@@ -1,0 +1,212 @@
+﻿<UserControl x:Class="Timelapse.HelpUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="495" d:DesignWidth="759">
+    <DockPanel Name="dockPanel">
+           <FlowDocumentScrollViewer>
+                <FlowDocument  FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
+
+                  
+                    <Paragraph FontSize="20" FontWeight="Bold">Getting Started</Paragraph>
+                    <List>
+                        <ListItem>
+                            <Paragraph>
+                                <Bold>Load your images.</Bold> From the File menu, load the folder containing your images.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                <Bold>Make this window full screen.</Bold> You will get the best results as your images will be as large as possible.
+                            </Paragraph>
+                        </ListItem>
+                    </List>
+
+                <Paragraph FontSize="20" FontWeight="Bold">What you need</Paragraph>
+                <Paragraph>This program assumes the following:</Paragraph>
+                <List>
+                    <ListItem>
+                        <Paragraph>All your images are in a single folder</Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>The image sequence are sorted in alphabetic order</Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>The folder contains a
+                            <Italic>CodeTemplate.xml</Italic> file that defines your analysis codes. This is normally created and supplied to you by the primary biologist.
+                        </Paragraph>
+                    </ListItem>
+                </List>
+
+
+                <Paragraph FontSize="20" FontWeight="Bold">Go through the Tutorial</Paragraph>
+                <Paragraph>The tutorial manual includes sample images so that you can read and try out the software at the same time.  Its worth going through it. This overview is intended only as a reminder, and doesn't cover everything.
+                    <LineBreak></LineBreak>Through the <Bold>Help Menu</Bold> you can:
+                </Paragraph>
+                <List>
+
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>view the Tutorial Manual</Bold> in a web browser</Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph><Bold>download the Sample Images</Bold> via your web browser</Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>view the Timelapse Home Page</Bold> in a web browser, which is another way to access the tutorial materials.
+                        </Paragraph>
+                    </ListItem>
+                </List>
+                    
+
+                <Paragraph FontSize="20" FontWeight="Bold">How to Code Your Images</Paragraph>
+                    <Paragraph>There are four kinds of controls that you can use to code your image.</Paragraph>
+                    <List>
+                        <ListItem>
+                            <Paragraph>
+                                <Bold>Text notes</Bold> are labelled text fields that you can type into.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                <Bold>Choice notes</Bold> let you either select choices from a menu.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                <Bold>Counters</Bold> let you count things. You first click on the choice button, then click on the things you are counting within this and subsequent images. See below
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                <Bold>Copy Previous Values Button</Bold> will copy values from some of the fields set in the last image into the fields of the current image. This is to reduce your tedium when there are many things that are common across images. The fields are 'copyable' are defined by you (or your cheif biologis) in the Template File.  
+                            </Paragraph>
+                    </ListItem>
+                    <ListItem>
+                            <Paragraph>
+                                <Bold>Context menu for copying values</Bold> are available on all the controls. Each lets you 'copy' existing or previous data in different ways.
+                            </Paragraph>
+                       </ListItem>
+                </List>
+
+                <Paragraph FontSize="20" FontWeight="Bold">Counting by marking over images, navigating, and zooming images</Paragraph>
+                <List>
+                    <ListItem>
+                    <Paragraph>
+                        <Bold>Counting.</Bold> If you want to count something in the image, click the label of the desired counter. Then click on the things you are counting on the image. A marker will appear on the image, and the count will go up by one
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Removing a count.</Bold> If you want to remove that count, just right-click on the red dot. The red dot will disappear, and the count will go down by one.
+                    </Paragraph>
+                </ListItem>
+                </List>
+                    
+                <Paragraph FontSize="20" FontWeight="Bold">Viewing images: navigating, comparing, filtering, magnifying and zooming images</Paragraph>
+                    <Paragraph>You can do several things while viewing images.</Paragraph>
+                    <List>
+
+                        <ListItem>
+                            <Paragraph>
+                                <Bold>Navigating.</Bold> Use the left/right arrow keys, or the slider to go between images.
+                            </Paragraph>
+                        </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>Filtering.</Bold> Using the view menu, you can filter the images to exclude (or to see only) dark night-time images and/or corrupted images.
+                        </Paragraph>
+                    </ListItem>
+                    <ListItem>
+                            <Paragraph>
+                                <Bold>Magnifier.</Bold> Select the magnifier in the view menu to toggle the magnifier on and off.
+                            </Paragraph>
+                        </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>Zooming.</Bold> Use the scroll wheel of your mouse to zoom in and out of an image. Zoom levels are persistent between images.
+                        </Paragraph>
+                    </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                <Bold>Image differencing.</Bold> Use the down arrow key to see a composite that highlights the difference between the current image and the two surrounding ones. The things you are counting may 'pop up' on this visual. 
+                                Alternately, use the up-arrow key to cycle through the differences between this image and the previous one or the next one. In this case the differences will be the union between the two. 
+                                Experiment with it. It may help you see things you want to count in an image that you may otherwise have missed. We found it works really well with some images, but not as well with others. 
+                            </Paragraph>
+                        </ListItem>
+
+
+                </List>
+
+                <Paragraph FontSize="20" FontWeight="Bold">Your Data</Paragraph>
+                <Paragraph>The program keeps track of all the things that you do. As you change your data, it will automatically save it into a database file:</Paragraph>
+                <List>
+                     <ListItem>
+                            <Paragraph>
+                                <Bold>TemplateData.DB</Bold> is used internally by the program to store all the data. If you do, your data will be lost.
+                            </Paragraph>
+                    </ListItem>
+ 
+                </List>
+
+                <Paragraph FontSize="20" FontWeight="Bold">Exporting and Previewing your Data</Paragraph>
+                <Paragraph>You can export your data into a'comma separated values' format via the <Bold>File Menu</Bold>, where </Paragraph>
+                <List>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>Export</Bold> will export your data in a file named
+                            <Italic>TimelapseData.CSV</Italic>
+                        </Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>Export and Preview</Bold> will export your data and then try to open Excel so you can preview it immediately
+                        </Paragraph>
+                    </ListItem>
+                </List>
+                <Paragraph>
+                    <Bold> <Italic>Important:</Italic> </Bold> Exporting always over-writes the TemplateData.csv file. Thus you do NOT want to edit the TemplateData.csv if you plan on re-exporting it, as those changes will be lost. Of course, after you are done with this image set, you can use that file as you see fit.
+                </Paragraph>
+
+                    
+                <Paragraph FontSize="20" FontWeight="Bold">Keyboard Shortcuts</Paragraph>
+                <List>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>Left/Right arrow</Bold> to go to the left or right image</Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>Up arrow</Bold> once to highlight the differences between this image with the previous image, and
+                            <Bold>again</Bold> for the differences with the the next image
+                        </Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>Down arrow</Bold> to highlight the differences between this image and both surrounding images
+                        </Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>M</Bold> toggles the magnifying glass on and off
+                        </Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>U</Bold> / <Bold>D</Bold>  increases / decreases the magnfication in the magnifying glass
+                        </Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>C</Bold> does the same thing as clicking the
+                            <Italic><Bold>Copy Previous Values</Bold> </Italic> button
+                        </Paragraph>
+                    </ListItem>
+                </List>
+            </FlowDocument>
+            </FlowDocumentScrollViewer>        
+    </DockPanel>
+</UserControl>

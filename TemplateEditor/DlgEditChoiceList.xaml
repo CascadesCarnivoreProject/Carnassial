@@ -1,0 +1,23 @@
+﻿<Window x:Class="TimelapseTemplateEditor.DlgEditChoiceList"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Create a choice list" Topmost="True" Height="300" MaxHeight="600" Width="175" MaxWidth="250" ShowInTaskbar="False" WindowStyle="None" SizeToContent="Manual"  Loaded="Window_Loaded">
+    <DockPanel >
+
+        <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
+            <TextBlock  Text="Define choice menu," FontWeight="Bold" Padding="0,0,0,0"  FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock  Text="with 1 item per line" FontWeight="Bold" Padding="0,0,0,0"  FontSize="14" VerticalAlignment="Center"/>
+            <Rectangle Fill="#FF868686" Height="2"></Rectangle>
+            
+        </StackPanel>
+
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Name="CancelButton"  IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="5,5,5,5" Click="cancelButton_Click">Cancel</Button>
+                <Button Name="OkButton"  IsDefault="False" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,5,5,5" Click="okButton_Click" IsEnabled="False">Ok</Button>
+            </StackPanel>
+            <TextBox Name="tbItemList" FontSize="12" DockPanel.Dock="Top" MinHeight="100" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
+                     TextWrapping="NoWrap"  AcceptsTab="True" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextChanged="tbLog_TextChanged" ToolTip="Define the choice menu by editing 1 choice item per line" />
+        </DockPanel>
+    </DockPanel>
+</Window>

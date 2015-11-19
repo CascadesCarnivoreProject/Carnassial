@@ -1,0 +1,227 @@
+﻿<Window x:Class="Timelapse.TimelapseWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:Timelapse"
+    Title="Timelapse 2.0: Helping You Analyze Images from Field Cameras" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"  
+        Width="1132" Height="676" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown" WindowState="Normal" PreviewKeyUp="Window_PreviewKeyUp" Icon="32x32.ico">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <Style  x:Key="RadioButtonCodeBar" TargetType="RadioButton" BasedOn="{ StaticResource {x:Type ToggleButton}}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                        <Border HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="border" Padding="5,5,5,5" CornerRadius="5,5,5,5" Background="Beige" BorderBrush="LightBlue" BorderThickness="1,1,1,4" SnapsToDevicePixels="True">
+                            <ContentPresenter x:Name="contentPresenter"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="true">
+                                <Setter Property="Background" TargetName="border" Value="LightBlue"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="Gray"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Margin" Value="0,0,2,0" />
+        </Style>
+
+        <Style  x:Key="LabelCodeBar" TargetType="Label">
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="5,5,5,5"/>
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Height" Value="30" />
+        </Style>
+
+        <Style  x:Key="TextBoxCodeBar" TargetType="TextBox" >
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="0,4,5,5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="LightBlue"/>
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Focusable" Value="True" />
+            <Setter Property="IsReadOnly" Value="False" />
+        </Style>
+<!--
+        <Style  x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="5,4,5,5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="LightBLue"/>
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Height" Value="25" />
+            <Setter Property="Focusable" Value="True" />
+            <Setter Property="IsReadOnly" Value="False" />
+            <Setter Property="IsEditable" Value="False" />
+        </Style>
+-->
+        <Style  x:Key="StackPanelCodeBar" TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Horizontal"/>
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="Height" Value="40"/>
+        </Style>
+    </Window.Resources>
+
+    <!-- An example of how to do a command binding in a menu or keyboard, should we want to add any
+         if in a menu, we would add the attribut Command="Save" and InputGestureText="Ctrl+S" 
+    <Window.CommandBindings>  
+        <CommandBinding Command="Save" Executed="ExportCommandBinding_Executed"></CommandBinding> 
+    </Window.CommandBindings>
+
+    <Window.InputBindings>
+        <KeyBinding Key="S" Modifiers="Control" Command="Save"></KeyBinding>
+    </Window.InputBindings>
+    -->
+    <Grid >
+        <DockPanel Name="mainUI">
+            <Menu DockPanel.Dock="Top">
+                <!-- File Menu -->
+                <MenuItem Header="_File" IsTabStop="false">
+                    <MenuItem Name="MenuItemLoadImages" Header="_Load images from folder..." Click="MenuItemLoadImages_Click" ToolTip="Asks you for the image folder location (which must have a CodeTemplate.Xml file in it)"/>
+                    <Separator />
+                    <MenuItem Name="MenuItemExportAsCSV" Header="_Export as CSV File" IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports all the data into a CSV (comma-separated values) file"/>
+                    <MenuItem Name="MenuItemExportAsCSVAndPreview" Header="_Export as CSV File and Preview in Excel " IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports all the data into a CSV (comma-separated values) file, and previews it in Excel"/>
+                    <Separator />
+                    <MenuItem Name="MenuItemExportThisImage" Header="_Export This Image..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) this image into a particular folder"/>
+                    <Separator />
+                    <MenuItem  Name="MenuItemExit" Header="_Exit" Click="MenuItemExit_Click" ToolTip="Quits the program"/>
+                </MenuItem>
+
+                <!-- Edit Menu -->
+                <MenuItem Name="MenuItemEdit" Header="_Edit" IsEnabled="false" IsTabStop="false">
+                    <MenuItem Name="MenuItemCopyPreviousValues" IsCheckable="False" Header="_Copy Previous Values" Click="btnCopy_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template."/>
+                    <MenuItem Header="Delete"  IsCheckable="False" SubmenuOpened="Delete_SubmenuOpening"  >
+                        <MenuItem Name="MenuItemDeleteImage" IsCheckable="False" Header="_The current image..." Click="MenuItemDeleteImage_Click"  ToolTip="Deletes the image but not the data associated with that image"/>
+                        <MenuItem Name="MenuItemDeleteImageAndData" IsCheckable="False" Header="_The current image and its data..." Click="MenuItemDeleteImage_Click"  ToolTip="Deletes the image and the data associated with it"/>
+                        <Separator/>
+                        <MenuItem Name="MenuItemDeleteImages" IsCheckable="False" Header="_All images marked for deletion..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes all images marked for deletion, but leaves the data intact"/>
+                        <MenuItem Name="MenuItemDeleteImagesAndData" IsCheckable="False" Header="_All images marked for deletion and their data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes all images marked for deletion, as well as the data associated with those images"/>
+                    </MenuItem>
+                    <MenuItem Header="Date Correction"  IsCheckable="False" >
+                        <MenuItem Name="MenuItemSwapDayMonth" IsCheckable="False" Header="_Swap Day and Month..."  Click="MenuItemSwapDayMonth_Click" ToolTip="Swaps the day and month value in the Date field across all images"/>
+                        <MenuItem Name="MenuItemCorrectDates" Header="_Add Correction Value..."  Click="MenuItemDateCorrections_Click"  ToolTip="Utilities to correct for dates that are not quite right" IsEnabled="True" />
+                        <MenuItem Name="MenuItemCorrectTimeChanges" Header="_Correct for Daylight Savings Time..."  Click="MenuItemCorrectDaylightSavings_Click"  ToolTip="Utilities to correct daylight saving time issues" IsEnabled="True" />
+                    </MenuItem>
+ 
+                    <MenuItem Name="MenuItemLog" Header="_Edit notes for this Image Set..."  Click="MenuItemLog_Click"  ToolTip="View and edit any notes (a log of activites or to do items?) particular to this Image Set" IsEnabled="True" />
+                </MenuItem>
+
+                <!-- Options Menu -->
+                <MenuItem Name="MenuItemOptions" Header="_Options" IsEnabled="false" IsTabStop="false">
+                    <MenuItem Name="MenuItemControlsInSeparateWindow" IsCheckable="True" IsChecked="False" Header="_Controls in Separate Window" Click="MenuItemControlsInSeparateWindow_Click" ToolTip="Toggles whether your coding controls should appear in the main window or in a separate window"/>
+                    <MenuItem Name="MenuItemAudioFeedback" IsCheckable="True" IsChecked="False" Header="_Audio Feedback" Click="MenuItemAudioFeedback_Click" ToolTip="Toggles the audio that speaks the count whenever you add a counting mark to the image"/>
+                    <Separator/>
+                    <MenuItem Header="Magnifying Glass"  IsCheckable="False" >
+                        <MenuItem Name="MenuItemMagnifier" IsCheckable="True" IsChecked="False" InputGestureText="M" Header="_Visibility" Click="MenuItemMagnifier_Click" ToolTip="Toggles the presence of the magnifying glass"/>
+                        <MenuItem Name="MenuItemMagnifierIncrease" IsCheckable="False" InputGestureText="U" Header="_Increase Magnification" Click="MenuItemMagnifierIncrease_Click" ToolTip="Increase the magnification of the magnifying glass"/>
+                        <MenuItem Name="MenuItemMagnifierDecrease" IsCheckable="False" InputGestureText="D" Header="_Decrease Magnification" Click="MenuItemMagnifierDecrease_Click" ToolTip="Decrease the magnification of the magnifying glass"/>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem Name="MenuItemImageCounts" Header="_Show Image Counts..." Click="MenuItemImageCounts_Click" ToolTip="Displays statistics on the number of images and their types"/>
+                    <MenuItem Name="MenuItemViewFilteredDatabaseContents" Header="_Show Filtered Database Contents..." Click="MenuItemViewFilteredDatabaseContents_Click" ToolTip="Display the current filtered view of the (changing) database"/>
+
+                    <Separator/>
+                    <MenuItem Name="MenuItemOptionsBox" Header="_Advanced Settings and Operations..."  InputGestureText="Ctl" Click="MenuItemOptions_Click"  ToolTip="Brings up options that should only be used by advanced users" IsEnabled="False" />
+                </MenuItem>
+
+                <!-- View Menu -->
+                <MenuItem x:Name="MenuItemView" Header="_View" IsEnabled="false" IsTabStop="false" SubmenuOpened="View_SubmenuOpening"  ToolTip="Zooming, navigating, and image differencing">
+                    <MenuItem Name="MenuItemViewNextImage" IsCheckable="False" Header="_View Next Image" Click="MenuItemViewNextImage_Click" InputGestureText="&#x2192;" ToolTip="View the next image in the image set"/>
+                    <MenuItem Name="MenuItemViewPreviousImage" IsCheckable="False" Header="_View Previous Image"  Click="MenuItemViewPreviousImage_Click" InputGestureText="&#x2190;" ToolTip="View the previous image in the image set"/>
+                    <Separator/>                    
+                    <MenuItem Name="MenuItemZoomIn" IsCheckable="False" Header="_Zoom In" Click="MenuItemZoomIn_Click" InputGestureText="&#x2039;" ToolTip="Zoom into this image"/>
+                    <MenuItem Name="MenuItemZoomOut" IsCheckable="False" Header="_Zoom Out"  Click="MenuItemZoomOut_Click" InputGestureText="&#x203A;" ToolTip="Zoom out of this image"/>
+                    <Separator/>
+                    <MenuItem x:Name="MenuItemBookmarkSavePanZoom" IsCheckable="False" Header="_Bookmark Current Zoom Region" InputGestureText="B" ToolTip="Save the current zoom region setting as a bookmark" Click="MenuItem_BookmarkSavePanZoom"/>
+                    <MenuItem x:Name="MenuItemBookmarkSetPanZoom" IsCheckable="False"  Header="Zoom to Bookmarked Region" InputGestureText="+" ToolTip="Zoom to the region saved in the bookmark" Click="MenuItem_BookmarkSetPanZoom"/>
+                    <MenuItem x:Name="MenuItemBookmarkDefaultPanZoom" IsCheckable="False" Header="_Zoom Out all the Way" InputGestureText="-" ToolTip="Zoom out to see the entire image" Click="MenuItem_BookmarkDefaultPanZoom"/>
+                    <Separator/>
+                    <MenuItem Name="MenuItemViewDifferencesCycleThrough" IsCheckable="False" Header="_Cycle Through Image Differences" Click="MenuItemViewDifferencesCycleThrough_Click" InputGestureText="&#x2191;" ToolTip="View an image enhancement that cycles through the visual differences between the current image and the next image, and then the previous image"/>
+                    <MenuItem Name="MenuItemViewDifferencesCombined" IsCheckable="False" Header="_View  Combined Image Differences" Click="MenuItemViewDifferencesCombined_Click" InputGestureText="&#x2193;" ToolTip="View an image enhancement that shows, as a single image, the visual differences between the current image and the surrounding two images"/>
+                    <Separator/>
+                </MenuItem>
+
+                <!-- Filter Menu -->
+                <MenuItem x:Name="MenuItemFilter" Header="_Filter" IsEnabled="false" IsTabStop="false" SubmenuOpened="View_SubmenuOpening" ToolTip="Filter the data to only show a subset of the images">
+                    <MenuItem x:Name="MenuItemViewAllImages" IsCheckable="True" IsChecked="True" Header="_All Images" Click="MenuItemView_Click" ToolTip="Shows all images, including corrupted and dark ones"/>
+                    <MenuItem x:Name="MenuItemViewLightImages"   IsCheckable="True" IsChecked="False" Header="_Light Images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to remove those that are dark or corrupted"/>
+                    <MenuItem x:Name="MenuItemViewDarkImages" IsCheckable="True" IsChecked="False" Header="_Dark Images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only dark images"/>
+                    <MenuItem x:Name="MenuItemViewCorruptedImages" IsCheckable="True" IsChecked="False" Header="_Corrupted Images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only corrupted images"/>
+                    <MenuItem x:Name="MenuItemViewMissingImages"   IsCheckable="True" IsChecked="False" Header="_Missing Images"   Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only missing images"/>
+                    <MenuItem x:Name="MenuItemViewImagesMarkedForDeletion"  IsCheckable="True" IsChecked="False" Header="_Images Marked for Deletion"   Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only images marked for deletion"/>
+                </MenuItem>
+                
+                <!-- Help Menu -->
+                <MenuItem Name="MenuItemHelp" Header="_Help" IsEnabled="true" IsTabStop="false">
+                    <MenuItem Name="MenuItemOverview" Header="_Brief Overview..." Click="MenuOverview_Click" ToolTip="A brief overview of how to use this software"/>
+                    <Separator/>
+                    <MenuItem Name="MenuItemTimelapseHomePage" Header="_The Timelapse Web Page (via your web browser)" Click="MenuTimelapseWebPage_Click" ToolTip="Displays the Timelapse Image Analyzer web page in your browser"/>
+                    <MenuItem Name="MenuItemTutorialManual" Header="_Tutorial Manual (via your web browser)" Click="MenuTutorialManual_Click" ToolTip="Displays the Tutorial Manual - a large PDF file - in your browser"/>
+                    <MenuItem Name="MenuItemDownloadSampleImages" Header="Download Tutorial Sample Images (via your web browser)" Click="MenuDownloadSampleImages_Click" ToolTip="Using your browser, it downloads the sample image files used in the  Tutorial Manual for you to practise with"/>
+                    <MenuItem Name="MenuItemJoinMailingList" Header="Timelapse Mailing List - Join it (via your web browser)" Click="MenuJoinTimelapseMailingList_Click" ToolTip="Using your browser, go to the page that lets you join the timelapse mailing list. You will be informed about updates, and you can post requests to it."/>
+                    <MenuItem Name="MenuItemMailToMailingList" Header="Timelapse Mailing List - Send Email " Click="MenuMailToTimelapseMailingList_Click" ToolTip="Post an email to the Timelapse mailing list. You should join the mailing list before doing this."/>
+                    <MenuItem Name="MenuItemAbout" Header="_About..." Click="MenuOverview_About" ToolTip="Displays version information about this program and how to contact its creator"/>
+                </MenuItem>
+
+            </Menu>
+            <local:HelpUserControl x:Name="helpControl" Visibility="Visible" Height="Auto" ></local:HelpUserControl>
+            <local:FeedbackCtl x:Name="feedbackCtl" Visibility="Collapsed"  ></local:FeedbackCtl>
+
+            <StackPanel Margin="0,0,0,0" DockPanel.Dock="Top">
+                <Grid Name="ControlGrid" VerticalAlignment="Stretch" Margin="1,0,-1,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition  Width="Auto"  />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel DockPanel.Dock="Top"  Name="controlsTray" Visibility="Collapsed" Grid.Column="0">
+                    </StackPanel>
+                    <Button Name="btnCopy" Background="#C8FBC8" Visibility="Collapsed" Click="btnCopy_Click"  Margin="5,5,5,5" Padding="5,0,5,0" Grid.Column="1" HorizontalAlignment="Right" 
+                            Width="Auto" MinHeight="60" VerticalAlignment="Stretch" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template.">
+                        <TextBlock TextWrapping="Wrap" FontWeight="Bold">
+                            Copy<LineBreak/>Previous<LineBreak/>Values
+                        </TextBlock>
+                        <Button.Style>
+                            <Style TargetType="{x:Type Button}">
+                                <Setter Property="Background" Value="#C8FBC8"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="DarkGray" BorderThickness="1" > 
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"  Margin="5,5,5,5" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#C8FBC8"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
+                <DockPanel Name="DockPanelNavigator" Visibility="Collapsed" >
+                    <Slider Name="sldrImageNavigator"  Minimum ="0" Maximum="0" ValueChanged="sldrImageNavigator_ValueChanged" IsSnapToTickEnabled="True" TickFrequency="1" Focusable="False" LargeChange="1" ToolTip="Scroll through all images" Margin="5,0,5,0"/>
+                </DockPanel>
+            </StackPanel>
+            <StatusBar DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Name="statusBar" ItemsSource="{Binding}">
+                <StatusBarItem Content="Image number: " FontWeight="Bold" />
+                <StatusBarItem Content="0"/>
+                <StatusBarItem Content="of "/>
+                <StatusBarItem Content="Unknown"/>
+                <StatusBarItem Content=""/>
+                <StatusBarItem Content="" HorizontalAlignment="Right" />
+            </StatusBar>
+        </DockPanel>
+    </Grid>
+</Window>

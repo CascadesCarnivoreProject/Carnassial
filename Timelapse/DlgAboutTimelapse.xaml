@@ -1,0 +1,57 @@
+﻿<Window x:Class="Timelapse.DlgAboutTimelapse"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="About Timelapse" Height="420" Width="550"
+		ResizeMode="NoResize"
+		ShowInTaskbar="False"
+		WindowStartupLocation="CenterOwner" BorderBrush="Black">
+
+    <DockPanel>
+        <StackPanel Name="StackPanelCorrect" Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
+            <StackPanel  Margin="10,10,0,0" Orientation="Horizontal">
+                <Canvas Width="60" Height="60">
+                    <Ellipse  Width="60" Height="60" Stroke="Black" Fill="#46FD0A0A" />
+                    <Label  Content="i" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+                </Canvas>
+                <TextBlock x:Name="txtBlockTitle" Text="About Timelapse" Padding="10,5,0,0"  FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
+                <Run FontWeight="Bold" Text="Version: " FontSize="14"/> 
+                <Run x:Name="Version" FontSize="14"/>
+            </TextBlock>
+                <Button Name="BtnCheckForUpdate" Content="Check for Newer Versions" Margin="50,0,0,0" Click="BtnCheckForUpdate_Click"/>
+            </StackPanel>
+            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
+                <Run FontWeight="Bold" Text="Author: " FontSize="14"/> 
+                <Run Text="Saul Greenberg" FontSize="14"/>
+                <LineBreak/>
+                <Run Text="               Greenberg Consulting Inc. / University of Calgary " FontSize="14"/>
+                <LineBreak/>
+                <Run Text="               saul@ucalgary.ca" FontSize="14"/>
+                <LineBreak/>
+            </TextBlock>
+
+            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="14" >
+                <Run FontWeight="Bold" Text="Terms of use: " FontSize="14"/>
+            </TextBlock>
+            <TextBlock HorizontalAlignment="Left" Margin="70,0,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap"  FontSize="14">
+                <Run Text="Timelapse software is supplied 'as is' as part of a volunteer project. "/>
+                <LineBreak/>
+                <LineBreak/>  
+                <Run Text="However, we are quite interested in making it better for you. "/>
+                <LineBreak/>              
+                <Run Text="Email Saul with any comments, problems and suggestions for improvements."/>
+                <LineBreak/>
+            </TextBlock>
+        </StackPanel>
+
+        <DockPanel Name="DockPanelImage">
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Name="OkButton"  IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="okButton_Click" IsEnabled="True">Okay</Button>
+            </StackPanel>
+        </DockPanel>
+    </DockPanel>
+
+</Window>
+
