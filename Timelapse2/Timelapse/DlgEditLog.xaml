@@ -1,0 +1,44 @@
+﻿<Window x:Class="Timelapse.DlgEditLog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Name="DlgNameEditLog"
+        Title="Edit your notes for this image set" 
+        MinHeight="480" MinWidth="768"
+		Height="600" Width="768"
+		ResizeMode="CanResizeWithGrip"
+		ShowInTaskbar="False"
+		WindowStartupLocation="CenterOwner" BorderBrush="Black">
+       
+    <DockPanel >
+
+        <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
+            <StackPanel Margin="10,10,0,0" Orientation="Horizontal">
+                <Canvas  Width="60" Height="60">
+                    <Ellipse  Width="60" Height="60" Stroke="Black" Fill="#46FD0A0A" />
+                    <Label   Content="?" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+                </Canvas>
+                <TextBlock  Text="Edit your notes for this image set" Padding="10,5,0,0"  FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+            </StackPanel>
+           
+            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
+				<Run FontWeight="Bold" Text="What this is: " FontSize="14"/>
+				<Run Text="Record any notes about this image set that you may want to refer to in the future. Your notes will be saved and " />
+                <Run Text="viewable at any time through this software, but it will" />
+                <Run FontWeight="Bold" Text=" not " FontStyle="Italic" /> 
+                <Run Text="be saved in the spreadsheet csv file. Typical uses are to log activities, list to-do items, leave messages for others, etc." />
+            </TextBlock>
+
+
+            <Rectangle Fill="#FF868686" Height="2"></Rectangle>
+
+        </StackPanel>
+
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Name="CancelButton"  IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="cancelButton_Click">Cancel</Button>
+                <Button Name="OkButton"  IsDefault="False" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="okButton_Click" IsEnabled="False">Save</Button>
+            </StackPanel>
+            <TextBox Name="tbLog" MinHeight="100" MinWidth="100"  DockPanel.Dock="Top" HorizontalAlignment="Stretch" TextWrapping="Wrap" AcceptsTab="True" AcceptsReturn="True" FontSize="14" VerticalScrollBarVisibility="Auto" TextChanged="tbLog_TextChanged" />
+        </DockPanel>
+    </DockPanel>
+</Window>

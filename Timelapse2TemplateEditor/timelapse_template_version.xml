@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<timelapse>
+  <version>2.0.1.5</version>
+  <url>http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.Download2</url>
+  <changes>
+- Fixed a small bug in the way Data Labels are corrected. 
+- Message dialog boxes redone to a common look and feel
+- Added a button in the 'About' dialog that goes to the version changes page.
+
+To see other version history details, select Help/About and click the Version History button.</changes>
+
+</timelapse>
