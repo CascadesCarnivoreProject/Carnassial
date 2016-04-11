@@ -2,7 +2,7 @@
 {
     // Keep all constants in one place. 
     // This helps ensure we are not setting values differently across multiple files, etc.
-    static class Constants
+    internal static class Constants
     {
         // Update Information, for checking for updates in the timelapse xml file stored on the web site
         public const string URL_CONTAINING_LATEST_VERSION_INFO = "http://saul.cpsc.ucalgary.ca/timelapse/uploads/Installs/timelapse_version.xml";
@@ -41,6 +41,9 @@
         public const string IMAGEQUALITY_MISSING = "Missing";
 
         // Default Settings
+        public const byte DifferenceThresholdMax = 255;
+        public const byte DifferenceThresholdMin = 0;
+
         public const int DEFAULT_DIFFERENCE_THRESHOLD = 20; // The threshold to determine differences between images
 
         // Special characters
@@ -66,19 +69,18 @@
         public const string ID = "Id";                       // the unique id of the table row
 
         // To keep track of image counts and the order of dates
-        public enum ImageQualityFilters : int { Ok = 0, Dark = 1, Missing = 2, Corrupted = 3, All = 4, MarkedForDeletion = 5, Custom = 6 };
-        public enum DateOrder : int { DayMonth = 0, MonthDay = 1, Unknown = 2 };
+        public enum DateOrder : int { DayMonth = 0, MonthDay = 1, Unknown = 2 }
 
         // XML Labels(Code Template File) - XXXX NOTE, COULD PROBABLY PREFIX THIS WITH 'XML' for great clarity
         public const string IMAGES = "Images";             // There are multiple images
-       
+
         public const string IMAGE = "Image";               // A single image and its associated data
 
-        public const string MARKER_STANDARDCOLOR = "Gold"; 
+        public const string MARKER_STANDARDCOLOR = "Gold";
         public const string MARKER_SELECTIONCOLOR = "MediumBlue";
-        public const string MARKER_EMPHASISCOLOR = "Red"; 
+        public const string MARKER_EMPHASISCOLOR = "Red";
 
-        //  Names of standard elements, always included but not always made visible
+        // Names of standard elements, always included but not always made visible
         public const string FILE = "File";
         public const string FOLDER = "Folder";
         public const string DATE = "Date";
@@ -97,8 +99,8 @@
         // Keys defining columns in our ImageSetTable
         public const string LOG = "Log";                   // String holding a user-created text log
         public const string STATE_MAGNIFIER = "Magnifier";          // string holding the true/false state of the magnifying glass (on or off)
-        public const string STATE_FILTER="Filter";         // string holding the currently selected filter
-        public const string STATE_ROW="Row";                    // string holding the currently selected row
+        public const string STATE_FILTER = "Filter";         // string holding the currently selected filter
+        public const string STATE_ROW = "Row";                    // string holding the currently selected row
         public const string STATE_WHITESPACE_TRIMMED = "WhiteSpaceTrimmed";          // string holding the true/false state of whether the white space has been trimmed from the data.
 
         // XML STRING PATHS to standard elements, always included but not always made visible
@@ -115,5 +117,32 @@
 
         public const int DEFAULT_DARK_PIXEL_THRESHOLD = 60; // The default threshold where a pixel color should be considered as 'dark' when checking image darkness. The Range is 0  (black) - 255 (white)
         public const double DEFAULT_DARK_PIXEL_RATIO_THRESHOLD = 0.9; // The default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
+
+        public static class Registry
+        {
+            public static class Key
+            {
+                // The image filter used on exit
+                public const string AudioFeedback = "AudioFeedback";
+                // Whether the controls are in a separate window (true) or in the Timelapse Window (false)
+                public const string ControlsInSeparateWindow = "ControlWindowSeparate";
+                // The width of the controlWindow
+                public const string ControlWindowHeight = "ControlWindowHeight";
+                // The width of the controlWindow
+                public const string ControlWindowWidth = "ControlWindowWidth";
+                // The DarkPixelThreshold
+                public const string DarkPixelThreshold = "DarkPixelThreshold";
+                // The DarkPixelRatio
+                public const string DarkPixelRatio = "DarkPixelRatio";
+                // The last image folder on exit (a full path)
+                public const string LastDatabaseFolderPath = "LastDatabaseFolderPath";
+                // The last image template file name on exit (just the name)
+                public const string LastDatabaseTemplateName = "LastDatabaseTemplateName";
+                // Whether to show the CSV dialog window
+                public const string ShowCsvDialog = "ShowCsvDialog";
+            }
+
+            public const string RootKey = @"Software\Greenberg Consulting\Timelapse\2.0";   // Defines the KEY path under HKEY_CURRENT_USER
+        }
     }
 }

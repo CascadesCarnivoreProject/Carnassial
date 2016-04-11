@@ -16,29 +16,25 @@ namespace Timelapse
     public partial class DlgOptionsDarkImagesThreshold : Window
     {
         #region Variables and Constants
-        DBData dbData;
-        BitmapFrame bmap;
-        int originalDarkPixelThreshold = 0; // Default value
-        double originalDarkPixelRatio = 0;
-        int darkPixelThreshold = 0; // Default value
-        double darkPixelRatio = 0;  //Default value 
-        double darkPixelRatioFound = 0;
-        bool isColor = false; // Whether the image is color or grey scale
-
-        const int MINIMUM_WIDTH = 12;
+        private DBData dbData;
+        private BitmapFrame bmap;
+        private int darkPixelThreshold = 0; // Default value
+        private double darkPixelRatio = 0;  //Default value 
+        private double darkPixelRatioFound = 0;
+        private bool isColor = false; // Whether the image is color or grey scale
+        private TimelapseState state;
+        private const int MINIMUM_WIDTH = 12;
         #endregion
 
         #region Window Initialization and Callbacks
-        public DlgOptionsDarkImagesThreshold(DBData db_data, int dark_pixel_threshold, double dark_pixel_ratio)
+        public DlgOptionsDarkImagesThreshold(DBData dbData, TimelapseState state)
         {
             InitializeComponent();
 
-            this.dbData = db_data;
-            this.originalDarkPixelThreshold = dark_pixel_threshold;
-            this.originalDarkPixelRatio = dark_pixel_ratio;
-
-            this.darkPixelThreshold = dark_pixel_threshold;
-            this.darkPixelRatio = dark_pixel_ratio;
+            this.dbData = dbData;
+            this.darkPixelThreshold = state.DarkPixelThreshold;
+            this.darkPixelRatio = state.DarkPixelRatioThreshold;
+            this.state = state;
         }
 
         // Display the image and associated details in the UI
@@ -51,7 +47,7 @@ namespace Timelapse
                 this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
             }
 
-            this.sldrDarkThreshold.Value = this.originalDarkPixelThreshold;
+            this.sldrDarkThreshold.Value = this.state.DarkPixelRatioThreshold;
             sldrDarkThreshold.ValueChanged += sldrDarkThreshold_ValueChanged;
 
             this.sldrScrollImages.Minimum = 0;
@@ -213,9 +209,8 @@ namespace Timelapse
         private void btnOk_Click(object sender, RoutedEventArgs e)
         {
             // Update the Timelapse variables to the current settings
-            TimelapseWindow owner = this.Owner as TimelapseWindow;
-            owner.darkPixelThreshold = this.darkPixelThreshold;
-            owner.darkPixelRatioThreshold = this.darkPixelRatio;
+            this.state.DarkPixelThreshold = this.darkPixelThreshold;
+            this.state.DarkPixelRatioThreshold = this.darkPixelRatio;
 
             RescanImageQuality();
             DisplayImageAndDetails(); // Goes back to the original image
@@ -241,11 +236,11 @@ namespace Timelapse
         private void menuResetCurrent_Click(object sender, RoutedEventArgs e)
         {
             // Move the thumb to correspond to the original value
-            this.darkPixelRatio = this.originalDarkPixelRatio;
+            this.darkPixelRatio = this.state.DarkPixelRatioThreshold;
             Canvas.SetLeft(this.LineDarkPixelRatio, this.darkPixelRatio * (this.FeedbackCanvas.ActualWidth - this.LineDarkPixelRatio.ActualWidth));
 
             // Move the slider to its original position
-            this.sldrDarkThreshold.Value = this.originalDarkPixelThreshold;
+            this.sldrDarkThreshold.Value = this.state.DarkPixelRatioThreshold;
             this.Recalculate();
             this.Repaint();
         }

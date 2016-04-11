@@ -37,7 +37,7 @@ namespace Timelapse
             {
                 // We ideally want to use the metadata date. 
                 // If the image is corrupted we fall back to the file date
-                imgprop.UseMetadata = (imgprop.ImageQuality == (int)Constants.ImageQualityFilters.Corrupted) ? false : true;
+                imgprop.UseMetadata = (imgprop.ImageQuality == ImageQualityFilter.Corrupted) ? false : true;
 
                 if (imgprop.UseMetadata)
                 {

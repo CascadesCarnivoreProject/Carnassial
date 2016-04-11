@@ -189,7 +189,7 @@ namespace Timelapse
 
             column_definition.Add (Constants.STATE_MAGNIFIER, " TEXT DEFAULT 'true'");
             column_definition.Add (Constants.STATE_ROW, " TEXT DEFAULT '0'");
-            int ifilter = (int)Constants.ImageQualityFilters.All;
+            int ifilter = (int)ImageQualityFilter.All;
             column_definition.Add (Constants.STATE_FILTER, " TEXT DEFAULT '" + ifilter.ToString() + "'");
             this.DB.CreateTable(Constants.TABLEIMAGESET, column_definition, out result, out command_executed);
 
@@ -413,10 +413,10 @@ namespace Timelapse
         public int[] GetImageCounts()
         {
             int [] counts = new int[4]{0,0,0,0};
-            counts[(int)Constants.ImageQualityFilters.Dark] = doCountQuery(Constants.IMAGEQUALITY_DARK);
-            counts[(int)Constants.ImageQualityFilters.Corrupted] = doCountQuery(Constants.IMAGEQUALITY_CORRUPTED);
-            counts[(int)Constants.ImageQualityFilters.Missing] = doCountQuery(Constants.IMAGEQUALITY_MISSING);
-            counts[(int)Constants.ImageQualityFilters.Ok] = doCountQuery(Constants.IMAGEQUALITY_OK);
+            counts[(int)ImageQualityFilter.Dark] = doCountQuery(Constants.IMAGEQUALITY_DARK);
+            counts[(int)ImageQualityFilter.Corrupted] = doCountQuery(Constants.IMAGEQUALITY_CORRUPTED);
+            counts[(int)ImageQualityFilter.Missing] = doCountQuery(Constants.IMAGEQUALITY_MISSING);
+            counts[(int)ImageQualityFilter.Ok] = doCountQuery(Constants.IMAGEQUALITY_OK);
             return counts;
         }
         public int GetNoFilterCount()

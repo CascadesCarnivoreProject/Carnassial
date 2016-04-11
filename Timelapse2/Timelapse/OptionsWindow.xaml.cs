@@ -30,10 +30,10 @@ namespace Timelapse
             
 
             //// Image Differencing Thresholds
-            sldrDifferenceThreshold.Value = mainProgram.differenceThreshold;
-            sldrDifferenceThreshold.ToolTip = mainProgram.differenceThreshold;
-            sldrDifferenceThreshold.Maximum = mainProgram.differenceThresholdMax;
-            sldrDifferenceThreshold.Minimum = mainProgram.differenceThresholdMin;
+            sldrDifferenceThreshold.Value = mainProgram.DifferenceThreshold;
+            sldrDifferenceThreshold.ToolTip = mainProgram.DifferenceThreshold;
+            sldrDifferenceThreshold.Maximum = Constants.DifferenceThresholdMax;
+            sldrDifferenceThreshold.Minimum = Constants.DifferenceThresholdMin;
 
             
             //// For swapping data within notes, fixed choices, or counters:
@@ -65,14 +65,14 @@ namespace Timelapse
         private void btnResetImageDifferencing_Click(object sender, RoutedEventArgs e)
         {
             mainProgram.ResetDifferenceThreshold();
-            sldrDifferenceThreshold.Value = mainProgram.differenceThreshold;
-            sldrDifferenceThreshold.ToolTip = mainProgram.differenceThreshold;
+            sldrDifferenceThreshold.Value = mainProgram.DifferenceThreshold;
+            sldrDifferenceThreshold.ToolTip = mainProgram.DifferenceThreshold;
         }
 
         private void sldrDifferenceThreshold_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            mainProgram.differenceThreshold = (byte) sldrDifferenceThreshold.Value;
-            sldrDifferenceThreshold.ToolTip = mainProgram.differenceThreshold;
+            mainProgram.DifferenceThreshold = (byte) sldrDifferenceThreshold.Value;
+            sldrDifferenceThreshold.ToolTip = mainProgram.DifferenceThreshold;
         }
 
         private void btnCloseWindow_Click(object sender, RoutedEventArgs e)

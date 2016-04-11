@@ -16,11 +16,11 @@ namespace Timelapse
         // Without the timer, it flickers terribly.
         private DispatcherTimer timer = new DispatcherTimer ();
         private const long quarterSecond = 2500000;
-        private State state; // We need to access the state so we can post the current window size
+        private TimelapseState state; // We need to access the state so we can post the current window size
         #endregion 
 
         #region Constructors
-        public ControlWindow(State state)
+        public ControlWindow(TimelapseState state)
         {
             this.timer.Tick += timer_Tick;
             this.timer.Interval = new System.TimeSpan(quarterSecond);
@@ -49,10 +49,10 @@ namespace Timelapse
         // This will size the window so its the same as its last size
         public void RestorePreviousSize ()
         {
-            if (state.controlWindowSize.X != 0 && state.controlWindowSize.Y != 0)
+            if (state.ControlWindowSize.X != 0 && state.ControlWindowSize.Y != 0)
             {
-                this.Width = state.controlWindowSize.X;
-                this.Height = state.controlWindowSize.Y;
+                this.Width = state.ControlWindowSize.X;
+                this.Height = state.ControlWindowSize.Y;
             }
         }
         
@@ -71,7 +71,7 @@ namespace Timelapse
         {
             this.SizeToContent = SizeToContent.Height;
             timer.Stop ();
-            state.controlWindowSize = new Point(this.ActualWidth, this.ActualHeight);
+            state.ControlWindowSize = new Point(this.ActualWidth, this.ActualHeight);
         }
         #endregion
     }

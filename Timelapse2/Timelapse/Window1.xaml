@@ -88,7 +88,7 @@
                     <MenuItem Name="MenuItemLoadImages" Header="_Load images from folder..." Click="MenuItemLoadImages_Click" ToolTip="Asks you for the image folder location (which must have a CodeTemplate.Xml file in it)"/>
                     <Separator />
                     <MenuItem Name="MenuItemExportAsCSV" Header="_Export data for these images as CSV File" IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated values) file"/>
-                    <MenuItem Name="MenuItemExportAsCSVAndPreview" Header="_Export data for these images as CSV File and Preview in Excel " IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports  data for the (possibly filtered) imagesinto a CSV (comma-separated values) file, and previews it in Excel"/>
+                    <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="_Export data for these images as CSV File and Preview in Excel " IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports  data for the (possibly filtered) imagesinto a CSV (comma-separated values) file, and previews it in Excel"/>
                     <Separator />
                     <MenuItem Name="MenuItemExportThisImage" Header="_Export This Image..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) this image into a particular folder"/>
                     <Separator />
@@ -99,7 +99,7 @@
 
                 <!-- Edit Menu -->
                 <MenuItem Name="MenuItemEdit" Header="_Edit" IsEnabled="false" IsTabStop="false">
-                    <MenuItem Name="MenuItemCopyPreviousValues" IsCheckable="False" Header="_Copy Previous Values" Click="btnCopy_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template."/>
+                    <MenuItem Name="MenuItemCopyPreviousValues" IsCheckable="False" Header="_Copy Previous Values" Click="BtnCopy_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template."/>
                     <MenuItem Name="MenuItemPopulateFieldFromMetaData" IsCheckable="False" Header="_Populate a Field with Image Metadata" ToolTip="Match a data field with an image metadata type. Then populate that field across all images with the corresponding image metadata value." Click="MenuItemPopulateFieldFromMetaData_Click"/>
                     <MenuItem Header="Delete"  IsCheckable="False" SubmenuOpened="Delete_SubmenuOpening"  >
                         <MenuItem Name="MenuItemDeleteImage" IsCheckable="False" Header="_The current image..." Click="MenuItemDeleteImage_Click"  ToolTip="Deletes the image but not the data associated with that image"/>
@@ -191,7 +191,7 @@
 
                     <StackPanel DockPanel.Dock="Top"  Name="controlsTray" Visibility="Collapsed" Grid.Column="0">
                     </StackPanel>
-                    <Button Name="btnCopy" Background="#C8FBC8" Visibility="Collapsed" Click="btnCopy_Click"  Margin="5,5,5,5" Padding="5,0,5,0" Grid.Column="1" HorizontalAlignment="Right" 
+                    <Button Name="btnCopy" Background="#C8FBC8" Visibility="Collapsed" Click="BtnCopy_Click"  Margin="5,5,5,5" Padding="5,0,5,0" Grid.Column="1" HorizontalAlignment="Right" 
                             Width="Auto" MinHeight="60" VerticalAlignment="Stretch" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template.">
                         <TextBlock TextWrapping="Wrap" FontWeight="Bold">
                             Copy<LineBreak/>Previous<LineBreak/>Values
@@ -218,7 +218,7 @@
                     </Button>
                 </Grid>
                 <DockPanel Name="DockPanelNavigator" Visibility="Collapsed" >
-                    <Slider Name="sldrImageNavigator"  Minimum ="0" Maximum="0" ValueChanged="sldrImageNavigator_ValueChanged" IsSnapToTickEnabled="True" TickFrequency="1" Focusable="False" LargeChange="1" ToolTip="Scroll through all images" Margin="5,0,5,0"/>
+                    <Slider Name="sldrImageNavigator"  Minimum ="0" Maximum="0" ValueChanged="SldrImageNavigator_ValueChanged" IsSnapToTickEnabled="True" TickFrequency="1" Focusable="False" LargeChange="1" ToolTip="Scroll through all images" Margin="5,0,5,0"/>
                 </DockPanel>
             </StackPanel>
             <StatusBar DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Name="statusBar" ItemsSource="{Binding}">
