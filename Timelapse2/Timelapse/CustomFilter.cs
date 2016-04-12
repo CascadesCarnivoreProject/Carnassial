@@ -80,21 +80,25 @@ namespace Timelapse
             {
                 // Get the values for each control
                 DataRow row = sortedTemplateTable.Rows[i];
-                string type = row[Constants.TYPE].ToString();
+                string type = row[Constants.Database.Type].ToString();
 
                 // We only handle certain types, e.g., we don't give the user the opportunity to search over file names / folders / date / time
-                if (type == Constants.NOTE || type == Constants.COUNTER || type == Constants.FIXEDCHOICE || type == Constants.IMAGEQUALITY || type == Constants.FLAG)
+                if (type == Constants.DatabaseElement.Note ||
+                    type == Constants.DatabaseElement.Counter ||
+                    type == Constants.DatabaseElement.FixedChoice ||
+                    type == Constants.DatabaseElement.ImageQuality ||
+                    type == Constants.DatabaseElement.Flag)
                 {
                     // Create a new search expression for each row, where each row specifies a particular control and how it can be searched
                     string default_value = "";
                     string expression = CH_EQUALS;
                     bool is_use_for_searching = false;
-                    if (type == Constants.COUNTER)
+                    if (type == Constants.DatabaseElement.Counter)
                     {
                         default_value = "0";
                         expression = CH_GREATER_THAN;  // Makes more sense that people will test for > as the default rather than counters
                     }
-                    else if (type == Constants.FLAG)
+                    else if (type == Constants.DatabaseElement.Flag)
                     {
                         default_value = "false";
                     }
@@ -103,11 +107,11 @@ namespace Timelapse
                     SearchTerm st = new SearchTerm();
                     st.UseForSearching = is_use_for_searching;
                     st.Type = type;
-                    st.Label = (string) row[Constants.LABEL];
-                    st.DataLabel = (string) row[Constants.DATALABEL];
+                    st.Label = (string) row[Constants.Control.Label];
+                    st.DataLabel = (string) row[Constants.Control.DataLabel];
                     st.Expression = expression;
                     st.Value = default_value;
-                    st.List = (string)row[Constants.LIST];
+                    st.List = (string)row[Constants.Control.List];
                     this.SearchTermList.Add(row_count, st);
                     row_count++;
                 }

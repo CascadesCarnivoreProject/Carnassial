@@ -146,12 +146,12 @@ namespace Timelapse
             {
                 // Get the values for each control
                 DataRow row = sortedTemplateTable.Rows[i];
-                string type = row[Constants.TYPE].ToString();
+                string type = row[Constants.Database.Type].ToString();
                 
-                if (type == Constants.NOTE || type == Constants.DATE || type == Constants.TIME )
+                if (type == Constants.DatabaseElement.Note || type == Constants.DatabaseElement.Date || type == Constants.DatabaseElement.Time )
                 {
-                    string datalabel = (string)row[Constants.DATALABEL];
-                    string label = (string)row[Constants.LABEL];
+                    string datalabel = (string)row[Constants.Control.DataLabel];
+                    string label = (string)row[Constants.Control.Label];
                     this.dictNoteFieldLookup.Add (label, datalabel );
                     // this.NoteID = Convert.ToInt32(row[Constants.ID].ToString()); // TODO Need to use this ID to pass between controls and data
                     this.lboxNoteFields.Items.Add(label);
@@ -212,8 +212,8 @@ namespace Timelapse
                 // Report progress as needed.
                 for (int i = 0; i < dbData.dataTable.Rows.Count; i++)
                 {
-                    fname = dbData.dataTable.Rows[i][Constants.FILE].ToString();
-                    int id = Int32.Parse(dbData.dataTable.Rows[i][Constants.ID].ToString());
+                    fname = dbData.dataTable.Rows[i][Constants.DatabaseElement.File].ToString();
+                    int id = Int32.Parse(dbData.dataTable.Rows[i][Constants.Database.ID].ToString());
                     dictTemp = extw.FetchExifFrom(System.IO.Path.Combine(this.folderPath, fname), tags);
                     if (dictTemp.Count <= 0)
                     {

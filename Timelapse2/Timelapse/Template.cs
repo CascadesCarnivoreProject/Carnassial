@@ -98,7 +98,7 @@ namespace Timelapse
             string command_executed;
             this.templateTable = new DataTable();
 
-            this.templateTable = this.DB.GetDataTableFromSelect(Constants.SELECTSTAR + Constants.TABLETEMPLATE + " ORDER BY  " + Constants.SPREADSHEETORDER + "  ASC", out result, out command_executed);
+            this.templateTable = this.DB.GetDataTableFromSelect(Constants.Database.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BTemplateDatabase.Y  " + Constants.Database.SpreadsheetOrder + "  ASC", out result, out command_executed);
             DataRow row;            // The current row
             String label = "";      // The row's label
             String data_label = ""; // The row's data label
@@ -117,29 +117,29 @@ namespace Timelapse
                 row = templateTable.Rows[i];
 
                 // Get various values from each row
-                type = (string)row[Constants.TYPE];
+                type = (string)row[Constants.Database.Type];
                 // Not sure why, but if its an empty value it doesn't like it. Therefore we do this in a try/catch.
-                try { label = (string)row[Constants.LABEL]; }
+                try { label = (string)row[Constants.Control.Label]; }
                 catch { label = ""; }
-                try { data_label = (string)row[Constants.DATALABEL]; }
+                try { data_label = (string)row[Constants.Control.DataLabel]; }
                 catch { data_label = ""; }
 
                 // Increment the times we have seen a particular type, and compose a possible unique label identifying it (e.g., Counter3)
                 switch (type)
                 {
-                    case Constants.COUNTER:
+                    case Constants.DatabaseElement.Counter:
                         counter_count++;
                         temp = type + counter_count.ToString();
                         break;
-                    case Constants.FIXEDCHOICE:
+                    case Constants.DatabaseElement.FixedChoice:
                         choice_count++;
                         temp = type + choice_count.ToString();
                         break;
-                    case Constants.NOTE:
+                    case Constants.DatabaseElement.Note:
                         note_count++;
                         temp = type + note_count.ToString();
                         break;
-                    case Constants.FLAG:
+                    case Constants.DatabaseElement.Flag:
                         flag_count++;
                         temp = type + flag_count.ToString();
                         break;
@@ -152,23 +152,23 @@ namespace Timelapse
                 dataline.Clear();
                 if ("" == data_label.Trim() && "" == label.Trim()) // No labels / data labels, so use the ones we created
                 {
-                    dataline.Add(Constants.LABEL, temp);
-                    dataline.Add(Constants.DATALABEL, temp);
-                    row[Constants.LABEL] = temp;
-                    row[Constants.DATALABEL] = temp;
+                    dataline.Add(Constants.Control.Label, temp);
+                    dataline.Add(Constants.Control.DataLabel, temp);
+                    row[Constants.Control.Label] = temp;
+                    row[Constants.Control.DataLabel] = temp;
                 }
                 else if ("" == data_label.Trim())   // No data label but a label, so use the label's value
                 {
-                    dataline.Add(Constants.DATALABEL, label);
-                    row[Constants.DATALABEL] = row[Constants.LABEL];
+                    dataline.Add(Constants.Control.DataLabel, label);
+                    row[Constants.Control.DataLabel] = row[Constants.Control.Label];
                 }
 
                 // Now add the new values to the database
                 if (dataline.Count > 0)
                 {
-                    string id = row[Constants.ID].ToString();
-                    string cmd = Constants.ID + " = " + id;
-                    this.DB.UpdateWhere(Constants.TABLETEMPLATE, dataline, cmd, out result, out command_executed);
+                    string id = row[Constants.Database.ID].ToString();
+                    string cmd = Constants.Database.ID + " = " + id;
+                    this.DB.UpdateWhere(Constants.Database.TemplateTable, dataline, cmd, out result, out command_executed);
                 }
             }
         }
@@ -180,7 +180,7 @@ namespace Timelapse
             bool result = false;
             string command_executed = "";
           
-            DataTable temp = this.DB.GetDataTableFromSelect("Pragma table_info('" + Constants.TABLETEMPLATE + "')", out result, out  command_executed);
+            DataTable temp = this.DB.GetDataTableFromSelect("Pragma table_info('" + Constants.Database.TemplateTable + "')", out result, out  command_executed);
             if (result == false) return;
             for (int i = 0; i < temp.Rows.Count; i++)
             {

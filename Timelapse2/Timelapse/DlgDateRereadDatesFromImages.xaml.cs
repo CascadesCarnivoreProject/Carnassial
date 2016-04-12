@@ -79,12 +79,12 @@ namespace Timelapse
                 int j = 1;
                 for (int i = 0; i < count; i++)
                 {
-                    fileInfo = new FileInfo(System.IO.Path.Combine(dbData.FolderPath, dbData.dataTable.Rows[i][Constants.FILE].ToString()));
+                    fileInfo = new FileInfo(System.IO.Path.Combine(dbData.FolderPath, dbData.dataTable.Rows[i][Constants.DatabaseElement.File].ToString()));
                     BitmapSource bmap = null;
 
                     imgprop = new ImageProperties();                            // We will store the various times here
-                    imgprop.Name = dbData.dataTable.Rows[i][Constants.FILE].ToString();
-                    imgprop.ID = Int32.Parse(dbData.dataTable.Rows[i][Constants.ID].ToString());
+                    imgprop.Name = dbData.dataTable.Rows[i][Constants.DatabaseElement.File].ToString();
+                    imgprop.ID = Int32.Parse(dbData.dataTable.Rows[i][Constants.Database.ID].ToString());
                     string message = "";
                     try
                     {
@@ -115,14 +115,14 @@ namespace Timelapse
                             imgprop.FinalTime = DateTimeHandler.StandardTimeString(fileTime);
                             message += " Using File timestamp";
                         }
-                        if (imgprop.FinalDate.Equals(dbData.dataTable.Rows[i][Constants.DATE].ToString()))
+                        if (imgprop.FinalDate.Equals(dbData.dataTable.Rows[i][Constants.DatabaseElement.Date].ToString()))
                         {
                             message += ", same date";
                             imgprop.FinalDate = ""; // If its the same, we won't copy it
                         }
                         else
                             message += ", different date";
-                        if (imgprop.FinalTime.Equals(dbData.dataTable.Rows[i][Constants.TIME].ToString()))
+                        if (imgprop.FinalTime.Equals(dbData.dataTable.Rows[i][Constants.DatabaseElement.Time].ToString()))
                         {
                             message += ", same time";
                             imgprop.FinalTime = ""; // If its the same, we won't copy it
@@ -148,19 +148,19 @@ namespace Timelapse
                     if ( ! (imgprop_list[i].FinalDate.Equals("")) && !(imgprop_list[i].FinalTime.Equals("")))
                     {
                         // Both date and time need updating
-                        list_to_update_db.Add(new Tuple<int, string, string>(imgprop_list[i].ID, Constants.DATE, imgprop_list[i].FinalDate));
-                        list_to_update_db.Add(new Tuple<int, string, string>(imgprop_list[i].ID, Constants.TIME, imgprop_list[i].FinalTime));
+                        list_to_update_db.Add(new Tuple<int, string, string>(imgprop_list[i].ID, Constants.DatabaseElement.Date, imgprop_list[i].FinalDate));
+                        list_to_update_db.Add(new Tuple<int, string, string>(imgprop_list[i].ID, Constants.DatabaseElement.Time, imgprop_list[i].FinalTime));
                         msg = "Date / Time updated to: " + imgprop_list[i].FinalDate + " " + imgprop_list[i].FinalTime;
                     }
                     else if ( !(imgprop_list[i].FinalDate.Equals ("")))
                     {
                         // Only date needs updating
-                        list_to_update_db.Add(new Tuple<int, string, string>(imgprop_list[i].ID, Constants.DATE, imgprop_list[i].FinalDate));
+                        list_to_update_db.Add(new Tuple<int, string, string>(imgprop_list[i].ID, Constants.DatabaseElement.Date, imgprop_list[i].FinalDate));
                         msg = "Date updated to: " + imgprop_list[i].FinalDate;
                     }
                     else if ( !(imgprop_list[i].FinalTime.Equals ("")))
                     {
-                        list_to_update_db.Add(new Tuple<int, string, string>(imgprop_list[i].ID, Constants.TIME, imgprop_list[i].FinalTime));
+                        list_to_update_db.Add(new Tuple<int, string, string>(imgprop_list[i].ID, Constants.DatabaseElement.Time, imgprop_list[i].FinalTime));
                         // dbData.RowSetValueFromID(Constants.TIME, imgprop_list[i].FinalTime, imgprop_list[i].ID); // OLD WAY: ONE ROW AT A TIME. Can DELETE THIS
                         msg = "Time updated to: " + imgprop_list[i].FinalTime;
                     }

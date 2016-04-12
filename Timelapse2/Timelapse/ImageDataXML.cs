@@ -10,7 +10,7 @@ namespace Timelapse
         {
         }
         #region constants
- 
+
         // XML Labels
         const string SLASH = "/";
         const string IMAGES = "Images";             // There are multiple images
@@ -19,7 +19,7 @@ namespace Timelapse
         const string DATA = "Data";                 // the data describing the attributes of that code
 
         // Paths to standard elements, always included but not always made visible
-        const string FILE = "_File";        
+        const string FILE = "_File";
         const string FOLDER = "_Folder";
         const string DATE = "_Date";
         const string TIME = "_Time";
@@ -32,12 +32,12 @@ namespace Timelapse
         const string POINTS = "Points";             // There may be multiple points per counter
         const string POINT = "Point";               // a single point
         const string X = "X";                       // Every point has an X and Y
-        const string Y = "Y";                       
+        const string Y = "Y";
         #endregion
 
         // Read all the data into the imageData structure from the XML file in the filepath.
         // Note that we need to know the code controls,as we have to associate any points read in with a particular counter control
-        
+
         public static void Read(string filePath, DataTable template, DBData dbData)
         {
             // XML Preparation
@@ -54,7 +54,7 @@ namespace Timelapse
 
             XmlNodeList nodelist = xmlDoc.SelectNodes(IMAGES + SLASH + IMAGE);
             XmlNodeList innerNodeList;
-          
+
             string filename = "";
             string date;
             string time;
@@ -73,22 +73,22 @@ namespace Timelapse
 
             // Create three lists, each one representing the datalabels (in order found in the template) of notes, counters and choices
             // We will use these to find the matching ones in the xml data table.
-            for (int i = 0; i < template.Rows.Count; i++ )
+            for (int i = 0; i < template.Rows.Count; i++)
             {
-                if (template.Rows[i][Constants.TYPE].Equals (Constants.NOTE) )
+                if (template.Rows[i][Constants.Database.Type].Equals(Constants.DatabaseElement.Note))
                 {
-                    notenames.Add((string) template.Rows[i][Constants.DATALABEL]);
+                    notenames.Add((string)template.Rows[i][Constants.Control.DataLabel]);
                 }
-                else if  (template.Rows[i][Constants.TYPE].Equals (Constants.COUNTER) )
+                else if (template.Rows[i][Constants.Database.Type].Equals(Constants.DatabaseElement.Counter))
                 {
-                    counternames.Add((string) template.Rows[i][Constants.DATALABEL]);
+                    counternames.Add((string)template.Rows[i][Constants.Control.DataLabel]);
                 }
-                else if (template.Rows[i][Constants.TYPE].Equals(Constants.FIXEDCHOICE))
+                else if (template.Rows[i][Constants.Database.Type].Equals(Constants.DatabaseElement.FixedChoice))
                 {
-                    choicenames.Add((string)template.Rows[i][Constants.DATALABEL]);
+                    choicenames.Add((string)template.Rows[i][Constants.Control.DataLabel]);
                 }
             }
-            
+
             foreach (XmlNode n in nodelist)
             {
                 int idx;
@@ -107,11 +107,11 @@ namespace Timelapse
 
                 // Date - We use the original date, as the analyst may have adjusted them 
                 date = n[DATE].InnerText;
-                dataline.Add(Constants.DATE, date);
+                dataline.Add(Constants.DatabaseElement.Date, date);
 
                 // Date - We use the original time, although its almost certainly identical
                 time = n[TIME].InnerText;
-                dataline.Add(Constants.TIME, time);
+                dataline.Add(Constants.DatabaseElement.Time, time);
 
                 // We don't use the imagequality, as the new system may have altered how quality is determined (e.g., deleted files)
                 // imagequality = n[IMAGEQUALITY].InnerText;
@@ -119,7 +119,7 @@ namespace Timelapse
                 // System.Diagnostics.Debug.Print("----" + filename + " " + date + " " + time + " " + imagequality);
 
                 // Notes: Iterate through 
-                idx = 0; 
+                idx = 0;
                 innerNodeList = n.SelectNodes(NOTE);
                 foreach (XmlNode node in innerNodeList)
                 {
@@ -160,22 +160,22 @@ namespace Timelapse
                     }
 
                     // Remove the last "|" from the point list
-                    if (!countercoord.Equals(""))  countercoord = countercoord.Remove(countercoord.Length - 1); // Remove the last "|"
+                    if (!countercoord.Equals("")) countercoord = countercoord.Remove(countercoord.Length - 1); // Remove the last "|"
 
                     // Countercoords will have a list of points (possibly empty) with each list entry representing a control
-                    countercoords.Add(new ColumnTuple (counternames[idx], countercoord));
+                    countercoords.Add(new ColumnTuple(counternames[idx], countercoord));
                     idx++;
                 }
                 // Add this update to the list of all updates for the Datatable, and then update it
-                control_values_to_update.Add(dataline, Constants.FILE + "='" + filename + "'");
+                control_values_to_update.Add(dataline, Constants.DatabaseElement.File + "='" + filename + "'");
 
-                where = Constants.ID + "='" + id.ToString() + "'";
-                marker_value_to_update.Add(new ColumnTupleListWhere (countercoords, where));
+                where = Constants.Database.ID + "='" + id.ToString() + "'";
+                marker_value_to_update.Add(new ColumnTupleListWhere(countercoords, where));
                 //dbData.UpdateMarkersInRow (id, counternames, countercoords); // Update the marker table
 
                 // Create a list of all updates for the MarkerTable, and then update it
 
-                countercoords = new ColumnTupleList ();
+                countercoords = new ColumnTupleList();
             }
             // Update the various tables in one fell swoop
             dbData.RowsUpdateRowsFromFilenames(control_values_to_update);

@@ -100,7 +100,7 @@ namespace Timelapse
 
         public int ReadDarkPixelThreshold()
         {
-            return this.ReadIntegerFromRegistry(Constants.Registry.Key.DarkPixelThreshold, Constants.DEFAULT_DARK_PIXEL_THRESHOLD);
+            return this.ReadIntegerFromRegistry(Constants.Registry.Key.DarkPixelThreshold, Constants.DarkPixelThresholdDefault);
         }
 
         public void WriteDarkPixelThreshold(int threshold)
@@ -110,7 +110,7 @@ namespace Timelapse
 
         public double ReadDarkPixelRatioThreshold()
         {
-            return this.ReadDoubleFromRegistry(Constants.Registry.Key.DarkPixelRatio, Constants.DEFAULT_DARK_PIXEL_RATIO_THRESHOLD);
+            return this.ReadDoubleFromRegistry(Constants.Registry.Key.DarkPixelRatio, Constants.DarkPixelRatioThresholdDefault);
         }
 
         public void WriteDarkPixelRatioThreshold(double threshold)

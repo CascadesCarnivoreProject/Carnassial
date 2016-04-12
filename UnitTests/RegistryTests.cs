@@ -53,13 +53,13 @@ namespace Timelapse.UnitTests
                 Assert.IsFalse(audioFeedback);
                 Assert.IsFalse(controlInSeparateWindow);
                 Assert.IsTrue(controlWindowSize.X == 0 && controlWindowSize.Y == 0);
-                Assert.IsTrue(darkPixelRatioThreshold == Constants.DEFAULT_DARK_PIXEL_RATIO_THRESHOLD);
-                Assert.IsTrue(darkPixelThreshold == Constants.DEFAULT_DARK_PIXEL_THRESHOLD);
+                Assert.IsTrue(darkPixelRatioThreshold == Constants.DarkPixelRatioThresholdDefault);
+                Assert.IsTrue(darkPixelThreshold == Constants.DarkPixelThresholdDefault);
                 Assert.IsTrue(lastImageFolderPath == null);
                 Assert.IsTrue(lastImageTemplateName == null);
 
                 lastImageFolderPath = Environment.CurrentDirectory;
-                lastImageTemplateName = Constants.DBTEMPLATEFILENAME;
+                lastImageTemplateName = Constants.File.TemplateDatabaseFileName;
 
                 timelapseRegistry.WriteAudioFeedback(audioFeedback);
                 timelapseRegistry.WriteControlsInSeparateWindow(controlInSeparateWindow);
@@ -82,10 +82,10 @@ namespace Timelapse.UnitTests
                 Assert.IsFalse(audioFeedback);
                 Assert.IsFalse(controlInSeparateWindow);
                 Assert.IsTrue(controlWindowSize.X == 0 && controlWindowSize.Y == 0);
-                Assert.IsTrue(darkPixelRatioThreshold == Constants.DEFAULT_DARK_PIXEL_RATIO_THRESHOLD);
-                Assert.IsTrue(darkPixelThreshold == Constants.DEFAULT_DARK_PIXEL_THRESHOLD);
+                Assert.IsTrue(darkPixelRatioThreshold == Constants.DarkPixelRatioThresholdDefault);
+                Assert.IsTrue(darkPixelThreshold == Constants.DarkPixelThresholdDefault);
                 Assert.IsTrue(lastImageFolderPath == Environment.CurrentDirectory);
-                Assert.IsTrue(lastImageTemplateName == Constants.DBTEMPLATEFILENAME);
+                Assert.IsTrue(lastImageTemplateName == Constants.File.TemplateDatabaseFileName);
             }
 
             Registry.CurrentUser.DeleteSubKeyTree(testRootKey);

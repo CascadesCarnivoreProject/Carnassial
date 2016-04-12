@@ -159,7 +159,7 @@ namespace Timelapse
                 // if (dbData.RowIsImageCorrupted(i)) continue;
 
                 // Parse the date. Note that this should never fail at this point, but just in case, put out a debug message
-                sdate = (string)dbData.dataTable.Rows[index][Constants.DATE] + " " + (string)dbData.dataTable.Rows[index][Constants.TIME];
+                sdate = (string)dbData.dataTable.Rows[index][Constants.DatabaseElement.Date] + " " + (string)dbData.dataTable.Rows[index][Constants.DatabaseElement.Time];
                 succeeded = DateTime.TryParse(sdate, out date);
                 if (succeeded)
                 {
@@ -189,13 +189,13 @@ namespace Timelapse
             if (startIndex >= dbData.dataTable.Rows.Count) return -1;   // Make sure index is in range.
 
             // Parse the provided starting date. Note that this should never fail at this point, but just in case, put out a debug message
-            sStartingDate = (string)dbData.dataTable.Rows[startIndex][Constants.DATE] + " " + (string)dbData.dataTable.Rows[startIndex][Constants.TIME];
+            sStartingDate = (string)dbData.dataTable.Rows[startIndex][Constants.DatabaseElement.Date] + " " + (string)dbData.dataTable.Rows[startIndex][Constants.DatabaseElement.Time];
             if (!DateTime.TryParse(sStartingDate, out dStartingDate)) return -1; // Should never fail, but just in case.
 
             for (int index = startIndex + 1; index < dbData.dataTable.Rows.Count; index++)
             {
                 // Parse the date for the given record.
-                sCurrentDate = (string)dbData.dataTable.Rows[index][Constants.DATE] + " " + (string)dbData.dataTable.Rows[index][Constants.TIME];
+                sCurrentDate = (string)dbData.dataTable.Rows[index][Constants.DatabaseElement.Date] + " " + (string)dbData.dataTable.Rows[index][Constants.DatabaseElement.Time];
                 if (!DateTime.TryParse(sCurrentDate, out dCurrentDate)) return (index - 1); // If we can't parse the date, the return the previous date 
                 if (dStartingDate.Day == dCurrentDate.Day && dStartingDate.Month == dCurrentDate.Month && dStartingDate.Year == dCurrentDate.Year)
                 {

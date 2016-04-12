@@ -138,7 +138,7 @@ namespace Timelapse
             this.lblRatioFound.Content = String.Format("{0,3:##0}", 100 * this.darkPixelRatioFound);
 
             //// We don't want to update labels if the image is not valid 
-            if (this.lblOriginalClassification.Content.ToString() == Constants.IMAGEQUALITY_OK || this.lblOriginalClassification.Content.ToString() == Constants.IMAGEQUALITY_DARK)
+            if (this.lblOriginalClassification.Content.ToString() == Constants.ImageQuality.Ok || this.lblOriginalClassification.Content.ToString() == Constants.ImageQuality.Dark)
             {
                 if (this.isColor) // color image 
                 {
@@ -153,11 +153,11 @@ namespace Timelapse
                 }
 
                 if (this.isColor)
-                    this.lblNewClassification.Content = Constants.IMAGEQUALITY_OK;       // Color image
+                    this.lblNewClassification.Content = Constants.ImageQuality.Ok;       // Color image
                 else if ( this.darkPixelRatio <= this.darkPixelRatioFound)
-                    this.lblNewClassification.Content = Constants.IMAGEQUALITY_DARK;  // Dark grey scale image
+                    this.lblNewClassification.Content = Constants.ImageQuality.Dark;  // Dark grey scale image
                 else
-                    this.lblNewClassification.Content = Constants.IMAGEQUALITY_OK;   // Light grey scale image
+                    this.lblNewClassification.Content = Constants.ImageQuality.Ok;   // Light grey scale image
             }
             else
             {
@@ -249,11 +249,11 @@ namespace Timelapse
         private void menuResetDefault_Click(object sender, RoutedEventArgs e)
         {
             // Move the thumb to correspond to the original value
-            this.darkPixelRatio = Constants.DEFAULT_DARK_PIXEL_RATIO_THRESHOLD;
+            this.darkPixelRatio = Constants.DarkPixelRatioThresholdDefault;
             Canvas.SetLeft(this.LineDarkPixelRatio, this.darkPixelRatio * (this.FeedbackCanvas.ActualWidth - this.LineDarkPixelRatio.ActualWidth));
 
             // Move the slider to its original position
-            this.sldrDarkThreshold.Value = Constants.DEFAULT_DARK_PIXEL_THRESHOLD;
+            this.sldrDarkThreshold.Value = Constants.DarkPixelThresholdDefault;
             this.Recalculate();
             this.Repaint();
         }
@@ -336,15 +336,15 @@ namespace Timelapse
                 int j = 1;
                 for (int i = 0; i < count; i++)
                 {
-                    fileInfo = new FileInfo(System.IO.Path.Combine(dbData.FolderPath, dbData.dataTable.Rows[i][Constants.FILE].ToString()));
+                    fileInfo = new FileInfo(System.IO.Path.Combine(dbData.FolderPath, dbData.dataTable.Rows[i][Constants.DatabaseElement.File].ToString()));
 
                     imgQuality = new ImageQuality();                            // We will store the various image properties here
-                    imgQuality.FileName = dbData.dataTable.Rows[i][Constants.FILE].ToString();
-                    imgQuality.ID = Int32.Parse(dbData.dataTable.Rows[i][Constants.ID].ToString());
-                    imgQuality.OldImageQuality = dbData.dataTable.Rows[i][Constants.IMAGEQUALITY].ToString();
+                    imgQuality.FileName = dbData.dataTable.Rows[i][Constants.DatabaseElement.File].ToString();
+                    imgQuality.ID = Int32.Parse(dbData.dataTable.Rows[i][Constants.Database.ID].ToString());
+                    imgQuality.OldImageQuality = dbData.dataTable.Rows[i][Constants.DatabaseElement.ImageQuality].ToString();
 
                     // If its not a valid image, say so and go onto the next one.
-                    if (!imgQuality.OldImageQuality.Equals(Constants.IMAGEQUALITY_OK) && !imgQuality.OldImageQuality.Equals(Constants.IMAGEQUALITY_DARK))
+                    if (!imgQuality.OldImageQuality.Equals(Constants.ImageQuality.Ok) && !imgQuality.OldImageQuality.Equals(Constants.ImageQuality.Dark))
                     {
                         imgQuality.NewImageQuality = "";
                         imgQuality.Update = false;
@@ -359,7 +359,7 @@ namespace Timelapse
                         // Note that if the image can't be created, we will just to the catch.
                         imgQuality.Bmap = BitmapFrame.Create(new Uri(fileInfo.FullName), BitmapCreateOptions.None, BitmapCacheOption.None);
 
-                        imgQuality.NewImageQuality = (PixelBitmap.IsDark(imgQuality.Bmap, this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor)) ? Constants.IMAGEQUALITY_DARK : Constants.IMAGEQUALITY_OK;
+                        imgQuality.NewImageQuality = (PixelBitmap.IsDark(imgQuality.Bmap, this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor)) ? Constants.ImageQuality.Dark : Constants.ImageQuality.Ok;
                         imgQuality.isColor = this.isColor;
                         imgQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
                         if (imgQuality.OldImageQuality.Equals(imgQuality.NewImageQuality))
@@ -370,7 +370,7 @@ namespace Timelapse
                         {
                             imgQuality.Update = true;
                             imgQualityList.Add(imgQuality);
-                            dbData.RowSetValueFromID(Constants.IMAGEQUALITY, imgQuality.NewImageQuality, imgQuality.ID);
+                            dbData.RowSetValueFromID(Constants.DatabaseElement.ImageQuality, imgQuality.NewImageQuality, imgQuality.ID);
                         }
                     }
                     catch // Image isn't there

@@ -25,8 +25,8 @@ namespace Timelapse
             this.AudioFeedback = false;
 
             // thresholds used for determining image darkness
-            this.DarkPixelThreshold = Constants.DEFAULT_DARK_PIXEL_THRESHOLD;
-            this.DarkPixelRatioThreshold = Constants.DEFAULT_DARK_PIXEL_RATIO_THRESHOLD;
+            this.DarkPixelThreshold = Constants.DarkPixelThresholdDefault;
+            this.DarkPixelRatioThreshold = Constants.DarkPixelRatioThresholdDefault;
 
             this.ControlWindowSize = new Point(0, 0);
             this.ImageFilter = ImageQualityFilter.All;

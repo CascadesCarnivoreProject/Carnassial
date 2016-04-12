@@ -30,12 +30,12 @@ namespace Timelapse
                 List<string> datalabels = new List<string>();
                 for (int i = 0; i < db.templateTable.Rows.Count; i++)
                 {
-                    label = (string)db.templateTable.Rows[i][Constants.LABEL];
-                    datalabel = (string)db.templateTable.Rows[i][Constants.DATALABEL];
+                    label = (string)db.templateTable.Rows[i][Constants.Control.Label];
+                    datalabel = (string)db.templateTable.Rows[i][Constants.Control.DataLabel];
                     header += addColumn(getLabel(label, datalabel));
 
                     // get a list of datalabels so we can add columns in the order that matches the current template table order
-                    if (Constants.ID != datalabel) datalabels.Add(datalabel);
+                    if (Constants.Database.ID != datalabel) datalabels.Add(datalabel);
                 }
                 tw.WriteLine(header);
                 // For each row in the data table, write out the columns in the same order as the 

@@ -251,7 +251,7 @@ namespace Timelapse
         // Marks constants 
         private const int MARK_DIAMETER = 10;
         private const int MARK_STROKETHICKNESS = 2;
-        private Brush MARK_STROKEBRUSH = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.MARKER_STANDARDCOLOR);
+        private Brush MARK_STROKEBRUSH = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
         private SolidColorBrush MARK_FILLBRUSH = new SolidColorBrush(System.Windows.Media.Color.FromArgb(2, 0, 0, 0));
 
         // Zooming constants
@@ -980,7 +980,7 @@ namespace Timelapse
         /// </summary>
         public MetaTag()
         {
-            this.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.MARKER_STANDARDCOLOR);
+            this.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
             this.Emphasise = false;
             this.Label = "";
             this.Annotate = false;

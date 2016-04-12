@@ -208,7 +208,7 @@ namespace Timelapse
             this.state.LastDatabaseTemplateName = Path.GetFileName(templateDatabasePath);
             if (String.IsNullOrEmpty(this.state.LastDatabaseTemplateName))
             {
-                this.state.LastDatabaseTemplateName = Constants.DBTEMPLATEFILENAME;
+                this.state.LastDatabaseTemplateName = Constants.File.TemplateDatabaseFileName;
             }
 
             // Create the template to the Timelapse Template database
@@ -389,15 +389,15 @@ namespace Timelapse
                     {
                         continue; // Column must be the ID, which we skip over as its not a key.
                     }
-                    if (type.Equals(Constants.COUNTER))
+                    if (type.Equals(Constants.DatabaseElement.Counter))
                     {
                         counterList.Add(dataLabel);
                     }
-                    else if (type.Equals(Constants.NOTE) || type.Equals(Constants.FIXEDCHOICE))
+                    else if (type.Equals(Constants.DatabaseElement.Note) || type.Equals(Constants.DatabaseElement.FixedChoice))
                     {
                         notesAndFixedChoicesList.Add(dataLabel);
                     }
-                    else if (type.Equals(Constants.FLAG))
+                    else if (type.Equals(Constants.DatabaseElement.Flag))
                     {
                         flagsList.Add(dataLabel);
                     }
@@ -434,43 +434,43 @@ namespace Timelapse
 
                             switch (type)
                             {
-                                case Constants.FILE: // Add The File name
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.FILE];
+                                case Constants.DatabaseElement.File: // Add The File name
+                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File];
                                     dataline.Add(dataLabel, imgprop_list[i].Name);
                                     break;
-                                case Constants.FOLDER: // Add The Folder name
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.FOLDER];
+                                case Constants.DatabaseElement.Folder: // Add The Folder name
+                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.Folder];
                                     dataline.Add(dataLabel, imgprop_list[i].Folder);
                                     break;
-                                case Constants.DATE:
+                                case Constants.DatabaseElement.Date:
                                     // Add the date
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DATE];
+                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.Date];
                                     dataline.Add(dataLabel, imgprop_list[i].FinalDate);
                                     break;
-                                case Constants.TIME:
+                                case Constants.DatabaseElement.Time:
                                     // Add the time
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.TIME];
+                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.Time];
                                     dataline.Add(dataLabel, imgprop_list[i].FinalTime);
                                     break;
-                                case Constants.IMAGEQUALITY: // Add the Image Quality
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.IMAGEQUALITY];
-                                    string str = Constants.IMAGEQUALITY_OK;
+                                case Constants.DatabaseElement.ImageQuality: // Add the Image Quality
+                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.ImageQuality];
+                                    string str = Constants.ImageQuality.Ok;
                                     if (imgprop_list[i].ImageQuality == ImageQualityFilter.Dark)
                                     {
-                                        str = Constants.IMAGEQUALITY_DARK;
+                                        str = Constants.ImageQuality.Dark;
                                     }
                                     else if (imgprop_list[i].ImageQuality == ImageQualityFilter.Corrupted)
                                     {
-                                        str = Constants.IMAGEQUALITY_CORRUPTED;
+                                        str = Constants.ImageQuality.Corrupted;
                                     }
                                     dataline.Add(dataLabel, str);
                                     break;
-                                case Constants.DELETEFLAG: // Add the Delete flag
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DELETEFLAG];
+                                case Constants.DatabaseElement.DeleteFlag: // Add the Delete flag
+                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.DeleteFlag];
                                     dataline.Add(dataLabel, this.imageDatabase.TemplateGetDefault(dataLabel)); // Default as specified in the template file, which should be "false"
                                     break;
-                                case Constants.NOTE:        // Find and then Add the Note or Fixed Choice
-                                case Constants.FIXEDCHOICE:
+                                case Constants.DatabaseElement.Note:        // Find and then Add the Note or Fixed Choice
+                                case Constants.DatabaseElement.FixedChoice:
                                     // Now initialize notes, counters, and fixed choices to the defaults
                                     foreach (string tkey in notesAndFixedChoicesList)
                                     {
@@ -480,7 +480,7 @@ namespace Timelapse
                                         }
                                     }
                                     break;
-                                case Constants.FLAG:
+                                case Constants.DatabaseElement.Flag:
                                     // Now initialize flags to the defaults
                                     foreach (string tkey in flagsList)
                                     {
@@ -490,7 +490,7 @@ namespace Timelapse
                                         }
                                     }
                                     break;
-                                case Constants.COUNTER:
+                                case Constants.DatabaseElement.Counter:
                                     foreach (string tkey in counterList)
                                     {
                                         if (col_datalabel.Equals(tkey))
@@ -514,8 +514,8 @@ namespace Timelapse
                         index = i;
                     }
 
-                    this.imageDatabase.InsertMultipleRows(Constants.TABLEDATA, dataline_list);
-                    this.imageDatabase.InsertMultipleRows(Constants.TABLEMARKERS, markerline_list);
+                    this.imageDatabase.InsertMultipleRows(Constants.Database.DataTable, dataline_list);
+                    this.imageDatabase.InsertMultipleRows(Constants.Database.MarkersTable, markerline_list);
                     j = j + interval - 1;
                     // Get the bitmap again to show it
                     if (imgprop_list[index].ImageQuality == ImageQualityFilter.Corrupted)
@@ -574,14 +574,14 @@ namespace Timelapse
                 // If we want to import old data from the ImageData.xml file, we can do it here...
                 // Check to see if there is an ImageData.xml file in here. If there is, ask the user
                 // if we want to load the data from that...
-                if (File.Exists(System.IO.Path.Combine(this.FolderPath, Constants.XMLDATAFILENAME)))
+                if (File.Exists(System.IO.Path.Combine(this.FolderPath, Constants.File.XmlDataFileName)))
                 {
                     DlgImportImageDataXMLFile dlg = new DlgImportImageDataXMLFile();
                     dlg.Owner = this;
                     bool? result3 = dlg.ShowDialog();
                     if (result3 == true)
                     {
-                        ImageDataXML.Read(System.IO.Path.Combine(this.FolderPath, Constants.XMLDATAFILENAME), imageDatabase.templateTable, imageDatabase);
+                        ImageDataXML.Read(System.IO.Path.Combine(this.FolderPath, Constants.File.XmlDataFileName), imageDatabase.templateTable, imageDatabase);
                         this.SetImageFilterAndIndex(this.imageDatabase.State_Row, (ImageQualityFilter)this.imageDatabase.State_Filter); // to regenerate the controls and markers for this image
                     }
                 }
@@ -620,7 +620,7 @@ namespace Timelapse
                     }
                     else
                     {
-                        this.imageDatabase.templateTable = this.imageDatabase.CreateDataTableFromDatabaseTable(Constants.TABLETEMPLATE);
+                        this.imageDatabase.templateTable = this.imageDatabase.CreateDataTableFromDatabaseTable(Constants.Database.TemplateTable);
                     }
                 }
 
@@ -732,16 +732,16 @@ namespace Timelapse
             List<String> dbtable_list = new List<String>();
             List<String> templatetable_list = new List<String>();
 
-            DataTable databaseTemplateTable = this.imageDatabase.CreateDataTableFromDatabaseTable(Constants.TABLETEMPLATE);
+            DataTable databaseTemplateTable = this.imageDatabase.CreateDataTableFromDatabaseTable(Constants.Database.TemplateTable);
 
             // Create two lists that we will compare, each containing the DataLabels from the template in the template file vs. db file.
             for (int i = 0; i < databaseTemplateTable.Rows.Count; i++)
             {
-                dbtable_list.Add((string)databaseTemplateTable.Rows[i][Constants.DATALABEL]);
+                dbtable_list.Add((string)databaseTemplateTable.Rows[i][Constants.Control.DataLabel]);
             }
             for (int i = 0; i < this.template.templateTable.Rows.Count; i++)
             {
-                templatetable_list.Add((string)this.template.templateTable.Rows[i][Constants.DATALABEL]);
+                templatetable_list.Add((string)this.template.templateTable.Rows[i][Constants.Control.DataLabel]);
             }
 
             // Check to see if there are field in the template template that are not in the db template
@@ -1037,29 +1037,29 @@ namespace Timelapse
 
                 switch (type)
                 {
-                    case Constants.FILE:
-                    case Constants.FOLDER:
-                    case Constants.TIME:
-                    case Constants.DATE:
-                    case Constants.NOTE:
+                    case Constants.DatabaseElement.File:
+                    case Constants.DatabaseElement.Folder:
+                    case Constants.DatabaseElement.Time:
+                    case Constants.DatabaseElement.Date:
+                    case Constants.DatabaseElement.Note:
                         notectl = (MyNote)pair.Value; // get the control
                         notectl.ContentCtl.TextChanged += new TextChangedEventHandler(this.NoteCtl_TextChanged);
                         notectl.ContentCtl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
                         break;
-                    case Constants.DELETEFLAG:
-                    case Constants.FLAG:
+                    case Constants.DatabaseElement.DeleteFlag:
+                    case Constants.DatabaseElement.Flag:
                         flagctl = (MyFlag)pair.Value; // get the control
                         flagctl.ContentCtl.Checked += this.FlagCtl_CheckedChanged;
                         flagctl.ContentCtl.Unchecked += this.FlagCtl_CheckedChanged;
                         flagctl.ContentCtl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
                         break;
-                    case Constants.IMAGEQUALITY:
-                    case Constants.FIXEDCHOICE:
+                    case Constants.DatabaseElement.ImageQuality:
+                    case Constants.DatabaseElement.FixedChoice:
                         fixedchoicectl = (MyFixedChoice)pair.Value; // get the control
                         fixedchoicectl.ContentCtl.SelectionChanged += new SelectionChangedEventHandler(this.FixedChoiceCtl_SelectionChanged);
                         fixedchoicectl.ContentCtl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
                         break;
-                    case Constants.COUNTER:
+                    case Constants.DatabaseElement.Counter:
                         counterctl = (MyCounter)pair.Value; // get the control
                         counterctl.ContentCtl.TextChanged += new TextChangedEventHandler(this.CounterCtl_TextChanged);
                         counterctl.ContentCtl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
@@ -1230,16 +1230,16 @@ namespace Timelapse
                 string type = (string)this.imageDatabase.TypeFromKey[pair.Key];
                 switch (type)
                 {
-                    case Constants.FILE:
-                    case Constants.FOLDER:
-                    case Constants.TIME:
-                    case Constants.DATE:
-                    case Constants.NOTE:
-                    case Constants.FLAG:
-                    case Constants.IMAGEQUALITY:
-                    case Constants.DELETEFLAG:
-                    case Constants.FIXEDCHOICE:
-                    case Constants.COUNTER:
+                    case Constants.DatabaseElement.File:
+                    case Constants.DatabaseElement.Folder:
+                    case Constants.DatabaseElement.Time:
+                    case Constants.DatabaseElement.Date:
+                    case Constants.DatabaseElement.Note:
+                    case Constants.DatabaseElement.Flag:
+                    case Constants.DatabaseElement.ImageQuality:
+                    case Constants.DatabaseElement.DeleteFlag:
+                    case Constants.DatabaseElement.FixedChoice:
+                    case Constants.DatabaseElement.Counter:
                         MyControl control = (MyControl)pair.Value;
                         if (control.Copyable)
                         {
@@ -1263,16 +1263,16 @@ namespace Timelapse
                 string type = (string)this.imageDatabase.TypeFromKey[pair.Key];
                 switch (type)
                 {
-                    case Constants.FILE:
-                    case Constants.FOLDER:
-                    case Constants.TIME:
-                    case Constants.DATE:
-                    case Constants.NOTE:
-                    case Constants.FLAG:
-                    case Constants.IMAGEQUALITY:
-                    case Constants.DELETEFLAG:
-                    case Constants.FIXEDCHOICE:
-                    case Constants.COUNTER:
+                    case Constants.DatabaseElement.File:
+                    case Constants.DatabaseElement.Folder:
+                    case Constants.DatabaseElement.Time:
+                    case Constants.DatabaseElement.Date:
+                    case Constants.DatabaseElement.Note:
+                    case Constants.DatabaseElement.Flag:
+                    case Constants.DatabaseElement.ImageQuality:
+                    case Constants.DatabaseElement.DeleteFlag:
+                    case Constants.DatabaseElement.FixedChoice:
+                    case Constants.DatabaseElement.Counter:
                         MyControl control = (MyControl)pair.Value;
                         control.Container.ClearValue(Control.BackgroundProperty);
                         break;
@@ -1336,7 +1336,7 @@ namespace Timelapse
                 }
 
                 // Generate the differenced image. 
-                string fullFileName = System.IO.Path.Combine(this.FolderPath, this.imageDatabase.RowGetValueFromDataLabel((string)this.imageDatabase.DataLabelFromType[Constants.FILE], idx));
+                string fullFileName = System.IO.Path.Combine(this.FolderPath, this.imageDatabase.RowGetValueFromDataLabel((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File], idx));
                 // Check if that file actually exists
                 if (!File.Exists(fullFileName))
                 {
@@ -1463,7 +1463,7 @@ namespace Timelapse
                 // Get the previous and next image
                 int idx = this.imageDatabase.CurrentRow - 1;
 
-                string path = Path.Combine(this.FolderPath, this.imageDatabase.RowGetValueFromType((string)this.imageDatabase.DataLabelFromType[Constants.FILE], idx));
+                string path = Path.Combine(this.FolderPath, this.imageDatabase.RowGetValueFromType((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File], idx));
                 if (!File.Exists(path))
                 {
                     StatusBarUpdate.Message(this.statusBar, "Can't show combined differences without three good images");
@@ -1472,7 +1472,7 @@ namespace Timelapse
                 BitmapImage prevImage = new BitmapImage(new Uri(path));
 
                 idx = this.imageDatabase.CurrentRow + 1;
-                path = Path.Combine(this.FolderPath, this.imageDatabase.RowGetValueFromType((string)this.imageDatabase.DataLabelFromType[Constants.FILE], idx));
+                path = Path.Combine(this.FolderPath, this.imageDatabase.RowGetValueFromType((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File], idx));
                 if (!File.Exists(path))
                 {
                     StatusBarUpdate.Message(this.statusBar, "Can't show combined differences without three good images");
@@ -1527,8 +1527,8 @@ namespace Timelapse
 
             // Get and display the bitmap
             BitmapImage image = new BitmapImage();
-            string srcFile = System.IO.Path.Combine(this.imageDatabase.FolderPath, this.imageDatabase.RowGetValueFromType(Constants.FILE));
-            if (this.imageDatabase.RowGetValueFromType(Constants.IMAGEQUALITY).Equals(Constants.IMAGEQUALITY_CORRUPTED))
+            string srcFile = System.IO.Path.Combine(this.imageDatabase.FolderPath, this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File));
+            if (this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.ImageQuality).Equals(Constants.ImageQuality.Corrupted))
             {
                 image = Utilities.BitmapFromResource(image, "corrupted.jpg", useCachedImages, 0, 0);
             }
@@ -1543,9 +1543,9 @@ namespace Timelapse
                 {
                     // The file is missing! show the missing image placeholder 
                     // If its not already tagged as missing, then tag it as such.
-                    if (!Constants.IMAGEQUALITY_MISSING.Equals(this.imageDatabase.RowGetValueFromType(Constants.IMAGEQUALITY)))
+                    if (!Constants.ImageQuality.Missing.Equals(this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.ImageQuality)))
                     {
-                        this.imageDatabase.RowSetValueFromDataLabel((string)this.imageDatabase.DataLabelFromType[Constants.IMAGEQUALITY], Constants.IMAGEQUALITY_MISSING);
+                        this.imageDatabase.RowSetValueFromDataLabel((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.ImageQuality], Constants.ImageQuality.Missing);
                     }
                     image = Utilities.BitmapFromResource(image, "missing.jpg", useCachedImages, 0, 0);
                 }
@@ -1568,43 +1568,43 @@ namespace Timelapse
 
                 switch (type)
                 {
-                    case Constants.FILE:
+                    case Constants.DatabaseElement.File:
                         notectl = (MyNote)pair.Value;
-                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.FILE);
+                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File);
                         break;
-                    case Constants.FOLDER:
+                    case Constants.DatabaseElement.Folder:
                         notectl = (MyNote)pair.Value;
-                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.FOLDER);
+                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.Folder);
                         break;
-                    case Constants.TIME:
+                    case Constants.DatabaseElement.Time:
                         notectl = (MyNote)pair.Value;
-                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.TIME);
+                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.Time);
                         break;
-                    case Constants.DATE:
+                    case Constants.DatabaseElement.Date:
                         notectl = (MyNote)pair.Value;
-                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.DATE);
+                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.Date);
                         break;
-                    case Constants.IMAGEQUALITY:
+                    case Constants.DatabaseElement.ImageQuality:
                         fixedchoicectl = (MyFixedChoice)pair.Value;
-                        fixedchoicectl.Content = this.imageDatabase.RowGetValueFromType(Constants.IMAGEQUALITY);
+                        fixedchoicectl.Content = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.ImageQuality);
                         break;
-                    case Constants.DELETEFLAG:
+                    case Constants.DatabaseElement.DeleteFlag:
                         flagctl = (MyFlag)pair.Value; // get the control
                         flagctl.Content = this.imageDatabase.RowGetValueFromDataLabel(flagctl.DataLabel);
                         break;
-                    case Constants.NOTE:
+                    case Constants.DatabaseElement.Note:
                         notectl = (MyNote)pair.Value; // get the control
                         notectl.Content = this.imageDatabase.RowGetValueFromDataLabel(notectl.DataLabel);
                         break;
-                    case Constants.FLAG:
+                    case Constants.DatabaseElement.Flag:
                         flagctl = (MyFlag)pair.Value; // get the control
                         flagctl.Content = this.imageDatabase.RowGetValueFromDataLabel(flagctl.DataLabel);
                         break;
-                    case Constants.FIXEDCHOICE:
+                    case Constants.DatabaseElement.FixedChoice:
                         fixedchoicectl = (MyFixedChoice)pair.Value; // get the control
                         fixedchoicectl.Content = this.imageDatabase.RowGetValueFromDataLabel(fixedchoicectl.DataLabel);
                         break;
-                    case Constants.COUNTER:
+                    case Constants.DatabaseElement.Counter:
                         counterctl = (MyCounter)pair.Value; // get the control
                         counterctl.Content = this.imageDatabase.RowGetValueFromDataLabel(counterctl.DataLabel);
                         break;
@@ -1826,7 +1826,7 @@ namespace Timelapse
                     // Update the datatable and database with the new counter values
                     this.state.IsContentValueChangedFromOutside = true;
                     myCounter.Content = new_counter_data;
-                    this.imageDatabase.UpdateRow(this.imageDatabase.CurrentId, myCounter.DataLabel, new_counter_data, Constants.TABLEDATA);
+                    this.imageDatabase.UpdateRow(this.imageDatabase.CurrentId, myCounter.DataLabel, new_counter_data, Constants.Database.DataTable);
                     this.state.IsContentValueChangedFromOutside = false;
                 }
 
@@ -1875,12 +1875,12 @@ namespace Timelapse
                             point = mtagCounter.MetaTags[i].Point;
                             if (!point_list.Equals(String.Empty))
                             {
-                                point_list += Constants.MARKERBAR;          // We don't put a marker bar at the beginning of the point list
+                                point_list += Constants.Database.MarkerBar;          // We don't put a marker bar at the beginning of the point list
                             }
                             point_list += String.Format("{0:0.000},{1:0.000}", point.X, point.Y);   // Add a point in the form 
                         }
                     }
-                    this.imageDatabase.UpdateRow(this.imageDatabase.CurrentId, myCounter.DataLabel, point_list, Constants.TABLEMARKERS);
+                    this.imageDatabase.UpdateRow(this.imageDatabase.CurrentId, myCounter.DataLabel, point_list, Constants.Database.MarkersTable);
                 }
                 this.RefreshTheMarkableCanvasListOfMetaTags(); // Refresh the Markable Canvas, where it will also delete the metaTag at the same time
             }
@@ -1947,7 +1947,7 @@ namespace Timelapse
             {
                 if (!pointlist.Equals(String.Empty))
                 {
-                    pointlist += Constants.MARKERBAR; // We don't put a marker bar at the beginning of the point list
+                    pointlist += Constants.Database.MarkerBar; // We don't put a marker bar at the beginning of the point list
                 }
                 pointlist += String.Format("{0:0.000},{1:0.000}", mt.Point.X, mt.Point.Y); // Add a point in the form x,y e.g., 0.5, 0.7
             }
@@ -1981,11 +1981,11 @@ namespace Timelapse
                     mtag.Emphasise = (this.state.IsMouseOverCounter == mtagCounter.DataLabel) ? true : false;
                     if (null != selectedCounter && current_counter.DataLabel == selectedCounter.DataLabel)
                     {
-                        mtag.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.MARKER_SELECTIONCOLOR);
+                        mtag.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.SelectionColour);
                     }
                     else
                     {
-                        mtag.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.MARKER_STANDARDCOLOR);
+                        mtag.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
                     }
 
                     // the first time through, show an annotation. Otherwise we clear the flags to hide the annotation.
@@ -2072,7 +2072,7 @@ namespace Timelapse
                 return;
             }
             // Get the file name of the current image 
-            string sourceFile = this.imageDatabase.RowGetValueFromType(Constants.FILE);
+            string sourceFile = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File);
 
             // Set up a Folder Browser with some instructions
             var dialog = new System.Windows.Forms.SaveFileDialog();
@@ -2164,7 +2164,7 @@ namespace Timelapse
                 }
             }
 
-            DlgPopulateFieldWithMetadata dlg = new DlgPopulateFieldWithMetadata(this.imageDatabase, this.imageDatabase.RowGetValueFromType(Constants.FILE), this.FolderPath);
+            DlgPopulateFieldWithMetadata dlg = new DlgPopulateFieldWithMetadata(this.imageDatabase, this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File), this.FolderPath);
             dlg.Owner = this;
             bool? result = dlg.ShowDialog();
             if (result == true)
@@ -2182,9 +2182,9 @@ namespace Timelapse
                 int i = this.imageDatabase.GetDeletedImagesCounts();
                 this.MenuItemDeleteImages.IsEnabled = i > 0;
                 this.MenuItemDeleteImagesAndData.IsEnabled = i > 0;
-                this.MenuItemDeleteImageAndData.IsEnabled = true; // (quality == Constants.IMAGEQUALITY_CORRUPTED || quality == Constants.IMAGEQUALITY_MISSING) ? false : true;
-                string quality = this.imageDatabase.RowGetValueFromDataLabel(Constants.IMAGEQUALITY);
-                this.MenuItemDeleteImage.IsEnabled = (quality == Constants.IMAGEQUALITY_CORRUPTED || quality == Constants.IMAGEQUALITY_MISSING) ? false : true;
+                this.MenuItemDeleteImageAndData.IsEnabled = true; // (quality == Constants.ImageQuality.CORRUPTED || quality == Constants.ImageQuality.MISSING) ? false : true;
+                string quality = this.imageDatabase.RowGetValueFromDataLabel(Constants.DatabaseElement.ImageQuality);
+                this.MenuItemDeleteImage.IsEnabled = (quality == Constants.ImageQuality.Corrupted || quality == Constants.ImageQuality.Missing) ? false : true;
             }
             catch
             {
@@ -2198,16 +2198,16 @@ namespace Timelapse
 
         private void MenuItemDeleteImage_Click(object sender, RoutedEventArgs e)
         {
-            bool isCorrupted = Constants.IMAGEQUALITY_CORRUPTED.Equals((string)this.imageDatabase.RowGetValueFromType(Constants.IMAGEQUALITY));
+            bool isCorrupted = Constants.ImageQuality.Corrupted.Equals((string)this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.ImageQuality));
             MenuItem mi = sender as MenuItem;
             DlgDeleteImage dlg;
             if (mi.Name.Equals(this.MenuItemDeleteImage.Name))
             {
-                dlg = new DlgDeleteImage(this.imageDatabase, this.imageDatabase.RowGetValueFromType(Constants.FILE), this.FolderPath, isCorrupted, false);
+                dlg = new DlgDeleteImage(this.imageDatabase, this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File), this.FolderPath, isCorrupted, false);
             }
             else
             {
-                dlg = new DlgDeleteImage(this.imageDatabase, this.imageDatabase.RowGetValueFromType(Constants.FILE), this.FolderPath, isCorrupted, true); // Delete the data as well
+                dlg = new DlgDeleteImage(this.imageDatabase, this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File), this.FolderPath, isCorrupted, true); // Delete the data as well
             }
             dlg.Owner = this;
             bool? result = dlg.ShowDialog();
@@ -2303,32 +2303,32 @@ namespace Timelapse
                 {
                     // case Constants.FILE:     
                     // case Constants.FOLDER:
-                    case Constants.TIME:
-                    case Constants.DATE:
-                    case Constants.NOTE:
+                    case Constants.DatabaseElement.Time:
+                    case Constants.DatabaseElement.Date:
+                    case Constants.DatabaseElement.Note:
                         notectl = (MyNote)pair.Value; // get the control
                         if (this.imageDatabase.TemplateIsCopyable(notectl.Key))
                         {
                             notectl.Content = this.imageDatabase.RowGetValueFromDataLabel(notectl.Key, previousRow);
                         }
                         break;
-                    case Constants.DELETEFLAG:
-                    case Constants.FLAG:
+                    case Constants.DatabaseElement.DeleteFlag:
+                    case Constants.DatabaseElement.Flag:
                         flagctl = (MyFlag)pair.Value; // get the control
                         if (this.imageDatabase.TemplateIsCopyable(flagctl.Key))
                         {
                             flagctl.Content = this.imageDatabase.RowGetValueFromDataLabel(flagctl.Key, previousRow);
                         }
                         break;
-                    case Constants.IMAGEQUALITY:
-                    case Constants.FIXEDCHOICE:
+                    case Constants.DatabaseElement.ImageQuality:
+                    case Constants.DatabaseElement.FixedChoice:
                         fixedchoicectl = (MyFixedChoice)pair.Value; // get the control
                         if (this.imageDatabase.TemplateIsCopyable(fixedchoicectl.Key))
                         {
                             fixedchoicectl.Content = this.imageDatabase.RowGetValueFromDataLabel(fixedchoicectl.Key, previousRow);
                         }
                         break;
-                    case Constants.COUNTER:
+                    case Constants.DatabaseElement.Counter:
                         counterctl = (MyCounter)pair.Value; // get the control
                         if (this.imageDatabase.TemplateIsCopyable(counterctl.DataLabel))
                         {
@@ -2894,7 +2894,7 @@ namespace Timelapse
 
         public void ResetDifferenceThreshold()
         {
-            this.DifferenceThreshold = Constants.DEFAULT_DIFFERENCE_THRESHOLD;
+            this.DifferenceThreshold = Constants.DifferenceThresholdDefault;
         }
 
         // Say the given text
