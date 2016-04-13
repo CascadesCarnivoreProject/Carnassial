@@ -12,6 +12,7 @@ namespace Timelapse
         public const int DifferenceThresholdDefault = 20; // The threshold to determine differences between images
         public const byte DifferenceThresholdMax = 255;
         public const byte DifferenceThresholdMin = 0;
+        public const int NumberOfMostRecentDatabasesToTrack = 9;
         public const string StandardColour = "Gold";
         public const string SelectionColour = "MediumBlue";
 
@@ -80,8 +81,9 @@ namespace Timelapse
         {
             public const string BackupFolder = "Backups"; // Sub-folder that will contain file backups and deleted images 
             public const string CsvFileExtension = ".csv";
-            public const string ImageDatabaseFileName = "TimelapseData.ddb";               // Image database name
-            public const string TemplateDatabaseFileName = "TimelapseTemplate.tdb";    // Template
+            public const string ImageDatabaseFileName = "TimelapseData.ddb";
+            public const string TemplateDatabaseFileName = "TimelapseTemplate.tdb";
+            public const string TemplateDatabaseFileExtension = ".tdb";
             public const string XmlTemplateFileName = "CodeTemplate.xml";
             public const string XmlDataFileName = "ImageData.xml";
         }
@@ -110,10 +112,8 @@ namespace Timelapse
                 public const string DarkPixelThreshold = "DarkPixelThreshold";
                 // The DarkPixelRatio
                 public const string DarkPixelRatio = "DarkPixelRatio";
-                // The last image folder on exit (a full path)
-                public const string LastDatabaseFolderPath = "LastDatabaseFolderPath";
-                // The last image template file name on exit (just the name)
-                public const string LastDatabaseTemplateName = "LastDatabaseTemplateName";
+                // Key containing the list of most recently used data files
+                public const string MostRecentlyUsedDataFiles = "MostRecentlyUsedDataFiles";
                 // Whether to show the CSV dialog window
                 public const string ShowCsvDialog = "ShowCsvDialog";
             }

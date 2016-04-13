@@ -118,11 +118,11 @@ namespace Timelapse
             bi.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
             if (this.isCorrupted) // Show the corrupted iamge placeholder
             {
-                bi = Utilities.BitmapFromResource(bi, "corrupted.jpg", true, 0, 0);
+                bi = Utilities.BitmapFromResource(bi, "corrupted.jpg", true);
             }
             else if (!File.Exists(System.IO.Path.Combine(this.imageFolderPath, this.imageFilename)))
             {
-                bi = Utilities.BitmapFromResource(bi, "missing.jpg", true, 0, 0);
+                bi = Utilities.BitmapFromResource(bi, "missing.jpg", true);
             }
             else
             {
@@ -139,7 +139,7 @@ namespace Timelapse
         {
             // Get and display the bitmap
             var bi = new BitmapImage();
-            bi = Utilities.BitmapFromResource(bi, "missing.jpg", true, 0, 0);
+            bi = Utilities.BitmapFromResource(bi, "missing.jpg", true);
             this.deletedImage.Source = bi;
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows;
 
 namespace Timelapse
@@ -16,8 +17,7 @@ namespace Timelapse
         public bool IsContentValueChangedFromOutside { get; set; }
         public bool IsDateTimeOrder { get; set; }
         public string IsMouseOverCounter { get; set; }
-        public string LastDatabaseFolderPath { get; set; }
-        public string LastDatabaseTemplateName { get; set; }
+        public MostRecentlyUsedList<string> MostRecentDatabasePaths { get; set; }
         public bool ShowCsvDialog { get; set; }
 
         public TimelapseState()
@@ -35,8 +35,7 @@ namespace Timelapse
             this.IsMouseOverCounter = String.Empty;
             this.IsDateTimeOrder = true;
             this.IsContentValueChangedFromOutside = false;
-            this.LastDatabaseFolderPath = null;
-            this.LastDatabaseTemplateName = null;
+            this.MostRecentDatabasePaths = null;
             this.ShowCsvDialog = true;
         }
     }

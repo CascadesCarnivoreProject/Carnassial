@@ -97,9 +97,11 @@ namespace Timelapse
                 this.state.DarkPixelThreshold = userSettings.ReadDarkPixelThreshold();
                 this.state.DarkPixelRatioThreshold = userSettings.ReadDarkPixelRatioThreshold();
                 this.state.ShowCsvDialog = userSettings.ReadShowCsvDialog();
-                this.state.LastDatabaseFolderPath = userSettings.ReadLastDatabaseFolderPath();  // the last path opened by the user is stored in the registry
-                this.state.LastDatabaseTemplateName = userSettings.ReadLastDatabaseTemplateName();  // the template filname opened by the user is stored in the registry
+                this.state.MostRecentDatabasePaths = userSettings.ReadMostRecentDataFilePaths();  // the last path opened by the user is stored in the registry
             }
+
+            // populate the most recent databases list
+            this.MenuItemRecentDataFiles_Refresh();
         }
 
         public byte DifferenceThreshold { get; set; } // The threshold used for calculating combined differences
@@ -161,8 +163,7 @@ namespace Timelapse
                 userSettings.WriteControlsInSeparateWindow(this.MenuItemControlsInSeparateWindow.IsChecked);
                 userSettings.WriteDarkPixelThreshold(this.state.DarkPixelThreshold);
                 userSettings.WriteDarkPixelRatioThreshold(this.state.DarkPixelRatioThreshold);
-                userSettings.TryWriteLastDatabaseFolderPath(this.state.LastDatabaseFolderPath);
-                userSettings.TryWriteLastDatabaseTemplateName(this.state.LastDatabaseTemplateName);
+                userSettings.WriteMostRecentDataFilePaths(this.state.MostRecentDatabasePaths);
                 userSettings.WriteShowCsvDialog(this.state.ShowCsvDialog);
             }
 
@@ -178,45 +179,53 @@ namespace Timelapse
         #endregion
 
         #region Image Loading
-        // When the user clicks the 'Load' button, load all image information and prepare the interface.
-        private void LoadButton_Click(object sender, RoutedEventArgs e)
+        private bool TryGetTemplatePath(out string templateDatabasePath)
         {
-            this.LoadImagesFromSources();
-        }
-
-        // Load the code template and then the images from either the database (if it exists) or the actual images (if it doesn't exist)
-        private void LoadImagesFromSources()
-        {
-            // First, select a template file which should reside with  the image set, otherwise abort loading (which means the user can try again later)
-            // Also pass it the last image folder / template file viewed, which will be shown in the file dialog
-            string templateDatabasePath = Utilities.GetTemplateFileFromUser(this.state.LastDatabaseFolderPath, this.state.LastDatabaseTemplateName);  // Returns the path and the file name
-            if (templateDatabasePath == null)
+            // prompt user to select a template
+            // default the template selection dialog to the most recently opened database
+            string defaultTemplateDatabasePath;
+            this.state.MostRecentDatabasePaths.TryGetMostRecent(out defaultTemplateDatabasePath);
+            if (Utilities.TryGetTemplateFileFromUser(defaultTemplateDatabasePath, out templateDatabasePath) == false)
             {
-                return;
+                return false;
             }
 
             string templateDatabaseDirectoryPath = Path.GetDirectoryName(templateDatabasePath);
             if (String.IsNullOrEmpty(templateDatabaseDirectoryPath))
             {
-                return;
+                return false;
             }
 
-            this.imageDatabase.FolderPath = templateDatabaseDirectoryPath;
-            this.state.LastDatabaseFolderPath = templateDatabaseDirectoryPath;
-
-            // Parse the returned file path to get just the filename and the path to the folder. 
-            this.state.LastDatabaseTemplateName = Path.GetFileName(templateDatabasePath);
-            if (String.IsNullOrEmpty(this.state.LastDatabaseTemplateName))
+            // if the user didn't specify a file name for the .tdb use the default
+            // TODO: Saul  is this case still reachable?
+            if (String.IsNullOrEmpty(Path.GetFileName(templateDatabasePath)))
             {
-                this.state.LastDatabaseTemplateName = Constants.File.TemplateDatabaseFileName;
+                templateDatabasePath = Path.Combine(templateDatabaseDirectoryPath, Constants.File.TemplateDatabaseFileName);
             }
 
+            return true;
+        }
+
+        /// <summary>
+        /// Load the specified database template and then the associated images.
+        /// </summary>
+        /// <param name="templateDatabasePath">Fully qualified path to the template database file.</param>
+        /// <returns>true if the template and images were loaded, false otherwise</returns>
+        private bool TryOpenTemplateAndLoadImages(string templateDatabasePath)
+        {
             // Create the template to the Timelapse Template database
             this.template = new Template();
-            if (!this.template.Open(this.FolderPath, this.state.LastDatabaseTemplateName))
+            if (!this.template.Open(templateDatabasePath))
             {
-                return;
+                this.OnDataFileLoadFailed();
+                // TODO: Saul  notify the user the template couldn't be loaded rather than silently doing nothing
+                return false;
             }
+
+            // update state to the newly selected database template
+            this.imageDatabase.FolderPath = Path.GetDirectoryName(templateDatabasePath);
+            this.state.MostRecentDatabasePaths.SetMostRecent(templateDatabasePath);
+            this.MenuItemRecentDataFiles_Refresh();
 
             // We now have the template file. Load the TemplateTable from that file, which makes it data accessible through its table
             this.template.LoadTemplateTable();
@@ -232,15 +241,16 @@ namespace Timelapse
                     {
                         if (this.state.ImmediateExit)
                         {
-                            return;
+                            return true;
                         }
-                        this.LoadComplete(false);
+                        this.OnImageLoadingComplete();
                     }
                     break;
                 case 1: // User cancelled the process of choosing between .ddb files
                     if (this.state.ImmediateExit)
                     {
-                        return;
+                        this.OnDataFileLoadFailed();
+                        return false;
                     }
                     break;
                 case 2: // There are no existing .ddb files
@@ -249,16 +259,18 @@ namespace Timelapse
                     {
                         DlgMessageBox messageBox = new DlgMessageBox();
                         messageBox.MessageTitle = "No Images Found in the Image Set Folder";
-                        messageBox.MessageProblem = "There doesn't seem to be any JPG images in your chosen image folder:";
+                        messageBox.MessageProblem = "There don't seem to be any JPG images in your chosen image folder:";
                         messageBox.MessageProblem += Environment.NewLine + "\u2022 " + this.FolderPath + Environment.NewLine;
                         messageBox.MessageReason = "\u2022 The folder has no JPG files in it (image files ending in '.jpg'), or" + Environment.NewLine;
-                        messageBox.MessageReason += "\u2022 You may has selected the wrong folder, i.e., a folder other than the one containing the images.";
+                        messageBox.MessageReason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images.";
                         messageBox.MessageSolution = "\u2022 Check that the chosen folder actually contains JPG images (i.e., a 'jpg' suffix), or" + Environment.NewLine;
                         messageBox.MessageSolution += "\u2022 Choose another folder.";
                         messageBox.IconType = MessageBoxImage.Error;
                         messageBox.ButtonType = MessageBoxButton.OK;
                         messageBox.ShowDialog();
-                        return;
+
+                        this.OnDataFileLoadFailed();
+                        return false;
                     }
                     break;
             }
@@ -267,6 +279,7 @@ namespace Timelapse
             // For persistance: set a flag if We've opened the same image folder we worked with in the last session. 
             // If its different, saved the new folder path 
             this.imageFolderReopened = (templateDatabasePath == this.FolderPath) ? true : false;
+            return true;
         }
 
         // Load all the jpg images found in the folder
@@ -552,7 +565,7 @@ namespace Timelapse
 
                 this.markableCanvas.Visibility = Visibility.Visible;
 
-                // Finally warn the user if there are any ambiguous dates in terms of day/month or month/day order
+                // warn the user if there are any ambiguous dates in terms of day/month or month/day order
                 if (ambiguous_daymonth_order)
                 {
                     DlgMessageBox dlgMB = new DlgMessageBox();
@@ -570,7 +583,11 @@ namespace Timelapse
                     dlgMB.IconType = MessageBoxImage.Information;
                     dlgMB.ShowDialog();
                 }
-                LoadComplete(true);
+                this.OnImageLoadingComplete();
+
+                // Finally, tell the user how many images were loaded, etc.
+                this.MenuItemImageCounts_Click(null, null);
+
                 // If we want to import old data from the ImageData.xml file, we can do it here...
                 // Check to see if there is an ImageData.xml file in here. If there is, ask the user
                 // if we want to load the data from that...
@@ -605,7 +622,7 @@ namespace Timelapse
         {
             if (this.imageDatabase.CreateDB(template))
             {
-                // When we are loading from an existing data file, ensure that the template in the template db matches  stored in the data db
+                // When we are loading from an existing data file, ensure that the template in the template db matches the template stored in the data db
                 List<string> errors = this.CheckCodesVsImageData();
                 if (errors.Count > 0)
                 {
@@ -634,8 +651,10 @@ namespace Timelapse
             return false;
         }
 
-        // When we are done loading images, add callbacks, prepare the UI, set up the image set, and show the image.
-        private void LoadComplete(bool isLoadInitializedFromImages)
+        /// <summary>
+        /// When image loading has completed add callbacks, prepare the UI, set up the image set, and show the image.
+        /// </summary>
+        private void OnImageLoadingComplete()
         {
             // Make sure that all the string data in the datatable has white space trimmed from its beginning and end
             // This is needed as the custom filter doesn't work well in testing comparisons if there is leading or trailing white space in it
@@ -669,6 +688,7 @@ namespace Timelapse
             this.MenuItemExportThisImage.IsEnabled = true;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = true;
             this.MenuItemExportAsCSV.IsEnabled = true;
+            this.MenuItemRecentDataFiles.IsEnabled = false;
             this.MenuItemRenameDataFile.IsEnabled = true;
             this.MenuItemEdit.IsEnabled = true;
             this.MenuItemDeleteImage.IsEnabled = true;
@@ -696,8 +716,8 @@ namespace Timelapse
 
             this.markableCanvas.Focus(); // We start with this having the focus so it can interpret keyboard shortcuts if needed. 
 
-            // Finally, set the current filter and the image index to the same as the ones in the last session,
-            // providing that we are working with the same image folder. 
+            // set the current filter and the image index to the same as the ones in the last session, providing that we are working 
+            // with the same image folder. 
             // Doing so also displays the image
             if (this.imageFolderReopened)
             {
@@ -717,12 +737,26 @@ namespace Timelapse
             {
                 StatusBarUpdate.Message(this.statusBar, "No file backups were made.");
             }
+        }
 
-            // Finally, tell the user how many images were loaded, etc.
-            if (isLoadInitializedFromImages)
-            {
-                this.MenuItemImageCounts_Click(null, null);
-            }
+        /// <summary>
+        /// If a data file could not be opened or the user canceled loading revert the UI to its initial state so the user can try
+        /// loading another data file and isn't presented with menu options applicable only when a data file has been opened.
+        /// </summary>
+        private void OnDataFileLoadFailed()
+        {
+            this.MenuItemAddImagesToDataFile.IsEnabled = false;
+            this.MenuItemLoadImages.IsEnabled = true;
+            this.MenuItemExportThisImage.IsEnabled = false;
+            this.MenuItemExportAsCsvAndPreview.IsEnabled = false;
+            this.MenuItemExportAsCSV.IsEnabled = false;
+            this.MenuItemRecentDataFiles.IsEnabled = true;
+            this.MenuItemRenameDataFile.IsEnabled = false;
+            this.MenuItemEdit.IsEnabled = false;
+            this.MenuItemDeleteImage.IsEnabled = false;
+            this.MenuItemView.IsEnabled = false;
+            this.MenuItemFilter.IsEnabled = false;
+            this.MenuItemOptions.IsEnabled = false;
         }
 
         // Check if the code template file matches the Image data file. If not, return a list of errors,
@@ -1530,7 +1564,7 @@ namespace Timelapse
             string srcFile = System.IO.Path.Combine(this.imageDatabase.FolderPath, this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File));
             if (this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.ImageQuality).Equals(Constants.ImageQuality.Corrupted))
             {
-                image = Utilities.BitmapFromResource(image, "corrupted.jpg", useCachedImages, 0, 0);
+                image = Utilities.BitmapFromResource(image, "corrupted.jpg", useCachedImages);
             }
             else
             {
@@ -1547,7 +1581,7 @@ namespace Timelapse
                     {
                         this.imageDatabase.RowSetValueFromDataLabel((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.ImageQuality], Constants.ImageQuality.Missing);
                     }
-                    image = Utilities.BitmapFromResource(image, "missing.jpg", useCachedImages, 0, 0);
+                    image = Utilities.BitmapFromResource(image, "missing.jpg", useCachedImages);
                 }
             }
             this.markableCanvas.imgToDisplay.Source = image;
@@ -2006,15 +2040,19 @@ namespace Timelapse
         }
         #endregion
 
-        #region File Menu Callbacks
+        #region File Menu Callbacks and Support Functions
 
         /// <summary>Load the images from a folder.</summary>
         private void MenuItemLoadImages_Click(object sender, RoutedEventArgs e)
         {
-            this.LoadImagesFromSources();
+            string templateDatabasePath;
+            if (this.TryGetTemplatePath(out templateDatabasePath))
+            {
+                this.TryOpenTemplateAndLoadImages(templateDatabasePath);
+            }
         }
 
-        /// <summary>Write the  CSV file and preview it in excel.</summary>
+        /// <summary>Write the CSV file and preview it in excel.</summary>
         private void MenuItemExportCSV_Click(object sender, RoutedEventArgs e)
         {
             // Write the file
@@ -2100,6 +2138,35 @@ namespace Timelapse
                 {
                     StatusBarUpdate.Message(this.statusBar, "Copy failed for some reason!");
                 }
+            }
+        }
+
+        private void MenuItemRecentDataFile_Click(object sender, RoutedEventArgs e)
+        {
+            string recentDatabasePath = (string)((MenuItem)sender).ToolTip;
+            if (this.TryOpenTemplateAndLoadImages(recentDatabasePath) == false)
+            {
+                this.state.MostRecentDatabasePaths.TryRemove(recentDatabasePath);
+                this.MenuItemRecentDataFiles_Refresh();
+            }
+        }
+
+        /// <summary>
+        /// Update the list of recent databases displayed under File -> Recent Databases.
+        /// </summary>
+        private void MenuItemRecentDataFiles_Refresh()
+        {
+            this.MenuItemRecentDataFiles.IsEnabled = this.state.MostRecentDatabasePaths.Count > 0;
+            this.MenuItemRecentDataFiles.Items.Clear();
+
+            int index = 1;
+            foreach (string recentDatabasePath in this.state.MostRecentDatabasePaths)
+            {
+                MenuItem recentDatabaseItem = new MenuItem();
+                recentDatabaseItem.Click += this.MenuItemRecentDataFile_Click;
+                recentDatabaseItem.Header = String.Format("_{0} {1}", index++, recentDatabasePath);
+                recentDatabaseItem.ToolTip = recentDatabasePath;
+                this.MenuItemRecentDataFiles.Items.Add(recentDatabaseItem);
             }
         }
 

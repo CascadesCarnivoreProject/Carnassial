@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows;
-using Utility.ModifyRegistry;
 
 /// <summary>
 /// These functions read and write values to HKCU\Constants.Registry.RootKey to persist them between sessions.
@@ -27,37 +27,17 @@ namespace Timelapse
         }
 
         // Functions used to save and retrive the last image folder path to and from the Registry
-        public string ReadLastDatabaseFolderPath()
+        public MostRecentlyUsedList<string> ReadMostRecentDataFilePaths()
         {
-            return this.ReadStringFromRegistry(Constants.Registry.Key.LastDatabaseFolderPath);
+            return this.ReadMostRecentlyUsedListFromRegistry(Constants.Registry.Key.MostRecentlyUsedDataFiles);
         }
 
-        public bool TryWriteLastDatabaseFolderPath(string path)
+        public void WriteMostRecentDataFilePaths(MostRecentlyUsedList<string> paths)
         {
-            if (String.IsNullOrWhiteSpace(path))
-            {
-                return false;
-            }
-            this.WriteToRegistry(Constants.Registry.Key.LastDatabaseFolderPath, path);
-            return true;
+            this.WriteToRegistry(Constants.Registry.Key.MostRecentlyUsedDataFiles, paths);
         }
 
-        public string ReadLastDatabaseTemplateName()
-        {
-            return this.ReadStringFromRegistry(Constants.Registry.Key.LastDatabaseTemplateName);
-        }
-
-        public bool TryWriteLastDatabaseTemplateName(string templateName)
-        {
-            if (String.IsNullOrWhiteSpace(templateName))
-            {
-                return false;
-            }
-            this.WriteToRegistry(Constants.Registry.Key.LastDatabaseTemplateName, templateName);
-            return true;
-        }
-
-        // Save and retrive the state of audio feedback  (i.e., if its on or not)
+        // Save and retrive the state of audio feedback (i.e., if its on or not)
         public bool ReadAudioFeedback()
         {
             return this.ReadBooleanFromRegistry(Constants.Registry.Key.AudioFeedback, false);

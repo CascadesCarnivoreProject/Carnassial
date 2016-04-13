@@ -1,7 +1,8 @@
-using System;
 using Microsoft.Win32;
+using System;
+using System.Collections.Generic;
 
-namespace Utility.ModifyRegistry
+namespace Timelapse
 {
     /// <summary>
     /// Base class for manipulating an application's user preferences and related information in the registry.
@@ -99,9 +100,58 @@ namespace Utility.ModifyRegistry
             return (string)this.RegistryKey.GetValue(subKeyPath);
         }
 
+        // read a series of REG_SZ keys' values from the registry
+        protected MostRecentlyUsedList<string> ReadMostRecentlyUsedListFromRegistry(string subKeyPath)
+        {
+            RegistryKey subKey = this.RegistryKey.OpenSubKey(subKeyPath);
+            MostRecentlyUsedList<string> values = new MostRecentlyUsedList<string>(Constants.NumberOfMostRecentDatabasesToTrack);
+
+            if (subKey != null)
+            {
+                for (int index = subKey.ValueCount - 1; index >= 0; --index)
+                {                   
+                    string listItem = (string)subKey.GetValue(index.ToString());
+                    if (listItem != null)
+                    {
+                        values.SetMostRecent(listItem);
+                    }
+                }
+            }
+
+            return values;
+        }
+
         protected void WriteToRegistry(string subKeyPath, bool value)
         {
             this.WriteToRegistry(subKeyPath, value.ToString().ToLowerInvariant());
+        }
+
+        protected void WriteToRegistry(string subKeyPath, MostRecentlyUsedList<string> values)
+        {
+            if (values != null)
+            {
+                // create the key whose values represent elements of the list
+                RegistryKey subKey = this.RegistryKey.OpenSubKey(subKeyPath, true);
+                if (subKey == null)
+                {
+                    subKey = this.RegistryKey.CreateSubKey(subKeyPath);
+                }
+
+                // write the values
+                int index = 0;
+                foreach (string value in values)
+                {
+                    subKey.SetValue(index.ToString(), value);
+                    ++index;
+                }
+
+                // remove any additional values when the new list is shorter than the old one
+                int maximumValueName = subKey.ValueCount;
+                for (; index < maximumValueName; ++index)
+                {
+                    subKey.DeleteValue(index.ToString());
+                }
+            }
         }
 
         protected void WriteToRegistry(string subKeyPath, int value)

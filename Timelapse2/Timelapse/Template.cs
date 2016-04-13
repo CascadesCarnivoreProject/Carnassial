@@ -11,65 +11,59 @@ namespace Timelapse
     public class Template
     {
         #region Private variables
-        private SQLiteWrapper DB;            
+        private SQLiteWrapper DB;
         private DataTable m_templateTable = new DataTable();     // A table containing all the names of the data fields 
         // public Dictionary<String, String> typeToKey = new Dictionary<String, String>();
         #endregion 
 
         #region Public Properties 
-
-        
-        /// <summary>
-        /// The folder path where the database should be located
-        /// </summary>
-        public string Folder { get; set; }   
-   
-        /// <summary>
-        /// The file name of the template db lives
-        /// </summary>
-        public string Filename { get; set; } 
- 
         /// <summary>
         /// The complete path (including file name) of the template db
         /// </summary>
-        public string FilePath { get; set; }   
-   
+        public string FilePath { get; set; }
+
         /// <summary>
-        /// // This datatable will contain the template
+        /// This datatable will contain the template
         /// </summary>
-        public DataTable templateTable        
+        public DataTable templateTable
         {
             set { m_templateTable = value; }
             get { return m_templateTable; }
         }
 
-
-        /// Returns true of the Timelapse Template database exists 
+        /// <summary>
+        /// Returns true if the Timelapse Template database exists 
         /// </summary>
-        public bool Exists { get { return File.Exists(this.FilePath); } }    
+        public bool Exists
+        {
+            get { return File.Exists(this.FilePath); }
+        }
 
         #endregion
 
         #region Public methods
-        /// <summary>Constructor </summary>
-        public Template () {}
+        /// <summary>Constructor</summary>
+        public Template()
+        {
+        }
 
         /// <summary>
         /// Create and assign the connection to the Timelapse Data database
         /// </summary>
-        public bool Open(string folder, string filename)
+        public bool Open(string filePath)
         {
             // Initialize some variables so we remember them
-            this.Folder = folder;
-            this.Filename = filename;
-            this.FilePath = System.IO.Path.Combine (this.Folder, this.Filename);
-            
+            this.FilePath = filePath;
+
             // Check that the database exists and that it can be opened
-            if (!this.Exists) return false;
-            
+            if (!this.Exists)
+            {
+                return false;
+            }
+
             // Open a connection to the template DB
-            try 
-            { 
+            try
+            {
                 this.DB = new SQLiteWrapper(this.FilePath);    // Create a pointer to the database and assign it
                 return true;
             }
@@ -179,8 +173,8 @@ namespace Timelapse
         {
             bool result = false;
             string command_executed = "";
-          
-            DataTable temp = this.DB.GetDataTableFromSelect("Pragma table_info('" + Constants.Database.TemplateTable + "')", out result, out  command_executed);
+
+            DataTable temp = this.DB.GetDataTableFromSelect("Pragma table_info('" + Constants.Database.TemplateTable + "')", out result, out command_executed);
             if (result == false) return;
             for (int i = 0; i < temp.Rows.Count; i++)
             {

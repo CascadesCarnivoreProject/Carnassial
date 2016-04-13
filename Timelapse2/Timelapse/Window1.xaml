@@ -85,16 +85,18 @@
             <Menu DockPanel.Dock="Top">
                 <!-- File Menu -->
                 <MenuItem Header="_File" IsTabStop="false">
-                    <MenuItem Name="MenuItemLoadImages" Header="_Load images from folder..." Click="MenuItemLoadImages_Click" ToolTip="Asks you for the image folder location (which must have a CodeTemplate.Xml file in it)"/>
+                    <MenuItem Name="MenuItemLoadImages" Header="_Load images from folder..." Click="MenuItemLoadImages_Click" ToolTip="Asks for the image folder location, either creating a new database or opening an existing one"/>
                     <Separator />
                     <MenuItem Name="MenuItemExportAsCSV" Header="_Export data for these images as CSV File" IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated values) file"/>
-                    <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="_Export data for these images as CSV File and Preview in Excel " IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports  data for the (possibly filtered) imagesinto a CSV (comma-separated values) file, and previews it in Excel"/>
+                    <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="_Export data for these images as CSV file and preview in Excel " IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated value) file and previews it in Excel"/>
                     <Separator />
-                    <MenuItem Name="MenuItemExportThisImage" Header="_Export This Image..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) this image into a particular folder"/>
+                    <MenuItem Name="MenuItemExportThisImage" Header="_Export this image..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) this image into a particular folder"/>
                     <Separator />
-                    <MenuItem Name="MenuItemRenameDataFile" Header="_Rename the Data File..." Click="MenuItemRenameDataFile_Click" IsEnabled="false" ToolTip="Renames the data file to a name of your choosing"/>
+                    <MenuItem Name="MenuItemRenameDataFile" Header="_Rename the data file..." Click="MenuItemRenameDataFile_Click" IsEnabled="false" ToolTip="Renames the data file to a name of your choosing"/>
                     <Separator />
-                    <MenuItem  Name="MenuItemExit" Header="_Exit" Click="MenuItemExit_Click" ToolTip="Quits the program"/>
+                    <MenuItem Name="MenuItemRecentDataFiles" Header="Recent _data files" IsEnabled="false" ToolTip="Recently used folders or data files"/>
+                    <Separator />
+                    <MenuItem Name="MenuItemExit" Header="E_xit" Click="MenuItemExit_Click" ToolTip="Quits the program"/>
                 </MenuItem>
 
                 <!-- Edit Menu -->

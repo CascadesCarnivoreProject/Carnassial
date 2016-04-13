@@ -176,25 +176,13 @@ namespace Timelapse
             }
             else if (state.Equals("missing"))
             {
-                bi = Utilities.BitmapFromResource(bi, "missing.jpg", true, 0, 0);
+                bi = Utilities.BitmapFromResource(bi, "missing.jpg", true);
             }
             else if (state.Equals("corrupted"))
             {
-                bi = Utilities.BitmapFromResource(bi, "corrupted.jpg", true, 0, 0);
+                bi = Utilities.BitmapFromResource(bi, "corrupted.jpg", true);
             }
             return bi;
-        }
-
-
-        /// <summary>
-        /// Display the deleted image placeholder so the user knows what it looks like
-        /// </summary>
-        private void showDeletedImage()
-        {
-            //// Get and display the bitmap
-            //var bi = new BitmapImage();
-            //bi = Utilities.BitmapFromResource(bi, "missing.jpg", true, 0, 0);
-            //this.deletedImage.Source = bi;
         }
 
         /// <summary>

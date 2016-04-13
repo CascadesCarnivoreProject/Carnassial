@@ -295,6 +295,7 @@
     <Compile Include="ImageProperties.cs" />
     <Compile Include="ImageQualityFilter.cs" />
     <Compile Include="MetaTagCounter.cs" />
+    <Compile Include="MostRecentlyUsedList.cs" />
     <Compile Include="SpreadsheetWriter.cs" />
     <Compile Include="DlgDateCorrection.xaml.cs">
       <DependentUpon>DlgDateCorrection.xaml</DependentUpon>
