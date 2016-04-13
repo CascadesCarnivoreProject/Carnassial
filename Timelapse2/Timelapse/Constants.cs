@@ -81,8 +81,9 @@ namespace Timelapse
         {
             public const string BackupFolder = "Backups"; // Sub-folder that will contain file backups and deleted images 
             public const string CsvFileExtension = ".csv";
-            public const string ImageDatabaseFileName = "TimelapseData.ddb";
-            public const string TemplateDatabaseFileName = "TimelapseTemplate.tdb";
+            public const string DefaultImageDatabaseFileName = "TimelapseData.ddb";
+            public const string DefaultTemplateDatabaseFileName = "TimelapseTemplate.tdb";
+            public const string ImageDatabaseFileExtension = ".ddb";
             public const string TemplateDatabaseFileExtension = ".tdb";
             public const string XmlTemplateFileName = "CodeTemplate.xml";
             public const string XmlDataFileName = "ImageData.xml";

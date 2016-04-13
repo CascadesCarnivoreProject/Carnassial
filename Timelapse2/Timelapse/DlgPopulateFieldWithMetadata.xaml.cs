@@ -210,10 +210,10 @@ namespace Timelapse
                 // For each row in the database, get the image filename and try to extract the chosen metatag value.
                 // If we can't decide if we want to leave the data field alone or to clear it depending on the state of the isClearIfNoMetaData (set via the checkbox)
                 // Report progress as needed.
-                for (int i = 0; i < dbData.dataTable.Rows.Count; i++)
+                for (int i = 0; i < dbData.DataTable.Rows.Count; i++)
                 {
-                    fname = dbData.dataTable.Rows[i][Constants.DatabaseElement.File].ToString();
-                    int id = Int32.Parse(dbData.dataTable.Rows[i][Constants.Database.ID].ToString());
+                    fname = dbData.DataTable.Rows[i][Constants.DatabaseElement.File].ToString();
+                    int id = Int32.Parse(dbData.DataTable.Rows[i][Constants.Database.ID].ToString());
                     dictTemp = extw.FetchExifFrom(System.IO.Path.Combine(this.folderPath, fname), tags);
                     if (dictTemp.Count <= 0)
                     {

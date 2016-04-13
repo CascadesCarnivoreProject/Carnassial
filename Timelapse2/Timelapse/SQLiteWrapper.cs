@@ -315,30 +315,31 @@ class SQLiteWrapper
     /// </summary>
     /// <param name="query">The SQL to run</param>
     /// <returns>A DataTable containing the result set.</returns>
-    public DataTable GetDataTableFromSelect(string query, out bool result, out string command_executed)
+    public bool TryGetDataTableFromSelect(string query, out DataTable dataTable)
     {
-        result = true;
-        command_executed = "";
-
-        DataTable dt = new DataTable();
         try
         {
             // Open the connection
-            SQLiteConnection cnn = new SQLiteConnection(dbConnection);
-            cnn.Open();
-            SQLiteCommand mycommand = new SQLiteCommand(cnn);
-            command_executed = query;
-            mycommand.CommandText = query;
-            SQLiteDataReader reader = mycommand.ExecuteReader();
-            dt.Load(reader);
-            reader.Close();
-            cnn.Close();
+            using (SQLiteConnection connection = new SQLiteConnection(dbConnection))
+            {
+                connection.Open();
+                using (SQLiteCommand command = new SQLiteCommand(connection))
+                {
+                    command.CommandText = query;
+                    using (SQLiteDataReader reader = command.ExecuteReader())
+                    {
+                        dataTable = new DataTable();
+                        dataTable.Load(reader);
+                    }
+                }
+            }
+            return true;
         }
         catch
         {
-            result = false;
+            dataTable = null;
+            return false;
         }
-        return dt;
     }
 
     /// <summary>
@@ -775,21 +776,18 @@ class SQLiteWrapper
 
     #region Columns: Checking and Adding 
     // This method will check if a column exists in a table
-    public bool isColumnInTable(String tableName, String columnName)
+    public bool IsColumnInTable(String tableName, String columnName)
     {
-        bool result = false;
-        string command_executed = "";
-
         string query = "SELECT " + columnName + " from " + tableName;
         try
-        { 
-            DataTable dt = this.GetDataTableFromSelect(query, out result, out command_executed);
+        {
+            DataTable dummy;
+            return this.TryGetDataTableFromSelect(query, out dummy);
         }
         catch 
         {
             return false;
         }
-        return result;
     }
 
     // This method will create a column in a table, where it is added to its end
@@ -855,19 +853,18 @@ class SQLiteWrapper
     /// <param name="command_executed"></param>
     public void DeleteAllFromAllTables(out bool result, out string command_executed)
     {
-        // SELECT NAME FROM SQLITE_MASTER WHERE TYPE='table' ORDER BY NAME;
-        result = true;
-        command_executed = "";
-        DataTable tables;
         try
         {
+            // SELECT NAME FROM SQLITE_MASTER WHERE TYPE='table' ORDER BY NAME;
             string query = SELECT;
             query += NAME_FROM_SQLITE_MASTER;
             query += WHERE;
             query += TYPE_EQUAL_TABLE;
             query += ORDER_BY + NAME;
+            DataTable tables;
+            result = this.TryGetDataTableFromSelect(query, out tables);
             command_executed = query;
-            tables = this.GetDataTableFromSelect(query, out result, out command_executed);
+
             foreach (DataRow table in tables.Rows)
             {
                 this.DeleteAllFromTable(table["NAME"].ToString(), out result, out command_executed);
@@ -876,6 +873,7 @@ class SQLiteWrapper
         catch
         {
             result = false;
+            command_executed = null;
         }
     }
     #endregion

@@ -154,13 +154,13 @@ namespace Timelapse
             string sdate ;
 
             // First, do a pass to see if swapping the date/time order is even possible
-            for (int i = 0; i < dbData.dataTable.Rows.Count; i++)
+            for (int i = 0; i < dbData.DataTable.Rows.Count; i++)
             {
                // Skip over corrupted images for now, as we know those dates are likley wrong
                if (dbData.RowIsImageCorrupted(i)) continue;
 
                // Parse the date, which should always work at this point. But just in case, put out a debug message
-               sdate = (string) dbData.dataTable.Rows[i][Constants.DatabaseElement.Date] + " " + (string) dbData.dataTable.Rows[i][Constants.DatabaseElement.Time];
+               sdate = (string) dbData.DataTable.Rows[i][Constants.DatabaseElement.Date] + " " + (string) dbData.DataTable.Rows[i][Constants.DatabaseElement.Time];
                succeeded = DateTime.TryParse(sdate, out date);
                if (!succeeded) Debug.Print("In SwapDayMonth - something went wrong trying to parse a date!");
 

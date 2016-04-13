@@ -3,6 +3,7 @@
     <CollectionProperty Name="RecognizedWords">
       <Value>copyable</Value>
       <Value>metatag</Value>
+      <Value>metatags</Value>
       <Value>Timelapse</Value>
     </CollectionProperty>
   </GlobalSettings>
@@ -50,6 +51,11 @@
           </RuleSettings>
         </Rule>
         <Rule Name="ElementParametersMustBeDocumented">
+          <RuleSettings>
+            <BooleanProperty Name="Enabled">False</BooleanProperty>
+          </RuleSettings>
+        </Rule>
+        <Rule Name="ElementReturnValueMustBeDocumented">
           <RuleSettings>
             <BooleanProperty Name="Enabled">False</BooleanProperty>
           </RuleSettings>

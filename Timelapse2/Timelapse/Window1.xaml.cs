@@ -200,7 +200,7 @@ namespace Timelapse
             // TODO: Saul  is this case still reachable?
             if (String.IsNullOrEmpty(Path.GetFileName(templateDatabasePath)))
             {
-                templateDatabasePath = Path.Combine(templateDatabaseDirectoryPath, Constants.File.TemplateDatabaseFileName);
+                templateDatabasePath = Path.Combine(templateDatabaseDirectoryPath, Constants.File.DefaultTemplateDatabaseFileName);
             }
 
             return true;
@@ -223,7 +223,12 @@ namespace Timelapse
             }
 
             // update state to the newly selected database template
-            this.imageDatabase.FolderPath = Path.GetDirectoryName(templateDatabasePath);
+            string imageDatabaseFileName = Constants.File.DefaultImageDatabaseFileName;
+            if (String.Equals(Path.GetFileName(templateDatabasePath), Constants.File.DefaultTemplateDatabaseFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                imageDatabaseFileName = Path.GetFileNameWithoutExtension(templateDatabasePath) + Constants.File.ImageDatabaseFileExtension;
+            }
+            this.imageDatabase = new DBData(Path.GetDirectoryName(templateDatabasePath), imageDatabaseFileName);
             this.state.MostRecentDatabasePaths.SetMostRecent(templateDatabasePath);
             this.MenuItemRecentDataFiles_Refresh();
 
@@ -394,9 +399,9 @@ namespace Timelapse
                 List<string> counterList = new List<string>();
                 List<string> notesAndFixedChoicesList = new List<string>();
                 List<string> flagsList = new List<string>();
-                for (int i = 0; i < this.imageDatabase.dataTable.Columns.Count; i++)
+                for (int i = 0; i < this.imageDatabase.DataTable.Columns.Count; i++)
                 {
-                    dataLabel = this.imageDatabase.dataTable.Columns[i].ColumnName;
+                    string dataLabel = this.imageDatabase.DataTable.Columns[i].ColumnName;
                     string type = (string)this.imageDatabase.TypeFromKey[dataLabel];
                     if (null == type)
                     {
@@ -436,9 +441,9 @@ namespace Timelapse
                         dataline = new Dictionary<string, string>();
                         markerline = new Dictionary<string, string>();
 
-                        for (int col = 0; col < imageDatabase.dataTable.Columns.Count; col++) // Fill up each column in order
+                        for (int col = 0; col < imageDatabase.DataTable.Columns.Count; col++) // Fill up each column in order
                         {
-                            string col_datalabel = imageDatabase.dataTable.Columns[col].ColumnName;
+                            string col_datalabel = imageDatabase.DataTable.Columns[col].ColumnName;
                             string type = (string)imageDatabase.TypeFromKey[col_datalabel];
                             if (null == type)
                             {
@@ -598,7 +603,7 @@ namespace Timelapse
                     bool? result3 = dlg.ShowDialog();
                     if (result3 == true)
                     {
-                        ImageDataXML.Read(System.IO.Path.Combine(this.FolderPath, Constants.File.XmlDataFileName), imageDatabase.templateTable, imageDatabase);
+                        ImageDataXML.Read(System.IO.Path.Combine(this.FolderPath, Constants.File.XmlDataFileName), imageDatabase.TemplateTable, imageDatabase);
                         this.SetImageFilterAndIndex(this.imageDatabase.State_Row, (ImageQualityFilter)this.imageDatabase.State_Filter); // to regenerate the controls and markers for this image
                     }
                 }
@@ -620,7 +625,7 @@ namespace Timelapse
         // Try to load the images from the DB file.
         private Boolean LoadImagesFromDB(Template template)
         {
-            if (this.imageDatabase.CreateDB(template))
+            if (this.imageDatabase.TryCreateImageDatabase(template))
             {
                 // When we are loading from an existing data file, ensure that the template in the template db matches the template stored in the data db
                 List<string> errors = this.CheckCodesVsImageData();
@@ -637,7 +642,7 @@ namespace Timelapse
                     }
                     else
                     {
-                        this.imageDatabase.templateTable = this.imageDatabase.CreateDataTableFromDatabaseTable(Constants.Database.TemplateTable);
+                        this.imageDatabase.TemplateTable = this.imageDatabase.CreateDataTableFromDatabaseTable(Constants.Database.TemplateTable);
                     }
                 }
 
@@ -729,7 +734,7 @@ namespace Timelapse
                 this.SetImageFilterAndIndex(0, ImageQualityFilter.All);
             }
 
-            if (FileBackup.CreateBackups(this.FolderPath, this.imageDatabase.Filename))
+            if (FileBackup.CreateBackups(this.FolderPath, this.imageDatabase.FileName))
             {
                 StatusBarUpdate.Message(this.statusBar, "Backups of files made.");
             }
@@ -1649,7 +1654,7 @@ namespace Timelapse
 
             // update the status bar to show which image we are on out of the total
             StatusBarUpdate.CurrentImageNumber(this.statusBar, this.imageDatabase.CurrentRow + 1); // Add one because indexes are 0-based
-            StatusBarUpdate.TotalCount(this.statusBar, this.imageDatabase.dataTable.Rows.Count);
+            StatusBarUpdate.TotalCount(this.statusBar, this.imageDatabase.DataTable.Rows.Count);
             StatusBarUpdate.ClearMessage(this.statusBar);
 
             this.sldrImageNavigator.Value = this.imageDatabase.CurrentRow;
@@ -2056,7 +2061,7 @@ namespace Timelapse
         private void MenuItemExportCSV_Click(object sender, RoutedEventArgs e)
         {
             // Write the file
-            string csvfile = System.IO.Path.GetFileNameWithoutExtension(this.imageDatabase.Filename) + ".csv";
+            string csvfile = System.IO.Path.GetFileNameWithoutExtension(this.imageDatabase.FileName) + ".csv";
             string csvpath = System.IO.Path.Combine(this.FolderPath, csvfile);
             SpreadsheetWriter.ExportDataAsCSV(this.imageDatabase, csvpath);
 
@@ -2172,17 +2177,17 @@ namespace Timelapse
 
         private void MenuItemRenameDataFile_Click(object sender, RoutedEventArgs e)
         {
-            DlgRenameDataFile dlg = new DlgRenameDataFile(this.imageDatabase.Filename);
+            DlgRenameDataFile dlg = new DlgRenameDataFile(this.imageDatabase.FileName);
             dlg.Owner = this;
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                if (File.Exists(Path.Combine(this.FolderPath, this.imageDatabase.Filename)))
+                if (File.Exists(Path.Combine(this.FolderPath, this.imageDatabase.FileName)))
                 {
-                    File.Move(Path.Combine(this.FolderPath, this.imageDatabase.Filename),
+                    File.Move(Path.Combine(this.FolderPath, this.imageDatabase.FileName),
                               Path.Combine(this.FolderPath, dlg.new_filename));  // Change the file name to the new file name
-                    this.imageDatabase.Filename = dlg.new_filename; // Store the file name
-                    this.imageDatabase.CreateDB(this.template);          // Recreate the database connecction
+                    this.imageDatabase.FileName = dlg.new_filename; // Store the file name
+                    this.imageDatabase.TryCreateImageDatabase(this.template);          // Recreate the database connecction
                 }
             }
         }

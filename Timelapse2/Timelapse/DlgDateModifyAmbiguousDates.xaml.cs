@@ -153,13 +153,13 @@ namespace Timelapse
 
             // Starting from the index, get the date from successive rows and see if the date is ambiguous
             // Note that if the index is out of range, it will return -1, so that's ok.
-            for (int index = startIndex; index < dbData.dataTable.Rows.Count; index++)
+            for (int index = startIndex; index < dbData.DataTable.Rows.Count; index++)
             {
                 // Ignore corrupted images
                 // if (dbData.RowIsImageCorrupted(i)) continue;
 
                 // Parse the date. Note that this should never fail at this point, but just in case, put out a debug message
-                sdate = (string)dbData.dataTable.Rows[index][Constants.DatabaseElement.Date] + " " + (string)dbData.dataTable.Rows[index][Constants.DatabaseElement.Time];
+                sdate = (string)dbData.DataTable.Rows[index][Constants.DatabaseElement.Date] + " " + (string)dbData.DataTable.Rows[index][Constants.DatabaseElement.Time];
                 succeeded = DateTime.TryParse(sdate, out date);
                 if (succeeded)
                 {
@@ -186,16 +186,16 @@ namespace Timelapse
             string sStartingDate;
             string sCurrentDate;
 
-            if (startIndex >= dbData.dataTable.Rows.Count) return -1;   // Make sure index is in range.
+            if (startIndex >= dbData.DataTable.Rows.Count) return -1;   // Make sure index is in range.
 
             // Parse the provided starting date. Note that this should never fail at this point, but just in case, put out a debug message
-            sStartingDate = (string)dbData.dataTable.Rows[startIndex][Constants.DatabaseElement.Date] + " " + (string)dbData.dataTable.Rows[startIndex][Constants.DatabaseElement.Time];
+            sStartingDate = (string)dbData.DataTable.Rows[startIndex][Constants.DatabaseElement.Date] + " " + (string)dbData.DataTable.Rows[startIndex][Constants.DatabaseElement.Time];
             if (!DateTime.TryParse(sStartingDate, out dStartingDate)) return -1; // Should never fail, but just in case.
 
-            for (int index = startIndex + 1; index < dbData.dataTable.Rows.Count; index++)
+            for (int index = startIndex + 1; index < dbData.DataTable.Rows.Count; index++)
             {
                 // Parse the date for the given record.
-                sCurrentDate = (string)dbData.dataTable.Rows[index][Constants.DatabaseElement.Date] + " " + (string)dbData.dataTable.Rows[index][Constants.DatabaseElement.Time];
+                sCurrentDate = (string)dbData.DataTable.Rows[index][Constants.DatabaseElement.Date] + " " + (string)dbData.DataTable.Rows[index][Constants.DatabaseElement.Time];
                 if (!DateTime.TryParse(sCurrentDate, out dCurrentDate)) return (index - 1); // If we can't parse the date, the return the previous date 
                 if (dStartingDate.Day == dCurrentDate.Day && dStartingDate.Month == dCurrentDate.Month && dStartingDate.Year == dCurrentDate.Year)
                 {
@@ -206,7 +206,7 @@ namespace Timelapse
                     return index - 1;
                 }
             }
-            return dbData.dataTable.Rows.Count - 1; //if we got here, it means that we arrived at the end of the records
+            return dbData.DataTable.Rows.Count - 1; //if we got here, it means that we arrived at the end of the records
         }
         #endregion
 

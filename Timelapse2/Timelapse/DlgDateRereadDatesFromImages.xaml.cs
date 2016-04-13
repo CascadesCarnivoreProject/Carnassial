@@ -75,16 +75,16 @@ namespace Timelapse
                 }));
 
                 // Pass 1. Check to see what dates/times need updating.
-                int count = dbData.dataTable.Rows.Count;
+                int count = dbData.DataTable.Rows.Count;
                 int j = 1;
                 for (int i = 0; i < count; i++)
                 {
-                    fileInfo = new FileInfo(System.IO.Path.Combine(dbData.FolderPath, dbData.dataTable.Rows[i][Constants.DatabaseElement.File].ToString()));
+                    fileInfo = new FileInfo(System.IO.Path.Combine(dbData.FolderPath, dbData.DataTable.Rows[i][Constants.DatabaseElement.File].ToString()));
                     BitmapSource bmap = null;
 
                     imgprop = new ImageProperties();                            // We will store the various times here
-                    imgprop.Name = dbData.dataTable.Rows[i][Constants.DatabaseElement.File].ToString();
-                    imgprop.ID = Int32.Parse(dbData.dataTable.Rows[i][Constants.Database.ID].ToString());
+                    imgprop.Name = dbData.DataTable.Rows[i][Constants.DatabaseElement.File].ToString();
+                    imgprop.ID = Int32.Parse(dbData.DataTable.Rows[i][Constants.Database.ID].ToString());
                     string message = "";
                     try
                     {
@@ -115,14 +115,14 @@ namespace Timelapse
                             imgprop.FinalTime = DateTimeHandler.StandardTimeString(fileTime);
                             message += " Using File timestamp";
                         }
-                        if (imgprop.FinalDate.Equals(dbData.dataTable.Rows[i][Constants.DatabaseElement.Date].ToString()))
+                        if (imgprop.FinalDate.Equals(dbData.DataTable.Rows[i][Constants.DatabaseElement.Date].ToString()))
                         {
                             message += ", same date";
                             imgprop.FinalDate = ""; // If its the same, we won't copy it
                         }
                         else
                             message += ", different date";
-                        if (imgprop.FinalTime.Equals(dbData.dataTable.Rows[i][Constants.DatabaseElement.Time].ToString()))
+                        if (imgprop.FinalTime.Equals(dbData.DataTable.Rows[i][Constants.DatabaseElement.Time].ToString()))
                         {
                             message += ", same time";
                             imgprop.FinalTime = ""; // If its the same, we won't copy it

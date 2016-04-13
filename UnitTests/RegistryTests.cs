@@ -151,7 +151,7 @@ namespace Timelapse.UnitTests
                 Assert.IsTrue(mostRecentDatabasePaths.Count == 0);
 
                 // write
-                string databasePath = Path.Combine(Environment.CurrentDirectory, Constants.File.ImageDatabaseFileName);
+                string databasePath = Path.Combine(Environment.CurrentDirectory, Constants.File.DefaultImageDatabaseFileName);
                 mostRecentDatabasePaths.SetMostRecent(databasePath);
 
                 timelapseRegistry.WriteAudioFeedback(audioFeedback);

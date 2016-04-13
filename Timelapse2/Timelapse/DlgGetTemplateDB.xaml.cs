@@ -43,7 +43,7 @@ namespace Timelapse
             string templateFile = this.GetTemplatePathFromUser(path);
             if (null != templateFile)
             {
-                File.Copy(templateFile, System.IO.Path.Combine(this.path, Constants.File.TemplateDatabaseFileName));
+                File.Copy(templateFile, System.IO.Path.Combine(this.path, Constants.File.DefaultTemplateDatabaseFileName));
                 this.DialogResult = true;
             }
             else this.DialogResult = false;

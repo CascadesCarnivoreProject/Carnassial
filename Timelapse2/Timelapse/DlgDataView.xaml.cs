@@ -28,7 +28,7 @@ namespace Timelapse
         /// </summary>
         public void RefreshDataTable()
         {
-            this.datagrid.ItemsSource = dbData.dataTable.DefaultView;
+            this.datagrid.ItemsSource = dbData.DataTable.DefaultView;
         }
 
         #region Callbacks

@@ -332,16 +332,16 @@ namespace Timelapse
                     // First, change the UIprovide some feedback
                     //this.txtblockFeedback.Text += "Step 1/2: Examining images..." + Environment.NewLine;
                 }));
-                int count = dbData.dataTable.Rows.Count;
+                int count = dbData.DataTable.Rows.Count;
                 int j = 1;
                 for (int i = 0; i < count; i++)
                 {
-                    fileInfo = new FileInfo(System.IO.Path.Combine(dbData.FolderPath, dbData.dataTable.Rows[i][Constants.DatabaseElement.File].ToString()));
+                    fileInfo = new FileInfo(System.IO.Path.Combine(dbData.FolderPath, dbData.DataTable.Rows[i][Constants.DatabaseElement.File].ToString()));
 
                     imgQuality = new ImageQuality();                            // We will store the various image properties here
-                    imgQuality.FileName = dbData.dataTable.Rows[i][Constants.DatabaseElement.File].ToString();
-                    imgQuality.ID = Int32.Parse(dbData.dataTable.Rows[i][Constants.Database.ID].ToString());
-                    imgQuality.OldImageQuality = dbData.dataTable.Rows[i][Constants.DatabaseElement.ImageQuality].ToString();
+                    imgQuality.FileName = dbData.DataTable.Rows[i][Constants.DatabaseElement.File].ToString();
+                    imgQuality.ID = Int32.Parse(dbData.DataTable.Rows[i][Constants.Database.ID].ToString());
+                    imgQuality.OldImageQuality = dbData.DataTable.Rows[i][Constants.DatabaseElement.ImageQuality].ToString();
 
                     // If its not a valid image, say so and go onto the next one.
                     if (!imgQuality.OldImageQuality.Equals(Constants.ImageQuality.Ok) && !imgQuality.OldImageQuality.Equals(Constants.ImageQuality.Dark))
