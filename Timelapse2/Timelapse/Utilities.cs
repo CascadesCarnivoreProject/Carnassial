@@ -1,91 +1,77 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Windows.Forms;
 using System.Windows.Media.Imaging;
-
 
 namespace Timelapse
 {
     /// <summary>
     /// Utilities collect a variety of miscellaneous utility functions
     /// </summary>
-
-    class Utilities
+    internal class Utilities
     {
         #region Folder paths and folder names
-
-        // Given a folder path, return only the folder name
-        static public string GetFolderNameFromFolderPath(string folder_path)
-        {
-            string[] directories = folder_path.Split(System.IO.Path.DirectorySeparatorChar);
-            return (directories[directories.Length - 1]);
-        }
-
-        // Get a location for the Template file from the user. Return null on failure
-        public static string GetTemplateFileFromUser(string defaultPath, string filename)
+        // get a location for the template database from the user
+        public static bool TryGetTemplateFileFromUser(string defaultTemplateFilePath, out string templateDatabasePath)
         {
             // Get the template file, which should be located where the images reside
-            var fbd = new System.Windows.Forms.OpenFileDialog();
-            fbd.Title = "Select a TimelapseTemplate.tdb file,  which should be one located in your image folder";
-            fbd.CheckFileExists = true;
-            fbd.CheckPathExists = true;
-            fbd.Multiselect = false;
-            fbd.InitialDirectory = defaultPath;
-            fbd.FileName = filename;
-            
-            fbd.AutoUpgradeEnabled = true;
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Title = "Select a TimelapseTemplate.tdb file, which should be one located in your image folder";
+            openFileDialog.CheckFileExists = true;
+            openFileDialog.CheckPathExists = true;
+            openFileDialog.Multiselect = false;
+            if (String.IsNullOrWhiteSpace(defaultTemplateFilePath))
+            {
+                openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            }
+            else
+            {
+                openFileDialog.InitialDirectory = Path.GetDirectoryName(defaultTemplateFilePath);
+                openFileDialog.FileName = Path.GetFileName(defaultTemplateFilePath);
+            }
+            openFileDialog.AutoUpgradeEnabled = true;
 
             // Set filter for file extension and default file extension 
-            fbd.DefaultExt = ".tdb";
-            fbd.Filter = "Template files (.tdb)|*.tdb";
+            openFileDialog.DefaultExt = Constants.File.TemplateDatabaseFileExtension;
+            openFileDialog.Filter = String.Format("Template files ({0})|*{0}", Constants.File.TemplateDatabaseFileExtension);
 
-            if (fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                return (fbd.FileName);                                      // Standard user-selected path
+                templateDatabasePath = openFileDialog.FileName;
+                return true;
             }
-            return null;                                                    // User must have aborted the operation
+
+            templateDatabasePath = null;
+            return false;
         }
         
-        // Get a folder from the user. Return null on failure
-        public static string GetFolderPathFromUser(string defaultPath)
-        {
-            // Get the folder where the images reside
-            var fbd = new System.Windows.Forms.FolderBrowserDialog();
-           
-            fbd.ShowNewFolderButton = false; 
-            fbd.Description = "Select a folder containing images to analyze,  where the folder should include a CodeTemplate.xml file";
-            string path = defaultPath;                     // Retrieve the last opened image path from the registry
-            fbd.SelectedPath = path;
-  
-            if (fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                return (fbd.SelectedPath);                                      // Standard user-selected path
-            }
-            return null;                                                        // User must have aborted the operation
-        }
-
-        /// <summary> Given a bitmap, load it with the image specified in the resource file, scaled to match the width and height</summary>
-        /// <param name="bi"></param>
-        /// <param name="resource"></param>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        /// <returns></returns>
-        public static BitmapImage BitmapFromResource(BitmapImage bi, string resource, bool to_cache, int width, int height)
+        /// <summary>Given a bitmap, load it with the image specified in the resource file</summary>
+        /// <param name="bitmap">bitmap to populate with the image</param>
+        /// <param name="resource">embedded resource to load bitmap data from</param>
+        /// <param name="cache">true to enable caching of the bitmap, false to disable caching</param>
+        /// <returns>the passed in bitmap</returns>
+        public static BitmapImage BitmapFromResource(BitmapImage bitmap, string resource, bool cache)
         {   
-            bi.BeginInit();
-            if (!to_cache)
-                bi.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-            bi.UriSource = new Uri("pack://application:,,/Resources/" + resource);
-            bi.CacheOption = BitmapCacheOption.OnLoad;
-            bi.EndInit();
-            bi.Freeze();
-            return bi;
+            bitmap.BeginInit();
+            if (!cache)
+            {
+                bitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+            }
+            bitmap.UriSource = new Uri("pack://application:,,/Resources/" + resource);
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.EndInit();
+            bitmap.Freeze();
+            return bitmap;
         }
 
         public static BitmapImage BitmapFromFile(BitmapImage bi, string imageFilepath, bool use_cached_images)
         {   
             bi.BeginInit();
             if (!use_cached_images)
+            {
                 bi.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+            }
             bi.UriSource = new Uri(imageFilepath);
             bi.CacheOption = BitmapCacheOption.OnLoad;
             bi.EndInit();
@@ -94,7 +80,6 @@ namespace Timelapse
         }
          #endregion
     }
-
 
     // Classes for database updates. The main idea is to 
     // - supply a list of multiple column-value pairs, where list time indicates where it should apply

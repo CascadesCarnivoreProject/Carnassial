@@ -67,7 +67,7 @@ namespace Timelapse
                 string operation = (hours == 1) ? "added" : "subtracted";
 
                 int initial = (forward) ? dbData.CurrentRow : 0;
-                int final = (forward) ? dbData.dataTable.Rows.Count : dbData.CurrentRow + 1;
+                int final = (forward) ? dbData.DataTable.Rows.Count : dbData.CurrentRow + 1;
 
                 TimeSpan ts = new TimeSpan(hours, 0, 0);
                 // Update the database

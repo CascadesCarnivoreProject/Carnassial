@@ -48,33 +48,37 @@ namespace Timelapse
             {
                 // Get the values for each control
                 DataRow row = sortedTemplateTable.Rows[i];
-                string type = row[Constants.TYPE].ToString();
-                string defaultValue = row[Constants.DEFAULT].ToString();
-                string label = row[Constants.LABEL].ToString();
-                string tooltip = row[Constants.TOOLTIP].ToString();
-                string width = row[Constants.TXTBOXWIDTH].ToString();
+                string type = row[Constants.Database.Type].ToString();
+                string defaultValue = row[Constants.Control.DefaultValue].ToString();
+                string label = row[Constants.Control.Label].ToString();
+                string tooltip = row[Constants.Control.Tooltop].ToString();
+                string width = row[Constants.Control.TextBoxWidth].ToString();
                 int    iwidth = (width == "") ? 0 : Convert.ToInt32(width);
-                string visiblity = row[Constants.VISIBLE].ToString();
+                string visiblity = row[Constants.Control.Visible].ToString();
                 bool   bvisiblity = ("true" == visiblity.ToLower ()) ? true : false;
-                string copyable = row[Constants.COPYABLE].ToString();
+                string copyable = row[Constants.Control.Copyable].ToString();
                 bool   bcopyable = ("true" == copyable.ToLower ()) ? true : false;
-                string list = row[Constants.LIST].ToString();
-                int id = Convert.ToInt32 (row[Constants.ID].ToString ()); // TODO Need to use this ID to pass between controls and data
+                string list = row[Constants.Control.List].ToString();
+                int id = Convert.ToInt32 (row[Constants.Database.ID].ToString ()); // TODO Need to use this ID to pass between controls and data
 
                 // Get the key
-                key = (string) row[Constants.DATALABEL];
-                if (type == Constants.DATE && defaultValue == "")
+                key = (string) row[Constants.Control.DataLabel];
+                if (type == Constants.DatabaseElement.Date && defaultValue == "")
                 {
                     defaultValue = EXAMPLE_DATE;
                 }
-                else if (type == Constants.TIME && defaultValue == "")
+                else if (type == Constants.DatabaseElement.Time && defaultValue == "")
                 {
                     defaultValue = EXAMPLE_TIME;
                 }
 
-                if (type == Constants.FILE || type == Constants.FOLDER || type == Constants.DATE || type == Constants.TIME || type == Constants.NOTE)
+                if (type == Constants.DatabaseElement.File || 
+                    type == Constants.DatabaseElement.Folder || 
+                    type == Constants.DatabaseElement.Date || 
+                    type == Constants.DatabaseElement.Time || 
+                    type == Constants.DatabaseElement.Note)
                 {
-                    bool createContextMenu = (type == Constants.FILE) ? false : true;
+                    bool createContextMenu = (type == Constants.DatabaseElement.File) ? false : true;
                     MyNote myNote = new MyNote(this, createContextMenu);
                     myNote.Key = key;
                     myNote.Label = label;
@@ -83,13 +87,13 @@ namespace Timelapse
                     myNote.Width = iwidth;
                     myNote.Visible = bvisiblity;
                     myNote.Content = defaultValue;
-                    myNote.ReadOnly = (type == Constants.FOLDER || type == Constants.FILE) ? true : false; // File and Folder Notes are read only i.e., non-editable by the user 
+                    myNote.ReadOnly = (type == Constants.DatabaseElement.Folder || type == Constants.DatabaseElement.File) ? true : false; // File and Folder Notes are read only i.e., non-editable by the user 
                     myNote.Copyable = bcopyable;
                     this.ControlGrid.Inlines.Add(myNote.Container);
                     //this.WP.Children.Add(myNote.Container);
                     this.ControlFromDataLabel.Add(key, myNote);
                 }
-                else if (type == Constants.FLAG || type == Constants.DELETEFLAG)
+                else if (type == Constants.DatabaseElement.Flag || type == Constants.DatabaseElement.DeleteFlag)
                 {
                     MyFlag myFlag = new MyFlag(this, true);
                     myFlag.Key = key;
@@ -105,7 +109,7 @@ namespace Timelapse
                     this.ControlGrid.Inlines.Add(myFlag.Container);  
                     this.ControlFromDataLabel.Add(key, myFlag);
                 }
-                else if (type == Constants.COUNTER)
+                else if (type == Constants.DatabaseElement.Counter)
                 {
                     MyCounter myCounter = new MyCounter(this, true);
                     myCounter.Key = key;
@@ -121,7 +125,7 @@ namespace Timelapse
                     //this.WP.Children.Add(myCounter.Container);
                     this.ControlFromDataLabel.Add(key, myCounter);
                 }
-                else if (type == Constants.FIXEDCHOICE || type == Constants.IMAGEQUALITY)
+                else if (type == Constants.DatabaseElement.FixedChoice || type == Constants.DatabaseElement.ImageQuality)
                 {
                     MyFixedChoice myFixedChoice = new MyFixedChoice(this, true, list);
                     myFixedChoice.Key = key;

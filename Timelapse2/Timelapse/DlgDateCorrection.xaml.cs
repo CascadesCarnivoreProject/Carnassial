@@ -80,7 +80,7 @@ namespace Timelapse
                 if (ticks_difference == 0) return; // No difference, so nothing to correct
 
                 // Update the database
-                dbData.RowsUpdateAllDateTimeFieldsWithCorrectionValue(ticks_difference, 0, dbData.dataTable.Rows.Count); //For all rows...
+                dbData.RowsUpdateAllDateTimeFieldsWithCorrectionValue(ticks_difference, 0, dbData.DataTable.Rows.Count); //For all rows...
 
                 // Add an entry into the log detailing what we just did
                 this.dbData.Log += Environment.NewLine;

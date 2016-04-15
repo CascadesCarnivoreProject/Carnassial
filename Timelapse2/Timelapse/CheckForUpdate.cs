@@ -16,14 +16,14 @@ namespace Timelapse
             {
                 // provide the XmlTextReader with the URL of   our xml document  
 
-                reader = new XmlTextReader(Constants.URL_CONTAINING_LATEST_VERSION_INFO);
+                reader = new XmlTextReader(Constants.LatestVersionAddress.AbsoluteUri);
                 reader.MoveToContent(); // simply (and easily) skip the junk at the beginning  
 
                 // internal - as the XmlTextReader moves only forward, we save current xml element name in elementName variable. 
                 // When we parse a  text node, we refer to elementName to check what was the node name  
                 string elementName = "";
                 // we check if the xml starts with a proper "ourfancyapp" element node  
-                if ((reader.NodeType == XmlNodeType.Element) && (reader.Name == Constants.APPLICATION_NAME))
+                if ((reader.NodeType == XmlNodeType.Element) && (reader.Name == Constants.ApplicationName))
                 {
                     while (reader.Read())
                     {

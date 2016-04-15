@@ -10,7 +10,7 @@ namespace Timelapse
     {
         public static bool CreateBackups(string folderPath, string dbFilename)
         {
-            string BackupFolder = System.IO.Path.Combine(folderPath, Constants.BACKUPFOLDER);   // The Backup Folder 
+            string BackupFolder = System.IO.Path.Combine(folderPath, Constants.File.BackupFolder);   // The Backup Folder 
             string dbFile = System.IO.Path.Combine(folderPath, dbFilename);
             string dbBackupFilename = FileBackup.CreateTimeStampedFileName(dbFilename);
             string dbBackupFile = System.IO.Path.Combine(BackupFolder, dbBackupFilename);
@@ -25,10 +25,10 @@ namespace Timelapse
                 }
 
                 // Backup the CSV file
-                string csvFilename = (System.IO.Path.GetFileNameWithoutExtension(dbFilename) + Constants.CSVSUFFIX);
+                string csvFilename = (System.IO.Path.GetFileNameWithoutExtension(dbFilename) + Constants.File.CsvFileExtension);
                 string csvFile = System.IO.Path.Combine(folderPath, csvFilename);
                 string csvBackupFilename = CreateTimeStampedFileName(csvFilename);
-                string csvBackupFile = System.IO.Path.Combine(folderPath, Constants.BACKUPFOLDER, csvBackupFilename);
+                string csvBackupFile = System.IO.Path.Combine(folderPath, Constants.File.BackupFolder, csvBackupFilename);
                 if (File.Exists(csvFile)) // The CVS file doesn't always exist.
                 {
                     File.Copy(csvFile, csvBackupFile, true);

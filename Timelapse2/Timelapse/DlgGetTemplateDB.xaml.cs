@@ -22,7 +22,7 @@ namespace Timelapse
             InitializeComponent();
             this.path = path;
             RunPath.Text += path;
-            if (File.Exists (System.IO.Path.Combine (path, Constants.XMLTEMPLATEFILENAME)))
+            if (File.Exists (System.IO.Path.Combine (path, Constants.File.XmlTemplateFileName)))
             {
                 this.CodeTemplateMessage1.Visibility = Visibility.Visible;
                 this.CodeTemplateMessage2.Visibility = Visibility.Visible;
@@ -43,7 +43,7 @@ namespace Timelapse
             string templateFile = this.GetTemplatePathFromUser(path);
             if (null != templateFile)
             {
-                File.Copy(templateFile, System.IO.Path.Combine(this.path, Constants.DBTEMPLATEFILENAME));
+                File.Copy(templateFile, System.IO.Path.Combine(this.path, Constants.File.DefaultTemplateDatabaseFileName));
                 this.DialogResult = true;
             }
             else this.DialogResult = false;

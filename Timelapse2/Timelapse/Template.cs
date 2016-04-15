@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 
 namespace Timelapse
@@ -10,67 +11,35 @@ namespace Timelapse
     /// </summary>
     public class Template
     {
-        #region Private variables
-        private SQLiteWrapper DB;            
-        private DataTable m_templateTable = new DataTable();     // A table containing all the names of the data fields 
-        // public Dictionary<String, String> typeToKey = new Dictionary<String, String>();
-        #endregion 
+        private SQLiteWrapper database;
 
-        #region Public Properties 
-
-        
         /// <summary>
-        /// The folder path where the database should be located
+        /// Gets or sets the complete path (including file name) of the template database
         /// </summary>
-        public string Folder { get; set; }   
-   
-        /// <summary>
-        /// The file name of the template db lives
-        /// </summary>
-        public string Filename { get; set; } 
- 
-        /// <summary>
-        /// The complete path (including file name) of the template db
-        /// </summary>
-        public string FilePath { get; set; }   
-   
-        /// <summary>
-        /// // This datatable will contain the template
-        /// </summary>
-        public DataTable templateTable        
-        {
-            set { m_templateTable = value; }
-            get { return m_templateTable; }
-        }
+        public string FilePath { get; set; }
 
-
-        /// Returns true of the Timelapse Template database exists 
+        /// <summary>
+        /// Gets or sets the template table
         /// </summary>
-        public bool Exists { get { return File.Exists(this.FilePath); } }    
-
-        #endregion
+        public DataTable TemplateTable { get; set; }
 
         #region Public methods
-        /// <summary>Constructor </summary>
-        public Template () {}
-
         /// <summary>
         /// Create and assign the connection to the Timelapse Data database
         /// </summary>
-        public bool Open(string folder, string filename)
+        public bool TryOpen(string filePath)
         {
-            // Initialize some variables so we remember them
-            this.Folder = folder;
-            this.Filename = filename;
-            this.FilePath = System.IO.Path.Combine (this.Folder, this.Filename);
-            
             // Check that the database exists and that it can be opened
-            if (!this.Exists) return false;
-            
+            if (!File.Exists(filePath))
+            {
+                return false;
+            }
+
             // Open a connection to the template DB
-            try 
-            { 
-                this.DB = new SQLiteWrapper(this.FilePath);    // Create a pointer to the database and assign it
+            try
+            {
+                this.database = new SQLiteWrapper(filePath);    // Create a pointer to the database and assign it
+                this.FilePath = filePath;
                 return true;
             }
             catch
@@ -94,16 +63,10 @@ namespace Timelapse
             // As well, the contents of the template table are loaded into memory.
 
             // The template table will hold all the values of the TableTemplate in the database
-            bool result;
-            string command_executed;
-            this.templateTable = new DataTable();
-
-            this.templateTable = this.DB.GetDataTableFromSelect(Constants.SELECTSTAR + Constants.TABLETEMPLATE + " ORDER BY  " + Constants.SPREADSHEETORDER + "  ASC", out result, out command_executed);
-            DataRow row;            // The current row
-            String label = "";      // The row's label
-            String data_label = ""; // The row's data label
-            String type = "";       // The row's type
-            String temp = "";
+            DataTable templateTable;
+            bool result = this.database.TryGetDataTableFromSelect(Constants.Database.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Database.SpreadsheetOrder + "  ASC", out templateTable);
+            Debug.Assert(result == true && templateTable != null, String.Format("Loading template table from {0} failed.", this.FilePath));
+            this.TemplateTable = templateTable;
 
             int counter_count = 0;  // The number of counters/ choices/ notes seen so far
             int choice_count = 0;
@@ -112,63 +75,82 @@ namespace Timelapse
 
             Dictionary<String, Object> dataline = new Dictionary<String, Object>();    // Will hold key/value pairs that have change din the current row
             // For each row...
-            for (int i = 0; i < templateTable.Rows.Count; i++)
+            for (int i = 0; i < this.TemplateTable.Rows.Count; i++)
             {
-                row = templateTable.Rows[i];
+                DataRow row = this.TemplateTable.Rows[i];
 
                 // Get various values from each row
-                type = (string)row[Constants.TYPE];
+                string type = (string)row[Constants.Database.Type];
                 // Not sure why, but if its an empty value it doesn't like it. Therefore we do this in a try/catch.
-                try { label = (string)row[Constants.LABEL]; }
-                catch { label = ""; }
-                try { data_label = (string)row[Constants.DATALABEL]; }
-                catch { data_label = ""; }
+                string label;      // The row's label
+                try
+                {
+                    label = (string)row[Constants.Control.Label];
+                }
+                catch
+                {
+                    label = String.Empty;
+                }
+
+                string data_label; // The row's data label
+                try
+                {
+                    data_label = (string)row[Constants.Control.DataLabel];
+                }
+                catch
+                {
+                    data_label = String.Empty;
+                }
 
                 // Increment the times we have seen a particular type, and compose a possible unique label identifying it (e.g., Counter3)
+                string temp;
                 switch (type)
                 {
-                    case Constants.COUNTER:
+                    case Constants.DatabaseElement.Counter:
                         counter_count++;
                         temp = type + counter_count.ToString();
                         break;
-                    case Constants.FIXEDCHOICE:
+                    case Constants.DatabaseElement.FixedChoice:
                         choice_count++;
                         temp = type + choice_count.ToString();
                         break;
-                    case Constants.NOTE:
+                    case Constants.DatabaseElement.Note:
                         note_count++;
                         temp = type + note_count.ToString();
                         break;
-                    case Constants.FLAG:
+                    case Constants.DatabaseElement.Flag:
                         flag_count++;
                         temp = type + flag_count.ToString();
                         break;
                     default:
-                        temp = "";
+                        temp = String.Empty;
                         break;
                 }
 
                 // Check if various values are empty, and if so update the row and fill the dataline with appropriate defaults
                 dataline.Clear();
-                if ("" == data_label.Trim() && "" == label.Trim()) // No labels / data labels, so use the ones we created
+                if (String.Empty == data_label.Trim() && String.Empty == label.Trim())
                 {
-                    dataline.Add(Constants.LABEL, temp);
-                    dataline.Add(Constants.DATALABEL, temp);
-                    row[Constants.LABEL] = temp;
-                    row[Constants.DATALABEL] = temp;
+                    // No labels / data labels, so use the ones we created
+                    dataline.Add(Constants.Control.Label, temp);
+                    dataline.Add(Constants.Control.DataLabel, temp);
+                    row[Constants.Control.Label] = temp;
+                    row[Constants.Control.DataLabel] = temp;
                 }
-                else if ("" == data_label.Trim())   // No data label but a label, so use the label's value
+                else if (String.Empty == data_label.Trim())
                 {
-                    dataline.Add(Constants.DATALABEL, label);
-                    row[Constants.DATALABEL] = row[Constants.LABEL];
+                    // No data label but a label, so use the label's value
+                    dataline.Add(Constants.Control.DataLabel, label);
+                    row[Constants.Control.DataLabel] = row[Constants.Control.Label];
                 }
 
                 // Now add the new values to the database
                 if (dataline.Count > 0)
                 {
-                    string id = row[Constants.ID].ToString();
-                    string cmd = Constants.ID + " = " + id;
-                    this.DB.UpdateWhere(Constants.TABLETEMPLATE, dataline, cmd, out result, out command_executed);
+                    string id = row[Constants.Database.ID].ToString();
+                    string cmd = Constants.Database.ID + " = " + id;
+                    string command_executed;
+                    this.database.UpdateWhere(Constants.Database.TemplateTable, dataline, cmd, out result, out command_executed);
                 }
             }
         }
@@ -177,11 +159,12 @@ namespace Timelapse
         // Currently unused
         public void GetSchema()
         {
-            bool result = false;
-            string command_executed = "";
-          
-            DataTable temp = this.DB.GetDataTableFromSelect("Pragma table_info('" + Constants.TABLETEMPLATE + "')", out result, out  command_executed);
-            if (result == false) return;
+            DataTable temp;
+            if (this.database.TryGetDataTableFromSelect("Pragma table_info('" + Constants.Database.TemplateTable + "')", out temp) == false)
+            {
+                return;
+            }
+
             for (int i = 0; i < temp.Rows.Count; i++)
             {
                 string s = "=Template===";

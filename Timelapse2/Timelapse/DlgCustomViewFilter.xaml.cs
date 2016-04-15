@@ -118,7 +118,7 @@ namespace Timelapse
                 comboboxExpressions.Width = 60;
                 comboboxExpressions.Margin = thickness;
                 comboboxExpressions.IsEnabled = customFilter.SearchTermList[row_count].UseForSearching; ;
-                comboboxExpressions.ItemsSource = (type == Constants.COUNTER) ? number_expressions : text_expressions;
+                comboboxExpressions.ItemsSource = (type == Constants.DatabaseElement.Counter) ? number_expressions : text_expressions;
                 comboboxExpressions.SelectionChanged += CbExpressions_SelectionChanged; // Create the callback that is invoked whenever the user changes the expresison
 
                 Grid.SetRow(comboboxExpressions, row_count);
@@ -128,7 +128,7 @@ namespace Timelapse
                 // Value column: The value used for comparison in the search
                 // Notes and Counters both uses a text field, so they can be constructed as a textbox
                 // However, Counters textboxes are modified to only allow integer input (both direct typing or pasting are checked)
-                if (type == Constants.NOTE || type == Constants.COUNTER)
+                if (type == Constants.DatabaseElement.Note || type == Constants.DatabaseElement.Counter)
                 {
                     TextBox tboxValue = new TextBox();
                     tboxValue.Text = customFilter.SearchTermList[row_count].Value;
@@ -141,7 +141,7 @@ namespace Timelapse
                     tboxValue.Margin = thickness;
 
                     // The following is specific only to Counters
-                    if (type == Constants.COUNTER)
+                    if (type == Constants.DatabaseElement.Counter)
                     {
                         tboxValue.PreviewTextInput += TxtboxCounterValue_PreviewTextInput;
                         DataObject.AddPastingHandler(tboxValue, tboxCounterValueOnPaste);
@@ -153,7 +153,7 @@ namespace Timelapse
                     grid.Children.Add(tboxValue);
                 }
                 // FixedChoice and ImageQuality both present combo boxes, so they can be constructed the same way
-                else if (type == Constants.FIXEDCHOICE || type == Constants.IMAGEQUALITY)
+                else if (type == Constants.DatabaseElement.FixedChoice || type == Constants.DatabaseElement.ImageQuality)
                 {
                     ComboBox comboBoxValue = new ComboBox();
 
@@ -172,11 +172,9 @@ namespace Timelapse
                     Grid.SetColumn(comboBoxValue, 3);
                     grid.Children.Add(comboBoxValue);
                 }
-
-                // Flags present checkboxes
-                else if (type == Constants.FLAG)
+                else if (type == Constants.DatabaseElement.Flag)
                 {
-
+                    // Flags present checkboxes
                     CheckBox cbFlag = new CheckBox();
                     cbFlag.Margin = thickness;
                     cbFlag.IsEnabled = customFilter.SearchTermList[row_count].UseForSearching; ;

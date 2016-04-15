@@ -28,7 +28,7 @@ namespace Timelapse
             int row = -1;
             for (int i = dbData.CurrentRow - 1; i >=0; i--) // Search for the row with some value in it, starting from the previous row
             {
-                valueToCopy = (string) dbData.dataTable.Rows[i][key];
+                valueToCopy = (string) dbData.DataTable.Rows[i][key];
                 valueToCopy = valueToCopy.Trim();
                 if ( valueToCopy.Length  > 0 )  
                 {
@@ -51,12 +51,12 @@ namespace Timelapse
                 dlgMB.MessageTitle = "Nothing to Propagate to Here.";
                 dlgMB.MessageReason = "None of the earlier images have anything in this field, so there are no values to propagate.";
                 dlgMB.ShowDialog();
-                return (string) dbData.dataTable.Rows[dbData.CurrentRow][key]; // No change, so return the current value
+                return (string) dbData.DataTable.Rows[dbData.CurrentRow][key]; // No change, so return the current value
             }
             int number_images_affected = this.dbData.CurrentRow - row;
             if (this.PropagateFromLastValue(valueToCopy, (number_images_affected).ToString()) != true) 
             {
-                return (string)dbData.dataTable.Rows[dbData.CurrentRow][key]; // No change, so return the current value
+                return (string)dbData.DataTable.Rows[dbData.CurrentRow][key]; // No change, so return the current value
             };
 
             // Update. Note that we start on the next row, as we are copying from the current row.
@@ -71,7 +71,7 @@ namespace Timelapse
             string valueToCopy = this.dbData.RowGetValueFromDataLabel(key);
             valueToCopy = valueToCopy.Trim();
 
-            int number_images_affected = this.dbData.dataTable.Rows.Count;
+            int number_images_affected = this.dbData.DataTable.Rows.Count;
 
             if (CopyCurrentValueToAll(valueToCopy, number_images_affected.ToString(), checkForZero ) != true) return;
             this.dbData.RowsUpdateAllFilteredView (key, valueToCopy);
@@ -85,7 +85,7 @@ namespace Timelapse
             string valueToCopy = this.dbData.RowGetValueFromDataLabel(key);
             valueToCopy = valueToCopy.Trim();
 
-            int number_images_affected = this.dbData.dataTable.Rows.Count - this.dbData.CurrentRow - 1;
+            int number_images_affected = this.dbData.DataTable.Rows.Count - this.dbData.CurrentRow - 1;
 
             if (number_images_affected == 0)
             { 
@@ -114,7 +114,7 @@ namespace Timelapse
             int row = -1;
             for (int i = dbData.CurrentRow - 1; i >= 0; i--) // Search for the row with some value in it, starting from the previous row
             {
-                valueToCopy = (string)dbData.dataTable.Rows[i][key];
+                valueToCopy = (string)dbData.DataTable.Rows[i][key];
 
                 if (valueToCopy.Trim().Length > 0)
                 {
@@ -131,7 +131,7 @@ namespace Timelapse
         public bool Forward_IsPossible(string key)
         {
             string valueToCopy = this.dbData.RowGetValueFromDataLabel(key);
-            int number_images_affected = this.dbData.dataTable.Rows.Count - this.dbData.CurrentRow - 1;
+            int number_images_affected = this.dbData.DataTable.Rows.Count - this.dbData.CurrentRow - 1;
 
             return (number_images_affected > 0) ? true : false;
         }

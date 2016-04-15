@@ -73,7 +73,7 @@ namespace Timelapse
             GridLength gridlength20 = new GridLength(1, GridUnitType.Auto);
             for (int i = 0; i < deletedTable.Rows.Count; i++ )
             {
-                fname = (string) deletedTable.Rows[i][Constants.FILE];
+                fname = (string) deletedTable.Rows[i][Constants.DatabaseElement.File];
                 
                 label = new Label();
                 label.Content = fname;
@@ -82,7 +82,7 @@ namespace Timelapse
 
                 path = System.IO.Path.Combine(this.imageFolderPath, fname);
 
-                if (Constants.IMAGEQUALITY_CORRUPTED == (string)deletedTable.Rows[i][Constants.IMAGEQUALITY])
+                if (Constants.ImageQuality.Corrupted == (string)deletedTable.Rows[i][Constants.DatabaseElement.ImageQuality])
                     image = this.getImage(path, "corrupted");
                 else if (File.Exists(path))
                     image = this.getImage(path, "ok");
@@ -140,12 +140,12 @@ namespace Timelapse
             Mouse.OverrideCursor = Cursors.Wait; 
             for (int i = 0; i < deletedTable.Rows.Count; i++)
             {
-                fname = (string)this.deletedTable.Rows[i][Constants.FILE];
-                Int64 id = (Int64) this.deletedTable.Rows[i][Constants.ID];
-                string datalabel = (string) this.dbData.DataLabelFromType[Constants.DELETEFLAG];
+                fname = (string)this.deletedTable.Rows[i][Constants.DatabaseElement.File];
+                Int64 id = (Int64) this.deletedTable.Rows[i][Constants.Database.ID];
+                string datalabel = (string) this.dbData.DataLabelFromType[Constants.DatabaseElement.DeleteFlag];
                 this.dbData.UpdateRow((int) id, datalabel, "false");
                 path = System.IO.Path.Combine(this.imageFolderPath, fname);
-                if (this.deleteData) IDs.Add((Int64) this.deletedTable.Rows[i][Constants.ID]);
+                if (this.deleteData) IDs.Add((Int64) this.deletedTable.Rows[i][Constants.Database.ID]);
                 if (File.Exists(path))
                     moveImageToBackupFolder(this.imageFolderPath, fname);
             }
@@ -176,25 +176,13 @@ namespace Timelapse
             }
             else if (state.Equals("missing"))
             {
-                bi = Utilities.BitmapFromResource(bi, "missing.jpg", true, 0, 0);
+                bi = Utilities.BitmapFromResource(bi, "missing.jpg", true);
             }
             else if (state.Equals("corrupted"))
             {
-                bi = Utilities.BitmapFromResource(bi, "corrupted.jpg", true, 0, 0);
+                bi = Utilities.BitmapFromResource(bi, "corrupted.jpg", true);
             }
             return bi;
-        }
-
-
-        /// <summary>
-        /// Display the deleted image placeholder so the user knows what it looks like
-        /// </summary>
-        private void showDeletedImage()
-        {
-            //// Get and display the bitmap
-            //var bi = new BitmapImage();
-            //bi = Utilities.BitmapFromResource(bi, "missing.jpg", true, 0, 0);
-            //this.deletedImage.Source = bi;
         }
 
         /// <summary>
@@ -205,7 +193,7 @@ namespace Timelapse
             string sourceFile = System.IO.Path.Combine(folderpath, fname);
             if (!File.Exists(sourceFile)) return;  // If there is no source file, its a missing file so we can't back it up
 
-            string destFolder = System.IO.Path.Combine(folderpath, Constants.BACKUPFOLDER);
+            string destFolder = System.IO.Path.Combine(folderpath, Constants.File.BackupFolder);
             string destFile = System.IO.Path.Combine(destFolder, fname);
 
             // Create a new target folder, if necessary.

@@ -118,11 +118,11 @@ namespace Timelapse
             bi.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
             if (this.isCorrupted) // Show the corrupted iamge placeholder
             {
-                bi = Utilities.BitmapFromResource(bi, "corrupted.jpg", true, 0, 0);
+                bi = Utilities.BitmapFromResource(bi, "corrupted.jpg", true);
             }
             else if (!File.Exists(System.IO.Path.Combine(this.imageFolderPath, this.imageFilename)))
             {
-                bi = Utilities.BitmapFromResource(bi, "missing.jpg", true, 0, 0);
+                bi = Utilities.BitmapFromResource(bi, "missing.jpg", true);
             }
             else
             {
@@ -139,7 +139,7 @@ namespace Timelapse
         {
             // Get and display the bitmap
             var bi = new BitmapImage();
-            bi = Utilities.BitmapFromResource(bi, "missing.jpg", true, 0, 0);
+            bi = Utilities.BitmapFromResource(bi, "missing.jpg", true);
             this.deletedImage.Source = bi;
         }
 
@@ -149,7 +149,7 @@ namespace Timelapse
         private void moveImageToBackupFolder()
         {
             string sourceFile = System.IO.Path.Combine(this.imageFolderPath, this.imageFilename);
-            string destFolder = System.IO.Path.Combine(this.imageFolderPath, Constants.BACKUPFOLDER);
+            string destFolder = System.IO.Path.Combine(this.imageFolderPath, Constants.File.BackupFolder);
             string destFile = System.IO.Path.Combine(destFolder, this.imageFilename);
 
             if (!File.Exists (sourceFile)) return;  // If there is no source file, its a missing file so we can't back it up

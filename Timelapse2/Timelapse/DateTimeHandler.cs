@@ -18,6 +18,14 @@ namespace Timelapse
         private const int NOMINUTE = 0;
         private const int NOSECONDS = 0;
 
+        // To keep track of image counts and the order of dates
+        private enum DateOrder : int
+        {
+            DayMonth = 0,
+            MonthDay = 1,
+            Unknown = 2
+        }
+
         #region Public Static Methods
 
         public static bool VerifyAndUpdateDates(List<ImageProperties> imgprop_list)
@@ -37,7 +45,7 @@ namespace Timelapse
             {
                 // We ideally want to use the metadata date. 
                 // If the image is corrupted we fall back to the file date
-                imgprop.UseMetadata = (imgprop.ImageQuality == (int)Constants.ImageQualityFilters.Corrupted) ? false : true;
+                imgprop.UseMetadata = (imgprop.ImageQuality == ImageQualityFilter.Corrupted) ? false : true;
 
                 if (imgprop.UseMetadata)
                 {
@@ -64,7 +72,7 @@ namespace Timelapse
                     imgprop.FinalTime = DateTimeHandler.StandardTimeString(imgprop.DateFileCreation);
                     if (dtDate.Day > 12) ambiguous_date_order = false;
                 }
-                imgprop.DateOrder = (int)Constants.DateOrder.DayMonth; // REMOVE THIS WHEN WE FIGURE THINGS OUT
+                imgprop.DateOrder = (int)DateOrder.DayMonth; // REMOVE THIS WHEN WE FIGURE THINGS OUT
             }
             return ambiguous_date_order;
         }
@@ -146,13 +154,13 @@ namespace Timelapse
             string sdate ;
 
             // First, do a pass to see if swapping the date/time order is even possible
-            for (int i = 0; i < dbData.dataTable.Rows.Count; i++)
+            for (int i = 0; i < dbData.DataTable.Rows.Count; i++)
             {
                // Skip over corrupted images for now, as we know those dates are likley wrong
                if (dbData.RowIsImageCorrupted(i)) continue;
 
                // Parse the date, which should always work at this point. But just in case, put out a debug message
-               sdate = (string) dbData.dataTable.Rows[i][Constants.DATE] + " " + (string) dbData.dataTable.Rows[i][Constants.TIME];
+               sdate = (string) dbData.DataTable.Rows[i][Constants.DatabaseElement.Date] + " " + (string) dbData.DataTable.Rows[i][Constants.DatabaseElement.Time];
                succeeded = DateTime.TryParse(sdate, out date);
                if (!succeeded) Debug.Print("In SwapDayMonth - something went wrong trying to parse a date!");
 

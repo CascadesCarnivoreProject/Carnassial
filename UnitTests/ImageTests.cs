@@ -15,7 +15,7 @@ namespace UnitTests
             string folderPath = Environment.CurrentDirectory;
             string imageFile = "BushnellTrophyHD-119677C-20160224-056.JPG";
 
-            DBData database = new DBData();
+            DBData database = new DBData(folderPath, "ImageTests.ddb");
             DlgPopulateFieldWithMetadata populateFieldDialog = new DlgPopulateFieldWithMetadata(database, imageFile, folderPath);
             populateFieldDialog.LoadExif();
             Dictionary<string, string> exif = (Dictionary<string, string>)populateFieldDialog.dg.ItemsSource;
