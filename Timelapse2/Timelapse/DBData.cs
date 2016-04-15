@@ -417,7 +417,7 @@ namespace Timelapse
 
             DataTable dataTable;
             result = this.database.TryGetDataTableFromSelect(query, out dataTable);
-            this.DataTable = this.DataTable;
+            this.DataTable = dataTable;
             return true;
         }
 

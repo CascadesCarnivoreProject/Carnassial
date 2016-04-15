@@ -40,36 +40,24 @@ namespace Timelapse
 
         private void RescanDates()
         {
-            DateTimeHandler dateTimeHandler = new DateTimeHandler();
-            FileInfo fileInfo;
-
             // Collect the image properties for for the 2nd pass into a list...
-            ImageProperties imgprop;  
             List<ImageProperties> imgprop_list = new List<ImageProperties>();
-
-            Dictionary<String, String> dataline = new Dictionary<String, String>();   // Populate the data for the image
- 
-            // This tuple list will hold the id, key and value that we will want to update in the database
-            List<Tuple<int, string, string>> list_to_update_db = new List<Tuple<int, string, string>>();
 
             // This list will hold key / value pairs that will be bound to the datagrid feedback, 
             // which is the way to make those pairs appear in the data grid during background worker progress updates
-            ObservableCollection<MyFeedbackPair> MyFeedbackPairList = new ObservableCollection<MyFeedbackPair>();
-            this.dgFeedback.ItemsSource = MyFeedbackPairList;
+            ObservableCollection<MyFeedbackPair> feedbackPairList = new ObservableCollection<MyFeedbackPair>();
+            this.dgFeedback.ItemsSource = feedbackPairList;
 
-            // all the different formats used by cameras, including ambiguities in month/day vs day/month orders.
-            DateTimeStyles styles;
-            CultureInfo invariantCulture;
-            invariantCulture = CultureInfo.CreateSpecificCulture("");
-            styles = DateTimeStyles.None;
+            BackgroundWorker bgw = new BackgroundWorker()
+            {
+                WorkerReportsProgress = true
+            };
 
-            var bgw = new BackgroundWorker() { WorkerReportsProgress = true };
             bgw.DoWork += (ow, ea) =>
             {   // this runs on the background thread; its written as an anonymous delegate
                 // We need to invoke this to allow updates on the UI
                 this.Dispatcher.Invoke(new Action(() =>
                 {
-                    ;
                     // First, change the UIprovide some feedback
                     bgw.ReportProgress(0, new FeedbackMessage("Pass 1: Examining all images...", "Checking if dates/time differ"));
                 }));
@@ -79,28 +67,28 @@ namespace Timelapse
                 int j = 1;
                 for (int i = 0; i < count; i++)
                 {
-                    fileInfo = new FileInfo(System.IO.Path.Combine(dbData.FolderPath, dbData.DataTable.Rows[i][Constants.DatabaseElement.File].ToString()));
-                    BitmapSource bmap = null;
-
-                    imgprop = new ImageProperties();                            // We will store the various times here
-                    imgprop.Name = dbData.DataTable.Rows[i][Constants.DatabaseElement.File].ToString();
-                    imgprop.ID = Int32.Parse(dbData.DataTable.Rows[i][Constants.Database.ID].ToString());
+                    // We will store the various times here
+                    ImageProperties imageProperties = new ImageProperties();
+                    imageProperties.File = dbData.DataTable.Rows[i][Constants.DatabaseElement.File].ToString();
+                    imageProperties.Folder = dbData.DataTable.Rows[i][Constants.DatabaseElement.Folder].ToString();
+                    imageProperties.ID = Int32.Parse(dbData.DataTable.Rows[i][Constants.Database.ID].ToString());
                     string message = "";
                     try
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just to the catch.
-                        bmap = BitmapFrame.Create(new Uri(fileInfo.FullName), BitmapCreateOptions.None, BitmapCacheOption.None);
+                        BitmapSource bmap = imageProperties.Load(dbData.FolderPath);
 
                         // First we try to see if  can get a valid and parsable metadata date and time
                         BitmapMetadata meta = (BitmapMetadata)bmap.Metadata;        // Get the data from the metadata
                         if (null != meta.DateTaken)
                         {
                            DateTime dtDate;
-                           if (DateTime.TryParse(meta.DateTaken, invariantCulture, styles, out dtDate))
+                           // all the different formats used by cameras, including ambiguities in month/day vs day/month orders.
+                           if (DateTime.TryParse(meta.DateTaken, CultureInfo.InvariantCulture, DateTimeStyles.None, out dtDate))
                            {
-                               imgprop.FinalDate = DateTimeHandler.StandardDateString(dtDate);
-                               imgprop.FinalTime = DateTimeHandler.StandardTimeString(dtDate);
+                               imageProperties.FinalDate = DateTimeHandler.StandardDateString(dtDate);
+                               imageProperties.FinalTime = DateTimeHandler.StandardTimeString(dtDate);
                                message += " Using metadata timestamp";
                            }
                         }
@@ -108,41 +96,49 @@ namespace Timelapse
                         {
                             // For some reason, different versions of Windows treat creation time and modification time differently, 
                             // giving inconsistent values. So I just check both and take the lesser of the two.
+                            FileInfo fileInfo = imageProperties.GetFileInfo(dbData.FolderPath);
                             DateTime creationTime = File.GetCreationTime(fileInfo.FullName);
                             DateTime writeTime = File.GetLastWriteTime(fileInfo.FullName);
                             DateTime fileTime = (DateTime.Compare(creationTime, writeTime) < 0) ? creationTime : writeTime;
-                            imgprop.FinalDate = DateTimeHandler.StandardDateString(fileTime);
-                            imgprop.FinalTime = DateTimeHandler.StandardTimeString(fileTime);
+                            imageProperties.FinalDate = DateTimeHandler.StandardDateString(fileTime);
+                            imageProperties.FinalTime = DateTimeHandler.StandardTimeString(fileTime);
                             message += " Using File timestamp";
                         }
-                        if (imgprop.FinalDate.Equals(dbData.DataTable.Rows[i][Constants.DatabaseElement.Date].ToString()))
+                        if (imageProperties.FinalDate.Equals(dbData.DataTable.Rows[i][Constants.DatabaseElement.Date].ToString()))
                         {
                             message += ", same date";
-                            imgprop.FinalDate = ""; // If its the same, we won't copy it
+                            imageProperties.FinalDate = ""; // If its the same, we won't copy it
                         }
                         else
+                        {
                             message += ", different date";
-                        if (imgprop.FinalTime.Equals(dbData.DataTable.Rows[i][Constants.DatabaseElement.Time].ToString()))
+                        }
+                        if (imageProperties.FinalTime.Equals(dbData.DataTable.Rows[i][Constants.DatabaseElement.Time].ToString()))
                         {
                             message += ", same time";
-                            imgprop.FinalTime = ""; // If its the same, we won't copy it
+                            imageProperties.FinalTime = ""; // If its the same, we won't copy it
                         }
                         else
-                            message += ", different time"; 
-                        imgprop_list.Add(imgprop);
+                        {
+                            message += ", different time";
+                        }
+                        imgprop_list.Add(imageProperties);
                     }
                     catch // Image isn't there
                     {
                         message += " , skipping as cannot open image.";
                     }
                     j++;
-                    bgw.ReportProgress(0, new FeedbackMessage(imgprop.Name, message));
+                    bgw.ReportProgress(0, new FeedbackMessage(imageProperties.File, message));
                     if (i % 100 == 0) System.Threading.Thread.Sleep(25); // Put in a delay every now and then, as otherwise the UI won't update.
                 }
 
                 // Pass 2. Update each date as needed 
                 string msg = "";
                 bgw.ReportProgress(0, new FeedbackMessage("Pass 2: For selected images", "Updating only when dates or times differ..."));
+
+                // This tuple list will hold the id, key and value that we will want to update in the database
+                List<Tuple<int, string, string>> list_to_update_db = new List<Tuple<int, string, string>>();
                 for (int i = 0; i < imgprop_list.Count; i++)
                 {
                     if ( ! (imgprop_list[i].FinalDate.Equals("")) && !(imgprop_list[i].FinalTime.Equals("")))
@@ -168,7 +164,7 @@ namespace Timelapse
                     {
                         msg = "Updating not required";  
                     }
-                    bgw.ReportProgress(0, new FeedbackMessage(imgprop_list[i].Name, msg));
+                    bgw.ReportProgress(0, new FeedbackMessage(imgprop_list[i].File, msg));
                     if (i % 100 == 0) System.Threading.Thread.Sleep(25); // Put in a delay every now and then, as otherwise the UI won't update.
                 }
                 bgw.ReportProgress(0, new FeedbackMessage("Writing to database...", "Please wait"));
@@ -179,7 +175,7 @@ namespace Timelapse
             bgw.ProgressChanged += (o, ea) =>
             {
                 FeedbackMessage message = (FeedbackMessage)ea.UserState;
-                MyFeedbackPairList.Add(new MyFeedbackPair { Image = message.ImageName, Message = message.Message });
+                feedbackPairList.Add(new MyFeedbackPair { Image = message.ImageName, Message = message.Message });
                 this.dgFeedback.ScrollIntoView(dgFeedback.Items[dgFeedback.Items.Count - 1]);
             };
             bgw.RunWorkerCompleted += (o, ea) =>

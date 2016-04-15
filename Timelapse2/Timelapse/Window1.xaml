@@ -87,12 +87,13 @@
                 <MenuItem Header="_File" IsTabStop="false">
                     <MenuItem Name="MenuItemLoadImages" Header="_Load images from folder..." Click="MenuItemLoadImages_Click" ToolTip="Asks for the image folder location, either creating a new database or opening an existing one"/>
                     <Separator />
-                    <MenuItem Name="MenuItemExportAsCSV" Header="_Export data for these images as CSV File" IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated values) file"/>
-                    <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="_Export data for these images as CSV file and preview in Excel " IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated value) file and previews it in Excel"/>
+                    <MenuItem Name="MenuItemExportAsCSV" Header="Export data for these images as a _CSV file..." IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated values) file"/>
+                    <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="Export data for these images as CSV file and preview in _Excel..." IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated value) file and previews it in Excel"/>
                     <Separator />
-                    <MenuItem Name="MenuItemExportThisImage" Header="_Export this image..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) this image into a particular folder"/>
+                    <MenuItem Name="MenuItemExportThisImage" Header="Export this _image..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) this image into a particular folder"/>
                     <Separator />
                     <MenuItem Name="MenuItemRenameDataFile" Header="_Rename the data file..." Click="MenuItemRenameDataFile_Click" IsEnabled="false" ToolTip="Renames the data file to a name of your choosing"/>
+                    <MenuItem Name="MenuItemAddImagesToDataFile" Header="_Add images to data file..." Click="MenuItemAddImagesToDataFile_Click" IsEnabled="false" ToolTip="Renames the data file to a name of your choosing"/>
                     <Separator />
                     <MenuItem Name="MenuItemRecentDataFiles" Header="Recent _data files" IsEnabled="false" ToolTip="Recently used folders or data files"/>
                     <Separator />
@@ -158,7 +159,7 @@
                 </MenuItem>
 
                 <!-- Filter Menu -->
-                <MenuItem x:Name="MenuItemFilter" Header="_Filter" IsEnabled="false" IsTabStop="false" SubmenuOpened="View_SubmenuOpening" ToolTip="Filter the data to only show a subset of the images">
+                <MenuItem x:Name="MenuItemFilter" Header="F_ilter" IsEnabled="false" IsTabStop="false" SubmenuOpened="View_SubmenuOpening" ToolTip="Filter the data to only show a subset of the images">
                     <MenuItem x:Name="MenuItemViewAllImages" IsCheckable="True" IsChecked="True" Header="_All Images" Click="MenuItemView_Click" ToolTip="Shows all images, including corrupted and dark ones"/>
                     <MenuItem x:Name="MenuItemViewLightImages"   IsCheckable="True" IsChecked="False" Header="_Light Images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to remove those that are dark or corrupted"/>
                     <MenuItem x:Name="MenuItemViewDarkImages" IsCheckable="True" IsChecked="False" Header="_Dark Images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only dark images"/>

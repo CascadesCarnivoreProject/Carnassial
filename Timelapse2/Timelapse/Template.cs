@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 
 namespace Timelapse
@@ -63,7 +64,8 @@ namespace Timelapse
 
             // The template table will hold all the values of the TableTemplate in the database
             DataTable templateTable;
-            this.database.TryGetDataTableFromSelect(Constants.Database.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Database.SpreadsheetOrder + "  ASC", out templateTable);
+            bool result = this.database.TryGetDataTableFromSelect(Constants.Database.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Database.SpreadsheetOrder + "  ASC", out templateTable);
+            Debug.Assert(result == true && templateTable != null, String.Format("Loading template table from {0} failed.", this.FilePath));
             this.TemplateTable = templateTable;
 
             int counter_count = 0;  // The number of counters/ choices/ notes seen so far
@@ -147,7 +149,6 @@ namespace Timelapse
                 {
                     string id = row[Constants.Database.ID].ToString();
                     string cmd = Constants.Database.ID + " = " + id;
-                    bool result;
                     string command_executed;
                     this.database.UpdateWhere(Constants.Database.TemplateTable, dataline, cmd, out result, out command_executed);
                 }

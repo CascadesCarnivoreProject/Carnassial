@@ -12,14 +12,6 @@ namespace Timelapse
     internal class Utilities
     {
         #region Folder paths and folder names
-
-        // Given a folder path, return only the folder name
-        public static string GetFolderNameFromFolderPath(string folder_path)
-        {
-            string[] directories = folder_path.Split(Path.DirectorySeparatorChar);
-            return directories[directories.Length - 1];
-        }
-
         // get a location for the template database from the user
         public static bool TryGetTemplateFileFromUser(string defaultTemplateFilePath, out string templateDatabasePath)
         {

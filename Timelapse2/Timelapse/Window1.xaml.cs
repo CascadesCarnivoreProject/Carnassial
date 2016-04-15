@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using FolderBrowserDialog = System.Windows.Forms.FolderBrowserDialog;
 
 namespace Timelapse
 {
@@ -26,10 +27,7 @@ namespace Timelapse
         private CustomFilter customfilter;
 
         // the database that holds all the data
-        private DBData imageDatabase = new DBData();
-
-        // an array of image files, in sequence
-        private FileInfo[] imageFilePaths;
+        private DBData imageDatabase;
         private Controls myControls;
 
         // These are used for Image differencing
@@ -113,8 +111,8 @@ namespace Timelapse
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            string executable_folder = System.IO.Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
-            if (!File.Exists(System.IO.Path.Combine(executable_folder, "System.Data.SQLite.dll")))
+            string directoryContainingTimelapse = Path.GetDirectoryName(this.GetType().Assembly.Location);
+            if (!File.Exists(Path.Combine(directoryContainingTimelapse, "System.Data.SQLite.dll")))
             {
                 DlgMessageBox dlgMB = new DlgMessageBox();
                 dlgMB.MessageTitle = "Timelapse needs to be in its original downloaded folder";
@@ -211,11 +209,11 @@ namespace Timelapse
         /// </summary>
         /// <param name="templateDatabasePath">Fully qualified path to the template database file.</param>
         /// <returns>true if the template and images were loaded, false otherwise</returns>
-        private bool TryOpenTemplateAndLoadImages(string templateDatabasePath)
+        internal bool TryOpenTemplateAndLoadImages(string templateDatabasePath)
         {
             // Create the template to the Timelapse Template database
             this.template = new Template();
-            if (!this.template.Open(templateDatabasePath))
+            if (!this.template.TryOpen(templateDatabasePath))
             {
                 this.OnDataFileLoadFailed();
                 // TODO: Saul  notify the user the template couldn't be loaded rather than silently doing nothing
@@ -224,7 +222,7 @@ namespace Timelapse
 
             // update state to the newly selected database template
             string imageDatabaseFileName = Constants.File.DefaultImageDatabaseFileName;
-            if (String.Equals(Path.GetFileName(templateDatabasePath), Constants.File.DefaultTemplateDatabaseFileName, StringComparison.OrdinalIgnoreCase))
+            if (String.Equals(Path.GetFileName(templateDatabasePath), Constants.File.DefaultTemplateDatabaseFileName, StringComparison.OrdinalIgnoreCase) == false)
             {
                 imageDatabaseFileName = Path.GetFileNameWithoutExtension(templateDatabasePath) + Constants.File.ImageDatabaseFileExtension;
             }
@@ -260,7 +258,7 @@ namespace Timelapse
                     break;
                 case 2: // There are no existing .ddb files
                 default:
-                    if (this.LoadByScanningImageFolder() == false)
+                    if (this.LoadByScanningImageFolder(this.FolderPath) == false)
                     {
                         DlgMessageBox messageBox = new DlgMessageBox();
                         messageBox.MessageTitle = "No Images Found in the Image Set Folder";
@@ -274,7 +272,11 @@ namespace Timelapse
                         messageBox.ButtonType = MessageBoxButton.OK;
                         messageBox.ShowDialog();
 
+                        // revert UI to no database loaded state
+                        // but enable adding images so that if the user needs to place the database in a folder which doesn't directly contain 
+                        // any .jpg images they can still add images in other locations
                         this.OnDataFileLoadFailed();
+                        this.MenuItemAddImagesToDataFile.IsEnabled = true;
                         return false;
                     }
                     break;
@@ -288,41 +290,39 @@ namespace Timelapse
         }
 
         // Load all the jpg images found in the folder
-        private bool LoadByScanningImageFolder()
+        private bool LoadByScanningImageFolder(string imageFolderPath)
         {
-            DateTimeHandler dateTimeHandler = new DateTimeHandler();
-            FileInfo fileInfo;
-            ProgressState progressState = new ProgressState();
-            ImageProperties imgprop;  // Collect the image properties for for the 2nd pass...
-            List<ImageProperties> imgprop_list = new List<ImageProperties>();
-            Dictionary<String, String> dataline = new Dictionary<String, String>();   // Populate the data for the image
-            Dictionary<String, String> markerline = new Dictionary<String, String>(); // Populate the markers database, where each key column corresponds to each key counter in the datatable
-            int index = 0;
-            string dataLabel = String.Empty;
-            bool ambiguous_daymonth_order = false;
-
-            this.imageFilePaths = new DirectoryInfo(this.imageDatabase.FolderPath).GetFiles("*.jpg");
-            int count = this.imageFilePaths.Length;
+            FileInfo[] imageFilePaths = new DirectoryInfo(imageFolderPath).GetFiles("*.jpg");
+            int count = imageFilePaths.Length;
             if (count == 0)
             {
                 return false;
             }
 
-            // Create the database and its table before we can load any data into it
-            // Open a connection to the template DB
-            bool result = this.imageDatabase.CreateDB(this.template);
+            // the database and its tables must exist before data can be loaded into it
+            if (this.imageDatabase.Exists() == false)
+            {
+                // TODO: Saul  handle case where database creation fails
+                bool result = this.imageDatabase.TryCreateImageDatabase(this.template);
 
-            // We generate the data user interface controls from the template description after the database has been created from the template
-            this.myControls.GenerateControls(this.imageDatabase);
-            this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
+                // We generate the data user interface controls from the template description after the database has been created from the template
+                this.myControls.GenerateControls(this.imageDatabase);
+                this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
 
-            this.imageDatabase.CreateTables();
-            this.imageDatabase.CreateLookupTables();
+                this.imageDatabase.CreateTables();
+                this.imageDatabase.CreateLookupTables();
+            }
 
             // We want to show previews of the frames to the user as they are individually loaded
             // Because WPF uses a scene graph, we have to do this by a background worker, as this forces the update
-            var bgw = new BackgroundWorker() { WorkerReportsProgress = true };
-            bgw.DoWork += (ow, ea) =>
+            BackgroundWorker backgroundWorker = new BackgroundWorker()
+            {
+                WorkerReportsProgress = true
+            };
+
+            bool ambiguous_daymonth_order = false;
+            ProgressState progressState = new ProgressState();
+            backgroundWorker.DoWork += (ow, ea) =>
             {   // this runs on the background thread; its written as an anonymous delegate
                 // We need to invoke this to allow updates on the UI
                 this.Dispatcher.Invoke(new Action(() =>
@@ -333,51 +333,50 @@ namespace Timelapse
                 }));
 
                 // First pass: Examine images to extract its basic properties
-                BitmapSource bmap;
-                BitmapSource corruptedbmp = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"));
-                for (int i = 0; i < count; i++)
+                BitmapFrame corruptedbmp = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"));
+                List<ImageProperties> imagePropertyList = new List<ImageProperties>();
+                for (int image = 0; image < count; image++)
                 {
-                    fileInfo = imageFilePaths[i];
-                    bmap = null;
+                    FileInfo imageFile = imageFilePaths[image];
+                    ImageProperties imageProperties = new ImageProperties();
+                    imageProperties.File = imageFile.Name;
+                    imageProperties.Folder = NativeMethods.GetRelativePath(this.FolderPath, imageFile.FullName);
+                    imageProperties.Folder = Path.GetDirectoryName(imageProperties.Folder);
 
-                    imgprop = new ImageProperties();
-                    imgprop.Name = fileInfo.Name;
-                    imgprop.Folder = Utilities.GetFolderNameFromFolderPath(this.FolderPath);
+                    BitmapFrame bmap = null;
                     try
                     {
                         // Create the bitmap and determine its ImageQuality 
-                        bmap = BitmapFrame.Create(new Uri(fileInfo.FullName), BitmapCreateOptions.None, BitmapCacheOption.None);
+                        bmap = BitmapFrame.Create(new Uri(imageFile.FullName), BitmapCreateOptions.None, BitmapCacheOption.None);
 
                         bool isDark = PixelBitmap.IsDark(bmap, this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
-                        imgprop.ImageQuality = isDark ? ImageQualityFilter.Dark : ImageQualityFilter.Ok;
+                        imageProperties.ImageQuality = isDark ? ImageQualityFilter.Dark : ImageQualityFilter.Ok;
                     }
                     catch
                     {
                         bmap = corruptedbmp;
-                        imgprop.ImageQuality = ImageQualityFilter.Corrupted;
+                        imageProperties.ImageQuality = ImageQualityFilter.Corrupted;
                     }
 
                     // Get the data from the metadata
                     BitmapMetadata meta = (BitmapMetadata)bmap.Metadata;
-                    imgprop.DateMetadata = meta.DateTaken;
+                    imageProperties.DateMetadata = meta.DateTaken;
                     // For some reason, different versions of Windows treat creation time and modification time differently, 
                     // giving inconsisten values. So I just check both and take the lesser of the two.
-                    DateTime time1 = File.GetCreationTime(fileInfo.FullName);
-                    DateTime time2 = File.GetLastWriteTime(fileInfo.FullName);
-                    imgprop.DateFileCreation = (DateTime.Compare(time1, time2) < 0) ? time1 : time2;
+                    DateTime time1 = File.GetCreationTime(imageFile.FullName);
+                    DateTime time2 = File.GetLastWriteTime(imageFile.FullName);
+                    imageProperties.DateFileCreation = (DateTime.Compare(time1, time2) < 0) ? time1 : time2;
 
                     // Debug.Print(fileInfo.Name + " " + time1.ToString() + " " + time2.ToString() + " " + time3);
-                    imgprop.ID = index + 1; // its plus 1 as the Database IDs start at 1 rather than 0
-                    imgprop_list.Add(imgprop);
+                    imageProperties.ID = image + 1; // its plus 1 as the Database IDs start at 1 rather than 0
+                    imagePropertyList.Add(imageProperties);
 
-                    index++;
-                    int progress = Convert.ToInt32(Convert.ToDouble(index) / Convert.ToDouble(count) * 100);
-
-                    if (index == 1 || (index % 1 == 0))
+                    if (imageProperties.ID == 1 || (imageProperties.ID % Constants.FolderScanProgressUpdateFrequency == 0))
                     {
-                        progressState.Message = String.Format("{0}/{1}: Examining {2}", i, count, imgprop.Name);
+                        progressState.Message = String.Format("{0}/{1}: Examining {2}", image, count, imageProperties.File);
                         progressState.Bmap = bmap;
-                        bgw.ReportProgress(progress, progressState);
+                        int progress = Convert.ToInt32(Convert.ToDouble(imageProperties.ID) / Convert.ToDouble(count) * 100);
+                        backgroundWorker.ReportProgress(progress, progressState);
                     }
                     else
                     {
@@ -388,8 +387,8 @@ namespace Timelapse
                 // Second pass: Determine dates ... This can be pretty quick, so we don't really need to give any feedback on it.
                 progressState.Message = "Second pass";
                 progressState.Bmap = null;
-                bgw.ReportProgress(0, progressState);
-                ambiguous_daymonth_order = DateTimeHandler.VerifyAndUpdateDates(imgprop_list);
+                backgroundWorker.ReportProgress(0, progressState);
+                ambiguous_daymonth_order = DateTimeHandler.VerifyAndUpdateDates(imagePropertyList);
 
                 // Third pass: Update database
                 // TODO This is pretty slow... a good place to make it more efficient by adding multiple values in one shot
@@ -426,20 +425,22 @@ namespace Timelapse
                 List<Dictionary<string, string>> dataline_list;
                 List<Dictionary<string, string>> markerline_list;
                 const int interval = 100;
-                for (int j = 0; j < imgprop_list.Count; j++)
+
+                for (int j = 0; j < imagePropertyList.Count; j++)
                 {
                     // Create a dataline from the image properties, add it to a list of data lines,
                     // then do a multiple insert of the list of datalines to the database 
                     dataline_list = new List<Dictionary<string, string>>();
                     markerline_list = new List<Dictionary<string, string>>();
-                    for (int i = j; (i < (j + interval)) && (i < imgprop_list.Count); i++)
+                    int image = -1;
+                    for (int i = j; (i < (j + interval)) && (i < imagePropertyList.Count); i++)
                     {
                         // THE PROBLEM IS THAT WE ARE NOT ADDING THESE VALUES IN THE SAME ORDER AS THE TABLE
                         // THEY MUST BE IN THE SAME ORDER IE, AS IN THE COLUMNS. This case statement just fills up 
                         // the dataline in the same order as the template table.
                         // It assumes that the key is always the first column
-                        dataline = new Dictionary<string, string>();
-                        markerline = new Dictionary<string, string>();
+                        Dictionary<string, string> dataline = new Dictionary<string, string>();
+                        Dictionary<string, string> markerline = new Dictionary<string, string>();
 
                         for (int col = 0; col < imageDatabase.DataTable.Columns.Count; col++) // Fill up each column in order
                         {
@@ -453,31 +454,31 @@ namespace Timelapse
                             switch (type)
                             {
                                 case Constants.DatabaseElement.File: // Add The File name
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File];
-                                    dataline.Add(dataLabel, imgprop_list[i].Name);
+                                    string dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File];
+                                    dataline.Add(dataLabel, imagePropertyList[i].File);
                                     break;
                                 case Constants.DatabaseElement.Folder: // Add The Folder name
                                     dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.Folder];
-                                    dataline.Add(dataLabel, imgprop_list[i].Folder);
+                                    dataline.Add(dataLabel, imagePropertyList[i].Folder);
                                     break;
                                 case Constants.DatabaseElement.Date:
                                     // Add the date
                                     dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.Date];
-                                    dataline.Add(dataLabel, imgprop_list[i].FinalDate);
+                                    dataline.Add(dataLabel, imagePropertyList[i].FinalDate);
                                     break;
                                 case Constants.DatabaseElement.Time:
                                     // Add the time
                                     dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.Time];
-                                    dataline.Add(dataLabel, imgprop_list[i].FinalTime);
+                                    dataline.Add(dataLabel, imagePropertyList[i].FinalTime);
                                     break;
                                 case Constants.DatabaseElement.ImageQuality: // Add the Image Quality
                                     dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.ImageQuality];
                                     string str = Constants.ImageQuality.Ok;
-                                    if (imgprop_list[i].ImageQuality == ImageQualityFilter.Dark)
+                                    if (imagePropertyList[i].ImageQuality == ImageQualityFilter.Dark)
                                     {
                                         str = Constants.ImageQuality.Dark;
                                     }
-                                    else if (imgprop_list[i].ImageQuality == ImageQualityFilter.Corrupted)
+                                    else if (imagePropertyList[i].ImageQuality == ImageQualityFilter.Corrupted)
                                     {
                                         str = Constants.ImageQuality.Corrupted;
                                     }
@@ -529,39 +530,39 @@ namespace Timelapse
                         {
                             markerline_list.Add(markerline);
                         }
-                        index = i;
+                        image = i;
                     }
 
                     this.imageDatabase.InsertMultipleRows(Constants.Database.DataTable, dataline_list);
                     this.imageDatabase.InsertMultipleRows(Constants.Database.MarkersTable, markerline_list);
                     j = j + interval - 1;
+
                     // Get the bitmap again to show it
-                    if (imgprop_list[index].ImageQuality == ImageQualityFilter.Corrupted)
+                    BitmapFrame bmap;
+                    if (imagePropertyList[image].ImageQuality == ImageQualityFilter.Corrupted)
                     {
                         bmap = corruptedbmp;
                     }
                     else
                     {
-                        bmap = BitmapFrame.Create(new Uri(System.IO.Path.Combine(this.imageDatabase.FolderPath, imgprop_list[index].Name)), BitmapCreateOptions.None, BitmapCacheOption.None);
+                        bmap = imagePropertyList[image].Load(this.FolderPath);
                     }
 
                     // Show progress. Since its slow, we may as well do it every update
-                    int progress2 = Convert.ToInt32(Convert.ToDouble(index) / Convert.ToDouble(count) * 100);
-                    progressState.Message = String.Format("{0}/{1}: Adding {2}", index, count, imgprop_list[index].Name);
+                    int progress2 = Convert.ToInt32(Convert.ToDouble(image) / Convert.ToDouble(count) * 100);
+                    progressState.Message = String.Format("{0}/{1}: Adding {2}", image, count, imagePropertyList[image].File);
                     progressState.Bmap = bmap;
-                    bgw.ReportProgress(progress2, progressState);
+                    backgroundWorker.ReportProgress(progress2, progressState);
                 }
-                // this.dbData.AddNewRow(dataline);
-                // this.dbData.AddNewRow(markerline, Constants.TABLEMARKERS);
             };
-            bgw.ProgressChanged += (o, ea) =>
+            backgroundWorker.ProgressChanged += (o, ea) =>
             {   
                 // this gets called on the UI thread
                 ProgressState progstate = (ProgressState)ea.UserState;
                 Feedback(progressState.Bmap, ea.ProgressPercentage, progressState.Message);
                 this.feedbackCtl.Visibility = System.Windows.Visibility.Visible;
             };
-            bgw.RunWorkerCompleted += (o, ea) =>
+            backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
                 // this.dbData.GetImagesAll(); // Now load up the data table
                 // Get rid of the feedback panel, and show the main interface
@@ -596,19 +597,20 @@ namespace Timelapse
                 // If we want to import old data from the ImageData.xml file, we can do it here...
                 // Check to see if there is an ImageData.xml file in here. If there is, ask the user
                 // if we want to load the data from that...
-                if (File.Exists(System.IO.Path.Combine(this.FolderPath, Constants.File.XmlDataFileName)))
+                if (File.Exists(Path.Combine(this.FolderPath, Constants.File.XmlDataFileName)))
                 {
                     DlgImportImageDataXMLFile dlg = new DlgImportImageDataXMLFile();
                     dlg.Owner = this;
                     bool? result3 = dlg.ShowDialog();
                     if (result3 == true)
                     {
-                        ImageDataXML.Read(System.IO.Path.Combine(this.FolderPath, Constants.File.XmlDataFileName), imageDatabase.TemplateTable, imageDatabase);
+                        ImageDataXML.Read(Path.Combine(this.FolderPath, Constants.File.XmlDataFileName), imageDatabase.TemplateTable, imageDatabase);
                         this.SetImageFilterAndIndex(this.imageDatabase.State_Row, (ImageQualityFilter)this.imageDatabase.State_Filter); // to regenerate the controls and markers for this image
                     }
                 }
             };
-            bgw.RunWorkerAsync();
+
+            backgroundWorker.RunWorkerAsync();
             return true;
         }
 
@@ -689,6 +691,7 @@ namespace Timelapse
 
             // Now that we have something to show, enable menus and menu items as needed
             // Note that we do not enable those menu items that would have no effect
+            this.MenuItemAddImagesToDataFile.IsEnabled = true;
             this.MenuItemLoadImages.IsEnabled = false;
             this.MenuItemExportThisImage.IsEnabled = true;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = true;
@@ -730,8 +733,7 @@ namespace Timelapse
             }
             else
             {
-                // Default to showing first  image of all images
-                this.SetImageFilterAndIndex(0, ImageQualityFilter.All);
+                this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
             }
 
             if (FileBackup.CreateBackups(this.FolderPath, this.imageDatabase.FileName))
@@ -778,9 +780,9 @@ namespace Timelapse
             {
                 dbtable_list.Add((string)databaseTemplateTable.Rows[i][Constants.Control.DataLabel]);
             }
-            for (int i = 0; i < this.template.templateTable.Rows.Count; i++)
+            for (int i = 0; i < this.template.TemplateTable.Rows.Count; i++)
             {
-                templatetable_list.Add((string)this.template.templateTable.Rows[i][Constants.Control.DataLabel]);
+                templatetable_list.Add((string)this.template.TemplateTable.Rows[i][Constants.Control.DataLabel]);
             }
 
             // Check to see if there are field in the template template that are not in the db template
@@ -806,7 +808,7 @@ namespace Timelapse
         #endregion
 
         #region Filters
-        private bool SetImageFilterAndIndex(int index, ImageQualityFilter filter)
+        private bool SetImageFilterAndIndex(int image, ImageQualityFilter filter)
         {
             // Change the filter to reflect what the user selected. Update the menu state accordingly
             // Set the checked status of the radio button menu items to the filter.
@@ -850,7 +852,7 @@ namespace Timelapse
 
                     if (this.state.ImageFilter == ImageQualityFilter.Ok)
                     {
-                        return this.SetImageFilterAndIndex(0, ImageQualityFilter.All);
+                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
                     }
                     this.MenuItemViewSetSelected(this.state.ImageFilter);
                     return false;
@@ -885,7 +887,7 @@ namespace Timelapse
 
                     if (this.state.ImageFilter == ImageQualityFilter.Corrupted)
                     {
-                        return this.SetImageFilterAndIndex(0, ImageQualityFilter.All);
+                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
                     }
 
                     this.MenuItemViewSetSelected(this.state.ImageFilter);
@@ -921,7 +923,7 @@ namespace Timelapse
 
                     if (this.state.ImageFilter == ImageQualityFilter.Dark)
                     {
-                        return this.SetImageFilterAndIndex(0, ImageQualityFilter.All);
+                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
                     }
 
                     this.MenuItemViewSetSelected(this.state.ImageFilter);
@@ -956,7 +958,7 @@ namespace Timelapse
                     dlgMB.ShowDialog();
                     if (this.state.ImageFilter == ImageQualityFilter.Missing)
                     {
-                        return this.SetImageFilterAndIndex(0, ImageQualityFilter.All);
+                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
                     }
                     this.MenuItemViewSetSelected(this.state.ImageFilter);
                     return false;
@@ -992,7 +994,7 @@ namespace Timelapse
 
                     if (this.state.ImageFilter == ImageQualityFilter.MarkedForDeletion)
                     {
-                        return this.SetImageFilterAndIndex(0, ImageQualityFilter.All);
+                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
                     }
                     this.MenuItemViewSetSelected(this.state.ImageFilter);
                     return false;
@@ -1025,16 +1027,16 @@ namespace Timelapse
                     dlgMB.ShowDialog();
                     if (this.state.ImageFilter == ImageQualityFilter.Missing)
                     {
-                        return this.SetImageFilterAndIndex(0, ImageQualityFilter.All);
+                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
                     }
                     this.MenuItemViewSetSelected(this.state.ImageFilter);
                     return false;
                 }
             }
 
-            // Go to the first row.
-            // We may want to change this to try to go to last saved image, if its in this filtered view.
-            this.imageDatabase.ToDataRowIndex(index);
+            // go to the specified image
+            bool imageSeekSucceeded = this.imageDatabase.ToDataRowIndex(image);
+            Debug.Assert(imageSeekSucceeded, String.Format("Failed to reach row index {0} in the image table.  Did table loading fail?", image));
 
             // After a filter change, set the slider to represent the index and the count of the current filter
             this.SldrImageNavigatorEnableCallback(false);
@@ -1375,7 +1377,7 @@ namespace Timelapse
                 }
 
                 // Generate the differenced image. 
-                string fullFileName = System.IO.Path.Combine(this.FolderPath, this.imageDatabase.RowGetValueFromDataLabel((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File], idx));
+                string fullFileName = Path.Combine(this.FolderPath, this.imageDatabase.RowGetValueFromDataLabel((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File], idx));
                 // Check if that file actually exists
                 if (!File.Exists(fullFileName))
                 {
@@ -1562,21 +1564,28 @@ namespace Timelapse
 
         public void ShowImage(int index, bool useCachedImages)
         {
-            this.imageDatabase.ToDataRowIndex(index);
+            if (this.imageDatabase.ToDataRowIndex(index) == false)
+            {
+                throw new ArgumentOutOfRangeException("index", String.Format("{0} is not a valid row index in the image table.", index));
+            }
+            ImageProperties imageProperties = new ImageProperties();
+            imageProperties.ImageQuality = (ImageQualityFilter)Enum.Parse(typeof(ImageQualityFilter), this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.ImageQuality));
 
             // Get and display the bitmap
-            BitmapImage image = new BitmapImage();
-            string srcFile = System.IO.Path.Combine(this.imageDatabase.FolderPath, this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File));
-            if (this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.ImageQuality).Equals(Constants.ImageQuality.Corrupted))
+            BitmapImage bitmap = new BitmapImage();
+            if (imageProperties.ImageQuality == ImageQualityFilter.Corrupted)
             {
-                image = Utilities.BitmapFromResource(image, "corrupted.jpg", useCachedImages);
+                bitmap = Utilities.BitmapFromResource(bitmap, "corrupted.jpg", useCachedImages);
             }
             else
             {
-                if (File.Exists(srcFile))
+                imageProperties.File = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File);
+                imageProperties.Folder = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.Folder);
+                string imagePath = imageProperties.GetImagePath(this.FolderPath);
+                if (File.Exists(imagePath))
                 {
                     this.MenuItemDeleteImage.IsEnabled = true;
-                    Utilities.BitmapFromFile(image, srcFile, useCachedImages);
+                    Utilities.BitmapFromFile(bitmap, imagePath, useCachedImages);
                 }
                 else
                 {
@@ -1586,10 +1595,10 @@ namespace Timelapse
                     {
                         this.imageDatabase.RowSetValueFromDataLabel((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.ImageQuality], Constants.ImageQuality.Missing);
                     }
-                    image = Utilities.BitmapFromResource(image, "missing.jpg", useCachedImages);
+                    bitmap = Utilities.BitmapFromResource(bitmap, "missing.jpg", useCachedImages);
                 }
             }
-            this.markableCanvas.imgToDisplay.Source = image;
+            this.markableCanvas.imgToDisplay.Source = bitmap;
 
             // For each control, we get its type and then update its contents from the current data table row
             string type;
@@ -1661,7 +1670,7 @@ namespace Timelapse
 
             // Set the magImage to the source so the unaltered image will appear on the magnifying glass
             // Although its probably not needed, also make the magCanvas the same size as the image
-            this.markableCanvas.imgToMagnify.Source = image;
+            this.markableCanvas.imgToMagnify.Source = bitmap;
 
             // Whenever we navigate to a new image, delete any markers that were displayed on the current image 
             // and then draw the markers assoicated with the new image
@@ -1686,7 +1695,7 @@ namespace Timelapse
         // navigate left/right image or up/down to look at differenced image
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (this.imageDatabase.ImageCount == 0)
+            if (this.imageDatabase == null || this.imageDatabase.ImageCount == 0)
             {
                 return; // No images are loaded, so don't try to interpret any keys
             }
@@ -2046,6 +2055,19 @@ namespace Timelapse
         #endregion
 
         #region File Menu Callbacks and Support Functions
+        private void MenuItemAddImagesToDataFile_Click(object sender, RoutedEventArgs e)
+        {
+            FolderBrowserDialog folderSelectionDialog = new FolderBrowserDialog();
+            folderSelectionDialog.Description = "Select a folder to add additional image files from";
+            folderSelectionDialog.SelectedPath = this.FolderPath;
+            switch (folderSelectionDialog.ShowDialog())
+            {
+                case System.Windows.Forms.DialogResult.OK:
+                case System.Windows.Forms.DialogResult.Yes:
+                    this.LoadByScanningImageFolder(folderSelectionDialog.SelectedPath);
+                    break;
+            }
+        }
 
         /// <summary>Load the images from a folder.</summary>
         private void MenuItemLoadImages_Click(object sender, RoutedEventArgs e)
@@ -2061,8 +2083,8 @@ namespace Timelapse
         private void MenuItemExportCSV_Click(object sender, RoutedEventArgs e)
         {
             // Write the file
-            string csvfile = System.IO.Path.GetFileNameWithoutExtension(this.imageDatabase.FileName) + ".csv";
-            string csvpath = System.IO.Path.Combine(this.FolderPath, csvfile);
+            string csvfile = Path.GetFileNameWithoutExtension(this.imageDatabase.FileName) + ".csv";
+            string csvpath = Path.Combine(this.FolderPath, csvfile);
             SpreadsheetWriter.ExportDataAsCSV(this.imageDatabase, csvpath);
 
             MenuItem mi = (MenuItem)sender;
@@ -2129,14 +2151,14 @@ namespace Timelapse
             if (result == System.Windows.Forms.DialogResult.OK)
             {
                 // Set the source and destination file names, including the complete path
-                string sourceFileName = System.IO.Path.Combine(this.FolderPath, sourceFile);
+                string sourceFileName = Path.Combine(this.FolderPath, sourceFile);
                 string destFileName = dialog.FileName;
 
                 // Try to copy the source file to the destination, overwriting the destination file if it already exists.
                 // And giving some feedback about its success (or failure) 
                 try
                 {
-                    System.IO.File.Copy(sourceFileName, destFileName, true);
+                    File.Copy(sourceFileName, destFileName, true);
                     StatusBarUpdate.Message(this.statusBar, sourceFile + " copied to " + destFileName);
                 }
                 catch
@@ -2182,13 +2204,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                if (File.Exists(Path.Combine(this.FolderPath, this.imageDatabase.FileName)))
-                {
-                    File.Move(Path.Combine(this.FolderPath, this.imageDatabase.FileName),
-                              Path.Combine(this.FolderPath, dlg.new_filename));  // Change the file name to the new file name
-                    this.imageDatabase.FileName = dlg.new_filename; // Store the file name
-                    this.imageDatabase.TryCreateImageDatabase(this.template);          // Recreate the database connecction
-                }
+                this.imageDatabase.RenameDataFile(dlg.new_filename, this.template);
             }
         }
 
@@ -2223,7 +2239,7 @@ namespace Timelapse
                 // Set the filter to show all images and a valid image
                 if (msg_result == true)
                 {
-                    this.SetImageFilterAndIndex(0, ImageQualityFilter.All); // Set it to all images
+                    this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
                     int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
@@ -2477,7 +2493,7 @@ namespace Timelapse
                 // Set the filter to show all images and a valid image
                 if (msg_result == true)
                 {
-                    this.SetImageFilterAndIndex(0, ImageQualityFilter.All); // Set it to all images
+                    this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
                     int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
@@ -2517,7 +2533,7 @@ namespace Timelapse
                 // Set the filter to show all images and a valid image
                 if (msg_result == true)
                 {
-                    this.SetImageFilterAndIndex(0, ImageQualityFilter.All); // Set it to all images
+                    this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
                     int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
@@ -2558,7 +2574,7 @@ namespace Timelapse
                 // Set the filter to show all images and a valid image
                 if (msg_result == true)
                 {
-                    this.SetImageFilterAndIndex(0, ImageQualityFilter.All); // Set it to all images
+                    this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
                     int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
@@ -2603,7 +2619,7 @@ namespace Timelapse
                     // Set the filter to show all images and then go to the first image
                     if (msg_result == true)
                     {
-                        this.SetImageFilterAndIndex(0, ImageQualityFilter.All); // Set it to all images
+                        this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
                         this.ShowImage(0);
                     }
                 }
@@ -2648,7 +2664,7 @@ namespace Timelapse
                 // Set the filter to show all images and a valid image
                 if (msg_result == true)
                 {
-                    this.SetImageFilterAndIndex(0, ImageQualityFilter.All); // Set it to all images
+                    this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
                     int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
@@ -2686,7 +2702,7 @@ namespace Timelapse
                 // Set the filter to show all images and a valid image
                 if (msg_result == true)
                 {
-                    this.SetImageFilterAndIndex(0, ImageQualityFilter.All); // Set it to all images
+                    this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
                     int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
@@ -2825,7 +2841,7 @@ namespace Timelapse
             }
 
             // Treat the checked status as a radio button i.e., toggle their states so only the clicked menu item is checked.
-            bool result = this.SetImageFilterAndIndex(0, filter);  // Go to the first result (i.e., index 0) in the given filter set
+            bool result = this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, filter);  // Go to the first result (i.e., index 0) in the given filter set
             // if (result == true) MenuItemViewSetSelected(item);  //Check the currently selected menu item and uncheck the others in this group
         }
 
@@ -2861,7 +2877,7 @@ namespace Timelapse
             if (msg_result == true)
             {
                 // MenuItemViewSetSelected(ImageQualityFilters.Custom);
-                this.SetImageFilterAndIndex(0, ImageQualityFilter.Custom);
+                this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.Custom);
                 // this.showImage(dbData.CurrentRow);
             }
         }

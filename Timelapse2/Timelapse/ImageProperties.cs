@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Windows.Media.Imaging;
 
 namespace Timelapse
 {
@@ -15,11 +17,26 @@ namespace Timelapse
         public string Folder { get; set; }
         public int ID { get; set; }
         public ImageQualityFilter ImageQuality { get; set; }
-        public string Name { get; set; }
+        public string File { get; set; }
         public bool UseMetadata { get; set; }
 
-        public ImageProperties()
+        public FileInfo GetFileInfo(string rootFolderPath)
         {
+            return new FileInfo(this.GetImagePath(rootFolderPath));
+        }
+
+        public string GetImagePath(string rootFolderPath)
+        {
+            if (this.Folder == null)
+            {
+                return Path.Combine(rootFolderPath, this.File);
+            }
+            return Path.Combine(rootFolderPath, this.Folder, this.File);
+        }
+
+        public BitmapFrame Load(string rootFolderPath)
+        {
+            return BitmapFrame.Create(new Uri(this.GetImagePath(rootFolderPath)), BitmapCreateOptions.None, BitmapCacheOption.None);
         }
     }
 }
