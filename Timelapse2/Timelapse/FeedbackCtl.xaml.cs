@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿using System;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace Timelapse
@@ -12,18 +13,21 @@ namespace Timelapse
         {
             set { this.progressPB.Value = value; }
         }
-        public string ShowMessage 
+
+        public string ShowMessage
         {
             set { this.messageLbl.Content = value; }
         }
+
         public ImageSource ShowImage
         {
-            set { this.imageImg.Source = (ImageSource) value; }
+            set { this.imageImg.Source = (ImageSource)value; }
         }
+
         public FeedbackCtl()
         {
-            InitializeComponent();
-            this.ShowMessage = "";
+            this.InitializeComponent();
+            this.ShowMessage = String.Empty;
             this.ShowImage = null;
             this.ShowProgress = 0;
         }

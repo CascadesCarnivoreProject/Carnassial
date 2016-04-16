@@ -124,111 +124,116 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="CheckForUpdate.cs" />
+    <Compile Include="Images\FeedbackMessage.cs" />
+    <Compile Include="Images\ImageQuality.cs" />
+    <Compile Include="Util\CheckForUpdate.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="CustomFilter.cs" />
-    <Compile Include="DBData.cs" />
-    <Compile Include="DlgAboutTimelapse.xaml.cs">
-      <DependentUpon>DlgAboutTimelapse.xaml</DependentUpon>
+    <Compile Include="Database\CustomFilter.cs" />
+    <Compile Include="Database\ColumnTuple.cs" />
+    <Compile Include="Database\ColumnTupleListWhere.cs" />
+    <Compile Include="Database\ImageDatabase.cs" />
+    <Compile Include="Database\SearchTerm.cs" />
+    <Compile Include="DialogAboutTimelapse.xaml.cs">
+      <DependentUpon>DialogAboutTimelapse.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgChooseDataBaseFile.xaml.cs">
-      <DependentUpon>DlgChooseDataBaseFile.xaml</DependentUpon>
+    <Compile Include="DialogChooseDataBaseFile.xaml.cs">
+      <DependentUpon>DialogChooseDataBaseFile.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgCustomViewFilter.xaml.cs">
-      <DependentUpon>DlgCustomViewFilter.xaml</DependentUpon>
+    <Compile Include="DialogCustomViewFilter.xaml.cs">
+      <DependentUpon>DialogCustomViewFilter.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgDateModifyAmbiguousDates.xaml.cs">
-      <DependentUpon>DlgDateModifyAmbiguousDates.xaml</DependentUpon>
+    <Compile Include="DialogDateModifyAmbiguousDates.xaml.cs">
+      <DependentUpon>DialogDateModifyAmbiguousDates.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgDataView.xaml.cs">
-      <DependentUpon>DlgDataView.xaml</DependentUpon>
+    <Compile Include="DialogDataView.xaml.cs">
+      <DependentUpon>DialogDataView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgDateRereadDatesFromImages.xaml.cs">
-      <DependentUpon>DlgDateRereadDatesFromImages.xaml</DependentUpon>
+    <Compile Include="DialogDateRereadDatesFromImages.xaml.cs">
+      <DependentUpon>DialogDateRereadDatesFromImages.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgDeleteImages.xaml.cs">
-      <DependentUpon>DlgDeleteImages.xaml</DependentUpon>
+    <Compile Include="DialogDeleteImages.xaml.cs">
+      <DependentUpon>DialogDeleteImages.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgDeleteImage.xaml.cs">
-      <DependentUpon>DlgDeleteImage.xaml</DependentUpon>
+    <Compile Include="DialogDeleteImage.xaml.cs">
+      <DependentUpon>DialogDeleteImage.xaml</DependentUpon>
     </Compile>
-    <Page Include="DlgAboutTimelapse.xaml">
+    <Page Include="DialogAboutTimelapse.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgChooseDataBaseFile.xaml">
+    <Page Include="DialogChooseDataBaseFile.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgCustomViewFilter.xaml">
+    <Page Include="DialogCustomViewFilter.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgDateModifyAmbiguousDates.xaml">
+    <Page Include="DialogDateModifyAmbiguousDates.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgDataView.xaml">
+    <Page Include="DialogDataView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgDateCorrection.xaml">
+    <Page Include="DialogDateCorrection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgDateRereadDatesFromImages.xaml">
+    <Page Include="DialogDateRereadDatesFromImages.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgDeleteImages.xaml">
+    <Page Include="DialogDeleteImages.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="DlgEditLog.xaml">
+    <Page Include="DialogEditLog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgImportImageDataXMLFile.xaml">
+    <Page Include="DialogImportImageDataXmlFile.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="DlgGetTemplateDB.xaml">
+    <Page Include="DialogGetTemplateDB.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgMessageBox.xaml">
+    <Page Include="DialogMessageBox.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="DlgExportingCVS.xaml">
+    <Page Include="DialogExportCsv.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgOptionsDarkImagesThreshold.xaml">
+    <Page Include="DialogOptionsDarkImagesThreshold.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgPopulateFieldWithMetadata.xaml">
+    <Page Include="DialogPopulateFieldWithMetadata.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgRenameDataFile.xaml">
+    <Page Include="DialogRenameDataFile.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgStatisticsOfImageCounts.xaml">
+    <Page Include="DialogStatisticsOfImageCounts.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgDateSwapDayMonth.xaml">
+    <Page Include="DialogDateSwapDayMonth.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgTemplatesDontMatch.xaml">
+    <Page Include="DialogTemplatesDontMatch.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgDateTimeChangeCorrection.xaml">
+    <Page Include="DialogDateTimeChangeCorrection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -256,7 +261,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Window1.xaml">
+    <Page Include="TimelapseWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -266,58 +271,64 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="BitmapStuff.cs" />
-    <Compile Include="DlgImportImageDataXMLFile.xaml.cs">
-      <DependentUpon>DlgImportImageDataXMLFile.xaml</DependentUpon>
+    <Compile Include="Images\MetaTag.cs" />
+    <Compile Include="Images\PixelBitmap.cs" />
+    <Compile Include="DialogImportImageDataXmlFile.xaml.cs">
+      <DependentUpon>DialogImportImageDataXmlFile.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgMessageBox.xaml.cs">
-      <DependentUpon>DlgMessageBox.xaml</DependentUpon>
+    <Compile Include="DialogMessageBox.xaml.cs">
+      <DependentUpon>DialogMessageBox.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgOptionsDarkImagesThreshold.xaml.cs">
-      <DependentUpon>DlgOptionsDarkImagesThreshold.xaml</DependentUpon>
+    <Compile Include="DialogOptionsDarkImagesThreshold.xaml.cs">
+      <DependentUpon>DialogOptionsDarkImagesThreshold.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgPopulateFieldWithMetadata.xaml.cs">
-      <DependentUpon>DlgPopulateFieldWithMetadata.xaml</DependentUpon>
+    <Compile Include="DialogPopulateFieldWithMetadata.xaml.cs">
+      <DependentUpon>DialogPopulateFieldWithMetadata.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgRenameDataFile.xaml.cs">
-      <DependentUpon>DlgRenameDataFile.xaml</DependentUpon>
+    <Compile Include="DialogRenameDataFile.xaml.cs">
+      <DependentUpon>DialogRenameDataFile.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgTemplatesDontMatch.xaml.cs">
-      <DependentUpon>DlgTemplatesDontMatch.xaml</DependentUpon>
+    <Compile Include="DialogTemplatesDontMatch.xaml.cs">
+      <DependentUpon>DialogTemplatesDontMatch.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Exif\ExifToolException.cs" />
-    <Compile Include="Exif\ExifToolWrapper.cs" />
+    <Compile Include="Images\ExifToolException.cs" />
+    <Compile Include="Images\ExifToolWrapper.cs" />
     <Compile Include="FeedbackCtl.xaml.cs">
       <DependentUpon>FeedbackCtl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="FileBackup.cs" />
-    <Compile Include="ImageDataXML.cs" />
-    <Compile Include="ImageProperties.cs" />
-    <Compile Include="ImageQualityFilter.cs" />
-    <Compile Include="MetaTagCounter.cs" />
-    <Compile Include="MostRecentlyUsedList.cs" />
-    <Compile Include="NativeMethods.cs" />
-    <Compile Include="SpreadsheetWriter.cs" />
-    <Compile Include="DlgDateCorrection.xaml.cs">
-      <DependentUpon>DlgDateCorrection.xaml</DependentUpon>
+    <Compile Include="Database\FileBackup.cs" />
+    <Compile Include="Images\ImageDataXml.cs" />
+    <Compile Include="Database\ImageProperties.cs" />
+    <Compile Include="Database\ImageQualityFilter.cs" />
+    <Compile Include="Images\MetaTagCounter.cs" />
+    <Compile Include="Util\MostRecentlyUsedList.cs" />
+    <Compile Include="Util\DataEntryControl.cs" />
+    <Compile Include="Util\DataEntryCounter.cs" />
+    <Compile Include="Util\DataEntryChoice.cs" />
+    <Compile Include="Util\DataEntryFlag.cs" />
+    <Compile Include="Util\DataEntryNote.cs" />
+    <Compile Include="Util\NativeMethods.cs" />
+    <Compile Include="Database\SpreadsheetWriter.cs" />
+    <Compile Include="DialogDateCorrection.xaml.cs">
+      <DependentUpon>DialogDateCorrection.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgEditLog.xaml.cs">
-      <DependentUpon>DlgEditLog.xaml</DependentUpon>
+    <Compile Include="DialogEditLog.xaml.cs">
+      <DependentUpon>DialogEditLog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgGetTemplateDB.xaml.cs">
-      <DependentUpon>DlgGetTemplateDB.xaml</DependentUpon>
+    <Compile Include="DialogGetTemplateDB.xaml.cs">
+      <DependentUpon>DialogGetTemplateDB.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgExportingCVS.xaml.cs">
-      <DependentUpon>DlgExportingCVS.xaml</DependentUpon>
+    <Compile Include="DialogExportCsv.xaml.cs">
+      <DependentUpon>DialogExportCsv.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgStatisticsOfImageCounts.xaml.cs">
-      <DependentUpon>DlgStatisticsOfImageCounts.xaml</DependentUpon>
+    <Compile Include="DialogStatisticsOfImageCounts.xaml.cs">
+      <DependentUpon>DialogStatisticsOfImageCounts.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgDateSwapDayMonth.xaml.cs">
-      <DependentUpon>DlgDateSwapDayMonth.xaml</DependentUpon>
+    <Compile Include="DialogDateSwapDayMonth.xaml.cs">
+      <DependentUpon>DialogDateSwapDayMonth.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgDateTimeChangeCorrection.xaml.cs">
-      <DependentUpon>DlgDateTimeChangeCorrection.xaml</DependentUpon>
+    <Compile Include="DialogDateTimeChangeCorrection.xaml.cs">
+      <DependentUpon>DialogDateTimeChangeCorrection.xaml</DependentUpon>
     </Compile>
     <Compile Include="HelpUserControl.xaml.cs">
       <DependentUpon>HelpUserControl.xaml</DependentUpon>
@@ -325,9 +336,10 @@
     <Compile Include="HelpWindow.xaml.cs">
       <DependentUpon>HelpWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="MarkableImageCanvas.cs" />
-    <Compile Include="DateTimeHandler.cs" />
-    <Compile Include="RegistryUserSettings.cs" />
+    <Compile Include="Images\MarkableImageCanvas.cs" />
+    <Compile Include="Util\DateTimeHandler.cs" />
+    <Compile Include="Images\PixelColor.cs" />
+    <Compile Include="Util\RegistryUserSettings.cs" />
     <Compile Include="Controls.xaml.cs">
       <DependentUpon>Controls.xaml</DependentUpon>
     </Compile>
@@ -337,24 +349,26 @@
     <Compile Include="OptionsWindow.xaml.cs">
       <DependentUpon>OptionsWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="TimelapseRegistryUserSettings.cs" />
-    <Compile Include="Propagate.cs" />
+    <Compile Include="Util\TimelapseRegistryUserSettings.cs" />
+    <Compile Include="Database\PropagateControl.cs">
+      <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
+    </Compile>
     <Compile Include="Resource1.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resource1.resx</DependentUpon>
     </Compile>
-    <Compile Include="SQLiteWrapper.cs" />
-    <Compile Include="StatusBarUpdates.cs" />
-    <Compile Include="Template.cs" />
-    <Compile Include="TimelapseState.cs" />
-    <Compile Include="Utilities.cs" />
-    <Compile Include="Window1.xaml.cs">
-      <DependentUpon>Window1.xaml</DependentUpon>
+    <Compile Include="Database\SQLiteWrapper.cs" />
+    <Compile Include="Util\StatusBarUpdates.cs" />
+    <Compile Include="Database\TemplateDatabase.cs" />
+    <Compile Include="Util\TimelapseState.cs" />
+    <Compile Include="Util\Utilities.cs" />
+    <Compile Include="TimelapseWindow.xaml.cs">
+      <DependentUpon>TimelapseWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
       <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
     </Compile>
-    <Page Include="DlgDeleteImage.xaml">
+    <Page Include="DialogDeleteImage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -431,6 +445,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.Data.SQLite.Core.1.0.96.0\build\net40\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.96.0\build\net40\System.Data.SQLite.Core.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

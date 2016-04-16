@@ -5,6 +5,7 @@
       <Value>metatag</Value>
       <Value>metatags</Value>
       <Value>Timelapse</Value>
+      <Value>xaml</Value>
     </CollectionProperty>
   </GlobalSettings>
   <Analyzers>
@@ -56,6 +57,11 @@
           </RuleSettings>
         </Rule>
         <Rule Name="ElementReturnValueMustBeDocumented">
+          <RuleSettings>
+            <BooleanProperty Name="Enabled">False</BooleanProperty>
+          </RuleSettings>
+        </Rule>
+        <Rule Name="ConstructorSummaryDocumentationMustBeginWithStandardText">
           <RuleSettings>
             <BooleanProperty Name="Enabled">False</BooleanProperty>
           </RuleSettings>
