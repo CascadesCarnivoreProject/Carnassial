@@ -106,7 +106,7 @@ namespace Timelapse
                 // Value column: The value used for comparison in the search
                 // Notes and Counters both uses a text field, so they can be constructed as a textbox
                 // However, Counters textboxes are modified to only allow integer input (both direct typing or pasting are checked)
-                if (type == Constants.DatabaseElement.Note || type == Constants.DatabaseElement.Counter)
+                if (type == Constants.DatabaseColumn.Note || type == Constants.DatabaseColumn.Counter)
                 {
                     TextBox tboxValue = new TextBox();
                     tboxValue.Text = this.customFilter.SearchTermList[row_count].Value;
@@ -119,7 +119,7 @@ namespace Timelapse
                     tboxValue.Margin = thickness;
 
                     // The following is specific only to Counters
-                    if (type == Constants.DatabaseElement.Counter)
+                    if (type == Constants.DatabaseColumn.Counter)
                     {
                         tboxValue.PreviewTextInput += this.TxtboxCounterValue_PreviewTextInput;
                         DataObject.AddPastingHandler(tboxValue, this.CounterValueText_Paste);
@@ -130,7 +130,7 @@ namespace Timelapse
                     Grid.SetColumn(tboxValue, 3);
                     grid.Children.Add(tboxValue);
                 }
-                else if (type == Constants.DatabaseElement.FixedChoice || type == Constants.DatabaseElement.ImageQuality)
+                else if (type == Constants.DatabaseColumn.FixedChoice || type == Constants.DatabaseColumn.ImageQuality)
                 {
                     // FixedChoice and ImageQuality both present combo boxes, so they can be constructed the same way
                     ComboBox comboBoxValue = new ComboBox();
@@ -150,7 +150,7 @@ namespace Timelapse
                     Grid.SetColumn(comboBoxValue, 3);
                     grid.Children.Add(comboBoxValue);
                 }
-                else if (type == Constants.DatabaseElement.Flag)
+                else if (type == Constants.DatabaseColumn.Flag)
                 {
                     // Flags present checkboxes
                     CheckBox flagCheckBox = new CheckBox();

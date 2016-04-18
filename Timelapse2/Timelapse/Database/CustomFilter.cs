@@ -55,9 +55,9 @@ namespace Timelapse.Database
             {
                 if (this.Query.Trim() == String.Empty)
                 {
-                    return this.database.GetNoFilterCount(); // If there is no query, assume it is equivalent to all images
+                    return this.database.GetImageCount(); // If there is no query, assume it is equivalent to all images
                 }
-                return this.database.GetCustomFilterCount(this.Query);
+                return this.database.GetImageCountWithCustomFilter(this.Query);
             }
         }
 
@@ -77,7 +77,7 @@ namespace Timelapse.Database
             this.LogicalOperator = LogicalOperators.Or; // We default the search operation to this logical operation
             this.SearchTermList = new Dictionary<int, SearchTerm>();
 
-            DataTable sortedTemplateTable = this.database.TemplateGetSortedByControls();
+            DataTable sortedTemplateTable = this.database.GetControlsSortedByControlOrder();
 
             // Initialize the filter to reflect the desired controls in the template (in sorted order)
             int row_count = 1; // We start at 1 as there is already a header row
@@ -88,22 +88,22 @@ namespace Timelapse.Database
                 string type = row[Constants.Database.Type].ToString();
 
                 // We only handle certain types, e.g., we don't give the user the opportunity to search over file names / folders / date / time
-                if (type == Constants.DatabaseElement.Note ||
-                    type == Constants.DatabaseElement.Counter ||
-                    type == Constants.DatabaseElement.FixedChoice ||
-                    type == Constants.DatabaseElement.ImageQuality ||
-                    type == Constants.DatabaseElement.Flag)
+                if (type == Constants.DatabaseColumn.Note ||
+                    type == Constants.DatabaseColumn.Counter ||
+                    type == Constants.DatabaseColumn.FixedChoice ||
+                    type == Constants.DatabaseColumn.ImageQuality ||
+                    type == Constants.DatabaseColumn.Flag)
                 {
                     // Create a new search expression for each row, where each row specifies a particular control and how it can be searched
                     string default_value = String.Empty;
                     string expression = Constants.Filter.Equal;
                     bool is_use_for_searching = false;
-                    if (type == Constants.DatabaseElement.Counter)
+                    if (type == Constants.DatabaseColumn.Counter)
                     {
                         default_value = "0";
                         expression = Constants.Filter.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
                     }
-                    else if (type == Constants.DatabaseElement.Flag)
+                    else if (type == Constants.DatabaseColumn.Flag)
                     {
                         default_value = "false";
                     }

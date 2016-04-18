@@ -90,11 +90,9 @@ namespace Timelapse
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             this.MoveImageToBackupFolder();
-            // createPlaceholderImage();
             if (this.deleteData)
             {
-                Int64 id = (Int64)this.database.GetIdOfCurrentRow();
-                this.database.DeleteRow((int)id);
+                this.database.DeleteImage(this.database.CurrentImage.ID);
             }
             this.DialogResult = true;
         }
@@ -143,7 +141,7 @@ namespace Timelapse
         {
             string sourceFile = this.imageProperties.GetImagePath(this.imageFolderPath);
             string destFolder = Path.Combine(this.imageFolderPath, Constants.File.BackupFolder);
-            string destFile = Path.Combine(destFolder, this.imageProperties.Folder);
+            string destFile = Path.Combine(destFolder, this.imageProperties.RelativeFolderPath);
 
             if (!File.Exists(sourceFile))
             {

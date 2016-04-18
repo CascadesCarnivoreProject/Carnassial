@@ -40,12 +40,12 @@ namespace Timelapse.Database
                 tw.WriteLine(header);
                 // For each row in the data table, write out the columns in the same order as the 
                 // data labels in the template file
-                for (int i = 0; i < db.DataTable.Rows.Count; i++)
+                for (int i = 0; i < db.ImageCount; i++)
                 {
                     string row = String.Empty;
                     foreach (string dataLabel in datalabels)
                     {
-                        row += AddColumn((string)db.DataTable.Rows[i][dataLabel]);
+                        row += AddColumn((string)db.ImageDataTable.Rows[i][dataLabel]);
                     }
                     tw.WriteLine(row);
                 }   

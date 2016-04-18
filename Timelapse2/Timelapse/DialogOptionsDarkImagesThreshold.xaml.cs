@@ -54,7 +54,7 @@ namespace Timelapse
 
             this.sldrScrollImages.Minimum = 0;
             this.sldrScrollImages.Maximum = this.database.ImageCount - 1;
-            this.sldrScrollImages.Value = this.database.CurrentRow;
+            this.sldrScrollImages.Value = this.database.CurrentImageRow;
 
             this.SetPreviousNextButtonStates();
             this.SldrScrollImages_ValueChanged(null, null);
@@ -116,31 +116,6 @@ namespace Timelapse
             this.UpdateLabels();
         }
 
-        // Load the image with the currentID into the display
-        private void LoadImage()
-        {
-            bool result;
-
-            // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            string path = Path.Combine(this.database.FolderPath, this.database.IDGetFile(out result));
-            try
-            {
-                this.bitmap = BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
-            }
-            catch
-            {
-                if (!File.Exists(path))
-                {
-                    this.bitmap = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"));
-                }
-                else
-                {
-                    this.bitmap = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"));
-                }
-            }
-            this.img.Source = this.bitmap;
-        }
-
         // Update all the labels to show the current values
         private void UpdateLabels()
         {
@@ -185,11 +160,11 @@ namespace Timelapse
         // Utility routine for calling a typical sequence of UI update actions
         private void DisplayImageAndDetails()
         {
-            bool result;
-            this.lblImageName.Content = this.database.IDGetFile(out result);
-            this.lblOriginalClassification.Content = this.database.IDGetImageQuality(out result); // The original image classification
+            this.bitmap = this.database.CurrentImage.LoadImage(this.database.FolderPath);
+            this.img.Source = this.bitmap;
+            this.lblImageName.Content = this.database.CurrentImage.FileName;
+            this.lblOriginalClassification.Content = this.database.CurrentImage.ImageQuality.ToString(); // The original image classification
 
-            this.LoadImage();
             this.Recalculate();
             this.Repaint();
         }
@@ -205,21 +180,21 @@ namespace Timelapse
         // Navigate to the previous image
         private void PreviousButton_Click(object sender, RoutedEventArgs e)
         {
-            this.database.ToDataRowPrevious();
-            this.sldrScrollImages.Value = this.database.CurrentRow;
+            this.database.TryMoveToPreviousImage();
+            this.sldrScrollImages.Value = this.database.CurrentImageRow;
         }
 
         // Navigate to the next image
         private void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            this.database.ToDataRowNext();
-            this.sldrScrollImages.Value = this.database.CurrentRow;
+            this.database.TryMoveToNextImage();
+            this.sldrScrollImages.Value = this.database.CurrentImageRow;
         }
 
         private void SetPreviousNextButtonStates()
         {
-            this.PrevButton.IsEnabled = (this.database.CurrentRow == 0) ? false : true;
-            this.NextButton.IsEnabled = (this.database.CurrentRow < this.database.ImageCount - 1) ? true : false;
+            this.PrevButton.IsEnabled = (this.database.CurrentImageRow == 0) ? false : true;
+            this.NextButton.IsEnabled = (this.database.CurrentImageRow < this.database.ImageCount - 1) ? true : false;
         }
 
         // Update the database if the OK button is clicked
@@ -322,7 +297,7 @@ namespace Timelapse
 
         private void SldrScrollImages_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            this.database.ToDataRowIndex(Convert.ToInt32(this.sldrScrollImages.Value));
+            this.database.TryMoveToImage(Convert.ToInt32(this.sldrScrollImages.Value));
             this.DisplayImageAndDetails();
             this.SetPreviousNextButtonStates();
         }
@@ -340,38 +315,33 @@ namespace Timelapse
 
         private void RescanImageQuality()
         {
-            FileInfo fileInfo;
-            ImageQuality imgQuality;  // Collect the image properties for for the 2nd pass...
-            List<ImageQuality> imgQualityList = new List<ImageQuality>();
-
-            // TODO: 
-            // MAKE DB UPDATE EFFICIENT
-            var bgw = new BackgroundWorker() { WorkerReportsProgress = true };
-            bgw.DoWork += (ow, ea) =>
-            {   // this runs on the background thread; its written as an anonymous delegate
+            BackgroundWorker backgroundWorker = new BackgroundWorker()
+            {
+                WorkerReportsProgress = true
+            };
+            backgroundWorker.DoWork += (ow, ea) =>
+            {   
+                // this runs on the background thread; its written as an anonymous delegate
                 // We need to invoke this to allow updates on the UI
                 this.Dispatcher.Invoke(new Action(() =>
                 {
                     // First, change the UIprovide some feedback
                     // this.txtblockFeedback.Text += "Step 1/2: Examining images..." + Environment.NewLine;
                 }));
-                int count = database.DataTable.Rows.Count;
-                int j = 1;
-                for (int i = 0; i < count; i++)
-                {
-                    fileInfo = new FileInfo(System.IO.Path.Combine(database.FolderPath, database.DataTable.Rows[i][Constants.DatabaseElement.File].ToString()));
 
-                    imgQuality = new ImageQuality();                            // We will store the various image properties here
-                    imgQuality.FileName = database.DataTable.Rows[i][Constants.DatabaseElement.File].ToString();
-                    imgQuality.ID = Int32.Parse(database.DataTable.Rows[i][Constants.Database.ID].ToString());
-                    imgQuality.OldImageQuality = database.DataTable.Rows[i][Constants.DatabaseElement.ImageQuality].ToString();
+                // TODO: MAKE DB UPDATE EFFICIENT
+                int images = database.ImageCount;
+                for (int image = 0; image < images; image++)
+                {
+                    ImageQuality imageQuality = new ImageQuality(database.ImageDataTable.Rows[image]);
 
                     // If its not a valid image, say so and go onto the next one.
-                    if (!imgQuality.OldImageQuality.Equals(Constants.ImageQuality.Ok) && !imgQuality.OldImageQuality.Equals(Constants.ImageQuality.Dark))
+                    if (!imageQuality.OldImageQuality.Equals(Constants.ImageQuality.Ok) && 
+                        !imageQuality.OldImageQuality.Equals(Constants.ImageQuality.Dark))
                     {
-                        imgQuality.NewImageQuality = String.Empty;
-                        imgQuality.Update = false;
-                        bgw.ReportProgress(0, imgQuality);
+                        imageQuality.NewImageQuality = String.Empty;
+                        imageQuality.Update = false;
+                        backgroundWorker.ReportProgress(0, imageQuality);
                         continue;
                     }
 
@@ -380,43 +350,40 @@ namespace Timelapse
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just to the catch.
-                        imgQuality.Bitmap = BitmapFrame.Create(new Uri(fileInfo.FullName), BitmapCreateOptions.None, BitmapCacheOption.None);
-
-                        imgQuality.NewImageQuality = PixelBitmap.IsDark(imgQuality.Bitmap, this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor) ? Constants.ImageQuality.Dark : Constants.ImageQuality.Ok;
-                        imgQuality.IsColor = this.isColor;
-                        imgQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
-                        if (imgQuality.OldImageQuality.Equals(imgQuality.NewImageQuality))
+                        imageQuality.Bitmap = imageQuality.LoadImage(this.database.FolderPath);
+                        imageQuality.NewImageQuality = PixelBitmap.IsDark(imageQuality.Bitmap, this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor) ? Constants.ImageQuality.Dark : Constants.ImageQuality.Ok;
+                        imageQuality.IsColor = this.isColor;
+                        imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
+                        if (imageQuality.OldImageQuality.Equals(imageQuality.NewImageQuality))
                         {
-                            imgQuality.Update = false;
+                            imageQuality.Update = false;
                         }
                         else
                         {
-                            imgQuality.Update = true;
-                            imgQualityList.Add(imgQuality);
-                            database.RowSetValueFromID(Constants.DatabaseElement.ImageQuality, imgQuality.NewImageQuality, imgQuality.ID);
+                            imageQuality.Update = true;
+                            database.UpdateImage(imageQuality.ID, Constants.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality);
                         }
                     }
                     catch // Image isn't there
                     {
-                        imgQuality.Update = false;
+                        imageQuality.Update = false;
                     }
-                    j++;
-                    bgw.ReportProgress(0, imgQuality);
+                    backgroundWorker.ReportProgress(0, imageQuality);
                 }
             };
-            bgw.ProgressChanged += (o, ea) =>
+            backgroundWorker.ProgressChanged += (o, ea) =>
             {
                 // this gets called on the UI thread
-                ImageQuality iq = (ImageQuality)ea.UserState;
-                this.img.Source = iq.Bitmap;
+                ImageQuality imageQuality = (ImageQuality)ea.UserState;
+                this.img.Source = imageQuality.Bitmap;
 
-                this.lblImageName.Content = iq.FileName;
-                this.lblOriginalClassification.Content = iq.OldImageQuality;
-                this.lblNewClassification.Content = iq.NewImageQuality;
+                this.lblImageName.Content = imageQuality.FileName;
+                this.lblOriginalClassification.Content = imageQuality.OldImageQuality;
+                this.lblNewClassification.Content = imageQuality.NewImageQuality;
                 this.lblDarkPixelRatio.Content = String.Format("{0,3:##0}%", 100 * this.darkPixelRatio);
-                this.lblRatioFound.Content = String.Format("{0,3:##0}", 100 * iq.DarkPixelRatioFound);
+                this.lblRatioFound.Content = String.Format("{0,3:##0}", 100 * imageQuality.DarkPixelRatioFound);
 
-                if (iq.IsColor) // color image 
+                if (imageQuality.IsColor) // color image 
                 {
                     this.lblThresholdMessage.Text = "Color image - therefore not dark";
                     this.txtPercent.Visibility = Visibility.Hidden;
@@ -429,20 +396,20 @@ namespace Timelapse
                 }
 
                 // Size the bar to show how many pixels in the current image are at least as dark as that color
-                this.RectDarkPixelRatioFound.Width = FeedbackCanvas.ActualWidth * iq.DarkPixelRatioFound;
+                this.RectDarkPixelRatioFound.Width = FeedbackCanvas.ActualWidth * imageQuality.DarkPixelRatioFound;
                 if (this.RectDarkPixelRatioFound.Width < 6)
                 {
                     this.RectDarkPixelRatioFound.Width = 6; // Just so something is always visible
                 }
                 this.RectDarkPixelRatioFound.Height = FeedbackCanvas.ActualHeight;
             };
-            bgw.RunWorkerCompleted += (o, ea) =>
+            backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
                 DisplayImageAndDetails();
                 TimelapseWindow owner = this.Owner as TimelapseWindow;
                 owner.MenuItemImageCounts_Click(null, null);
             };
-            bgw.RunWorkerAsync();
+            backgroundWorker.RunWorkerAsync();
         }
         #endregion
     }

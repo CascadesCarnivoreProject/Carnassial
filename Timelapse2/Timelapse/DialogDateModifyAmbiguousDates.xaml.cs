@@ -10,7 +10,7 @@ using Timelapse.Util;
 namespace Timelapse
 {
     /// <summary>
-    /// Interaction logic for DlgCheckModifyAmbiguousDates.xaml
+    /// Interaction logic for DialogCheckModifyAmbiguousDates.xaml
     /// </summary>
     public partial class DialogDateModifyAmbiguousDates : Window
     {
@@ -44,20 +44,18 @@ namespace Timelapse
 
         private bool NextAmbiguousDate()
         {
-            int id = -1; // the ID of the record
-            bool result;
-
             // The search will search inclusively from the given image number, and will return the first image number that is ambiguous, else -1
             this.rangeStart = this.GetNextAmbiguousDate(this.rangeStart);
+            ImageProperties imageProperties = null;
             if (this.rangeStart >= 0)
             {
                 // We found an ambiguous date; provide appropriate feedback
-                id = this.database.RowGetID(this.rangeStart);
+                int id = this.database.GetImageID(this.rangeStart);
                 if (id >= 0)
                 {
-                    string sdate = (string)this.database.IDGetDate(id, out result);
-                    this.lblOriginalDate.Content = sdate;
-                    this.lblNewDate.Content = DateTimeHandler.SwapSingleDayMonth(sdate);
+                    imageProperties = new ImageProperties(this.database.ImageDataTable.Rows.Find(id));
+                    this.lblOriginalDate.Content = imageProperties.Date;
+                    this.lblNewDate.Content = DateTimeHandler.SwapSingleDayMonth(imageProperties.Date);
 
                     this.rangeEnd = this.GetDateRangeWithSameDate(this.rangeStart);
                     this.lblNumberOfImagesWithSameDate.Content = " Images from the same day: ";
@@ -81,35 +79,16 @@ namespace Timelapse
                 this.lblNumberOfImagesWithSameDate.Content = "No ambiguous dates left";
                 this.imgDateImage.Source = null;
             }
-            // Now show the image that we are using as our sample
-            if (this.rangeStart == -1)
-            {
-                return false; // No valid image to show!
-            }
 
-            // Get the image filename and display it
-            string fname = (string)this.database.IDGetFile(id, out result);
-            this.lblImageName.Content = fname;
+            // No valid image to show!
+            if (imageProperties == null)
+            {
+                return false;
+            }
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            string path = Path.Combine(this.database.FolderPath, fname);
-            BitmapFrame bmap;
-            try
-            {
-                bmap = BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
-            }
-            catch
-            {
-                if (!File.Exists(path))
-                {
-                    bmap = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"));
-                }
-                else
-                {
-                    bmap = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"));
-                }
-            }
-            this.imgDateImage.Source = bmap;
+            this.imgDateImage.Source = imageProperties.LoadImage(this.database.FolderPath);
+            this.lblImageName.Content = imageProperties.FileName;
             return true;
         }
 
@@ -118,11 +97,11 @@ namespace Timelapse
         {
             if (sender == this.cboxNewDate)
             {
-                this.database.RowsUpdateSwapDayMonth(this.rangeStart, this.rangeEnd);
+                this.database.ExchangeDayAndMonthInImageDate(this.rangeStart, this.rangeEnd);
             }
             else
             {
-                this.database.RowsUpdateSwapDayMonth(this.rangeStart, this.rangeEnd);
+                this.database.ExchangeDayAndMonthInImageDate(this.rangeStart, this.rangeEnd);
             }
         }
 
@@ -133,9 +112,9 @@ namespace Timelapse
             this.DialogResult = true;
 
             // Refresh the database / datatable to reflect the updated values, which will also refressh the main timelpase display.
-            int current_row = this.database.CurrentRow;
+            int currentImage = this.database.CurrentImageRow;
             this.database.GetImagesAll();
-            this.database.CurrentRow = current_row;
+            this.database.TryMoveToImage(currentImage);
         }
 
         private void NextButton_Click(object sender, RoutedEventArgs e)
@@ -155,13 +134,13 @@ namespace Timelapse
         {
             // Starting from the index, get the date from successive rows and see if the date is ambiguous
             // Note that if the index is out of range, it will return -1, so that's ok.
-            for (int index = startIndex; index < this.database.DataTable.Rows.Count; index++)
+            for (int index = startIndex; index < this.database.ImageCount; index++)
             {
                 // Ignore corrupted images
                 // if (this.database.RowIsImageCorrupted(i)) continue;
 
                 // Parse the date. Note that this should never fail at this point, but just in case, put out a debug message
-                string dateAsString = (string)this.database.DataTable.Rows[index][Constants.DatabaseElement.Date] + " " + (string)this.database.DataTable.Rows[index][Constants.DatabaseElement.Time];
+                string dateAsString = (string)this.database.ImageDataTable.Rows[index][Constants.DatabaseColumn.Date] + " " + (string)this.database.ImageDataTable.Rows[index][Constants.DatabaseColumn.Time];
                 DateTime date;
                 bool succeeded = DateTime.TryParse(dateAsString, out date);
                 if (succeeded)
@@ -183,23 +162,23 @@ namespace Timelapse
         // That is, return the final image that is dated the same date as this image
         private int GetDateRangeWithSameDate(int startIndex)
         {
-            if (startIndex >= this.database.DataTable.Rows.Count)
+            if (startIndex >= this.database.ImageCount)
             {
                 return -1;   // Make sure index is in range.
             }
 
             // Parse the provided starting date. Note that this should never fail at this point, but just in case, put out a debug message
-            string startingDateAsString = (string)this.database.DataTable.Rows[startIndex][Constants.DatabaseElement.Date] + " " + (string)this.database.DataTable.Rows[startIndex][Constants.DatabaseElement.Time];
+            string startingDateAsString = (string)this.database.ImageDataTable.Rows[startIndex][Constants.DatabaseColumn.Date] + " " + (string)this.database.ImageDataTable.Rows[startIndex][Constants.DatabaseColumn.Time];
             DateTime startingDate;
             if (!DateTime.TryParse(startingDateAsString, out startingDate))
             {
                 return -1; // Should never fail, but just in case.
             }
 
-            for (int index = startIndex + 1; index < this.database.DataTable.Rows.Count; index++)
+            for (int index = startIndex + 1; index < this.database.ImageCount; index++)
             {
                 // Parse the date for the given record.
-                string currentDateAsString = (string)this.database.DataTable.Rows[index][Constants.DatabaseElement.Date] + " " + (string)this.database.DataTable.Rows[index][Constants.DatabaseElement.Time];
+                string currentDateAsString = (string)this.database.ImageDataTable.Rows[index][Constants.DatabaseColumn.Date] + " " + (string)this.database.ImageDataTable.Rows[index][Constants.DatabaseColumn.Time];
                 DateTime currentDate;
                 if (!DateTime.TryParse(currentDateAsString, out currentDate))
                 {
@@ -214,7 +193,7 @@ namespace Timelapse
                     return index - 1;
                 }
             }
-            return this.database.DataTable.Rows.Count - 1; // if we got here, it means that we arrived at the end of the records
+            return this.database.ImageCount - 1; // if we got here, it means that we arrived at the end of the records
         }
     }
 }

@@ -14,12 +14,12 @@ namespace Timelapse.Database
         private SQLiteWrapper database;
 
         /// <summary>
-        /// Gets or sets the complete path (including file name) of the template database
+        /// Gets the complete path (including file name) of the template database
         /// </summary>
         public string FilePath { get; private set; }
 
         /// <summary>
-        /// Gets or sets the template table
+        /// Gets the template table
         /// </summary>
         public DataTable TemplateTable { get; private set; }
 
@@ -109,19 +109,19 @@ namespace Timelapse.Database
                 string temp;
                 switch (type)
                 {
-                    case Constants.DatabaseElement.Counter:
+                    case Constants.DatabaseColumn.Counter:
                         counter_count++;
                         temp = type + counter_count.ToString();
                         break;
-                    case Constants.DatabaseElement.FixedChoice:
+                    case Constants.DatabaseColumn.FixedChoice:
                         choice_count++;
                         temp = type + choice_count.ToString();
                         break;
-                    case Constants.DatabaseElement.Note:
+                    case Constants.DatabaseColumn.Note:
                         note_count++;
                         temp = type + note_count.ToString();
                         break;
-                    case Constants.DatabaseElement.Flag:
+                    case Constants.DatabaseColumn.Flag:
                         flag_count++;
                         temp = type + flag_count.ToString();
                         break;

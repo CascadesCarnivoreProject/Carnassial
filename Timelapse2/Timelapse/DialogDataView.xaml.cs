@@ -29,7 +29,7 @@ namespace Timelapse
         /// </summary>
         public void RefreshDataTable()
         {
-            this.datagrid.ItemsSource = this.database.DataTable.DefaultView;
+            this.datagrid.ItemsSource = this.database.ImageDataTable.DefaultView;
         }
 
         #region Callbacks
@@ -46,9 +46,9 @@ namespace Timelapse
         /// <summary>Ensure that the the highlighted row is the current row </summary>
         private void DispatcherTimer_Tick(object sender, EventArgs e)
         {
-            if (this.lastRow != this.database.CurrentRow)
+            if (this.lastRow != this.database.CurrentImageRow)
             {
-                this.datagrid.SelectedIndex = this.database.CurrentRow;
+                this.datagrid.SelectedIndex = this.database.CurrentImageRow;
             }
 
             // A workaround to autoscroll the currently selected items, where the item always appears at the top of the window.

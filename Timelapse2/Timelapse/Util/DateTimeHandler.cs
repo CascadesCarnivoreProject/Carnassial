@@ -53,8 +53,8 @@ namespace Timelapse.Util
                     result = DateTime.TryParse(imageProperties.DateMetadata, invariantCulture, styles, out date);
                     if (true == result)
                     {
-                        imageProperties.FinalDate = DateTimeHandler.StandardDateString(date);
-                        imageProperties.FinalTime = DateTimeHandler.StandardTimeString(date);
+                        imageProperties.Date = DateTimeHandler.StandardDateString(date);
+                        imageProperties.Time = DateTimeHandler.StandardTimeString(date);
                         if (date.Day > 12)
                         {
                             ambiguous_date_order = false;
@@ -63,8 +63,8 @@ namespace Timelapse.Util
                     else
                     {
                         // We can't read in the metadata date correctly, so use the file creation date instead
-                        imageProperties.FinalDate = DateTimeHandler.StandardDateString(imageProperties.DateFileCreation);
-                        imageProperties.FinalTime = DateTimeHandler.StandardTimeString(imageProperties.DateFileCreation);
+                        imageProperties.Date = DateTimeHandler.StandardDateString(imageProperties.DateFileCreation);
+                        imageProperties.Time = DateTimeHandler.StandardTimeString(imageProperties.DateFileCreation);
                         imageProperties.UseMetadata = false;
                         if (date.Day > 12)
                         {
@@ -74,14 +74,13 @@ namespace Timelapse.Util
                 }
                 else
                 {
-                    imageProperties.FinalDate = DateTimeHandler.StandardDateString(imageProperties.DateFileCreation);
-                    imageProperties.FinalTime = DateTimeHandler.StandardTimeString(imageProperties.DateFileCreation);
+                    imageProperties.Date = DateTimeHandler.StandardDateString(imageProperties.DateFileCreation);
+                    imageProperties.Time = DateTimeHandler.StandardTimeString(imageProperties.DateFileCreation);
                     if (date.Day > 12)
                     {
                         ambiguous_date_order = false;
                     }
                 }
-                imageProperties.DateOrder = (int)DateOrder.DayMonth; // REMOVE THIS WHEN WE FIGURE THINGS OUT
             }
             return ambiguous_date_order;
         }
@@ -150,23 +149,19 @@ namespace Timelapse.Util
         /// </summary>
         public static int SwapDayMonthIsPossible(ImageDatabase database)
         {
-            DateTime date; // Month/Day order
-            DateTime reversedDate;
-            bool succeeded = true;
-            string sdate;
-
             // First, do a pass to see if swapping the date/time order is even possible
-            for (int i = 0; i < database.DataTable.Rows.Count; i++)
+            for (int i = 0; i < database.ImageCount; i++)
             {
                 // Skip over corrupted images for now, as we know those dates are likley wrong
-                if (database.RowIsImageCorrupted(i))
+                if (database.IsImageCorrupt(i))
                 {
                     continue;
                 }
 
                 // Parse the date, which should always work at this point. But just in case, put out a debug message
-                sdate = (string)database.DataTable.Rows[i][Constants.DatabaseElement.Date] + " " + (string)database.DataTable.Rows[i][Constants.DatabaseElement.Time];
-                succeeded = DateTime.TryParse(sdate, out date);
+                string dateAsString = (string)database.ImageDataTable.Rows[i][Constants.DatabaseColumn.Date] + " " + (string)database.ImageDataTable.Rows[i][Constants.DatabaseColumn.Time];
+                DateTime date; // Month/Day order
+                bool succeeded = DateTime.TryParse(dateAsString, out date);
                 if (!succeeded)
                 {
                     Debug.Print("In SwapDayMonth - something went wrong trying to parse a date!");
@@ -175,7 +170,7 @@ namespace Timelapse.Util
                 // Now check to see if the reversed date is legit. If it throws an exception, we know its a problem so get out of here.
                 try
                 {
-                    reversedDate = new DateTime(date.Year, date.Day, date.Month); // we have swapped the day with the month
+                    DateTime reversedDate = new DateTime(date.Year, date.Day, date.Month); // we have swapped the day with the month
                     succeeded = true;
                 }
                 catch

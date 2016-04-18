@@ -34,7 +34,7 @@ namespace Timelapse
 
             this.Propagate = new PropagateControl(database);
 
-            DataTable sortedControlTable = database.TemplateGetSortedByControls();
+            DataTable sortedControlTable = database.GetControlsSortedByControlOrder();
             for (int i = 0; i < sortedControlTable.Rows.Count; i++)
             {
                 // Get the values for each control
@@ -53,34 +53,34 @@ namespace Timelapse
                 string widthAsString = dataRow[Constants.Control.TextBoxWidth].ToString();
                 int width = (widthAsString == String.Empty) ? 0 : Convert.ToInt32(widthAsString);
 
-                if (type == Constants.DatabaseElement.Date && defaultValue == String.Empty)
+                if (type == Constants.DatabaseColumn.Date && defaultValue == String.Empty)
                 {
                     defaultValue = EXAMPLE_DATE;
                 }
-                else if (type == Constants.DatabaseElement.Time && defaultValue == String.Empty)
+                else if (type == Constants.DatabaseColumn.Time && defaultValue == String.Empty)
                 {
                     defaultValue = EXAMPLE_TIME;
                 }
 
-                if (type == Constants.DatabaseElement.File ||
-                    type == Constants.DatabaseElement.Folder ||
-                    type == Constants.DatabaseElement.Date ||
-                    type == Constants.DatabaseElement.Time ||
-                    type == Constants.DatabaseElement.Note)
+                if (type == Constants.DatabaseColumn.File ||
+                    type == Constants.DatabaseColumn.Folder ||
+                    type == Constants.DatabaseColumn.Date ||
+                    type == Constants.DatabaseColumn.Time ||
+                    type == Constants.DatabaseColumn.Note)
                 {
-                    bool createContextMenu = (type == Constants.DatabaseElement.File) ? false : true;
+                    bool createContextMenu = (type == Constants.DatabaseColumn.File) ? false : true;
                     DataEntryNote myNote = new DataEntryNote(dataLabel, this, createContextMenu);
                     myNote.Label = label;
                     myNote.Tooltip = tooltip;
                     myNote.Width = width;
                     myNote.Visible = visiblity;
                     myNote.Content = defaultValue;
-                    myNote.ReadOnly = (type == Constants.DatabaseElement.Folder || type == Constants.DatabaseElement.File) ? true : false; // File and Folder Notes are read only i.e., non-editable by the user 
+                    myNote.ReadOnly = (type == Constants.DatabaseColumn.Folder || type == Constants.DatabaseColumn.File) ? true : false; // File and Folder Notes are read only i.e., non-editable by the user 
                     myNote.Copyable = copyable;
                     this.ControlGrid.Inlines.Add(myNote.Container);
                     this.ControlFromDataLabel.Add(dataLabel, myNote);
                 }
-                else if (type == Constants.DatabaseElement.Flag || type == Constants.DatabaseElement.DeleteFlag)
+                else if (type == Constants.DatabaseColumn.Flag || type == Constants.DatabaseColumn.DeleteFlag)
                 {
                     DataEntryFlag myFlag = new DataEntryFlag(dataLabel, this, true);
                     myFlag.Label = label;
@@ -93,7 +93,7 @@ namespace Timelapse
                     this.ControlGrid.Inlines.Add(myFlag.Container);
                     this.ControlFromDataLabel.Add(dataLabel, myFlag);
                 }
-                else if (type == Constants.DatabaseElement.Counter)
+                else if (type == Constants.DatabaseColumn.Counter)
                 {
                     DataEntryCounter myCounter = new DataEntryCounter(dataLabel, this, true);
                     myCounter.Label = label;
@@ -106,7 +106,7 @@ namespace Timelapse
                     this.ControlGrid.Inlines.Add(myCounter.Container);
                     this.ControlFromDataLabel.Add(dataLabel, myCounter);
                 }
-                else if (type == Constants.DatabaseElement.FixedChoice || type == Constants.DatabaseElement.ImageQuality)
+                else if (type == Constants.DatabaseColumn.FixedChoice || type == Constants.DatabaseColumn.ImageQuality)
                 {
                     DataEntryChoice myFixedChoice = new DataEntryChoice(dataLabel, this, true, list);
                     myFixedChoice.Label = label;

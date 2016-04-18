@@ -1,20 +1,18 @@
 ﻿using System;
 using System.Globalization;
-using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using Timelapse.Database;
-using Timelapse.Images;
 
 namespace Timelapse
 {
     /// <summary>
     /// Interaction logic for DialogDateCorrection.xaml
-    /// This dialog lets the user specify a corrected date and time of an image. All other image dates and times are then correctes by the same amount.
+    /// This dialog lets the user specify a corrected date and time of an image. All other image dates and times are then corrected by the same amount.
     /// This is useful if (say) the camera was not initialized to the correct date and time.
-    /// It assumes that Timelapse is configured to display all images, and the its currently displayiing a valid image (and thus a valid date)
+    /// It assumes that Timelapse is configured to display all images, and the its currently displaying a valid image (and thus a valid date)
     /// </summary>
     public partial class DialogDateCorrection : Window
     {
@@ -25,35 +23,15 @@ namespace Timelapse
         {
             this.InitializeComponent();
             this.database = database;
-            // Get the original date and display it
-            bool result;
-            this.lblOriginalDate.Content = this.database.IDGetDate(out result) + " " + this.database.IDGetTime(out result);
+
+            // Get the original date time and display it
+            this.lblOriginalDate.Content = this.database.CurrentImage.Date + " " + this.database.CurrentImage.Time;
 
             // Get the image filename and display it
-            this.lblImageName.Content = this.database.IDGetFile(out result);
+            this.lblImageName.Content = this.database.CurrentImage.FileName;
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            ImageProperties imageProperties = new ImageProperties();
-            imageProperties.File = this.database.IDGetFile(out result);
-            imageProperties.Folder = this.database.IDGetFolder(out result);
-            string path = imageProperties.GetImagePath(this.database.FolderPath);
-            BitmapFrame bmap;
-            try
-            {
-                bmap = BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
-            }
-            catch
-            {
-                if (!File.Exists(path))
-                {
-                    bmap = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"));
-                }
-                else
-                {
-                    bmap = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"));
-                }
-            }
-            this.imgDateImage.Source = bmap;
+            this.imgDateImage.Source = this.database.CurrentImage.LoadImage(this.database.FolderPath);
 
             // Try to put the original date / time into the corrected date field. If we can't, leave it as it is (i.e., as dd-mmm-yyyy hh:mm am).
             string format = "dd-MMM-yyyy hh:mm tt";
@@ -88,26 +66,26 @@ namespace Timelapse
                 // Calculate the date/time difference
                 DateTime originalDateTime = DateTime.Parse((string)this.lblOriginalDate.Content);
                 DateTime correctedDateTime = DateTime.Parse(this.tbNewDate.Text);
-                long ticks_difference = correctedDateTime.Ticks - originalDateTime.Ticks;
+                TimeSpan timeDifference = correctedDateTime - originalDateTime;
 
-                if (ticks_difference == 0)
+                if (timeDifference == TimeSpan.Zero)
                 {
                     return; // No difference, so nothing to correct
                 }
 
                 // Update the database
-                this.database.RowsUpdateAllDateTimeFieldsWithCorrectionValue(ticks_difference, 0, this.database.DataTable.Rows.Count); // For all rows...
+                this.database.AdjustAllImageTimes(timeDifference, 0, this.database.ImageCount); // For all rows...
 
                 // Add an entry into the log detailing what we just did
-                this.database.Log += Environment.NewLine;
-                this.database.Log += "System entry: Added a correction value to all dates.\n";
-                this.database.Log += "                        Old sample date was: " + (string)this.lblOriginalDate.Content + " and new date is " + this.tbNewDate.Text + "\n";
+                StringBuilder log = new StringBuilder(Environment.NewLine);
+                log.AppendLine("System entry: Added a correction value to all dates.");
+                log.AppendLine("                        Old sample date was: " + (string)this.lblOriginalDate.Content + " and new date is " + this.tbNewDate.Text);
+                this.database.AppendToImageSetLog(log);
 
                 // Refresh the database / datatable to reflect the updated values, which will also refressh the main timelpase display.
-                int current_row = this.database.CurrentRow;
+                int current_row = this.database.CurrentImageRow;
                 this.database.GetImagesAll();
-                this.database.CurrentRow = current_row;
-                this.database.CurrentId = this.database.GetIdOfCurrentRow();
+                this.database.TryMoveToImage(current_row);
                 this.DialogResult = true;
             }
             catch

@@ -147,13 +147,14 @@ namespace Timelapse
             if ((this.imageDatabase != null) && (this.imageDatabase.ImageCount > 0))
             {
                 // Save the following in the database as they are local to this image set
-                this.imageDatabase.State_Filter = (int)this.state.ImageFilter;
-                if (this.imageDatabase.State_Filter == (int)ImageQualityFilter.Custom)
+                if (this.state.ImageFilter == ImageQualityFilter.Custom)
                 {
-                    this.imageDatabase.State_Filter = (int)ImageQualityFilter.All; // Don't save custom filters. Revert to All 
+                    // don't save custom filters, revert to All 
+                    this.state.ImageFilter = ImageQualityFilter.All;
                 }
-                this.imageDatabase.State_Row = this.imageDatabase.CurrentRow;
-                this.imageDatabase.State_Magnifyer = this.markableCanvas.IsMagnifyingGlassVisible;
+                this.imageDatabase.UpdateImageSetFilter(this.state.ImageFilter);
+                this.imageDatabase.UpdateImageSetRowIndex(this.imageDatabase.CurrentImageRow);
+                this.imageDatabase.UpdateMagnifierEnabled(this.markableCanvas.IsMagnifyingGlassVisible);
             }
 
             // Save the current filter set and the index of the current image being viewed in that set, and save it into the registry
@@ -237,7 +238,7 @@ namespace Timelapse
             // If there are multiple .ddb files, ask the use to choose one and use that
             // However, if the user cancels that choice, just abort.
             // If there are no .ddb files, then just create the standard one.
-            switch (this.imageDatabase.FindFile())
+            switch (this.imageDatabase.TrySelectDatabaseFile())
             {
                 case 0: // An existing .ddb file is available
                     if (this.LoadImagesFromDB(this.template) == true)
@@ -333,33 +334,30 @@ namespace Timelapse
                 }));
 
                 // First pass: Examine images to extract its basic properties
-                BitmapFrame corruptedbmp = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"));
+                BitmapFrame corruptedBitmap = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"));
                 List<ImageProperties> imagePropertyList = new List<ImageProperties>();
                 for (int image = 0; image < count; image++)
                 {
                     FileInfo imageFile = imageFilePaths[image];
-                    ImageProperties imageProperties = new ImageProperties();
-                    imageProperties.File = imageFile.Name;
-                    imageProperties.Folder = NativeMethods.GetRelativePath(this.FolderPath, imageFile.FullName);
-                    imageProperties.Folder = Path.GetDirectoryName(imageProperties.Folder);
+                    ImageProperties imageProperties = new ImageProperties(this.FolderPath, imageFile);
 
-                    BitmapFrame bmap = null;
+                    BitmapFrame bitmap = null;
                     try
                     {
                         // Create the bitmap and determine its ImageQuality 
-                        bmap = BitmapFrame.Create(new Uri(imageFile.FullName), BitmapCreateOptions.None, BitmapCacheOption.None);
+                        bitmap = BitmapFrame.Create(new Uri(imageFile.FullName), BitmapCreateOptions.None, BitmapCacheOption.None);
 
-                        bool isDark = PixelBitmap.IsDark(bmap, this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
+                        bool isDark = PixelBitmap.IsDark(bitmap, this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
                         imageProperties.ImageQuality = isDark ? ImageQualityFilter.Dark : ImageQualityFilter.Ok;
                     }
                     catch
                     {
-                        bmap = corruptedbmp;
+                        bitmap = corruptedBitmap;
                         imageProperties.ImageQuality = ImageQualityFilter.Corrupted;
                     }
 
                     // Get the data from the metadata
-                    BitmapMetadata meta = (BitmapMetadata)bmap.Metadata;
+                    BitmapMetadata meta = (BitmapMetadata)bitmap.Metadata;
                     imageProperties.DateMetadata = meta.DateTaken;
                     // For some reason, different versions of Windows treat creation time and modification time differently, 
                     // giving inconsisten values. So I just check both and take the lesser of the two.
@@ -373,8 +371,8 @@ namespace Timelapse
 
                     if (imageProperties.ID == 1 || (imageProperties.ID % Constants.FolderScanProgressUpdateFrequency == 0))
                     {
-                        progressState.Message = String.Format("{0}/{1}: Examining {2}", image, count, imageProperties.File);
-                        progressState.Bmap = bmap;
+                        progressState.Message = String.Format("{0}/{1}: Examining {2}", image, count, imageProperties.FileName);
+                        progressState.Bmap = bitmap;
                         int progress = Convert.ToInt32(Convert.ToDouble(imageProperties.ID) / Convert.ToDouble(count) * 100);
                         backgroundWorker.ReportProgress(progress, progressState);
                     }
@@ -398,23 +396,23 @@ namespace Timelapse
                 List<string> counterList = new List<string>();
                 List<string> notesAndFixedChoicesList = new List<string>();
                 List<string> flagsList = new List<string>();
-                for (int i = 0; i < this.imageDatabase.DataTable.Columns.Count; i++)
+                for (int i = 0; i < this.imageDatabase.ImageDataTable.Columns.Count; i++)
                 {
-                    string dataLabel = this.imageDatabase.DataTable.Columns[i].ColumnName;
-                    string type = (string)this.imageDatabase.TypeFromKey[dataLabel];
+                    string dataLabel = this.imageDatabase.ImageDataTable.Columns[i].ColumnName;
+                    string type = this.imageDatabase.ControlTypeFromDataLabel[dataLabel];
                     if (null == type)
                     {
                         continue; // Column must be the ID, which we skip over as its not a key.
                     }
-                    if (type.Equals(Constants.DatabaseElement.Counter))
+                    if (type.Equals(Constants.DatabaseColumn.Counter))
                     {
                         counterList.Add(dataLabel);
                     }
-                    else if (type.Equals(Constants.DatabaseElement.Note) || type.Equals(Constants.DatabaseElement.FixedChoice))
+                    else if (type.Equals(Constants.DatabaseColumn.Note) || type.Equals(Constants.DatabaseColumn.FixedChoice))
                     {
                         notesAndFixedChoicesList.Add(dataLabel);
                     }
-                    else if (type.Equals(Constants.DatabaseElement.Flag))
+                    else if (type.Equals(Constants.DatabaseColumn.Flag))
                     {
                         flagsList.Add(dataLabel);
                     }
@@ -442,10 +440,10 @@ namespace Timelapse
                         Dictionary<string, string> dataline = new Dictionary<string, string>();
                         Dictionary<string, string> markerline = new Dictionary<string, string>();
 
-                        for (int col = 0; col < imageDatabase.DataTable.Columns.Count; col++) // Fill up each column in order
+                        for (int column = 0; column < imageDatabase.ImageDataTable.Columns.Count; column++) // Fill up each column in order
                         {
-                            string col_datalabel = imageDatabase.DataTable.Columns[col].ColumnName;
-                            string type = (string)imageDatabase.TypeFromKey[col_datalabel];
+                            string columnDatalabel = imageDatabase.ImageDataTable.Columns[column].ColumnName;
+                            string type = imageDatabase.ControlTypeFromDataLabel[columnDatalabel];
                             if (null == type)
                             {
                                 continue; // a null will be returned from the ID, as we don't add it to the typefromkey hash.
@@ -453,26 +451,26 @@ namespace Timelapse
 
                             switch (type)
                             {
-                                case Constants.DatabaseElement.File: // Add The File name
-                                    string dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File];
-                                    dataline.Add(dataLabel, imagePropertyList[i].File);
+                                case Constants.DatabaseColumn.File: // Add The File name
+                                    string dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.File];
+                                    dataline.Add(dataLabel, imagePropertyList[i].FileName);
                                     break;
-                                case Constants.DatabaseElement.Folder: // Add The Folder name
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.Folder];
-                                    dataline.Add(dataLabel, imagePropertyList[i].Folder);
+                                case Constants.DatabaseColumn.Folder: // Add The Folder name
+                                    dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.Folder];
+                                    dataline.Add(dataLabel, imagePropertyList[i].RelativeFolderPath);
                                     break;
-                                case Constants.DatabaseElement.Date:
+                                case Constants.DatabaseColumn.Date:
                                     // Add the date
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.Date];
-                                    dataline.Add(dataLabel, imagePropertyList[i].FinalDate);
+                                    dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.Date];
+                                    dataline.Add(dataLabel, imagePropertyList[i].Date);
                                     break;
-                                case Constants.DatabaseElement.Time:
+                                case Constants.DatabaseColumn.Time:
                                     // Add the time
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.Time];
-                                    dataline.Add(dataLabel, imagePropertyList[i].FinalTime);
+                                    dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.Time];
+                                    dataline.Add(dataLabel, imagePropertyList[i].Time);
                                     break;
-                                case Constants.DatabaseElement.ImageQuality: // Add the Image Quality
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.ImageQuality];
+                                case Constants.DatabaseColumn.ImageQuality: // Add the Image Quality
+                                    dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.ImageQuality];
                                     string str = Constants.ImageQuality.Ok;
                                     if (imagePropertyList[i].ImageQuality == ImageQualityFilter.Dark)
                                     {
@@ -484,37 +482,37 @@ namespace Timelapse
                                     }
                                     dataline.Add(dataLabel, str);
                                     break;
-                                case Constants.DatabaseElement.DeleteFlag: // Add the Delete flag
-                                    dataLabel = (string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.DeleteFlag];
-                                    dataline.Add(dataLabel, this.imageDatabase.TemplateGetDefault(dataLabel)); // Default as specified in the template file, which should be "false"
+                                case Constants.DatabaseColumn.DeleteFlag: // Add the Delete flag
+                                    dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.DeleteFlag];
+                                    dataline.Add(dataLabel, this.imageDatabase.GetControlDefaultValue(dataLabel)); // Default as specified in the template file, which should be "false"
                                     break;
-                                case Constants.DatabaseElement.Note:        // Find and then Add the Note or Fixed Choice
-                                case Constants.DatabaseElement.FixedChoice:
+                                case Constants.DatabaseColumn.Note:        // Find and then Add the Note or Fixed Choice
+                                case Constants.DatabaseColumn.FixedChoice:
                                     // Now initialize notes, counters, and fixed choices to the defaults
                                     foreach (string tkey in notesAndFixedChoicesList)
                                     {
-                                        if (col_datalabel.Equals(tkey))
+                                        if (columnDatalabel.Equals(tkey))
                                         {
-                                            dataline.Add(tkey, this.imageDatabase.TemplateGetDefault(tkey)); // Default as specified in the template file
+                                            dataline.Add(tkey, this.imageDatabase.GetControlDefaultValue(tkey)); // Default as specified in the template file
                                         }
                                     }
                                     break;
-                                case Constants.DatabaseElement.Flag:
+                                case Constants.DatabaseColumn.Flag:
                                     // Now initialize flags to the defaults
                                     foreach (string tkey in flagsList)
                                     {
-                                        if (col_datalabel.Equals(tkey))
+                                        if (columnDatalabel.Equals(tkey))
                                         {
-                                            dataline.Add(tkey, this.imageDatabase.TemplateGetDefault(tkey)); // Default as specified in the template file
+                                            dataline.Add(tkey, this.imageDatabase.GetControlDefaultValue(tkey)); // Default as specified in the template file
                                         }
                                     }
                                     break;
-                                case Constants.DatabaseElement.Counter:
+                                case Constants.DatabaseColumn.Counter:
                                     foreach (string tkey in counterList)
                                     {
-                                        if (col_datalabel.Equals(tkey))
+                                        if (columnDatalabel.Equals(tkey))
                                         {
-                                            dataline.Add(tkey, this.imageDatabase.TemplateGetDefault(tkey)); // Default as specified in the template file
+                                            dataline.Add(tkey, this.imageDatabase.GetControlDefaultValue(tkey)); // Default as specified in the template file
                                             markerline.Add(tkey, String.Empty);        // TODO ASSUMES THAT MARKER LIST IS IN SAME ORDER AS COUNTERS. THIS MAY NOT BE CORRECT ONCE WE SWITCH ROWS, SO SHOULD DO THIS SEPARATELY
                                         }
                                     }
@@ -533,7 +531,7 @@ namespace Timelapse
                         image = i;
                     }
 
-                    this.imageDatabase.InsertMultipleRows(Constants.Database.DataTable, dataline_list);
+                    this.imageDatabase.InsertMultipleRows(Constants.Database.ImageDataTable, dataline_list);
                     this.imageDatabase.InsertMultipleRows(Constants.Database.MarkersTable, markerline_list);
                     j = j + interval - 1;
 
@@ -541,16 +539,16 @@ namespace Timelapse
                     BitmapFrame bmap;
                     if (imagePropertyList[image].ImageQuality == ImageQualityFilter.Corrupted)
                     {
-                        bmap = corruptedbmp;
+                        bmap = corruptedBitmap;
                     }
                     else
                     {
-                        bmap = imagePropertyList[image].Load(this.FolderPath);
+                        bmap = imagePropertyList[image].LoadImage(this.FolderPath);
                     }
 
                     // Show progress. Since its slow, we may as well do it every update
                     int progress2 = Convert.ToInt32(Convert.ToDouble(image) / Convert.ToDouble(count) * 100);
-                    progressState.Message = String.Format("{0}/{1}: Adding {2}", image, count, imagePropertyList[image].File);
+                    progressState.Message = String.Format("{0}/{1}: Adding {2}", image, count, imagePropertyList[image].FileName);
                     progressState.Bmap = bmap;
                     backgroundWorker.ReportProgress(progress2, progressState);
                 }
@@ -605,7 +603,7 @@ namespace Timelapse
                     if (result3 == true)
                     {
                         ImageDataXml.Read(Path.Combine(this.FolderPath, Constants.File.XmlDataFileName), imageDatabase.TemplateTable, imageDatabase);
-                        this.SetImageFilterAndIndex(this.imageDatabase.State_Row, (ImageQualityFilter)this.imageDatabase.State_Filter); // to regenerate the controls and markers for this image
+                        this.SetImageFilterAndIndex(this.imageDatabase.GetImageSetRowIndex(), this.imageDatabase.GetImageSetFilter()); // to regenerate the controls and markers for this image
                     }
                 }
             };
@@ -671,8 +669,7 @@ namespace Timelapse
             if (!this.imageDatabase.DoesWhiteSpaceColumnExist())
             {
                 this.imageDatabase.CreateWhiteSpaceColumn();
-                this.imageDatabase.DataTableTrimDataWhiteSpace();  // Trim the white space from all the data
-                this.imageDatabase.State_WhiteSpaceTrimmed = true;
+                this.imageDatabase.TrimImageAndTemplateTableWhitespace();  // Trim the white space from all the data
             }
 
             // Create a Custom Filter, which will hold the current custom filter expression (if any) that may be set in the DialogCustomViewFilter
@@ -684,10 +681,10 @@ namespace Timelapse
 
             // Set the magnifying glass status from the registry. 
             // Note that if it wasn't in the registry, the value returned will be true by default
-            this.markableCanvas.IsMagnifyingGlassVisible = this.imageDatabase.State_Magnifyer;
+            this.markableCanvas.IsMagnifyingGlassVisible = this.imageDatabase.IsMagnifierEnabled();
 
-            // Add callbacks to all our controls
-            this.MyAddControlsCallback();
+            // Add all data entry controls
+            this.AddDataEntryControls();
 
             // Now that we have something to show, enable menus and menu items as needed
             // Note that we do not enable those menu items that would have no effect
@@ -720,7 +717,7 @@ namespace Timelapse
 
             // Show the image, Hide the load button, and make the feedback panels visible
             this.SldrImageNavigatorEnableCallback(false);
-            this.imageDatabase.ToDataRowFirst();
+            this.imageDatabase.TryMoveToFirstImage();
 
             this.markableCanvas.Focus(); // We start with this having the focus so it can interpret keyboard shortcuts if needed. 
 
@@ -729,7 +726,7 @@ namespace Timelapse
             // Doing so also displays the image
             if (this.imageFolderReopened)
             {
-                this.SetImageFilterAndIndex(this.imageDatabase.State_Row, (ImageQualityFilter)this.imageDatabase.State_Filter);
+                this.SetImageFilterAndIndex(this.imageDatabase.GetImageSetRowIndex(), this.imageDatabase.GetImageSetFilter());
             }
             else
             {
@@ -1035,18 +1032,18 @@ namespace Timelapse
             }
 
             // go to the specified image
-            bool imageSeekSucceeded = this.imageDatabase.ToDataRowIndex(image);
+            bool imageSeekSucceeded = this.imageDatabase.TryMoveToImage(image);
             Debug.Assert(imageSeekSucceeded, String.Format("Failed to reach row index {0} in the image table.  Did table loading fail?", image));
 
             // After a filter change, set the slider to represent the index and the count of the current filter
             this.SldrImageNavigatorEnableCallback(false);
             this.sldrImageNavigator.Maximum = this.imageDatabase.ImageCount - 1;  // Reset the slider to the size of images in this set
-            this.sldrImageNavigator.Value = this.imageDatabase.CurrentRow;
+            this.sldrImageNavigator.Value = this.imageDatabase.CurrentImageRow;
 
             // Update the status bar accordingly
-            StatusBarUpdate.CurrentImageNumber(this.statusBar, this.imageDatabase.CurrentRow + 1);  // We add 1 because its a 0-based list
+            StatusBarUpdate.CurrentImageNumber(this.statusBar, this.imageDatabase.CurrentImageRow + 1);  // We add 1 because its a 0-based list
             StatusBarUpdate.TotalCount(this.statusBar, this.imageDatabase.ImageCount);
-            this.ShowImage(this.imageDatabase.CurrentRow);
+            this.ShowImage(this.imageDatabase.CurrentImageRow);
             this.SldrImageNavigatorEnableCallback(true);
             this.state.ImageFilter = filter;    // Remember the current filter
             return true;
@@ -1061,16 +1058,11 @@ namespace Timelapse
         /// <summary>
         /// Add the event handler callbacks for our (possibly invisible)  controls
         /// </summary>
-        private void MyAddControlsCallback()
+        private void AddDataEntryControls()
         {
-            string type = String.Empty;
-            DataEntryNote notectl;
-            DataEntryCounter counterctl;
-            DataEntryChoice fixedchoicectl;
-            DataEntryFlag flagctl;
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
             {
-                type = (string)this.imageDatabase.TypeFromKey[pair.Key];
+                string type = this.imageDatabase.ControlTypeFromDataLabel[pair.Key];
                 if (null == type)
                 {
                     type = "Not a control";
@@ -1078,30 +1070,30 @@ namespace Timelapse
 
                 switch (type)
                 {
-                    case Constants.DatabaseElement.File:
-                    case Constants.DatabaseElement.Folder:
-                    case Constants.DatabaseElement.Time:
-                    case Constants.DatabaseElement.Date:
-                    case Constants.DatabaseElement.Note:
-                        notectl = (DataEntryNote)pair.Value; // get the control
+                    case Constants.DatabaseColumn.File:
+                    case Constants.DatabaseColumn.Folder:
+                    case Constants.DatabaseColumn.Time:
+                    case Constants.DatabaseColumn.Date:
+                    case Constants.DatabaseColumn.Note:
+                        DataEntryNote notectl = (DataEntryNote)pair.Value; // get the control
                         notectl.ContentControl.TextChanged += new TextChangedEventHandler(this.NoteCtl_TextChanged);
                         notectl.ContentControl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
                         break;
-                    case Constants.DatabaseElement.DeleteFlag:
-                    case Constants.DatabaseElement.Flag:
-                        flagctl = (DataEntryFlag)pair.Value; // get the control
+                    case Constants.DatabaseColumn.DeleteFlag:
+                    case Constants.DatabaseColumn.Flag:
+                        DataEntryFlag flagctl = (DataEntryFlag)pair.Value; // get the control
                         flagctl.ContentControl.Checked += this.FlagControl_CheckedChanged;
                         flagctl.ContentControl.Unchecked += this.FlagControl_CheckedChanged;
                         flagctl.ContentControl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
                         break;
-                    case Constants.DatabaseElement.ImageQuality:
-                    case Constants.DatabaseElement.FixedChoice:
-                        fixedchoicectl = (DataEntryChoice)pair.Value; // get the control
+                    case Constants.DatabaseColumn.ImageQuality:
+                    case Constants.DatabaseColumn.FixedChoice:
+                        DataEntryChoice fixedchoicectl = (DataEntryChoice)pair.Value; // get the control
                         fixedchoicectl.ContentControl.SelectionChanged += new SelectionChangedEventHandler(this.ChoiceControl_SelectionChanged);
                         fixedchoicectl.ContentControl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
                         break;
-                    case Constants.DatabaseElement.Counter:
-                        counterctl = (DataEntryCounter)pair.Value; // get the control
+                    case Constants.DatabaseColumn.Counter:
+                        DataEntryCounter counterctl = (DataEntryCounter)pair.Value; // get the control
                         counterctl.ContentControl.TextChanged += new TextChangedEventHandler(this.CounterControl_TextChanged);
                         counterctl.ContentControl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
                         counterctl.ContentControl.PreviewTextInput += new TextCompositionEventHandler(this.CounterCtl_PreviewTextInput);
@@ -1197,7 +1189,7 @@ namespace Timelapse
             textBox.Text = textBox.Text.TrimStart();  // Don't allow leading spaces in the note
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)textBox.Tag;
-            this.imageDatabase.RowSetValueFromDataLabel(control.DataLabel, textBox.Text.Trim());
+            this.imageDatabase.UpdateCurrentImage(control.DataLabel, textBox.Text.Trim());
             this.state.IsContentChanged = true; // We've altered some content
             this.state.IsContentValueChangedFromOutside = false;
         }
@@ -1214,7 +1206,7 @@ namespace Timelapse
             textBox.Text = textBox.Text.TrimStart();  // Don't allow leading spaces in the counter
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)textBox.Tag;
-            this.imageDatabase.RowSetValueFromDataLabel(control.DataLabel, textBox.Text.Trim());
+            this.imageDatabase.UpdateCurrentImage(control.DataLabel, textBox.Text.Trim());
             this.state.IsContentChanged = true; // We've altered some content
             this.state.IsContentValueChangedFromOutside = false;
             return;
@@ -1237,7 +1229,7 @@ namespace Timelapse
 
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)comboBox.Tag;
-            this.imageDatabase.RowSetValueFromDataLabel(control.DataLabel, comboBox.SelectedItem.ToString().Trim());
+            this.imageDatabase.UpdateCurrentImage(control.DataLabel, comboBox.SelectedItem.ToString().Trim());
             this.SetTopLevelFocus();
             this.state.IsContentChanged = true; // We've altered some content
             this.state.IsContentValueChangedFromOutside = false;
@@ -1255,7 +1247,7 @@ namespace Timelapse
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)checkBox.Tag;
             string value = ((bool)checkBox.IsChecked) ? "true" : "false";
-            this.imageDatabase.RowSetValueFromDataLabel(control.DataLabel, value);
+            this.imageDatabase.UpdateCurrentImage(control.DataLabel, value);
             this.state.IsContentChanged = true; // We've altered some content
             this.state.IsContentValueChangedFromOutside = false;
             return;
@@ -1268,19 +1260,19 @@ namespace Timelapse
         {
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
             {
-                string type = (string)this.imageDatabase.TypeFromKey[pair.Key];
+                string type = this.imageDatabase.ControlTypeFromDataLabel[pair.Key];
                 switch (type)
                 {
-                    case Constants.DatabaseElement.File:
-                    case Constants.DatabaseElement.Folder:
-                    case Constants.DatabaseElement.Time:
-                    case Constants.DatabaseElement.Date:
-                    case Constants.DatabaseElement.Note:
-                    case Constants.DatabaseElement.Flag:
-                    case Constants.DatabaseElement.ImageQuality:
-                    case Constants.DatabaseElement.DeleteFlag:
-                    case Constants.DatabaseElement.FixedChoice:
-                    case Constants.DatabaseElement.Counter:
+                    case Constants.DatabaseColumn.File:
+                    case Constants.DatabaseColumn.Folder:
+                    case Constants.DatabaseColumn.Time:
+                    case Constants.DatabaseColumn.Date:
+                    case Constants.DatabaseColumn.Note:
+                    case Constants.DatabaseColumn.Flag:
+                    case Constants.DatabaseColumn.ImageQuality:
+                    case Constants.DatabaseColumn.DeleteFlag:
+                    case Constants.DatabaseColumn.FixedChoice:
+                    case Constants.DatabaseColumn.Counter:
                         DataEntryControl control = (DataEntryControl)pair.Value;
                         if (control.Copyable)
                         {
@@ -1301,19 +1293,19 @@ namespace Timelapse
         {
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
             {
-                string type = (string)this.imageDatabase.TypeFromKey[pair.Key];
+                string type = this.imageDatabase.ControlTypeFromDataLabel[pair.Key];
                 switch (type)
                 {
-                    case Constants.DatabaseElement.File:
-                    case Constants.DatabaseElement.Folder:
-                    case Constants.DatabaseElement.Time:
-                    case Constants.DatabaseElement.Date:
-                    case Constants.DatabaseElement.Note:
-                    case Constants.DatabaseElement.Flag:
-                    case Constants.DatabaseElement.ImageQuality:
-                    case Constants.DatabaseElement.DeleteFlag:
-                    case Constants.DatabaseElement.FixedChoice:
-                    case Constants.DatabaseElement.Counter:
+                    case Constants.DatabaseColumn.File:
+                    case Constants.DatabaseColumn.Folder:
+                    case Constants.DatabaseColumn.Time:
+                    case Constants.DatabaseColumn.Date:
+                    case Constants.DatabaseColumn.Note:
+                    case Constants.DatabaseColumn.Flag:
+                    case Constants.DatabaseColumn.ImageQuality:
+                    case Constants.DatabaseColumn.DeleteFlag:
+                    case Constants.DatabaseColumn.FixedChoice:
+                    case Constants.DatabaseColumn.Counter:
                         DataEntryControl control = (DataEntryControl)pair.Value;
                         control.Container.ClearValue(Control.BackgroundProperty);
                         break;
@@ -1338,11 +1330,11 @@ namespace Timelapse
             // The unaltered image will always be cached at this point, so there is no need to check.
             if (this.whichImageState == (int)WhichImage.Unaltered)
             {
-                this.markableCanvas.imgToMagnify.Source = this.cachedImages[(int)WhichImage.Unaltered];
-                this.markableCanvas.imgToDisplay.Source = this.cachedImages[(int)WhichImage.Unaltered];
+                this.markableCanvas.ImageToMagnify.Source = this.cachedImages[(int)WhichImage.Unaltered];
+                this.markableCanvas.ImageToDisplay.Source = this.cachedImages[(int)WhichImage.Unaltered];
 
                 // Check if its a corrupted image
-                if (!this.imageDatabase.RowIsImageDisplayable())
+                if (!this.imageDatabase.CurrentImage.IsDisplayable())
                 {
                     // TO DO AS WE MAY HAVE TO GET THE INDEX OF THE NEXT IN CYCLE IMAGE???
                     StatusBarUpdate.Message(this.statusBar, "Image is corrupted");
@@ -1361,23 +1353,23 @@ namespace Timelapse
                 int idx;
                 if (this.whichImageState == (int)WhichImage.PreviousDiff)
                 {
-                    idx = this.imageDatabase.CurrentRow - 1;   // Find the previous image (unless we are already at the beginning)
+                    idx = this.imageDatabase.CurrentImageRow - 1;   // Find the previous image (unless we are already at the beginning)
                     if (idx < 0)
                     {
-                        idx = this.imageDatabase.CurrentRow;
+                        idx = this.imageDatabase.CurrentImageRow;
                     }
                 }
                 else
                 {
-                    idx = this.imageDatabase.CurrentRow + 1;
+                    idx = this.imageDatabase.CurrentImageRow + 1;
                     if (idx >= this.imageDatabase.ImageCount)
                     {
-                        idx = this.imageDatabase.CurrentRow;
+                        idx = this.imageDatabase.CurrentImageRow;
                     }
                 }
 
                 // Generate the differenced image. 
-                string fullFileName = Path.Combine(this.FolderPath, this.imageDatabase.RowGetValueFromDataLabel((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File], idx));
+                string fullFileName = Path.Combine(this.FolderPath, this.imageDatabase.GetImageValue(this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.File], idx));
                 // Check if that file actually exists
                 if (!File.Exists(fullFileName))
                 {
@@ -1395,7 +1387,7 @@ namespace Timelapse
                 this.cachedImages[(int)this.whichImageState] = (BitmapSource)img;
             }
             // display the differenced image
-            this.markableCanvas.imgToDisplay.Source = this.cachedImages[this.whichImageState];
+            this.markableCanvas.ImageToDisplay.Source = this.cachedImages[this.whichImageState];
             StatusBarUpdate.Message(this.statusBar, "Viewing " + ((this.whichImageState == (int)WhichImage.PreviousDiff) ? "previous" : "next") + " differenced image");
         }
 
@@ -1410,8 +1402,8 @@ namespace Timelapse
             }
 
             // If the current image is marked as corrupted, we will only show the original (replacement) image
-            int idx = this.imageDatabase.CurrentRow;
-            if (!this.imageDatabase.RowIsImageDisplayable())
+            int idx = this.imageDatabase.CurrentImageRow;
+            if (!this.imageDatabase.CurrentImage.IsDisplayable())
             {
                 this.whichImageState = (int)WhichImage.Unaltered;
                 return;
@@ -1431,22 +1423,22 @@ namespace Timelapse
             // We can't actually show the previous or next image differencing if we are on the first or last image in the set respectively
             // Nor can we do it if the next image in the sequence is a corrupted one.
             // If that is the case, skip to the next one in the sequence
-            if (this.whichImageState == (int)WhichImage.PreviousDiff && this.imageDatabase.CurrentRow == 0)
+            if (this.whichImageState == (int)WhichImage.PreviousDiff && this.imageDatabase.CurrentImageRow == 0)
             {
                 // Already at the beginning
                 this.NextInCycle();
             }
-            else if (this.whichImageState == (int)WhichImage.NextDiff && this.imageDatabase.CurrentRow == this.imageDatabase.ImageCount - 1)
+            else if (this.whichImageState == (int)WhichImage.NextDiff && this.imageDatabase.CurrentImageRow == this.imageDatabase.ImageCount - 1)
             {
                 // Already at the end
                 this.NextInCycle();
             }
-            else if (this.whichImageState == (int)WhichImage.NextDiff && !this.imageDatabase.RowIsImageDisplayable(this.imageDatabase.CurrentRow + 1))
+            else if (this.whichImageState == (int)WhichImage.NextDiff && !this.imageDatabase.IsImageDisplayable(this.imageDatabase.CurrentImageRow + 1))
             {
                 // Can't use the next image as its corrupted
                 this.NextInCycle();
             }
-            else if (this.whichImageState == (int)WhichImage.PreviousDiff && !this.imageDatabase.RowIsImageDisplayable(this.imageDatabase.CurrentRow - 1))
+            else if (this.whichImageState == (int)WhichImage.PreviousDiff && !this.imageDatabase.IsImageDisplayable(this.imageDatabase.CurrentImageRow - 1))
             {
                 // Can't use the previous image as its corrupted
                 this.NextInCycle();
@@ -1471,14 +1463,14 @@ namespace Timelapse
             // If we are on the unaltered image
             if (this.whichImageState == (int)WhichImage.Unaltered)
             {
-                this.markableCanvas.imgToDisplay.Source = this.cachedImages[this.whichImageState];
-                this.markableCanvas.imgToMagnify.Source = this.cachedImages[this.whichImageState];
+                this.markableCanvas.ImageToDisplay.Source = this.cachedImages[this.whichImageState];
+                this.markableCanvas.ImageToMagnify.Source = this.cachedImages[this.whichImageState];
                 StatusBarUpdate.ClearMessage(this.statusBar);
                 return;
             }
 
             // If we are on  the first image, or the last image, then don't do anything
-            if (this.imageDatabase.CurrentRow == 0 || this.imageDatabase.CurrentRow == this.imageDatabase.ImageCount - 1)
+            if (this.imageDatabase.CurrentImageRow == 0 || this.imageDatabase.CurrentImageRow == this.imageDatabase.ImageCount - 1)
             {
                 this.whichImageState = (int)WhichImage.Unaltered;
                 StatusBarUpdate.Message(this.statusBar, "Can't show combined differences without three good images");
@@ -1486,9 +1478,9 @@ namespace Timelapse
             }
 
             // If any of the images are corrupted, then don't do anything
-            if (!this.imageDatabase.RowIsImageDisplayable() || 
-                !this.imageDatabase.RowIsImageDisplayable(this.imageDatabase.CurrentRow + 1) || 
-                !this.imageDatabase.RowIsImageDisplayable(this.imageDatabase.CurrentRow - 1))
+            if (!this.imageDatabase.CurrentImage.IsDisplayable() || 
+                !this.imageDatabase.IsImageDisplayable(this.imageDatabase.CurrentImageRow + 1) || 
+                !this.imageDatabase.IsImageDisplayable(this.imageDatabase.CurrentImageRow - 1))
             {
                 this.whichImageState = (int)WhichImage.Unaltered;
                 StatusBarUpdate.Message(this.statusBar, "Can't show combined differences without three good images");
@@ -1498,47 +1490,57 @@ namespace Timelapse
             if (null == this.cachedImages[this.whichImageState])
             {
                 // We need three valid images: the current one, the previous one, and the next one.
-                // The current image is always in the cache. Create a PixeBitmap from it
-                PixelBitmap currImage = new PixelBitmap((BitmapSource)this.cachedImages[(int)WhichImage.Unaltered]);
+                int currentImage = this.imageDatabase.CurrentImageRow;
 
-                // Get the previous and next image
-                int idx = this.imageDatabase.CurrentRow - 1;
-
-                string path = Path.Combine(this.FolderPath, this.imageDatabase.RowGetValueFromType((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File], idx));
-                if (!File.Exists(path))
+                BitmapImage previousImage = null;
+                if (this.imageDatabase.TryMoveToImage(currentImage - 1))
+                {
+                    string previousImagePath = this.imageDatabase.CurrentImage.GetImagePath(this.imageDatabase.FolderPath);
+                    if (File.Exists(previousImagePath))
+                    {
+                        previousImage = new BitmapImage(new Uri(previousImagePath));
+                    }
+                    this.imageDatabase.TryMoveToImage(currentImage);
+                }
+                if (previousImage == null)
                 {
                     StatusBarUpdate.Message(this.statusBar, "Can't show combined differences without three good images");
                     return;
                 }
-                BitmapImage prevImage = new BitmapImage(new Uri(path));
 
-                idx = this.imageDatabase.CurrentRow + 1;
-                path = Path.Combine(this.FolderPath, this.imageDatabase.RowGetValueFromType((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.File], idx));
-                if (!File.Exists(path))
+                BitmapImage nextImage = null;
+                if (this.imageDatabase.TryMoveToImage(currentImage + 1))
+                {
+                    string nextImagePath = this.imageDatabase.CurrentImage.GetImagePath(this.imageDatabase.FolderPath);
+                    if (File.Exists(nextImagePath))
+                    {
+                        nextImage = new BitmapImage(new Uri(nextImagePath));
+                    }
+                    this.imageDatabase.TryMoveToImage(currentImage);
+                }
+                if (nextImage == null)
                 {
                     StatusBarUpdate.Message(this.statusBar, "Can't show combined differences without three good images");
                     return;
                 }
-                BitmapImage nextImage = new BitmapImage(new Uri(path));
 
                 // Generate the differenced image and dislay it
-                PixelBitmap differencedImage = PixelBitmap.Difference(this.cachedImages[(int)WhichImage.Unaltered], prevImage, nextImage, this.DifferenceThreshold);
+                PixelBitmap differencedImage = PixelBitmap.Difference(this.cachedImages[(int)WhichImage.Unaltered], previousImage, nextImage, this.DifferenceThreshold);
                 this.cachedImages[this.whichImageState] = differencedImage.ToBitmap();
             }
 
             this.whichImageState = (int)WhichImage.CombinedDiff;
-            this.markableCanvas.imgToDisplay.Source = this.cachedImages[this.whichImageState];
+            this.markableCanvas.ImageToDisplay.Source = this.cachedImages[this.whichImageState];
             StatusBarUpdate.Message(this.statusBar, "Viewing surrounding differences");
         }
-
         #endregion
 
         #region Slider Event Handlers and related
         private void SldrImageNavigator_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             this.state.IsContentValueChangedFromOutside = true;
-            this.imageDatabase.ToDataRowIndex((int)sldrImageNavigator.Value);
-            this.ShowImage(this.imageDatabase.CurrentRow);
+            this.imageDatabase.TryMoveToImage((int)sldrImageNavigator.Value);
+            this.ShowImage(this.imageDatabase.CurrentImageRow);
             this.state.IsContentValueChangedFromOutside = false;
         }
 
@@ -1564,51 +1566,18 @@ namespace Timelapse
 
         public void ShowImage(int index, bool useCachedImages)
         {
-            if (this.imageDatabase.ToDataRowIndex(index) == false)
+            if (this.imageDatabase.TryMoveToImage(index) == false)
             {
                 throw new ArgumentOutOfRangeException("index", String.Format("{0} is not a valid row index in the image table.", index));
             }
-            ImageProperties imageProperties = new ImageProperties();
-            imageProperties.ImageQuality = (ImageQualityFilter)Enum.Parse(typeof(ImageQualityFilter), this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.ImageQuality));
 
             // Get and display the bitmap
-            BitmapImage bitmap = new BitmapImage();
-            if (imageProperties.ImageQuality == ImageQualityFilter.Corrupted)
-            {
-                bitmap = Utilities.BitmapFromResource(bitmap, "corrupted.jpg", useCachedImages);
-            }
-            else
-            {
-                imageProperties.File = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File);
-                imageProperties.Folder = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.Folder);
-                string imagePath = imageProperties.GetImagePath(this.FolderPath);
-                if (File.Exists(imagePath))
-                {
-                    this.MenuItemDeleteImage.IsEnabled = true;
-                    Utilities.BitmapFromFile(bitmap, imagePath, useCachedImages);
-                }
-                else
-                {
-                    // The file is missing! show the missing image placeholder 
-                    // If its not already tagged as missing, then tag it as such.
-                    if (!Constants.ImageQuality.Missing.Equals(this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.ImageQuality)))
-                    {
-                        this.imageDatabase.RowSetValueFromDataLabel((string)this.imageDatabase.DataLabelFromType[Constants.DatabaseElement.ImageQuality], Constants.ImageQuality.Missing);
-                    }
-                    bitmap = Utilities.BitmapFromResource(bitmap, "missing.jpg", useCachedImages);
-                }
-            }
-            this.markableCanvas.imgToDisplay.Source = bitmap;
+            this.markableCanvas.ImageToDisplay.Source = this.imageDatabase.CurrentImage.LoadImage(this.imageDatabase.FolderPath);
 
             // For each control, we get its type and then update its contents from the current data table row
-            string type;
-            DataEntryNote notectl;
-            DataEntryChoice fixedchoicectl;
-            DataEntryCounter counterctl;
-            DataEntryFlag flagctl;
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
             {
-                type = (string)this.imageDatabase.TypeFromKey[pair.Key];
+                string type = this.imageDatabase.ControlTypeFromDataLabel[pair.Key];
                 if (null == type)
                 {
                     type = "Not a control";
@@ -1616,45 +1585,45 @@ namespace Timelapse
 
                 switch (type)
                 {
-                    case Constants.DatabaseElement.File:
+                    case Constants.DatabaseColumn.File:
+                        DataEntryNote notectl = (DataEntryNote)pair.Value;
+                        notectl.Content = this.imageDatabase.CurrentImage.FileName;
+                        break;
+                    case Constants.DatabaseColumn.Folder:
                         notectl = (DataEntryNote)pair.Value;
-                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File);
+                        notectl.Content = this.imageDatabase.CurrentImage.RelativeFolderPath;
                         break;
-                    case Constants.DatabaseElement.Folder:
+                    case Constants.DatabaseColumn.Time:
                         notectl = (DataEntryNote)pair.Value;
-                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.Folder);
+                        notectl.Content = this.imageDatabase.CurrentImage.Time;
                         break;
-                    case Constants.DatabaseElement.Time:
+                    case Constants.DatabaseColumn.Date:
                         notectl = (DataEntryNote)pair.Value;
-                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.Time);
+                        notectl.Content = this.imageDatabase.CurrentImage.Date;
                         break;
-                    case Constants.DatabaseElement.Date:
-                        notectl = (DataEntryNote)pair.Value;
-                        notectl.Content = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.Date);
+                    case Constants.DatabaseColumn.ImageQuality:
+                        DataEntryChoice fixedchoicectl = (DataEntryChoice)pair.Value;
+                        fixedchoicectl.Content = this.imageDatabase.CurrentImage.ImageQuality.ToString();
                         break;
-                    case Constants.DatabaseElement.ImageQuality:
-                        fixedchoicectl = (DataEntryChoice)pair.Value;
-                        fixedchoicectl.Content = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.ImageQuality);
+                    case Constants.DatabaseColumn.DeleteFlag:
+                        DataEntryFlag flagctl = (DataEntryFlag)pair.Value; // get the control
+                        flagctl.Content = this.imageDatabase.GetCurrentImageValue(flagctl.DataLabel);
                         break;
-                    case Constants.DatabaseElement.DeleteFlag:
-                        flagctl = (DataEntryFlag)pair.Value; // get the control
-                        flagctl.Content = this.imageDatabase.RowGetValueFromDataLabel(flagctl.DataLabel);
-                        break;
-                    case Constants.DatabaseElement.Note:
+                    case Constants.DatabaseColumn.Note:
                         notectl = (DataEntryNote)pair.Value; // get the control
-                        notectl.Content = this.imageDatabase.RowGetValueFromDataLabel(notectl.DataLabel);
+                        notectl.Content = this.imageDatabase.GetCurrentImageValue(notectl.DataLabel);
                         break;
-                    case Constants.DatabaseElement.Flag:
+                    case Constants.DatabaseColumn.Flag:
                         flagctl = (DataEntryFlag)pair.Value; // get the control
-                        flagctl.Content = this.imageDatabase.RowGetValueFromDataLabel(flagctl.DataLabel);
+                        flagctl.Content = this.imageDatabase.GetCurrentImageValue(flagctl.DataLabel);
                         break;
-                    case Constants.DatabaseElement.FixedChoice:
+                    case Constants.DatabaseColumn.FixedChoice:
                         fixedchoicectl = (DataEntryChoice)pair.Value; // get the control
-                        fixedchoicectl.Content = this.imageDatabase.RowGetValueFromDataLabel(fixedchoicectl.DataLabel);
+                        fixedchoicectl.Content = this.imageDatabase.GetCurrentImageValue(fixedchoicectl.DataLabel);
                         break;
-                    case Constants.DatabaseElement.Counter:
-                        counterctl = (DataEntryCounter)pair.Value; // get the control
-                        counterctl.Content = this.imageDatabase.RowGetValueFromDataLabel(counterctl.DataLabel);
+                    case Constants.DatabaseColumn.Counter:
+                        DataEntryCounter counterctl = (DataEntryCounter)pair.Value; // get the control
+                        counterctl.Content = this.imageDatabase.GetCurrentImageValue(counterctl.DataLabel);
                         break;
                     default:
                         break;
@@ -1662,15 +1631,15 @@ namespace Timelapse
             }
 
             // update the status bar to show which image we are on out of the total
-            StatusBarUpdate.CurrentImageNumber(this.statusBar, this.imageDatabase.CurrentRow + 1); // Add one because indexes are 0-based
-            StatusBarUpdate.TotalCount(this.statusBar, this.imageDatabase.DataTable.Rows.Count);
+            StatusBarUpdate.CurrentImageNumber(this.statusBar, this.imageDatabase.CurrentImageRow + 1); // Add one because indexes are 0-based
+            StatusBarUpdate.TotalCount(this.statusBar, this.imageDatabase.ImageCount);
             StatusBarUpdate.ClearMessage(this.statusBar);
 
-            this.sldrImageNavigator.Value = this.imageDatabase.CurrentRow;
+            this.sldrImageNavigator.Value = this.imageDatabase.CurrentImageRow;
 
             // Set the magImage to the source so the unaltered image will appear on the magnifying glass
             // Although its probably not needed, also make the magCanvas the same size as the image
-            this.markableCanvas.imgToMagnify.Source = bitmap;
+            this.markableCanvas.ImageToMagnify.Source = this.markableCanvas.ImageToDisplay.Source;
 
             // Whenever we navigate to a new image, delete any markers that were displayed on the current image 
             // and then draw the markers assoicated with the new image
@@ -1678,7 +1647,7 @@ namespace Timelapse
             this.RefreshTheMarkableCanvasListOfMetaTags();
 
             // Always cache the current image
-            this.cachedImages[(int)WhichImage.Unaltered] = (BitmapImage)this.markableCanvas.imgToMagnify.Source;
+            this.cachedImages[(int)WhichImage.Unaltered] = (BitmapSource)this.markableCanvas.ImageToMagnify.Source;
 
             // Also reset the differencing variables
             this.cachedImages[(int)WhichImage.PreviousDiff] = null;
@@ -1833,7 +1802,7 @@ namespace Timelapse
         // Get all the counters' metatags (if any)  from the current row in the database
         private void GetTheMarkableCanvasListOfMetaTags()
         {
-            this.counterCoords = this.imageDatabase.MarkerTableGetMetaTagCounterList();
+            this.counterCoords = this.imageDatabase.GetMetaTagCounters();
         }
 
         // Event handler: A marker, as defined in e.MetaTag, has been either added (if e.IsNew is true) or deleted (if it is false)
@@ -1874,7 +1843,7 @@ namespace Timelapse
                     // Update the datatable and database with the new counter values
                     this.state.IsContentValueChangedFromOutside = true;
                     myCounter.Content = new_counter_data;
-                    this.imageDatabase.UpdateRow(this.imageDatabase.CurrentId, myCounter.DataLabel, new_counter_data, Constants.Database.DataTable);
+                    this.imageDatabase.UpdateImage(this.imageDatabase.CurrentImage.ID, myCounter.DataLabel, new_counter_data);
                     this.state.IsContentValueChangedFromOutside = false;
                 }
 
@@ -1928,7 +1897,7 @@ namespace Timelapse
                             point_list += String.Format("{0:0.000},{1:0.000}", point.X, point.Y);   // Add a point in the form 
                         }
                     }
-                    this.imageDatabase.UpdateRow(this.imageDatabase.CurrentId, myCounter.DataLabel, point_list, Constants.Database.MarkersTable);
+                    this.imageDatabase.UpdateID(this.imageDatabase.CurrentImage.ID, myCounter.DataLabel, point_list, Constants.Database.MarkersTable);
                 }
                 this.RefreshTheMarkableCanvasListOfMetaTags(); // Refresh the Markable Canvas, where it will also delete the metaTag at the same time
             }
@@ -1963,7 +1932,7 @@ namespace Timelapse
             count++;
             counter_data = count.ToString();
             this.state.IsContentValueChangedFromOutside = true;
-            this.imageDatabase.UpdateRow(this.imageDatabase.CurrentId, myCounter.DataLabel, counter_data);
+            this.imageDatabase.UpdateImage(this.imageDatabase.CurrentImage.ID, myCounter.DataLabel, counter_data);
             myCounter.Content = counter_data;
             this.state.IsContentValueChangedFromOutside = false;
 
@@ -1999,7 +1968,7 @@ namespace Timelapse
                 }
                 pointlist += String.Format("{0:0.000},{1:0.000}", mt.Point.X, mt.Point.Y); // Add a point in the form x,y e.g., 0.5, 0.7
             }
-            this.imageDatabase.MarkerTableAddPoint(myCounter.DataLabel, pointlist);
+            this.imageDatabase.SetMarkerPoints(myCounter.DataLabel, pointlist);
             this.RefreshTheMarkableCanvasListOfMetaTags(true);
             this.Speak(myCounter.Content + " " + myCounter.Label); // Speak the current count
         }
@@ -2123,7 +2092,7 @@ namespace Timelapse
         /// </summary>
         private void MenuItemExportThisImage_Click(object sender, RoutedEventArgs e)
         {
-            if (!this.imageDatabase.RowIsImageDisplayable())
+            if (!this.imageDatabase.CurrentImage.IsDisplayable())
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.IconType = MessageBoxImage.Error;
@@ -2137,7 +2106,7 @@ namespace Timelapse
                 return;
             }
             // Get the file name of the current image 
-            string sourceFile = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File);
+            string sourceFile = this.imageDatabase.CurrentImage.FileName;
 
             // Set up a Folder Browser with some instructions
             var dialog = new System.Windows.Forms.SaveFileDialog();
@@ -2224,7 +2193,7 @@ namespace Timelapse
         private void MenuItemPopulateFieldFromMetaData_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image or deleted image, tell the person. Selecting ok will shift the filter..
-            if (this.imageDatabase.RowIsImageDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.imageDatabase.CurrentImage.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "Populate a Data Field with Image Metadata of your Choosing...";
@@ -2240,7 +2209,7 @@ namespace Timelapse
                 if (msg_result == true)
                 {
                     this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
-                    int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
+                    int row = this.imageDatabase.FindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
                         this.ShowImage(row);
@@ -2252,12 +2221,12 @@ namespace Timelapse
                 }
             }
 
-            DialogPopulateFieldWithMetadata dlg = new DialogPopulateFieldWithMetadata(this.imageDatabase, this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File), this.FolderPath);
+            DialogPopulateFieldWithMetadata dlg = new DialogPopulateFieldWithMetadata(this.imageDatabase, this.imageDatabase.CurrentImage.FileName, this.FolderPath);
             dlg.Owner = this;
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.ShowImage(this.imageDatabase.CurrentRow);
+                this.ShowImage(this.imageDatabase.CurrentImageRow);
                 this.state.IsContentChanged = true;
             }
         }
@@ -2267,12 +2236,11 @@ namespace Timelapse
         {
             try
             {
-                int i = this.imageDatabase.GetDeletedImagesCounts();
+                int i = this.imageDatabase.GetDeletedImageCount();
                 this.MenuItemDeleteImages.IsEnabled = i > 0;
                 this.MenuItemDeleteImagesAndData.IsEnabled = i > 0;
-                this.MenuItemDeleteImageAndData.IsEnabled = true; // (quality == Constants.ImageQuality.CORRUPTED || quality == Constants.ImageQuality.MISSING) ? false : true;
-                string quality = this.imageDatabase.RowGetValueFromDataLabel(Constants.DatabaseElement.ImageQuality);
-                this.MenuItemDeleteImage.IsEnabled = (quality == Constants.ImageQuality.Corrupted || quality == Constants.ImageQuality.Missing) ? false : true;
+                this.MenuItemDeleteImageAndData.IsEnabled = true;
+                this.MenuItemDeleteImage.IsEnabled = this.imageDatabase.CurrentImage.IsDisplayable();
             }
             catch
             {
@@ -2286,10 +2254,7 @@ namespace Timelapse
 
         private void MenuItemDeleteImage_Click(object sender, RoutedEventArgs e)
         {
-            ImageProperties imageProperties = new ImageProperties();
-            imageProperties.File = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.File);
-            imageProperties.Folder = this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.Folder);
-            imageProperties.ImageQuality = (ImageQualityFilter)Enum.Parse(typeof(ImageQualityFilter), (string)this.imageDatabase.RowGetValueFromType(Constants.DatabaseElement.ImageQuality));
+            ImageProperties imageProperties = new ImageProperties(this.imageDatabase.ImageDataTable.Rows[this.imageDatabase.CurrentImageRow]);
 
             MenuItem sendingMenuItem = sender as MenuItem;
             bool deleteData = !sendingMenuItem.Name.Equals(this.MenuItemDeleteImage.Name);
@@ -2301,10 +2266,10 @@ namespace Timelapse
                 // Shows the deleted image placeholder // (although if it is already marked as corrupted, it will show the corrupted image placeholder)
                 if (sendingMenuItem.Name.Equals(this.MenuItemDeleteImageAndData.Name))
                 {
-                    this.imageDatabase.ToDataRowPrevious();
-                    this.SetImageFilterAndIndex(this.imageDatabase.CurrentRow, this.state.ImageFilter);
+                    this.imageDatabase.TryMoveToPreviousImage();
+                    this.SetImageFilterAndIndex(this.imageDatabase.CurrentImageRow, this.state.ImageFilter);
                 }
-                this.ShowImage(this.imageDatabase.CurrentRow, false);
+                this.ShowImage(this.imageDatabase.CurrentImageRow, false);
             }
         }
 
@@ -2343,45 +2308,44 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.SetImageFilterAndIndex(this.imageDatabase.CurrentRow, this.state.ImageFilter);
-                this.ShowImage(this.imageDatabase.CurrentRow, false);
+                this.SetImageFilterAndIndex(this.imageDatabase.CurrentImageRow, this.state.ImageFilter);
+                this.ShowImage(this.imageDatabase.CurrentImageRow, false);
             }
         }
 
         /// <summary> Add some text to the Image Set Log </summary>
         private void MenuItemLog_Click(object sender, RoutedEventArgs e)
         {
-            DialogEditLog dlg = new DialogEditLog(this.imageDatabase.Log);
+            DialogEditLog dlg = new DialogEditLog(this.imageDatabase.GetImageSetLog());
             dlg.Owner = this;
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.imageDatabase.Log = dlg.LogContents;
+                this.imageDatabase.SetImageSetLog(dlg.LogContents);
                 this.state.IsContentChanged = true;
             }
         }
 
         private void BtnCopy_Click(object sender, RoutedEventArgs e)
         {
-            int previousRow = this.imageDatabase.CurrentRow - 1;
+            int previousRow = this.imageDatabase.CurrentImageRow - 1;
             if (previousRow < 0)
             {
                 return; // We are already on the first image, so there is nothing to copy
             }
 
-            string type = String.Empty;
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
             {
-                type = (string)this.imageDatabase.TypeFromKey[pair.Key];
+                string type = this.imageDatabase.ControlTypeFromDataLabel[pair.Key];
                 if (null == type)
                 {
                     type = "Not a control";
                 }
 
                 DataEntryControl control = pair.Value;
-                if (this.imageDatabase.TemplateIsCopyable(control.DataLabel))
+                if (this.imageDatabase.IsControlCopyable(control.DataLabel))
                 {
-                    control.Content = this.imageDatabase.RowGetValueFromDataLabel(control.DataLabel, previousRow);
+                    control.Content = this.imageDatabase.GetImageValue(control.DataLabel, previousRow);
                 }
             }
             this.state.IsContentChanged = true; // We've altered some content
@@ -2451,7 +2415,7 @@ namespace Timelapse
                 if (msg_result == true)
                 {
                     this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
-                    int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
+                    int row = this.imageDatabase.FindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
                         this.ShowImage(row);
@@ -2475,7 +2439,7 @@ namespace Timelapse
         private void MenuItemSwapDayMonth_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.imageDatabase.RowIsImageDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.imageDatabase.CurrentImage.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "Swap the day / month...";
@@ -2491,7 +2455,7 @@ namespace Timelapse
                 if (msg_result == true)
                 {
                     this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
-                    int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
+                    int row = this.imageDatabase.FindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
                         this.ShowImage(row);
@@ -2508,7 +2472,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.ShowImage(this.imageDatabase.CurrentRow);
+                this.ShowImage(this.imageDatabase.CurrentImageRow);
             }
         }
 
@@ -2516,7 +2480,7 @@ namespace Timelapse
         private void MenuItemDateCorrections_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.imageDatabase.RowIsImageDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.imageDatabase.CurrentImage.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "Add a correction value to every date...";
@@ -2532,7 +2496,7 @@ namespace Timelapse
                 if (msg_result == true)
                 {
                     this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
-                    int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
+                    int row = this.imageDatabase.FindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
                         this.ShowImage(row);
@@ -2550,7 +2514,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.ShowImage(this.imageDatabase.CurrentRow);
+                this.ShowImage(this.imageDatabase.CurrentImageRow);
             }
         }
 
@@ -2558,7 +2522,7 @@ namespace Timelapse
         private void MenuItemCorrectDaylightSavings_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.imageDatabase.RowIsImageDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.imageDatabase.CurrentImage.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
             {
                 if (this.state.ImageFilter != ImageQualityFilter.All)
                 {
@@ -2601,14 +2565,14 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.ShowImage(this.imageDatabase.CurrentRow);
+                this.ShowImage(this.imageDatabase.CurrentImageRow);
             }
         }
 
         private void MenuItemCheckModifyAmbiguousDates_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.imageDatabase.RowIsImageDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.imageDatabase.CurrentImage.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "Check and Modify Ambiguous Dates...";
@@ -2622,7 +2586,7 @@ namespace Timelapse
                 if (msg_result == true)
                 {
                     this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
-                    int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
+                    int row = this.imageDatabase.FindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
                         this.ShowImage(row);
@@ -2639,7 +2603,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.ShowImage(this.imageDatabase.CurrentRow);
+                this.ShowImage(this.imageDatabase.CurrentImageRow);
             }
         }
 
@@ -2660,7 +2624,7 @@ namespace Timelapse
                 if (msg_result == true)
                 {
                     this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
-                    int row = this.imageDatabase.RowFindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
+                    int row = this.imageDatabase.FindNextDisplayableImage(1); // Start at Row 1, as they are numbered from 1 onwards...
                     if (row >= 0)
                     {
                         this.ShowImage(row);
@@ -2677,7 +2641,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.ShowImage(this.imageDatabase.CurrentRow);
+                this.ShowImage(this.imageDatabase.CurrentImageRow);
             }
         }
 
@@ -2707,21 +2671,21 @@ namespace Timelapse
         #region View Menu Callbacks
         private void View_SubmenuOpening(object sender, RoutedEventArgs e)
         {
-            int[] counts = this.imageDatabase.GetImageCounts();
+            Dictionary<ImageQualityFilter, int> counts = this.imageDatabase.GetImageCounts();
 
-            this.MenuItemViewLightImages.IsEnabled = counts[(int)ImageQualityFilter.Ok] > 0;
-            this.MenuItemViewDarkImages.IsEnabled = counts[(int)ImageQualityFilter.Dark] > 0;
-            this.MenuItemViewCorruptedImages.IsEnabled = counts[(int)ImageQualityFilter.Corrupted] > 0;
-            this.MenuItemViewMissingImages.IsEnabled = counts[(int)ImageQualityFilter.Missing] > 0;
-            this.MenuItemViewImagesMarkedForDeletion.IsEnabled = this.imageDatabase.GetDeletedImagesCounts() > 0;
+            this.MenuItemViewLightImages.IsEnabled = counts[ImageQualityFilter.Ok] > 0;
+            this.MenuItemViewDarkImages.IsEnabled = counts[ImageQualityFilter.Dark] > 0;
+            this.MenuItemViewCorruptedImages.IsEnabled = counts[ImageQualityFilter.Corrupted] > 0;
+            this.MenuItemViewMissingImages.IsEnabled = counts[ImageQualityFilter.Missing] > 0;
+            this.MenuItemViewImagesMarkedForDeletion.IsEnabled = this.imageDatabase.GetDeletedImageCount() > 0;
         }
 
         private void MenuItemZoomIn_Click(object sender, RoutedEventArgs e)
         {
-            lock (this.markableCanvas.imgToDisplay)
+            lock (this.markableCanvas.ImageToDisplay)
             {
-                Point location = Mouse.GetPosition(this.markableCanvas.imgToDisplay);
-                if (location.X > this.markableCanvas.imgToDisplay.ActualWidth || location.Y > this.markableCanvas.imgToDisplay.ActualHeight)
+                Point location = Mouse.GetPosition(this.markableCanvas.ImageToDisplay);
+                if (location.X > this.markableCanvas.ImageToDisplay.ActualWidth || location.Y > this.markableCanvas.ImageToDisplay.ActualHeight)
                 {
                     return; // Ignore points if mouse is off the image
                 }
@@ -2731,9 +2695,9 @@ namespace Timelapse
 
         private void MenuItemZoomOut_Click(object sender, RoutedEventArgs e)
         {
-            lock (this.markableCanvas.imgToDisplay)
+            lock (this.markableCanvas.ImageToDisplay)
             {
-                Point location = Mouse.GetPosition(this.markableCanvas.imgToDisplay);
+                Point location = Mouse.GetPosition(this.markableCanvas.ImageToDisplay);
                 this.markableCanvas.ScaleImage(location, false); // Zooming in if delta is positive, else zooming out
             }
         }
@@ -2842,12 +2806,8 @@ namespace Timelapse
         /// <summary> Show a dialog box telling the user how many images were loaded, etc.</summary>
         public void MenuItemImageCounts_Click(object sender, RoutedEventArgs e)
         {
-            int[] counts = this.imageDatabase.GetImageCounts();
-            DialogStatisticsOfImageCounts dlg = new DialogStatisticsOfImageCounts(
-                counts[(int)ImageQualityFilter.Ok],
-                counts[(int)ImageQualityFilter.Dark],
-                counts[(int)ImageQualityFilter.Corrupted],
-                counts[(int)ImageQualityFilter.Missing]);
+            Dictionary<ImageQualityFilter, int> counts = this.imageDatabase.GetImageCounts();
+            DialogStatisticsOfImageCounts dlg = new DialogStatisticsOfImageCounts(counts);
             dlg.Owner = this;
             dlg.ShowDialog();
         }
@@ -2958,7 +2918,7 @@ namespace Timelapse
         private void ViewNextImage()
         {
             this.state.IsContentValueChangedFromOutside = true;
-            this.imageDatabase.ToDataRowNext();
+            this.imageDatabase.TryMoveToNextImage();
             this.ViewRefresh();
             this.state.IsContentValueChangedFromOutside = false;
         }
@@ -2967,7 +2927,7 @@ namespace Timelapse
         private void ViewPreviousImage()
         {
             this.state.IsContentValueChangedFromOutside = true;
-            this.imageDatabase.ToDataRowPrevious();
+            this.imageDatabase.TryMoveToPreviousImage();
             this.ViewRefresh();
             this.state.IsContentValueChangedFromOutside = false;
         }
@@ -2976,7 +2936,7 @@ namespace Timelapse
         private void ViewRefresh()
         {
             this.SldrImageNavigatorEnableCallback(false);
-            this.ShowImage(this.imageDatabase.CurrentRow);
+            this.ShowImage(this.imageDatabase.CurrentImageRow);
             this.SldrImageNavigatorEnableCallback(true);
         }
 

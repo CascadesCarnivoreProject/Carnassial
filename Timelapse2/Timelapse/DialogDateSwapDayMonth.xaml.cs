@@ -1,7 +1,6 @@
 ﻿using System;
-using System.IO;
+using System.Text;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using Timelapse.Database;
 using Timelapse.Util;
 
@@ -23,9 +22,9 @@ namespace Timelapse
             this.database = database;
 
             // imgNumber will point to the first image  that is not swappable, else -1
+            ImageProperties imageProperties = null;
             int imgNumber = DateTimeHandler.SwapDayMonthIsPossible(this.database);
-            int id = this.database.RowGetID(imgNumber);
-            bool result;
+            int id = this.database.GetImageID(imgNumber);
             if (id >= 0)
             {
                 // We can't swap the dates; provide appropriate feedback
@@ -33,51 +32,31 @@ namespace Timelapse
                 this.StackPanelError.Visibility = Visibility.Visible;
                 this.OkButton.Visibility = Visibility.Collapsed;
 
-                this.lblOriginalDate.Content = this.database.IDGetDate(id, out result);
+                imageProperties = new ImageProperties(this.database.ImageDataTable.Rows.Find(id));
+                this.lblOriginalDate.Content = imageProperties.Date;
                 this.lblNewDate.Content = "No valid date possible";
             }
             else
             {
                 // We can swap the dates; provide appropriate feedback
-                imgNumber = this.database.RowFindNextDisplayableImage(0);
-                id = this.database.RowGetID(imgNumber);
+                imgNumber = this.database.FindNextDisplayableImage(0);
+                id = this.database.GetImageID(imgNumber);
                 if (id >= 0)
                 {
-                    string sdate = (string)this.database.IDGetDate(id, out result);
-                    this.lblOriginalDate.Content = sdate;
-                    this.lblNewDate.Content = DateTimeHandler.SwapSingleDayMonth(sdate);
+                    imageProperties = new ImageProperties(this.database.ImageDataTable.Rows.Find(id));
+                    this.lblOriginalDate.Content = imageProperties.Date;
+                    this.lblNewDate.Content = DateTimeHandler.SwapSingleDayMonth(imageProperties.Date);
                 }
             }
 
             // Now show the image that we are using as our sample
-            if (imgNumber == -1)
+            if (imageProperties == null)
             {
                 return; // No valid image to show!
             }
 
-            // Get the image filename and display it
-            string fname = (string)this.database.IDGetFile(id, out result);
-            this.lblImageName.Content = fname;
-
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            string path = System.IO.Path.Combine(this.database.FolderPath, fname);
-            BitmapFrame bmap;
-            try
-            {
-                bmap = BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
-            }
-            catch
-            {
-                if (!File.Exists(path))
-                {
-                    bmap = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"));
-                }
-                else
-                {
-                    bmap = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"));
-                }
-            }
-            this.imgDateImage.Source = bmap;
+            this.imgDateImage.Source = imageProperties.LoadImage(this.database.FolderPath);
         }
         #endregion
 
@@ -95,15 +74,18 @@ namespace Timelapse
         // If the user click ok, swap the day and month field
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            this.database.RowsUpdateSwapDayMonth();
-            this.database.Log += "System entry: Swapped the days and months for all dates.\n";
-            this.database.Log += "                       Old sample date was: " + this.lblOriginalDate.Content + " and new date is " + this.lblNewDate.Content + "\n";
+            // TODO: Todd  is use of an unrestricted range correct behaviour when images have been loaded from multiple folders?
+            this.database.ExchangeDayAndMonthInImageDate();
+            StringBuilder log = new StringBuilder();
+            log.AppendLine("System entry: Swapped the days and months for all dates.");
+            log.AppendLine("                       Old sample date was: " + this.lblOriginalDate.Content + " and new date is " + this.lblNewDate.Content);
+            this.database.AppendToImageSetLog(log);
             this.DialogResult = true;
 
             // Refresh the database / datatable to reflect the updated values, which will also refressh the main timelpase display.
-            int current_row = this.database.CurrentRow;
+            int currentImage = this.database.CurrentImageRow;
             this.database.GetImagesAll();
-            this.database.CurrentRow = current_row;
+            this.database.TryMoveToImage(currentImage);
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

@@ -137,14 +137,14 @@ namespace Timelapse
         #region Notefields callbacks
         public void LoadDataFieldLabels()
         {
-            DataTable sortedTemplateTable = this.database.TemplateGetSortedByControls();
+            DataTable sortedTemplateTable = this.database.GetControlsSortedByControlOrder();
             for (int i = 0; i < sortedTemplateTable.Rows.Count; i++)
             {
                 // Get the values for each control
                 DataRow row = sortedTemplateTable.Rows[i];
                 string type = row[Constants.Database.Type].ToString();
 
-                if (type == Constants.DatabaseElement.Note || type == Constants.DatabaseElement.Date || type == Constants.DatabaseElement.Time)
+                if (type == Constants.DatabaseColumn.Note || type == Constants.DatabaseColumn.Date || type == Constants.DatabaseColumn.Time)
                 {
                     string datalabel = (string)row[Constants.Control.DataLabel];
                     string label = (string)row[Constants.Control.Label];
@@ -176,7 +176,7 @@ namespace Timelapse
             Dictionary<string, string> dictTemp;
 
             // This tuple list will hold the id, key and value that we will want to update in the database
-            List<Tuple<int, string, string>> list_to_update_db = new List<Tuple<int, string, string>>();
+            List<Tuple<long, string, string>> list_to_update_db = new List<Tuple<long, string, string>>();
 
             // This list will hold key / value pairs that will be bound to the datagrid feedback, 
             // which is the way to make those pairs appear in the data grid during background worker progress updates
@@ -206,16 +206,16 @@ namespace Timelapse
                 // For each row in the database, get the image filename and try to extract the chosen metatag value.
                 // If we can't decide if we want to leave the data field alone or to clear it depending on the state of the isClearIfNoMetaData (set via the checkbox)
                 // Report progress as needed.
-                for (int i = 0; i < database.DataTable.Rows.Count; i++)
+                for (int i = 0; i < database.ImageCount; i++)
                 {
-                    fname = database.DataTable.Rows[i][Constants.DatabaseElement.File].ToString();
-                    int id = Int32.Parse(database.DataTable.Rows[i][Constants.Database.ID].ToString());
+                    fname = database.ImageDataTable.Rows[i][Constants.DatabaseColumn.File].ToString();
+                    int id = Int32.Parse(database.ImageDataTable.Rows[i][Constants.Database.ID].ToString());
                     dictTemp = exifTool.FetchExifFrom(System.IO.Path.Combine(this.folderPath, fname), tags);
                     if (dictTemp.Count <= 0)
                     {
                         if (this.isClearIfNoMetaData)
                         {
-                            list_to_update_db.Add(new Tuple<int, string, string>(id, dictNoteFieldLookup[this.noteLabel], String.Empty)); // Clear the data field if there is no metadata...
+                            list_to_update_db.Add(new Tuple<long, string, string>(id, dictNoteFieldLookup[this.noteLabel], String.Empty)); // Clear the data field if there is no metadata...
                             bgw.ReportProgress(0, new FeedbackMessage(fname, "No metadata found - data field is cleared"));
                         }
                         else
@@ -230,11 +230,11 @@ namespace Timelapse
                     {
                         Thread.Sleep(25); // Put in a short delay every now and then, as otherwise the UI may not update.
                     }
-                    list_to_update_db.Add(new Tuple<int, string, string>(id, dictNoteFieldLookup[this.noteLabel], value));
+                    list_to_update_db.Add(new Tuple<long, string, string>(id, dictNoteFieldLookup[this.noteLabel], value));
                 }
 
                 bgw.ReportProgress(0, new FeedbackMessage("Writing the data...", "Please wait..."));
-                database.RowsUpdateByRowIdKeyVaue(list_to_update_db);
+                database.UpdateImages(list_to_update_db);
                 bgw.ReportProgress(0, new FeedbackMessage("Done", "Done"));
             };
             bgw.ProgressChanged += (o, ea) =>

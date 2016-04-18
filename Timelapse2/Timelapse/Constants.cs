@@ -48,7 +48,7 @@ namespace Timelapse
             // db table names and related strings
             public const string CreationStringInteger = "Id integer primary key";
             public const string CreationStringPrimaryKey = "INTEGER PRIMARY KEY AUTOINCREMENT";
-            public const string DataTable = "DataTable";         // the table containing the image data
+            public const string ImageDataTable = "DataTable";         // the table containing the image data
             public const string ID = "Id";                       // the unique id of the table row
             public const string ImageSetTable = "ImageSetTable"; // the table containing information commont to the entire image set
             public const string MarkersTable = "MarkersTable";         // the table containing the marker data
@@ -59,11 +59,11 @@ namespace Timelapse
             public const char MarkerBar = '|';              // Separator used to separate marker points in the database i.e. "2.3,5.6 | 7.1, 3.3"
         }
 
-        // Names of standard elements, always included but not always made visible
-        public static class DatabaseElement
+        // Names of standard database columns, always included but not always made visible in the user controls
+        public static class DatabaseColumn
         {
             public const string Counter = "Counter";           // a counter
-            public const string Data = "Data";                 // the data describing the attributes of that code
+            public const string Data = "Data";                 // the data describing the attributes of that control
             public const string Date = "Date";
             public const string DeleteFlag = "DeleteFlag";    // a flag data type for marking deletion
             public const string File = "File";

@@ -13,25 +13,25 @@ namespace Timelapse.Images
 {
     /// <summary>
     /// MarkableImageCanvas - A canvas that:
-    /// - contains an image that can be scaled and tranlated by the user with the mouse, 
+    /// - contains an image that can be scaled and translated by the user with the mouse, 
     /// - can draw and track marks atop the image
     /// </summary>
     public class MarkableImageCanvas : Canvas
     {
+        private List<MetaTag> metaTags;
+
         #region Public Properties
 
         /// <summary>
         /// The image that will be displayed in the MarkableImageCanvas
         /// </summary>
-        public Image imgToDisplay { get; set; }
-
+        public Image ImageToDisplay { get; set; }
 
         /// <summary>
         /// The image that will be displayed in the MarkableImageCanvas's Magnifying Glass
         /// </summary>
-        public Image imgToMagnify { get; set; }
+        public Image ImageToMagnify { get; set; }
 
-        private List<MetaTag> m_MetaTags;
         /// <summary>
         /// The list of MetaTags  we are using to define the marks on the image
         /// </summary>
@@ -39,11 +39,11 @@ namespace Timelapse.Images
         {
             get
             {
-                return m_MetaTags;
+                return metaTags;
             }
             set
             {
-                m_MetaTags = value;
+                metaTags = value;
                 MarkersRefresh();
             }
         }
@@ -64,7 +64,7 @@ namespace Timelapse.Images
                 try
                 {
                     // Nothing to scale, so get out of here
-                    if (this.imgToDisplay.Source == null) return; 
+                    if (this.ImageToDisplay.Source == null) return; 
                     this.ScaleImage(new Point(100, 100), true);
                 }
                 catch 
@@ -94,7 +94,7 @@ namespace Timelapse.Images
 
         public static DependencyProperty MaxZoomUpperBoundProperty = DependencyProperty.Register("MaxZoomUpperBound", typeof(double), typeof(MarkableImageCanvas));
         /// <summary>
-        /// The maximum Upper Bound of our zoom (scale) of the image. WHile the MaxZoom can be changed, it can't be larger than this )
+        /// The maximum upper bound of our zoom (scale) of the image. While the MaxZoom can be changed, it can't be larger than this.
         /// </summary>
         public double MaxZoomUpperBound
         {
@@ -146,9 +146,9 @@ namespace Timelapse.Images
                 this.magnifyingGlass.ZoomValue = newValue;
 
                 // Make sure that there is actually something to magnify
-                if (this.imgToMagnify.Source != null && this.imgToDisplay.ActualWidth > 0) 
-                if ( this.imgToDisplay.ActualWidth > 0) 
-                    this.magnifyingGlass.Redraw(Calculations.CorrectGetPosition(this), Calculations.CorrectGetPosition(this.imgToDisplay), this.imgToDisplay.ActualWidth, this.imgToDisplay.ActualHeight, canvasToMagnify);
+                if (this.ImageToMagnify.Source != null && this.ImageToDisplay.ActualWidth > 0) 
+                if ( this.ImageToDisplay.ActualWidth > 0) 
+                    this.magnifyingGlass.Redraw(Calculations.CorrectGetPosition(this), Calculations.CorrectGetPosition(this.ImageToDisplay), this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight, canvasToMagnify);
             }
         }
 
@@ -312,25 +312,25 @@ namespace Timelapse.Images
             this.MaxZoomUpperBound = ZOOM_MAXIMUM_UPPERBOUND;
             
             // Set up some initial image properites for the image to magnify
-            this.imgToMagnify = new Image(); 
-            this.imgToMagnify.HorizontalAlignment = HorizontalAlignment.Left;
-            this.imgToMagnify.VerticalAlignment = VerticalAlignment.Top;
-            Canvas.SetLeft(imgToMagnify, 0);
-            Canvas.SetTop(imgToMagnify, 0);
+            this.ImageToMagnify = new Image(); 
+            this.ImageToMagnify.HorizontalAlignment = HorizontalAlignment.Left;
+            this.ImageToMagnify.VerticalAlignment = VerticalAlignment.Top;
+            Canvas.SetLeft(ImageToMagnify, 0);
+            Canvas.SetTop(ImageToMagnify, 0);
 
             // add the image to the magnification canvas
-            canvasToMagnify.Children.Add(this.imgToMagnify);
+            canvasToMagnify.Children.Add(this.ImageToMagnify);
 
             // Set up some initial image properites and event handlers 
-            this.imgToDisplay = new Image();
-            this.imgToDisplay.HorizontalAlignment = HorizontalAlignment.Left;
-            this.imgToDisplay.VerticalAlignment = VerticalAlignment.Top;
-            this.imgToDisplay.SizeChanged += new SizeChangedEventHandler(OnImgToDisplay_SizeChanged);
+            this.ImageToDisplay = new Image();
+            this.ImageToDisplay.HorizontalAlignment = HorizontalAlignment.Left;
+            this.ImageToDisplay.VerticalAlignment = VerticalAlignment.Top;
+            this.ImageToDisplay.SizeChanged += new SizeChangedEventHandler(OnImgToDisplay_SizeChanged);
 
             // Position and add the image to the canvas
-            Canvas.SetLeft(imgToDisplay, 0);
-            Canvas.SetTop(imgToDisplay, 0);
-            this.Children.Add(imgToDisplay);
+            Canvas.SetLeft(ImageToDisplay, 0);
+            Canvas.SetTop(ImageToDisplay, 0);
+            this.Children.Add(ImageToDisplay);
 
             // Set up the magnifying glass
             this.magnifyingGlass.MarkableCanvasParent = this; // A reference to this so we can access the markable Canvas state
@@ -354,14 +354,14 @@ namespace Timelapse.Images
             this.Zoom = 1;
             this.TranslateX = 0;
             this.TranslateY = 0;
-            imgToDisplay.RenderTransform = _trGroup;
+            ImageToDisplay.RenderTransform = _trGroup;
 
             //  Event handlers for image interaction: mouse handling for marking, zooming, panning, scroll wheel, etc.
-            this.imgToDisplay.MouseDown += new MouseButtonEventHandler(OnImage_MouseDown);
+            this.ImageToDisplay.MouseDown += new MouseButtonEventHandler(OnImage_MouseDown);
             this.MouseMove += new MouseEventHandler(OnImage_MouseMove);
 
-            this.imgToDisplay.MouseUp += new MouseButtonEventHandler(OnImage_MouseUp);
-            this.imgToDisplay.MouseWheel += new MouseWheelEventHandler(OnImage_MouseWheel);
+            this.ImageToDisplay.MouseUp += new MouseButtonEventHandler(OnImage_MouseUp);
+            this.ImageToDisplay.MouseWheel += new MouseWheelEventHandler(OnImage_MouseWheel);
             this.PreviewKeyDown += new KeyEventHandler(OnImage_PreviewKeyDown);
    
             this.MouseLeave += new MouseEventHandler(OnImage_MouseLeave);
@@ -391,9 +391,9 @@ namespace Timelapse.Images
         {
             MarkersRemove(this);
             MarkersRemove(this.canvasToMagnify);
-            if (null != this.imgToDisplay)
+            if (null != this.ImageToDisplay)
             {
-                MarkersDraw(this, this.imgToDisplay.RenderSize, true);
+                MarkersDraw(this, this.ImageToDisplay.RenderSize, true);
                 MarkersDraw(this.canvasToMagnify, this.canvasToMagnify.RenderSize, false);
             }
         }
@@ -470,8 +470,8 @@ namespace Timelapse.Images
         // Whenever the canvas size changes, resize the image
         private void OnMarkableImageCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            this.imgToDisplay.Width = this.ActualWidth;
-            this.imgToDisplay.Height = this.ActualHeight;
+            this.ImageToDisplay.Width = this.ActualWidth;
+            this.ImageToDisplay.Height = this.ActualHeight;
             BookmarkClearZoomPan(); // We clear the bookmark (if any) as it will no longer be correct.
         }
 
@@ -493,7 +493,7 @@ namespace Timelapse.Images
             this._previousLocation = e.GetPosition(this);
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                this._mouseDownLocation = e.GetPosition(this.imgToDisplay);
+                this._mouseDownLocation = e.GetPosition(this.ImageToDisplay);
                 this._mouseDownSender = (UIElement)sender;
                 this._mouseDownTime = DateTime.Now;
             }
@@ -526,9 +526,9 @@ namespace Timelapse.Images
                 else
                 {
                     // Update the magnifying glass
-                    canvasToMagnify.Width = this.imgToMagnify.ActualWidth;      // Make sure that the canvas is the same size as the image
-                    canvasToMagnify.Height = this.imgToMagnify.ActualHeight;
-                    this.magnifyingGlass.Redraw(Calculations.CorrectGetPosition(this), Calculations.CorrectGetPosition(this.imgToDisplay), this.imgToDisplay.ActualWidth, this.imgToDisplay.ActualHeight, canvasToMagnify);
+                    canvasToMagnify.Width = this.ImageToMagnify.ActualWidth;      // Make sure that the canvas is the same size as the image
+                    canvasToMagnify.Height = this.ImageToMagnify.ActualHeight;
+                    this.magnifyingGlass.Redraw(Calculations.CorrectGetPosition(this), Calculations.CorrectGetPosition(this.ImageToDisplay), this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight, canvasToMagnify);
                 }
                 this._previousLocation = location;
                
@@ -539,7 +539,7 @@ namespace Timelapse.Images
         private void SetMagnifyingGlassVisibility(Point mousePosition)
         {
             // The the actual (transformed) bounds of the image
-            Point transformedSize = this._trGroup.Transform(new Point (this.imgToDisplay.ActualWidth, this.imgToDisplay.ActualHeight));
+            Point transformedSize = this._trGroup.Transform(new Point (this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight));
             bool mouseOverImage = (mousePosition.X <= transformedSize.X && mousePosition.Y <= transformedSize.Y);
            if (mouseOverImage) 
            {
@@ -557,7 +557,7 @@ namespace Timelapse.Images
             this.Cursor = Cursors.Arrow;
 
             // Get the current position
-            Point location = e.GetPosition(this.imgToDisplay);
+            Point location = e.GetPosition(this.ImageToDisplay);
             
             // Is this the end of a translate operation, or a marking operation?
             // We decide by checking if the left button has been released, the mouse location is
@@ -573,9 +573,9 @@ namespace Timelapse.Images
                 {
                     // Get the current point, and create a marker on it.
 
-                    Point p = e.GetPosition(imgToDisplay);
+                    Point p = e.GetPosition(ImageToDisplay);
                     // Debug.Print(p.ToString());
-                    p = Calculations.convertPointToRatio(p, imgToDisplay.ActualWidth, imgToDisplay.ActualHeight);
+                    p = Calculations.convertPointToRatio(p, ImageToDisplay.ActualWidth, ImageToDisplay.ActualHeight);
                     MetaTag mt = new MetaTag ();
                     mt.Point = p;
                     //mt.Brush = Brushes.Green;
@@ -596,7 +596,7 @@ namespace Timelapse.Images
             lock (this)
             {
                 // We will scale around the current point
-                Point location = e.GetPosition(this.imgToDisplay);
+                Point location = e.GetPosition(this.ImageToDisplay);
                 bool zoomIn = (e.Delta > 0); // Zooming in if delta is positive, else zooming out
                 ScaleImage(location, zoomIn);
             }
@@ -622,18 +622,18 @@ namespace Timelapse.Images
 
                 // zoom in
                 case Key.OemPeriod:
-                    lock (this.imgToDisplay)
+                    lock (this.ImageToDisplay)
                     {
-                        Point location = Mouse.GetPosition(this.imgToDisplay);
-                        if (location.X > this.imgToDisplay.ActualWidth || location.Y > this.imgToDisplay.ActualHeight) break; // Ignore points if mouse is off the image
+                        Point location = Mouse.GetPosition(this.ImageToDisplay);
+                        if (location.X > this.ImageToDisplay.ActualWidth || location.Y > this.ImageToDisplay.ActualHeight) break; // Ignore points if mouse is off the image
                         this.ScaleImage(location, true); // Zooming in if delta is positive, else zooming out
                     }
                     break;
                 // zoom out
                 case Key.OemComma:  
-                    lock (this.imgToDisplay)
+                    lock (this.ImageToDisplay)
                     {
-                        Point location = Mouse.GetPosition(this.imgToDisplay);
+                        Point location = Mouse.GetPosition(this.ImageToDisplay);
                         this.ScaleImage(location, false); // Zooming in if delta is positive, else zooming out
                     }
                     break;
@@ -654,16 +654,16 @@ namespace Timelapse.Images
         {
             // Get the center point on the image
             Point center = this.PointFromScreen(
-                this.imgToDisplay.PointToScreen(new Point(
-                    this.imgToDisplay.Width / 2.0, this.imgToDisplay.Height / 2.0)));
+                this.ImageToDisplay.PointToScreen(new Point(
+                    this.ImageToDisplay.Width / 2.0, this.ImageToDisplay.Height / 2.0)));
 
             // Calculate the delta position from the last location relative to the center
             double newX = center.X + mouse_location.X - this._previousLocation.X;
             double newY = center.Y + mouse_location.Y - this._previousLocation.Y;
 
             // get the translated image width
-            double imageWidth = this.imgToDisplay.Width * this._trScale.ScaleX;
-            double imageHeight = this.imgToDisplay.Height * this._trScale.ScaleY;
+            double imageWidth = this.ImageToDisplay.Width * this._trScale.ScaleX;
+            double imageHeight = this.ImageToDisplay.Height * this._trScale.ScaleY;
 
             // Limit the delta position so that the image stays on the screen
             if (newX - imageWidth / 2.0 >= 0.0)
@@ -695,7 +695,7 @@ namespace Timelapse.Images
                  (!zoomIn && this._trScale.ScaleX <= ZOOM_MINIMUM)) return;
 
             // We will scale around the current point
-            Point beforeZoom = this.PointFromScreen(this.imgToDisplay.PointToScreen(location));
+            Point beforeZoom = this.PointFromScreen(this.ImageToDisplay.PointToScreen(location));
 
             // Calculate the scaling factor during zoom ins or out. Ensure that we keep within our
             // maximum and minimum scaling bounds. 
@@ -727,16 +727,16 @@ namespace Timelapse.Images
                 }
             }
 
-            Point afterZoom = this.PointFromScreen(this.imgToDisplay.PointToScreen(location));
+            Point afterZoom = this.PointFromScreen(this.ImageToDisplay.PointToScreen(location));
 
             // Scale the image, and at the same time translate it so that the 
             // point in the image under the cursor stays there
-            double imageWidth = this.imgToDisplay.Width * this._trScale.ScaleX;
-            double imageHeight = this.imgToDisplay.Height * this._trScale.ScaleY;
+            double imageWidth = this.ImageToDisplay.Width * this._trScale.ScaleX;
+            double imageHeight = this.ImageToDisplay.Height * this._trScale.ScaleY;
 
             Point center = this.PointFromScreen(
-                this.imgToDisplay.PointToScreen(new Point(
-                    this.imgToDisplay.Width / 2.0, this.imgToDisplay.Height / 2.0)));
+                this.ImageToDisplay.PointToScreen(new Point(
+                    this.ImageToDisplay.Width / 2.0, this.ImageToDisplay.Height / 2.0)));
 
             double newX = center.X - (afterZoom.X - beforeZoom.X);
             double newY = center.Y - (afterZoom.Y - beforeZoom.Y);
@@ -1083,7 +1083,7 @@ namespace Timelapse.Images
         {
             // Abort if we don't have an image to magnify
             if (canvasToMagnify == null) return;
-            if (this.MarkableCanvasParent.imgToMagnify.Source == null) return;
+            if (this.MarkableCanvasParent.ImageToMagnify.Source == null) return;
             notYetRedrawn = false;
 
             // Abort if the magnifying glass visiblity is not visible, as there is no point doing all this work
@@ -1128,11 +1128,11 @@ namespace Timelapse.Images
             // positions of edges where we shold change the angle. 
 
             double left_edge = EDGE_THRESHOLD;
-            double right_edge = this.MarkableCanvasParent.imgToDisplay.ActualWidth - EDGE_THRESHOLD;
+            double right_edge = this.MarkableCanvasParent.ImageToDisplay.ActualWidth - EDGE_THRESHOLD;
             double top_edge = EDGE_THRESHOLD;
-            double bottom_edge = this.MarkableCanvasParent.imgToDisplay.ActualHeight - EDGE_THRESHOLD;
-            double canvasheight = this.MarkableCanvasParent.imgToDisplay.ActualHeight;
-            double canvaswidth = this.MarkableCanvasParent.imgToDisplay.ActualWidth;
+            double bottom_edge = this.MarkableCanvasParent.ImageToDisplay.ActualHeight - EDGE_THRESHOLD;
+            double canvasheight = this.MarkableCanvasParent.ImageToDisplay.ActualHeight;
+            double canvaswidth = this.MarkableCanvasParent.ImageToDisplay.ActualWidth;
 
              
             // Specify the magnifying glass angle needed

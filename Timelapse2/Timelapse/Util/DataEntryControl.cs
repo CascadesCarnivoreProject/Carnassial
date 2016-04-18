@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -36,7 +37,7 @@ namespace Timelapse.Util
             set { this.MenuItemCopyCurrentValue.IsEnabled = value; }
         }
 
-        /// <summary>Gets or sets the data label which corresponds to this control.</summary>
+        /// <summary>Gets the data label which corresponds to this control.</summary>
         public string DataLabel { get; private set; }
 
         public bool PropagateFromLastValue_IsEnabled
@@ -137,6 +138,7 @@ namespace Timelapse.Util
     // A generic control comprises a stack panel containing 
     // - a control containing at least a descriptive label 
     // - another control for displaying / entering data at a given width
+    [SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1402:FileMayOnlyContainASingleClass", Justification = "StyleCop limitation.")]
     public abstract class DataEntryControl<TContent, TLabel> : DataEntryControl
         where TContent : Control, new()
         where TLabel : ContentControl, new()

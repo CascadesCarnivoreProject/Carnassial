@@ -103,7 +103,7 @@ namespace Timelapse.Database
                 {
                     query += column.Key + " " + column.Value + Comma + Environment.NewLine;             // columnname datatype,
                 }
-                query = query.Remove(query.Length - Comma.Length - Environment.NewLine.Length);         //remove last comma / new line and replace with );
+                query = query.Remove(query.Length - Comma.Length - Environment.NewLine.Length);         // remove last comma / new line and replace with );
                 query += CloseParenthesis + Semicolon;
                 command_executed = query;
                 this.ExecuteNonQuery(query, out result);
@@ -131,7 +131,7 @@ namespace Timelapse.Database
                 {
                     if (j == 0)
                     {
-                        values += String.Format(" {0}" + Comma, i + 1); // "NULL" + COMMA;
+                        values += String.Format(" {0}" + Comma, i + 1);
                     }
                     else if (j == 1 | j == 2)
                     {
@@ -145,7 +145,7 @@ namespace Timelapse.Database
                     }
                 }
                 values = values.Substring(0, values.Length - Comma.Length);        // Remove last comma in the sequence 
-                query += String.Format("({0}); ", values);                          //      ('value1', 'value2', ... 'valueN');
+                query += String.Format("({0}); ", values);                          // ('value1', 'value2', ... 'valueN');
                 queries.Add(query);
                 command_executed += query + Environment.NewLine;
             }
@@ -350,7 +350,7 @@ namespace Timelapse.Database
         /// </summary>
         /// <param name="query">The SQL to run</param>
         /// <returns>A value containing the single result.</returns>
-        public Object GetObjectFromSelect(string query, out bool result, out string command_executed)
+        public object GetobjectFromSelect(string query, out bool result, out string command_executed)
         {
             result = true;
             command_executed = String.Empty;
@@ -379,7 +379,7 @@ namespace Timelapse.Database
         /// </summary>
         public int GetIntFromSelect(string query, out bool result, out string command_executed)
         {
-            return Convert.ToInt32(this.GetObjectFromSelect(query, out result, out command_executed));
+            return Convert.ToInt32(this.GetobjectFromSelect(query, out result, out command_executed));
         }
 
         /// <summary>
@@ -387,7 +387,7 @@ namespace Timelapse.Database
         /// </summary>
         public string GetStringFromSelect(string query, out bool result, out string command_executed)
         {
-            return (string)this.GetObjectFromSelect(query, out result, out command_executed);
+            return (string)this.GetobjectFromSelect(query, out result, out command_executed);
         }
         #endregion
 
@@ -501,13 +501,13 @@ namespace Timelapse.Database
             }
         }
 
-        public void UpdateWhereBeginEnd(string table_name, Dictionary<Dictionary<string, Object>, string> update_query_list, out bool result, out string command_executed)
+        public void UpdateWhereBeginEnd(string table_name, Dictionary<Dictionary<string, object>, string> update_query_list, out bool result, out string command_executed)
         {
             string query = String.Empty;
             command_executed = String.Empty;
             result = true;
             List<string> queries = new List<string>();
-            foreach (KeyValuePair<Dictionary<string, Object>, string> update_query in update_query_list)
+            foreach (KeyValuePair<Dictionary<string, object>, string> update_query in update_query_list)
             {
                 query = this.UpdateCreateSingleUpdateQuery(table_name, update_query.Key, update_query.Value);
                 if (query.Equals(String.Empty))
@@ -547,7 +547,7 @@ namespace Timelapse.Database
         /// <param name="tableName">The table to update.</param>
         /// <param name="columnname_value_list">A dictionary containing Column names and their new values.</param>
         /// <param name="where">The where clause for the update statement.</param>
-        public void UpdateWhere(string tableName, Dictionary<string, Object> columnname_value_list, string where, out bool result, out string command_executed)
+        public void UpdateWhere(string tableName, Dictionary<string, object> columnname_value_list, string where, out bool result, out string command_executed)
         {
             // UPDATE table_name SET 
             // colname1 = value1, 
@@ -572,7 +572,7 @@ namespace Timelapse.Database
         }
 
         // Return a single update query as a string
-        private string UpdateCreateSingleUpdateQuery(string table_name, Dictionary<string, Object> columnname_value_list, string where)
+        private string UpdateCreateSingleUpdateQuery(string table_name, Dictionary<string, object> columnname_value_list, string where)
         {
             // UPDATE table_name SET 
             // colname1 = value1, 
@@ -589,7 +589,7 @@ namespace Timelapse.Database
             }
 
             // column_name = 'value'
-            foreach (KeyValuePair<string, Object> val in columnname_value_list)
+            foreach (KeyValuePair<string, object> val in columnname_value_list)
             {
                 // we have to cater to different formats for integers, NULLS and strings...
                 if (this.IsNumber(val.Value))
@@ -814,8 +814,9 @@ namespace Timelapse.Database
             return result;
         }
         #endregion
+
         #region Deleting Rows 
-        /// <summary>elete specific rows from the DB where...</summary>
+        /// <summary>delete specific rows from the DB where...</summary>
         /// <param name="tableName">The table from which to delete.</param>
         /// <param name="where">The where clause for the delete.</param>
         public void DeleteFromTable(string tableName, string where, out bool result, out string command_executed)

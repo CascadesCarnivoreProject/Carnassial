@@ -65,12 +65,10 @@ namespace Timelapse
             GridLength gridlength20 = new GridLength(1, GridUnitType.Auto);
             for (int i = 0; i < deletedImageTable.Rows.Count; i++)
             {
-                ImageProperties imageProperties = new ImageProperties();
-                imageProperties.File = (string)deletedImageTable.Rows[i][Constants.DatabaseElement.File];
-                imageProperties.Folder = (string)deletedImageTable.Rows[i][Constants.DatabaseElement.Folder];
+                ImageProperties imageProperties = new ImageProperties(deletedImageTable.Rows[i]);
                 string path = imageProperties.GetImagePath(this.imageFolderPath);
                 BitmapImage image;
-                if (Constants.ImageQuality.Corrupted == (string)deletedImageTable.Rows[i][Constants.DatabaseElement.ImageQuality])
+                if (ImageQualityFilter.Corrupted == imageProperties.ImageQuality)
                 {
                     image = this.GetImage(path, "corrupted");
                 }
@@ -90,7 +88,7 @@ namespace Timelapse
                 }
 
                 Label imageLabel = new Label();
-                imageLabel.Content = imageProperties.File;
+                imageLabel.Content = imageProperties.FileName;
                 imageLabel.Height = 25;
                 imageLabel.VerticalAlignment = VerticalAlignment.Top;
 
@@ -132,18 +130,14 @@ namespace Timelapse
         /// </summary>
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            List<int> imagesIDsToDelete = new List<int>();
+            List<long> imagesIDsToDelete = new List<long>();
             Mouse.OverrideCursor = Cursors.Wait;
             for (int i = 0; i < this.deletedImageTable.Rows.Count; i++)
             {
-                ImageProperties imageProperties = new ImageProperties();
-                imageProperties.File = (string)this.deletedImageTable.Rows[i][Constants.DatabaseElement.File];
-                imageProperties.Folder = (string)this.deletedImageTable.Rows[i][Constants.DatabaseElement.Folder];
-                imageProperties.ID = (int)this.deletedImageTable.Rows[i][Constants.Database.ID];
+                ImageProperties imageProperties = new ImageProperties(this.deletedImageTable.Rows[i]);
 
-                string deleteFlag = (string)this.database.DataLabelFromType[Constants.DatabaseElement.DeleteFlag];
-                this.database.UpdateRow((int)imageProperties.ID, deleteFlag, "false");
-
+                string deleteFlag = this.database.DataLabelFromControlType[Constants.DatabaseColumn.DeleteFlag];
+                this.database.UpdateImage((int)imageProperties.ID, deleteFlag, "false");
                 if (this.deleteData)
                 {
                     imagesIDsToDelete.Add(imageProperties.ID);
@@ -152,15 +146,15 @@ namespace Timelapse
                 string path = imageProperties.GetImagePath(this.imageFolderPath);
                 if (File.Exists(path))
                 {
-                    this.MoveImageToBackupFolder(this.imageFolderPath, imageProperties.File);
+                    this.MoveImageToBackupFolder(this.imageFolderPath, imageProperties.FileName);
                 }
             }
 
             if (this.deleteData)
             {
-                foreach (int id in imagesIDsToDelete)
+                foreach (long id in imagesIDsToDelete)
                 {
-                    this.database.DeleteRow(id);
+                    this.database.DeleteImage(id);
                 }
             }
 

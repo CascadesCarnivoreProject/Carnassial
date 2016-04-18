@@ -1,14 +1,13 @@
 ﻿using System;
-using System.IO;
+using System.Text;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using Timelapse.Database;
 using Timelapse.Util;
 
 namespace Timelapse
 {
     /// <summary>
-    /// Interaction logic for DlgTimeChangeCorrection.xaml
+    /// Interaction logic for DialogTimeChangeCorrection.xaml
     /// This dialog lets a user enter a time change correction of + / - 1 hour, which is propagated backwards/forwards 
     /// the current image as set by the user in the radio buttons.
     /// </summary>
@@ -22,32 +21,12 @@ namespace Timelapse
             this.database = database;
 
             // Get the original date and display it
-            this.database.GetIdOfCurrentRow();
-            bool result;
-            this.lblOriginalDate.Content = this.database.IDGetDate(out result) + " " + this.database.IDGetTime(out result);
-
-            // Get the image filename and display it
-            this.lblImageName.Content = this.database.IDGetFile(out result);
+            ImageProperties imageProperties = new ImageProperties(this.database.ImageDataTable.Rows.Find(this.database.CurrentImageRow));
+            this.lblOriginalDate.Content = imageProperties.Date + " " + imageProperties.Time;
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            string path = Path.Combine(this.database.FolderPath, this.database.IDGetFile(out result));
-            BitmapFrame bmap;
-            try
-            {
-                bmap = BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
-            }
-            catch
-            {
-                if (!File.Exists(path))
-                {
-                    bmap = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"));
-                }
-                else
-                {
-                    bmap = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"));
-                }
-            }
-            this.imgDateImage.Source = bmap;
+            this.imgDateImage.Source = imageProperties.LoadImage(this.database.FolderPath);
+            this.lblImageName.Content = imageProperties.FileName;
         }
 
         private void DlgDateCorrectionName_Loaded(object sender, RoutedEventArgs e)
@@ -71,23 +50,24 @@ namespace Timelapse
                 string direction = forward ? "forward" : "backwards";
                 string operation = hours == 1 ? "added" : "subtracted";
 
-                int initial = forward ? this.database.CurrentRow : 0;
-                int final = forward ? this.database.DataTable.Rows.Count : this.database.CurrentRow + 1;
+                int initial = forward ? this.database.CurrentImageRow : 0;
+                int final = forward ? this.database.ImageCount : this.database.CurrentImageRow + 1;
 
-                TimeSpan ts = new TimeSpan(hours, 0, 0);
+                TimeSpan timeDifference = new TimeSpan(hours, 0, 0);
                 // Update the database
-                this.database.RowsUpdateAllDateTimeFieldsWithCorrectionValue(ts.Ticks, initial, final); // For all rows...
+                this.database.AdjustAllImageTimes(timeDifference, initial, final); // For all rows...
 
                 // Add an entry into the log detailing what we just did
-                this.database.Log += Environment.NewLine;
-                this.database.Log += "System entry: Corrected for Daylight Saving Times.\n";
-                this.database.Log += "                        Correction started at image " + this.lblImageName.Content + " and was propagated " + direction + "\n";
-                this.database.Log += "                        An hour was " + operation + " to those images\n";
+                StringBuilder log = new StringBuilder(Environment.NewLine);
+                log.AppendLine("System entry: Corrected for Daylight Saving Times.");
+                log.AppendLine("                        Correction started at image " + this.lblImageName.Content + " and was propagated " + direction);
+                log.AppendLine("                        An hour was " + operation + " to those images");
+                this.database.AppendToImageSetLog(log);
 
                 // Refresh the database / datatable to reflect the updated values, which will also refressh the main timelpase display.
-                int current_row = this.database.CurrentRow;
+                int currentImage = this.database.CurrentImageRow;
                 this.database.GetImagesAll();
-                this.database.CurrentRow = current_row;
+                this.database.TryMoveToImage(currentImage);
 
                 this.DialogResult = true;
             }
