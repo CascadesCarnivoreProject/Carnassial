@@ -18,10 +18,11 @@ namespace Timelapse
     /// a list of metadata found in the current image. It asks the user to select one from each.
     /// The user can then populate the selected data field with the corresponding metadata value from that image for all images.
     /// </summary>
-    public partial class DialogPopulateFieldWithMetadata : Window
+    public partial class DialogPopulateFieldWithMetadata : Window, IDisposable
     {
         private Dictionary<string, string> dictMetaDataLookup;
         private Dictionary<string, string> dictNoteFieldLookup = new Dictionary<string, string>();  // DataLabel, Label
+        private bool disposed;
         private ExifToolWrapper exifTool;
         private string metaDataName = String.Empty;
         private string noteLabel = String.Empty;
@@ -40,6 +41,20 @@ namespace Timelapse
             this.folderPath = folderPath;
             this.database = database;
             this.InitializeComponent();
+        }
+
+        public void Dispose()
+        {
+            if (this.disposed == false)
+            {
+                if (this.exifTool != null)
+                {
+                    this.exifTool.Dispose();
+                }
+            }
+
+            GC.SuppressFinalize(this);
+            this.disposed = true;
         }
 
         // After the interface is loaded, 
@@ -210,7 +225,7 @@ namespace Timelapse
                 {
                     fname = database.ImageDataTable.Rows[i][Constants.DatabaseColumn.File].ToString();
                     int id = Int32.Parse(database.ImageDataTable.Rows[i][Constants.Database.ID].ToString());
-                    dictTemp = exifTool.FetchExifFrom(System.IO.Path.Combine(this.folderPath, fname), tags);
+                    dictTemp = this.exifTool.FetchExifFrom(Path.Combine(this.folderPath, fname), tags);
                     if (dictTemp.Count <= 0)
                     {
                         if (this.isClearIfNoMetaData)

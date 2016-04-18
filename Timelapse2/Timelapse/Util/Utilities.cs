@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media.Imaging;
 
@@ -44,14 +45,14 @@ namespace Timelapse.Util
             templateDatabasePath = null;
             return false;
         }
-        
+
         /// <summary>Given a bitmap, load it with the image specified in the resource file</summary>
         /// <param name="bitmap">bitmap to populate with the image</param>
         /// <param name="resource">embedded resource to load bitmap data from</param>
         /// <param name="cache">true to enable caching of the bitmap, false to disable caching</param>
         /// <returns>the passed in bitmap</returns>
         public static BitmapImage BitmapFromResource(BitmapImage bitmap, string resource, bool cache)
-        {   
+        {
             bitmap.BeginInit();
             if (!cache)
             {
@@ -65,7 +66,7 @@ namespace Timelapse.Util
         }
 
         public static BitmapImage BitmapFromFile(BitmapImage bi, string imageFilepath, bool use_cached_images)
-        {   
+        {
             bi.BeginInit();
             if (!use_cached_images)
             {
@@ -77,6 +78,20 @@ namespace Timelapse.Util
             bi.Freeze(); // this makes the BitmapImage threadsafe!
             return bi;
         }
-         #endregion
+        #endregion
+
+        // Calculate the point as a ratio of its position on the image, so we can locate it regardless of the actual image size
+        public static Point ConvertPointToRatio(Point p, double width, double height)
+        {
+            Point ratioPt = new Point((double)p.X / (double)width, (double)p.Y / (double)height);
+            return ratioPt;
+        }
+
+        // The inverse of the above operation
+        public static Point ConvertRatioToPoint(System.Windows.Point p, double width, double height)
+        {
+            Point imagePt = new Point(p.X * width, p.Y * height);
+            return imagePt;
+        }
     }
 }

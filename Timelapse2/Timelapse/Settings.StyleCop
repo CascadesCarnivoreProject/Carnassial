@@ -2,6 +2,7 @@
   <GlobalSettings>
     <CollectionProperty Name="RecognizedWords">
       <Value>copyable</Value>
+      <Value>Markable</Value>
       <Value>metatag</Value>
       <Value>metatags</Value>
       <Value>Timelapse</Value>

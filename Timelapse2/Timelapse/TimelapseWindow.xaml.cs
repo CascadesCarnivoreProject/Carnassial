@@ -21,17 +21,17 @@ namespace Timelapse
     /// <summary>
     /// main window for Timelapse
     /// </summary>
-    public partial class TimelapseWindow : Window
+    public partial class TimelapseWindow : Window, IDisposable
     {
         // Handles to the controls window and to the controls
         private ControlWindow controlWindow;
-        
         private List<MetaTagCounter> counterCoords = null;
         private CustomFilter customfilter;
 
         // the database that holds all the data
         private ImageDatabase imageDatabase;
         private Controls dataEntryControls;
+        private bool disposed;
 
         // These are used for Image differencing
         // If a person toggles between the current image and its two differenced imaes, those images are stored
@@ -110,6 +110,17 @@ namespace Timelapse
         private string FolderPath
         {
             get { return this.imageDatabase.FolderPath; }
+        }
+
+        public void Dispose()
+        {
+            if (this.disposed == false)
+            {
+                this.speechSynthesizer.Dispose();
+            }
+
+            GC.SuppressFinalize(this);
+            this.disposed = true;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -1824,12 +1835,12 @@ namespace Timelapse
                 {
                     return;
                 }
-                this.Markers_NewMetaTag(currentCounter, e.metaTag);
+                this.Markers_NewMetaTag(currentCounter, e.MetaTag);
             }
             else
             {
                 // An existing marker has been deleted.
-                DataEntryCounter myCounter = (DataEntryCounter)this.dataEntryControls.ControlFromDataLabel[e.metaTag.DataLabel];
+                DataEntryCounter myCounter = (DataEntryCounter)this.dataEntryControls.ControlFromDataLabel[e.MetaTag.DataLabel];
 
                 // Part 1. Decrement the count 
                 string old_counter_data = myCounter.Content;
@@ -1878,7 +1889,7 @@ namespace Timelapse
                     for (int i = 0; i < mtagCounter.MetaTags.Count; i++)
                     {
                         // Check if we are looking at the same metatag. 
-                        if (e.metaTag.Guid == mtagCounter.MetaTags[i].Guid)
+                        if (e.MetaTag.Guid == mtagCounter.MetaTags[i].Guid)
                         {
                             // We found the metaTag. Remove that metatag from the metatags list 
                             mtagCounter.MetaTags.RemoveAt(i);

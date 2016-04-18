@@ -151,5 +151,38 @@ namespace Timelapse
 
             public const string RootKey = @"Software\Greenberg Consulting\Timelapse\2.0";   // Defines the KEY path under HKEY_CURRENT_USER
         }
+
+        public static class Sql
+        {
+            public const string DataSource = "Data Source=";
+            public const string CreateTable = "CREATE TABLE ";
+            public const string InsertInto = "INSERT INTO ";
+            public const string Values = " VALUES ";
+            public const string Select = " SELECT ";
+            public const string UnionAll = " UNION ALL";
+            public const string As = " AS ";
+            public const string DeleteFrom = " DELETE FROM ";
+            public const string Where = " WHERE ";
+            public const string NameFromSqliteMaster = " NAME FROM SQLITE_MASTER ";
+            public const string TypeEqualsTable = " TYPE='table' ";
+            public const string OrderBy = " ORDER BY ";
+            public const string Name = " NAME ";
+            public const string Update = " UPDATE ";
+            public const string Set = " SET ";
+            public const string When = " WHEN ";
+            public const string Then = " THEN ";
+            public const string Begin = " BEGIN ";
+            public const string End = " END ";
+            public const string EqualsCaseID = " = CASE Id";
+            public const string WhereIDIn = Where + "Id IN ";
+
+            public const string Null = "NULL";
+            public const string NullAs = Null + " " + As;
+
+            public const string Comma = ", ";
+            public const string OpenParenthesis = " ( ";
+            public const string CloseParenthesis = " ) ";
+            public const string Semicolon = " ; ";
+        }
     }
 }

@@ -126,6 +126,8 @@
     </ApplicationDefinition>
     <Compile Include="Images\FeedbackMessage.cs" />
     <Compile Include="Images\ImageQuality.cs" />
+    <Compile Include="Images\MagnifyingGlass.cs" />
+    <Compile Include="Images\MetaTagEventArgs.cs" />
     <Compile Include="Util\CheckForUpdate.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Database\CustomFilter.cs" />

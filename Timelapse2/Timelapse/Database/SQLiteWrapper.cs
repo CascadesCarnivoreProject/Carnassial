@@ -11,41 +11,9 @@ namespace Timelapse.Database
     // It is NOT a generalized wrapper, as it only handles a few simple things.
     internal class SQLiteWrapper
     {
-        #region Constants and Private Variables
-        private const string DATASOURCE = "Data Source=";
-        private const string CREATE_TABLE = "CREATE TABLE ";
-        private const string INSERT_INTO = "INSERT INTO ";
-        private const string VALUES = " VALUES ";
-        private const string SELECT = " SELECT ";
-        private const string UNION_ALL = " UNION ALL";
-        private const string AS = " AS ";
-        private const string DELETE_FROM = " DELETE FROM ";
-        private const string WHERE = " WHERE ";
-        private const string NAME_FROM_SQLITE_MASTER = " NAME FROM SQLITE_MASTER ";
-        private const string TYPE_EQUAL_TABLE = " TYPE='table' ";
-        private const string ORDER_BY = " ORDER BY ";
-        private const string NAME = " NAME ";
-        private const string UPDATE = " UPDATE ";
-        private const string SET = " SET ";
-        private const string WHEN = " WHEN ";
-        private const string THEN = " THEN ";
-        private const string BEGIN = " BEGIN ";
-        private const string END = " END ";
-        private const string EQUALS_CASE_ID = " = CASE Id";
-        private const string WHERE_ID_IN = WHERE + "Id IN ";
-
-        private const string NULL = "NULL";
-        private const string NULL_AS = NULL + " " + AS;
-
-        private const string Comma = ", ";
-        private const string OpenParenthesis = " ( ";
-        private const string CloseParenthesis = " ) ";
-        private const string Semicolon = " ; ";
-
         // A connection string identifying the  database file. Takes the form:
         // "Data Source=filepath" 
         private string connectionString;
-        #endregion
 
         #region Constructors
         /// <summary>
@@ -59,7 +27,7 @@ namespace Timelapse.Database
             {
                 SQLiteConnection.CreateFile(inputFile);
             }
-            this.connectionString = String.Format("{0}{1}", DATASOURCE, inputFile);
+            this.connectionString = String.Format("{0}{1}", Constants.Sql.DataSource, inputFile);
         }
 
         /// <summary>
@@ -98,13 +66,13 @@ namespace Timelapse.Database
             result = true;
             try
             {
-                query = CREATE_TABLE + table_name + OpenParenthesis + Environment.NewLine;               // CREATE TABLE <tablename> (
+                query = Constants.Sql.CreateTable + table_name + Constants.Sql.OpenParenthesis + Environment.NewLine;               // CREATE TABLE <tablename> (
                 foreach (KeyValuePair<string, string> column in column_definitions)
                 {
-                    query += column.Key + " " + column.Value + Comma + Environment.NewLine;             // columnname datatype,
+                    query += column.Key + " " + column.Value + Constants.Sql.Comma + Environment.NewLine;             // columnname datatype,
                 }
-                query = query.Remove(query.Length - Comma.Length - Environment.NewLine.Length);         // remove last comma / new line and replace with );
-                query += CloseParenthesis + Semicolon;
+                query = query.Remove(query.Length - Constants.Sql.Comma.Length - Environment.NewLine.Length);         // remove last comma / new line and replace with );
+                query += Constants.Sql.CloseParenthesis + Constants.Sql.Semicolon;
                 command_executed = query;
                 this.ExecuteNonQuery(query, out result);
             }
@@ -125,26 +93,26 @@ namespace Timelapse.Database
             result = true;
             for (int i = 0; i < datatable.Rows.Count; i++)
             {
-                query = INSERT_INTO + table_name + " VALUES ";                                   // INSERT INTO table_name;
+                query = Constants.Sql.InsertInto + table_name + " VALUES ";                                   // INSERT INTO table_name;
                 values = String.Empty;
                 for (int j = 0; j < datatable.Columns.Count; j++)
                 {
                     if (j == 0)
                     {
-                        values += String.Format(" {0}" + Comma, i + 1);
+                        values += String.Format(" {0}" + Constants.Sql.Comma, i + 1);
                     }
                     else if (j == 1 | j == 2)
                     {
-                        values += String.Format(" {0}" + Comma, datatable.Rows[i][j]);         // "value1, value2, ... valueN"
+                        values += String.Format(" {0}" + Constants.Sql.Comma, datatable.Rows[i][j]);         // "value1, value2, ... valueN"
                     }
                     else
                     {
                         string newvalue = (string)datatable.Rows[i][j];
                         newvalue = newvalue.Replace("'", "''");
-                        values += String.Format(" {0}" + Comma, this.Quote(newvalue));         // "'value1', 'value2', ... 'valueN'"
+                        values += String.Format(" {0}" + Constants.Sql.Comma, this.Quote(newvalue));         // "'value1', 'value2', ... 'valueN'"
                     }
                 }
-                values = values.Substring(0, values.Length - Comma.Length);        // Remove last comma in the sequence 
+                values = values.Substring(0, values.Length - Constants.Sql.Comma.Length);        // Remove last comma in the sequence 
                 query += String.Format("({0}); ", values);                          // ('value1', 'value2', ... 'valueN');
                 queries.Add(query);
                 command_executed += query + Environment.NewLine;
@@ -173,18 +141,18 @@ namespace Timelapse.Database
             result = true;
             foreach (KeyValuePair<string, string> val in data)
             {
-                columns += String.Format(" {0}" + Comma, val.Key.ToString()); // transform dictionary entries into a string "col1, col2, ... coln"
-                values += String.Format(" {0}" + Comma, this.Quote(val.Value));         // transform dictionary entries into a string "'value1', 'value2', ... 'valueN'"
+                columns += String.Format(" {0}" + Constants.Sql.Comma, val.Key.ToString()); // transform dictionary entries into a string "col1, col2, ... coln"
+                values += String.Format(" {0}" + Constants.Sql.Comma, this.Quote(val.Value));         // transform dictionary entries into a string "'value1', 'value2', ... 'valueN'"
             }
-            columns = columns.Substring(0, columns.Length - Comma.Length);     // Remove last comma in the sequence to produce (col1, col2, ... coln)  
-            values = values.Substring(0, values.Length - Comma.Length);        // Remove last comma in the sequence 
+            columns = columns.Substring(0, columns.Length - Constants.Sql.Comma.Length);     // Remove last comma in the sequence to produce (col1, col2, ... coln)  
+            values = values.Substring(0, values.Length - Constants.Sql.Comma.Length);        // Remove last comma in the sequence 
 
             // Construct the query. The newlines are to format it for pretty printing
-            query = INSERT_INTO + tableName;                                   // INSERT INTO table_name
+            query = Constants.Sql.InsertInto + tableName;                       // INSERT INTO table_name
             query += Environment.NewLine;
             query += String.Format("({0}) ", columns);                          //      (col1, col2, ... coln)
             query += Environment.NewLine;
-            query += VALUES;                                                    // VALUES
+            query += Constants.Sql.Values;                                      // VALUES
             query += Environment.NewLine;
             query += String.Format("({0}); ", values);                          //      ('value1', 'value2', ... 'valueN');
 
@@ -212,24 +180,24 @@ namespace Timelapse.Database
                 query = String.Empty;
                 foreach (KeyValuePair<string, string> val in data)
                 {
-                    columns += String.Format(" {0}" + Comma, val.Key.ToString());      // transform dictionary entries into a string "col1, col2, ... coln"
-                    values += String.Format(" {0}" + Comma, this.Quote(val.Value));         // transform dictionary entries into a string "'value1', 'value2', ... 'valueN'"
+                    columns += String.Format(" {0}" + Constants.Sql.Comma, val.Key.ToString());      // transform dictionary entries into a string "col1, col2, ... coln"
+                    values += String.Format(" {0}" + Constants.Sql.Comma, this.Quote(val.Value));         // transform dictionary entries into a string "'value1', 'value2', ... 'valueN'"
                 }
                 if (columns.Length > 0)
                 {
-                    columns = columns.Substring(0, columns.Length - Comma.Length);     // Remove last comma in the sequence to produce (col1, col2, ... coln)  
+                    columns = columns.Substring(0, columns.Length - Constants.Sql.Comma.Length);     // Remove last comma in the sequence to produce (col1, col2, ... coln)  
                 }
                 if (values.Length > 0)
                 {
-                    values = values.Substring(0, values.Length - Comma.Length);        // Remove last comma in the sequence 
+                    values = values.Substring(0, values.Length - Constants.Sql.Comma.Length);        // Remove last comma in the sequence 
                 }
 
                 // Construct the query. The newlines are to format it for pretty printing
-                query = INSERT_INTO + table_name;                                   // INSERT INTO table_name
+                query = Constants.Sql.InsertInto + table_name;                                   // INSERT INTO table_name
                 query += Environment.NewLine;
                 query += String.Format("({0}) ", columns);                          //      (col1, col2, ... coln)
                 query += Environment.NewLine;
-                query += VALUES;                                                    // VALUES
+                query += Constants.Sql.Values;                                                    // VALUES
                 query += Environment.NewLine;
                 query += String.Format("({0}); ", values);                          //      ('value1', 'value2', ... 'valueN');
                 queries.Add(query);
@@ -270,34 +238,34 @@ namespace Timelapse.Database
             }
 
             // The first row
-            string query = INSERT_INTO + this.Quote(tableName);    // INSERT INTO 'table' 
+            string query = Constants.Sql.InsertInto + this.Quote(tableName);    // INSERT INTO 'table' 
 
-            query += Environment.NewLine + OpenParenthesis;   // ('column1', 'column2', ... 'columnN') 
+            query += Environment.NewLine + Constants.Sql.OpenParenthesis;   // ('column1', 'column2', ... 'columnN') 
             foreach (string column_name in columnsList)
             {
-                query += this.Quote(column_name) + Comma;
+                query += this.Quote(column_name) + Constants.Sql.Comma;
             }
-            query = query.Remove(query.Length - Comma.Length);
-            query += CloseParenthesis;
+            query = query.Remove(query.Length - Constants.Sql.Comma.Length);
+            query += Constants.Sql.CloseParenthesis;
 
-            query += Environment.NewLine + VALUES;              // VALUES
+            query += Environment.NewLine + Constants.Sql.Values;              // VALUES
 
             // For each row to insert, provide the corresponding values
             // ('value11',  value 12, ... value1N),
             foreach (List<string> row_values in valuesList)
             {
                 query += Environment.NewLine;
-                query += OpenParenthesis;
+                query += Constants.Sql.OpenParenthesis;
 
                 foreach (string value in row_values)
                 {
-                    query += this.Quote(value) + Comma;
+                    query += this.Quote(value) + Constants.Sql.Comma;
                 }
                 // Remove the last comma
-                query = query.Remove(query.Length - Comma.Length);
-                query += CloseParenthesis + Comma;
+                query = query.Remove(query.Length - Constants.Sql.Comma.Length);
+                query += Constants.Sql.CloseParenthesis + Constants.Sql.Comma;
             }
-            query = query.Remove(query.Length - Comma.Length);  // ('valueM1',  value M2, ... valueMN);
+            query = query.Remove(query.Length - Constants.Sql.Comma.Length);  // ('valueM1',  value M2, ... valueMN);
             query += ";";
 
             command_executed = query;
@@ -447,7 +415,7 @@ namespace Timelapse.Database
                     if (query_count == 1)
                     {
                         mycommand = new SQLiteCommand(cnn);
-                        mycommand.CommandText = BEGIN;
+                        mycommand.CommandText = Constants.Sql.Begin;
                         rowsUpdated += mycommand.ExecuteNonQuery();
                         // Debug.Print(mycommand.CommandText);
                     }
@@ -461,7 +429,7 @@ namespace Timelapse.Database
                     if (query_count == max_count)
                     {
                         mycommand = new SQLiteCommand(cnn);
-                        mycommand.CommandText = END;
+                        mycommand.CommandText = Constants.Sql.End;
                         rowsUpdated += mycommand.ExecuteNonQuery();
                         query_count = 0;
                         // Debug.Print(mycommand.CommandText);
@@ -471,7 +439,7 @@ namespace Timelapse.Database
                 if (query_count != 0)
                 {
                     mycommand = new SQLiteCommand(cnn);
-                    mycommand.CommandText = END;
+                    mycommand.CommandText = Constants.Sql.End;
                     rowsUpdated += mycommand.ExecuteNonQuery();
                     // Debug.Print(mycommand.CommandText);
                 }
@@ -594,15 +562,15 @@ namespace Timelapse.Database
                 // we have to cater to different formats for integers, NULLS and strings...
                 if (this.IsNumber(val.Value))
                 {
-                    cells_to_update += String.Format(" {0} = {1}{2}", val.Key, val.Value.ToString(), Comma);
+                    cells_to_update += String.Format(" {0} = {1}{2}", val.Key, val.Value.ToString(), Constants.Sql.Comma);
                 }
                 else if (val.Value == null)
                 {
-                    cells_to_update += String.Format(" {0} = NULL{1}", val.Key.ToString(), Comma);
+                    cells_to_update += String.Format(" {0} = NULL{1}", val.Key.ToString(), Constants.Sql.Comma);
                 }
                 else if (val.Value is string)
                 {
-                    cells_to_update += String.Format(" {0} = {1}{2}", val.Key.ToString(), this.Quote(val.Value.ToString()), Comma);
+                    cells_to_update += String.Format(" {0} = {1}{2}", val.Key.ToString(), this.Quote(val.Value.ToString()), Constants.Sql.Comma);
                 }
                 else
                 {
@@ -610,13 +578,13 @@ namespace Timelapse.Database
                     return String.Empty;
                 }
             }
-            cells_to_update = cells_to_update.Substring(0, cells_to_update.Length - Comma.Length); // Remove the last comma
+            cells_to_update = cells_to_update.Substring(0, cells_to_update.Length - Constants.Sql.Comma.Length); // Remove the last comma
 
-            string query = UPDATE + table_name + SET;
+            string query = Constants.Sql.Update + table_name + Constants.Sql.Set;
             query += cells_to_update;
-            query += WHERE;
+            query += Constants.Sql.Where;
             query += where;
-            query += Semicolon;
+            query += Constants.Sql.Semicolon;
             return query;
         }
         // A version of the above that uses a different data structure. Returns a single update query as a string
@@ -642,15 +610,15 @@ namespace Timelapse.Database
                 // we have to cater to different formats for integers, NULLS and strings...
                 if (this.IsNumber(val.ColumnValue))
                 {
-                    cells_to_update += String.Format(" {0} = {1}{2}", val.ColumnName, val.ColumnValue.ToString(), Comma);
+                    cells_to_update += String.Format(" {0} = {1}{2}", val.ColumnName, val.ColumnValue.ToString(), Constants.Sql.Comma);
                 }
                 else if (val.ColumnValue == null)
                 {
-                    cells_to_update += String.Format(" {0} = NULL{1}", val.ColumnName.ToString(), Comma);
+                    cells_to_update += String.Format(" {0} = NULL{1}", val.ColumnName.ToString(), Constants.Sql.Comma);
                 }
                 else if (val.ColumnValue is string)
                 {
-                    cells_to_update += String.Format(" {0} = {1}{2}", val.ColumnName.ToString(), this.Quote(val.ColumnValue.ToString()), Comma);
+                    cells_to_update += String.Format(" {0} = {1}{2}", val.ColumnName.ToString(), this.Quote(val.ColumnValue.ToString()), Constants.Sql.Comma);
                 }
                 else
                 {
@@ -658,13 +626,13 @@ namespace Timelapse.Database
                     return String.Empty;
                 }
             }
-            cells_to_update = cells_to_update.Substring(0, cells_to_update.Length - Comma.Length); // Remove the last comma
+            cells_to_update = cells_to_update.Substring(0, cells_to_update.Length - Constants.Sql.Comma.Length); // Remove the last comma
 
-            string query = UPDATE + table_name + SET;
+            string query = Constants.Sql.Update + table_name + Constants.Sql.Set;
             query += cells_to_update;
-            query += WHERE;
+            query += Constants.Sql.Where;
             query += where;
-            query += Semicolon;
+            query += Constants.Sql.Semicolon;
             return query;
         }
 
@@ -694,8 +662,8 @@ namespace Timelapse.Database
             List<int> id_list = new List<int>();
 
             bool first_time = true;
-            string query = UPDATE + table_name;             // UPDATE table_name
-            query += SET + Environment.NewLine;                                   // SET
+            string query = Constants.Sql.Update + table_name;             // UPDATE table_name
+            query += Constants.Sql.Set + Environment.NewLine;                                   // SET
             foreach (Tuple<string, int, string> tuple in tuple_list)
             {
                 current_column = tuple.Item1;
@@ -705,48 +673,48 @@ namespace Timelapse.Database
                     // Start a new column set
                     if (!first_time)
                     {
-                        query += END + Comma;
+                        query += Constants.Sql.End + Constants.Sql.Comma;
                     }
                     else
                     {
                         first_time = false;
                     }
-                    query += Environment.NewLine + " " + current_column + EQUALS_CASE_ID;                         // <column_name> EQUALS CASE Id
+                    query += Environment.NewLine + " " + current_column + Constants.Sql.EqualsCaseID;                         // <column_name> EQUALS CASE Id
                 }
-                query += Environment.NewLine + WHEN + tuple.Item2.ToString() + THEN + this.Quote(tuple.Item3);    // WHEN <ID> THEN <new value>
+                query += Environment.NewLine + Constants.Sql.When + tuple.Item2.ToString() + Constants.Sql.Then + this.Quote(tuple.Item3);    // WHEN <ID> THEN <new value>
                 if (!id_list.Contains(tuple.Item2))
                 {
                     id_list.Add(tuple.Item2);   // A running list of the IDs seen so far
                 }
                 last_column = current_column;
             }
-            query = query.Remove(query.Length - Comma.Length);
-            query += END;
-            query += WHERE_ID_IN + OpenParenthesis;
+            query = query.Remove(query.Length - Constants.Sql.Comma.Length);
+            query += Constants.Sql.End;
+            query += Constants.Sql.WhereIDIn + Constants.Sql.OpenParenthesis;
             foreach (int i in id_list)
             {
                 query += i.ToString();
-                query += Comma;
+                query += Constants.Sql.Comma;
             }
-            query = query.Remove(query.Length - Comma.Length);
-            query += CloseParenthesis + Semicolon;
+            query = query.Remove(query.Length - Constants.Sql.Comma.Length);
+            query += Constants.Sql.CloseParenthesis + Constants.Sql.Semicolon;
 
             // MessageBox.Show (query);
             query = String.Empty;
-            query = UPDATE + table_name;
-            query += SET;
+            query = Constants.Sql.Update + table_name;
+            query += Constants.Sql.Set;
             query += "Col2" + " = CASE id ";
-            query += WHEN + "1 " + THEN + "'new21'";
-            query += WHEN + "2 " + THEN + "'new22'";
-            query += WHEN + "3 " + THEN + "'new23'";
-            query += END + Comma;
+            query += Constants.Sql.When + "1 " + Constants.Sql.Then + "'new21'";
+            query += Constants.Sql.When + "2 " + Constants.Sql.Then + "'new22'";
+            query += Constants.Sql.When + "3 " + Constants.Sql.Then + "'new23'";
+            query += Constants.Sql.End + Constants.Sql.Comma;
 
             query += "Col3" + " = CASE id ";
-            query += WHEN + "2 " + THEN + "'new32'";
-            query += WHEN + "3 " + THEN + "'new33'";
-            query += WHEN + "4 " + THEN + "'new34'";
-            query += END;
-            query += WHERE + "id in (1,2,3,4)";  // ADDED FOR EFFICIENCY AS IT REDUCES THE NUMBER OF TESTS, BUT CAN BE LEFT OUT
+            query += Constants.Sql.When + "2 " + Constants.Sql.Then + "'new32'";
+            query += Constants.Sql.When + "3 " + Constants.Sql.Then + "'new33'";
+            query += Constants.Sql.When + "4 " + Constants.Sql.Then + "'new34'";
+            query += Constants.Sql.End;
+            query += Constants.Sql.Where + "id in (1,2,3,4)";  // ADDED FOR EFFICIENCY AS IT REDUCES THE NUMBER OF TESTS, BUT CAN BE LEFT OUT
 
             ///////////
             // query = String.Empty;
@@ -824,11 +792,11 @@ namespace Timelapse.Database
             // DELETE FROM table_name WHERE where
             result = true;
             command_executed = String.Empty;
-            string query = DELETE_FROM + tableName;        // DELETE FROM table_name
+            string query = Constants.Sql.DeleteFrom + tableName;        // DELETE FROM table_name
             if (!where.Trim().Equals(String.Empty))
             {
                 // Add the WHERE clause only when where is not empty
-                query += WHERE;                                 // WHERE
+                query += Constants.Sql.Where;                   // WHERE
                 query += where;                                 // where
             }
             try
@@ -853,11 +821,11 @@ namespace Timelapse.Database
             try
             {
                 // SELECT NAME FROM SQLITE_MASTER WHERE TYPE='table' ORDER BY NAME;
-                string query = SELECT;
-                query += NAME_FROM_SQLITE_MASTER;
-                query += WHERE;
-                query += TYPE_EQUAL_TABLE;
-                query += ORDER_BY + NAME;
+                string query = Constants.Sql.Select;
+                query += Constants.Sql.NameFromSqliteMaster;
+                query += Constants.Sql.Where;
+                query += Constants.Sql.TypeEqualsTable;
+                query += Constants.Sql.OrderBy + Constants.Sql.Name;
                 DataTable tables;
                 result = this.TryGetDataTableFromSelect(query, out tables);
                 command_executed = query;
