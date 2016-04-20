@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Speech.Synthesis;
 using System.Windows;
@@ -254,7 +255,7 @@ namespace Timelapse
             switch (this.imageDatabase.TrySelectDatabaseFile())
             {
                 case 0: // An existing .ddb file is available
-                    if (this.LoadImagesFromDB(this.template) == true)
+                    if (this.TryLoadImagesFromDatabase(this.template) == true)
                     {
                         if (this.state.ImmediateExit)
                         {
@@ -493,7 +494,7 @@ namespace Timelapse
         }
 
         // Try to load the images from the DB file.
-        private Boolean LoadImagesFromDB(TemplateDatabase template)
+        private bool TryLoadImagesFromDatabase(TemplateDatabase template)
         {
             if (this.imageDatabase.TryCreateImageDatabase(template))
             {
@@ -512,7 +513,7 @@ namespace Timelapse
                     }
                     else
                     {
-                        this.imageDatabase.TemplateTable = this.imageDatabase.CreateDataTableFromDatabaseTable(Constants.Database.TemplateTable);
+                        this.imageDatabase.TemplateTable = this.imageDatabase.GetDataTable(Constants.Database.TemplateTable);
                     }
                 }
 
@@ -520,7 +521,7 @@ namespace Timelapse
                 this.dataEntryControls.GenerateControls(this.imageDatabase);
                 this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
                 this.imageDatabase.CreateLookupTables();
-                this.imageDatabase.GetImagesAll();
+                this.imageDatabase.TryGetImagesAll();
                 return true;
             }
             return false;
@@ -642,7 +643,7 @@ namespace Timelapse
             List<String> dbtable_list = new List<String>();
             List<String> templatetable_list = new List<String>();
 
-            DataTable databaseTemplateTable = this.imageDatabase.CreateDataTableFromDatabaseTable(Constants.Database.TemplateTable);
+            DataTable databaseTemplateTable = this.imageDatabase.GetDataTable(Constants.Database.TemplateTable);
 
             // Create two lists that we will compare, each containing the DataLabels from the template in the template file vs. db file.
             for (int i = 0; i < databaseTemplateTable.Rows.Count; i++)
@@ -684,7 +685,7 @@ namespace Timelapse
             if (filter == ImageQualityFilter.All)
             {
                 // All images
-                this.imageDatabase.GetImagesAll();
+                this.imageDatabase.TryGetImagesAll();
                 StatusBarUpdate.View(this.statusBar, "all images.");
                 this.MenuItemViewSetSelected(ImageQualityFilter.All);
                 if (null != this.dlgDataView)
@@ -695,7 +696,7 @@ namespace Timelapse
             else if (filter == ImageQualityFilter.Ok)
             {
                 // Light images
-                if (this.imageDatabase.GetImagesAllButDarkAndCorrupted())
+                if (this.imageDatabase.TryGetImagesAllButDarkAndCorrupted())
                 {
                     StatusBarUpdate.View(this.statusBar, "light images.");
                     this.MenuItemViewSetSelected(ImageQualityFilter.Ok);
@@ -730,7 +731,7 @@ namespace Timelapse
             else if (filter == ImageQualityFilter.Corrupted)
             {
                 // Corrupted images
-                if (this.imageDatabase.GetImagesCorrupted())
+                if (this.imageDatabase.TryGetImagesCorrupted())
                 {
                     StatusBarUpdate.View(this.statusBar, "corrupted images.");
                     this.MenuItemViewSetSelected(ImageQualityFilter.Corrupted);
@@ -766,7 +767,7 @@ namespace Timelapse
             else if (filter == ImageQualityFilter.Dark)
             {
                 // Dark images
-                if (this.imageDatabase.GetImagesDark())
+                if (this.imageDatabase.TryGetImagesDark())
                 {
                     StatusBarUpdate.View(this.statusBar, "dark images.");
                     this.MenuItemViewSetSelected(ImageQualityFilter.Dark);
@@ -802,7 +803,7 @@ namespace Timelapse
             else if (filter == ImageQualityFilter.Missing)
             {
                 // Missing images
-                if (this.imageDatabase.GetImagesMissing())
+                if (this.imageDatabase.TryGetImagesMissing())
                 {
                     StatusBarUpdate.View(this.statusBar, "missing images.");
                     this.MenuItemViewSetSelected(ImageQualityFilter.Missing);
@@ -836,7 +837,7 @@ namespace Timelapse
             else if (filter == ImageQualityFilter.MarkedForDeletion)
             {
                 // Images marked for deletion
-                if (this.imageDatabase.GetImagesMarkedForDeletion())
+                if (this.imageDatabase.TryGetImagesMarkedForDeletion())
                 {
                     StatusBarUpdate.View(this.statusBar, "images marked for deletion.");
                     this.MenuItemViewSetSelected(ImageQualityFilter.MarkedForDeletion);
@@ -872,7 +873,7 @@ namespace Timelapse
             else if (filter == ImageQualityFilter.Custom)
             {
                 // Custom Filter
-                if (this.customfilter.QueryResultCount != 0)
+                if (this.customfilter.GetImageCount() != 0)
                 {
                     StatusBarUpdate.View(this.statusBar, "images matching your custom filter.");
                     this.MenuItemViewSetSelected(ImageQualityFilter.Custom);

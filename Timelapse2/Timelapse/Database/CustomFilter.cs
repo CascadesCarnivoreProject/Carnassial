@@ -13,68 +13,16 @@ namespace Timelapse.Database
         private ImageDatabase database;
 
         public Dictionary<int, SearchTerm> SearchTermList { get; private set; }
-        public LogicalOperators LogicalOperator { get; set; }
-
-        /// <summary>Gets the query that will be formed from the collected search terms</summary>
-        public string Query
-        {
-            get { return this.CreateQuery(); }
-        }
-
-        /// <summary>Gets a value indicating whether there is any query to be made </summary>
-        public bool IsQueryEmpty
-        {
-            get { return this.Query == String.Empty; }
-        }
-
-        /// <summary>Gets a value indicating whether there are two or more search terms selected in this query</summary>
-        public bool IsQueryHasMultipleSelectedSearchTerms
-        {
-            get
-            {
-                int count = 0;
-                for (int row = 1; row <= this.SearchTermList.Count; row++)
-                {
-                    if (this.SearchTermList[row].UseForSearching)
-                    {
-                        count++;
-                    }
-                    if (count > 1)
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
-        }
-
-        /// <summary>Gets the count of how many results will be expected if the query is executed </summary>
-        public int QueryResultCount
-        {
-            get
-            {
-                if (this.Query.Trim() == String.Empty)
-                {
-                    return this.database.GetImageCount(); // If there is no query, assume it is equivalent to all images
-                }
-                return this.database.GetImageCountWithCustomFilter(this.Query);
-            }
-        }
-
-        public enum LogicalOperators
-        {
-            And,
-            Or
-        }
+        public CustomFilterOperator LogicalOperator { get; set; }
 
         /// <summary>
         /// Create a CustomFilter, where we build a list of potential search term expressions based on the controls found in the sorted template table
         /// The search term will be used only if its 'UseForSearching' field is true
         /// </summary>
-        public CustomFilter(ImageDatabase db_data)
+        public CustomFilter(ImageDatabase database)
         {
-            this.database = db_data;
-            this.LogicalOperator = LogicalOperators.Or; // We default the search operation to this logical operation
+            this.database = database;
+            this.LogicalOperator = CustomFilterOperator.Or; // We default the search operation to this logical operation
             this.SearchTermList = new Dictionary<int, SearchTerm>();
 
             DataTable sortedTemplateTable = this.database.GetControlsSortedByControlOrder();
@@ -124,16 +72,45 @@ namespace Timelapse.Database
         }
 
         #region Public methods to Run the Query
+        /// <summary>Gets the count of how many results will be expected if the query is executed </summary>
+        public int GetImageCount()
+        {
+            string query = this.CreateQuery();
+            if (query.Trim() == String.Empty)
+            {
+                return this.database.GetImageCount(); // If there is no query, assume it is equivalent to all images
+            }
+            return this.database.GetImageCountWithCustomFilter(query);
+        }
+
+        /// <summary>Gets a value indicating whether there are two or more search terms selected in this query</summary>
+        public bool QueryHasMultipleSelectedSearchTerms()
+        {
+            int count = 0;
+            for (int row = 1; row <= this.SearchTermList.Count; row++)
+            {
+                if (this.SearchTermList[row].UseForSearching)
+                {
+                    count++;
+                }
+                if (count > 1)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         /// <summary>Run the query on the database</summary>
         /// <returns>Returns success or failure</returns>
-        public bool RunQuery()
+        public bool TryRunQuery()
         {
-            string query = this.Query;
+            string query = this.CreateQuery();
             if (query == String.Empty)
             {
-                return this.database.GetImagesAll();
+                return this.database.TryGetImagesAll();
             }
-            return this.database.GetImagesCustom(this.Query);
+            return this.database.TryGetImagesCustom(query);
         }
         #endregion
 
@@ -155,7 +132,7 @@ namespace Timelapse.Database
                 // If there is already an expression in the query, then we add either and 'And' or an 'Or' to it 
                 if (query.Length > 0)
                 {
-                    query += (this.LogicalOperator == LogicalOperators.And) ? " And " : " Or ";
+                    query += (this.LogicalOperator == CustomFilterOperator.And) ? " And " : " Or ";
                 }
 
                 // Now construct the rest of it: DataLabel expresson Value e.g., foo>"5" 

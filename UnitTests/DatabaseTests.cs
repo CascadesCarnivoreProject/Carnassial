@@ -37,7 +37,7 @@ namespace Timelapse.UnitTests
             database.CreateWhiteSpaceColumn();
             database.TrimImageAndTemplateTableWhitespace();  // Trim the white space from all the data
             database.InitializeMarkerTableFromDataTable();
-            Assert.IsTrue(database.GetImagesAll());
+            Assert.IsTrue(database.TryGetImagesAll());
             Assert.IsTrue(database.TryMoveToFirstImage());
             Assert.IsTrue(database.TryMoveToNextImage());
 
@@ -57,7 +57,7 @@ namespace Timelapse.UnitTests
             database.UpdateImages(new List<ColumnTuplesWithWhere>() { image2Update });
 
             // pull the image data table again so the updates are visible to .csv export
-            Assert.IsTrue(database.GetImagesAll());
+            Assert.IsTrue(database.TryGetImagesAll());
 
             // roundtrip data through .csv
             CsvReaderWriter csvReaderWriter = new CsvReaderWriter();

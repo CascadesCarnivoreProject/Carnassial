@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.IO;
 
 namespace Timelapse.Database
@@ -66,17 +64,13 @@ namespace Timelapse.Database
             // As well, the contents of the template table are loaded into memory.
 
             // The template table will hold all the values of the TableTemplate in the database
-            DataTable templateTable;
-            bool result = this.database.TryGetDataTableFromSelect(Constants.Database.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Database.SpreadsheetOrder + "  ASC", out templateTable);
-            Debug.Assert(result == true && templateTable != null, String.Format("Loading template table from {0} failed.", this.FilePath));
-            this.TemplateTable = templateTable;
-
-            int counter_count = 0;  // The number of counters/ choices/ notes seen so far
-            int choice_count = 0;
-            int note_count = 0;
-            int flag_count = 0;
+            this.TemplateTable = this.database.GetDataTableFromSelect(Constants.Database.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Database.SpreadsheetOrder + "  ASC");
 
             // For each row...
+            int counterCount = 0;  // The number of counters/ choices/ notes seen so far
+            int choiceCount = 0;
+            int flagCount = 0;
+            int noteCount = 0;
             for (int i = 0; i < this.TemplateTable.Rows.Count; i++)
             {
                 DataRow row = this.TemplateTable.Rows[i];
@@ -109,20 +103,20 @@ namespace Timelapse.Database
                 switch (type)
                 {
                     case Constants.DatabaseColumn.Counter:
-                        counter_count++;
-                        uniqueFallbackLabel = type + counter_count.ToString();
+                        counterCount++;
+                        uniqueFallbackLabel = type + counterCount.ToString();
                         break;
                     case Constants.DatabaseColumn.FixedChoice:
-                        choice_count++;
-                        uniqueFallbackLabel = type + choice_count.ToString();
+                        choiceCount++;
+                        uniqueFallbackLabel = type + choiceCount.ToString();
                         break;
                     case Constants.DatabaseColumn.Note:
-                        note_count++;
-                        uniqueFallbackLabel = type + note_count.ToString();
+                        noteCount++;
+                        uniqueFallbackLabel = type + noteCount.ToString();
                         break;
                     case Constants.DatabaseColumn.Flag:
-                        flag_count++;
-                        uniqueFallbackLabel = type + flag_count.ToString();
+                        flagCount++;
+                        uniqueFallbackLabel = type + flagCount.ToString();
                         break;
                     default:
                         uniqueFallbackLabel = String.Empty;
@@ -151,8 +145,7 @@ namespace Timelapse.Database
                 {
                     long id = (long)row[Constants.Database.ID];
                     columnsToUpdate.SetWhere(id);
-                    string commandExecuted;
-                    this.database.Update(Constants.Database.TemplateTable, columnsToUpdate, out result, out commandExecuted);
+                    this.database.Update(Constants.Database.TemplateTable, columnsToUpdate);
                 }
             }
         }

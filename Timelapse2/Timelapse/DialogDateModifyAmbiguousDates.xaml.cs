@@ -113,7 +113,7 @@ namespace Timelapse
 
             // Refresh the database / datatable to reflect the updated values, which will also refressh the main timelpase display.
             int currentImage = this.database.CurrentImageRow;
-            this.database.GetImagesAll();
+            this.database.TryGetImagesAll();
             this.database.TryMoveToImage(currentImage);
         }
 

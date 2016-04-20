@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.IO;
 
 namespace Timelapse.Database
@@ -52,7 +53,7 @@ namespace Timelapse.Database
         /// A simplified table creation routine. It expects the column definitions to be supplied
         /// as a column_name, data type key value pair. 
         /// </summary>
-        public void CreateTable(string tableName, List<ColumnTuple> columnDefinitions, out bool result, out string commandExecuted)
+        public void CreateTable(string tableName, List<ColumnTuple> columnDefinitions)
         {
             // The table creation syntax supported is:
             // CREATE TABLE table_name (
@@ -60,32 +61,20 @@ namespace Timelapse.Database
             //     column2name datatype,               NAME TEXT NOT NULL,
             //     ...                                 ...
             //     columnNname datatype);              SALARY REAL);
-            string query = String.Empty;
-            commandExecuted = String.Empty;
-            result = true;
-            try
+            string query = Constants.Sql.CreateTable + tableName + Constants.Sql.OpenParenthesis + Environment.NewLine;               // CREATE TABLE <tablename> (
+            foreach (ColumnTuple column in columnDefinitions)
             {
-                query = Constants.Sql.CreateTable + tableName + Constants.Sql.OpenParenthesis + Environment.NewLine;               // CREATE TABLE <tablename> (
-                foreach (ColumnTuple column in columnDefinitions)
-                {
-                    query += column.Name + " " + column.Value + Constants.Sql.Comma + Environment.NewLine;             // columnname datatype,
-                }
-                query = query.Remove(query.Length - Constants.Sql.Comma.Length - Environment.NewLine.Length);         // remove last comma / new line and replace with );
-                query += Constants.Sql.CloseParenthesis + Constants.Sql.Semicolon;
-                commandExecuted = query;
-                this.ExecuteNonQuery(query, out result);
+                query += column.Name + " " + column.Value + Constants.Sql.Comma + Environment.NewLine;             // columnname datatype,
             }
-            catch
-            {
-                result = false;
-            }
+            query = query.Remove(query.Length - Constants.Sql.Comma.Length - Environment.NewLine.Length);         // remove last comma / new line and replace with );
+            query += Constants.Sql.CloseParenthesis + Constants.Sql.Semicolon;
+            this.ExecuteNonQuery(query);
         }
 
         // Assumes they have exactly the same creation string
-        public void Insert(string tableName, DataTable datatable, out bool result, out string commandExecuted)
+        public void Insert(string tableName, DataTable datatable)
         {
             List<string> queries = new List<string>();
-            commandExecuted = String.Empty;
             for (int i = 0; i < datatable.Rows.Count; i++)
             {
                 string query = Constants.Sql.InsertInto + tableName + " VALUES ";                             // INSERT INTO table_name;
@@ -110,55 +99,19 @@ namespace Timelapse.Database
                 values = values.Substring(0, values.Length - Constants.Sql.Comma.Length);        // Remove last comma in the sequence 
                 query += String.Format("({0}); ", values);                          // ('value1', 'value2', ... 'valueN');
                 queries.Add(query);
-                commandExecuted += query + Environment.NewLine;
             }
 
-            this.ExecuteNonQueryWrappedInBeginEnd(queries, out result);
+            this.ExecuteNonQueryWrappedInBeginEnd(queries);
         }
         #endregion
 
         #region Insertion: Single Row
-        /// <summary>
-        ///     Insert a single row into the database. 
-        ///     Warning: Very inefficient if there are a large number of consecutive inserts
-        /// </summary>
-        /// <param name="tableName">The table into which we insert the data.</param>
-        /// <param name="columnsToUpdate">A dictionary containing the column names and data for the insert.</param>
-        public void Insert(string tableName, List<ColumnTuple> columnsToUpdate, out bool result, out string commandExecuted)
-        {
-            // INSERT INTO table_name
-            //      colname1, colname12, ... colnameN VALUES
-            //      ('value1', 'value2', ... 'valueN');
-            string columns = String.Empty;
-            string values = String.Empty;
-            foreach (ColumnTuple column in columnsToUpdate)
-            {
-                columns += String.Format(" {0}" + Constants.Sql.Comma, column.Name); // transform dictionary entries into a string "col1, col2, ... coln"
-                values += String.Format(" {0}" + Constants.Sql.Comma, this.Quote(column.Value));         // transform dictionary entries into a string "'value1', 'value2', ... 'valueN'"
-            }
-            columns = columns.Substring(0, columns.Length - Constants.Sql.Comma.Length);     // Remove last comma in the sequence to produce (col1, col2, ... coln)  
-            values = values.Substring(0, values.Length - Constants.Sql.Comma.Length);        // Remove last comma in the sequence 
-
-            // Construct the query. The newlines are to format it for pretty printing
-            string query = Constants.Sql.InsertInto + tableName;                // INSERT INTO table_name
-            query += Environment.NewLine;
-            query += String.Format("({0}) ", columns);                          //      (col1, col2, ... coln)
-            query += Environment.NewLine;
-            query += Constants.Sql.Values;                                      // VALUES
-            query += Environment.NewLine;
-            query += String.Format("({0}); ", values);                          //      ('value1', 'value2', ... 'valueN');
-
-            commandExecuted = query;
-            this.ExecuteNonQuery(query, out result);
-        }
-
-        public void Insert(string tableName, List<List<ColumnTuple>> insertionStatements, out bool result, out string commandExecuted)
+        public void Insert(string tableName, List<List<ColumnTuple>> insertionStatements)
         {
             // Construct each individual query in the form 
             // INSERT INTO table_name
             //      colname1, colname12, ... colnameN VALUES
             //      ('value1', 'value2', ... 'valueN');
-            commandExecuted = String.Empty;
             List<string> queries = new List<string>();
             foreach (List<ColumnTuple> columnsToUpdate in insertionStatements)
             {
@@ -181,17 +134,16 @@ namespace Timelapse.Database
                 // Construct the query. The newlines are to format it for pretty printing
                 string query = Constants.Sql.InsertInto + tableName;               // INSERT INTO table_name
                 query += Environment.NewLine;
-                query += String.Format("({0}) ", columns);                         //      (col1, col2, ... coln)
+                query += String.Format("({0}) ", columns);                         // (col1, col2, ... coln)
                 query += Environment.NewLine;
                 query += Constants.Sql.Values;                                     // VALUES
                 query += Environment.NewLine;
-                query += String.Format("({0}); ", values);                         //      ('value1', 'value2', ... 'valueN');
+                query += String.Format("({0}); ", values);                         // ('value1', 'value2', ... 'valueN');
                 queries.Add(query);
-                commandExecuted += query + Environment.NewLine;                    // And add it to our list of queries
             }
 
             // Now try to invoke the batch queries
-            this.ExecuteNonQueryWrappedInBeginEnd(queries, out result);
+            this.ExecuteNonQueryWrappedInBeginEnd(queries);
         }
         #endregion
 
@@ -201,7 +153,7 @@ namespace Timelapse.Database
         /// </summary>
         /// <param name="query">The SQL to run</param>
         /// <returns>A DataTable containing the result set.</returns>
-        public bool TryGetDataTableFromSelect(string query, out DataTable dataTable)
+        public DataTable GetDataTableFromSelect(string query)
         {
             try
             {
@@ -214,17 +166,17 @@ namespace Timelapse.Database
                         command.CommandText = query;
                         using (SQLiteDataReader reader = command.ExecuteReader())
                         {
-                            dataTable = new DataTable();
+                            DataTable dataTable = new DataTable();
                             dataTable.Load(reader);
+                            return dataTable;
                         }
                     }
                 }
-                return true;
             }
-            catch
+            catch (Exception exception)
             {
-                dataTable = null;
-                return false;
+                Debug.Assert(false, "ExecuteReader() failed.", exception.ToString());
+                return null;
             }
         }
 
@@ -233,9 +185,8 @@ namespace Timelapse.Database
         /// </summary>
         /// <param name="query">The SQL to run</param>
         /// <returns>A value containing the single result.</returns>
-        public object GetObjectFromSelect(string query, out bool result, out string commandExecuted)
+        private object GetObjectFromSelect(string query)
         {
-            commandExecuted = query;
             try
             {
                 // Open the connection
@@ -245,15 +196,13 @@ namespace Timelapse.Database
                     using (SQLiteCommand command = new SQLiteCommand(connection))
                     {
                         command.CommandText = query;
-                        object value = command.ExecuteScalar();
-                        result = true;
-                        return value;
+                        return command.ExecuteScalar();
                     }
                 }
             }
-            catch
+            catch (Exception exception)
             {
-                result = false;
+                Debug.Assert(false, "ExecuteScalar() failed.", exception.ToString());
                 return null;
             }
         }
@@ -261,11 +210,10 @@ namespace Timelapse.Database
 
         #region Query Execution
         /// <summary>
-        ///  Allows the programmer to interact with the database for purposes other than a query.
+        /// Allows the programmer to interact with the database for purposes other than a query.
         /// </summary>
         /// <param name="statement">The SQL to be run.</param>
-        /// <returns>An Integer containing the number of rows updated.</returns>
-        public int ExecuteNonQuery(string statement, out bool result)
+        public void ExecuteNonQuery(string statement)
         {
             try
             {
@@ -276,15 +224,12 @@ namespace Timelapse.Database
                     {
                         command.CommandText = statement;
                         int rowsUpdated = command.ExecuteNonQuery();
-                        result = true;
-                        return rowsUpdated;
                     }
                 }
             }
-            catch
+            catch (Exception exception)
             {
-                result = false;
-                return 0;
+                Debug.Assert(false, "ExecuteNonQuery() failed.", exception.ToString());
             }
         }
 
@@ -292,7 +237,7 @@ namespace Timelapse.Database
         /// Given a list of complete queries, wrap up to 500 of them in a BEGIN/END statement so they are all executed in one go for efficiency
         /// Continue for the next up to 500, and so on.
         /// </summary>
-        public int ExecuteNonQueryWrappedInBeginEnd(List<string> statements, out bool result)
+        public void ExecuteNonQueryWrappedInBeginEnd(List<string> statements)
         {
             // BEGIN
             //      query1
@@ -300,9 +245,7 @@ namespace Timelapse.Database
             //      ...
             //      queryn
             // END
-            int rowsUpdated = 0;
-            int query_count = 0;
-            int max_count = 500;
+            const int MaxStatementCount = 500;
             try
             {
                 using (SQLiteConnection connection = new SQLiteConnection(this.connectionString))
@@ -311,11 +254,13 @@ namespace Timelapse.Database
                     SQLiteCommand command;
 
                     // Invoke each query in the queries list
+                    int rowsUpdated = 0;
+                    int statementsInQuery = 0;
                     foreach (string statement in statements)
                     {
-                        query_count++;
+                        statementsInQuery++;
                         // Insert a BEGIN if we are at the beginning of the count
-                        if (query_count == 1)
+                        if (statementsInQuery == 1)
                         {
                             using (command = new SQLiteCommand(connection))
                             {
@@ -333,19 +278,19 @@ namespace Timelapse.Database
                         }
 
                         // END
-                        if (query_count == max_count)
+                        if (statementsInQuery >= MaxStatementCount)
                         {
                             using (command = new SQLiteCommand(connection))
                             {
                                 command.CommandText = Constants.Sql.End;
                                 rowsUpdated += command.ExecuteNonQuery();
-                                query_count = 0;
+                                statementsInQuery = 0;
                                 // Debug.Print(mycommand.CommandText);
                             }
                         }
                     }
                     // END
-                    if (query_count != 0)
+                    if (statementsInQuery != 0)
                     {
                         using (command = new SQLiteCommand(connection))
                         {
@@ -354,35 +299,30 @@ namespace Timelapse.Database
                             // Debug.Print(mycommand.CommandText);
                         }
                     }
-                    result = true;
                 }
             }
-            catch
+            catch (Exception exception)
             {
-                result = false;
+                Debug.Assert(false, "ExecuteNonQuery() failed.", exception.ToString());
             }
-            return rowsUpdated;
         }
         #endregion
 
         #region Updates
         // Trims all the white space from the data held in the list of column_names int table_name
         // Note: this is needed as earlier versions didn't trim the white space from the data. This allows us to trim it in the database after the fact.
-        public void UpdateTrimWhitespace(string tableName, List<string> columnNames, out bool result, out string commandExecuted)
+        public void TrimWhitespace(string tableName, List<string> columnNames)
         {
-            commandExecuted = String.Empty;
-            result = true;
             foreach (string columnName in columnNames)
             {
-                commandExecuted = "Update " + tableName + " SET " + columnName + " = TRIM (" + columnName + ")"; // Form: UPDATE tablename SET columname = TRIM(columnname)
-                this.ExecuteNonQuery(commandExecuted, out result);  // TODO MAKE THIS ALL IN ONE OPERATION
+                string command = "Update " + tableName + " SET " + columnName + " = TRIM (" + columnName + ")"; // Form: UPDATE tablename SET columname = TRIM(columnname)
+                this.ExecuteNonQuery(command);  // TODO MAKE THIS ALL IN ONE OPERATION
             }
         }
 
-        public void Update(string tableName, List<ColumnTuplesWithWhere> updateQueryList, out bool result, out string commandExecuted)
+        public void Update(string tableName, List<ColumnTuplesWithWhere> updateQueryList)
         {
             // TODO: support splitting the query into 100 row (or similar size) chunks here rather than requiring all callers implement it
-            commandExecuted = String.Empty;
             List<string> queries = new List<string>();
             foreach (ColumnTuplesWithWhere updateQuery in updateQueryList)
             {
@@ -392,10 +332,9 @@ namespace Timelapse.Database
                     continue; // skip non-queries
                 }
                 queries.Add(query);
-                commandExecuted += query; // The string of queries
             }
-            result = true;
-            this.ExecuteNonQueryWrappedInBeginEnd(queries, out result);
+
+            this.ExecuteNonQueryWrappedInBeginEnd(queries);
         }
 
         /// <summary>
@@ -403,7 +342,7 @@ namespace Timelapse.Database
         /// </summary>
         /// <param name="tableName">The table to update.</param>
         /// <param name="columnsToUpdate">The column names and their new values.</param>
-        public void Update(string tableName, ColumnTuplesWithWhere columnsToUpdate, out bool result, out string commandExecuted)
+        public void Update(string tableName, ColumnTuplesWithWhere columnsToUpdate)
         {
             // UPDATE table_name SET 
             // colname1 = value1, 
@@ -413,15 +352,7 @@ namespace Timelapse.Database
             // WHERE
             // <condition> e.g., ID=1;
             string query = this.CreateUpdateQuery(tableName, columnsToUpdate);
-            commandExecuted = query;
-            try
-            {
-                this.ExecuteNonQuery(query, out result);
-            }
-            catch
-            {
-                result = false;
-            }
+            this.ExecuteNonQuery(query);
         }
 
         // Return a single update query as a string
@@ -467,13 +398,13 @@ namespace Timelapse.Database
 
         #region Counts
         /// <summary>
-        ///  Retrieve a count of items from the DB. Select statement must be of the form "Select Count(*) FROM "
+        /// Retrieve a count of items from the DB. Select statement must be of the form "Select Count(*) FROM "
         /// </summary>
         /// <param name="query">The query to run.</param>
         /// <returns>The number of items selected.</returns>
-        public int GetCountFromSelect(string query, out bool result, out string commandExecuted)
+        public int GetCountFromSelect(string query)
         {
-            return Convert.ToInt32(this.GetObjectFromSelect(query, out result, out commandExecuted));
+            return Convert.ToInt32(this.GetObjectFromSelect(query));
         }
         #endregion
 
@@ -481,11 +412,24 @@ namespace Timelapse.Database
         // This method will check if a column exists in a table
         public bool IsColumnInTable(string tableName, string columnName)
         {
-            string query = "SELECT " + columnName + " from " + tableName;
+            // TODO: change this to a proper IF EXISTS rather than relying on a try catch
             try
             {
-                DataTable dummy;
-                return this.TryGetDataTableFromSelect(query, out dummy);
+                // Open the connection
+                using (SQLiteConnection connection = new SQLiteConnection(this.connectionString))
+                {
+                    connection.Open();
+                    using (SQLiteCommand command = new SQLiteCommand(connection))
+                    {
+                        command.CommandText = "SELECT " + columnName + " from " + tableName;
+                        using (SQLiteDataReader reader = command.ExecuteReader())
+                        {
+                            DataTable dataTable = new DataTable();
+                            dataTable.Load(reader);
+                            return true;
+                        }
+                    }
+                }
             }
             catch
             {
@@ -494,19 +438,10 @@ namespace Timelapse.Database
         }
 
         // This method will create a column in a table, where it is added to its end
-        public bool CreateColumn(string tableName, string columnName)
+        public void CreateColumn(string tableName, string columnName)
         {
-            bool result = false;
             string query = "ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " TEXT";
-            try
-            {
-                this.ExecuteNonQuery(query, out result);
-            }
-            catch
-            {
-                return false;
-            }
-            return result;
+            this.ExecuteNonQuery(query);
         }
         #endregion
 
@@ -514,11 +449,9 @@ namespace Timelapse.Database
         /// <summary>delete specific rows from the DB where...</summary>
         /// <param name="tableName">The table from which to delete.</param>
         /// <param name="where">The where clause for the delete.</param>
-        public void Delete(string tableName, string where, out bool result, out string commandExecuted)
+        public void Delete(string tableName, string where)
         {
             // DELETE FROM table_name WHERE where
-            result = true;
-            commandExecuted = String.Empty;
             string query = Constants.Sql.DeleteFrom + tableName;        // DELETE FROM table_name
             if (!where.Trim().Equals(String.Empty))
             {
@@ -526,22 +459,14 @@ namespace Timelapse.Database
                 query += Constants.Sql.Where;                   // WHERE
                 query += where;                                 // where
             }
-            try
-            {
-                this.ExecuteNonQuery(query, out result);
-            }
-            catch
-            {
-                result = false;
-            }
+            this.ExecuteNonQuery(query);
         }
         #endregion
 
         #region Utilities
         private string Quote(string s)
         {
-            const string QUOTE = "'";
-            return QUOTE + s + QUOTE;
+            return "'" + s + "'";
         }
         #endregion
     }

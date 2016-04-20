@@ -14,7 +14,7 @@ namespace Timelapse
     public partial class DialogCustomViewFilter : Window
     {
         // Whether to show or hide the explanation (state remembered across all these dialog boxes)
-        private static bool HideExplanation = false;
+        private static bool hideExplanation = false;
 
         private ImageDatabase database;
         private CustomFilter customFilter;
@@ -39,10 +39,10 @@ namespace Timelapse
             }
 
             // Show or hide the explanation depending on the saved state of the static variable
-            btnHideText.IsChecked = DialogCustomViewFilter.HideExplanation;
+            btnHideText.IsChecked = DialogCustomViewFilter.hideExplanation;
 
             // And now the real work
-            if (this.customFilter.LogicalOperator == CustomFilter.LogicalOperators.And)
+            if (this.customFilter.LogicalOperator == CustomFilterOperator.And)
             {
                 rbAnd.IsChecked = true;
                 rbOr.IsChecked = false;
@@ -287,42 +287,41 @@ namespace Timelapse
         // i show or hides the search term feedback for that row.
         private void UpdateSearchCriteriaFeedback()
         {
-            SearchTerm st;
-            int row;
-            bool last_expression = true;
-            bool search_terms_exists = false;
+            bool lastExpression = true;
+            bool searchTermsExist = false;
             // We go backwards, as we don't want to print the AND or OR on the last expression
-            for (int i = this.customFilter.SearchTermList.Count - 1; i >= 0; i--)
+            for (int index = this.customFilter.SearchTermList.Count - 1; index >= 0; index--)
             {
-                row = i + 1; // we offset the row by 1 as row 0 is the header
-                st = this.customFilter.SearchTermList.Values.ElementAt(i);
+                int row = index + 1; // we offset the row by 1 as row 0 is the header
+                SearchTerm searchTerm = this.customFilter.SearchTermList.Values.ElementAt(index);
                 TextBlock tb_search_feedback = (TextBlock)grid.Children.Cast<UIElement>().First(ex => Grid.GetRow(ex) == row && Grid.GetColumn(ex) == 4);
 
-                if (st.UseForSearching)
+                if (searchTerm.UseForSearching)
                 {
                     // We are only interested in showing feedback for rows where the search expression is active
-                    search_terms_exists = true;
+                    searchTermsExist = true;
                     // Construct the search term 
-                    string string_to_display = st.DataLabel + " " + st.Expression + " "; // So far, we have "Data Label = 
+                    string stringToDisplay = searchTerm.DataLabel + " " + searchTerm.Expression + " "; // So far, we have "Data Label = 
 
-                    string value = st.Value.Trim();    // the Value, but if its 
+                    string value = searchTerm.Value.Trim();    // the Value, but if its 
                     if (value.Length == 0)
                     {
                         value = "\"\"";  // an empty string, display it as ""
                     }
-                    string_to_display += value;
+                    stringToDisplay += value;
 
                     // If its not the last expression and if there are multiple queries (i.e., search terms) then show the And or Or at its end.
-                    if (!last_expression && this.customFilter.IsQueryHasMultipleSelectedSearchTerms)
+                    bool queryHasMultipleSelectedSearchTerms = this.customFilter.QueryHasMultipleSelectedSearchTerms();
+                    if (!lastExpression && queryHasMultipleSelectedSearchTerms)
                     {
-                        if (this.customFilter.IsQueryHasMultipleSelectedSearchTerms)
+                        if (queryHasMultipleSelectedSearchTerms)
                         {
-                            string_to_display += " " + this.customFilter.LogicalOperator.ToString();
+                            stringToDisplay += " " + this.customFilter.LogicalOperator.ToString();
                         }
                     }
 
-                    tb_search_feedback.Text = string_to_display;
-                    last_expression = false;
+                    tb_search_feedback.Text = stringToDisplay;
+                    lastExpression = false;
                 }
                 else
                 {
@@ -331,10 +330,10 @@ namespace Timelapse
                 }
             }
 
-            int count = this.customFilter.QueryResultCount;
+            int count = this.customFilter.GetImageCount();
             this.OkButton.IsEnabled = count > 0 ? true : false;
-            this.btnShowAll.IsEnabled = search_terms_exists;
-            textBlockQueryMatches.Text = this.customFilter.QueryResultCount.ToString();
+            this.btnShowAll.IsEnabled = searchTermsExist;
+            textBlockQueryMatches.Text = count.ToString();
         }
         #endregion
 
@@ -342,22 +341,22 @@ namespace Timelapse
         // Toggle the visibility of the explanation panel
         private void HideTextButton_StateChange(object sender, RoutedEventArgs e)
         {
-            DialogCustomViewFilter.HideExplanation = (bool)btnHideText.IsChecked;
-            gridExplanation.Visibility = DialogCustomViewFilter.HideExplanation ? Visibility.Collapsed : Visibility.Visible;
+            DialogCustomViewFilter.hideExplanation = (bool)btnHideText.IsChecked;
+            gridExplanation.Visibility = DialogCustomViewFilter.hideExplanation ? Visibility.Collapsed : Visibility.Visible;
         }
 
         // Radio buttons for determing if we use And or Or
         private void AndOrRadioButton_Checked(object sender, RoutedEventArgs e)
         {
             RadioButton rb = sender as RadioButton;
-            this.customFilter.LogicalOperator = (rb == this.rbAnd) ? CustomFilter.LogicalOperators.And : CustomFilter.LogicalOperators.Or;
+            this.customFilter.LogicalOperator = (rb == this.rbAnd) ? CustomFilterOperator.And : CustomFilterOperator.Or;
             this.UpdateSearchCriteriaFeedback();
         }
 
         // Apply the filter if the Ok button is clicked
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            this.customFilter.RunQuery();
+            this.customFilter.TryRunQuery();
             this.DialogResult = true;
         }
 
