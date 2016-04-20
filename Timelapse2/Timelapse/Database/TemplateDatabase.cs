@@ -76,7 +76,6 @@ namespace Timelapse.Database
             int note_count = 0;
             int flag_count = 0;
 
-            Dictionary<String, Object> dataline = new Dictionary<String, Object>();    // Will hold key/value pairs that have change din the current row
             // For each row...
             for (int i = 0; i < this.TemplateTable.Rows.Count; i++)
             {
@@ -95,65 +94,65 @@ namespace Timelapse.Database
                     label = String.Empty;
                 }
 
-                string data_label; // The row's data label
+                string dataLabel; // The row's data label
                 try
                 {
-                    data_label = (string)row[Constants.Control.DataLabel];
+                    dataLabel = (string)row[Constants.Control.DataLabel];
                 }
                 catch
                 {
-                    data_label = String.Empty;
+                    dataLabel = String.Empty;
                 }
 
                 // Increment the times we have seen a particular type, and compose a possible unique label identifying it (e.g., Counter3)
-                string temp;
+                string uniqueFallbackLabel;
                 switch (type)
                 {
                     case Constants.DatabaseColumn.Counter:
                         counter_count++;
-                        temp = type + counter_count.ToString();
+                        uniqueFallbackLabel = type + counter_count.ToString();
                         break;
                     case Constants.DatabaseColumn.FixedChoice:
                         choice_count++;
-                        temp = type + choice_count.ToString();
+                        uniqueFallbackLabel = type + choice_count.ToString();
                         break;
                     case Constants.DatabaseColumn.Note:
                         note_count++;
-                        temp = type + note_count.ToString();
+                        uniqueFallbackLabel = type + note_count.ToString();
                         break;
                     case Constants.DatabaseColumn.Flag:
                         flag_count++;
-                        temp = type + flag_count.ToString();
+                        uniqueFallbackLabel = type + flag_count.ToString();
                         break;
                     default:
-                        temp = String.Empty;
+                        uniqueFallbackLabel = String.Empty;
                         break;
                 }
 
                 // Check if various values are empty, and if so update the row and fill the dataline with appropriate defaults
-                dataline.Clear();
-                if (String.Empty == data_label.Trim() && String.Empty == label.Trim())
+                ColumnTuplesWithWhere columnsToUpdate = new ColumnTuplesWithWhere();    // Will hold key/value pairs that have change din the current row
+                if (String.Empty == dataLabel.Trim() && String.Empty == label.Trim())
                 {
                     // No labels / data labels, so use the ones we created
-                    dataline.Add(Constants.Control.Label, temp);
-                    dataline.Add(Constants.Control.DataLabel, temp);
-                    row[Constants.Control.Label] = temp;
-                    row[Constants.Control.DataLabel] = temp;
+                    columnsToUpdate.Columns.Add(new ColumnTuple(Constants.Control.Label, uniqueFallbackLabel));
+                    columnsToUpdate.Columns.Add(new ColumnTuple(Constants.Control.DataLabel, uniqueFallbackLabel));
+                    row[Constants.Control.Label] = uniqueFallbackLabel;
+                    row[Constants.Control.DataLabel] = uniqueFallbackLabel;
                 }
-                else if (String.Empty == data_label.Trim())
+                else if (String.Empty == dataLabel.Trim())
                 {
                     // No data label but a label, so use the label's value
-                    dataline.Add(Constants.Control.DataLabel, label);
+                    columnsToUpdate.Columns.Add(new ColumnTuple(Constants.Control.DataLabel, label));
                     row[Constants.Control.DataLabel] = row[Constants.Control.Label];
                 }
 
                 // Now add the new values to the database
-                if (dataline.Count > 0)
+                if (columnsToUpdate.Columns.Count > 0)
                 {
-                    string id = row[Constants.Database.ID].ToString();
-                    string cmd = Constants.Database.ID + " = " + id;
-                    string command_executed;
-                    this.database.UpdateWhere(Constants.Database.TemplateTable, dataline, cmd, out result, out command_executed);
+                    long id = (long)row[Constants.Database.ID];
+                    columnsToUpdate.SetWhere(id);
+                    string commandExecuted;
+                    this.database.Update(Constants.Database.TemplateTable, columnsToUpdate, out result, out commandExecuted);
                 }
             }
         }

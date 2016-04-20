@@ -70,6 +70,7 @@ namespace Timelapse
             public const string FixedChoice = "FixedChoice";   // a fixed choice
             public const string Flag = "Flag";                 // A boolean
             public const string Folder = "Folder";
+            public const string ID = "Id";
             public const string Image = "Image";               // A single image and its associated data
             public const string ImageQuality = "ImageQuality";
             public const string Images = "Images";             // There are multiple images

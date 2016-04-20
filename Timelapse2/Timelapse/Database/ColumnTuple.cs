@@ -5,13 +5,13 @@ namespace Timelapse.Database
     // A tuple comprising a Column and a Value
     public class ColumnTuple
     {
-        public string ColumnName { get; set; }
-        public object ColumnValue { get; set; }
+        public string Name { get; private set; }
+        public string Value { get; private set; }
 
-        public ColumnTuple(string column, object value)
+        public ColumnTuple(string column, string value)
         {
-            this.ColumnName = column;
-            this.ColumnValue = value;
+            this.Name = column;
+            this.Value = value;
         }
     }
 }

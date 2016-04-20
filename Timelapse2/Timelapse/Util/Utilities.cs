@@ -13,36 +13,36 @@ namespace Timelapse.Util
     {
         #region Folder paths and folder names
         // get a location for the template database from the user
-        public static bool TryGetTemplateFileFromUser(string defaultTemplateFilePath, out string templateDatabasePath)
+        public static bool TryGetFileFromUser(string title, string defaultFilePath, string filter, out string selectedFilePath)
         {
             // Get the template file, which should be located where the images reside
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Title = "Select a TimelapseTemplate.tdb file, which should be one located in your image folder";
+            openFileDialog.Title = title;
             openFileDialog.CheckFileExists = true;
             openFileDialog.CheckPathExists = true;
             openFileDialog.Multiselect = false;
-            if (String.IsNullOrWhiteSpace(defaultTemplateFilePath))
+            if (String.IsNullOrWhiteSpace(defaultFilePath))
             {
                 openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             }
             else
             {
-                openFileDialog.InitialDirectory = Path.GetDirectoryName(defaultTemplateFilePath);
-                openFileDialog.FileName = Path.GetFileName(defaultTemplateFilePath);
+                openFileDialog.InitialDirectory = Path.GetDirectoryName(defaultFilePath);
+                openFileDialog.FileName = Path.GetFileName(defaultFilePath);
             }
             openFileDialog.AutoUpgradeEnabled = true;
 
             // Set filter for file extension and default file extension 
             openFileDialog.DefaultExt = Constants.File.TemplateDatabaseFileExtension;
-            openFileDialog.Filter = String.Format("Template files ({0})|*{0}", Constants.File.TemplateDatabaseFileExtension);
+            openFileDialog.Filter = filter;
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                templateDatabasePath = openFileDialog.FileName;
+                selectedFilePath = openFileDialog.FileName;
                 return true;
             }
 
-            templateDatabasePath = null;
+            selectedFilePath = null;
             return false;
         }
 

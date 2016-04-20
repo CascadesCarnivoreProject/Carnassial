@@ -132,7 +132,7 @@
     <Compile Include="Constants.cs" />
     <Compile Include="Database\CustomFilter.cs" />
     <Compile Include="Database\ColumnTuple.cs" />
-    <Compile Include="Database\ColumnTupleListWhere.cs" />
+    <Compile Include="Database\ColumnTuplesWithWhere.cs" />
     <Compile Include="Database\ImageDatabase.cs" />
     <Compile Include="Database\SearchTerm.cs" />
     <Compile Include="DialogAboutTimelapse.xaml.cs">
@@ -310,7 +310,7 @@
     <Compile Include="Util\DataEntryFlag.cs" />
     <Compile Include="Util\DataEntryNote.cs" />
     <Compile Include="Util\NativeMethods.cs" />
-    <Compile Include="Database\SpreadsheetWriter.cs" />
+    <Compile Include="Database\CsvReaderWriter.cs" />
     <Compile Include="DialogDateCorrection.xaml.cs">
       <DependentUpon>DialogDateCorrection.xaml</DependentUpon>
     </Compile>

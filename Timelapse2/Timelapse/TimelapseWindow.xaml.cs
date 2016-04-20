@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -198,7 +197,10 @@ namespace Timelapse
             // default the template selection dialog to the most recently opened database
             string defaultTemplateDatabasePath;
             this.state.MostRecentDatabasePaths.TryGetMostRecent(out defaultTemplateDatabasePath);
-            if (Utilities.TryGetTemplateFileFromUser(defaultTemplateDatabasePath, out templateDatabasePath) == false)
+            if (Utilities.TryGetFileFromUser("Select a TimelapseTemplate.tdb file, which should be one located in your image folder",
+                                             defaultTemplateDatabasePath,
+                                             String.Format("Template files ({0})|*{0}", Constants.File.TemplateDatabaseFileExtension),
+                                             out templateDatabasePath) == false)
             {
                 return false;
             }
@@ -401,168 +403,25 @@ namespace Timelapse
 
                 // Third pass: Update database
                 // TODO This is pretty slow... a good place to make it more efficient by adding multiple values in one shot
-
-                // We need to get a list of which columns are counters vs notes or fixed coices, 
-                // as we will shortly have to initialize them to some defaults
-                List<string> counterList = new List<string>();
-                List<string> notesAndFixedChoicesList = new List<string>();
-                List<string> flagsList = new List<string>();
-                for (int i = 0; i < this.imageDatabase.ImageDataTable.Columns.Count; i++)
+                this.imageDatabase.AddImages(imagePropertyList, (ImageProperties imageProperties, int imageIndex) =>
                 {
-                    string dataLabel = this.imageDatabase.ImageDataTable.Columns[i].ColumnName;
-                    string type = this.imageDatabase.ControlTypeFromDataLabel[dataLabel];
-                    if (null == type)
-                    {
-                        continue; // Column must be the ID, which we skip over as its not a key.
-                    }
-                    if (type.Equals(Constants.DatabaseColumn.Counter))
-                    {
-                        counterList.Add(dataLabel);
-                    }
-                    else if (type.Equals(Constants.DatabaseColumn.Note) || type.Equals(Constants.DatabaseColumn.FixedChoice))
-                    {
-                        notesAndFixedChoicesList.Add(dataLabel);
-                    }
-                    else if (type.Equals(Constants.DatabaseColumn.Flag))
-                    {
-                        flagsList.Add(dataLabel);
-                    }
-                }
-
-                // Create a dataline from the image properties, add it to a list of data lines,
-                // then do a multiple insert of the list of datalines to the database 
-                List<Dictionary<string, string>> dataline_list;
-                List<Dictionary<string, string>> markerline_list;
-                const int interval = 100;
-
-                for (int j = 0; j < imagePropertyList.Count; j++)
-                {
-                    // Create a dataline from the image properties, add it to a list of data lines,
-                    // then do a multiple insert of the list of datalines to the database 
-                    dataline_list = new List<Dictionary<string, string>>();
-                    markerline_list = new List<Dictionary<string, string>>();
-                    int image = -1;
-                    for (int i = j; (i < (j + interval)) && (i < imagePropertyList.Count); i++)
-                    {
-                        // THE PROBLEM IS THAT WE ARE NOT ADDING THESE VALUES IN THE SAME ORDER AS THE TABLE
-                        // THEY MUST BE IN THE SAME ORDER IE, AS IN THE COLUMNS. This case statement just fills up 
-                        // the dataline in the same order as the template table.
-                        // It assumes that the key is always the first column
-                        Dictionary<string, string> dataline = new Dictionary<string, string>();
-                        Dictionary<string, string> markerline = new Dictionary<string, string>();
-
-                        for (int column = 0; column < imageDatabase.ImageDataTable.Columns.Count; column++) // Fill up each column in order
-                        {
-                            string columnDatalabel = imageDatabase.ImageDataTable.Columns[column].ColumnName;
-                            string type = imageDatabase.ControlTypeFromDataLabel[columnDatalabel];
-                            if (null == type)
-                            {
-                                continue; // a null will be returned from the ID, as we don't add it to the typefromkey hash.
-                            }
-
-                            switch (type)
-                            {
-                                case Constants.DatabaseColumn.File: // Add The File name
-                                    string dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.File];
-                                    dataline.Add(dataLabel, imagePropertyList[i].FileName);
-                                    break;
-                                case Constants.DatabaseColumn.Folder: // Add The Folder name
-                                    dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.Folder];
-                                    dataline.Add(dataLabel, imagePropertyList[i].RelativeFolderPath);
-                                    break;
-                                case Constants.DatabaseColumn.Date:
-                                    // Add the date
-                                    dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.Date];
-                                    dataline.Add(dataLabel, imagePropertyList[i].Date);
-                                    break;
-                                case Constants.DatabaseColumn.Time:
-                                    // Add the time
-                                    dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.Time];
-                                    dataline.Add(dataLabel, imagePropertyList[i].Time);
-                                    break;
-                                case Constants.DatabaseColumn.ImageQuality: // Add the Image Quality
-                                    dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.ImageQuality];
-                                    string str = Constants.ImageQuality.Ok;
-                                    if (imagePropertyList[i].ImageQuality == ImageQualityFilter.Dark)
-                                    {
-                                        str = Constants.ImageQuality.Dark;
-                                    }
-                                    else if (imagePropertyList[i].ImageQuality == ImageQualityFilter.Corrupted)
-                                    {
-                                        str = Constants.ImageQuality.Corrupted;
-                                    }
-                                    dataline.Add(dataLabel, str);
-                                    break;
-                                case Constants.DatabaseColumn.DeleteFlag: // Add the Delete flag
-                                    dataLabel = this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.DeleteFlag];
-                                    dataline.Add(dataLabel, this.imageDatabase.GetControlDefaultValue(dataLabel)); // Default as specified in the template file, which should be "false"
-                                    break;
-                                case Constants.DatabaseColumn.Note:        // Find and then Add the Note or Fixed Choice
-                                case Constants.DatabaseColumn.FixedChoice:
-                                    // Now initialize notes, counters, and fixed choices to the defaults
-                                    foreach (string tkey in notesAndFixedChoicesList)
-                                    {
-                                        if (columnDatalabel.Equals(tkey))
-                                        {
-                                            dataline.Add(tkey, this.imageDatabase.GetControlDefaultValue(tkey)); // Default as specified in the template file
-                                        }
-                                    }
-                                    break;
-                                case Constants.DatabaseColumn.Flag:
-                                    // Now initialize flags to the defaults
-                                    foreach (string tkey in flagsList)
-                                    {
-                                        if (columnDatalabel.Equals(tkey))
-                                        {
-                                            dataline.Add(tkey, this.imageDatabase.GetControlDefaultValue(tkey)); // Default as specified in the template file
-                                        }
-                                    }
-                                    break;
-                                case Constants.DatabaseColumn.Counter:
-                                    foreach (string tkey in counterList)
-                                    {
-                                        if (columnDatalabel.Equals(tkey))
-                                        {
-                                            dataline.Add(tkey, this.imageDatabase.GetControlDefaultValue(tkey)); // Default as specified in the template file
-                                            markerline.Add(tkey, String.Empty);        // TODO ASSUMES THAT MARKER LIST IS IN SAME ORDER AS COUNTERS. THIS MAY NOT BE CORRECT ONCE WE SWITCH ROWS, SO SHOULD DO THIS SEPARATELY
-                                        }
-                                    }
-                                    break;
-
-                                default:
-                                    Debug.Print("Shouldn't ever reach here!");
-                                    break;
-                            }
-                        }
-                        dataline_list.Add(dataline);
-                        if (markerline.Count > 0)
-                        {
-                            markerline_list.Add(markerline);
-                        }
-                        image = i;
-                    }
-
-                    this.imageDatabase.InsertMultipleRows(Constants.Database.ImageDataTable, dataline_list);
-                    this.imageDatabase.InsertMultipleRows(Constants.Database.MarkersTable, markerline_list);
-                    j = j + interval - 1;
-
                     // Get the bitmap again to show it
                     BitmapFrame bmap;
-                    if (imagePropertyList[image].ImageQuality == ImageQualityFilter.Corrupted)
+                    if (imageProperties.ImageQuality == ImageQualityFilter.Corrupted)
                     {
                         bmap = corruptedBitmap;
                     }
                     else
                     {
-                        bmap = imagePropertyList[image].LoadImage(this.FolderPath);
+                        bmap = imageProperties.LoadImage(this.FolderPath);
                     }
 
                     // Show progress. Since its slow, we may as well do it every update
-                    int progress2 = Convert.ToInt32(Convert.ToDouble(image) / Convert.ToDouble(count) * 100);
-                    progressState.Message = String.Format("{0}/{1}: Adding {2}", image, count, imagePropertyList[image].FileName);
+                    int addImageProgress = Convert.ToInt32(Convert.ToDouble(imageIndex) / Convert.ToDouble(imagePropertyList.Count) * 100);
+                    progressState.Message = String.Format("{0}/{1}: Adding {2}", imageIndex, count, imageProperties.FileName);
                     progressState.Bmap = bmap;
-                    backgroundWorker.ReportProgress(progress2, progressState);
-                }
+                    backgroundWorker.ReportProgress(addImageProgress, progressState);
+                });
             };
             backgroundWorker.ProgressChanged += (o, ea) =>
             {   
@@ -695,7 +554,7 @@ namespace Timelapse
             this.markableCanvas.IsMagnifyingGlassVisible = this.imageDatabase.IsMagnifierEnabled();
 
             // Add all data entry controls
-            this.AddDataEntryControls();
+            this.SetDataEntryControlCallbacks();
 
             // Now that we have something to show, enable menus and menu items as needed
             // Note that we do not enable those menu items that would have no effect
@@ -703,7 +562,8 @@ namespace Timelapse
             this.MenuItemLoadImages.IsEnabled = false;
             this.MenuItemExportThisImage.IsEnabled = true;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = true;
-            this.MenuItemExportAsCSV.IsEnabled = true;
+            this.MenuItemExportAsCsv.IsEnabled = true;
+            this.MenuItemImportFromCsv.IsEnabled = true;
             this.MenuItemRecentDataFiles.IsEnabled = false;
             this.MenuItemRenameDataFile.IsEnabled = true;
             this.MenuItemEdit.IsEnabled = true;
@@ -764,7 +624,8 @@ namespace Timelapse
             this.MenuItemLoadImages.IsEnabled = true;
             this.MenuItemExportThisImage.IsEnabled = false;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = false;
-            this.MenuItemExportAsCSV.IsEnabled = false;
+            this.MenuItemExportAsCsv.IsEnabled = false;
+            this.MenuItemImportFromCsv.IsEnabled = false;
             this.MenuItemRecentDataFiles.IsEnabled = true;
             this.MenuItemRenameDataFile.IsEnabled = false;
             this.MenuItemEdit.IsEnabled = false;
@@ -1063,23 +924,22 @@ namespace Timelapse
         #endregion
 
         #region Configure Callbacks
-        // Add callbacks to all our controls. When the user changes an image's attribute using a particular control,
-        // the callback updates the matching field for that image in the imageData structure.
-
         /// <summary>
         /// Add the event handler callbacks for our (possibly invisible)  controls
         /// </summary>
-        private void AddDataEntryControls()
+        private void SetDataEntryControlCallbacks()
         {
+            // Add callbacks to all our controls. When the user changes an image's attribute using a particular control,
+            // the callback updates the matching field for that image in the imageData structure.
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
             {
-                string type = this.imageDatabase.ControlTypeFromDataLabel[pair.Key];
-                if (null == type)
+                string controlType = this.imageDatabase.ControlTypeFromDataLabel[pair.Key];
+                if (null == controlType)
                 {
-                    type = "Not a control";
+                    return;
                 }
 
-                switch (type)
+                switch (controlType)
                 {
                     case Constants.DatabaseColumn.File:
                     case Constants.DatabaseColumn.Folder:
@@ -1380,7 +1240,7 @@ namespace Timelapse
                 }
 
                 // Generate the differenced image. 
-                string fullFileName = Path.Combine(this.FolderPath, this.imageDatabase.GetImageValue(this.imageDatabase.DataLabelFromControlType[Constants.DatabaseColumn.File], idx));
+                string fullFileName = Path.Combine(this.FolderPath, this.imageDatabase.GetImageValue(this.imageDatabase.DataLabelFromColumnName[Constants.DatabaseColumn.File], idx));
                 // Check if that file actually exists
                 if (!File.Exists(fullFileName))
                 {
@@ -1575,6 +1435,7 @@ namespace Timelapse
             this.ShowImage(index, true); // by default, use cached images
         }
 
+        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", Justification = "Workaround for StyleCop getting confused about local variable references.")]
         public void ShowImage(int index, bool useCachedImages)
         {
             if (this.imageDatabase.TryMoveToImage(index) == false)
@@ -1681,9 +1542,10 @@ namespace Timelapse
             }
 
             // Don't interpret keyboard shortcuts if the focus is on a control in the control grid, as the text entered may be directed
-            // to the controls within it. That is, if  a textbox or combo box has the focus, then abort as this is normal text input
-            // and NOT a shortcut key
-            if (this.IsFocusInTextboxOrCombobox())
+            // to the controls within it. That is, if a textbox or combo box has the focus, then take no as this is normal text input
+            // and NOT a shortcut key.  Similarly, if a menu is displayed keys should be directed to the menu rather than interpreted as
+            // shortcuts.
+            if (this.SendKeyToDataEntryControlOrMenu())
             {
                 return;
             }
@@ -1778,7 +1640,7 @@ namespace Timelapse
             if (checkForControlFocus)
             {
                 // If we are in a data control, don't reset the focus.
-                if (this.IsFocusInTextboxOrCombobox())
+                if (this.SendKeyToDataEntryControlOrMenu())
                 {
                     return;
                 }
@@ -1790,16 +1652,36 @@ namespace Timelapse
         }
 
         // Return true if the current focus is in a textbox or combobox data control
-        private bool IsFocusInTextboxOrCombobox()
+        private bool SendKeyToDataEntryControlOrMenu()
         {
-            IInputElement ie = (IInputElement)FocusManager.GetFocusedElement(this);
-            if (ie == null)
+            // check if a menu is open
+            // it is sufficient to check one always visible item from each top level menu (file, edit, etc.)
+            // NOTE: this must be kept in sync with 
+            if (this.MenuItemExit.IsVisible || // file menu
+                this.MenuItemCopyPreviousValues.IsVisible || // edit menu
+                this.MenuItemViewFilteredDatabaseContents.IsVisible || // options menu
+                this.MenuItemViewNextImage.IsVisible || // view menu
+                this.MenuItemViewAllImages.IsVisible || // filter menu, and then the help menu...
+                this.MenuItemOverview.IsVisible)
+            {
+                return true;
+            }
+
+            // by default focus will be on the MarkableImageCanvas
+            // opening a menu doesn't change the focus
+            IInputElement focusedElement = FocusManager.GetFocusedElement(this);
+            if (focusedElement == null)
             {
                 return false;
             }
 
-            Type type = ie.GetType();
-            if (typeof(TextBox) == type || typeof(ComboBox) == type || typeof(ComboBoxItem) == type)
+            // check if focus is on a control
+            // NOTE: this list must be kept in sync with the System.Windows classed used by the classes in Timelapse.Util.DataEntry*.cs
+            Type type = focusedElement.GetType();
+            if (typeof(CheckBox) == type ||
+                typeof(ComboBox) == type || 
+                typeof(ComboBoxItem) == type ||
+                typeof(TextBox) == type)
             {
                 return true;
             }
@@ -2060,12 +1942,13 @@ namespace Timelapse
         }
 
         /// <summary>Write the CSV file and preview it in excel.</summary>
-        private void MenuItemExportCSV_Click(object sender, RoutedEventArgs e)
+        private void MenuItemExportCsv_Click(object sender, RoutedEventArgs e)
         {
             // Write the file
-            string csvfile = Path.GetFileNameWithoutExtension(this.imageDatabase.FileName) + ".csv";
-            string csvpath = Path.Combine(this.FolderPath, csvfile);
-            SpreadsheetWriter.ExportDataAsCsv(this.imageDatabase, csvpath);
+            string csvFileName = Path.GetFileNameWithoutExtension(this.imageDatabase.FileName) + ".csv";
+            string csvFilePath = Path.Combine(this.FolderPath, csvFileName);
+            CsvReaderWriter csvWriter = new CsvReaderWriter();
+            csvWriter.ExportToCsv(this.imageDatabase, csvFilePath);
 
             MenuItem mi = (MenuItem)sender;
             if (mi == this.MenuItemExportAsCsvAndPreview)
@@ -2076,7 +1959,7 @@ namespace Timelapse
 
                 process.StartInfo.UseShellExecute = true;
                 process.StartInfo.RedirectStandardOutput = false;
-                process.StartInfo.FileName = csvpath;
+                process.StartInfo.FileName = csvFilePath;
                 process.Start();
             }
             else
@@ -2084,7 +1967,7 @@ namespace Timelapse
                 // Since we don't show the file, give the user some feedback about the export operation
                 if (this.state.ShowCsvDialog)
                 {
-                    DialogExportCsv dlg = new DialogExportCsv(csvfile);
+                    DialogExportCsv dlg = new DialogExportCsv(csvFileName);
                     dlg.Owner = this;
                     bool? result = dlg.ShowDialog();
                     if (result != null)
@@ -2093,7 +1976,7 @@ namespace Timelapse
                     }
                 }
             }
-            StatusBarUpdate.Message(this.statusBar, "Data exported to " + csvfile);
+            StatusBarUpdate.Message(this.statusBar, "Data exported to " + csvFileName);
             this.state.IsContentChanged = false; // We've altered some content
         }
 
@@ -2146,6 +2029,21 @@ namespace Timelapse
                     StatusBarUpdate.Message(this.statusBar, "Copy failed for some reason!");
                 }
             }
+        }
+
+        private void MenuItemImportFromCsv_Click(object sender, RoutedEventArgs e)
+        {
+            string csvFilePath;
+            if (Utilities.TryGetFileFromUser("Select a .csv file to merge into the current data file",
+                                             Path.Combine(this.imageDatabase.FolderPath, Path.GetFileNameWithoutExtension(this.imageDatabase.FileName) + Constants.File.CsvFileExtension),
+                                             String.Format("Comma separated value files ({0})|*{0}", Constants.File.CsvFileExtension),
+                                             out csvFilePath) == false)
+            {
+                return;
+            }
+
+            CsvReaderWriter csvReader = new CsvReaderWriter();
+            csvReader.ImportFromCsv(this.imageDatabase, csvFilePath);
         }
 
         private void MenuItemRecentDataFile_Click(object sender, RoutedEventArgs e)

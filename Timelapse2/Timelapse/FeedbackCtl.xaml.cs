@@ -5,7 +5,7 @@ using System.Windows.Media;
 namespace Timelapse
 {
     /// <summary>
-    /// Interaction logic for FeedbackCtl.xaml
+    /// Interaction logic for the feedback control.
     /// </summary>
     public partial class FeedbackCtl : UserControl
     {

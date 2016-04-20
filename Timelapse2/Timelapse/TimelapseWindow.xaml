@@ -87,8 +87,9 @@
                 <MenuItem Header="_File" IsTabStop="false">
                     <MenuItem Name="MenuItemLoadImages" Header="_Load images from folder..." Click="MenuItemLoadImages_Click" ToolTip="Asks for the image folder location, either creating a new database or opening an existing one"/>
                     <Separator />
-                    <MenuItem Name="MenuItemExportAsCSV" Header="Export data for these images as a _CSV file..." IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated values) file"/>
-                    <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="Export data for these images as CSV file and preview in _Excel..." IsEnabled="false" Click="MenuItemExportCSV_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated value) file and previews it in Excel"/>
+                    <MenuItem Name="MenuItemExportAsCsv" Header="Export data for these images as a _CSV file..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated values) file"/>
+                    <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="Export data for these images as CSV file and preview in _Excel..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated value) file and previews it in Excel"/>
+                    <MenuItem Name="MenuItemImportFromCsv" Header="I_mport data from a CSV file..." IsEnabled="false" Click="MenuItemImportFromCsv_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated values) file"/>
                     <Separator />
                     <MenuItem Name="MenuItemExportThisImage" Header="Export this _image..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) this image into a particular folder"/>
                     <Separator />

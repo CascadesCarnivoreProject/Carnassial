@@ -136,7 +136,7 @@ namespace Timelapse
             {
                 ImageProperties imageProperties = new ImageProperties(this.deletedImageTable.Rows[i]);
 
-                string deleteFlag = this.database.DataLabelFromControlType[Constants.DatabaseColumn.DeleteFlag];
+                string deleteFlag = this.database.DataLabelFromColumnName[Constants.DatabaseColumn.DeleteFlag];
                 this.database.UpdateImage((int)imageProperties.ID, deleteFlag, "false");
                 if (this.deleteData)
                 {

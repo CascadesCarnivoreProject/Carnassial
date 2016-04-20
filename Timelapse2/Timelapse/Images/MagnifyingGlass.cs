@@ -126,7 +126,7 @@ namespace Timelapse.Images
             {
                 return;
             }
-            notYetRedrawn = false;
+            this.notYetRedrawn = false;
 
             // Abort if the magnifying glass visiblity is not visible, as there is no point doing all this work
             if (this.Visibility != Visibility.Visible)
@@ -308,7 +308,7 @@ namespace Timelapse.Images
             if (this.IsVisibilityDesired)
             {
                 // Note: a better way would be to invoke the redraw method, but generating the arguments for that is a pain.
-                if (notYetRedrawn)
+                if (this.notYetRedrawn)
                 {
                     // On startup, we don't want to show the magnifying glass until there has been at least one redraw pass in it to display its contents
                     return;

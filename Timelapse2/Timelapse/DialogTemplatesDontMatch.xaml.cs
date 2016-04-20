@@ -5,7 +5,7 @@ using System.Windows.Documents;
 namespace Timelapse
 {
     /// <summary>
-    /// Interaction logic for DialogTemplatesDontMatch.xaml
+    /// Interaction logic for the mismatched templates dialog.
     /// </summary>
     public partial class DialogTemplatesDontMatch : Window
     {
