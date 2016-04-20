@@ -3,8 +3,9 @@
 namespace Timelapse
 {
     /// <summary>
-    /// Interaction logic for App.xaml
+    /// Interaction logic for Timelapse
     /// </summary>
-    public partial class App : Application {
+    public partial class App : Application
+    {
     }
 }

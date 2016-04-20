@@ -2,9 +2,14 @@
   <GlobalSettings>
     <CollectionProperty Name="RecognizedWords">
       <Value>copyable</Value>
+      <Value>csv</Value>
+      <Value>dd-MMM-yyyy</Value>
+      <Value>Markable</Value>
       <Value>metatag</Value>
       <Value>metatags</Value>
+      <Value>rgb</Value>
       <Value>Timelapse</Value>
+      <Value>xaml</Value>
     </CollectionProperty>
   </GlobalSettings>
   <Analyzers>
@@ -60,6 +65,11 @@
             <BooleanProperty Name="Enabled">False</BooleanProperty>
           </RuleSettings>
         </Rule>
+        <Rule Name="ConstructorSummaryDocumentationMustBeginWithStandardText">
+          <RuleSettings>
+            <BooleanProperty Name="Enabled">False</BooleanProperty>
+          </RuleSettings>
+        </Rule>
       </Rules>
       <AnalyzerSettings />
     </Analyzer>
@@ -96,6 +106,11 @@
           </RuleSettings>
         </Rule>
         <Rule Name="SplitParametersMustStartOnLineAfterDeclaration">
+          <RuleSettings>
+            <BooleanProperty Name="Enabled">False</BooleanProperty>
+          </RuleSettings>
+        </Rule>
+        <Rule Name="ParameterMustFollowComma">
           <RuleSettings>
             <BooleanProperty Name="Enabled">False</BooleanProperty>
           </RuleSettings>

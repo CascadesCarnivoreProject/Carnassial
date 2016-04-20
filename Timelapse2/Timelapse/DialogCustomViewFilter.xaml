@@ -1,0 +1,125 @@
+﻿<Window x:Class="Timelapse.DialogCustomViewFilter"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Timelapse"
+        mc:Ignorable="d"
+        Title="Create a Custom View Filter"
+        MinHeight="500" MinWidth="700"
+		Height="900" Width="768"
+		ResizeMode="CanResizeWithGrip"
+		ShowInTaskbar="False"
+		WindowStartupLocation="CenterOwner"  Loaded="Window_Loaded" >
+    <DockPanel >
+        <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch" >
+            <Grid  Margin="10,10,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Canvas  Width="60" Height="60" Grid.Column="0">
+                    <Ellipse Width="60" Height="60" Stroke="Black" Fill="#46FD0A0A" />
+                    <Label Content="?" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" 
+                           HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+                </Canvas>
+                <TextBlock  Grid.Column="1" Text="Create a Custom View Filter" Padding="10,5,0,0"  FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
+                <CheckBox Name="btnHideText" Content="Hide explanation" Grid.Column="2" Margin="0,10,5,0" VerticalAlignment="Center" Checked="HideTextButton_StateChange" Unchecked="HideTextButton_StateChange" IsThreeState="False"/>
+            </Grid>
+            <Grid x:Name="gridExplanation" HorizontalAlignment="Left" Margin="10,10,0,0"  VerticalAlignment="Top" >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock HorizontalAlignment="Left"  VerticalAlignment="Top" Grid.Row="0" Grid.Column="0" FontWeight="Bold" FontSize="14"><Run Text="Issue "/></TextBlock>
+                <TextBlock HorizontalAlignment="Left"  VerticalAlignment="Top" Grid.Row="0" Grid.Column="1" FontWeight="Normal" FontSize="14" TextWrapping="Wrap">
+                    <Run Text="You may want to view only a subset of your images that fit some criteria of interest to you." /></TextBlock>
+
+                <TextBlock HorizontalAlignment="Left"  Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.Column="0" FontWeight="Bold" FontSize="14">
+                    <Run Text="Solution   "/></TextBlock>
+                <TextBlock HorizontalAlignment="Left"  Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.Column="1" FontWeight="Normal" FontSize="14" TextWrapping="Wrap">
+                    <Run Text="Specify some search terms that describes your criteria, and use that to create a filter. " />
+                    <LineBreak/>
+                    <Run Text="1. Each row below reflects your data fields."/>
+                    <LineBreak/>
+                    <Run Text="2. Select one or more data fields that you want to use as part of your search." />
+                    <LineBreak/>
+                    <Run Text="3. Select the expresson you want to use." />
+                    <LineBreak/>
+                    <Run Text="4. Select or enter the value you want to use to compare against the data field's contents." /></TextBlock>
+                <TextBlock HorizontalAlignment="Left"  Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="2" Grid.Column="0" FontWeight="Bold" FontSize="14"><Run Text="Hint "/></TextBlock>
+                <TextBlock HorizontalAlignment="Left"  Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="2" Grid.Column="1" FontWeight="Normal" FontSize="14" TextWrapping="Wrap">
+
+                    <Run FontWeight="Bold" Text="Glob"/> 
+                    <Run Text=" expressons allow wildcard matches. "/> 
+                    <Run FontWeight="Bold" Text="*"/> 
+                    <Run Text=" is any number of characters;  "/> 
+                    <Run FontWeight="Bold" Text="?" /> 
+                    <Run Text="  is any single character; "/>
+                <Run FontWeight="Bold" Text="[abc]" /> 
+                    <Run Text="  is one of the indicated characters; "/>
+                <Run FontWeight="Bold" Text="[a-z]" /> 
+                    <Run Text="  is the range of indicated characters. "/></TextBlock>
+
+                <TextBlock HorizontalAlignment="Left"  Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="3" Grid.Column="0" FontWeight="Bold" FontSize="14"><Run Text="Result "/></TextBlock>
+                <TextBlock HorizontalAlignment="Left"  Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="3" Grid.Column="1" FontWeight="Normal" FontSize="14" TextWrapping="Wrap"><Run Text="Only those images matching your search criteria will be displayed"/></TextBlock>
+            </Grid>
+            
+            <Rectangle Fill="#FF868686" Height="2"></Rectangle>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Margin="10" FontWeight="Bold" VerticalAlignment="Center" Text="Combine searches using: "/>
+                <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton  VerticalAlignment="Center" Name="rbAnd" Margin="3,3,0,3 " FontWeight="Bold" Content="And" GroupName="LogicalOperators" IsChecked="True"/>
+                        <TextBlock VerticalAlignment="Center" Margin="3,3,0,3" Text="to filter for images matching all selected search terms"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Name="rbOr" VerticalAlignment="Center" Margin="3,1,0,3" FontWeight="Bold" Content="Or"  GroupName="LogicalOperators"  />
+                        <TextBlock VerticalAlignment="Center" Margin="3,0,0,3" Text="   to filter for images matching any one of the selected search terms"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+            <Rectangle Fill="#FF868686" Height="2"></Rectangle>
+        </StackPanel>
+        
+        <DockPanel DockPanel.Dock="Bottom">
+            <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
+            <Button Name="btnShowAll" Content="Reset to All Images" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,0,0"  Padding="10" Click="ShowAllButton_Click" IsEnabled="False"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+               
+                <TextBlock Name="textBlockQueryMatches" HorizontalAlignment="Left"  Margin="10,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"  FontWeight="DemiBold" FontSize="12"><Run Text="0  "/></TextBlock>
+                    <TextBlock HorizontalAlignment="Left"  Margin="0,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"  FontSize="12"><Run Text=" images match your query "/></TextBlock>
+                    <Button Name="CancelButton"   Grid.Column="0" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">Cancel</Button>
+                <Button Name="OkButton"   Grid.Column="1" IsDefault="False" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">Okay</Button>
+           </StackPanel>
+        </DockPanel>
+        <ScrollViewer>
+            <Grid Name="grid" Width="Auto" Height="Auto" DockPanel.Dock="Bottom" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Padding ="10,0,5,0" FontWeight="Bold" Text="Select" Grid.Row="0" Grid.Column="0"/>
+                <TextBlock Padding ="5,0,5,0" FontWeight="Bold" Text="Label" Grid.Row="0" Grid.Column="1"/>
+                <TextBlock Padding ="5,0,5,0" FontWeight="Bold" Text="Expression" Grid.Row="0" Grid.Column="2"/>
+                <TextBlock Padding ="5,0,5,0" FontWeight="Bold" Text="Value" Grid.Row="0" Grid.Column="3"/>
+                <TextBlock Padding ="5,0,5,0" FontWeight="Bold" Text="Search Criteria" Grid.Row="0" Grid.Column="4"/>
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
+</Window>
