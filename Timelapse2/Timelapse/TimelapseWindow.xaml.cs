@@ -46,6 +46,7 @@ namespace Timelapse
 
         private int whichImageState = (int)WhichImage.Unaltered;
         private BitmapSource[] cachedImages = new BitmapSource[4];  // Cache of unaltered image [1], previous[0], next[2] and combined [3] differenced image
+        private string mostRecentImageAddFolderPath;
         private HelpWindow overviewWindow; // Create the help window. 
         private OptionsWindow optionsWindow; // Create the options window
         private MarkableImageCanvas markableCanvas;
@@ -335,7 +336,7 @@ namespace Timelapse
                 WorkerReportsProgress = true
             };
 
-            bool ambiguous_daymonth_order = false;
+            bool unambiguousDayMonthOrder = true;
             ProgressState progressState = new ProgressState();
             backgroundWorker.DoWork += (ow, ea) =>
             {   // this runs on the background thread; its written as an anonymous delegate
@@ -363,21 +364,23 @@ namespace Timelapse
 
                         bool isDark = PixelBitmap.IsDark(bitmap, this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
                         imageProperties.ImageQuality = isDark ? ImageQualityFilter.Dark : ImageQualityFilter.Ok;
+
+                        // see if the date can be updated from the metadata
+                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmap.Metadata);
+                        if (imageTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed ||
+                            imageTimeAdjustment == DateTimeAdjustment.MetadataDateUsed)
+                        {
+                            if (imageProperties.ImageTaken.Day < 13)
+                            {
+                                unambiguousDayMonthOrder = false;
+                            }
+                        }
                     }
                     catch
                     {
                         bitmap = corruptedBitmap;
                         imageProperties.ImageQuality = ImageQualityFilter.Corrupted;
                     }
-
-                    // Get the data from the metadata
-                    BitmapMetadata meta = (BitmapMetadata)bitmap.Metadata;
-                    imageProperties.DateMetadata = meta.DateTaken;
-                    // For some reason, different versions of Windows treat creation time and modification time differently, 
-                    // giving inconsisten values. So I just check both and take the lesser of the two.
-                    DateTime time1 = File.GetCreationTime(imageFile.FullName);
-                    DateTime time2 = File.GetLastWriteTime(imageFile.FullName);
-                    imageProperties.DateFileCreation = (DateTime.Compare(time1, time2) < 0) ? time1 : time2;
 
                     // Debug.Print(fileInfo.Name + " " + time1.ToString() + " " + time2.ToString() + " " + time3);
                     imageProperties.ID = image + 1; // its plus 1 as the Database IDs start at 1 rather than 0
@@ -400,7 +403,6 @@ namespace Timelapse
                 progressState.Message = "Second pass";
                 progressState.Bmap = null;
                 backgroundWorker.ReportProgress(0, progressState);
-                ambiguous_daymonth_order = DateTimeHandler.VerifyAndUpdateDates(imagePropertyList);
 
                 // Third pass: Update database
                 // TODO This is pretty slow... a good place to make it more efficient by adding multiple values in one shot
@@ -441,7 +443,7 @@ namespace Timelapse
                 this.markableCanvas.Visibility = Visibility.Visible;
 
                 // warn the user if there are any ambiguous dates in terms of day/month or month/day order
-                if (ambiguous_daymonth_order)
+                if (unambiguousDayMonthOrder == false)
                 {
                     DialogMessageBox dlgMB = new DialogMessageBox();
                     dlgMB.MessageTitle = "Timelapse was unsure about the month / day order of your image's dates";
@@ -1922,12 +1924,15 @@ namespace Timelapse
         {
             FolderBrowserDialog folderSelectionDialog = new FolderBrowserDialog();
             folderSelectionDialog.Description = "Select a folder to add additional image files from";
-            folderSelectionDialog.SelectedPath = this.FolderPath;
+            folderSelectionDialog.SelectedPath = this.mostRecentImageAddFolderPath == null ? this.FolderPath : this.mostRecentImageAddFolderPath;
             switch (folderSelectionDialog.ShowDialog())
             {
                 case System.Windows.Forms.DialogResult.OK:
                 case System.Windows.Forms.DialogResult.Yes:
                     this.LoadByScanningImageFolder(folderSelectionDialog.SelectedPath);
+                    // remember the parent of the selected folder path to save the user clicks and scrolling in case images from additional 
+                    // directories are added
+                    this.mostRecentImageAddFolderPath = Path.GetDirectoryName(folderSelectionDialog.SelectedPath);
                     break;
             }
         }
@@ -2045,6 +2050,8 @@ namespace Timelapse
 
             CsvReaderWriter csvReader = new CsvReaderWriter();
             csvReader.ImportFromCsv(this.imageDatabase, csvFilePath);
+
+            this.OnImageLoadingComplete();
         }
 
         private void MenuItemRecentDataFile_Click(object sender, RoutedEventArgs e)

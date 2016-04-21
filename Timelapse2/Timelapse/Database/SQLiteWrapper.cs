@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
+using Timelapse.Util;
 
 namespace Timelapse.Database
 {
@@ -93,7 +94,7 @@ namespace Timelapse.Database
                     {
                         string newvalue = (string)datatable.Rows[i][j];
                         newvalue = newvalue.Replace("'", "''");
-                        values += String.Format(" {0}" + Constants.Sql.Comma, this.Quote(newvalue));         // "'value1', 'value2', ... 'valueN'"
+                        values += String.Format(" {0}" + Constants.Sql.Comma, Utilities.QuoteForSql(newvalue));         // "'value1', 'value2', ... 'valueN'"
                     }
                 }
                 values = values.Substring(0, values.Length - Constants.Sql.Comma.Length);        // Remove last comma in the sequence 
@@ -120,7 +121,7 @@ namespace Timelapse.Database
                 foreach (ColumnTuple column in columnsToUpdate)
                 {
                     columns += String.Format(" {0}" + Constants.Sql.Comma, column.Name);      // transform dictionary entries into a string "col1, col2, ... coln"
-                    values += String.Format(" {0}" + Constants.Sql.Comma, this.Quote(column.Value));         // transform dictionary entries into a string "'value1', 'value2', ... 'valueN'"
+                    values += String.Format(" {0}" + Constants.Sql.Comma, Utilities.QuoteForSql(column.Value));         // transform dictionary entries into a string "'value1', 'value2', ... 'valueN'"
                 }
                 if (columns.Length > 0)
                 {
@@ -175,7 +176,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, "ExecuteReader() failed.", exception.ToString());
+                Debug.Assert(false, String.Format("Failure executing query '{0}'."), exception.ToString());
                 return null;
             }
         }
@@ -202,7 +203,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, "ExecuteScalar() failed.", exception.ToString());
+                Debug.Assert(false, String.Format("Failure executing query '{0}'.", query), exception.ToString());
                 return null;
             }
         }
@@ -229,7 +230,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, "ExecuteNonQuery() failed.", exception.ToString());
+                Debug.Assert(false, String.Format("Failure executing statement '{0}'.", statement), exception.ToString());
             }
         }
 
@@ -246,41 +247,38 @@ namespace Timelapse.Database
             //      queryn
             // END
             const int MaxStatementCount = 500;
+            string mostRecentStatement = null;
             try
             {
                 using (SQLiteConnection connection = new SQLiteConnection(this.connectionString))
                 {
                     connection.Open();
-                    SQLiteCommand command;
 
-                    // Invoke each query in the queries list
-                    int rowsUpdated = 0;
-                    int statementsInQuery = 0;
-                    foreach (string statement in statements)
+                    using (SQLiteCommand command = new SQLiteCommand(connection))
                     {
-                        statementsInQuery++;
-                        // Insert a BEGIN if we are at the beginning of the count
-                        if (statementsInQuery == 1)
+                        // Invoke each query in the queries list
+                        int rowsUpdated = 0;
+                        int statementsInQuery = 0;
+                        foreach (string statement in statements)
                         {
-                            using (command = new SQLiteCommand(connection))
+                            // capture the most recent statement so it's available for debugging
+                            mostRecentStatement = statement;
+                            statementsInQuery++;
+
+                            // Insert a BEGIN if we are at the beginning of the count
+                            if (statementsInQuery == 1)
                             {
                                 command.CommandText = Constants.Sql.Begin;
-                                rowsUpdated += command.ExecuteNonQuery();
+                                command.ExecuteNonQuery();
                                 // Debug.Print(mycommand.CommandText);
                             }
-                        }
 
-                        using (command = new SQLiteCommand(connection))
-                        {
                             command.CommandText = statement;
                             rowsUpdated += command.ExecuteNonQuery();
                             // Debug.Print(query_count.ToString());
-                        }
 
-                        // END
-                        if (statementsInQuery >= MaxStatementCount)
-                        {
-                            using (command = new SQLiteCommand(connection))
+                            // END
+                            if (statementsInQuery >= MaxStatementCount)
                             {
                                 command.CommandText = Constants.Sql.End;
                                 rowsUpdated += command.ExecuteNonQuery();
@@ -288,11 +286,8 @@ namespace Timelapse.Database
                                 // Debug.Print(mycommand.CommandText);
                             }
                         }
-                    }
-                    // END
-                    if (statementsInQuery != 0)
-                    {
-                        using (command = new SQLiteCommand(connection))
+                        // END
+                        if (statementsInQuery != 0)
                         {
                             command.CommandText = Constants.Sql.End;
                             rowsUpdated += command.ExecuteNonQuery();
@@ -303,7 +298,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, "ExecuteNonQuery() failed.", exception.ToString());
+                Debug.Assert(false, String.Format("Failure near executing statement '{0}'.", mostRecentStatement), exception.ToString());
             }
         }
         #endregion
@@ -381,7 +376,7 @@ namespace Timelapse.Database
                 }
                 else
                 {
-                    query += String.Format(" {0} = {1}{2}", column.Name, this.Quote(column.Value), Constants.Sql.Comma);
+                    query += String.Format(" {0} = {1}{2}", column.Name, Utilities.QuoteForSql(column.Value), Constants.Sql.Comma);
                 }
             }
             query = query.Substring(0, query.Length - Constants.Sql.Comma.Length); // Remove the last comma
@@ -460,13 +455,6 @@ namespace Timelapse.Database
                 query += where;                                 // where
             }
             this.ExecuteNonQuery(query);
-        }
-        #endregion
-
-        #region Utilities
-        private string Quote(string s)
-        {
-            return "'" + s + "'";
         }
         #endregion
     }

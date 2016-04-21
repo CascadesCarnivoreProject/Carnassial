@@ -17,10 +17,12 @@ namespace UnitTests
             string imageFile = "BushnellTrophyHD-119677C-20160224-056.JPG";
 
             ImageDatabase database = new ImageDatabase(folderPath, Constants.File.DefaultImageDatabaseFileName);
-            DialogPopulateFieldWithMetadata populateFieldDialog = new DialogPopulateFieldWithMetadata(database, imageFile, folderPath);
-            populateFieldDialog.LoadExif();
-            Dictionary<string, string> exif = (Dictionary<string, string>)populateFieldDialog.dg.ItemsSource;
-            Assert.IsTrue(exif.Count > 0, "Expected at least one EXIF field to be retrieved from {0}", Path.Combine(folderPath, imageFile));
+            using (DialogPopulateFieldWithMetadata populateFieldDialog = new DialogPopulateFieldWithMetadata(database, imageFile, folderPath))
+            {
+                populateFieldDialog.LoadExif();
+                Dictionary<string, string> exif = (Dictionary<string, string>)populateFieldDialog.dg.ItemsSource;
+                Assert.IsTrue(exif.Count > 0, "Expected at least one EXIF field to be retrieved from {0}", Path.Combine(folderPath, imageFile));
+            }
         }
     }
 }

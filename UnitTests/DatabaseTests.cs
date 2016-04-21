@@ -29,9 +29,6 @@ namespace Timelapse.UnitTests
             ImageDatabase database = this.CreateImageDatabase();
             FileInfo imageFileInfo = new FileInfo("BushnellTrophyHD-119677C-20160224-056.JPG");
             ImageProperties image1 = new ImageProperties(database.FolderPath, imageFileInfo);
-            image1.Date = DateTimeHandler.StandardDateString(imageFileInfo.LastWriteTimeUtc);
-            image1.DateFileCreation = imageFileInfo.CreationTimeUtc;
-            image1.Time = DateTimeHandler.StandardTimeString(imageFileInfo.LastWriteTimeUtc);
             ImageProperties image2 = new ImageProperties(database.FolderPath, imageFileInfo);
             database.AddImages(new List<ImageProperties>() { image1, image2 }, null);
             database.CreateWhiteSpaceColumn();

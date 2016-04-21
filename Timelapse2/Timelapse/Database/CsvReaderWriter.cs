@@ -79,13 +79,14 @@ namespace Timelapse.Database
                         // .csv files are ambiguous in the sense a trailing comma may or may not be present at the end of the line
                         // if the final field has a value this case isn't a concern, but if the final field has no value then there's
                         // no way for the parser to know the exact number of fields in the line
-                        row.Add(null);
+                        row.Add(String.Empty);
                     }
                     else if (row.Count != dataLabels.Count)
                     {
                         Debug.Assert(false, String.Format("Expected {0} fields in line {1} but found {2}.", dataLabels.Count, String.Join(",", row), row.Count));
                     }
 
+                    // assemble set of column values to update
                     string imageFileName = null;
                     string folder = null;
                     ColumnTuplesWithWhere imageToUpdate = new ColumnTuplesWithWhere();
@@ -95,6 +96,7 @@ namespace Timelapse.Database
                         string value = row[field];
                         imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, value));
 
+                        // capture components of image's unique identifier for constructing where clause
                         if (dataLabel == Constants.DatabaseColumn.File)
                         {
                             imageFileName = value;
@@ -105,10 +107,12 @@ namespace Timelapse.Database
                         }
                     }
 
+                    // accumulate image
                     Debug.Assert(String.IsNullOrWhiteSpace(imageFileName) == false, "Image's file name was not loaded.");
                     imageToUpdate.SetWhere(folder, imageFileName);
                     imagesToUpdate.Add(imageToUpdate);
 
+                    // write current batch of updates to database
                     if (imagesToUpdate.Count >= 100)
                     {
                         database.UpdateImages(imagesToUpdate);
@@ -116,6 +120,7 @@ namespace Timelapse.Database
                     }
                 }
 
+                // perform any remaining updates
                 database.UpdateImages(imagesToUpdate);
             }
             catch
@@ -135,12 +140,6 @@ namespace Timelapse.Database
         #endregion
 
         #region Private methods
-
-        // Returms the dataLabel if it isn't empty, otherwise the label
-        private string GetLabel(string label, string dataLabel)
-        {
-            return (dataLabel == String.Empty) ? label : dataLabel;
-        }
 
         // Check if there is any Quotation Mark '"', a Comma ',', a Line Feed \x0A,  or Carriage Return \x0D
         // and escape it as needed
@@ -163,11 +162,15 @@ namespace Timelapse.Database
         private List<string> GetDataLabels(ImageDatabase database)
         {
             List<string> dataLabels = new List<string>();
-            for (int i = 0; i < database.TemplateTable.Rows.Count; i++)
+            for (int row = 0; row < database.TemplateTable.Rows.Count; row++)
             {
-                string label = (string)database.TemplateTable.Rows[i][Constants.Control.Label];
-                string dataLabel = (string)database.TemplateTable.Rows[i][Constants.Control.DataLabel];
-                dataLabel = this.GetLabel(label, dataLabel);
+                string label = (string)database.TemplateTable.Rows[row][Constants.Control.Label];
+                string dataLabel = (string)database.TemplateTable.Rows[row][Constants.Control.DataLabel];
+                if (dataLabel == String.Empty)
+                {
+                    dataLabel = label;
+                }
+                Debug.Assert(String.IsNullOrWhiteSpace(dataLabel) == false, String.Format("Encountered empty data label '{0}' at row {1} in template table.", dataLabel, row));
 
                 // get a list of datalabels so we can add columns in the order that matches the current template table order
                 if (Constants.Database.ID != dataLabel)
@@ -204,7 +207,10 @@ namespace Timelapse.Database
                     else if (currentCharacter == ',')
                     {
                         // empty field
-                        parsedLine.Add(null);
+                        // promote null values to empty values to prevent the presence of SQNull objects in data tables
+                        // much Timelapse code assumes data table fields can be blindly cast to string and breaks once the data table has been
+                        // refreshed after null values are inserted
+                        parsedLine.Add(String.Empty);
                         continue;
                     }
                     else

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Timelapse.Util;
 
 namespace Timelapse.Database
 {
@@ -32,10 +33,10 @@ namespace Timelapse.Database
 
         public void SetWhere(string folder, string file)
         {
-            this.Where = String.Format("{0} = '{1}'", Constants.DatabaseColumn.File, file);
+            this.Where = String.Format("{0} = {1}", Constants.DatabaseColumn.File, Utilities.QuoteForSql(file));
             if (String.IsNullOrEmpty(folder) == false)
             {
-                this.Where += String.Format(" AND {0} = '{1}'", Constants.DatabaseColumn.Folder, folder);
+                this.Where += String.Format(" AND {0} = {1}", Constants.DatabaseColumn.Folder, Utilities.QuoteForSql(folder));
             }
         }
     }

@@ -26,66 +26,6 @@ namespace Timelapse.Util
             Unknown = 2
         }
 
-        #region Public Static Methods
-
-        public static bool VerifyAndUpdateDates(List<ImageProperties> imagePropertyList)
-        {
-            DateTime date = new DateTime(); // the DateTime date that we will get
-            bool result = false;
-            bool ambiguous_date_order = true;
-
-            // The invariant culture tends to handle a broad variety of date formats. Hopefully this will work correctly to differentiate
-            // all the different formats used by cameras, including ambiguities in month/day vs day/month orders.
-            DateTimeStyles styles;
-            CultureInfo invariantCulture;
-            invariantCulture = CultureInfo.CreateSpecificCulture(String.Empty);
-            styles = DateTimeStyles.None;
-
-            foreach (ImageProperties imageProperties in imagePropertyList)
-            {
-                // We ideally want to use the metadata date. 
-                // If the image is corrupted we fall back to the file date
-                imageProperties.UseMetadata = (imageProperties.ImageQuality == ImageQualityFilter.Corrupted) ? false : true;
-
-                if (imageProperties.UseMetadata)
-                {
-                    // Try to parse the date in both day/month and month/day order. 
-                    result = DateTime.TryParse(imageProperties.DateMetadata, invariantCulture, styles, out date);
-                    if (true == result)
-                    {
-                        imageProperties.Date = DateTimeHandler.StandardDateString(date);
-                        imageProperties.Time = DateTimeHandler.StandardTimeString(date);
-                        if (date.Day > 12)
-                        {
-                            ambiguous_date_order = false;
-                        }
-                    }
-                    else
-                    {
-                        // We can't read in the metadata date correctly, so use the file creation date instead
-                        imageProperties.Date = DateTimeHandler.StandardDateString(imageProperties.DateFileCreation);
-                        imageProperties.Time = DateTimeHandler.StandardTimeString(imageProperties.DateFileCreation);
-                        imageProperties.UseMetadata = false;
-                        if (date.Day > 12)
-                        {
-                            ambiguous_date_order = false;
-                        }
-                    }
-                }
-                else
-                {
-                    imageProperties.Date = DateTimeHandler.StandardDateString(imageProperties.DateFileCreation);
-                    imageProperties.Time = DateTimeHandler.StandardTimeString(imageProperties.DateFileCreation);
-                    if (date.Day > 12)
-                    {
-                        ambiguous_date_order = false;
-                    }
-                }
-            }
-            return ambiguous_date_order;
-        }
-        #endregion
-
         #region Static Methods: Return the date or time as a string
 
         /// <summary>
@@ -150,16 +90,16 @@ namespace Timelapse.Util
         public static int SwapDayMonthIsPossible(ImageDatabase database)
         {
             // First, do a pass to see if swapping the date/time order is even possible
-            for (int i = 0; i < database.ImageCount; i++)
+            for (int image = 0; image < database.ImageCount; image++)
             {
                 // Skip over corrupted images for now, as we know those dates are likley wrong
-                if (database.IsImageCorrupt(i))
+                if (database.IsImageCorrupt(image))
                 {
                     continue;
                 }
 
                 // Parse the date, which should always work at this point. But just in case, put out a debug message
-                string dateAsString = (string)database.ImageDataTable.Rows[i][Constants.DatabaseColumn.Date] + " " + (string)database.ImageDataTable.Rows[i][Constants.DatabaseColumn.Time];
+                string dateAsString = (string)database.ImageDataTable.Rows[image][Constants.DatabaseColumn.Date] + " " + (string)database.ImageDataTable.Rows[image][Constants.DatabaseColumn.Time];
                 DateTime date; // Month/Day order
                 bool succeeded = DateTime.TryParse(dateAsString, out date);
                 if (!succeeded)
@@ -167,15 +107,16 @@ namespace Timelapse.Util
                     Debug.Print("In SwapDayMonth - something went wrong trying to parse a date!");
                 }
 
-                // Now check to see if the reversed date is legit. If it throws an exception, we know its a problem so get out of here.
+                // Now check to see if the reversed date is legit. If it throws an exception, we know it's a problem.
+                // TODO: Saul  add code to check if day and month are swappable rather than throwing
                 try
                 {
-                    DateTime reversedDate = new DateTime(date.Year, date.Day, date.Month); // we have swapped the day with the month
+                    DateTime reversedDate = new DateTime(date.Year, date.Day, date.Month); // swapped day and month
                     succeeded = true;
                 }
                 catch
                 {
-                    return i; // Return the first image where we couldn't swap the date
+                    return image; // return the first image where we couldn't swap the date
                 }
                 if (!succeeded)
                 {

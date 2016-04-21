@@ -6,6 +6,9 @@
 bin/
 packages/
 obj/
- 
+
+# Timelapse output
+Backups/
+
 # Visual Studio 2015 cache/options directory 
 .vs/ 

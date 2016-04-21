@@ -126,6 +126,7 @@
     </ApplicationDefinition>
     <Compile Include="Database\CustomFilterOperator.cs" />
     <Compile Include="Images\FeedbackMessage.cs" />
+    <Compile Include="Database\DateTimeAdjustment.cs" />
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
     <Compile Include="Images\MetaTagEventArgs.cs" />
