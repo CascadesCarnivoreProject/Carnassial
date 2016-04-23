@@ -16,7 +16,7 @@ namespace Timelapse.UnitTests
             ImageDatabase database = this.CreateImageDatabase();
             
             Controls controls = new Controls();
-            controls.GenerateControls(database);
+            controls.GenerateControls(database, 0);
 
             int expectedControls = 6 + 10;
             Assert.IsTrue(controls.ControlFromDataLabel.Count == expectedControls, "Expected {0} controls to be generated but {1} were.", expectedControls, controls.ControlFromDataLabel.Count);
@@ -35,8 +35,10 @@ namespace Timelapse.UnitTests
             database.TrimImageAndTemplateTableWhitespace();  // Trim the white space from all the data
             database.InitializeMarkerTableFromDataTable();
             Assert.IsTrue(database.TryGetImagesAll());
-            Assert.IsTrue(database.TryMoveToFirstImage());
-            Assert.IsTrue(database.TryMoveToNextImage());
+
+            ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(database);
+            Assert.IsTrue(imageEnumerator.TryMoveToImage(0));
+            Assert.IsTrue(imageEnumerator.MoveNext());
 
             // simulate data entry
             ColumnTuplesWithWhere image2Update = new ColumnTuplesWithWhere();
@@ -50,7 +52,7 @@ namespace Timelapse.UnitTests
             image2Update.Columns.Add(new ColumnTuple("Activity", "unknown"));
             image2Update.Columns.Add(new ColumnTuple("Comments", "escaped field due presence of ,"));
             image2Update.Columns.Add(new ColumnTuple("Survey", "Timelapse database unit tests"));
-            image2Update.SetWhere(database.CurrentImage.ID);
+            image2Update.SetWhere(imageEnumerator.Current.ID);
             database.UpdateImages(new List<ColumnTuplesWithWhere>() { image2Update });
 
             // pull the image data table again so the updates are visible to .csv export

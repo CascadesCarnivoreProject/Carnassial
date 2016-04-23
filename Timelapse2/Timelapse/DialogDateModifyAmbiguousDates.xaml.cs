@@ -111,10 +111,8 @@ namespace Timelapse
             // this.database.RowsUpdateSwapDayMonth();
             this.DialogResult = true;
 
-            // Refresh the database / datatable to reflect the updated values, which will also refressh the main timelpase display.
-            int currentImage = this.database.CurrentImageRow;
+            // Refresh the database / datatable to reflect the updated values
             this.database.TryGetImagesAll();
-            this.database.TryMoveToImage(currentImage);
         }
 
         private void NextButton_Click(object sender, RoutedEventArgs e)
@@ -134,7 +132,7 @@ namespace Timelapse
         {
             // Starting from the index, get the date from successive rows and see if the date is ambiguous
             // Note that if the index is out of range, it will return -1, so that's ok.
-            for (int index = startIndex; index < this.database.ImageCount; index++)
+            for (int index = startIndex; index < this.database.CurrentlySelectedImageCount; index++)
             {
                 // Ignore corrupted images
                 // if (this.database.RowIsImageCorrupted(i)) continue;
@@ -162,7 +160,7 @@ namespace Timelapse
         // That is, return the final image that is dated the same date as this image
         private int GetDateRangeWithSameDate(int startIndex)
         {
-            if (startIndex >= this.database.ImageCount)
+            if (startIndex >= this.database.CurrentlySelectedImageCount)
             {
                 return -1;   // Make sure index is in range.
             }
@@ -175,7 +173,7 @@ namespace Timelapse
                 return -1; // Should never fail, but just in case.
             }
 
-            for (int index = startIndex + 1; index < this.database.ImageCount; index++)
+            for (int index = startIndex + 1; index < this.database.CurrentlySelectedImageCount; index++)
             {
                 // Parse the date for the given record.
                 string currentDateAsString = (string)this.database.ImageDataTable.Rows[index][Constants.DatabaseColumn.Date] + " " + (string)this.database.ImageDataTable.Rows[index][Constants.DatabaseColumn.Time];
@@ -193,7 +191,7 @@ namespace Timelapse
                     return index - 1;
                 }
             }
-            return this.database.ImageCount - 1; // if we got here, it means that we arrived at the end of the records
+            return this.database.CurrentlySelectedImageCount - 1; // if we got here, it means that we arrived at the end of the records
         }
     }
 }

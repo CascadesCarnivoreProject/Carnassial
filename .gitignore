@@ -7,6 +7,10 @@ bin/
 packages/
 obj/
 
+# Profiling results
+*.vsp
+*.vspx
+
 # Timelapse output
 Backups/
 

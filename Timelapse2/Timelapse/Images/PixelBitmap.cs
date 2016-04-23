@@ -20,13 +20,12 @@ namespace Timelapse.Images
             get { return this.Pixels[x + y * this.Width]; }
         }
 
-        // Constructor. Takes an image given to it, and coverts it into a BGRA32 format, i.e., an Blue, Green, Red, Alpha format
-        // Note: it does not check to see if its a valid image!
-        // Note: this is slow. If there is any way to speed this up, it would be really really nice.
         private PixelBitmap()
         {
         }
 
+        // Constructor. Takes an image given to it, and coverts it into a BGRA32 format, i.e., an Blue, Green, Red, Alpha format
+        // Note: it does not check to see if its a valid image!
         public PixelBitmap(BitmapSource source)
         {
             if (source.Format != PixelFormats.Bgra32)
@@ -37,6 +36,9 @@ namespace Timelapse.Images
             this.Height = source.PixelHeight;
 
             this.Pixels = new PixelColor[this.Width * this.Height];
+            // Note: this is about two thirds of CPU used for calculating combined differences.
+            // If there is any way to speed this up, it would be really really nice.
+            // TODO: Saul  would using WriteableBitmap.Pixels to avoid the need to clone pixels be helpful?  Buffer.BlockCopy() may also be worth a look
             this.CopyPixels(source, this.Pixels, this.Width * 4, 0);
         }
 
@@ -121,11 +123,14 @@ namespace Timelapse.Images
         // Given two images, return an image containing the visual difference between them
         public static PixelBitmap operator -(PixelBitmap image1, PixelBitmap image2)
         {
-            // if image1 is not same size as image2, use the smaller of their dimensions 
-            int width = Math.Min(image1.Width, image2.Width);
-            int height = Math.Min(image1.Height, image2.Height);
+            // fail if image1 is not same size as image2
+            if ((image1.Width != image2.Width) ||
+                (image1.Height != image2.Height))
+            {
+                return null;
+            }
 
-            PixelColor[] pixelColor = new PixelColor[width * height];
+            PixelColor[] pixelColor = new PixelColor[image1.Width * image1.Height];
             for (int i = 0; i < pixelColor.Length; i++)
             {
                 byte b = (byte)Math.Abs(image1.Pixels[i].Blue - image2.Pixels[i].Blue);
@@ -138,23 +143,27 @@ namespace Timelapse.Images
                 PixelColor pixel = new PixelColor() { Alpha = a, Red = diff, Blue = diff, Green = diff };
                 pixelColor[i] = pixel;
             }
-            return new PixelBitmap() { Width = width, Height = height, Pixels = pixelColor };
+            return new PixelBitmap() { Width = image1.Width, Height = image1.Height, Pixels = pixelColor };
         }
 
         // Given three images, return an image that highlights the differences in common betwen the main image and the first image,
         // and the main image and a second image. 
-        public static PixelBitmap Difference(BitmapSource mainImgBM, BitmapSource img1BM, BitmapSource img2BM, byte threshold)
+        public static PixelBitmap CombinedDifference(BitmapSource unaltered, BitmapSource previous, BitmapSource next, byte threshold)
         {
-            PixelBitmap mainImg = new PixelBitmap((BitmapSource)mainImgBM);
-            PixelBitmap img1 = new PixelBitmap((BitmapSource)img1BM);
-            PixelBitmap img2 = new PixelBitmap((BitmapSource)img2BM);
-            // if images are not same size , use the smaller of their dimensions 
-            int width = Math.Min(mainImg.Width, img1.Width);
-            width = Math.Min(width, img2.Width);
-            int height = Math.Min(mainImg.Height, img1.Height);
-            height = Math.Min(height, img2.Height);
+            // fail if the images aren't all the same size
+            if ((unaltered.PixelWidth != previous.PixelWidth) ||
+                (unaltered.PixelHeight != previous.PixelHeight) ||
+                (unaltered.PixelWidth != next.PixelWidth) ||
+                (unaltered.PixelHeight != next.PixelHeight))
+            {
+                return null;
+            }
 
-            PixelColor[] pixelColor = new PixelColor[width * height]; // CHECK THIS - BOUNDS MAY NOT BE RIGHT
+            PixelBitmap mainImg = new PixelBitmap((BitmapSource)unaltered);
+            PixelBitmap img1 = new PixelBitmap((BitmapSource)previous);
+            PixelBitmap img2 = new PixelBitmap((BitmapSource)next);
+
+            PixelColor[] pixelColor = new PixelColor[mainImg.Width * mainImg.Height]; // CHECK THIS - BOUNDS MAY NOT BE RIGHT
             for (int i = 0; i < pixelColor.Length; i++)
             {
                 byte b1 = (byte)Math.Abs(mainImg.Pixels[i].Blue - img1.Pixels[i].Blue);
@@ -174,7 +183,7 @@ namespace Timelapse.Images
                 var pixel = new PixelColor() { Alpha = a, Red = diff, Blue = diff, Green = diff };
                 pixelColor[i] = pixel;
             }
-            return new PixelBitmap() { Width = width, Height = height, Pixels = pixelColor };
+            return new PixelBitmap() { Width = mainImg.Width, Height = mainImg.Height, Pixels = pixelColor };
         }
 
         public static byte TempCalc(System.Byte threshold, System.Byte p, System.Byte n)
@@ -182,7 +191,7 @@ namespace Timelapse.Images
             return (p > threshold && n > threshold) ? (byte)((p + n) / 2) : (byte)0;
         }
 
-        // Copy pixels form a source into the PixelColor array
+        // Copy pixels from a source into the PixelColor array
         private unsafe void CopyPixels(BitmapSource source, PixelColor[] pixels, int stride, int offset)
         {
             // fixed holds the item in memory while I am working on it

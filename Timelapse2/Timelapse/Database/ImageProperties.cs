@@ -23,6 +23,7 @@ namespace Timelapse.Database
         public ImageProperties(string imageFolderPath, FileInfo imageFile)
         {
             this.FileName = imageFile.Name;
+            this.ImageQuality = ImageQualityFilter.Ok;
             this.RelativeFolderPath = NativeMethods.GetRelativePath(imageFolderPath, imageFile.FullName);
             this.RelativeFolderPath = Path.GetDirectoryName(this.RelativeFolderPath);
 
@@ -67,15 +68,18 @@ namespace Timelapse.Database
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
             {
-                return BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"));
+                return Constants.Images.Missing;
             }
             try
             {
+                // scanning through images with BitmapCacheOption.None results in less than 6% CPU in BitmapFrame.Create() and
+                // 90% in System.Windows.Application.Run(), suggesting little scope for optimization within Timelapse proper
+                // this is significantly faster than BitmapCacheOption.Default
                 return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
             }
             catch
             {
-                return BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"));
+                return Constants.Images.Corrupt;
             }
         }
 

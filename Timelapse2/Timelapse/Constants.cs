@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Windows.Media.Imaging;
 
 namespace Timelapse
 {
@@ -126,6 +127,20 @@ namespace Timelapse
             public const string Dark = "Dark";
             public const string Missing = "Missing";
             public const string Ok = "Ok";
+        }
+
+        public static class Images
+        {
+            public static readonly BitmapFrame Corrupt;
+            public static readonly BitmapFrame Missing;
+
+            static Images()
+            {
+                Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.Corrupt.Freeze();
+                Images.Missing = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.Missing.Freeze();
+            }
         }
 
         public static class Registry

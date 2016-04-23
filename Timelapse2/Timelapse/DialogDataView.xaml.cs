@@ -14,13 +14,15 @@ namespace Timelapse
         private static int lastIndex = -1; // Keep track of the last index we had selected. Don't autoscroll if it hasn't changed.
 
         private ImageDatabase database;
+        private int defaultImageRow;
         private DispatcherTimer dispatcherTimer;
         private int lastRow = -1;
 
-        public DialogDataView(ImageDatabase database)
+        public DialogDataView(ImageDatabase database, int defaultImageRow)
         {
             this.InitializeComponent();
             this.database = database;
+            this.defaultImageRow = defaultImageRow;
             this.RefreshDataTable();
         }
 
@@ -46,9 +48,9 @@ namespace Timelapse
         /// <summary>Ensure that the the highlighted row is the current row </summary>
         private void DispatcherTimer_Tick(object sender, EventArgs e)
         {
-            if (this.lastRow != this.database.CurrentImageRow)
+            if (this.lastRow != this.defaultImageRow)
             {
-                this.datagrid.SelectedIndex = this.database.CurrentImageRow;
+                this.datagrid.SelectedIndex = this.defaultImageRow;
             }
 
             // A workaround to autoscroll the currently selected items, where the item always appears at the top of the window.

@@ -90,7 +90,7 @@ namespace Timelapse.Util
         public static int SwapDayMonthIsPossible(ImageDatabase database)
         {
             // First, do a pass to see if swapping the date/time order is even possible
-            for (int image = 0; image < database.ImageCount; image++)
+            for (int image = 0; image < database.CurrentlySelectedImageCount; image++)
             {
                 // Skip over corrupted images for now, as we know those dates are likley wrong
                 if (database.IsImageCorrupt(image))

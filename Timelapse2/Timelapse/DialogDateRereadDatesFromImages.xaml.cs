@@ -63,7 +63,7 @@ namespace Timelapse
 
                 // Pass 1. Check to see what dates/times need updating.
                 List<ImageProperties> imagePropertiesList = new List<ImageProperties>();
-                int count = database.ImageCount;
+                int count = database.CurrentlySelectedImageCount;
                 for (int image = 0; image < count; image++)
                 {
                     // We will store the various times here

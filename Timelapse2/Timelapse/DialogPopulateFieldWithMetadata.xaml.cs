@@ -20,25 +20,22 @@ namespace Timelapse
     /// </summary>
     public partial class DialogPopulateFieldWithMetadata : Window, IDisposable
     {
-        private Dictionary<string, string> dictMetaDataLookup;
-        private Dictionary<string, string> dictNoteFieldLookup = new Dictionary<string, string>();  // DataLabel, Label
+        private Dictionary<string, string> dataLabelFromLabel = new Dictionary<string, string>();  // DataLabel, Label
         private bool disposed;
         private ExifToolWrapper exifTool;
         private string metaDataName = String.Empty;
         private string noteLabel = String.Empty;
         private string noteDataLabel = String.Empty;
 
-        private string fileName;
         private ImageDatabase database;
-        private string folderPath;
+        private string imageFilePath;
         private bool isSelectedDataField = false;
         private bool isSelectedMetaData = false;
         private bool isClearIfNoMetaData = false;
 
-        public DialogPopulateFieldWithMetadata(ImageDatabase database, string fileName, string folderPath)
+        public DialogPopulateFieldWithMetadata(ImageDatabase database, string imageFilePath)
         {
-            this.fileName = fileName;
-            this.folderPath = folderPath;
+            this.imageFilePath = imageFilePath;
             this.database = database;
             this.InitializeComponent();
         }
@@ -70,7 +67,7 @@ namespace Timelapse
                 this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
             }
 
-            this.lblImageName.Content = this.fileName;
+            this.lblImageName.Content = this.imageFilePath;
             this.LoadExif();
             this.LoadDataFieldLabels();
         }
@@ -83,8 +80,8 @@ namespace Timelapse
             this.exifTool = new ExifToolWrapper();
             this.exifTool.Start();
 
-            this.dictMetaDataLookup = this.exifTool.FetchExifFrom(Path.Combine(this.folderPath, this.fileName));
-            this.dg.ItemsSource = this.dictMetaDataLookup; // Bind the dictionary to the data grid. For some reason, I couldn't do this in  xaml
+            Dictionary<string, string> exifData = this.exifTool.FetchExifFrom(this.imageFilePath);
+            this.dg.ItemsSource = exifData; // Bind the dictionary to the data grid. For some reason, I couldn't do this in  xaml
         }
 
         #endregion
@@ -163,7 +160,7 @@ namespace Timelapse
                 {
                     string datalabel = (string)row[Constants.Control.DataLabel];
                     string label = (string)row[Constants.Control.Label];
-                    this.dictNoteFieldLookup.Add(label, datalabel);
+                    this.dataLabelFromLabel.Add(label, datalabel);
                     // this.NoteID = Convert.ToInt32(row[Constants.ID].ToString()); // TODO Need to use this ID to pass between controls and data
                     this.lboxNoteFields.Items.Add(label);
                 }
@@ -188,18 +185,10 @@ namespace Timelapse
         // Populate the database with the metadata for that note field
         private void Populate()
         {
-            Dictionary<string, string> dictTemp;
-
-            // This tuple list will hold the id, key and value that we will want to update in the database
-            List<Tuple<long, string, string>> list_to_update_db = new List<Tuple<long, string, string>>();
-
             // This list will hold key / value pairs that will be bound to the datagrid feedback, 
             // which is the way to make those pairs appear in the data grid during background worker progress updates
             ObservableCollection<KeyValuePair<string, string>> keyValueList = new ObservableCollection<KeyValuePair<string, string>>();
             this.dgFeedback.ItemsSource = keyValueList;
-
-            string fname;
-            string[] tags = { this.metaDataName };
 
             // Update the UI to show the feedback datagrid, 
             this.tbPopulatingMessage.Text = "Populating the data field '" + this.noteDataLabel + "' from each image's '" + this.metaDataName + "' metadata ";
@@ -210,9 +199,10 @@ namespace Timelapse
             this.FeedbackPanel.Visibility = Visibility.Visible;
             this.PanelHeader.Visibility = Visibility.Collapsed;
 
-            var bgw = new BackgroundWorker() { WorkerReportsProgress = true };
-            bgw.DoWork += (ow, ea) =>
-            {   // this runs on the background thread; its written as an anonymous delegate
+            BackgroundWorker backgroundWorker = new BackgroundWorker() { WorkerReportsProgress = true };
+            backgroundWorker.DoWork += (ow, ea) =>
+            {  
+                // this runs on the background thread; its written as an anonymous delegate
                 // We need to invoke this to allow updates on the UI
                 this.Dispatcher.Invoke(new Action(() =>
                 {
@@ -221,38 +211,40 @@ namespace Timelapse
                 // For each row in the database, get the image filename and try to extract the chosen metatag value.
                 // If we can't decide if we want to leave the data field alone or to clear it depending on the state of the isClearIfNoMetaData (set via the checkbox)
                 // Report progress as needed.
-                for (int i = 0; i < database.ImageCount; i++)
+                // This tuple list will hold the id, key and value that we will want to update in the database
+                List<Tuple<long, string, string>> imageIDKeyValue = new List<Tuple<long, string, string>>();
+                for (int image = 0; image < database.CurrentlySelectedImageCount; image++)
                 {
-                    fname = database.ImageDataTable.Rows[i][Constants.DatabaseColumn.File].ToString();
-                    int id = Int32.Parse(database.ImageDataTable.Rows[i][Constants.Database.ID].ToString());
-                    dictTemp = this.exifTool.FetchExifFrom(Path.Combine(this.folderPath, fname), tags);
+                    ImageProperties imageProperties = database.GetImage(image);
+                    string[] tags = { this.metaDataName };
+                    Dictionary<string, string> dictTemp = this.exifTool.FetchExifFrom(imageProperties.GetImagePath(database.FolderPath), tags);
                     if (dictTemp.Count <= 0)
                     {
                         if (this.isClearIfNoMetaData)
                         {
-                            list_to_update_db.Add(new Tuple<long, string, string>(id, dictNoteFieldLookup[this.noteLabel], String.Empty)); // Clear the data field if there is no metadata...
-                            bgw.ReportProgress(0, new FeedbackMessage(fname, "No metadata found - data field is cleared"));
+                            imageIDKeyValue.Add(new Tuple<long, string, string>(imageProperties.ID, this.dataLabelFromLabel[this.noteLabel], String.Empty)); // Clear the data field if there is no metadata...
+                            backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, "No metadata found - data field is cleared"));
                         }
                         else
                         {
-                            bgw.ReportProgress(0, new FeedbackMessage(fname, "No metadata found - data field remains unaltered"));
+                            backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, "No metadata found - data field remains unaltered"));
                         }
                         continue;
                     }
                     string value = dictTemp[this.metaDataName];
-                    bgw.ReportProgress(0, new FeedbackMessage(fname, value));
-                    if (i % 250 == 0)
+                    backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, value));
+                    if (image % 250 == 0)
                     {
                         Thread.Sleep(25); // Put in a short delay every now and then, as otherwise the UI may not update.
                     }
-                    list_to_update_db.Add(new Tuple<long, string, string>(id, dictNoteFieldLookup[this.noteLabel], value));
+                    imageIDKeyValue.Add(new Tuple<long, string, string>(imageProperties.ID, this.dataLabelFromLabel[this.noteLabel], value));
                 }
 
-                bgw.ReportProgress(0, new FeedbackMessage("Writing the data...", "Please wait..."));
-                database.UpdateImages(list_to_update_db);
-                bgw.ReportProgress(0, new FeedbackMessage("Done", "Done"));
+                backgroundWorker.ReportProgress(0, new FeedbackMessage("Writing the data...", "Please wait..."));
+                database.UpdateImages(imageIDKeyValue);
+                backgroundWorker.ReportProgress(0, new FeedbackMessage("Done", "Done"));
             };
-            bgw.ProgressChanged += (o, ea) =>
+            backgroundWorker.ProgressChanged += (o, ea) =>
             {
                 // Get the message and add it to the data structure 
                 FeedbackMessage message = (FeedbackMessage)ea.UserState;
@@ -261,12 +253,12 @@ namespace Timelapse
                 // Scrolls so the last object added is visible
                 this.dgFeedback.ScrollIntoView(dgFeedback.Items[dgFeedback.Items.Count - 1]);
             };
-            bgw.RunWorkerCompleted += (o, ea) =>
+            backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
                 btnCancel.Content = "Done"; // Change the Cancel button to Done, but inactivate it as we don't want the operation to be cancellable (due to worries about database corruption)
                 btnCancel.IsEnabled = true;
             };
-            bgw.RunWorkerAsync();
+            backgroundWorker.RunWorkerAsync();
         }
         #endregion
 

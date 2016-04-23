@@ -34,7 +34,7 @@ namespace Timelapse.Database
 
                 // For each row in the data table, write out the columns in the same order as the 
                 // data labels in the template file
-                for (int i = 0; i < database.ImageCount; i++)
+                for (int i = 0; i < database.CurrentlySelectedImageCount; i++)
                 {
                     StringBuilder row = new StringBuilder();
                     foreach (string dataLabel in dataLabels)

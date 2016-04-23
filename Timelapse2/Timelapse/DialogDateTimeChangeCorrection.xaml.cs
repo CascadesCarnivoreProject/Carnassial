@@ -13,20 +13,21 @@ namespace Timelapse
     /// </summary>
     public partial class DialogDateTimeChangeCorrection : Window
     {
+        private int currentImageRow;
         private ImageDatabase database;
 
-        public DialogDateTimeChangeCorrection(ImageDatabase database)
+        public DialogDateTimeChangeCorrection(ImageDatabase database, ImageTableEnumerator image)
         {
             this.InitializeComponent();
             this.database = database;
+            this.currentImageRow = image.CurrentRow;
 
             // Get the original date and display it
-            ImageProperties imageProperties = new ImageProperties(this.database.ImageDataTable.Rows.Find(this.database.CurrentImageRow));
-            this.lblOriginalDate.Content = imageProperties.Date + " " + imageProperties.Time;
+            this.lblOriginalDate.Content = image.Current.Date + " " + image.Current.Time;
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            this.imgDateImage.Source = imageProperties.LoadImage(this.database.FolderPath);
-            this.lblImageName.Content = imageProperties.FileName;
+            this.imgDateImage.Source = image.Current.LoadImage(this.database.FolderPath);
+            this.lblImageName.Content = image.Current.FileName;
         }
 
         private void DlgDateCorrectionName_Loaded(object sender, RoutedEventArgs e)
@@ -39,7 +40,7 @@ namespace Timelapse
             }
         }
 
-        // When the user clicks ok, add/subtrack an hour propagated forwards/backwards as specified
+        // When the user clicks ok, add/subtract an hour propagated forwards/backwards as specified
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -50,8 +51,8 @@ namespace Timelapse
                 string direction = forward ? "forward" : "backwards";
                 string operation = hours == 1 ? "added" : "subtracted";
 
-                int initial = forward ? this.database.CurrentImageRow : 0;
-                int final = forward ? this.database.ImageCount : this.database.CurrentImageRow + 1;
+                int initial = forward ? this.currentImageRow : 0;
+                int final = forward ? this.database.CurrentlySelectedImageCount : this.currentImageRow + 1;
 
                 TimeSpan timeDifference = new TimeSpan(hours, 0, 0);
                 // Update the database
@@ -64,11 +65,8 @@ namespace Timelapse
                 log.AppendLine("                        An hour was " + operation + " to those images");
                 this.database.AppendToImageSetLog(log);
 
-                // Refresh the database / datatable to reflect the updated values, which will also refressh the main timelpase display.
-                int currentImage = this.database.CurrentImageRow;
+                // Refresh the database / datatable to reflect the updated values
                 this.database.TryGetImagesAll();
-                this.database.TryMoveToImage(currentImage);
-
                 this.DialogResult = true;
             }
             catch

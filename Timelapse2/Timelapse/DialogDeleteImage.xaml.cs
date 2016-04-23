@@ -28,7 +28,7 @@ namespace Timelapse
         /// Ask the user if he/she wants to delete the given image indicated by the index.
         /// Other parameters indicate various specifics of that image that we will use to display and delete it
         /// </summary>
-        public DialogDeleteImage(ImageDatabase databae, ImageProperties imageProperties, string imageFolderPath, bool deleteData)
+        public DialogDeleteImage(ImageDatabase database, ImageProperties imageProperties, string imageFolderPath, bool deleteData)
         {
             this.InitializeComponent();
 
@@ -36,11 +36,11 @@ namespace Timelapse
             this.imageProperties = imageProperties;
             this.imageFolderPath = imageFolderPath;
             this.deleteData = deleteData;
-            this.database = databae;
+            this.database = database;
 
             if (this.deleteData == true)
             {
-                this.textMain.Text = "Delete the current image file and its data: " + this.imageProperties; // put the file name in the title   
+                this.textMain.Text = "Delete the current image file and its data: " + this.imageProperties.FileName; // put the file name in the title   
                 this.TBDeleteImageAndData1.Visibility = Visibility.Visible;
                 this.TBDeleteImageOnly1.Visibility = Visibility.Collapsed;
                 this.TBDeleteImageOnly2.Visibility = Visibility.Collapsed;
@@ -52,7 +52,7 @@ namespace Timelapse
             }
             else
             {
-                this.textMain.Text = "Delete the current image file: " + this.imageProperties; // put the file name in the title  
+                this.textMain.Text = "Delete the current image file: " + this.imageProperties.FileName; // put the file name in the title  
                 this.TBDeleteImageAndData1.Visibility = Visibility.Collapsed;
                 this.TBDeleteImageOnly1.Visibility = Visibility.Visible;
                 this.TBDeleteImageOnly2.Visibility = Visibility.Visible;
@@ -64,8 +64,13 @@ namespace Timelapse
                 this.OkButton.IsEnabled = true;
             }
             this.deleteData = deleteData;
-            this.ShowOriginalImage();
-            this.ShowDeletedImage();
+
+            // show the original image
+            BitmapFrame image = this.imageProperties.LoadImage(this.imageFolderPath);
+            this.originalImage.Source = image;
+
+            // show the deleted image
+            this.deletedImage.Source = Constants.Images.Missing;
         }
 
         #endregion
@@ -92,46 +97,9 @@ namespace Timelapse
             this.MoveImageToBackupFolder();
             if (this.deleteData)
             {
-                this.database.DeleteImage(this.database.CurrentImage.ID);
+                this.database.DeleteImage(this.imageProperties.ID);
             }
             this.DialogResult = true;
-        }
-
-        /// <summary>
-        /// Display the original image in the dialog box, or a placeholder if we cannot
-        /// </summary>
-        private void ShowOriginalImage()
-        {
-            // Get and display the bitmap
-            BitmapImage image = new BitmapImage();
-            image.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-
-            string imageFilePath = this.imageProperties.GetImagePath(this.imageFolderPath);
-            if (this.imageProperties.ImageQuality == ImageQualityFilter.Corrupted)
-            {
-                // Show the corrupted iamge placeholder
-                image = Utilities.BitmapFromResource(image, "corrupted.jpg", true);
-            }
-            else if (!File.Exists(imageFilePath))
-            {
-                image = Utilities.BitmapFromResource(image, "missing.jpg", true);
-            }
-            else
-            {
-                Utilities.BitmapFromFile(image, imageFilePath, true);
-            }
-            this.originalImage.Source = image;
-        }
-
-        /// <summary>
-        /// Display the deleted image placeholder so the user knows what it looks like
-        /// </summary>
-        private void ShowDeletedImage()
-        {
-            // Get and display the bitmap
-            BitmapImage image = new BitmapImage();
-            image = Utilities.BitmapFromResource(image, "missing.jpg", true);
-            this.deletedImage.Source = image;
         }
 
         /// <summary>
