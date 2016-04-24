@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Speech.Synthesis;
 using System.Windows;
@@ -47,7 +46,7 @@ namespace Timelapse
         }
 
         private ImageDifference imageDifferenceState = ImageDifference.Unaltered;
-        private Dictionary<ImageDifference, BitmapSource> imageDifferenceCache = new Dictionary<ImageDifference, BitmapSource>();
+        private Dictionary<ImageDifference, WriteableBitmap> imageDifferenceCache = new Dictionary<ImageDifference, WriteableBitmap>();
         private string mostRecentImageAddFolderPath;
         private HelpWindow overviewWindow; // Create the help window. 
         private OptionsWindow optionsWindow; // Create the options window
@@ -55,8 +54,6 @@ namespace Timelapse
 
         // Status information concerning the state of the UI
         private TimelapseState state = new TimelapseState();
-        private Canvas magCanvas = new Canvas(); // This canvas will contain the image and marks used for the magnifying glass
-        private System.Windows.Controls.Image magImg = new System.Windows.Controls.Image(); // and this contain the image within it
 
         // Speech feedback
         private SpeechSynthesizer speechSynthesizer = new SpeechSynthesizer();
@@ -358,14 +355,14 @@ namespace Timelapse
                     FileInfo imageFile = imageFilePaths[image];
                     ImageProperties imageProperties = new ImageProperties(this.FolderPath, imageFile);
 
-                    BitmapFrame bitmap = null;
+                    WriteableBitmap bitmap = null;
                     try
                     {
                         // Create the bitmap and determine its ImageQuality
                         // avoid ImageProperties.LoadImage() here as the create exception needs to surface to set the image quality to corrupt
-                        bitmap = BitmapFrame.Create(new Uri(imageFile.FullName), BitmapCreateOptions.None, BitmapCacheOption.None);
+                        bitmap = new WriteableBitmap(BitmapFrame.Create(new Uri(imageFile.FullName), BitmapCreateOptions.None, BitmapCacheOption.None));
 
-                        bool isDark = PixelBitmap.IsDark(bitmap, this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
+                        bool isDark = bitmap.IsDark(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
                         imageProperties.ImageQuality = isDark ? ImageQualityFilter.Dark : ImageQualityFilter.Ok;
 
                         // see if the date can be updated from the metadata
@@ -412,7 +409,7 @@ namespace Timelapse
                 this.imageDatabase.AddImages(imagePropertyList, (ImageProperties imageProperties, int imageIndex) =>
                 {
                     // Get the bitmap again to show it
-                    BitmapFrame bitmap = imageProperties.LoadImage(this.FolderPath);
+                    WriteableBitmap bitmap = imageProperties.LoadImage(this.FolderPath);
 
                     // Show progress. Since its slow, we may as well do it every update
                     int addImageProgress = Convert.ToInt32(Convert.ToDouble(imageIndex) / Convert.ToDouble(imagePropertyList.Count) * 100);
@@ -1202,7 +1199,7 @@ namespace Timelapse
                 if (!this.imageEnumerator.Current.IsDisplayable())
                 {
                     // TO DO AS WE MAY HAVE TO GET THE INDEX OF THE NEXT IN CYCLE IMAGE???
-                    StatusBarUpdate.Message(this.statusBar, "Image is corrupted");
+                    StatusBarUpdate.Message(this.statusBar, String.Format("Image is {0}.", this.imageEnumerator.Current.ImageQuality));
                 }
                 else
                 {
@@ -1247,21 +1244,20 @@ namespace Timelapse
                     return;
                 }
 
-                PixelBitmap unalteredBitmap = new PixelBitmap((BitmapSource)this.imageDifferenceCache[ImageDifference.Unaltered]);
-                PixelBitmap comparisonBitmap = new PixelBitmap((BitmapSource)comparisonImage.LoadImage(this.FolderPath));
-                PixelBitmap differenceBitmap = unalteredBitmap - comparisonBitmap;
+                WriteableBitmap unalteredBitmap = this.imageDifferenceCache[ImageDifference.Unaltered];
+                WriteableBitmap comparisonBitmap = comparisonImage.LoadImage(this.FolderPath);
+                WriteableBitmap differenceBitmap = unalteredBitmap.Subtract(comparisonBitmap);
                 if (differenceBitmap == null)
                 {
                     // the bitmaps aren't the same size
                     // this is not a common case, but it's possible the camera's megapixel setting was changed during the image set or that images may
                     // have been modified
-                    StatusBarUpdate.Message(this.statusBar, String.Format("Error: Difference image {0} is of a different size than {1}", comparisonImage.FileName, this.imageEnumerator.Current.FileName));
+                    StatusBarUpdate.Message(this.statusBar, String.Format("Error: Difference image {0} is not compatible with {1}", comparisonImage.FileName, this.imageEnumerator.Current.FileName));
                     return;
                 }
 
                 // and now cache the differenced image
-                BitmapSource differenceImage = differenceBitmap.ToBitmap();
-                this.imageDifferenceCache[this.imageDifferenceState] = (BitmapSource)differenceImage;
+                this.imageDifferenceCache[this.imageDifferenceState] = differenceBitmap;
             }
 
             // display the differenced image
@@ -1361,49 +1357,47 @@ namespace Timelapse
             if (null == this.imageDifferenceCache[this.imageDifferenceState])
             {
                 // We need three valid images: the current one, the previous one, and the next one.
-                BitmapImage previousImage = null;
+                WriteableBitmap previousImage = null;
                 if (this.imageDatabase.IsImageRowInRange(this.imageEnumerator.CurrentRow - 1))
                 {
                     ImageProperties previousImageProperties = this.imageDatabase.GetImage(this.imageEnumerator.CurrentRow - 1);
-                    string previousImagePath = previousImageProperties.GetImagePath(this.imageDatabase.FolderPath);
-                    if (File.Exists(previousImagePath))
+                    if (previousImageProperties.IsDisplayable())
                     {
-                        previousImage = new BitmapImage(new Uri(previousImagePath));
+                        previousImage = previousImageProperties.LoadImage(this.FolderPath);
                     }
                 }
                 if (previousImage == null)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "Can't show combined differences without previous and next images");
+                    StatusBarUpdate.Message(this.statusBar, "Can't show combined differences without previous image");
                     return;
                 }
 
-                BitmapImage nextImage = null;
+                WriteableBitmap nextImage = null;
                 if (this.imageDatabase.IsImageRowInRange(this.imageEnumerator.CurrentRow + 1))
                 {
                     ImageProperties nextImageProperties = this.imageDatabase.GetImage(this.imageEnumerator.CurrentRow + 1);
-                    string nextImagePath = nextImageProperties.GetImagePath(this.imageDatabase.FolderPath);
-                    if (File.Exists(nextImagePath))
+                    if (nextImageProperties.IsDisplayable())
                     {
-                        nextImage = new BitmapImage(new Uri(nextImagePath));
+                        nextImage = nextImageProperties.LoadImage(this.FolderPath);
                     }
                 }
                 if (nextImage == null)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "Can't show combined differences without three good images");
+                    StatusBarUpdate.Message(this.statusBar, "Can't show combined differences without next image");
                     return;
                 }
 
-                PixelBitmap differenceBitmap = PixelBitmap.CombinedDifference(this.imageDifferenceCache[ImageDifference.Unaltered], previousImage, nextImage, this.DifferenceThreshold);
+                WriteableBitmap differenceBitmap = this.imageDifferenceCache[ImageDifference.Unaltered].CombinedDifference(previousImage, nextImage, this.DifferenceThreshold);
                 if (differenceBitmap == null)
                 {
                     // the bitmaps aren't the same size
                     // this is not a common case, but it's possible the camera's megapixel setting was changed during the image set or that images may
                     // have been modified
-                    StatusBarUpdate.Message(this.statusBar, String.Format("Error: Previous or next image is of a different size from {0}", this.imageEnumerator.Current.FileName));
+                    StatusBarUpdate.Message(this.statusBar, String.Format("Error: Previous or next image is not compatible with {0}", this.imageEnumerator.Current.FileName));
                     return;
                 }
 
-                this.imageDifferenceCache[this.imageDifferenceState] = differenceBitmap.ToBitmap();
+                this.imageDifferenceCache[this.imageDifferenceState] = differenceBitmap;
             }
 
             // display differenced image
@@ -1520,7 +1514,7 @@ namespace Timelapse
 
                 // Reset the image difference cache
                 // all moves are to display of unaltered images and invalidate any cached differences
-                this.imageDifferenceCache[ImageDifference.Unaltered] = (BitmapSource)this.markableCanvas.ImageToMagnify.Source;
+                this.imageDifferenceCache[ImageDifference.Unaltered] = (WriteableBitmap)this.markableCanvas.ImageToMagnify.Source;
                 this.imageDifferenceCache[ImageDifference.Previous] = null;
                 this.imageDifferenceCache[ImageDifference.Next] = null;
                 this.imageDifferenceCache[ImageDifference.Combined] = null;

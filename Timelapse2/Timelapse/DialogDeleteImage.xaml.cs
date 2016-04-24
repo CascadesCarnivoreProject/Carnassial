@@ -1,9 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Windows;
-using System.Windows.Media.Imaging;
+using System.Windows.Media;
 using Timelapse.Database;
-using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -66,7 +64,7 @@ namespace Timelapse
             this.deleteData = deleteData;
 
             // show the original image
-            BitmapFrame image = this.imageProperties.LoadImage(this.imageFolderPath);
+            ImageSource image = this.imageProperties.LoadImage(this.imageFolderPath);
             this.originalImage.Source = image;
 
             // show the deleted image

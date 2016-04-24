@@ -277,7 +277,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Images\MetaTag.cs" />
-    <Compile Include="Images\PixelBitmap.cs" />
+    <Compile Include="Images\WriteableBitmapExtensions.cs" />
     <Compile Include="DialogImportImageDataXmlFile.xaml.cs">
       <DependentUpon>DialogImportImageDataXmlFile.xaml</DependentUpon>
     </Compile>
@@ -343,7 +343,6 @@
     </Compile>
     <Compile Include="Images\MarkableImageCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
-    <Compile Include="Images\PixelColor.cs" />
     <Compile Include="Util\RegistryUserSettings.cs" />
     <Compile Include="Controls.xaml.cs">
       <DependentUpon>Controls.xaml</DependentUpon>

@@ -63,7 +63,7 @@ namespace Timelapse.Database
             return true;
         }
 
-        public BitmapFrame LoadImage(string imageFolderPath)
+        public WriteableBitmap LoadImage(string imageFolderPath)
         {
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
@@ -75,7 +75,7 @@ namespace Timelapse.Database
                 // scanning through images with BitmapCacheOption.None results in less than 6% CPU in BitmapFrame.Create() and
                 // 90% in System.Windows.Application.Run(), suggesting little scope for optimization within Timelapse proper
                 // this is significantly faster than BitmapCacheOption.Default
-                return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
+                return new WriteableBitmap(BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None));
             }
             catch
             {

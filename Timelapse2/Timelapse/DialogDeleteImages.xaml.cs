@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
+using System.Windows.Media;
 using Timelapse.Database;
-using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -66,7 +64,7 @@ namespace Timelapse
             for (int i = 0; i < deletedImageTable.Rows.Count; i++)
             {
                 ImageProperties imageProperties = new ImageProperties(deletedImageTable.Rows[i]);
-                BitmapFrame bitmap = imageProperties.LoadImage(database.FolderPath);
+                ImageSource bitmap = imageProperties.LoadImage(database.FolderPath);
 
                 if (col == 0)
                 {

@@ -18,7 +18,7 @@ namespace Timelapse
     {
         private const int MinimumWidth = 12;
 
-        private BitmapFrame bitmap;
+        private WriteableBitmap bitmap;
         private int darkPixelThreshold = 0; // Default value
         private double darkPixelRatio = 0;  // Default value 
         private double darkPixelRatioFound = 0;
@@ -165,7 +165,7 @@ namespace Timelapse
             this.lblImageName.Content = this.imageEnumerator.Current.FileName;
             this.lblOriginalClassification.Content = this.imageEnumerator.Current.ImageQuality.ToString(); // The original image classification
 
-            this.Recalculate();
+            this.RecalculateIsDark();
             this.Repaint();
         }
         #endregion
@@ -233,7 +233,7 @@ namespace Timelapse
 
             // Move the slider to its original position
             this.sldrDarkThreshold.Value = this.state.DarkPixelRatioThreshold;
-            this.Recalculate();
+            this.RecalculateIsDark();
             this.Repaint();
         }
 
@@ -246,7 +246,7 @@ namespace Timelapse
 
             // Move the slider to its original position
             this.sldrDarkThreshold.Value = Constants.DarkPixelThresholdDefault;
-            this.Recalculate();
+            this.RecalculateIsDark();
             this.Repaint();
         }
         #endregion
@@ -261,7 +261,7 @@ namespace Timelapse
             }
             this.darkPixelThreshold = Convert.ToInt32(e.NewValue);
 
-            this.Recalculate();
+            this.RecalculateIsDark();
             this.Repaint();
         }
 
@@ -290,8 +290,8 @@ namespace Timelapse
                 return;
             }
 
-            this.Recalculate();
-            // We don't repaint, as this will screw up the thumb draggin. So just update the labels instead.
+            this.RecalculateIsDark();
+            // We don't repaint, as this will screw up the thumb dragging. So just update the labels instead.
             this.UpdateLabels();
         }
 
@@ -305,12 +305,11 @@ namespace Timelapse
 
         #region Work Utilities
         /// <summary>
-        ///  Recalculate the image darkness classification with the given thresholds and return the ratio of pixels
-        ///  at least as dark as the threshold for the current image
+        /// Redo image darkness classification with current thresholds and return the ratio of pixels at least as dark as the threshold for the current image.
         /// </summary>
-        private void Recalculate()
+        private void RecalculateIsDark()
         {
-            PixelBitmap.IsDark(this.bitmap, this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
+            this.bitmap.IsDark(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
         }
 
         private void RescanImageQuality()
@@ -349,9 +348,9 @@ namespace Timelapse
                     try
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
-                        // Note that if the image can't be created, we will just to the catch.
+                        // Note that if the image can't be created, we will just go to the catch.
                         imageQuality.Bitmap = imageQuality.LoadImage(this.database.FolderPath);
-                        imageQuality.NewImageQuality = PixelBitmap.IsDark(imageQuality.Bitmap, this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor) ? Constants.ImageQuality.Dark : Constants.ImageQuality.Ok;
+                        imageQuality.NewImageQuality = imageQuality.Bitmap.IsDark(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor) ? Constants.ImageQuality.Dark : Constants.ImageQuality.Ok;
                         imageQuality.IsColor = this.isColor;
                         imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
                         if (imageQuality.OldImageQuality.Equals(imageQuality.NewImageQuality))

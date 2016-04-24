@@ -9,7 +9,7 @@ namespace Timelapse.Images
     // otherwise the values may have changed on the other thread.
     public class ImageQuality : ImageProperties
     {
-        public BitmapFrame Bitmap { get; set; }
+        public WriteableBitmap Bitmap { get; set; }
         public double DarkPixelRatioFound { get; set; }
         public bool IsColor { get; set; }
         public string NewImageQuality { get; set; }
