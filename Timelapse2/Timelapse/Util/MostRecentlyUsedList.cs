@@ -32,6 +32,11 @@ namespace Timelapse.Util
             return this.list.GetEnumerator();
         }
 
+        public bool IsFull()
+        {
+            return this.list.Count == this.maximumItems;
+        }
+
         public void SetMostRecent(TElement mostRecent)
         {
             if (this.list.Remove(mostRecent) == false)
@@ -57,6 +62,18 @@ namespace Timelapse.Util
             }
 
             mostRecent = default(TElement);
+            return false;
+        }
+
+        public bool TryGetLeastRecent(out TElement leastRecent)
+        {
+            if (this.list.Count > 0)
+            {
+                leastRecent = this.list.Last.Value;
+                return true;
+            }
+
+            leastRecent = default(TElement);
             return false;
         }
 

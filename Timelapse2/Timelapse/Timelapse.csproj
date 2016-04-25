@@ -125,9 +125,12 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Database\CustomFilterOperator.cs" />
+    <Compile Include="Images\ImageDifferenceResult.cs" />
+    <Compile Include="Images\ImageCache.cs" />
     <Compile Include="Database\ImageTableEnumerator.cs" />
     <Compile Include="Images\FeedbackMessage.cs" />
     <Compile Include="Database\DateTimeAdjustment.cs" />
+    <Compile Include="Images\ImageDifference.cs" />
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
     <Compile Include="Images\MetaTagEventArgs.cs" />

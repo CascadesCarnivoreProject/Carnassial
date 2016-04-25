@@ -65,9 +65,9 @@ namespace Timelapse.Images
 
         public static bool IsDark(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio)
         {
-            double dummy1;
-            bool dummy2;
-            return image.IsDark(darkPixelThreshold, darkPixelRatio, out dummy1, out dummy2);
+            double ignored1;
+            bool ignored2;
+            return image.IsDark(darkPixelThreshold, darkPixelRatio, out ignored1, out ignored2);
         }
 
         // Return whether the image is mostly dark. This is done by counting the number of pixels that are

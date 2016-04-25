@@ -97,6 +97,8 @@ namespace Timelapse.Database
                         imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, value));
 
                         // capture components of image's unique identifier for constructing where clause
+                        // at least for now, it's assumed all image renames or moves are done through Timelapse and hence file name + folder path forms 
+                        // an immutable (and unique) ID for the image
                         if (dataLabel == Constants.DatabaseColumn.File)
                         {
                             imageFileName = value;

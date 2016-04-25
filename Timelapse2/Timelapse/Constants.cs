@@ -9,6 +9,7 @@ namespace Timelapse
     internal static class Constants
     {
         // Default Settings
+        public const int BitmapCacheSize = 9;
         public const double DarkPixelRatioThresholdDefault = 0.9; // The default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
         public const int DarkPixelThresholdDefault = 60; // The default threshold where a pixel color should be considered as 'dark' when checking image darkness. The Range is 0  (black) - 255 (white)
         public const int DefaultImageRowIndex = 0;

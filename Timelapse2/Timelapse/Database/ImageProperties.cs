@@ -97,6 +97,11 @@ namespace Timelapse.Database
 
         public DateTimeAdjustment TryUseImageTaken(BitmapMetadata metadata)
         {
+            if (metadata == null)
+            {
+                return DateTimeAdjustment.MetadataNotUsed;
+            }
+
             if (String.IsNullOrWhiteSpace(metadata.DateTaken) == false)
             {
                 // try to get the date from the metadata

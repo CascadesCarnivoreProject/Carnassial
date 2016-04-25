@@ -6,7 +6,7 @@ namespace Timelapse.Database
 {
     public class ImageTableEnumerator : IEnumerator<ImageProperties>
     {
-        private ImageDatabase database;
+        protected ImageDatabase Database { get; private set; }
 
         // the current image, null if its no been set or if the database is empty
         public ImageProperties Current { get; private set; }
@@ -19,7 +19,10 @@ namespace Timelapse.Database
 
         public ImageTableEnumerator(ImageDatabase database, int startingPosition)
         {
-            this.database = database;
+            this.CurrentRow = startingPosition;
+            this.Database = database;
+
+            // OK if this fails as ImageTableEnumerator..ctor(ImageDatabase) passes -1 to match default enumerator behaviour
             this.TryMoveToImage(startingPosition);
         }
 
@@ -41,7 +44,7 @@ namespace Timelapse.Database
             return this.TryMoveToImage(this.CurrentRow + 1);
         }
 
-        public void Reset()
+        public virtual void Reset()
         {
             this.TryMoveToImage(Constants.DefaultImageRowIndex);
         }
@@ -58,13 +61,13 @@ namespace Timelapse.Database
         /// Attempt to go to a particular image, returning true if we can otherwise false (e.g., if the index is out of range)
         /// Remember, that we are zero based, so (for example) and index of 5 will go to the sixth image
         /// </summary>
-        public bool TryMoveToImage(int imageRowIndex)
+        public virtual bool TryMoveToImage(int imageRowIndex)
         {
-            if (this.database.IsImageRowInRange(imageRowIndex))
+            if (this.Database.IsImageRowInRange(imageRowIndex))
             {
                 this.CurrentRow = imageRowIndex;
                 // rebuild ImageProperties regardless of whether the row changed or not as this seek may be a refresh after a database change
-                this.Current = new ImageProperties(this.database.ImageDataTable.Rows[imageRowIndex]);
+                this.Current = new ImageProperties(this.Database.ImageDataTable.Rows[imageRowIndex]);
                 return true;
             }
 
