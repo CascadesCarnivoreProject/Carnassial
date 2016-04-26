@@ -160,7 +160,7 @@ namespace Timelapse
         // Utility routine for calling a typical sequence of UI update actions
         private void DisplayImageAndDetails()
         {
-            this.bitmap = this.imageEnumerator.Current.LoadImage(this.database.FolderPath);
+            this.bitmap = this.imageEnumerator.Current.LoadWriteableBitmap(this.database.FolderPath);
             this.img.Source = this.bitmap;
             this.lblImageName.Content = this.imageEnumerator.Current.FileName;
             this.lblOriginalClassification.Content = this.imageEnumerator.Current.ImageQuality.ToString(); // The original image classification
@@ -349,7 +349,7 @@ namespace Timelapse
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just go to the catch.
-                        imageQuality.Bitmap = imageQuality.LoadImage(this.database.FolderPath);
+                        imageQuality.Bitmap = imageQuality.LoadWriteableBitmap(this.database.FolderPath);
                         imageQuality.NewImageQuality = imageQuality.Bitmap.IsDark(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor) ? Constants.ImageQuality.Dark : Constants.ImageQuality.Ok;
                         imageQuality.IsColor = this.isColor;
                         imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;

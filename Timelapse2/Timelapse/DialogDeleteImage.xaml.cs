@@ -64,7 +64,7 @@ namespace Timelapse
             this.deleteData = deleteData;
 
             // show the original image
-            ImageSource image = this.imageProperties.LoadImage(this.imageFolderPath);
+            ImageSource image = this.imageProperties.LoadWriteableBitmap(this.imageFolderPath);
             this.originalImage.Source = image;
 
             // show the deleted image

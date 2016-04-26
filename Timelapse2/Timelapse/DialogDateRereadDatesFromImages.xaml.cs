@@ -73,8 +73,9 @@ namespace Timelapse
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just to the catch.
-                        BitmapSource bitmap = imageProperties.LoadImage(database.FolderPath);
-                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmap.Metadata);
+                        // see remarks about framework WriteableBitmap.Metadata slicing bug in TimelapseWindow.LoadByScanningImageFolder()
+                        BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(database.FolderPath);
+                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapFrame.Metadata);
                         switch (imageTimeAdjustment)
                         {
                             case DateTimeAdjustment.MetadataNotUsed:

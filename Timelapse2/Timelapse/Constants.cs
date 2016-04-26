@@ -132,14 +132,14 @@ namespace Timelapse
 
         public static class Images
         {
-            public static readonly WriteableBitmap Corrupt;
-            public static readonly WriteableBitmap Missing;
+            public static readonly BitmapFrame Corrupt;
+            public static readonly BitmapFrame Missing;
 
             static Images()
             {
-                Images.Corrupt = new WriteableBitmap(BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand));
+                Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Corrupt.Freeze();
-                Images.Missing = new WriteableBitmap(BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand));
+                Images.Missing = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Missing.Freeze();
             }
         }

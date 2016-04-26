@@ -214,7 +214,7 @@ namespace Timelapse.Images
             if (this.unalteredBitmapsByID.TryGetValue(image.ID, out bitmap) == false)
             {
                 // load the requested bitmap from disk as isn't cached
-                bitmap = image.LoadImage(this.Database.FolderPath);
+                bitmap = image.LoadWriteableBitmap(this.Database.FolderPath);
 
                 // if the bitmap cache is full make room for the newly loaded bitmap
                 if (this.mostRecentlyUsedIDs.IsFull())

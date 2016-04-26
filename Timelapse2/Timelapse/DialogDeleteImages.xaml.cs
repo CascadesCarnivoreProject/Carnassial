@@ -64,7 +64,7 @@ namespace Timelapse
             for (int i = 0; i < deletedImageTable.Rows.Count; i++)
             {
                 ImageProperties imageProperties = new ImageProperties(deletedImageTable.Rows[i]);
-                ImageSource bitmap = imageProperties.LoadImage(database.FolderPath);
+                ImageSource bitmap = imageProperties.LoadWriteableBitmap(database.FolderPath);
 
                 if (col == 0)
                 {

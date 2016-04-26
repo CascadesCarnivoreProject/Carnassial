@@ -347,13 +347,16 @@ namespace Timelapse
                     {
                         // Create the bitmap and determine its ImageQuality
                         // avoid ImageProperties.LoadImage() here as the create exception needs to surface to set the image quality to corrupt
-                        bitmap = new WriteableBitmap(BitmapFrame.Create(new Uri(imageFile.FullName), BitmapCreateOptions.None, BitmapCacheOption.None));
+                        // framework bug: WriteableBitmap.Metadata returns null rather than metatada offered by the underlying BitmapFrame, so 
+                        // retain the frame and pass its metadata to TryUseImageTaken().
+                        BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
+                        bitmap = new WriteableBitmap(bitmapFrame);
 
                         bool isDark = bitmap.IsDark(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
                         imageProperties.ImageQuality = isDark ? ImageQualityFilter.Dark : ImageQualityFilter.Ok;
 
                         // see if the date can be updated from the metadata
-                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmap.Metadata);
+                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapFrame.Metadata);
                         if (imageTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed ||
                             imageTimeAdjustment == DateTimeAdjustment.MetadataDateUsed)
                         {
@@ -363,9 +366,10 @@ namespace Timelapse
                             }
                         }
                     }
-                    catch
+                    catch (Exception exception)
                     {
-                        bitmap = Constants.Images.Corrupt;
+                        Debug.Assert(false, String.Format("Load of {0} failed.", imageProperties.FileName), exception.ToString());
+                        bitmap = new WriteableBitmap(Constants.Images.Corrupt);
                         imageProperties.ImageQuality = ImageQualityFilter.Corrupted;
                     }
 
@@ -396,7 +400,7 @@ namespace Timelapse
                 this.imageDatabase.AddImages(imagePropertyList, (ImageProperties imageProperties, int imageIndex) =>
                 {
                     // Get the bitmap again to show it
-                    WriteableBitmap bitmap = imageProperties.LoadImage(this.FolderPath);
+                    WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.FolderPath);
 
                     // Show progress. Since its slow, we may as well do it every update
                     int addImageProgress = Convert.ToInt32(Convert.ToDouble(imageIndex) / Convert.ToDouble(imagePropertyList.Count) * 100);
@@ -1355,7 +1359,7 @@ namespace Timelapse
             // unique and immutable
             if (newImageToDisplay)
             {
-                WriteableBitmap unalteredImage = this.imageCache.Current.LoadImage(this.imageDatabase.FolderPath);
+                WriteableBitmap unalteredImage = this.imageCache.Current.LoadWriteableBitmap(this.imageDatabase.FolderPath);
                 this.markableCanvas.ImageToDisplay.Source = unalteredImage;
 
                 // Set the magImage to the source so the unaltered image will appear on the magnifying glass
