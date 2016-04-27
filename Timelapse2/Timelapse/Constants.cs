@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Windows.Media.Imaging;
 
 namespace Timelapse
 {
@@ -8,6 +9,7 @@ namespace Timelapse
     internal static class Constants
     {
         // Default Settings
+        public const int BitmapCacheSize = 9;
         public const double DarkPixelRatioThresholdDefault = 0.9; // The default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
         public const int DarkPixelThresholdDefault = 60; // The default threshold where a pixel color should be considered as 'dark' when checking image darkness. The Range is 0  (black) - 255 (white)
         public const int DefaultImageRowIndex = 0;
@@ -126,6 +128,20 @@ namespace Timelapse
             public const string Dark = "Dark";
             public const string Missing = "Missing";
             public const string Ok = "Ok";
+        }
+
+        public static class Images
+        {
+            public static readonly BitmapFrame Corrupt;
+            public static readonly BitmapFrame Missing;
+
+            static Images()
+            {
+                Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.Corrupt.Freeze();
+                Images.Missing = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.Missing.Freeze();
+            }
         }
 
         public static class Registry

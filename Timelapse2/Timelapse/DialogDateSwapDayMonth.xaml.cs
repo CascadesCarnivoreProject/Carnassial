@@ -32,18 +32,18 @@ namespace Timelapse
                 this.StackPanelError.Visibility = Visibility.Visible;
                 this.OkButton.Visibility = Visibility.Collapsed;
 
-                imageProperties = new ImageProperties(this.database.ImageDataTable.Rows.Find(id));
+                imageProperties = this.database.FindImageByID(id);
                 this.lblOriginalDate.Content = imageProperties.Date;
                 this.lblNewDate.Content = "No valid date possible";
             }
             else
             {
                 // We can swap the dates; provide appropriate feedback
-                imgNumber = this.database.FindNextDisplayableImage(0);
+                imgNumber = this.database.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
                 id = this.database.GetImageID(imgNumber);
                 if (id >= 0)
                 {
-                    imageProperties = new ImageProperties(this.database.ImageDataTable.Rows.Find(id));
+                    imageProperties = this.database.FindImageByID(id);
                     this.lblOriginalDate.Content = imageProperties.Date;
                     this.lblNewDate.Content = DateTimeHandler.SwapSingleDayMonth(imageProperties.Date);
                 }
@@ -56,7 +56,7 @@ namespace Timelapse
             }
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            this.imgDateImage.Source = imageProperties.LoadImage(this.database.FolderPath);
+            this.imgDateImage.Source = imageProperties.LoadWriteableBitmap(this.database.FolderPath);
         }
         #endregion
 
@@ -80,12 +80,10 @@ namespace Timelapse
             log.AppendLine("System entry: Swapped the days and months for all dates.");
             log.AppendLine("                       Old sample date was: " + this.lblOriginalDate.Content + " and new date is " + this.lblNewDate.Content);
             this.database.AppendToImageSetLog(log);
-            this.DialogResult = true;
 
-            // Refresh the database / datatable to reflect the updated values, which will also refressh the main timelpase display.
-            int currentImage = this.database.CurrentImageRow;
+            // Refresh the database / datatable to reflect the updated values
             this.database.TryGetImagesAll();
-            this.database.TryMoveToImage(currentImage);
+            this.DialogResult = true;
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

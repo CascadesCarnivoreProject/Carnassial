@@ -27,12 +27,12 @@ namespace Timelapse
             this.CounterControls = new List<DataEntryCounter>();
         }
 
-        public void GenerateControls(ImageDatabase database)
+        public void GenerateControls(ImageDatabase database, int startingPosition)
         {
             const string EXAMPLE_DATE = "28-Dec-2014";
             const string EXAMPLE_TIME = "04:00 PM";
 
-            this.Propagate = new PropagateControl(database);
+            this.Propagate = new PropagateControl(database, startingPosition);
 
             DataTable sortedControlTable = database.GetControlsSortedByControlOrder();
             for (int i = 0; i < sortedControlTable.Rows.Count; i++)

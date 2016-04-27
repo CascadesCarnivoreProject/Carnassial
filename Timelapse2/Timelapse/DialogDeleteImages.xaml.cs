@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
+using System.Windows.Media;
 using Timelapse.Database;
-using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -66,20 +64,7 @@ namespace Timelapse
             for (int i = 0; i < deletedImageTable.Rows.Count; i++)
             {
                 ImageProperties imageProperties = new ImageProperties(deletedImageTable.Rows[i]);
-                string path = imageProperties.GetImagePath(this.imageFolderPath);
-                BitmapImage image;
-                if (ImageQualityFilter.Corrupted == imageProperties.ImageQuality)
-                {
-                    image = this.GetImage(path, "corrupted");
-                }
-                else if (File.Exists(path))
-                {
-                    image = this.GetImage(path, "ok");
-                }
-                else
-                {
-                    image = this.GetImage(path, "missing");
-                }
+                ImageSource bitmap = imageProperties.LoadWriteableBitmap(database.FolderPath);
 
                 if (col == 0)
                 {
@@ -93,7 +78,7 @@ namespace Timelapse
                 imageLabel.VerticalAlignment = VerticalAlignment.Top;
 
                 System.Windows.Controls.Image imageControl = new System.Windows.Controls.Image();
-                imageControl.Source = image;
+                imageControl.Source = bitmap;
 
                 Grid.SetRow(imageLabel, row);
                 Grid.SetRow(imageControl, row + 1);
@@ -143,11 +128,7 @@ namespace Timelapse
                     imagesIDsToDelete.Add(imageProperties.ID);
                 }
 
-                string path = imageProperties.GetImagePath(this.imageFolderPath);
-                if (File.Exists(path))
-                {
-                    this.MoveImageToBackupFolder(this.imageFolderPath, imageProperties.FileName);
-                }
+                this.TryMoveImageToBackupFolder(this.imageFolderPath, imageProperties);
             }
 
             if (this.deleteData)
@@ -163,55 +144,34 @@ namespace Timelapse
         }
 
         /// <summary>
-        /// Display the original image in the dialog box, or a placeholder if we cannot
-        /// </summary>
-        private BitmapImage GetImage(string path, string state)
-        {
-            // Get and display the bitmap
-            BitmapImage bitmap = new BitmapImage();
-            bitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-
-            if (state.Equals("ok"))
-            {
-                Utilities.BitmapFromFile(bitmap, path, false);
-            }
-            else if (state.Equals("missing"))
-            {
-                bitmap = Utilities.BitmapFromResource(bitmap, "missing.jpg", true);
-            }
-            else if (state.Equals("corrupted"))
-            {
-                bitmap = Utilities.BitmapFromResource(bitmap, "corrupted.jpg", true);
-            }
-            return bitmap;
-        }
-
-        /// <summary>
         /// Create a backup of the current image file in the backup folder
         /// </summary>
-        private void MoveImageToBackupFolder(string folderPath, string fileName)
+        private bool TryMoveImageToBackupFolder(string folderPath, ImageProperties imageProperties)
         {
-            string sourceFile = Path.Combine(folderPath, fileName);
-            if (!File.Exists(sourceFile))
+            string sourceFilePath = imageProperties.GetImagePath(folderPath);
+            if (!File.Exists(sourceFilePath))
             {
-                return;  // If there is no source file, its a missing file so we can't back it up
+                return false;  // If there is no source file, its a missing file so we can't back it up
             }
 
-            string destFolder = Path.Combine(folderPath, Constants.File.BackupFolder);
-            string destFile = Path.Combine(destFolder, fileName);
-
             // Create a new target folder, if necessary.
-            if (!Directory.Exists(destFolder))
+            string destinationFolder = Path.Combine(folderPath, Constants.File.BackupFolder);
+            if (!Directory.Exists(destinationFolder))
             {
-                Directory.CreateDirectory(destFolder);
+                Directory.CreateDirectory(destinationFolder);
             }
 
             // Move the image file to another location. 
-            // However, if the destination file already exists don't overwrite it as its probably the original version.
-            if (!File.Exists(destFile))
+            // However, if the destination file already exists don't overwrite it as it's probably the original version.
+            // TODO: Saul  is it really OK if backups are lossy?
+            string destinationFilePath = Path.Combine(destinationFolder, imageProperties.FileName);
+            if (!File.Exists(destinationFilePath))
             {
-                File.Move(sourceFile, destFile);
+                File.Move(sourceFilePath, destinationFilePath);
+                return true;
             }
+
+            return false;
         }
         #endregion
 

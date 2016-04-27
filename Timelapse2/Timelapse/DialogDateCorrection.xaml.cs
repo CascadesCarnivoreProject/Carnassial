@@ -19,19 +19,19 @@ namespace Timelapse
         private ImageDatabase database;
 
         // Create the interface
-        public DialogDateCorrection(ImageDatabase database)
+        public DialogDateCorrection(ImageDatabase database, ImageProperties imageToCorrect)
         {
             this.InitializeComponent();
             this.database = database;
 
             // Get the original date time and display it
-            this.lblOriginalDate.Content = this.database.CurrentImage.Date + " " + this.database.CurrentImage.Time;
+            this.lblOriginalDate.Content = imageToCorrect.Date + " " + imageToCorrect.Time;
 
             // Get the image filename and display it
-            this.lblImageName.Content = this.database.CurrentImage.FileName;
+            this.lblImageName.Content = imageToCorrect.FileName;
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            this.imgDateImage.Source = this.database.CurrentImage.LoadImage(this.database.FolderPath);
+            this.imgDateImage.Source = imageToCorrect.LoadWriteableBitmap(this.database.FolderPath);
 
             // Try to put the original date / time into the corrected date field. If we can't, leave it as it is (i.e., as dd-mmm-yyyy hh:mm am).
             string format = "dd-MMM-yyyy hh:mm tt";
@@ -74,7 +74,7 @@ namespace Timelapse
                 }
 
                 // Update the database
-                this.database.AdjustAllImageTimes(timeDifference, 0, this.database.ImageCount); // For all rows...
+                this.database.AdjustAllImageTimes(timeDifference, 0, this.database.CurrentlySelectedImageCount); // For all rows...
 
                 // Add an entry into the log detailing what we just did
                 StringBuilder log = new StringBuilder(Environment.NewLine);
@@ -82,10 +82,8 @@ namespace Timelapse
                 log.AppendLine("                        Old sample date was: " + (string)this.lblOriginalDate.Content + " and new date is " + this.tbNewDate.Text);
                 this.database.AppendToImageSetLog(log);
 
-                // Refresh the database / datatable to reflect the updated values, which will also refressh the main timelpase display.
-                int current_row = this.database.CurrentImageRow;
+                // Refresh the database / datatable to reflect the updated values
                 this.database.TryGetImagesAll();
-                this.database.TryMoveToImage(current_row);
                 this.DialogResult = true;
             }
             catch

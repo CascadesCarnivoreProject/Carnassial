@@ -48,7 +48,7 @@
             <Setter Property="Focusable" Value="True" />
             <Setter Property="IsReadOnly" Value="False" />
         </Style>
-<!--
+        <!--
         <Style  x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -103,82 +103,82 @@
 
                 <!-- Edit Menu -->
                 <MenuItem Name="MenuItemEdit" Header="_Edit" IsEnabled="false" IsTabStop="false">
-                    <MenuItem Name="MenuItemCopyPreviousValues" IsCheckable="False" Header="_Copy Previous Values" Click="BtnCopy_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template."/>
-                    <MenuItem Name="MenuItemPopulateFieldFromMetaData" IsCheckable="False" Header="_Populate a Field with Image Metadata" ToolTip="Match a data field with an image metadata type. Then populate that field across all images with the corresponding image metadata value." Click="MenuItemPopulateFieldFromMetaData_Click"/>
-                    <MenuItem Header="Delete"  IsCheckable="False" SubmenuOpened="Delete_SubmenuOpening"  >
-                        <MenuItem Name="MenuItemDeleteImage" IsCheckable="False" Header="_The current image..." Click="MenuItemDeleteImage_Click"  ToolTip="Deletes the image but not the data associated with that image"/>
-                        <MenuItem Name="MenuItemDeleteImageAndData" IsCheckable="False" Header="_The current image and its data..." Click="MenuItemDeleteImage_Click"  ToolTip="Deletes the image and the data associated with it"/>
+                    <MenuItem Name="MenuItemCopyPreviousValues" IsCheckable="False" Header="_Copy previous values" Click="BtnCopy_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template."/>
+                    <MenuItem Name="MenuItemPopulateFieldFromMetaData" IsCheckable="False" Header="_Populate a field with image metadata..." ToolTip="Match a data field with an image metadata type. Then populate that field across all images with the corresponding image metadata value." Click="MenuItemPopulateFieldFromMetaData_Click"/>
+                    <MenuItem Header="D_elete"  IsCheckable="False" SubmenuOpened="Delete_SubmenuOpening"  >
+                        <MenuItem Name="MenuItemDeleteImage" IsCheckable="False" Header="The current _image..." Click="MenuItemDeleteImage_Click"  ToolTip="Deletes the image but not the data associated with that image"/>
+                        <MenuItem Name="MenuItemDeleteImageAndData" IsCheckable="False" Header="The current image and its _data..." Click="MenuItemDeleteImage_Click"  ToolTip="Deletes the image and the data associated with it"/>
                         <Separator/>
                         <MenuItem Name="MenuItemDeleteImages" IsCheckable="False" Header="_All images marked for deletion..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes all images marked for deletion, but leaves the data intact"/>
                         <MenuItem Name="MenuItemDeleteImagesAndData" IsCheckable="False" Header="_All images marked for deletion and their data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes all images marked for deletion, as well as the data associated with those images"/>
                     </MenuItem>
-                    <MenuItem Header="Date Correction"  IsCheckable="False" >
-                        <MenuItem Name="MenuItemRereadDatesfromImages" Header="_Re-read Dates from Images..."  Click="MenuItemRereadDatesfromImages_Click"  ToolTip="Re-read the dates from all the images" IsEnabled="True" />
-                        <MenuItem Name="MenuItemCorrectTimeChanges" Header="_Correct for Daylight Savings Time..."  Click="MenuItemCorrectDaylightSavings_Click"  ToolTip="Utilities to correct daylight saving time issues" IsEnabled="True" />
-                        <MenuItem Name="MenuItemCorrectDates" Header="_Add a Correction Value to Every Date..."  Click="MenuItemDateCorrections_Click"  ToolTip="Utilities to correct for dates that are not quite right" IsEnabled="True" />
-                        <MenuItem Name="MenuItemCheckModifyAmbiguousDates" Header="_Check And Modify Ambiguous Dates..."  Click="MenuItemCheckModifyAmbiguousDates_Click"  ToolTip="Check And modify (if needed) ambiguous dates on a day by day basis" IsEnabled="True" />
-                        <MenuItem Name="MenuItemSwapDayMonth" IsCheckable="False" Header="_Swap Day and Month for All Images..."  Click="MenuItemSwapDayMonth_Click" ToolTip="Swaps the day and month value in the Date field across all images, if possible"/>
+                    <MenuItem Header="_Date Correction" IsCheckable="False" >
+                        <MenuItem Name="MenuItemRereadDatesfromImages" Header="_Re-read dates from images..."  Click="MenuItemRereadDatesfromImages_Click"  ToolTip="Re-read the dates from all the images" IsEnabled="True" />
+                        <MenuItem Name="MenuItemCorrectTimeChanges" Header="Correct for _daylight savings time..."  Click="MenuItemCorrectDaylightSavings_Click"  ToolTip="Utilities to correct daylight saving time issues" IsEnabled="True" />
+                        <MenuItem Name="MenuItemCorrectDates" Header="Add a correction value to _every date..."  Click="MenuItemDateCorrections_Click"  ToolTip="Utilities to correct for dates that are not quite right" IsEnabled="True" />
+                        <MenuItem Name="MenuItemCheckModifyAmbiguousDates" Header="Check and modify _ambiguous dates..."  Click="MenuItemCheckModifyAmbiguousDates_Click"  ToolTip="Check And modify (if needed) ambiguous dates on a day by day basis" IsEnabled="True" />
+                        <MenuItem Name="MenuItemSwapDayMonth" IsCheckable="False" Header="_Swap day and month for all images..."  Click="MenuItemSwapDayMonth_Click" ToolTip="Swaps the day and month value in the Date field across all images, if possible"/>
                     </MenuItem>
- 
-                    <MenuItem Name="MenuItemLog" Header="_Edit notes for this Image Set..."  Click="MenuItemLog_Click"  ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this Image Set" IsEnabled="True" />
+
+                    <MenuItem Name="MenuItemLog" Header="Edit _notes for this image set..."  Click="MenuItemLog_Click"  ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this Image Set" IsEnabled="True" />
                 </MenuItem>
 
                 <!-- Options Menu -->
                 <MenuItem Name="MenuItemOptions" Header="_Options" IsEnabled="false" IsTabStop="false">
-                    <MenuItem Name="MenuItemControlsInSeparateWindow" IsCheckable="True" IsChecked="False" Header="_Controls in Separate Window" Click="MenuItemControlsInSeparateWindow_Click" ToolTip="Toggles whether your coding controls should appear in the main window or in a separate window"/>
-                    <MenuItem Name="MenuItemAudioFeedback" IsCheckable="True" IsChecked="False" Header="_Audio Feedback" Click="MenuItemAudioFeedback_Click" ToolTip="Toggles the audio that speaks the count whenever you add a counting mark to the image"/>
+                    <MenuItem Name="MenuItemControlsInSeparateWindow" IsCheckable="True" IsChecked="False" Header="_Controls in separate window" Click="MenuItemControlsInSeparateWindow_Click" ToolTip="Toggles whether your coding controls should appear in the main window or in a separate window"/>
+                    <MenuItem Name="MenuItemAudioFeedback" IsCheckable="True" IsChecked="False" Header="_Audio feedback" Click="MenuItemAudioFeedback_Click" ToolTip="Toggles the audio that speaks the count whenever you add a counting mark to the image"/>
                     <Separator/>
-                    <MenuItem Header="Magnifying Glass"  IsCheckable="False" >
+                    <MenuItem Header="_Magnifying Glass"  IsCheckable="False" >
                         <MenuItem Name="MenuItemMagnifier" IsCheckable="True" IsChecked="False" InputGestureText="M" Header="_Visibility" Click="MenuItemMagnifier_Click" ToolTip="Toggles the presence of the magnifying glass"/>
-                        <MenuItem Name="MenuItemMagnifierIncrease" IsCheckable="False" InputGestureText="U" Header="_Increase Magnification" Click="MenuItemMagnifierIncrease_Click" ToolTip="Increase the magnification of the magnifying glass"/>
-                        <MenuItem Name="MenuItemMagnifierDecrease" IsCheckable="False" InputGestureText="D" Header="_Decrease Magnification" Click="MenuItemMagnifierDecrease_Click" ToolTip="Decrease the magnification of the magnifying glass"/>
+                        <MenuItem Name="MenuItemMagnifierIncrease" IsCheckable="False" InputGestureText="U" Header="_Increase magnification" Click="MenuItemMagnifierIncrease_Click" ToolTip="Increase the magnification of the magnifying glass"/>
+                        <MenuItem Name="MenuItemMagnifierDecrease" IsCheckable="False" InputGestureText="D" Header="_Decrease magnification" Click="MenuItemMagnifierDecrease_Click" ToolTip="Decrease the magnification of the magnifying glass"/>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Name="MenuItemImageCounts" Header="_Show Image Counts..." Click="MenuItemImageCounts_Click" ToolTip="Displays statistics on the number of images and their types"/>
-                    <MenuItem Name="MenuItemViewFilteredDatabaseContents" Header="_Show Filtered Database Contents..." Click="MenuItemViewFilteredDatabaseContents_Click" ToolTip="Display the current filtered view of the (changing) database"/>
+                    <MenuItem Name="MenuItemImageCounts" Header="Show _image counts..." Click="MenuItemImageCounts_Click" ToolTip="Displays statistics on the number of images and their types"/>
+                    <MenuItem Name="MenuItemViewFilteredDatabaseContents" Header="Show _filtered database contents..." Click="MenuItemViewFilteredDatabaseContents_Click" ToolTip="Display the current filtered view of the (changing) database"/>
 
                     <Separator/>
-                    <MenuItem Name="MenuItemOptionsDarkImagesThreshold" Header="Customize the Threshold for Determining Dark Images..."  Click="MenuItemOptionsDarkImagesThreshold_Click"  ToolTip="Adjust two values that determine how images should be classified as dark" IsEnabled="True" />
-                    <MenuItem Name="MenuItemOptionsBox" Header="_Advanced Settings and Operations..."  InputGestureText="Ctl" Click="MenuItemOptions_Click"  ToolTip="Brings up options that should only be used by advanced users" IsEnabled="False" />
+                    <MenuItem Name="MenuItemOptionsDarkImagesThreshold" Header="Customize the _threshold for determining dark images..."  Click="MenuItemOptionsDarkImagesThreshold_Click"  ToolTip="Adjust two values that determine how images should be classified as dark" IsEnabled="True" />
+                    <MenuItem Name="MenuItemOptionsBox" Header="Advanced _settings and operations..."  InputGestureText="Ctl" Click="MenuItemOptions_Click"  ToolTip="Brings up options that should only be used by advanced users" IsEnabled="False" />
                 </MenuItem>
 
                 <!-- View Menu -->
                 <MenuItem x:Name="MenuItemView" Header="_View" IsEnabled="false" IsTabStop="false" SubmenuOpened="View_SubmenuOpening"  ToolTip="Zooming, navigating, and image differencing">
-                    <MenuItem Name="MenuItemViewNextImage" IsCheckable="False" Header="_View Next Image" Click="MenuItemViewNextImage_Click" InputGestureText="&#x2192;" ToolTip="View the next image in the image set"/>
-                    <MenuItem Name="MenuItemViewPreviousImage" IsCheckable="False" Header="_View Previous Image"  Click="MenuItemViewPreviousImage_Click" InputGestureText="&#x2190;" ToolTip="View the previous image in the image set"/>
-                    <Separator/>                    
-                    <MenuItem Name="MenuItemZoomIn" IsCheckable="False" Header="_Zoom In" Click="MenuItemZoomIn_Click" InputGestureText="&#x2039;" ToolTip="Zoom into this image"/>
-                    <MenuItem Name="MenuItemZoomOut" IsCheckable="False" Header="_Zoom Out"  Click="MenuItemZoomOut_Click" InputGestureText="&#x203A;" ToolTip="Zoom out of this image"/>
+                    <MenuItem Name="MenuItemViewNextImage" IsCheckable="False" Header="View _next image" Click="MenuItemViewNextImage_Click" InputGestureText="&#x2192;" ToolTip="View the next image in the image set"/>
+                    <MenuItem Name="MenuItemViewPreviousImage" IsCheckable="False" Header="View _previous image"  Click="MenuItemViewPreviousImage_Click" InputGestureText="&#x2190;" ToolTip="View the previous image in the image set"/>
                     <Separator/>
-                    <MenuItem x:Name="MenuItemBookmarkSavePanZoom" IsCheckable="False" Header="_Bookmark Current Zoom Region" InputGestureText="B" ToolTip="Save the current zoom region setting as a bookmark" Click="MenuItem_BookmarkSavePanZoom"/>
-                    <MenuItem x:Name="MenuItemBookmarkSetPanZoom" IsCheckable="False"  Header="Zoom to Bookmarked Region" InputGestureText="+" ToolTip="Zoom to the region saved in the bookmark" Click="MenuItem_BookmarkSetPanZoom"/>
-                    <MenuItem x:Name="MenuItemBookmarkDefaultPanZoom" IsCheckable="False" Header="_Zoom Out all the Way" InputGestureText="-" ToolTip="Zoom out to see the entire image" Click="MenuItem_BookmarkDefaultPanZoom"/>
+                    <MenuItem Name="MenuItemZoomIn" IsCheckable="False" Header="Zoom _in" Click="MenuItemZoomIn_Click" InputGestureText="&#x2039;" ToolTip="Zoom into this image"/>
+                    <MenuItem Name="MenuItemZoomOut" IsCheckable="False" Header="Zoom _out"  Click="MenuItemZoomOut_Click" InputGestureText="&#x203A;" ToolTip="Zoom out of this image"/>
                     <Separator/>
-                    <MenuItem Name="MenuItemViewDifferencesCycleThrough" IsCheckable="False" Header="_Cycle Through Image Differences" Click="MenuItemViewDifferencesCycleThrough_Click" InputGestureText="&#x2191;" ToolTip="View an image enhancement that cycles through the visual differences between the current image and the next image, and then the previous image"/>
-                    <MenuItem Name="MenuItemViewDifferencesCombined" IsCheckable="False" Header="_View  Combined Image Differences" Click="MenuItemViewDifferencesCombined_Click" InputGestureText="&#x2193;" ToolTip="View an image enhancement that shows, as a single image, the visual differences between the current image and the surrounding two images"/>
+                    <MenuItem x:Name="MenuItemBookmarkSavePanZoom" IsCheckable="False" Header="_Bookmark current zoom region" InputGestureText="B" ToolTip="Save the current zoom region setting as a bookmark" Click="MenuItem_BookmarkSavePanZoom"/>
+                    <MenuItem x:Name="MenuItemBookmarkSetPanZoom" IsCheckable="False"  Header="Zoom to bookmarked _region" InputGestureText="+" ToolTip="Zoom to the region saved in the bookmark" Click="MenuItem_BookmarkSetPanZoom"/>
+                    <MenuItem x:Name="MenuItemBookmarkDefaultPanZoom" IsCheckable="False" Header="Zoom out all the _way" InputGestureText="-" ToolTip="Zoom out to see the entire image" Click="MenuItem_BookmarkDefaultPanZoom"/>
+                    <Separator/>
+                    <MenuItem Name="MenuItemViewDifferencesCycleThrough" IsCheckable="False" Header="_Cycle through image differences" Click="MenuItemViewDifferencesCycleThrough_Click" InputGestureText="&#x2191;" ToolTip="View an image enhancement that cycles through the visual differences between the current image and the next image, and then the previous image"/>
+                    <MenuItem Name="MenuItemViewDifferencesCombined" IsCheckable="False" Header="_View combined image differences" Click="MenuItemViewDifferencesCombined_Click" InputGestureText="&#x2193;" ToolTip="View an image enhancement that shows, as a single image, the visual differences between the current image and the surrounding two images"/>
                     <Separator/>
                 </MenuItem>
 
                 <!-- Filter Menu -->
                 <MenuItem x:Name="MenuItemFilter" Header="F_ilter" IsEnabled="false" IsTabStop="false" SubmenuOpened="View_SubmenuOpening" ToolTip="Filter the data to only show a subset of the images">
-                    <MenuItem x:Name="MenuItemViewAllImages" IsCheckable="True" IsChecked="True" Header="_All Images" Click="MenuItemView_Click" ToolTip="Shows all images, including corrupted and dark ones"/>
-                    <MenuItem x:Name="MenuItemViewLightImages"   IsCheckable="True" IsChecked="False" Header="_Light Images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to remove those that are dark or corrupted"/>
-                    <MenuItem x:Name="MenuItemViewDarkImages" IsCheckable="True" IsChecked="False" Header="_Dark Images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only dark images"/>
-                    <MenuItem x:Name="MenuItemViewCorruptedImages" IsCheckable="True" IsChecked="False" Header="_Corrupted Images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only corrupted images"/>
-                    <MenuItem x:Name="MenuItemViewMissingImages"   IsCheckable="True" IsChecked="False" Header="_Missing Images"   Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only missing images"/>
-                    <MenuItem x:Name="MenuItemViewImagesMarkedForDeletion"  IsCheckable="True" IsChecked="False" Header="_Images Marked for Deletion"   Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only images marked for deletion"/>
+                    <MenuItem x:Name="MenuItemViewAllImages" IsCheckable="True" IsChecked="True" Header="_All images" Click="MenuItemView_Click" ToolTip="Shows all images, including corrupted and dark ones"/>
+                    <MenuItem x:Name="MenuItemViewLightImages"   IsCheckable="True" IsChecked="False" Header="_Light images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to remove those that are dark or corrupted"/>
+                    <MenuItem x:Name="MenuItemViewDarkImages" IsCheckable="True" IsChecked="False" Header="_Dark images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only dark images"/>
+                    <MenuItem x:Name="MenuItemViewCorruptedImages" IsCheckable="True" IsChecked="False" Header="_Corrupted images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only corrupted images"/>
+                    <MenuItem x:Name="MenuItemViewMissingImages"   IsCheckable="True" IsChecked="False" Header="_Missing images"   Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only missing images"/>
+                    <MenuItem x:Name="MenuItemViewImagesMarkedForDeletion"  IsCheckable="True" IsChecked="False" Header="_Images marked for deletion"   Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only images marked for deletion"/>
                     <MenuItem x:Name="MenuItemViewCustomFilter"  IsCheckable="True" IsChecked="False" Header="_Custom filter..."  ToolTip="Create a custom filter to display only particular images" Click="MenuItemViewCustomFilter_Click"/>
                 </MenuItem>
-                
+
                 <!-- Help Menu -->
                 <MenuItem Name="MenuItemHelp" Header="_Help" IsEnabled="true" IsTabStop="false">
-                    <MenuItem Name="MenuItemOverview" Header="_Brief Overview..." Click="MenuOverview_Click" ToolTip="A brief overview of how to use this software"/>
+                    <MenuItem Name="MenuItemOverview" Header="_Brief overview..." Click="MenuOverview_Click" ToolTip="A brief overview of how to use this software"/>
                     <Separator/>
-                    <MenuItem Name="MenuItemTimelapseHomePage" Header="_The Timelapse Web Page (via your web browser)" Click="MenuTimelapseWebPage_Click" ToolTip="Displays the Timelapse Image Analyzer web page in your browser"/>
-                    <MenuItem Name="MenuItemTutorialManual" Header="_Tutorial Manual (via your web browser)" Click="MenuTutorialManual_Click" ToolTip="Displays the Tutorial Manual - a large PDF file - in your browser"/>
-                    <MenuItem Name="MenuItemDownloadSampleImages" Header="Download Tutorial Sample Images (via your web browser)" Click="MenuDownloadSampleImages_Click" ToolTip="Using your browser, it downloads the sample image files used in the  Tutorial Manual for you to practise with"/>
-                    <MenuItem Name="MenuItemJoinMailingList" Header="Timelapse Mailing List - Join it (via your web browser)" Click="MenuJoinTimelapseMailingList_Click" ToolTip="Using your browser, go to the page that lets you join the timelapse mailing list. You will be informed about updates, and you can post requests to it."/>
-                    <MenuItem Name="MenuItemMailToMailingList" Header="Timelapse Mailing List - Send Email " Click="MenuMailToTimelapseMailingList_Click" ToolTip="Post an email to the Timelapse mailing list. You should join the mailing list before doing this."/>
+                    <MenuItem Name="MenuItemTimelapseHomePage" Header="The Timelapse _web page (via your web browser)" Click="MenuTimelapseWebPage_Click" ToolTip="Displays the Timelapse Image Analyzer web page in your browser"/>
+                    <MenuItem Name="MenuItemTutorialManual" Header="Tutorial _manual (via your web browser)" Click="MenuTutorialManual_Click" ToolTip="Displays the Tutorial Manual - a large PDF file - in your browser"/>
+                    <MenuItem Name="MenuItemDownloadSampleImages" Header="_Download tutorial sample images (via your web browser)" Click="MenuDownloadSampleImages_Click" ToolTip="Using your browser, it downloads the sample image files used in the  Tutorial Manual for you to practise with"/>
+                    <MenuItem Name="MenuItemJoinMailingList" Header="Timelapse mailing list - _Join it (via your web browser)" Click="MenuJoinTimelapseMailingList_Click" ToolTip="Using your browser, go to the page that lets you join the timelapse mailing list. You will be informed about updates, and you can post requests to it."/>
+                    <MenuItem Name="MenuItemMailToMailingList" Header="Timelapse mailing list - Send _email " Click="MenuMailToTimelapseMailingList_Click" ToolTip="Post an email to the Timelapse mailing list. You should join the mailing list before doing this."/>
                     <MenuItem Name="MenuItemAbout" Header="_About..." Click="MenuOverview_About" ToolTip="Displays version information about this program and how to contact its creator"/>
                 </MenuItem>
 
@@ -206,7 +206,7 @@
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="{x:Type Button}">
-                                            <Border Background="{TemplateBinding Background}" BorderBrush="DarkGray" BorderThickness="1" > 
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="DarkGray" BorderThickness="1" >
                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"  Margin="5,5,5,5" />
                                             </Border>
                                         </ControlTemplate>

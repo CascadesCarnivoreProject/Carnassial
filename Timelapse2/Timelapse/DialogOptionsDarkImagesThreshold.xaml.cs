@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -20,20 +18,22 @@ namespace Timelapse
     {
         private const int MinimumWidth = 12;
 
-        private ImageDatabase database;
-        private BitmapFrame bitmap;
+        private WriteableBitmap bitmap;
         private int darkPixelThreshold = 0; // Default value
         private double darkPixelRatio = 0;  // Default value 
         private double darkPixelRatioFound = 0;
+        private ImageDatabase database;
+        private ImageTableEnumerator imageEnumerator;
         private bool isColor = false; // Whether the image is color or grey scale
         private TimelapseState state;
 
         #region Window Initialization and Callbacks
-        public DialogOptionsDarkImagesThreshold(ImageDatabase database, TimelapseState state)
+        public DialogOptionsDarkImagesThreshold(ImageDatabase database, int currentImageIndex, TimelapseState state)
         {
             this.InitializeComponent();
 
             this.database = database;
+            this.imageEnumerator = new ImageTableEnumerator(database, currentImageIndex);
             this.darkPixelThreshold = state.DarkPixelThreshold;
             this.darkPixelRatio = state.DarkPixelRatioThreshold;
             this.state = state;
@@ -53,8 +53,8 @@ namespace Timelapse
             this.sldrDarkThreshold.ValueChanged += this.DarkThresholdSlider_ValueChanged;
 
             this.sldrScrollImages.Minimum = 0;
-            this.sldrScrollImages.Maximum = this.database.ImageCount - 1;
-            this.sldrScrollImages.Value = this.database.CurrentImageRow;
+            this.sldrScrollImages.Maximum = this.database.CurrentlySelectedImageCount - 1;
+            this.sldrScrollImages.Value = this.imageEnumerator.CurrentRow;
 
             this.SetPreviousNextButtonStates();
             this.SldrScrollImages_ValueChanged(null, null);
@@ -160,12 +160,12 @@ namespace Timelapse
         // Utility routine for calling a typical sequence of UI update actions
         private void DisplayImageAndDetails()
         {
-            this.bitmap = this.database.CurrentImage.LoadImage(this.database.FolderPath);
+            this.bitmap = this.imageEnumerator.Current.LoadWriteableBitmap(this.database.FolderPath);
             this.img.Source = this.bitmap;
-            this.lblImageName.Content = this.database.CurrentImage.FileName;
-            this.lblOriginalClassification.Content = this.database.CurrentImage.ImageQuality.ToString(); // The original image classification
+            this.lblImageName.Content = this.imageEnumerator.Current.FileName;
+            this.lblOriginalClassification.Content = this.imageEnumerator.Current.ImageQuality.ToString(); // The original image classification
 
-            this.Recalculate();
+            this.RecalculateIsDark();
             this.Repaint();
         }
         #endregion
@@ -180,21 +180,21 @@ namespace Timelapse
         // Navigate to the previous image
         private void PreviousButton_Click(object sender, RoutedEventArgs e)
         {
-            this.database.TryMoveToPreviousImage();
-            this.sldrScrollImages.Value = this.database.CurrentImageRow;
+            this.imageEnumerator.MovePrevious();
+            this.sldrScrollImages.Value = this.imageEnumerator.CurrentRow;
         }
 
         // Navigate to the next image
         private void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            this.database.TryMoveToNextImage();
-            this.sldrScrollImages.Value = this.database.CurrentImageRow;
+            this.imageEnumerator.MoveNext();
+            this.sldrScrollImages.Value = this.imageEnumerator.CurrentRow;
         }
 
         private void SetPreviousNextButtonStates()
         {
-            this.PrevButton.IsEnabled = (this.database.CurrentImageRow == 0) ? false : true;
-            this.NextButton.IsEnabled = (this.database.CurrentImageRow < this.database.ImageCount - 1) ? true : false;
+            this.PrevButton.IsEnabled = (this.imageEnumerator.CurrentRow == 0) ? false : true;
+            this.NextButton.IsEnabled = (this.imageEnumerator.CurrentRow < this.database.CurrentlySelectedImageCount - 1) ? true : false;
         }
 
         // Update the database if the OK button is clicked
@@ -233,7 +233,7 @@ namespace Timelapse
 
             // Move the slider to its original position
             this.sldrDarkThreshold.Value = this.state.DarkPixelRatioThreshold;
-            this.Recalculate();
+            this.RecalculateIsDark();
             this.Repaint();
         }
 
@@ -246,7 +246,7 @@ namespace Timelapse
 
             // Move the slider to its original position
             this.sldrDarkThreshold.Value = Constants.DarkPixelThresholdDefault;
-            this.Recalculate();
+            this.RecalculateIsDark();
             this.Repaint();
         }
         #endregion
@@ -261,7 +261,7 @@ namespace Timelapse
             }
             this.darkPixelThreshold = Convert.ToInt32(e.NewValue);
 
-            this.Recalculate();
+            this.RecalculateIsDark();
             this.Repaint();
         }
 
@@ -290,14 +290,14 @@ namespace Timelapse
                 return;
             }
 
-            this.Recalculate();
-            // We don't repaint, as this will screw up the thumb draggin. So just update the labels instead.
+            this.RecalculateIsDark();
+            // We don't repaint, as this will screw up the thumb dragging. So just update the labels instead.
             this.UpdateLabels();
         }
 
         private void SldrScrollImages_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            this.database.TryMoveToImage(Convert.ToInt32(this.sldrScrollImages.Value));
+            this.imageEnumerator.TryMoveToImage(Convert.ToInt32(this.sldrScrollImages.Value));
             this.DisplayImageAndDetails();
             this.SetPreviousNextButtonStates();
         }
@@ -305,12 +305,11 @@ namespace Timelapse
 
         #region Work Utilities
         /// <summary>
-        ///  Recalculate the image darkness classification with the given thresholds and return the ratio of pixels
-        ///  at least as dark as the threshold for the current image
+        /// Redo image darkness classification with current thresholds and return the ratio of pixels at least as dark as the threshold for the current image.
         /// </summary>
-        private void Recalculate()
+        private void RecalculateIsDark()
         {
-            PixelBitmap.IsDark(this.bitmap, this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
+            this.bitmap.IsDark(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
         }
 
         private void RescanImageQuality()
@@ -330,7 +329,7 @@ namespace Timelapse
                 }));
 
                 // TODO: MAKE DB UPDATE EFFICIENT
-                int images = database.ImageCount;
+                int images = database.CurrentlySelectedImageCount;
                 for (int image = 0; image < images; image++)
                 {
                     ImageQuality imageQuality = new ImageQuality(database.ImageDataTable.Rows[image]);
@@ -349,9 +348,9 @@ namespace Timelapse
                     try
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
-                        // Note that if the image can't be created, we will just to the catch.
-                        imageQuality.Bitmap = imageQuality.LoadImage(this.database.FolderPath);
-                        imageQuality.NewImageQuality = PixelBitmap.IsDark(imageQuality.Bitmap, this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor) ? Constants.ImageQuality.Dark : Constants.ImageQuality.Ok;
+                        // Note that if the image can't be created, we will just go to the catch.
+                        imageQuality.Bitmap = imageQuality.LoadWriteableBitmap(this.database.FolderPath);
+                        imageQuality.NewImageQuality = imageQuality.Bitmap.IsDark(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor) ? Constants.ImageQuality.Dark : Constants.ImageQuality.Ok;
                         imageQuality.IsColor = this.isColor;
                         imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
                         if (imageQuality.OldImageQuality.Equals(imageQuality.NewImageQuality))

@@ -16,10 +16,6 @@ namespace Timelapse.Database
         // A pointer to the Timelapse Data database
         private SQLiteWrapper database;
 
-        // the current image, null if its no been set or if the database is empty
-        public ImageProperties CurrentImage { get; private set; }
-        public int CurrentImageRow { get; private set; }
-
         /// <summary>Gets the file name of the image database on disk.</summary>
         public string FileName { get; private set; }
 
@@ -42,8 +38,6 @@ namespace Timelapse.Database
         public ImageDatabase(string folderPath, string fileName)
         {
             this.ControlTypeFromDataLabel = new Dictionary<string, string>();
-            this.CurrentImage = null;
-            this.CurrentImageRow = -1;
             this.DataLabelFromColumnName = new Dictionary<string, string>();
             this.ImageDataTable = new DataTable();
             this.FolderPath = folderPath;
@@ -52,7 +46,7 @@ namespace Timelapse.Database
         }
 
         /// <summary>Gets the number of images currently in the image table.</summary>
-        public int ImageCount
+        public int CurrentlySelectedImageCount
         {
             get { return this.ImageDataTable.Rows.Count; }
         }
@@ -352,6 +346,11 @@ namespace Timelapse.Database
             return File.Exists(this.GetDatabaseFilePath());
         }
 
+        public ImageProperties FindImageByID(long id)
+        {
+            return new ImageProperties(this.ImageDataTable.Rows.Find(id));
+        }
+
         public void InitializeMarkerTableFromDataTable()
         {
             string command = "Select * FROM " + Constants.Database.MarkersTable;
@@ -556,6 +555,11 @@ namespace Timelapse.Database
             return this.database.GetCountFromSelect(query);
         }
 
+        public ImageProperties GetImage(int row)
+        {
+            return new ImageProperties(this.ImageDataTable.Rows[row]);
+        }
+
         // This first form just returns the count of all images with no filters applied
         public int GetImageCount()
         {
@@ -647,7 +651,7 @@ namespace Timelapse.Database
         public void UpdateAllImagesInFilteredView(string dataLabel, string value)
         {
             List<ColumnTuplesWithWhere> updateQuery = new List<ColumnTuplesWithWhere>();
-            for (int i = 0; i < this.ImageCount; i++)
+            for (int i = 0; i < this.CurrentlySelectedImageCount; i++)
             {
                 this.ImageDataTable.Rows[i][dataLabel] = value;
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
@@ -778,14 +782,14 @@ namespace Timelapse.Database
         // It also assumes that the data table is showing All images
         public void ExchangeDayAndMonthInImageDate()
         {
-            this.ExchangeDayAndMonthInImageDate(0, this.ImageCount);
+            this.ExchangeDayAndMonthInImageDate(0, this.CurrentlySelectedImageCount);
         }
 
         // Update all the date fields between the start and end index by swapping the days and months.
         // It  assumes that the data table is showing All images
         public void ExchangeDayAndMonthInImageDate(int startRow, int endRow)
         {
-            if (this.ImageCount == 0 || startRow >= this.ImageCount || endRow >= this.ImageCount)
+            if (this.CurrentlySelectedImageCount == 0 || startRow >= this.CurrentlySelectedImageCount || endRow >= this.CurrentlySelectedImageCount)
             {
                 return;
             }
@@ -841,48 +845,6 @@ namespace Timelapse.Database
             this.database.Delete(Constants.Database.ImageDataTable, Constants.DatabaseColumn.ID + " = " + id.ToString());
         }
 
-        /// <summary> 
-        /// Go to the first image, returning true if we can otherwise false
-        /// </summary>
-        public bool TryMoveToFirstImage()
-        {
-            return this.TryMoveToImage(0);
-        }
-
-        /// <summary> 
-        /// Go to the next image, returning false if we can't (e.g., if we are at the end) 
-        /// </summary>
-        public bool TryMoveToNextImage()
-        {
-            return this.TryMoveToImage(this.CurrentImageRow + 1);
-        }
-
-        /// <summary>
-        /// Go to the previous image, returning true if we can otherwise false (e.g., if we are at the beginning)
-        /// </summary>
-        public bool TryMoveToPreviousImage()
-        {
-            return this.TryMoveToImage(this.CurrentImageRow - 1);
-        }
-
-        /// <summary>
-        /// Go to a particular image, returning true if we can otherwise false (e.g., if the index is out of range)
-        /// Remember, that we are zero based, so (for example) and index of 5 will go to the sixth image
-        /// </summary>
-        public bool TryMoveToImage(int imageRowIndex)
-        {
-            if (this.IsImageRowInRange(imageRowIndex))
-            {
-                this.CurrentImageRow = imageRowIndex;
-                this.CurrentImage = new ImageProperties(this.ImageDataTable.Rows[this.CurrentImageRow]);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
         // Given a row index, return the ID
         public int GetImageID(int rowIndex)
         {
@@ -901,12 +863,7 @@ namespace Timelapse.Database
             }
         }
 
-        public string GetCurrentImageValue(string dataLabel)
-        {
-            return this.GetImageValue(dataLabel, this.CurrentImageRow);
-        }
-
-        public string GetImageValue(string dataLabel, int rowIndex)
+        public string GetImageValue(int rowIndex, string dataLabel)
         {
             if (this.IsImageRowInRange(rowIndex))
             {
@@ -919,9 +876,9 @@ namespace Timelapse.Database
         }
 
         /// <summary>A convenience routine for checking to see if the image in the given row is displayable (i.e., not corrupted or missing)</summary>
-        public bool IsImageDisplayable(int row)
+        public bool IsImageDisplayable(int rowIndex)
         {
-            string result = this.GetImageValue(this.DataLabelFromColumnName[Constants.DatabaseColumn.ImageQuality], row);
+            string result = this.GetImageValue(rowIndex, this.DataLabelFromColumnName[Constants.DatabaseColumn.ImageQuality]);
             if (result.Equals(Constants.ImageQuality.Corrupted) || result.Equals(Constants.ImageQuality.Missing))
             {
                 return false;
@@ -929,17 +886,22 @@ namespace Timelapse.Database
             return true;
         }
 
-        /// <summary>A convenience routine for checking to see if the image in the given row is corrupted</summary>
-        public bool IsImageCorrupt(int row)
+        public bool IsImageRowInRange(int imageRowIndex)
         {
-            string result = this.GetImageValue(this.DataLabelFromColumnName[Constants.DatabaseColumn.ImageQuality], row);
+            return (imageRowIndex >= 0) && (imageRowIndex < this.CurrentlySelectedImageCount) ? true : false;
+        }
+
+        /// <summary>A convenience routine for checking to see if the image in the given row is corrupted</summary>
+        public bool IsImageCorrupt(int rowIndex)
+        {
+            string result = this.GetImageValue(rowIndex, this.DataLabelFromColumnName[Constants.DatabaseColumn.ImageQuality]);
             return result.Equals(Constants.ImageQuality.Corrupted) ? true : false;
         }
 
         // Find the next displayable image after the provided row in the current image set
-        public int FindNextDisplayableImage(int initialRow)
+        public int FindFirstDisplayableImage(int firstRowInSearch)
         {
-            for (int row = initialRow; row < this.ImageCount; row++)
+            for (int row = firstRowInSearch; row < this.CurrentlySelectedImageCount; row++)
             {
                 if (this.IsImageDisplayable(row))
                 {
@@ -972,15 +934,6 @@ namespace Timelapse.Database
             return (string)foundRow[Constants.Control.DefaultValue];
         }
 
-        public void UpdateCurrentImage(string dataLabel, string value)
-        {
-            if (this.IsImageRowInRange(this.CurrentImageRow))
-            {
-                this.ImageDataTable.Rows[this.CurrentImageRow][dataLabel] = value;
-                this.UpdateImage(this.CurrentImage.ID, dataLabel, value);
-            }
-        }
-
         // Check if the White Space column exists in the ImageSetTable
         public bool DoesWhiteSpaceColumnExist()
         {
@@ -1004,7 +957,7 @@ namespace Timelapse.Database
         /// It will have a MetaTagCounter for each control, even if there may be no metatags in it
         /// </summary>
         /// <returns>list of counters</returns>
-        public List<MetaTagCounter> GetMetaTagCounters()
+        public List<MetaTagCounter> GetMetaTagCounters(long imageID)
         {
             List<MetaTagCounter> metaTagCounters = new List<MetaTagCounter>();
 
@@ -1019,7 +972,7 @@ namespace Timelapse.Database
             }
 
             // Get the current row number of the id in the marker table
-            int row_num = this.FindMarkerRow(this.CurrentImage.ID);
+            int row_num = this.FindMarkerRow(imageID);
             if (row_num < 0)
             {
                 return metaTagCounters;
@@ -1070,12 +1023,13 @@ namespace Timelapse.Database
         /// <summary>
         /// Set the list of marker points on the current row in the marker table. 
         /// </summary>
+        /// <param name="imageID">the identifier of the row to update</param>
         /// <param name="dataLabel">data label</param>
         /// <param name="pointList">A list of points in the form x,y|x,y|x,y</param>
-        public void SetMarkerPoints(string dataLabel, string pointList)
+        public void SetMarkerPoints(long imageID, string dataLabel, string pointList)
         {
             // Find the current row number
-            int row_num = this.FindMarkerRow(this.CurrentImage.ID);
+            int row_num = this.FindMarkerRow(imageID);
             if (row_num < 0)
             {
                 return;
@@ -1083,7 +1037,7 @@ namespace Timelapse.Database
 
             // Update the database and datatable
             this.MarkerTable.Rows[row_num][dataLabel] = pointList;
-            this.UpdateID(this.CurrentImage.ID, dataLabel, pointList, Constants.Database.MarkersTable);  // Update the database
+            this.UpdateID(imageID, dataLabel, pointList, Constants.Database.MarkersTable);  // Update the database
         }
 
         public void UpdateImageSetFilter(ImageQualityFilter filter)
@@ -1207,11 +1161,6 @@ namespace Timelapse.Database
         private void ImageSetSetValue(string key, string value)
         {
             this.UpdateID(1, Constants.DatabaseColumn.Log, value, Constants.Database.ImageSetTable);
-        }
-
-        private bool IsImageRowInRange(int imageRowIndex)
-        {
-            return (imageRowIndex >= 0) && (imageRowIndex < this.ImageCount) ? true : false;
         }
     }
 }

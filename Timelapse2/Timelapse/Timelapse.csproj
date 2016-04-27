@@ -125,7 +125,12 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Database\CustomFilterOperator.cs" />
+    <Compile Include="Images\ImageDifferenceResult.cs" />
+    <Compile Include="Images\ImageCache.cs" />
+    <Compile Include="Database\ImageTableEnumerator.cs" />
     <Compile Include="Images\FeedbackMessage.cs" />
+    <Compile Include="Database\DateTimeAdjustment.cs" />
+    <Compile Include="Images\ImageDifference.cs" />
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
     <Compile Include="Images\MetaTagEventArgs.cs" />
@@ -275,7 +280,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Images\MetaTag.cs" />
-    <Compile Include="Images\PixelBitmap.cs" />
+    <Compile Include="Images\WriteableBitmapExtensions.cs" />
     <Compile Include="DialogImportImageDataXmlFile.xaml.cs">
       <DependentUpon>DialogImportImageDataXmlFile.xaml</DependentUpon>
     </Compile>
@@ -341,7 +346,6 @@
     </Compile>
     <Compile Include="Images\MarkableImageCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
-    <Compile Include="Images\PixelColor.cs" />
     <Compile Include="Util\RegistryUserSettings.cs" />
     <Compile Include="Controls.xaml.cs">
       <DependentUpon>Controls.xaml</DependentUpon>

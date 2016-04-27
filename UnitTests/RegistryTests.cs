@@ -21,6 +21,7 @@ namespace Timelapse.UnitTests
             MostRecentlyUsedList<int> mruList = new MostRecentlyUsedList<int>(5);
 
             mruList.SetMostRecent(0);
+            Assert.IsFalse(mruList.IsFull());
             int mostRecent;
             Assert.IsTrue(mruList.TryGetMostRecent(out mostRecent));
             Assert.IsTrue(mostRecent == 0);
@@ -29,6 +30,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(list[0] == 0);
 
             mruList.SetMostRecent(1);
+            Assert.IsFalse(mruList.IsFull());
             Assert.IsTrue(mruList.TryGetMostRecent(out mostRecent));
             Assert.IsTrue(mostRecent == 1);
             list = mruList.ToList();
@@ -37,6 +39,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(list[1] == 0);
 
             mruList.SetMostRecent(0);
+            Assert.IsFalse(mruList.IsFull());
             Assert.IsTrue(mruList.TryGetMostRecent(out mostRecent));
             Assert.IsTrue(mostRecent == 0);
             list = mruList.ToList();
@@ -45,12 +48,14 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(list[1] == 1);
 
             Assert.IsTrue(mruList.TryRemove(0));
+            Assert.IsFalse(mruList.IsFull());
             list = mruList.ToList();
             Assert.IsTrue(list.Count == 1);
             Assert.IsTrue(list[0] == 1);
 
             Assert.IsFalse(mruList.TryRemove(0));
             Assert.IsTrue(mruList.TryRemove(1));
+            Assert.IsFalse(mruList.IsFull());
             list = mruList.ToList();
             Assert.IsTrue(list.Count == 0);
 
@@ -60,6 +65,7 @@ namespace Timelapse.UnitTests
             mruList.SetMostRecent(5);
             mruList.SetMostRecent(6);
             mruList.SetMostRecent(7);
+            Assert.IsTrue(mruList.IsFull());
             Assert.IsTrue(mruList.TryGetMostRecent(out mostRecent));
             Assert.IsTrue(mostRecent == 7);
             list = mruList.ToList();
@@ -71,6 +77,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(list[4] == 3);
 
             mruList.SetMostRecent(6);
+            Assert.IsTrue(mruList.IsFull());
             Assert.IsTrue(mruList.TryGetMostRecent(out mostRecent));
             Assert.IsTrue(mostRecent == 6);
             list = mruList.ToList();
@@ -82,6 +89,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(list[4] == 3);
 
             mruList.SetMostRecent(3);
+            Assert.IsTrue(mruList.IsFull());
             Assert.IsTrue(mruList.TryGetMostRecent(out mostRecent));
             Assert.IsTrue(mostRecent == 3);
             list = mruList.ToList();
@@ -93,13 +101,20 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(list[4] == 4);
 
             Assert.IsFalse(mruList.TryRemove(-1));
+            Assert.IsTrue(mruList.IsFull());
+
             Assert.IsTrue(mruList.TryRemove(5));
+            Assert.IsFalse(mruList.IsFull());
             list = mruList.ToList();
             Assert.IsTrue(list.Count == 4);
             Assert.IsTrue(list[0] == 3);
             Assert.IsTrue(list[1] == 6);
             Assert.IsTrue(list[2] == 7);
             Assert.IsTrue(list[3] == 4);
+
+            int leastRecent;
+            Assert.IsTrue(mruList.TryGetLeastRecent(out leastRecent));
+            Assert.IsTrue(leastRecent == 4);
         }
 
         /// <summary>
