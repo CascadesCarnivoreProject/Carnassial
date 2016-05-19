@@ -309,6 +309,8 @@
     <Compile Include="Database\ImageProperties.cs" />
     <Compile Include="Database\ImageQualityFilter.cs" />
     <Compile Include="Images\MetaTagCounter.cs" />
+    <Compile Include="Util\ControlLabelStyle.cs" />
+    <Compile Include="Util\ControlContentStyle.cs" />
     <Compile Include="Util\MostRecentlyUsedList.cs" />
     <Compile Include="Util\DataEntryControl.cs" />
     <Compile Include="Util\DataEntryCounter.cs" />

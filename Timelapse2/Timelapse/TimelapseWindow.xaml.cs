@@ -561,16 +561,16 @@ namespace Timelapse
             this.MenuItemMagnifier.IsChecked = this.markableCanvas.IsMagnifyingGlassVisible;
 
             // Also adjust the visibility of the various other UI components.
-            this.helpControl.Visibility = System.Windows.Visibility.Collapsed;
-            this.DockPanelNavigator.Visibility = System.Windows.Visibility.Visible;
-            this.controlsTray.Visibility = System.Windows.Visibility.Visible;
-            this.btnCopy.Visibility = System.Windows.Visibility.Visible;
+            this.btnCopy.Visibility = Visibility.Visible;
+            this.controlsTray.Visibility = Visibility.Visible;
+            this.DockPanelNavigator.Visibility = Visibility.Visible;
+            this.helpControl.Visibility = Visibility.Collapsed;
 
             // Set the image set filter to all images. This should also set the correct count, etc. 
             StatusBarUpdate.View(this.statusBar, "all images.");
 
-            // Show the image, Hide the load button, and make the feedback panels visible
-            this.SldrImageNavigatorEnableCallback(false);
+            // Show the image, hide the load button, and make the feedback panels visible
+            this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
             this.markableCanvas.Focus(); // We start with this having the focus so it can interpret keyboard shortcuts if needed. 
 
             // set the current filter and the image index to the same as the ones in the last session, providing that we are working 
@@ -885,14 +885,14 @@ namespace Timelapse
             }
 
             // After a filter change, set the slider to represent the index and the count of the current filter
-            this.SldrImageNavigatorEnableCallback(false);
-            this.sldrImageNavigator.Maximum = this.imageDatabase.CurrentlySelectedImageCount - 1;  // Reset the slider to the size of images in this set
-            this.sldrImageNavigator.Value = this.imageCache.CurrentRow;
+            this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
+            this.ImageNavigatorSlider.Maximum = this.imageDatabase.CurrentlySelectedImageCount - 1;  // Reset the slider to the size of images in this set
+            this.ImageNavigatorSlider.Value = this.imageCache.CurrentRow;
 
             // Update the status bar accordingly
             StatusBarUpdate.CurrentImageNumber(this.statusBar, this.imageCache.CurrentRow + 1);  // We add 1 because its a 0-based list
             StatusBarUpdate.TotalCount(this.statusBar, this.imageDatabase.CurrentlySelectedImageCount);
-            this.SldrImageNavigatorEnableCallback(true);
+            this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
             this.state.ImageFilter = filter;    // Remember the current filter
 
             // Display the first available image under the new filter
@@ -963,18 +963,14 @@ namespace Timelapse
         /// Whenever the user hits enter over the control, set the focus back to the top-level
         /// </summary>
         /// <param name="sender">source of the event</param>
-        /// <param name="e">event information</param>
-        private void ContentCtl_PreviewKeyDown(object sender, KeyEventArgs e)
+        /// <param name="eventArgs">event information</param>
+        private void ContentCtl_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
         {
-            if (e.Key == Key.Enter)
+            if (eventArgs.Key == Key.Enter)
             {
-                this.SetTopLevelFocus(false); // The false means don't check to see if a textbox or control has the focus, as we want to reset the focus elsewhere
-                e.Handled = true;
-            }
-            else
-            {
-                Control ctlSender = (Control)sender;
-                ctlSender.Focus();
+                // The false means don't check to see if a textbox or control has the focus, as we want to reset the focus elsewhere
+                this.SetTopLevelFocus(false, eventArgs);
+                eventArgs.Handled = true;
             }
         }
 
@@ -1027,6 +1023,63 @@ namespace Timelapse
             this.RefreshTheMarkableCanvasListOfMetaTags();
         }
 
+        private void MoveFocusToNextOrPreviousControlOrImageSlider(bool moveToPreviousControl)
+        {
+            // identify the currently selected control
+            // if focus is currently set to the canvas this defaults to the first or last control, as appropriate
+            int currentControl = moveToPreviousControl ? this.dataEntryControls.DataEntryControls.Count : -1;
+
+            IInputElement focusedElement = FocusManager.GetFocusedElement(this);
+            if (focusedElement != null)
+            {
+                Type type = focusedElement.GetType();
+                if (typeof(CheckBox) == type ||
+                    typeof(ComboBox) == type ||
+                    typeof(ComboBoxItem) == type ||
+                    typeof(TextBox) == type)
+                {
+                    DataEntryControl focusedControl = (DataEntryControl)((Control)focusedElement).Tag;
+                    int index = 0;
+                    foreach (DataEntryControl control in this.dataEntryControls.DataEntryControls)
+                    {
+                        if (Object.ReferenceEquals(focusedControl, control))
+                        {
+                            currentControl = index;
+                        }
+                        ++index;
+                    }
+                }
+            }
+
+            // move to the next or previous control as available
+            Func<int, int> incrementOrDecrement;
+            if (moveToPreviousControl)
+            {
+                incrementOrDecrement = (int index) => { return --index; };
+            }
+            else
+            {
+                incrementOrDecrement = (int index) => { return ++index; };
+            }
+
+            for (currentControl = incrementOrDecrement(currentControl); 
+                 currentControl > -1 && currentControl < this.dataEntryControls.DataEntryControls.Count;
+                 currentControl = incrementOrDecrement(currentControl))
+            {
+                DataEntryControl control = this.dataEntryControls.DataEntryControls[currentControl];
+                if (control.ReadOnly == false)
+                {
+                    control.Focus();
+                    return;
+                }
+            }
+
+            // no control was found so set focus to the slider
+            // this has also the desirable side effect of binding the controls into both next and previous loops so that keys can be used to cycle
+            // continuously through them
+            this.ImageNavigatorSlider.Focus();
+        }
+
         // Whenever the text in a particular note box changes, update the particular note field in the database 
         private void NoteCtl_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -1036,8 +1089,28 @@ namespace Timelapse
             }
 
             TextBox textBox = (TextBox)sender;
-            textBox.Text = textBox.Text.TrimStart();  // Don't allow leading spaces in the note
+
+            // Don't allow leading whitespace in the note
+            // Updating the text box moves the caret to the start position, which results in poor user experience when the text box initially contains only
+            // whitespace and the user happens to move focus to the control in such a way that the first non-whitespace character entered follows some of the
+            // whitespace---the result's the first character of the word ends up at the end rather than at the beginning.  Whitespace only fields are common
+            // as the Template Editor defaults note fields to a single space.
+            int cursorPosition = textBox.CaretIndex;
+            string trimmedNote = textBox.Text.TrimStart();
+            if (trimmedNote != textBox.Text)
+            {
+                cursorPosition -= textBox.Text.Length - trimmedNote.Length;
+                if (cursorPosition < 0)
+                {
+                    cursorPosition = 0;
+                }
+
+                textBox.Text = trimmedNote;
+                textBox.CaretIndex = cursorPosition;
+            }
+
             // Get the key identifying the control, and then add its value to the database
+            // any trailing whitespace is also removed
             DataEntryControl control = (DataEntryControl)textBox.Tag;
             this.imageDatabase.UpdateImage(this.imageCache.Current.ID, control.DataLabel, textBox.Text.Trim());
             this.state.IsContentChanged = true; // We've altered some content
@@ -1080,7 +1153,6 @@ namespace Timelapse
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)comboBox.Tag;
             this.imageDatabase.UpdateImage(this.imageCache.Current.ID, control.DataLabel, comboBox.SelectedItem.ToString().Trim());
-            this.SetTopLevelFocus();
             this.state.IsContentChanged = true; // We've altered some content
             this.state.IsContentValueChangedFromOutside = false;
         }
@@ -1270,22 +1342,22 @@ namespace Timelapse
         #endregion
 
         #region Slider Event Handlers and related
-        private void SldrImageNavigator_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void ImageNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             this.state.IsContentValueChangedFromOutside = true;
-            this.ShowImage((int)sldrImageNavigator.Value);
+            this.ShowImage((int)ImageNavigatorSlider.Value);
             this.state.IsContentValueChangedFromOutside = false;
         }
 
-        private void SldrImageNavigatorEnableCallback(bool state)
+        private void ImageNavigatorSlider_EnableOrDisableValueChangedCallback(bool enableCallback)
         {
-            if (state)
+            if (enableCallback)
             {
-                this.sldrImageNavigator.ValueChanged += new RoutedPropertyChangedEventHandler<double>(this.SldrImageNavigator_ValueChanged);
+                this.ImageNavigatorSlider.ValueChanged += new RoutedPropertyChangedEventHandler<double>(this.ImageNavigatorSlider_ValueChanged);
             }
             else
             {
-                this.sldrImageNavigator.ValueChanged -= new RoutedPropertyChangedEventHandler<double>(this.SldrImageNavigator_ValueChanged);
+                this.ImageNavigatorSlider.ValueChanged -= new RoutedPropertyChangedEventHandler<double>(this.ImageNavigatorSlider_ValueChanged);
             }
         }
         #endregion
@@ -1351,7 +1423,7 @@ namespace Timelapse
             StatusBarUpdate.TotalCount(this.statusBar, this.imageDatabase.CurrentlySelectedImageCount);
             StatusBarUpdate.ClearMessage(this.statusBar);
 
-            this.sldrImageNavigator.Value = this.imageCache.CurrentRow;
+            this.ImageNavigatorSlider.Value = this.imageCache.CurrentRow;
 
             // get and display the new image if the image changed
             // this avoids unnecessary image reloads and refreshes in cases where ShowImage() is just being called to refresh controls
@@ -1377,7 +1449,7 @@ namespace Timelapse
         #region Keyboard shortcuts
         // If its an arrow key and the textbox doesn't have the focus,
         // navigate left/right image or up/down to look at differenced image
-        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs eventData)
         {
             if (this.imageDatabase == null || this.imageDatabase.CurrentlySelectedImageCount == 0)
             {
@@ -1388,7 +1460,7 @@ namespace Timelapse
             // to the controls within it. That is, if a textbox or combo box has the focus, then take no as this is normal text input
             // and NOT a shortcut key.  Similarly, if a menu is displayed keys should be directed to the menu rather than interpreted as
             // shortcuts.
-            if (this.SendKeyToDataEntryControlOrMenu())
+            if (this.SendKeyToDataEntryControlOrMenu(eventData))
             {
                 return;
             }
@@ -1398,15 +1470,18 @@ namespace Timelapse
 
             // Interpret key as a possible shortcut key. 
             // Depending on the key, take the appropriate action
-            switch (e.Key)
+            switch (eventData.Key)
             {
-                case Key.B:
-                    this.markableCanvas.BookmarkSaveZoomPan(); // Bookmark (Save) the current pan / zoom level of the image
+                case Key.B:                 // Bookmark (Save) the current pan / zoom level of the image
+                    this.markableCanvas.BookmarkSaveZoomPan();
                     break;
-                case Key.OemPlus:                 // Restore the zoom level / pan coordinates of the bookmark
+                case Key.Escape:
+                    this.SetTopLevelFocus(false, eventData);
+                    break;
+                case Key.OemPlus:           // Restore the zoom level / pan coordinates of the bookmark
                     this.markableCanvas.BookmarkSetZoomPan();
                     break;
-                case Key.OemMinus:                 // Restore the zoom level / pan coordinates of the bookmark
+                case Key.OemMinus:          // Restore the zoom level / pan coordinates of the bookmark
                     this.markableCanvas.BookmarkZoomOutAllTheWay();
                     break;
                 case Key.M:                 // Toggle the magnifying glass on and off
@@ -1438,10 +1513,13 @@ namespace Timelapse
                 case Key.RightCtrl:
                     this.MenuItemOptionsBox.IsEnabled = true;
                     break;
+                case Key.Tab:
+                    this.MoveFocusToNextOrPreviousControlOrImageSlider(Keyboard.Modifiers == ModifierKeys.Shift);
+                    break;
                 default:
                     return;
             }
-            e.Handled = true;
+            eventData.Handled = true;
         }
 
         private void Window_PreviewKeyUp(object sender, KeyEventArgs e)
@@ -1458,32 +1536,27 @@ namespace Timelapse
         // image control. This is done from various places.
 
         // Whenever the user clicks on the image, reset the image focus to the image control 
-        private void MarkableCanvas_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        private void MarkableCanvas_PreviewMouseDown(object sender, MouseButtonEventArgs eventArgs)
         {
-            this.SetTopLevelFocus();
+            this.SetTopLevelFocus(true, eventArgs);
         }
 
         // When we move over the canvas, reset the top level focus
-        private void MarkableCanvas_MouseEnter(object sender, MouseEventArgs e)
+        private void MarkableCanvas_MouseEnter(object sender, MouseEventArgs eventArgs)
         {
-            this.SetTopLevelFocus(true);
-        }
-
-        private void SetTopLevelFocus()
-        {
-            this.SetTopLevelFocus(false);
+            this.SetTopLevelFocus(true, eventArgs);
         }
 
         // Actually set the top level keyboard focus to the image control
-        private void SetTopLevelFocus(bool checkForControlFocus)
+        private void SetTopLevelFocus(bool checkForControlFocus, InputEventArgs eventArgs)
         {
             // If the text box or combobox has the focus, we usually don't want to reset the focus. 
             // However, there are a few instances (e.g., after enter has been pressed) where we no longer want it 
             // to have the focus, so we allow for that via this flag.
-            if (checkForControlFocus)
+            if (checkForControlFocus && eventArgs is KeyEventArgs)
             {
                 // If we are in a data control, don't reset the focus.
-                if (this.SendKeyToDataEntryControlOrMenu())
+                if (this.SendKeyToDataEntryControlOrMenu((KeyEventArgs)eventArgs))
                 {
                     return;
                 }
@@ -1495,7 +1568,7 @@ namespace Timelapse
         }
 
         // Return true if the current focus is in a textbox or combobox data control
-        private bool SendKeyToDataEntryControlOrMenu()
+        private bool SendKeyToDataEntryControlOrMenu(KeyEventArgs eventData)
         {
             // check if a menu is open
             // it is sufficient to check one always visible item from each top level menu (file, edit, etc.)
@@ -1519,14 +1592,17 @@ namespace Timelapse
             }
 
             // check if focus is on a control
-            // NOTE: this list must be kept in sync with the System.Windows classed used by the classes in Timelapse.Util.DataEntry*.cs
+            // NOTE: this list must be kept in sync with the System.Windows classes used by the classes in Timelapse\Util\DataEntry*.cs
             Type type = focusedElement.GetType();
             if (typeof(CheckBox) == type ||
                 typeof(ComboBox) == type ||
                 typeof(ComboBoxItem) == type ||
                 typeof(TextBox) == type)
             {
-                return true;
+                // send all keys to controls by default except
+                // - escape as that's a natural way to back out of a control (the user can also hit enter)
+                // - tab as that's the Windows keyboard navigation standard for moving between controls
+                return eventData.Key != Key.Escape && eventData.Key != Key.Tab;
             }
 
             return false;
@@ -2612,14 +2688,18 @@ namespace Timelapse
         #endregion
 
         #region Utilities
-        // Return the index of the currently active counter Control, otherwise -1
+        // Returns the currently active counter control, otherwise null
         private DataEntryCounter FindSelectedCounter()
         {
-            foreach (DataEntryCounter counter in this.dataEntryControls.CounterControls)
+            foreach (DataEntryControl control in this.dataEntryControls.DataEntryControls)
             {
-                if (counter.IsSelected)
+                if (control is DataEntryCounter)
                 {
-                    return counter;
+                    DataEntryCounter counter = (DataEntryCounter)control;
+                    if (counter.IsSelected)
+                    {
+                        return counter;
+                    }
                 }
             }
             return null;
@@ -2647,9 +2727,9 @@ namespace Timelapse
             if (this.imageDatabase.IsImageRowInRange(newIndex))
             {
                 this.state.IsContentValueChangedFromOutside = true;
-                this.SldrImageNavigatorEnableCallback(false);
+                this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
                 this.ShowImage(newIndex);
-                this.SldrImageNavigatorEnableCallback(true);
+                this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
                 this.state.IsContentValueChangedFromOutside = false;
             }
         }

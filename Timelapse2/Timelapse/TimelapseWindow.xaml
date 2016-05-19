@@ -222,7 +222,7 @@
                     </Button>
                 </Grid>
                 <DockPanel Name="DockPanelNavigator" Visibility="Collapsed" >
-                    <Slider Name="sldrImageNavigator"  Minimum ="0" Maximum="0" ValueChanged="SldrImageNavigator_ValueChanged" IsSnapToTickEnabled="True" TickFrequency="1" Focusable="False" LargeChange="1" ToolTip="Scroll through all images" Margin="5,0,5,0"/>
+                    <Slider Name="ImageNavigatorSlider" Minimum ="0" Maximum="0" ValueChanged="ImageNavigatorSlider_ValueChanged" IsSnapToTickEnabled="True" TickFrequency="1" LargeChange="1" ToolTip="Scroll through all images" Margin="5,0,5,0"/>
                 </DockPanel>
             </StackPanel>
             <StatusBar DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Name="statusBar" ItemsSource="{Binding}">

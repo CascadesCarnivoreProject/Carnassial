@@ -8,14 +8,14 @@ namespace Timelapse.UnitTests
 {
     public class TimelapseTest
     {
-        protected ImageDatabase CreateImageDatabase()
+        protected ImageDatabase CreateImageDatabase(string templateFileName, string imageDatabaseFileName)
         {
             string folderPath = Environment.CurrentDirectory;
             TemplateDatabase template;
-            bool result = TemplateDatabase.TryOpen(Path.Combine(folderPath, Constants.File.DefaultTemplateDatabaseFileName), out template);
+            bool result = TemplateDatabase.TryOpen(Path.Combine(folderPath, templateFileName), out template);
             Assert.IsTrue(result);
 
-            string imageDatabaseFilePath = Path.Combine(folderPath, Constants.File.DefaultImageDatabaseFileName);
+            string imageDatabaseFilePath = Path.Combine(folderPath, imageDatabaseFileName);
             if (File.Exists(imageDatabaseFilePath))
             {
                 File.Delete(imageDatabaseFilePath);

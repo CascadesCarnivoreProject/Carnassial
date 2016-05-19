@@ -8,8 +8,6 @@ namespace Timelapse.Util
 {
     public abstract class DataEntryControl
     {
-        private ContextMenu menu = new ContextMenu();
-
         protected Controls ControlsPanel { get; private set; }
         protected MenuItem MenuItemPropagateFromLastValue { get; private set; }
         protected MenuItem MenuItemCopyForward { get; private set; }
@@ -22,7 +20,7 @@ namespace Timelapse.Util
         /// <summary>Gets or sets a value indicating whether the note contents are copyable.</summary>
         public bool Copyable { get; set; }
 
-        public bool CopyForward_IsEnabled
+        public bool CopyForwardEnabled
         {
             get { return this.MenuItemCopyForward.IsEnabled; }
             set { this.MenuItemCopyForward.IsEnabled = value; }
@@ -31,27 +29,26 @@ namespace Timelapse.Util
         /// <summary>Gets the container that holds the control.</summary>
         public StackPanel Container { get; private set; }
 
-        public bool CopyCurrentValue_IsEnabled
-        {
-            get { return this.MenuItemCopyCurrentValue.IsEnabled; }
-            set { this.MenuItemCopyCurrentValue.IsEnabled = value; }
-        }
-
         /// <summary>Gets the data label which corresponds to this control.</summary>
         public string DataLabel { get; private set; }
 
-        public bool PropagateFromLastValue_IsEnabled
+        public bool PropagateFromLastValueEnabled
         {
             get { return this.MenuItemPropagateFromLastValue.IsEnabled; }
             set { this.MenuItemPropagateFromLastValue.IsEnabled = value; }
         }
 
-        /// <summary>Gets or sets a value indicating whether the note should be visible in the interface</summary>
-        public bool Visible
+        /// <summary>Gets or sets a value indicating whether the control's content is user-editable</summary>
+        public abstract bool ReadOnly { get; set; }
+
+        /// <summary>Gets or sets the tooltip attached to the Note</summary>
+        public string Tooltip
         {
-            get { return this.Container.Visibility == Visibility.Visible; }
-            set { this.Container.Visibility = value ? Visibility.Visible : Visibility.Collapsed; }
+            get { return (string)this.Container.ToolTip; }
+            set { this.Container.ToolTip = value; }
         }
+
+        public abstract void Focus();
 
         protected DataEntryControl(string dataLabel, Controls dataEntryControls, bool createContextMenu)
         {
@@ -85,12 +82,13 @@ namespace Timelapse.Util
                 this.MenuItemCopyCurrentValue.Header = "Copy to all";
                 this.MenuItemCopyCurrentValue.Click += new RoutedEventHandler(this.MenuItemCopyCurrentValue_Click);
 
-                this.menu.Items.Add(this.MenuItemPropagateFromLastValue);
-                this.menu.Items.Add(this.MenuItemCopyForward);
-                this.menu.Items.Add(this.MenuItemCopyCurrentValue);
+                ContextMenu menu = new ContextMenu();
+                menu.Items.Add(this.MenuItemPropagateFromLastValue);
+                menu.Items.Add(this.MenuItemCopyForward);
+                menu.Items.Add(this.MenuItemCopyCurrentValue);
 
                 this.Container.PreviewMouseRightButtonDown += this.Container_PreviewMouseRightButtonDown;
-                this.Container.ContextMenu = this.menu;
+                this.Container.ContextMenu = menu;
             }
         }
 
@@ -123,8 +121,8 @@ namespace Timelapse.Util
             // Decide which context menu items to enable
             // May not be able to do this without the dbData!
             bool checkForZero = false;
-            this.CopyForward_IsEnabled = this.ControlsPanel.Propagate.Forward_IsPossible(this.DataLabel);
-            this.PropagateFromLastValue_IsEnabled = this.ControlsPanel.Propagate.FromLastValue_IsPossible(this.DataLabel, checkForZero);
+            this.CopyForwardEnabled = this.ControlsPanel.Propagate.Forward_IsPossible(this.DataLabel);
+            this.PropagateFromLastValueEnabled = this.ControlsPanel.Propagate.FromLastValue_IsPossible(this.DataLabel, checkForZero);
         }
 
         // Set the contents to whatever is in the PassingContentValue
@@ -155,17 +153,10 @@ namespace Timelapse.Util
         public TLabel LabelControl { get; private set; }
 
         /// <summary>Gets or sets a value indicating whether the control's content is user-editable</summary>
-        public bool ReadOnly
+        public override bool ReadOnly
         {
             get { return !this.ContentControl.IsEnabled; }
             set { this.ContentControl.IsEnabled = !value; }
-        }
-
-        /// <summary>Gets or sets the tooltip attached to the Note</summary>
-        public string Tooltip
-        {
-            get { return (string)this.Container.ToolTip; }
-            set { this.Container.ToolTip = value; }
         }
 
         /// <summary>Gets or sets the width of the content control</summary>
@@ -175,23 +166,35 @@ namespace Timelapse.Util
             set { this.ContentControl.Width = value; }
         }
 
-        protected DataEntryControl(string dataLabel, Controls dataEntryControls, bool createContextMenu) : 
+        protected DataEntryControl(string dataLabel, Controls dataEntryControls, Nullable<ControlContentStyle> contentStyleName, ControlLabelStyle labelStyleName, bool createContextMenu) : 
             base(dataLabel, dataEntryControls, createContextMenu)
         {
             this.ContentControl = new TContent();
 
-            // Create the label (which is an actual label)
-            this.LabelControl = new TLabel();
-            this.LabelControl.Style = dataEntryControls.FindResource("LabelCodeBar") as Style;
-            this.LabelControl.IsTabStop = false;
-
-            // add the label and content to the stack panel
-            this.Container.Children.Add(this.LabelControl);
-            this.Container.Children.Add(this.ContentControl);
+            // configure the content
+            this.ContentControl.IsTabStop = true;
+            if (contentStyleName.HasValue)
+            {
+                this.ContentControl.Style = (Style)dataEntryControls.FindResource(contentStyleName.Value.ToString());
+            }
+            this.ReadOnly = false;
 
             // use the content's tag to point back to this so event handlers can access the DataEntryControl as well as just ContentControl
             // the data update callback for each control type in TimelapseWindow, such as NoteControl_TextChanged(), rely on this
             this.ContentControl.Tag = this;
+
+            // Create the label (which is an actual label)
+            this.LabelControl = new TLabel();
+            this.LabelControl.Style = (Style)dataEntryControls.FindResource(labelStyleName.ToString());
+
+            // add the label and content to the stack panel
+            this.Container.Children.Add(this.LabelControl);
+            this.Container.Children.Add(this.ContentControl);
+        }
+
+        public override void Focus()
+        {
+            this.ContentControl.Focus();
         }
     }
 }

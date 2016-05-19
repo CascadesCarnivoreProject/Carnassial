@@ -17,14 +17,8 @@ namespace Timelapse.Util
         }
 
         public DataEntryFlag(string dataLabel, Controls dataEntryControls, bool createContextMenu)
-            : base(dataLabel, dataEntryControls, createContextMenu)
+            : base(dataLabel, dataEntryControls, ControlContentStyle.FlagCodeBar, ControlLabelStyle.LabelCodeBar, createContextMenu)
         {
-            // configure the content box
-            Style style2 = dataEntryControls.FindResource("FlagCodeBar") as Style;
-            this.ContentControl.Style = style2;
-            this.ContentControl.IsTabStop = true;
-
-            // Now configure the various elements
             this.Container.ToolTip = "Toggle between true (checked) and false (unchecked)";
 
             // Change the menu text to indicate that propagate goes back to the last non-zero value

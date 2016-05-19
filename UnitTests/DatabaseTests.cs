@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Timelapse.Database;
 
@@ -11,20 +12,38 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void GenerateControls()
         {
-            ImageDatabase database = this.CreateImageDatabase();
-            
-            Controls controls = new Controls();
-            controls.GenerateControls(database, 0);
+            List<DatabaseExpectations> databaseExpectations = new List<DatabaseExpectations>()
+            {
+                new DatabaseExpectations()
+                {
+                    ImageDatabaseFileName = TestConstants.File.CarnivoreImageDatabaseFileName,
+                    TemplateDatabaseFileName = TestConstants.File.CarnivoreTemplateDatabaseFileName,
+                    ExpectedControls = 5 + 10
+                },
+                new DatabaseExpectations()
+                {
+                    ImageDatabaseFileName = Constants.File.DefaultImageDatabaseFileName,
+                    TemplateDatabaseFileName = Constants.File.DefaultTemplateDatabaseFileName,
+                    ExpectedControls = 6 + 12
+                }
+            };
 
-            int expectedControls = 6 + 10;
-            Assert.IsTrue(controls.ControlFromDataLabel.Count == expectedControls, "Expected {0} controls to be generated but {1} were.", expectedControls, controls.ControlFromDataLabel.Count);
+            foreach (DatabaseExpectations databaseExpectation in databaseExpectations)
+            {
+                ImageDatabase database = this.CreateImageDatabase(databaseExpectation.TemplateDatabaseFileName, databaseExpectation.ImageDatabaseFileName);
+
+                Controls controls = new Controls();
+                controls.GenerateControls(database, 0);
+
+                Assert.IsTrue(controls.ControlFromDataLabel.Count == databaseExpectation.ExpectedControls, "Expected {0} controls to be generated but {1} were.", databaseExpectation.ExpectedControls, controls.ControlFromDataLabel.Count);
+            }
         }
 
         [TestMethod]
         public void RoundtripCsv()
         {
             // create database, push test images into the database, and load the image data table
-            ImageDatabase database = this.CreateImageDatabase();
+            ImageDatabase database = this.CreateImageDatabase(TestConstants.File.CarnivoreImageDatabaseFileName, TestConstants.File.CarnivoreTemplateDatabaseFileName);
             this.PopulateImageDatabase(database);
 
             // roundtrip data through .csv
