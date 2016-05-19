@@ -20,13 +20,9 @@ namespace Timelapse.Util
             set { this.ContentControl.SelectedValue = value; }
         }
 
-        public DataEntryChoice(string dataLabel, Controls dataEntryControls, bool createContextMenu, string list)
-            : base(dataLabel, dataEntryControls, createContextMenu)
+        public DataEntryChoice(string dataLabel, Controls dataEntryControls, bool createContextMenu, string choicesAsString)
+            : base(dataLabel, dataEntryControls, null, ControlLabelStyle.LabelCodeBar, createContextMenu)
         {
-            // configure the label
-            this.LabelControl.Style = dataEntryControls.FindResource("LabelCodeBar") as Style;
-            this.LabelControl.IsTabStop = false;
-
             // The look of the combobox
             this.ContentControl.Height = 25;
             this.ContentControl.HorizontalAlignment = HorizontalAlignment.Left;
@@ -36,7 +32,6 @@ namespace Timelapse.Util
             this.ContentControl.BorderBrush = Brushes.LightBlue;
 
             // The behaviour of the combobox
-            this.ContentControl.IsTabStop = true;
             this.ContentControl.IsTextSearchEnabled = true;
             this.ContentControl.Focusable = true;
             this.ContentControl.IsReadOnly = true;
@@ -46,10 +41,10 @@ namespace Timelapse.Util
             this.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
 
             // Add items to the combo box
-            List<string> result = list.Split(new char[] { '|' }).ToList();
-            foreach (string str in result)
+            List<string> choices = choicesAsString.Split(new char[] { '|' }).ToList();
+            foreach (string choice in choices)
             {
-                this.ContentControl.Items.Add(str.Trim());
+                this.ContentControl.Items.Add(choice.Trim());
             }
             // Add a separator and an empty field to the list, so the user can return it to an empty state. Note that this means ImageQuality can also be empty.. not sure if this is a good thing
             this.ContentControl.Items.Add(new Separator());

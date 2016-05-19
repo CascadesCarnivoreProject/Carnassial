@@ -17,15 +17,10 @@ namespace Timelapse.Util
         }
 
         public DataEntryNote(string dataLabel, Controls dataEntryControls, bool createContextMenu) : 
-            base(dataLabel, dataEntryControls, createContextMenu)
+            base(dataLabel, dataEntryControls, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.LabelCodeBar, createContextMenu)
         {
             // Modify the context menu so it can have a propage submenu
             this.ContentControl.ContextMenu = null;
-
-            // configure the content box
-            Style style2 = dataEntryControls.FindResource("TextBoxCodeBar") as Style;
-            this.ContentControl.Style = style2;
-            this.ContentControl.IsTabStop = true;
 
             // Now configure the various elements
             this.Container.ToolTip = "Type in text";

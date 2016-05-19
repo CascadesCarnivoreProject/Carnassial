@@ -23,14 +23,11 @@ namespace Timelapse.Util
         }
 
         public DataEntryCounter(string dataLabel, Controls dataEntryControls, bool createContextMenu) : 
-            base(dataLabel, dataEntryControls, createContextMenu)
+            base(dataLabel, dataEntryControls, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.RadioButtonCodeBar, createContextMenu)
         {
-            // configure the content box
-            Style style2 = dataEntryControls.FindResource("TextBoxCodeBar") as Style;
-            this.ContentControl.Style = style2;
-            this.ContentControl.IsTabStop = true;
-
             // Modify the context menu so it can have a propage submenu
+            // TODO: Saul  the context menu's attached to the container rather than the content?
+            //             and if the context menu is nulled out after creation why is it possible to pass createContextMenu = true?
             this.ContentControl.ContextMenu = null;
 
             // Now configure the various elements
@@ -38,9 +35,6 @@ namespace Timelapse.Util
 
             // Make this part of a group with all the other radio buttons of this type
             this.LabelControl.GroupName = "A";
-
-            // Add this counter to the list of counters, so we can quickly access all counters
-            this.ControlsPanel.CounterControls.Add(this);
 
             // Change the menu text to indicate that propagate goes back to the last non-zero value
             this.MenuItemPropagateFromLastValue.Header = "Propagate from the last non-zero value to here";
@@ -76,8 +70,8 @@ namespace Timelapse.Util
             // Decide which context menu items to enable
             // May not be able to do this without the dbData!
             bool checkForZero = true;
-            this.CopyForward_IsEnabled = this.ControlsPanel.Propagate.Forward_IsPossible(this.DataLabel);
-            this.PropagateFromLastValue_IsEnabled = this.ControlsPanel.Propagate.FromLastValue_IsPossible(this.DataLabel, checkForZero);
+            this.CopyForwardEnabled = this.ControlsPanel.Propagate.Forward_IsPossible(this.DataLabel);
+            this.PropagateFromLastValueEnabled = this.ControlsPanel.Propagate.FromLastValue_IsPossible(this.DataLabel, checkForZero);
         }
     }
 }

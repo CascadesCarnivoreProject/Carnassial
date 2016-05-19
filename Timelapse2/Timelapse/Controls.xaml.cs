@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
 using Timelapse.Database;
 using Timelapse.Util;
@@ -16,7 +16,7 @@ namespace Timelapse
     {
         // Given a key, return its associated control
         public Dictionary<string, DataEntryControl> ControlFromDataLabel { get; private set; }
-        public List<DataEntryCounter> CounterControls { get; private set; } // list of all our counter controls
+        public List<DataEntryControl> DataEntryControls { get; private set; } // list of all our counter controls
         // The wrap panel will contain all our controls. If we want to reparent things, we do it by reparenting the wrap panel
         public PropagateControl Propagate { get; private set; }
 
@@ -24,23 +24,28 @@ namespace Timelapse
         {
             this.InitializeComponent();
             this.ControlFromDataLabel = new Dictionary<string, DataEntryControl>();
-            this.CounterControls = new List<DataEntryCounter>();
+            this.DataEntryControls = new List<DataEntryControl>();
         }
 
         public void GenerateControls(ImageDatabase database, int startingPosition)
         {
-            const string EXAMPLE_DATE = "28-Dec-2014";
-            const string EXAMPLE_TIME = "04:00 PM";
-
             this.Propagate = new PropagateControl(database, startingPosition);
 
             DataTable sortedControlTable = database.GetControlsSortedByControlOrder();
-            for (int i = 0; i < sortedControlTable.Rows.Count; i++)
+            for (int row = 0; row < sortedControlTable.Rows.Count; row++)
             {
-                // Get the values for each control
-                DataRow dataRow = sortedControlTable.Rows[i];
+                // no point in generating a control if it doesn't render in the UX
+                DataRow dataRow = sortedControlTable.Rows[row];
+                string visiblityAsString = dataRow[Constants.Control.Visible].ToString();
+                bool visible = String.Equals(Boolean.TrueString, visiblityAsString, StringComparison.OrdinalIgnoreCase) ? true : false;
+                if (visible == false)
+                {
+                    continue;
+                }
+
+                // get the values for the control
                 string copyableAsString = dataRow[Constants.Control.Copyable].ToString();
-                bool copyable = ("true" == copyableAsString.ToLower()) ? true : false;
+                bool copyable = String.Equals(Boolean.TrueString, copyableAsString, StringComparison.OrdinalIgnoreCase) ? true : false;
                 string dataLabel = (string)dataRow[Constants.Control.DataLabel];
                 string defaultValue = dataRow[Constants.Control.DefaultValue].ToString();
                 int id = Convert.ToInt32(dataRow[Constants.Database.ID].ToString()); // TODO Need to use this ID to pass between controls and data
@@ -48,20 +53,10 @@ namespace Timelapse
                 string list = dataRow[Constants.Control.List].ToString();
                 string tooltip = dataRow[Constants.Control.Tooltop].ToString();
                 string type = dataRow[Constants.Database.Type].ToString();
-                string visiblityAsString = dataRow[Constants.Control.Visible].ToString();
-                bool visiblity = ("true" == visiblityAsString.ToLower()) ? true : false;
                 string widthAsString = dataRow[Constants.Control.TextBoxWidth].ToString();
                 int width = (widthAsString == String.Empty) ? 0 : Convert.ToInt32(widthAsString);
 
-                if (type == Constants.DatabaseColumn.Date && defaultValue == String.Empty)
-                {
-                    defaultValue = EXAMPLE_DATE;
-                }
-                else if (type == Constants.DatabaseColumn.Time && defaultValue == String.Empty)
-                {
-                    defaultValue = EXAMPLE_TIME;
-                }
-
+                DataEntryControl controlToAdd;
                 if (type == Constants.DatabaseColumn.File ||
                     type == Constants.DatabaseColumn.Folder ||
                     type == Constants.DatabaseColumn.Date ||
@@ -69,60 +64,49 @@ namespace Timelapse
                     type == Constants.DatabaseColumn.Note)
                 {
                     bool createContextMenu = (type == Constants.DatabaseColumn.File) ? false : true;
-                    DataEntryNote myNote = new DataEntryNote(dataLabel, this, createContextMenu);
-                    myNote.Label = label;
-                    myNote.Tooltip = tooltip;
-                    myNote.Width = width;
-                    myNote.Visible = visiblity;
-                    myNote.Content = defaultValue;
-                    myNote.ReadOnly = (type == Constants.DatabaseColumn.Folder || type == Constants.DatabaseColumn.File) ? true : false; // File and Folder Notes are read only i.e., non-editable by the user 
-                    myNote.Copyable = copyable;
-                    this.ControlGrid.Inlines.Add(myNote.Container);
-                    this.ControlFromDataLabel.Add(dataLabel, myNote);
+                    DataEntryNote noteControl = new DataEntryNote(dataLabel, this, createContextMenu);
+                    noteControl.Label = label;
+                    noteControl.Width = width;
+                    if (type == Constants.DatabaseColumn.Folder || type == Constants.DatabaseColumn.File)
+                    {
+                        // File name and Folder path aren't editable by the user 
+                        noteControl.ReadOnly = true;
+                    }
+                    controlToAdd = noteControl;
                 }
                 else if (type == Constants.DatabaseColumn.Flag || type == Constants.DatabaseColumn.DeleteFlag)
                 {
-                    DataEntryFlag myFlag = new DataEntryFlag(dataLabel, this, true);
-                    myFlag.Label = label;
-                    myFlag.Tooltip = tooltip;
-                    myFlag.Width = width;
-                    myFlag.Visible = visiblity;
-                    myFlag.Content = defaultValue;
-                    myFlag.ReadOnly = false; // Flags are editable by the user 
-                    myFlag.Copyable = copyable;
-                    this.ControlGrid.Inlines.Add(myFlag.Container);
-                    this.ControlFromDataLabel.Add(dataLabel, myFlag);
+                    DataEntryFlag flagControl = new DataEntryFlag(dataLabel, this, true);
+                    flagControl.Label = label;
+                    flagControl.Width = width;
+                    controlToAdd = flagControl;
                 }
                 else if (type == Constants.DatabaseColumn.Counter)
                 {
-                    DataEntryCounter myCounter = new DataEntryCounter(dataLabel, this, true);
-                    myCounter.Label = label;
-                    myCounter.Tooltip = tooltip;
-                    myCounter.Width = width;
-                    myCounter.Visible = visiblity;
-                    myCounter.Content = defaultValue;
-                    myCounter.ReadOnly = false; // Couonters are editable by the user 
-                    myCounter.Copyable = copyable;
-                    this.ControlGrid.Inlines.Add(myCounter.Container);
-                    this.ControlFromDataLabel.Add(dataLabel, myCounter);
+                    DataEntryCounter counterControl = new DataEntryCounter(dataLabel, this, true);
+                    counterControl.Label = label;
+                    counterControl.Width = width;
+                    controlToAdd = counterControl;
                 }
                 else if (type == Constants.DatabaseColumn.FixedChoice || type == Constants.DatabaseColumn.ImageQuality)
                 {
-                    DataEntryChoice myFixedChoice = new DataEntryChoice(dataLabel, this, true, list);
-                    myFixedChoice.Label = label;
-                    myFixedChoice.Tooltip = tooltip;
-                    myFixedChoice.Width = width;
-                    myFixedChoice.Visible = visiblity;
-                    myFixedChoice.Content = defaultValue;
-                    myFixedChoice.ReadOnly = false; // Fixed choices are editable (by selecting a menu) by the user 
-                    myFixedChoice.Copyable = copyable;
-                    this.ControlGrid.Inlines.Add(myFixedChoice.Container);
-                    this.ControlFromDataLabel.Add(dataLabel, myFixedChoice);
+                    DataEntryChoice choiceControl = new DataEntryChoice(dataLabel, this, true, list);
+                    choiceControl.Label = label;
+                    choiceControl.Width = width;
+                    controlToAdd = choiceControl;
                 }
                 else
                 {
                     Debug.Assert(false, String.Format("Unhandled control type {0}.", type));
+                    continue;
                 }
+
+                controlToAdd.Content = defaultValue;
+                controlToAdd.Copyable = copyable;
+                controlToAdd.Tooltip = tooltip;
+                this.ControlGrid.Inlines.Add(controlToAdd.Container);
+                this.DataEntryControls.Add(controlToAdd);
+                this.ControlFromDataLabel.Add(dataLabel, controlToAdd);
             }
         }
 
