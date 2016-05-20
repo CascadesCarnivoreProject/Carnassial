@@ -201,10 +201,11 @@ namespace Timelapse
 
             // if the user didn't specify a file name for the .tdb use the default
             // TODO: Saul  is this case still reachable?
-            if (String.IsNullOrEmpty(Path.GetFileName(templateDatabasePath)))
-            {
-                templateDatabasePath = Path.Combine(templateDatabaseDirectoryPath, Constants.File.DefaultTemplateDatabaseFileName);
-            }
+            // RESPONSE: I think not, so I commented it out for now.
+            //if (String.IsNullOrEmpty(Path.GetFileName(templateDatabasePath)))
+            //{
+            //    templateDatabasePath = Path.Combine(templateDatabaseDirectoryPath, Constants.File.DefaultTemplateDatabaseFileName);
+            //}
 
             return true;
         }
@@ -343,13 +344,14 @@ namespace Timelapse
                     ImageProperties imageProperties = new ImageProperties(this.FolderPath, imageFile);
 
                     WriteableBitmap bitmap = null;
+                    BitmapFrame bitmapFrame = null;
                     try
                     {
                         // Create the bitmap and determine its ImageQuality
                         // avoid ImageProperties.LoadImage() here as the create exception needs to surface to set the image quality to corrupt
                         // framework bug: WriteableBitmap.Metadata returns null rather than metatada offered by the underlying BitmapFrame, so 
                         // retain the frame and pass its metadata to TryUseImageTaken().
-                        BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
+                        bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
                         bitmap = new WriteableBitmap(bitmapFrame);
 
                         bool isDark = bitmap.IsDark(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
@@ -380,7 +382,7 @@ namespace Timelapse
                     if (imageProperties.ID == 1 || (imageProperties.ID % Constants.FolderScanProgressUpdateFrequency == 0))
                     {
                         progressState.Message = String.Format("{0}/{1}: Examining {2}", image, count, imageProperties.FileName);
-                        progressState.Bmap = bitmap;
+                        progressState.Bmap = bitmapFrame;
                         int progress = Convert.ToInt32(Convert.ToDouble(imageProperties.ID) / Convert.ToDouble(count) * 100);
                         backgroundWorker.ReportProgress(progress, progressState);
                     }
@@ -400,12 +402,12 @@ namespace Timelapse
                 this.imageDatabase.AddImages(imagePropertyList, (ImageProperties imageProperties, int imageIndex) =>
                 {
                     // Get the bitmap again to show it
-                    WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.FolderPath);
-
+                    //WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.FolderPath);
+                    BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
                     // Show progress. Since its slow, we may as well do it every update
                     int addImageProgress = Convert.ToInt32(Convert.ToDouble(imageIndex) / Convert.ToDouble(imagePropertyList.Count) * 100);
                     progressState.Message = String.Format("{0}/{1}: Adding {2}", imageIndex, count, imageProperties.FileName);
-                    progressState.Bmap = bitmap;
+                    progressState.Bmap = bitmapFrame;
                     backgroundWorker.ReportProgress(addImageProgress, progressState);
                 });
             };
