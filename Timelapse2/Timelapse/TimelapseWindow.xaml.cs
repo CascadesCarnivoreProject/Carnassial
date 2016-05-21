@@ -221,7 +221,20 @@ namespace Timelapse
             if (!TemplateDatabase.TryOpen(templateDatabasePath, out this.template))
             {
                 this.OnDataFileLoadFailed();
-                // TODO: Saul  notify the user the template couldn't be loaded rather than silently doing nothing
+                // SAULDONE: notify the user the template couldn't be loaded rather than silently doing nothing
+                DialogMessageBox messageBox = new DialogMessageBox();
+                DialogMessageBox dlgMB = new DialogMessageBox();
+                dlgMB.MessageTitle = "Timelapse could not load the Template";
+                dlgMB.MessageProblem = "Timelapse could not load the Template File:" + Environment.NewLine;
+                dlgMB.MessageProblem += "\u2022 " + templateDatabasePath;
+                dlgMB.MessageReason = "The template may be corrupted or somehow otherwise invalid. ";
+                dlgMB.MessageSolution = "You may have to recreate the template, or use another copy of it (if you have one).";
+                dlgMB.MessageResult = "Timelapse won't do anything. You can try to select another template file.";
+                dlgMB.MessageHint = "See if you can examine the template file in the Timelapse Template Editor.";
+                dlgMB.MessageHint += "If you can't, there is likley something wrong with it and you will have to recreate it.";
+                dlgMB.ButtonType = MessageBoxButton.OK;
+                dlgMB.IconType = MessageBoxImage.Error;
+                dlgMB.ShowDialog();
                 return false;
             }
 
@@ -305,7 +318,12 @@ namespace Timelapse
             // the database and its tables must exist before data can be loaded into it
             if (this.imageDatabase.Exists() == false)
             {
-                // TODO: Saul  handle case where database creation fails
+                // SAULDONE: Q.  handle case where database creation fails
+                // SAULDONE: Hmm. I've never seen database creation failure. Nonetheless, while I can pop up a messagebox here, the real issue is how
+                // SAULDONE: to revert the system back to some reasonable state. I will need to look at this closely 
+                // SAULDONE: What we really need is a function that we can call that will essentially bring the system back to its
+                // SAULDONE: virgin state, that we can invoke from various conditions. 
+                // SAULDONE: Alternately, we can just exit Timelapse (a poor solution but it could suffice for now)
                 bool result = this.imageDatabase.TryCreateImageDatabase(this.template);
 
                 // We generate the data user interface controls from the template description after the database has been created from the template
@@ -397,7 +415,9 @@ namespace Timelapse
                 backgroundWorker.ReportProgress(0, progressState);
 
                 // Third pass: Update database
-                // TODO This is pretty slow... a good place to make it more efficient by adding multiple values in one shot
+                // TODOSAUL This used to be slow... but I think its ok now. But check if its a good place to make it more efficient by having it add multiple values in one shot (it may already be doing that - if so, delete this comment)
+                // TODOTODD: Can you explain this change to me? This is a change you did, and I don't normally use the => expression.
+                // TODOTODD: Not an error, just need to understand it.
                 this.imageDatabase.AddImages(imagePropertyList, (ImageProperties imageProperties, int imageIndex) =>
                 {
                     // Get the bitmap again to show it
@@ -530,7 +550,6 @@ namespace Timelapse
             }
 
             // Create a Custom Filter, which will hold the current custom filter expression (if any) that may be set in the DialogCustomViewFilter
-            // TODO: HAVE THIS STORED IN THE IMAGESET DATABASE
             this.customfilter = new CustomFilter(this.imageDatabase);
 
             // Load the Marker table from the database
@@ -980,7 +999,8 @@ namespace Timelapse
         /// <param name="e">event information</param>
         private void CounterCtl_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            // TODO: If the result is a blank (i.e., spaces or empty string), need to clean it up.
+            // SAULDONE: Q. If the result is a blank (i.e., spaces or empty string), need to clean it up.
+            // SAULDONE: Fixed in TextChanged, where a blank will be replaced by a -0
             e.Handled = !this.IsAllValidNumericChars(e.Text);
             this.OnPreviewTextInput(e);
         }
@@ -1128,6 +1148,16 @@ namespace Timelapse
 
             TextBox textBox = (TextBox)sender;
             textBox.Text = textBox.Text.TrimStart();  // Don't allow leading spaces in the counter
+
+            // SAULDONE: The code previously allowed an empty value in a counter, which we don't want.
+            // SAULDONE: If the field is now empty, make the text a 0. But as this can make editing awkward, we select the 0 so 
+            // SAULDONE: that further editing will overwrite it.
+            if (textBox.Text == "")
+            {
+                textBox.Text = "0";
+                textBox.SelectAll();
+            }
+
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)textBox.Tag;
             this.imageDatabase.UpdateImage(this.imageCache.Current.ID, control.DataLabel, textBox.Text.Trim());
@@ -1294,7 +1324,7 @@ namespace Timelapse
 
             // display the differenced image
             // SAULDONE: Q. should the magnifiable image also be updated?
-            // SAULDONE: A. No. The idea is that the nagnifying glass always displays the original non-diferenced image. 
+            // SAULDONE: A. No. The idea is that the magnifying glass always displays the original non-diferenced image. 
             // SAULDONE: This allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
             this.markableCanvas.ImageToDisplay.Source = this.imageCache.GetCurrentImage();
             StatusBarUpdate.Message(this.statusBar, "Viewing differences compared to " + (this.imageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next") + " image");
@@ -1338,7 +1368,8 @@ namespace Timelapse
             }
 
             // display differenced image
-            // TODO: Saul  should the magnifiable image also be updated?
+            // SAULDONE: Q Saul  should the magnifiable image also be updated?
+            // SAULDONE: No. The magnifying glass always shows the original source, not the differenced image.
             this.markableCanvas.ImageToDisplay.Source = this.imageCache.GetCurrentImage();
             StatusBarUpdate.Message(this.statusBar, "Viewing differences compared to both the next and previous images");
         }
@@ -1374,6 +1405,11 @@ namespace Timelapse
                 this.ShowImage(firstImageDisplayable);
             }
             // TODO: Saul  what if there's no displayable image?
+            // SAULDONE: Ah. THis was never an issue before, as Timelapse used to error check whether there were any images when the
+            // SAULDONE: template was originally opened, and if not would stop there. However, your multiple folder changes do allow a template to be loaded without images.
+            // SAULDONE: I tested this, and it seems that this code would not be triggered anyways, so perhaps nothing needs to be done about this. 
+            // SAULDONE: As explained in the ToDo.docx, I think a better safeguard would be to require the user to add at least some images after the 'Load Images from Folder' menu item is selected.
+            // SAULDONE: If we do want to somehow catch this, this will be a larger code change with some thought put into it (as there are likely other situations similar to this), so this needs to be revisited later. 
         }
 
         private void ShowImage(int newImageRow)
@@ -2075,7 +2111,8 @@ namespace Timelapse
             }
             catch
             {
-                // TODO THIS FUNCTION WAS BLOWING UP ON THERESAS MACHINE, NOT SURE WHY> SO TRY TO RESOLVE IT WITH THIS FALLBACK.
+                // This function was blowing up on one user's machine, but not others.
+                // I couldn't figure out why, so I just put this fallback in here to catch that unusual case.
                 this.MenuItemDeleteImages.IsEnabled = true;
                 this.MenuItemDeleteImagesAndData.IsEnabled = true;
                 this.MenuItemDeleteImage.IsEnabled = true;

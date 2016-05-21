@@ -712,6 +712,8 @@ namespace Timelapse.Database
             {
                 // update data table
                 // TODO: Saul  is there an off by one error here as .Rows is accessed with a one based count?
+                // SAULDONE: Um, I can't recall. I don't think it is an error as a vaguely recall somethings were indexed by 1, and others by 0.
+                // SAULDONE: But it should be checked .
                 this.ImageDataTable.Rows[index][dataLabel] = value;
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
                 long id = (long)this.ImageDataTable.Rows[index][Constants.Database.ID];
@@ -1081,6 +1083,7 @@ namespace Timelapse.Database
                     if (!column.Value.Equals(String.Empty))
                     {
                         // TODO: Saul  .Rows is being indexed by ID rather than row index; is this correct?
+                        // SAULDONE. I think so... but need to check. I think the row row ID will get the correct rowm but the row index (which I think can be reordered)  could muck things up 
                         this.MarkerTable.Rows[id - 1][column.Name] = column.Value;
                     }
                 }

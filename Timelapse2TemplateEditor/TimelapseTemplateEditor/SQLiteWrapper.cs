@@ -265,7 +265,7 @@ namespace TimelapseTemplateEditor
         #region Insertion: Multiple Rows
         /// <summary>
         /// Efficiently insert 1 to 500 rows into the database in one operation. 
-        /// TODO MODIFY IT SO THAT IT DOES IT IN MULTIPLES OF 500 AS NEEDED
+        /// TODO MODIFY IT SO THAT IT DOES IT IN MULTIPLES OF 500, as I read somewhere that SQLite doesn't like handling much more than 500 at a time. However, I am not sure if this is true.
         /// </summary>
         /// <param name="tableName"></param>
         /// <param name="columnsList"></param>

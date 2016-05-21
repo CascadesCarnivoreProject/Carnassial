@@ -45,7 +45,6 @@ namespace TimelapseTemplateEditor
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
-    /// TODO: Allow everything but File name to be copyable (although I think this is a bad idea)
     /// </summary>
     public partial class MainWindow : Window
     {
