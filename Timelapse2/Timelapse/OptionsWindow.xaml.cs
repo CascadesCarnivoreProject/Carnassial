@@ -18,17 +18,17 @@ namespace Timelapse
             this.markableCanvas = mcanvas;
             this.mainProgram = mainWindow;
 
-            //// The Max Zoom Value
+            // The Max Zoom Value
             sldrMaxZoom.Value = this.markableCanvas.MaxZoom;
             sldrMaxZoom.ToolTip = this.markableCanvas.MaxZoom;
             sldrMaxZoom.Maximum = this.markableCanvas.MaxZoomUpperBound;
             sldrMaxZoom.Minimum = 1;
 
-            //// Image Differencing Thresholds
+            // Image Differencing Thresholds
             sldrDifferenceThreshold.Value = this.mainProgram.DifferenceThreshold;
             sldrDifferenceThreshold.ToolTip = this.mainProgram.DifferenceThreshold;
-            sldrDifferenceThreshold.Maximum = Constants.DifferenceThresholdMax;
-            sldrDifferenceThreshold.Minimum = Constants.DifferenceThresholdMin;
+            sldrDifferenceThreshold.Maximum = Constants.Images.DifferenceThresholdMax;
+            sldrDifferenceThreshold.Minimum = Constants.Images.DifferenceThresholdMin;
 
             /*
             // For swapping data within notes, fixed choices, or counters:

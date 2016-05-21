@@ -124,7 +124,7 @@ namespace Timelapse.Database
 
                 if (valueToCopy.Trim().Length > 0)
                 {
-                    // TODO: Saul  fix SA1408
+                    // TODOSAUL: fix SA1408
                     if (checkForZero && !valueToCopy.Equals("0") || !checkForZero)
                     {
                         row = i;    // We found a non-empty value
@@ -153,7 +153,7 @@ namespace Timelapse.Database
             DialogMessageBox dlgMB = new DialogMessageBox();
             dlgMB.IconType = MessageBoxImage.Question;
             dlgMB.ButtonType = MessageBoxButton.YesNo;
-            dlgMB.MessageTitle = "Please confirm 'Copy Forward' for this field.";
+            dlgMB.MessageTitle = "Please confirm 'Copy Forward' for this field...";
 
             dlgMB.MessageProblem = "The Copy Forward operation is not undoable, and can overwrite existing values.";
             dlgMB.MessageResult = "If you select yes, this operation will:" + Environment.NewLine;
@@ -178,7 +178,7 @@ namespace Timelapse.Database
             DialogMessageBox dlgMB = new DialogMessageBox();
             dlgMB.IconType = MessageBoxImage.Question;
             dlgMB.ButtonType = MessageBoxButton.YesNo;
-            dlgMB.MessageTitle = "Please confirm 'Copy to All' for this field.";
+            dlgMB.MessageTitle = "Please confirm 'Copy to All' for this field...";
 
             dlgMB.MessageProblem = "The Copy to All operation is not undoable, and can overwrite existing values.";
             dlgMB.MessageResult = "If you select yes, this operation will:" + Environment.NewLine;

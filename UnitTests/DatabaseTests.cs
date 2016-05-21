@@ -44,7 +44,7 @@ namespace Timelapse.UnitTests
         {
             // create database, push test images into the database, and load the image data table
             ImageDatabase database = this.CreateImageDatabase(TestConstants.File.CarnivoreImageDatabaseFileName, TestConstants.File.CarnivoreTemplateDatabaseFileName);
-            this.PopulateImageDatabase(database);
+            this.PopulateCarnivoreDatabase(database);
 
             // roundtrip data through .csv
             CsvReaderWriter csvReaderWriter = new CsvReaderWriter();

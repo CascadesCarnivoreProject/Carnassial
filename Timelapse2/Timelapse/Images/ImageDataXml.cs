@@ -44,7 +44,7 @@ namespace Timelapse.Images
                         noteControlNames.Add(dataLabel);
                         break;
                     default:
-                        // TODO: Saul  why no support for flag controls?
+                        // TODOSAUL: why no support for flag controls?
                         break;
                 }
             }

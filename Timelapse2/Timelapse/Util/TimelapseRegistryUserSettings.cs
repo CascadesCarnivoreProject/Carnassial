@@ -27,14 +27,14 @@ namespace Timelapse.Util
         }
 
         // Functions used to save and retrive the last image folder path to and from the Registry
-        public MostRecentlyUsedList<string> ReadMostRecentDataFilePaths()
+        public MostRecentlyUsedList<string> ReadMostRecentImageSets()
         {
-            return this.ReadMostRecentlyUsedListFromRegistry(Constants.Registry.Key.MostRecentlyUsedDataFiles);
+            return this.ReadMostRecentlyUsedListFromRegistry(Constants.Registry.Key.MostRecentlyUsedImageSets);
         }
 
-        public void WriteMostRecentDataFilePaths(MostRecentlyUsedList<string> paths)
+        public void WriteMostRecentImageSets(MostRecentlyUsedList<string> paths)
         {
-            this.WriteToRegistry(Constants.Registry.Key.MostRecentlyUsedDataFiles, paths);
+            this.WriteToRegistry(Constants.Registry.Key.MostRecentlyUsedImageSets, paths);
         }
 
         // Save and retrive the state of audio feedback (i.e., if its on or not)
@@ -80,7 +80,7 @@ namespace Timelapse.Util
 
         public int ReadDarkPixelThreshold()
         {
-            return this.ReadIntegerFromRegistry(Constants.Registry.Key.DarkPixelThreshold, Constants.DarkPixelThresholdDefault);
+            return this.ReadIntegerFromRegistry(Constants.Registry.Key.DarkPixelThreshold, Constants.Images.DarkPixelThresholdDefault);
         }
 
         public void WriteDarkPixelThreshold(int threshold)
@@ -90,7 +90,7 @@ namespace Timelapse.Util
 
         public double ReadDarkPixelRatioThreshold()
         {
-            return this.ReadDoubleFromRegistry(Constants.Registry.Key.DarkPixelRatio, Constants.DarkPixelRatioThresholdDefault);
+            return this.ReadDoubleFromRegistry(Constants.Registry.Key.DarkPixelRatio, Constants.Images.DarkPixelRatioThresholdDefault);
         }
 
         public void WriteDarkPixelRatioThreshold(double threshold)

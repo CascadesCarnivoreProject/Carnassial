@@ -30,11 +30,12 @@ namespace Timelapse.UnitTests
             return imageDatabase;
         }
 
-        protected void PopulateImageDatabase(ImageDatabase database)
+        protected void PopulateCarnivoreDatabase(ImageDatabase database)
         {
-            FileInfo imageFileInfo = new FileInfo("BushnellTrophyHD-119677C-20160224-056.JPG");
-            ImageProperties image1 = new ImageProperties(database.FolderPath, imageFileInfo);
-            ImageProperties image2 = new ImageProperties(database.FolderPath, imageFileInfo);
+            FileInfo martenFileInfo = new FileInfo(TestConstants.File.InfraredMartenImage);
+            ImageProperties image1 = new ImageProperties(database.FolderPath, martenFileInfo);
+            FileInfo bobcatFileInfo = new FileInfo(TestConstants.File.DaylightBobcatImage);
+            ImageProperties image2 = new ImageProperties(database.FolderPath, bobcatFileInfo);
             database.AddImages(new List<ImageProperties>() { image1, image2 }, null);
             database.CreateWhiteSpaceColumn();
             database.TrimImageAndTemplateTableWhitespace();  // Trim the white space from all the data

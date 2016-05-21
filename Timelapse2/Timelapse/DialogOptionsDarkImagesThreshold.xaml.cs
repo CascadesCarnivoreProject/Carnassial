@@ -49,7 +49,7 @@ namespace Timelapse
                 this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
             }
 
-            this.sldrDarkThreshold.Value = this.state.DarkPixelRatioThreshold;
+            this.sldrDarkThreshold.Value = this.state.DarkPixelThreshold;
             this.sldrDarkThreshold.ValueChanged += this.DarkThresholdSlider_ValueChanged;
 
             this.sldrScrollImages.Minimum = 0;
@@ -165,7 +165,7 @@ namespace Timelapse
             this.lblImageName.Content = this.imageEnumerator.Current.FileName;
             this.lblOriginalClassification.Content = this.imageEnumerator.Current.ImageQuality.ToString(); // The original image classification
 
-            this.RecalculateIsDark();
+            this.RecalculateImageQualityForCurrentImage();
             this.Repaint();
         }
         #endregion
@@ -204,7 +204,7 @@ namespace Timelapse
             this.state.DarkPixelThreshold = this.darkPixelThreshold;
             this.state.DarkPixelRatioThreshold = this.darkPixelRatio;
 
-            this.RescanImageQuality();
+            this.UpdateImageQualityForAllSelectedImages();
             this.DisplayImageAndDetails(); // Goes back to the original image
             this.CancelButton.Content = "Done";
         }
@@ -233,7 +233,7 @@ namespace Timelapse
 
             // Move the slider to its original position
             this.sldrDarkThreshold.Value = this.state.DarkPixelRatioThreshold;
-            this.RecalculateIsDark();
+            this.RecalculateImageQualityForCurrentImage();
             this.Repaint();
         }
 
@@ -241,12 +241,12 @@ namespace Timelapse
         private void MenuItemResetDefault_Click(object sender, RoutedEventArgs e)
         {
             // Move the thumb to correspond to the original value
-            this.darkPixelRatio = Constants.DarkPixelRatioThresholdDefault;
+            this.darkPixelRatio = Constants.Images.DarkPixelRatioThresholdDefault;
             Canvas.SetLeft(this.LineDarkPixelRatio, this.darkPixelRatio * (this.FeedbackCanvas.ActualWidth - this.LineDarkPixelRatio.ActualWidth));
 
             // Move the slider to its original position
-            this.sldrDarkThreshold.Value = Constants.DarkPixelThresholdDefault;
-            this.RecalculateIsDark();
+            this.sldrDarkThreshold.Value = Constants.Images.DarkPixelThresholdDefault;
+            this.RecalculateImageQualityForCurrentImage();
             this.Repaint();
         }
         #endregion
@@ -261,7 +261,7 @@ namespace Timelapse
             }
             this.darkPixelThreshold = Convert.ToInt32(e.NewValue);
 
-            this.RecalculateIsDark();
+            this.RecalculateImageQualityForCurrentImage();
             this.Repaint();
         }
 
@@ -290,7 +290,7 @@ namespace Timelapse
                 return;
             }
 
-            this.RecalculateIsDark();
+            this.RecalculateImageQualityForCurrentImage();
             // We don't repaint, as this will screw up the thumb dragging. So just update the labels instead.
             this.UpdateLabels();
         }
@@ -305,14 +305,18 @@ namespace Timelapse
 
         #region Work Utilities
         /// <summary>
-        /// Redo image darkness classification with current thresholds and return the ratio of pixels at least as dark as the threshold for the current image.
+        /// Redo image quality calculations with current thresholds and return the ratio of pixels at least as dark as the threshold for the current image.
+        /// Does not update the database.
         /// </summary>
-        private void RecalculateIsDark()
+        private void RecalculateImageQualityForCurrentImage()
         {
-            this.bitmap.IsDark(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
+            this.bitmap.GetImageQuality(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
         }
 
-        private void RescanImageQuality()
+        /// <summary>
+        /// Redo image quality calculations with current thresholds for all images selected by the current filter.  Updates the database.
+        /// </summary>
+        private void UpdateImageQualityForAllSelectedImages()
         {
             BackgroundWorker backgroundWorker = new BackgroundWorker()
             {
@@ -350,7 +354,7 @@ namespace Timelapse
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just go to the catch.
                         imageQuality.Bitmap = imageQuality.LoadWriteableBitmap(this.database.FolderPath);
-                        imageQuality.NewImageQuality = imageQuality.Bitmap.IsDark(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor) ? Constants.ImageQuality.Dark : Constants.ImageQuality.Ok;
+                        imageQuality.NewImageQuality = imageQuality.Bitmap.GetImageQuality(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor).ToString();
                         imageQuality.IsColor = this.isColor;
                         imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
                         if (imageQuality.OldImageQuality.Equals(imageQuality.NewImageQuality))

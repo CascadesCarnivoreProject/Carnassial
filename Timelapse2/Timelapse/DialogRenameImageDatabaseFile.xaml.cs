@@ -5,14 +5,14 @@ using System.Windows.Controls;
 namespace Timelapse
 {
     /// <summary>
-    /// Interaction logic for DialogRenameDataFile.xaml
+    /// Interaction logic for DialogRenameImageDatabaseFile.xaml
     /// </summary>
-    public partial class DialogRenameDataFile : Window
+    public partial class DialogRenameImageDatabaseFile : Window
     {
         private string originalFileName;
         public string NewFilename { get; private set; }
 
-        public DialogRenameDataFile(string fileName)
+        public DialogRenameImageDatabaseFile(string fileName)
         {
             this.originalFileName = fileName;
             this.NewFilename = Path.GetFileNameWithoutExtension(fileName);

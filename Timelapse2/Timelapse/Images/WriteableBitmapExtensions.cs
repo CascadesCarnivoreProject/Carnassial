@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Timelapse.Database;
 
 namespace Timelapse.Images
 {
@@ -20,7 +21,7 @@ namespace Timelapse.Images
                 WriteableBitmapExtensions.BitmapsMismatched(unaltered, next))
             {
                 return null;
-            }
+             }
 
             int blueOffset;
             int greenOffset;
@@ -62,58 +63,59 @@ namespace Timelapse.Images
             WriteableBitmap difference = new WriteableBitmap(BitmapSource.Create(unaltered.PixelWidth, unaltered.PixelHeight, unaltered.DpiX, unaltered.DpiY, unaltered.Format, unaltered.Palette, differencePixels, unaltered.BackBufferStride));
             return difference;
         }
+
         // Return whether the image is mostly dark. This is done by counting the number of pixels that are
         // below a certain tolerance (i.e., mostly black), and seeing if the % of mostly dark pixels are
         // at or higher than the given darkPercent.
         // We also check to see if the image is predominantly color. We do this by checking to see if pixels are grey scale
         // (where r=g=b, with a bit of slop added) and then check that against a threshold.
-        public static bool IsDark(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio)
+        public static ImageQualityFilter GetImageQuality(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio)
         {
             double ignored1;
             bool ignored2;
-            return image.IsDark(darkPixelThreshold, darkPixelRatio, out ignored1, out ignored2);
+            return image.GetImageQuality(darkPixelThreshold, darkPixelRatio, out ignored1, out ignored2);
         }
 
-        public static unsafe bool IsDark(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio, out double darkPixelFraction, out bool isColor)
+        // Return whether the image is mostly dark. This is done by counting the number of pixels that are
+        // below a certain tolerance (i.e., mostly black), and seeing if the % of mostly dark pixels are
+        // at or higher than the given darkPercent.
+        // We also check to see if the image is predominantly color. We do this by checking to see if pixels are grey scale
+        // (where r=g=b, with a bit of slop added) and then check that against a threshold.
+        public static unsafe ImageQualityFilter GetImageQuality(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio, out double darkPixelFraction, out bool isColor)
         {
-            const int ColorThreshold = 40; // A grey scale pixel has r = g = b. But we will allow some empircially deriven slop in here just in case a bit of color creeps in
-            const double GreyScalePixelThreshold = .9; // A greyscale image (given the above slop) will typically have about 90% of its pixels as grey scale
-
             // The RGB offsets from the beginning of the pixel (i.e., 0, 1 or 2)
-            int blueOffset; 
+            int blueOffset;
             int greenOffset;
             int redOffset;
             WriteableBitmapExtensions.GetColorOffsets(image, out blueOffset, out greenOffset, out redOffset);
 
-            byte* imageIndex = (byte*)image.BackBuffer.ToPointer(); // the imageIndex will point to a particular byte in the pixel array
-            
-
-            int totalPixels = image.PixelHeight * image.PixelWidth; // total number of pixels in the image
-            int pixelSizeInBytes = image.Format.BitsPerPixel / 8;
-
-            // various counters that we will use to in our calculation of image darkness
+            // various counters that we will use in calculation of image darkness
             int darkPixels = 0;
             int uncoloredPixels = 0;
             int countedPixels = 0;
 
-            // Examine only every PixelStride pixel, as otherwise its a very expensive operation
-            // SAUL TODO: Calculate the PixelStride as a function of the imageSize, so that future high res images will still be processed quickly.
-            const int PixelStride = 20; 
-            for (int pixel = 0; pixel < totalPixels; pixel += PixelStride)
-            { 
-                byte b = *(imageIndex + blueOffset) ;
-                byte g = *(imageIndex + greenOffset);
-                byte r = *(imageIndex + redOffset);
+            // Examine only a subset of pixels as otherwise this is a very expensive operation
+            // TODOSAUL: Calculate pixelStride as a function of image size so future high res images will still be processed quickly.
+            byte* currentPixel = (byte*)image.BackBuffer.ToPointer(); // the imageIndex will point to a particular byte in the pixel array
+            int pixelSizeInBytes = image.Format.BitsPerPixel / 8;
+            int pixelStride = Constants.Images.DarkPixelSampleStrideDefault;
+            int totalPixels = image.PixelHeight * image.PixelWidth; // total number of pixels in the image
+            for (int pixelIndex = 0; pixelIndex < totalPixels; pixelIndex += pixelStride)
+            {
+                // get next pixel of interest
+                byte b = *(currentPixel + blueOffset);
+                byte g = *(currentPixel + greenOffset);
+                byte r = *(currentPixel + redOffset);
 
                 // The numbers below convert a particular color to its greyscale equivalent, and then checked against the darkPixelThreshold
                 // Colors are not weighted equally. Since pure green is lighter than pure red and pure blue, it has a higher weight. 
                 // Pure blue is the darkest of the three, so it receives the least weight.
-                byte brightness = (byte)Math.Round(0.299 * r + +0.5876 * g + 0.114 * b);
-                if (brightness <= darkPixelThreshold)
+                int humanPercievedLuminosity = (int)Math.Round(0.299 * r + 0.5876 * g + 0.114 * b);
+                if (humanPercievedLuminosity <= darkPixelThreshold)
                 {
                     ++darkPixels;
                 }
-                
+
                 // Check if the pixel is a grey scale vs. color pixel, using a heuristic. 
                 // In precise grey scales, r = g = b. However, we allow a bit of slop as some cameras actually
                 // have a bit of color in their dark shots (don't ask me why, it just happens). 
@@ -122,28 +124,34 @@ namespace Timelapse.Images
                 // In practice a grey scale pixel's rgb are all equal (i.e., delta = 0) but we need the value as we want to see how 'close' the pixel 
                 // actually is to 0, i.e., to allow some slop in determining grey versus color pixels.
                 int rgbDelta = Math.Abs(r - g) + Math.Abs(g - b) + Math.Abs(b - r);
-                if (rgbDelta <= ColorThreshold)
+                if (rgbDelta <= Constants.Images.GreyScalePixelThreshold)
                 {
                     ++uncoloredPixels;
                 }
-                imageIndex += pixelSizeInBytes * PixelStride; // Advance the pointer to the beginning of the next pixel of interest
-                countedPixels++;
+
+                // update other loop variables
+                ++countedPixels;
+                currentPixel += pixelSizeInBytes * pixelStride; // Advance the pointer to the beginning of the next pixel of interest
             }
 
-            // Check if its a grey scale image, i.e., at least the fraction of the pixels in this image (given this slop) are grey scale as determined by the GreyScalePixelThreshold.
-            // If not, its a color image so judge it as not dark and retrn
+            // Check if its a grey scale image, i.e., at least 90% of the pixels in this image (given this slop) are grey scale.
+            // If not, its a color image so judge it as not dark
             double uncoloredPixelFraction = 1d * uncoloredPixels / countedPixels;
-            if (uncoloredPixelFraction < GreyScalePixelThreshold)
+            if (uncoloredPixelFraction < Constants.Images.GreyScaleImageThreshold)
             {
                 darkPixelFraction = 1 - uncoloredPixelFraction;
                 isColor = true;
-                return false;
+                return ImageQualityFilter.Ok;
             }
 
             // It is a grey scale image. If the fraction of dark pixels are higher than the threshold, it is dark.
             darkPixelFraction = 1d * darkPixels / countedPixels;
             isColor = false;
-            return darkPixelFraction >= darkPixelRatio;
+            if (darkPixelFraction >= darkPixelRatio)
+            {
+                return ImageQualityFilter.Dark;
+            }
+            return ImageQualityFilter.Ok;
         }
 
         // Given two images, return an image containing the visual difference between them
@@ -185,7 +193,7 @@ namespace Timelapse.Images
             return difference;
         }
 
-        private static bool BitmapsMismatched(WriteableBitmap image1, WriteableBitmap image2)
+        internal static bool BitmapsMismatched(WriteableBitmap image1, WriteableBitmap image2)
         {
             return (image1.PixelWidth != image2.PixelWidth) ||
                    (image1.PixelHeight != image2.PixelHeight) ||

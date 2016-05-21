@@ -17,7 +17,7 @@ namespace Timelapse.Util
         public bool IsContentValueChangedFromOutside { get; set; }
         public bool IsDateTimeOrder { get; set; }
         public string IsMouseOverCounter { get; set; }
-        public MostRecentlyUsedList<string> MostRecentDatabasePaths { get; set; }
+        public MostRecentlyUsedList<string> MostRecentImageSets { get; set; }
         public bool ShowCsvDialog { get; set; }
 
         public TimelapseState()
@@ -25,8 +25,8 @@ namespace Timelapse.Util
             this.AudioFeedback = false;
 
             // thresholds used for determining image darkness
-            this.DarkPixelThreshold = Constants.DarkPixelThresholdDefault;
-            this.DarkPixelRatioThreshold = Constants.DarkPixelRatioThresholdDefault;
+            this.DarkPixelThreshold = Constants.Images.DarkPixelThresholdDefault;
+            this.DarkPixelRatioThreshold = Constants.Images.DarkPixelRatioThresholdDefault;
 
             this.ControlWindowSize = new Point(0, 0);
             this.ImageFilter = ImageQualityFilter.All;
@@ -35,7 +35,7 @@ namespace Timelapse.Util
             this.IsMouseOverCounter = String.Empty;
             this.IsDateTimeOrder = true;
             this.IsContentValueChangedFromOutside = false;
-            this.MostRecentDatabasePaths = null;
+            this.MostRecentImageSets = null;
             this.ShowCsvDialog = true;
         }
     }

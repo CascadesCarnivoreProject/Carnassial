@@ -9,13 +9,7 @@ namespace Timelapse
     internal static class Constants
     {
         // Default Settings
-        public const int BitmapCacheSize = 9;
-        public const double DarkPixelRatioThresholdDefault = 0.9; // The default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
-        public const int DarkPixelThresholdDefault = 60; // The default threshold where a pixel color should be considered as 'dark' when checking image darkness. The Range is 0  (black) - 255 (white)
         public const int DefaultImageRowIndex = 0;
-        public const int DifferenceThresholdDefault = 20; // The threshold to determine differences between images
-        public const byte DifferenceThresholdMax = 255;
-        public const byte DifferenceThresholdMin = 0;
         public const int FolderScanProgressUpdateFrequency = 1;
         public const int NumberOfMostRecentDatabasesToTrack = 9;
         public const string StandardColour = "Gold";
@@ -25,6 +19,13 @@ namespace Timelapse
         public const string ApplicationName = "timelapse";
         public static readonly Uri LatestVersionAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Installs/timelapse_version.xml");
         public static readonly Uri VersionChangesAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.TimelapseVersions#Timelapse");
+
+        // Boolean.TrueString and FalseString are "True" and "False" and are preferred, but 
+        public static class Boolean
+        {
+            public const string True = "true";
+            public const string False = "false";
+        }
 
         // Generic Codes
         // These are generic to all controls that want to use them
@@ -132,6 +133,25 @@ namespace Timelapse
 
         public static class Images
         {
+            public const int BitmapCacheSize = 9;
+
+            // The default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
+            public const double DarkPixelRatioThresholdDefault = 0.9;
+            public const int DarkPixelSampleStrideDefault = 20;
+            // The default threshold where a pixel color should be considered as 'dark' when checking image darkness. The Range is 0  (black) - 255 (white)
+            public const int DarkPixelThresholdDefault = 60;
+
+            // The threshold to determine differences between images
+            public const int DifferenceThresholdDefault = 20;
+            public const byte DifferenceThresholdMax = 255;
+            public const byte DifferenceThresholdMin = 0;
+
+            // A greyscale image (given the above slop) will typically have about 90% of its pixels as grey scale
+            public const double GreyScaleImageThreshold = 0.9;
+            // Check only every few pixels as otherwise dark frame detection is expensive operation
+            // A grey scale pixel has r = g = b. But we will allow some slop in here just in case a bit of color creeps in
+            public const int GreyScalePixelThreshold = 40;
+
             public static readonly BitmapFrame Corrupt;
             public static readonly BitmapFrame Missing;
 
@@ -160,8 +180,8 @@ namespace Timelapse
                 public const string DarkPixelThreshold = "DarkPixelThreshold";
                 // The DarkPixelRatio
                 public const string DarkPixelRatio = "DarkPixelRatio";
-                // Key containing the list of most recently used data files
-                public const string MostRecentlyUsedDataFiles = "MostRecentlyUsedDataFiles";
+                // Key containing the list of most recently used template databases
+                public const string MostRecentlyUsedImageSets = "MostRecentlyUsedImageSets";
                 // Whether to show the CSV dialog window
                 public const string ShowCsvDialog = "ShowCsvDialog";
             }
