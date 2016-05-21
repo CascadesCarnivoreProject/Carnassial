@@ -200,8 +200,7 @@ namespace Timelapse
             }
 
             // if the user didn't specify a file name for the .tdb use the default
-            // TODO: Saul  is this case still reachable?
-            // RESPONSE: I think not, so I commented it out for now.
+            // SAULDONE: Q. Saul  is this case still reachable? A. I think not, so I commented it out for now.
             //if (String.IsNullOrEmpty(Path.GetFileName(templateDatabasePath)))
             //{
             //    templateDatabasePath = Path.Combine(templateDatabaseDirectoryPath, Constants.File.DefaultTemplateDatabaseFileName);
@@ -1294,7 +1293,9 @@ namespace Timelapse
             }
 
             // display the differenced image
-            // TODO: Saul  should the magnifiable image also be updated?
+            // SAULDONE: Q. should the magnifiable image also be updated?
+            // SAULDONE: A. No. The idea is that the nagnifying glass always displays the original non-diferenced image. 
+            // SAULDONE: This allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
             this.markableCanvas.ImageToDisplay.Source = this.imageCache.GetCurrentImage();
             StatusBarUpdate.Message(this.statusBar, "Viewing differences compared to " + (this.imageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next") + " image");
         }
