@@ -252,9 +252,21 @@ namespace Timelapse.Database
                         }
                     }
                 }
+                // Check if we have reached the end.
+                // If the last character is a non-comma, we need to add the final (non-empty) field to the parsedLine list.
+                // Otherwise we add an empty field 
+                if (index == unparsedLine.Length - 1)
+                {
+                    string field = String.Empty;
+                    if (currentCharacter != ',')
+                    {
+                        field = unparsedLine.Substring(fieldStart, index - fieldStart + 1);
+                    }
+                    parsedLine.Add(field); 
+                }
             }
             return parsedLine;
         }
-        #endregion 
+        #endregion
     }
 }

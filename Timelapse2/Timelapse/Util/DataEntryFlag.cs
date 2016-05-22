@@ -13,7 +13,7 @@ namespace Timelapse.Util
         public override string Content
         {
             get { return ((bool)this.ContentControl.IsChecked) ? "true" : "false"; }
-            set { this.ContentControl.IsChecked = (value == "true") ? true : false; }
+            set { value = value.ToLower();  this.ContentControl.IsChecked = (value == "true") ? true : false; }
         }
 
         public DataEntryFlag(string dataLabel, Controls dataEntryControls, bool createContextMenu)
