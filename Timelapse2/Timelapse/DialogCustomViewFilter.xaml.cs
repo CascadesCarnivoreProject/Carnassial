@@ -95,7 +95,19 @@ namespace Timelapse
                 comboboxExpressions.Margin = thickness;
                 comboboxExpressions.IsEnabled = this.customFilter.SearchTermList[row_count].UseForSearching;
                 // The expressions allowed to compare numbers vs. plain text
-                string[] expressions = { Constants.Filter.Equal, Constants.Filter.NotEqual, Constants.Filter.LessThan, Constants.Filter.GreaterThan, Constants.Filter.LessThanOrEqual, Constants.Filter.GreaterThanOrEqual, Constants.Filter.Glob };
+                string[] expressions;
+                if (type == Constants.DatabaseColumn.Counter)
+                { 
+                    // No globs in Counters: since that text field only allows numbers, we can't enter the special characters Glob required
+                    expressions = new string[] { Constants.Filter.Equal, Constants.Filter.NotEqual, Constants.Filter.LessThan, Constants.Filter.GreaterThan, Constants.Filter.LessThanOrEqual, Constants.Filter.GreaterThanOrEqual};
+                }
+                else if (type == Constants.DatabaseColumn.Flag)
+                {
+                    // Only equals and not equals in Flags, as other options don't make sense for booleans
+                    expressions = new string[] { Constants.Filter.Equal, Constants.Filter.NotEqual};
+                }
+                else
+                    expressions = new string[] { Constants.Filter.Equal, Constants.Filter.NotEqual, Constants.Filter.LessThan, Constants.Filter.GreaterThan, Constants.Filter.LessThanOrEqual, Constants.Filter.GreaterThanOrEqual, Constants.Filter.Glob };
                 comboboxExpressions.ItemsSource = expressions;
                 comboboxExpressions.SelectionChanged += this.CbExpressions_SelectionChanged; // Create the callback that is invoked whenever the user changes the expresison
 

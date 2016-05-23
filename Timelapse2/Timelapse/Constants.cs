@@ -116,7 +116,7 @@ namespace Timelapse
             public const string Equal = "\u003D";
             public const string Glob = " GLOB ";
             public const string GreaterThan = "\u003E";
-            public const string GreaterThanOrEqual = "\u2267";
+            public const string GreaterThanOrEqual = "\u2265";
             public const string LessThan = "\u003C";
             public const string LessThanOrEqual = "\u2264";
             public const string NotEqual = "\u2260";

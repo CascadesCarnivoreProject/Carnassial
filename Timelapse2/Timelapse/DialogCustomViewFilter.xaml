@@ -60,15 +60,15 @@
                 <TextBlock HorizontalAlignment="Left"  Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="2" Grid.Column="1" FontWeight="Normal" FontSize="14" TextWrapping="Wrap">
 
                     <Run FontWeight="Bold" Text="Glob"/> 
-                    <Run Text=" expressons allow wildcard matches. "/> 
+                    <Run Text=" expressons allow wildcard: "/> 
                     <Run FontWeight="Bold" Text="*"/> 
-                    <Run Text=" is any number of characters;  "/> 
+                    <Run Text=" matches any number of characters;  "/> 
                     <Run FontWeight="Bold" Text="?" /> 
-                    <Run Text="  is any single character; "/>
+                    <Run Text="  matches any single character; "/>
                 <Run FontWeight="Bold" Text="[abc]" /> 
-                    <Run Text="  is one of the indicated characters; "/>
+                    <Run Text="  matches one of the indicated characters; "/>
                 <Run FontWeight="Bold" Text="[a-z]" /> 
-                    <Run Text="  is the range of indicated characters. "/></TextBlock>
+                    <Run Text="  matches the range of indicated characters. "/></TextBlock>
 
                 <TextBlock HorizontalAlignment="Left"  Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="3" Grid.Column="0" FontWeight="Bold" FontSize="14"><Run Text="Result "/></TextBlock>
                 <TextBlock HorizontalAlignment="Left"  Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="3" Grid.Column="1" FontWeight="Normal" FontSize="14" TextWrapping="Wrap"><Run Text="Only those images matching your search criteria will be displayed"/></TextBlock>
