@@ -1905,6 +1905,30 @@ namespace Timelapse
         /// <summary>Write the CSV file and preview it in excel.</summary>
         private void MenuItemExportCsv_Click(object sender, RoutedEventArgs e)
         {
+            if (this.state.ImageFilter != ImageQualityFilter.All)
+            {
+                DialogMessageBox dlgMB = new DialogMessageBox();
+                dlgMB.MessageTitle = "Exporting to a CSV file on a Filtered View...";
+                dlgMB.MessageProblem = "Only a subset of your data will be exported to the CSV file." ;
+
+                dlgMB.MessageReason = "As your filter (in the Filter menu) is not set to view 'All Images', ";
+                dlgMB.MessageReason = "only data for those images displayed by this filter will be exported. ";
+
+                dlgMB.MessageSolution = "If you want to export just this subset, then " + Environment.NewLine;
+                dlgMB.MessageSolution += "\u2022 click Okay" + Environment.NewLine + Environment.NewLine;
+                dlgMB.MessageSolution += "If you want to export all your data for all your images, then " + Environment.NewLine;
+                dlgMB.MessageSolution += "\u2022 click Cancel," + Environment.NewLine;
+                dlgMB.MessageSolution += "\u2022 select 'All Images' in the Filter menu, " + Environment.NewLine;
+                dlgMB.MessageSolution += "\u2022 retry exporting your data as a CVS file.";
+
+                dlgMB.IconType = MessageBoxImage.Warning;
+                dlgMB.ButtonType = MessageBoxButton.OKCancel;
+                bool? msg_result = dlgMB.ShowDialog();
+
+                // Set the filter to show all images and a valid image
+                if (msg_result != true) return;
+            }
+
             // Write the file
             string csvFileName = Path.GetFileNameWithoutExtension(this.imageDatabase.FileName) + ".csv";
             string csvFilePath = Path.Combine(this.FolderPath, csvFileName);
@@ -1995,6 +2019,35 @@ namespace Timelapse
         private void MenuItemImportFromCsv_Click(object sender, RoutedEventArgs e)
         {
             string csvFilePath;
+            DialogMessageBox dlgMB = new DialogMessageBox();
+            dlgMB.MessageTitle = "Importing CSV data rules...";
+            dlgMB.MessageProblem = "Importing data from a CSV (comma separated value) file will only work if you follow the rules below." + Environment.NewLine;
+            dlgMB.MessageProblem += "Otherwise your Timelapse data may become corrupted.";
+
+            dlgMB.MessageReason = "Timelapse requires the CSV file and its data to follow a specific format.";
+
+            dlgMB.MessageSolution = "\u2022 Only modify and import a CSV file previously exported by Timelapse." + Environment.NewLine;
+            dlgMB.MessageSolution = "\u2022 Don't change the File or Folder names" + Environment.NewLine;
+            dlgMB.MessageSolution += "\u2022 Do not change the order or names of any of the columns" + Environment.NewLine;
+            dlgMB.MessageSolution += "\u2022 Restrict data modification as follows:" + Environment.NewLine;
+            dlgMB.MessageSolution += "    \u2022 Counter data to positive integers" + Environment.NewLine;
+            dlgMB.MessageSolution += "    \u2022 Flag data to either 'true' or 'false'" + Environment.NewLine;
+            dlgMB.MessageSolution += "    \u2022 FixedChoice data to a string that exactly match one of the FixedChoice menu options, or empty." + Environment.NewLine;
+            dlgMB.MessageSolution += "    \u2022 Note data to any string, or empty." + Environment.NewLine;
+            dlgMB.MessageSolution += "    \u2022 As Date / Time field formats are sometimes altered by spreadsheets," + Environment.NewLine;
+            dlgMB.MessageSolution += "           test those with a dummy data file to see if those format changes are acceptable.";
+
+
+            dlgMB.MessageResult = "Timelapse will create a backup .ddb file in the Backups folder, and will then try its best.";
+            dlgMB.MessageHint= "After you import, check your data. If it is not what you expect, restore your data by using that backup file.";
+
+            dlgMB.IconType = MessageBoxImage.Warning;
+            dlgMB.ButtonType = MessageBoxButton.OKCancel;
+            bool? msg_result = dlgMB.ShowDialog();
+
+            // Set the filter to show all images and a valid image
+            if (msg_result != true) return;
+
             if (Utilities.TryGetFileFromUser("Select a .csv file to merge into the current data file",
                                              Path.Combine(this.imageDatabase.FolderPath, Path.GetFileNameWithoutExtension(this.imageDatabase.FileName) + Constants.File.CsvFileExtension),
                                              String.Format("Comma separated value files ({0})|*{0}", Constants.File.CsvFileExtension),
@@ -2003,10 +2056,21 @@ namespace Timelapse
                 return;
             }
 
+            // Create a backup file
+            if (FileBackup.CreateBackups(this.FolderPath, this.imageDatabase.FileName))
+            {
+                StatusBarUpdate.Message(this.statusBar, "Backups of files made.");
+            }
+            else
+            {
+                StatusBarUpdate.Message(this.statusBar, "No file backups were made.");
+            }
+
             CsvReaderWriter csvReader = new CsvReaderWriter();
             csvReader.ImportFromCsv(this.imageDatabase, csvFilePath);
 
             this.OnImageLoadingComplete();
+            StatusBarUpdate.Message(this.statusBar, "CSV file imported.");
         }
 
         private void MenuItemRecentDataFile_Click(object sender, RoutedEventArgs e)
@@ -2210,7 +2274,7 @@ namespace Timelapse
                 {
                     type = "Not a control";
                 }
-
+            
                 DataEntryControl control = pair.Value;
                 if (this.imageDatabase.IsControlCopyable(control.DataLabel))
                 {
