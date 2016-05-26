@@ -87,6 +87,30 @@ namespace Timelapse.UnitTests
             }
         }
 
+        [TestMethod]
+        // SaulToDo : write my first unit test.
+        public void CheckIsDark ()
+        {
+            // Load the test image from the given folder path
+            string folderPath = Environment.CurrentDirectory;
+            string imageFilePath = Path.Combine(folderPath, "BushnellTrophyHD-119677C-20160224-056.JPG");
+
+            BitmapFrame bitmapFrame = BitmapFrame.Create(new Uri(imageFilePath), BitmapCreateOptions.None, BitmapCacheOption.None);
+            WriteableBitmap bitmap = new WriteableBitmap(bitmapFrame);
+
+            // These thresholds and Ratio for determining image darkness are used as the system defaults 
+            int darkPixelThreshold = 60;
+            double darkPixelRatio = 0.9;
+
+            double darkPixelFraction = 0;
+            bool isColor = false;
+            // The above Bushnell photo should return .0743353174106539 for darkPixelFraction, and false for the other values.
+            bool isDark = bitmap.IsDark(darkPixelThreshold, darkPixelRatio, out darkPixelFraction, out isColor);
+            Assert.IsTrue(Math.Abs (darkPixelFraction - 0.0743353174106539) < .00000001, "Expected value of darkPixelFraction should be .0743353174106539, but was {0}", darkPixelFraction);
+            Assert.IsTrue(isColor == false, "Expected value of isColor should be false, but was {0}", isColor);
+            Assert.IsTrue(isDark == false, "Expected value of isDark should be false, but was {0}", isDark);
+        }
+
         private void CheckDifferenceResult(ImageDifferenceResult result, ImageCache cache)
         {
             WriteableBitmap currentBitmap = cache.GetCurrentImage();
