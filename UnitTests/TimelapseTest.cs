@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Windows.Media.Imaging;
 using Timelapse.Database;
 
 namespace Timelapse.UnitTests
@@ -33,10 +34,14 @@ namespace Timelapse.UnitTests
         protected void PopulateCarnivoreDatabase(ImageDatabase database)
         {
             FileInfo martenFileInfo = new FileInfo(TestConstants.File.InfraredMartenImage);
-            ImageProperties image1 = new ImageProperties(database.FolderPath, martenFileInfo);
+            ImageProperties martenImage = new ImageProperties(database.FolderPath, martenFileInfo);
+            martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(database.FolderPath).Metadata);
+
             FileInfo bobcatFileInfo = new FileInfo(TestConstants.File.DaylightBobcatImage);
-            ImageProperties image2 = new ImageProperties(database.FolderPath, bobcatFileInfo);
-            database.AddImages(new List<ImageProperties>() { image1, image2 }, null);
+            ImageProperties bobcatImage = new ImageProperties(database.FolderPath, bobcatFileInfo);
+            bobcatImage.TryUseImageTaken((BitmapMetadata)bobcatImage.LoadBitmapFrame(database.FolderPath).Metadata);
+
+            database.AddImages(new List<ImageProperties>() { martenImage, bobcatImage }, null);
             database.CreateWhiteSpaceColumn();
             database.TrimImageAndTemplateTableWhitespace();  // Trim the white space from all the data
             database.InitializeMarkerTableFromDataTable();

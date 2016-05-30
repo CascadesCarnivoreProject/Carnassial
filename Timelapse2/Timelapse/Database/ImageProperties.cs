@@ -92,7 +92,7 @@ namespace Timelapse.Database
             return new WriteableBitmap(this.LoadBitmapFrame(imageFolderPath));
         }
 
-        public void PopulateDateAndTimeFields(FileInfo fileInfo)
+        private void PopulateDateAndTimeFields(FileInfo fileInfo)
         {
             // Typically the creation time is the time a file was created in the local file system and the last write time when it was
             // last modified ever in any file system.  So, for example, copying an image from a camera's SD card to a computer results

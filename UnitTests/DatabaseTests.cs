@@ -24,16 +24,16 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(martenImage.ImageQuality == ImageQualityFilter.Ok);
             Assert.IsTrue(martenImage.ImageTaken == DateTime.MinValue);
             Assert.IsTrue(martenImage.InitialRootFolderName == currentDirectoryName);
-            Assert.IsTrue(martenImage.Time == "03:59:46");
+            Assert.IsTrue(martenImage.Time == "04:59:46");
 
             ImageProperties bobcatImage = database.GetImage(1);
-            Assert.IsTrue(bobcatImage.Date == "30-Nov-2015");
+            Assert.IsTrue(bobcatImage.Date == "05-Aug-2015");
             Assert.IsTrue(bobcatImage.FileName == TestConstants.File.DaylightBobcatImage);
             Assert.IsTrue(bobcatImage.ID == 2);
             Assert.IsTrue(bobcatImage.ImageQuality == ImageQualityFilter.Ok);
             Assert.IsTrue(bobcatImage.ImageTaken == DateTime.MinValue);
             Assert.IsTrue(bobcatImage.InitialRootFolderName == currentDirectoryName);
-            Assert.IsTrue(bobcatImage.Time == "07:24:34");
+            Assert.IsTrue(bobcatImage.Time == "08:06:23");
         }
 
         [TestMethod]
