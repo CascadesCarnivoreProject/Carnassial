@@ -120,7 +120,7 @@ namespace Timelapse.Database
                                 break;
                             case Constants.DatabaseColumn.Folder: // Add The Folder name
                                 dataLabel = this.DataLabelFromColumnName[Constants.DatabaseColumn.Folder];
-                                imageRow.Add(new ColumnTuple(dataLabel, imageProperties.RelativeFolderPath));
+                                imageRow.Add(new ColumnTuple(dataLabel, imageProperties.InitialRootFolderName));
                                 break;
                             case Constants.DatabaseColumn.Date:
                                 // Add the date

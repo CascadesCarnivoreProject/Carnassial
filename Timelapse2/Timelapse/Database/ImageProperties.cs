@@ -17,15 +17,18 @@ namespace Timelapse.Database
         public string FileName { get; set; }
         public long ID { get; set; }
         public ImageQualityFilter ImageQuality { get; set; }
-        public string RelativeFolderPath { get; set; }
+        public string InitialRootFolderName { get; set; }
         public string Time { get; set; }
 
         public ImageProperties(string imageFolderPath, FileInfo imageFile)
         {
             this.FileName = imageFile.Name;
             this.ImageQuality = ImageQualityFilter.Ok;
-            this.RelativeFolderPath = NativeMethods.GetRelativePath(imageFolderPath, imageFile.FullName);
-            this.RelativeFolderPath = Path.GetDirectoryName(this.RelativeFolderPath);
+            this.InitialRootFolderName = Path.GetFileName(imageFolderPath);
+            // TODOTODD: restore support for this
+            // GetRelativePath() includes the image's file name; remove that from the relative path as it's stored separately
+            // this.RelativeFolderPath = NativeMethods.GetRelativePath(imageFolderPath, imageFile.FullName);
+            // this.RelativeFolderPath = Path.GetDirectoryName(this.RelativeFolderPath);
 
             this.PopulateDateAndTimeFields(imageFile);
         }
@@ -36,7 +39,7 @@ namespace Timelapse.Database
             this.FileName = (string)imageRow[Constants.DatabaseColumn.File];
             this.ID = (long)imageRow[Constants.Database.ID];
             this.ImageQuality = (ImageQualityFilter)Enum.Parse(typeof(ImageQualityFilter), (string)imageRow[Constants.DatabaseColumn.ImageQuality]);
-            this.RelativeFolderPath = (string)imageRow[Constants.DatabaseColumn.Folder];
+            this.InitialRootFolderName = (string)imageRow[Constants.DatabaseColumn.Folder];
             this.Time = (string)imageRow[Constants.DatabaseColumn.Time];
         }
 
@@ -47,11 +50,12 @@ namespace Timelapse.Database
 
         public string GetImagePath(string rootFolderPath)
         {
-            if (this.RelativeFolderPath == null)
-            {
+            // TODOTODD: restore support for this
+            // if (this.RelativeFolderPath == null)
+            // {
                 return Path.Combine(rootFolderPath, this.FileName);
-            }
-            return Path.Combine(rootFolderPath, this.RelativeFolderPath, this.FileName);
+            // }
+            // return Path.Combine(rootFolderPath, this.RelativeFolderPath, this.FileName);
         }
 
         public bool IsDisplayable()

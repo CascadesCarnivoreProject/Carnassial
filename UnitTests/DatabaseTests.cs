@@ -10,6 +10,33 @@ namespace Timelapse.UnitTests
     public class DatabaseTests : TimelapseTest
     {
         [TestMethod]
+        public void AddImages()
+        {
+            string currentDirectoryName = Path.GetFileName(Environment.CurrentDirectory);
+
+            ImageDatabase database = this.CreateImageDatabase(TestConstants.File.CarnivoreImageDatabaseFileName, TestConstants.File.CarnivoreTemplateDatabaseFileName);
+            this.PopulateCarnivoreDatabase(database);
+
+            ImageProperties martenImage = database.GetImage(0);
+            Assert.IsTrue(martenImage.Date == "24-Feb-2016");
+            Assert.IsTrue(martenImage.FileName == TestConstants.File.InfraredMartenImage);
+            Assert.IsTrue(martenImage.ID == 1);
+            Assert.IsTrue(martenImage.ImageQuality == ImageQualityFilter.Ok);
+            Assert.IsTrue(martenImage.ImageTaken == DateTime.MinValue);
+            Assert.IsTrue(martenImage.InitialRootFolderName == currentDirectoryName);
+            Assert.IsTrue(martenImage.Time == "03:59:46");
+
+            ImageProperties bobcatImage = database.GetImage(1);
+            Assert.IsTrue(bobcatImage.Date == "30-Nov-2015");
+            Assert.IsTrue(bobcatImage.FileName == TestConstants.File.DaylightBobcatImage);
+            Assert.IsTrue(bobcatImage.ID == 2);
+            Assert.IsTrue(bobcatImage.ImageQuality == ImageQualityFilter.Ok);
+            Assert.IsTrue(bobcatImage.ImageTaken == DateTime.MinValue);
+            Assert.IsTrue(bobcatImage.InitialRootFolderName == currentDirectoryName);
+            Assert.IsTrue(bobcatImage.Time == "07:24:34");
+        }
+
+        [TestMethod]
         public void GenerateControls()
         {
             List<DatabaseExpectations> databaseExpectations = new List<DatabaseExpectations>()

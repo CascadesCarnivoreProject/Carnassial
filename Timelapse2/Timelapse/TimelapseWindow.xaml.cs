@@ -1411,7 +1411,7 @@ namespace Timelapse
                         control.Value.Content = this.imageCache.Current.FileName;
                         break;
                     case Constants.DatabaseColumn.Folder:
-                        control.Value.Content = this.imageCache.Current.RelativeFolderPath;
+                        control.Value.Content = this.imageCache.Current.InitialRootFolderName;
                         break;
                     case Constants.DatabaseColumn.Time:
                         control.Value.Content = this.imageCache.Current.Time;
