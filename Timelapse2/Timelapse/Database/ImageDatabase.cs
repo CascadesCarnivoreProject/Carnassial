@@ -120,7 +120,7 @@ namespace Timelapse.Database
                                 break;
                             case Constants.DatabaseColumn.Folder: // Add The Folder name
                                 dataLabel = this.DataLabelFromColumnName[Constants.DatabaseColumn.Folder];
-                                imageRow.Add(new ColumnTuple(dataLabel, imageProperties.RelativeFolderPath));
+                                imageRow.Add(new ColumnTuple(dataLabel, imageProperties.InitialRootFolderName));
                                 break;
                             case Constants.DatabaseColumn.Date:
                                 // Add the date
@@ -291,7 +291,7 @@ namespace Timelapse.Database
 
             List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>(); // Populate the data for the image set with defaults
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Log, "Add text here"));
-            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, "true"));
+            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, Constants.Boolean.True));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Row, "0"));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, ifilter.ToString()));
             List<List<ColumnTuple>> insertionStatements = new List<List<ColumnTuple>>();
@@ -381,7 +381,7 @@ namespace Timelapse.Database
             }
         }
 
-        public void RenameDataFile(string newFileName, TemplateDatabase template)
+        public void RenameFile(string newFileName, TemplateDatabase template)
         {
             if (File.Exists(Path.Combine(this.FolderPath, this.FileName)))
             {
@@ -502,12 +502,6 @@ namespace Timelapse.Database
         {
             string result = this.ImageSetGetValue(Constants.DatabaseColumn.Filter);
             return (ImageQualityFilter)Convert.ToInt32(result);
-        }
-
-        public bool GetImageSetWhiteSpaceTrimmed()
-        {
-            string result = this.ImageSetGetValue(Constants.DatabaseColumn.WhiteSpaceTrimmed);
-            return Convert.ToBoolean(result);
         }
 
         public string GetImageSetLog()
@@ -711,9 +705,9 @@ namespace Timelapse.Database
             for (int index = fromRow; index <= toRow; index++)
             {
                 // update data table
-                // TODO: Saul  is there an off by one error here as .Rows is accessed with a one based count?
-                // SAULDONE: Um, I can't recall. I don't think it is an error as a vaguely recall somethings were indexed by 1, and others by 0.
-                // SAULDONE: But it should be checked .
+                // TODOSAUL: is there an off by one error here as .Rows is accessed with a one based count?
+                // Um, I can't recall. I don't think it is an error as a vaguely recall somethings were indexed by 1, and others by 0.
+                // But it should be checked.
                 this.ImageDataTable.Rows[index][dataLabel] = value;
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
                 long id = (long)this.ImageDataTable.Rows[index][Constants.Database.ID];
@@ -1075,15 +1069,15 @@ namespace Timelapse.Database
                 int id;
                 if (!Int32.TryParse(idAsString, out id))
                 {
-                    Debug.Print("Can't GetThe Id");
+                    Debug.Print("Can't get the ID");
                     break;
                 }
                 foreach (ColumnTuple column in marker.Columns)
                 {
                     if (!column.Value.Equals(String.Empty))
                     {
-                        // TODO: Saul  .Rows is being indexed by ID rather than row index; is this correct?
-                        // SAULDONE. I think so... but need to check. I think the row row ID will get the correct rowm but the row index (which I think can be reordered)  could muck things up 
+                        // TODOSAUL: .Rows is being indexed by ID rather than row index; is this correct?
+                        // I think so... but need to check. I think the row ID will get the correct row but the row index (which I think can be reordered) could muck things up 
                         this.MarkerTable.Rows[id - 1][column.Name] = column.Value;
                     }
                 }

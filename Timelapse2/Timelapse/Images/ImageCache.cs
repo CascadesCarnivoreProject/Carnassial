@@ -18,7 +18,7 @@ namespace Timelapse.Images
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
             this.differenceBitmapCache = new Dictionary<ImageDifference, WriteableBitmap>();
-            this.mostRecentlyUsedIDs = new MostRecentlyUsedList<long>(Constants.BitmapCacheSize);
+            this.mostRecentlyUsedIDs = new MostRecentlyUsedList<long>(Constants.Images.BitmapCacheSize);
             this.unalteredBitmapsByID = new Dictionary<long, WriteableBitmap>();
         }
 

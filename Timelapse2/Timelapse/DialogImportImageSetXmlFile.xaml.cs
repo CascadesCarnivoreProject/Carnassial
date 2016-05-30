@@ -6,13 +6,13 @@ namespace Timelapse
     /// Dialog to ask the user to indicate the path to a code template file, which is invoked when there is no code template file in the image folder. 
     /// If a code template file is found, it is copied to the image folder. 
     /// </summary>
-    public partial class DialogImportImageDataXmlFile : Window
+    public partial class DialogImportImageSetXmlFile : Window
     {
         /// <summary>
         /// Ask the user to indicate the path to a code template file (called if there is no code template file in the image folder). 
         /// If a code template file is found, it is copied to the image folder. 
         /// </summary>
-        public DialogImportImageDataXmlFile()
+        public DialogImportImageSetXmlFile()
         {
             this.InitializeComponent();
         }

@@ -163,7 +163,7 @@ namespace Timelapse
 
             // Move the image file to another location. 
             // However, if the destination file already exists don't overwrite it as it's probably the original version.
-            // TODO: Saul  is it really OK if backups are lossy?
+            // TODOSAUL: is it really OK if backups are lossy?
             string destinationFilePath = Path.Combine(destinationFolder, imageProperties.FileName);
             if (!File.Exists(destinationFilePath))
             {

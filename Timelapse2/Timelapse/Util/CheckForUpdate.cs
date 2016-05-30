@@ -77,7 +77,7 @@ namespace Timelapse.Util
             {
                 // ask the user if he would like to download the new version  
                 DialogMessageBox dlgMB = new DialogMessageBox();
-                dlgMB.MessageTitle = "A new version of Timelapse available.";
+                dlgMB.MessageTitle = "A new version of Timelapse is available.";
                 dlgMB.MessageProblem = "You a running an old version of Timelapse: version " + curVersion.ToString();
                 dlgMB.MessageReason = "A new version of Timelapse is available: version " + newVersion.ToString();
                 dlgMB.MessageSolution = "Select 'Yes' to go to the Timelapse website and download it.";

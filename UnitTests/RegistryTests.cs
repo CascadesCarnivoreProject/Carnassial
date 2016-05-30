@@ -130,7 +130,7 @@ namespace Timelapse.UnitTests
                 Point controlWindowSize = timelapseRegistry.ReadControlWindowSize();
                 double darkPixelRatioThreshold = timelapseRegistry.ReadDarkPixelRatioThreshold();
                 int darkPixelThreshold = timelapseRegistry.ReadDarkPixelThreshold();
-                MostRecentlyUsedList<string> mostRecentDatabasePaths = timelapseRegistry.ReadMostRecentDataFilePaths();
+                MostRecentlyUsedList<string> mostRecentImageSets = timelapseRegistry.ReadMostRecentImageSets();
                 bool showCsvDialog = timelapseRegistry.ReadShowCsvDialog();
             }
         }
@@ -155,27 +155,27 @@ namespace Timelapse.UnitTests
                 Point controlWindowSize = timelapseRegistry.ReadControlWindowSize();
                 double darkPixelRatioThreshold = timelapseRegistry.ReadDarkPixelRatioThreshold();
                 int darkPixelThreshold = timelapseRegistry.ReadDarkPixelThreshold();
-                MostRecentlyUsedList<string> mostRecentDatabasePaths = timelapseRegistry.ReadMostRecentDataFilePaths();
+                MostRecentlyUsedList<string> mostRecentImageSets = timelapseRegistry.ReadMostRecentImageSets();
                 bool showCsvDialog = timelapseRegistry.ReadShowCsvDialog();
 
                 Assert.IsFalse(audioFeedback);
                 Assert.IsFalse(controlInSeparateWindow);
                 Assert.IsTrue(controlWindowSize.X == 0 && controlWindowSize.Y == 0);
-                Assert.IsTrue(darkPixelRatioThreshold == Constants.DarkPixelRatioThresholdDefault);
-                Assert.IsTrue(darkPixelThreshold == Constants.DarkPixelThresholdDefault);
-                Assert.IsTrue(mostRecentDatabasePaths != null);
-                Assert.IsTrue(mostRecentDatabasePaths.Count == 0);
+                Assert.IsTrue(darkPixelRatioThreshold == Constants.Images.DarkPixelRatioThresholdDefault);
+                Assert.IsTrue(darkPixelThreshold == Constants.Images.DarkPixelThresholdDefault);
+                Assert.IsTrue(mostRecentImageSets != null);
+                Assert.IsTrue(mostRecentImageSets.Count == 0);
 
                 // write
                 string databasePath = Path.Combine(Environment.CurrentDirectory, Constants.File.DefaultImageDatabaseFileName);
-                mostRecentDatabasePaths.SetMostRecent(databasePath);
+                mostRecentImageSets.SetMostRecent(databasePath);
 
                 timelapseRegistry.WriteAudioFeedback(audioFeedback);
                 timelapseRegistry.WriteControlsInSeparateWindow(controlInSeparateWindow);
                 timelapseRegistry.WriteControlWindowSize(controlWindowSize);
                 timelapseRegistry.WriteDarkPixelRatioThreshold(darkPixelRatioThreshold);
                 timelapseRegistry.WriteDarkPixelThreshold(darkPixelThreshold);
-                timelapseRegistry.WriteMostRecentDataFilePaths(mostRecentDatabasePaths);
+                timelapseRegistry.WriteMostRecentImageSets(mostRecentImageSets);
                 timelapseRegistry.WriteShowCsvDialog(showCsvDialog);
 
                 // loopback
@@ -184,18 +184,18 @@ namespace Timelapse.UnitTests
                 controlWindowSize = timelapseRegistry.ReadControlWindowSize();
                 darkPixelRatioThreshold = timelapseRegistry.ReadDarkPixelRatioThreshold();
                 darkPixelThreshold = timelapseRegistry.ReadDarkPixelThreshold();
-                mostRecentDatabasePaths = timelapseRegistry.ReadMostRecentDataFilePaths();
+                mostRecentImageSets = timelapseRegistry.ReadMostRecentImageSets();
                 showCsvDialog = timelapseRegistry.ReadShowCsvDialog();
 
                 Assert.IsFalse(audioFeedback);
                 Assert.IsFalse(controlInSeparateWindow);
                 Assert.IsTrue(controlWindowSize.X == 0 && controlWindowSize.Y == 0);
-                Assert.IsTrue(darkPixelRatioThreshold == Constants.DarkPixelRatioThresholdDefault);
-                Assert.IsTrue(darkPixelThreshold == Constants.DarkPixelThresholdDefault);
-                Assert.IsTrue(mostRecentDatabasePaths != null);
-                Assert.IsTrue(mostRecentDatabasePaths.Count == 1);
+                Assert.IsTrue(darkPixelRatioThreshold == Constants.Images.DarkPixelRatioThresholdDefault);
+                Assert.IsTrue(darkPixelThreshold == Constants.Images.DarkPixelThresholdDefault);
+                Assert.IsTrue(mostRecentImageSets != null);
+                Assert.IsTrue(mostRecentImageSets.Count == 1);
                 string mostRecentDatabasePath;
-                Assert.IsTrue(mostRecentDatabasePaths.TryGetMostRecent(out mostRecentDatabasePath));
+                Assert.IsTrue(mostRecentImageSets.TryGetMostRecent(out mostRecentDatabasePath));
                 Assert.IsTrue(mostRecentDatabasePath == databasePath);
 
                 // overwrite
@@ -204,7 +204,7 @@ namespace Timelapse.UnitTests
                 timelapseRegistry.WriteControlWindowSize(controlWindowSize);
                 timelapseRegistry.WriteDarkPixelRatioThreshold(darkPixelRatioThreshold);
                 timelapseRegistry.WriteDarkPixelThreshold(darkPixelThreshold);
-                timelapseRegistry.WriteMostRecentDataFilePaths(mostRecentDatabasePaths);
+                timelapseRegistry.WriteMostRecentImageSets(mostRecentImageSets);
                 timelapseRegistry.WriteShowCsvDialog(showCsvDialog);
             }
 

@@ -108,7 +108,7 @@ namespace Timelapse.Util
                 }
 
                 // Now check to see if the reversed date is legit. If it throws an exception, we know it's a problem.
-                // TODO: Saul  add code to check if day and month are swappable rather than throwing
+                // TODOSAUL: add code to check if day and month are swappable rather than throwing
                 try
                 {
                     DateTime reversedDate = new DateTime(date.Year, date.Day, date.Month); // swapped day and month

@@ -105,27 +105,27 @@ namespace Timelapse
         /// </summary>
         private void MoveImageToBackupFolder()
         {
-            string sourceFile = this.imageProperties.GetImagePath(this.imageFolderPath);
-            string destFolder = Path.Combine(this.imageFolderPath, Constants.File.BackupFolder);
-            string destFile = Path.Combine(destFolder, this.imageProperties.RelativeFolderPath);
+            string sourcePath = this.imageProperties.GetImagePath(this.imageFolderPath);
+            string destinationFolder = Path.Combine(this.imageFolderPath, Constants.File.BackupFolder);
+            string destinationPath = Path.Combine(destinationFolder, Path.GetFileName(sourcePath));
 
-            if (!File.Exists(sourceFile))
+            if (!File.Exists(sourcePath))
             {
                 return;  // If there is no source file, its a missing file so we can't back it up
             }
 
             // Create a new target folder, if necessary.
-            if (!Directory.Exists(destFolder))
+            if (!Directory.Exists(destinationFolder))
             {
-                Directory.CreateDirectory(destFolder);
+                Directory.CreateDirectory(destinationFolder);
             }
 
             // Move the image file to another location. 
-            // This will overwrite the destination file  if it already exists .
-            if (File.Exists(destFile))
+            // This will overwrite the destination file if it already exists.
+            if (File.Exists(destinationPath))
             {
-                File.Delete(destFile);
-                File.Move(sourceFile, destFile);
+                File.Delete(destinationPath);
+                File.Move(sourcePath, destinationPath);
             }
         }
         #endregion

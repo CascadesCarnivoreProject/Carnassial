@@ -24,7 +24,7 @@ namespace Timelapse
             this.database = database;
 
             // We add this in code behind as we don't want to invoke these callbacks when the interface is created.
-            // TODO: Saul  both combo boxes route to the same handler which doesn't vary its action depending on the sending control; is this a bug?
+            // TODOSAUL: both combo boxes route to the same handler which doesn't vary its action depending on the sending control; is this a bug?
             this.cboxOriginalDate.Checked += this.DateBox_Checked;
             this.cboxNewDate.Checked += this.DateBox_Checked;
 

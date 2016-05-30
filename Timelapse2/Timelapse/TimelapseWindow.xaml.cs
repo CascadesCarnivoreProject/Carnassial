@@ -85,11 +85,11 @@ namespace Timelapse
                 this.state.DarkPixelThreshold = userSettings.ReadDarkPixelThreshold();
                 this.state.DarkPixelRatioThreshold = userSettings.ReadDarkPixelRatioThreshold();
                 this.state.ShowCsvDialog = userSettings.ReadShowCsvDialog();
-                this.state.MostRecentDatabasePaths = userSettings.ReadMostRecentDataFilePaths();  // the last path opened by the user is stored in the registry
+                this.state.MostRecentImageSets = userSettings.ReadMostRecentImageSets();  // the last path opened by the user is stored in the registry
             }
 
             // populate the most recent databases list
-            this.MenuItemRecentDataFiles_Refresh();
+            this.MenuItemRecentImageSets_Refresh();
         }
 
         public byte DifferenceThreshold { get; set; } // The threshold used for calculating combined differences
@@ -116,7 +116,7 @@ namespace Timelapse
             if (!File.Exists(Path.Combine(directoryContainingTimelapse, "System.Data.SQLite.dll")))
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
-                dlgMB.MessageTitle = "Timelapse needs to be in its original downloaded folder";
+                dlgMB.MessageTitle = "Timelapse needs to be in its original downloaded folder.";
                 dlgMB.MessageProblem = "The Timelapse Programs won't run properly as it was not correctly installed.";
                 dlgMB.MessageReason = "When you downloaded Timelapse, it was in a folder with several other files and folders it needs. You probably dragged Timelapse out of that folder.";
                 dlgMB.MessageSolution = "Put the Timelapse programs back in its original folder, or download it again.";
@@ -163,7 +163,7 @@ namespace Timelapse
                 userSettings.WriteControlsInSeparateWindow(this.MenuItemControlsInSeparateWindow.IsChecked);
                 userSettings.WriteDarkPixelThreshold(this.state.DarkPixelThreshold);
                 userSettings.WriteDarkPixelRatioThreshold(this.state.DarkPixelRatioThreshold);
-                userSettings.WriteMostRecentDataFilePaths(this.state.MostRecentDatabasePaths);
+                userSettings.WriteMostRecentImageSets(this.state.MostRecentImageSets);
                 userSettings.WriteShowCsvDialog(this.state.ShowCsvDialog);
             }
 
@@ -184,7 +184,7 @@ namespace Timelapse
             // prompt user to select a template
             // default the template selection dialog to the most recently opened database
             string defaultTemplateDatabasePath;
-            this.state.MostRecentDatabasePaths.TryGetMostRecent(out defaultTemplateDatabasePath);
+            this.state.MostRecentImageSets.TryGetMostRecent(out defaultTemplateDatabasePath);
             if (Utilities.TryGetFileFromUser("Select a TimelapseTemplate.tdb file, which should be one located in your image folder",
                                              defaultTemplateDatabasePath,
                                              String.Format("Template files ({0})|*{0}", Constants.File.TemplateDatabaseFileExtension),
@@ -198,13 +198,6 @@ namespace Timelapse
             {
                 return false;
             }
-
-            // if the user didn't specify a file name for the .tdb use the default
-            // SAULDONE: Q. Saul  is this case still reachable? A. I think not, so I commented it out for now.
-            //if (String.IsNullOrEmpty(Path.GetFileName(templateDatabasePath)))
-            //{
-            //    templateDatabasePath = Path.Combine(templateDatabaseDirectoryPath, Constants.File.DefaultTemplateDatabaseFileName);
-            //}
 
             return true;
         }
@@ -220,11 +213,11 @@ namespace Timelapse
             this.template = new TemplateDatabase();
             if (!TemplateDatabase.TryOpen(templateDatabasePath, out this.template))
             {
-                this.OnDataFileLoadFailed();
-                // SAULDONE: notify the user the template couldn't be loaded rather than silently doing nothing
+                this.OnImageDatabaseNotLoaded();
+                // notify the user the template couldn't be loaded rather than silently doing nothing
                 DialogMessageBox messageBox = new DialogMessageBox();
                 DialogMessageBox dlgMB = new DialogMessageBox();
-                dlgMB.MessageTitle = "Timelapse could not load the Template";
+                dlgMB.MessageTitle = "Timelapse could not load the template.";
                 dlgMB.MessageProblem = "Timelapse could not load the Template File:" + Environment.NewLine;
                 dlgMB.MessageProblem += "\u2022 " + templateDatabasePath;
                 dlgMB.MessageReason = "The template may be corrupted or somehow otherwise invalid. ";
@@ -246,8 +239,8 @@ namespace Timelapse
             }
             this.imageDatabase = new ImageDatabase(Path.GetDirectoryName(templateDatabasePath), imageDatabaseFileName);
             this.imageCache = new ImageCache(this.imageDatabase);
-            this.state.MostRecentDatabasePaths.SetMostRecent(templateDatabasePath);
-            this.MenuItemRecentDataFiles_Refresh();
+            this.state.MostRecentImageSets.SetMostRecent(templateDatabasePath);
+            this.MenuItemRecentImageSets_Refresh();
 
             // Find the .ddb file in the image set folder. If a single .ddb file is found, use that one
             // If there are multiple .ddb files, ask the use to choose one and use that
@@ -268,7 +261,7 @@ namespace Timelapse
                 case 1: // User cancelled the process of choosing between .ddb files
                     if (this.state.ImmediateExit)
                     {
-                        this.OnDataFileLoadFailed();
+                        this.OnImageDatabaseNotLoaded();
                         return false;
                     }
                     break;
@@ -277,7 +270,7 @@ namespace Timelapse
                     if (this.LoadByScanningImageFolder(this.FolderPath) == false)
                     {
                         DialogMessageBox messageBox = new DialogMessageBox();
-                        messageBox.MessageTitle = "No Images Found in the Image Set Folder";
+                        messageBox.MessageTitle = "No Iiages Found in the image set folder.";
                         messageBox.MessageProblem = "There don't seem to be any JPG images in your chosen image folder:";
                         messageBox.MessageProblem += Environment.NewLine + "\u2022 " + this.FolderPath + Environment.NewLine;
                         messageBox.MessageReason = "\u2022 The folder has no JPG files in it (image files ending in '.jpg'), or" + Environment.NewLine;
@@ -291,8 +284,8 @@ namespace Timelapse
                         // revert UI to no database loaded state
                         // but enable adding images so that if the user needs to place the database in a folder which doesn't directly contain 
                         // any .jpg images they can still add images in other locations
-                        this.OnDataFileLoadFailed();
-                        this.MenuItemAddImagesToDataFile.IsEnabled = true;
+                        this.OnImageDatabaseNotLoaded();
+                        this.MenuItemAddImagesToImageSet.IsEnabled = true;
                         return false;
                     }
                     break;
@@ -318,12 +311,11 @@ namespace Timelapse
             // the database and its tables must exist before data can be loaded into it
             if (this.imageDatabase.Exists() == false)
             {
-                // SAULDONE: Q.  handle case where database creation fails
-                // SAULDONE: Hmm. I've never seen database creation failure. Nonetheless, while I can pop up a messagebox here, the real issue is how
-                // SAULDONE: to revert the system back to some reasonable state. I will need to look at this closely 
-                // SAULDONE: What we really need is a function that we can call that will essentially bring the system back to its
-                // SAULDONE: virgin state, that we can invoke from various conditions. 
-                // SAULDONE: Alternately, we can just exit Timelapse (a poor solution but it could suffice for now)
+                // TODOSAUL: Hmm. I've never seen database creation failure. Nonetheless, while I can pop up a messagebox here, the real issue is how
+                // to revert the system back to some reasonable state. I will need to look at this closely 
+                // What we really need is a function that we can call that will essentially bring the system back to its
+                // virgin state, that we can invoke from various conditions. 
+                // Alternately, we can just exit Timelapse (a poor solution but it could suffice for now)
                 bool result = this.imageDatabase.TryCreateImageDatabase(this.template);
 
                 // We generate the data user interface controls from the template description after the database has been created from the template
@@ -349,8 +341,8 @@ namespace Timelapse
                 this.Dispatcher.Invoke(new Action(() =>
                 {
                     // First, change the UI
-                    this.helpControl.Visibility = System.Windows.Visibility.Collapsed;
-                    Feedback(null, 0, "Examining images...");
+                    this.helpControl.Visibility = Visibility.Collapsed;
+                    this.Feedback(null, 0, "Examining images...");
                 }));
 
                 // First pass: Examine images to extract its basic properties
@@ -370,9 +362,7 @@ namespace Timelapse
                         // retain the frame and pass its metadata to TryUseImageTaken().
                         bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
                         bitmap = new WriteableBitmap(bitmapFrame);
-
-                        bool isDark = bitmap.IsDark(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
-                        imageProperties.ImageQuality = isDark ? ImageQualityFilter.Dark : ImageQualityFilter.Ok;
+                        imageProperties.ImageQuality = bitmap.GetImageQuality(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
 
                         // see if the date can be updated from the metadata
                         DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapFrame.Metadata);
@@ -416,12 +406,10 @@ namespace Timelapse
 
                 // Third pass: Update database
                 // TODOSAUL This used to be slow... but I think its ok now. But check if its a good place to make it more efficient by having it add multiple values in one shot (it may already be doing that - if so, delete this comment)
-                // TODOTODD: Can you explain this change to me? This is a change you did, and I don't normally use the => expression.
-                // TODOTODD: Not an error, just need to understand it.
                 this.imageDatabase.AddImages(imagePropertyList, (ImageProperties imageProperties, int imageIndex) =>
                 {
                     // Get the bitmap again to show it
-                    //WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.FolderPath);
+                    // WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.FolderPath);
                     BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
                     // Show progress. Since its slow, we may as well do it every update
                     int addImageProgress = Convert.ToInt32(Convert.ToDouble(imageIndex) / Convert.ToDouble(imagePropertyList.Count) * 100);
@@ -434,8 +422,8 @@ namespace Timelapse
             {
                 // this gets called on the UI thread
                 ProgressState progstate = (ProgressState)ea.UserState;
-                Feedback(progressState.Bmap, ea.ProgressPercentage, progressState.Message);
-                this.feedbackCtl.Visibility = System.Windows.Visibility.Visible;
+                this.Feedback(progressState.Bmap, ea.ProgressPercentage, progressState.Message);
+                this.feedbackCtl.Visibility = Visibility.Visible;
             };
             backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
@@ -450,7 +438,7 @@ namespace Timelapse
                 if (unambiguousDayMonthOrder == false)
                 {
                     DialogMessageBox dlgMB = new DialogMessageBox();
-                    dlgMB.MessageTitle = "Timelapse was unsure about the month / day order of your image's dates";
+                    dlgMB.MessageTitle = "Timelapse was unsure about the month / day order of your image's dates.";
                     dlgMB.MessageProblem = "Timelapse is extracting the dates from your images. However, it cannot tell if the dates are in day/month order, or month/day order.";
                     dlgMB.MessageReason = "Image date formats can be ambiguous. For example, is 2015/03/05 March 5 or May 3?";
                     dlgMB.MessageSolution = "If Timelapse gets it wrong, you can correct the dates by choosing" + Environment.NewLine;
@@ -474,10 +462,10 @@ namespace Timelapse
                 // if we want to load the data from that...
                 if (File.Exists(Path.Combine(this.FolderPath, Constants.File.XmlDataFileName)))
                 {
-                    DialogImportImageDataXmlFile dlg = new DialogImportImageDataXmlFile();
-                    dlg.Owner = this;
-                    bool? result3 = dlg.ShowDialog();
-                    if (result3 == true)
+                    DialogImportImageSetXmlFile importLegacyXmlDialog = new DialogImportImageSetXmlFile();
+                    importLegacyXmlDialog.Owner = this;
+                    bool? dialogResult = importLegacyXmlDialog.ShowDialog();
+                    if (dialogResult == true)
                     {
                         ImageDataXml.Read(Path.Combine(this.FolderPath, Constants.File.XmlDataFileName), imageDatabase.TemplateTable, imageDatabase);
                         this.SetImageFilterAndIndex(this.imageDatabase.GetImageSetRowIndex(), this.imageDatabase.GetImageSetFilter()); // to regenerate the controls and markers for this image
@@ -504,8 +492,9 @@ namespace Timelapse
         {
             if (this.imageDatabase.TryCreateImageDatabase(template))
             {
-                // When we are loading from an existing data file, ensure that the template in the template db matches the template stored in the data db
-                List<string> errors = this.CheckCodesVsImageData();
+                // When we are loading from an existing image datbase, ensure that the template in the template database matches the template stored in
+                // the image database
+                List<string> errors = this.AreTemplateTablesConsistent();
                 if (errors.Count > 0)
                 {
                     DialogTemplatesDontMatch dlg = new DialogTemplatesDontMatch(errors);
@@ -564,14 +553,14 @@ namespace Timelapse
 
             // Now that we have something to show, enable menus and menu items as needed
             // Note that we do not enable those menu items that would have no effect
-            this.MenuItemAddImagesToDataFile.IsEnabled = true;
+            this.MenuItemAddImagesToImageSet.IsEnabled = true;
             this.MenuItemLoadImages.IsEnabled = false;
             this.MenuItemExportThisImage.IsEnabled = true;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = true;
             this.MenuItemExportAsCsv.IsEnabled = true;
             this.MenuItemImportFromCsv.IsEnabled = true;
-            this.MenuItemRecentDataFiles.IsEnabled = false;
-            this.MenuItemRenameDataFile.IsEnabled = true;
+            this.MenuItemRecentImageSets.IsEnabled = false;
+            this.MenuItemRenameImageDatabaseFile.IsEnabled = true;
             this.MenuItemEdit.IsEnabled = true;
             this.MenuItemDeleteImage.IsEnabled = true;
             this.MenuItemView.IsEnabled = true;
@@ -616,19 +605,19 @@ namespace Timelapse
         }
 
         /// <summary>
-        /// If a data file could not be opened or the user canceled loading revert the UI to its initial state so the user can try
-        /// loading another data file and isn't presented with menu options applicable only when a data file has been opened.
+        /// If an image set could not be opened or the user canceled loading revert the UI to its initial state so the user can try
+        /// loading another image set and isn't presented with menu options applicable only when an image set is open.
         /// </summary>
-        private void OnDataFileLoadFailed()
+        private void OnImageDatabaseNotLoaded()
         {
-            this.MenuItemAddImagesToDataFile.IsEnabled = false;
+            this.MenuItemAddImagesToImageSet.IsEnabled = false;
             this.MenuItemLoadImages.IsEnabled = true;
             this.MenuItemExportThisImage.IsEnabled = false;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = false;
             this.MenuItemExportAsCsv.IsEnabled = false;
             this.MenuItemImportFromCsv.IsEnabled = false;
-            this.MenuItemRecentDataFiles.IsEnabled = true;
-            this.MenuItemRenameDataFile.IsEnabled = false;
+            this.MenuItemRecentImageSets.IsEnabled = true;
+            this.MenuItemRenameImageDatabaseFile.IsEnabled = false;
             this.MenuItemEdit.IsEnabled = false;
             this.MenuItemDeleteImage.IsEnabled = false;
             this.MenuItemView.IsEnabled = false;
@@ -636,41 +625,40 @@ namespace Timelapse
             this.MenuItemOptions.IsEnabled = false;
         }
 
-        // Check if the code template file matches the Image data file. If not, return a list of errors,
-        // i.e., columns that appera in one but not the other.
-        private List<string> CheckCodesVsImageData()
+        // Check if the template table in the template database matches the the one in the image database. If not, return a list of errors,
+        // i.e., columns that apper in one but not the other.
+        private List<string> AreTemplateTablesConsistent()
         {
-            List<String> dbtable_list = new List<String>();
-            List<String> templatetable_list = new List<String>();
-
-            DataTable databaseTemplateTable = this.imageDatabase.GetDataTable(Constants.Database.TemplateTable);
-
             // Create two lists that we will compare, each containing the DataLabels from the template in the template file vs. db file.
+            DataTable databaseTemplateTable = this.imageDatabase.GetDataTable(Constants.Database.TemplateTable);
+            List<String> imageDataLabels = new List<String>();
             for (int i = 0; i < databaseTemplateTable.Rows.Count; i++)
             {
-                dbtable_list.Add((string)databaseTemplateTable.Rows[i][Constants.Control.DataLabel]);
-            }
-            for (int i = 0; i < this.template.TemplateTable.Rows.Count; i++)
-            {
-                templatetable_list.Add((string)this.template.TemplateTable.Rows[i][Constants.Control.DataLabel]);
+                imageDataLabels.Add((string)databaseTemplateTable.Rows[i][Constants.Control.DataLabel]);
             }
 
-            // Check to see if there are field in the template template that are not in the db template
-            List<string> errors = new List<string>();
-            foreach (string s in templatetable_list)
+            List<String> templateDataLabels = new List<String>();
+            for (int i = 0; i < this.template.TemplateTable.Rows.Count; i++)
             {
-                if (!dbtable_list.Contains(s))
+                templateDataLabels.Add((string)this.template.TemplateTable.Rows[i][Constants.Control.DataLabel]);
+            }
+
+            // Check to see if there are fields in the template database table which are not in the image database's template table
+            List<string> errors = new List<string>();
+            foreach (string dataLabel in templateDataLabels)
+            {
+                if (!imageDataLabels.Contains(dataLabel))
                 {
-                    errors.Add("- A field with the DataLabel '" + s + "' was found in the Template, but nothing matches that in the Data." + Environment.NewLine);
+                    errors.Add("- A field with the DataLabel '" + dataLabel + "' was found in the Template, but nothing matches that in the Data." + Environment.NewLine);
                 }
             }
 
-            // Check to see if there are fields in the db template that are not in the template template
-            foreach (string s in dbtable_list)
+            // Check to see if there are fields in the image database's template table which are not in the template database's table
+            foreach (string dataLabel in imageDataLabels)
             {
-                if (!templatetable_list.Contains(s))
+                if (!templateDataLabels.Contains(dataLabel))
                 {
-                    errors.Add("- A field with the DataLabel '" + s + "' was found in the Data, but nothing matches that in the Template." + Environment.NewLine);
+                    errors.Add("- A field with the DataLabel '" + dataLabel + "' was found in the Data, but nothing matches that in the Template." + Environment.NewLine);
                 }
             }
             return errors;
@@ -999,8 +987,6 @@ namespace Timelapse
         /// <param name="e">event information</param>
         private void CounterCtl_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            // SAULDONE: Q. If the result is a blank (i.e., spaces or empty string), need to clean it up.
-            // SAULDONE: Fixed in TextChanged, where a blank will be replaced by a -0
             e.Handled = !this.IsAllValidNumericChars(e.Text);
             this.OnPreviewTextInput(e);
         }
@@ -1083,7 +1069,7 @@ namespace Timelapse
                 incrementOrDecrement = (int index) => { return ++index; };
             }
 
-            for (currentControl = incrementOrDecrement(currentControl); 
+            for (currentControl = incrementOrDecrement(currentControl);
                  currentControl > -1 && currentControl < this.dataEntryControls.DataEntryControls.Count;
                  currentControl = incrementOrDecrement(currentControl))
             {
@@ -1149,10 +1135,8 @@ namespace Timelapse
             TextBox textBox = (TextBox)sender;
             textBox.Text = textBox.Text.TrimStart();  // Don't allow leading spaces in the counter
 
-            // SAULDONE: The code previously allowed an empty value in a counter, which we don't want.
-            // SAULDONE: If the field is now empty, make the text a 0. But as this can make editing awkward, we select the 0 so 
-            // SAULDONE: that further editing will overwrite it.
-            if (textBox.Text == "")
+            // If the field is now empty, make the text a 0.  But, as this can make editing awkward, we select the 0 so that further editing will overwrite it.
+            if (textBox.Text == String.Empty)
             {
                 textBox.Text = "0";
                 textBox.SelectAll();
@@ -1323,9 +1307,8 @@ namespace Timelapse
             }
 
             // display the differenced image
-            // SAULDONE: Q. should the magnifiable image also be updated?
-            // SAULDONE: A. No. The idea is that the magnifying glass always displays the original non-diferenced image. 
-            // SAULDONE: This allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
+            // the magnifying glass always displays the original non-diferenced image so ImageToDisplay is updated and ImageToMagnify left unchnaged
+            // this allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
             this.markableCanvas.ImageToDisplay.Source = this.imageCache.GetCurrentImage();
             StatusBarUpdate.Message(this.statusBar, "Viewing differences compared to " + (this.imageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next") + " image");
         }
@@ -1368,8 +1351,7 @@ namespace Timelapse
             }
 
             // display differenced image
-            // SAULDONE: Q Saul  should the magnifiable image also be updated?
-            // SAULDONE: No. The magnifying glass always shows the original source, not the differenced image.
+            // see above remarks about not modifying ImageToMagnify
             this.markableCanvas.ImageToDisplay.Source = this.imageCache.GetCurrentImage();
             StatusBarUpdate.Message(this.statusBar, "Viewing differences compared to both the next and previous images");
         }
@@ -1404,12 +1386,8 @@ namespace Timelapse
             {
                 this.ShowImage(firstImageDisplayable);
             }
-            // TODO: Saul  what if there's no displayable image?
-            // SAULDONE: Ah. THis was never an issue before, as Timelapse used to error check whether there were any images when the
-            // SAULDONE: template was originally opened, and if not would stop there. However, your multiple folder changes do allow a template to be loaded without images.
-            // SAULDONE: I tested this, and it seems that this code would not be triggered anyways, so perhaps nothing needs to be done about this. 
-            // SAULDONE: As explained in the ToDo.docx, I think a better safeguard would be to require the user to add at least some images after the 'Load Images from Folder' menu item is selected.
-            // SAULDONE: If we do want to somehow catch this, this will be a larger code change with some thought put into it (as there are likely other situations similar to this), so this needs to be revisited later. 
+            // TODOSAUL: what if there's no displayable image?
+            // I tested this, and it seems that this code would not be triggered anyways, so perhaps nothing needs to be done about this. 
         }
 
         private void ShowImage(int newImageRow)
@@ -1433,7 +1411,7 @@ namespace Timelapse
                         control.Value.Content = this.imageCache.Current.FileName;
                         break;
                     case Constants.DatabaseColumn.Folder:
-                        control.Value.Content = this.imageCache.Current.RelativeFolderPath;
+                        control.Value.Content = this.imageCache.Current.InitialRootFolderName;
                         break;
                     case Constants.DatabaseColumn.Time:
                         control.Value.Content = this.imageCache.Current.Time;
@@ -1875,7 +1853,7 @@ namespace Timelapse
         #endregion
 
         #region File Menu Callbacks and Support Functions
-        private void MenuItemAddImagesToDataFile_Click(object sender, RoutedEventArgs e)
+        private void MenuItemAddImagesToImageSet_Click(object sender, RoutedEventArgs e)
         {
             FolderBrowserDialog folderSelectionDialog = new FolderBrowserDialog();
             folderSelectionDialog.Description = "Select a folder to add additional image files from";
@@ -1908,8 +1886,8 @@ namespace Timelapse
             if (this.state.ImageFilter != ImageQualityFilter.All)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
-                dlgMB.MessageTitle = "Exporting to a CSV file on a Filtered View...";
-                dlgMB.MessageProblem = "Only a subset of your data will be exported to the CSV file." ;
+                dlgMB.MessageTitle = "Exporting to a CSV file on a filtered view...";
+                dlgMB.MessageProblem = "Only a subset of your data will be exported to the CSV file.";
 
                 dlgMB.MessageReason = "As your filter (in the Filter menu) is not set to view 'All Images', ";
                 dlgMB.MessageReason = "only data for those images displayed by this filter will be exported. ";
@@ -1919,14 +1897,17 @@ namespace Timelapse
                 dlgMB.MessageSolution += "If you want to export all your data for all your images, then " + Environment.NewLine;
                 dlgMB.MessageSolution += "\u2022 click Cancel," + Environment.NewLine;
                 dlgMB.MessageSolution += "\u2022 select 'All Images' in the Filter menu, " + Environment.NewLine;
-                dlgMB.MessageSolution += "\u2022 retry exporting your data as a CVS file.";
+                dlgMB.MessageSolution += "\u2022 retry exporting your data as a CSV file.";
 
                 dlgMB.IconType = MessageBoxImage.Warning;
                 dlgMB.ButtonType = MessageBoxButton.OKCancel;
                 bool? msg_result = dlgMB.ShowDialog();
 
                 // Set the filter to show all images and a valid image
-                if (msg_result != true) return;
+                if (msg_result != true)
+                {
+                    return;
+                }
             }
 
             // Write the file
@@ -1965,7 +1946,7 @@ namespace Timelapse
             this.state.IsContentChanged = false; // We've altered some content
         }
 
-        /// <summary> 
+        /// <summary>
         /// Export the current image to the folder selected by the user via a folder browser dialog.
         /// and provide feedback in the status bar if done.
         /// </summary>
@@ -2035,20 +2016,22 @@ namespace Timelapse
             dlgMB.MessageSolution += "    \u2022 FixedChoice data to a string that exactly match one of the FixedChoice menu options, or empty." + Environment.NewLine;
             dlgMB.MessageSolution += "    \u2022 Note data to any string, or empty." + Environment.NewLine;
             dlgMB.MessageSolution += "    \u2022 As Date / Time field formats are sometimes altered by spreadsheets," + Environment.NewLine;
-            dlgMB.MessageSolution += "           test those with a dummy data file to see if those format changes are acceptable.";
-
+            dlgMB.MessageSolution += "           any changes to those fields will be ignored during the import.";
 
             dlgMB.MessageResult = "Timelapse will create a backup .ddb file in the Backups folder, and will then try its best.";
-            dlgMB.MessageHint= "After you import, check your data. If it is not what you expect, restore your data by using that backup file.";
+            dlgMB.MessageHint = "After you import, check your data. If it is not what you expect, restore your data by using that backup file.";
 
             dlgMB.IconType = MessageBoxImage.Warning;
             dlgMB.ButtonType = MessageBoxButton.OKCancel;
             bool? msg_result = dlgMB.ShowDialog();
 
             // Set the filter to show all images and a valid image
-            if (msg_result != true) return;
+            if (msg_result != true)
+            {
+                return;
+            }
 
-            if (Utilities.TryGetFileFromUser("Select a .csv file to merge into the current data file",
+            if (Utilities.TryGetFileFromUser("Select a .csv file to merge into the current image set",
                                              Path.Combine(this.imageDatabase.FolderPath, Path.GetFileNameWithoutExtension(this.imageDatabase.FileName) + Constants.File.CsvFileExtension),
                                              String.Format("Comma separated value files ({0})|*{0}", Constants.File.CsvFileExtension),
                                              out csvFilePath) == false)
@@ -2073,47 +2056,47 @@ namespace Timelapse
             StatusBarUpdate.Message(this.statusBar, "CSV file imported.");
         }
 
-        private void MenuItemRecentDataFile_Click(object sender, RoutedEventArgs e)
+        private void MenuItemRecentImageSet_Click(object sender, RoutedEventArgs e)
         {
             string recentDatabasePath = (string)((MenuItem)sender).ToolTip;
             if (this.TryOpenTemplateAndLoadImages(recentDatabasePath) == false)
             {
-                this.state.MostRecentDatabasePaths.TryRemove(recentDatabasePath);
-                this.MenuItemRecentDataFiles_Refresh();
+                this.state.MostRecentImageSets.TryRemove(recentDatabasePath);
+                this.MenuItemRecentImageSets_Refresh();
             }
         }
 
         /// <summary>
         /// Update the list of recent databases displayed under File -> Recent Databases.
         /// </summary>
-        private void MenuItemRecentDataFiles_Refresh()
+        private void MenuItemRecentImageSets_Refresh()
         {
-            this.MenuItemRecentDataFiles.IsEnabled = this.state.MostRecentDatabasePaths.Count > 0;
-            this.MenuItemRecentDataFiles.Items.Clear();
+            this.MenuItemRecentImageSets.IsEnabled = this.state.MostRecentImageSets.Count > 0;
+            this.MenuItemRecentImageSets.Items.Clear();
 
             int index = 1;
-            foreach (string recentDatabasePath in this.state.MostRecentDatabasePaths)
+            foreach (string recentImageSetPath in this.state.MostRecentImageSets)
             {
-                MenuItem recentDatabaseItem = new MenuItem();
-                recentDatabaseItem.Click += this.MenuItemRecentDataFile_Click;
-                recentDatabaseItem.Header = String.Format("_{0} {1}", index++, recentDatabasePath);
-                recentDatabaseItem.ToolTip = recentDatabasePath;
-                this.MenuItemRecentDataFiles.Items.Add(recentDatabaseItem);
+                MenuItem recentImageSetItem = new MenuItem();
+                recentImageSetItem.Click += this.MenuItemRecentImageSet_Click;
+                recentImageSetItem.Header = String.Format("_{0} {1}", index++, recentImageSetPath);
+                recentImageSetItem.ToolTip = recentImageSetPath;
+                this.MenuItemRecentImageSets.Items.Add(recentImageSetItem);
             }
         }
 
-        private void MenuItemRenameDataFile_Click(object sender, RoutedEventArgs e)
+        private void MenuItemRenameImageDatabaseFile_Click(object sender, RoutedEventArgs e)
         {
-            DialogRenameDataFile dlg = new DialogRenameDataFile(this.imageDatabase.FileName);
+            DialogRenameImageDatabaseFile dlg = new DialogRenameImageDatabaseFile(this.imageDatabase.FileName);
             dlg.Owner = this;
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.imageDatabase.RenameDataFile(dlg.NewFilename, this.template);
+                this.imageDatabase.RenameFile(dlg.NewFilename, this.template);
             }
         }
 
-        /// <summary> 
+        /// <summary>
         /// Exit Timelapse
         /// </summary>
         private void MenuItemExit_Click(object sender, RoutedEventArgs e)
@@ -2132,7 +2115,7 @@ namespace Timelapse
             if (this.imageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
-                dlgMB.MessageTitle = "Populate a Data Field with Image Metadata of your Choosing...";
+                dlgMB.MessageTitle = "Populate a data field with image metadata of your choosing.";
                 dlgMB.MessageProblem = "To populate a data field with image metadata of your choosing, Timelapse must first" + Environment.NewLine;
                 dlgMB.MessageProblem += "\u2022 be filtered to view All Images (normally set  in the Filter menu)" + Environment.NewLine;
                 dlgMB.MessageProblem += "\u2022 be displaying a valid image";
@@ -2207,7 +2190,7 @@ namespace Timelapse
             }
         }
 
-        /// <summary> Delete all images marked for deletion, and optionally the data associated with those images.
+        /// <summary>Delete all images marked for deletion, and optionally the data associated with those images.
         /// Deleted images are actually moved to a backup folder.</summary>
         private void MenuItemDeleteImages_Click(object sender, RoutedEventArgs e)
         {
@@ -2246,7 +2229,7 @@ namespace Timelapse
             }
         }
 
-        /// <summary> Add some text to the Image Set Log </summary>
+        /// <summary>Add some text to the image set log</summary>
         private void MenuItemLog_Click(object sender, RoutedEventArgs e)
         {
             DialogEditLog dlg = new DialogEditLog(this.imageDatabase.GetImageSetLog());
@@ -2274,7 +2257,7 @@ namespace Timelapse
                 {
                     type = "Not a control";
                 }
-            
+
                 DataEntryControl control = pair.Value;
                 if (this.imageDatabase.IsControlCopyable(control.DataLabel))
                 {
@@ -2308,8 +2291,8 @@ namespace Timelapse
             this.MenuItemMagnifier.IsChecked = this.markableCanvas.IsMagnifyingGlassVisible;
         }
 
-        /// <summary> Increase the magnification of the magnifying glass. We do this several times to make
-        /// the increase effect more visible through a menu option versus the keyboard equivalent </summary>
+        /// <summary>Increase the magnification of the magnifying glass. We do this several times to make
+        /// the increase effect more visible through a menu option versus the keyboard equivalent</summary>
         private void MenuItemMagnifierIncrease_Click(object sender, RoutedEventArgs e)
         {
             this.markableCanvas.MagnifierZoomIn();
@@ -2320,8 +2303,8 @@ namespace Timelapse
             this.markableCanvas.MagnifierZoomIn();
         }
 
-        /// <summary>  Decrease the magnification of the magnifying glass. We do this several times to make
-        /// the increase effect more visible through a menu option versus the keyboard equivalent </summary>
+        /// <summary> Decrease the magnification of the magnifying glass. We do this several times to make
+        /// the increase effect more visible through a menu option versus the keyboard equivalent</summary>
         private void MenuItemMagnifierDecrease_Click(object sender, RoutedEventArgs e)
         {
             this.markableCanvas.MagnifierZoomOut();
@@ -2364,7 +2347,7 @@ namespace Timelapse
             }
         }
 
-        /// <summary> Swap the day / month fields if possible </summary>
+        /// <summary>Swap the day / month fields if possible</summary>
         private void MenuItemSwapDayMonth_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
@@ -2400,7 +2383,7 @@ namespace Timelapse
             }
         }
 
-        /// <summary> Correct the date by specifying an offset </summary>
+        /// <summary>Correct the date by specifying an offset</summary>
         private void MenuItemDateCorrections_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
@@ -2438,7 +2421,7 @@ namespace Timelapse
             }
         }
 
-        /// <summary> Correct for daylight savings time</summary>
+        /// <summary>Correct for daylight savings time</summary>
         private void MenuItemCorrectDaylightSavings_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
@@ -2447,7 +2430,7 @@ namespace Timelapse
                 if (this.state.ImageFilter != ImageQualityFilter.All)
                 {
                     DialogMessageBox dlgMB = new DialogMessageBox();
-                    dlgMB.MessageTitle = "Can't correct for daylight savings time...";
+                    dlgMB.MessageTitle = "Can't correct for daylight savings time.";
                     dlgMB.MessageProblem = "To correct for daylight savings time:" + Environment.NewLine;
                     dlgMB.MessageProblem += "\u2022 Timelapse must first be filtered to view All Images (normally set  in the Filter menu)" + Environment.NewLine;
                     dlgMB.MessageProblem += "\u2022 The displayed image should also be the one at the daylight savings time threshold.";
@@ -2467,7 +2450,7 @@ namespace Timelapse
                 {
                     // Just a corrupted image
                     DialogMessageBox dlgMB = new DialogMessageBox();
-                    dlgMB.MessageTitle = "Can't correct for daylight savings time...";
+                    dlgMB.MessageTitle = "Can't correct for daylight savings time.";
                     dlgMB.MessageProblem = "This is a corrupted image.  ";
                     dlgMB.MessageSolution = "To correct for daylight savings time, you need to:" + Environment.NewLine;
                     dlgMB.MessageSolution += "\u2022 be displaying  an image with a valid date ";
@@ -2494,7 +2477,7 @@ namespace Timelapse
             if (this.imageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
-                dlgMB.MessageTitle = "Check and Modify Ambiguous Dates...";
+                dlgMB.MessageTitle = "Check and modify ambiguous dates...";
                 dlgMB.MessageProblem = "To check and modify ambiguous dates, Timelapse must first be filtered to view All Images (normally set  in the Filter menu)";
                 dlgMB.MessageSolution = "Select 'Ok' for Timelapse to set the filter to 'All Images'.";
                 dlgMB.IconType = MessageBoxImage.Exclamation;
@@ -2554,7 +2537,7 @@ namespace Timelapse
             }
         }
 
-        /// <summary>  Toggle the audio feedback on and off </summary>
+        /// <summary> Toggle the audio feedback on and off</summary>
         private void MenuItemAudioFeedback_Click(object sender, RoutedEventArgs e)
         {
             // We don't have to do anything here...
@@ -2562,7 +2545,7 @@ namespace Timelapse
             this.MenuItemAudioFeedback.IsChecked = this.state.AudioFeedback;
         }
 
-        /// <summary> Show advanced options</summary>
+        /// <summary>Show advanced options</summary>
         private void MenuItemOptions_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -2611,31 +2594,31 @@ namespace Timelapse
             }
         }
 
-        /// <summary> Navigate to the next image in this image set </summary>
+        /// <summary>Navigate to the next image in this image set</summary>
         private void MenuItemViewNextImage_Click(object sender, RoutedEventArgs e)
         {
             this.ViewNextImage(); // Goto the next image
         }
 
-        /// <summary> Navigate to the previous image in this image set </summary>
+        /// <summary>Navigate to the previous image in this image set</summary>
         private void MenuItemViewPreviousImage_Click(object sender, RoutedEventArgs e)
         {
             this.ViewPreviousImage(); // Goto the previous image
         }
 
-        /// <summary> Cycle through the image differences </summary>
+        /// <summary>Cycle through the image differences</summary>
         private void MenuItemViewDifferencesCycleThrough_Click(object sender, RoutedEventArgs e)
         {
             this.ViewPreviousOrNextDifference();
         }
 
-        /// <summary> View the combined image differences </summary>
+        /// <summary>View the combined image differences</summary>
         private void MenuItemViewDifferencesCombined_Click(object sender, RoutedEventArgs e)
         {
             this.ViewCombinedDifference();
         }
 
-        /// <summary> Select the appropriate filter and update the view </summary>
+        /// <summary>Select the appropriate filter and update the view</summary>
         private void MenuItemView_Click(object sender, RoutedEventArgs e)
         {
             MenuItem item = (MenuItem)sender;
@@ -2711,7 +2694,7 @@ namespace Timelapse
             }
         }
 
-        /// <summary> Show a dialog box telling the user how many images were loaded, etc.</summary>
+        /// <summary>Show a dialog box telling the user how many images were loaded, etc.</summary>
         public void MenuItemImageCounts_Click(object sender, RoutedEventArgs e)
         {
             Dictionary<ImageQualityFilter, int> counts = this.imageDatabase.GetImageCounts();
@@ -2720,7 +2703,7 @@ namespace Timelapse
             dlg.ShowDialog();
         }
 
-        /// <summary> Display the dialog showing the filtered view of the current database contents </summary>
+        /// <summary>Display the dialog showing the filtered view of the current database contents</summary>
         private void MenuItemViewFilteredDatabaseContents_Click(object sender, RoutedEventArgs e)
         {
             if (null != this.dlgDataView && this.dlgDataView.IsLoaded)
@@ -2733,7 +2716,7 @@ namespace Timelapse
         #endregion 
 
         #region Help Menu Callbacks
-        /// <summary> Display a help window </summary> 
+        /// <summary>Display a help window</summary> 
         private void MenuOverview_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -2747,7 +2730,7 @@ namespace Timelapse
             }
         }
 
-        /// <summary>  Display a message describing the version, etc.</summary> 
+        /// <summary> Display a message describing the version, etc.</summary> 
         private void MenuOverview_About(object sender, RoutedEventArgs e)
         {
             DialogAboutTimelapse dlg = new DialogAboutTimelapse();
@@ -2755,35 +2738,35 @@ namespace Timelapse
             dlg.ShowDialog();
         }
 
-        /// <summary>  Display the Timelapse home page </summary> 
+        /// <summary> Display the Timelapse home page</summary> 
         private void MenuTimelapseWebPage_Click(object sender, RoutedEventArgs e)
         {
             Uri tutorialUri = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.Version2HomePage");
             Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
         }
 
-        /// <summary>   Display the manual in a web browser </summary> 
+        /// <summary>  Display the manual in a web browser</summary> 
         private void MenuTutorialManual_Click(object sender, RoutedEventArgs e)
         {
             Uri tutorialUri = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Installs/Timelapse2/Timelapse2Manual.pdf");
             Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
         }
 
-        /// <summary>  Display the page in the web browser that lets you join the timelapse mailing list  </summary> 
+        /// <summary> Display the page in the web browser that lets you join the timelapse mailing list </summary> 
         private void MenuJoinTimelapseMailingList_Click(object sender, RoutedEventArgs e)
         {
             Uri tutorialUri = new Uri("http://mailman.ucalgary.ca/mailman/listinfo/timelapse-l");
             Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
         }
 
-        /// <summary>  Download the sample images from a web browser  </summary> 
+        /// <summary> Download the sample images from a web browser </summary> 
         private void MenuDownloadSampleImages_Click(object sender, RoutedEventArgs e)
         {
             Uri tutorialUri = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Main/TutorialImageSet2.zip");
             Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
         }
 
-        /// <summary> Send mail to the timelapse mailing list</summary> 
+        /// <summary>Send mail to the timelapse mailing list</summary> 
         private void MenuMailToTimelapseMailingList_Click(object sender, RoutedEventArgs e)
         {
             Uri tutorialUri = new Uri("mailto:timelapse-l@mailman.ucalgary.ca");
@@ -2811,7 +2794,7 @@ namespace Timelapse
 
         public void ResetDifferenceThreshold()
         {
-            this.DifferenceThreshold = Constants.DifferenceThresholdDefault;
+            this.DifferenceThreshold = Constants.Images.DifferenceThresholdDefault;
         }
 
         // Say the given text
@@ -2891,7 +2874,7 @@ namespace Timelapse
             }
         }
 
-        /// <summary> Show the Coding Controls in a separate window </summary>
+        /// <summary>Show the Coding Controls in a separate window</summary>
         private void ControlsInSeparateWindow()
         {
             // this.controlsTray.Children.Clear();

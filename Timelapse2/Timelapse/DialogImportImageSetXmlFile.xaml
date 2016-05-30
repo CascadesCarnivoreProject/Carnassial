@@ -1,4 +1,4 @@
-﻿<Window x:Class="Timelapse.DialogImportImageDataXmlFile"
+﻿<Window x:Class="Timelapse.DialogImportImageSetXmlFile"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Import Data from ImageData.XML?" 
@@ -28,10 +28,10 @@
             <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
 				<Run FontWeight="Bold" Text="Options:" FontSize="14" />
                 <Run FontWeight="Bold"  Text="  1. Use Old Data" />
-                <Run Text="will create a new-style data file from the images, and then add the old data into it." />
+                <Run Text="will create a new-style image set from the images, and then add the old data into it." />
                 <LineBreak/> 
                 <Run FontWeight="Bold"  Text="                    2. Ignore Old Data" />
-				<Run Text="will create a new-style data file from the images, but will not use the old data." />
+				<Run Text="will create a new-style image set from the images, but will not use the old data." />
             </TextBlock>
 
             <TextBlock HorizontalAlignment="Left" Margin="10,10,10,10"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >

@@ -39,7 +39,7 @@ namespace Timelapse
             string dateAsString = this.lblOriginalDate.Content.ToString();
             try
             {
-                // TODO: Saul  why call ParseExact() here?
+                // TODOSAUL: why call ParseExact() here?
                 DateTime.ParseExact(dateAsString, format, provider);
                 this.tbNewDate.Text = this.lblOriginalDate.Content.ToString();
             }
@@ -107,7 +107,7 @@ namespace Timelapse
             string dateAsString = tbNewDate.Text;
             try
             {
-                // TODO: Saul  why call ParseExact() here?
+                // TODOSAUL: why call ParseExact() here?
                 DateTime.ParseExact(dateAsString, format, provider);
                 tblkStatus.Text = "\x221A"; // A checkmark
 

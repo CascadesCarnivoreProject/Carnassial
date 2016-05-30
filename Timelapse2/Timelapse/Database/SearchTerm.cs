@@ -20,7 +20,7 @@ namespace Timelapse.Database
             this.DataLabel = String.Empty;
             this.Expression = String.Empty;
             this.Label = String.Empty;
-            // TODO: Saul  should this.List not follow pattern by defaulting to null?
+            // TODOSAUL: should this.List not follow pattern by defaulting to null?
             this.Type = String.Empty;
             this.UseForSearching = false;
             this.Value = String.Empty;

@@ -12,8 +12,15 @@ namespace Timelapse.Util
         /// <summary>Gets or sets the Content of the Note</summary>
         public override string Content
         {
-            get { return ((bool)this.ContentControl.IsChecked) ? "true" : "false"; }
-            set { value = value.ToLower();  this.ContentControl.IsChecked = (value == "true") ? true : false; }
+            get
+            {
+                return ((bool)this.ContentControl.IsChecked) ? "true" : "false";
+            }
+            set
+            {
+                value = value.ToLower();
+                this.ContentControl.IsChecked = (value == "true") ? true : false;
+            }
         }
 
         public DataEntryFlag(string dataLabel, Controls dataEntryControls, bool createContextMenu)

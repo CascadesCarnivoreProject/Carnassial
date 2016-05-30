@@ -12,7 +12,6 @@ namespace Timelapse.Database
     /// </summary>
     internal class CsvReaderWriter
     {
-        #region Public methods
         /// <summary>
         /// Export all the database data associated with the filtered view to the CSV file indicated in the file path so that spreadsheet applications (like Excel) can display it.
         /// </summary>
@@ -97,7 +96,6 @@ namespace Timelapse.Database
                             {
                                 string dataLabel = dataLabels[field];
                                 string value = row[field];
-                                imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, value));
 
                                 // capture components of image's unique identifier for constructing where clause
                                 // at least for now, it's assumed all image renames or moves are done through Timelapse and hence file name + folder path forms 
@@ -106,9 +104,19 @@ namespace Timelapse.Database
                                 {
                                     imageFileName = value;
                                 }
-                                if (dataLabel == Constants.DatabaseColumn.Folder)
+                                else if (dataLabel == Constants.DatabaseColumn.Folder)
                                 {
                                     folder = value;
+                                }
+                                else if (dataLabel == Constants.DatabaseColumn.Date ||
+                                         dataLabel == Constants.DatabaseColumn.Time)
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    // above columns are excluded for now
+                                    imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, value));
                                 }
                             }
 
@@ -135,7 +143,7 @@ namespace Timelapse.Database
                 DialogMessageBox messageBox = new DialogMessageBox();
                 messageBox.IconType = MessageBoxImage.Error;
                 messageBox.ButtonType = MessageBoxButton.OK;
-                messageBox.MessageTitle = "Can't import the .csv file.";
+                messageBox.MessageTitle = "Can't import the CSV file.";
                 messageBox.MessageProblem = String.Format("The file {0} could not be opened.", filePath);
                 messageBox.MessageReason = "Most likely the file is open in another program.";
                 messageBox.MessageSolution = "If the file is open in another program, close it.";
@@ -144,9 +152,6 @@ namespace Timelapse.Database
                 messageBox.ShowDialog();
             }
         }
-        #endregion
-
-        #region Private methods
 
         // Check if there is any Quotation Mark '"', a Comma ',', a Line Feed \x0A,  or Carriage Return \x0D
         // and escape it as needed
@@ -252,21 +257,17 @@ namespace Timelapse.Database
                         }
                     }
                 }
-                // Check if we have reached the end.
-                // If the last character is a non-comma, we need to add the final (non-empty) field to the parsedLine list.
-                // Otherwise we add an empty field 
-                if (index == unparsedLine.Length - 1)
-                {
-                    string field = String.Empty;
-                    if (currentCharacter != ',')
-                    {
-                        field = unparsedLine.Substring(fieldStart, index - fieldStart + 1);
-                    }
-                    parsedLine.Add(field); 
-                }
             }
+
+            // if the last character is a non-comma add the final (non-empty) field
+            // final empty fields are ambiguous at this level and therefore handled by the caller
+            if (inField)
+            {
+                string field = unparsedLine.Substring(fieldStart, unparsedLine.Length - fieldStart + 1);
+                parsedLine.Add(field);
+            }
+
             return parsedLine;
         }
-        #endregion
     }
 }
