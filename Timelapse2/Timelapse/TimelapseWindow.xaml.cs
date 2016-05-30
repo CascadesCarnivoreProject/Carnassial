@@ -285,7 +285,7 @@ namespace Timelapse
                         // but enable adding images so that if the user needs to place the database in a folder which doesn't directly contain 
                         // any .jpg images they can still add images in other locations
                         this.OnImageDatabaseNotLoaded();
-                        this.MenuItemAddImagesToImageSet.IsEnabled = true;
+                        // TODOTODD: this.MenuItemAddImagesToImageSet.IsEnabled = true;
                         return false;
                     }
                     break;
@@ -553,7 +553,7 @@ namespace Timelapse
 
             // Now that we have something to show, enable menus and menu items as needed
             // Note that we do not enable those menu items that would have no effect
-            this.MenuItemAddImagesToImageSet.IsEnabled = true;
+            // TODOTODD: this.MenuItemAddImagesToImageSet.IsEnabled = true;
             this.MenuItemLoadImages.IsEnabled = false;
             this.MenuItemExportThisImage.IsEnabled = true;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = true;
@@ -610,7 +610,7 @@ namespace Timelapse
         /// </summary>
         private void OnImageDatabaseNotLoaded()
         {
-            this.MenuItemAddImagesToImageSet.IsEnabled = false;
+            // TODOTODD: this.MenuItemAddImagesToImageSet.IsEnabled = false;
             this.MenuItemLoadImages.IsEnabled = true;
             this.MenuItemExportThisImage.IsEnabled = false;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = false;
