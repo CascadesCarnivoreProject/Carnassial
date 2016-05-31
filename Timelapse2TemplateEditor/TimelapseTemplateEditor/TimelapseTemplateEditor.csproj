@@ -133,8 +133,8 @@
     <Compile Include="DlgEditChoiceList.xaml.cs">
       <DependentUpon>DlgEditChoiceList.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgMessageBox.xaml.cs">
-      <DependentUpon>DlgMessageBox.xaml</DependentUpon>
+    <Compile Include="DialogMessageBox.xaml.cs">
+      <DependentUpon>DialogMessageBox.xaml</DependentUpon>
     </Compile>
     <Compile Include="SQLiteWrapper.cs" />
     <Page Include="Dictionary1.xaml">
@@ -149,7 +149,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgMessageBox.xaml">
+    <Page Include="DialogMessageBox.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

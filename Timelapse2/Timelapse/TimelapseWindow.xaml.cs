@@ -118,7 +118,7 @@ namespace Timelapse
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "Timelapse needs to be in its original downloaded folder.";
                 dlgMB.MessageProblem = "The Timelapse Programs won't run properly as it was not correctly installed.";
-                dlgMB.MessageReason = "When you downloaded Timelapse, it was in a folder with several other files and folders it needs. You probably dragged Timelapse out of that folder.";
+                dlgMB.MessageProblem += "When you downloaded Timelapse, it was in a folder with several other files and folders it needs. You probably dragged Timelapse out of that folder." + Environment.NewLine; ;
                 dlgMB.MessageSolution = "Put the Timelapse programs back in its original folder, or download it again.";
                 dlgMB.MessageHint = "If you want to access these programs from elsewhere, create a shortcut to it." + Environment.NewLine;
                 dlgMB.MessageHint += "1. From its original folder, right-click the Timelapse program icon  and select 'Create Shortcut' from the menu." + Environment.NewLine;
