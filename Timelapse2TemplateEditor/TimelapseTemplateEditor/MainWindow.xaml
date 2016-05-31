@@ -616,7 +616,7 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel>
-                                        <Button Name="btnButton" Tag="{Binding Path=ControlOrder}" Click="btnChoiceListButton_Click"  local:Extensions.ChoiceList="{Binding Path=List, Mode=TwoWay, Converter={StaticResource listConverter}}" Margin="1"  Content="Define List" >
+                                        <Button Name="btnButton" Tag="{Binding Path=ControlOrder}" Click="ChoiceListButton_Click"  local:MainWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay, Converter={StaticResource listConverter}}" Margin="1"  Content="Define List" >
                                             <Button.Style>
                                                 <Style TargetType="{x:Type Button}">
                                                     <Style.Triggers>
@@ -690,8 +690,8 @@
                     <TextBlock Grid.Row="0" Margin="0,10,10,0" FontWeight="Bold" Text="What the interface will (roughly) look like. Drag and drop these controls (by their labels) to re-arrange their order to your preference"></TextBlock>
                     <Border Grid.Row="1" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
                         <ScrollViewer VerticalAlignment="Top">
-                            <WrapPanel x:Name="wp" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="sp_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="sp_PreviewMouseLeftButtonUp" PreviewMouseMove="sp_PreviewMouseMove"
-                                    DragEnter="sp_DragEnter" Drop="sp_Drop" />
+                            <WrapPanel x:Name="wp" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="OnPreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="OnPreviewMouseLeftButtonUp" PreviewMouseMove="OnPreviewMouseMove"
+                                    DragEnter="OnDragEnter" Drop="OnDragDrop" />
                         </ScrollViewer>
                     </Border>
                     <TextBlock Grid.Row="2" Margin="0,5,10,0" FontWeight="Bold" Text="The spreadsheet column order.  Drag and drop columns to re-arrange their order to your preference"></TextBlock>

@@ -1,12 +1,19 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Windows.Media;
 using Timelapse;
 
 namespace TimelapseTemplateEditor
 {
     internal static class EditorConstant
     {
+        // If the DataGrid columns change this needs to be adjusted to index correctly.
+        // Could not find a way to reference the DataGrid items by name.
+        public const int DataGridTypeColumnIndex = 3;
+
         public const string MainWindowBaseTitle = "Timelapse Template Editor";  // The initial title shown in the window title bar
+
+        public static readonly SolidColorBrush NotEditableCellColor = Brushes.LightGray; // Color of non-editable data grid items 
 
         // reserved words that cannot be used as a data label
         public static readonly ReadOnlyCollection<string> ReservedWords = new List<string>()

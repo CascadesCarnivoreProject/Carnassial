@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using Timelapse;
 
-namespace TimelapseTemplateEditor
+namespace TimelapseTemplateEditor.Util
 {
     // This clase reads in the code_template.xml file (the old way that we used to specify the template) 
     // and converts it into a data template database.
@@ -21,7 +21,6 @@ namespace TimelapseTemplateEditor
         public DataTable Convert(MainWindow win, string filePath, DataTable templateTable, ref List<string> error_messages)
         {
             // string holding a user-created text log
-
             DataTable tempTable = templateTable.Copy();
             XmlDocument xmlDoc = new XmlDocument();
             XmlNodeList nodelist;
@@ -30,37 +29,34 @@ namespace TimelapseTemplateEditor
             // Collect all the data labels as we come across them, as we have to ensure that a new data label doesn't have the same name as an existing one
             List<string> data_label_list = new List<string>();
 
-
-            int index = -1;
-
-            win.generateControlsAndSpreadsheet = false;
+            win.GenerateControlsAndSpreadsheet = false;
 
             xmlDoc.Load(filePath);  // Load the XML document (the code template file)
 
             nodelist = xmlDoc.SelectNodes(Constants.ImageXml.FilePath); // Convert the File type 
             nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
-            index = FindRow(nodelist, tempTable, Constants.DatabaseColumn.File);
-            UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.File, index, ref error_messages, ref data_label_list);
+            int index = FindRow(nodelist, tempTable, Constants.DatabaseColumn.File);
+            this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.File, index, ref error_messages, ref data_label_list);
 
             nodelist = xmlDoc.SelectNodes(Constants.ImageXml.FolderPath); // Convert the Folder type
             nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
             index = FindRow(nodelist, tempTable, Constants.DatabaseColumn.Folder);
-            UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Folder, index, ref error_messages, ref data_label_list);
+            this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Folder, index, ref error_messages, ref data_label_list);
 
             nodelist = xmlDoc.SelectNodes(Constants.ImageXml.DatePath); // Convert the Date type
             nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
             index = FindRow(nodelist, tempTable, Constants.DatabaseColumn.Date);
-            UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Date, index, ref error_messages, ref data_label_list);
+            this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Date, index, ref error_messages, ref data_label_list);
 
             nodelist = xmlDoc.SelectNodes(Constants.ImageXml.TimePath); // Convert the Time type
             nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
             index = FindRow(nodelist, tempTable, Constants.DatabaseColumn.Time);
-            UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Time, index, ref error_messages, ref data_label_list);
+            this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Time, index, ref error_messages, ref data_label_list);
 
             nodelist = xmlDoc.SelectNodes(Constants.ImageXml.ImageQualityPath); // Convert the Image Quality type
             nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
             index = FindRow(nodelist, tempTable, Constants.DatabaseColumn.ImageQuality);
-            UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.ImageQuality, index, ref error_messages, ref data_label_list);
+            this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.ImageQuality, index, ref error_messages, ref data_label_list);
 
             // Convert the Notes types, if any
             nodelist = xmlDoc.SelectNodes(Constants.ImageXml.NotePath);
@@ -68,8 +64,8 @@ namespace TimelapseTemplateEditor
             {
                 // Get the XML section containing values for each note
                 nodeData = nodelist[i].SelectNodes(Constants.ImageXml.Data);
-                AddRow(nodeData, tempTable, Constants.Control.Note);
-                UpdateRow(win, nodeData, tempTable, Constants.Control.Note, tempTable.Rows.Count - 1, ref error_messages, ref data_label_list);
+                this.AddRow(nodeData, tempTable, Constants.Control.Note);
+                this.UpdateRow(win, nodeData, tempTable, Constants.Control.Note, tempTable.Rows.Count - 1, ref error_messages, ref data_label_list);
             }
 
             // Convert the Choices types, if any
@@ -78,8 +74,8 @@ namespace TimelapseTemplateEditor
             {
                 // Get the XML section containing values for each choice
                 nodeData = nodelist[i].SelectNodes(Constants.ImageXml.Data);
-                AddRow(nodeData, tempTable, Constants.Control.FixedChoice);
-                UpdateRow(win, nodeData, tempTable, Constants.Control.FixedChoice, tempTable.Rows.Count - 1, ref error_messages, ref data_label_list);
+                this.AddRow(nodeData, tempTable, Constants.Control.FixedChoice);
+                this.UpdateRow(win, nodeData, tempTable, Constants.Control.FixedChoice, tempTable.Rows.Count - 1, ref error_messages, ref data_label_list);
             }
 
             // Convert the Counts types, if any
@@ -88,11 +84,10 @@ namespace TimelapseTemplateEditor
             {
                 // Get the XML section containing values for each note
                 nodeData = nodelist[i].SelectNodes(Constants.ImageXml.Data);
-                AddRow(nodeData, tempTable, Constants.Control.Counter);
-                UpdateRow(win, nodeData, tempTable, Constants.Control.Note, tempTable.Rows.Count - 1, ref error_messages, ref data_label_list);
+                this.AddRow(nodeData, tempTable, Constants.Control.Counter);
+                this.UpdateRow(win, nodeData, tempTable, Constants.Control.Note, tempTable.Rows.Count - 1, ref error_messages, ref data_label_list);
             }
             return tempTable;
-
         }
         #endregion
 
@@ -105,7 +100,8 @@ namespace TimelapseTemplateEditor
             DataRow row = null;
 
             // Update the File type 
-            if (nodelist.Count == 1) // There should be only one
+            // There should be only one node
+            if (nodelist.Count == 1)
             {
                 // Find the row of a given type
                 for (int i = 0; i < tempTable.Rows.Count; i++)
@@ -118,50 +114,72 @@ namespace TimelapseTemplateEditor
                         break;
                     }
                 }
-
             }
             return index;
         }
 
-        //currently used to update the default table with new values
-        private static void UpdateRow(MainWindow win, XmlNodeList nodeData, DataTable tempTable, string typeWanted, int index, ref List<string> error_messages, ref List<string> data_label_list)
+        // currently used to update the default table with new values
+        private void UpdateRow(MainWindow win, XmlNodeList nodeData, DataTable tempTable, string typeWanted, int index, ref List<string> error_messages, ref List<string> data_label_list)
         {
-            string str_datalabel;
             tempTable.Rows[index][Constants.Control.DefaultValue] = GetColumn(nodeData, Constants.Control.DefaultValue);             // Default
             tempTable.Rows[index][Constants.Control.TextBoxWidth] = GetColumn(nodeData, Constants.Control.TextBoxWidth);      // Width
 
             // The tempTable should have defaults filled in at this point for labels, datalabels, and tooltips
             // Thus if we just get empty values, we should use those defaults rather than clearing them
-            string str_label = GetColumn(nodeData, Constants.Control.Label);                                            // Label
-            if (!String.IsNullOrEmpty(str_label))
-                tempTable.Rows[index][Constants.Control.Label] = str_label;
+            string label = GetColumn(nodeData, Constants.Control.Label);                                            // Label
+            if (!String.IsNullOrEmpty(label))
+            {
+                tempTable.Rows[index][Constants.Control.Label] = label;
+            }
 
-            if (typeWanted.Equals(Constants.DatabaseColumn.File)) str_datalabel = Constants.DatabaseColumn.File;
-            else if (typeWanted.Equals(Constants.DatabaseColumn.Folder)) str_datalabel = Constants.DatabaseColumn.Folder;
-            else if (typeWanted.Equals(Constants.DatabaseColumn.Date)) str_datalabel = Constants.DatabaseColumn.Date;
-            else if (typeWanted.Equals(Constants.DatabaseColumn.Time)) str_datalabel = Constants.DatabaseColumn.Time;
-            else if (typeWanted.Equals(Constants.DatabaseColumn.ImageQuality)) str_datalabel = Constants.DatabaseColumn.ImageQuality;
-            else if (typeWanted.Equals(Constants.DatabaseColumn.DeleteFlag)) str_datalabel = Constants.DatabaseColumn.DeleteFlag;
+            string dataLabel;
+            if (typeWanted.Equals(Constants.DatabaseColumn.File))
+            {
+                dataLabel = Constants.DatabaseColumn.File;
+            }
+            else if (typeWanted.Equals(Constants.DatabaseColumn.Folder))
+            {
+                dataLabel = Constants.DatabaseColumn.Folder;
+            }
+            else if (typeWanted.Equals(Constants.DatabaseColumn.Date))
+            {
+                dataLabel = Constants.DatabaseColumn.Date;
+            }
+            else if (typeWanted.Equals(Constants.DatabaseColumn.Time))
+            {
+                dataLabel = Constants.DatabaseColumn.Time;
+            }
+            else if (typeWanted.Equals(Constants.DatabaseColumn.ImageQuality))
+            {
+                dataLabel = Constants.DatabaseColumn.ImageQuality;
+            }
+            else if (typeWanted.Equals(Constants.DatabaseColumn.DeleteFlag))
+            {
+                dataLabel = Constants.DatabaseColumn.DeleteFlag;
+            }
             else
             {
-                str_datalabel = GetColumn(nodeData, Constants.Control.DataLabel);
-                if (str_datalabel.Trim().Equals(String.Empty)) str_datalabel = str_label; // If there is no data label, use the label's value into it. 
-
-                string datalabel = Regex.Replace(str_datalabel, @"\s+", String.Empty);    // remove any white space that may be there
-                datalabel = Regex.Replace(str_datalabel, "[^a-zA-Z0-9_]", String.Empty);  // only allow alphanumeric and '_'. 
-                if (!datalabel.Equals(str_datalabel))
+                dataLabel = GetColumn(nodeData, Constants.Control.DataLabel);
+                if (dataLabel.Trim().Equals(String.Empty))
                 {
-                    error_messages.Add("illicit characters: '" + str_datalabel + "' changed to '" + datalabel + "'");
-                    str_datalabel = datalabel;
+                    dataLabel = label; // If there is no data label, use the label's value into it. 
                 }
 
-                datalabel = str_datalabel.ToUpper();
+                string datalabel = Regex.Replace(dataLabel, @"\s+", String.Empty);    // remove any white space that may be there
+                datalabel = Regex.Replace(dataLabel, "[^a-zA-Z0-9_]", String.Empty);  // only allow alphanumeric and '_'. 
+                if (!datalabel.Equals(dataLabel))
+                {
+                    error_messages.Add("illicit characters: '" + dataLabel + "' changed to '" + datalabel + "'");
+                    dataLabel = datalabel;
+                }
+
+                datalabel = dataLabel.ToUpper();
                 foreach (string s in EditorConstant.ReservedWords)
                 {
                     if (s.Equals(datalabel))
                     {
-                        error_messages.Add("reserved word:    '" + str_datalabel + "' changed to '" + str_datalabel + "_'");
-                        str_datalabel += "_";
+                        error_messages.Add("reserved word:    '" + dataLabel + "' changed to '" + dataLabel + "_'");
+                        dataLabel += "_";
                         break;
                     }
                 }
@@ -172,35 +190,42 @@ namespace TimelapseTemplateEditor
             // First, check to see if the datalabel already exsists in the list, i.e., its not a unique key
             // If it doesn't, keep trying to add an integer to its end to make it unique.
             int j = 0;
-            string temp_datalabel = str_datalabel;
+            string temp_datalabel = dataLabel;
             while (data_label_list.Contains(temp_datalabel))
             {
-                temp_datalabel = str_datalabel + j.ToString();
+                temp_datalabel = dataLabel + j.ToString();
             }
-            if (!str_datalabel.Equals(temp_datalabel))
+            if (!dataLabel.Equals(temp_datalabel))
             {
-                error_messages.Add("duplicate data label:" + Environment.NewLine + "   '" + str_datalabel + "' changed to '" + temp_datalabel + "'");
-                str_datalabel = temp_datalabel;
+                error_messages.Add("duplicate data label:" + Environment.NewLine + "   '" + dataLabel + "' changed to '" + temp_datalabel + "'");
+                dataLabel = temp_datalabel;
             }
 
-            if (!String.IsNullOrEmpty(str_datalabel))
+            if (!String.IsNullOrEmpty(dataLabel))
             {
-                if (str_datalabel.Equals("Delete")) str_datalabel = "DeleteLabel"; // Delete is a reserved word!
-                tempTable.Rows[index][Constants.Control.DataLabel] = str_datalabel;
+                if (dataLabel.Equals("Delete"))
+                {
+                    dataLabel = "DeleteLabel"; // Delete is a reserved word!
+                }
+                tempTable.Rows[index][Constants.Control.DataLabel] = dataLabel;
             }
             else
             {
                 // If the data label was empty, the priority is to use the non-empty label contents
                 // otherwise we stay with the default contents of the data label filled in previously 
-                str_label = Regex.Replace(str_label, @"\s+", String.Empty);
-                if (str_label != String.Empty) tempTable.Rows[index][Constants.Control.DataLabel] = str_label;
+                label = Regex.Replace(label, @"\s+", String.Empty);
+                if (label != String.Empty)
+                {
+                    tempTable.Rows[index][Constants.Control.DataLabel] = label;
+                }
             }
-            data_label_list.Add(str_datalabel); // and add it to the list of data labels seen
+            data_label_list.Add(dataLabel); // and add it to the list of data labels seen
 
             string str_tooltip = GetColumn(nodeData, Constants.Control.Tooltip);
             if (!String.IsNullOrEmpty(str_tooltip))
+            {
                 tempTable.Rows[index][Constants.Control.Tooltip] = str_tooltip;
-
+            }
 
             // If there is no value supplied for Copyable, default is false for these data types (as they are already filled in by the system). 
             // Counters are also not copyable be default, as we expect counts to change image by image. But there are cases where they user may want to alter this.
@@ -216,26 +241,28 @@ namespace TimelapseTemplateEditor
             // If there is no value supplied for Visibility, default is true (i.e., the control will be visible in the interface)
             tempTable.Rows[index][Constants.Control.Visible] = MyConvertToBool(TextFromNode(nodeData, 0, Constants.Control.Visible), "true");
 
-            //if the type has a list, we have to do more work.
-            if (typeWanted == Constants.DatabaseColumn.ImageQuality)  // Load up the menu items
+            // if the type has a list, we have to do more work.
+            if (typeWanted == Constants.DatabaseColumn.ImageQuality)
             {
-                tempTable.Rows[index][Constants.Control.List] = Constants.ImageQuality.ListOfValues; // For Image Quality, use the new list (longer than the one in old templates)
+                // For Image Quality, use the new list (longer than the one in old templates)
+                tempTable.Rows[index][Constants.Control.List] = Constants.ImageQuality.ListOfValues;
             }
-            else if (typeWanted == Constants.DatabaseColumn.ImageQuality || typeWanted == Constants.Control.FixedChoice)  // Load up the menu items
+            else if (typeWanted == Constants.DatabaseColumn.ImageQuality || typeWanted == Constants.Control.FixedChoice)
             {
+                // Load up the menu items
                 tempTable.Rows[index][Constants.Control.List] = String.Empty; // FOr others, generate the list from what is stored
 
-                XmlNodeList nItems = nodeData[0].SelectNodes(Constants.Control.List + Constants.ImageXml.Slash + Constants.ImageXml.Item);
+                XmlNodeList nodes = nodeData[0].SelectNodes(Constants.Control.List + Constants.ImageXml.Slash + Constants.ImageXml.Item);
                 bool firsttime = true;
-                foreach (XmlNode nodeItem in nItems)
+                foreach (XmlNode node in nodes)
                 {
                     if (firsttime)
                     {
-                        tempTable.Rows[index][Constants.Control.List] = nodeItem.InnerText; //also clears the list's default values
+                        tempTable.Rows[index][Constants.Control.List] = node.InnerText; // also clears the list's default values
                     }
                     else
                     {
-                        tempTable.Rows[index][Constants.Control.List] += "|" + nodeItem.InnerText;
+                        tempTable.Rows[index][Constants.Control.List] += "|" + node.InnerText;
                     }
                     firsttime = false;
                 }
@@ -246,7 +273,10 @@ namespace TimelapseTemplateEditor
         private static string GetColumn(XmlNodeList nodeData, string what)
         {
             string s = TextFromNode(nodeData, 0, what);
-            if (null == s) s = String.Empty;
+            if (null == s)
+            {
+                s = String.Empty;
+            }
             return s;
         }
 
@@ -254,8 +284,14 @@ namespace TimelapseTemplateEditor
         private static string MyConvertToBool(string value, string defaultReturn)
         {
             string s = value.ToLower();
-            if (s == "true") return "true";
-            if (s == "false") return "false";
+            if (s == "true")
+            {
+                return "true";
+            }
+            if (s == "false")
+            {
+                return "false";
+            }
             return defaultReturn;
         }
 
@@ -275,11 +311,11 @@ namespace TimelapseTemplateEditor
                 tempTable.Rows[index][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Counter;
                 tempTable.Rows[index][Constants.Control.Copyable] = false;
                 tempTable.Rows[index][Constants.Control.Visible] = true;
-                tempTable.Rows[index][Constants.Control.Label] = Constants.Control.Counter + counterCount.ToString();
-                tempTable.Rows[index][Constants.Control.DataLabel] = Constants.Control.Counter + counterCount.ToString();
+                tempTable.Rows[index][Constants.Control.Label] = Constants.Control.Counter + this.counterCount.ToString();
+                tempTable.Rows[index][Constants.Control.DataLabel] = Constants.Control.Counter + this.counterCount.ToString();
                 tempTable.Rows[index][Constants.Control.Tooltip] = EditorConstant.DefaultTooltip.Counter;
                 tempTable.Rows[index][Constants.Control.List] = String.Empty;
-                counterCount++;
+                this.counterCount++;
             }
             else if (typeWanted.Equals(Constants.Control.Note))
             {
@@ -288,8 +324,8 @@ namespace TimelapseTemplateEditor
                 tempTable.Rows[index][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Note;
                 tempTable.Rows[index][Constants.Control.Copyable] = true;
                 tempTable.Rows[index][Constants.Control.Visible] = true;
-                tempTable.Rows[index][Constants.Control.Label] = Constants.Control.Note + noteCount.ToString();
-                tempTable.Rows[index][Constants.Control.DataLabel] = Constants.Control.Note + noteCount.ToString();
+                tempTable.Rows[index][Constants.Control.Label] = Constants.Control.Note + this.noteCount.ToString();
+                tempTable.Rows[index][Constants.Control.DataLabel] = Constants.Control.Note + this.noteCount.ToString();
                 tempTable.Rows[index][Constants.Control.Tooltip] = EditorConstant.DefaultTooltip.Note;
                 tempTable.Rows[index][Constants.Control.List] = String.Empty;
             }
@@ -300,15 +336,16 @@ namespace TimelapseTemplateEditor
                 tempTable.Rows[index][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Choice;
                 tempTable.Rows[index][Constants.Control.Copyable] = true;
                 tempTable.Rows[index][Constants.Control.Visible] = true;
-                tempTable.Rows[index][Constants.Control.Label] = EditorConstant.Control.Choice + choiceCount.ToString();
+                tempTable.Rows[index][Constants.Control.Label] = EditorConstant.Control.Choice + this.choiceCount.ToString();
                 // TODOSAUL: shouldn't this be Constants.Control.FixedChoice?
-                tempTable.Rows[index][Constants.Control.DataLabel] = EditorConstant.Control.Choice + choiceCount.ToString();
+                tempTable.Rows[index][Constants.Control.DataLabel] = EditorConstant.Control.Choice + this.choiceCount.ToString();
                 tempTable.Rows[index][Constants.Control.Tooltip] = EditorConstant.DefaultTooltip.Choice;
                 tempTable.Rows[index][Constants.Control.List] = String.Empty;
             }
 
             // Now update the templatetable with the new values
-            //UpdateRow(win, nodelist, tempTable, typeWanted, index);
+            // TODOSAUL: if this is commented out why have this method?
+            // UpdateRow(win, nodelist, tempTable, typeWanted, index);
         }
 
         private static void AddDeletedFlag(DataTable tempTable)
@@ -318,8 +355,6 @@ namespace TimelapseTemplateEditor
             int index = tempTable.Rows.Count - 1;
             tempTable.Rows[index][Constants.Control.ControlOrder] = tempTable.Rows.Count;
             tempTable.Rows[index][Constants.Control.SpreadsheetOrder] = tempTable.Rows.Count;
-
-            //tempTable.Rows[index][Constants.SPREADSHEETORDER] = spreadsheetOrder++);
             tempTable.Rows[index][Constants.Control.DefaultValue] = EditorConstant.DefaultValue.Flag;
             tempTable.Rows[index][Constants.DatabaseColumn.Type] = Constants.DatabaseColumn.DeleteFlag;
             tempTable.Rows[index][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Flag;
@@ -336,7 +371,10 @@ namespace TimelapseTemplateEditor
         private static string TextFromNode(XmlNodeList node, int nodeIndex, string nodeToFind)
         {
             XmlNodeList n = node[nodeIndex].SelectNodes(nodeToFind);
-            if (n.Count == 0) return String.Empty; //The node doesn't exist
+            if (n.Count == 0)
+            {
+                return String.Empty; // The node doesn't exist
+            }
             return n[0].InnerText;
         }
         #endregion

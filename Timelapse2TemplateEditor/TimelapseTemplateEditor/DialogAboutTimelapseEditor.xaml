@@ -1,4 +1,4 @@
-﻿<Window x:Class="TimelapseTemplateEditor.DlgAboutTimelapseEditor"
+﻿<Window x:Class="TimelapseTemplateEditor.DialogAboutTimelapseEditor"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
      Title="About the TimelapseTemplateEdtior" Height="420" Width="550"
@@ -49,7 +49,7 @@
 
         <DockPanel Name="DockPanelImage">
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Name="OkButton"  IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="okButton_Click" IsEnabled="True">Okay</Button>
+                <Button Name="OkButton"  IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True">Okay</Button>
             </StackPanel>
         </DockPanel>
     </DockPanel>

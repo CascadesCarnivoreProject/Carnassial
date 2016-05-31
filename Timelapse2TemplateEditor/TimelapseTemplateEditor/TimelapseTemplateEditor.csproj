@@ -123,20 +123,26 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="CodeTemplateImporter.cs" />
+    <Compile Include="Util\CodeTemplateImporter.cs" />
     <Compile Include="EditorConstant.cs" />
-    <Compile Include="CSVHelpers.cs" />
-    <Compile Include="DlgAboutTimelapseEditor.xaml.cs">
-      <DependentUpon>DlgAboutTimelapseEditor.xaml</DependentUpon>
+    <Compile Include="Util\CsvHelper.cs" />
+    <Compile Include="DialogAboutTimelapseEditor.xaml.cs">
+      <DependentUpon>DialogAboutTimelapseEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DlgEditChoiceList.xaml.cs">
-      <DependentUpon>DlgEditChoiceList.xaml</DependentUpon>
+    <Compile Include="DialogEditChoiceList.xaml.cs">
+      <DependentUpon>DialogEditChoiceList.xaml</DependentUpon>
     </Compile>
-    <Page Include="DlgAboutTimelapseEditor.xaml">
+    <Compile Include="Util\CallerMemberNameAttribute.cs" />
+    <Compile Include="CellTextBlockConverter.cs" />
+    <Compile Include="Util\ControlGeneration.cs" />
+    <Compile Include="MainWindowExtensions.cs" />
+    <Compile Include="ListBoxDBOutputConverter.cs" />
+    <Compile Include="Util\MyTrace.cs" />
+    <Page Include="DialogAboutTimelapseEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DlgEditChoiceList.xaml">
+    <Page Include="DialogEditChoiceList.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
