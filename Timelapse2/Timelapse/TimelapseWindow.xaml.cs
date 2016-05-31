@@ -270,8 +270,8 @@ namespace Timelapse
                     if (this.LoadByScanningImageFolder(this.FolderPath) == false)
                     {
                         DialogMessageBox messageBox = new DialogMessageBox();
-                        messageBox.MessageTitle = "No Iiages Found in the image set folder.";
-                        messageBox.MessageProblem = "There don't seem to be any JPG images in your chosen image folder:";
+                        messageBox.MessageTitle = "No Images Found in the image set folder.";
+                        messageBox.MessageProblem = "There doesn't seem to be any JPG images in your chosen image folder:";
                         messageBox.MessageProblem += Environment.NewLine + "\u2022 " + this.FolderPath + Environment.NewLine;
                         messageBox.MessageReason = "\u2022 The folder has no JPG files in it (image files ending in '.jpg'), or" + Environment.NewLine;
                         messageBox.MessageReason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images.";

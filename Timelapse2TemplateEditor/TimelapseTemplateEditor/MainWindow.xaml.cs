@@ -464,7 +464,7 @@ namespace TimelapseTemplateEditor
             if (selectedRowView == null)
             {
                 RemoveRowButton.IsEnabled = false;
-                RemoveRowButton.Content = REMOVEBUTTON_REMOVEITEM;
+                RemoveRowButton.Content = REMOVEBUTTON_REMOVE;//ITEM;
             }
             else if (( selectedRowView.Row[Constants.TYPE].Equals(Constants.FILE)
                 || selectedRowView.Row[Constants.TYPE].Equals(Constants.FOLDER)
@@ -732,7 +732,6 @@ namespace TimelapseTemplateEditor
         private DataRow findRow (int column_number, string searchValue)
         {
             int rowIndex = -1;
-            Debug.Print("Search Value: " + searchValue);
             foreach (DataRow row in templateTable.Rows)
             {
                 rowIndex++;
