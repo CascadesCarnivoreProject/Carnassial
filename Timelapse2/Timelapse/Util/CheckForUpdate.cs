@@ -4,7 +4,7 @@ using System.Xml;
 
 namespace Timelapse.Util
 {
-    internal class CheckForUpdate
+    public class CheckForUpdate
     {
         // Checks for updates by comparing the current version number with a version stored on the Timelapse website in an xml file.
         public static void GetAndParseVersion(Window win, bool showNoUpdatesMessage)

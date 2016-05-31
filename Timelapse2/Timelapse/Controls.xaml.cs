@@ -48,11 +48,11 @@ namespace Timelapse
                 bool copyable = String.Equals(Boolean.TrueString, copyableAsString, StringComparison.OrdinalIgnoreCase) ? true : false;
                 string dataLabel = (string)dataRow[Constants.Control.DataLabel];
                 string defaultValue = dataRow[Constants.Control.DefaultValue].ToString();
-                int id = Convert.ToInt32(dataRow[Constants.Database.ID].ToString()); // TODO Need to use this ID to pass between controls and data
+                int id = Convert.ToInt32(dataRow[Constants.DatabaseColumn.ID].ToString()); // TODO Need to use this ID to pass between controls and data
                 string label = dataRow[Constants.Control.Label].ToString();
                 string list = dataRow[Constants.Control.List].ToString();
-                string tooltip = dataRow[Constants.Control.Tooltop].ToString();
-                string type = dataRow[Constants.Database.Type].ToString();
+                string tooltip = dataRow[Constants.Control.Tooltip].ToString();
+                string type = dataRow[Constants.DatabaseColumn.Type].ToString();
                 string widthAsString = dataRow[Constants.Control.TextBoxWidth].ToString();
                 int width = (widthAsString == String.Empty) ? 0 : Convert.ToInt32(widthAsString);
 
@@ -61,7 +61,7 @@ namespace Timelapse
                     type == Constants.DatabaseColumn.Folder ||
                     type == Constants.DatabaseColumn.Date ||
                     type == Constants.DatabaseColumn.Time ||
-                    type == Constants.DatabaseColumn.Note)
+                    type == Constants.Control.Note)
                 {
                     bool createContextMenu = (type == Constants.DatabaseColumn.File) ? false : true;
                     DataEntryNote noteControl = new DataEntryNote(dataLabel, this, createContextMenu);
@@ -74,21 +74,21 @@ namespace Timelapse
                     }
                     controlToAdd = noteControl;
                 }
-                else if (type == Constants.DatabaseColumn.Flag || type == Constants.DatabaseColumn.DeleteFlag)
+                else if (type == Constants.Control.Flag || type == Constants.DatabaseColumn.DeleteFlag)
                 {
                     DataEntryFlag flagControl = new DataEntryFlag(dataLabel, this, true);
                     flagControl.Label = label;
                     flagControl.Width = width;
                     controlToAdd = flagControl;
                 }
-                else if (type == Constants.DatabaseColumn.Counter)
+                else if (type == Constants.Control.Counter)
                 {
                     DataEntryCounter counterControl = new DataEntryCounter(dataLabel, this, true);
                     counterControl.Label = label;
                     counterControl.Width = width;
                     controlToAdd = counterControl;
                 }
-                else if (type == Constants.DatabaseColumn.FixedChoice || type == Constants.DatabaseColumn.ImageQuality)
+                else if (type == Constants.Control.FixedChoice || type == Constants.DatabaseColumn.ImageQuality)
                 {
                     DataEntryChoice choiceControl = new DataEntryChoice(dataLabel, this, true, list);
                     choiceControl.Label = label;

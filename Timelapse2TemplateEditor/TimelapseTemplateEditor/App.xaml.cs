@@ -7,6 +7,5 @@ namespace TimelapseTemplateEditor
     /// </summary>
     public partial class App : Application
     {
-        public static string newComboItemString = " ";
     }
 }

@@ -33,25 +33,25 @@ namespace Timelapse.Database
             {
                 // Get the values for each control
                 DataRow row = sortedTemplateTable.Rows[i];
-                string type = row[Constants.Database.Type].ToString();
+                string type = row[Constants.DatabaseColumn.Type].ToString();
 
                 // We only handle certain types, e.g., we don't give the user the opportunity to search over file names / folders / date / time
-                if (type == Constants.DatabaseColumn.Note ||
-                    type == Constants.DatabaseColumn.Counter ||
-                    type == Constants.DatabaseColumn.FixedChoice ||
+                if (type == Constants.Control.Note ||
+                    type == Constants.Control.Counter ||
+                    type == Constants.Control.FixedChoice ||
                     type == Constants.DatabaseColumn.ImageQuality ||
-                    type == Constants.DatabaseColumn.Flag)
+                    type == Constants.Control.Flag)
                 {
                     // Create a new search expression for each row, where each row specifies a particular control and how it can be searched
                     string default_value = String.Empty;
                     string expression = Constants.Filter.Equal;
                     bool is_use_for_searching = false;
-                    if (type == Constants.DatabaseColumn.Counter)
+                    if (type == Constants.Control.Counter)
                     {
                         default_value = "0";
                         expression = Constants.Filter.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
                     }
-                    else if (type == Constants.DatabaseColumn.Flag)
+                    else if (type == Constants.Control.Flag)
                     {
                         default_value = "false";
                     }

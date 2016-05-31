@@ -37,7 +37,7 @@ namespace Timelapse.Database
         {
             this.Date = (string)imageRow[Constants.DatabaseColumn.Date];
             this.FileName = (string)imageRow[Constants.DatabaseColumn.File];
-            this.ID = (long)imageRow[Constants.Database.ID];
+            this.ID = (long)imageRow[Constants.DatabaseColumn.ID];
             this.ImageQuality = (ImageQualityFilter)Enum.Parse(typeof(ImageQualityFilter), (string)imageRow[Constants.DatabaseColumn.ImageQuality]);
             this.InitialRootFolderName = (string)imageRow[Constants.DatabaseColumn.Folder];
             this.Time = (string)imageRow[Constants.DatabaseColumn.Time];

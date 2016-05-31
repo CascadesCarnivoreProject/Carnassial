@@ -68,15 +68,15 @@ namespace Timelapse.Database
                 }
 
                 string controlType = this.ControlTypeFromDataLabel[columnName];
-                if (controlType.Equals(Constants.DatabaseColumn.Counter))
+                if (controlType.Equals(Constants.Control.Counter))
                 {
                     counterList.Add(columnName);
                 }
-                else if (controlType.Equals(Constants.DatabaseColumn.Note) || controlType.Equals(Constants.DatabaseColumn.FixedChoice))
+                else if (controlType.Equals(Constants.Control.Note) || controlType.Equals(Constants.Control.FixedChoice))
                 {
                     notesAndFixedChoicesList.Add(columnName);
                 }
-                else if (controlType.Equals(Constants.DatabaseColumn.Flag))
+                else if (controlType.Equals(Constants.Control.Flag))
                 {
                     flagsList.Add(columnName);
                 }
@@ -149,8 +149,8 @@ namespace Timelapse.Database
                                 dataLabel = this.DataLabelFromColumnName[Constants.DatabaseColumn.DeleteFlag];
                                 imageRow.Add(new ColumnTuple(dataLabel, this.GetControlDefaultValue(dataLabel))); // Default as specified in the template file, which should be "false"
                                 break;
-                            case Constants.DatabaseColumn.Note:        // Find and then Add the Note or Fixed Choice
-                            case Constants.DatabaseColumn.FixedChoice:
+                            case Constants.Control.Note:        // Find and then Add the Note or Fixed Choice
+                            case Constants.Control.FixedChoice:
                                 // Now initialize notes, counters, and fixed choices to the defaults
                                 foreach (string controlName in notesAndFixedChoicesList)
                                 {
@@ -160,7 +160,7 @@ namespace Timelapse.Database
                                     }
                                 }
                                 break;
-                            case Constants.DatabaseColumn.Flag:
+                            case Constants.Control.Flag:
                                 // Now initialize flags to the defaults
                                 foreach (string controlName in flagsList)
                                 {
@@ -170,7 +170,7 @@ namespace Timelapse.Database
                                     }
                                 }
                                 break;
-                            case Constants.DatabaseColumn.Counter:
+                            case Constants.Control.Counter:
                                 foreach (string controlName in counterList)
                                 {
                                     if (columnName.Equals(controlName))
@@ -264,10 +264,10 @@ namespace Timelapse.Database
             // 1. Create the Data Table from the template
             // First, define the creation string based on the contents of the template. 
             List<ColumnTuple> columnDefinitions = new List<ColumnTuple>();
-            columnDefinitions.Add(new ColumnTuple(Constants.Database.ID, Constants.Database.CreationStringPrimaryKey));  // It begins with the ID integer primary key
+            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // It begins with the ID integer primary key
             foreach (DataRow row in this.TemplateTable.Rows)
             {
-                long id = (long)row[Constants.Database.ID];
+                long id = (long)row[Constants.DatabaseColumn.ID];
                 string dataLabel = (string)row[Constants.Control.DataLabel];
                 string defaultValue = (string)row[Constants.Control.DefaultValue];
                 columnDefinitions.Add(new ColumnTuple(dataLabel, " Text '" + defaultValue + "'"));
@@ -280,7 +280,7 @@ namespace Timelapse.Database
 
             // 2. Create the ImageSetTable and initialize a single row in it
             columnDefinitions.Clear();
-            columnDefinitions.Add(new ColumnTuple(Constants.Database.ID, Constants.Database.CreationStringPrimaryKey));  // It begins with the ID integer primary key
+            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // It begins with the ID integer primary key
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Log, " TEXT DEFAULT 'Add text here.'"));
 
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, " TEXT DEFAULT 'true'"));
@@ -300,14 +300,14 @@ namespace Timelapse.Database
 
             // 3.Create the MarkersTable and initialize a single row in it
             columnDefinitions.Clear();
-            columnDefinitions.Add(new ColumnTuple(Constants.Database.ID, Constants.Database.CreationStringPrimaryKey));  // t begins with the ID integer primary key
+            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // t begins with the ID integer primary key
             string type = String.Empty;
             foreach (DataRow row in this.TemplateTable.Rows)
             {
-                type = (string)row[Constants.Database.Type];
-                if (type.Equals(Constants.DatabaseColumn.Counter))
+                type = (string)row[Constants.DatabaseColumn.Type];
+                if (type.Equals(Constants.Control.Counter))
                 {
-                    long id = (long)row[Constants.Database.ID];
+                    long id = (long)row[Constants.DatabaseColumn.ID];
                     string dataLabel = (string)row[Constants.Control.DataLabel];
                     columnDefinitions.Add(new ColumnTuple(dataLabel, " Text Default ''"));
                 }
@@ -317,14 +317,14 @@ namespace Timelapse.Database
             // 4. Copy the TemplateTable to this Database
             // First we have to create the table
             columnDefinitions.Clear();
-            columnDefinitions.Add(new ColumnTuple(Constants.Database.ID, "INTEGER primary key"));
-            columnDefinitions.Add(new ColumnTuple(Constants.Database.ControlOrder, "INTEGER"));
-            columnDefinitions.Add(new ColumnTuple(Constants.Database.SpreadsheetOrder, "INTEGER"));
-            columnDefinitions.Add(new ColumnTuple(Constants.Database.Type, "text"));
+            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.ID, "INTEGER primary key"));
+            columnDefinitions.Add(new ColumnTuple(Constants.Control.ControlOrder, "INTEGER"));
+            columnDefinitions.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, "INTEGER"));
+            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Type, "text"));
             columnDefinitions.Add(new ColumnTuple(Constants.Control.DefaultValue, "text"));
             columnDefinitions.Add(new ColumnTuple(Constants.Control.Label, "text"));
             columnDefinitions.Add(new ColumnTuple(Constants.Control.DataLabel, "text"));
-            columnDefinitions.Add(new ColumnTuple(Constants.Control.Tooltop, "text"));
+            columnDefinitions.Add(new ColumnTuple(Constants.Control.Tooltip, "text"));
             columnDefinitions.Add(new ColumnTuple(Constants.Control.TextBoxWidth, "text"));
             columnDefinitions.Add(new ColumnTuple(Constants.Control.Copyable, "text"));
             columnDefinitions.Add(new ColumnTuple(Constants.Control.Visible, "text"));
@@ -365,15 +365,15 @@ namespace Timelapse.Database
         {
             foreach (DataRow row in this.TemplateTable.Rows)
             {
-                long id = (long)row[Constants.Database.ID];
+                long id = (long)row[Constants.DatabaseColumn.ID];
                 string dataLabel = (string)row[Constants.Control.DataLabel];
-                string controlType = (string)row[Constants.Database.Type];
+                string controlType = (string)row[Constants.DatabaseColumn.Type];
 
                 // We don't want to add these types to the hash, as there can be multiple ones, which means the key would not be unique
-                if (!(controlType.Equals(Constants.DatabaseColumn.Note) ||
-                      controlType.Equals(Constants.DatabaseColumn.FixedChoice) ||
-                      controlType.Equals(Constants.DatabaseColumn.Counter) ||
-                      controlType.Equals(Constants.DatabaseColumn.Flag)))
+                if (!(controlType.Equals(Constants.Control.Note) ||
+                      controlType.Equals(Constants.Control.FixedChoice) ||
+                      controlType.Equals(Constants.Control.Counter) ||
+                      controlType.Equals(Constants.Control.Flag)))
                 {
                     this.DataLabelFromColumnName.Add(controlType, dataLabel);
                 }
@@ -642,7 +642,7 @@ namespace Timelapse.Database
             }
 
             // update the table
-            DataRow[] foundRows = dataTable.Select(Constants.Database.ID + " = " + id);
+            DataRow[] foundRows = dataTable.Select(Constants.DatabaseColumn.ID + " = " + id);
             if (foundRows.Length == 1)
             {
                 int index = dataTable.Rows.IndexOf(foundRows[0]);
@@ -662,8 +662,8 @@ namespace Timelapse.Database
             {
                 this.ImageDataTable.Rows[i][dataLabel] = value;
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
-                long id = (long)this.ImageDataTable.Rows[i][Constants.Database.ID];
-                string where = Constants.Database.ID + " = " + this.ImageDataTable.Rows[i][Constants.Database.ID].ToString();                             // on this paticular row with the given id
+                long id = (long)this.ImageDataTable.Rows[i][Constants.DatabaseColumn.ID];
+                string where = Constants.DatabaseColumn.ID + " = " + this.ImageDataTable.Rows[i][Constants.DatabaseColumn.ID].ToString();                             // on this paticular row with the given id
                 updateQuery.Add(new ColumnTuplesWithWhere(columnToUpdate, where));
             }
 
@@ -696,7 +696,7 @@ namespace Timelapse.Database
                 // Debug.Print(datarow.ToString());
 
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
-                string where = Constants.Database.ID + " = " + id;
+                string where = Constants.DatabaseColumn.ID + " = " + id;
                 updateQuery.Add(new ColumnTuplesWithWhere(columnToUpdate, where));
             }
 
@@ -723,10 +723,10 @@ namespace Timelapse.Database
                 // But it should be checked.
                 this.ImageDataTable.Rows[index][dataLabel] = value;
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
-                long id = (long)this.ImageDataTable.Rows[index][Constants.Database.ID];
+                long id = (long)this.ImageDataTable.Rows[index][Constants.DatabaseColumn.ID];
 
                 // update database
-                string where = Constants.Database.ID + " = " + this.ImageDataTable.Rows[index][Constants.Database.ID].ToString();                             // on this paticular row with the given id
+                string where = Constants.DatabaseColumn.ID + " = " + this.ImageDataTable.Rows[index][Constants.DatabaseColumn.ID].ToString();                             // on this paticular row with the given id
                 updateQuery.Add(new ColumnTuplesWithWhere(columnToUpdate, where));
             }
 
@@ -777,8 +777,8 @@ namespace Timelapse.Database
                 List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>();                       // Update the date and time
                 columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, (string)tempTable.Rows[i][Constants.DatabaseColumn.Date]));
                 columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Time, (string)tempTable.Rows[i][Constants.DatabaseColumn.Time]));
-                long id = (Int64)tempTable.Rows[i][Constants.Database.ID];
-                string where = Constants.Database.ID + " = " + tempTable.Rows[i][Constants.Database.ID].ToString();                             // on this paticular row with the given id
+                long id = (Int64)tempTable.Rows[i][Constants.DatabaseColumn.ID];
+                string where = Constants.DatabaseColumn.ID + " = " + tempTable.Rows[i][Constants.DatabaseColumn.ID].ToString();                             // on this paticular row with the given id
                 updateQuery.Add(new ColumnTuplesWithWhere(columnsToUpdate, where));
             }
 
@@ -828,8 +828,8 @@ namespace Timelapse.Database
                 // Now update the actual database with the new date/time values stored in the temporary table
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>();               // Update the date 
                 columnToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, DateTimeHandler.StandardDateString(reversedDate)));
-                long id = (long)this.ImageDataTable.Rows[i][Constants.Database.ID];
-                string where = Constants.Database.ID + " = " + id.ToString();                             // on this paticular row with the given id
+                long id = (long)this.ImageDataTable.Rows[i][Constants.DatabaseColumn.ID];
+                string where = Constants.DatabaseColumn.ID + " = " + id.ToString();                             // on this paticular row with the given id
                 updateQuery.Add(new ColumnTuplesWithWhere(columnToUpdate, where));
             }
 
@@ -882,7 +882,7 @@ namespace Timelapse.Database
             }
             try
             {
-                Int64 id = (Int64)this.ImageDataTable.Rows[rowIndex][Constants.Database.ID];
+                Int64 id = (Int64)this.ImageDataTable.Rows[rowIndex][Constants.DatabaseColumn.ID];
                 return Convert.ToInt32(id);
             }
             catch
@@ -963,7 +963,7 @@ namespace Timelapse.Database
         {
             DataTable tempdt = this.TemplateTable.Copy();
             DataView dv = tempdt.DefaultView;
-            dv.Sort = Constants.Database.ControlOrder + " ASC";
+            dv.Sort = Constants.Control.ControlOrder + " ASC";
             return dv.ToTable();
         }
 
@@ -1034,7 +1034,7 @@ namespace Timelapse.Database
             for (int i = 0; i < this.MarkerTable.Columns.Count; i++)
             {
                 datalabel = this.MarkerTable.Columns[i].ColumnName;
-                if (datalabel.Equals(Constants.Database.ID))
+                if (datalabel.Equals(Constants.DatabaseColumn.ID))
                 {
                     continue;  // Skip the ID
                 }
@@ -1144,7 +1144,7 @@ namespace Timelapse.Database
         {
             for (int row_number = 0; row_number < this.MarkerTable.Rows.Count; row_number++)
             {
-                string str = this.MarkerTable.Rows[row_number][Constants.Database.ID].ToString();
+                string str = this.MarkerTable.Rows[row_number][Constants.DatabaseColumn.ID].ToString();
                 int this_id;
                 if (Int32.TryParse(str, out this_id) == false)
                 {
@@ -1191,7 +1191,7 @@ namespace Timelapse.Database
             {
                 if (dataLabel.Equals(this.TemplateTable.Rows[i][Constants.Control.DataLabel]))
                 {
-                    return (long)this.TemplateTable.Rows[i][Constants.Database.ID];
+                    return (long)this.TemplateTable.Rows[i][Constants.DatabaseColumn.ID];
                 }
             }
             return -1;
@@ -1201,7 +1201,7 @@ namespace Timelapse.Database
         private string ImageSetGetValue(string dataLabel)
         {
             // Get the single row
-            string query = "Select * From " + Constants.Database.ImageSetTable + " WHERE " + Constants.Database.ID + " = 1";
+            string query = "Select * From " + Constants.Database.ImageSetTable + " WHERE " + Constants.DatabaseColumn.ID + " = 1";
             DataTable imagesetTable = this.database.GetDataTableFromSelect(query);
             return (string)imagesetTable.Rows[0][dataLabel];
         }

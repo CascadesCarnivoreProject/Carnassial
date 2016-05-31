@@ -10,7 +10,7 @@ namespace Timelapse.Database
 {
     // A wrapper to make it easy to invoke some basic SQLite commands
     // It is NOT a generalized wrapper, as it only handles a few simple things.
-    internal class SQLiteWrapper
+    public class SQLiteWrapper
     {
         // A connection string identifying the  database file. Takes the form:
         // "Data Source=filepath" 
@@ -449,7 +449,7 @@ namespace Timelapse.Database
         {
             // DELETE FROM table_name WHERE where
             string query = Constants.Sql.DeleteFrom + tableName;        // DELETE FROM table_name
-            if (!where.Trim().Equals(String.Empty))
+            if (!String.IsNullOrWhiteSpace(where))
             {
                 // Add the WHERE clause only when where is not empty
                 query += Constants.Sql.Where;                   // WHERE

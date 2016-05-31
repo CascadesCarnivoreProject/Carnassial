@@ -186,7 +186,7 @@ namespace Timelapse.Database
                 Debug.Assert(String.IsNullOrWhiteSpace(dataLabel) == false, String.Format("Encountered empty data label '{0}' at row {1} in template table.", dataLabel, row));
 
                 // get a list of datalabels so we can add columns in the order that matches the current template table order
-                if (Constants.Database.ID != dataLabel)
+                if (Constants.DatabaseColumn.ID != dataLabel)
                 {
                     dataLabels.Add(dataLabel);
                 }

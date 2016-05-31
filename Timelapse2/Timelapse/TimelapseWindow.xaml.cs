@@ -934,25 +934,25 @@ namespace Timelapse
                     case Constants.DatabaseColumn.Folder:
                     case Constants.DatabaseColumn.Time:
                     case Constants.DatabaseColumn.Date:
-                    case Constants.DatabaseColumn.Note:
+                    case Constants.Control.Note:
                         DataEntryNote notectl = (DataEntryNote)pair.Value; // get the control
                         notectl.ContentControl.TextChanged += new TextChangedEventHandler(this.NoteCtl_TextChanged);
                         notectl.ContentControl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
                         break;
                     case Constants.DatabaseColumn.DeleteFlag:
-                    case Constants.DatabaseColumn.Flag:
+                    case Constants.Control.Flag:
                         DataEntryFlag flagctl = (DataEntryFlag)pair.Value; // get the control
                         flagctl.ContentControl.Checked += this.FlagControl_CheckedChanged;
                         flagctl.ContentControl.Unchecked += this.FlagControl_CheckedChanged;
                         flagctl.ContentControl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
                         break;
                     case Constants.DatabaseColumn.ImageQuality:
-                    case Constants.DatabaseColumn.FixedChoice:
+                    case Constants.Control.FixedChoice:
                         DataEntryChoice fixedchoicectl = (DataEntryChoice)pair.Value; // get the control
                         fixedchoicectl.ContentControl.SelectionChanged += new SelectionChangedEventHandler(this.ChoiceControl_SelectionChanged);
                         fixedchoicectl.ContentControl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
                         break;
-                    case Constants.DatabaseColumn.Counter:
+                    case Constants.Control.Counter:
                         DataEntryCounter counterctl = (DataEntryCounter)pair.Value; // get the control
                         counterctl.ContentControl.TextChanged += new TextChangedEventHandler(this.CounterControl_TextChanged);
                         counterctl.ContentControl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
@@ -1206,12 +1206,12 @@ namespace Timelapse
                     case Constants.DatabaseColumn.Folder:
                     case Constants.DatabaseColumn.Time:
                     case Constants.DatabaseColumn.Date:
-                    case Constants.DatabaseColumn.Note:
-                    case Constants.DatabaseColumn.Flag:
+                    case Constants.Control.Note:
+                    case Constants.Control.Flag:
                     case Constants.DatabaseColumn.ImageQuality:
                     case Constants.DatabaseColumn.DeleteFlag:
-                    case Constants.DatabaseColumn.FixedChoice:
-                    case Constants.DatabaseColumn.Counter:
+                    case Constants.Control.FixedChoice:
+                    case Constants.Control.Counter:
                         DataEntryControl control = (DataEntryControl)pair.Value;
                         if (control.Copyable)
                         {
@@ -1239,12 +1239,12 @@ namespace Timelapse
                     case Constants.DatabaseColumn.Folder:
                     case Constants.DatabaseColumn.Time:
                     case Constants.DatabaseColumn.Date:
-                    case Constants.DatabaseColumn.Note:
-                    case Constants.DatabaseColumn.Flag:
+                    case Constants.Control.Note:
+                    case Constants.Control.Flag:
                     case Constants.DatabaseColumn.ImageQuality:
                     case Constants.DatabaseColumn.DeleteFlag:
-                    case Constants.DatabaseColumn.FixedChoice:
-                    case Constants.DatabaseColumn.Counter:
+                    case Constants.Control.FixedChoice:
+                    case Constants.Control.Counter:
                         DataEntryControl control = (DataEntryControl)pair.Value;
                         control.Container.ClearValue(Control.BackgroundProperty);
                         break;
@@ -1431,11 +1431,11 @@ namespace Timelapse
                     case Constants.DatabaseColumn.ImageQuality:
                         control.Value.Content = this.imageCache.Current.ImageQuality.ToString();
                         break;
-                    case Constants.DatabaseColumn.Counter:
+                    case Constants.Control.Counter:
                     case Constants.DatabaseColumn.DeleteFlag:
-                    case Constants.DatabaseColumn.FixedChoice:
-                    case Constants.DatabaseColumn.Flag:
-                    case Constants.DatabaseColumn.Note:
+                    case Constants.Control.FixedChoice:
+                    case Constants.Control.Flag:
+                    case Constants.Control.Note:
                         control.Value.Content = this.imageDatabase.GetImageValue(this.imageCache.CurrentRow, control.Value.DataLabel);
                         break;
                     default:

@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Windows;
+using Timelapse.Util;
 
 namespace TimelapseTemplateEditor
 {
     /// <summary>
-    /// Interaction logic for DlgAboutTImelapseEditor.xaml
+    /// Interaction logic for DlgAboutTimelapseEditor.xaml
     /// </summary>
     public partial class DlgAboutTimelapseEditor : Window
     {

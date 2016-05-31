@@ -154,9 +154,9 @@ namespace Timelapse
             {
                 // Get the values for each control
                 DataRow row = sortedTemplateTable.Rows[i];
-                string type = row[Constants.Database.Type].ToString();
+                string type = row[Constants.DatabaseColumn.Type].ToString();
 
-                if (type == Constants.DatabaseColumn.Note || type == Constants.DatabaseColumn.Date || type == Constants.DatabaseColumn.Time)
+                if (type == Constants.Control.Note || type == Constants.DatabaseColumn.Date || type == Constants.DatabaseColumn.Time)
                 {
                     string datalabel = (string)row[Constants.Control.DataLabel];
                     string label = (string)row[Constants.Control.Label];

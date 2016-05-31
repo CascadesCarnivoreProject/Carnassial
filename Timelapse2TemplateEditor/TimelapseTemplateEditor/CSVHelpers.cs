@@ -7,14 +7,13 @@ namespace TimelapseTemplateEditor
     /// </summary>
     public class CsvHelperMethods
     {
-
-        public static string  ConvertLineBreaksToBars (string originalList)
+        public static string ConvertLineBreaksToBars(string originalList)
         {
             string[] newLineDelimiters = { Environment.NewLine };
             char[] barDelimiter = { '|' };
             string[] rawItemList = originalList.Split(newLineDelimiters, StringSplitOptions.RemoveEmptyEntries);
-            string trimmedItem = "";
-            string newList = "";
+            string trimmedItem = String.Empty;
+            string newList = String.Empty;
 
             foreach (string rawItem in rawItemList)
             {
@@ -32,8 +31,8 @@ namespace TimelapseTemplateEditor
             string[] newLineDelimiters = { Environment.NewLine };
             char[] barDelimiter = { '|' };
             string[] rawItemList = originalList.Split(barDelimiter);
-            string trimmedItem = "";
-            string newList = "";
+            string trimmedItem = String.Empty;
+            string newList = String.Empty;
 
             foreach (string rawItem in rawItemList)
             {
@@ -47,17 +46,17 @@ namespace TimelapseTemplateEditor
         }
 
 
-            // All the stuff below here is old and can likely be deleted
+        // All the stuff below here is old and can likely be deleted
 
-        public String[] csvToArray(String valString)
+        public String[] csvToArray(string valString)
         {
             String[] valArray = Array.ConvertAll(valString.Split('|'), p => p.Trim());
             return valArray;
         }
-        public String arrayToCSV(String[] valArray)
+        public string arrayToCSV(String[] valArray)
         {
-            String newComboString = "";
-            foreach (String s in valArray) //turns the array back into a string to re-add it.
+            string newComboString = String.Empty;
+            foreach (string s in valArray) //turns the array back into a string to re-add it.
             {
                 newComboString += s + "| ";
             }
@@ -68,11 +67,11 @@ namespace TimelapseTemplateEditor
             return newComboString;
         }
 
-        public String deleteItemFromCSV(String comboBoxString, String selectedItemString)
+        public string deleteItemFromCSV(string comboBoxString, string selectedItemString)
         {
             String[] valArray = csvToArray(comboBoxString);
-            String newComboString = "";
-            foreach (String s in valArray) //turns the array back into a string to re-add it.
+            string newComboString = String.Empty;
+            foreach (string s in valArray) //turns the array back into a string to re-add it.
             {
                 if (!s.Equals(selectedItemString)) //if its not the deleted value, add to new return string
                 {
@@ -87,11 +86,11 @@ namespace TimelapseTemplateEditor
         }
 
         //very similar to delete, only replacing one item
-        public String editItemInCSV(String comboBoxString, String selectedItemString, String editedValue)
+        public string editItemInCSV(string comboBoxString, string selectedItemString, string editedValue)
         {
             String[] valArray = csvToArray(comboBoxString);
-            String newComboString = "";
-            foreach (String s in valArray) //turns the array back into a string to re-add it.
+            string newComboString = String.Empty;
+            foreach (string s in valArray) //turns the array back into a string to re-add it.
             {
                 if (!s.Equals(selectedItemString)) //if its not the edited value, add to new return string
                 {

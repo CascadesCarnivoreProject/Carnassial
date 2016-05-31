@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace TimelapseTemplateEditor
@@ -50,7 +51,7 @@ namespace TimelapseTemplateEditor
         // Enable the Ok button for non-empty text
         private void tbLog_TextChanged(object sender, TextChangedEventArgs e)
         {
-            this.OkButton.IsEnabled = (!this.tbItemList.Text.Trim().Equals(""));
+            this.OkButton.IsEnabled = (!this.tbItemList.Text.Trim().Equals(String.Empty));
         }
 
         private void cancelButton_Click(object sender, RoutedEventArgs e)

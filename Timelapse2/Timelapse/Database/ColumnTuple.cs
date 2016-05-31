@@ -8,6 +8,11 @@ namespace Timelapse.Database
         public string Name { get; private set; }
         public string Value { get; private set; }
 
+        public ColumnTuple(string column, int value)
+            : this(column, value.ToString())
+        {
+        }
+
         public ColumnTuple(string column, string value)
         {
             this.Name = column;

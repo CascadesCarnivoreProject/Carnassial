@@ -7,24 +7,26 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions; // For debugging
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.IO;
-using System.Globalization;
-using System.Windows.Controls.Primitives;
-using System.Diagnostics;
+using Timelapse;
+using Timelapse.Database;
+using Timelapse.Util;
 
-using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions; // For debugging
 namespace System.Runtime.CompilerServices
 {
     sealed class CallerMemberNameAttribute : Attribute { }
 }
-
 
 namespace TimelapseTemplateEditor
 {
@@ -35,10 +37,10 @@ namespace TimelapseTemplateEditor
         [CallerMemberName] string memberName = "")
         {
             // Uncomment to enable tracing
-            //if (message.Equals (""))
+            //if (message.Equals (String.Empty))
             //    Debug.Print("**: "  + memberName);
-           // else
-           //     Debug.Print("**" + message + ": " + memberName);
+            // else
+            //     Debug.Print("**" + message + ": " + memberName);
         }
     }
     #endregion
@@ -48,33 +50,23 @@ namespace TimelapseTemplateEditor
     /// </summary>
     public partial class MainWindow : Window
     {
-        #region Variables
         // Interface values
-        System.Windows.Media.SolidColorBrush notEditableCellColor = System.Windows.Media.Brushes.LightGray; // Color of non-editable data grid items 
+        SolidColorBrush notEditableCellColor = Brushes.LightGray; // Color of non-editable data grid items 
 
         // Database-related values
         SQLiteWrapper db;                                   // The Database where the template is stored
-       
-        String dbFileName;                                  //  Filename of the database; by convention it is DataTemplate.db
+
+        string dbFileName;                                  //  Filename of the database; by convention it is DataTemplate.db
         public DataTable templateTable = new DataTable();   // The table holding the primary data template
 
         // Combobx manipulations and values
         CsvHelperMethods h = new CsvHelperMethods();        // A class for converting data into comma-separated values to deal with our lists in our choice items
- 
+
         // Booleans for tracking state
         bool rowsActionsOn = false;
         bool tabWasPressed = false; //to make tab trigger row update.
         public bool generateControlsAndSpreadsheet = true;
 
-        //Reserved words that cannot be used as a data label
-        public string[] RESERVED_KEYWORDS =  {"ABORT","ACTION", "ADD", "AFTER", "ALL", "ALTER", "ANALYZE", "AND", "AS", "ASC", "ATTACH", "AUTOINCREMENT", 
-               "BEFORE", "BEGIN", "BETWEEN", "BY", "CASCADE", "CASE", "CAST", "CHECK", "COLLATE", "COLUMN", "COMMIT", "CONFLICT", 
-               "CONSTRAINT", "CREATE", "CROSS", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "DATABASE", "DEFAULT", "DEFERRABLE", "DEFERRED", "DELETE", "DESC", "DETACH", "DISTINCT", "DROP",
-               "EACH", "ELSE", "END", "ESCAPE", "EXCEPT", "EXCLUSIVE", "EXISTS", "EXPLAIN", "FAIL", "FOR", "FOREIGN", "FROM", "FULL", "GLOB", "GROUP", "HAVING", "ID", "IF", "IGNORE", "IMMEDIATE", "IN", "INDEX", "INDEXED", 
-                "INITIALLY", "INNER", "INSERT", "INSTEAD", "INTERSECT", "INTO", "IS", "ISNULL", "JOIN", "KEY", "LEFT", "LIKE", "LIMIT", "MATCH", "NATURAL", "NO", "NOT", "NOTNULL", "NULL", "OF", "OFFSET", "ON", "OR", 
-                "ORDER", "OUTER", "PLAN", "PRAGMA", "PRIMARY", "QUERY", "RAISE", "RECURSIVE", "REFERENCES", "REGEXP", "REINDEX", "RELEASE", "RENAME", "REPLACE", "RESTRICT", "RIGHT", "ROLLBACK", "ROW", "SAVEPOINT", "SELECT", 
-                "SET", "TABLE", "TEMP", "TEMPORARY", "THEN", "TO", "TRANSACTION", "TRIGGER", "UNION", "UNIQUE", "UPDATE", "USING", "VACUUM", "VALUES", "VIEW", "VIRTUAL", "WHEN", "WHERE", "WITH", "WITHOUT"};
- 
         // Counters for tracking how many of each item we have
         int counterCount = 0;
         int noteCount = 0;
@@ -87,23 +79,6 @@ namespace TimelapseTemplateEditor
         private Point _startPoint;
         private UIElement _realDragSource;
         private UIElement _dummyDragSource = new UIElement();
-
-        #endregion Variables
-
-        #region Constants
-        const string WINDOWBASETITLE = "Timelapse Template Editor";  // The initial title shown in the window title bar
-        string REMOVEBUTTON_REMOVE = "Remove";
-        string REMOVEBUTTON_REMOVEITEM = "Remove item" + Environment.NewLine;
-        string REMOVEBUTTON_REMOVEITEMNUMBER = "Remove item" + Environment.NewLine + " #";
-        string REMOVEBUTTON_CANTDELETE = "Item cannot" + Environment.NewLine + "be removed";
-        const string TAG_UP = "Up";
-        const string TAG_DOWN = "Down";
-
-        // Database query phrases
-        const string SELECTSTAR = "SELECT * FROM ";
-        const string BYCONTROLSORTORDER = " ORDER BY " + Constants.CONTROLORDER;
-        const string BYSPREADSHEETSORTORDER = " ORDER BY " + Constants.SPREADSHEETORDER;
-        #endregion
 
         #region Constructors/Destructors
         /// <summary>
@@ -118,10 +93,10 @@ namespace TimelapseTemplateEditor
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            string executable_folder = System.IO.Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+            string executable_folder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
 
             // A check to make sure that users installed Timelapse properly, i.e., that they did not drag it out of its installation folder.
-            if (!File.Exists(System.IO.Path.Combine(executable_folder, "System.Data.SQLite.dll")))
+            if (!File.Exists(Path.Combine(executable_folder, "System.Data.SQLite.dll")))
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.IconType = MessageBoxImage.Error;
@@ -137,18 +112,18 @@ namespace TimelapseTemplateEditor
                 dlgMB.ShowDialog();
                 Application.Current.Shutdown();
             }
-            else 
-            { 
+            else
+            {
                 CheckForUpdate.GetAndParseVersion(this, false);
             }
         }
-         
+
         // When the main window closes, apply any pending edits.
         void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             TemplateDataGrid.CommitEdit();
         }
-         #endregion Constructors/Destructors
+        #endregion Constructors/Destructors
 
         #region DataGrid and New Database Initialization
         /// <summary>
@@ -158,17 +133,15 @@ namespace TimelapseTemplateEditor
         /// </summary>
         /// <param name="databasePath">The path of the DB file created or loaded</param>
         /// <param name="ourTableName">The name of the table loaded in the DB file. Always the same in the current implementation</param>
-        public void InitializeDataGrid(String databasePath, String ourTableName)
+        public void InitializeDataGrid(string databasePath, string ourTableName)
         {
             MyTrace.MethodName("DG");
-            bool result;
-            string command_executed;
 
             // Create a new DB file if one does not exist, or load a DB file if there is one.
             if (!File.Exists(databasePath))
             {
                 db = new SQLiteWrapper(databasePath);
-                PopulateNewDB();
+                PopulateTemplateDatabase();
             }
             else
             {
@@ -176,10 +149,10 @@ namespace TimelapseTemplateEditor
             }
 
             // Have the window title include the database file name
-            OnlyWindow.Title = WINDOWBASETITLE + " | File: " + System.IO.Path.GetFileName(dbFileName);
+            OnlyWindow.Title = EditorConstant.MainWindowBaseTitle + " | File: " + Path.GetFileName(dbFileName);
 
             // Load the template table from the database into the data table
-            templateTable = db.GetDataTableFromSelect(SELECTSTAR + ourTableName, out result, out command_executed);
+            templateTable = db.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + ourTableName);
 
             // Map the data tableto the data grid, and create a callback executed whenever the datatable row changes
             TemplateDataGrid.DataContext = templateTable;
@@ -194,7 +167,7 @@ namespace TimelapseTemplateEditor
             // Update the user interface specified by the contents of the table
             // Change the help text message
 
-            DataTable tempTable = db.GetDataTableFromSelect(SELECTSTAR + Constants.TABLENAME + BYCONTROLSORTORDER, out result, out command_executed);
+            DataTable tempTable = db.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + EditorConstant.Sql.ByControlSortOrder);
             ControlGeneration.GenerateControls(this, this.wp, tempTable);
             GenerateSpreadsheet();
             this.InitializeUI();
@@ -202,17 +175,15 @@ namespace TimelapseTemplateEditor
 
         // Reload a database into the grid. We do this as part of the convert, where we create the database, but then have to reinitialize the datagrid if we want to see the results.
         // So this is actually a reduced form of INitializeDataGrid
-        public void ReInitializeDataGrid(String databasePath, String ourTableName)
+        public void ReInitializeDataGrid(string databasePath, string ourTableName)
         {
             MyTrace.MethodName("DG");
-            bool result;
-            string command_executed;
 
             // Create a new DB file if one does not exist, or load a DB file if there is one.
             if (!File.Exists(databasePath))
             {
                 db = new SQLiteWrapper(databasePath);
-                PopulateNewDB();
+                PopulateTemplateDatabase();
             }
             else
             {
@@ -220,149 +191,141 @@ namespace TimelapseTemplateEditor
             }
 
             // Have the window title include the database file name
-            OnlyWindow.Title = WINDOWBASETITLE + " | File: " + System.IO.Path.GetFileName(dbFileName);
+            OnlyWindow.Title = EditorConstant.MainWindowBaseTitle + " | File: " + Path.GetFileName(dbFileName);
 
             // Load the template table from the database into the data table
-            templateTable = db.GetDataTableFromSelect(SELECTSTAR + ourTableName, out result, out command_executed);
+            templateTable = db.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + ourTableName);
 
             // Map the data table to the data grid, and create a callback executed whenever the datatable row changes
             TemplateDataGrid.DataContext = templateTable;
             templateTable.RowChanged += templateTable_RowChanged;
 
             // Update the user interface specified by the contents of the table
-            DataTable tempTable = db.GetDataTableFromSelect(SELECTSTAR + Constants.TABLENAME + BYCONTROLSORTORDER, out result, out command_executed);
+            DataTable tempTable = db.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + EditorConstant.Sql.ByControlSortOrder);
             ControlGeneration.GenerateControls(this, this.wp, tempTable);
             GenerateSpreadsheet();
             this.InitializeUI();
         }
-   
+
 
         /// <summary>
         /// Called when a new DB is created. A new table is created and populated with required fields set to their default values.
         /// </summary>
-        public void PopulateNewDB()
+        public void PopulateTemplateDatabase()
         {
-            bool result;
-            string command_executed;
-            Dictionary<string, string> column_definitions = new Dictionary<string, string>();
+            // create the template table
+            List<ColumnTuple> templateTableColumns = new List<ColumnTuple>();
+            templateTableColumns.Add(new ColumnTuple(Constants.DatabaseColumn.ID, "INTEGER primary key autoincrement"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.ControlOrder, "INTEGER"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, "INTEGER"));
+            templateTableColumns.Add(new ColumnTuple(Constants.DatabaseColumn.Type, "text"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.DefaultValue, "text"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.Label, "text"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.DataLabel, "text"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.Tooltip, "text"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.TextBoxWidth, "text"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.Copyable, "text"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.Visible, "text"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.List, "text"));
+            this.db.CreateTable(Constants.Database.TemplateTable, templateTableColumns);
 
+            // add default controls to table
+            List<List<ColumnTuple>> controls = new List<List<ColumnTuple>>();
             int controlOrder = 1; // The control order, incremented by 1 for every new entry
             int spreadsheetOrder = 1; // The spreadsheet order, incremented by 1 for every new entry
 
-            // Create a table. 
-            column_definitions.Add(Constants.ID, "INTEGER primary key autoincrement");
-            column_definitions.Add(Constants.CONTROLORDER, "INTEGER");
-            column_definitions.Add(Constants.SPREADSHEETORDER, "INTEGER");
-            column_definitions.Add(Constants.TYPE, "text");
-            column_definitions.Add(Constants.DEFAULT, "text");
-            column_definitions.Add(Constants.LABEL, "text");
-            column_definitions.Add(Constants.DATALABEL, "text");
-            column_definitions.Add(Constants.TOOLTIP, "text");
-            column_definitions.Add(Constants.TXTBOXWIDTH, "text");
-            column_definitions.Add(Constants.COPYABLE, "text");
-            column_definitions.Add(Constants.VISIBLE, "text");
-            column_definitions.Add(Constants.LIST, "text");
-            this.db.CreateTable(Constants.TABLENAME, column_definitions, out result, out command_executed);
+            // file
+            List<ColumnTuple> file = new List<ColumnTuple>();
+            file.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
+            file.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
+            file.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.DatabaseColumn.File));
+            file.Add(new ColumnTuple(Constants.Control.DefaultValue, EditorConstant.DefaultValue.File));
+            file.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.File));
+            file.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.File));
+            file.Add(new ColumnTuple(Constants.Control.Tooltip, EditorConstant.Tooltip.File));
+            file.Add(new ColumnTuple(Constants.Control.TextBoxWidth, EditorConstant.DefaultWidth.File));
+            file.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
+            file.Add(new ColumnTuple(Constants.Control.Visible, "true"));
+            file.Add(new ColumnTuple(Constants.Control.List, String.Empty));
+            controls.Add(file);
 
-            // To fill the table, we will  create a line with default values for each row, then add that line to the dataList,
-            // then add the dataList to the table
-            List<Dictionary<String, Object>> dataList = new List<Dictionary<String, Object>>();
+            // folder
+            List<ColumnTuple> folder = new List<ColumnTuple>();
+            folder.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
+            folder.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
+            folder.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.DatabaseColumn.Folder));
+            folder.Add(new ColumnTuple(Constants.Control.DefaultValue, EditorConstant.DefaultValue.Folder));
+            folder.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Folder));
+            folder.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Folder));
+            folder.Add(new ColumnTuple(Constants.Control.Tooltip, EditorConstant.Tooltip.Folder));
+            folder.Add(new ColumnTuple(Constants.Control.TextBoxWidth, EditorConstant.DefaultWidth.Folder));
+            folder.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
+            folder.Add(new ColumnTuple(Constants.Control.Visible, "true"));
+            folder.Add(new ColumnTuple(Constants.Control.List, String.Empty));
+            controls.Add(folder);
 
-            //File
-            Dictionary<String, Object> dataLine = new Dictionary<String, Object>();
-            //dataLine.Add(Constants.ID, null);
-            dataLine.Add(Constants.CONTROLORDER, controlOrder++ );
-            dataLine.Add(Constants.SPREADSHEETORDER, spreadsheetOrder++);
-            dataLine.Add(Constants.TYPE, Constants.FILE);
-            dataLine.Add(Constants.DEFAULT, Constants.DEFAULT_FILE);
-            dataLine.Add(Constants.LABEL, Constants.LABEL_FILE);
-            dataLine.Add(Constants.DATALABEL, Constants.LABEL_FILE);
-            dataLine.Add(Constants.TOOLTIP, Constants.TOOLTIP_FILE);
-            dataLine.Add(Constants.TXTBOXWIDTH, Constants.TXTBOXWIDTH_FILE);
-            dataLine.Add(Constants.COPYABLE, "false");
-            dataLine.Add(Constants.VISIBLE, "true");
-            dataLine.Add(Constants.LIST, "");
-            dataList.Add(dataLine);
+            // date
+            List<ColumnTuple> date = new List<ColumnTuple>();
+            date.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
+            date.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
+            date.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.DatabaseColumn.Date));
+            date.Add(new ColumnTuple(Constants.Control.DefaultValue, EditorConstant.DefaultValue.Date));
+            date.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Date));
+            date.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Date));
+            date.Add(new ColumnTuple(Constants.Control.Tooltip, EditorConstant.Tooltip.Date));
+            date.Add(new ColumnTuple(Constants.Control.TextBoxWidth, EditorConstant.DefaultWidth.Date));
+            date.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
+            date.Add(new ColumnTuple(Constants.Control.Visible, "true"));
+            date.Add(new ColumnTuple(Constants.Control.List, String.Empty));
+            controls.Add(date);
 
-            //Folder
-            dataLine = new Dictionary<String, Object>();
-            //dataLine.Add(Constants.ID, null);
-            dataLine.Add(Constants.CONTROLORDER, controlOrder++  );
-            dataLine.Add(Constants.SPREADSHEETORDER, spreadsheetOrder++);
-            dataLine.Add(Constants.TYPE, Constants.FOLDER);
-            dataLine.Add(Constants.DEFAULT, Constants.DEFAULT_FOLDER);
-            dataLine.Add(Constants.LABEL, Constants.LABEL_FOLDER);
-            dataLine.Add(Constants.DATALABEL, Constants.LABEL_FOLDER);
-            dataLine.Add(Constants.TOOLTIP, Constants.TOOLTIP_FOLDER);
-            dataLine.Add(Constants.TXTBOXWIDTH, Constants.TXTBOXWIDTH_FOLDER);
-            dataLine.Add(Constants.COPYABLE, "false");
-            dataLine.Add(Constants.VISIBLE, "true");
-            dataLine.Add(Constants.LIST, "");
-            dataList.Add(dataLine);
+            // time
+            List<ColumnTuple> time = new List<ColumnTuple>();
+            time.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
+            time.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
+            time.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.DatabaseColumn.Time));
+            time.Add(new ColumnTuple(Constants.Control.DefaultValue, EditorConstant.DefaultValue.Time));
+            time.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Time));
+            time.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Time));
+            time.Add(new ColumnTuple(Constants.Control.Tooltip, EditorConstant.Tooltip.Time));
+            time.Add(new ColumnTuple(Constants.Control.TextBoxWidth, EditorConstant.DefaultWidth.Time));
+            time.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
+            time.Add(new ColumnTuple(Constants.Control.Visible, "true"));
+            time.Add(new ColumnTuple(Constants.Control.List, String.Empty));
+            controls.Add(time);
 
-            //Date
-            dataLine = new Dictionary<String, Object>();
-            dataLine.Add(Constants.CONTROLORDER, controlOrder++);
-            dataLine.Add(Constants.SPREADSHEETORDER, spreadsheetOrder++);
-            dataLine.Add(Constants.TYPE, Constants.DATE);
-            dataLine.Add(Constants.DEFAULT, Constants.DEFAULT_DATE);
-            dataLine.Add(Constants.LABEL, Constants.LABEL_DATE);
-            dataLine.Add(Constants.DATALABEL, Constants.LABEL_DATE);
-            dataLine.Add(Constants.TOOLTIP, Constants.TOOLTIP_DATE);
-            dataLine.Add(Constants.TXTBOXWIDTH, Constants.TXTBOXWIDTH_DATE);
-            dataLine.Add(Constants.COPYABLE, "false");
-            dataLine.Add(Constants.VISIBLE, "true");
-            dataLine.Add(Constants.LIST, "");
-            dataList.Add(dataLine);
+            // image quality
+            List<ColumnTuple> imageQuality = new List<ColumnTuple>();
+            imageQuality.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
+            imageQuality.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
+            imageQuality.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.DatabaseColumn.ImageQuality));
+            imageQuality.Add(new ColumnTuple(Constants.Control.DefaultValue, EditorConstant.DefaultValue.ImageQuality));
+            imageQuality.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.ImageQuality));
+            imageQuality.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.ImageQuality));
+            imageQuality.Add(new ColumnTuple(Constants.Control.Tooltip, EditorConstant.Tooltip.ImageQuality));
+            imageQuality.Add(new ColumnTuple(Constants.Control.TextBoxWidth, EditorConstant.DefaultWidth.ImageQuality));
+            imageQuality.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
+            imageQuality.Add(new ColumnTuple(Constants.Control.Visible, "true"));
+            imageQuality.Add(new ColumnTuple(Constants.Control.List, Constants.ImageQuality.ListOfValues));
+            controls.Add(imageQuality);
 
-            //Time
-            dataLine = new Dictionary<String, Object>();
-            dataLine.Add(Constants.CONTROLORDER, controlOrder++);
-            dataLine.Add(Constants.SPREADSHEETORDER, spreadsheetOrder++);
-            dataLine.Add(Constants.TYPE, Constants.TIME);
-            dataLine.Add(Constants.DEFAULT, Constants.DEFAULT_TIME);
-            dataLine.Add(Constants.LABEL, Constants.LABEL_TIME);
-            dataLine.Add(Constants.DATALABEL, Constants.LABEL_TIME);
-            dataLine.Add(Constants.TOOLTIP, Constants.TOOLTIP_TIME);
-            dataLine.Add(Constants.TXTBOXWIDTH, Constants.TXTBOXWIDTH_TIME);
-            dataLine.Add(Constants.COPYABLE, "false");
-            dataLine.Add(Constants.VISIBLE, "true");
-            dataLine.Add(Constants.LIST, "");
-            dataList.Add(dataLine);
-
-            //Image Quality
-            dataLine = new Dictionary<String, Object>();
-           // dataLine.Add(Constants.ID, null);
-            dataLine.Add(Constants.CONTROLORDER, controlOrder++);
-            dataLine.Add(Constants.SPREADSHEETORDER, spreadsheetOrder++);
-            dataLine.Add(Constants.TYPE, Constants.IMAGEQUALITY);
-            dataLine.Add(Constants.DEFAULT, Constants.DEFAULT_IMAGEQUALITY);
-            dataLine.Add(Constants.LABEL, Constants.LABEL_IMAGEQUALITY);
-            dataLine.Add(Constants.DATALABEL, Constants.LABEL_IMAGEQUALITY);
-            dataLine.Add(Constants.TOOLTIP, Constants.TOOLTIP_IMAGEQUALITY);
-            dataLine.Add(Constants.TXTBOXWIDTH, Constants.TXTBOXWIDTH_IMAGEQUALITY);
-            dataLine.Add(Constants.COPYABLE, "false");
-            dataLine.Add(Constants.VISIBLE, "true");
-            dataLine.Add(Constants.LIST, Constants.LIST_IMAGEQUALITY);
-            dataList.Add(dataLine);
-
-            //Deletion
-            dataLine = new Dictionary<String, Object>();
-            dataLine.Add(Constants.CONTROLORDER, controlOrder++);
-            dataLine.Add(Constants.SPREADSHEETORDER, spreadsheetOrder++);
-            dataLine.Add(Constants.TYPE, Constants.DELETEFLAG);
-            dataLine.Add(Constants.DEFAULT, Constants.DEFAULT_FLAG);
-            dataLine.Add(Constants.LABEL, Constants.LABEL_DELETEFLAG);
-            dataLine.Add(Constants.DATALABEL, Constants.DATALABEL_DELETEFLAG);
-            dataLine.Add(Constants.TOOLTIP, Constants.TOOLTIP_DELETEFLAG);
-            dataLine.Add(Constants.TXTBOXWIDTH, Constants.CHKBOXWIDTH_FLAG);
-            dataLine.Add(Constants.COPYABLE, "false");
-            dataLine.Add(Constants.VISIBLE, "true");
-            dataLine.Add(Constants.LIST, "");
-            dataList.Add(dataLine);
+            // delete flag
+            List<ColumnTuple> markForDeletion = new List<ColumnTuple>();
+            markForDeletion.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
+            markForDeletion.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.DatabaseColumn.DeleteFlag));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.DefaultValue, EditorConstant.DefaultValue.Flag));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.DeleteFlag));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.DeleteFlag));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.Tooltip, EditorConstant.Tooltip.MarkForDeletion));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.TextBoxWidth, EditorConstant.DefaultWidth.Flag));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.Visible, "true"));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.List, String.Empty));
+            controls.Add(markForDeletion);
 
             // Insert the datalist into the table
-            db.InsertMultiplesBeginEnd(Constants.TABLENAME, dataList, out result, out command_executed);
+            db.Insert(Constants.Database.TemplateTable, controls);
         }
         #endregion DataGrid and New Database Initialization
 
@@ -378,31 +341,30 @@ namespace TimelapseTemplateEditor
         private void UpdateDBFull()
         {
             MyTrace.MethodName("DB");
-            bool result;
-            string command_executed;
+            
             //Build a Dictionary with all the rows/columns corresponding to the grid. 
-            List<Dictionary<String, Object>> dictionaryList = new List<Dictionary<string, Object>>();
+            List<List<ColumnTuple>> dictionaryList = new List<List<ColumnTuple>>();
             DataRowCollection rowCol = templateTable.Rows;
             foreach (DataRow row in templateTable.Rows)
             {
-                Dictionary<String, Object> dataLine = new Dictionary<String, Object>();
+                List<ColumnTuple> control = new List<ColumnTuple>();
                 for (int i = 0; i < row.ItemArray.Length; i++)
                 {
                     //sanitize quotes and add to Dictionary.
-                    String value = row[i].ToString();
+                    string value = row[i].ToString();
                     value = value.Replace("'", "''");
-                    dataLine.Add(templateTable.Columns[i].ToString(), value);
+                    control.Add(new ColumnTuple(templateTable.Columns[i].ToString(), value));
                 }
-                dictionaryList.Add(dataLine);
+                dictionaryList.Add(control);
             }
-            
+
             // Clear the existing table and add the new values
-            db.DeleteAllFromTable(Constants.TABLENAME, out result, out command_executed);
-            db.InsertMultiplesBeginEnd(Constants.TABLENAME, dictionaryList, out result, out command_executed);
+            db.Delete(Constants.Database.TemplateTable, null);
+            db.Insert(Constants.Database.TemplateTable, dictionaryList);
 
             // Update the simulated UI controls so that it reflects the current values in the database
-            DataTable tempTable = db.GetDataTableFromSelect(SELECTSTAR + Constants.TABLENAME + BYCONTROLSORTORDER, out result, out command_executed);
-            ControlGeneration.GenerateControls(this,this.wp, tempTable);
+            DataTable tempTable = db.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + EditorConstant.Sql.ByControlSortOrder);
+            ControlGeneration.GenerateControls(this, this.wp, tempTable);
             GenerateSpreadsheet();
         }
 
@@ -412,27 +374,26 @@ namespace TimelapseTemplateEditor
         private void UpdateDBRow(DataRow row)
         {
             MyTrace.MethodName("DB");
-            bool result;
-            string command_executed;
-            Dictionary<string, Object> columnname_value_list = new Dictionary<string, Object>(); 
-            Dictionary<Dictionary<string, Object>, string> update_query_list = new Dictionary<Dictionary<string, Object>, string>();
+
+            List<ColumnTuple> columns = new List<ColumnTuple>();
             for (int i = 0; i < row.ItemArray.Length; i++)
             {
-                //sanitize quotes and add to Dictionary.
-                String value = row[i].ToString();
-                value = value.Replace("'", "''");
-                if (value == "") value = " ";
-                columnname_value_list.Add(templateTable.Columns[i].ToString(), value);
-                //Debug.Print("value " + value.ToString());
+                // sanitize quotes
+                string value = row[i].ToString().Replace("'", "''");
+                if (value == String.Empty)
+                {
+                    value = " ";
+                }
+                columns.Add(new ColumnTuple(templateTable.Columns[i].ToString(), value));
             }
-            String where = Constants.ID + " = " + row[Constants.ID];
-            update_query_list.Add(columnname_value_list, where);
-            db.UpdateWhereBeginEnd (Constants.TABLENAME, update_query_list, out result, out command_executed);
+
+            ColumnTuplesWithWhere updateQuery = new ColumnTuplesWithWhere(columns, Constants.DatabaseColumn.ID + " = " + row[Constants.DatabaseColumn.ID]);
+            db.Update(Constants.Database.TemplateTable, updateQuery);
 
             // Update the simulatedcontrols so that it reflects the current values in the database
-            DataTable tempTable = db.GetDataTableFromSelect(SELECTSTAR + Constants.TABLENAME + BYCONTROLSORTORDER, out result, out command_executed);
+            DataTable tempTable = db.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + EditorConstant.Sql.ByControlSortOrder);
             if (this.generateControlsAndSpreadsheet)
-            { 
+            {
                 ControlGeneration.GenerateControls(this, this.wp, tempTable);
                 GenerateSpreadsheet();
             }
@@ -467,21 +428,21 @@ namespace TimelapseTemplateEditor
             if (selectedRowView == null)
             {
                 RemoveRowButton.IsEnabled = false;
-                RemoveRowButton.Content = REMOVEBUTTON_REMOVE;//ITEM;
+                RemoveRowButton.Content = "Remove";
             }
-            else if (( selectedRowView.Row[Constants.TYPE].Equals(Constants.FILE)
-                || selectedRowView.Row[Constants.TYPE].Equals(Constants.FOLDER)
-                || selectedRowView.Row[Constants.TYPE].Equals(Constants.DATE)
-                || selectedRowView.Row[Constants.TYPE].Equals(Constants.TIME)
-                || selectedRowView.Row[Constants.TYPE].Equals(Constants.IMAGEQUALITY)))
+            else if ((selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.File)
+                || selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.Folder)
+                || selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.Date)
+                || selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.Time)
+                || selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.ImageQuality)))
             {
                 RemoveRowButton.IsEnabled = false;
-                RemoveRowButton.Content = REMOVEBUTTON_CANTDELETE;
+                RemoveRowButton.Content = "Item cannot" + Environment.NewLine + "be removed";
             }
             else if (selectedRowView != null)
             {
                 RemoveRowButton.IsEnabled = true;
-                RemoveRowButton.Content = REMOVEBUTTON_REMOVE; //REMOVEBUTTON_REMOVEITEMNUMBER + selectedRowView.Row[Constants.CONTROLORDER];
+                RemoveRowButton.Content = "Remove";
             }
         }
 
@@ -491,129 +452,123 @@ namespace TimelapseTemplateEditor
         /// </summary>
         private void AddRowButton_Click(object sender, RoutedEventArgs e)
         {
-            bool result;
-            string command_executed = "";
             Button button = sender as Button;
 
             // Get all the data labels, as we have to ensure that a new data label doesn't have the same name as an existing on
-           List <string> data_label_list = new List <string>();
-            for (int i = 0; i < templateTable.Rows.Count; i++ )
+            List<string> dataLabels = new List<string>();
+            for (int i = 0; i < templateTable.Rows.Count; i++)
             {
-                data_label_list.Add ((string) templateTable.Rows[i][Constants.DATALABEL]);
+                dataLabels.Add((string)templateTable.Rows[i][Constants.Control.DataLabel]);
             }
 
-            //Debug.Print("--------------------ADD ROW------------------------");
-            this.db.WrapWithBegin(out result, out command_executed);
             templateTable.Rows.Add();
-            //System.Console.WriteLine(button.Tag.ToString());
-            templateTable.Rows[templateTable.Rows.Count - 1][Constants.CONTROLORDER] = templateTable.Rows.Count;
-            templateTable.Rows[templateTable.Rows.Count - 1][Constants.SPREADSHEETORDER] = templateTable.Rows.Count;
-            templateTable.Rows[templateTable.Rows.Count - 1][Constants.LIST] = Constants.DEFAULT_LIST;
+
+            templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.ControlOrder] = templateTable.Rows.Count;
+            templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.SpreadsheetOrder] = templateTable.Rows.Count;
+            templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.List] = EditorConstant.DefaultValue.List;
             if (button.Tag.ToString().Equals("Count"))
             {
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DEFAULT] = Constants.DEFAULT_COUNTER;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TYPE] = Constants.COUNTER;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TXTBOXWIDTH] = Constants.TXTBOXWIDTH_COUNTER;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.COPYABLE] = false;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.VISIBLE] = true;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TOOLTIP] = Constants.TOOLTIP_COUNTER;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.DefaultValue] = EditorConstant.DefaultValue.Counter;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DatabaseColumn.Type] = Constants.Control.Counter;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Counter;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Copyable] = false;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Visible] = true;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Tooltip] = EditorConstant.DefaultTooltip.Counter;
 
                 // Add some default label names for counters (e.g., Counter1, Counter2, etc.) to ensure they are not empty
                 // If the data label name  exists, keep incrementing the count that is appended to the end
                 // of the field type until it forms a unique data label name
-                string candidate_label = Constants.LABEL_COUNTER + counterCount.ToString();
-                while (data_label_list.Contains(candidate_label))
+                string candidate_label = Constants.Control.Counter + counterCount.ToString();
+                while (dataLabels.Contains(candidate_label))
                 {
                     counterCount++;
-                    candidate_label = Constants.LABEL_COUNTER + counterCount.ToString();
+                    candidate_label = Constants.Control.Counter + counterCount.ToString();
                 }
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.LABEL] = candidate_label;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DATALABEL] = candidate_label;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Label] = candidate_label;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.DataLabel] = candidate_label;
                 counterCount++;
             }
-            else if (button.Tag.ToString().Equals(Constants.NOTE))
+            else if (button.Tag.ToString().Equals(Constants.Control.Note))
             {
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DEFAULT] = Constants.DEFAULT_NOTE;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TYPE] = Constants.NOTE;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TXTBOXWIDTH] = Constants.TXTBOXWIDTH_NOTE;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.COPYABLE] = true;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.VISIBLE] = true;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TOOLTIP] = Constants.TOOLTIP_NOTE;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.DefaultValue] = EditorConstant.DefaultValue.Note;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DatabaseColumn.Type] = Constants.Control.Note;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Note;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Copyable] = true;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Visible] = true;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Tooltip] = EditorConstant.DefaultTooltip.Note;
 
                 // Add some default label names for notes (e.g., Note1, Note2, etc.) to ensure they are not empty
                 // If the data label name  exists, keep incrementing the count that is appended to the end
                 // of the field type until it forms a unique data label name
-                string candidate_label = Constants.LABEL_NOTE + noteCount.ToString();
-                while (data_label_list.Contains(candidate_label))
+                string candidate_label = Constants.Control.Note + noteCount.ToString();
+                while (dataLabels.Contains(candidate_label))
                 {
                     noteCount++;
-                    candidate_label = Constants.LABEL_NOTE + noteCount.ToString();
+                    candidate_label = Constants.Control.Note + noteCount.ToString();
                 }
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DATALABEL] = candidate_label;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.LABEL] = candidate_label;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.DataLabel] = candidate_label;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Label] = candidate_label;
                 noteCount++;
             }
             else if (button.Tag.ToString().Equals("Choice"))
             {
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DEFAULT] = Constants.DEFAULT_CHOICE;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TYPE] = Constants.CHOICE;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TXTBOXWIDTH] = Constants.TXTBOXWIDTH_CHOICE;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.COPYABLE] = true;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.VISIBLE] = true;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TOOLTIP] = Constants.TOOLTIP_CHOICE;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.DefaultValue] = EditorConstant.DefaultValue.Choice;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DatabaseColumn.Type] = Constants.Control.FixedChoice;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Choice;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Copyable] = true;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Visible] = true;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Tooltip] = EditorConstant.DefaultTooltip.Choice;
 
                 // Add some default label names for choices (e.g., Choice1, Choice2, etc.) to ensure they are not empty
                 // If the data label name  exists, keep incrementing the count that is appended to the end
                 // of the field type until it forms a unique data label name
-                string candidate_label = Constants.LABEL_CHOICE + choiceCount.ToString();
-                while (data_label_list.Contains(candidate_label))
+                string candidate_label = EditorConstant.Control.Choice + choiceCount.ToString();
+                while (dataLabels.Contains(candidate_label))
                 {
                     choiceCount++;
-                    candidate_label = Constants.LABEL_CHOICE + choiceCount.ToString();
+                    candidate_label = EditorConstant.Control.Choice + choiceCount.ToString();
                 }
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DATALABEL] = candidate_label;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.LABEL] = candidate_label;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.DataLabel] = candidate_label;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Label] = candidate_label;
                 choiceCount++;
             }
             else if (button.Tag.ToString().Equals("Flag"))
             {
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DEFAULT] = Constants.DEFAULT_FLAG;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TYPE] = Constants.FLAG;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TXTBOXWIDTH] = Constants.CHKBOXWIDTH_FLAG;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.COPYABLE] = true;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.VISIBLE] = true;
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.TOOLTIP] = Constants.TOOLTIP_FLAG;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.DefaultValue] = EditorConstant.DefaultValue.Flag;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DatabaseColumn.Type] = Constants.Control.Flag;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Flag;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Copyable] = true;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Visible] = true;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Tooltip] = EditorConstant.DefaultTooltip.Flag;
 
                 // Add some default label names for flags (e.g., Flag1, Flag2, etc.) to ensure they are not empty
                 // If the data label name  exists, keep incrementing the count that is appended to the end
                 // of the field type until it forms a unique data label name
-                string candidate_label = Constants.LABEL_FLAG + flagCount.ToString();
-                while (data_label_list.Contains(candidate_label))
+                string candidate_label = Constants.Control.Flag + flagCount.ToString();
+                while (dataLabels.Contains(candidate_label))
                 {
                     flagCount++;
-                    candidate_label = Constants.LABEL_FLAG + flagCount.ToString();
+                    candidate_label = Constants.Control.Flag + flagCount.ToString();
                 }
-                templateTable.Rows[templateTable.Rows.Count - 1][Constants.DATALABEL] = candidate_label;
-               templateTable.Rows[templateTable.Rows.Count - 1][Constants.LABEL] = candidate_label;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.DataLabel] = candidate_label;
+                templateTable.Rows[templateTable.Rows.Count - 1][Constants.Control.Label] = candidate_label;
                 flagCount++;
             }
-            this.db.WrapWithEnd(out result, out command_executed);
 
-            List<Dictionary<String, Object>> insertion_statements_list = new List<Dictionary<String, Object>>();
-            Dictionary<String, Object> insertion_statement = new Dictionary<String, Object>();
+            List<ColumnTuple> control = new List<ColumnTuple>();
             for (int i = 0; i < templateTable.Columns.Count; i++)
             {
-                insertion_statement.Add(templateTable.Columns[i].ColumnName, templateTable.Rows[templateTable.Rows.Count - 1][i]);
+                control.Add(new ColumnTuple(templateTable.Columns[i].ColumnName, templateTable.Rows[templateTable.Rows.Count - 1][i].ToString()));
             }
-            insertion_statements_list.Add(insertion_statement); 
-            db.InsertMultiplesBeginEnd(Constants.TABLENAME, insertion_statements_list, out result, out command_executed);
-            TemplateDataGrid.ScrollIntoView(TemplateDataGrid.Items[TemplateDataGrid.Items.Count-1]);
-            DataTable tempTable = db.GetDataTableFromSelect(SELECTSTAR + Constants.TABLENAME + BYCONTROLSORTORDER, out result, out command_executed);
-            //db.WrapWithBegin(out result, out command_executed);
+            List<List<ColumnTuple>> controlWrapper = new List<List<ColumnTuple>>() { control };
+            db.Insert(Constants.Database.TemplateTable, controlWrapper);
+
+            TemplateDataGrid.ScrollIntoView(TemplateDataGrid.Items[TemplateDataGrid.Items.Count - 1]);
+            DataTable tempTable = db.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + EditorConstant.Sql.ByControlSortOrder);
+
             ControlGeneration.GenerateControls(this, this.wp, tempTable);
             ControlsWereReordered();
-            //db.WrapWithEnd(out result, out command_executed);
-         }
+        }
 
         /// <summary>
         /// Removes a row from the table and shifts up the ids on the remaining rows.
@@ -621,27 +576,23 @@ namespace TimelapseTemplateEditor
         /// </summary>
         private void RemoveRowButton_Click(object sender, RoutedEventArgs e)
         {
-            bool result;
-            string command_executed="";
-            string where = "";
             rowsActionsOn = true;
-            DataRowView selectedRowView = TemplateDataGrid.SelectedItem as DataRowView;
-            Dictionary<String, Object> rowDict;
-            Dictionary<Dictionary<String, Object>, string> update_statements = new Dictionary<Dictionary<String, Object>, string>();
 
-            int deleted_control_number = Convert.ToInt32 ((Int64) selectedRowView.Row[Constants.CONTROLORDER]);
-            int deleted_spreadsheet_number = Convert.ToInt32((Int64)selectedRowView.Row[Constants.SPREADSHEETORDER]);
+            DataRowView selectedRowView = TemplateDataGrid.SelectedItem as DataRowView;
+            int deleted_control_number = Convert.ToInt32((Int64)selectedRowView.Row[Constants.Control.ControlOrder]);
+            int deleted_spreadsheet_number = Convert.ToInt32((Int64)selectedRowView.Row[Constants.Control.SpreadsheetOrder]);
             int this_control_number;
             int this_spreadsheet_number;
+            List<ColumnTuplesWithWhere> update_statements = new List<ColumnTuplesWithWhere>();
             if (!(selectedRowView == null
-                || selectedRowView.Row[Constants.TYPE].Equals(Constants.FILE)
-                || selectedRowView.Row[Constants.TYPE].Equals(Constants.FOLDER)
-                || selectedRowView.Row[Constants.TYPE].Equals(Constants.DATE)
-                || selectedRowView.Row[Constants.TYPE].Equals(Constants.TIME)
-                || selectedRowView.Row[Constants.TYPE].Equals(Constants.IMAGEQUALITY)))
+                || selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.File)
+                || selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.Folder)
+                || selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.Date)
+                || selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.Time)
+                || selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.ImageQuality)))
             {
-                where = Constants.ID + " = " + selectedRowView.Row[Constants.ID];
-                db.DeleteFromTable(Constants.TABLENAME, where, out result, out command_executed);
+                string where = Constants.DatabaseColumn.ID + " = " + selectedRowView.Row[Constants.DatabaseColumn.ID];
+                db.Delete(Constants.Database.TemplateTable, where);
                 templateTable.Rows.Remove(selectedRowView.Row);
 
                 // Regenerate the Counter order and Spreadsheet Order. Essentially, what we do is look at the order number. If its
@@ -649,47 +600,48 @@ namespace TimelapseTemplateEditor
                 for (int i = 0; i < templateTable.Rows.Count; i++)
                 {
                     // If its not the deleted row...
-                    this_control_number = Convert.ToInt32(templateTable.Rows[i][Constants.CONTROLORDER]);
-                    this_spreadsheet_number = Convert.ToInt32(templateTable.Rows[i][Constants.SPREADSHEETORDER]);
+                    this_control_number = Convert.ToInt32(templateTable.Rows[i][Constants.Control.ControlOrder]);
+                    this_spreadsheet_number = Convert.ToInt32(templateTable.Rows[i][Constants.Control.SpreadsheetOrder]);
                     if (this_control_number != deleted_control_number) // If its the deleted control, ignore it as it will be removed.
                     {
-                        rowDict = new Dictionary<String, Object>();
+                        List<ColumnTuple> rowDict = new List<ColumnTuple>();
                         // Decrement control numbers for those that are greater than the one that was removed, to account for that removal
                         if (this_control_number > deleted_control_number)
                         {
-                            rowDict.Add(Constants.CONTROLORDER, this_control_number - 1);
-                            templateTable.Rows[i][Constants.CONTROLORDER] = this_control_number - 1;
+                            rowDict.Add(new ColumnTuple(Constants.Control.ControlOrder, this_control_number - 1));
+                            templateTable.Rows[i][Constants.Control.ControlOrder] = this_control_number - 1;
                         }
                         else
                         {
-                            rowDict.Add(Constants.CONTROLORDER, this_control_number);
-                            templateTable.Rows[i][Constants.CONTROLORDER] = this_control_number;
+                            rowDict.Add(new ColumnTuple(Constants.Control.ControlOrder, this_control_number));
+                            templateTable.Rows[i][Constants.Control.ControlOrder] = this_control_number;
                         }
-                        where = Constants.ID + " = " + templateTable.Rows[i][Constants.ID];
-                        update_statements.Add (rowDict, where);
+                        where = Constants.DatabaseColumn.ID + " = " + templateTable.Rows[i][Constants.DatabaseColumn.ID];
+                        update_statements.Add(new ColumnTuplesWithWhere(rowDict, where));
                     }
+
                     if (this_spreadsheet_number != deleted_spreadsheet_number) // If its the deleted control, ignore it as it will be removed.
                     {
-                        rowDict = new Dictionary<String, Object>();
+                        List<ColumnTuple> rowDict = new List<ColumnTuple>();
                         // Decrement control numbers for those that are greater than the one that was removed, to account for that removal
                         if (this_spreadsheet_number > deleted_spreadsheet_number)
                         {
-                            rowDict.Add(Constants.SPREADSHEETORDER, this_spreadsheet_number - 1);
-                            templateTable.Rows[i][Constants.SPREADSHEETORDER] = this_spreadsheet_number - 1;
+                            rowDict.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, this_spreadsheet_number - 1));
+                            templateTable.Rows[i][Constants.Control.SpreadsheetOrder] = this_spreadsheet_number - 1;
                         }
                         else
                         {
-                            rowDict.Add(Constants.SPREADSHEETORDER, this_spreadsheet_number);
-                            templateTable.Rows[i][Constants.SPREADSHEETORDER] = this_spreadsheet_number;
+                            rowDict.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, this_spreadsheet_number));
+                            templateTable.Rows[i][Constants.Control.SpreadsheetOrder] = this_spreadsheet_number;
                         }
-                        where = Constants.ID + " = " + templateTable.Rows[i][Constants.ID];
-                        update_statements.Add(rowDict, where);
+                        where = Constants.DatabaseColumn.ID + " = " + templateTable.Rows[i][Constants.DatabaseColumn.ID];
+                        update_statements.Add(new ColumnTuplesWithWhere(rowDict, where));
                     }
                 }
-                 db.UpdateWhereBeginEnd (Constants.TABLENAME, update_statements, out result, out command_executed);
+                db.Update(Constants.Database.TemplateTable, update_statements);
 
                 //update the controls so that it reflects the current values in the database
-                DataTable tempTable = db.GetDataTableFromSelect(SELECTSTAR + Constants.TABLENAME + BYCONTROLSORTORDER, out result, out command_executed);
+                DataTable tempTable = db.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + EditorConstant.Sql.ByControlSortOrder);
                 ControlGeneration.GenerateControls(this, this.wp, tempTable);
                 GenerateSpreadsheet();
             }
@@ -702,16 +654,17 @@ namespace TimelapseTemplateEditor
         private void btnChoiceListButton_Click(object sender, RoutedEventArgs e)
         {
             Button button = (Button)sender;
-            string choice_list = "";
+            string choice_list = String.Empty;
 
             /// The button tag holds the Control Order of the row the button is in, not the ID.
             /// So we have to search through the rows to find the one with the correct control order
             /// and retrieve / set the ItemList menu in that row.
-            DataRow foundRow = findRow(1, button.Tag.ToString() );
+            DataRow foundRow = findRow(1, button.Tag.ToString());
 
             // It should always find a row, but just in case...
-            if (null != foundRow) {
-                choice_list = foundRow[Constants.LIST].ToString();
+            if (null != foundRow)
+            {
+                choice_list = foundRow[Constants.Control.List].ToString();
             }
 
             choice_list = CsvHelperMethods.ConvertBarsToLineBreaks(choice_list);
@@ -719,20 +672,20 @@ namespace TimelapseTemplateEditor
             dlg.Owner = this;
             bool? result = dlg.ShowDialog();
             if (result == true)
-            {   
+            {
                 if (null != foundRow)
-                    foundRow[Constants.LIST] = CsvHelperMethods.ConvertLineBreaksToBars(dlg.ItemList);
+                    foundRow[Constants.Control.List] = CsvHelperMethods.ConvertLineBreaksToBars(dlg.ItemList);
                 else
                 {
                     // We should never be null, so shouldn't get here. But just in case this does happen, 
                     // I am setting the itemList to be the one in the ControlOrder row. This was the original buggy version that didn't work, but what the heck.
-                    templateTable.Rows[Convert.ToInt32(button.Tag) - 1][Constants.LIST] = CsvHelperMethods.ConvertLineBreaksToBars(dlg.ItemList);
+                    templateTable.Rows[Convert.ToInt32(button.Tag) - 1][Constants.Control.List] = CsvHelperMethods.ConvertLineBreaksToBars(dlg.ItemList);
                 }
-            } 
+            }
         }
         // Helper function
         // Find a row in the templateTable given a search value and a column number in a DatTable
-        private DataRow findRow (int column_number, string searchValue)
+        private DataRow findRow(int column_number, string searchValue)
         {
             int rowIndex = -1;
             foreach (DataRow row in templateTable.Rows)
@@ -740,7 +693,7 @@ namespace TimelapseTemplateEditor
                 rowIndex++;
                 if (row[column_number].ToString().Equals(searchValue))
                 {
-                    return (row); 
+                    return (row);
                 }
             }
             // It should never return null, but just in case...
@@ -807,7 +760,7 @@ namespace TimelapseTemplateEditor
                     {
                         if (TemplateDataGrid.CurrentColumn.Header.Equals("Data Label")) // Only allow alphanumeric and  '_" in data labels
                         {
-                            if ((!AreAllValidAlphaNumericChars(e.Text)) && !e.Text.Equals ("_") )
+                            if ((!AreAllValidAlphaNumericChars(e.Text)) && !e.Text.Equals("_"))
                             {
                                 DialogMessageBox dlgMB = new DialogMessageBox();
                                 dlgMB.IconType = MessageBoxImage.Warning;
@@ -823,11 +776,11 @@ namespace TimelapseTemplateEditor
                         else if (TemplateDataGrid.CurrentColumn.Header.Equals("Default Value"))
                         {
                             DataRowView row = aRow.Item as DataRowView;
-                            if ((string)row.Row.ItemArray[3] == Constants.COUNTER) // Its a counter. Only allow numbers
+                            if ((string)row.Row.ItemArray[3] == Constants.Control.Counter) // Its a counter. Only allow numbers
                             {
                                 e.Handled = !AreAllValidNumericChars(e.Text);
                             }
-                            else if ((string)row.Row.ItemArray[3] == Constants.FLAG) // Its a flag. Only allow t/f and translate that to true / false
+                            else if ((string)row.Row.ItemArray[3] == Constants.Control.Flag) // Its a flag. Only allow t/f and translate that to true / false
                             {
                                 DataRowView dataRow = (DataRowView)TemplateDataGrid.SelectedItem;
                                 int index = TemplateDataGrid.CurrentCell.Column.DisplayIndex;
@@ -926,26 +879,26 @@ namespace TimelapseTemplateEditor
             MyTrace.MethodName("Main");
 
             // If the edited cell is not in the Data Label column, then just exit.
-            if (! e.Column.Header.Equals("Data Label"))  return;
+            if (!e.Column.Header.Equals("Data Label")) return;
 
             TextBox t = e.EditingElement as TextBox;
             string datalabel = t.Text;
 
             // Create a list of existing data labels, so we can compare the data label against it for a unique names
-            List <string> data_label_list = new List <string>();
+            List<string> data_label_list = new List<string>();
             for (int i = 0; i < templateTable.Rows.Count; i++)
             {
-                data_label_list.Add ((string) templateTable.Rows[i][Constants.DATALABEL]);
+                data_label_list.Add((string)templateTable.Rows[i][Constants.Control.DataLabel]);
             }
 
 
             // Check to see if the data label is empty. If it is, generate a unique data label and warn the user
-            if (datalabel.Trim().Equals(""))
+            if (datalabel.Trim().Equals(String.Empty))
             {
                 // We need to generate a unique new datalabel  
                 int suffix = 1;
-                string candidate_datalabel = "DataLabel" +suffix.ToString();
-                while (data_label_list.Contains (candidate_datalabel) )  // Keep on incrementing the suffix until the datalabel is not in the list
+                string candidate_datalabel = "DataLabel" + suffix.ToString();
+                while (data_label_list.Contains(candidate_datalabel))  // Keep on incrementing the suffix until the datalabel is not in the list
                 {
                     suffix++;
                     candidate_datalabel = "DataLabel" + suffix.ToString();
@@ -963,17 +916,17 @@ namespace TimelapseTemplateEditor
             // Check to see if the data label is unique. If not, generate a unique data label and warn the user
             for (int i = 0; i < templateTable.Rows.Count; i++)
             {
-                if (datalabel.Equals((string)templateTable.Rows[i][Constants.DATALABEL]))
+                if (datalabel.Equals((string)templateTable.Rows[i][Constants.Control.DataLabel]))
                 {
                     if (TemplateDataGrid.SelectedIndex == i) continue; // Its the same row, so its the same key, so skip it
 
                     // We need to generate a unique new datalabel  
                     int suffix = 1;
                     string candidate_datalabel = datalabel + suffix.ToString();
-                    while (data_label_list.Contains (candidate_datalabel) )  // Keep on incrementing the suffix until the datalabel is not in the list
+                    while (data_label_list.Contains(candidate_datalabel))  // Keep on incrementing the suffix until the datalabel is not in the list
                     {
                         suffix++;
-                        candidate_datalabel = datalabel + suffix.ToString ();
+                        candidate_datalabel = datalabel + suffix.ToString();
                     }
                     DialogMessageBox dlgMB = new DialogMessageBox();
                     dlgMB.IconType = MessageBoxImage.Warning;
@@ -998,10 +951,11 @@ namespace TimelapseTemplateEditor
 
                 string first_letter = datalabel[0].ToString();
 
-                if (! (alpha.IsMatch(first_letter) && alphanumdash.IsMatch(datalabel))) {
+                if (!(alpha.IsMatch(first_letter) && alphanumdash.IsMatch(datalabel)))
+                {
                     string candidate_datalabel = datalabel;
 
-                    if (! alpha.IsMatch(first_letter))
+                    if (!alpha.IsMatch(first_letter))
                         candidate_datalabel = "X" + candidate_datalabel.Substring(1);
                     candidate_datalabel = Regex.Replace(candidate_datalabel, @"[^A-Za-z0-9_]+", "X");
 
@@ -1019,7 +973,7 @@ namespace TimelapseTemplateEditor
 
             // Check to see if its a reserved word
             datalabel = datalabel.ToUpper();
-            foreach (string s in this.RESERVED_KEYWORDS)
+            foreach (string s in EditorConstant.ReservedWords)
             {
                 if (s.Equals(datalabel))
                 {
@@ -1041,12 +995,12 @@ namespace TimelapseTemplateEditor
 
         //constants for below method. Could not find another way to reference the DataGrid items by name
         //If the DataGrid columns change, this needs to be adjusted to index correctly.
-        int DG_TYPE         = 3;
+        int DG_TYPE = 3;
 
         //more constants to access checkbox columns and combobox columns.
         //the sortmemberpath is include, not the sort name, so we are accessing by head, which may change.
-        string DG_HEAD_COPYABLE = Constants.COPYABLE;
-        string DG_HEAD_LIST     = Constants.LIST;
+        string DG_HEAD_COPYABLE = Constants.Control.Copyable;
+        string DG_HEAD_LIST = Constants.Control.List;
 
         /// <summary>
         /// Greys out cells as defined by logic. 
@@ -1066,34 +1020,34 @@ namespace TimelapseTemplateEditor
                     {
                         // The following attributes should always be editable.
                         // Note that this is hardwired to the header names in the xaml file, so this could break if that ever changes.. should probably do this so it works no matter what the header text is of the table
-                        if (TemplateDataGrid.Columns[j].Header.Equals("Width") || TemplateDataGrid.Columns[j].Header.Equals("Visible") || TemplateDataGrid.Columns[j].Header.Equals("Label") ||  TemplateDataGrid.Columns[j].Header.Equals("Tooltip")) 
+                        if (TemplateDataGrid.Columns[j].Header.Equals("Width") || TemplateDataGrid.Columns[j].Header.Equals("Visible") || TemplateDataGrid.Columns[j].Header.Equals("Label") || TemplateDataGrid.Columns[j].Header.Equals("Tooltip"))
                             continue;
 
                         // The following attributes should NOT be editable.
                         DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(j);
                         DataRowView thisRow = (DataRowView)TemplateDataGrid.Items[i];
 
-                        
-                        if(TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.ID)
-                            || TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.CONTROLORDER)
-                            || TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.SPREADSHEETORDER)
-                            || TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.TYPE)
-                            || thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.FILE)
-                            || thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.FOLDER)
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DATE) )
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.TIME) )
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DELETEFLAG) )
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.COUNTER) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_LIST))
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.NOTE) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_LIST))
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.FILE) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_COPYABLE))
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.FOLDER) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_COPYABLE))
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DATE) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_COPYABLE))
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.TIME) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_COPYABLE))
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.IMAGEQUALITY) && TemplateDataGrid.Columns[j].Header.Equals("Data Label"))
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.IMAGEQUALITY) && TemplateDataGrid.Columns[j].Header.Equals("List"))
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.IMAGEQUALITY) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_COPYABLE))
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.IMAGEQUALITY) && TemplateDataGrid.Columns[j].Header.Equals("List"))
-                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.IMAGEQUALITY) && TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.DEFAULT)))
+
+                        if (TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.DatabaseColumn.ID)
+                            || TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.Control.ControlOrder)
+                            || TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.Control.SpreadsheetOrder)
+                            || TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.DatabaseColumn.Type)
+                            || thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.File)
+                            || thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.Folder)
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.Date))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.Time))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.DeleteFlag))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.Control.Counter) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_LIST))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.Control.Note) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_LIST))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.File) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_COPYABLE))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.Folder) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_COPYABLE))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.Date) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_COPYABLE))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.Time) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_COPYABLE))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[j].Header.Equals("Data Label"))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[j].Header.Equals("List"))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[j].Header.Equals(DG_HEAD_COPYABLE))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[j].Header.Equals("List"))
+                            || (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.Control.DefaultValue)))
                         {
                             cell.Background = notEditableCellColor;
                             cell.Foreground = Brushes.Gray;
@@ -1107,7 +1061,7 @@ namespace TimelapseTemplateEditor
                                 {
                                     checkbox.IsEnabled = false;
                                 }
-                                else if (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.IMAGEQUALITY) && TemplateDataGrid.Columns[j].Header.Equals("List"))
+                                else if (thisRow.Row.ItemArray[DG_TYPE].Equals(Constants.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[j].Header.Equals("List"))
                                 {
                                     cell.IsEnabled = false; // Don't let users edit the ImageQuality menu
                                 }
@@ -1172,21 +1126,21 @@ namespace TimelapseTemplateEditor
         ///////////////////////////////////////////////////////////////////////////////////////////
         //// MENU BAR METHODS & LISTENERS
         ///////////////////////////////////////////////////////////////////////////////////////////		
-        
+
         /// <summary>
         /// Creates a new database file of a user chosen name in a user chosen location.
         /// </summary>
         private void NewFileMenuItem_Click(object sender, RoutedEventArgs e)
         {
             TemplateDataGrid.CommitEdit(); //to apply edits that the enter key was not pressed
-            
+
             // Configure save file dialog box
             Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
-            dlg.FileName = Constants.DB_ROOTFILENAME; // Default file name without the extension
-            dlg.DefaultExt = Constants.DB_FILENAMEEXTENSION; // Default file extension
-            dlg.Filter = "Database Files (" + Constants.DB_FILENAMEEXTENSION + ")|*" + Constants.DB_FILENAMEEXTENSION; // Filter files by extension 
+            dlg.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
+            dlg.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
+            dlg.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
             dlg.Title = "Select Location to Save New Template File";
-            
+
             // Show save file dialog box
             Nullable<bool> result = dlg.ShowDialog();
 
@@ -1198,10 +1152,10 @@ namespace TimelapseTemplateEditor
                 {
                     File.Delete(dlg.FileName);
                 }
-                
+
                 // Open document 
                 dbFileName = dlg.FileName;
-                InitializeDataGrid(dbFileName, Constants.TABLENAME);
+                InitializeDataGrid(dbFileName, Constants.Database.TemplateTable);
             }
 
         }
@@ -1212,11 +1166,11 @@ namespace TimelapseTemplateEditor
         private void OpenFileMenuItem_Click(object sender, RoutedEventArgs e)
         {
             TemplateDataGrid.CommitEdit(); //to save any edits that the enter key was not pressed
-            
+
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
-            dlg.FileName = Constants.DB_ROOTFILENAME; // Default file name without the extension
-            dlg.DefaultExt = Constants.DB_FILENAMEEXTENSION; // Default file extension
-            dlg.Filter = "Database Files (" + Constants.DB_FILENAMEEXTENSION + ")|*" + Constants.DB_FILENAMEEXTENSION; // Filter files by extension 
+            dlg.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
+            dlg.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
+            dlg.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
             dlg.Title = "Select an Existing Template File to Open";
 
             // Show open file dialog box
@@ -1229,7 +1183,7 @@ namespace TimelapseTemplateEditor
 
                 // Open document 
                 dbFileName = dlg.FileName;
-                InitializeDataGrid(dbFileName, Constants.TABLENAME);
+                InitializeDataGrid(dbFileName, Constants.Database.TemplateTable);
             }
         }
 
@@ -1262,15 +1216,16 @@ namespace TimelapseTemplateEditor
 
         private void ConvertCodeTemplateFileMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            string codeTemplateFileName = "";  // The code template file name
+            string codeTemplateFileName = String.Empty;  // The code template file name
 
             TemplateDataGrid.CommitEdit(); //to save any edits that the enter key was not pressed
 
             // Get the name of the Code Template file to open
             Microsoft.Win32.OpenFileDialog dlg1 = new Microsoft.Win32.OpenFileDialog();
-            dlg1.FileName = Constants.CT_ROOTFILENAME; // Default file name
-            dlg1.DefaultExt = Constants.CT_FILENAMEEXTENSION; // Default file extension
-            dlg1.Filter = "Code Template Files (" + Constants.CT_FILENAMEEXTENSION + ")|*" + Constants.CT_FILENAMEEXTENSION; // Filter files by extension 
+            dlg1.FileName = Path.GetFileName(Constants.File.XmlDataFileName); // Default file name
+            string xmlDataFileExtension = Path.GetExtension(Constants.File.XmlDataFileName);
+            dlg1.DefaultExt = xmlDataFileExtension; // Default file extension
+            dlg1.Filter = "Code Template Files (" + xmlDataFileExtension + ")|*" + xmlDataFileExtension; // Filter files by extension 
             dlg1.Title = "Select Code Template File to convert...";
 
             Nullable<bool> result = dlg1.ShowDialog(); // Show the open file dialog box
@@ -1280,33 +1235,34 @@ namespace TimelapseTemplateEditor
             // Get the name of the new database file to create (over-writes it if it exists)
             Microsoft.Win32.SaveFileDialog dlg2 = new Microsoft.Win32.SaveFileDialog();
             dlg2.Title = "Select Location to Save the Converted Template File";
-            dlg2.FileName = Constants.DB_ROOTFILENAME; // Default file name
-            dlg2.DefaultExt = Constants.DB_FILENAMEEXTENSION; // Default file extension
-            dlg2.Filter = "Database Files (" + Constants.DB_FILENAMEEXTENSION + ")|*" + Constants.DB_FILENAMEEXTENSION; // Filter files by extension 
+            dlg2.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name
+            dlg2.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
+            dlg2.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
 
 
             result = dlg2.ShowDialog(); // Show open file dialog box
             if (result == true)         // Process open file dialog box results 
             {
                 SaveDbBackup();
-                if (File.Exists (dlg2.FileName))     // Overwrite the file if it exists
+                if (File.Exists(dlg2.FileName))     // Overwrite the file if it exists
                 {
-                    File.Delete (dlg2.FileName);
+                    File.Delete(dlg2.FileName);
                 }
                 // Open document 
                 dbFileName = dlg2.FileName;
             }
-            
+
             // Start with the default layout of the data template
-            InitializeDataGrid(dbFileName, Constants.TABLENAME);
-            
+            InitializeDataGrid(dbFileName, Constants.Database.TemplateTable);
+
             // Now convert the code template file into a Data Template, overwriting values and adding rows as required
             Mouse.OverrideCursor = Cursors.Wait;
-            List<string> error_messages = new List<string> ();
-            this.templateTable = CodeTemplateImporter.Convert(this, codeTemplateFileName, this.templateTable, ref error_messages);
+            List<string> error_messages = new List<string>();
+            CodeTemplateImporter importer = new CodeTemplateImporter();
+            this.templateTable = importer.Convert(this, codeTemplateFileName, this.templateTable, ref error_messages);
             this.generateControlsAndSpreadsheet = true;
             UpdateDBFull();
-            ReInitializeDataGrid(dbFileName, Constants.TABLENAME);
+            ReInitializeDataGrid(dbFileName, Constants.Database.TemplateTable);
             Mouse.OverrideCursor = null;
             if (error_messages.Count > 0)
             {
@@ -1382,18 +1338,18 @@ namespace TimelapseTemplateEditor
         #endregion Menu Listeners
 
         #region SpreadsheetAppearance
-        private void GenerateSpreadsheet ()
+        private void GenerateSpreadsheet()
         {
             DataTable sortedview = this.templateTable.Copy();
-            sortedview.DefaultView.Sort = Constants.SPREADSHEETORDER + " " + "ASC";
+            sortedview.DefaultView.Sort = Constants.Control.SpreadsheetOrder + " " + "ASC";
             DataTable temptable = sortedview.DefaultView.ToTable();
             this.dgSpreadsheet.Columns.Clear();
             for (int i = 0; i < temptable.Rows.Count; i++)
             {
                 DataGridTextColumn dgColumb = new DataGridTextColumn();
-                if (System.DBNull.Value != temptable.Rows[i][Constants.DATALABEL]) 
+                if (System.DBNull.Value != temptable.Rows[i][Constants.Control.DataLabel])
                 {
-                    dgColumb.Header = (string)temptable.Rows[i][Constants.DATALABEL];
+                    dgColumb.Header = (string)temptable.Rows[i][Constants.Control.DataLabel];
                     this.dgSpreadsheet.Columns.Add(dgColumb);
                 }
             }
@@ -1401,38 +1357,29 @@ namespace TimelapseTemplateEditor
 
         private void ColumnReordered(object sender, DataGridColumnEventArgs e)
         {
-            DataGrid dg = (DataGrid) sender;
-            string header = "";
-            string data_label;
-            //int col_index = this.templateTable.Columns.IndexOf(Constants.DATALABEL);
-            int row_index = -1;
-            int new_position;
+            DataGrid dg = (DataGrid)sender;
             Dictionary<string, int> pairs = new Dictionary<string, int>();
-
-            bool result;
-            string command_executed;
-            this.db.WrapWithBegin(out result, out command_executed);
             for (int i = 0; i < dg.Columns.Count; i++)
             {
-                header = dg.Columns[i].Header.ToString();
-                row_index = findRow (header);
-                new_position = dg.Columns[i].DisplayIndex + 1;
+                string header = dg.Columns[i].Header.ToString();
+                int row_index = findRow(header);
+                int new_position = dg.Columns[i].DisplayIndex + 1;
                 pairs.Add(header, new_position);
             }
-            for (int i = 0; i < this.templateTable.Rows.Count; i++) 
+
+            for (int i = 0; i < this.templateTable.Rows.Count; i++)
             {
-                data_label = (string)this.templateTable.Rows[i][Constants.DATALABEL];
+                string data_label = (string)this.templateTable.Rows[i][Constants.Control.DataLabel];
                 int new_value = pairs[data_label];
-                this.templateTable.Rows[i][Constants.SPREADSHEETORDER] = new_value;
+                this.templateTable.Rows[i][Constants.Control.SpreadsheetOrder] = new_value;
             }
-            this.db.WrapWithEnd(out result, out command_executed);
         }
 
         private int findRow(string to_find)
         {
             for (int i = 0; i < this.templateTable.Rows.Count; i++)
             {
-                if (to_find.Equals((string)this.templateTable.Rows[i][Constants.DATALABEL]))
+                if (to_find.Equals((string)this.templateTable.Rows[i][Constants.Control.DataLabel]))
                     return i;
             }
             return -1;
@@ -1459,7 +1406,7 @@ namespace TimelapseTemplateEditor
             {
                 _isDown = false;
                 _isDragging = false;
-                if (! (_realDragSource == null)) 
+                if (!(_realDragSource == null))
                     _realDragSource.ReleaseMouseCapture();
             }
             catch { }
@@ -1557,9 +1504,6 @@ namespace TimelapseTemplateEditor
 
         private void ControlsWereReordered()
         {
-            bool result;
-            string command_executed;
-            
             StackPanel sp;
             Dictionary<string, int> pairs = new Dictionary<string, int>();
             int idx = 1;
@@ -1569,22 +1513,21 @@ namespace TimelapseTemplateEditor
             {
                 sp = element as StackPanel;
                 if (sp == null) continue;
-                pairs.Add((string) sp.Tag, idx);
+                pairs.Add((string)sp.Tag, idx);
                 idx++;
             }
 
-            this.db.WrapWithBegin(out result, out command_executed);
             Int64 id;
             for (int i = 0; i < this.templateTable.Rows.Count; i++)
             {
-                data_label = (string)this.templateTable.Rows[i][Constants.DATALABEL];
-                id = (Int64)this.templateTable.Rows[i][Constants.ID];
+                data_label = (string)this.templateTable.Rows[i][Constants.Control.DataLabel];
+                id = (Int64)this.templateTable.Rows[i][Constants.DatabaseColumn.ID];
                 int new_value = pairs[data_label];
                 DataRow foundRow = this.templateTable.Rows.Find(id);
-                foundRow[Constants.CONTROLORDER] = new_value;
+                foundRow[Constants.Control.ControlOrder] = new_value;
             }
-            this.db.WrapWithEnd(out result, out command_executed);
-            DataTable tempTable = db.GetDataTableFromSelect(SELECTSTAR + Constants.TABLENAME + BYCONTROLSORTORDER, out result, out command_executed);
+            
+            DataTable tempTable = db.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + EditorConstant.Sql.ByControlSortOrder);
             ControlGeneration.GenerateControls(this, this.wp, tempTable); // A contorted to make sure it updates itself
         }
         #endregion
@@ -1592,7 +1535,7 @@ namespace TimelapseTemplateEditor
         #region UI Visibility
         private void InitializeUI()
         {
-            this.HelpText.Text = "Type directly in the white fields to edit them. Gray fields are not editable." + Environment.NewLine + 
+            this.HelpText.Text = "Type directly in the white fields to edit them. Gray fields are not editable." + Environment.NewLine +
                 "List items: create  menu items by typing. Click 'v' to view the menu, and raise each item's context menu to re-order its position.";
             this.HelpDocument.Visibility = Visibility.Collapsed;
             this.HelpText.Visibility = Visibility.Visible;
@@ -1604,7 +1547,7 @@ namespace TimelapseTemplateEditor
             this.OpenFileMenuItem.IsEnabled = false;
             this.ConvertFileMenuItem.IsEnabled = false;
             this.ViewMenu.IsEnabled = true;
-            
+
         }
         #endregion
         #region Helper Methods
@@ -1615,16 +1558,16 @@ namespace TimelapseTemplateEditor
         {
             if (!String.IsNullOrEmpty(dbFileName))
             {
-                String backupPath = System.IO.Path.GetDirectoryName(dbFileName) + "\\"
-                    + "(backup)" 
-                    + System.IO.Path.GetFileNameWithoutExtension(dbFileName) 
-                    + System.IO.Path.GetExtension(dbFileName);
+                string backupPath = Path.GetDirectoryName(dbFileName) + "\\"
+                    + "(backup)"
+                    + Path.GetFileNameWithoutExtension(dbFileName)
+                    + Path.GetExtension(dbFileName);
                 File.Copy(dbFileName, backupPath, true);
             }
         }
         #endregion Helper Methods
 
-     }
+    }
 
     #region Converter Classes
     /// <summary>
@@ -1674,7 +1617,7 @@ namespace TimelapseTemplateEditor
             {
                 return valString.Trim();
             }
-            return "";
+            return String.Empty;
         }
     }
 
@@ -1697,7 +1640,7 @@ namespace TimelapseTemplateEditor
             {
                 return valString.Trim();
             }
-            return "";
+            return String.Empty;
         }
     }
     #endregion Converters
@@ -1712,72 +1655,72 @@ namespace TimelapseTemplateEditor
             const string EXAMPLE_DATE = "28-Dec-2014";
             const string EXAMPLE_TIME = "04:00 PM";
 
-            wp.Children.Clear();  
+            wp.Children.Clear();
 
             for (int i = 0; i < tempTable.Rows.Count; i++)
             {
                 DataRow row = tempTable.Rows[i];
-                string type = row[Constants.TYPE].ToString();
-                string defaultValue = row[Constants.DEFAULT].ToString();
-                string label = row[Constants.LABEL].ToString();
-                string datalabel = row[Constants.DATALABEL].ToString();
-                string tooltip = row[Constants.TOOLTIP].ToString();
-                string width = row[Constants.TXTBOXWIDTH].ToString();
-                string visiblity = row[Constants.VISIBLE].ToString();
-                string list = row[Constants.LIST].ToString();
+                string type = row[Constants.DatabaseColumn.Type].ToString();
+                string defaultValue = row[Constants.Control.DefaultValue].ToString();
+                string label = row[Constants.Control.Label].ToString();
+                string datalabel = row[Constants.Control.DataLabel].ToString();
+                string tooltip = row[Constants.Control.Tooltip].ToString();
+                string width = row[Constants.Control.TextBoxWidth].ToString();
+                string visiblity = row[Constants.Control.Visible].ToString();
+                string list = row[Constants.Control.List].ToString();
 
-                int iwidth = (width == "") ? 0 : Convert.ToInt32(width);
+                int iwidth = (width == String.Empty) ? 0 : Convert.ToInt32(width);
 
                 bool bvisiblity = (visiblity == "true" || visiblity == "True") ? true : false;
 
-                    StackPanel sp = null;
+                StackPanel sp = null;
 
-                    if (type == Constants.DATE && defaultValue == "")
-                    {
-                        defaultValue = EXAMPLE_DATE;
-                    }
-                    else if (type == Constants.TIME && defaultValue == "")
-                    {
-                        defaultValue = EXAMPLE_TIME;
-                    }
+                if (type == Constants.DatabaseColumn.Date && defaultValue == String.Empty)
+                {
+                    defaultValue = EXAMPLE_DATE;
+                }
+                else if (type == Constants.DatabaseColumn.Time && defaultValue == String.Empty)
+                {
+                    defaultValue = EXAMPLE_TIME;
+                }
 
-                    if (type == Constants.FILE || type == Constants.FOLDER || type == Constants.DATE || type == Constants.TIME || type == Constants.NOTE)
-                    {
-                        Label labelctl = CreateLabel(win, label, tooltip);
-                        TextBox txtbox = CreateTextBox(win, defaultValue, tooltip, iwidth);
-                        sp = CreateStackPanel(win, labelctl, txtbox);
-                    }
-                    else if (type == Constants.COUNTER)
-                    {
-                        RadioButton rb = CreateRadioButton(win, label, tooltip);
-                        TextBox txtbox = CreateTextBox(win, defaultValue, tooltip, iwidth);
-                        sp = CreateStackPanel(win, rb, txtbox);
-                    }
-                    else if (type == Constants.FLAG || type == Constants.DELETEFLAG)
-                    {
-                        Label labelctl = CreateLabel(win, label, tooltip); 
-                        CheckBox flag = CreateFlag(win, "", tooltip);
-                        flag.IsChecked = (defaultValue == "true") ? true : false;
-                        //TextBox txtbox = CreateTextBox(win, defaultValue, tooltip, iwidth);
-                        sp = CreateStackPanel(win, labelctl, flag);
-                    }
-                    else if (type == Constants.CHOICE || type == Constants.IMAGEQUALITY)
-                    {
-                        Label labelctl = CreateLabel(win, label, tooltip);
-                        ComboBox combobox = CreateComboBox(win, list, tooltip, iwidth);
-                        sp = CreateStackPanel(win, labelctl, combobox);
-                    }
+                if (type == Constants.DatabaseColumn.File || type == Constants.DatabaseColumn.Folder || type == Constants.DatabaseColumn.Date || type == Constants.DatabaseColumn.Time || type == Constants.Control.Note)
+                {
+                    Label labelctl = CreateLabel(win, label, tooltip);
+                    TextBox txtbox = CreateTextBox(win, defaultValue, tooltip, iwidth);
+                    sp = CreateStackPanel(win, labelctl, txtbox);
+                }
+                else if (type == Constants.Control.Counter)
+                {
+                    RadioButton rb = CreateRadioButton(win, label, tooltip);
+                    TextBox txtbox = CreateTextBox(win, defaultValue, tooltip, iwidth);
+                    sp = CreateStackPanel(win, rb, txtbox);
+                }
+                else if (type == Constants.Control.Flag || type == Constants.DatabaseColumn.DeleteFlag)
+                {
+                    Label labelctl = CreateLabel(win, label, tooltip);
+                    CheckBox flag = CreateFlag(win, String.Empty, tooltip);
+                    flag.IsChecked = (defaultValue == "true") ? true : false;
+                    //TextBox txtbox = CreateTextBox(win, defaultValue, tooltip, iwidth);
+                    sp = CreateStackPanel(win, labelctl, flag);
+                }
+                else if (type == Constants.Control.FixedChoice || type == Constants.DatabaseColumn.ImageQuality)
+                {
+                    Label labelctl = CreateLabel(win, label, tooltip);
+                    ComboBox combobox = CreateComboBox(win, list, tooltip, iwidth);
+                    sp = CreateStackPanel(win, labelctl, combobox);
+                }
 
-                    if (sp != null)
-                    {
-                        sp.Tag = datalabel;
-                        //Debug.Print("sp.Tag = " + datalabel);
-                        wp.Children.Add(sp);
-                    }
-                    if (true != bvisiblity)
-                    {
-                        sp.Visibility = Visibility.Collapsed;
-                    }
+                if (sp != null)
+                {
+                    sp.Tag = datalabel;
+                    //Debug.Print("sp.Tag = " + datalabel);
+                    wp.Children.Add(sp);
+                }
+                if (true != bvisiblity)
+                {
+                    sp.Visibility = Visibility.Collapsed;
+                }
             }
         }
 

@@ -28,7 +28,7 @@ namespace Timelapse.Database
 
         public void SetWhere(long id)
         {
-            this.Where = Constants.Database.ID + " = " + id.ToString();
+            this.Where = Constants.DatabaseColumn.ID + " = " + id.ToString();
         }
 
         public void SetWhere(string folder, string file)
