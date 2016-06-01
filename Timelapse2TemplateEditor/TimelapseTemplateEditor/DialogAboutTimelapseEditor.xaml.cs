@@ -25,7 +25,8 @@ namespace TimelapseTemplateEditor
 
         private void BtnCheckForUpdate_Click(object sender, RoutedEventArgs e)
         {
-            CheckForUpdate.GetAndParseVersion(this, true);
+            VersionClient updater = new VersionClient(EditorConstant.ApplicationName, EditorConstant.LatestVersionAddress);
+            updater.TryGetAndParseVersion(true);
         }
 
         private void BtnVersionChanges_Click(object sender, RoutedEventArgs e)

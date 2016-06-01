@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 
@@ -30,3 +31,5 @@ using System.Windows;
 
 [assembly: AssemblyVersion("2.0.1.5")]
 [assembly: AssemblyFileVersion("2.0.1.5")]
+
+[assembly: InternalsVisibleTo("Timelapse2.UnitTests")]

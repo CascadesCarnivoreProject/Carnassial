@@ -17,7 +17,7 @@ namespace Timelapse
         public const string SelectionColour = "MediumBlue";
 
         // Update Information, for checking for updates in the timelapse xml file stored on the web site
-        public const string ApplicationName = "timelapse";
+        public const string ApplicationName = "Timelapse";
         public static readonly Uri LatestVersionAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Installs/timelapse_version.xml");
         public static readonly Uri VersionChangesAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.TimelapseVersions#Timelapse");
 
@@ -307,6 +307,14 @@ namespace Timelapse
             public const string OpenParenthesis = " ( ";
             public const string CloseParenthesis = " ) ";
             public const string Semicolon = " ; ";
+        }
+
+        public static class VersionXml
+        {
+            public const string Changes = "changes";
+            public const string Timelapse = "timelapse";
+            public const string Url = "url";
+            public const string Version = "version";
         }
     }
 }

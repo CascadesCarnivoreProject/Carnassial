@@ -72,7 +72,8 @@ namespace TimelapseTemplateEditor
             }
             else
             {
-                CheckForUpdate.GetAndParseVersion(this, false);
+                VersionClient updater = new VersionClient(Constants.ApplicationName, Constants.LatestVersionAddress);
+                updater.TryGetAndParseVersion(false);
             }
         }
 

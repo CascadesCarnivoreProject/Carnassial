@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
-using Timelapse;
 
 namespace TimelapseTemplateEditor
 {
     internal static class EditorConstant
     {
+        public const string ApplicationName = "TimelapseTemplateEditor";
+
         // If the DataGrid columns change this needs to be adjusted to index correctly.
         // Could not find a way to reference the DataGrid items by name.
         public const int DataGridTypeColumnIndex = 3;
@@ -14,6 +16,7 @@ namespace TimelapseTemplateEditor
         public const string MainWindowBaseTitle = "Timelapse Template Editor";  // The initial title shown in the window title bar
 
         public static readonly SolidColorBrush NotEditableCellColor = Brushes.LightGray; // Color of non-editable data grid items 
+        public static readonly Uri LatestVersionAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Installs/timelapse_template_version.xml");
 
         // reserved words that cannot be used as a data label
         public static readonly ReadOnlyCollection<string> ReservedSqlKeywords = new List<string>()

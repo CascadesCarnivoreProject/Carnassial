@@ -66,8 +66,13 @@
     <Compile Include="RegistryTests.cs" />
     <Compile Include="TestConstants.cs" />
     <Compile Include="TimelapseTest.cs" />
+    <Compile Include="VersionTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Timelapse2TemplateEditor\TimelapseTemplateEditor\TimelapseTemplateEditor.csproj">
+      <Project>{38a59036-3982-4dc8-a19a-ada1d8c1529a}</Project>
+      <Name>TimelapseTemplateEditor</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Timelapse2\Timelapse\Timelapse.csproj">
       <Project>{f223a2f9-f2c2-47a8-80f3-472349176579}</Project>
       <Name>Timelapse</Name>
