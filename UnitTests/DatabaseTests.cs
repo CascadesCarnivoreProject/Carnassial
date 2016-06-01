@@ -58,9 +58,10 @@ namespace Timelapse.UnitTests
             foreach (DatabaseExpectations databaseExpectation in databaseExpectations)
             {
                 ImageDatabase database = this.CreateImageDatabase(databaseExpectation.TemplateDatabaseFileName, databaseExpectation.ImageDatabaseFileName);
+                ImageTableEnumerator ImageEnumerator = new ImageTableEnumerator(database);
 
                 Controls controls = new Controls();
-                controls.GenerateControls(database, 0);
+                controls.GenerateControls(database, ImageEnumerator);
 
                 Assert.IsTrue(controls.ControlFromDataLabel.Count == databaseExpectation.ExpectedControls, "Expected {0} controls to be generated but {1} were.", databaseExpectation.ExpectedControls, controls.ControlFromDataLabel.Count);
             }

@@ -435,7 +435,7 @@ namespace Timelapse.Database
             return this.TryGetImages("*", where);
         }
 
-        // Filter:  images marked for deltion
+        // Filter:  images marked for deletion
         public bool TryGetImagesMarkedForDeletion()
         {
             string where = this.DataLabelFromColumnName[Constants.DatabaseColumn.DeleteFlag]; // key

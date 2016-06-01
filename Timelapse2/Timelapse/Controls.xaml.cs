@@ -27,9 +27,9 @@ namespace Timelapse
             this.DataEntryControls = new List<DataEntryControl>();
         }
 
-        public void GenerateControls(ImageDatabase database, int startingPosition)
+        public void GenerateControls(ImageDatabase database, ImageTableEnumerator imageEnumerator)
         {
-            this.Propagate = new PropagateControl(database, startingPosition);
+            this.Propagate = new PropagateControl(database, imageEnumerator);
 
             DataTable sortedControlTable = database.GetControlsSortedByControlOrder();
             for (int row = 0; row < sortedControlTable.Rows.Count; row++)

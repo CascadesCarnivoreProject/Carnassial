@@ -319,7 +319,7 @@ namespace Timelapse
                 bool result = this.imageDatabase.TryCreateImageDatabase(this.template);
 
                 // We generate the data user interface controls from the template description after the database has been created from the template
-                this.dataEntryControls.GenerateControls(this.imageDatabase, this.imageCache.CurrentRow);
+                this.dataEntryControls.GenerateControls(this.imageDatabase, this.imageCache);
                 this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
 
                 this.imageDatabase.CreateTables();
@@ -513,7 +513,7 @@ namespace Timelapse
                 }
 
                 // We generate the data user interface controls from the template description after the database has been created from the template
-                this.dataEntryControls.GenerateControls(this.imageDatabase, this.imageCache.CurrentRow);
+                this.dataEntryControls.GenerateControls(this.imageDatabase, this.imageCache);
                 this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
                 this.imageDatabase.CreateLookupTables();
                 this.imageDatabase.TryGetImagesAll();

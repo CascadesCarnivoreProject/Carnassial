@@ -73,7 +73,7 @@ namespace Timelapse
                 case Key.Right:             // next image
                     this.NextButton_Click(null, null);
                     break;
-                case Key.Left:              // previous image
+                case Key.Left:              // previous imageimageEnumerator.CurrentRow
                     this.PreviousButton_Click(null, null);
                     break;
                 default:

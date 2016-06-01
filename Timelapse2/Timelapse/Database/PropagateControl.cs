@@ -10,12 +10,15 @@ namespace Timelapse.Database
     public class PropagateControl
     {
         private ImageDatabase database;
-        private ImageTableEnumerator imageEnumerator;
+        private ImageTableEnumerator localImageEnumerator; // We use this internally to do all the propogation. however, we get the current row number from the mainImageEnumerator
+        private ImageTableEnumerator mainImageEnumerator;  // the main image enumerator used by timelapse, which will have the correct state information (e.g., importantly, the current row number)
 
-        public PropagateControl(ImageDatabase database, int startingPosition)
+
+        public PropagateControl(ImageDatabase database, ImageTableEnumerator imageEnumerator)
         {
+            this.mainImageEnumerator = imageEnumerator; // We need a reference to the mainImageEnumerator as we will need it to retrieve the current row number.
             this.database = database;  // We need a reference to the database if we are going to update it.
-            this.imageEnumerator = new ImageTableEnumerator(database, startingPosition);
+            this.localImageEnumerator = new ImageTableEnumerator(database, this.mainImageEnumerator.CurrentRow);
         }
 
         /// <summary>
@@ -26,7 +29,8 @@ namespace Timelapse.Database
             string valueToCopy = checkForZero ? "0" : String.Empty;
 
             int targetRow = -1;
-            for (int index = this.imageEnumerator.CurrentRow - 1; index >= 0; index--)
+            this.localImageEnumerator.TryMoveToImage(this.mainImageEnumerator.CurrentRow);  // Set the image to the current row
+            for (int index = this.localImageEnumerator.CurrentRow - 1; index >= 0; index--)
             {
                 // Search for the row with some value in it, starting from the previous row
                 valueToCopy = (string)this.database.ImageDataTable.Rows[index][dataLabel];
@@ -53,23 +57,24 @@ namespace Timelapse.Database
                 dlgMB.MessageTitle = "Nothing to Propagate to Here.";
                 dlgMB.MessageReason = "None of the earlier images have anything in this field, so there are no values to propagate.";
                 dlgMB.ShowDialog();
-                return (string)this.database.ImageDataTable.Rows[this.imageEnumerator.CurrentRow][dataLabel]; // No change, so return the current value
+                return (string)this.database.ImageDataTable.Rows[this.localImageEnumerator.CurrentRow][dataLabel]; // No change, so return the current value
             }
-            int number_images_affected = this.imageEnumerator.CurrentRow - targetRow;
+            int number_images_affected = this.localImageEnumerator.CurrentRow - targetRow;
             if (this.PropagateFromLastValue(valueToCopy, number_images_affected.ToString()) != true)
             {
-                return (string)this.database.ImageDataTable.Rows[this.imageEnumerator.CurrentRow][dataLabel]; // No change, so return the current value
+                return (string)this.database.ImageDataTable.Rows[this.localImageEnumerator.CurrentRow][dataLabel]; // No change, so return the current value
             }
 
             // Update. Note that we start on the next row, as we are copying from the current row.
-            this.database.UpdateImages(dataLabel, valueToCopy, targetRow + 1, this.imageEnumerator.CurrentRow);
+            this.database.UpdateImages(dataLabel, valueToCopy, targetRow + 1, this.localImageEnumerator.CurrentRow);
             return valueToCopy;
         }
 
         /// <summary>Copy the current value of this control to all images </summary>
         public void CopyValues(string dataLabel, bool checkForZero)
         {
-            string valueToCopy = this.database.GetImageValue(this.imageEnumerator.CurrentRow, dataLabel);
+            this.localImageEnumerator.TryMoveToImage(this.mainImageEnumerator.CurrentRow);  // Set the image to the current row
+            string valueToCopy = this.database.GetImageValue(this.localImageEnumerator.CurrentRow, dataLabel);
             valueToCopy = valueToCopy.Trim();
 
             int number_images_affected = this.database.CurrentlySelectedImageCount;
@@ -84,10 +89,11 @@ namespace Timelapse.Database
         /// <summary> Propagate the current value of this control forward from this point across the current set of filtered images </summary>
         public void Forward(string dataLabel, bool checkForZero)
         {
-            string valueToCopy = this.database.GetImageValue(this.imageEnumerator.CurrentRow, dataLabel);
+            this.localImageEnumerator.TryMoveToImage(this.mainImageEnumerator.CurrentRow); // Set the image to the current row
+            string valueToCopy = database.GetImageValue(this.localImageEnumerator.CurrentRow, dataLabel);
             valueToCopy = valueToCopy.Trim();
 
-            int number_images_affected = this.database.CurrentlySelectedImageCount - this.imageEnumerator.CurrentRow - 1;
+            int number_images_affected = this.database.CurrentlySelectedImageCount - this.localImageEnumerator.CurrentRow - 1;
 
             if (number_images_affected == 0)
             {
@@ -108,7 +114,7 @@ namespace Timelapse.Database
             }
 
             // Update. Note that we start on the next row, as we are copying from the current row.
-            this.database.UpdateImages(dataLabel, valueToCopy, this.imageEnumerator.CurrentRow + 1, this.database.CurrentlySelectedImageCount - 1);
+            this.database.UpdateImages(dataLabel, valueToCopy, this.localImageEnumerator.CurrentRow + 1, this.database.CurrentlySelectedImageCount - 1);
         }
 
         #region Public utilites to check if we can actually do particular operations
@@ -117,7 +123,8 @@ namespace Timelapse.Database
         {
             string valueToCopy = String.Empty;
             int row = -1;
-            for (int i = this.imageEnumerator.CurrentRow - 1; i >= 0; i--)
+            this.localImageEnumerator.TryMoveToImage(this.mainImageEnumerator.CurrentRow);  // Set the image to the current row
+            for (int i = this.localImageEnumerator.CurrentRow - 1; i >= 0; i--)
             {
                 // Search for the row with some value in it, starting from the previous row
                 valueToCopy = (string)this.database.ImageDataTable.Rows[i][dataLabel];
@@ -137,8 +144,9 @@ namespace Timelapse.Database
 
         public bool Forward_IsPossible(string dataLabel)
         {
-            string valueToCopy = this.database.GetImageValue(this.imageEnumerator.CurrentRow, dataLabel);
-            int number_images_affected = this.database.CurrentlySelectedImageCount - this.imageEnumerator.CurrentRow - 1;
+            this.localImageEnumerator.TryMoveToImage(this.mainImageEnumerator.CurrentRow);  // Set the image to the current row
+            string valueToCopy = this.database.GetImageValue(this.localImageEnumerator.CurrentRow, dataLabel);
+            int number_images_affected = this.database.CurrentlySelectedImageCount - this.localImageEnumerator.CurrentRow - 1;
 
             return (number_images_affected > 0) ? true : false;
         }
