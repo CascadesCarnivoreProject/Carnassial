@@ -1819,14 +1819,14 @@ namespace Timelapse
             for (int i = 0; i < this.counterCoords.Count; i++)
             {
                 MetaTagCounter mtagCounter = this.counterCoords[i];
+                DataEntryControl control;
                 DataEntryCounter current_counter;
-                try
-                { 
-                    // Get the current counter associated with the marker
+                if (true == this.dataEntryControls.ControlFromDataLabel.TryGetValue (mtagCounter.DataLabel, out control))
+                {
                     current_counter = (DataEntryCounter)this.dataEntryControls.ControlFromDataLabel[mtagCounter.DataLabel];
                 }
-                catch (KeyNotFoundException)
-                {
+                else
+                { 
                     // If we can't find the counter, its likely because the control was made invisible in the template,
                     // which means that there is no control associated with the marker. So just don't create the 
                     // markers associated with this control. Note that if the control is later made visible in the template,
