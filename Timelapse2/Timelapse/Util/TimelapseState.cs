@@ -12,7 +12,6 @@ namespace Timelapse.Util
         public int DarkPixelThreshold { get; set; }
         public double DarkPixelRatioThreshold { get; set; }
         public ImageQualityFilter ImageFilter { get; set; }
-        public bool ImmediateExit { get; set; }
         public bool IsContentChanged { get; set; }
         public bool IsContentValueChangedFromOutside { get; set; }
         public bool IsDateTimeOrder { get; set; }
@@ -30,7 +29,6 @@ namespace Timelapse.Util
 
             this.ControlWindowSize = new Point(0, 0);
             this.ImageFilter = ImageQualityFilter.All;
-            this.ImmediateExit = false;
             this.IsContentChanged = false;
             this.IsMouseOverCounter = String.Empty;
             this.IsDateTimeOrder = true;

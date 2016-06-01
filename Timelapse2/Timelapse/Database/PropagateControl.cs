@@ -13,7 +13,6 @@ namespace Timelapse.Database
         private ImageTableEnumerator localImageEnumerator; // We use this internally to do all the propogation. however, we get the current row number from the mainImageEnumerator
         private ImageTableEnumerator mainImageEnumerator;  // the main image enumerator used by timelapse, which will have the correct state information (e.g., importantly, the current row number)
 
-
         public PropagateControl(ImageDatabase database, ImageTableEnumerator imageEnumerator)
         {
             this.mainImageEnumerator = imageEnumerator; // We need a reference to the mainImageEnumerator as we will need it to retrieve the current row number.
@@ -90,7 +89,7 @@ namespace Timelapse.Database
         public void Forward(string dataLabel, bool checkForZero)
         {
             this.localImageEnumerator.TryMoveToImage(this.mainImageEnumerator.CurrentRow); // Set the image to the current row
-            string valueToCopy = database.GetImageValue(this.localImageEnumerator.CurrentRow, dataLabel);
+            string valueToCopy = this.database.GetImageValue(this.localImageEnumerator.CurrentRow, dataLabel);
             valueToCopy = valueToCopy.Trim();
 
             int number_images_affected = this.database.CurrentlySelectedImageCount - this.localImageEnumerator.CurrentRow - 1;

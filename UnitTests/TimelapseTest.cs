@@ -22,13 +22,7 @@ namespace Timelapse.UnitTests
                 File.Delete(imageDatabaseFilePath);
             }
 
-            ImageDatabase imageDatabase = new ImageDatabase(Path.GetDirectoryName(imageDatabaseFilePath), Path.GetFileName(imageDatabaseFilePath));
-            result = imageDatabase.TryCreateImageDatabase(template);
-            Assert.IsTrue(result);
-            imageDatabase.CreateTables();
-            imageDatabase.CreateLookupTables();
-
-            return imageDatabase;
+            return new ImageDatabase(Path.GetDirectoryName(imageDatabaseFilePath), Path.GetFileName(imageDatabaseFilePath), template);
         }
 
         protected void PopulateCarnivoreDatabase(ImageDatabase database)
@@ -44,7 +38,7 @@ namespace Timelapse.UnitTests
             database.AddImages(new List<ImageProperties>() { martenImage, bobcatImage }, null);
             database.CreateWhiteSpaceColumn();
             database.TrimImageAndTemplateTableWhitespace();  // Trim the white space from all the data
-            database.InitializeMarkerTableFromDataTable();
+            database.SyncMarkerTableFromDatabase();
             Assert.IsTrue(database.TryGetImagesAll());
 
             ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(database);

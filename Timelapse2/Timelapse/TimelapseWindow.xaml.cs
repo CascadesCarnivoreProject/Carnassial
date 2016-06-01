@@ -138,11 +138,6 @@ namespace Timelapse
         // On exiting, save various attributes so we can use recover them later
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            if (this.state.ImmediateExit)
-            {
-                return;
-            }
-
             if ((this.imageDatabase != null) && (this.imageDatabase.CurrentlySelectedImageCount > 0))
             {
                 // Save the following in the database as they are local to this image set
@@ -211,7 +206,6 @@ namespace Timelapse
         internal bool TryOpenTemplateAndLoadImages(string templateDatabasePath)
         {
             // Create the template to the Timelapse Template database
-            this.template = new TemplateDatabase();
             if (!TemplateDatabase.TryOpen(templateDatabasePath, out this.template))
             {
                 this.OnImageDatabaseNotLoaded();
@@ -238,7 +232,7 @@ namespace Timelapse
             {
                 imageDatabaseFileName = Path.GetFileNameWithoutExtension(templateDatabasePath) + Constants.File.ImageDatabaseFileExtension;
             }
-            this.imageDatabase = new ImageDatabase(Path.GetDirectoryName(templateDatabasePath), imageDatabaseFileName);
+            this.imageDatabase = new ImageDatabase(Path.GetDirectoryName(templateDatabasePath), imageDatabaseFileName, this.template);
             this.imageCache = new ImageCache(this.imageDatabase);
             this.state.MostRecentImageSets.SetMostRecent(templateDatabasePath);
             this.MenuItemRecentImageSets_Refresh();
@@ -250,22 +244,18 @@ namespace Timelapse
             switch (this.imageDatabase.TrySelectDatabaseFile())
             {
                 case 0: // An existing .ddb file is available
-                    if (this.TryLoadImagesFromDatabase(this.template) == true)
+                    if (this.TryLoadImagesFromDatabase(this.template))
                     {
-                        if (this.state.ImmediateExit)
-                        {
-                            return true;
-                        }
                         this.OnImageLoadingComplete();
                     }
-                    break;
-                case 1: // User cancelled the process of choosing between .ddb files
-                    if (this.state.ImmediateExit)
+                    else
                     {
-                        this.OnImageDatabaseNotLoaded();
                         return false;
                     }
                     break;
+                case 1: // User cancelled the process of choosing between .ddb files
+                    this.OnImageDatabaseNotLoaded();
+                    return false;
                 case 2: // There are no existing .ddb files
                 default:
                     if (this.LoadByScanningImageFolder(this.FolderPath) == false)
@@ -307,24 +297,6 @@ namespace Timelapse
             if (count == 0)
             {
                 return false;
-            }
-
-            // the database and its tables must exist before data can be loaded into it
-            if (this.imageDatabase.Exists() == false)
-            {
-                // TODOSAUL: Hmm. I've never seen database creation failure. Nonetheless, while I can pop up a messagebox here, the real issue is how
-                // to revert the system back to some reasonable state. I will need to look at this closely 
-                // What we really need is a function that we can call that will essentially bring the system back to its
-                // virgin state, that we can invoke from various conditions. 
-                // Alternately, we can just exit Timelapse (a poor solution but it could suffice for now)
-                bool result = this.imageDatabase.TryCreateImageDatabase(this.template);
-
-                // We generate the data user interface controls from the template description after the database has been created from the template
-                this.dataEntryControls.GenerateControls(this.imageDatabase, this.imageCache);
-                this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
-
-                this.imageDatabase.CreateTables();
-                this.imageDatabase.CreateLookupTables();
             }
 
             // We want to show previews of the frames to the user as they are individually loaded
@@ -491,36 +463,28 @@ namespace Timelapse
         // Try to load the images from the DB file.
         private bool TryLoadImagesFromDatabase(TemplateDatabase template)
         {
-            if (this.imageDatabase.TryCreateImageDatabase(template))
+            // When we are loading from an existing image database, ensure that the template in the template database matches the template stored in
+            // the image database
+            List<string> errors = this.AreTemplateTablesConsistent();
+            if (errors.Count > 0)
             {
-                // When we are loading from an existing image datbase, ensure that the template in the template database matches the template stored in
-                // the image database
-                List<string> errors = this.AreTemplateTablesConsistent();
-                if (errors.Count > 0)
+                DialogTemplatesDontMatch dlg = new DialogTemplatesDontMatch(errors);
+                dlg.Owner = this;
+                bool? result = dlg.ShowDialog();
+                if (result == true)
                 {
-                    DialogTemplatesDontMatch dlg = new DialogTemplatesDontMatch(errors);
-                    dlg.Owner = this;
-                    bool? result = dlg.ShowDialog();
-                    if (result == true)
-                    {
-                        this.state.ImmediateExit = true;
-                        Application.Current.Shutdown();
-                        return true;
-                    }
-                    else
-                    {
-                        this.imageDatabase.TemplateTable = this.imageDatabase.GetDataTable(Constants.Database.TemplateTable);
-                    }
+                    // user indicated not to update to the current template so exit
+                    Application.Current.Shutdown();
+                    return false;
                 }
-
-                // We generate the data user interface controls from the template description after the database has been created from the template
-                this.dataEntryControls.GenerateControls(this.imageDatabase, this.imageCache);
-                this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
-                this.imageDatabase.CreateLookupTables();
-                this.imageDatabase.TryGetImagesAll();
-                return true;
+                // user indicated to run with the stale copy of the template in the image database
             }
-            return false;
+
+            // We generate the data user interface controls from the template description after the database has been created from the template
+            this.dataEntryControls.GenerateControls(this.imageDatabase, this.imageCache);
+            this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
+            this.imageDatabase.TryGetImagesAll();
+            return true;
         }
 
         /// <summary>
@@ -543,7 +507,7 @@ namespace Timelapse
             this.customfilter = new CustomFilter(this.imageDatabase);
 
             // Load the Marker table from the database
-            this.imageDatabase.InitializeMarkerTableFromDataTable();
+            this.imageDatabase.SyncMarkerTableFromDatabase();
 
             // Set the magnifying glass status from the registry. 
             // Note that if it wasn't in the registry, the value returned will be true by default
@@ -939,7 +903,7 @@ namespace Timelapse
                         notectl.ContentControl.TextChanged += new TextChangedEventHandler(this.NoteCtl_TextChanged);
                         notectl.ContentControl.PreviewKeyDown += new KeyEventHandler(this.ContentCtl_PreviewKeyDown);
                         break;
-                    case Constants.DatabaseColumn.DeleteFlag:
+                    case Constants.Control.DeleteFlag:
                     case Constants.Control.Flag:
                         DataEntryFlag flagctl = (DataEntryFlag)pair.Value; // get the control
                         flagctl.ContentControl.Checked += this.FlagControl_CheckedChanged;
@@ -1209,7 +1173,7 @@ namespace Timelapse
                     case Constants.Control.Note:
                     case Constants.Control.Flag:
                     case Constants.DatabaseColumn.ImageQuality:
-                    case Constants.DatabaseColumn.DeleteFlag:
+                    case Constants.Control.DeleteFlag:
                     case Constants.Control.FixedChoice:
                     case Constants.Control.Counter:
                         DataEntryControl control = (DataEntryControl)pair.Value;
@@ -1242,7 +1206,7 @@ namespace Timelapse
                     case Constants.Control.Note:
                     case Constants.Control.Flag:
                     case Constants.DatabaseColumn.ImageQuality:
-                    case Constants.DatabaseColumn.DeleteFlag:
+                    case Constants.Control.DeleteFlag:
                     case Constants.Control.FixedChoice:
                     case Constants.Control.Counter:
                         DataEntryControl control = (DataEntryControl)pair.Value;
@@ -1432,7 +1396,7 @@ namespace Timelapse
                         control.Value.Content = this.imageCache.Current.ImageQuality.ToString();
                         break;
                     case Constants.Control.Counter:
-                    case Constants.DatabaseColumn.DeleteFlag:
+                    case Constants.Control.DeleteFlag:
                     case Constants.Control.FixedChoice:
                     case Constants.Control.Flag:
                     case Constants.Control.Note:
@@ -1831,12 +1795,12 @@ namespace Timelapse
                 MetaTagCounter mtagCounter = this.counterCoords[i];
                 DataEntryControl control;
                 DataEntryCounter current_counter;
-                if (true == this.dataEntryControls.ControlFromDataLabel.TryGetValue (mtagCounter.DataLabel, out control))
+                if (true == this.dataEntryControls.ControlFromDataLabel.TryGetValue(mtagCounter.DataLabel, out control))
                 {
                     current_counter = (DataEntryCounter)this.dataEntryControls.ControlFromDataLabel[mtagCounter.DataLabel];
                 }
                 else
-                { 
+                {
                     // If we can't find the counter, its likely because the control was made invisible in the template,
                     // which means that there is no control associated with the marker. So just don't create the 
                     // markers associated with this control. Note that if the control is later made visible in the template,
@@ -2936,10 +2900,6 @@ namespace Timelapse
         /// </summary>
         private void ControlWindow_Closing(object sender, EventArgs e)
         {
-            if (this.state.ImmediateExit)
-            {
-                return;
-            }
             this.controlWindow.ChildRemove(this.dataEntryControls);
             this.controlsTray.Children.Remove(this.dataEntryControls);
 

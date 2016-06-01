@@ -78,7 +78,7 @@ namespace Timelapse.UnitTests
             string folderPath = Environment.CurrentDirectory;
             string imageFilePath = Path.Combine(folderPath, TestConstants.File.InfraredMartenImage);
 
-            ImageDatabase database = new ImageDatabase(folderPath, Constants.File.DefaultImageDatabaseFileName);
+            ImageDatabase database = this.CreateImageDatabase(Constants.File.DefaultTemplateDatabaseFileName, Constants.File.DefaultImageDatabaseFileName);
             using (DialogPopulateFieldWithMetadata populateFieldDialog = new DialogPopulateFieldWithMetadata(database, imageFilePath))
             {
                 populateFieldDialog.LoadExif();

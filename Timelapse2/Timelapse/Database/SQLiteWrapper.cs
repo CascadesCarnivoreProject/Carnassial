@@ -71,39 +71,6 @@ namespace Timelapse.Database
             query += Constants.Sql.CloseParenthesis + Constants.Sql.Semicolon;
             this.ExecuteNonQuery(query);
         }
-
-        // Assumes they have exactly the same creation string
-        public void Insert(string tableName, DataTable datatable)
-        {
-            List<string> queries = new List<string>();
-            for (int i = 0; i < datatable.Rows.Count; i++)
-            {
-                string query = Constants.Sql.InsertInto + tableName + " VALUES ";                             // INSERT INTO table_name;
-                string values = String.Empty;
-                for (int j = 0; j < datatable.Columns.Count; j++)
-                {
-                    if (j == 0)
-                    {
-                        values += String.Format(" {0}" + Constants.Sql.Comma, i + 1);
-                    }
-                    else if (j == 1 | j == 2)
-                    {
-                        values += String.Format(" {0}" + Constants.Sql.Comma, datatable.Rows[i][j]);         // "value1, value2, ... valueN"
-                    }
-                    else
-                    {
-                        string newvalue = (string)datatable.Rows[i][j];
-                        newvalue = newvalue.Replace("'", "''");
-                        values += String.Format(" {0}" + Constants.Sql.Comma, Utilities.QuoteForSql(newvalue));         // "'value1', 'value2', ... 'valueN'"
-                    }
-                }
-                values = values.Substring(0, values.Length - Constants.Sql.Comma.Length);        // Remove last comma in the sequence 
-                query += String.Format("({0}); ", values);                          // ('value1', 'value2', ... 'valueN');
-                queries.Add(query);
-            }
-
-            this.ExecuteNonQueryWrappedInBeginEnd(queries);
-        }
         #endregion
 
         #region Insertion: Single Row
@@ -116,6 +83,8 @@ namespace Timelapse.Database
             List<string> queries = new List<string>();
             foreach (List<ColumnTuple> columnsToUpdate in insertionStatements)
             {
+                Debug.Assert(columnsToUpdate != null && columnsToUpdate.Count > 0, "No column updates are specified.");
+
                 string columns = String.Empty;
                 string values = String.Empty;
                 foreach (ColumnTuple column in columnsToUpdate)
@@ -442,10 +411,10 @@ namespace Timelapse.Database
         #endregion
 
         #region Deleting Rows 
-        /// <summary>delete a single row from the DB as specified in the where clause ...</summary>
-        /// <param name="tableName">The table from which to delete </param>
-        /// <param name="where">The where clause for the row to delete (e.g., ID=1).</param>
-        public void Delete(string tableName, string where)
+        /// <summary>delete specific rows from the DB where...</summary>
+        /// <param name="tableName">The table from which to delete.</param>
+        /// <param name="where">The where clause for the delete.</param>
+        public void DeleteRows(string tableName, string where)
         {
             // DELETE FROM table_name WHERE where
             string query = Constants.Sql.DeleteFrom + tableName;        // DELETE FROM table_name

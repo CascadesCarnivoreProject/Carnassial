@@ -35,27 +35,27 @@ namespace TimelapseTemplateEditor.Util
 
             nodelist = xmlDoc.SelectNodes(Constants.ImageXml.FilePath); // Convert the File type 
             nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
-            int index = FindRow(nodelist, tempTable, Constants.DatabaseColumn.File);
+            int index = this.FindFirstRowOfType(nodelist, tempTable, Constants.DatabaseColumn.File);
             this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.File, index, ref error_messages, ref data_label_list);
 
             nodelist = xmlDoc.SelectNodes(Constants.ImageXml.FolderPath); // Convert the Folder type
             nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
-            index = FindRow(nodelist, tempTable, Constants.DatabaseColumn.Folder);
+            index = this.FindFirstRowOfType(nodelist, tempTable, Constants.DatabaseColumn.Folder);
             this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Folder, index, ref error_messages, ref data_label_list);
 
             nodelist = xmlDoc.SelectNodes(Constants.ImageXml.DatePath); // Convert the Date type
             nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
-            index = FindRow(nodelist, tempTable, Constants.DatabaseColumn.Date);
+            index = this.FindFirstRowOfType(nodelist, tempTable, Constants.DatabaseColumn.Date);
             this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Date, index, ref error_messages, ref data_label_list);
 
             nodelist = xmlDoc.SelectNodes(Constants.ImageXml.TimePath); // Convert the Time type
             nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
-            index = FindRow(nodelist, tempTable, Constants.DatabaseColumn.Time);
+            index = this.FindFirstRowOfType(nodelist, tempTable, Constants.DatabaseColumn.Time);
             this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Time, index, ref error_messages, ref data_label_list);
 
             nodelist = xmlDoc.SelectNodes(Constants.ImageXml.ImageQualityPath); // Convert the Image Quality type
             nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
-            index = FindRow(nodelist, tempTable, Constants.DatabaseColumn.ImageQuality);
+            index = this.FindFirstRowOfType(nodelist, tempTable, Constants.DatabaseColumn.ImageQuality);
             this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.ImageQuality, index, ref error_messages, ref data_label_list);
 
             // Convert the Notes types, if any
@@ -87,6 +87,7 @@ namespace TimelapseTemplateEditor.Util
                 this.AddRow(nodeData, tempTable, Constants.Control.Counter);
                 this.UpdateRow(win, nodeData, tempTable, Constants.Control.Note, tempTable.Rows.Count - 1, ref error_messages, ref data_label_list);
             }
+
             return tempTable;
         }
         #endregion
@@ -94,28 +95,24 @@ namespace TimelapseTemplateEditor.Util
         #region Find, update and add rows 
         // Given a typeWanted (i.e., which should be one of the default types as only one of them exists), find its first occurance. 
         // If and only if its found, update the row with the XML information.
-        private static int FindRow(XmlNodeList nodelist, DataTable tempTable, string typeWanted)
+        private int FindFirstRowOfType(XmlNodeList nodelist, DataTable tempTable, string typeWanted)
         {
-            int index = -1;
-            DataRow row = null;
-
             // Update the File type 
             // There should be only one node
             if (nodelist.Count == 1)
             {
                 // Find the row of a given type
-                for (int i = 0; i < tempTable.Rows.Count; i++)
+                for (int rowIndex = 0; rowIndex < tempTable.Rows.Count; rowIndex++)
                 {
-                    row = tempTable.Rows[i];
+                    DataRow row = tempTable.Rows[rowIndex];
                     string type = row[Constants.DatabaseColumn.Type].ToString();
                     if (type == typeWanted)
                     {
-                        index = i;
-                        break;
+                        return rowIndex;
                     }
                 }
             }
-            return index;
+            return -1;
         }
 
         // currently used to update the default table with new values
@@ -153,9 +150,9 @@ namespace TimelapseTemplateEditor.Util
             {
                 dataLabel = Constants.DatabaseColumn.ImageQuality;
             }
-            else if (typeWanted.Equals(Constants.DatabaseColumn.DeleteFlag))
+            else if (typeWanted.Equals(Constants.Control.DeleteFlag))
             {
-                dataLabel = Constants.DatabaseColumn.DeleteFlag;
+                dataLabel = Constants.Control.DeleteFlag;
             }
             else
             {
@@ -174,7 +171,7 @@ namespace TimelapseTemplateEditor.Util
                 }
 
                 datalabel = dataLabel.ToUpper();
-                foreach (string s in EditorConstant.ReservedWords)
+                foreach (string s in EditorConstant.ReservedSqlKeywords)
                 {
                     if (s.Equals(datalabel))
                     {
@@ -296,6 +293,7 @@ namespace TimelapseTemplateEditor.Util
         }
 
         // Add a new row onto the table
+        // TODOTODD: dup code, merge to TemplateDatabase
         private void AddRow(XmlNodeList nodelist, DataTable tempTable, string typeWanted)
         {
             // First, populate the row with default values
@@ -308,12 +306,12 @@ namespace TimelapseTemplateEditor.Util
             {
                 tempTable.Rows[index][Constants.Control.DefaultValue] = "0";
                 tempTable.Rows[index][Constants.DatabaseColumn.Type] = Constants.Control.Counter;
-                tempTable.Rows[index][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Counter;
+                tempTable.Rows[index][Constants.Control.TextBoxWidth] = Constants.ControlDefault.CounterWidth;
                 tempTable.Rows[index][Constants.Control.Copyable] = false;
                 tempTable.Rows[index][Constants.Control.Visible] = true;
                 tempTable.Rows[index][Constants.Control.Label] = Constants.Control.Counter + this.counterCount.ToString();
                 tempTable.Rows[index][Constants.Control.DataLabel] = Constants.Control.Counter + this.counterCount.ToString();
-                tempTable.Rows[index][Constants.Control.Tooltip] = EditorConstant.DefaultTooltip.Counter;
+                tempTable.Rows[index][Constants.Control.Tooltip] = Constants.ControlDefault.CounterTooltip;
                 tempTable.Rows[index][Constants.Control.List] = String.Empty;
                 this.counterCount++;
             }
@@ -321,31 +319,27 @@ namespace TimelapseTemplateEditor.Util
             {
                 tempTable.Rows[index][Constants.Control.DefaultValue] = String.Empty;
                 tempTable.Rows[index][Constants.DatabaseColumn.Type] = Constants.Control.Note;
-                tempTable.Rows[index][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Note;
+                tempTable.Rows[index][Constants.Control.TextBoxWidth] = Constants.ControlDefault.NoteWidth;
                 tempTable.Rows[index][Constants.Control.Copyable] = true;
                 tempTable.Rows[index][Constants.Control.Visible] = true;
                 tempTable.Rows[index][Constants.Control.Label] = Constants.Control.Note + this.noteCount.ToString();
                 tempTable.Rows[index][Constants.Control.DataLabel] = Constants.Control.Note + this.noteCount.ToString();
-                tempTable.Rows[index][Constants.Control.Tooltip] = EditorConstant.DefaultTooltip.Note;
+                tempTable.Rows[index][Constants.Control.Tooltip] = Constants.ControlDefault.NoteTooltip;
                 tempTable.Rows[index][Constants.Control.List] = String.Empty;
             }
             else if (typeWanted.Equals(Constants.Control.FixedChoice))
             {
                 tempTable.Rows[index][Constants.Control.DefaultValue] = String.Empty;
                 tempTable.Rows[index][Constants.DatabaseColumn.Type] = Constants.Control.FixedChoice;
-                tempTable.Rows[index][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Choice;
+                tempTable.Rows[index][Constants.Control.TextBoxWidth] = Constants.ControlDefault.FixedChoiceWidth;
                 tempTable.Rows[index][Constants.Control.Copyable] = true;
                 tempTable.Rows[index][Constants.Control.Visible] = true;
-                tempTable.Rows[index][Constants.Control.Label] = EditorConstant.Control.Choice + this.choiceCount.ToString();
+                tempTable.Rows[index][Constants.Control.Label] = Constants.Control.Choice + this.choiceCount.ToString();
                 // TODOSAUL: shouldn't this be Constants.Control.FixedChoice?
-                tempTable.Rows[index][Constants.Control.DataLabel] = EditorConstant.Control.Choice + this.choiceCount.ToString();
-                tempTable.Rows[index][Constants.Control.Tooltip] = EditorConstant.DefaultTooltip.Choice;
+                tempTable.Rows[index][Constants.Control.DataLabel] = Constants.Control.Choice + this.choiceCount.ToString();
+                tempTable.Rows[index][Constants.Control.Tooltip] = Constants.ControlDefault.FixedChoiceTooltip;
                 tempTable.Rows[index][Constants.Control.List] = String.Empty;
             }
-
-            // Now update the templatetable with the new values
-            // TODOSAUL: if this is commented out why have this method?
-            // UpdateRow(win, nodelist, tempTable, typeWanted, index);
         }
 
         private static void AddDeletedFlag(DataTable tempTable)
@@ -355,14 +349,14 @@ namespace TimelapseTemplateEditor.Util
             int index = tempTable.Rows.Count - 1;
             tempTable.Rows[index][Constants.Control.ControlOrder] = tempTable.Rows.Count;
             tempTable.Rows[index][Constants.Control.SpreadsheetOrder] = tempTable.Rows.Count;
-            tempTable.Rows[index][Constants.Control.DefaultValue] = EditorConstant.DefaultValue.Flag;
-            tempTable.Rows[index][Constants.DatabaseColumn.Type] = Constants.DatabaseColumn.DeleteFlag;
-            tempTable.Rows[index][Constants.Control.TextBoxWidth] = EditorConstant.DefaultWidth.Flag;
+            tempTable.Rows[index][Constants.Control.DefaultValue] = Constants.ControlDefault.FlagValue;
+            tempTable.Rows[index][Constants.DatabaseColumn.Type] = Constants.Control.DeleteFlag;
+            tempTable.Rows[index][Constants.Control.TextBoxWidth] = Constants.ControlDefault.FlagWidth;
             tempTable.Rows[index][Constants.Control.Copyable] = false;
             tempTable.Rows[index][Constants.Control.Visible] = true;
             tempTable.Rows[index][Constants.Control.Label] = EditorConstant.Control.MarkForDeletionLabel;
             tempTable.Rows[index][Constants.Control.DataLabel] = EditorConstant.Control.MarkForDeletion;
-            tempTable.Rows[index][Constants.Control.Tooltip] = EditorConstant.Tooltip.MarkForDeletion;
+            tempTable.Rows[index][Constants.Control.Tooltip] = Constants.ControlDefault.MarkForDeletionTooltip;
         }
         #endregion Find, update and add rows
 

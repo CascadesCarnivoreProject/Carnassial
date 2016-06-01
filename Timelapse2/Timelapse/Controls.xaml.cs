@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Windows;
 using System.Windows.Controls;
 using Timelapse.Database;
 using Timelapse.Util;
@@ -74,7 +73,7 @@ namespace Timelapse
                     }
                     controlToAdd = noteControl;
                 }
-                else if (type == Constants.Control.Flag || type == Constants.DatabaseColumn.DeleteFlag)
+                else if (type == Constants.Control.Flag || type == Constants.Control.DeleteFlag)
                 {
                     DataEntryFlag flagControl = new DataEntryFlag(dataLabel, this, true);
                     flagControl.Label = label;

@@ -334,7 +334,7 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="ExitFileMenuItem" Header="_Exit" Click="ExitFileMenuItem_Click">
+                    <MenuItem Name="ExitFileMenuItem" Header="E_xit" Click="ExitFileMenuItem_Click">
                         <MenuItem.Icon>
                             <Image Source="Images/Close_16XLG.png" />
                         </MenuItem.Icon>
@@ -345,13 +345,12 @@
                     </MenuItem>
                 </MenuItem>
                 <MenuItem Header="_Help" >
-                    <MenuItem Name="MenuItemTimelapseHomePage" Header="_The Timelapse Web Page (via your web browser)" Click="MenuTimelapseWebPage_Click" ToolTip="Displays the Timelapse Image Analyzer web page in your browser"/>
-                    <MenuItem Name="MenuItemTutorialManual" Header="_Tutorial Manual (via your web browser)" Click="MenuTutorialManual_Click" ToolTip="Displays the Tutorial Manual - a large PDF file - in your browser"/>
-                    <MenuItem Name="MenuItemDownloadSampleImages" Header="Download Tutorial Sample Images (via your web browser)" Click="MenuDownloadSampleImages_Click" ToolTip="Using your browser, it downloads the sample image files used in the  Tutorial Manual for you to practise with"/>
-                    <MenuItem Name="MenuItemJoinMailingList" Header="Timelapse Mailing List - Join it (via your web browser)" Click="MenuJoinTimelapseMailingList_Click" ToolTip="Using your browser, go to the page that lets you join the timelapse mailing list. You will be informed about updates, and you can post requests to it."/>
-                    <MenuItem Name="MenuItemMailToMailingList" Header="Timelapse Mailing List - Send Email " Click="MenuMailToTimelapseMailingList_Click" ToolTip="Post an email to the Timelapse mailing list. You should join the mailing list before doing this."/>
-                    <MenuItem Name="AboutMenuItem" Header="_About" Click="AboutMenuItem_Click" ToolTip="Information about this application version">
-                    </MenuItem>
+                    <MenuItem Name="MenuItemTimelapseHomePage" Header="The Timelapse _web page (via your web browser)" Click="MenuTimelapseWebPage_Click" ToolTip="Displays the Timelapse Image Analyzer web page in your browser"/>
+                    <MenuItem Name="MenuItemTutorialManual" Header="Tutorial _manual (via your web browser)" Click="MenuTutorialManual_Click" ToolTip="Displays the Tutorial Manual - a large PDF file - in your browser"/>
+                    <MenuItem Name="MenuItemDownloadSampleImages" Header="_Download tutorial sample images (via your web browser)" Click="MenuDownloadSampleImages_Click" ToolTip="Using your browser, it downloads the sample image files used in the  Tutorial Manual for you to practise with"/>
+                    <MenuItem Name="MenuItemJoinMailingList" Header="Timelapse mailing list - _Join it (via your web browser)" Click="MenuJoinTimelapseMailingList_Click" ToolTip="Using your browser, go to the page that lets you join the timelapse mailing list. You will be informed about updates, and you can post requests to it."/>
+                    <MenuItem Name="MenuItemMailToMailingList" Header="Timelapse mailing list - Send _email " Click="MenuMailToTimelapseMailingList_Click" ToolTip="Post an email to the Timelapse mailing list. You should join the mailing list before doing this."/>
+                    <MenuItem Name="AboutMenuItem" Header="_About" Click="AboutMenuItem_Click" ToolTip="Displays version information about this program and how to contact its creator"/>
                 </MenuItem>
             </Menu>
             <TextBlock Name="HelpText" Visibility="Collapsed" Grid.Row="0" FontSize="16" Text="Use the File Menu to create or open a template, and to convert an old CodeTemplate.xml file to the new format." Margin =" 10" DockPanel.Dock="Top"/>
@@ -664,14 +663,14 @@
                         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,-1" >
                             <TextBlock  Margin="0,0,0,5" DockPanel.Dock="Top" FontSize="14"  HorizontalAlignment="Center"><Run Text="Add:"/></TextBlock>
                             <UniformGrid Margin="0,0,0,0" Rows="4" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
-                                <Button Content="Count"  Margin="0,0,0,2.5" Tag="Count" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddRowButton_Click" Name="AddCountRowButton"/>
-                                <Button Content="Choice" Margin="0,0,0,2.5" Tag="Choice" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddRowButton_Click " Name="AddChoiceRowButton"/>
-                                <Button Content="Note" Margin="0,0,0,2.5"  Tag="Note" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddRowButton_Click" Name="AddNoteRowButton"/>
-                                <Button Content="Flag" Margin="0,0,0,0"  Tag="Flag" DockPanel.Dock="Bottom"  HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddRowButton_Click" Name="AddFlagRowButton"/>
+                                <Button Content="Count"  Margin="0,0,0,2.5" Tag="Counter" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton"/>
+                                <Button Content="Choice" Margin="0,0,0,2.5" Tag="FixedChoice" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFixedChoiceButton"/>
+                                <Button Content="Note" Margin="0,0,0,2.5"  Tag="Note" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddNoteButton"/>
+                                <Button Content="Flag" Margin="0,0,0,0"  Tag="Flag" DockPanel.Dock="Bottom"  HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFlagButton"/>
                             </UniformGrid>
                         </DockPanel>
                     </Border>
-                    <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center"  DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveRowButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveRowButton_Click" Margin="0,30,0,0"/>
+                    <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center"  DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveControlButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveControlButton_Click" Margin="0,30,0,0"/>
 
                 </DockPanel>
 

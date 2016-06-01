@@ -12,28 +12,27 @@ namespace TimelapseTemplateEditor.Util
     // It is meant to roughly approximate what the controls will look like in the user interface
     internal class ControlGeneration
     {
-        public static void GenerateControls(Window win, WrapPanel wp, DataTable tempTable)
+        public static void GenerateControls(Window win, WrapPanel wp, DataTable templateTable)
         {
             const string EXAMPLE_DATE = "28-Dec-2014";
             const string EXAMPLE_TIME = "04:00 PM";
 
             wp.Children.Clear();
 
-            for (int i = 0; i < tempTable.Rows.Count; i++)
+            foreach (DataRow control in templateTable.Rows)
             {
-                DataRow row = tempTable.Rows[i];
-                string type = row[Constants.DatabaseColumn.Type].ToString();
-                string defaultValue = row[Constants.Control.DefaultValue].ToString();
-                string label = row[Constants.Control.Label].ToString();
-                string datalabel = row[Constants.Control.DataLabel].ToString();
-                string tooltip = row[Constants.Control.Tooltip].ToString();
-                string width = row[Constants.Control.TextBoxWidth].ToString();
-                string visiblity = row[Constants.Control.Visible].ToString();
-                string list = row[Constants.Control.List].ToString();
+                string type = control[Constants.DatabaseColumn.Type].ToString();
+                string defaultValue = control[Constants.Control.DefaultValue].ToString();
+                string label = control[Constants.Control.Label].ToString();
+                string datalabel = control[Constants.Control.DataLabel].ToString();
+                string tooltip = control[Constants.Control.Tooltip].ToString();
+                string widthAsString = control[Constants.Control.TextBoxWidth].ToString();
+                string visiblityAsString = control[Constants.Control.Visible].ToString();
+                string list = control[Constants.Control.List].ToString();
 
-                int iwidth = (width == String.Empty) ? 0 : Convert.ToInt32(width);
+                int width = (widthAsString == String.Empty) ? 0 : Convert.ToInt32(widthAsString);
 
-                bool bvisiblity = (visiblity == "true" || visiblity == "True") ? true : false;
+                bool visiblity = (visiblityAsString == "true" || visiblityAsString == "True") ? true : false;
 
                 StackPanel sp = null;
 
@@ -49,16 +48,16 @@ namespace TimelapseTemplateEditor.Util
                 if (type == Constants.DatabaseColumn.File || type == Constants.DatabaseColumn.Folder || type == Constants.DatabaseColumn.Date || type == Constants.DatabaseColumn.Time || type == Constants.Control.Note)
                 {
                     Label labelctl = CreateLabel(win, label, tooltip);
-                    TextBox txtbox = CreateTextBox(win, defaultValue, tooltip, iwidth);
+                    TextBox txtbox = CreateTextBox(win, defaultValue, tooltip, width);
                     sp = CreateStackPanel(win, labelctl, txtbox);
                 }
                 else if (type == Constants.Control.Counter)
                 {
                     RadioButton rb = CreateRadioButton(win, label, tooltip);
-                    TextBox txtbox = CreateTextBox(win, defaultValue, tooltip, iwidth);
+                    TextBox txtbox = CreateTextBox(win, defaultValue, tooltip, width);
                     sp = CreateStackPanel(win, rb, txtbox);
                 }
-                else if (type == Constants.Control.Flag || type == Constants.DatabaseColumn.DeleteFlag)
+                else if (type == Constants.Control.Flag || type == Constants.Control.DeleteFlag)
                 {
                     Label labelctl = CreateLabel(win, label, tooltip);
                     CheckBox flag = CreateFlag(win, String.Empty, tooltip);
@@ -68,7 +67,7 @@ namespace TimelapseTemplateEditor.Util
                 else if (type == Constants.Control.FixedChoice || type == Constants.DatabaseColumn.ImageQuality)
                 {
                     Label labelctl = CreateLabel(win, label, tooltip);
-                    ComboBox combobox = CreateComboBox(win, list, tooltip, iwidth);
+                    ComboBox combobox = CreateComboBox(win, list, tooltip, width);
                     sp = CreateStackPanel(win, labelctl, combobox);
                 }
 
@@ -77,7 +76,7 @@ namespace TimelapseTemplateEditor.Util
                     sp.Tag = datalabel;
                     wp.Children.Add(sp);
                 }
-                if (true != bvisiblity)
+                if (true != visiblity)
                 {
                     sp.Visibility = Visibility.Collapsed;
                 }

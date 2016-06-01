@@ -47,6 +47,53 @@ namespace Timelapse
             public const string Flag = "Flag";                 // A boolean
             public const string List = "List";             // indicates a list of items
             public const string Note = "Note";                 // A note
+
+            // default data labels
+            public const string Choice = "Choice";            // Label for: a choice
+
+            // things which should be data labels but are used in the TemplateTable's Type column
+            public const string DeleteFlag = "DeleteFlag";    // a flag data type for marking deletion
+        }
+
+        public static class ControlDefault
+        {
+            // standard controls
+            public const string CounterTooltip = "Click the counter button, then click on the image to count the entity. Or just type in a count";
+            public const string CounterValue = "0";              // Default for: counters
+            public const string CounterWidth = "80";
+            public const string FixedChoiceTooltip = "Choose an item from the menu";
+            public const string FixedChoiceValue = "";
+            public const string FixedChoiceWidth = "100";
+
+            public const string FlagTooltip = "Toggle between true and false";
+            public const string FlagValue = Constants.Boolean.False;             // Default for: flags
+            public const string FlagWidth = "20";
+            public const string NoteTooltip = "Write a textual note";
+            public const string NoteValue = "";                  // Default for: notes
+            public const string NoteWidth = "100";
+
+            // TODOSAUL: can this be removed?
+            public const string ListValue = "";                  // Default for: list
+
+            // standard columns
+            public const string DateTooltip = "Date the image was taken";
+            public const string DateValue = "";                  // Default for: date image was taken
+            public const string DateWidth = "100";
+            public const string FileTooltip = "The image file name";
+            public const string FileValue = "";                  // Default for: the file name
+            public const string FileWidth = "100";
+
+            public const string FolderTooltip = "Name of the folder containing the images";
+            public const string FolderValue = "";                // Default for: the folder path
+            public const string FolderWidth = "100";
+            public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read";
+            public const string ImageQualityValue = "";          // Default for: time image was taken
+            public const string ImageQualityWidth = "80";
+
+            public const string MarkForDeletionTooltip = "Mark an image as one to be deleted. You can then confirm deletion through the Edit Menu";
+            public const string TimeTooltip = "Time the image was taken";
+            public const string TimeValue = "";                  // Default for: time image was taken
+            public const string TimeWidth = "100";
         }
 
         public static class Database
@@ -68,7 +115,6 @@ namespace Timelapse
         {
             public const string Data = "Data";                 // the data describing the attributes of that control
             public const string Date = "Date";
-            public const string DeleteFlag = "DeleteFlag";    // a flag data type for marking deletion
             public const string File = "File";
             public const string Folder = "Folder";
             public const string ID = "Id";
@@ -177,7 +223,7 @@ namespace Timelapse
             }
         }
 
-        public class ImageXml
+        public static class ImageXml
         {
             // standard elements, always included but not always made visible
             public const string Date = "_Date";
