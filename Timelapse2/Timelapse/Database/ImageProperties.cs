@@ -79,7 +79,12 @@ namespace Timelapse.Database
                 // scanning through images with BitmapCacheOption.None results in less than 6% CPU in BitmapFrame.Create() and
                 // 90% in System.Windows.Application.Run(), suggesting little scope for optimization within Timelapse proper
                 // this is significantly faster than BitmapCacheOption.Default
-                return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
+                //SAULTODO: Unfortunately, using BitmapCacheOption.None locks the file as it is being accessed (rather than a memory copy being created when using a cache)
+                //SAULTODO: This means we cannot do any file operations on it, which is necessery if we want to delete the image through the Delete Image(s) menu option.
+                //SAULTODO: One solution is to pass a parameter to this function that specifies whether to use the cache or not, but that means changes to all the calling code
+                //SAULTODO: So I will defer that until I know that no other solution exists.
+                //return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
+                return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
             }
             catch
             {

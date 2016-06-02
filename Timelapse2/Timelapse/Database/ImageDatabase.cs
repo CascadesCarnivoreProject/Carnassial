@@ -895,9 +895,17 @@ namespace Timelapse.Database
         }
 
         // Find the next displayable image after the provided row in the current image set
+        // If there is no next displayable image, then find the first previous image before the provided row that is dispay
         public int FindFirstDisplayableImage(int firstRowInSearch)
         {
             for (int row = firstRowInSearch; row < this.CurrentlySelectedImageCount; row++)
+            {
+                if (this.IsImageDisplayable(row))
+                {
+                    return row;
+                }
+            }
+            for (int row = firstRowInSearch -1 ; row >= 0; row--)
             {
                 if (this.IsImageDisplayable(row))
                 {

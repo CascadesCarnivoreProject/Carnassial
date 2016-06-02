@@ -115,6 +115,20 @@ namespace Timelapse
         /// </summary>
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
+            // Don't allow the user to delete ALL their data. 
+            // TODOSAUL: Need a general fix to this throughout, where we allow for an empty dataset 
+            if (this.deleteData && (this.deletedImageTable.Rows.Count >= this.database.GetImageCount()))
+            {
+                DialogMessageBox dlgMsg = new DialogMessageBox();
+                dlgMsg.IconType = MessageBoxImage.Error;
+                dlgMsg.MessageTitle = "You can't delete all your images";
+                dlgMsg.MessageProblem = "You can't delete all your images";
+                dlgMsg.MessageReason = "Timelapse must have at least one image to display.";
+                dlgMsg.MessageSolution = "Select only a subset of images to delete.";
+                dlgMsg.ShowDialog();
+                this.DialogResult = false;
+                return;
+            }
             List<long> imagesIDsToDelete = new List<long>();
             Mouse.OverrideCursor = Cursors.Wait;
             for (int i = 0; i < this.deletedImageTable.Rows.Count; i++)
@@ -146,6 +160,8 @@ namespace Timelapse
         /// <summary>
         /// Create a backup of the current image file in the backup folder
         /// </summary>
+        /// SAULTODO: For some reason, it won't delete a corrupted file because there is an access violation
+        /// SAULTODO: I suspect that elsewhere in the code the image is being opened when it is initially checked but not released. Need track this down...
         private bool TryMoveImageToBackupFolder(string folderPath, ImageProperties imageProperties)
         {
             string sourceFilePath = imageProperties.GetImagePath(folderPath);
@@ -153,25 +169,47 @@ namespace Timelapse
             {
                 return false;  // If there is no source file, its a missing file so we can't back it up
             }
-
+            
             // Create a new target folder, if necessary.
             string destinationFolder = Path.Combine(folderPath, Constants.File.BackupFolder);
             if (!Directory.Exists(destinationFolder))
             {
                 Directory.CreateDirectory(destinationFolder);
             }
-
+            
             // Move the image file to another location. 
             // However, if the destination file already exists don't overwrite it as it's probably the original version.
             // TODOSAUL: is it really OK if backups are lossy?
+            // Move the image file to another location. 
+            // This will overwrite the destination file if it already exists.
             string destinationFilePath = Path.Combine(destinationFolder, imageProperties.FileName);
-            if (!File.Exists(destinationFilePath))
+            //System.Diagnostics.Debug.Print(sourceFilePath + " " + destinationFilePath);
+            if (File.Exists(destinationFilePath))
             {
-                File.Move(sourceFilePath, destinationFilePath);
-                return true;
+                try
+                {
+                    File.Delete(sourceFilePath);
+                    return true;
+                }
+                catch (IOException e)
+                {
+                    System.Diagnostics.Debug.Print(e.Message);
+                    return false;
+                }
             }
-
-            return false;
+            else
+            {
+                try
+                {
+                    File.Move(sourceFilePath, destinationFilePath);
+                    return true;
+                }
+                catch (IOException e)
+                {
+                    System.Diagnostics.Debug.Print(e.Message);
+                    return false;
+                }
+            }
         }
         #endregion
 

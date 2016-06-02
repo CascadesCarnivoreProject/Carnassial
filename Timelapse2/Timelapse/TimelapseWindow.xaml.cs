@@ -1390,7 +1390,14 @@ namespace Timelapse
             // I tested this, and it seems that this code would not be triggered anyways, so perhaps nothing needs to be done about this. 
         }
 
+        // Show the image in the current row, forcing a refresh of that image. 
         private void ShowImage(int newImageRow)
+        {
+            ShowImage(newImageRow, false);
+        }
+
+        // Show the image in the current row
+        private void ShowImage(int newImageRow, bool forceRefresh)
         {
             // for the bitmap caching logic below to work this should be the only place where code in TimelapseWindow moves the image enumerator
             bool newImageToDisplay;
@@ -1446,6 +1453,7 @@ namespace Timelapse
             // this avoids unnecessary image reloads and refreshes in cases where ShowImage() is just being called to refresh controls
             // the image row can't be tested against as its meaning changes when filters are changed; use the image ID as that's both
             // unique and immutable
+            if (forceRefresh) newImageToDisplay = true;
             if (newImageToDisplay)
             {
                 WriteableBitmap unalteredImage = this.imageCache.Current.LoadWriteableBitmap(this.imageDatabase.FolderPath);
@@ -2190,14 +2198,19 @@ namespace Timelapse
             bool? result = deleteImageDialog.ShowDialog();
             if (result == true)
             {
-                // Shows the deleted image placeholder // (although if it is already marked as corrupted, it will show the corrupted image placeholder)
-                if (sendingMenuItem.Name.Equals(this.MenuItemDeleteImageAndData.Name))
+                int currentRow = this.imageCache.CurrentRow;
+                // Shows the missing image placeholder 
+                // If it is already marked as corrupted, it will show the corrupted image placeholder)
+                if (sendingMenuItem.Name.Equals(this.MenuItemDeleteImageAndData.Name)) // If we deleted the data and image, then show the previous image.
                 {
-                    this.SetImageFilterAndIndex(this.imageCache.CurrentRow - 1, this.state.ImageFilter);
-                }
+                    this.SetImageFilterAndIndex(0, this.state.ImageFilter); // As we have deleted an image and its data, reset the filter to retrieve the remaining images
+                    ShowFirstDisplayableImage(currentRow);
+                    //this.imageCache.MoveToClosestImagePossible(currentRow); // then try to show an image closest to the one we have deleted
+                    //this.ShowImage(this.imageCache.CurrentRow, true);       
+    }
                 else
                 {
-                    this.ShowImage(this.imageCache.CurrentRow);
+                    this.ShowImage(this.imageCache.CurrentRow, true); // We only deleted the image, not the data. ShowImage with a forced refresh shows the missing image placeholder
                 }
             }
         }
@@ -2237,7 +2250,23 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
+                this.imageCache.MovePrevious();
                 this.SetImageFilterAndIndex(this.imageCache.CurrentRow, this.state.ImageFilter);
+                if (mi.Name.Equals("MenuItemDeleteImages"))
+                {
+                    // ShowImage to force a refresh of the current image, required to show the missing image placeholde
+                    this.ShowImage(this.imageCache.CurrentRow, true); 
+                }
+                else
+                {
+                    int currentRow = this.imageCache.CurrentRow;
+                    
+                    this.SetImageFilterAndIndex(0, this.state.ImageFilter); // As we have deleted an image and its data, reset the filter to retrieve the remaining images
+
+                    ShowFirstDisplayableImage(currentRow);                      // Of course, this won't really work as the current row may not point to the (non deleted) image the user may have been on...
+                    //this.imageCache.MoveToClosestImagePossible(this.imageCache.CurrentRow);
+                    //this.ShowImage(this.imageCache.CurrentRow, true);
+                }
             }
         }
 

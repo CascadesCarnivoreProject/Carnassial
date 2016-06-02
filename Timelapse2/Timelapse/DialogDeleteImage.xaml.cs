@@ -92,6 +92,19 @@ namespace Timelapse
         /// </summary>
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
+            // Don't allow the user to delete ALL their data. 
+            // TODOSAUL: Need a general fix to this throughout, where we allow for an empty dataset 
+            if (this.database.GetImageCount() == 1)
+            {
+                DialogMessageBox dlgMsg = new DialogMessageBox();
+                dlgMsg.IconType = MessageBoxImage.Error;
+                dlgMsg.MessageTitle = "You can't delete all last image";
+                dlgMsg.MessageProblem = "You can't delete  your last image";
+                dlgMsg.MessageReason = "Timelapse must have at least one image to display.";
+                dlgMsg.ShowDialog();
+                this.DialogResult = false;
+                return;
+            }
             this.MoveImageToBackupFolder();
             if (this.deleteData)
             {
@@ -125,8 +138,8 @@ namespace Timelapse
             if (File.Exists(destinationPath))
             {
                 File.Delete(destinationPath);
-                File.Move(sourcePath, destinationPath);
             }
+            File.Move(sourcePath, destinationPath);
         }
         #endregion
     }
