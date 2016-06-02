@@ -16,7 +16,7 @@ namespace Timelapse.Util
             set { this.ContentControl.Text = value; }
         }
 
-        public DataEntryNote(string dataLabel, Controls dataEntryControls, bool createContextMenu) : 
+        public DataEntryNote(string dataLabel, DataEntryControls dataEntryControls, bool createContextMenu) : 
             base(dataLabel, dataEntryControls, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.LabelCodeBar, createContextMenu)
         {
             // Modify the context menu so it can have a propage submenu

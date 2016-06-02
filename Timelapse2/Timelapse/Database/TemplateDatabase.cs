@@ -54,7 +54,7 @@ namespace Timelapse.Database
         /// </summary>
         public DataTable TemplateTable { get; private set; }
 
-        public void AddControl(string controlType)
+        public DataRow AddControl(string controlType)
         {
             // create the row for the new control in the data table
             DataRow newRow = this.TemplateTable.NewRow();
@@ -120,6 +120,7 @@ namespace Timelapse.Database
             // update the in memory table to reflect current database content
             // could just add the new row to the table but this is done in case a bug results in the insert lacking perfect fidelity
             this.TemplateTable = this.GetControlsSortedByControlOrder();
+            return this.TemplateTable.Rows[this.TemplateTable.Rows.Count - 1];
         }
 
         public void Dispose()
@@ -193,6 +194,11 @@ namespace Timelapse.Database
 
             // it's possible the passed data row isn't attached to TemplateTable, so refresh the table just in case
             this.TemplateTable = this.GetControlsSortedByControlOrder();
+        }
+
+        public void SyncTemplateTableToDatabase()
+        {
+            this.SyncTemplateTableToDatabase(this.TemplateTable);
         }
 
         public void SyncTemplateTableToDatabase(DataTable newTable)

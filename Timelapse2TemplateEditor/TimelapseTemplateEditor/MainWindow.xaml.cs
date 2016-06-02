@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -25,29 +26,31 @@ namespace TimelapseTemplateEditor
         private TemplateDatabase templateDatabase;
 
         // Booleans for tracking state
-        private bool rowsActionsOn = false;
-        private bool tabWasPressed = false; // to make tab trigger row update.
+        private bool generateControlsAndSpreadsheet;
+        private bool rowsActionsOn;
+        private bool tabWasPressed; // to make tab trigger row update.
 
         // These variables support the drag/drop of controls
         private bool isMouseDown;
         private bool isMouseDragging;
         private Point startPoint;
         private UIElement realMouseDragSource;
-        private UIElement dummyMouseDragSource = new UIElement();
+        private UIElement dummyMouseDragSource;
 
         /// <summary>
         /// Starts the UI.
         /// </summary>
         public MainWindow()
         {
-            this.GenerateControlsAndSpreadsheet = true;
+            this.dummyMouseDragSource = new UIElement();
+            this.generateControlsAndSpreadsheet = true;
+            this.rowsActionsOn = false;
+            this.tabWasPressed = false;
 
             this.InitializeComponent();
             this.Closing += this.MainWindow_Closing;
             this.ShowAllColumnsMenuItem_Click(this.ShowAllColumns, null);
         }
-
-        public bool GenerateControlsAndSpreadsheet { get; set; }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -91,7 +94,7 @@ namespace TimelapseTemplateEditor
         /// </summary>
         /// <param name="templateDatabaseFilePath">The path of the DB file created or loaded</param>
         /// <param name="ourTableName">The name of the table loaded in the DB file. Always the same in the current implementation</param>
-        public void InitializeDataGrid(string templateDatabaseFilePath, string ourTableName)
+        private void InitializeDataGrid(string templateDatabaseFilePath, string ourTableName)
         {
             MyTrace.MethodName("DG");
 
@@ -113,14 +116,14 @@ namespace TimelapseTemplateEditor
 
             // Update the user interface specified by the contents of the table
             // Change the help text message
-            ControlGeneration.GenerateControls(this, this.wp, this.templateDatabase.TemplateTable);
+            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
             this.InitializeUI();
         }
 
         // Reload a database into the grid. We do this as part of the convert, where we create the database, but then have to reinitialize the datagrid if we want to see the results.
         // So this is actually a reduced form of INitializeDataGrid
-        public void ReInitializeDataGrid(string templateDatabaseFilePath, string ourTableName)
+        private void ReInitializeDataGrid(string templateDatabaseFilePath)
         {
             MyTrace.MethodName("DG");
 
@@ -135,8 +138,7 @@ namespace TimelapseTemplateEditor
             this.templateDatabase.TemplateTable.RowChanged += this.TemplateTable_RowChanged;
 
             // Update the user interface specified by the contents of the table
-            DataTable tempTable = this.templateDatabase.TemplateTable.Clone();
-            ControlGeneration.GenerateControls(this, this.wp, tempTable);
+            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
             this.InitializeUI();
         }
@@ -151,9 +153,9 @@ namespace TimelapseTemplateEditor
             MyTrace.MethodName("DB");
 
             this.templateDatabase.SyncControlToDatabase(row);
-            if (this.GenerateControlsAndSpreadsheet)
+            if (this.generateControlsAndSpreadsheet)
             {
-                ControlGeneration.GenerateControls(this, this.wp, this.templateDatabase.TemplateTable);
+                EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
                 this.GenerateSpreadsheet();
             }
         }
@@ -171,7 +173,7 @@ namespace TimelapseTemplateEditor
         }
         #endregion Data Changed Listeners and Methods=
 
-        #region Datagrid Row Modifyiers listeners and methods
+        #region Datagrid Row Modifiers listeners and methods
         /// <summary>
         /// Logic to enable/disable editing buttons depending on there being a row selection
         /// Also sets the text for the remove row button.
@@ -184,17 +186,20 @@ namespace TimelapseTemplateEditor
             {
                 this.RemoveControlButton.IsEnabled = false;
                 this.RemoveControlButton.Content = "Remove";
+                return;
             }
-            else if (selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.File) ||
-                     selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.Folder) ||
-                     selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.Date) ||
-                     selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.Time) ||
-                     selectedRowView.Row[Constants.DatabaseColumn.Type].Equals(Constants.DatabaseColumn.ImageQuality))
+
+            string controlType = (string)selectedRowView.Row[Constants.DatabaseColumn.Type];
+            if ((controlType == Constants.DatabaseColumn.File) ||
+                (controlType == Constants.DatabaseColumn.Folder) ||
+                (controlType == Constants.DatabaseColumn.Date) ||
+                (controlType == Constants.DatabaseColumn.Time) ||
+                (controlType == Constants.DatabaseColumn.ImageQuality))
             {
                 this.RemoveControlButton.IsEnabled = false;
                 this.RemoveControlButton.Content = "Item cannot" + Environment.NewLine + "be removed";
             }
-            else if (selectedRowView != null)
+            else
             {
                 this.RemoveControlButton.IsEnabled = true;
                 this.RemoveControlButton.Content = "Remove";
@@ -212,7 +217,7 @@ namespace TimelapseTemplateEditor
             this.templateDatabase.AddControl(controlType);
 
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
-            ControlGeneration.GenerateControls(this, this.wp, this.templateDatabase.TemplateTable);
+            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.OnControlOrderChanged();
         }
 
@@ -228,16 +233,11 @@ namespace TimelapseTemplateEditor
                 // nothing to do
                 return;
             }
+
             string controlType = (string)selectedRowView.Row[Constants.DatabaseColumn.Type];
-            if (controlType == Constants.DatabaseColumn.Date ||
-                controlType == Constants.Control.DeleteFlag || // data label and column name in the DataTable for images is MarkForDeletion
-                controlType == Constants.DatabaseColumn.File ||
-                controlType == Constants.DatabaseColumn.Folder ||
-                controlType == Constants.DatabaseColumn.ImageQuality ||
-                controlType == Constants.DatabaseColumn.Time)
+            if (EditorControls.IsStandardControlType(controlType))
             {
                 // standard controls cannot be removed
-                // TODOSAUL: this code relies on type being set to the data label rather than the type of the control; isn't this a bug?
                 return;
             }
 
@@ -245,7 +245,7 @@ namespace TimelapseTemplateEditor
             this.templateDatabase.RemoveControl(selectedRowView.Row);
 
             // update the control panel so it reflects the current values in the database
-            ControlGeneration.GenerateControls(this, this.wp, this.templateDatabase.TemplateTable);
+            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
 
             this.rowsActionsOn = false;
@@ -390,12 +390,12 @@ namespace TimelapseTemplateEditor
                                 int index = this.TemplateDataGrid.CurrentCell.Column.DisplayIndex;
                                 if (e.Text == "t" || e.Text == "T")
                                 {
-                                    dataRow.Row[index] = "true";
+                                    dataRow.Row[index] = Constants.Boolean.True;
                                     this.SyncControlToDatabase(dataRow.Row);
                                 }
                                 else if (e.Text == "f" || e.Text == "F")
                                 {
-                                    dataRow.Row[index] = "false";
+                                    dataRow.Row[index] = Constants.Boolean.False;
                                     this.SyncControlToDatabase(dataRow.Row);
                                 }
                                 e.Handled = true;
@@ -418,6 +418,7 @@ namespace TimelapseTemplateEditor
             }
             return true;
         }
+
         // Helper function for the above
         private bool AreAllValidAlphaNumericChars(string str)
         {
@@ -495,7 +496,7 @@ namespace TimelapseTemplateEditor
             }
 
             TextBox t = e.EditingElement as TextBox;
-            string datalabel = t.Text;
+            string dataLabel = t.Text;
 
             // Create a list of existing data labels, so we can compare the data label against it for a unique names
             List<string> data_label_list = new List<string>();
@@ -505,7 +506,7 @@ namespace TimelapseTemplateEditor
             }
 
             // Check to see if the data label is empty. If it is, generate a unique data label and warn the user
-            if (datalabel.Trim().Equals(String.Empty))
+            if (dataLabel.Trim().Equals(String.Empty))
             {
                 // We need to generate a unique new datalabel  
                 int suffix = 1;
@@ -529,7 +530,7 @@ namespace TimelapseTemplateEditor
             // Check to see if the data label is unique. If not, generate a unique data label and warn the user
             for (int i = 0; i < this.templateDatabase.TemplateTable.Rows.Count; i++)
             {
-                if (datalabel.Equals((string)this.templateDatabase.TemplateTable.Rows[i][Constants.Control.DataLabel]))
+                if (dataLabel.Equals((string)this.templateDatabase.TemplateTable.Rows[i][Constants.Control.DataLabel]))
                 {
                     if (this.TemplateDataGrid.SelectedIndex == i)
                     {
@@ -538,12 +539,12 @@ namespace TimelapseTemplateEditor
 
                     // We need to generate a unique new datalabel  
                     int suffix = 1;
-                    string candidate_datalabel = datalabel + suffix.ToString();
+                    string candidate_datalabel = dataLabel + suffix.ToString();
                     while (data_label_list.Contains(candidate_datalabel))
                     {
                         // Keep on incrementing the suffix until the datalabel is not in the list
                         suffix++;
-                        candidate_datalabel = datalabel + suffix.ToString();
+                        candidate_datalabel = dataLabel + suffix.ToString();
                     }
                     DialogMessageBox dlgMB = new DialogMessageBox();
                     dlgMB.IconType = MessageBoxImage.Warning;
@@ -561,16 +562,16 @@ namespace TimelapseTemplateEditor
             // Check to see if the label (if its not empty, which it shouldn't be) has any illegal characters.
             // Note that most of this is redundant, as we have already checked for illegal characters as they are typed. However,
             // we have not checked to see if the first letter is alphabetic.
-            if (datalabel.Length > 0)
+            if (dataLabel.Length > 0)
             {
                 Regex alphanumdash = new Regex("^[a-zA-Z0-9_]*$");
                 Regex alpha = new Regex("^[a-zA-Z]*$");
 
-                string first_letter = datalabel[0].ToString();
+                string first_letter = dataLabel[0].ToString();
 
-                if (!(alpha.IsMatch(first_letter) && alphanumdash.IsMatch(datalabel)))
+                if (!(alpha.IsMatch(first_letter) && alphanumdash.IsMatch(dataLabel)))
                 {
-                    string candidate_datalabel = datalabel;
+                    string candidate_datalabel = dataLabel;
 
                     if (!alpha.IsMatch(first_letter))
                     {
@@ -591,10 +592,9 @@ namespace TimelapseTemplateEditor
             }
 
             // Check to see if its a reserved word
-            datalabel = datalabel.ToUpper();
-            foreach (string s in EditorConstant.ReservedSqlKeywords)
+            foreach (string sqlKeyword in EditorConstant.ReservedSqlKeywords)
             {
-                if (s.Equals(datalabel))
+                if (String.Equals(sqlKeyword, dataLabel, StringComparison.OrdinalIgnoreCase))
                 {
                     DialogMessageBox dlgMB = new DialogMessageBox();
                     dlgMB.IconType = MessageBoxImage.Warning;
@@ -620,49 +620,51 @@ namespace TimelapseTemplateEditor
         /// This is called after row are added/moved/deleted to update the colors. 
         /// This also disables checkboxes that cannot be edited. Disabling checkboxes does not effect row interactions.
         /// </summary>
-        public void UpdateCellColors()
+        private void UpdateCellColors()
         {
-            for (int i = 0; i < this.TemplateDataGrid.Items.Count; i++)
+            for (int rowIndex = 0; rowIndex < this.TemplateDataGrid.Items.Count; rowIndex++)
             {
-                DataGridRow row = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(i);
+                DataGridRow row = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex);
                 if (row != null)
                 {
                     DataGridCellsPresenter presenter = GetVisualChild<DataGridCellsPresenter>(row);
-                    for (int j = 0; j < this.TemplateDataGrid.Columns.Count; j++)
+                    for (int column = 0; column < this.TemplateDataGrid.Columns.Count; column++)
                     {
                         // The following attributes should always be editable.
                         // Note that this is hardwired to the header names in the xaml file, so this could break if that ever changes.. should probably do this so it works no matter what the header text is of the table
-                        if (this.TemplateDataGrid.Columns[j].Header.Equals("Width") || this.TemplateDataGrid.Columns[j].Header.Equals("Visible") || this.TemplateDataGrid.Columns[j].Header.Equals("Label") || this.TemplateDataGrid.Columns[j].Header.Equals("Tooltip"))
+                        string columnHeader = (string)this.TemplateDataGrid.Columns[column].Header;
+                        if ((columnHeader == EditorConstant.Control.Width) || (columnHeader == Constants.Control.Visible) || (columnHeader == Constants.Control.Label) || (columnHeader == Constants.Control.Tooltip))
                         {
                             continue;
                         }
 
                         // The following attributes should NOT be editable.
-                        DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(j);
-                        DataRowView thisRow = (DataRowView)this.TemplateDataGrid.Items[i];
+                        DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
+                        DataRowView thisRow = (DataRowView)this.TemplateDataGrid.Items[rowIndex];
 
                         // more constants to access checkbox columns and combobox columns.
                         // the sortmemberpath is include, not the sort name, so we are accessing by head, which may change.
-                        if (this.TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.DatabaseColumn.ID) ||
-                            this.TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.Control.ControlOrder) ||
-                            this.TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.Control.SpreadsheetOrder) ||
-                            this.TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.DatabaseColumn.Type) ||
-                            thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.File) ||
-                            thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.Folder) ||
-                            thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.Date) ||
-                            thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.Time) ||
-                            thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.Control.DeleteFlag) ||
-                            (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.Control.Counter) && this.TemplateDataGrid.Columns[j].Header.Equals(Constants.Control.List)) ||
-                            (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.Control.Note) && this.TemplateDataGrid.Columns[j].Header.Equals(Constants.Control.List)) ||
-                            (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.File) && this.TemplateDataGrid.Columns[j].Header.Equals(Constants.Control.Copyable)) ||
-                            (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.Folder) && this.TemplateDataGrid.Columns[j].Header.Equals(Constants.Control.Copyable)) ||
-                            (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.Date) && this.TemplateDataGrid.Columns[j].Header.Equals(Constants.Control.Copyable)) ||
-                            (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.Time) && this.TemplateDataGrid.Columns[j].Header.Equals(Constants.Control.Copyable)) ||
-                            (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.ImageQuality) && this.TemplateDataGrid.Columns[j].Header.Equals("Data Label")) ||
-                            (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.ImageQuality) && this.TemplateDataGrid.Columns[j].Header.Equals("List")) ||
-                            (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.ImageQuality) && this.TemplateDataGrid.Columns[j].Header.Equals(Constants.Control.Copyable)) ||
-                            (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.ImageQuality) && this.TemplateDataGrid.Columns[j].Header.Equals("List")) ||
-                            (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.ImageQuality) && this.TemplateDataGrid.Columns[j].SortMemberPath.Equals(Constants.Control.DefaultValue)))
+                        string controlType = (string)thisRow.Row[Constants.DatabaseColumn.Type];
+                        string sortMemberPath = this.TemplateDataGrid.Columns[column].SortMemberPath;
+                        if ((sortMemberPath == Constants.DatabaseColumn.ID) ||
+                            (sortMemberPath == Constants.Control.ControlOrder) ||
+                            (sortMemberPath == Constants.Control.SpreadsheetOrder) ||
+                            (sortMemberPath == Constants.DatabaseColumn.Type) ||
+                            (controlType == Constants.DatabaseColumn.Date) ||
+                            (controlType == Constants.Control.DeleteFlag) ||
+                            (controlType == Constants.DatabaseColumn.File) ||
+                            (controlType == Constants.DatabaseColumn.Folder) ||
+                            ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.Copyable)) ||
+                            ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == EditorConstant.Control.DataLabel)) ||
+                            ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.List)) ||
+                            ((controlType == Constants.DatabaseColumn.ImageQuality) && (sortMemberPath == Constants.Control.DefaultValue)) ||
+                            (controlType == Constants.DatabaseColumn.Time) ||
+                            ((controlType == Constants.Control.Counter) && (columnHeader == Constants.Control.List)) ||
+                            ((controlType == Constants.Control.Note) && (columnHeader == Constants.Control.List)) ||
+                            ((controlType == Constants.DatabaseColumn.Date) && (columnHeader == Constants.Control.Copyable)) ||
+                            ((controlType == Constants.DatabaseColumn.File) && (columnHeader == Constants.Control.Copyable)) ||
+                            ((controlType == Constants.DatabaseColumn.Folder) && (columnHeader == Constants.Control.Copyable)) ||
+                            ((controlType == Constants.DatabaseColumn.Time) && (columnHeader == Constants.Control.Copyable)))
                         {
                             cell.Background = EditorConstant.NotEditableCellColor;
                             cell.Foreground = Brushes.Gray;
@@ -676,7 +678,7 @@ namespace TimelapseTemplateEditor
                                 {
                                     checkbox.IsEnabled = false;
                                 }
-                                else if (thisRow.Row.ItemArray[EditorConstant.DataGridTypeColumnIndex].Equals(Constants.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[j].Header.Equals("List"))
+                                else if ((controlType == Constants.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[column].Header.Equals("List"))
                                 {
                                     cell.IsEnabled = false; // Don't let users edit the ImageQuality menu
                                 }
@@ -685,12 +687,12 @@ namespace TimelapseTemplateEditor
                         else
                         {
                             cell.ClearValue(DataGridCell.BackgroundProperty); // otherwise when scrolling cells offscreen get colored randomly
-                            var cp = cell.Content as ContentPresenter;
+                            ContentPresenter cellContent = cell.Content as ContentPresenter;
 
                             // if cell has a checkbox, enable it.
-                            if (cp != null)
+                            if (cellContent != null)
                             {
-                                var checkbox = cp.ContentTemplate.FindName("CheckBox", cp) as CheckBox;
+                                CheckBox checkbox = cellContent.ContentTemplate.FindName("CheckBox", cellContent) as CheckBox;
                                 if (checkbox != null)
                                 {
                                     checkbox.IsEnabled = true;
@@ -715,7 +717,7 @@ namespace TimelapseTemplateEditor
         /// WPF does not make it easy to get to the actual cells.
         /// Code from: http://techiethings.blogspot.com/2010/05/get-wpf-datagrid-row-and-cell.html
         /// </summary>
-        public static T GetVisualChild<T>(Visual parent) where T : Visual
+        private static T GetVisualChild<T>(Visual parent) where T : Visual
         {
             T child = default(T);
             int numVisuals = VisualTreeHelper.GetChildrenCount(parent);
@@ -745,7 +747,7 @@ namespace TimelapseTemplateEditor
             this.TemplateDataGrid.CommitEdit(); // to apply edits that the enter key was not pressed
 
             // Configure save file dialog box
-            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            SaveFileDialog dlg = new SaveFileDialog();
             dlg.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
             dlg.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
             dlg.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
@@ -757,7 +759,7 @@ namespace TimelapseTemplateEditor
             // Process save file dialog box results 
             if (result == true)
             {
-                this.SaveDbBackup();
+                this.TrySaveDatabaseBackupFile();
 
                 // Overwrite the file if it exists
                 if (File.Exists(dlg.FileName))
@@ -777,7 +779,7 @@ namespace TimelapseTemplateEditor
         {
             this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
 
-            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            OpenFileDialog dlg = new OpenFileDialog();
             dlg.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
             dlg.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
             dlg.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
@@ -789,7 +791,7 @@ namespace TimelapseTemplateEditor
             // Process open file dialog box results 
             if (result == true)
             {
-                this.SaveDbBackup();
+                this.TrySaveDatabaseBackupFile();
 
                 // Open document 
                 this.InitializeDataGrid(dlg.FileName, Constants.Database.TemplateTable);
@@ -807,15 +809,21 @@ namespace TimelapseTemplateEditor
 
             foreach (DataGridColumn col in this.TemplateDataGrid.Columns)
             {
-                if (!mi.IsChecked && (col.Header.Equals("ID") || col.Header.Equals("Control\norder") || col.Header.Equals("Spreadsheet\norder")))
+                if (!mi.IsChecked && 
+                    (col.Header.Equals(EditorConstant.Control.ID) || col.Header.Equals(EditorConstant.Control.ControlOrder) || col.Header.Equals(EditorConstant.Control.SpreadsheetOrder)))
                 {
                     col.MinWidth = 0;
                     col.Width = new DataGridLength(0);
                 }
                 else
                 {
-                    col.MinWidth = (col.Header.Equals("Visible") || col.Header.Equals("Copyable") || col.Header.Equals("Width")) ? 65 : 90;
-                    if (col.Header.Equals("Tooltip"))
+                    col.MinWidth = 90;
+                    if (col.Header.Equals(Constants.Control.Visible) || col.Header.Equals(Constants.Control.Copyable) || col.Header.Equals(EditorConstant.Control.Width))
+                    {
+                        col.MinWidth = 65;
+                    }
+
+                    if (col.Header.Equals(Constants.Control.Tooltip))
                     {
                         col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
                     }
@@ -834,17 +842,17 @@ namespace TimelapseTemplateEditor
             this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
 
             // Get the name of the Code Template file to open
-            Microsoft.Win32.OpenFileDialog dlg1 = new Microsoft.Win32.OpenFileDialog();
-            dlg1.FileName = Path.GetFileName(Constants.File.XmlDataFileName); // Default file name
+            OpenFileDialog codeTemplateFile = new OpenFileDialog();
+            codeTemplateFile.FileName = Path.GetFileName(Constants.File.XmlDataFileName); // Default file name
             string xmlDataFileExtension = Path.GetExtension(Constants.File.XmlDataFileName);
-            dlg1.DefaultExt = xmlDataFileExtension; // Default file extension
-            dlg1.Filter = "Code Template Files (" + xmlDataFileExtension + ")|*" + xmlDataFileExtension; // Filter files by extension 
-            dlg1.Title = "Select Code Template File to convert...";
+            codeTemplateFile.DefaultExt = xmlDataFileExtension; // Default file extension
+            codeTemplateFile.Filter = "Code Template Files (" + xmlDataFileExtension + ")|*" + xmlDataFileExtension; // Filter files by extension 
+            codeTemplateFile.Title = "Select Code Template File to convert...";
 
-            Nullable<bool> result = dlg1.ShowDialog(); // Show the open file dialog box
+            Nullable<bool> result = codeTemplateFile.ShowDialog(); // Show the open file dialog box
             if (result == true)
             {
-                codeTemplateFileName = dlg1.FileName;  // Process open file dialog box results 
+                codeTemplateFileName = codeTemplateFile.FileName;  // Process open file dialog box results 
             }
             else
             {
@@ -852,53 +860,53 @@ namespace TimelapseTemplateEditor
             }
 
             // Get the name of the new database file to create (over-writes it if it exists)
-            Microsoft.Win32.SaveFileDialog dlg2 = new Microsoft.Win32.SaveFileDialog();
-            dlg2.Title = "Select Location to Save the Converted Template File";
-            dlg2.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name
-            dlg2.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
-            dlg2.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
-            result = dlg2.ShowDialog(); // Show open file dialog box
+            SaveFileDialog templateDatabaseFile = new SaveFileDialog();
+            templateDatabaseFile.Title = "Select Location to Save the Converted Template File";
+            templateDatabaseFile.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name
+            templateDatabaseFile.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
+            templateDatabaseFile.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            result = templateDatabaseFile.ShowDialog(); // Show open file dialog box
 
             // Process open file dialog box results 
             if (result == true)
             {
-                this.SaveDbBackup();
+                this.TrySaveDatabaseBackupFile();
 
                 // Overwrite the file if it exists
-                if (File.Exists(dlg2.FileName))
+                if (File.Exists(templateDatabaseFile.FileName))
                 {
-                    File.Delete(dlg2.FileName);
+                    File.Delete(templateDatabaseFile.FileName);
                 }
             }
 
             // Start with the default layout of the data template
-            this.InitializeDataGrid(dlg2.FileName, Constants.Database.TemplateTable);
+            this.InitializeDataGrid(templateDatabaseFile.FileName, Constants.Database.TemplateTable);
 
             // Now convert the code template file into a Data Template, overwriting values and adding rows as required
             Mouse.OverrideCursor = Cursors.Wait;
 
-            List<string> error_messages = new List<string>();
+            this.generateControlsAndSpreadsheet = false;
+            List<string> conversionErrors;
             CodeTemplateImporter importer = new CodeTemplateImporter();
-            DataTable convertedTable = importer.Convert(this, codeTemplateFileName, this.templateDatabase.TemplateTable, ref error_messages);
-            this.GenerateControlsAndSpreadsheet = true;
-            this.templateDatabase.SyncTemplateTableToDatabase(convertedTable);
+            importer.Import(codeTemplateFileName, this.templateDatabase, out conversionErrors);
+            this.generateControlsAndSpreadsheet = true;
 
-            ControlGeneration.GenerateControls(this, this.wp, this.templateDatabase.TemplateTable);
+            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
-            this.ReInitializeDataGrid(this.templateDatabase.FilePath, Constants.Database.TemplateTable);
+            this.ReInitializeDataGrid(this.templateDatabase.FilePath);
             Mouse.OverrideCursor = null;
-            if (error_messages.Count > 0)
+            if (conversionErrors.Count > 0)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.IconType = MessageBoxImage.Warning;
                 dlgMB.MessageTitle = "One or more Data Labels were problematic";
-                dlgMB.MessageProblem = error_messages.Count.ToString() + " of your Data Labels were problematic." + Environment.NewLine + Environment.NewLine +
+                dlgMB.MessageProblem = conversionErrors.Count.ToString() + " of your Data Labels were problematic." + Environment.NewLine + Environment.NewLine +
                               "Data Labels:" + Environment.NewLine +
                               "\u2022 must be unique," + Environment.NewLine +
                               "\u2022 can only contain alphanumeric characters and '_'," + Environment.NewLine +
                               "\u2022 cannot match particular reserved words.";
                 dlgMB.MessageResult = "We will automatically repair these Data Labels:";
-                foreach (string s in error_messages)
+                foreach (string s in conversionErrors)
                 {
                     dlgMB.MessageSolution += Environment.NewLine + "\u2022 " + s;
                 }
@@ -996,6 +1004,8 @@ namespace TimelapseTemplateEditor
                 int new_value = pairs[data_label];
                 this.templateDatabase.TemplateTable.Rows[i][Constants.Control.SpreadsheetOrder] = new_value;
             }
+
+            this.templateDatabase.SyncTemplateTableToDatabase();
         }
 
         private int FindRow(string to_find)
@@ -1014,13 +1024,13 @@ namespace TimelapseTemplateEditor
         #region Dragging and Dropping of Controls to Reorder them
         private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.Source == this.wp)
+            if (e.Source == this.controlsPanel)
             {
             }
             else
             {
                 this.isMouseDown = true;
-                this.startPoint = e.GetPosition(this.wp);
+                this.startPoint = e.GetPosition(this.controlsPanel);
             }
         }
 
@@ -1045,8 +1055,8 @@ namespace TimelapseTemplateEditor
             if (this.isMouseDown)
             {
                 if ((this.isMouseDragging == false) && 
-                    ((Math.Abs(e.GetPosition(this.wp).X - this.startPoint.X) > SystemParameters.MinimumHorizontalDragDistance) || 
-                     (Math.Abs(e.GetPosition(this.wp).Y - this.startPoint.Y) > SystemParameters.MinimumVerticalDragDistance)))
+                    ((Math.Abs(e.GetPosition(this.controlsPanel).X - this.startPoint.X) > SystemParameters.MinimumHorizontalDragDistance) || 
+                     (Math.Abs(e.GetPosition(this.controlsPanel).Y - this.startPoint.Y) > SystemParameters.MinimumVerticalDragDistance)))
                 {
                     this.isMouseDragging = true;
                     this.realMouseDragSource = e.Source as UIElement;
@@ -1068,35 +1078,36 @@ namespace TimelapseTemplateEditor
         {
             if (e.Data.GetDataPresent("UIElement"))
             {
-                UIElement droptarget = e.Source as UIElement;
-                int droptargetIndex = -1, i = 0;
-                foreach (UIElement element in this.wp.Children)
+                UIElement dropTarget = e.Source as UIElement;
+                int control = 0;
+                int dropTargetIndex = -1;
+                foreach (UIElement element in this.controlsPanel.Children)
                 {
-                    if (element.Equals(droptarget))
+                    if (element.Equals(dropTarget))
                     {
-                        droptargetIndex = i;
+                        dropTargetIndex = control;
                         break;
                     }
                     else
                     {
                         // Check if its a stack panel, and if so check to see if its children are the drop target
-                        StackPanel tsp = element as StackPanel;
-                        if (null != tsp)
+                        StackPanel stackPanel = element as StackPanel;
+                        if (null != stackPanel)
                         {
                             // Check the children...
-                            foreach (UIElement subelement in tsp.Children)
+                            foreach (UIElement subelement in stackPanel.Children)
                             {
-                                if (subelement.Equals(droptarget))
+                                if (subelement.Equals(dropTarget))
                                 {
-                                    droptargetIndex = i;
+                                    dropTargetIndex = control;
                                     break;
                                 }
                             }
                         }
                     }
-                    i++;
+                    control++;
                 }
-                if (droptargetIndex != -1)
+                if (dropTargetIndex != -1)
                 {
                     StackPanel tsp = this.realMouseDragSource as StackPanel;
                     if (null == tsp)
@@ -1104,8 +1115,8 @@ namespace TimelapseTemplateEditor
                         StackPanel parent = FindVisualParent<StackPanel>(this.realMouseDragSource);
                         this.realMouseDragSource = parent;
                     }
-                    this.wp.Children.Remove(this.realMouseDragSource);
-                    this.wp.Children.Insert(droptargetIndex, this.realMouseDragSource);
+                    this.controlsPanel.Children.Remove(this.realMouseDragSource);
+                    this.controlsPanel.Children.Insert(dropTargetIndex, this.realMouseDragSource);
                     this.OnControlOrderChanged();
                 }
 
@@ -1115,7 +1126,7 @@ namespace TimelapseTemplateEditor
             }
         }
 
-        public static T FindVisualParent<T>(UIElement element) where T : UIElement
+        private static T FindVisualParent<T>(UIElement element) where T : UIElement
         {
             UIElement parent = element;
             while (parent != null)
@@ -1132,28 +1143,28 @@ namespace TimelapseTemplateEditor
 
         private void OnControlOrderChanged()
         {
-            Dictionary<string, int> newControlIndiciesByDataLabel = new Dictionary<string, int>();
-            int controlIndex = 1;
-            foreach (UIElement element in this.wp.Children)
+            Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>();
+            int controlOrder = 1;
+            foreach (UIElement element in this.controlsPanel.Children)
             {
                 StackPanel stackPanel = element as StackPanel;
                 if (stackPanel == null)
                 {
                     continue;
                 }
-                newControlIndiciesByDataLabel.Add((string)stackPanel.Tag, controlIndex);
-                controlIndex++;
+                newControlOrderByDataLabel.Add((string)stackPanel.Tag, controlOrder);
+                controlOrder++;
             }
 
             for (int rowIndex = 0; rowIndex < this.templateDatabase.TemplateTable.Rows.Count; rowIndex++)
             {
                 string dataLabel = (string)this.templateDatabase.TemplateTable.Rows[rowIndex][Constants.Control.DataLabel];
-                int newControlOrder = newControlIndiciesByDataLabel[dataLabel];
+                int newControlOrder = newControlOrderByDataLabel[dataLabel];
                 this.templateDatabase.TemplateTable.Rows[rowIndex][Constants.Control.ControlOrder] = newControlOrder;
             }
 
-            // TODOSAUL: should this method persist the new control order to the database?
-            ControlGeneration.GenerateControls(this, this.wp, this.templateDatabase.TemplateTable); // A contorted to make sure the controls panel updates itself
+            this.templateDatabase.SyncTemplateTableToDatabase();
+            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable); // A contorted to make sure the controls panel updates itself
         }
         #endregion
 
@@ -1176,16 +1187,14 @@ namespace TimelapseTemplateEditor
         /// <summary>
         /// Helper method that creates a database backup. Used when performing file menu options.
         /// </summary>
-        public void SaveDbBackup()
+        private bool TrySaveDatabaseBackupFile()
         {
-            if (!String.IsNullOrEmpty(this.templateDatabase.FilePath))
+            if (this.templateDatabase == null)
             {
-                string backupPath = Path.GetDirectoryName(this.templateDatabase.FilePath) + "\\"
-                    + "(backup)"
-                    + Path.GetFileNameWithoutExtension(this.templateDatabase.FilePath)
-                    + Path.GetExtension(this.templateDatabase.FilePath);
-                File.Copy(this.templateDatabase.FilePath, backupPath, true);
+                return false;
             }
+
+            return FileBackup.TryCreateBackups(Path.GetDirectoryName(this.templateDatabase.FilePath), Path.GetFileName(this.templateDatabase.FilePath));
         }
     }
 }

@@ -134,7 +134,7 @@
     </Compile>
     <Compile Include="Util\CallerMemberNameAttribute.cs" />
     <Compile Include="CellTextBlockConverter.cs" />
-    <Compile Include="Util\ControlGeneration.cs" />
+    <Compile Include="Util\EditorControls.cs" />
     <Compile Include="MainWindowExtensions.cs" />
     <Compile Include="ListBoxDBOutputConverter.cs" />
     <Compile Include="Util\MyTrace.cs" />

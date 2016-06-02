@@ -27,7 +27,7 @@ namespace Timelapse
         private List<MetaTagCounter> counterCoords = null;
         private CustomFilter customfilter;
 
-        private Controls dataEntryControls;
+        private DataEntryControls dataEntryControls;
         private bool disposed;
 
         // the database that holds all the data
@@ -90,7 +90,7 @@ namespace Timelapse
             this.btnCopy.MouseLeave += this.BtnCopy_MouseLeave;
 
             // Create data controls, including reparenting the copy button from the main window into the my control window.
-            this.dataEntryControls = new Controls();
+            this.dataEntryControls = new DataEntryControls();
             this.ControlGrid.Children.Remove(this.btnCopy);
             this.dataEntryControls.AddButton(this.btnCopy);
 
@@ -481,7 +481,7 @@ namespace Timelapse
             }
 
             // We generate the data user interface controls from the template description after the database has been created from the template
-            this.dataEntryControls.GenerateControls(this.imageDatabase, this.imageCache);
+            this.dataEntryControls.Generate(this.imageDatabase, this.imageCache);
             this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
             this.imageDatabase.TryGetImagesAll();
             return true;
@@ -559,7 +559,7 @@ namespace Timelapse
                 this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
             }
 
-            if (FileBackup.CreateBackups(this.FolderPath, this.imageDatabase.FileName))
+            if (FileBackup.TryCreateBackups(this.FolderPath, this.imageDatabase.FileName))
             {
                 StatusBarUpdate.Message(this.statusBar, "Backups of files made.");
             }
@@ -1000,7 +1000,7 @@ namespace Timelapse
         {
             // identify the currently selected control
             // if focus is currently set to the canvas this defaults to the first or last control, as appropriate
-            int currentControl = moveToPreviousControl ? this.dataEntryControls.DataEntryControls.Count : -1;
+            int currentControl = moveToPreviousControl ? this.dataEntryControls.Controls.Count : -1;
 
             IInputElement focusedElement = FocusManager.GetFocusedElement(this);
             if (focusedElement != null)
@@ -1013,7 +1013,7 @@ namespace Timelapse
                 {
                     DataEntryControl focusedControl = (DataEntryControl)((Control)focusedElement).Tag;
                     int index = 0;
-                    foreach (DataEntryControl control in this.dataEntryControls.DataEntryControls)
+                    foreach (DataEntryControl control in this.dataEntryControls.Controls)
                     {
                         if (Object.ReferenceEquals(focusedControl, control))
                         {
@@ -1036,10 +1036,10 @@ namespace Timelapse
             }
 
             for (currentControl = incrementOrDecrement(currentControl);
-                 currentControl > -1 && currentControl < this.dataEntryControls.DataEntryControls.Count;
+                 currentControl > -1 && currentControl < this.dataEntryControls.Controls.Count;
                  currentControl = incrementOrDecrement(currentControl))
             {
-                DataEntryControl control = this.dataEntryControls.DataEntryControls[currentControl];
+                DataEntryControl control = this.dataEntryControls.Controls[currentControl];
                 if (control.ReadOnly == false)
                 {
                     control.Focus();
@@ -2026,7 +2026,7 @@ namespace Timelapse
             }
 
             // Create a backup file
-            if (FileBackup.CreateBackups(this.FolderPath, this.imageDatabase.FileName))
+            if (FileBackup.TryCreateBackups(this.FolderPath, this.imageDatabase.FileName))
             {
                 StatusBarUpdate.Message(this.statusBar, "Backups of files made.");
             }
@@ -2783,7 +2783,7 @@ namespace Timelapse
         // Returns the currently active counter control, otherwise null
         private DataEntryCounter FindSelectedCounter()
         {
-            foreach (DataEntryControl control in this.dataEntryControls.DataEntryControls)
+            foreach (DataEntryControl control in this.dataEntryControls.Controls)
             {
                 if (control is DataEntryCounter)
                 {

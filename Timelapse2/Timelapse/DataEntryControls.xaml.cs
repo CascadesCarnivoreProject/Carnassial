@@ -11,22 +11,22 @@ namespace Timelapse
     /// <summary>
     /// This class generates controls based upon the information passed into it from the data grid templateTable
     /// </summary>
-    public partial class Controls : UserControl
+    public partial class DataEntryControls : UserControl
     {
         // Given a key, return its associated control
         public Dictionary<string, DataEntryControl> ControlFromDataLabel { get; private set; }
-        public List<DataEntryControl> DataEntryControls { get; private set; } // list of all our counter controls
+        public List<DataEntryControl> Controls { get; private set; } // list of all our counter controls
         // The wrap panel will contain all our controls. If we want to reparent things, we do it by reparenting the wrap panel
         public PropagateControl Propagate { get; private set; }
 
-        public Controls()
+        public DataEntryControls()
         {
             this.InitializeComponent();
             this.ControlFromDataLabel = new Dictionary<string, DataEntryControl>();
-            this.DataEntryControls = new List<DataEntryControl>();
+            this.Controls = new List<DataEntryControl>();
         }
 
-        public void GenerateControls(ImageDatabase database, ImageTableEnumerator imageEnumerator)
+        public void Generate(ImageDatabase database, ImageTableEnumerator imageEnumerator)
         {
             this.Propagate = new PropagateControl(database, imageEnumerator);
 
@@ -104,7 +104,7 @@ namespace Timelapse
                 controlToAdd.Copyable = copyable;
                 controlToAdd.Tooltip = tooltip;
                 this.ControlGrid.Inlines.Add(controlToAdd.Container);
-                this.DataEntryControls.Add(controlToAdd);
+                this.Controls.Add(controlToAdd);
                 this.ControlFromDataLabel.Add(dataLabel, controlToAdd);
             }
         }

@@ -31,13 +31,13 @@ namespace Timelapse
 
         #region Public Methods
         /// <summary>Add the user control to this window</summary>
-        public void AddControls(Controls myControls)
+        public void AddControls(DataEntryControls myControls)
         {
             this.TopLevelGrid.Children.Add(myControls);
         }
 
         /// <summary>Remove the user control from this window</summary>
-        public void ChildRemove(Controls myControls)
+        public void ChildRemove(DataEntryControls myControls)
         {
             this.TopLevelGrid.Children.Remove(myControls);
         }

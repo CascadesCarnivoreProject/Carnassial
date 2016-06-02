@@ -8,11 +8,6 @@ namespace TimelapseTemplateEditor
     internal static class EditorConstant
     {
         public const string ApplicationName = "TimelapseTemplateEditor";
-
-        // If the DataGrid columns change this needs to be adjusted to index correctly.
-        // Could not find a way to reference the DataGrid items by name.
-        public const int DataGridTypeColumnIndex = 3;
-
         public const string MainWindowBaseTitle = "Timelapse Template Editor";  // The initial title shown in the window title bar
 
         public static readonly SolidColorBrush NotEditableCellColor = Brushes.LightGray; // Color of non-editable data grid items 
@@ -40,6 +35,15 @@ namespace TimelapseTemplateEditor
 
             // labels for the few cases where the default label isn't the same as the data label
             public const string MarkForDeletionLabel = "Delete?";        // Label for: the Deletion
+
+            // data grid column headers
+            // these are human friendly forms of data labels
+            // these constants are duplicated in MainWindow.xaml and must be kept in sync
+            public const string ControlOrder = "Control\norder";
+            public const string DataLabel = "Data Label";
+            public const string ID = "ID";
+            public const string Width = "Width";
+            public const string SpreadsheetOrder = "Spreadsheet\norder";
         }
     }
 }

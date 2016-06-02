@@ -55,6 +55,13 @@ namespace Timelapse
             public const string DeleteFlag = "DeleteFlag";    // a flag data type for marking deletion
         }
 
+        // see also ControlLabelStyle and ControlContentStyle
+        public static class ControlStyle
+        {
+            public const string ComboBoxCodeBar = "ComboBoxCodeBar";
+            public const string StackPanelCodeBar = "StackPanelCodeBar";
+        }
+
         public static class ControlDefault
         {
             // standard controls
@@ -72,7 +79,6 @@ namespace Timelapse
             public const string NoteValue = "";                  // Default for: notes
             public const string NoteWidth = "100";
 
-            // TODOSAUL: can this be removed?
             public const string ListValue = "";                  // Default for: list
 
             // standard columns

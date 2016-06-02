@@ -258,7 +258,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls.xaml">
+    <Page Include="DataEntryControls.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -354,8 +354,8 @@
     <Compile Include="Images\MarkableImageCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
     <Compile Include="Util\RegistryUserSettings.cs" />
-    <Compile Include="Controls.xaml.cs">
-      <DependentUpon>Controls.xaml</DependentUpon>
+    <Compile Include="DataEntryControls.xaml.cs">
+      <DependentUpon>DataEntryControls.xaml</DependentUpon>
     </Compile>
     <Compile Include="ControlWindow.xaml.cs">
       <DependentUpon>ControlWindow.xaml</DependentUpon>

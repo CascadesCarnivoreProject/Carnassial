@@ -82,21 +82,21 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(database.TemplateTable.Columns.Count == DatabaseTests.TemplateTableColumns.Count);
             this.VerifyControls(database);
 
-            database.AddControl(Constants.Control.Counter);
+            DataRow newControl = database.AddControl(Constants.Control.Counter);
             Assert.IsTrue(database.TemplateTable.Rows.Count == 7);
-            this.VerifyControl(database.TemplateTable.Rows[database.TemplateTable.Rows.Count - 1]);
+            this.VerifyControl(newControl);
 
-            database.AddControl(Constants.Control.FixedChoice);
+            newControl = database.AddControl(Constants.Control.FixedChoice);
             Assert.IsTrue(database.TemplateTable.Rows.Count == 8);
-            this.VerifyControl(database.TemplateTable.Rows[database.TemplateTable.Rows.Count - 1]);
+            this.VerifyControl(newControl);
 
-            database.AddControl(Constants.Control.Flag);
+            newControl = database.AddControl(Constants.Control.Flag);
             Assert.IsTrue(database.TemplateTable.Rows.Count == 9);
-            this.VerifyControl(database.TemplateTable.Rows[database.TemplateTable.Rows.Count - 1]);
+            this.VerifyControl(newControl);
 
-            database.AddControl(Constants.Control.Note);
+            newControl = database.AddControl(Constants.Control.Note);
             Assert.IsTrue(database.TemplateTable.Rows.Count == 10);
-            this.VerifyControl(database.TemplateTable.Rows[database.TemplateTable.Rows.Count - 1]);
+            this.VerifyControl(newControl);
 
             database.RemoveControl(database.TemplateTable.Rows[2]);
             Assert.IsTrue(database.TemplateTable.Rows.Count == 9);
@@ -110,10 +110,14 @@ namespace Timelapse.UnitTests
             int iterations = 10;
             for (int iteration = 0; iteration < iterations; ++iteration)
             {
-                database.AddControl(Constants.Control.Note);
-                database.AddControl(Constants.Control.Flag);
-                database.AddControl(Constants.Control.FixedChoice);
-                database.AddControl(Constants.Control.Counter);
+                newControl = database.AddControl(Constants.Control.Note);
+                this.VerifyControl(newControl);
+                newControl = database.AddControl(Constants.Control.Flag);
+                this.VerifyControl(newControl);
+                newControl = database.AddControl(Constants.Control.FixedChoice);
+                this.VerifyControl(newControl);
+                newControl = database.AddControl(Constants.Control.Counter);
+                this.VerifyControl(newControl);
             }
 
             database.RemoveControl(database.TemplateTable.Rows[22]);
@@ -162,8 +166,8 @@ namespace Timelapse.UnitTests
                 ImageDatabase database = this.CreateImageDatabase(databaseExpectation.TemplateDatabaseFileName, databaseExpectation.ImageDatabaseFileName);
                 ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(database);
 
-                Controls controls = new Controls();
-                controls.GenerateControls(database, imageEnumerator);
+                DataEntryControls controls = new DataEntryControls();
+                controls.Generate(database, imageEnumerator);
 
                 Assert.IsTrue(controls.ControlFromDataLabel.Count == databaseExpectation.ExpectedControls, "Expected {0} controls to be generated but {1} were.", databaseExpectation.ExpectedControls, controls.ControlFromDataLabel.Count);
             }

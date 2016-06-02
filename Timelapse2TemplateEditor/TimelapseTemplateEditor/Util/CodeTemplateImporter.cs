@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Timelapse;
+using Timelapse.Database;
 
 namespace TimelapseTemplateEditor.Util
 {
@@ -12,171 +13,96 @@ namespace TimelapseTemplateEditor.Util
     // and converts it into a data template database.
     public class CodeTemplateImporter
     {
-        // Counters for tracking how many of each item we have
-        private int counterCount = 0;
-        private int noteCount = 0;
-        private int choiceCount = 0;
-
-        #region Read the Codes
-        public DataTable Convert(MainWindow win, string filePath, DataTable templateTable, ref List<string> error_messages)
+        public void Import(string filePath, TemplateDatabase templateDatabase, out List<string> conversionErrors)
         {
-            // string holding a user-created text log
-            DataTable tempTable = templateTable.Copy();
-            XmlDocument xmlDoc = new XmlDocument();
-            XmlNodeList nodelist;
-            XmlNodeList nodeData;
+            conversionErrors = new List<string>();
 
             // Collect all the data labels as we come across them, as we have to ensure that a new data label doesn't have the same name as an existing one
-            List<string> data_label_list = new List<string>();
+            List<string> dataLabels = new List<string>();
 
-            win.GenerateControlsAndSpreadsheet = false;
+            // Load the XML document (the code template file)
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.Load(filePath);
 
-            xmlDoc.Load(filePath);  // Load the XML document (the code template file)
+            // merge standard controls which existed in code templates
+            XmlNodeList selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.FilePath); // Convert the File type 
+            this.UpdateStandardControl(selectedNodes, templateDatabase, Constants.DatabaseColumn.File, ref conversionErrors, ref dataLabels);
 
-            nodelist = xmlDoc.SelectNodes(Constants.ImageXml.FilePath); // Convert the File type 
-            nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
-            int index = this.FindFirstRowOfType(nodelist, tempTable, Constants.DatabaseColumn.File);
-            this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.File, index, ref error_messages, ref data_label_list);
+            selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.FolderPath); // Convert the Folder type
+            this.UpdateStandardControl(selectedNodes, templateDatabase, Constants.DatabaseColumn.Folder, ref conversionErrors, ref dataLabels);
 
-            nodelist = xmlDoc.SelectNodes(Constants.ImageXml.FolderPath); // Convert the Folder type
-            nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
-            index = this.FindFirstRowOfType(nodelist, tempTable, Constants.DatabaseColumn.Folder);
-            this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Folder, index, ref error_messages, ref data_label_list);
+            selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.DatePath); // Convert the Date type
+            this.UpdateStandardControl(selectedNodes, templateDatabase, Constants.DatabaseColumn.Date, ref conversionErrors, ref dataLabels);
 
-            nodelist = xmlDoc.SelectNodes(Constants.ImageXml.DatePath); // Convert the Date type
-            nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
-            index = this.FindFirstRowOfType(nodelist, tempTable, Constants.DatabaseColumn.Date);
-            this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Date, index, ref error_messages, ref data_label_list);
+            selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.TimePath); // Convert the Time type
+            this.UpdateStandardControl(selectedNodes, templateDatabase, Constants.DatabaseColumn.Time, ref conversionErrors, ref dataLabels);
 
-            nodelist = xmlDoc.SelectNodes(Constants.ImageXml.TimePath); // Convert the Time type
-            nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
-            index = this.FindFirstRowOfType(nodelist, tempTable, Constants.DatabaseColumn.Time);
-            this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.Time, index, ref error_messages, ref data_label_list);
+            selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.ImageQualityPath); // Convert the Image Quality type
+            this.UpdateStandardControl(selectedNodes, templateDatabase, Constants.DatabaseColumn.ImageQuality, ref conversionErrors, ref dataLabels);
 
-            nodelist = xmlDoc.SelectNodes(Constants.ImageXml.ImageQualityPath); // Convert the Image Quality type
-            nodeData = nodelist[0].SelectNodes(Constants.ImageXml.Data);
-            index = this.FindFirstRowOfType(nodelist, tempTable, Constants.DatabaseColumn.ImageQuality);
-            this.UpdateRow(win, nodeData, tempTable, Constants.DatabaseColumn.ImageQuality, index, ref error_messages, ref data_label_list);
-
-            // Convert the Notes types, if any
-            nodelist = xmlDoc.SelectNodes(Constants.ImageXml.NotePath);
-            for (int i = 0; i < nodelist.Count; i++)
+            // no flag controls to import
+            // import notes
+            selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.NotePath);
+            for (int index = 0; index < selectedNodes.Count; index++)
             {
-                // Get the XML section containing values for each note
-                nodeData = nodelist[i].SelectNodes(Constants.ImageXml.Data);
-                this.AddRow(nodeData, tempTable, Constants.Control.Note);
-                this.UpdateRow(win, nodeData, tempTable, Constants.Control.Note, tempTable.Rows.Count - 1, ref error_messages, ref data_label_list);
+                DataRow note = templateDatabase.AddControl(Constants.Control.Note);
+                this.UpdateControl(selectedNodes[index], templateDatabase, Constants.Control.Note, note, ref conversionErrors, ref dataLabels);
             }
 
-            // Convert the Choices types, if any
-            nodelist = xmlDoc.SelectNodes(Constants.ImageXml.FixedChoicePath);
-            for (int i = 0; i < nodelist.Count; i++)
+            // import choices
+            selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.FixedChoicePath);
+            for (int index = 0; index < selectedNodes.Count; index++)
             {
-                // Get the XML section containing values for each choice
-                nodeData = nodelist[i].SelectNodes(Constants.ImageXml.Data);
-                this.AddRow(nodeData, tempTable, Constants.Control.FixedChoice);
-                this.UpdateRow(win, nodeData, tempTable, Constants.Control.FixedChoice, tempTable.Rows.Count - 1, ref error_messages, ref data_label_list);
+                DataRow choice = templateDatabase.AddControl(Constants.Control.FixedChoice);
+                this.UpdateControl(selectedNodes[index], templateDatabase, Constants.Control.FixedChoice, choice, ref conversionErrors, ref dataLabels);
             }
 
-            // Convert the Counts types, if any
-            nodelist = xmlDoc.SelectNodes(Constants.ImageXml.CounterPath);
-            for (int i = 0; i < nodelist.Count; i++)
+            // import counters
+            selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.CounterPath);
+            for (int index = 0; index < selectedNodes.Count; index++)
             {
-                // Get the XML section containing values for each note
-                nodeData = nodelist[i].SelectNodes(Constants.ImageXml.Data);
-                this.AddRow(nodeData, tempTable, Constants.Control.Counter);
-                this.UpdateRow(win, nodeData, tempTable, Constants.Control.Note, tempTable.Rows.Count - 1, ref error_messages, ref data_label_list);
+                DataRow counter = templateDatabase.AddControl(Constants.Control.Counter);
+                this.UpdateControl(selectedNodes[index], templateDatabase, Constants.Control.Counter, counter, ref conversionErrors, ref dataLabels);
             }
-
-            return tempTable;
-        }
-        #endregion
-
-        #region Find, update and add rows 
-        // Given a typeWanted (i.e., which should be one of the default types as only one of them exists), find its first occurance. 
-        // If and only if its found, update the row with the XML information.
-        private int FindFirstRowOfType(XmlNodeList nodelist, DataTable tempTable, string typeWanted)
-        {
-            // Update the File type 
-            // There should be only one node
-            if (nodelist.Count == 1)
-            {
-                // Find the row of a given type
-                for (int rowIndex = 0; rowIndex < tempTable.Rows.Count; rowIndex++)
-                {
-                    DataRow row = tempTable.Rows[rowIndex];
-                    string type = row[Constants.DatabaseColumn.Type].ToString();
-                    if (type == typeWanted)
-                    {
-                        return rowIndex;
-                    }
-                }
-            }
-            return -1;
         }
 
-        // currently used to update the default table with new values
-        private void UpdateRow(MainWindow win, XmlNodeList nodeData, DataTable tempTable, string typeWanted, int index, ref List<string> error_messages, ref List<string> data_label_list)
+        private void UpdateControl(XmlNode selectedNode, TemplateDatabase templateDatabase, string typeWanted, DataRow control, ref List<string> errorMessages, ref List<string> dataLabels)
         {
-            tempTable.Rows[index][Constants.Control.DefaultValue] = GetColumn(nodeData, Constants.Control.DefaultValue);             // Default
-            tempTable.Rows[index][Constants.Control.TextBoxWidth] = GetColumn(nodeData, Constants.Control.TextBoxWidth);      // Width
+            XmlNodeList selectedData = selectedNode.SelectNodes(Constants.ImageXml.Data);
+            control[Constants.Control.DefaultValue] = GetColumn(selectedData, Constants.Control.DefaultValue); // Default
+            control[Constants.Control.TextBoxWidth] = GetColumn(selectedData, Constants.Control.TextBoxWidth); // Width
 
             // The tempTable should have defaults filled in at this point for labels, datalabels, and tooltips
             // Thus if we just get empty values, we should use those defaults rather than clearing them
-            string label = GetColumn(nodeData, Constants.Control.Label);                                            // Label
+            string label = GetColumn(selectedData, Constants.Control.Label);
             if (!String.IsNullOrEmpty(label))
             {
-                tempTable.Rows[index][Constants.Control.Label] = label;
+                control[Constants.Control.Label] = label;
             }
 
-            string dataLabel;
-            if (typeWanted.Equals(Constants.DatabaseColumn.File))
+            string controlType = typeWanted;
+            if (EditorControls.IsStandardControlType(typeWanted) == false)
             {
-                dataLabel = Constants.DatabaseColumn.File;
-            }
-            else if (typeWanted.Equals(Constants.DatabaseColumn.Folder))
-            {
-                dataLabel = Constants.DatabaseColumn.Folder;
-            }
-            else if (typeWanted.Equals(Constants.DatabaseColumn.Date))
-            {
-                dataLabel = Constants.DatabaseColumn.Date;
-            }
-            else if (typeWanted.Equals(Constants.DatabaseColumn.Time))
-            {
-                dataLabel = Constants.DatabaseColumn.Time;
-            }
-            else if (typeWanted.Equals(Constants.DatabaseColumn.ImageQuality))
-            {
-                dataLabel = Constants.DatabaseColumn.ImageQuality;
-            }
-            else if (typeWanted.Equals(Constants.Control.DeleteFlag))
-            {
-                dataLabel = Constants.Control.DeleteFlag;
-            }
-            else
-            {
-                dataLabel = GetColumn(nodeData, Constants.Control.DataLabel);
-                if (dataLabel.Trim().Equals(String.Empty))
+                controlType = GetColumn(selectedData, Constants.Control.DataLabel);
+                if (controlType.Trim().Equals(String.Empty))
                 {
-                    dataLabel = label; // If there is no data label, use the label's value into it. 
+                    controlType = label; // If there is no data label, use the label's value into it. 
                 }
 
-                string datalabel = Regex.Replace(dataLabel, @"\s+", String.Empty);    // remove any white space that may be there
-                datalabel = Regex.Replace(dataLabel, "[^a-zA-Z0-9_]", String.Empty);  // only allow alphanumeric and '_'. 
-                if (!datalabel.Equals(dataLabel))
+                string dataLabel = Regex.Replace(controlType, @"\s+", String.Empty);    // remove any white space that may be there
+                dataLabel = Regex.Replace(controlType, "[^a-zA-Z0-9_]", String.Empty);  // only allow alphanumeric and '_'. 
+                if (!dataLabel.Equals(controlType))
                 {
-                    error_messages.Add("illicit characters: '" + dataLabel + "' changed to '" + datalabel + "'");
-                    dataLabel = datalabel;
+                    errorMessages.Add("illicit characters: '" + controlType + "' changed to '" + dataLabel + "'");
+                    controlType = dataLabel;
                 }
 
-                datalabel = dataLabel.ToUpper();
-                foreach (string s in EditorConstant.ReservedSqlKeywords)
+                foreach (string sqlKeyword in EditorConstant.ReservedSqlKeywords)
                 {
-                    if (s.Equals(datalabel))
+                    if (String.Equals(sqlKeyword, dataLabel, StringComparison.OrdinalIgnoreCase))
                     {
-                        error_messages.Add("reserved word:    '" + dataLabel + "' changed to '" + dataLabel + "_'");
-                        dataLabel += "_";
+                        errorMessages.Add("reserved word:    '" + controlType + "' changed to '" + controlType + "_'");
+                        controlType += "_";
                         break;
                     }
                 }
@@ -187,24 +113,25 @@ namespace TimelapseTemplateEditor.Util
             // First, check to see if the datalabel already exsists in the list, i.e., its not a unique key
             // If it doesn't, keep trying to add an integer to its end to make it unique.
             int j = 0;
-            string temp_datalabel = dataLabel;
-            while (data_label_list.Contains(temp_datalabel))
+            string temp_datalabel = controlType;
+            while (dataLabels.Contains(temp_datalabel))
             {
-                temp_datalabel = dataLabel + j.ToString();
+                temp_datalabel = controlType + j.ToString();
             }
-            if (!dataLabel.Equals(temp_datalabel))
+            if (!controlType.Equals(temp_datalabel))
             {
-                error_messages.Add("duplicate data label:" + Environment.NewLine + "   '" + dataLabel + "' changed to '" + temp_datalabel + "'");
-                dataLabel = temp_datalabel;
+                errorMessages.Add("duplicate data label:" + Environment.NewLine + "   '" + controlType + "' changed to '" + temp_datalabel + "'");
+                controlType = temp_datalabel;
             }
 
-            if (!String.IsNullOrEmpty(dataLabel))
+            if (!String.IsNullOrEmpty(controlType))
             {
-                if (dataLabel.Equals("Delete"))
+                if (controlType.Equals("Delete"))
                 {
-                    dataLabel = "DeleteLabel"; // Delete is a reserved word!
+                    // TODOSAUL: should this be Constants.Control.DeleteFlag?
+                    controlType = "DeleteLabel"; // Delete is a reserved word!
                 }
-                tempTable.Rows[index][Constants.Control.DataLabel] = dataLabel;
+                control[Constants.Control.DataLabel] = controlType;
             }
             else
             {
@@ -213,57 +140,75 @@ namespace TimelapseTemplateEditor.Util
                 label = Regex.Replace(label, @"\s+", String.Empty);
                 if (label != String.Empty)
                 {
-                    tempTable.Rows[index][Constants.Control.DataLabel] = label;
+                    control[Constants.Control.DataLabel] = label;
                 }
             }
-            data_label_list.Add(dataLabel); // and add it to the list of data labels seen
+            dataLabels.Add(controlType); // and add it to the list of data labels seen
 
-            string str_tooltip = GetColumn(nodeData, Constants.Control.Tooltip);
-            if (!String.IsNullOrEmpty(str_tooltip))
+            string tooltip = GetColumn(selectedData, Constants.Control.Tooltip);
+            if (!String.IsNullOrEmpty(tooltip))
             {
-                tempTable.Rows[index][Constants.Control.Tooltip] = str_tooltip;
+                control[Constants.Control.Tooltip] = tooltip;
             }
 
             // If there is no value supplied for Copyable, default is false for these data types (as they are already filled in by the system). 
             // Counters are also not copyable be default, as we expect counts to change image by image. But there are cases where they user may want to alter this.
-            if (typeWanted == Constants.DatabaseColumn.Date || typeWanted == Constants.DatabaseColumn.Time || typeWanted == Constants.DatabaseColumn.ImageQuality || typeWanted == Constants.DatabaseColumn.Folder || typeWanted == Constants.DatabaseColumn.File || typeWanted == Constants.Control.Counter)
+            string copyable = Constants.Boolean.True;
+            if (EditorControls.IsStandardControlType(typeWanted))
             {
-                tempTable.Rows[index][Constants.Control.Copyable] = MyConvertToBool(TextFromNode(nodeData, 0, Constants.Control.Copyable), "false");
+                copyable = Constants.Boolean.False;
             }
-            else
-            {
-                tempTable.Rows[index][Constants.Control.Copyable] = MyConvertToBool(TextFromNode(nodeData, 0, Constants.Control.Copyable), "true");
-            }
+            control[Constants.Control.Copyable] = ConvertToBool(TextFromNode(selectedData, 0, Constants.Control.Copyable), copyable);
 
             // If there is no value supplied for Visibility, default is true (i.e., the control will be visible in the interface)
-            tempTable.Rows[index][Constants.Control.Visible] = MyConvertToBool(TextFromNode(nodeData, 0, Constants.Control.Visible), "true");
+            control[Constants.Control.Visible] = ConvertToBool(TextFromNode(selectedData, 0, Constants.Control.Visible), Constants.Boolean.True);
 
             // if the type has a list, we have to do more work.
             if (typeWanted == Constants.DatabaseColumn.ImageQuality)
             {
                 // For Image Quality, use the new list (longer than the one in old templates)
-                tempTable.Rows[index][Constants.Control.List] = Constants.ImageQuality.ListOfValues;
+                control[Constants.Control.List] = Constants.ImageQuality.ListOfValues;
             }
             else if (typeWanted == Constants.DatabaseColumn.ImageQuality || typeWanted == Constants.Control.FixedChoice)
             {
                 // Load up the menu items
-                tempTable.Rows[index][Constants.Control.List] = String.Empty; // FOr others, generate the list from what is stored
+                control[Constants.Control.List] = String.Empty; // FOr others, generate the list from what is stored
 
-                XmlNodeList nodes = nodeData[0].SelectNodes(Constants.Control.List + Constants.ImageXml.Slash + Constants.ImageXml.Item);
+                XmlNodeList nodes = selectedData[0].SelectNodes(Constants.Control.List + Constants.ImageXml.Slash + Constants.ImageXml.Item);
                 bool firsttime = true;
                 foreach (XmlNode node in nodes)
                 {
                     if (firsttime)
                     {
-                        tempTable.Rows[index][Constants.Control.List] = node.InnerText; // also clears the list's default values
+                        control[Constants.Control.List] = node.InnerText; // also clears the list's default values
                     }
                     else
                     {
-                        tempTable.Rows[index][Constants.Control.List] += "|" + node.InnerText;
+                        control[Constants.Control.List] += "|" + node.InnerText;
                     }
                     firsttime = false;
                 }
             }
+
+            templateDatabase.SyncControlToDatabase(control);
+        }
+
+        private void UpdateStandardControl(XmlNodeList selectedNodes, TemplateDatabase templateDatabase, string typeWanted, ref List<string> errorMessages, ref List<string> dataLabels)
+        {
+            Debug.Assert(selectedNodes != null && selectedNodes.Count == 1, "Row update is supported for only a single XML element.");
+            
+            // assume the database is well formed and contains only a single row of the given standard type
+            for (int rowIndex = 0; rowIndex < templateDatabase.TemplateTable.Rows.Count; rowIndex++)
+            {
+                DataRow control = templateDatabase.TemplateTable.Rows[rowIndex];
+                string controlType = (string)control[Constants.DatabaseColumn.Type];
+                if (controlType == typeWanted)
+                {
+                    this.UpdateControl(selectedNodes[0], templateDatabase, typeWanted, control, ref errorMessages, ref dataLabels);
+                }
+            }
+
+            throw new ArgumentOutOfRangeException(String.Format("Control of type {0} could not be found in database.", typeWanted));
         }
 
         // A helper routine to make sure that no values are ever null
@@ -277,90 +222,21 @@ namespace TimelapseTemplateEditor.Util
             return s;
         }
 
-        // Convert a string to a boolean, where its set to defaultReturn if it cannot be converted by its value
-        private static string MyConvertToBool(string value, string defaultReturn)
+        // Convert a string to a boolean, where its set to defaultValue if it cannot be converted by its value
+        private static string ConvertToBool(string value, string defaultValue)
         {
-            string s = value.ToLower();
-            if (s == "true")
+            string s = value.ToLowerInvariant();
+            if (s == Constants.Boolean.True)
             {
-                return "true";
+                return Constants.Boolean.True;
             }
-            if (s == "false")
+            if (s == Constants.Boolean.False)
             {
-                return "false";
+                return Constants.Boolean.False;
             }
-            return defaultReturn;
+            return defaultValue;
         }
 
-        // Add a new row onto the table
-        // TODOTODD: dup code, merge to TemplateDatabase
-        private void AddRow(XmlNodeList nodelist, DataTable tempTable, string typeWanted)
-        {
-            // First, populate the row with default values
-            tempTable.Rows.Add();
-
-            int index = tempTable.Rows.Count - 1;
-            tempTable.Rows[index][Constants.Control.ControlOrder] = tempTable.Rows.Count;
-            tempTable.Rows[index][Constants.Control.SpreadsheetOrder] = tempTable.Rows.Count;
-            if (typeWanted.Equals(Constants.Control.Counter))
-            {
-                tempTable.Rows[index][Constants.Control.DefaultValue] = "0";
-                tempTable.Rows[index][Constants.DatabaseColumn.Type] = Constants.Control.Counter;
-                tempTable.Rows[index][Constants.Control.TextBoxWidth] = Constants.ControlDefault.CounterWidth;
-                tempTable.Rows[index][Constants.Control.Copyable] = false;
-                tempTable.Rows[index][Constants.Control.Visible] = true;
-                tempTable.Rows[index][Constants.Control.Label] = Constants.Control.Counter + this.counterCount.ToString();
-                tempTable.Rows[index][Constants.Control.DataLabel] = Constants.Control.Counter + this.counterCount.ToString();
-                tempTable.Rows[index][Constants.Control.Tooltip] = Constants.ControlDefault.CounterTooltip;
-                tempTable.Rows[index][Constants.Control.List] = String.Empty;
-                this.counterCount++;
-            }
-            else if (typeWanted.Equals(Constants.Control.Note))
-            {
-                tempTable.Rows[index][Constants.Control.DefaultValue] = String.Empty;
-                tempTable.Rows[index][Constants.DatabaseColumn.Type] = Constants.Control.Note;
-                tempTable.Rows[index][Constants.Control.TextBoxWidth] = Constants.ControlDefault.NoteWidth;
-                tempTable.Rows[index][Constants.Control.Copyable] = true;
-                tempTable.Rows[index][Constants.Control.Visible] = true;
-                tempTable.Rows[index][Constants.Control.Label] = Constants.Control.Note + this.noteCount.ToString();
-                tempTable.Rows[index][Constants.Control.DataLabel] = Constants.Control.Note + this.noteCount.ToString();
-                tempTable.Rows[index][Constants.Control.Tooltip] = Constants.ControlDefault.NoteTooltip;
-                tempTable.Rows[index][Constants.Control.List] = String.Empty;
-            }
-            else if (typeWanted.Equals(Constants.Control.FixedChoice))
-            {
-                tempTable.Rows[index][Constants.Control.DefaultValue] = String.Empty;
-                tempTable.Rows[index][Constants.DatabaseColumn.Type] = Constants.Control.FixedChoice;
-                tempTable.Rows[index][Constants.Control.TextBoxWidth] = Constants.ControlDefault.FixedChoiceWidth;
-                tempTable.Rows[index][Constants.Control.Copyable] = true;
-                tempTable.Rows[index][Constants.Control.Visible] = true;
-                tempTable.Rows[index][Constants.Control.Label] = Constants.Control.Choice + this.choiceCount.ToString();
-                // TODOSAUL: shouldn't this be Constants.Control.FixedChoice?
-                tempTable.Rows[index][Constants.Control.DataLabel] = Constants.Control.Choice + this.choiceCount.ToString();
-                tempTable.Rows[index][Constants.Control.Tooltip] = Constants.ControlDefault.FixedChoiceTooltip;
-                tempTable.Rows[index][Constants.Control.List] = String.Empty;
-            }
-        }
-
-        private static void AddDeletedFlag(DataTable tempTable)
-        {
-            tempTable.Rows.Add();
-
-            int index = tempTable.Rows.Count - 1;
-            tempTable.Rows[index][Constants.Control.ControlOrder] = tempTable.Rows.Count;
-            tempTable.Rows[index][Constants.Control.SpreadsheetOrder] = tempTable.Rows.Count;
-            tempTable.Rows[index][Constants.Control.DefaultValue] = Constants.ControlDefault.FlagValue;
-            tempTable.Rows[index][Constants.DatabaseColumn.Type] = Constants.Control.DeleteFlag;
-            tempTable.Rows[index][Constants.Control.TextBoxWidth] = Constants.ControlDefault.FlagWidth;
-            tempTable.Rows[index][Constants.Control.Copyable] = false;
-            tempTable.Rows[index][Constants.Control.Visible] = true;
-            tempTable.Rows[index][Constants.Control.Label] = EditorConstant.Control.MarkForDeletionLabel;
-            tempTable.Rows[index][Constants.Control.DataLabel] = EditorConstant.Control.MarkForDeletion;
-            tempTable.Rows[index][Constants.Control.Tooltip] = Constants.ControlDefault.MarkForDeletionTooltip;
-        }
-        #endregion Find, update and add rows
-
-        #region Utilities
         // Given a nodelist, get the text associated with it 
         private static string TextFromNode(XmlNodeList node, int nodeIndex, string nodeToFind)
         {
@@ -371,6 +247,5 @@ namespace TimelapseTemplateEditor.Util
             }
             return n[0].InnerText;
         }
-        #endregion
     }
 }

@@ -23,7 +23,7 @@ namespace Timelapse.Util
             }
         }
 
-        public DataEntryFlag(string dataLabel, Controls dataEntryControls, bool createContextMenu)
+        public DataEntryFlag(string dataLabel, DataEntryControls dataEntryControls, bool createContextMenu)
             : base(dataLabel, dataEntryControls, ControlContentStyle.FlagCodeBar, ControlLabelStyle.LabelCodeBar, createContextMenu)
         {
             this.Container.ToolTip = "Toggle between true (checked) and false (unchecked)";

@@ -22,7 +22,7 @@ namespace Timelapse.Util
             get { return this.LabelControl.IsChecked.HasValue ? (bool)this.LabelControl.IsChecked : false; }
         }
 
-        public DataEntryCounter(string dataLabel, Controls dataEntryControls, bool createContextMenu) : 
+        public DataEntryCounter(string dataLabel, DataEntryControls dataEntryControls, bool createContextMenu) : 
             base(dataLabel, dataEntryControls, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.RadioButtonCodeBar, createContextMenu)
         {
             // Modify the context menu so it can have a propage submenu

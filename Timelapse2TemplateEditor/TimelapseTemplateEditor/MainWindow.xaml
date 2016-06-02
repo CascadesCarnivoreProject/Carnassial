@@ -182,112 +182,6 @@
             </ToolTip>
             <local:ListBoxDBOutputConverter x:Key="listConverter" />
             <local:CellTextBlockConverter x:Key="cellTBConverter" />
-
-
-            <Style  x:Key="RadioButtonCodeBar" TargetType="RadioButton" BasedOn="{ StaticResource {x:Type ToggleButton}}">
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="{x:Type ToggleButton}">
-                            <Border HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="border" Padding="5,5,5,5" CornerRadius="5,5,5,5" Background="Beige" BorderBrush="LightBlue" BorderThickness="1,1,1,4" SnapsToDevicePixels="True">
-                                <ContentPresenter x:Name="contentPresenter"/>
-                            </Border>
-
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsChecked" Value="true">
-                                    <Setter Property="Background" TargetName="border" Value="LightBlue"/>
-                                    <Setter Property="BorderBrush" TargetName="border" Value="Gray"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="Margin" Value="0,0,2,0" />
-            </Style>
-
-            <Style  x:Key="LabelCodeBar" TargetType="Label">
-                <Setter Property="HorizontalAlignment" Value="Right"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Padding" Value="5,5,5,5"/>
-                <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="Height" Value="30" />
-            </Style>
-
-            <Style  x:Key="FlagCodeBar" TargetType="{x:Type CheckBox}">
-                <Setter Property="SnapsToDevicePixels" Value="true"/>
-                <Setter Property="OverridesDefaultStyle" Value="true"/>
-                <Setter Property="FocusVisualStyle" Value="{DynamicResource CheckBoxFocusVisualStyle}" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="CheckBox">
-                            <BulletDecorator Background="Transparent">
-                                <BulletDecorator.Bullet>
-                                    <Border x:Name="Border"  
-                                  Width="17" 
-                                  Height="17" 
-                                  CornerRadius="2" 
-                                  Background="{StaticResource NormalBrush}"
-                                  BorderThickness="1"
-                                  BorderBrush="{StaticResource NormalBorderBrush}">
-                                        <Path 
-                                    Width="11" Height="11" 
-                                    x:Name="CheckMark"
-                                    SnapsToDevicePixels="False" 
-                                    Stroke="{StaticResource GlyphBrush}"
-                                    StrokeThickness="2"
-                                    Data="M 2,4 C 2,4 3,5 5,13 C 5,13 5,3 12,0" />
-                                    </Border>
-                                </BulletDecorator.Bullet>
-                                <ContentPresenter Margin="4,0,0,0"
-                                VerticalAlignment="Center"
-                                HorizontalAlignment="Left"
-                                RecognizesAccessKey="True"/>
-                            </BulletDecorator>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsChecked" Value="false">
-                                    <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
-                                </Trigger>
-                                <Trigger Property="IsChecked" Value="{x:Null}">
-                                    <Setter TargetName="CheckMark" Property="Data" Value="M 0 7 L 7 0" />
-                                </Trigger>
-                                <Trigger Property="IsMouseOver" Value="true">
-                                    <Setter TargetName="Border" Property="Background" Value="{StaticResource DarkBrush}" />
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="true">
-                                    <Setter TargetName="Border" Property="Background" Value="{StaticResource PressedBrush}" />
-                                    <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PressedBorderBrush}" />
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="false">
-                                    <Setter TargetName="Border" Property="Background" Value="{StaticResource DisabledBackgroundBrush}" />
-                                    <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource DisabledBorderBrush}" />
-                                    <Setter Property="Foreground" Value="{StaticResource DisabledForegroundBrush}"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-
-                    </Setter.Value>
-                </Setter>
-                <Setter Property="HorizontalAlignment" Value="Right"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Padding" Value="5,5,5,5"/>
-                <Setter Property="Margin" Value="0,10,0,0"/>
-                <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="Height" Value="30" />
-            </Style>
-
-            <Style  x:Key="TextBoxCodeBar" TargetType="TextBox" >
-                <Setter Property="HorizontalAlignment" Value="Left"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Padding" Value="0,4,5,5"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="BorderBrush" Value="LightBlue"/>
-                <Setter Property="FontWeight" Value="Normal" />
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="Height" Value="30" />
-                <Setter Property="Focusable" Value="True" />
-                <Setter Property="IsReadOnly" Value="False" />
-            </Style>
-
             <Style  x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
                 <Setter Property="HorizontalAlignment" Value="Left"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -300,12 +194,6 @@
                 <Setter Property="Focusable" Value="True" />
                 <Setter Property="IsReadOnly" Value="False" />
                 <Setter Property="IsEditable" Value="False" />
-            </Style>
-
-            <Style  x:Key="StackPanelCodeBar" TargetType="StackPanel">
-                <Setter Property="Orientation" Value="Horizontal"/>
-                <Setter Property="Margin" Value="0,0,10,0" />
-                <Setter Property="Height" Value="40"/>
             </Style>
         </ResourceDictionary>
     </Window.Resources>
@@ -689,7 +577,7 @@
                     <TextBlock Grid.Row="0" Margin="0,10,10,0" FontWeight="Bold" Text="What the interface will (roughly) look like. Drag and drop these controls (by their labels) to re-arrange their order to your preference"></TextBlock>
                     <Border Grid.Row="1" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
                         <ScrollViewer VerticalAlignment="Top">
-                            <WrapPanel x:Name="wp" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="OnPreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="OnPreviewMouseLeftButtonUp" PreviewMouseMove="OnPreviewMouseMove"
+                            <WrapPanel x:Name="controlsPanel" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="OnPreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="OnPreviewMouseLeftButtonUp" PreviewMouseMove="OnPreviewMouseMove"
                                     DragEnter="OnDragEnter" Drop="OnDragDrop" />
                         </ScrollViewer>
                     </Border>
