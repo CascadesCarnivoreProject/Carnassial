@@ -2205,8 +2205,6 @@ namespace Timelapse
                 {
                     this.SetImageFilterAndIndex(0, this.state.ImageFilter); // As we have deleted an image and its data, reset the filter to retrieve the remaining images
                     ShowFirstDisplayableImage(currentRow);
-                    //this.imageCache.MoveToClosestImagePossible(currentRow); // then try to show an image closest to the one we have deleted
-                    //this.ShowImage(this.imageCache.CurrentRow, true);       
     }
                 else
                 {
@@ -2260,12 +2258,8 @@ namespace Timelapse
                 else
                 {
                     int currentRow = this.imageCache.CurrentRow;
-                    
                     this.SetImageFilterAndIndex(0, this.state.ImageFilter); // As we have deleted an image and its data, reset the filter to retrieve the remaining images
-
                     ShowFirstDisplayableImage(currentRow);                      // Of course, this won't really work as the current row may not point to the (non deleted) image the user may have been on...
-                    //this.imageCache.MoveToClosestImagePossible(this.imageCache.CurrentRow);
-                    //this.ShowImage(this.imageCache.CurrentRow, true);
                 }
             }
         }
