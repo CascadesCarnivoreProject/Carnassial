@@ -85,7 +85,7 @@ namespace Timelapse.Database
                 //SAULTODO: One solution is to pass a parameter to this function that specifies whether to use the cache or not, but that means changes to all the calling code
                 //SAULTODO: So I will defer that until I know that no other solution exists.
                 //return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
-                return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.Default);
+                return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
             }
             catch
             {
