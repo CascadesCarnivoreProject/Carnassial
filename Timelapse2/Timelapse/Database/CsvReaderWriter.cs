@@ -100,6 +100,7 @@ namespace Timelapse.Database
                                 // capture components of image's unique identifier for constructing where clause
                                 // at least for now, it's assumed all image renames or moves are done through Timelapse and hence file name + folder path forms 
                                 // an immutable (and unique) ID for the image
+                                // Also don't update date and time, as Excel will often change the date format  when the csv file is opened, changed and saved.
                                 if (dataLabel == Constants.DatabaseColumn.File)
                                 {
                                     imageFileName = value;
@@ -263,7 +264,7 @@ namespace Timelapse.Database
             // final empty fields are ambiguous at this level and therefore handled by the caller
             if (inField)
             {
-                string field = unparsedLine.Substring(fieldStart, unparsedLine.Length - fieldStart + 1);
+                string field = unparsedLine.Substring(fieldStart, unparsedLine.Length - fieldStart ); 
                 parsedLine.Add(field);
             }
 
