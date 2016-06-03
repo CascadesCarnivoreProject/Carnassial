@@ -377,7 +377,7 @@ namespace Timelapse
                     }
                     catch (Exception exception)
                     {
-                        Debug.Assert(false, String.Format("Load of {0} failed.", imageProperties.FileName), exception.ToString());
+                        Debug.Assert(false, String.Format("Load of {0} failed as its likely corrupted.", imageProperties.FileName), exception.ToString());
                         bitmap = new WriteableBitmap(Constants.Images.Corrupt);
                         imageProperties.ImageQuality = ImageQualityFilter.Corrupted;
                     }
@@ -725,7 +725,7 @@ namespace Timelapse
                     this.MenuItemViewSetSelected(ImageQualityFilter.Corrupted);
                     if (null != this.dlgDataView)
                     {
-                        this.dlgDataView.RefreshDataTable();  // If its displaye, update the window that shows the filtered view data base
+                        this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
                     }
                 }
                 else
@@ -892,6 +892,10 @@ namespace Timelapse
                 }
             }
 
+            // Display the first available image under the new filter
+
+            //this.ShowFirstDisplayableImage(defaultImageRow); // SAULTODO: It used to be this call, but changed it to ShowImage. Check, but seems to work.
+            this.ShowImage(defaultImageRow);
             // After a filter change, set the slider to represent the index and the count of the current filter
             this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
             this.ImageNavigatorSlider.Maximum = this.imageDatabase.CurrentlySelectedImageCount - 1;  // Reset the slider to the size of images in this set
@@ -902,9 +906,6 @@ namespace Timelapse
             StatusBarUpdate.TotalCount(this.statusBar, this.imageDatabase.CurrentlySelectedImageCount);
             this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
             this.state.ImageFilter = filter;    // Remember the current filter
-
-            // Display the first available image under the new filter
-            this.ShowFirstDisplayableImage(defaultImageRow);
             return true;
         }
 

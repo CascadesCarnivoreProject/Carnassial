@@ -141,8 +141,14 @@ namespace Timelapse
                 {
                     imagesIDsToDelete.Add(imageProperties.ID);
                 }
-
+                else
+                {
+                    // As only the image was deleted, mark its image quality as missing.
+                    string dataLabel = this.database.DataLabelFromColumnName[Constants.DatabaseColumn.ImageQuality];
+                    this.database.UpdateImage((int)imageProperties.ID, dataLabel, ImageQualityFilter.Missing.ToString());
+                }
                 this.TryMoveImageToBackupFolder(this.imageFolderPath, imageProperties);
+
             }
 
             if (this.deleteData)

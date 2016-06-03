@@ -110,6 +110,12 @@ namespace Timelapse
             {
                 this.database.DeleteImage(this.imageProperties.ID);
             }
+            else
+            {
+                // As only the image was deleted, mark its image quality as missing.
+                string dataLabel = this.database.DataLabelFromColumnName[Constants.DatabaseColumn.ImageQuality];
+                this.database.UpdateImage(this.imageProperties.ID, dataLabel, ImageQualityFilter.Missing.ToString());
+            }
             this.DialogResult = true;
         }
 
