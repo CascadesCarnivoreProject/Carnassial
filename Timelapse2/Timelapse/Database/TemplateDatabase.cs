@@ -34,13 +34,12 @@ namespace Timelapse.Database
             if (populateDatabase)
             {
                 // initialize the database if it's newly created
-                this.OnNewDatabase(other);
+                this.OnDatabaseCreated(other);
             }
             else
             {
-                // if it's an existing database check if it needs updating to current structure
-                this.TemplateTable = this.GetControlsSortedByControlOrder();
-                this.MigrateTemplateTableIfNeeded();
+                // if it's an existing database check if it needs updating to current structure and load data tables
+                this.OnExistingDatabaseOpened(other);
             }
         }
 
@@ -64,7 +63,7 @@ namespace Timelapse.Database
                 case Constants.Control.Counter:
                     dataLabelPrefix = Constants.Control.Counter;
                     newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.CounterValue;
-                    newRow[Constants.DatabaseColumn.Type] = Constants.Control.Counter;
+                    newRow[Constants.Control.Type] = Constants.Control.Counter;
                     newRow[Constants.Control.TextBoxWidth] = Constants.ControlDefault.CounterWidth;
                     newRow[Constants.Control.Copyable] = false;
                     newRow[Constants.Control.Visible] = true;
@@ -73,7 +72,7 @@ namespace Timelapse.Database
                 case Constants.Control.Note:
                     dataLabelPrefix = Constants.Control.Note;
                     newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.NoteValue;
-                    newRow[Constants.DatabaseColumn.Type] = Constants.Control.Note;
+                    newRow[Constants.Control.Type] = Constants.Control.Note;
                     newRow[Constants.Control.TextBoxWidth] = Constants.ControlDefault.NoteWidth;
                     newRow[Constants.Control.Copyable] = true;
                     newRow[Constants.Control.Visible] = true;
@@ -82,7 +81,7 @@ namespace Timelapse.Database
                 case Constants.Control.FixedChoice:
                     dataLabelPrefix = Constants.Control.Choice;
                     newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.FixedChoiceValue;
-                    newRow[Constants.DatabaseColumn.Type] = Constants.Control.FixedChoice;
+                    newRow[Constants.Control.Type] = Constants.Control.FixedChoice;
                     newRow[Constants.Control.TextBoxWidth] = Constants.ControlDefault.FixedChoiceWidth;
                     newRow[Constants.Control.Copyable] = true;
                     newRow[Constants.Control.Visible] = true;
@@ -91,7 +90,7 @@ namespace Timelapse.Database
                 case Constants.Control.Flag:
                     dataLabelPrefix = Constants.Control.Flag;
                     newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.FlagValue;
-                    newRow[Constants.DatabaseColumn.Type] = Constants.Control.Flag;
+                    newRow[Constants.Control.Type] = Constants.Control.Flag;
                     newRow[Constants.Control.TextBoxWidth] = Constants.ControlDefault.FlagWidth;
                     newRow[Constants.Control.Copyable] = true;
                     newRow[Constants.Control.Visible] = true;
@@ -280,14 +279,14 @@ namespace Timelapse.Database
             this.Database.Insert(tableName, insertionStatements);
         }
 
-        protected virtual void OnNewDatabase(TemplateDatabase other)
+        protected virtual void OnDatabaseCreated(TemplateDatabase other)
         {
             // create the template table
             List<ColumnTuple> templateTableColumns = new List<ColumnTuple>();
             templateTableColumns.Add(new ColumnTuple(Constants.DatabaseColumn.ID, "INTEGER primary key autoincrement"));
             templateTableColumns.Add(new ColumnTuple(Constants.Control.ControlOrder, "INTEGER"));
             templateTableColumns.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, "INTEGER"));
-            templateTableColumns.Add(new ColumnTuple(Constants.DatabaseColumn.Type, "text"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.Type, "text"));
             templateTableColumns.Add(new ColumnTuple(Constants.Control.DefaultValue, "text"));
             templateTableColumns.Add(new ColumnTuple(Constants.Control.Label, "text"));
             templateTableColumns.Add(new ColumnTuple(Constants.Control.DataLabel, "text"));
@@ -314,7 +313,7 @@ namespace Timelapse.Database
             List<ColumnTuple> file = new List<ColumnTuple>();
             file.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             file.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            file.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.DatabaseColumn.File));
+            file.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.File));
             file.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.FileValue));
             file.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.File));
             file.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.File));
@@ -329,7 +328,7 @@ namespace Timelapse.Database
             List<ColumnTuple> folder = new List<ColumnTuple>();
             folder.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             folder.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            folder.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.DatabaseColumn.Folder));
+            folder.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Folder));
             folder.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.FolderValue));
             folder.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Folder));
             folder.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Folder));
@@ -344,7 +343,7 @@ namespace Timelapse.Database
             List<ColumnTuple> date = new List<ColumnTuple>();
             date.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             date.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            date.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.DatabaseColumn.Date));
+            date.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Date));
             date.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.DateValue));
             date.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Date));
             date.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Date));
@@ -359,7 +358,7 @@ namespace Timelapse.Database
             List<ColumnTuple> time = new List<ColumnTuple>();
             time.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             time.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            time.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.DatabaseColumn.Time));
+            time.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Time));
             time.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.TimeValue));
             time.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Time));
             time.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Time));
@@ -374,7 +373,7 @@ namespace Timelapse.Database
             List<ColumnTuple> imageQuality = new List<ColumnTuple>();
             imageQuality.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             imageQuality.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            imageQuality.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.DatabaseColumn.ImageQuality));
+            imageQuality.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.ImageQuality));
             imageQuality.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.ImageQualityValue));
             imageQuality.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.ImageQuality));
             imageQuality.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.ImageQuality));
@@ -389,7 +388,7 @@ namespace Timelapse.Database
             List<ColumnTuple> markForDeletion = new List<ColumnTuple>();
             markForDeletion.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             markForDeletion.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            markForDeletion.Add(new ColumnTuple(Constants.DatabaseColumn.Type, Constants.Control.DeleteFlag));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.Type, Constants.Control.DeleteFlag));
             markForDeletion.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.FlagValue));
             markForDeletion.Add(new ColumnTuple(Constants.Control.Label, Constants.Control.DeleteFlag));
             markForDeletion.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.Control.DeleteFlag));
@@ -405,6 +404,12 @@ namespace Timelapse.Database
 
             // populate the in memory version of the template table
             this.TemplateTable = this.GetControlsSortedByControlOrder();
+        }
+
+        protected virtual void OnExistingDatabaseOpened(TemplateDatabase other)
+        {
+            this.TemplateTable = this.GetControlsSortedByControlOrder();
+            this.MigrateTemplateTableIfNeeded();
         }
 
         private string GetNextUniqueDataLabel(string dataLabelPrefix)
@@ -447,7 +452,7 @@ namespace Timelapse.Database
                 DataRow row = this.TemplateTable.Rows[rowIndex];
 
                 // Get various values from each row
-                string controlType = (string)row[Constants.DatabaseColumn.Type];
+                string controlType = (string)row[Constants.Control.Type];
                 // Not sure why, but if its an empty value it doesn't like it. Therefore we do this in a try/catch.
                 string label;      // The row's label
                 try

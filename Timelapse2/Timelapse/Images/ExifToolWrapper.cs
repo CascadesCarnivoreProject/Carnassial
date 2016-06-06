@@ -30,7 +30,7 @@ namespace Timelapse.Images
         private readonly ManualResetEvent waitHandle = new ManualResetEvent(true);
 
         private bool disposed = false;
-        private int cmdCnt = 1;
+        private int commandCount = 1;
         private Process exifTool = null;
         private bool stopRequested = false;
 
@@ -69,124 +69,6 @@ namespace Timelapse.Images
             };
 
             this.Status = Statuses.Stopped;
-        }
-
-        public static int OrientationDeg2Pos(int deg)
-        {
-            switch (deg)
-            {
-                case 270:
-                    return 8;
-                case 180:
-                    return 3;
-                case 90:
-                    return 6;
-                default:
-                    return 1;
-            }
-        }
-
-        public static string OrientationDeg2String(int deg)
-        {
-            switch (deg)
-            {
-                case 270:
-                    return "Rotate 270 CW";
-                case 180:
-                    return "Rotate 180";
-                case 90:
-                    return "Rotate 90 CW";
-                default:
-                    return "Horizontal (normal)";
-            }
-        }
-
-        /*
-1        2       3      4         5            6           7          8
-
-888888  888888      88  88      8888888888  88                  88  8888888888
-88          88      88  88      88  88      88  88          88  88      88  88
-8888      8888    8888  8888    88          8888888888  8888888888          88
-88          88      88  88
-88          88  888888  888888
-                                                      at least 6 and 8 seems to be inverted
-         */
-        // TODO: maybe some kind of map would be better
-        public static int OrientationPos2Deg(int pos)
-        {
-            switch (pos)
-            {
-                case 8:
-                    return 270;
-                case 3:
-                    return 180;
-                case 6:
-                    return 90;
-                default:
-                    return 0;
-            }
-        }
-
-        /*
-        1 => 'Horizontal (normal)',
-        2 => 'Mirror horizontal',
-        3 => 'Rotate 180',
-        4 => 'Mirror vertical',
-        5 => 'Mirror horizontal and rotate 270 CW',
-        6 => 'Rotate 90 CW',
-        7 => 'Mirror horizontal and rotate 90 CW',
-        8 => 'Rotate 270 CW',
-        */
-        public static int OrientationString2Deg(string pos)
-        {
-            switch (pos)
-            {
-                case "Rotate 270 CW":
-                    return 270;
-                case "Rotate 180":
-                    return 180;
-                case "Rotate 90 CW":
-                    return 90;
-                default:
-                    return 0;
-            }
-        }
-
-        public static int RotateOrientation(int crtOri, bool clockwise, int steps = 1)
-        {
-            int newOri = 1;
-            int len = OrientationPositions.Length;
-
-            if (steps % len == 0)
-            {
-                return crtOri;
-            }
-
-            for (int i = 0; i < len; i++)
-            {
-                if (crtOri == OrientationPositions[i])
-                {
-                    newOri = clockwise
-                        ? OrientationPositions[(i + steps) % len]
-                        : OrientationPositions[(i + (1 + steps / len) * len - steps) % OrientationPositions.Length];
-
-                    break;
-                }
-            }
-
-            return newOri;
-        }
-
-        public bool CloneExif(string source, string dest, bool backup = false)
-        {
-            if (!File.Exists(source) || !File.Exists(dest))
-            {
-                return false;
-            }
-
-            string exifToolOutput = this.SendCommand("{0}-tagsFromFile\n{1}\n{2}", backup ? String.Empty : "-overwrite_original\n", source, dest);
-
-            return exifToolOutput.Contains("1 image files updated");
         }
 
         public void Dispose()
@@ -242,32 +124,6 @@ namespace Timelapse.Images
             return res;
         }
 
-        public List<string> FetchExifToListFrom(string path, IEnumerable<string> tagsToKeep = null, bool keepKeysWithEmptyValues = true, string separator = ": ")
-        {
-            List<string> res = new List<string>();
-
-            bool filter = tagsToKeep != null && tagsToKeep.Any();
-            string exifToolOutput = this.SendCommand(path);
-            foreach (string line in exifToolOutput.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                string[] keyValuePair = line.Split('\t');
-                Debug.Assert(keyValuePair.Length == 2, "Can not parse line :'" + line + "'");
-
-                if (keyValuePair.Length != 2 || (!keepKeysWithEmptyValues && string.IsNullOrEmpty(keyValuePair[1])))
-                {
-                    continue;
-                }
-                if (filter && !tagsToKeep.Contains(keyValuePair[0]))
-                {
-                    continue;
-                }
-
-                res.Add(string.Format("{0}{1}{2}", keyValuePair[0], separator, keyValuePair[1]));
-            }
-
-            return res;
-        }
-
         public DateTime? GetCreationTime(string path)
         {
             DateTime dt;
@@ -283,22 +139,6 @@ namespace Timelapse.Images
             return null;
         }
 
-        public int GetOrientation(string path)
-        {
-            int o;
-            if (Int32.TryParse(this.SendCommand("-Orientation\n-n\n-s3\n{0}", path).Trim(new[] { '\t', '\r', '\n' }), out o))
-            {
-                return o;
-            }
-
-            return 1;
-        }
-
-        public int GetOrientationDeg(string path)
-        {
-            return ExifToolWrapper.OrientationPos2Deg(this.GetOrientation(path));
-        }
-
         public string SendCommand(string cmd, params object[] args)
         {
             if (this.Status != Statuses.Ready)
@@ -310,66 +150,16 @@ namespace Timelapse.Images
             lock (LockObj)
             {
                 this.waitHandle.Reset();
-                this.exifTool.StandardInput.WriteLine("{0}\n-execute{1}", args.Length == 0 ? cmd : string.Format(cmd, args), this.cmdCnt);
+                this.exifTool.StandardInput.WriteLine("{0}\n-execute{1}", args.Length == 0 ? cmd : string.Format(cmd, args), this.commandCount);
                 this.waitHandle.WaitOne();
 
-                this.cmdCnt++;
+                this.commandCount++;
 
                 exifToolOutput = this.output.ToString();
                 this.output.Clear();
             }
 
             return exifToolOutput;
-        }
-
-        public bool SetExifInto(string path, Dictionary<string, string> data, bool overwriteOriginal = true)
-        {
-            if (!File.Exists(path))
-            {
-                return false;
-            }
-
-            StringBuilder command = new StringBuilder();
-            foreach (KeyValuePair<string, string> kv in data)
-            {
-                command.AppendFormat("-{0}={1}\n", kv.Key, kv.Value);
-            }
-
-            if (overwriteOriginal)
-            {
-                command.AppendLine("-overwrite_original");
-            }
-
-            command.Append(path);
-            string exifToolOutput = this.SendCommand(command.ToString());
-
-            return exifToolOutput.Contains("1 image files updated");
-        }
-
-        public bool SetOrientation(string path, int ori, bool overwriteOriginal = true)
-        {
-            if (!File.Exists(path))
-            {
-                return false;
-            }
-
-            StringBuilder cmd = new StringBuilder();
-            cmd.AppendFormat("-Orientation={0}\n-n\n-s3\n", ori);
-
-            if (overwriteOriginal)
-            {
-                cmd.AppendLine("-overwrite_original");
-            }
-
-            cmd.Append(path);
-            string exifToolOutput = this.SendCommand(cmd.ToString());
-
-            return exifToolOutput.Contains("1 image files updated");
-        }
-
-        public bool SetOrientationDeg(string path, int ori, bool overwriteOriginal = true)
-        {
-            return this.SetOrientation(path, OrientationDeg2Pos(ori), overwriteOriginal);
         }
 
         public void Start()
@@ -465,7 +255,7 @@ namespace Timelapse.Images
             }
             else
             {
-                if (e.Data.ToLower() == string.Format("{{ready{0}}}", this.cmdCnt))
+                if (e.Data.ToLower() == string.Format("{{ready{0}}}", this.commandCount))
                 {
                     this.waitHandle.Set();
                 }

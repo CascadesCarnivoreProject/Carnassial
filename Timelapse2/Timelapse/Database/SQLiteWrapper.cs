@@ -287,7 +287,7 @@ namespace Timelapse.Database
 
         public void Update(string tableName, List<ColumnTuplesWithWhere> updateQueryList)
         {
-            // TODO: support splitting the query into 100 row (or similar size) chunks here rather than requiring all callers implement it
+            // TODOSAUL: support splitting the query into 100 row (or similar size) chunks here rather than requiring all callers implement it
             List<string> queries = new List<string>();
             foreach (ColumnTuplesWithWhere updateQuery in updateQueryList)
             {

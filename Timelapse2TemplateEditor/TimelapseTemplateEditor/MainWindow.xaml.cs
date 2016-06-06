@@ -189,7 +189,7 @@ namespace TimelapseTemplateEditor
                 return;
             }
 
-            string controlType = (string)selectedRowView.Row[Constants.DatabaseColumn.Type];
+            string controlType = (string)selectedRowView.Row[Constants.Control.Type];
             if ((controlType == Constants.DatabaseColumn.File) ||
                 (controlType == Constants.DatabaseColumn.Folder) ||
                 (controlType == Constants.DatabaseColumn.Date) ||
@@ -234,7 +234,7 @@ namespace TimelapseTemplateEditor
                 return;
             }
 
-            string controlType = (string)selectedRowView.Row[Constants.DatabaseColumn.Type];
+            string controlType = (string)selectedRowView.Row[Constants.Control.Type];
             if (EditorControls.IsStandardControlType(controlType))
             {
                 // standard controls cannot be removed
@@ -644,12 +644,12 @@ namespace TimelapseTemplateEditor
 
                         // more constants to access checkbox columns and combobox columns.
                         // the sortmemberpath is include, not the sort name, so we are accessing by head, which may change.
-                        string controlType = (string)thisRow.Row[Constants.DatabaseColumn.Type];
+                        string controlType = (string)thisRow.Row[Constants.Control.Type];
                         string sortMemberPath = this.TemplateDataGrid.Columns[column].SortMemberPath;
                         if ((sortMemberPath == Constants.DatabaseColumn.ID) ||
                             (sortMemberPath == Constants.Control.ControlOrder) ||
                             (sortMemberPath == Constants.Control.SpreadsheetOrder) ||
-                            (sortMemberPath == Constants.DatabaseColumn.Type) ||
+                            (sortMemberPath == Constants.Control.Type) ||
                             (controlType == Constants.DatabaseColumn.Date) ||
                             (controlType == Constants.Control.DeleteFlag) ||
                             (controlType == Constants.DatabaseColumn.File) ||

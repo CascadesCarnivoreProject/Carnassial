@@ -201,7 +201,7 @@ namespace TimelapseTemplateEditor.Util
             for (int rowIndex = 0; rowIndex < templateDatabase.TemplateTable.Rows.Count; rowIndex++)
             {
                 DataRow control = templateDatabase.TemplateTable.Rows[rowIndex];
-                string controlType = (string)control[Constants.DatabaseColumn.Type];
+                string controlType = (string)control[Constants.Control.Type];
                 if (controlType == typeWanted)
                 {
                     this.UpdateControl(selectedNodes[0], templateDatabase, typeWanted, control, ref errorMessages, ref dataLabels);

@@ -332,7 +332,7 @@ namespace Timelapse
                     // this.txtblockFeedback.Text += "Step 1/2: Examining images..." + Environment.NewLine;
                 }));
 
-                // TODO: MAKE DB UPDATE EFFICIENT
+                // TODOSAUL: MAKE DB UPDATE EFFICIENT
                 int images = database.CurrentlySelectedImageCount;
                 for (int image = 0; image < images; image++)
                 {

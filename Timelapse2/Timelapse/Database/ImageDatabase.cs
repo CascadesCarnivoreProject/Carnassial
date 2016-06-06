@@ -28,12 +28,12 @@ namespace Timelapse.Database
         public DataTable ImageDataTable { get; private set; }
 
         // contains the markers
-        public DataTable MarkerTable { get; private set; }
+        public DataTable MarkersTable { get; private set; }
 
         public Dictionary<string, string> ControlTypeFromDataLabel { get; private set; }
 
-        public ImageDatabase(string folderPath, string fileName, TemplateDatabase template)
-            : base(Path.Combine(folderPath, fileName), template)
+        public ImageDatabase(string folderPath, string fileName, TemplateDatabase templateDatabase)
+            : base(Path.Combine(folderPath, fileName), templateDatabase)
         {
             // TODOSAUL: Hmm. I've never seen database creation failure. Nonetheless, while I can pop up a messagebox here, the real issue is how
             // to revert the system back to some reasonable state. I will need to look at this closely 
@@ -181,7 +181,7 @@ namespace Timelapse.Database
                                     if (columnName.Equals(controlName))
                                     {
                                         imageRow.Add(new ColumnTuple(controlName, this.GetControlDefaultValue(controlName))); // Default as specified in the template file
-                                        markerRow.Add(new ColumnTuple(controlName, String.Empty));        // TODO ASSUMES THAT MARKER LIST IS IN SAME ORDER AS COUNTERS. THIS MAY NOT BE CORRECT ONCE WE SWITCH ROWS, SO SHOULD DO THIS SEPARATELY
+                                        markerRow.Add(new ColumnTuple(controlName, String.Empty));        // TODOSAUL: ASSUMES THAT MARKER LIST IS IN SAME ORDER AS COUNTERS. THIS MAY NOT BE CORRECT ONCE WE SWITCH ROWS, SO SHOULD DO THIS SEPARATELY
                                     }
                                 }
                                 break;
@@ -245,10 +245,10 @@ namespace Timelapse.Database
         /// Assumes that the database has already been opened and that the Template Table is loaded, where the DataLabel always has a valid value.
         /// Then create both the ImageSet table and the Markers table
         /// </summary>
-        protected override void OnNewDatabase(TemplateDatabase templateDatabase)
+        protected override void OnDatabaseCreated(TemplateDatabase templateDatabase)
         {
             // copy the template's TemplateTable
-            base.OnNewDatabase(templateDatabase);
+            base.OnDatabaseCreated(templateDatabase);
 
             // Create the DataTable from the template
             // First, define the creation string based on the contents of the template. 
@@ -278,13 +278,15 @@ namespace Timelapse.Database
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Row, " TEXT DEFAULT '0'"));
             int allImages = (int)ImageQualityFilter.All;
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, " TEXT DEFAULT '" + allImages.ToString() + "'"));
+            // TODOSAUL: columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, " TEXT"));
             this.Database.CreateTable(Constants.Database.ImageSetTable, columnDefinitions);
 
             List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>(); // Populate the data for the image set with defaults
-            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Log, "Add text here"));
+            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Log, Constants.Database.ImageSetDefaultLog));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, Constants.Boolean.True));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Row, "0"));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, allImages.ToString()));
+            // TODOSAUL: columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True));
             List<List<ColumnTuple>> insertionStatements = new List<List<ColumnTuple>>();
             insertionStatements.Add(columnsToUpdate);
             this.Database.Insert(Constants.Database.ImageSetTable, insertionStatements);
@@ -295,7 +297,7 @@ namespace Timelapse.Database
             string type = String.Empty;
             foreach (DataRow row in this.TemplateTable.Rows)
             {
-                type = (string)row[Constants.DatabaseColumn.Type];
+                type = (string)row[Constants.Control.Type];
                 if (type.Equals(Constants.Control.Counter))
                 {
                     long id = (long)row[Constants.DatabaseColumn.ID];
@@ -306,20 +308,46 @@ namespace Timelapse.Database
             this.Database.CreateTable(Constants.Database.MarkersTable, columnDefinitions);
         }
 
+        protected override void OnExistingDatabaseOpened(TemplateDatabase templateDatabase)
+        {
+            // perform TemplateTable initializations and migrations first
+            base.OnExistingDatabaseOpened(templateDatabase);
+
+            // Make sure that all the string data in the datatable has white space trimmed from its beginning and end
+            // This is needed as the custom filter doesn't work well in testing comparisons if there is leading or trailing white space in it
+            // Newer versions of TImelapse will trim the data as it is entered, but older versions did not, so this is to make it backwards-compatable.
+            // The WhiteSpaceExists column in the ImageSetTable did not exist before this version, so we add it to the table. If it exists, then 
+            // we know the data has been trimmed and we don't have to do it again as the newer versions take care of trimmingon the fly.
+            bool whiteSpaceColumnExists = this.Database.IsColumnInTable(Constants.Database.ImageSetTable, Constants.DatabaseColumn.WhiteSpaceTrimmed);
+            if (!whiteSpaceColumnExists)
+            {
+                // create the whitespace column
+                this.Database.CreateColumn(Constants.Database.ImageSetTable, Constants.DatabaseColumn.WhiteSpaceTrimmed);
+                
+                // trim the white space from all the data
+                List<string> columnNames = new List<string>();
+                for (int i = 0; i < this.TemplateTable.Rows.Count; i++)
+                {
+                    DataRow row = this.TemplateTable.Rows[i];
+                    columnNames.Add((string)row[Constants.Control.DataLabel]);
+                }
+
+                this.Database.TrimWhitespace(Constants.Database.ImageDataTable, columnNames);
+                this.UpdateID(1, Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True, Constants.Database.ImageSetTable);
+            }
+
+            // load the marker table from the database
+            string command = "Select * FROM " + Constants.Database.MarkersTable;
+            this.MarkersTable = this.Database.GetDataTableFromSelect(command);
+        }
+
         public ImageProperties FindImageByID(long id)
         {
             return new ImageProperties(this.ImageDataTable.Rows.Find(id));
         }
 
-        public void SyncMarkerTableFromDatabase()
-        {
-            string command = "Select * FROM " + Constants.Database.MarkersTable;
-            this.MarkerTable = this.Database.GetDataTableFromSelect(command);
-        }
-
         /// <summary>
         /// Create lookup tables that allow us to retrieve a key from a type and vice versa
-        /// TODO Should probably change this so its done internally rather than called externally
         /// </summary>
         private void PopulateDataLabelMaps()
         {
@@ -327,7 +355,7 @@ namespace Timelapse.Database
             {
                 long id = (long)row[Constants.DatabaseColumn.ID];
                 string dataLabel = (string)row[Constants.Control.DataLabel];
-                string controlType = (string)row[Constants.DatabaseColumn.Type];
+                string controlType = (string)row[Constants.Control.Type];
 
                 // We don't want to add these types to the hash, as there can be multiple ones, which means the key would not be unique
                 if (!(controlType.Equals(Constants.Control.Note) ||
@@ -586,7 +614,7 @@ namespace Timelapse.Database
                     // image set operations go directly to database; no data table is in use
                     return;
                 case Constants.Database.MarkersTable:
-                    dataTable = this.MarkerTable;
+                    dataTable = this.MarkersTable;
                     break;
                 case Constants.Database.TemplateTable:
                     dataTable = this.TemplateTable;
@@ -630,7 +658,7 @@ namespace Timelapse.Database
             this.Database.Update(Constants.Database.ImageDataTable, updateQuery);
         }
 
-        // TODO: Change the date function to use this, as it currently updates the db one at a time.
+        // TODOSAUL: Change the date function to use this, as it currently updates the db one at a time.
         // This handy function efficiently updates multiple rows (each row identified by an ID) with different key/value pairs. 
         // For example, consider the tuple:
         // 5, myKey1, value1
@@ -695,9 +723,9 @@ namespace Timelapse.Database
 
         // Given a time difference in ticks, update all the date / time field in the database
         // Note that it does NOT update the dataTable - this has to be done outside of this routine by regenerating the datatables with whatever filter is being used..
-        // TODO: modify this to include argments showing the current filtered view and row number, perhaps, so we could restore the datatable and the view?? 
-        // TODO But that would add complications if there are unanticipated filtered views.
-        // TODO: Another option is to go through whatever the current datatable is and just update those fields. 
+        // TODOSAUL: modify this to include argments showing the current filtered view and row number, perhaps, so we could restore the datatable and the view?? 
+        // But that would add complications if there are unanticipated filtered views.
+        // Another option is to go through whatever the current datatable is and just update those fields. 
         public void AdjustAllImageTimes(TimeSpan adjustment, int from, int to)
         {
             // We create a temporary table. We do this just in case we are currently on a filtered view
@@ -719,7 +747,7 @@ namespace Timelapse.Database
                 // correct the date and modify the temporary datatable rows accordingly
                 date += adjustment;
                 tempTable.Rows[i][Constants.DatabaseColumn.Date] = DateTimeHandler.StandardDateString(date);
-                tempTable.Rows[i][Constants.DatabaseColumn.Time] = DateTimeHandler.StandardTimeString(date);
+                tempTable.Rows[i][Constants.DatabaseColumn.Time] = DateTimeHandler.DatabaseTimeString(date);
             }
 
             // Now update the actual database with the new date/time values stored in the temporary table
@@ -897,7 +925,7 @@ namespace Timelapse.Database
                     return row;
                 }
             }
-            for (int row = firstRowInSearch -1 ; row >= 0; row--)
+            for (int row = firstRowInSearch - 1; row >= 0; row--)
             {
                 if (this.IsImageDisplayable(row))
                 {
@@ -942,18 +970,6 @@ namespace Timelapse.Database
             return (string)foundRow[Constants.Control.DefaultValue];
         }
 
-        // Check if the White Space column exists in the ImageSetTable
-        public bool DoesWhiteSpaceColumnExist()
-        {
-            return this.Database.IsColumnInTable(Constants.Database.ImageSetTable, Constants.DatabaseColumn.WhiteSpaceTrimmed);
-        }
-
-        // Create the White Space column exists in the ImageSetTable
-        public void CreateWhiteSpaceColumn()
-        {
-            this.Database.CreateColumn(Constants.Database.ImageSetTable, Constants.DatabaseColumn.WhiteSpaceTrimmed);
-        }
-
         public int GetImageSetRowIndex()
         {
             string result = this.ImageSetGetValue(Constants.DatabaseColumn.Row);
@@ -970,11 +986,11 @@ namespace Timelapse.Database
             List<MetaTagCounter> metaTagCounters = new List<MetaTagCounter>();
 
             // Test to see if we actually have a valid result
-            if (this.MarkerTable.Rows.Count == 0)
+            if (this.MarkersTable.Rows.Count == 0)
             {
                 return metaTagCounters;    // This should not really happen, but just in case
             }
-            if (this.MarkerTable.Columns.Count == 0)
+            if (this.MarkersTable.Columns.Count == 0)
             {
                 return metaTagCounters; // Should also not happen as this wouldn't be called unless we have at least one counter control
             }
@@ -986,14 +1002,14 @@ namespace Timelapse.Database
                 return metaTagCounters;
             }
 
-            // Iterate through the columns, where we create a new MetaTagCounter for each control and add it to the MetaTagCounte rList
+            // Iterate through the columns, where we create a new MetaTagCounter for each control and add it to the MetaTagCounter list
             MetaTagCounter mtagCounter;
             string datalabel = String.Empty;
             string value = String.Empty;
             List<Point> points;
-            for (int i = 0; i < this.MarkerTable.Columns.Count; i++)
+            for (int i = 0; i < this.MarkersTable.Columns.Count; i++)
             {
-                datalabel = this.MarkerTable.Columns[i].ColumnName;
+                datalabel = this.MarkersTable.Columns[i].ColumnName;
                 if (datalabel.Equals(Constants.DatabaseColumn.ID))
                 {
                     continue;  // Skip the ID
@@ -1006,7 +1022,7 @@ namespace Timelapse.Database
                 // Now create a new Metatag for each point and add it to the counter
                 try
                 {
-                    value = (string)this.MarkerTable.Rows[row_num][datalabel];
+                    value = (string)this.MarkersTable.Rows[row_num][datalabel];
                 }
                 catch
                 {
@@ -1044,7 +1060,7 @@ namespace Timelapse.Database
             }
 
             // Update the database and datatable
-            this.MarkerTable.Rows[row_num][dataLabel] = pointList;
+            this.MarkersTable.Rows[row_num][dataLabel] = pointList;
             this.UpdateID(imageID, dataLabel, pointList, Constants.Database.MarkersTable);  // Update the database
         }
 
@@ -1090,7 +1106,7 @@ namespace Timelapse.Database
                     {
                         // TODOSAUL: .Rows is being indexed by ID rather than row index; is this correct?
                         // I think so... but need to check. I think the row ID will get the correct row but the row index (which I think can be reordered) could muck things up 
-                        this.MarkerTable.Rows[id - 1][column.Name] = column.Value;
+                        this.MarkersTable.Rows[id - 1][column.Name] = column.Value;
                     }
                 }
             }
@@ -1109,9 +1125,9 @@ namespace Timelapse.Database
                 {
                     this.ImageDataTable.Dispose();
                 }
-                if (this.MarkerTable != null)
+                if (this.MarkersTable != null)
                 {
-                    this.MarkerTable.Dispose();
+                    this.MarkersTable.Dispose();
                 }
             }
 
@@ -1125,9 +1141,9 @@ namespace Timelapse.Database
         /// <returns>-1 on failure</returns>
         private int FindMarkerRow(long imageID)
         {
-            for (int row_number = 0; row_number < this.MarkerTable.Rows.Count; row_number++)
+            for (int row_number = 0; row_number < this.MarkersTable.Rows.Count; row_number++)
             {
-                string str = this.MarkerTable.Rows[row_number][Constants.DatabaseColumn.ID].ToString();
+                string str = this.MarkersTable.Rows[row_number][Constants.DatabaseColumn.ID].ToString();
                 int this_id;
                 if (Int32.TryParse(str, out this_id) == false)
                 {

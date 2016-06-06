@@ -39,7 +39,7 @@ namespace TimelapseTemplateEditor.Util
             foreach (DataRow control in templateTable.Rows)
             {
                 // unpack control properties
-                string type = (string)control[Constants.DatabaseColumn.Type];
+                string type = (string)control[Constants.Control.Type];
                 string defaultValue = (string)control[Constants.Control.DefaultValue];
                 string label = (string)control[Constants.Control.Label];
                 string dataLabel = (string)control[Constants.Control.DataLabel];
@@ -54,11 +54,11 @@ namespace TimelapseTemplateEditor.Util
                 {
                     if (type == Constants.DatabaseColumn.Date)
                     {
-                        defaultValue = DateTime.Now.ToString("dd-MMM-yyyy"); // "01-Jun-2016"
+                        defaultValue = DateTime.Now.ToString(Constants.Time.DateFormat); // "01-Jun-2016"
                     }
                     else if (type == Constants.DatabaseColumn.Time)
                     {
-                        defaultValue = DateTime.Now.ToString("HH:mm tt"); // "07:39 PM"
+                        defaultValue = DateTime.Now.ToString(Constants.Time.TimeFormatForUser); // "07:39 PM"
                     }
                 }
 

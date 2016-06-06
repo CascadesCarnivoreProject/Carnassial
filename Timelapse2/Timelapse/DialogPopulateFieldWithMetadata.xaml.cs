@@ -57,7 +57,7 @@ namespace Timelapse
         // After the interface is loaded, 
         // - Load the Exif data into the data grid
         // - Load the names of the note controls into the listbox
-        // TODO: ERROR CHECK CORRUPTED, ETC.. that the exiftool exists, AND THAT WE CAN OPEN THE FILE AND GET THE EXIF AND 
+        // TODOSAUL: ERROR CHECK CORRUPTED, ETC.. that the exiftool exists, AND THAT WE CAN OPEN THE FILE AND GET THE EXIF AND 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Make sure the title bar of the dialog box is on the screen. For small screens it may default to being off the screen
@@ -154,14 +154,14 @@ namespace Timelapse
             {
                 // Get the values for each control
                 DataRow row = sortedTemplateTable.Rows[i];
-                string type = row[Constants.DatabaseColumn.Type].ToString();
+                string type = row[Constants.Control.Type].ToString();
 
                 if (type == Constants.Control.Note || type == Constants.DatabaseColumn.Date || type == Constants.DatabaseColumn.Time)
                 {
                     string datalabel = (string)row[Constants.Control.DataLabel];
                     string label = (string)row[Constants.Control.Label];
                     this.dataLabelFromLabel.Add(label, datalabel);
-                    // this.NoteID = Convert.ToInt32(row[Constants.ID].ToString()); // TODO Need to use this ID to pass between controls and data
+                    // this.NoteID = Convert.ToInt32(row[Constants.ID].ToString()); // TODOSAUL: Need to use this ID to pass between controls and data
                     this.lboxNoteFields.Items.Add(label);
                 }
             }
@@ -217,8 +217,8 @@ namespace Timelapse
                 {
                     ImageProperties imageProperties = database.GetImage(image);
                     string[] tags = { this.metaDataName };
-                    Dictionary<string, string> dictTemp = this.exifTool.FetchExifFrom(imageProperties.GetImagePath(database.FolderPath), tags);
-                    if (dictTemp.Count <= 0)
+                    Dictionary<string, string> exifData = this.exifTool.FetchExifFrom(imageProperties.GetImagePath(database.FolderPath), tags);
+                    if (exifData.Count <= 0)
                     {
                         if (this.isClearIfNoMetaData)
                         {
@@ -231,7 +231,7 @@ namespace Timelapse
                         }
                         continue;
                     }
-                    string value = dictTemp[this.metaDataName];
+                    string value = exifData[this.metaDataName];
                     backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, value));
                     if (image % 250 == 0)
                     {

@@ -12,7 +12,6 @@ namespace Timelapse.Database
     /// </summary>
     public class ImageProperties
     {
-        public DateTime ImageTaken { get; set; }
         public string Date { get; set; }
         public string FileName { get; set; }
         public long ID { get; set; }
@@ -30,7 +29,14 @@ namespace Timelapse.Database
             // this.RelativeFolderPath = NativeMethods.GetRelativePath(imageFolderPath, imageFile.FullName);
             // this.RelativeFolderPath = Path.GetDirectoryName(this.RelativeFolderPath);
 
-            this.PopulateDateAndTimeFields(imageFile);
+            // Typically the creation time is the time a file was created in the local file system and the last write time when it was
+            // last modified ever in any file system.  So, for example, copying an image from a camera's SD card to a computer results
+            // in the image file on the computer having a write time which is before its creation time.  Check both and take the lesser 
+            // of the two to provide a best effort default.  In most cases it's desirable to see if a more accurate time can be obtained
+            // from the image's EXIF metadata.
+            DateTime earliestTime = imageFile.CreationTime < imageFile.LastWriteTime ? imageFile.CreationTime : imageFile.LastWriteTime;
+            this.Date = DateTimeHandler.StandardDateString(earliestTime);
+            this.Time = DateTimeHandler.DatabaseTimeString(earliestTime);
         }
 
         public ImageProperties(DataRow imageRow)
@@ -41,6 +47,11 @@ namespace Timelapse.Database
             this.ImageQuality = (ImageQualityFilter)Enum.Parse(typeof(ImageQualityFilter), (string)imageRow[Constants.DatabaseColumn.ImageQuality]);
             this.InitialRootFolderName = (string)imageRow[Constants.DatabaseColumn.Folder];
             this.Time = (string)imageRow[Constants.DatabaseColumn.Time];
+        }
+
+        public DateTime GetDateTime()
+        {
+            return DateTime.ParseExact(this.Date + " " + this.Time, Constants.Time.DateTimeFormat, CultureInfo.InvariantCulture);
         }
 
         public FileInfo GetFileInfo(string rootFolderPath)
@@ -148,22 +159,25 @@ namespace Timelapse.Database
             if (String.IsNullOrWhiteSpace(metadata.DateTaken) == false)
             {
                 // try to get the date from the metadata
-                DateTime dateImageTaken;
                 // all the different formats used by cameras, including ambiguities in month/day vs day/month orders.
+                DateTime dateImageTaken;
                 if (DateTime.TryParse(metadata.DateTaken, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateImageTaken))
                 {
+                    // get the current date time
+                    DateTime currentDateTime = this.GetDateTime();
+
                     // measure the extent to which the image file time and image taken metadata are consistent
                     bool dateAdjusted = false;
-                    if (this.ImageTaken.Date != dateImageTaken.Date)
+                    if (currentDateTime.Date != dateImageTaken.Date)
                     {
                         this.Date = DateTimeHandler.StandardDateString(dateImageTaken);
                         dateAdjusted = true;
                     }
 
                     bool timeAdjusted = false;
-                    if (this.ImageTaken.TimeOfDay != dateImageTaken.TimeOfDay)
+                    if (currentDateTime.TimeOfDay != dateImageTaken.TimeOfDay)
                     {
-                        this.Time = DateTimeHandler.StandardTimeString(dateImageTaken);
+                        this.Time = DateTimeHandler.DatabaseTimeString(dateImageTaken);
                         timeAdjusted = true;
                     }
 
@@ -174,10 +188,9 @@ namespace Timelapse.Database
                     // daylight-standard transition occurred but the camera hadn't yet been serviced to put its clock on the new time,
                     // and needs to be reported separately as the change of day in images taken just after midnight is not an indicator
                     // of day-month ordering ambiguity in the image taken metadata.
-                    bool standardTimeAdjustment = dateImageTaken - this.ImageTaken == TimeSpan.FromHours(1);
+                    bool standardTimeAdjustment = dateImageTaken - currentDateTime == TimeSpan.FromHours(1);
 
                     // snap to metadata time and return the extent of the time adjustment
-                    this.ImageTaken = dateImageTaken;
                     if (standardTimeAdjustment)
                     {
                         return DateTimeAdjustment.MetadataDateAndTimeOneHourLater;

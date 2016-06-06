@@ -5,7 +5,7 @@ namespace Timelapse.Database
 {
     /// <summary>
     /// The code in here propagates values of a control across the various images in various ways.
-    /// TODO Update to make this work with the new set of controls
+    /// TODOSAUL: Update to make this work with the new set of controls
     /// </summary>
     public class PropagateControl
     {

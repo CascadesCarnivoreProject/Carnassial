@@ -71,10 +71,9 @@ namespace Timelapse
             }
         }
 
-        // If the user click ok, swap the day and month field
+        // If the user click ok, swap the day and month field for all images selected by the current filter
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Todd  is use of an unrestricted range correct behaviour when images have been loaded from multiple folders?
             this.database.ExchangeDayAndMonthInImageDate();
             StringBuilder log = new StringBuilder();
             log.AppendLine("System entry: Swapped the days and months for all dates.");

@@ -34,12 +34,13 @@ namespace Timelapse
             public const string ControlOrder = "ControlOrder";
             public const string Copyable = "Copyable";     // whether the content of this item should be copied from previous values
             public const string DataLabel = "DataLabel";   // if not empty, its used instead of the label as the header for the column when writing the spreadsheet
-            public const string DefaultValue = "DefaultValue";  // a default value for that code
+            public const string DefaultValue = "DefaultValue"; // a default value for that code
             public const string Label = "Label";           // a label used to describe that code
             public const string SpreadsheetOrder = "SpreadsheetOrder";
-            public const string TextBoxWidth = "TXTBOXWIDTH";      // the width of the textbox
+            public const string TextBoxWidth = "TXTBOXWIDTH";  // the width of the textbox
             public const string Tooltip = "Tooltip";       // the tooltip text that describes the code
-            public const string Visible = "Visible";        // whether an item should be visible (used by standard items)
+            public const string Type = "Type";             // the data type
+            public const string Visible = "Visible";       // whether an item should be visible (used by standard items)
 
             // control types
             public const string Counter = "Counter";           // a counter
@@ -112,6 +113,9 @@ namespace Timelapse
             public const string MarkersTable = "MarkersTable";         // the table containing the marker data
             public const string TemplateTable = "TemplateTable"; // the data containing the template data
 
+            // default values
+            public const string ImageSetDefaultLog = "Add text here";
+
             // Special characters
             public const char MarkerBar = '|';              // Separator used to separate marker points in the database i.e. "2.3,5.6 | 7.1, 3.3"
         }
@@ -128,7 +132,6 @@ namespace Timelapse
             public const string ImageQuality = "ImageQuality";
             public const string Point = "Point";               // a single point
             public const string Time = "Time";
-            public const string Type = "Type";                   // the data type
             public const string X = "X";                       // Every point has an X and Y
             public const string Y = "Y";
 
@@ -313,6 +316,15 @@ namespace Timelapse
             public const string OpenParenthesis = " ( ";
             public const string CloseParenthesis = " ) ";
             public const string Semicolon = " ; ";
+        }
+
+        public static class Time
+        {
+            // The standard date format, e.g., 05-Apr-2011
+            public const string DateFormat = "dd-MMM-yyyy";
+            public const string DateTimeFormat = "dd-MMM-yyyy HH:mm:ss";
+            public const string TimeFormatForDatabase = "HH:mm:ss";
+            public const string TimeFormatForUser = "hh:mm tt";
         }
 
         public static class VersionXml

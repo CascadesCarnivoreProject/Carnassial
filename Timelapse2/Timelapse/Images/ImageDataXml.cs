@@ -33,7 +33,7 @@ namespace Timelapse.Images
             for (int control = 0; control < templateTable.Rows.Count; control++)
             {
                 string dataLabel = (string)templateTable.Rows[control][Constants.Control.DataLabel];
-                switch ((string)templateTable.Rows[control][Constants.DatabaseColumn.Type])
+                switch ((string)templateTable.Rows[control][Constants.Control.Type])
                 {
                     case Constants.Control.Counter:
                         counterControlNames.Add(dataLabel);

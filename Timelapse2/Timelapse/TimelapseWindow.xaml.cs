@@ -342,7 +342,8 @@ namespace Timelapse
                         if (imageTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed ||
                             imageTimeAdjustment == DateTimeAdjustment.MetadataDateUsed)
                         {
-                            if (imageProperties.ImageTaken.Day < 13)
+                            DateTime imageTaken = imageProperties.GetDateTime();
+                            if (imageTaken.Day < 13)
                             {
                                 unambiguousDayMonthOrder = false;
                             }
@@ -492,22 +493,8 @@ namespace Timelapse
         /// </summary>
         private void OnImageLoadingComplete()
         {
-            // Make sure that all the string data in the datatable has white space trimmed from its beginning and end
-            // This is needed as the custom filter doesn't work well in testing comparisons if there is leading or trailing white space in it
-            // Newer versions of TImelapse will trim the data as it is entered, but older versions did not, so this is to make it backwards-compatable.
-            // The WhiteSpaceExists column in the ImageSetTable did not exist before this version, so we add it to the table. If it exists, then 
-            // we know the data has been trimmed and we don't have to do it again as the newer versions take care of trimmingon the fly.
-            if (!this.imageDatabase.DoesWhiteSpaceColumnExist())
-            {
-                this.imageDatabase.CreateWhiteSpaceColumn();
-                this.imageDatabase.TrimImageAndTemplateTableWhitespace();  // Trim the white space from all the data
-            }
-
             // Create a Custom Filter, which will hold the current custom filter expression (if any) that may be set in the DialogCustomViewFilter
             this.customfilter = new CustomFilter(this.imageDatabase);
-
-            // Load the Marker table from the database
-            this.imageDatabase.SyncMarkerTableFromDatabase();
 
             // Set the magnifying glass status from the registry. 
             // Note that if it wasn't in the registry, the value returned will be true by default
@@ -858,8 +845,7 @@ namespace Timelapse
             }
 
             // Display the first available image under the new filter
-
-            //this.ShowFirstDisplayableImage(defaultImageRow); // SAULTODO: It used to be this call, but changed it to ShowImage. Check, but seems to work.
+            // this.ShowFirstDisplayableImage(defaultImageRow); // SAULTODO: It used to be this call, but changed it to ShowImage. Check, but seems to work.
             this.ShowImage(defaultImageRow);
             // After a filter change, set the slider to represent the index and the count of the current filter
             this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
@@ -1359,7 +1345,7 @@ namespace Timelapse
         // Show the image in the current row, forcing a refresh of that image. 
         private void ShowImage(int newImageRow)
         {
-            ShowImage(newImageRow, false);
+            this.ShowImage(newImageRow, false);
         }
 
         // Show the image in the current row
@@ -1419,7 +1405,10 @@ namespace Timelapse
             // this avoids unnecessary image reloads and refreshes in cases where ShowImage() is just being called to refresh controls
             // the image row can't be tested against as its meaning changes when filters are changed; use the image ID as that's both
             // unique and immutable
-            if (forceRefresh) newImageToDisplay = true;
+            if (forceRefresh)
+            {
+                newImageToDisplay = true;
+            }
             if (newImageToDisplay)
             {
                 WriteableBitmap unalteredImage = this.imageCache.Current.LoadWriteableBitmap(this.imageDatabase.FolderPath);

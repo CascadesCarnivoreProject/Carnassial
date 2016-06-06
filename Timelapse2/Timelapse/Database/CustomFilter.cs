@@ -33,7 +33,7 @@ namespace Timelapse.Database
             {
                 // Get the values for each control
                 DataRow row = sortedTemplateTable.Rows[i];
-                string type = row[Constants.DatabaseColumn.Type].ToString();
+                string type = row[Constants.Control.Type].ToString();
 
                 // We only handle certain types, e.g., we don't give the user the opportunity to search over file names / folders / date / time
                 if (type == Constants.Control.Note ||

@@ -10,8 +10,8 @@ using Timelapse.Database;
 
 namespace Timelapse
 {
-    // TODO Modify this so it tells the user that they can't delete an image that is not there.
-    // TODO Here and elsewhere, show the placeholder images scaled to the correct size. May have to keep width/height of original image to do this.
+    // TODOSAUL: Modify this so it tells the user that they can't delete an image that is not there.
+    // TODOSAUL: Here and elsewhere, show the placeholder images scaled to the correct size. May have to keep width/height of original image to do this.
 
     /// <summary>
     /// This dialog box asks the user if he/she wants to delete the following images
@@ -200,7 +200,6 @@ namespace Timelapse
                     this.database.UpdateImage((int)imageProperties.ID, dataLabel, ImageQualityFilter.Missing.ToString());
                 }
                 this.TryMoveImageToDeletedImagesFolder(this.imageFolderPath, imageProperties);
-
             }
 
             if (this.deleteData)

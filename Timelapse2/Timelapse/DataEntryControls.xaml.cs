@@ -51,7 +51,7 @@ namespace Timelapse
                 string label = dataRow[Constants.Control.Label].ToString();
                 string list = dataRow[Constants.Control.List].ToString();
                 string tooltip = dataRow[Constants.Control.Tooltip].ToString();
-                string type = dataRow[Constants.DatabaseColumn.Type].ToString();
+                string type = dataRow[Constants.Control.Type].ToString();
                 string widthAsString = dataRow[Constants.Control.TextBoxWidth].ToString();
                 int width = (widthAsString == String.Empty) ? 0 : Convert.ToInt32(widthAsString);
 
