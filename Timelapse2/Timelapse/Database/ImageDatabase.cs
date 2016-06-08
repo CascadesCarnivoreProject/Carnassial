@@ -398,6 +398,7 @@ namespace Timelapse.Database
             return this.database.GetDataTableFromSelect(command);
         }
 
+
         /// <summary> 
         /// Populate the image table so that it matches all the entries in its associated database table.
         /// Then set the currentID and currentRow to the the first record in the returned set
@@ -447,6 +448,18 @@ namespace Timelapse.Database
         {
             string where = this.DataLabelFromColumnName[Constants.DatabaseColumn.DeleteFlag]; // key
             where += "=\"true\""; // = value
+            return this.GetDataTableOfImages("*", where);
+        }
+
+        /// <summary>
+        /// Return a data table containing a single image row, where that row is identifed by the image's ID
+        /// </summary>
+        /// <param name="ID"></param>
+        /// <returns></returns>
+        public DataTable GetDataTableOfImagesbyID(long ID)
+        {
+            string where = Constants.DatabaseColumn.ID; // ID
+            where += "=\"" + ID + "\""; // = value
             return this.GetDataTableOfImages("*", where);
         }
 
@@ -844,7 +857,7 @@ namespace Timelapse.Database
             this.DeleteImage(idList);             // invoke the version of DeleteImage that operates over that list
         }
 
-        // Delete the data associated with the images identified by the list of IDs.
+        // Delete the data (including markers associated with the images identified by the list of IDs.
         public void DeleteImage(List <long> idList)
         {
             List<string> idClauses = new List<string>();
@@ -854,7 +867,9 @@ namespace Timelapse.Database
             }
             if (idClauses.Count > 0)
             {
+                // Delete the data and markers associated with that image
                 this.database.Delete(Constants.Database.ImageDataTable, idClauses);
+                this.database.Delete(Constants.Database.MarkersTable, idClauses);
             }
         }
 

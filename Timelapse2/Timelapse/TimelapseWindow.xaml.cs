@@ -2196,7 +2196,11 @@ namespace Timelapse
             bool deleteData = !sendingMenuItem.Name.Equals(this.MenuItemDeleteImage.Name);
             DialogDeleteImage deleteImageDialog = new DialogDeleteImage(this.imageDatabase, imageProperties, this.FolderPath, deleteData);
             deleteImageDialog.Owner = this;
-            bool? result = deleteImageDialog.ShowDialog();
+
+            //SAULTODO: THIS SHOULD WORK FOR SINGLE AND MULTIPLE IMAGE DELETIONS
+            DataTable deletedTable = this.imageDatabase.GetDataTableOfImagesbyID(imageProperties.ID);
+
+            bool ? result = deleteImageDialog.ShowDialog();
             if (result == true)
             {
                 int currentRow = this.imageCache.CurrentRow;

@@ -27,7 +27,7 @@ namespace Timelapse
 
         #region Public methods
         /// <summary>
-        /// Ask the user if he/she wants to delete the given image indicated by the index.
+        /// Ask the user if he/she wants to delete one or more images and (optionally) the data associated with those images.
         /// Other parameters indicate various specifics of that image that we will use to display and delete it
         /// </summary>
         public DialogDeleteImages(ImageDatabase database, DataTable deletedImageTable, string imageFolderPath, bool deleteData)
@@ -153,10 +153,6 @@ namespace Timelapse
 
             if (this.deleteData)
             {
-                //foreach (long id in imagesIDsToDelete)
-                //{
-                //    this.database.DeleteImage(id);
-                //}
                 this.database.DeleteImage(imagesIDsToDelete);
             }
 
