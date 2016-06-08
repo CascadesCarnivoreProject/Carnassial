@@ -836,9 +836,26 @@ namespace Timelapse.Database
             this.UpdateID(1, Constants.DatabaseColumn.WhiteSpaceTrimmed, true.ToString(), Constants.Database.ImageSetTable);
         }
 
+        // Delete the data associated with the image identified by the ID
         public void DeleteImage(long id)
         {
-            this.database.Delete(Constants.Database.ImageDataTable, Constants.DatabaseColumn.ID + " = " + id.ToString());
+            List<long> idList = new List<long>(); // Create a list containing one ID, and
+            idList.Add(id);
+            this.DeleteImage(idList);             // invoke the version of DeleteImage that operates over that list
+        }
+
+        // Delete the data associated with the images identified by the list of IDs.
+        public void DeleteImage(List <long> idList)
+        {
+            List<string> idClauses = new List<string>();
+            foreach (long id in idList)
+            {
+                idClauses.Add (Constants.DatabaseColumn.ID + " = " + id.ToString());
+            }
+            if (idClauses.Count > 0)
+            {
+                this.database.Delete(Constants.Database.ImageDataTable, idClauses);
+            }
         }
 
         // Given a row index, return the ID

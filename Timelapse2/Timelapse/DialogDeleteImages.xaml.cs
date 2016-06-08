@@ -153,10 +153,11 @@ namespace Timelapse
 
             if (this.deleteData)
             {
-                foreach (long id in imagesIDsToDelete)
-                {
-                    this.database.DeleteImage(id);
-                }
+                //foreach (long id in imagesIDsToDelete)
+                //{
+                //    this.database.DeleteImage(id);
+                //}
+                this.database.DeleteImage(imagesIDsToDelete);
             }
 
             this.DialogResult = true;

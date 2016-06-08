@@ -270,12 +270,12 @@ namespace Timelapse.Database
                             {
                                 command.CommandText = Constants.Sql.Begin;
                                 command.ExecuteNonQuery();
-                                // Debug.Print(mycommand.CommandText);
+                                // Debug.Print(command.CommandText);
                             }
 
                             command.CommandText = statement;
                             rowsUpdated += command.ExecuteNonQuery();
-                            // Debug.Print(query_count.ToString());
+                            //  Debug.Print(command.CommandText);
 
                             // END
                             if (statementsInQuery >= MaxStatementCount)
@@ -283,7 +283,8 @@ namespace Timelapse.Database
                                 command.CommandText = Constants.Sql.End;
                                 rowsUpdated += command.ExecuteNonQuery();
                                 statementsInQuery = 0;
-                                // Debug.Print(mycommand.CommandText);
+                                // Debug.Print(command.CommandText);
+
                             }
                         }
                         // END
@@ -291,7 +292,7 @@ namespace Timelapse.Database
                         {
                             command.CommandText = Constants.Sql.End;
                             rowsUpdated += command.ExecuteNonQuery();
-                            // Debug.Print(mycommand.CommandText);
+                            // Debug.Print(command.CommandText);
                         }
                     }
                 }
@@ -441,9 +442,9 @@ namespace Timelapse.Database
         #endregion
 
         #region Deleting Rows 
-        /// <summary>delete specific rows from the DB where...</summary>
-        /// <param name="tableName">The table from which to delete.</param>
-        /// <param name="where">The where clause for the delete.</param>
+        /// <summary>delete a single row from the DB as specified in the where clause ...</summary>
+        /// <param name="tableName">The table from which to delete </param>
+        /// <param name="where">The where clause for the row to delete (e.g., ID=1).</param>
         public void Delete(string tableName, string where)
         {
             // DELETE FROM table_name WHERE where
@@ -455,6 +456,34 @@ namespace Timelapse.Database
                 query += where;                                 // where
             }
             this.ExecuteNonQuery(query);
+        }
+        /// <summary>
+        /// Delete one or more rows from the DB, where each row is specified in the list of where clauses ..
+        /// </summary>
+        /// <param name="tableName">The table from which to delete</param>
+        /// <param name="WhereList">The where clauses for the row to delete (e.g., ID=1 ID=3 etc</param>
+        public void Delete(string tableName, List<string> WhereList)
+        {
+            List<string> queries = new List<string>();                      // A list of SQL queries
+
+            // Construct a list containing queries of the form DELETE FROM table_name WHERE where
+            foreach (string whereClause in WhereList)
+            {
+                // Add the WHERE clause only when where is not empty
+                if (!whereClause.Trim().Equals(String.Empty))
+                {                                                            // Construct each query statement
+                    string query = Constants.Sql.DeleteFrom + tableName;     // DELETE FROM table_name
+                    query += Constants.Sql.Where;                            // DELETE FROM table_name WHERE
+                    query += whereClause;                                    // DELETE FROM table_name WHERE whereClause
+                    query += "; ";                                           // DELETE FROM table_name WHERE whereClause;
+                    queries.Add(query);
+                }
+            }
+            // Now try to invoke the batch queries
+            if(queries.Count > 0)
+            {
+                this.ExecuteNonQueryWrappedInBeginEnd(queries);
+            }
         }
         #endregion
     }
