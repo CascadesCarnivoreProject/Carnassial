@@ -40,7 +40,7 @@ namespace Timelapse.Util
                 }
 
                 // Parse the date, which should always work at this point. But just in case, put out a debug message
-                string dateAsString = (string)database.ImageDataTable.Rows[image][Constants.DatabaseColumn.Date] + " " + (string)database.ImageDataTable.Rows[image][Constants.DatabaseColumn.Time];
+                string dateAsString = database.ImageDataTable.Rows[image].GetStringField(Constants.DatabaseColumn.Date) + " " + database.ImageDataTable.Rows[image].GetStringField(Constants.DatabaseColumn.Time);
                 DateTime date; // Month/Day order
                 bool succeeded = DateTime.TryParse(dateAsString, out date);
                 if (!succeeded)

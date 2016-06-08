@@ -17,6 +17,7 @@ namespace Timelapse.Database
         public long ID { get; set; }
         public ImageQualityFilter ImageQuality { get; set; }
         public string InitialRootFolderName { get; set; }
+        public string RelativePath { get; set; }
         public string Time { get; set; }
 
         public ImageProperties(string imageFolderPath, FileInfo imageFile)
@@ -24,11 +25,13 @@ namespace Timelapse.Database
             this.FileName = imageFile.Name;
             this.ImageQuality = ImageQualityFilter.Ok;
             this.InitialRootFolderName = Path.GetFileName(imageFolderPath);
-            // TODOTODD: restore support for this
             // GetRelativePath() includes the image's file name; remove that from the relative path as it's stored separately
-            // this.RelativeFolderPath = NativeMethods.GetRelativePath(imageFolderPath, imageFile.FullName);
-            // this.RelativeFolderPath = Path.GetDirectoryName(this.RelativeFolderPath);
-
+            // GetDirectoryName() returns String.Empty if there's no relative path; the SQL layer treats this inconsistently, resulting in 
+            // DataRows returning with RelativePath = String.Empty even if null is passed despite setting String.Empty as a column default
+            // resulting in RelativePath = null.  As a result, String.IsNullOrEmpty() is the appropriate test for lack of a RelativePath.
+            this.RelativePath = NativeMethods.GetRelativePath(imageFolderPath, imageFile.FullName);
+            this.RelativePath = Path.GetDirectoryName(this.RelativePath);
+            
             // Typically the creation time is the time a file was created in the local file system and the last write time when it was
             // last modified ever in any file system.  So, for example, copying an image from a camera's SD card to a computer results
             // in the image file on the computer having a write time which is before its creation time.  Check both and take the lesser 
@@ -41,12 +44,13 @@ namespace Timelapse.Database
 
         public ImageProperties(DataRow imageRow)
         {
-            this.Date = (string)imageRow[Constants.DatabaseColumn.Date];
-            this.FileName = (string)imageRow[Constants.DatabaseColumn.File];
+            this.Date = imageRow.GetStringField(Constants.DatabaseColumn.Date);
+            this.FileName = imageRow.GetStringField(Constants.DatabaseColumn.File);
             this.ID = (long)imageRow[Constants.DatabaseColumn.ID];
-            this.ImageQuality = (ImageQualityFilter)Enum.Parse(typeof(ImageQualityFilter), (string)imageRow[Constants.DatabaseColumn.ImageQuality]);
-            this.InitialRootFolderName = (string)imageRow[Constants.DatabaseColumn.Folder];
-            this.Time = (string)imageRow[Constants.DatabaseColumn.Time];
+            this.ImageQuality = (ImageQualityFilter)Enum.Parse(typeof(ImageQualityFilter), imageRow.GetStringField(Constants.DatabaseColumn.ImageQuality));
+            this.InitialRootFolderName = imageRow.GetStringField(Constants.DatabaseColumn.Folder);
+            this.RelativePath = imageRow.GetStringField(Constants.DatabaseColumn.RelativePath);
+            this.Time = imageRow.GetStringField(Constants.DatabaseColumn.Time);
         }
 
         public DateTime GetDateTime()
@@ -61,12 +65,12 @@ namespace Timelapse.Database
 
         public string GetImagePath(string rootFolderPath)
         {
-            // TODOTODD: restore support for this
-            // if (this.RelativeFolderPath == null)
-            // {
+            // see RelativePath remarks in constructor
+            if (String.IsNullOrEmpty(this.RelativePath))
+            {
                 return Path.Combine(rootFolderPath, this.FileName);
-            // }
-            // return Path.Combine(rootFolderPath, this.RelativeFolderPath, this.FileName);
+            }
+            return Path.Combine(rootFolderPath, this.RelativePath, this.FileName);
         }
 
         public bool IsDisplayable()
@@ -135,18 +139,6 @@ namespace Timelapse.Database
             {
                 return new WriteableBitmap(Constants.Images.CorruptThumbnail);
             }
-        }
-
-        private void PopulateDateAndTimeFields(FileInfo fileInfo)
-        {
-            // Typically the creation time is the time a file was created in the local file system and the last write time when it was
-            // last modified ever in any file system.  So, for example, copying an image from a camera's SD card to a computer results
-            // in the image file on the computer having a write time which is before its creation time.  Check both and take the lesser 
-            // of the two.
-            DateTime earliestTime = fileInfo.CreationTime < fileInfo.LastWriteTime ? fileInfo.CreationTime : fileInfo.LastWriteTime;
-            this.ImageTaken = earliestTime;
-            this.Date = DateTimeHandler.StandardDateString(this.ImageTaken);
-            this.Time = DateTimeHandler.StandardTimeString(this.ImageTaken);
         }
 
         public DateTimeAdjustment TryUseImageTaken(BitmapMetadata metadata)

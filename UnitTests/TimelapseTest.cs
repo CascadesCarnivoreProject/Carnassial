@@ -21,14 +21,15 @@ namespace Timelapse.UnitTests
         /// <summary>
         /// Clones the specified template and image databases and opens the image database's clone.
         /// </summary>
-        protected ImageDatabase CloneImageDatabase(string templateDatabaseFileName, string imageDatabaseFileName)
+        protected ImageDatabase CloneImageDatabase(string templateDatabaseBaseFileName, string imageDatabaseFileName)
         {
-            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseFileName);
+            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName);
 
             string imageDatabaseSourceFilePath = Path.Combine(this.WorkingDirectory, imageDatabaseFileName);
             string imageDatabaseCloneFilePath = this.GetUniqueFilePathForTest(imageDatabaseFileName);
             File.Copy(imageDatabaseSourceFilePath, imageDatabaseCloneFilePath, true);
-            return new ImageDatabase(Path.GetDirectoryName(imageDatabaseCloneFilePath), imageDatabaseCloneFilePath, templateDatabase);
+
+            return new ImageDatabase(imageDatabaseCloneFilePath, templateDatabase);
         }
 
         /// <summary>
@@ -41,7 +42,7 @@ namespace Timelapse.UnitTests
             File.Copy(templateDatabaseSourceFilePath, templateDatabaseCloneFilePath, true);
 
             TemplateDatabase clone;
-            bool result = TemplateDatabase.TryOpen(templateDatabaseSourceFilePath, out clone);
+            bool result = TemplateDatabase.TryOpen(templateDatabaseCloneFilePath, out clone);
             Assert.IsTrue(result, "Open of template database '{0}' failed.", templateDatabaseCloneFilePath);
             return clone;
         }
@@ -49,9 +50,9 @@ namespace Timelapse.UnitTests
         /// <summary>
         /// Clones the specified template database and creates an image database unique to the calling test.
         /// </summary>
-        protected ImageDatabase CreateImageDatabase(string templateDatabaseFileName, string imageDatabaseBaseFileName)
+        protected ImageDatabase CreateImageDatabase(string templateDatabaseBaseFileName, string imageDatabaseBaseFileName)
         {
-            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseFileName);
+            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName);
 
             string imageDatabaseFilePath = this.GetUniqueFilePathForTest(imageDatabaseBaseFileName);
             if (File.Exists(imageDatabaseFilePath))
@@ -59,7 +60,7 @@ namespace Timelapse.UnitTests
                 File.Delete(imageDatabaseFilePath);
             }
 
-            return new ImageDatabase(Path.GetDirectoryName(imageDatabaseFilePath), Path.GetFileName(imageDatabaseFilePath), templateDatabase);
+            return new ImageDatabase(imageDatabaseFilePath, templateDatabase);
         }
 
         /// <summary>
@@ -80,38 +81,107 @@ namespace Timelapse.UnitTests
 
         protected List<ImageExpectations> PopulateCarnivoreDatabase(ImageDatabase imageDatabase)
         {
-            FileInfo martenFileInfo = new FileInfo(TestConstant.File.InfraredMartenImage);
+            FileInfo martenFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.CarnivoreDirectoryName, TestConstant.File.DaylightMartenPairImage));
             ImageProperties martenImage = new ImageProperties(imageDatabase.FolderPath, martenFileInfo);
             martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata);
 
-            FileInfo bobcatFileInfo = new FileInfo(TestConstant.File.DaylightBobcatImage);
-            ImageProperties bobcatImage = new ImageProperties(imageDatabase.FolderPath, bobcatFileInfo);
-            bobcatImage.TryUseImageTaken((BitmapMetadata)bobcatImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata);
+            FileInfo coyoteFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.CarnivoreDirectoryName, TestConstant.File.DaylightCoyoteImage));
+            ImageProperties coyoteImage = new ImageProperties(imageDatabase.FolderPath, coyoteFileInfo);
+            coyoteImage.TryUseImageTaken((BitmapMetadata)coyoteImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata);
 
-            imageDatabase.AddImages(new List<ImageProperties>() { martenImage, bobcatImage }, null);
-            Assert.IsTrue(imageDatabase.TryGetImagesAll());
+            imageDatabase.AddImages(new List<ImageProperties>() { martenImage, coyoteImage }, null);
+            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
 
             ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(imageDatabase);
             Assert.IsTrue(imageEnumerator.TryMoveToImage(0));
             Assert.IsTrue(imageEnumerator.MoveNext());
 
+            // cover CSV or image XML import path
+            ColumnTuplesWithWhere coyoteImageUpdate = new ColumnTuplesWithWhere();
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("Station", "DS02"));
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("TriggerSource", "critter"));
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("Identification", "coyote"));
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("Confidence", "high"));
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("GroupType", "individual"));
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("Age", "adult"));
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("Pelage", String.Empty));
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("Activity", "unknown"));
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("Comments", "escaped field due presence of '"));
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("Survey", "Timelapse carnivore database unit tests"));
+            coyoteImageUpdate.SetWhere(imageEnumerator.Current.ID);
+            imageDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { coyoteImageUpdate });
+
             // simulate data entry
-            ColumnTuplesWithWhere image2Update = new ColumnTuplesWithWhere();
-            image2Update.Columns.Add(new ColumnTuple("Station", "ID02 Unit Test Camera Location"));
-            image2Update.Columns.Add(new ColumnTuple("TriggerSource", "critter"));
-            image2Update.Columns.Add(new ColumnTuple("Identification", "American marten"));
-            image2Update.Columns.Add(new ColumnTuple("Confidence", "high"));
-            image2Update.Columns.Add(new ColumnTuple("GroupType", "individual"));
-            image2Update.Columns.Add(new ColumnTuple("Age", "adult"));
-            image2Update.Columns.Add(new ColumnTuple("Pelage", String.Empty));
-            image2Update.Columns.Add(new ColumnTuple("Activity", "unknown"));
-            image2Update.Columns.Add(new ColumnTuple("Comments", "escaped field due presence of ,"));
-            image2Update.Columns.Add(new ColumnTuple("Survey", "Timelapse database unit tests"));
-            image2Update.SetWhere(imageEnumerator.Current.ID);
-            imageDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { image2Update });
+            int martenImageID = imageDatabase.GetImageID(0);
+            imageDatabase.UpdateImage(martenImageID, "Station", "DS02");
+            imageDatabase.UpdateImage(martenImageID, "TriggerSource", "critter");
+            imageDatabase.UpdateImage(martenImageID, "Identification", "American marten");
+            imageDatabase.UpdateImage(martenImageID, "Confidence", "high");
+            imageDatabase.UpdateImage(martenImageID, "GroupType", "pair");
+            imageDatabase.UpdateImage(martenImageID, "Age", "adult");
+            imageDatabase.UpdateImage(martenImageID, "Pelage", String.Empty);
+            imageDatabase.UpdateImage(martenImageID, "Activity", "unknown");
+            imageDatabase.UpdateImage(martenImageID, "Comments", "escaped field due presence of ,");
+            imageDatabase.UpdateImage(martenImageID, "Survey", "Timelapse carnivore database unit tests");
 
             // pull the image data table again so the updates are visible to .csv export
-            Assert.IsTrue(imageDatabase.TryGetImagesAll());
+            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
+
+            // generate expectations
+            List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
+            {
+                new ImageExpectations(TestConstant.Expectations.DaylightMartenPairImage),
+                new ImageExpectations(TestConstant.Expectations.DaylightCoyoteImage)
+            };
+
+            string initialRootFolderName = Path.GetFileName(imageDatabase.FolderPath);
+            for (int image = 0; image < imageDatabase.ImageDataTable.Rows.Count; ++image)
+            {
+                ImageExpectations imageExpectation = imageExpectations[image];
+                imageExpectation.ID = image + 1;
+                imageExpectation.InitialRootFolderName = initialRootFolderName;
+            }
+
+            return imageExpectations;
+        }
+
+        protected List<ImageExpectations> PopulateDefaultDatabase(ImageDatabase imageDatabase)
+        {
+            FileInfo martenFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.InfraredMartenImage));
+            ImageProperties martenImage = new ImageProperties(imageDatabase.FolderPath, martenFileInfo);
+            martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata);
+
+            FileInfo coyoteFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.DaylightBobcatImage));
+            ImageProperties bobcatImage = new ImageProperties(imageDatabase.FolderPath, coyoteFileInfo);
+            bobcatImage.TryUseImageTaken((BitmapMetadata)bobcatImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata);
+
+            imageDatabase.AddImages(new List<ImageProperties>() { martenImage, bobcatImage }, null);
+            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
+
+            ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(imageDatabase);
+            Assert.IsTrue(imageEnumerator.TryMoveToImage(0));
+            Assert.IsTrue(imageEnumerator.MoveNext());
+
+            // cover CSV or image XML import path
+            ColumnTuplesWithWhere bobcatUpdate = new ColumnTuplesWithWhere();
+            bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Choice0, "choice b"));
+            bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Counter0, 1));
+            bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true));
+            bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "bobcat"));
+            bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult"));
+            bobcatUpdate.SetWhere(imageEnumerator.Current.ID);
+            imageDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { bobcatUpdate });
+
+            // simulate data entry
+            int martenImageID = imageDatabase.GetImageID(0);
+            imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
+            imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
+            imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constants.Boolean.True);
+            imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");
+            imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
+
+            // pull the image data table again so the updates are visible to .csv export
+            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
 
             // generate expectations
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()

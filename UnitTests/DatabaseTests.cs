@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 using Timelapse.Database;
 
 namespace Timelapse.UnitTests
@@ -11,11 +12,28 @@ namespace Timelapse.UnitTests
     public class DatabaseTests : TimelapseTest
     {
         [TestMethod]
-        public void AddImages()
+        public void AddCarnivoreImages()
+        {
+            this.AddImages(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName, (ImageDatabase imageDatabase) =>
+            {
+                return this.PopulateCarnivoreDatabase(imageDatabase);
+            });
+        }
+
+        [TestMethod]
+        public void AddDefaultImages()
+        {
+            this.AddImages(TestConstant.File.DefaultTemplateDatabaseFileName2015, TestConstant.File.DefaultImageDatabaseFileName2023, (ImageDatabase imageDatabase) =>
+            {
+                return this.PopulateDefaultDatabase(imageDatabase);
+            });
+        }
+
+        private void AddImages(string templateDatabaseBaseFileName, string imageDatabaseBaseFileName, Func<ImageDatabase, List<ImageExpectations>> addImages)
         {
             // create database for test
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
-            List<ImageExpectations> imageExpectations = this.PopulateCarnivoreDatabase(imageDatabase);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(templateDatabaseBaseFileName, imageDatabaseBaseFileName);
+            List<ImageExpectations> imageExpectations = addImages(imageDatabase);
 
             // check images after initial add and again after reopen
             string currentDirectoryName = Path.GetFileName(imageDatabase.FolderPath);
@@ -29,8 +47,8 @@ namespace Timelapse.UnitTests
                 }
 
                 // reopen database for test and refresh images so next iteration of the loop checks state after reload
-                imageDatabase = new ImageDatabase(imageDatabase.FolderPath, imageDatabase.FileName, null);
-                Assert.IsTrue(imageDatabase.TryGetImagesAll());
+                imageDatabase = new ImageDatabase(imageDatabase.FilePath, imageDatabase);
+                Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
             }
         }
 
@@ -42,64 +60,92 @@ namespace Timelapse.UnitTests
 
             // populate template database
             this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
-            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == 6);
+            int numberOfStandardControls = Constants.Control.StandardTypes.Count;
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == numberOfStandardControls);
             this.VerifyControls(templateDatabase);
 
-            DataRow newControl = templateDatabase.AddControl(Constants.Control.Counter);
-            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == 7);
+            DataRow newControl = templateDatabase.AddUserDefinedControl(Constants.Control.Counter);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == numberOfStandardControls + 1);
             this.VerifyControl(newControl);
 
-            newControl = templateDatabase.AddControl(Constants.Control.FixedChoice);
-            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == 8);
+            newControl = templateDatabase.AddUserDefinedControl(Constants.Control.FixedChoice);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == numberOfStandardControls + 2);
             this.VerifyControl(newControl);
 
-            newControl = templateDatabase.AddControl(Constants.Control.Flag);
-            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == 9);
+            newControl = templateDatabase.AddUserDefinedControl(Constants.Control.Flag);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == numberOfStandardControls + 3);
             this.VerifyControl(newControl);
 
-            newControl = templateDatabase.AddControl(Constants.Control.Note);
-            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == 10);
+            newControl = templateDatabase.AddUserDefinedControl(Constants.Control.Note);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == numberOfStandardControls + 4);
             this.VerifyControl(newControl);
+            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
 
-            templateDatabase.RemoveControl(templateDatabase.TemplateTable.Rows[2]);
-            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == 9);
-            templateDatabase.RemoveControl(templateDatabase.TemplateTable.Rows[2]);
-            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == 8);
-            templateDatabase.RemoveControl(templateDatabase.TemplateTable.Rows[0]);
-            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == 7);
-            templateDatabase.RemoveControl(templateDatabase.TemplateTable.Rows[0]);
-            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == 6);
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.TemplateTable.Rows[numberOfStandardControls + 2]);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == numberOfStandardControls + 3);
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.TemplateTable.Rows[numberOfStandardControls + 2]);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == numberOfStandardControls + 2);
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.TemplateTable.Rows[numberOfStandardControls + 0]);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == numberOfStandardControls + 1);
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.TemplateTable.Rows[numberOfStandardControls + 0]);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == numberOfStandardControls);
+            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
 
             int iterations = 10;
             for (int iteration = 0; iteration < iterations; ++iteration)
             {
-                newControl = templateDatabase.AddControl(Constants.Control.Note);
+                newControl = templateDatabase.AddUserDefinedControl(Constants.Control.Note);
                 this.VerifyControl(newControl);
-                newControl = templateDatabase.AddControl(Constants.Control.Flag);
+                newControl = templateDatabase.AddUserDefinedControl(Constants.Control.Flag);
                 this.VerifyControl(newControl);
-                newControl = templateDatabase.AddControl(Constants.Control.FixedChoice);
+                newControl = templateDatabase.AddUserDefinedControl(Constants.Control.FixedChoice);
                 this.VerifyControl(newControl);
-                newControl = templateDatabase.AddControl(Constants.Control.Counter);
+                newControl = templateDatabase.AddUserDefinedControl(Constants.Control.Counter);
                 this.VerifyControl(newControl);
             }
 
-            templateDatabase.RemoveControl(templateDatabase.TemplateTable.Rows[22]);
-            templateDatabase.RemoveControl(templateDatabase.TemplateTable.Rows[16]);
+            // modify control and spreadsheet orders
+            // control order ends up reverse order from ID, spreadsheet order is alphabetical
+            Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>();
+            for (int controlOrder = templateDatabase.TemplateTable.Rows.Count, row = 0; row < templateDatabase.TemplateTable.Rows.Count; --controlOrder, ++row)
+            {
+                string dataLabel = templateDatabase.TemplateTable.Rows[row].GetStringField(Constants.Control.DataLabel);
+                newControlOrderByDataLabel.Add(dataLabel, controlOrder);
+            }
+            templateDatabase.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
 
-            // reopen and modify the template database
-            string templateDatabaseFilePath = templateDatabase.FilePath;
-            templateDatabase = new TemplateDatabase(templateDatabaseFilePath);
-            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseFilePath);
-            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == 6 + (4 * iterations) - 2);
-            Assert.IsTrue(templateDatabase.TemplateTable.Columns.Count == TestConstant.TemplateTableColumns.Count);
-            this.VerifyControls(templateDatabase);
+            List<string> alphabeticalDataLabels = newControlOrderByDataLabel.Keys.ToList();
+            alphabeticalDataLabels.Sort();
+            Dictionary<string, int> newSpreadsheetOrderByDataLabel = new Dictionary<string, int>();
+            int spreadsheetOrder = 0;
+            foreach (string dataLabel in alphabeticalDataLabels)
+            {
+                newSpreadsheetOrderByDataLabel.Add(dataLabel, ++spreadsheetOrder);
+            }
+            templateDatabase.UpdateDisplayOrder(Constants.Control.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
+            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
 
-            int controlIndex = 6 + (3 * iterations) - 3;
+            // remove some controls and verify the control and spreadsheet orders are properly updated
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.TemplateTable.Rows[numberOfStandardControls + 22]);
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.TemplateTable.Rows[numberOfStandardControls + 16]);
+            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+
+            // modify a control by data row manipulation
+            int controlIndex = numberOfStandardControls + (3 * iterations) - 3;
             DataRow control = templateDatabase.TemplateTable.Rows[controlIndex];
             string tooltip = "Field modification roundtrip.";
             control[Constants.Control.Tooltip] = tooltip;
             templateDatabase.SyncControlToDatabase(control);
-            Assert.IsTrue((string)templateDatabase.TemplateTable.Rows[controlIndex][Constants.Control.Tooltip] == tooltip);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows[controlIndex].GetStringField(Constants.Control.Tooltip) == tooltip);
+
+            // reopen the template database and check again
+            string templateDatabaseFilePath = templateDatabase.FilePath;
+            templateDatabase = new TemplateDatabase(templateDatabaseFilePath);
+            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseFilePath);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == numberOfStandardControls + (4 * iterations) - 2);
+            Assert.IsTrue(templateDatabase.TemplateTable.Columns.Count == TestConstant.TemplateTableColumns.Count);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows[controlIndex].GetStringField(Constants.Control.Tooltip) == tooltip);
+            this.VerifyControls(templateDatabase);
         }
 
         [TestMethod]
@@ -139,11 +185,11 @@ namespace Timelapse.UnitTests
             // load database
             string imageDatabaseBaseFileName = TestConstant.File.DefaultImageDatabaseFileName2023;
             ImageDatabase imageDatabase = this.CloneImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015, imageDatabaseBaseFileName);
-            Assert.IsTrue(imageDatabase.TryGetImagesAll());
+            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
 
             // verify template portion
             this.VerifyTemplateDatabase(imageDatabase, imageDatabaseBaseFileName);
-            this.VerifyTemplateTable(imageDatabase);
+            this.VerifyDefaultTemplateTableContent(imageDatabase);
 
             // verify image set table
             Assert.IsTrue(imageDatabase.GetImageSetFilter() == ImageQualityFilter.All);
@@ -180,6 +226,7 @@ namespace Timelapse.UnitTests
             ImageExpectations martenExpectation = new ImageExpectations(TestConstant.Expectations.InfraredMartenImage);
             martenExpectation.ID = 1;
             martenExpectation.InitialRootFolderName = initialRootFolderName;
+            martenExpectation.RelativePath = null;
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, "3");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice c");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "0");
@@ -189,11 +236,11 @@ namespace Timelapse.UnitTests
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, "custom label");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, Constants.Boolean.False);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, TestConstant.Expectations.CounterNotVisible.DefaultValue);
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, Constants.ControlDefault.FixedChoiceValue);
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, Constants.ControlDefault.NoteValue);
+            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, Constants.ControlDefault.Value);
+            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, Constants.ControlDefault.Value);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constants.ControlDefault.FlagValue);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, "1");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, Constants.ControlDefault.FixedChoiceValue);
+            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, Constants.ControlDefault.Value);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "note");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Constants.Boolean.True);
             martenExpectation.Verify(imageDatabase.ImageDataTable.Rows[0]);
@@ -201,21 +248,22 @@ namespace Timelapse.UnitTests
             ImageExpectations bobcatExpectation = new ImageExpectations(TestConstant.Expectations.DaylightBobcatImage);
             bobcatExpectation.ID = 2;
             bobcatExpectation.InitialRootFolderName = initialRootFolderName;
+            bobcatExpectation.RelativePath = null;
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, TestConstant.Expectations.Counter0.DefaultValue);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice a");
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "1");
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, Constants.Boolean.True);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, "3");
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, "with , comma");
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, Constants.ControlDefault.NoteValue);
+            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, Constants.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, Constants.Boolean.True);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, TestConstant.Expectations.CounterNotVisible.DefaultValue);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, Constants.ControlDefault.FixedChoiceValue);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, Constants.ControlDefault.NoteValue);
+            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, Constants.ControlDefault.Value);
+            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, Constants.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constants.ControlDefault.FlagValue);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, TestConstant.Expectations.Counter3.DefaultValue);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, Constants.ControlDefault.FixedChoiceValue);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, Constants.ControlDefault.NoteValue);
+            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, Constants.ControlDefault.Value);
+            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, Constants.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Constants.Boolean.True);
             bobcatExpectation.Verify(imageDatabase.ImageDataTable.Rows[1]);
         }
@@ -293,9 +341,25 @@ namespace Timelapse.UnitTests
 
             // TemplateTable checks
             Assert.IsTrue(templateDatabase.TemplateTable.Columns.Count == TestConstant.TemplateTableColumns.Count);
+            List<long> ids = new List<long>();
+            List<long> controlOrders = new List<long>();
+            List<long> spreadsheetOrders = new List<long>();
+            for (int row = 0; row < templateDatabase.TemplateTable.Rows.Count; ++row)
+            {
+                DataRow control = templateDatabase.TemplateTable.Rows[row];
+                ids.Add((long)control[Constants.DatabaseColumn.ID]);
+                controlOrders.Add((long)control[Constants.Control.ControlOrder]);
+                spreadsheetOrders.Add((long)control[Constants.Control.SpreadsheetOrder]);
+            }
+            List<long> uniqueIDs = ids.Distinct().ToList();
+            Assert.IsTrue(ids.Count == uniqueIDs.Count, "Expected {0} unique control IDs but found {1}.  {2} id(s) are duplicated.", ids.Count, uniqueIDs.Count, ids.Count - uniqueIDs.Count);
+            List<long> uniqueControlOrders = controlOrders.Distinct().ToList();
+            Assert.IsTrue(controlOrders.Count == uniqueControlOrders.Count, "Expected {0} unique control orders but found {1}.  {2} order(s) are duplicated.", controlOrders.Count, uniqueControlOrders.Count, controlOrders.Count - uniqueControlOrders.Count);
+            List<long> uniqueSpreadsheetOrders = spreadsheetOrders.Distinct().ToList();
+            Assert.IsTrue(spreadsheetOrders.Count == uniqueSpreadsheetOrders.Count, "Expected {0} unique spreadsheet orders but found {1}.  {2} order(s) are duplicated.", spreadsheetOrders.Count, uniqueSpreadsheetOrders.Count, spreadsheetOrders.Count - uniqueSpreadsheetOrders.Count);
         }
 
-        private void VerifyTemplateTable(TemplateDatabase templateDatabase)
+        private void VerifyDefaultTemplateTableContent(TemplateDatabase templateDatabase)
         {
             Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == TestConstant.DefaultImageTableColumns.Count - 1);
             TestConstant.Expectations.File.Verify(templateDatabase.TemplateTable.Rows[0]);
@@ -320,6 +384,7 @@ namespace Timelapse.UnitTests
             TestConstant.Expectations.Choice3.Verify(templateDatabase.TemplateTable.Rows[19]);
             TestConstant.Expectations.Note3.Verify(templateDatabase.TemplateTable.Rows[20]);
             TestConstant.Expectations.Flag3.Verify(templateDatabase.TemplateTable.Rows[21]);
+            TestConstant.Expectations.RelativePath.Verify(templateDatabase.TemplateTable.Rows[22]);
         }
     }
 }

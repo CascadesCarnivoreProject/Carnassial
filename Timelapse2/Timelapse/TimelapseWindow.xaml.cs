@@ -48,8 +48,6 @@ namespace Timelapse
         // the database that holds the template
         private TemplateDatabase template;
 
-        private bool imageFolderReopened = true; // Whether  the image folder in the current session is the same as the folder used in the last session
-
         private DialogDataView dlgDataView;
 
         #region Constructors, Cleaning up, Destructors
@@ -226,66 +224,68 @@ namespace Timelapse
                 return false;
             }
 
-            // update state to the newly selected database template
-            string imageDatabaseFileName = Constants.File.DefaultImageDatabaseFileName;
-            if (String.Equals(Path.GetFileName(templateDatabasePath), Constants.File.DefaultTemplateDatabaseFileName, StringComparison.OrdinalIgnoreCase) == false)
-            {
-                imageDatabaseFileName = Path.GetFileNameWithoutExtension(templateDatabasePath) + Constants.File.ImageDatabaseFileExtension;
-            }
-            this.imageDatabase = new ImageDatabase(Path.GetDirectoryName(templateDatabasePath), imageDatabaseFileName, this.template);
-            this.imageCache = new ImageCache(this.imageDatabase);
-            this.state.MostRecentImageSets.SetMostRecent(templateDatabasePath);
-            this.MenuItemRecentImageSets_Refresh();
-
             // Find the .ddb file in the image set folder. If a single .ddb file is found, use that one
             // If there are multiple .ddb files, ask the use to choose one and use that
             // However, if the user cancels that choice, just abort.
-            // If there are no .ddb files, then just create the standard one.
-            switch (this.imageDatabase.TrySelectDatabaseFile())
+            string imageDatabaseFilePath;
+            bool importImages;
+            if (this.TrySelectDatabaseFile(templateDatabasePath, out imageDatabaseFilePath, out importImages) == false)
             {
-                case 0: // An existing .ddb file is available
-                    if (this.TryLoadImagesFromDatabase(this.template))
-                    {
-                        this.OnImageLoadingComplete();
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                    break;
-                case 1: // User cancelled the process of choosing between .ddb files
-                    this.OnImageDatabaseNotLoaded();
-                    return false;
-                case 2: // There are no existing .ddb files
-                default:
-                    if (this.LoadByScanningImageFolder(this.FolderPath) == false)
-                    {
-                        DialogMessageBox messageBox = new DialogMessageBox();
-                        messageBox.MessageTitle = "No Images Found in the image set folder.";
-                        messageBox.MessageProblem = "There doesn't seem to be any JPG images in your chosen image folder:";
-                        messageBox.MessageProblem += Environment.NewLine + "\u2022 " + this.FolderPath + Environment.NewLine;
-                        messageBox.MessageReason = "\u2022 The folder has no JPG files in it (image files ending in '.jpg'), or" + Environment.NewLine;
-                        messageBox.MessageReason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images.";
-                        messageBox.MessageSolution = "\u2022 Check that the chosen folder actually contains JPG images (i.e., a 'jpg' suffix), or" + Environment.NewLine;
-                        messageBox.MessageSolution += "\u2022 Choose another folder.";
-                        messageBox.IconType = MessageBoxImage.Error;
-                        messageBox.ButtonType = MessageBoxButton.OK;
-                        messageBox.ShowDialog();
-
-                        // revert UI to no database loaded state
-                        // but enable adding images so that if the user needs to place the database in a folder which doesn't directly contain 
-                        // any .jpg images they can still add images in other locations
-                        this.OnImageDatabaseNotLoaded();
-                        // TODOTODD: this.MenuItemAddImagesToImageSet.IsEnabled = true;
-                        return false;
-                    }
-                    break;
+                this.OnImageDatabaseNotLoaded();
+                return false;
             }
-            this.state.IsContentChanged = false; // We've altered some content
 
-            // For persistance: set a flag if We've opened the same image folder we worked with in the last session. 
-            // If its different, saved the new folder path 
-            this.imageFolderReopened = (templateDatabasePath == this.FolderPath) ? true : false;
+            // When we are loading from an existing image database, ensure that the template in the template database matches the template stored in
+            // the image database
+            this.imageDatabase = new ImageDatabase(imageDatabaseFilePath, this.template);
+            if (this.imageDatabase.TemplateSynchronizationIssues.Count > 0)
+            {
+                DialogTemplatesDontMatch dlg = new DialogTemplatesDontMatch(this.imageDatabase.TemplateSynchronizationIssues);
+                dlg.Owner = this;
+                bool? result = dlg.ShowDialog();
+                if (result == true)
+                {
+                    // user indicated not to update to the current template so exit
+                    Application.Current.Shutdown();
+                    return false;
+                }
+                // user indicated to run with the stale copy of the template in the image database
+            }
+            this.imageCache = new ImageCache(this.imageDatabase);
+
+            if (importImages)
+            {
+                if (this.LoadByScanningImageFolder(this.FolderPath) == false)
+                {
+                    DialogMessageBox messageBox = new DialogMessageBox();
+                    messageBox.MessageTitle = "No Images Found in the image set folder.";
+                    messageBox.MessageProblem = "There doesn't seem to be any JPG images in your chosen image folder:";
+                    messageBox.MessageProblem += Environment.NewLine + "\u2022 " + this.FolderPath + Environment.NewLine;
+                    messageBox.MessageReason = "\u2022 The folder has no JPG files in it (image files ending in '.jpg'), or" + Environment.NewLine;
+                    messageBox.MessageReason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images.";
+                    messageBox.MessageSolution = "\u2022 Check that the chosen folder actually contains JPG images (i.e., a 'jpg' suffix), or" + Environment.NewLine;
+                    messageBox.MessageSolution += "\u2022 Choose another folder.";
+                    messageBox.IconType = MessageBoxImage.Error;
+                    messageBox.ButtonType = MessageBoxButton.OK;
+                    messageBox.ShowDialog();
+
+                    // revert UI to no database loaded state
+                    // but enable adding images so that if the user needs to place the database in a folder which doesn't directly contain 
+                    // any .jpg images they can still add images in other locations
+                    this.OnImageDatabaseNotLoaded();
+                    this.MenuItemAddImagesToImageSet.IsEnabled = true;
+                    return false;
+                }
+            }
+
+            // generate and render the data entry controls
+            this.dataEntryControls.Generate(this.imageDatabase, this.imageCache);
+            this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
+            this.OnImageLoadingComplete();
+
+            this.state.MostRecentImageSets.SetMostRecent(templateDatabasePath);
+            this.MenuItemRecentImageSets_Refresh();
+            this.state.IsContentChanged = false;
             return true;
         }
 
@@ -309,7 +309,8 @@ namespace Timelapse
             bool unambiguousDayMonthOrder = true;
             ProgressState progressState = new ProgressState();
             backgroundWorker.DoWork += (ow, ea) =>
-            {   // this runs on the background thread; its written as an anonymous delegate
+            {   
+                // this runs on the background thread; its written as an anonymous delegate
                 // We need to invoke this to allow updates on the UI
                 this.Dispatcher.Invoke(new Action(() =>
                 {
@@ -325,7 +326,6 @@ namespace Timelapse
                     FileInfo imageFile = imageFilePaths[image];
                     ImageProperties imageProperties = new ImageProperties(this.FolderPath, imageFile);
 
-                    WriteableBitmap bitmap = null;
                     BitmapFrame bitmapFrame = null;
                     try
                     {
@@ -334,7 +334,7 @@ namespace Timelapse
                         // framework bug: WriteableBitmap.Metadata returns null rather than metatada offered by the underlying BitmapFrame, so 
                         // retain the frame and pass its metadata to TryUseImageTaken().
                         bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
-                        bitmap = new WriteableBitmap(bitmapFrame);
+                        WriteableBitmap bitmap = new WriteableBitmap(bitmapFrame);
                         imageProperties.ImageQuality = bitmap.GetImageQuality(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
 
                         // see if the date can be updated from the metadata
@@ -351,20 +351,18 @@ namespace Timelapse
                     }
                     catch (Exception exception)
                     {
-                        Debug.Assert(false, String.Format("Load of {0} failed as its likely corrupted.", imageProperties.FileName), exception.ToString());
-                        bitmap = new WriteableBitmap(Constants.Images.Corrupt);
+                        Debug.Assert(false, String.Format("Load of {0} failed as it's likely corrupted.", imageProperties.FileName), exception.ToString());
+                        bitmapFrame = Constants.Images.Corrupt;
                         imageProperties.ImageQuality = ImageQualityFilter.Corrupted;
                     }
 
-                    // Debug.Print(fileInfo.Name + " " + time1.ToString() + " " + time2.ToString() + " " + time3);
-                    imageProperties.ID = image + 1; // its plus 1 as the Database IDs start at 1 rather than 0
                     imagePropertyList.Add(imageProperties);
 
-                    if (imageProperties.ID == 1 || (imageProperties.ID % Constants.FolderScanProgressUpdateFrequency == 0))
+                    if (image == 0 || (image % Constants.FolderScanProgressUpdateFrequency == 0))
                     {
                         progressState.Message = String.Format("{0}/{1}: Examining {2}", image, count, imageProperties.FileName);
                         progressState.Bmap = bitmapFrame;
-                        int progress = Convert.ToInt32(Convert.ToDouble(imageProperties.ID) / Convert.ToDouble(count) * 100);
+                        int progress = Convert.ToInt32(Convert.ToDouble(image) / Convert.ToDouble(count) * 100);
                         backgroundWorker.ReportProgress(progress, progressState);
                     }
                     else
@@ -451,6 +449,43 @@ namespace Timelapse
             return true;
         }
 
+        private bool TrySelectDatabaseFile(string templateDatabasePath, out string databaseFilePath, out bool importImages)
+        {
+            importImages = false;
+
+            string databaseFileName;
+            string directoryPath = Path.GetDirectoryName(templateDatabasePath);
+            string[] files = Directory.GetFiles(directoryPath, "*.ddb");
+            if (files.Length == 1)
+            {
+                databaseFileName = Path.GetFileName(files[0]); // Get the file name, excluding the path
+            }
+            else if (files.Length > 1)
+            {
+                DialogChooseDatabaseFile chooseDatabaseFile = new DialogChooseDatabaseFile(files);
+                bool? result = chooseDatabaseFile.ShowDialog();
+                if (result == true)
+                {
+                    databaseFileName = chooseDatabaseFile.SelectedFile;
+                }
+                else
+                {
+                    // User cancelled .ddb selection
+                    databaseFilePath = null;
+                    return false;
+                }
+            }
+            else
+            {
+                // There are no existing .ddb files
+                databaseFileName = Path.GetFileNameWithoutExtension(templateDatabasePath) + Constants.File.ImageDatabaseFileExtension;
+                importImages = true;
+            }
+
+            databaseFilePath = Path.Combine(directoryPath, databaseFileName);
+            return true;
+        }
+
         private void Feedback(BitmapSource bmap, int percent, string message)
         {
             this.feedbackCtl.ShowMessage = message;
@@ -459,33 +494,6 @@ namespace Timelapse
             {
                 this.feedbackCtl.ShowImage = bmap;
             }
-        }
-
-        // Try to load the images from the DB file.
-        private bool TryLoadImagesFromDatabase(TemplateDatabase template)
-        {
-            // When we are loading from an existing image database, ensure that the template in the template database matches the template stored in
-            // the image database
-            List<string> errors = this.AreTemplateTablesConsistent();
-            if (errors.Count > 0)
-            {
-                DialogTemplatesDontMatch dlg = new DialogTemplatesDontMatch(errors);
-                dlg.Owner = this;
-                bool? result = dlg.ShowDialog();
-                if (result == true)
-                {
-                    // user indicated not to update to the current template so exit
-                    Application.Current.Shutdown();
-                    return false;
-                }
-                // user indicated to run with the stale copy of the template in the image database
-            }
-
-            // We generate the data user interface controls from the template description after the database has been created from the template
-            this.dataEntryControls.Generate(this.imageDatabase, this.imageCache);
-            this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
-            this.imageDatabase.TryGetImagesAll();
-            return true;
         }
 
         /// <summary>
@@ -505,7 +513,7 @@ namespace Timelapse
 
             // Now that we have something to show, enable menus and menu items as needed
             // Note that we do not enable those menu items that would have no effect
-            // TODOTODD: this.MenuItemAddImagesToImageSet.IsEnabled = true;
+            this.MenuItemAddImagesToImageSet.IsEnabled = true;
             this.MenuItemLoadImages.IsEnabled = false;
             this.MenuItemExportThisImage.IsEnabled = true;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = true;
@@ -537,14 +545,7 @@ namespace Timelapse
             // set the current filter and the image index to the same as the ones in the last session, providing that we are working 
             // with the same image folder. 
             // Doing so also displays the image
-            if (this.imageFolderReopened)
-            {
-                this.SetImageFilterAndIndex(this.imageDatabase.GetImageSetRowIndex(), this.imageDatabase.GetImageSetFilter());
-            }
-            else
-            {
-                this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
-            }
+            this.SetImageFilterAndIndex(this.imageDatabase.GetImageSetRowIndex(), this.imageDatabase.GetImageSetFilter());
 
             if (FileBackup.TryCreateBackups(this.FolderPath, this.imageDatabase.FileName))
             {
@@ -562,7 +563,7 @@ namespace Timelapse
         /// </summary>
         private void OnImageDatabaseNotLoaded()
         {
-            // TODOTODD: this.MenuItemAddImagesToImageSet.IsEnabled = false;
+            this.MenuItemAddImagesToImageSet.IsEnabled = false;
             this.MenuItemLoadImages.IsEnabled = true;
             this.MenuItemExportThisImage.IsEnabled = false;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = false;
@@ -576,272 +577,139 @@ namespace Timelapse
             this.MenuItemFilter.IsEnabled = false;
             this.MenuItemOptions.IsEnabled = false;
         }
-
-        // Check if the template table in the template database matches the the one in the image database. If not, return a list of errors,
-        // i.e., columns that apper in one but not the other.
-        private List<string> AreTemplateTablesConsistent()
-        {
-            // Create two lists that we will compare, each containing the DataLabels from the template in the template file vs. db file.
-            DataTable databaseTemplateTable = this.imageDatabase.GetDataTable(Constants.Database.TemplateTable);
-            List<String> imageDataLabels = new List<String>();
-            for (int i = 0; i < databaseTemplateTable.Rows.Count; i++)
-            {
-                imageDataLabels.Add((string)databaseTemplateTable.Rows[i][Constants.Control.DataLabel]);
-            }
-
-            List<String> templateDataLabels = new List<String>();
-            for (int i = 0; i < this.template.TemplateTable.Rows.Count; i++)
-            {
-                templateDataLabels.Add((string)this.template.TemplateTable.Rows[i][Constants.Control.DataLabel]);
-            }
-
-            // Check to see if there are fields in the template database table which are not in the image database's template table
-            List<string> errors = new List<string>();
-            foreach (string dataLabel in templateDataLabels)
-            {
-                if (!imageDataLabels.Contains(dataLabel))
-                {
-                    errors.Add("- A field with the DataLabel '" + dataLabel + "' was found in the Template, but nothing matches that in the Data." + Environment.NewLine);
-                }
-            }
-
-            // Check to see if there are fields in the image database's template table which are not in the template database's table
-            foreach (string dataLabel in imageDataLabels)
-            {
-                if (!templateDataLabels.Contains(dataLabel))
-                {
-                    errors.Add("- A field with the DataLabel '" + dataLabel + "' was found in the Data, but nothing matches that in the Template." + Environment.NewLine);
-                }
-            }
-            return errors;
-        }
         #endregion
 
         #region Filters
         private bool SetImageFilterAndIndex(int defaultImageRow, ImageQualityFilter filter)
         {
-            // Change the filter to reflect what the user selected. Update the menu state accordingly
-            // Set the checked status of the radio button menu items to the filter.
-            if (filter == ImageQualityFilter.All)
+            bool imagesAvailableWithFilter;
+            switch (filter)
             {
-                // All images
-                this.imageDatabase.TryGetImagesAll();
-                StatusBarUpdate.View(this.statusBar, "all images.");
-                this.MenuItemViewSetSelected(ImageQualityFilter.All);
+                case ImageQualityFilter.All:
+                case ImageQualityFilter.Corrupted:
+                case ImageQualityFilter.Dark:
+                case ImageQualityFilter.MarkedForDeletion:
+                case ImageQualityFilter.Missing:
+                case ImageQualityFilter.Ok:
+                    imagesAvailableWithFilter = this.imageDatabase.TryGetImages(filter);
+                    break;
+                case ImageQualityFilter.Custom:
+                    imagesAvailableWithFilter = this.customfilter.GetImageCount() != 0;
+                    break;
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled image quality filter {0}.", filter));
+            }
+
+            if (imagesAvailableWithFilter || filter == ImageQualityFilter.All)
+            {
+                // Change the filter to reflect what the user selected. Update the menu state accordingly
+                // Set the checked status of the radio button menu items to the filter.
+                string status;
+                switch (filter)
+                {
+                    case ImageQualityFilter.All:
+                        status = "all images.";
+                        break;
+                    case ImageQualityFilter.Corrupted:
+                        status = "corrupted images.";
+                        break;
+                    case ImageQualityFilter.Custom:
+                        status = "images matching your custom filter.";
+                        break;
+                    case ImageQualityFilter.Dark:
+                        status = "dark images.";
+                        break;
+                    case ImageQualityFilter.MarkedForDeletion:
+                        status = "images marked for deletion.";
+                        break;
+                    case ImageQualityFilter.Missing:
+                        status = "missing images.";
+                        break;
+                    case ImageQualityFilter.Ok:
+                        status = "light images.";
+                        break;
+                    default:
+                        throw new NotSupportedException(String.Format("Unhandled image quality filter {0}.", filter));
+                }
+
+                StatusBarUpdate.View(this.statusBar, status);
+                this.MenuItemViewSetSelected(filter);
                 if (null != this.dlgDataView)
                 {
                     this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
-                }
-            }
-            else if (filter == ImageQualityFilter.Ok)
-            {
-                // Light images
-                if (this.imageDatabase.TryGetImagesAllButDarkAndCorrupted())
-                {
-                    StatusBarUpdate.View(this.statusBar, "light images.");
-                    this.MenuItemViewSetSelected(ImageQualityFilter.Ok);
-                    if (null != this.dlgDataView)
+                    if (filter == ImageQualityFilter.MarkedForDeletion)
                     {
-                        this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
-                    }
-                }
-                else
-                {
-                    // It really should never get here, as the menu option for filtering by light images will be disabled if there aren't any. 
-                    // Still,...
-                    StatusBarUpdate.Message(this.statusBar, "no light images to display.");
-                    DialogMessageBox dlgMB = new DialogMessageBox();
-                    dlgMB.MessageTitle = "Light filter selected, but no images are marked as light.";
-                    dlgMB.MessageProblem = "None of the images in this image set are light images, so nothing can be shown.";
-                    dlgMB.MessageReason = "None of the images have their 'ImageQuality' field  set to OK.";
-                    dlgMB.MessageResult = "The filter will not be applied.";
-                    dlgMB.MessageHint = "If you have images that you think should be marked as 'light', set its ImageQUality field to OK.";
-                    dlgMB.IconType = MessageBoxImage.Information;
-                    dlgMB.ButtonType = MessageBoxButton.OK;
-                    dlgMB.ShowDialog();
-
-                    if (this.state.ImageFilter == ImageQualityFilter.Ok)
-                    {
-                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
-                    }
-                    this.MenuItemViewSetSelected(this.state.ImageFilter);
-                    return false;
-                }
-            }
-            else if (filter == ImageQualityFilter.Corrupted)
-            {
-                // Corrupted images
-                if (this.imageDatabase.TryGetImagesCorrupted())
-                {
-                    StatusBarUpdate.View(this.statusBar, "corrupted images.");
-                    this.MenuItemViewSetSelected(ImageQualityFilter.Corrupted);
-                    if (null != this.dlgDataView)
-                    {
-                        this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
-                    }
-                }
-                else
-                {
-                    // It really should never get here, as the menu option for filtering by corrupted images will be disabled if there aren't any. 
-                    // Still,...
-                    StatusBarUpdate.Message(this.statusBar, "no corrupted images to display.");
-                    DialogMessageBox dlgMB = new DialogMessageBox();
-                    dlgMB.MessageTitle = "Corrupted filter selected, but no images are marked as corrupted.";
-                    dlgMB.MessageProblem = "None of the images in this image set are corrupted images, so nothing can be shown.";
-                    dlgMB.MessageReason = "None of the images have their 'ImageQuality' field  set to Corrupted.";
-                    dlgMB.MessageResult = "The filter will not be applied.";
-                    dlgMB.MessageHint = "If you have images that you think should be marked as 'Corrupted', set its ImageQUality field to Corrupted.";
-                    dlgMB.IconType = MessageBoxImage.Information;
-                    dlgMB.ButtonType = MessageBoxButton.OK;
-                    dlgMB.ShowDialog();
-
-                    if (this.state.ImageFilter == ImageQualityFilter.Corrupted)
-                    {
-                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
-                    }
-
-                    this.MenuItemViewSetSelected(this.state.ImageFilter);
-                    return false;
-                }
-            }
-            else if (filter == ImageQualityFilter.Dark)
-            {
-                // Dark images
-                if (this.imageDatabase.TryGetImagesDark())
-                {
-                    StatusBarUpdate.View(this.statusBar, "dark images.");
-                    this.MenuItemViewSetSelected(ImageQualityFilter.Dark);
-                    if (null != this.dlgDataView)
-                    {
-                        this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
-                    }
-                }
-                else
-                {
-                    // It really should never get here, as the menu option for filtering by dark images will be disabled if there aren't any. 
-                    // Still,...
-                    StatusBarUpdate.Message(this.statusBar, "no dark images to display.");
-                    DialogMessageBox messageBox = new DialogMessageBox();
-                    messageBox.MessageTitle = "Dark filter selected, but no images are marked as dark.";
-                    messageBox.MessageProblem = "None of the images in this image set are dark images, so nothing can be shown.";
-                    messageBox.MessageReason = "None of the images have their 'ImageQuality' field  set to Dark.";
-                    messageBox.MessageResult = "The filter will not be applied.";
-                    messageBox.MessageHint = "If you have images that you think should be marked as 'Dark', set its ImageQUality field to Dark.";
-                    messageBox.IconType = MessageBoxImage.Information;
-                    messageBox.ButtonType = MessageBoxButton.OK;
-                    messageBox.ShowDialog();
-
-                    if (this.state.ImageFilter == ImageQualityFilter.Dark)
-                    {
-                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
-                    }
-
-                    this.MenuItemViewSetSelected(this.state.ImageFilter);
-                    return false;
-                }
-            }
-            else if (filter == ImageQualityFilter.Missing)
-            {
-                // Missing images
-                if (this.imageDatabase.TryGetImagesMissing())
-                {
-                    StatusBarUpdate.View(this.statusBar, "missing images.");
-                    this.MenuItemViewSetSelected(ImageQualityFilter.Missing);
-                    if (null != this.dlgDataView)
-                    {
-                        this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
-                    }
-                }
-                else
-                {
-                    // It really should never get here, as the menu option for filtering by missing images will be disabled if there aren't any. 
-                    // Still,...
-                    StatusBarUpdate.Message(this.statusBar, "no missing images to display.");
-                    DialogMessageBox dlgMB = new DialogMessageBox();
-                    dlgMB.MessageTitle = "Missing filter selected, but no images are marked as missing.";
-                    dlgMB.MessageProblem = "None of the images in this image set are missing images, so nothing can be shown.";
-                    dlgMB.MessageReason = "None of the images have their 'ImageQuality' field  set to Missing.";
-                    dlgMB.MessageResult = "The filter will not be applied.";
-                    dlgMB.MessageHint = "If you have images that you think should be marked as 'Missing', set its ImageQUality field to Missing.";
-                    dlgMB.IconType = MessageBoxImage.Information;
-                    dlgMB.ButtonType = MessageBoxButton.OK;
-                    dlgMB.ShowDialog();
-                    if (this.state.ImageFilter == ImageQualityFilter.Missing)
-                    {
-                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
-                    }
-                    this.MenuItemViewSetSelected(this.state.ImageFilter);
-                    return false;
-                }
-            }
-            else if (filter == ImageQualityFilter.MarkedForDeletion)
-            {
-                // Images marked for deletion
-                if (this.imageDatabase.TryGetImagesMarkedForDeletion())
-                {
-                    StatusBarUpdate.View(this.statusBar, "images marked for deletion.");
-                    this.MenuItemViewSetSelected(ImageQualityFilter.MarkedForDeletion);
-                    if (null != this.dlgDataView)
-                    {
-                        this.dlgDataView.RefreshDataTable();
                         this.MenuItemViewFilteredDatabaseContents_Click(null, null); // Regenerate the DataView if needed
                     }
                 }
-                else
-                {
-                    // It really should never get here, as the menu option for filtering by images marked for deletion will be disabled if there aren't any. 
-                    // Still,...
-                    StatusBarUpdate.Message(this.statusBar, "No images marked for deletion to display.");
-                    DialogMessageBox dlgMB = new DialogMessageBox();
-                    dlgMB.MessageTitle = "Delete filter selected, but no images are marked for deletion";
-                    dlgMB.MessageProblem = "None of the images in this image set are marked for deletion, so nothing can be shown.";
-                    dlgMB.MessageReason = "None of the images have their 'Delete?' field checkmarked.";
-                    dlgMB.MessageResult = "The filter will not be applied.";
-                    dlgMB.MessageHint = "If you have images that you think should be marked for deletion, checkmark its Delete? field.";
-                    dlgMB.IconType = MessageBoxImage.Information;
-                    dlgMB.ButtonType = MessageBoxButton.OK;
-                    dlgMB.ShowDialog();
-
-                    if (this.state.ImageFilter == ImageQualityFilter.MarkedForDeletion)
-                    {
-                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
-                    }
-                    this.MenuItemViewSetSelected(this.state.ImageFilter);
-                    return false;
-                }
             }
-            else if (filter == ImageQualityFilter.Custom)
+            else
             {
-                // Custom Filter
-                if (this.customfilter.GetImageCount() != 0)
+                // other than custom filters these cases shouldn't be reachable as the menu options for the filters will be disabled if there aren't any
+                // corresponding images
+                DialogMessageBox messageBox = new DialogMessageBox();
+                if (filter == ImageQualityFilter.Corrupted)
                 {
-                    StatusBarUpdate.View(this.statusBar, "images matching your custom filter.");
-                    this.MenuItemViewSetSelected(ImageQualityFilter.Custom);
-                    if (null != this.dlgDataView)
-                    {
-                        this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
-                    }
+                    StatusBarUpdate.Message(this.statusBar, "no corrupted images to display.");
+                    messageBox.MessageTitle = "Corrupted filter selected, but no images are marked as corrupted.";
+                    messageBox.MessageProblem = "None of the images in this image set are corrupted images, so nothing can be shown.";
+                    messageBox.MessageReason = "None of the images have their 'ImageQuality' field set to Corrupted.";
+                    messageBox.MessageHint = "If you have images you think should be marked as 'Corrupted', set their ImageQuality field to Corrupted.";
+                }
+                else if (filter == ImageQualityFilter.Custom)
+                {
+                    StatusBarUpdate.Message(this.statusBar, "no images to display.");
+                    messageBox.MessageTitle = "Custom filter selected, but no images match the specified search.";
+                    messageBox.MessageProblem = "None of the images in this image set match the specified search, so nothing can be shown.";
+                    messageBox.MessageHint = "Try to create another custom filter.";
+                }
+                else if (filter == ImageQualityFilter.Dark)
+                {
+                    StatusBarUpdate.Message(this.statusBar, "no dark images to display.");
+                    messageBox.MessageTitle = "Dark filter selected, but no images are marked as dark.";
+                    messageBox.MessageProblem = "None of the images in this image set are dark images, so nothing can be shown.";
+                    messageBox.MessageReason = "None of the images have their 'ImageQuality' field set to Dark.";
+                    messageBox.MessageHint = "If you have images you think should be marked as 'Dark', set their ImageQuality field to Dark.";
+                }
+                else if (filter == ImageQualityFilter.Missing)
+                {
+                    StatusBarUpdate.Message(this.statusBar, "no missing images to display.");
+                    messageBox.MessageTitle = "Missing filter selected, but no images are marked as missing.";
+                    messageBox.MessageProblem = "None of the images in this image set are missing images, so nothing can be shown.";
+                    messageBox.MessageReason = "None of the images have their 'ImageQuality' field set to Missing.";
+                    messageBox.MessageHint = "If you have images you think should be marked as 'Missing', set their ImageQuality field to Missing.";
+                }
+                else if (filter == ImageQualityFilter.MarkedForDeletion)
+                {
+                    StatusBarUpdate.Message(this.statusBar, "No images marked for deletion to display.");
+                    messageBox.MessageTitle = "Delete filter selected, but no images are marked for deletion";
+                    messageBox.MessageProblem = "None of the images in this image set are marked for deletion, so nothing can be shown.";
+                    messageBox.MessageReason = "None of the images have their 'Delete?' field checked.";
+                    messageBox.MessageHint = "If you have images you think should be marked for deletion, check their Delete? field.";
+                }
+                else if (filter == ImageQualityFilter.Ok)
+                {
+                    StatusBarUpdate.Message(this.statusBar, "no light images to display.");
+                    messageBox.MessageTitle = "Light filter selected, but no images are marked as light.";
+                    messageBox.MessageProblem = "None of the images in this image set are light images, so nothing can be shown.";
+                    messageBox.MessageReason = "None of the images have their 'ImageQuality' field set to OK.";
+                    messageBox.MessageHint = "If you have images you think should be marked as 'light', set their ImageQuality field to OK.";
                 }
                 else
                 {
-                    // It really should never get here, as the dialog for filtering images shouldn't allow it, but... 
-                    // Still,...
-                    StatusBarUpdate.Message(this.statusBar, "no images to display.");
-                    DialogMessageBox dlgMB = new DialogMessageBox();
-                    dlgMB.MessageTitle = "Custom filter selected, but no images match the specified search.";
-                    dlgMB.MessageProblem = "None of the images in this image set match the specified search, so nothing can be shown.";
-                    dlgMB.MessageResult = "The filter will not be applied.";
-                    dlgMB.MessageHint = "Try to create another custom filter.";
-                    dlgMB.IconType = MessageBoxImage.Information;
-                    dlgMB.ButtonType = MessageBoxButton.OK;
-                    dlgMB.ShowDialog();
-                    if (this.state.ImageFilter == ImageQualityFilter.Missing)
-                    {
-                        return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
-                    }
-                    this.MenuItemViewSetSelected(this.state.ImageFilter);
-                    return false;
+                    throw new NotSupportedException(String.Format("Unhandled image quality filter {0}.", filter));
                 }
+                messageBox.ButtonType = MessageBoxButton.OK;
+                messageBox.IconType = MessageBoxImage.Information;
+                messageBox.MessageResult = "The filter will not be applied.";
+                messageBox.ShowDialog();
+
+                if (this.state.ImageFilter == filter)
+                {
+                    return this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
+                }
+                this.MenuItemViewSetSelected(this.state.ImageFilter);
+                return false;
             }
 
             // Display the first available image under the new filter
@@ -881,6 +749,7 @@ namespace Timelapse
                 switch (controlType)
                 {
                     case Constants.DatabaseColumn.File:
+                    case Constants.DatabaseColumn.RelativePath:
                     case Constants.DatabaseColumn.Folder:
                     case Constants.DatabaseColumn.Time:
                     case Constants.DatabaseColumn.Date:
@@ -1135,7 +1004,7 @@ namespace Timelapse
             CheckBox checkBox = (CheckBox)sender;
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)checkBox.Tag;
-            string value = ((bool)checkBox.IsChecked) ? "true" : "false";
+            string value = ((bool)checkBox.IsChecked) ? Constants.Boolean.True : Constants.Boolean.False;
             this.imageDatabase.UpdateImage(this.imageCache.Current.ID, control.DataLabel, value);
             this.state.IsContentChanged = true; // We've altered some content
             this.state.IsContentValueChangedFromOutside = false;
@@ -1149,29 +1018,13 @@ namespace Timelapse
         {
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
             {
-                string type = this.imageDatabase.ControlTypeFromDataLabel[pair.Key];
-                switch (type)
+                DataEntryControl control = (DataEntryControl)pair.Value;
+                if (control.Copyable)
                 {
-                    case Constants.DatabaseColumn.File:
-                    case Constants.DatabaseColumn.Folder:
-                    case Constants.DatabaseColumn.Time:
-                    case Constants.DatabaseColumn.Date:
-                    case Constants.Control.Note:
-                    case Constants.Control.Flag:
-                    case Constants.DatabaseColumn.ImageQuality:
-                    case Constants.Control.DeleteFlag:
-                    case Constants.Control.FixedChoice:
-                    case Constants.Control.Counter:
-                        DataEntryControl control = (DataEntryControl)pair.Value;
-                        if (control.Copyable)
-                        {
-                            var brush = new SolidColorBrush(Color.FromArgb(255, (byte)200, (byte)251, (byte)200));
-                            control.Container.Background = brush;
-                        }
-                        break;
-                    default:
-                        break;
+                    SolidColorBrush brush = new SolidColorBrush(Color.FromArgb(255, (byte)200, (byte)251, (byte)200));
+                    control.Container.Background = brush;
                 }
+                break;
             }
         }
 
@@ -1182,25 +1035,8 @@ namespace Timelapse
         {
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
             {
-                string type = this.imageDatabase.ControlTypeFromDataLabel[pair.Key];
-                switch (type)
-                {
-                    case Constants.DatabaseColumn.File:
-                    case Constants.DatabaseColumn.Folder:
-                    case Constants.DatabaseColumn.Time:
-                    case Constants.DatabaseColumn.Date:
-                    case Constants.Control.Note:
-                    case Constants.Control.Flag:
-                    case Constants.DatabaseColumn.ImageQuality:
-                    case Constants.Control.DeleteFlag:
-                    case Constants.Control.FixedChoice:
-                    case Constants.Control.Counter:
-                        DataEntryControl control = (DataEntryControl)pair.Value;
-                        control.Container.ClearValue(Control.BackgroundProperty);
-                        break;
-                    default:
-                        break;
-                }
+                DataEntryControl control = (DataEntryControl)pair.Value;
+                control.Container.ClearValue(Control.BackgroundProperty);
             }
         }
         #endregion
@@ -1368,6 +1204,9 @@ namespace Timelapse
                 {
                     case Constants.DatabaseColumn.File:
                         control.Value.Content = this.imageCache.Current.FileName;
+                        break;
+                    case Constants.DatabaseColumn.RelativePath:
+                        control.Value.Content = this.imageCache.Current.RelativePath;
                         break;
                     case Constants.DatabaseColumn.Folder:
                         control.Value.Content = this.imageCache.Current.InitialRootFolderName;
@@ -2125,11 +1964,11 @@ namespace Timelapse
         {
             try
             {
-                int i = this.imageDatabase.GetDeletedImageCount();
-                this.MenuItemDeleteImages.IsEnabled = i > 0;
-                this.MenuItemDeleteImagesAndData.IsEnabled = i > 0;
+                int deletedImages = this.imageDatabase.GetDeletedImageCount();
+                this.MenuItemDeleteImages.IsEnabled = deletedImages > 0;
+                this.MenuItemDeleteImagesAndData.IsEnabled = deletedImages > 0;
                 this.MenuItemDeleteImageAndData.IsEnabled = true;
-                this.MenuItemDeleteImage.IsEnabled = (this.imageCache.Current.IsDisplayable() || this.imageCache.Current.ImageQuality == ImageQualityFilter.Corrupted);
+                this.MenuItemDeleteImage.IsEnabled = this.imageCache.Current.IsDisplayable() || this.imageCache.Current.ImageQuality == ImageQualityFilter.Corrupted;
             }
             catch
             {
@@ -2141,6 +1980,7 @@ namespace Timelapse
                 this.MenuItemDeleteImageAndData.IsEnabled = true;
             }
         }
+
         /// <summary>Delete all images marked for deletion, and optionally the data associated with those images.
         /// Deleted images are actually moved to a backup folder.</summary>
         private void MenuItemDeleteImages_Click(object sender, RoutedEventArgs e)
@@ -2159,7 +1999,7 @@ namespace Timelapse
                 // Construct a table that contains the datarows of all images with their delete flag set, and set various flags
                 deletedTable = this.imageDatabase.GetDataTableOfImagesMarkedForDeletion();
                 isUseDeleteFlag = true;
-                isUseDeleteData = (mi.Name.Equals(this.MenuItemDeleteImages.Name)) ? false : true;
+                isUseDeleteData = mi.Name.Equals(this.MenuItemDeleteImages.Name) ? false : true;
             }
             else
             {
@@ -2167,7 +2007,7 @@ namespace Timelapse
                 ImageProperties imageProperties = new ImageProperties(this.imageDatabase.ImageDataTable.Rows[this.imageCache.CurrentRow]);
                 deletedTable = this.imageDatabase.GetDataTableOfImagesbyID(imageProperties.ID);
                 isUseDeleteFlag = false;
-                isUseDeleteData = (mi.Name.Equals(this.MenuItemDeleteImage.Name)) ? false : true;
+                isUseDeleteData = mi.Name.Equals(this.MenuItemDeleteImage.Name) ? false : true;
             }
             long currentID = this.imageCache.Current.ID;
 
@@ -2211,15 +2051,10 @@ namespace Timelapse
                     // We deleted images and data, which may also include the current image. 
                     // Because we may be deleting the current image, we need to find the next displayable and non-deleted image after this one.
                     this.SetImageFilterAndIndex(0, this.state.ImageFilter); // Reset the filter to retrieve the remaining images
-                    int currentRow = this.imageDatabase.FindClosestImage(currentID);
-                    
+
+                    int currentRow = this.imageDatabase.FindClosestImage(currentID);                    
                     this.ShowImage(currentRow, true);
                 }
-                    // We deleted images and data, which may also include the current image. 
-                    //int currentRow = this.imageCache.CurrentRow;
-                    //this.SetImageFilterAndIndex(0, this.state.ImageFilter); // As we have deleted an image and its data, reset the filter to retrieve the remaining images
-                    //ShowFirstDisplayableImage(currentRow);                  // Of course, this won't really work as the current row may not point to the (non deleted) image the user may have been on...
-                //}
             }
         }
 

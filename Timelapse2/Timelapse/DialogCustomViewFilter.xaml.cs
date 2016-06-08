@@ -195,7 +195,7 @@ namespace Timelapse
                     flagCheckBox.VerticalAlignment = VerticalAlignment.Center;
                     flagCheckBox.HorizontalAlignment = HorizontalAlignment.Left;
 
-                    flagCheckBox.IsChecked = (this.customFilter.SearchTermList[row_count].Value.ToLower() == "false") ? false : true;
+                    flagCheckBox.IsChecked = (this.customFilter.SearchTermList[row_count].Value.ToLower() == Constants.Boolean.False) ? false : true;
                     flagCheckBox.Checked += this.FlagBox_Check;
                     flagCheckBox.Unchecked += this.FlagBox_Check;
                     Grid.SetRow(flagCheckBox, row_count);

@@ -32,12 +32,17 @@ namespace Timelapse.Database
             for (int index = this.localImageEnumerator.CurrentRow - 1; index >= 0; index--)
             {
                 // Search for the row with some value in it, starting from the previous row
-                valueToCopy = (string)this.database.ImageDataTable.Rows[index][dataLabel];
+                valueToCopy = this.database.ImageDataTable.Rows[index].GetStringField(dataLabel);
+                if (valueToCopy == null)
+                {
+                    continue;
+                }
+
                 valueToCopy = valueToCopy.Trim();
                 if (valueToCopy.Length > 0)
                 {
                     if ((checkForZero && !valueToCopy.Equals("0"))             // Skip over non-zero values for counters
-                        || (isflag && !valueToCopy.ToLower().Equals("false")) // Skip over false values for flags
+                        || (isflag && !valueToCopy.Equals(Constants.Boolean.False, StringComparison.OrdinalIgnoreCase)) // Skip over false values for flags
                         || (!checkForZero && !isflag))
                     {
                         targetRow = index;    // We found a non-empty value
@@ -56,12 +61,12 @@ namespace Timelapse.Database
                 dlgMB.MessageTitle = "Nothing to Propagate to Here.";
                 dlgMB.MessageReason = "None of the earlier images have anything in this field, so there are no values to propagate.";
                 dlgMB.ShowDialog();
-                return (string)this.database.ImageDataTable.Rows[this.localImageEnumerator.CurrentRow][dataLabel]; // No change, so return the current value
+                return this.database.ImageDataTable.Rows[this.localImageEnumerator.CurrentRow].GetStringField(dataLabel); // No change, so return the current value
             }
             int number_images_affected = this.localImageEnumerator.CurrentRow - targetRow;
             if (this.PropagateFromLastValue(valueToCopy, number_images_affected.ToString()) != true)
             {
-                return (string)this.database.ImageDataTable.Rows[this.localImageEnumerator.CurrentRow][dataLabel]; // No change, so return the current value
+                return this.database.ImageDataTable.Rows[this.localImageEnumerator.CurrentRow].GetStringField(dataLabel); // No change, so return the current value
             }
 
             // Update. Note that we start on the next row, as we are copying from the current row.
@@ -126,7 +131,7 @@ namespace Timelapse.Database
             for (int i = this.localImageEnumerator.CurrentRow - 1; i >= 0; i--)
             {
                 // Search for the row with some value in it, starting from the previous row
-                valueToCopy = (string)this.database.ImageDataTable.Rows[i][dataLabel];
+                valueToCopy = this.database.ImageDataTable.Rows[i].GetStringField(dataLabel);
 
                 if (valueToCopy.Trim().Length > 0)
                 {

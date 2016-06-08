@@ -45,7 +45,7 @@
                     <MenuItem Name="MenuItemExportThisImage" Header="Export this _image..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) this image into a particular folder"/>
                     <Separator />
                     <MenuItem Name="MenuItemRenameImageDatabaseFile" Header="Rename the _data file..." Click="MenuItemRenameImageDatabaseFile_Click" IsEnabled="false" ToolTip="Renames the data file to a name of your choosing"/>
-                    <!-- <MenuItem Name="MenuItemAddImagesToImageSet" Header="_Add images to image set..." Click="MenuItemAddImagesToImageSet_Click" IsEnabled="false" ToolTip="Adds more images to the currently opened image set"/> -->
+                    <MenuItem Name="MenuItemAddImagesToImageSet" Header="_Add images to image set..." Click="MenuItemAddImagesToImageSet_Click" IsEnabled="false" ToolTip="Adds more images to the currently opened image set"/>
                     <Separator />
                     <MenuItem Name="MenuItemRecentImageSets" Header="_Recent image sets" IsEnabled="false" ToolTip="Recently used image sets"/>
                     <Separator />

@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
@@ -54,6 +55,17 @@ namespace Timelapse
 
             // things which should be data labels but are used in the TemplateTable's Type column
             public const string DeleteFlag = "DeleteFlag";    // a flag data type for marking deletion
+
+            public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
+            {
+                Constants.DatabaseColumn.Date,
+                Constants.Control.DeleteFlag,
+                Constants.DatabaseColumn.File,
+                Constants.DatabaseColumn.Folder,
+                Constants.DatabaseColumn.ImageQuality,
+                Constants.DatabaseColumn.RelativePath,
+                Constants.DatabaseColumn.Time
+            }.AsReadOnly();
         }
 
         // see also ControlLabelStyle and ControlContentStyle
@@ -65,47 +77,44 @@ namespace Timelapse
 
         public static class ControlDefault
         {
-            // standard controls
+            // general defaults
+            public const string Value = "";
+
+            // user defined controls
             public const string CounterTooltip = "Click the counter button, then click on the image to count the entity. Or just type in a count";
             public const string CounterValue = "0";              // Default for: counters
             public const string CounterWidth = "80";
             public const string FixedChoiceTooltip = "Choose an item from the menu";
-            public const string FixedChoiceValue = "";
             public const string FixedChoiceWidth = "100";
 
             public const string FlagTooltip = "Toggle between true and false";
             public const string FlagValue = Constants.Boolean.False;             // Default for: flags
             public const string FlagWidth = "20";
             public const string NoteTooltip = "Write a textual note";
-            public const string NoteValue = "";                  // Default for: notes
             public const string NoteWidth = "100";
 
-            public const string ListValue = "";                  // Default for: list
-
-            // standard columns
+            // standard controls
             public const string DateTooltip = "Date the image was taken";
-            public const string DateValue = "";                  // Default for: date image was taken
             public const string DateWidth = "100";
-            public const string FileTooltip = "The image file name";
-            public const string FileValue = "";                  // Default for: the file name
-            public const string FileWidth = "100";
 
+            public const string FileTooltip = "The image file name";
+            public const string FileWidth = "100";
+            public const string RelativePathTooltip = "The path between the folders containing the data file and the image";
+            public const string RelativePathWidth = "100";
             public const string FolderTooltip = "Name of the folder containing the images";
-            public const string FolderValue = "";                // Default for: the folder path
             public const string FolderWidth = "100";
+
             public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read";
-            public const string ImageQualityValue = "";          // Default for: time image was taken
             public const string ImageQualityWidth = "80";
 
             public const string MarkForDeletionTooltip = "Mark an image as one to be deleted. You can then confirm deletion through the Edit Menu";
             public const string TimeTooltip = "Time the image was taken";
-            public const string TimeValue = "";                  // Default for: time image was taken
             public const string TimeWidth = "100";
         }
 
         public static class Database
         {
-            // db table names and related strings
+            // database table names and related strings
             public const string CreationStringInteger = "Id integer primary key";
             public const string CreationStringPrimaryKey = "INTEGER PRIMARY KEY AUTOINCREMENT";
             public const string ImageDataTable = "DataTable";         // the table containing the image data
@@ -115,6 +124,7 @@ namespace Timelapse
 
             // default values
             public const string ImageSetDefaultLog = "Add text here";
+            public const int RowsPerInsert = 100;
 
             // Special characters
             public const char MarkerBar = '|';              // Separator used to separate marker points in the database i.e. "2.3,5.6 | 7.1, 3.3"
@@ -131,6 +141,7 @@ namespace Timelapse
             public const string Image = "Image";               // A single image and its associated data
             public const string ImageQuality = "ImageQuality";
             public const string Point = "Point";               // a single point
+            public const string RelativePath = "RelativePath";
             public const string Time = "Time";
             public const string X = "X";                       // Every point has an X and Y
             public const string Y = "Y";
@@ -175,7 +186,7 @@ namespace Timelapse
             public const string Missing = "Missing";
             public const string Ok = "Ok";
 
-            public const string ListOfValues = "Ok| Dark| Corrupted | Missing";
+            public const string ListOfValues = "Ok|Dark|Corrupted|Missing";
         }
 
         public static class Images
@@ -214,21 +225,21 @@ namespace Timelapse
                 Images.Missing.Freeze();
 
                 // Create thumbnails of both the above images
-                BitmapImage bmMissingThumbnail = new BitmapImage();
-                bmMissingThumbnail.BeginInit();
-                bmMissingThumbnail.DecodePixelWidth = 400;
-                bmMissingThumbnail.CacheOption = BitmapCacheOption.OnLoad;
-                bmMissingThumbnail.UriSource = new Uri("pack://application:,,/Resources/missing.jpg");
-                bmMissingThumbnail.EndInit();
+                BitmapImage missingThumbnail = new BitmapImage();
+                missingThumbnail.BeginInit();
+                missingThumbnail.DecodePixelWidth = 400;
+                missingThumbnail.CacheOption = BitmapCacheOption.OnLoad;
+                missingThumbnail.UriSource = new Uri("pack://application:,,/Resources/missing.jpg");
+                missingThumbnail.EndInit();
 
-                Images.MissingThumbnail = BitmapFrame.Create(bmMissingThumbnail);
-                BitmapImage bmCorruptThumbnail = new BitmapImage();
-                bmCorruptThumbnail.BeginInit();
-                bmCorruptThumbnail.DecodePixelWidth = 400;
-                bmCorruptThumbnail.CacheOption = BitmapCacheOption.OnLoad;
-                bmCorruptThumbnail.UriSource = new Uri("pack://application:,,/Resources/corrupted.jpg");
-                bmCorruptThumbnail.EndInit();
-                Images.CorruptThumbnail = BitmapFrame.Create(bmCorruptThumbnail);
+                Images.MissingThumbnail = BitmapFrame.Create(missingThumbnail);
+                BitmapImage corruptThumbnail = new BitmapImage();
+                corruptThumbnail.BeginInit();
+                corruptThumbnail.DecodePixelWidth = 400;
+                corruptThumbnail.CacheOption = BitmapCacheOption.OnLoad;
+                corruptThumbnail.UriSource = new Uri("pack://application:,,/Resources/corrupted.jpg");
+                corruptThumbnail.EndInit();
+                Images.CorruptThumbnail = BitmapFrame.Create(corruptThumbnail);
             }
         }
 
@@ -307,6 +318,7 @@ namespace Timelapse
             public const string End = " END ";
             public const string EqualsCaseID = " = CASE Id";
             public const string SelectStarFrom = "SELECT * FROM ";
+            public const string Text = "TEXT";
             public const string WhereIDIn = Where + "Id IN ";
 
             public const string Null = "NULL";

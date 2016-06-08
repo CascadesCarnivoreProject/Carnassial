@@ -584,7 +584,7 @@
                     <TextBlock Grid.Row="2" Margin="0,5,10,0" FontWeight="Bold" Text="The spreadsheet column order.  Drag and drop columns to re-arrange their order to your preference"></TextBlock>
                     <Border Grid.Row="3" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
                         <ScrollViewer MinHeight="50" Height="50" HorizontalScrollBarVisibility="Visible" VerticalAlignment="Top">
-                            <DataGrid x:Name="dgSpreadsheet" Margin="0,10,0,0"  MinHeight="25" Height="25" ColumnReordered="ColumnReordered" VerticalAlignment="Top"/>
+                            <DataGrid x:Name="dgSpreadsheet" Margin="0,10,0,0"  MinHeight="25" Height="25" ColumnReordered="OnSpreadsheetOrderChanged" VerticalAlignment="Top"/>
                         </ScrollViewer>
                     </Border>
                 </Grid>

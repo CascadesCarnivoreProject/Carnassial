@@ -189,12 +189,8 @@ namespace TimelapseTemplateEditor
                 return;
             }
 
-            string controlType = (string)selectedRowView.Row[Constants.Control.Type];
-            if ((controlType == Constants.DatabaseColumn.File) ||
-                (controlType == Constants.DatabaseColumn.Folder) ||
-                (controlType == Constants.DatabaseColumn.Date) ||
-                (controlType == Constants.DatabaseColumn.Time) ||
-                (controlType == Constants.DatabaseColumn.ImageQuality))
+            string controlType = selectedRowView.Row.GetStringField(Constants.Control.Type);
+            if (Constants.Control.StandardTypes.Contains(controlType))
             {
                 this.RemoveControlButton.IsEnabled = false;
                 this.RemoveControlButton.Content = "Item cannot" + Environment.NewLine + "be removed";
@@ -214,7 +210,7 @@ namespace TimelapseTemplateEditor
         {
             Button button = sender as Button;
             string controlType = button.Tag.ToString();
-            this.templateDatabase.AddControl(controlType);
+            this.templateDatabase.AddUserDefinedControl(controlType);
 
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
@@ -234,7 +230,7 @@ namespace TimelapseTemplateEditor
                 return;
             }
 
-            string controlType = (string)selectedRowView.Row[Constants.Control.Type];
+            string controlType = selectedRowView.Row.GetStringField(Constants.Control.Type);
             if (EditorControls.IsStandardControlType(controlType))
             {
                 // standard controls cannot be removed
@@ -242,7 +238,7 @@ namespace TimelapseTemplateEditor
             }
 
             this.rowsActionsOn = true;
-            this.templateDatabase.RemoveControl(selectedRowView.Row);
+            this.templateDatabase.RemoveUserDefinedControl(selectedRowView.Row);
 
             // update the control panel so it reflects the current values in the database
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
@@ -378,12 +374,12 @@ namespace TimelapseTemplateEditor
                         else if (this.TemplateDataGrid.CurrentColumn.Header.Equals("Default Value"))
                         {
                             DataRowView row = selectedRow.Item as DataRowView;
-                            if ((string)row.Row.ItemArray[3] == Constants.Control.Counter)
+                            if (row.Row.GetStringField(Constants.Control.Type) == Constants.Control.Counter)
                             {
                                 // Its a counter. Only allow numbers
                                 e.Handled = !this.AreAllValidNumericChars(e.Text);
                             }
-                            else if ((string)row.Row.ItemArray[3] == Constants.Control.Flag)
+                            else if (row.Row.GetStringField(Constants.Control.Type) == Constants.Control.Flag)
                             {
                                 // Its a flag. Only allow t/f and translate that to true / false
                                 DataRowView dataRow = (DataRowView)this.TemplateDataGrid.SelectedItem;
@@ -502,7 +498,7 @@ namespace TimelapseTemplateEditor
             List<string> data_label_list = new List<string>();
             for (int i = 0; i < this.templateDatabase.TemplateTable.Rows.Count; i++)
             {
-                data_label_list.Add((string)this.templateDatabase.TemplateTable.Rows[i][Constants.Control.DataLabel]);
+                data_label_list.Add(this.templateDatabase.TemplateTable.Rows[i].GetStringField(Constants.Control.DataLabel));
             }
 
             // Check to see if the data label is empty. If it is, generate a unique data label and warn the user
@@ -530,7 +526,7 @@ namespace TimelapseTemplateEditor
             // Check to see if the data label is unique. If not, generate a unique data label and warn the user
             for (int i = 0; i < this.templateDatabase.TemplateTable.Rows.Count; i++)
             {
-                if (dataLabel.Equals((string)this.templateDatabase.TemplateTable.Rows[i][Constants.Control.DataLabel]))
+                if (dataLabel.Equals(this.templateDatabase.TemplateTable.Rows[i].GetStringField(Constants.Control.DataLabel)))
                 {
                     if (this.TemplateDataGrid.SelectedIndex == i)
                     {
@@ -644,7 +640,7 @@ namespace TimelapseTemplateEditor
 
                         // more constants to access checkbox columns and combobox columns.
                         // the sortmemberpath is include, not the sort name, so we are accessing by head, which may change.
-                        string controlType = (string)thisRow.Row[Constants.Control.Type];
+                        string controlType = thisRow.Row.GetStringField(Constants.Control.Type);
                         string sortMemberPath = this.TemplateDataGrid.Columns[column].SortMemberPath;
                         if ((sortMemberPath == Constants.DatabaseColumn.ID) ||
                             (sortMemberPath == Constants.Control.ControlOrder) ||
@@ -658,13 +654,10 @@ namespace TimelapseTemplateEditor
                             ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == EditorConstant.Control.DataLabel)) ||
                             ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.List)) ||
                             ((controlType == Constants.DatabaseColumn.ImageQuality) && (sortMemberPath == Constants.Control.DefaultValue)) ||
+                            (controlType == Constants.DatabaseColumn.RelativePath) ||
                             (controlType == Constants.DatabaseColumn.Time) ||
                             ((controlType == Constants.Control.Counter) && (columnHeader == Constants.Control.List)) ||
-                            ((controlType == Constants.Control.Note) && (columnHeader == Constants.Control.List)) ||
-                            ((controlType == Constants.DatabaseColumn.Date) && (columnHeader == Constants.Control.Copyable)) ||
-                            ((controlType == Constants.DatabaseColumn.File) && (columnHeader == Constants.Control.Copyable)) ||
-                            ((controlType == Constants.DatabaseColumn.Folder) && (columnHeader == Constants.Control.Copyable)) ||
-                            ((controlType == Constants.DatabaseColumn.Time) && (columnHeader == Constants.Control.Copyable)))
+                            ((controlType == Constants.Control.Note) && (columnHeader == Constants.Control.List)))
                         {
                             cell.Background = EditorConstant.NotEditableCellColor;
                             cell.Foreground = Brushes.Gray;
@@ -978,46 +971,31 @@ namespace TimelapseTemplateEditor
             for (int i = 0; i < temptable.Rows.Count; i++)
             {
                 DataGridTextColumn column = new DataGridTextColumn();
-                if (System.DBNull.Value != temptable.Rows[i][Constants.Control.DataLabel])
+                string dataLabel = temptable.Rows[i].GetStringField(Constants.Control.DataLabel);
+                if (String.IsNullOrEmpty(dataLabel))
                 {
-                    column.Header = (string)temptable.Rows[i][Constants.Control.DataLabel];
+                    Debug.Assert(false, "Database constructors should guarantee data labels are not null.");
+                }
+                else
+                {
+                    column.Header = dataLabel;
                     this.dgSpreadsheet.Columns.Add(column);
                 }
             }
         }
 
-        private void ColumnReordered(object sender, DataGridColumnEventArgs e)
+        private void OnSpreadsheetOrderChanged(object sender, DataGridColumnEventArgs e)
         {
-            DataGrid dg = (DataGrid)sender;
-            Dictionary<string, int> pairs = new Dictionary<string, int>();
-            for (int i = 0; i < dg.Columns.Count; i++)
+            DataGrid dataGrid = (DataGrid)sender;
+            Dictionary<string, int> spreadsheetOrderByDataLabel = new Dictionary<string, int>();
+            for (int control = 0; control < dataGrid.Columns.Count; control++)
             {
-                string header = dg.Columns[i].Header.ToString();
-                int row_index = this.FindRow(header);
-                int new_position = dg.Columns[i].DisplayIndex + 1;
-                pairs.Add(header, new_position);
+                string dataLabelFromColumnHeader = dataGrid.Columns[control].Header.ToString();
+                int newSpreadsheetOrder = dataGrid.Columns[control].DisplayIndex + 1;
+                spreadsheetOrderByDataLabel.Add(dataLabelFromColumnHeader, newSpreadsheetOrder);
             }
 
-            for (int i = 0; i < this.templateDatabase.TemplateTable.Rows.Count; i++)
-            {
-                string data_label = (string)this.templateDatabase.TemplateTable.Rows[i][Constants.Control.DataLabel];
-                int new_value = pairs[data_label];
-                this.templateDatabase.TemplateTable.Rows[i][Constants.Control.SpreadsheetOrder] = new_value;
-            }
-
-            this.templateDatabase.SyncTemplateTableToDatabase();
-        }
-
-        private int FindRow(string to_find)
-        {
-            for (int i = 0; i < this.templateDatabase.TemplateTable.Rows.Count; i++)
-            {
-                if (to_find.Equals((string)this.templateDatabase.TemplateTable.Rows[i][Constants.Control.DataLabel]))
-                {
-                    return i;
-                }
-            }
-            return -1;
+            this.templateDatabase.UpdateDisplayOrder(Constants.Control.SpreadsheetOrder, spreadsheetOrderByDataLabel);
         }
         #endregion
 
@@ -1156,14 +1134,7 @@ namespace TimelapseTemplateEditor
                 controlOrder++;
             }
 
-            for (int rowIndex = 0; rowIndex < this.templateDatabase.TemplateTable.Rows.Count; rowIndex++)
-            {
-                string dataLabel = (string)this.templateDatabase.TemplateTable.Rows[rowIndex][Constants.Control.DataLabel];
-                int newControlOrder = newControlOrderByDataLabel[dataLabel];
-                this.templateDatabase.TemplateTable.Rows[rowIndex][Constants.Control.ControlOrder] = newControlOrder;
-            }
-
-            this.templateDatabase.SyncTemplateTableToDatabase();
+            this.templateDatabase.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable); // A contorted to make sure the controls panel updates itself
         }
         #endregion

@@ -25,6 +25,7 @@ namespace TimelapseTemplateEditor.Util
             xmlDoc.Load(filePath);
 
             // merge standard controls which existed in code templates
+            // MarkForDeletion and Relative path weren't available in code templates
             XmlNodeList selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.FilePath); // Convert the File type 
             this.UpdateStandardControl(selectedNodes, templateDatabase, Constants.DatabaseColumn.File, ref conversionErrors, ref dataLabels);
 
@@ -45,7 +46,7 @@ namespace TimelapseTemplateEditor.Util
             selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.NotePath);
             for (int index = 0; index < selectedNodes.Count; index++)
             {
-                DataRow note = templateDatabase.AddControl(Constants.Control.Note);
+                DataRow note = templateDatabase.AddUserDefinedControl(Constants.Control.Note);
                 this.UpdateControl(selectedNodes[index], templateDatabase, Constants.Control.Note, note, ref conversionErrors, ref dataLabels);
             }
 
@@ -53,7 +54,7 @@ namespace TimelapseTemplateEditor.Util
             selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.FixedChoicePath);
             for (int index = 0; index < selectedNodes.Count; index++)
             {
-                DataRow choice = templateDatabase.AddControl(Constants.Control.FixedChoice);
+                DataRow choice = templateDatabase.AddUserDefinedControl(Constants.Control.FixedChoice);
                 this.UpdateControl(selectedNodes[index], templateDatabase, Constants.Control.FixedChoice, choice, ref conversionErrors, ref dataLabels);
             }
 
@@ -61,7 +62,7 @@ namespace TimelapseTemplateEditor.Util
             selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.CounterPath);
             for (int index = 0; index < selectedNodes.Count; index++)
             {
-                DataRow counter = templateDatabase.AddControl(Constants.Control.Counter);
+                DataRow counter = templateDatabase.AddUserDefinedControl(Constants.Control.Counter);
                 this.UpdateControl(selectedNodes[index], templateDatabase, Constants.Control.Counter, counter, ref conversionErrors, ref dataLabels);
             }
         }
@@ -201,7 +202,7 @@ namespace TimelapseTemplateEditor.Util
             for (int rowIndex = 0; rowIndex < templateDatabase.TemplateTable.Rows.Count; rowIndex++)
             {
                 DataRow control = templateDatabase.TemplateTable.Rows[rowIndex];
-                string controlType = (string)control[Constants.Control.Type];
+                string controlType = control.GetStringField(Constants.Control.Type);
                 if (controlType == typeWanted)
                 {
                     this.UpdateControl(selectedNodes[0], templateDatabase, typeWanted, control, ref errorMessages, ref dataLabels);

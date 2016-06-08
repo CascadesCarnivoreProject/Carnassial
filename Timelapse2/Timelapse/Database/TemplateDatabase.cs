@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace Timelapse.Database
 {
@@ -53,7 +54,7 @@ namespace Timelapse.Database
         /// </summary>
         public DataTable TemplateTable { get; private set; }
 
-        public DataRow AddControl(string controlType)
+        public DataRow AddUserDefinedControl(string controlType)
         {
             // create the row for the new control in the data table
             DataRow newRow = this.TemplateTable.NewRow();
@@ -71,7 +72,7 @@ namespace Timelapse.Database
                     break;
                 case Constants.Control.Note:
                     dataLabelPrefix = Constants.Control.Note;
-                    newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.NoteValue;
+                    newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.Value;
                     newRow[Constants.Control.Type] = Constants.Control.Note;
                     newRow[Constants.Control.TextBoxWidth] = Constants.ControlDefault.NoteWidth;
                     newRow[Constants.Control.Copyable] = true;
@@ -80,7 +81,7 @@ namespace Timelapse.Database
                     break;
                 case Constants.Control.FixedChoice:
                     dataLabelPrefix = Constants.Control.Choice;
-                    newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.FixedChoiceValue;
+                    newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.Value;
                     newRow[Constants.Control.Type] = Constants.Control.FixedChoice;
                     newRow[Constants.Control.TextBoxWidth] = Constants.ControlDefault.FixedChoiceWidth;
                     newRow[Constants.Control.Copyable] = true;
@@ -104,7 +105,7 @@ namespace Timelapse.Database
             newRow[Constants.Control.ControlOrder] = this.TemplateTable.Rows.Count + 1;
             newRow[Constants.Control.DataLabel] = dataLabel;
             newRow[Constants.Control.Label] = dataLabel;
-            newRow[Constants.Control.List] = Constants.ControlDefault.ListValue;
+            newRow[Constants.Control.List] = Constants.ControlDefault.Value;
             newRow[Constants.Control.SpreadsheetOrder] = this.TemplateTable.Rows.Count + 1;
 
             // add the new control to the database
@@ -128,21 +129,48 @@ namespace Timelapse.Database
             GC.SuppressFinalize(this);
         }
 
-        public DataTable GetControlsSortedByControlOrder()
+        private DataTable GetControlsSortedByControlOrder()
         {
             return this.Database.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Control.ControlOrder);
+        }
+
+        public List<string> GetDataLabels()
+        {
+            List<string> dataLabels = new List<string>();
+            for (int row = 0; row < this.TemplateTable.Rows.Count; row++)
+            {
+                string dataLabel = this.TemplateTable.Rows[row].GetStringField(Constants.Control.DataLabel);
+                if (dataLabel == String.Empty)
+                {
+                    dataLabel = this.TemplateTable.Rows[row].GetStringField(Constants.Control.Label);
+                }
+                Debug.Assert(String.IsNullOrWhiteSpace(dataLabel) == false, String.Format("Encountered empty data label and label at row {0} in template table.", row));
+
+                // get a list of datalabels so we can add columns in the order that matches the current template table order
+                if (Constants.DatabaseColumn.ID != dataLabel)
+                {
+                    dataLabels.Add(dataLabel);
+                }
+            }
+            return dataLabels;
         }
 
         public bool IsControlCopyable(string dataLabel)
         {
             long id = this.GetControlIDFromTemplateTable(dataLabel);
             DataRow foundRow = this.TemplateTable.Rows.Find(id);
-            bool is_copyable;
-            return bool.TryParse((string)foundRow[Constants.Control.Copyable], out is_copyable) ? is_copyable : false;
+            bool isCopyable;
+            return bool.TryParse(foundRow.GetStringField(Constants.Control.Copyable), out isCopyable) ? isCopyable : false;
         }
 
-        public void RemoveControl(DataRow controlToRemove)
+        public void RemoveUserDefinedControl(DataRow controlToRemove)
         {
+            string controlType = controlToRemove.GetStringField(Constants.Control.Type);
+            if (Constants.Control.StandardTypes.Contains(controlType))
+            {
+                throw new NotSupportedException(String.Format("Standard control of type {0} cannot be removed.", controlType));
+            }
+
             // capture state
             int removedControlOrder = Convert.ToInt32((Int64)controlToRemove[Constants.Control.ControlOrder]);
             int removedSpreadsheetOrder = Convert.ToInt32((Int64)controlToRemove[Constants.Control.SpreadsheetOrder]);
@@ -195,12 +223,12 @@ namespace Timelapse.Database
             this.TemplateTable = this.GetControlsSortedByControlOrder();
         }
 
-        public void SyncTemplateTableToDatabase()
+        private void SyncTemplateTableToDatabase()
         {
             this.SyncTemplateTableToDatabase(this.TemplateTable);
         }
 
-        public void SyncTemplateTableToDatabase(DataTable newTable)
+        private void SyncTemplateTableToDatabase(DataTable newTable)
         {
             // clear the existing table in the database and add the new values
             this.Database.DeleteRows(Constants.Database.TemplateTable, null);
@@ -225,6 +253,47 @@ namespace Timelapse.Database
                 database = null;
                 return false;
             }
+        }
+
+        public void UpdateDisplayOrder(string column, Dictionary<string, int> newOrderByDataLabel)
+        {
+            // argument validation
+            if (column != Constants.Control.ControlOrder && column != Constants.Control.SpreadsheetOrder)
+            {
+                throw new ArgumentOutOfRangeException("column", String.Format("'{0}' is not a control order column.  Only '{1}' and '{2}' are order columns.", column, Constants.Control.ControlOrder, Constants.Control.SpreadsheetOrder));
+            }
+
+            if (newOrderByDataLabel.Count != this.TemplateTable.Rows.Count)
+            {
+                throw new NotSupportedException(String.Format("Partial order updates are not supported.  New ordering for {0} controls was passed but {1} controls are present for '{2}'.", newOrderByDataLabel.Count, this.TemplateTable.Rows.Count, column));
+            }
+
+            List<int> uniqueOrderValues = newOrderByDataLabel.Values.Distinct().ToList();
+            if (uniqueOrderValues.Count != newOrderByDataLabel.Count)
+            {
+                throw new ArgumentException("newOrderByDataLabel", String.Format("Each control must have a unique value for its order.  {0} duplicate values were passed for '{1}'.", newOrderByDataLabel.Count - uniqueOrderValues.Count, column));
+            }
+
+            uniqueOrderValues.Sort();
+            for (int control = 0; control < uniqueOrderValues.Count; ++control)
+            {
+                int expectedOrder = control + 1;
+                if (uniqueOrderValues[control] != expectedOrder)
+                {
+                    throw new ArgumentOutOfRangeException("newOrderByDataLabel", String.Format("Control order must be a ones based count.  An order of {0} was passed instead of the expected order {1} for '{2}'.", uniqueOrderValues[0], expectedOrder, column));
+                }
+            }
+
+            // update in memory table with new order
+            for (int row = 0; row < this.TemplateTable.Rows.Count; row++)
+            {
+                string dataLabel = this.TemplateTable.Rows[row].GetStringField(Constants.Control.DataLabel);
+                int newOrder = newOrderByDataLabel[dataLabel];
+                this.TemplateTable.Rows[row][column] = newOrder;
+            }
+
+            // sync new order to database
+            this.SyncTemplateTableToDatabase();
         }
 
         protected virtual void Dispose(bool disposing)
@@ -286,15 +355,15 @@ namespace Timelapse.Database
             templateTableColumns.Add(new ColumnTuple(Constants.DatabaseColumn.ID, "INTEGER primary key autoincrement"));
             templateTableColumns.Add(new ColumnTuple(Constants.Control.ControlOrder, "INTEGER"));
             templateTableColumns.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, "INTEGER"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.Type, "text"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.DefaultValue, "text"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.Label, "text"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.DataLabel, "text"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.Tooltip, "text"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.TextBoxWidth, "text"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.Copyable, "text"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.Visible, "text"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.List, "text"));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.Type, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.Label, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.Visible, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnTuple(Constants.Control.List, Constants.Sql.Text));
             this.Database.CreateTable(Constants.Database.TemplateTable, templateTableColumns);
 
             // if an existing table was passed, clone its contents into this database
@@ -306,37 +375,40 @@ namespace Timelapse.Database
 
             // no existing table to clone, so add standard controls to template table
             List<List<ColumnTuple>> standardControls = new List<List<ColumnTuple>>();
-            int controlOrder = 0; // The control order, incremented by 1 for every new entry
-            int spreadsheetOrder = 0; // The spreadsheet order, incremented by 1 for every new entry
+            int controlOrder = 0; // The control order, a one based count incremented for every new entry
+            int spreadsheetOrder = 0; // The spreadsheet order, a one based count incremented for every new entry
 
             // file
             List<ColumnTuple> file = new List<ColumnTuple>();
             file.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             file.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
             file.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.File));
-            file.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.FileValue));
+            file.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
             file.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.File));
             file.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.File));
             file.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.FileTooltip));
             file.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FileWidth));
-            file.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
-            file.Add(new ColumnTuple(Constants.Control.Visible, "true"));
-            file.Add(new ColumnTuple(Constants.Control.List, String.Empty));
+            file.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
+            file.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
+            file.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
             standardControls.Add(file);
+
+            // relative path
+            standardControls.Add(this.GetRelativePathTuples(++controlOrder, ++spreadsheetOrder, true));
 
             // folder
             List<ColumnTuple> folder = new List<ColumnTuple>();
             folder.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             folder.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
             folder.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Folder));
-            folder.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.FolderValue));
+            folder.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
             folder.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Folder));
             folder.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Folder));
             folder.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.FolderTooltip));
             folder.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FolderWidth));
-            folder.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
-            folder.Add(new ColumnTuple(Constants.Control.Visible, "true"));
-            folder.Add(new ColumnTuple(Constants.Control.List, String.Empty));
+            folder.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
+            folder.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
+            folder.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
             standardControls.Add(folder);
 
             // date
@@ -344,14 +416,14 @@ namespace Timelapse.Database
             date.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             date.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
             date.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Date));
-            date.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.DateValue));
+            date.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
             date.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Date));
             date.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Date));
             date.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DateTooltip));
             date.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.DateWidth));
-            date.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
-            date.Add(new ColumnTuple(Constants.Control.Visible, "true"));
-            date.Add(new ColumnTuple(Constants.Control.List, String.Empty));
+            date.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
+            date.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
+            date.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
             standardControls.Add(date);
 
             // time
@@ -359,14 +431,14 @@ namespace Timelapse.Database
             time.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             time.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
             time.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Time));
-            time.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.TimeValue));
+            time.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
             time.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Time));
             time.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Time));
             time.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.TimeTooltip));
             time.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.TimeWidth));
-            time.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
-            time.Add(new ColumnTuple(Constants.Control.Visible, "true"));
-            time.Add(new ColumnTuple(Constants.Control.List, String.Empty));
+            time.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
+            time.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
+            time.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
             standardControls.Add(time);
 
             // image quality
@@ -374,13 +446,13 @@ namespace Timelapse.Database
             imageQuality.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             imageQuality.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
             imageQuality.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.ImageQuality));
-            imageQuality.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.ImageQualityValue));
+            imageQuality.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
             imageQuality.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.ImageQuality));
             imageQuality.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.ImageQuality));
             imageQuality.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.ImageQualityTooltip));
             imageQuality.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.ImageQualityWidth));
-            imageQuality.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
-            imageQuality.Add(new ColumnTuple(Constants.Control.Visible, "true"));
+            imageQuality.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
+            imageQuality.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
             imageQuality.Add(new ColumnTuple(Constants.Control.List, Constants.ImageQuality.ListOfValues));
             standardControls.Add(imageQuality);
 
@@ -394,9 +466,9 @@ namespace Timelapse.Database
             markForDeletion.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.Control.DeleteFlag));
             markForDeletion.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.MarkForDeletionTooltip));
             markForDeletion.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FlagWidth));
-            markForDeletion.Add(new ColumnTuple(Constants.Control.Copyable, "false"));
-            markForDeletion.Add(new ColumnTuple(Constants.Control.Visible, "true"));
-            markForDeletion.Add(new ColumnTuple(Constants.Control.List, String.Empty));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
             standardControls.Add(markForDeletion);
 
             // insert standard controls into the template table
@@ -409,7 +481,18 @@ namespace Timelapse.Database
         protected virtual void OnExistingDatabaseOpened(TemplateDatabase other)
         {
             this.TemplateTable = this.GetControlsSortedByControlOrder();
-            this.MigrateTemplateTableIfNeeded();
+            this.EnsureDataLabelsAndLabelsNotEmpty();
+
+            // add a relative path control to pre v2.1 databases if one hasn't already been inserted
+            // the control is inserted with visible = false for backwards compatibility
+            long relativePathID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
+            if (relativePathID == -1)
+            {
+                int order = this.TemplateTable.Rows.Count + 1;
+                List<ColumnTuple> relativePathControl = this.GetRelativePathTuples(order, order, false);
+                this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { relativePathControl });
+                this.TemplateTable = this.GetControlsSortedByControlOrder();
+            }
         }
 
         private string GetNextUniqueDataLabel(string dataLabelPrefix)
@@ -418,7 +501,7 @@ namespace Timelapse.Database
             List<string> dataLabels = new List<string>();
             for (int row = 0; row < this.TemplateTable.Rows.Count; row++)
             {
-                dataLabels.Add((string)this.TemplateTable.Rows[row][Constants.Control.DataLabel]);
+                dataLabels.Add(this.TemplateTable.Rows[row].GetStringField(Constants.Control.DataLabel));
             }
 
             // If the data label name exists, keep incrementing the count that is appended to the end
@@ -435,11 +518,9 @@ namespace Timelapse.Database
         }
 
         /// <summary>
-        /// Load the Template Table into the data structure Data database. 
-        /// Assumes that the database has already been opened. 
-        /// Also verify that the Labels and Data Labels are non-empty, where it updates the TemplateTable (in the database and in memory) as needed
+        /// Supply default values for any empty labels or data labels are non-empty, updating both TemplateTable and the database as needed
         /// </summary>
-        private void MigrateTemplateTableIfNeeded()
+        private void EnsureDataLabelsAndLabelsNotEmpty()
         {
             // All the code below goes through the template table to see if there are any non-empty labels / data labels,
             // and if so, updates them to a reasonable value. If both are empty, it keeps track of its type and creates
@@ -452,27 +533,9 @@ namespace Timelapse.Database
                 DataRow row = this.TemplateTable.Rows[rowIndex];
 
                 // Get various values from each row
-                string controlType = (string)row[Constants.Control.Type];
-                // Not sure why, but if its an empty value it doesn't like it. Therefore we do this in a try/catch.
-                string label;      // The row's label
-                try
-                {
-                    label = (string)row[Constants.Control.Label];
-                }
-                catch
-                {
-                    label = null;
-                }
-
-                string dataLabel; // The row's data label
-                try
-                {
-                    dataLabel = (string)row[Constants.Control.DataLabel];
-                }
-                catch
-                {
-                    dataLabel = null;
-                }
+                string controlType = row.GetStringField(Constants.Control.Type);
+                string label = row.GetStringField(Constants.Control.Label);
+                string dataLabel = row.GetStringField(Constants.Control.DataLabel);
 
                 // Check if various values are empty, and if so update the row and fill the dataline with appropriate defaults
                 ColumnTuplesWithWhere columnsToUpdate = new ColumnTuplesWithWhere();    // holds columns which have changed for the current control
@@ -500,6 +563,23 @@ namespace Timelapse.Database
                     this.Database.Update(Constants.Database.TemplateTable, columnsToUpdate);
                 }
             }
+        }
+
+        private List<ColumnTuple> GetRelativePathTuples(int controlOrder, int spreadsheetOrder, bool visible)
+        {
+            List<ColumnTuple> relativePath = new List<ColumnTuple>();
+            relativePath.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder));
+            relativePath.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, spreadsheetOrder));
+            relativePath.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.RelativePath));
+            relativePath.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
+            relativePath.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.RelativePath));
+            relativePath.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.RelativePath));
+            relativePath.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.RelativePathTooltip));
+            relativePath.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.RelativePathWidth));
+            relativePath.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
+            relativePath.Add(new ColumnTuple(Constants.Control.Visible, visible));
+            relativePath.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
+            return relativePath;
         }
     }
 }

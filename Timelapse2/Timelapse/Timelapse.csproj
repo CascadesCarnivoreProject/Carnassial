@@ -125,6 +125,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Database\CustomFilterOperator.cs" />
+    <Compile Include="Database\DataRowExtensions.cs" />
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
     <Compile Include="Database\ImageTableEnumerator.cs" />
@@ -148,8 +149,8 @@
     <Compile Include="DialogAboutTimelapse.xaml.cs">
       <DependentUpon>DialogAboutTimelapse.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogChooseDataBaseFile.xaml.cs">
-      <DependentUpon>DialogChooseDataBaseFile.xaml</DependentUpon>
+    <Compile Include="DialogChooseDatabaseFile.xaml.cs">
+      <DependentUpon>DialogChooseDatabaseFile.xaml</DependentUpon>
     </Compile>
     <Compile Include="DialogCustomViewFilter.xaml.cs">
       <DependentUpon>DialogCustomViewFilter.xaml</DependentUpon>
@@ -170,7 +171,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogChooseDataBaseFile.xaml">
+    <Page Include="DialogChooseDatabaseFile.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

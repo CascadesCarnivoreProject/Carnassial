@@ -30,11 +30,10 @@ namespace Timelapse
         {
             this.Propagate = new PropagateControl(database, imageEnumerator);
 
-            DataTable sortedControlTable = database.GetControlsSortedByControlOrder();
-            for (int row = 0; row < sortedControlTable.Rows.Count; row++)
+            for (int row = 0; row < database.TemplateTable.Rows.Count; row++)
             {
                 // no point in generating a control if it doesn't render in the UX
-                DataRow dataRow = sortedControlTable.Rows[row];
+                DataRow dataRow = database.TemplateTable.Rows[row];
                 string visiblityAsString = dataRow[Constants.Control.Visible].ToString();
                 bool visible = String.Equals(Boolean.TrueString, visiblityAsString, StringComparison.OrdinalIgnoreCase) ? true : false;
                 if (visible == false)
@@ -45,7 +44,7 @@ namespace Timelapse
                 // get the values for the control
                 string copyableAsString = dataRow[Constants.Control.Copyable].ToString();
                 bool copyable = String.Equals(Boolean.TrueString, copyableAsString, StringComparison.OrdinalIgnoreCase) ? true : false;
-                string dataLabel = (string)dataRow[Constants.Control.DataLabel];
+                string dataLabel = dataRow.GetStringField(Constants.Control.DataLabel);
                 string defaultValue = dataRow[Constants.Control.DefaultValue].ToString();
                 int id = Convert.ToInt32(dataRow[Constants.DatabaseColumn.ID].ToString()); // TODO Need to use this ID to pass between controls and data
                 string label = dataRow[Constants.Control.Label].ToString();
@@ -57,18 +56,21 @@ namespace Timelapse
 
                 DataEntryControl controlToAdd;
                 if (type == Constants.DatabaseColumn.File ||
+                    type == Constants.DatabaseColumn.RelativePath ||
                     type == Constants.DatabaseColumn.Folder ||
                     type == Constants.DatabaseColumn.Date ||
                     type == Constants.DatabaseColumn.Time ||
                     type == Constants.Control.Note)
                 {
-                    bool createContextMenu = (type == Constants.DatabaseColumn.File) ? false : true;
+                    bool createContextMenu = (type == Constants.Control.Note) ? true : false;
                     DataEntryNote noteControl = new DataEntryNote(dataLabel, this, createContextMenu);
                     noteControl.Label = label;
                     noteControl.Width = width;
-                    if (type == Constants.DatabaseColumn.Folder || type == Constants.DatabaseColumn.File)
+                    if (type == Constants.DatabaseColumn.Folder || 
+                        type == Constants.DatabaseColumn.RelativePath ||
+                        type == Constants.DatabaseColumn.File)
                     {
-                        // File name and Folder path aren't editable by the user 
+                        // File name and path aren't editable by the user 
                         noteControl.ReadOnly = true;
                     }
                     controlToAdd = noteControl;
@@ -89,7 +91,8 @@ namespace Timelapse
                 }
                 else if (type == Constants.Control.FixedChoice || type == Constants.DatabaseColumn.ImageQuality)
                 {
-                    DataEntryChoice choiceControl = new DataEntryChoice(dataLabel, this, true, list);
+                    bool createContextMenu = (type == Constants.Control.FixedChoice) ? true : false;
+                    DataEntryChoice choiceControl = new DataEntryChoice(dataLabel, this, createContextMenu, list);
                     choiceControl.Label = label;
                     choiceControl.Width = width;
                     controlToAdd = choiceControl;

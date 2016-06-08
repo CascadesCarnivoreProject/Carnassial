@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Timelapse;
+using Timelapse.Database;
 using Timelapse.Util;
 
 namespace TimelapseTemplateEditor.Util
@@ -19,16 +19,6 @@ namespace TimelapseTemplateEditor.Util
     /// </remarks>
     internal class EditorControls
     {
-        private static readonly ReadOnlyCollection<string> StandardControlTypes = new List<string>()
-            {
-                Constants.DatabaseColumn.Date,
-                Constants.Control.DeleteFlag,
-                Constants.DatabaseColumn.File,
-                Constants.DatabaseColumn.Folder,
-                Constants.DatabaseColumn.ImageQuality,
-                Constants.DatabaseColumn.Time
-            }.AsReadOnly();
-
         public static void Generate(MainWindow mainWindow, WrapPanel parent, DataTable templateTable)
         {
             // used for styling all content and label controls except ComboBoxes since the combo box style is commented out in DataEntryControls.xaml
@@ -39,16 +29,16 @@ namespace TimelapseTemplateEditor.Util
             foreach (DataRow control in templateTable.Rows)
             {
                 // unpack control properties
-                string type = (string)control[Constants.Control.Type];
-                string defaultValue = (string)control[Constants.Control.DefaultValue];
-                string label = (string)control[Constants.Control.Label];
-                string dataLabel = (string)control[Constants.Control.DataLabel];
-                string tooltip = (string)control[Constants.Control.Tooltip];
-                string widthAsString = (string)control[Constants.Control.TextBoxWidth];
-                int width = (widthAsString == String.Empty) ? 0 : Convert.ToInt32(widthAsString);
-                string visiblityAsString = (string)control[Constants.Control.Visible];
+                string type = control.GetStringField(Constants.Control.Type);
+                string defaultValue = control.GetStringField(Constants.Control.DefaultValue);
+                string label = control.GetStringField(Constants.Control.Label);
+                string dataLabel = control.GetStringField(Constants.Control.DataLabel);
+                string tooltip = control.GetStringField(Constants.Control.Tooltip);
+                string widthAsString = control.GetStringField(Constants.Control.TextBoxWidth);
+                int width = String.IsNullOrEmpty(widthAsString) ? 0 : Convert.ToInt32(widthAsString);
+                string visiblityAsString = control.GetStringField(Constants.Control.Visible);
                 bool visiblity = String.Equals(visiblityAsString, Constants.Boolean.True, StringComparison.OrdinalIgnoreCase) ? true : false;
-                string list = (string)control[Constants.Control.List];
+                string list = control.GetStringField(Constants.Control.List);
 
                 if (defaultValue == String.Empty)
                 {
@@ -67,6 +57,7 @@ namespace TimelapseTemplateEditor.Util
                 switch (type)
                 {
                     case Constants.DatabaseColumn.File:
+                    case Constants.DatabaseColumn.RelativePath:
                     case Constants.DatabaseColumn.Folder:
                     case Constants.DatabaseColumn.Date:
                     case Constants.DatabaseColumn.Time:
@@ -91,7 +82,7 @@ namespace TimelapseTemplateEditor.Util
                     case Constants.DatabaseColumn.ImageQuality:
                         Label choiceLabel = CreateLabel(styleProvider, label, tooltip);
                         ComboBox choiceContent = CreateComboBox(mainWindow, list, tooltip, width);
-                        stackPanel = CreateStackPanel(styleProvider, choiceContent, choiceLabel);
+                        stackPanel = CreateStackPanel(styleProvider, choiceLabel, choiceContent);
                         break;
                     default:
                         throw new NotSupportedException(String.Format("Unhandled control type {0}.", type));
@@ -110,7 +101,7 @@ namespace TimelapseTemplateEditor.Util
 
         public static bool IsStandardControlType(string controlType)
         {
-            return EditorControls.StandardControlTypes.Contains(controlType);
+            return Constants.Control.StandardTypes.Contains(controlType);
         }
 
         // Returns a stack panel containing two controls

@@ -24,7 +24,7 @@ namespace Timelapse.Database
                 // If the data label is an empty string, we use the label instead.
                 // The append sequence results in a trailing comma which is retained when writing the line.
                 StringBuilder header = new StringBuilder();
-                List<string> dataLabels = this.GetDataLabels(database);
+                List<string> dataLabels = database.GetDataLabels();
                 foreach (string dataLabel in dataLabels)
                 {
                     header.Append(this.AddColumnValue(dataLabel));
@@ -38,13 +38,18 @@ namespace Timelapse.Database
                     StringBuilder row = new StringBuilder();
                     foreach (string dataLabel in dataLabels)
                     {
-                        row.Append(this.AddColumnValue((string)database.ImageDataTable.Rows[i][dataLabel]));
+                        row.Append(this.AddColumnValue(database.ImageDataTable.Rows[i].GetStringField(dataLabel)));
                     }
                     fileWriter.WriteLine(row.ToString());
                 }
             }
-            catch
+            catch (Exception exception)
             {
+                if (exception is IOException == false)
+                {
+                    Debug.Assert(false, "Export to CSV failed unexpectedly.", exception.ToString());
+                }
+
                 // Can't write the spreadsheet file
                 DialogMessageBox messageBox = new DialogMessageBox();
                 messageBox.IconType = MessageBoxImage.Error;
@@ -64,7 +69,7 @@ namespace Timelapse.Database
 
         public void ImportFromCsv(ImageDatabase database, string filePath)
         {
-            List<string> dataLabels = this.GetDataLabels(database);
+            List<string> dataLabels = database.GetDataLabels();
             try
             {
                 using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -91,6 +96,7 @@ namespace Timelapse.Database
                             // assemble set of column values to update
                             string imageFileName = null;
                             string folder = null;
+                            string relativePath = null;
                             ColumnTuplesWithWhere imageToUpdate = new ColumnTuplesWithWhere();
                             for (int field = 0; field < row.Count; ++field)
                             {
@@ -108,6 +114,10 @@ namespace Timelapse.Database
                                 {
                                     folder = value;
                                 }
+                                else if (dataLabel == Constants.DatabaseColumn.RelativePath)
+                                {
+                                    relativePath = value;
+                                }
                                 else if (dataLabel == Constants.DatabaseColumn.Date ||
                                          dataLabel == Constants.DatabaseColumn.Time)
                                 {
@@ -123,7 +133,7 @@ namespace Timelapse.Database
 
                             // accumulate image
                             Debug.Assert(String.IsNullOrWhiteSpace(imageFileName) == false, "Image's file name was not loaded.");
-                            imageToUpdate.SetWhere(folder, imageFileName);
+                            imageToUpdate.SetWhere(folder, relativePath, imageFileName);
                             imagesToUpdate.Add(imageToUpdate);
 
                             // write current batch of updates to database
@@ -170,28 +180,6 @@ namespace Timelapse.Database
             {
                 return value + ",";
             }
-        }
-
-        private List<string> GetDataLabels(ImageDatabase database)
-        {
-            List<string> dataLabels = new List<string>();
-            for (int row = 0; row < database.TemplateTable.Rows.Count; row++)
-            {
-                string label = (string)database.TemplateTable.Rows[row][Constants.Control.Label];
-                string dataLabel = (string)database.TemplateTable.Rows[row][Constants.Control.DataLabel];
-                if (dataLabel == String.Empty)
-                {
-                    dataLabel = label;
-                }
-                Debug.Assert(String.IsNullOrWhiteSpace(dataLabel) == false, String.Format("Encountered empty data label '{0}' at row {1} in template table.", dataLabel, row));
-
-                // get a list of datalabels so we can add columns in the order that matches the current template table order
-                if (Constants.DatabaseColumn.ID != dataLabel)
-                {
-                    dataLabels.Add(dataLabel);
-                }
-            }
-            return dataLabels;
         }
 
         private List<string> ReadAndParseLine(StreamReader csvReader)

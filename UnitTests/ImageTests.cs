@@ -92,6 +92,8 @@ namespace Timelapse.UnitTests
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
             {
                 new ImageExpectations(TestConstant.Expectations.DaylightBobcatImage),
+                new ImageExpectations(TestConstant.Expectations.DaylightCoyoteImage),
+                new ImageExpectations(TestConstant.Expectations.DaylightMartenPairImage),
                 new ImageExpectations(TestConstant.Expectations.InfraredMartenImage)
             };
 

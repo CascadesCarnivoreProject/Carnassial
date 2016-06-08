@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -35,7 +36,7 @@ namespace Timelapse
         /// </summary>
         public DialogDeleteImages(ImageDatabase database, DataTable deletedImageTable, bool deleteData, bool useDeleteFlags)
         {
-            string imageFolderPath = database.FolderPath; 
+            string imageFolderPath = database.FolderPath;
             this.InitializeComponent();
             Mouse.OverrideCursor = Cursors.Wait;
             this.deletedImageTable = deletedImageTable;
@@ -56,7 +57,7 @@ namespace Timelapse
             this.GridGallery.RowDefinitions.Clear();
 
             // Construct the dialog's text based on the state of the flags
-            if (useDeleteFlags == false )
+            if (useDeleteFlags == false)
             {
                 if (deleteData == false)
                 {
@@ -72,13 +73,13 @@ namespace Timelapse
                 {
                     // Case 2: Delete the current image and its data
                     this.Message.MessageTitle = "Delete the current image and its data";
-                    this.Message.MessageWhat  = "Deletes the current image (shown below) and the data associated with that image.";
+                    this.Message.MessageWhat = "Deletes the current image (shown below) and the data associated with that image.";
                     this.Message.MessageResult = "\u2022 The deleted image file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
                     this.Message.MessageResult += "\u2022 However, the data associated with that image will be permanently deleted.";
                     this.Message.MessageHint = "You can delete your image backups by deleting the DeletedImages folder.";
                 }
             }
-            else 
+            else
             {
                 if (deleteData == false)
                 {
@@ -187,8 +188,8 @@ namespace Timelapse
             {
                 ImageProperties imageProperties = new ImageProperties(this.deletedImageTable.Rows[i]);
 
-                string deleteFlag = this.database.DataLabelFromColumnName[Constants.Control.DeleteFlag];
-                this.database.UpdateImage((int)imageProperties.ID, deleteFlag, "false");
+                string markForDeletionDataLabel = this.database.DataLabelFromStandardControlType[Constants.Control.DeleteFlag];
+                this.database.UpdateImage((int)imageProperties.ID, markForDeletionDataLabel, Constants.Boolean.False);
                 if (this.deleteData)
                 {
                     imagesIDsToDelete.Add(imageProperties.ID);
@@ -196,8 +197,8 @@ namespace Timelapse
                 else
                 {
                     // As only the image was deleted, mark its image quality as missing.
-                    string dataLabel = this.database.DataLabelFromColumnName[Constants.DatabaseColumn.ImageQuality];
-                    this.database.UpdateImage((int)imageProperties.ID, dataLabel, ImageQualityFilter.Missing.ToString());
+                    string imageQualityDataLabel = this.database.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality];
+                    this.database.UpdateImage((int)imageProperties.ID, imageQualityDataLabel, ImageQualityFilter.Missing.ToString());
                 }
                 this.TryMoveImageToDeletedImagesFolder(this.imageFolderPath, imageProperties);
             }
@@ -221,26 +222,27 @@ namespace Timelapse
             {
                 return false;  // If there is no source file, its a missing file so we can't back it up
             }
-            
+
             // Create a new target folder, if necessary.
             string destinationFolder = Path.Combine(folderPath, Constants.File.DeletedImagesFolder);
             if (!Directory.Exists(destinationFolder))
             {
                 Directory.CreateDirectory(destinationFolder);
             }
-            
+
             // Move the image file to the backup location.           
             string destinationFilePath = Path.Combine(destinationFolder, imageProperties.FileName);
-            if (File.Exists(destinationFilePath))  // Becaue move doesn't allow overwriting, delete  the destination file if it already exists .
+            if (File.Exists(destinationFilePath))
             {
                 try
                 {
+                    // Becaue move doesn't allow overwriting, delete the destination file if it already exists.
                     File.Delete(sourceFilePath);
                     return true;
                 }
                 catch (IOException e)
                 {
-                    System.Diagnostics.Debug.Print(e.Message);
+                    Debug.Print(e.Message);
                     return false;
                 }
             }

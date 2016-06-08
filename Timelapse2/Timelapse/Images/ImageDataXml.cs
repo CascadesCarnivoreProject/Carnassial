@@ -32,8 +32,8 @@ namespace Timelapse.Images
             List<string> choiceControlNames = new List<string>();
             for (int control = 0; control < templateTable.Rows.Count; control++)
             {
-                string dataLabel = (string)templateTable.Rows[control][Constants.Control.DataLabel];
-                switch ((string)templateTable.Rows[control][Constants.Control.Type])
+                string dataLabel = templateTable.Rows[control].GetStringField(Constants.Control.DataLabel);
+                switch (templateTable.Rows[control].GetStringField(Constants.Control.Type))
                 {
                     case Constants.Control.Counter:
                         counterControlNames.Add(dataLabel);
@@ -140,7 +140,7 @@ namespace Timelapse.Images
 
                 // add this image's updates to the update lists
                 ColumnTuplesWithWhere imageToUpdate = new ColumnTuplesWithWhere(columnsToUpdate);
-                imageToUpdate.SetWhere(imageFolder, imageFileName);
+                imageToUpdate.SetWhere(imageFolder, null, imageFileName);
                 imagesToUpdate.Add(imageToUpdate);
 
                 ColumnTuplesWithWhere markerToUpdate = new ColumnTuplesWithWhere(counterCoordinates);

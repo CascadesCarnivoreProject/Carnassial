@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Data;
+using Timelapse.Database;
 
 namespace Timelapse.UnitTests
 {
@@ -21,7 +22,7 @@ namespace Timelapse.UnitTests
 
             foreach (KeyValuePair<string, string> userCounterExpectation in this.UserDefinedCountersByDataLabel)
             {
-                Assert.IsTrue((string)marker[userCounterExpectation.Key] == userCounterExpectation.Value, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.ID, userCounterExpectation.Key, userCounterExpectation.Value, marker[userCounterExpectation.Key]);
+                Assert.IsTrue(marker.GetStringField(userCounterExpectation.Key) == userCounterExpectation.Value, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.ID, userCounterExpectation.Key, userCounterExpectation.Value, marker.GetStringField(userCounterExpectation.Key));
             }
         }
     }

@@ -8,6 +8,11 @@
         public string Name { get; private set; }
         public string Value { get; private set; }
 
+        public ColumnTuple(string column, bool value)
+            : this(column, value ? Constants.Boolean.True : Constants.Boolean.False)
+        {
+        }
+
         public ColumnTuple(string column, int value)
             : this(column, value.ToString())
         {

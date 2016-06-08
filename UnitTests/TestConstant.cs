@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Timelapse.Database;
 using TimelapseTemplateEditor;
@@ -14,6 +13,7 @@ namespace Timelapse.UnitTests
         {
             Constants.DatabaseColumn.ID,
             Constants.DatabaseColumn.File,
+            Constants.DatabaseColumn.RelativePath,
             Constants.DatabaseColumn.Folder,
             Constants.DatabaseColumn.Date,
             Constants.DatabaseColumn.Time,
@@ -91,6 +91,7 @@ namespace Timelapse.UnitTests
         {
             // controls
             public static readonly ControlExpectations File;
+            public static readonly ControlExpectations RelativePath;
             public static readonly ControlExpectations Folder;
             public static readonly ControlExpectations Date;
             public static readonly ControlExpectations Time;
@@ -115,6 +116,8 @@ namespace Timelapse.UnitTests
 
             // images
             public static readonly ImageExpectations DaylightBobcatImage;
+            public static readonly ImageExpectations DaylightCoyoteImage;
+            public static readonly ImageExpectations DaylightMartenPairImage;
             public static readonly ImageExpectations InfraredMartenImage;
 
             static Expectations()
@@ -127,6 +130,14 @@ namespace Timelapse.UnitTests
                 Expectations.File.TextBoxWidth = Constants.ControlDefault.FileWidth;
                 Expectations.File.Tooltip = Constants.ControlDefault.FileTooltip;
                 Expectations.File.Type = Constants.DatabaseColumn.File;
+                Expectations.RelativePath = ControlExpectations.CreateNote(Constants.DatabaseColumn.RelativePath, 23);
+                Expectations.RelativePath.Copyable = false;
+                Expectations.RelativePath.DefaultValue = Constants.ControlDefault.Value;
+                Expectations.RelativePath.List = Constants.ControlDefault.Value;
+                Expectations.RelativePath.TextBoxWidth = Constants.ControlDefault.RelativePathWidth;
+                Expectations.RelativePath.Tooltip = Constants.ControlDefault.RelativePathTooltip;
+                Expectations.RelativePath.Type = Constants.DatabaseColumn.RelativePath;
+                Expectations.RelativePath.Visible = false;
                 Expectations.Folder = ControlExpectations.CreateNote(Constants.DatabaseColumn.Folder, 2);
                 Expectations.Folder.Copyable = false;
                 Expectations.Folder.DefaultValue = " ";
@@ -151,7 +162,7 @@ namespace Timelapse.UnitTests
                 Expectations.ImageQuality = ControlExpectations.CreateFlag(Constants.DatabaseColumn.ImageQuality, 5);
                 Expectations.ImageQuality.Copyable = false;
                 Expectations.ImageQuality.DefaultValue = " ";
-                Expectations.ImageQuality.List = Constants.ImageQuality.ListOfValues;
+                Expectations.ImageQuality.List = TestConstant.ImageQuality.LegacyListOfValues;
                 Expectations.ImageQuality.TextBoxWidth = Constants.ControlDefault.ImageQualityWidth;
                 Expectations.ImageQuality.Tooltip = Constants.ControlDefault.ImageQualityTooltip;
                 Expectations.ImageQuality.Type = Constants.DatabaseColumn.ImageQuality;
@@ -261,6 +272,28 @@ namespace Timelapse.UnitTests
                     Time = "08:06:23"
                 };
 
+                Expectations.DaylightCoyoteImage = new ImageExpectations()
+                {
+                    DarkPixelFraction = 0.60847930235235814,
+                    Date = "21-Apr-2016",
+                    FileName = TestConstant.File.DaylightCoyoteImage,
+                    IsColor = true,
+                    Quality = ImageQualityFilter.Ok,
+                    RelativePath = TestConstant.File.CarnivoreDirectoryName,
+                    Time = "06:31:13"
+                };
+
+                Expectations.DaylightMartenPairImage = new ImageExpectations()
+                {
+                    DarkPixelFraction = 0.70253739978510621,
+                    Date = "28-Jan-2015",
+                    FileName = TestConstant.File.DaylightMartenPairImage,
+                    IsColor = true,
+                    Quality = ImageQualityFilter.Ok,
+                    RelativePath = TestConstant.File.CarnivoreDirectoryName,
+                    Time = "11:17:34"
+                };
+
                 Expectations.InfraredMartenImage = new ImageExpectations()
                 {
                     DarkPixelFraction = 0.0743353174106539,
@@ -277,6 +310,7 @@ namespace Timelapse.UnitTests
         {
             // template databases for backwards compatibility testing
             // version is the editor version used for creation
+            public const string CarnivoreDirectoryName = "CarnivoreTestImages";
             public const string CarnivoreTemplateDatabaseFileName = "CarnivoreTemplate 2.0.1.5.tdb";
             public const string DefaultTemplateDatabaseFileName2015 = "TimelapseTemplate 2.0.1.5.tdb";
 
@@ -290,7 +324,14 @@ namespace Timelapse.UnitTests
             public const string DefaultNewTemplateDatabaseFileName = "TemplateDatabaseTest.tdb";
 
             public const string DaylightBobcatImage = "BushnellTrophyHD-119677C-20160805-926.JPG";
+            public const string DaylightCoyoteImage = "BushnellTrophyHDAggressor-119777C-20160421-112.JPG";
+            public const string DaylightMartenPairImage = "Reconyx-HC500-20150128-201.JPG";
             public const string InfraredMartenImage = "BushnellTrophyHD-119677C-20160224-056.JPG";
+        }
+
+        public static class ImageQuality
+        {
+            public const string LegacyListOfValues = "Ok| Dark| Corrupted | Missing";
         }
     }
 }

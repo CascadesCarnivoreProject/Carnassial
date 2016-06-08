@@ -149,17 +149,16 @@ namespace Timelapse
         #region Notefields callbacks
         public void LoadDataFieldLabels()
         {
-            DataTable sortedTemplateTable = this.database.GetControlsSortedByControlOrder();
-            for (int i = 0; i < sortedTemplateTable.Rows.Count; i++)
+            for (int i = 0; i < this.database.TemplateTable.Rows.Count; i++)
             {
                 // Get the values for each control
-                DataRow row = sortedTemplateTable.Rows[i];
+                DataRow row = this.database.TemplateTable.Rows[i];
                 string type = row[Constants.Control.Type].ToString();
 
                 if (type == Constants.Control.Note || type == Constants.DatabaseColumn.Date || type == Constants.DatabaseColumn.Time)
                 {
-                    string datalabel = (string)row[Constants.Control.DataLabel];
-                    string label = (string)row[Constants.Control.Label];
+                    string datalabel = row.GetStringField(Constants.Control.DataLabel);
+                    string label = row.GetStringField(Constants.Control.Label);
                     this.dataLabelFromLabel.Add(label, datalabel);
                     // this.NoteID = Convert.ToInt32(row[Constants.ID].ToString()); // TODOSAUL: Need to use this ID to pass between controls and data
                     this.lboxNoteFields.Items.Add(label);

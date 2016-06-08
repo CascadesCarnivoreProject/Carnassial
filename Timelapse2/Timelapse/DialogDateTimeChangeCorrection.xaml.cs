@@ -66,7 +66,7 @@ namespace Timelapse
                 this.database.AppendToImageSetLog(log);
 
                 // Refresh the database / datatable to reflect the updated values
-                this.database.TryGetImagesAll();
+                this.database.TryGetImages(ImageQualityFilter.All);
                 this.DialogResult = true;
             }
             catch
