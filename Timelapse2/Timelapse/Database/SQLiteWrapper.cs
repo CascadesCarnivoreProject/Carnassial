@@ -486,5 +486,510 @@ namespace Timelapse.Database
             }
         }
         #endregion
+
+        #region Public methods for Add/Delete/Rename Columns
+        /// <summary>
+        /// Add a column to the table named sourceTable at position columnNumber using the provided columnDefinition
+        /// </summary>
+        public bool AddColumn(string sourceTable, int columnNumber, string columnDefinition)
+        {
+            try
+            {
+                using (SQLiteConnection dbConnection = new SQLiteConnection(this.connectionString))
+                {
+                    dbConnection.Open();
+
+                    // Some basic error checking to make sure we can do the operation
+                    List<string> columnNames = GetColumnNamesAsList(dbConnection, sourceTable);
+
+                    // get the column name (the first word) from the column definition
+                    string columnName = (columnDefinition.IndexOf(" ") == -1) ? columnDefinition : columnDefinition.Substring(0, columnDefinition.IndexOf(" "));
+
+                    // Check if a column called columnName already exists in the source Table. If so, abort as we cannot add duplicate column names
+                    if (columnNames.Contains(columnName))
+                    {
+                        return false; // A column called columnName already exists in the source Table
+                    }
+
+                    // If columnNumber would result in the column being inserted at the end of the table, then use the more efficient method to do so.
+                    if (columnNumber >= columnNames.Count)
+                    {
+                        AddColumnToEndOfTable(dbConnection, sourceTable, columnDefinition);
+                        return true;
+                    }
+
+                    // We need to add a column elsewhere than the end. This requires us to 
+                    // create a new schema, create a new table from that schema, copy data over to it, remove the old table
+                    // and rename the new table to the name of the old one.
+
+                    // Get a schema definition identical to the schema in the existing table, 
+                    // but with a new column definition added at the given position 
+                    string newSchema = this.CloneSchemaButWithAddedColumn(dbConnection, sourceTable, columnNumber, columnDefinition);
+
+                    // Create a new table 
+                    string destTable = sourceTable + "NEW";
+                    string sql = "CREATE TABLE " + destTable + " (" + newSchema + ")";
+                    SQLiteCommand command = new SQLiteCommand(sql, dbConnection);
+                    command.ExecuteNonQuery();
+
+                    // Copy the old table's contents to the new table
+                    this.CopyAllValuesFromTable(dbConnection, sourceTable, sourceTable, destTable);
+
+                    // Now drop the source table and rename the destination table to that of the source table
+                    this.DropTable(dbConnection, sourceTable);
+
+                    // Rename the table
+                    this.RenameTable(dbConnection, destTable, sourceTable);
+                    return true;
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.Assert(false, String.Format("Failure in AddColumn executing query '{0}'."), exception.ToString());
+                return false;
+            }
+        }
+
+        public bool DeleteColumn(string sourceTable, string columnName)
+        {
+            try
+            {
+                using (SQLiteConnection dbConnection = new SQLiteConnection(this.connectionString))
+                {
+                    dbConnection.Open();
+                    // Some basic error checking to make sure we can do the operation
+                    if (columnName.Trim() == String.Empty)
+                    {
+                        return false;  // The provided column names= is an empty string
+                    }
+                    List<string> columnNames = GetColumnNamesAsList(dbConnection, sourceTable);
+                    if (!columnNames.Contains(columnName))
+                    {
+                        return false; // There is no column called columnName in the source Table, so we can't delete ti
+                    }
+
+                    // Get a schema definition identical to the schema in the existing table, 
+                    // but with the column named columnName deleted from it
+                    string newSchema = this.CloneSchemaButDeleteNamedColumn(dbConnection, sourceTable, columnName);
+
+                    // Create a new table 
+                    string destTable = sourceTable + "NEW";
+                    string sql = "CREATE TABLE " + destTable + " (" + newSchema + ")";
+                    SQLiteCommand command = new SQLiteCommand(sql, dbConnection);
+                    command.ExecuteNonQuery();
+
+                    // Copy the old table's contents to the new table
+                    this.CopyAllValuesFromTable(dbConnection, destTable, sourceTable, destTable);
+
+                    // Now drop the source table and rename the destination table to that of the source table
+                    this.DropTable(dbConnection, sourceTable);
+
+                    // Rename the table
+                    this.RenameTable(dbConnection, destTable, sourceTable);
+                    return true;
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.Assert(false, String.Format("Failure in DeleteColumn executing query '{0}'."), exception.ToString());
+                return false;
+            }
+        }
+
+        public bool RenameColumn(string sourceTable, string currentColumnName, string newColumnName)
+        {
+            try
+            {
+                using (SQLiteConnection dbConnection = new SQLiteConnection(this.connectionString))
+                {
+                    dbConnection.Open();
+                    // Some basic error checking to make sure we can do the operation
+                    if (currentColumnName.Trim() == String.Empty || newColumnName.Trim() == String.Empty)
+                    {
+                        return false;  // One of the provided column names is an empty string
+                    }
+                    List<string> columnNames = GetColumnNamesAsList(dbConnection, sourceTable);
+                    bool result1 = columnNames.Contains(currentColumnName);
+                    bool result2 = columnNames.Contains(newColumnName);
+
+                    if (columnNames.Contains(currentColumnName) == false) return false; // There is no column called currentColumnName in the source Table
+                    if (columnNames.Contains(newColumnName) == true) return false; // There is already a column called newColumnName in the source Table
+
+                    string newSchema = this.CloneSchemaButRenameColumn(dbConnection, sourceTable, currentColumnName, newColumnName);
+
+                    // Create a new table 
+                    string destTable = sourceTable + "NEW";
+                    string sql = "CREATE TABLE " + destTable + " (" + newSchema + ")";
+                    SQLiteCommand command = new SQLiteCommand(sql, dbConnection);
+                    command.ExecuteNonQuery();
+
+                    // Copy the old table's contents to the new table
+                    this.CopyAllValuesBetweenTables(dbConnection, sourceTable, destTable, sourceTable, destTable);
+
+                    // Now drop the source table and rename the destination table to that of the source table
+                    this.DropTable(dbConnection, sourceTable);
+
+                    // Rename the table
+                    this.RenameTable(dbConnection, destTable, sourceTable);
+                    return true;
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.Assert(false, String.Format("Failure in RenameColumn executing query '{0}'."), exception.ToString());
+                return false;
+            }
+
+        }
+        #endregion
+
+        #region Private Methods supporting Adding/Deleting/Renaming Columns
+        /// <summary>
+        /// Add a column to the end of the database table 
+        /// This does NOT require the table to be cloned.
+        /// Note: Some of the AddColumnToEndOfTable methods are currently not referenced, but may be handy in the future.
+        /// </summary>
+        /// <param name="dbConnection">the open and valid connection to the database</param> 
+        /// <param name="tableName">the name of the  table</param> 
+        /// <param name="name">the name of the new column</param> 
+        /// <param name="type">the type of the new column</param> 
+        private void AddColumnToEndOfTable(SQLiteConnection dbConnection, string tableName, string name, string type)
+        {
+            string columnDefinition = name + " " + type;
+            AddColumnToEndOfTable(dbConnection, tableName, columnDefinition);
+        }
+        /// <summary>
+        /// Add a column to the end of the database table. 
+        /// This does NOT require the table to be cloned.
+        /// </summary>
+        /// <param name="dbConnection">the open and valid connection to the database</param> 
+        /// <param name="tableName">the name of the  table</param> 
+        /// <param name="name">the name of the new column</param> 
+        /// <param name="type">the type of the new column</param> 
+        /// <param name="other_options">space-separated options such as PRIMARY KEY AUTOINCREMENT, NULL or NOT NULL etc</param>
+        private void AddColumnToEndOfTable(SQLiteConnection dbConnection, string tableName, string name, string type, string other_options)
+        {
+            string columnDefinition = name + " " + type;
+            if (other_options != string.Empty)
+            {
+                columnDefinition += " " + other_options;
+            }
+            AddColumnToEndOfTable(dbConnection, tableName, columnDefinition);
+        }
+
+        private void AddColumnToEndOfTable(SQLiteConnection dbConnection, string tableName, string columnDefinition)
+        {
+            string sql = "ALTER TABLE " + tableName + " ADD COLUMN " + columnDefinition;
+            SQLiteCommand command = new SQLiteCommand(sql, dbConnection);
+            command.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Copy all the values from the source table into the destination table. Assumes that both tables are populated with identically-named columns
+        /// </summary>
+        /// <param name="dbConnection"></param>
+        /// <param name="dataSourceTable">the source table whose values we will copy</param>
+        /// <param name="dataDestinationTable">the destination table where values will be copied into</param>
+        private void CopyAllValuesFromTable(SQLiteConnection dbConnection, string schemaFromTable, string dataSourceTable, string dataDestinationTable)
+        {
+            string commaSeparatedColumns = this.GetColumnNamesAsString(dbConnection, schemaFromTable);
+            string sql = "INSERT INTO " + dataDestinationTable + " (" + commaSeparatedColumns + ") SELECT " + commaSeparatedColumns + " FROM " + dataSourceTable;
+
+            SQLiteCommand command = new SQLiteCommand(sql, dbConnection);
+            command = new SQLiteCommand(sql, dbConnection);
+            command.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Copy all the values from the source table into the destination table. Assumes that both tables are populated with identically-named columns
+        /// </summary>
+        /// <param name="dbConnection"></param>
+        /// <param name="dataSourceTable">the source table whose values we will copy</param>
+        /// <param name="dataDestinationTable">the destination table where values will be copied into</param>
+        private void CopyAllValuesBetweenTables(SQLiteConnection dbConnection, string schemaFromSourceTable, string schemaFromDestinationTable, string dataSourceTable, string dataDestinationTable)
+        {
+            string commaSeparatedColumnsSource = this.GetColumnNamesAsString(dbConnection, schemaFromSourceTable);
+            string commaSeparatedColumnsDestination = this.GetColumnNamesAsString(dbConnection, schemaFromDestinationTable);
+            string sql = "INSERT INTO " + dataDestinationTable + " (" + commaSeparatedColumnsDestination + ") SELECT " + commaSeparatedColumnsSource + " FROM " + dataSourceTable;
+
+            SQLiteCommand command = new SQLiteCommand(sql, dbConnection);
+            command = new SQLiteCommand(sql, dbConnection);
+            command.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Drop the database table 'tableName' from the connected database.
+        /// </summary>
+        /// <param name="dbConnection">the open and valid connection to the database</param>
+        /// <param name="tableName">the name of the table</param>
+        private void DropTable(SQLiteConnection dbConnection, string tableName)
+        {
+            string sql = "DROP TABLE " + tableName;
+            SQLiteCommand command = new SQLiteCommand(sql, dbConnection);
+            command.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Return a list of all the column names in the  table named 'tableName' from the connected database.
+        /// </summary>
+        /// <param name="dbConnection">the open and valid connection to the database</param>
+        /// <param name="tableName">the name of the table</param>
+        /// <returns>a list of all the column names in the  table</returns>
+        private List<string> GetColumnNamesAsList(SQLiteConnection dbConnection, string tableName)
+        {
+            SQLiteDataReader reader = this.GetSchema(dbConnection, tableName);
+            List<string> columnNames = new List<string>();
+            while (reader.Read())
+            {
+                columnNames.Add(reader[1].ToString());
+            }
+            return columnNames;
+        }
+
+        /// <summary>
+        /// Return a comma-spearated string of all the column names in the  table named 'tableName' from the connected database.
+        /// </summary>
+        /// <param name="dbConnection">the open and valid connection to the database</param>
+        /// <param name="tableName">the name of the table</param>
+        /// <returns>a comma-spearated string of all the column names in the  table</returns>
+        private string GetColumnNamesAsString(SQLiteConnection dbConnection, string tableName)
+        {
+            string commaSeparatedColumns = string.Empty; // Construct a comma-separated string representation of the columns
+            foreach (string column in this.GetColumnNamesAsList(dbConnection, tableName))
+            {
+                commaSeparatedColumns += column + ", ";
+            }
+            return commaSeparatedColumns.TrimEnd(',', ' ');
+        }
+
+        /// <summary>
+        /// Get the Schema for a simple database table 'tableName' from the connected database.
+        /// For each column, it can retrieve schema settings including:
+        ///     Name, Type, If its the Primary Key, Constraints including its Default Value (if any) and Not Null 
+        /// However other constraints that may be set in the table schema are NOT returned, including:
+        ///     UNIQUE, CHECK, FOREIGN KEYS, AUTOINCREMENT 
+        /// If you use those, the schema may either ignore them or return odd values. So check it!
+        /// Usage example: SQLiteDataReader reader = GetSchema (dbConnection, "tableName");
+        /// To use the schema, do a while loop over reader.Read () to read a column at a time after every read
+        //// access the column's attributes, where 
+        //// -reader[0] is column number (e.g., 0)
+        //// -reader[1] is  columnname (e.g., Employee)
+        //// -reader[2] is  type (e.g., STRING)
+        //// -reader[3] to [5] also returns values, but not yet sure what they stand for.. maybe 'Primary Key Autoincrement'?
+        /// </summary>
+        /// <param name="dbConnection">the open and valid connection to the database</param>
+        /// <param name="tableName">the  name of the table</param>
+        /// <returns>
+        /// The schema as a SQLiteDataReader.To examine it, do a while loop over reader.Read () to read a column at a time after every read
+        /// access the column's attributes, where 
+        /// -reader[0] is column number (e.g., 0)
+        /// -reader[1] is  columnname (e.g., Employee)
+        /// -reader[2] is  type (e.g., STRING)
+        /// -reader[3] to [5] also returns values, but not yet sure what they stand for.. maybe 'Primary Key Autoincrement'?
+        /// </returns>
+        private SQLiteDataReader GetSchema(SQLiteConnection dbConnection, string tableName)
+        {
+            string sql = "PRAGMA TABLE_INFO (" + tableName + ")"; // Syntax is: PRAGMA TABLE_INFO (tableName)
+            SQLiteCommand command = new SQLiteCommand(sql, dbConnection);
+            command = new SQLiteCommand(sql, dbConnection);
+            return command.ExecuteReader();
+        }
+
+        /// <summary>
+        /// Add a column definition into the provided schema at the given column location
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <param name="columnNumber"></param>
+        /// <param name="columnDefinition"></param>
+        /// <returns></returns>
+        private string CloneSchemaButWithAddedColumn(SQLiteConnection dbConnection, string tableName, int columnNumber, string columnDefinition)
+        {
+            string newSchema = string.Empty;
+            int currentColumn = 0;
+            bool columnAdded = false;
+            SQLiteDataReader reader = this.GetSchema(dbConnection, tableName);
+            while (reader.Read())
+            {
+                string existingColumnDefinition = string.Empty;
+
+                // If we are at the spot where we should insert the new columm definition, do so.
+                if (currentColumn == columnNumber)
+                {
+                    existingColumnDefinition += columnDefinition + ", ";
+                    columnAdded = true;
+                }
+
+                // Add the existing column definition
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    switch (i)
+                    {
+                        case 0:  // cid (Column Index)
+                            break;
+                        case 1:  // name (Column Name)
+                        case 2:  // type (Column type)
+                            existingColumnDefinition += reader[i].ToString() + " ";
+                            break;
+                        case 3:  // notnull (Column has a NOT NULL constraint)
+                            if (reader[i].ToString() != "0")
+                            {
+                                existingColumnDefinition += "NOT NULL ";
+                            }
+                            break;
+                        case 4:  // dflt_value (Column has a default value)
+                            if (reader[i].ToString() != string.Empty)
+                            {
+                                existingColumnDefinition += "DEFAULT " + reader[i].ToString() + " ";
+                            }
+                            break;
+                        case 5:  // pk (Column is part of the primary key)
+                            if (reader[i].ToString() != "0")
+                            {
+                                existingColumnDefinition += "PRIMARY KEY ";
+                            }
+                            break;
+                    }
+                }
+                existingColumnDefinition = existingColumnDefinition.TrimEnd(' ');
+                newSchema += existingColumnDefinition + ", ";
+                currentColumn++;
+            }
+            // If we haven't added the column yet, its because the columnNumber provided 
+            // is greater than the number of columns in the table.
+            // So add it to the end.
+            if (columnAdded == false)
+            {
+                newSchema += columnDefinition + ", ";
+            }
+            newSchema = newSchema.TrimEnd(',', ' '); // remove last comma
+            return newSchema;
+        }
+
+        /// <summary>
+        /// Create a schema cloned from tableName, except with the column definition for columnName deleted
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <param name="columnNumber"></param>
+        /// <param name="columnDefinition"></param>
+        /// <returns></returns>
+        private string CloneSchemaButDeleteNamedColumn(SQLiteConnection dbConnection, string tableName, string columnName)
+        {
+            string newSchema = string.Empty;
+            int currentColumn = 0;
+            SQLiteDataReader reader = this.GetSchema(dbConnection, tableName);
+            while (reader.Read())
+            {
+                string existingColumnDefinition = string.Empty;
+                if (reader[1].ToString() == columnName) continue; // skip the column if is is named columnName, which will delete it from the schema
+
+                // Copy the existing column definition unless its the column named columnNam
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    switch (i)
+                    {
+                        case 0:  // cid (Column Index)
+                            break;
+                        case 1:  // name (Column Name)
+                        case 2:  // type (Column type)
+                            existingColumnDefinition += reader[i].ToString() + " ";
+                            break;
+                        case 3:  // notnull (Column has a NOT NULL constraint)
+                            if (reader[i].ToString() != "0")
+                            {
+                                existingColumnDefinition += "NOT NULL ";
+                            }
+                            break;
+                        case 4:  // dflt_value (Column has a default value)
+                            if (reader[i].ToString() != string.Empty)
+                            {
+                                existingColumnDefinition += "DEFAULT " + reader[i].ToString() + " ";
+                            }
+                            break;
+                        case 5:  // pk (Column is part of the primary key)
+                            if (reader[i].ToString() != "0")
+                            {
+                                existingColumnDefinition += "PRIMARY KEY ";
+                            }
+                            break;
+                    }
+                }
+                existingColumnDefinition = existingColumnDefinition.TrimEnd(' ');
+                newSchema += existingColumnDefinition + ", ";
+                currentColumn++;
+            }
+            newSchema = newSchema.TrimEnd(',', ' '); // remove last comma
+            return newSchema;
+        }
+
+
+        /// <summary>
+        /// Create a schema cloned from tableName, except with the column definition for columnName deleted
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <param name="columnNumber"></param>
+        /// <param name="columnDefinition"></param>
+        /// <returns></returns>
+        private string CloneSchemaButRenameColumn(SQLiteConnection dbConnection, string tableName, string existingColumnName, string newColumnName)
+        {
+            string newSchema = string.Empty;
+            SQLiteDataReader reader = this.GetSchema(dbConnection, tableName);
+            while (reader.Read())
+            {
+                string existingColumnDefinition = string.Empty;
+
+                // Copy the existing column definition unless its the column named columnNam
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    switch (i)
+                    {
+                        case 0:  // cid (Column Index)
+                            break;
+                        case 1:  // name (Column Name)
+                            // Rename the column if it is the one to be renamed
+                            existingColumnDefinition += (reader[1].ToString() == existingColumnName) ? newColumnName : reader[1].ToString();
+                            existingColumnDefinition += " ";
+                            break;
+                        case 2:  // type (Column type)
+                            existingColumnDefinition += reader[i].ToString() + " ";
+                            break;
+                        case 3:  // notnull (Column has a NOT NULL constraint)
+                            if (reader[i].ToString() != "0")
+                            {
+                                existingColumnDefinition += "NOT NULL ";
+                            }
+                            break;
+                        case 4:  // dflt_value (Column has a default value)
+                            if (reader[i].ToString() != string.Empty)
+                            {
+                                existingColumnDefinition += "DEFAULT " + reader[i].ToString() + " ";
+                            }
+                            break;
+                        case 5:  // pk (Column is part of the primary key)
+                            if (reader[i].ToString() != "0")
+                            {
+                                existingColumnDefinition += "PRIMARY KEY ";
+                            }
+                            break;
+                    }
+                }
+                existingColumnDefinition = existingColumnDefinition.TrimEnd(' ');
+                newSchema += existingColumnDefinition + ", ";
+            }
+            newSchema = newSchema.TrimEnd(',', ' '); // remove last comma
+            return newSchema;
+        }
+        /// <summary>
+        /// Rename the database table named 'tableName' to 'new_tableName'  
+        /// </summary>
+        /// <param name="dbConnection">the open and valid connection to the database</param>
+        /// <param name="old_tableName">the current name of the existing table</param> 
+        /// <param name="new_tableName">the new name of the table</param> 
+        private void RenameTable(SQLiteConnection dbConnection, string tableName, string new_tableName)
+        {
+            string sql = "ALTER TABLE " + tableName + " RENAME TO " + new_tableName;
+            SQLiteCommand command = new SQLiteCommand(sql, dbConnection);
+            command.ExecuteNonQuery();
+        }
+        #endregion
     }
 }
