@@ -444,9 +444,6 @@
     <Resource Include="16x16.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\deleted.jpg" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\missing.jpg" />
   </ItemGroup>
   <ItemGroup>
