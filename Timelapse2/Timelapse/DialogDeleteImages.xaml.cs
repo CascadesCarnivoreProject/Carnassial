@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Windows;
@@ -28,10 +29,13 @@ namespace Timelapse
         #region Public methods
         /// <summary>
         /// Ask the user if he/she wants to delete one or more images and (optionally) the data associated with those images.
-        /// Other parameters indicate various specifics of that image that we will use to display and delete it
+        /// Other parameters indicate various specifics of that image that we will use to display and delete it.
+        /// deleteData is true when the associated data should be deleted.
+        /// useDeleteFlags is true when the user is trying to delete images with the deletion flag set, otherwise its the current image being deleted
         /// </summary>
-        public DialogDeleteImages(ImageDatabase database, DataTable deletedImageTable, string imageFolderPath, bool deleteData)
+        public DialogDeleteImages(ImageDatabase database, DataTable deletedImageTable, bool deleteData, bool useDeleteFlags)
         {
+            string imageFolderPath = database.FolderPath; 
             this.InitializeComponent();
             Mouse.OverrideCursor = Cursors.Wait;
             this.deletedImageTable = deletedImageTable;
@@ -41,19 +45,64 @@ namespace Timelapse
 
             if (this.deleteData)
             {
-                this.sp_DeleteAll.Visibility = Visibility.Visible;
-                this.sp_DeleteImages.Visibility = Visibility.Collapsed;
                 this.OkButton.IsEnabled = false;
                 this.chkboxConfirm.Visibility = Visibility.Visible;
             }
             else
             {
-                this.sp_DeleteAll.Visibility = Visibility.Collapsed;
-                this.sp_DeleteImages.Visibility = Visibility.Visible;
                 this.OkButton.IsEnabled = true;
                 this.chkboxConfirm.Visibility = Visibility.Collapsed;
             }
             this.GridGallery.RowDefinitions.Clear();
+
+            // Construct the UI text based on the state of the flags
+            
+            
+            if (useDeleteFlags == false )
+            {
+                if (deleteData == false)
+                {
+                    // Case 1: Delete the current image, but not its data
+                    this.Message.MessageTitle = "Delete the current image.";
+                    this.Message.MessageWhat = "Deletes the current image (shown below) but not its data.";
+                    this.Message.MessageResult = "The deleted image file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
+                    this.Message.MessageResult += "A placeholder image will be shown when you try to view a deleted image.";
+                    this.Message.MessageHint = "Restore deleted images by manually copying or moving them back to their original location, or" + Environment.NewLine;
+                    this.Message.MessageHint += "you can delete your image backups by deleting the DeletedImages folder.";
+                }
+                else
+                {
+                    // Case 2: Delete the current image and its data
+                    this.Message.MessageTitle = "- Delete the current image and its data.";
+                    this.Message.MessageWhat  = "- Deletes the current image (shown below) and the data associated with that image.";
+                    this.Message.MessageResult = "The deleted image file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
+                    this.Message.MessageResult += "However, the data associated with that image will be permanently deleted.";
+                    this.Message.MessageHint = "You can delete your image backups by deleting the DeletedImages folder.";
+                }
+            }
+            else 
+            {
+                if (deleteData == false)
+                {
+                    // Case 3: Delete the images that have the delete flag set, but not their data
+                    this.Message.MessageTitle = "Delete all images marked for deletion";
+                    this.Message.MessageWhat = "Deletes all images marked for deletion (shown below) but not the data associated with those images.";
+                    this.Message.MessageResult = "The deleted image file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
+                    this.Message.MessageResult += "A placeholder image will be shown when you try to view a deleted image.";
+                    this.Message.MessageHint = "Restore deleted images by manually copying or moving them back to their original location, or" + Environment.NewLine;
+                    this.Message.MessageHint += "you can delete your image backups by deleting the DeletedImages folder";
+                }
+                else
+                {
+                    // Case 4: Delete the images that have the delete flag set, and their data
+                    this.Message.MessageTitle = "Delete all images marked for deletion and their data";
+                    this.Message.MessageWhat = "Deletes all images marked for deletion (shown below) along with the data associated with those images.";
+                    this.Message.MessageResult = "The deleted image file will be backed up in a sub-folder named DeletedImages" + Environment.NewLine;
+                    this.Message.MessageResult += "However, the data associated with those images will be permanently deleted.";
+                    this.Message.MessageHint = "You can delete your image backups by deleting the DeletedImages folder. ";
+                }
+            }
+            //this.Title = this.Message.MessageTitle;
 
             // Set the local variables to the passed in parameters
             int col = 0;

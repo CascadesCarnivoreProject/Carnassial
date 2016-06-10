@@ -134,6 +134,9 @@
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
     <Compile Include="Images\MetaTagEventArgs.cs" />
+    <Compile Include="StockMessage.xaml.cs">
+      <DependentUpon>StockMessage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Util\CheckForUpdate.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Database\CustomFilter.cs" />
@@ -266,6 +269,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="OptionsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="StockMessage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
