@@ -79,13 +79,11 @@ namespace Timelapse.Database
                 // scanning through images with BitmapCacheOption.None results in less than 6% CPU in BitmapFrame.Create() and
                 // 90% in System.Windows.Application.Run(), suggesting little scope for optimization within Timelapse proper
                 // this is significantly faster than BitmapCacheOption.Default
-                //SAULTODO: Unfortunately, using BitmapCacheOption.None locks the file as it is being accessed (rather than a memory copy being created when using a cache)
-                ///For now, I set the bitmap cache option to default so its loaded into memory, and also did the preservepixel format as otherwise it will break on loading (of my test images)
-                //SAULTODO: This means we cannot do any file operations on it, which is necessery if we want to delete the image through the Delete Image(s) menu option.
-                //SAULTODO: One solution is to pass a parameter to this function that specifies whether to use the cache or not, but that means changes to all the calling code
-                //SAULTODO: So I will defer that until I know that no other solution exists.
-                //return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
-                return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                // Note that using BitmapCacheOption.None locks the file as it is being accessed (rather than a memory copy being created when using a cache)
+                // This means we cannot do any file operations on it as it will produce an access violation.
+                // If this comes back to haunt us, then use this (slower) form: 
+                // return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
             }
             catch
             {
@@ -96,6 +94,36 @@ namespace Timelapse.Database
         public WriteableBitmap LoadWriteableBitmap(string imageFolderPath)
         {
             return new WriteableBitmap(this.LoadBitmapFrame(imageFolderPath));
+        }
+
+        /// <summary>
+        /// Given a file path to an image, return a thumbnail of size thumbnailSize 
+        /// If the file does not exist or if its corrupt, return a placeholder image.
+        /// TO DO: This should be reasonably efficient. However, 
+        /// -- do we really need to convert it to a writeable bitmap ?
+        /// -- it would be good to create stock thumbnails of the missing / corrupt images once, and return those instead of the full size image.
+        /// </summary>
+        public WriteableBitmap LoadBitmapThumbnail(string imageFolderPath, int thumbnailSize)
+        {
+            string path = this.GetImagePath(imageFolderPath);
+            if (!File.Exists(path))
+            {
+                return new WriteableBitmap(Constants.Images.MissingThumbnail);
+            }
+            try
+            {
+                BitmapImage bi = new BitmapImage();
+                bi.BeginInit();
+                bi.DecodePixelWidth = thumbnailSize;
+                bi.CacheOption = BitmapCacheOption.OnLoad;
+                bi.UriSource = new Uri(path);
+                bi.EndInit();
+                return new WriteableBitmap(bi);
+            }
+            catch
+            {
+                return new WriteableBitmap(Constants.Images.CorruptThumbnail);
+            }
         }
 
         private void PopulateDateAndTimeFields(FileInfo fileInfo)

@@ -947,6 +947,18 @@ namespace Timelapse.Database
             return -1;
         }
 
+        // Find the image whose ID is closest to the provided ID  in the current image set
+        // If the ID does not exist, then return the image row whose ID is just greater than the provided one. 
+        // However, if there is no greater ID (i.e., we are at the end) return the last row. 
+        public int FindClosestImage(long ID)
+        {
+            for (int row = 0; row < this.CurrentlySelectedImageCount; row++)
+            {
+                if (this.GetImageID(row) >= ID) return row;
+            }
+            return this.CurrentlySelectedImageCount - 1;
+        }
+
         public DataTable GetControlsSortedByControlOrder()
         {
             DataTable tempdt = this.TemplateTable.Copy();

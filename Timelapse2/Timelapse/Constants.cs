@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace Timelapse
 {
@@ -102,7 +103,8 @@ namespace Timelapse
 
         public static class File
         {
-            public const string BackupFolder = "Backups"; // Sub-folder that will contain file backups and deleted images 
+            public const string BackupFolder = "Backups"; // Sub-folder that will contain database and csv file backups  
+            public const string DeletedImagesFolder = "DeletedImages"; // Sub-folder that will contain backups of deleted images 
             public const string CsvFileExtension = ".csv";
             public const string DefaultImageDatabaseFileName = "TimelapseData.ddb";
             public const string DefaultTemplateDatabaseFileName = "TimelapseTemplate.tdb";
@@ -153,14 +155,35 @@ namespace Timelapse
             public const int GreyScalePixelThreshold = 40;
 
             public static readonly BitmapFrame Corrupt;
+            public static readonly BitmapFrame CorruptThumbnail;  
             public static readonly BitmapFrame Missing;
+            public static readonly BitmapFrame MissingThumbnail;
 
             static Images()
             {
+                // Create a variety of images.
+                // SAULTODO: Thumbnail access had occassionaly introduces a threading violation, but I need to replicate it before I can fix it.
                 Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Corrupt.Freeze();
                 Images.Missing = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Missing.Freeze();
+
+                // Create thumbnails of both the above images
+                BitmapImage bmMissingThumbnail = new BitmapImage();
+                bmMissingThumbnail.BeginInit();
+                bmMissingThumbnail.DecodePixelWidth = 400;
+                bmMissingThumbnail.CacheOption = BitmapCacheOption.OnLoad;
+                bmMissingThumbnail.UriSource = new Uri("pack://application:,,/Resources/missing.jpg");
+                bmMissingThumbnail.EndInit();
+
+                Images.MissingThumbnail = BitmapFrame.Create(bmMissingThumbnail);
+                BitmapImage bmCorruptThumbnail = new BitmapImage();
+                bmCorruptThumbnail.BeginInit();
+                bmCorruptThumbnail.DecodePixelWidth = 400;
+                bmCorruptThumbnail.CacheOption = BitmapCacheOption.OnLoad;
+                bmCorruptThumbnail.UriSource = new Uri("pack://application:,,/Resources/corrupted.jpg");
+                bmCorruptThumbnail.EndInit();
+                Images.CorruptThumbnail = BitmapFrame.Create(bmCorruptThumbnail);
             }
         }
 
