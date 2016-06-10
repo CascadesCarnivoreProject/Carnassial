@@ -2175,7 +2175,7 @@ namespace Timelapse
                 this.MenuItemDeleteImages.IsEnabled = i > 0;
                 this.MenuItemDeleteImagesAndData.IsEnabled = i > 0;
                 this.MenuItemDeleteImageAndData.IsEnabled = true;
-                this.MenuItemDeleteImage.IsEnabled = this.imageCache.Current.IsDisplayable();
+                this.MenuItemDeleteImage.IsEnabled = (this.imageCache.Current.IsDisplayable() || this.imageCache.Current.ImageQuality == ImageQualityFilter.Corrupted);
             }
             catch
             {
@@ -2187,44 +2187,41 @@ namespace Timelapse
                 this.MenuItemDeleteImageAndData.IsEnabled = true;
             }
         }
-
-        private void MenuItemDeleteImage_Click(object sender, RoutedEventArgs e)
-        {
-            ImageProperties imageProperties = new ImageProperties(this.imageDatabase.ImageDataTable.Rows[this.imageCache.CurrentRow]);
-
-            MenuItem sendingMenuItem = sender as MenuItem;
-            bool deleteData = !sendingMenuItem.Name.Equals(this.MenuItemDeleteImage.Name);
-            DialogDeleteImage deleteImageDialog = new DialogDeleteImage(this.imageDatabase, imageProperties, this.FolderPath, deleteData);
-            deleteImageDialog.Owner = this;
-            bool? result = deleteImageDialog.ShowDialog();
-            if (result == true)
-            {
-                int currentRow = this.imageCache.CurrentRow;
-                // Shows the missing image placeholder 
-                // If it is already marked as corrupted, it will show the corrupted image placeholder)
-                if (sendingMenuItem.Name.Equals(this.MenuItemDeleteImageAndData.Name)) // If we deleted the data and image, then show the previous image.
-                {
-                    this.SetImageFilterAndIndex(0, this.state.ImageFilter); // As we have deleted an image and its data, reset the filter to retrieve the remaining images
-                    ShowFirstDisplayableImage(currentRow);
-    }
-                else
-                {
-                    this.ShowImage(this.imageCache.CurrentRow, true); // We only deleted the image, not the data. ShowImage with a forced refresh shows the missing image placeholder
-                }
-            }
-        }
-
         /// <summary>Delete all images marked for deletion, and optionally the data associated with those images.
         /// Deleted images are actually moved to a backup folder.</summary>
         private void MenuItemDeleteImages_Click(object sender, RoutedEventArgs e)
         {
             MenuItem mi = sender as MenuItem;
+            DataTable deletedTable;
+            bool isUseDeleteData;
+            bool isUseDeleteFlag;
 
-            DataTable deletedTable = this.imageDatabase.GetDataTableOfImagesMarkedForDeletion();
+            // This callback is invoked by either variatons of DeleteImage (which deletes the current image) or 
+            // DeleteImages (which deletes the images marked by the deletion flag)
+            // Thus we need to use two different methods to construct a table containing all the images marked for deletion
+            if (mi.Name.Equals(this.MenuItemDeleteImages.Name) || mi.Name.Equals(this.MenuItemDeleteImagesAndData.Name))
+            {
+                // Delete by deletion flags case. 
+                // Construct a table that contains the datarows of all images with their delete flag set, and set various flags
+                deletedTable = this.imageDatabase.GetDataTableOfImagesMarkedForDeletion();
+                isUseDeleteFlag = true;
+                isUseDeleteData = (mi.Name.Equals(this.MenuItemDeleteImages.Name)) ? false : true;
+            }
+            else
+            {
+                // Delete current image case. Get the ID of the current image and construct a datatable that contains that image's datarow
+                ImageProperties imageProperties = new ImageProperties(this.imageDatabase.ImageDataTable.Rows[this.imageCache.CurrentRow]);
+                deletedTable = this.imageDatabase.GetDataTableOfImagesbyID(imageProperties.ID);
+                isUseDeleteFlag = false;
+                isUseDeleteData = (mi.Name.Equals(this.MenuItemDeleteImage.Name)) ? false : true;
+            }
+            long currentID = this.imageCache.Current.ID;
+
+            // If no images are selected for deletion. Warn the user.
+            // Note that this should never happen, as the invoking menu item should be disabled (and thus not selectable)
+            // if there aren't any images to delete. Still,...
             if (null == deletedTable)
             {
-                // It really should never get here, as this menu will be disabled if there aren't any images to delete. 
-                // Still,...
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "No images are marked for deletion";
                 dlgMB.MessageProblem = "You are trying to delete images marked for deletion, but none of the images have their 'Delete?' field checkmarked.";
@@ -2236,32 +2233,39 @@ namespace Timelapse
             }
 
             DialogDeleteImages dlg;
-            if (mi.Name.Equals("MenuItemDeleteImages"))
+            if (mi.Name.Equals(this.MenuItemDeleteImages.Name) || mi.Name.Equals(this.MenuItemDeleteImagesAndData.Name))
             {
-                dlg = new DialogDeleteImages(this.imageDatabase, deletedTable, this.FolderPath, false);   // don't delete data
+                dlg = new DialogDeleteImages(this.imageDatabase, deletedTable, isUseDeleteData, isUseDeleteFlag);   // don't delete data
             }
             else
             {
-                dlg = new DialogDeleteImages(this.imageDatabase, deletedTable, this.FolderPath, true);   // delete data
+                ImageProperties imageProperties = new ImageProperties(this.imageDatabase.ImageDataTable.Rows[this.imageCache.CurrentRow]);
+                dlg = new DialogDeleteImages(this.imageDatabase, deletedTable, isUseDeleteData, isUseDeleteFlag);   // delete data
             }
             dlg.Owner = this;
 
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.imageCache.MovePrevious();
-                this.SetImageFilterAndIndex(this.imageCache.CurrentRow, this.state.ImageFilter);
-                if (mi.Name.Equals("MenuItemDeleteImages"))
+                if (mi.Name.Equals(this.MenuItemDeleteImage.Name) || mi.Name.Equals(this.MenuItemDeleteImages.Name))
                 {
-                    // ShowImage to force a refresh of the current image, required to show the missing image placeholde
-                    this.ShowImage(this.imageCache.CurrentRow, true); 
+                    // We only deleted the image, not the data. We invoke ShowImage with a forced refresh to show missing image placeholder
+                    this.ShowImage(this.imageCache.CurrentRow, true);
                 }
                 else
                 {
-                    int currentRow = this.imageCache.CurrentRow;
-                    this.SetImageFilterAndIndex(0, this.state.ImageFilter); // As we have deleted an image and its data, reset the filter to retrieve the remaining images
-                    ShowFirstDisplayableImage(currentRow);                      // Of course, this won't really work as the current row may not point to the (non deleted) image the user may have been on...
+                    // We deleted images and data, which may also include the current image. 
+                    // Because we may be deleting the current image, we need to find the next displayable and non-deleted image after this one.
+                    this.SetImageFilterAndIndex(0, this.state.ImageFilter); // Reset the filter to retrieve the remaining images
+                    int currentRow = this.imageDatabase.FindClosestImage(currentID);
+                    
+                    this.ShowImage(currentRow, true);
                 }
+                    // We deleted images and data, which may also include the current image. 
+                    //int currentRow = this.imageCache.CurrentRow;
+                    //this.SetImageFilterAndIndex(0, this.state.ImageFilter); // As we have deleted an image and its data, reset the filter to retrieve the remaining images
+                    //ShowFirstDisplayableImage(currentRow);                  // Of course, this won't really work as the current row may not point to the (non deleted) image the user may have been on...
+                //}
             }
         }
 

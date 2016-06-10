@@ -134,6 +134,9 @@
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
     <Compile Include="Images\MetaTagEventArgs.cs" />
+    <Compile Include="StockMessage.xaml.cs">
+      <DependentUpon>StockMessage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Util\CheckForUpdate.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Database\CustomFilter.cs" />
@@ -161,9 +164,6 @@
     </Compile>
     <Compile Include="DialogDeleteImages.xaml.cs">
       <DependentUpon>DialogDeleteImages.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="DialogDeleteImage.xaml.cs">
-      <DependentUpon>DialogDeleteImage.xaml</DependentUpon>
     </Compile>
     <Page Include="DialogAboutTimelapse.xaml">
       <SubType>Designer</SubType>
@@ -266,6 +266,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="OptionsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="StockMessage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -377,10 +381,6 @@
       <SubType>Code</SubType>
       <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
     </Compile>
-    <Page Include="DialogDeleteImage.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
