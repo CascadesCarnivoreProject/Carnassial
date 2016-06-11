@@ -214,7 +214,6 @@ namespace TimelapseTemplateEditor
             while (data_label_list.Contains(temp_datalabel))
             {
                 temp_datalabel = str_datalabel + j.ToString();
-                Debug.Print("Here " + temp_datalabel);
             }
             if (!str_datalabel.Equals (temp_datalabel))
             {

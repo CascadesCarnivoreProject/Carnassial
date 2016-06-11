@@ -10,7 +10,7 @@ namespace Timelapse
     {
         public HelpWindow()
         {
-            InitializeComponent();
+            this.InitializeComponent();
         }
     }
 }

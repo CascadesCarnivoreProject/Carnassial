@@ -69,17 +69,19 @@ namespace TimelapseTemplateEditor
 
             // compare the versions  
              if (curVersion.CompareTo(newVersion) < 0)  
-             {  
+             {
                 // ask the user if he would like to download the new version  
-                string title =    "A new version of TimelapseTemplateEditor available.";
-                string question = "A new version of TimelapseTemplateEditor is available: version: " + newVersion.ToString() + Environment.NewLine;
-                question += "You a running an old version of TimelapseTemplateEditor: version: " + curVersion.ToString() + Environment.NewLine;
-                if (!changes.Equals("")) question += "Changes include: " + changes + Environment.NewLine;
-                question += Environment.NewLine;
-                question += "Select 'Yes' to go to the website and download it." + Environment.NewLine;
-
-                MessageBoxResult result = MessageBox.Show(win, question, title, MessageBoxButton.YesNo, MessageBoxImage.Question); 
-                if (result == MessageBoxResult.Yes)  
+                DialogMessageBox dlgMB = new DialogMessageBox();
+                dlgMB.IconType = MessageBoxImage.Question;
+                dlgMB.MessageTitle =    "A new version of TimelapseTemplateEditor available.";
+                dlgMB.MessageProblem = "A new version of TimelapseTemplateEditor is available: version: " + newVersion.ToString() + Environment.NewLine;
+                dlgMB.MessageProblem += "You a running an old version of TimelapseTemplateEditor: version: " + curVersion.ToString() + Environment.NewLine;
+                if (!changes.Equals("")) dlgMB.MessageProblem += "Changes include: " + changes + Environment.NewLine;
+                dlgMB.MessageProblem += Environment.NewLine;
+                dlgMB.MessageProblem += "Select 'Yes' to go to the website and download it." + Environment.NewLine;
+                dlgMB.ButtonType = MessageBoxButton.YesNo;
+                bool? result = dlgMB.ShowDialog(); 
+                if (result == true)  
                  {  
                         // navigate the default web browser to our app homepage (the url comes from the xml content)  
                         System.Diagnostics.Process.Start(url);  
@@ -87,11 +89,12 @@ namespace TimelapseTemplateEditor
             }
             else if (showNoUpdatesMessage)
             {
-                 // tell the user that there a no updates  
-                string title = "No updates to TimelapseTemplateEditor are available.";
-                string question = "You a running the latest version of TimelapseTemplateEditor: version: " + curVersion.ToString();
-
-                 MessageBox.Show(win, question, title, MessageBoxButton.OK, MessageBoxImage.Question);
+                DialogMessageBox dlgMB = new DialogMessageBox();
+                dlgMB.IconType = MessageBoxImage.Information;
+                // tell the user that there a no updates  
+                dlgMB.MessageTitle = "No updates to TimelapseTemplateEditor are available.";
+                dlgMB.MessageResult = "You a running the latest version of TimelapseTemplateEditor: version: " + curVersion.ToString();
+                dlgMB.ShowDialog();
             }
         }
     }

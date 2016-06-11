@@ -174,7 +174,7 @@
                     </ListItem>
                 </List>
                 <Paragraph>
-                    <Bold> <Italic>Important:</Italic> </Bold> Exporting always over-writes the TemplateData.csv file. Thus you do NOT want to edit the TemplateData.csv if you plan on re-exporting it, as those changes will be lost. Of course, after you are done with this image set, you can use that file as you see fit.
+                    <Bold> <Italic>Important:</Italic> </Bold> Exporting always overwrites the TimelapseData.csv file. Thus you do NOT want to edit the TimelapseData.csv if you plan on re-exporting it, as those changes will be lost. Of course, after you are done with this image set, you can use that file as you see fit.
                 </Paragraph>
 
                     

@@ -45,7 +45,6 @@ namespace TimelapseTemplateEditor
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
-    /// TODO: Allow everything but File name to be copyable (although I think this is a bad idea)
     /// </summary>
     public partial class MainWindow : Window
     {
@@ -124,14 +123,17 @@ namespace TimelapseTemplateEditor
             // A check to make sure that users installed Timelapse properly, i.e., that they did not drag it out of its installation folder.
             if (!File.Exists(System.IO.Path.Combine(executable_folder, "System.Data.SQLite.dll")))
             {
-                string title = "Timelapse needs to be in its original downloaded folder";
-                string problem = "The Timelapse Programs won't run properly as it was not correctly installed.";
-                string reason = "When you downloaded Timelapse, it was in a folder with several other files and folders it needs. You probably dragged Timelapse out of that folder.";
-                string solution = "Put the Timelapse programs back in its original folder, or download it again.";
-                string hint = "If you want to access these programs from elsewhere, create a shortcut to it." + Environment.NewLine;
-                hint += "1. From its original folder, right-click the Timelapse program icon  and select 'Create Shortcut' from the menu." + Environment.NewLine;
-                hint += "2. Drag the shortcut icon to the location of your choice.";
-                DlgMessageBox dlgMB = new DlgMessageBox(title, problem, reason, solution, "", hint);
+                DialogMessageBox dlgMB = new DialogMessageBox();
+                dlgMB.IconType = MessageBoxImage.Error;
+                dlgMB.MessageTitle = "Timelapse needs to be in its original downloaded folder";
+                dlgMB.MessageProblem = "The Timelapse Programs won't run properly as it was not correctly installed.";
+                dlgMB.MessageReason = "When you downloaded Timelapse, it was in a folder with several other files and folders it needs. You probably dragged Timelapse out of that folder.";
+                dlgMB.MessageSolution = "Put the Timelapse programs back in its original folder, or download it again.";
+                dlgMB.MessageResult = "Timelapse will shut down. Try again after you do the above solution.";
+                dlgMB.MessageHint = "If you want to access these programs from elsewhere, create a shortcut to it." + Environment.NewLine;
+                dlgMB.MessageHint += "1. From its original folder, right-click the Timelapse program icon  and select 'Create Shortcut' from the menu." + Environment.NewLine;
+                dlgMB.MessageHint += "2. Drag the shortcut icon to the location of your choice.";
+
                 dlgMB.ShowDialog();
                 Application.Current.Shutdown();
             }
@@ -465,7 +467,7 @@ namespace TimelapseTemplateEditor
             if (selectedRowView == null)
             {
                 RemoveRowButton.IsEnabled = false;
-                RemoveRowButton.Content = REMOVEBUTTON_REMOVEITEM;
+                RemoveRowButton.Content = REMOVEBUTTON_REMOVE;//ITEM;
             }
             else if (( selectedRowView.Row[Constants.TYPE].Equals(Constants.FILE)
                 || selectedRowView.Row[Constants.TYPE].Equals(Constants.FOLDER)
@@ -733,7 +735,6 @@ namespace TimelapseTemplateEditor
         private DataRow findRow (int column_number, string searchValue)
         {
             int rowIndex = -1;
-            Debug.Print("Search Value: " + searchValue);
             foreach (DataRow row in templateTable.Rows)
             {
                 rowIndex++;
@@ -770,11 +771,12 @@ namespace TimelapseTemplateEditor
                 int keyValue = (int)e.Key;
                 if (e.Key == Key.Space)
                 {
-                    string title = "Data Labels can only contain letters, numbers and '_'";
-                    string problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
-                    string solution = "Other characters, including spaces, will be ignored";
-                    string hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                    DlgMessageBox dlgMB = new DlgMessageBox(title, problem, "", solution, "", hint);
+                    DialogMessageBox dlgMB = new DialogMessageBox();
+                    dlgMB.IconType = MessageBoxImage.Warning;
+                    dlgMB.MessageTitle = "Data Labels can only contain letters, numbers and '_'";
+                    dlgMB.MessageProblem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
+                    dlgMB.MessageResult = "We will automatically ignore any other characters, including spaces";
+                    dlgMB.MessageHint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
                     dlgMB.ShowDialog();
                     e.Handled = true;
                 }
@@ -807,11 +809,12 @@ namespace TimelapseTemplateEditor
                         {
                             if ((!AreAllValidAlphaNumericChars(e.Text)) && !e.Text.Equals ("_") )
                             {
-                                string title = "Data Labels can only contain letters, numbers and '_'";
-                                string problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
-                                string solution = "Other characters, including spaces, will be ignored";
-                                string hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                                DlgMessageBox dlgMB = new DlgMessageBox(title, problem, "", solution, "", hint);
+                                DialogMessageBox dlgMB = new DialogMessageBox();
+                                dlgMB.IconType = MessageBoxImage.Warning;
+                                dlgMB.MessageTitle = "Data Labels can only contain letters, numbers and '_'";
+                                dlgMB.MessageProblem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
+                                dlgMB.MessageResult = "We will automatically ignore other characters, including spaces";
+                                dlgMB.MessageHint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
                                 dlgMB.ShowDialog();
                                 e.Handled = true;
                             }
@@ -947,12 +950,12 @@ namespace TimelapseTemplateEditor
                     suffix++;
                     candidate_datalabel = "DataLabel" + suffix.ToString();
                 }
-
-                string title = "Data Labels cannot be empty";
-                string problem = "Data Labels cannot be empty. They must begin with a letter, followed only by letters, numbers, and '_'.";
-                string solution = "We will create a uniquely named Data Label for you.";
-                string hint = "You can create your own name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                DlgMessageBox dlgMB = new DlgMessageBox(title, problem, "", solution, "", hint);
+                DialogMessageBox dlgMB = new DialogMessageBox();
+                dlgMB.IconType = MessageBoxImage.Warning;
+                dlgMB.MessageTitle = "Data Labels cannot be empty";
+                dlgMB.MessageProblem = "Data Labels cannot be empty. They must begin with a letter, followed only by letters, numbers, and '_'.";
+                dlgMB.MessageResult = "We will automatically create a uniquely named Data Label for you.";
+                dlgMB.MessageHint = "You can create your own name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
                 dlgMB.ShowDialog();
                 t.Text = candidate_datalabel;
             }
@@ -972,11 +975,12 @@ namespace TimelapseTemplateEditor
                         suffix++;
                         candidate_datalabel = datalabel + suffix.ToString ();
                     }
-                    string title = "Data Labels must be unique";
-                    string problem = "'" + t.Text + "' is not a valid Data Label, as you have already used it in another row.";
-                    string solution = "We will create a unique Data Label for you by adding a number to its end.";
-                    string hint = "You can create your own unique name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                    DlgMessageBox dlgMB = new DlgMessageBox(title, problem, "", solution, "", hint);
+                    DialogMessageBox dlgMB = new DialogMessageBox();
+                    dlgMB.IconType = MessageBoxImage.Warning;
+                    dlgMB.MessageTitle = "Data Labels must be unique";
+                    dlgMB.MessageProblem = "'" + t.Text + "' is not a valid Data Label, as you have already used it in another row.";
+                    dlgMB.MessageResult = "We will automatically create a unique Data Label for you by adding a number to its end.";
+                    dlgMB.MessageHint = "You can create your own unique name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
                     dlgMB.ShowDialog();
 
                     t.Text = candidate_datalabel;
@@ -1001,11 +1005,12 @@ namespace TimelapseTemplateEditor
                         candidate_datalabel = "X" + candidate_datalabel.Substring(1);
                     candidate_datalabel = Regex.Replace(candidate_datalabel, @"[^A-Za-z0-9_]+", "X");
 
-                    string title = "'" + t.Text + "' is not a valid Data Label.";
-                    string problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
-                    string solution = "We replaced all dissallowed characters with an 'X'.";
-                    string hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                    DlgMessageBox dlgMB = new DlgMessageBox(title, problem, "", solution, "", hint);
+                    DialogMessageBox dlgMB = new DialogMessageBox();
+                    dlgMB.IconType = MessageBoxImage.Warning;
+                    dlgMB.MessageTitle = "'" + t.Text + "' is not a valid Data Label.";
+                    dlgMB.MessageProblem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
+                    dlgMB.MessageResult = "We will replace all dissallowed characters with an 'X'.";
+                    dlgMB.MessageHint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
                     dlgMB.ShowDialog();
 
                     t.Text = candidate_datalabel;
@@ -1018,12 +1023,14 @@ namespace TimelapseTemplateEditor
             {
                 if (s.Equals(datalabel))
                 {
-                    string title = "'" + t.Text + "' is not a valid Data Label.";
-                    string problem = "Data labels cannot match the reserved words.";
-                    string solution = "We will add an '_' suffix to this Data Label to make it differ from the reserved word";
-                    string hint = "Avoid the resereved words listed below. Start your label with a letter. Then use any combination of letters, numbers, and '_'." + Environment.NewLine;
-                    foreach (string m in this.RESERVED_KEYWORDS) hint += m + " ";
-                    DlgMessageBox dlgMB = new DlgMessageBox(title, problem, "", solution, "", hint);
+                    DialogMessageBox dlgMB = new DialogMessageBox();
+                    dlgMB.IconType = MessageBoxImage.Warning;
+                    dlgMB.MessageTitle = "'" + t.Text + "' is not a valid Data Label.";
+                    dlgMB.MessageProblem = "Data labels cannot match the reserved words.";
+                    dlgMB.MessageResult = "We will add an '_' suffix to this Data Label to make it differ from the reserved word";
+                    dlgMB.MessageHint = "Avoid the resereved words listed below. Start your label with a letter. Then use any combination of letters, numbers, and '_'." + Environment.NewLine;
+                    foreach (string m in this.RESERVED_KEYWORDS) dlgMB.MessageHint += m + " ";
+
                     dlgMB.ShowDialog();
 
                     t.Text += "_";
@@ -1031,7 +1038,6 @@ namespace TimelapseTemplateEditor
                 }
             }
         }
-
 
         //constants for below method. Could not find another way to reference the DataGrid items by name
         //If the DataGrid columns change, this needs to be adjusted to index correctly.
@@ -1304,19 +1310,21 @@ namespace TimelapseTemplateEditor
             Mouse.OverrideCursor = null;
             if (error_messages.Count > 0)
             {
-                string title = "One or more Data Labels were problematic";
-                string problem = error_messages.Count.ToString() + " of your Data Labels were problematic." + Environment.NewLine + Environment.NewLine +
+                DialogMessageBox dlgMB = new DialogMessageBox();
+                dlgMB.IconType = MessageBoxImage.Warning;
+                dlgMB.MessageTitle = "One or more Data Labels were problematic";
+                dlgMB.MessageProblem = error_messages.Count.ToString() + " of your Data Labels were problematic." + Environment.NewLine + Environment.NewLine +
                               "Data Labels:" + Environment.NewLine +
                               "\u2022 must be unique," + Environment.NewLine +
                               "\u2022 can only contain alphanumeric characters and '_'," + Environment.NewLine +
                               "\u2022 cannot match particular reserved words.";
-                string solution = "These Data Labels were automatically repaired:";
+                dlgMB.MessageResult = "We will automatically repair these Data Labels:";
                 foreach (string s in error_messages)
                 {
-                    solution += Environment.NewLine + "\u2022 " + s;
+                    dlgMB.MessageSolution += Environment.NewLine + "\u2022 " + s;
                 }
-                string hint = "You can also rename these corrected Data Labels if you want";
-                DlgMessageBox dlgMB = new DlgMessageBox(title, problem, "", solution, "", hint);
+                dlgMB.MessageHint = "Check if these are the names you want. You can also rename these corrected Data Labels if you want";
+               
                 dlgMB.ShowDialog();
             }
         }

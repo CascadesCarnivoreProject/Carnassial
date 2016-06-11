@@ -126,96 +126,96 @@
             <SolidColorBrush x:Key="GlyphBrush" Color="#444" />
             <SolidColorBrush x:Key="LightColorBrush" Color="#DDD" />
 
-        <ToolTip x:Key="DefaultValueToolTip">
-            <TextBlock>An optional default data value that will be displayed to the analyst</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="LabelToolTip">
-            <TextBlock>The text describing this field as shown in the user interface</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="DataLabelToolTip">
-            <TextBlock>The text describing this field as written in the output file. Will be the same as the Label if its left empty.</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="TooltipToolTip">
-            <TextBlock>The help text describing this field as shown in the user interface</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="WidthToolTip">
-            <TextBlock>The width of the data entry field as shown in the user interface</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="CopyableToolTip">
-            <TextBlock>Whether the data value from the former image will be copied to the current image if the user selects the ‘Copy’ button in Timelapse</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="VisibleToolTip">
-            <TextBlock>Whether this item will be displayed in the user interface</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="TypeNoteToolTip">
-            <TextBlock>The Note item accepts free-form text</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="TypeCounterToolTip">
-            <TextBlock>The Count item provides a point and click interface for counting entities in an image</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="TypeFixedChoiceToolTip">
-            <TextBlock>The Choice item provides a drop down menu of possible choices that can be entered. Edit the list to create these choices</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="TypeFlagToolTip">
-            <TextBlock>The Flag item can be toggled between true and false</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="TypeFileToolTip">
-            <TextBlock>The File Item is filled in automatically by the system with the file name of the image</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="TypeFolderToolTip">
-            <TextBlock>The Folder Item is filled in automatically by the system</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="TypeDateToolTip">
-            <TextBlock>The Date item is filled in automatically by the system but will still be editable if changes are required</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="TypeTimeToolTip">
-            <TextBlock>The Time item is filled in automatically by the system but will still be editable if changes are required</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="TypeImageQualityToolTip">
-            <TextBlock>The Image Quality item is filled in automatically by the system</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="TypeDeletionFlagToolTip">
-            <TextBlock>The Deleted flag is a standard control used to mark images for deletion</TextBlock>
-        </ToolTip>
-        <ToolTip x:Key="ListFixedChoiceToolTip">
-            <TextBlock>A list of items displayed as a menu of choices. Type in new items; right click on an item to edit, move or delete it.</TextBlock>
-        </ToolTip>
-        <local:ListBoxDBOutputConverter x:Key="listConverter" />
-        <local:CellTextBlockConverter x:Key="cellTBConverter" />
-       
+            <ToolTip x:Key="DefaultValueToolTip">
+                <TextBlock>An optional default data value that will be displayed to the analyst</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="LabelToolTip">
+                <TextBlock>The text describing this field as shown in the user interface</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="DataLabelToolTip">
+                <TextBlock>The text describing this field as written in the output file. Will be the same as the Label if its left empty.</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="TooltipToolTip">
+                <TextBlock>The help text describing this field as shown in the user interface</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="WidthToolTip">
+                <TextBlock>The width of the data entry field as shown in the user interface</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="CopyableToolTip">
+                <TextBlock>Whether the data value from the former image will be copied to the current image if the user selects the ‘Copy’ button in Timelapse</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="VisibleToolTip">
+                <TextBlock>Whether this item will be displayed in the user interface</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="TypeNoteToolTip">
+                <TextBlock>The Note item accepts free-form text</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="TypeCounterToolTip">
+                <TextBlock>The Count item provides a point and click interface for counting entities in an image</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="TypeFixedChoiceToolTip">
+                <TextBlock>The Choice item provides a drop down menu of possible choices that can be entered. Edit the list to create these choices</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="TypeFlagToolTip">
+                <TextBlock>The Flag item can be toggled between true and false</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="TypeFileToolTip">
+                <TextBlock>The File Item is filled in automatically by the system with the file name of the image</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="TypeFolderToolTip">
+                <TextBlock>The Folder Item is filled in automatically by the system</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="TypeDateToolTip">
+                <TextBlock>The Date item is filled in automatically by the system but will still be editable if changes are required</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="TypeTimeToolTip">
+                <TextBlock>The Time item is filled in automatically by the system but will still be editable if changes are required</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="TypeImageQualityToolTip">
+                <TextBlock>The Image Quality item is filled in automatically by the system</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="TypeDeletionFlagToolTip">
+                <TextBlock>The Deleted flag is a standard control used to mark images for deletion</TextBlock>
+            </ToolTip>
+            <ToolTip x:Key="ListFixedChoiceToolTip">
+                <TextBlock>A list of items displayed as a menu of choices. Type in new items; right click on an item to edit, move or delete it.</TextBlock>
+            </ToolTip>
+            <local:ListBoxDBOutputConverter x:Key="listConverter" />
+            <local:CellTextBlockConverter x:Key="cellTBConverter" />
 
-        <Style  x:Key="RadioButtonCodeBar" TargetType="RadioButton" BasedOn="{ StaticResource {x:Type ToggleButton}}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ToggleButton}">
-                        <Border HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="border" Padding="5,5,5,5" CornerRadius="5,5,5,5" Background="Beige" BorderBrush="LightBlue" BorderThickness="1,1,1,4" SnapsToDevicePixels="True">
-                            <ContentPresenter x:Name="contentPresenter"/>
-                        </Border>
 
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="true">
-                                <Setter Property="Background" TargetName="border" Value="LightBlue"/>
-                                <Setter Property="BorderBrush" TargetName="border" Value="Gray"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Margin" Value="0,0,2,0" />
-        </Style>
+            <Style  x:Key="RadioButtonCodeBar" TargetType="RadioButton" BasedOn="{ StaticResource {x:Type ToggleButton}}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ToggleButton}">
+                            <Border HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="border" Padding="5,5,5,5" CornerRadius="5,5,5,5" Background="Beige" BorderBrush="LightBlue" BorderThickness="1,1,1,4" SnapsToDevicePixels="True">
+                                <ContentPresenter x:Name="contentPresenter"/>
+                            </Border>
 
-        <Style  x:Key="LabelCodeBar" TargetType="Label">
-            <Setter Property="HorizontalAlignment" Value="Right"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="5,5,5,5"/>
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Height" Value="30" />
-        </Style>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="true">
+                                    <Setter Property="Background" TargetName="border" Value="LightBlue"/>
+                                    <Setter Property="BorderBrush" TargetName="border" Value="Gray"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="Margin" Value="0,0,2,0" />
+            </Style>
 
-        <Style  x:Key="FlagCodeBar" TargetType="{x:Type CheckBox}">
+            <Style  x:Key="LabelCodeBar" TargetType="Label">
+                <Setter Property="HorizontalAlignment" Value="Right"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Padding" Value="5,5,5,5"/>
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="Height" Value="30" />
+            </Style>
+
+            <Style  x:Key="FlagCodeBar" TargetType="{x:Type CheckBox}">
                 <Setter Property="SnapsToDevicePixels" Value="true"/>
-                    <Setter Property="OverridesDefaultStyle" Value="true"/>
+                <Setter Property="OverridesDefaultStyle" Value="true"/>
                 <Setter Property="FocusVisualStyle" Value="{DynamicResource CheckBoxFocusVisualStyle}" />
                 <Setter Property="Template">
                     <Setter.Value>
@@ -267,40 +267,40 @@
 
                     </Setter.Value>
                 </Setter>
-            <Setter Property="HorizontalAlignment" Value="Right"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="5,5,5,5"/>
-            <Setter Property="Margin" Value="0,10,0,0"/>
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Height" Value="30" />
-        </Style>
+                <Setter Property="HorizontalAlignment" Value="Right"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Padding" Value="5,5,5,5"/>
+                <Setter Property="Margin" Value="0,10,0,0"/>
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="Height" Value="30" />
+            </Style>
 
-        <Style  x:Key="TextBoxCodeBar" TargetType="TextBox" >
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="0,4,5,5"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="LightBlue"/>
-            <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Height" Value="30" />
-            <Setter Property="Focusable" Value="True" />
-            <Setter Property="IsReadOnly" Value="False" />
-        </Style>
+            <Style  x:Key="TextBoxCodeBar" TargetType="TextBox" >
+                <Setter Property="HorizontalAlignment" Value="Left"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Padding" Value="0,4,5,5"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="LightBlue"/>
+                <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Height" Value="30" />
+                <Setter Property="Focusable" Value="True" />
+                <Setter Property="IsReadOnly" Value="False" />
+            </Style>
 
-        <Style  x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="5,4,5,5"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="LightBlue"/>
-            <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Height" Value="25" />
-            <Setter Property="Focusable" Value="True" />
-            <Setter Property="IsReadOnly" Value="False" />
-            <Setter Property="IsEditable" Value="False" />
-        </Style>
+            <Style  x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
+                <Setter Property="HorizontalAlignment" Value="Left"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Padding" Value="5,4,5,5"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="LightBlue"/>
+                <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Height" Value="25" />
+                <Setter Property="Focusable" Value="True" />
+                <Setter Property="IsReadOnly" Value="False" />
+                <Setter Property="IsEditable" Value="False" />
+            </Style>
 
             <Style  x:Key="StackPanelCodeBar" TargetType="StackPanel">
                 <Setter Property="Orientation" Value="Horizontal"/>
@@ -354,7 +354,7 @@
                     </MenuItem>
                 </MenuItem>
             </Menu>
-            <TextBlock Name="HelpText" Visibility="Collapsed" Grid.Row="0" FontSize="16" Text="Use the File Menu to create or open a template, and to convert an old CodeTemplate.xml file to the new format." Margin =" 10" DockPanel.Dock="Top"/> 
+            <TextBlock Name="HelpText" Visibility="Collapsed" Grid.Row="0" FontSize="16" Text="Use the File Menu to create or open a template, and to convert an old CodeTemplate.xml file to the new format." Margin =" 10" DockPanel.Dock="Top"/>
 
             <FlowDocumentScrollViewer Name="HelpDocument">
                 <FlowDocument  FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
@@ -366,7 +366,7 @@
                         <LineBreak/>
                         <LineBreak/>
                         <Run Text="The template specifies the custom data required by you and your organization. You define your data needs through this template editor, which saves it as a file usually named "/>
- 
+
                         <Bold>
                             <Run Text="TimelapseTemplate.db"/>
                         </Bold>
@@ -474,21 +474,20 @@
                 </FlowDocument>
             </FlowDocumentScrollViewer>
 
-
             <Grid DockPanel.Dock="Top" Margin="10,5,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Name="DisplayGrid" />
                     <ColumnDefinition Name="EditButton" Width="100"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                    <RowDefinition Name="EditScheme" Height="2*" MinHeight="225"/>
-                    <RowDefinition Name="MenuPreview" Height="1*"  MinHeight="190"/>
+                    <RowDefinition Name="EditScheme" Height="1.5*" MinHeight="225"/>
+                    <RowDefinition Name="MenuPreview" Height="1*"  MinHeight="250"/>
                 </Grid.RowDefinitions>
 
                 <!-- If you change the visible rows or header names, please check UpdateCellColors() constants to ensure they match new conventions -->
                 <TextBlock Name="TextMessage1" Visibility=" Collapsed" Grid.Row="0" Text="Create a new template, read in an existing template, or convert and old XML template. Grey Boxes aren't editable"/>
 
-                <DataGrid Name="TemplateDataGrid"  Visibility="Collapsed" PreviewKeyDown="TemplateDataGrid_PreviewKeyDown" PreviewTextInput="TemplateDataGrid_PreviewTextInput" Grid.Row="0" 
+                <DataGrid MinHeight="250" VerticalAlignment="Top"  Name="TemplateDataGrid"  Visibility="Collapsed" PreviewKeyDown="TemplateDataGrid_PreviewKeyDown" PreviewTextInput="TemplateDataGrid_PreviewTextInput" Grid.Row="0" 
                           BeginningEdit="NewTemplateDataGrid_BeginningEdit" RowHeight="25" LayoutUpdated="TemplateDataGrid_LayoutUpdated" 
                           SelectionChanged="TemplateDataGrid_SelectionChanged" SelectionMode="Single" CanUserReorderColumns="False" 
                           CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" CurrentCellChanged="TemplateDataGrid_CurrentCellChanged" 
@@ -542,7 +541,7 @@
                                             <Setter Property="ToolTip" Value="{StaticResource TypeImageQualityToolTip}"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
-                                            <Setter Property="ToolTip" Value="{StaticResource TypeDeletionFlagToolTip}"/> 
+                                            <Setter Property="ToolTip" Value="{StaticResource TypeDeletionFlagToolTip}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -681,24 +680,30 @@
                  VerticalAlignment="Top" 
                  HorizontalAlignment="Stretch" />
 
-                <DockPanel Name="OtherGrids" Visibility="Collapsed" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,7,0,0">
-                    <TextBlock DockPanel.Dock="Top" Margin="0,10,10,0" FontWeight="Bold" Text="What the interface will (roughly) look like. Drag and drop these controls (by their labels) to re-arrange their order to your preference"></TextBlock>
-                    <Border BorderBrush="Gray" Background="White" BorderThickness="1" DockPanel.Dock="Top" Margin="0,0,10,10" >
-                        <ScrollViewer MinHeight="100">
+                <Grid Name="OtherGrids" Visibility="Collapsed" Grid.Row="1" Grid.ColumnSpan="2" MinHeight="200" Margin="0,7,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition  Height="1*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height=".5*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Margin="0,10,10,0" FontWeight="Bold" Text="What the interface will (roughly) look like. Drag and drop these controls (by their labels) to re-arrange their order to your preference"></TextBlock>
+                    <Border Grid.Row="1" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
+                        <ScrollViewer VerticalAlignment="Top">
                             <WrapPanel x:Name="wp" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="sp_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="sp_PreviewMouseLeftButtonUp" PreviewMouseMove="sp_PreviewMouseMove"
                                     DragEnter="sp_DragEnter" Drop="sp_Drop" />
                         </ScrollViewer>
                     </Border>
-                    <TextBlock DockPanel.Dock="Top" Margin="0,5,10,0" FontWeight="Bold" Text="The spreadsheet column order.  Drag and drop columns to re-arrange their order to your preference"></TextBlock>
-                    <Border BorderBrush="Gray" Background="White" BorderThickness="1" DockPanel.Dock="Top" Margin="0,0,10,10" >
-                        <ScrollViewer MinHeight="100">
-                            <DataGrid x:Name="dgSpreadsheet" Margin="0,10,0,0"  Height="Auto" ColumnReordered="ColumnReordered" />
+                    <TextBlock Grid.Row="2" Margin="0,5,10,0" FontWeight="Bold" Text="The spreadsheet column order.  Drag and drop columns to re-arrange their order to your preference"></TextBlock>
+                    <Border Grid.Row="3" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
+                        <ScrollViewer MinHeight="50" Height="50" HorizontalScrollBarVisibility="Visible" VerticalAlignment="Top">
+                            <DataGrid x:Name="dgSpreadsheet" Margin="0,10,0,0"  MinHeight="25" Height="25" ColumnReordered="ColumnReordered" VerticalAlignment="Top"/>
                         </ScrollViewer>
                     </Border>
-                </DockPanel>
+                </Grid>
             </Grid>
         </DockPanel>
-        
+
     </Grid>
 
 </Window>
