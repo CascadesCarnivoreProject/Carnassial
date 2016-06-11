@@ -56,7 +56,26 @@ namespace Timelapse
         public TimelapseWindow()
         {
             this.InitializeComponent();
-            // CheckForUpdate.GetAndParseVersion (this, false);
+
+            // Abort if some of the required dependencies are missing
+            if (CheckDependencies.AreDependenciesMissing(this.GetType().Assembly.Location))
+            {
+                // Note that we can't use the DialogMessage to show this message as that class requires the Timelapse window to be displayed.
+                string MessageTitle = "Timelapse needs to be in its original downloaded folder.";
+                string Message = "Problem: " + Environment.NewLine;
+                Message += "Timelapse won't run properly as it was not correctly installed." + Environment.NewLine + Environment.NewLine;
+                Message += "Reason:  " + Environment.NewLine;
+                Message += "When you downloaded Timelapse, it was in a folder with several other files and folders it needs. You probably dragged Timelapse out of that folder." + Environment.NewLine + Environment.NewLine;
+                Message += "Solution:  " + Environment.NewLine;
+                Message += "Move the Timelapse program back to its original folder, or download it again." + Environment.NewLine + Environment.NewLine; 
+                Message += "Hint:  " + Environment.NewLine;
+                Message += "Create a shortcut if you want to access Timelapse outside its folder:" + Environment.NewLine;
+                Message += "1. From its original folder, right-click the Timelapse program icon." + Environment.NewLine;
+                Message += "2. Select 'Create Shortcut' from the menu." + Environment.NewLine;
+                Message += "3. Drag the shortcut icon to the location of your choice.";
+                MessageBox.Show(Message,MessageTitle, MessageBoxButton.OK, MessageBoxImage.Error) ;
+                Application.Current.Shutdown();
+            };
 
             this.ResetDifferenceThreshold();
             this.markableCanvas = new MarkableImageCanvas();
@@ -112,26 +131,8 @@ namespace Timelapse
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            string directoryContainingTimelapse = Path.GetDirectoryName(this.GetType().Assembly.Location);
-            if (!File.Exists(Path.Combine(directoryContainingTimelapse, "System.Data.SQLite.dll")))
-            {
-                DialogMessageBox dlgMB = new DialogMessageBox();
-                dlgMB.MessageTitle = "Timelapse needs to be in its original downloaded folder.";
-                dlgMB.MessageProblem = "The Timelapse Programs won't run properly as it was not correctly installed.";
-                dlgMB.MessageProblem += "When you downloaded Timelapse, it was in a folder with several other files and folders it needs. You probably dragged Timelapse out of that folder." + Environment.NewLine; ;
-                dlgMB.MessageSolution = "Put the Timelapse programs back in its original folder, or download it again.";
-                dlgMB.MessageHint = "If you want to access these programs from elsewhere, create a shortcut to it." + Environment.NewLine;
-                dlgMB.MessageHint += "1. From its original folder, right-click the Timelapse program icon  and select 'Create Shortcut' from the menu." + Environment.NewLine;
-                dlgMB.MessageHint += "2. Drag the shortcut icon to the location of your choice.";
-                dlgMB.IconType = MessageBoxImage.Error;
-                dlgMB.ShowDialog();
-                Application.Current.Shutdown();
-            }
-            else
-            {
-                CheckForUpdate.GetAndParseVersion(this, false);
-            }
-            // FOR MY DEBUGGING ONLY: THIS STARTS THE SYSTEM WITH THE LOAD MENU ITEM SELECTED loadImagesFromSources();  //OPENS THE MENU AUTOMATICALLY
+            CheckForUpdate.GetAndParseVersion(this, false);
+            // FOR MY DEBUGGING ONLY: Uncomment this to Start THE SYSTEM WITH THE LOAD MENU ITEM SELECTED loadImagesFromSources();  //OPENS THE MENU AUTOMATICALLY
         }
 
         // On exiting, save various attributes so we can use recover them later

@@ -137,6 +137,7 @@
     <Compile Include="StockMessage.xaml.cs">
       <DependentUpon>StockMessage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Util\CheckDependencies.cs" />
     <Compile Include="Util\CheckForUpdate.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Database\CustomFilter.cs" />
