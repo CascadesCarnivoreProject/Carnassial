@@ -14,7 +14,7 @@ namespace Timelapse.UnitTests
         {
             string currentDirectoryName = Path.GetFileName(Environment.CurrentDirectory);
 
-            ImageDatabase database = this.CreateImageDatabase(TestConstants.File.CarnivoreImageDatabaseFileName, TestConstants.File.CarnivoreTemplateDatabaseFileName);
+            ImageDatabase database = this.CreateImageDatabase(TestConstants.File.CarnivoreTemplateDatabaseFileName, TestConstants.File.CarnivoreImageDatabaseFileName);
             this.PopulateCarnivoreDatabase(database);
 
             ImageProperties martenImage = database.GetImage(0);
@@ -71,7 +71,7 @@ namespace Timelapse.UnitTests
         public void RoundtripCsv()
         {
             // create database, push test images into the database, and load the image data table
-            ImageDatabase database = this.CreateImageDatabase(TestConstants.File.CarnivoreImageDatabaseFileName, TestConstants.File.CarnivoreTemplateDatabaseFileName);
+            ImageDatabase database = this.CreateImageDatabase(TestConstants.File.CarnivoreTemplateDatabaseFileName, TestConstants.File.CarnivoreImageDatabaseFileName);
             this.PopulateCarnivoreDatabase(database);
 
             // roundtrip data through .csv

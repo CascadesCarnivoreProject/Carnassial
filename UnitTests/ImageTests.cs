@@ -14,7 +14,7 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void Cache()
         {
-            ImageDatabase database = this.CreateImageDatabase(TestConstants.File.CarnivoreImageDatabaseFileName, TestConstants.File.CarnivoreTemplateDatabaseFileName);
+            ImageDatabase database = this.CreateImageDatabase(TestConstants.File.CarnivoreTemplateDatabaseFileName, TestConstants.File.CarnivoreImageDatabaseFileName);
             this.PopulateCarnivoreDatabase(database);
 
             ImageCache cache = new ImageCache(database);
