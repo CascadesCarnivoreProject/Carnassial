@@ -124,6 +124,7 @@ namespace Timelapse
 
             // default values
             public const string ImageSetDefaultLog = "Add text here";
+            public const long InvalidID = -1;
             public const int RowsPerInsert = 100;
 
             // Special characters

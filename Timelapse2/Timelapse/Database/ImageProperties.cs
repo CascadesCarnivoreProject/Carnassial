@@ -23,6 +23,7 @@ namespace Timelapse.Database
         public ImageProperties(string imageFolderPath, FileInfo imageFile)
         {
             this.FileName = imageFile.Name;
+            this.ID = Constants.Database.InvalidID;
             this.ImageQuality = ImageQualityFilter.Ok;
             this.InitialRootFolderName = Path.GetFileName(imageFolderPath);
             // GetRelativePath() includes the image's file name; remove that from the relative path as it's stored separately

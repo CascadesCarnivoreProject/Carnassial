@@ -28,6 +28,7 @@ namespace Timelapse.UnitTests
             this.MarkForDeletion = other.MarkForDeletion;
             this.Quality = other.Quality;
             this.RelativePath = other.RelativePath;
+            this.SkipDateTimeVerification = other.SkipDateTimeVerification;
             this.Time = other.Time;
 
             foreach (KeyValuePair<string, string> columnExpectation in other.UserDefinedColumnsByDataLabel)
@@ -53,6 +54,8 @@ namespace Timelapse.UnitTests
         public ImageQualityFilter Quality { get; set; }
 
         public string RelativePath { get; set; }
+
+        public bool SkipDateTimeVerification { get; set; }
 
         public string Time { get; set; }
 
@@ -85,7 +88,6 @@ namespace Timelapse.UnitTests
         public void Verify(DataRow image)
         {
             // this.DarkPixelFraction isn't applicable
-            Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.Date) == this.Date, "{0}: Expected Date '{1}' but found '{2}'.", this.FileName, this.Date, image[Constants.DatabaseColumn.Date]);
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.File) == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, image[Constants.DatabaseColumn.File]);
             Assert.IsTrue((long)image[Constants.DatabaseColumn.ID] == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, image[Constants.DatabaseColumn.ID]);
             // this.IsColor isn't applicable
@@ -93,8 +95,14 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.Folder) == this.InitialRootFolderName, "{0}: Expected InitialRootFolderName '{1}' but found '{2}'.", this.FileName, this.InitialRootFolderName, image.GetStringField(Constants.DatabaseColumn.Folder));
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.ImageQuality) == this.Quality.ToString(), "{0}: Expected ImageQuality '{1}' but found '{2}'.", this.FileName, this.Quality, image.GetStringField(Constants.DatabaseColumn.ImageQuality));
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.RelativePath) == this.RelativePath, "{0}: Expected RelativePath '{1}' but found '{2}'.", this.FileName, this.RelativePath, image.GetStringField(Constants.DatabaseColumn.RelativePath));
-            Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.Time) == this.Time, "{0}: Expected Time '{1}' but found '{2}'.", this.FileName, this.Time, image.GetStringField(Constants.DatabaseColumn.Time));
             // this.UserDefinedColumnsByDataLabel isn't current applicable
+
+            // bypass checking of Date and Time properties if requested, for example if the camera didn't generate image taken metadata
+            if (this.SkipDateTimeVerification == false)
+            {
+                Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.Date) == this.Date, "{0}: Expected Date '{1}' but found '{2}'.", this.FileName, this.Date, image[Constants.DatabaseColumn.Date]);
+                Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.Time) == this.Time, "{0}: Expected Time '{1}' but found '{2}'.", this.FileName, this.Time, image.GetStringField(Constants.DatabaseColumn.Time));
+            }
 
             foreach (KeyValuePair<string, string> userFieldExpectation in this.UserDefinedColumnsByDataLabel)
             {
@@ -102,7 +110,7 @@ namespace Timelapse.UnitTests
             }
         }
 
-        public void Verify(ImageProperties imageProperties, bool checkDateTime)
+        public void Verify(ImageProperties imageProperties)
         {
             // this.DarkPixelFraction isn't applicable
             Assert.IsTrue(imageProperties.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, imageProperties.FileName);
@@ -113,8 +121,8 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(imageProperties.RelativePath == this.RelativePath, "{0}: Expected RelativePath '{1}' but found '{2}'.", this.FileName, this.RelativePath, imageProperties.RelativePath);
             // this.UserDefinedColumnsByDataLabel isn't current applicable
 
-            // optionally check Date and Time properties
-            if (checkDateTime)
+            // bypass checking of Date and Time properties if requested, for example if the camera didn't generate image taken metadata
+            if (this.SkipDateTimeVerification == false)
             {
                 Assert.IsTrue(imageProperties.Date == this.Date, "{0}: Expected Date '{1}' but found '{2}'.", this.FileName, this.Date, imageProperties.Date);
                 Assert.IsTrue(imageProperties.Time == this.Time, "{0}: Expected Time '{1}' but found '{2}'.", this.FileName, this.Time, imageProperties.Time);

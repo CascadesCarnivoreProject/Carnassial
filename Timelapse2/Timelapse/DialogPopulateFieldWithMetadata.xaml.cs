@@ -214,7 +214,7 @@ namespace Timelapse
                 List<Tuple<long, string, string>> imageIDKeyValue = new List<Tuple<long, string, string>>();
                 for (int image = 0; image < database.CurrentlySelectedImageCount; image++)
                 {
-                    ImageProperties imageProperties = database.GetImage(image);
+                    ImageProperties imageProperties = database.GetImageByRow(image);
                     string[] tags = { this.metaDataName };
                     Dictionary<string, string> exifData = this.exifTool.FetchExifFrom(imageProperties.GetImagePath(database.FolderPath), tags);
                     if (exifData.Count <= 0)

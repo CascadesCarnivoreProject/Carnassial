@@ -291,6 +291,7 @@ namespace Timelapse.UnitTests
                     IsColor = true,
                     Quality = ImageQualityFilter.Ok,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName,
+                    SkipDateTimeVerification = true,
                     Time = "11:17:34"
                 };
 

@@ -5,6 +5,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using Timelapse.Database;
+using Timelapse.Images;
 
 namespace Timelapse.UnitTests
 {
@@ -12,44 +13,111 @@ namespace Timelapse.UnitTests
     public class DatabaseTests : TimelapseTest
     {
         [TestMethod]
-        public void AddCarnivoreImages()
+        public void CreateReuseCarnivoreImageDatabase()
         {
-            this.AddImages(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName, (ImageDatabase imageDatabase) =>
+            this.CreateReuseImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName, (ImageDatabase imageDatabase) =>
             {
                 return this.PopulateCarnivoreDatabase(imageDatabase);
             });
         }
 
         [TestMethod]
-        public void AddDefaultImages()
+        public void CreateReuseDefaultImageDatabase()
         {
-            this.AddImages(TestConstant.File.DefaultTemplateDatabaseFileName2015, TestConstant.File.DefaultImageDatabaseFileName2023, (ImageDatabase imageDatabase) =>
+            this.CreateReuseImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015, TestConstant.File.DefaultImageDatabaseFileName2023, (ImageDatabase imageDatabase) =>
             {
                 return this.PopulateDefaultDatabase(imageDatabase);
             });
         }
 
-        private void AddImages(string templateDatabaseBaseFileName, string imageDatabaseBaseFileName, Func<ImageDatabase, List<ImageExpectations>> addImages)
+        private void CreateReuseImageDatabase(string templateDatabaseBaseFileName, string imageDatabaseBaseFileName, Func<ImageDatabase, List<ImageExpectations>> addImages)
         {
             // create database for test
             ImageDatabase imageDatabase = this.CreateImageDatabase(templateDatabaseBaseFileName, imageDatabaseBaseFileName);
             List<ImageExpectations> imageExpectations = addImages(imageDatabase);
 
-            // check images after initial add and again after reopen
+            // sanity coverage of image data table methods
+            int deletedImages = imageDatabase.GetDeletedImageCount();
+            Assert.IsTrue(deletedImages == 0);
+
+            Assert.IsTrue(imageDatabase.GetImageCount() == imageExpectations.Count);
+            Dictionary<ImageQualityFilter, int> imageCounts = imageDatabase.GetImageCounts();
+            Assert.IsTrue(imageCounts.Count == 4);
+            Assert.IsTrue(imageCounts[ImageQualityFilter.Corrupted] == 0);
+            Assert.IsTrue(imageCounts[ImageQualityFilter.Dark] == 0);
+            Assert.IsTrue(imageCounts[ImageQualityFilter.Missing] == 0);
+            Assert.IsTrue(imageCounts[ImageQualityFilter.Ok] == imageExpectations.Count);
+
+            // check images after initial add and again after reopen and application of filters
+            // checks are not performed after last filter in list is applied
             string currentDirectoryName = Path.GetFileName(imageDatabase.FolderPath);
-            for (int pass = 0; pass < 2; ++pass)
+            imageDatabase.TryGetImages(ImageQualityFilter.All);
+            foreach (ImageQualityFilter nextFilter in new List<ImageQualityFilter>() { ImageQualityFilter.All, ImageQualityFilter.Ok, ImageQualityFilter.Ok })
             {
+                Assert.IsTrue(imageDatabase.CurrentlySelectedImageCount == imageExpectations.Count);
+                DataTable allImageTable = imageDatabase.GetAllImages();
+                Assert.IsTrue(allImageTable.Rows.Count == imageExpectations.Count);
+                int firstDisplayableImage = imageDatabase.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
+                Assert.IsTrue(firstDisplayableImage == Constants.DefaultImageRowIndex);
+                DataTable markedForDeletionTable = imageDatabase.GetImagesMarkedForDeletion();
+                Assert.IsTrue(markedForDeletionTable.Rows.Count == 0);
+
                 for (int image = 0; image < imageExpectations.Count; ++image)
                 {
+                    // marshalling to ImageProperties
+                    ImageProperties imageProperties = imageDatabase.GetImageByRow(image);
                     ImageExpectations imageExpectation = imageExpectations[image];
-                    ImageProperties imageProperties = imageDatabase.GetImage(image);
-                    imageExpectation.Verify(imageProperties, false);
+                    imageExpectation.Verify(imageProperties);
+
+                    // row to ID conversion
+                    long id = imageDatabase.GetImageID(image);
+                    Assert.IsTrue(imageProperties.ID == id);
+
+                    // retrieval by ID
+                    DataTable imageTable = imageDatabase.GetImageByID(id);
+                    Assert.IsTrue(imageTable != null && imageTable.Rows.Count == 1);
+                    imageExpectation.Verify(imageTable.Rows[0]);
+
+                    List<MetaTagCounter> metaTagCounters = imageDatabase.GetMetaTagCounters(id);
+                    Assert.IsTrue(metaTagCounters.Count >= 0);
+
+                    // retrieval by path
+                    imageProperties.ID = Constants.Database.InvalidID;
+                    DataRow imageRow;
+                    Assert.IsTrue(imageDatabase.TryGetImage(imageProperties, out imageRow));
+
+                    // retrieval by specific method
+                    // imageDatabase.GetImageValue();
+                    Assert.IsFalse(imageDatabase.IsImageCorrupt(image));
+                    Assert.IsTrue(imageDatabase.IsImageDisplayable(image));
+                    Assert.IsTrue(imageDatabase.IsImageRowInRange(image));
+
+                    // retrieval by table
+                    imageExpectation.Verify(allImageTable.Rows[image]);
                 }
 
                 // reopen database for test and refresh images so next iteration of the loop checks state after reload
                 imageDatabase = new ImageDatabase(imageDatabase.FilePath, imageDatabase);
-                Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
+                Assert.IsTrue(imageDatabase.TryGetImages(nextFilter));
             }
+
+            // imageDatabase.TryGetImagesCustom();
+            // imageDatabase.UpdateAllImagesInFilteredView();
+            // imageDatabase.UpdateID();
+            // imageDatabase.UpdateImage();
+            // imageDatabase.UpdateImages();
+
+            // sanity coverage of image set table methods
+            this.VerifyDefaultImageSetTableContent(imageDatabase);
+            // imageDatabase.SetImageSetLog();
+            // imageDatabase.UpdateImageSetFilter();
+            // imageDatabase.UpdateImageSetRowIndex();
+            // imageDatabase.UpdateMagnifierEnabled();
+
+            // sanity coverage of marker table methods
+            // this.VerifyDefaultMarkerTableContent(imageDatabase, imageExpectations.Count);
+            // imageDatabase.SetMarkerPoints();
+            // imageDatabase.UpdateMarkers();
         }
 
         [TestMethod]
@@ -192,15 +260,11 @@ namespace Timelapse.UnitTests
             this.VerifyDefaultTemplateTableContent(imageDatabase);
 
             // verify image set table
-            Assert.IsTrue(imageDatabase.GetImageSetFilter() == ImageQualityFilter.All);
-            Assert.IsTrue(imageDatabase.GetImageSetRowIndex() == 0);
-            Assert.IsTrue(imageDatabase.GetImageSetLog() == Constants.Database.ImageSetDefaultLog);
-            Assert.IsTrue(imageDatabase.IsMagnifierEnabled());
+            this.VerifyDefaultImageSetTableContent(imageDatabase);
 
             // verify markers table
             int imagesExpected = 2;
-            Assert.IsTrue(imageDatabase.MarkersTable.Columns.Count == TestConstant.DefaultMarkerTableColumns.Count);
-            Assert.IsTrue(imageDatabase.MarkersTable.Rows.Count == imagesExpected);
+            this.VerifyDefaultMarkerTableContent(imageDatabase, imagesExpected);
 
             MarkerExpectation martenMarkerExpectation = new MarkerExpectation();
             martenMarkerExpectation.ID = 1;
@@ -266,6 +330,42 @@ namespace Timelapse.UnitTests
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, Constants.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Constants.Boolean.True);
             bobcatExpectation.Verify(imageDatabase.ImageDataTable.Rows[1]);
+        }
+
+        [TestMethod]
+        public void ImageDatabaseNegative()
+        {
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015, TestConstant.File.DefaultImageDatabaseFileName2023);
+            this.PopulateDefaultDatabase(imageDatabase);
+
+            int firstDisplayableImage = imageDatabase.FindFirstDisplayableImage(imageDatabase.CurrentlySelectedImageCount);
+            Assert.IsTrue(firstDisplayableImage == imageDatabase.CurrentlySelectedImageCount - 1);
+
+            int closestDisplayableImage = imageDatabase.FindClosestImage(Int64.MinValue);
+            Assert.IsTrue(closestDisplayableImage == 0);
+            closestDisplayableImage = imageDatabase.FindClosestImage(Int64.MaxValue);
+            Assert.IsTrue(closestDisplayableImage == imageDatabase.CurrentlySelectedImageCount - 1);
+
+            Assert.IsTrue(imageDatabase.GetImageCountWithCustomFilter(Constants.DatabaseColumn.File + " = 'InvalidValue'") == 0);
+
+            Assert.IsTrue(imageDatabase.GetImageValue(-1, Constants.DatabaseColumn.ID) == String.Empty);
+            Assert.IsTrue(imageDatabase.GetImageValue(imageDatabase.CurrentlySelectedImageCount, Constants.DatabaseColumn.ID) == String.Empty);
+
+            Assert.IsFalse(imageDatabase.IsImageCorrupt(-1));
+            Assert.IsFalse(imageDatabase.IsImageCorrupt(imageDatabase.CurrentlySelectedImageCount));
+
+            Assert.IsFalse(imageDatabase.IsImageDisplayable(-1));
+            Assert.IsFalse(imageDatabase.IsImageDisplayable(imageDatabase.CurrentlySelectedImageCount));
+
+            Assert.IsFalse(imageDatabase.IsImageRowInRange(-1));
+            Assert.IsFalse(imageDatabase.IsImageRowInRange(imageDatabase.CurrentlySelectedImageCount));
+
+            ImageProperties imageProperties = new ImageProperties(imageDatabase.ImageDataTable.Rows[0]);
+            imageProperties.ID = Constants.Database.InvalidID;
+            imageProperties.FileName = null;
+            DataRow imageRow;
+            Assert.IsFalse(imageDatabase.TryGetImage(imageProperties, out imageRow));
+            Assert.IsNull(imageRow);
         }
 
         [TestMethod]
@@ -357,6 +457,20 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(controlOrders.Count == uniqueControlOrders.Count, "Expected {0} unique control orders but found {1}.  {2} order(s) are duplicated.", controlOrders.Count, uniqueControlOrders.Count, controlOrders.Count - uniqueControlOrders.Count);
             List<long> uniqueSpreadsheetOrders = spreadsheetOrders.Distinct().ToList();
             Assert.IsTrue(spreadsheetOrders.Count == uniqueSpreadsheetOrders.Count, "Expected {0} unique spreadsheet orders but found {1}.  {2} order(s) are duplicated.", spreadsheetOrders.Count, uniqueSpreadsheetOrders.Count, spreadsheetOrders.Count - uniqueSpreadsheetOrders.Count);
+        }
+
+        private void VerifyDefaultImageSetTableContent(ImageDatabase imageDatabase)
+        {
+            Assert.IsTrue(imageDatabase.GetImageSetFilter() == ImageQualityFilter.All);
+            Assert.IsTrue(imageDatabase.GetImageSetRowIndex() == 0);
+            Assert.IsTrue(imageDatabase.GetImageSetLog() == Constants.Database.ImageSetDefaultLog);
+            Assert.IsTrue(imageDatabase.IsMagnifierEnabled());
+        }
+
+        private void VerifyDefaultMarkerTableContent(ImageDatabase imageDatabase, int imagesExpected)
+        {
+            Assert.IsTrue(imageDatabase.MarkersTable.Columns.Count == TestConstant.DefaultMarkerTableColumns.Count);
+            Assert.IsTrue(imageDatabase.MarkersTable.Rows.Count == imagesExpected);
         }
 
         private void VerifyDefaultTemplateTableContent(TemplateDatabase templateDatabase)

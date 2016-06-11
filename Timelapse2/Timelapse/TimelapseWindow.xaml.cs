@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Microsoft.WindowsAPICodePack.Dialogs;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Speech.Synthesis;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,7 +15,6 @@ using System.Windows.Media.Imaging;
 using Timelapse.Database;
 using Timelapse.Images;
 using Timelapse.Util;
-using FolderBrowserDialog = System.Windows.Forms.FolderBrowserDialog;
 
 namespace Timelapse
 {
@@ -56,24 +57,11 @@ namespace Timelapse
             this.InitializeComponent();
 
             // Abort if some of the required dependencies are missing
-            if (CheckDependencies.AreDependenciesMissing(this.GetType().Assembly.Location))
+            if (Dependencies.AreRequiredBinariesPresent(Assembly.GetExecutingAssembly()) == false)
             {
-                // Note that we can't use the DialogMessage to show this message as that class requires the Timelapse window to be displayed.
-                string MessageTitle = "Timelapse needs to be in its original downloaded folder.";
-                string Message = "Problem: " + Environment.NewLine;
-                Message += "Timelapse won't run properly as it was not correctly installed." + Environment.NewLine + Environment.NewLine;
-                Message += "Reason:  " + Environment.NewLine;
-                Message += "When you downloaded Timelapse, it was in a folder with several other files and folders it needs. You probably dragged Timelapse out of that folder." + Environment.NewLine + Environment.NewLine;
-                Message += "Solution:  " + Environment.NewLine;
-                Message += "Move the Timelapse program back to its original folder, or download it again." + Environment.NewLine + Environment.NewLine; 
-                Message += "Hint:  " + Environment.NewLine;
-                Message += "Create a shortcut if you want to access Timelapse outside its folder:" + Environment.NewLine;
-                Message += "1. From its original folder, right-click the Timelapse program icon." + Environment.NewLine;
-                Message += "2. Select 'Create Shortcut' from the menu." + Environment.NewLine;
-                Message += "3. Drag the shortcut icon to the location of your choice.";
-                MessageBox.Show(Message,MessageTitle, MessageBoxButton.OK, MessageBoxImage.Error) ;
+                Dependencies.ShowMissingBinariesDialog(Constants.ApplicationName);
                 Application.Current.Shutdown();
-            };
+            }
 
             this.ResetDifferenceThreshold();
             this.markableCanvas = new MarkableImageCanvas();
@@ -129,7 +117,8 @@ namespace Timelapse
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            CheckForUpdate.GetAndParseVersion(this, false);
+            VersionClient updater = new VersionClient(Constants.ApplicationName, Constants.LatestVersionAddress);
+            updater.TryGetAndParseVersion(false);
             // FOR MY DEBUGGING ONLY: Uncomment this to Start THE SYSTEM WITH THE LOAD MENU ITEM SELECTED loadImagesFromSources();  //OPENS THE MENU AUTOMATICALLY
         }
 
@@ -257,23 +246,8 @@ namespace Timelapse
             {
                 if (this.LoadByScanningImageFolder(this.FolderPath) == false)
                 {
-                    DialogMessageBox messageBox = new DialogMessageBox();
-                    messageBox.MessageTitle = "No Images Found in the image set folder.";
-                    messageBox.MessageProblem = "There doesn't seem to be any JPG images in your chosen image folder:";
-                    messageBox.MessageProblem += Environment.NewLine + "\u2022 " + this.FolderPath + Environment.NewLine;
-                    messageBox.MessageReason = "\u2022 The folder has no JPG files in it (image files ending in '.jpg'), or" + Environment.NewLine;
-                    messageBox.MessageReason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images.";
-                    messageBox.MessageSolution = "\u2022 Check that the chosen folder actually contains JPG images (i.e., a 'jpg' suffix), or" + Environment.NewLine;
-                    messageBox.MessageSolution += "\u2022 Choose another folder.";
-                    messageBox.IconType = MessageBoxImage.Error;
-                    messageBox.ButtonType = MessageBoxButton.OK;
-                    messageBox.ShowDialog();
-
                     // revert UI to no database loaded state
-                    // but enable adding images so that if the user needs to place the database in a folder which doesn't directly contain 
-                    // any .jpg images they can still add images in other locations
                     this.OnImageDatabaseNotLoaded();
-                    this.MenuItemAddImagesToImageSet.IsEnabled = true;
                     return false;
                 }
             }
@@ -289,16 +263,40 @@ namespace Timelapse
             return true;
         }
 
-        // Load all the jpg images found in the folder
         private bool LoadByScanningImageFolder(string imageFolderPath)
         {
             FileInfo[] imageFilePaths = new DirectoryInfo(imageFolderPath).GetFiles("*.jpg");
             int count = imageFilePaths.Length;
             if (count == 0)
             {
+                // no images were found in folder; see if user wants to try again
+                DialogMessageBox messageBox = new DialogMessageBox();
+                messageBox.MessageTitle = "No images found in the image set folder.";
+                messageBox.MessageProblem = "There don't seem to be any JPG images in your chosen image folder:" + Environment.NewLine;
+                messageBox.MessageProblem += "\u2022 " + this.FolderPath + Environment.NewLine;
+                messageBox.MessageReason = "\u2022 The folder has no JPG files in it (image files ending in '.jpg'), or" + Environment.NewLine;
+                messageBox.MessageReason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images.";
+                messageBox.MessageSolution = "Check that the chosen folder actually contains JPG images (i.e., a 'jpg' suffix), or" + Environment.NewLine;
+                messageBox.MessageSolution += "open a different folder." + Environment.NewLine;
+                messageBox.MessageResult += "Would you like to choose another folder?";
+                messageBox.IconType = MessageBoxImage.Question;
+                messageBox.ButtonType = MessageBoxButton.YesNo;
+                if (messageBox.ShowDialog() == false)
+                {
+                    return false;
+                }
+
+                string folderPath;
+                if (this.ShowFolderSelectionDialog(out folderPath))
+                {
+                    return this.LoadByScanningImageFolder(folderPath);
+                }
+
+                // exit if user changed their mind about trying again
                 return false;
             }
 
+            // Load all the jpg images found in the folder
             // We want to show previews of the frames to the user as they are individually loaded
             // Because WPF uses a scene graph, we have to do this by a background worker, as this forces the update
             BackgroundWorker backgroundWorker = new BackgroundWorker()
@@ -309,7 +307,7 @@ namespace Timelapse
             bool unambiguousDayMonthOrder = true;
             ProgressState progressState = new ProgressState();
             backgroundWorker.DoWork += (ow, ea) =>
-            {   
+            {
                 // this runs on the background thread; its written as an anonymous delegate
                 // We need to invoke this to allow updates on the UI
                 this.Dispatcher.Invoke(new Action(() =>
@@ -319,12 +317,19 @@ namespace Timelapse
                     this.Feedback(null, 0, "Examining images...");
                 }));
 
-                // First pass: Examine images to extract its basic properties
-                List<ImageProperties> imagePropertyList = new List<ImageProperties>();
+                // First pass: Examine images to extract their basic properties and build a list of images not already in the database
+                List<ImageProperties> imagesToInsert = new List<ImageProperties>();
                 for (int image = 0; image < count; image++)
                 {
                     FileInfo imageFile = imageFilePaths[image];
                     ImageProperties imageProperties = new ImageProperties(this.FolderPath, imageFile);
+                    DataRow imageRow;
+                    if (this.imageDatabase.TryGetImage(imageProperties, out imageRow))
+                    {
+                        // the database already has an entry for this image so skip it
+                        // if needed, a separate list of images to update could be generated
+                        continue;
+                    }
 
                     BitmapFrame bitmapFrame = null;
                     try
@@ -356,7 +361,7 @@ namespace Timelapse
                         imageProperties.ImageQuality = ImageQualityFilter.Corrupted;
                     }
 
-                    imagePropertyList.Add(imageProperties);
+                    imagesToInsert.Add(imageProperties);
 
                     if (image == 0 || (image % Constants.FolderScanProgressUpdateFrequency == 0))
                     {
@@ -378,13 +383,13 @@ namespace Timelapse
 
                 // Third pass: Update database
                 // TODOSAUL This used to be slow... but I think its ok now. But check if its a good place to make it more efficient by having it add multiple values in one shot (it may already be doing that - if so, delete this comment)
-                this.imageDatabase.AddImages(imagePropertyList, (ImageProperties imageProperties, int imageIndex) =>
+                this.imageDatabase.AddImages(imagesToInsert, (ImageProperties imageProperties, int imageIndex) =>
                 {
                     // Get the bitmap again to show it
                     // WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.FolderPath);
                     BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
                     // Show progress. Since its slow, we may as well do it every update
-                    int addImageProgress = Convert.ToInt32(Convert.ToDouble(imageIndex) / Convert.ToDouble(imagePropertyList.Count) * 100);
+                    int addImageProgress = Convert.ToInt32(Convert.ToDouble(imageIndex) / Convert.ToDouble(imagesToInsert.Count) * 100);
                     progressState.Message = String.Format("{0}/{1}: Adding {2}", imageIndex, count, imageProperties.FileName);
                     progressState.Bmap = bitmapFrame;
                     backgroundWorker.ReportProgress(addImageProgress, progressState);
@@ -713,8 +718,12 @@ namespace Timelapse
             }
 
             // Display the first available image under the new filter
-            // this.ShowFirstDisplayableImage(defaultImageRow); // SAULTODO: It used to be this call, but changed it to ShowImage. Check, but seems to work.
-            this.ShowImage(defaultImageRow);
+            if (this.imageDatabase.CurrentlySelectedImageCount > 0)
+            {
+                // this.ShowFirstDisplayableImage(defaultImageRow); // SAULTODO: It used to be this call, but changed it to ShowImage. Check, but seems to work.
+                this.ShowImage(defaultImageRow);
+            }
+
             // After a filter change, set the slider to represent the index and the count of the current filter
             this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
             this.ImageNavigatorSlider.Maximum = this.imageDatabase.CurrentlySelectedImageCount - 1;  // Reset the slider to the size of images in this set
@@ -1669,18 +1678,10 @@ namespace Timelapse
         #region File Menu Callbacks and Support Functions
         private void MenuItemAddImagesToImageSet_Click(object sender, RoutedEventArgs e)
         {
-            FolderBrowserDialog folderSelectionDialog = new FolderBrowserDialog();
-            folderSelectionDialog.Description = "Select a folder to add additional image files from";
-            folderSelectionDialog.SelectedPath = this.mostRecentImageAddFolderPath == null ? this.FolderPath : this.mostRecentImageAddFolderPath;
-            switch (folderSelectionDialog.ShowDialog())
+            string folderPath;
+            if (this.ShowFolderSelectionDialog(out folderPath))
             {
-                case System.Windows.Forms.DialogResult.OK:
-                case System.Windows.Forms.DialogResult.Yes:
-                    this.LoadByScanningImageFolder(folderSelectionDialog.SelectedPath);
-                    // remember the parent of the selected folder path to save the user clicks and scrolling in case images from additional 
-                    // directories are added
-                    this.mostRecentImageAddFolderPath = Path.GetDirectoryName(folderSelectionDialog.SelectedPath);
-                    break;
+                this.LoadByScanningImageFolder(folderPath);
             }
         }
 
@@ -1918,6 +1919,25 @@ namespace Timelapse
             this.Close();
         }
 
+        private bool ShowFolderSelectionDialog(out string folderPath)
+        {
+            CommonOpenFileDialog folderSelectionDialog = new CommonOpenFileDialog();
+            folderSelectionDialog.Title = "Select a folder to add image files from...";
+            folderSelectionDialog.DefaultDirectory = this.mostRecentImageAddFolderPath == null ? this.FolderPath : this.mostRecentImageAddFolderPath;
+            folderSelectionDialog.IsFolderPicker = true;
+            if (folderSelectionDialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                folderPath = folderSelectionDialog.FileName;
+
+                // remember the parent of the selected folder path to save the user clicks and scrolling in case images from additional 
+                // directories are added
+                this.mostRecentImageAddFolderPath = Path.GetDirectoryName(folderPath);
+                return true;
+            }
+
+            folderPath = null;
+            return false;
+        }
         #endregion
 
         #region Edit Menu Callbacks
@@ -1986,7 +2006,7 @@ namespace Timelapse
         private void MenuItemDeleteImages_Click(object sender, RoutedEventArgs e)
         {
             MenuItem mi = sender as MenuItem;
-            DataTable deletedTable;
+            DataTable deletedImages;
             bool isUseDeleteData;
             bool isUseDeleteFlag;
 
@@ -1997,7 +2017,7 @@ namespace Timelapse
             {
                 // Delete by deletion flags case. 
                 // Construct a table that contains the datarows of all images with their delete flag set, and set various flags
-                deletedTable = this.imageDatabase.GetDataTableOfImagesMarkedForDeletion();
+                deletedImages = this.imageDatabase.GetImagesMarkedForDeletion();
                 isUseDeleteFlag = true;
                 isUseDeleteData = mi.Name.Equals(this.MenuItemDeleteImages.Name) ? false : true;
             }
@@ -2005,7 +2025,7 @@ namespace Timelapse
             {
                 // Delete current image case. Get the ID of the current image and construct a datatable that contains that image's datarow
                 ImageProperties imageProperties = new ImageProperties(this.imageDatabase.ImageDataTable.Rows[this.imageCache.CurrentRow]);
-                deletedTable = this.imageDatabase.GetDataTableOfImagesbyID(imageProperties.ID);
+                deletedImages = this.imageDatabase.GetImageByID(imageProperties.ID);
                 isUseDeleteFlag = false;
                 isUseDeleteData = mi.Name.Equals(this.MenuItemDeleteImage.Name) ? false : true;
             }
@@ -2014,7 +2034,7 @@ namespace Timelapse
             // If no images are selected for deletion. Warn the user.
             // Note that this should never happen, as the invoking menu item should be disabled (and thus not selectable)
             // if there aren't any images to delete. Still,...
-            if (null == deletedTable)
+            if (null == deletedImages)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "No images are marked for deletion";
@@ -2029,12 +2049,12 @@ namespace Timelapse
             DialogDeleteImages dlg;
             if (mi.Name.Equals(this.MenuItemDeleteImages.Name) || mi.Name.Equals(this.MenuItemDeleteImagesAndData.Name))
             {
-                dlg = new DialogDeleteImages(this.imageDatabase, deletedTable, isUseDeleteData, isUseDeleteFlag);   // don't delete data
+                dlg = new DialogDeleteImages(this.imageDatabase, deletedImages, isUseDeleteData, isUseDeleteFlag);   // don't delete data
             }
             else
             {
                 ImageProperties imageProperties = new ImageProperties(this.imageDatabase.ImageDataTable.Rows[this.imageCache.CurrentRow]);
-                dlg = new DialogDeleteImages(this.imageDatabase, deletedTable, isUseDeleteData, isUseDeleteFlag);   // delete data
+                dlg = new DialogDeleteImages(this.imageDatabase, deletedImages, isUseDeleteData, isUseDeleteFlag);   // delete data
             }
             dlg.Owner = this;
 
@@ -2052,7 +2072,7 @@ namespace Timelapse
                     // Because we may be deleting the current image, we need to find the next displayable and non-deleted image after this one.
                     this.SetImageFilterAndIndex(0, this.state.ImageFilter); // Reset the filter to retrieve the remaining images
 
-                    int currentRow = this.imageDatabase.FindClosestImage(currentID);                    
+                    int currentRow = this.imageDatabase.FindClosestImage(currentID);
                     this.ShowImage(currentRow, true);
                 }
             }

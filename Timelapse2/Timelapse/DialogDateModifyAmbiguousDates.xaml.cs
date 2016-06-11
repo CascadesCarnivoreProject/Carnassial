@@ -50,7 +50,7 @@ namespace Timelapse
             if (this.rangeStart >= 0)
             {
                 // We found an ambiguous date; provide appropriate feedback
-                int id = this.database.GetImageID(this.rangeStart);
+                long id = this.database.GetImageID(this.rangeStart);
                 if (id >= 0)
                 {
                     imageProperties = new ImageProperties(this.database.ImageDataTable.Rows.Find(id));

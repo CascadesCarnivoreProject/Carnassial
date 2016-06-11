@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions; // For debugging
 using System.Windows;
 using System.Windows.Controls;
@@ -42,6 +43,13 @@ namespace TimelapseTemplateEditor
         /// </summary>
         public MainWindow()
         {
+            // Abort if some of the required dependencies are missing
+            if (Dependencies.AreRequiredBinariesPresent(Assembly.GetExecutingAssembly()) == false)
+            {
+                Dependencies.ShowMissingBinariesDialog(Constants.ApplicationName);
+                Application.Current.Shutdown();
+            }
+
             this.dummyMouseDragSource = new UIElement();
             this.generateControlsAndSpreadsheet = true;
             this.rowsActionsOn = false;
@@ -708,8 +716,8 @@ namespace TimelapseTemplateEditor
         /// <summary>
         /// Used in this code to get the child of a DataGridRows, DataGridCellsPresenter. This can be used to get the DataGridCell.
         /// WPF does not make it easy to get to the actual cells.
-        /// Code from: http://techiethings.blogspot.com/2010/05/get-wpf-datagrid-row-and-cell.html
         /// </summary>
+        // Code from: http://techiethings.blogspot.com/2010/05/get-wpf-datagrid-row-and-cell.html
         private static T GetVisualChild<T>(Visual parent) where T : Visual
         {
             T child = default(T);

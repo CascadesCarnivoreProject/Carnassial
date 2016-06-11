@@ -15,7 +15,7 @@ namespace Timelapse.Util
         }
 
         /// <summary>
-        /// Given a time as a DateTime return it as a string in HH:mm:ss format.
+        /// Given a time as a DateTime return it as a string in 24 hour format.
         /// </summary>
         public static string DatabaseTimeString(DateTime time)
         {

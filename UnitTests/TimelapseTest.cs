@@ -83,11 +83,11 @@ namespace Timelapse.UnitTests
         {
             FileInfo martenFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.CarnivoreDirectoryName, TestConstant.File.DaylightMartenPairImage));
             ImageProperties martenImage = new ImageProperties(imageDatabase.FolderPath, martenFileInfo);
-            martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata);
+            Assert.IsTrue(martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataNotUsed);
 
             FileInfo coyoteFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.CarnivoreDirectoryName, TestConstant.File.DaylightCoyoteImage));
             ImageProperties coyoteImage = new ImageProperties(imageDatabase.FolderPath, coyoteFileInfo);
-            coyoteImage.TryUseImageTaken((BitmapMetadata)coyoteImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata);
+            Assert.IsTrue(coyoteImage.TryUseImageTaken((BitmapMetadata)coyoteImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             imageDatabase.AddImages(new List<ImageProperties>() { martenImage, coyoteImage }, null);
             Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
@@ -112,7 +112,7 @@ namespace Timelapse.UnitTests
             imageDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { coyoteImageUpdate });
 
             // simulate data entry
-            int martenImageID = imageDatabase.GetImageID(0);
+            long martenImageID = imageDatabase.GetImageID(0);
             imageDatabase.UpdateImage(martenImageID, "Station", "DS02");
             imageDatabase.UpdateImage(martenImageID, "TriggerSource", "critter");
             imageDatabase.UpdateImage(martenImageID, "Identification", "American marten");
@@ -149,11 +149,11 @@ namespace Timelapse.UnitTests
         {
             FileInfo martenFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.InfraredMartenImage));
             ImageProperties martenImage = new ImageProperties(imageDatabase.FolderPath, martenFileInfo);
-            martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata);
+            Assert.IsTrue(martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeOneHourLater);
 
             FileInfo coyoteFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.DaylightBobcatImage));
             ImageProperties bobcatImage = new ImageProperties(imageDatabase.FolderPath, coyoteFileInfo);
-            bobcatImage.TryUseImageTaken((BitmapMetadata)bobcatImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata);
+            Assert.IsTrue(bobcatImage.TryUseImageTaken((BitmapMetadata)bobcatImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             imageDatabase.AddImages(new List<ImageProperties>() { martenImage, bobcatImage }, null);
             Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
@@ -173,7 +173,7 @@ namespace Timelapse.UnitTests
             imageDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { bobcatUpdate });
 
             // simulate data entry
-            int martenImageID = imageDatabase.GetImageID(0);
+            long martenImageID = imageDatabase.GetImageID(0);
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constants.Boolean.True);

@@ -24,7 +24,7 @@ namespace Timelapse
             // imgNumber will point to the first image  that is not swappable, else -1
             ImageProperties imageProperties = null;
             int imgNumber = DateTimeHandler.SwapDayMonthIsPossible(this.database);
-            int id = this.database.GetImageID(imgNumber);
+            long id = this.database.GetImageID(imgNumber);
             if (id >= 0)
             {
                 // We can't swap the dates; provide appropriate feedback
