@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using Timelapse.Database;
+using Timelapse.Images;
 
 namespace Timelapse
 {
@@ -14,15 +15,15 @@ namespace Timelapse
         private static int lastIndex = -1; // Keep track of the last index we had selected. Don't autoscroll if it hasn't changed.
 
         private ImageDatabase database;
-        private int defaultImageRow;
+        private ImageCache imageCache;
         private DispatcherTimer dispatcherTimer;
-        private int lastRow = -1;
 
-        public DialogDataView(ImageDatabase database, int defaultImageRow)
+        internal DialogDataView(ImageDatabase database, ImageCache imageCache)
         {
+            this.imageCache = imageCache;
+            
             this.InitializeComponent();
             this.database = database;
-            this.defaultImageRow = defaultImageRow;
             this.RefreshDataTable();
         }
 
@@ -48,19 +49,20 @@ namespace Timelapse
         /// <summary>Ensure that the the highlighted row is the current row </summary>
         private void DispatcherTimer_Tick(object sender, EventArgs e)
         {
-            if (this.lastRow != this.defaultImageRow)
-            {
-                this.datagrid.SelectedIndex = this.defaultImageRow;
-            }
+            // Set the selected index to the current row that represents the image being viewed
+            this.datagrid.SelectedIndex = this.imageCache.CurrentRow; 
 
             // A workaround to autoscroll the currently selected items, where the item always appears at the top of the window.
             // We check the last index and only autoscroll if it hasn't changed since then.
             // This workaround means that the user can manually scroll to a new spot, where it won't jump back unless the image number has changed.
+            // SAULTODO:  We can do better. I think it should only scroll when the row is out of view.
             if (lastIndex != this.datagrid.SelectedIndex)
-            {
+            { 
                 this.datagrid.ScrollIntoView(datagrid.Items[this.datagrid.Items.Count - 1]);
                 this.datagrid.UpdateLayout();
-                this.datagrid.ScrollIntoView(this.datagrid.Items[this.datagrid.SelectedIndex]);
+                // Try to autoscroll so at least 5 rows are visible (if possible) before the selected row
+                int rowToShow = (this.datagrid.SelectedIndex > 5) ? this.datagrid.SelectedIndex - 5 : 0;
+                this.datagrid.ScrollIntoView(this.datagrid.Items[rowToShow]);
                 lastIndex = this.datagrid.SelectedIndex;
             }
         }

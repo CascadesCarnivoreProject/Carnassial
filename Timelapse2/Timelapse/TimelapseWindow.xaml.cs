@@ -2750,7 +2750,7 @@ namespace Timelapse
             {
                 return; // If its already displayed, don't bother.
             }
-            this.dlgDataView = new DialogDataView(this.imageDatabase, this.imageCache.CurrentRow);
+            this.dlgDataView = new DialogDataView(this.imageDatabase, this.imageCache);
             this.dlgDataView.Show();
         }
         #endregion 
