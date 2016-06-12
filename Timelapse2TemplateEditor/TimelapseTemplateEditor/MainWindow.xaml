@@ -3,8 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:TimelapseTemplateEditor"
         Name="OnlyWindow"
-        Title="Timelapse Template Editor" Height="910.957" Width="1244.808" MinHeight="560" MinWidth="800" Icon="32x32.ico" Loaded="Window_Loaded">
-
+        Title="Timelapse Template Editor" Height="910.957" Width="1244.808" MinHeight="560" MinWidth="800" Icon="32x32.ico" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <ResourceDictionary>
             <!-- Focus Style for checkbox https://ramontebar.wordpress.com/2010/02/26/wpf-custom-check-box-template/-->
@@ -221,6 +220,8 @@
                             <Image Source="Images/ConvertFile.png" />
                         </MenuItem.Icon>
                     </MenuItem>
+                    <Separator />
+                    <MenuItem Name="MenuItemRecentTemplates" Header="_Recent templates" IsEnabled="false" ToolTip="Recently used templates"/>
                     <Separator />
                     <MenuItem Name="ExitFileMenuItem" Header="E_xit" Click="ExitFileMenuItem_Click">
                         <MenuItem.Icon>
@@ -509,6 +510,9 @@
                                                     <Style.Triggers>
                                                         <!--Triggers for disabling lists for some types-->
                                                         <DataTrigger Binding="{Binding Type}" Value="File">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="RelativePath">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Type}" Value="Folder">

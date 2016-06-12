@@ -80,7 +80,7 @@ namespace Timelapse
             this.ControlGrid.Children.Remove(this.btnCopy);
             this.dataEntryControls.AddButton(this.btnCopy);
 
-            // Recall states from prior sessions
+            // Recall state from prior sessions
             using (TimelapseRegistryUserSettings userSettings = new TimelapseRegistryUserSettings())
             {
                 this.state.AudioFeedback = userSettings.ReadAudioFeedback();
@@ -134,8 +134,16 @@ namespace Timelapse
                     this.state.ImageFilter = ImageQualityFilter.All;
                 }
                 this.imageDatabase.UpdateImageSetFilter(this.state.ImageFilter);
-                this.imageDatabase.UpdateImageSetRowIndex(this.imageCache.CurrentRow);
-                this.imageDatabase.UpdateMagnifierEnabled(this.markableCanvas.IsMagnifyingGlassVisible);
+
+                if (this.imageCache != null)
+                {
+                    this.imageDatabase.UpdateImageSetRowIndex(this.imageCache.CurrentRow);
+                }
+
+                if (this.markableCanvas != null)
+                {
+                    this.imageDatabase.UpdateMagnifierEnabled(this.markableCanvas.IsMagnifyingGlassVisible);
+                }
             }
 
             // Save the current filter set and the index of the current image being viewed in that set, and save it into the registry
@@ -483,7 +491,15 @@ namespace Timelapse
             else
             {
                 // There are no existing .ddb files
-                databaseFileName = Path.GetFileNameWithoutExtension(templateDatabasePath) + Constants.File.ImageDatabaseFileExtension;
+                string templateDatabaseFileName = Path.GetFileName(templateDatabasePath);
+                if (String.Equals(templateDatabaseFileName, Constants.File.DefaultTemplateDatabaseFileName, StringComparison.OrdinalIgnoreCase))
+                {
+                    databaseFileName = Constants.File.DefaultImageDatabaseFileName;
+                }
+                else
+                {
+                    databaseFileName = Path.GetFileNameWithoutExtension(templateDatabasePath) + Constants.File.ImageDatabaseFileExtension;
+                }
                 importImages = true;
             }
 

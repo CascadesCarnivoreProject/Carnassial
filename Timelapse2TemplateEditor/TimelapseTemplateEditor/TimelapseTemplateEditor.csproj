@@ -136,6 +136,7 @@
     <Compile Include="Util\EditorControls.cs" />
     <Compile Include="MainWindowExtensions.cs" />
     <Compile Include="ListBoxDBOutputConverter.cs" />
+    <Compile Include="Util\EditorRegistryUserSettings.cs" />
     <Compile Include="Util\MyTrace.cs" />
     <Page Include="DialogAboutTimelapseEditor.xaml">
       <SubType>Designer</SubType>

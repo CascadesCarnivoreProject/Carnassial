@@ -260,23 +260,23 @@ namespace Timelapse
 
         public static class Registry
         {
-            public static class Key
+            public static class TimelapseKey
             {
-                // The image filter used on exit
+                // the image filter used on exit
                 public const string AudioFeedback = "AudioFeedback";
-                // Whether the controls are in a separate window (true) or in the Timelapse Window (false)
+                // whether the controls are in a separate window (true) or in the Timelapse Window (false)
                 public const string ControlsInSeparateWindow = "ControlWindowSeparate";
-                // The width of the controlWindow
+                // the width of the controlWindow
                 public const string ControlWindowHeight = "ControlWindowHeight";
-                // The width of the controlWindow
+                // the width of the controlWindow
                 public const string ControlWindowWidth = "ControlWindowWidth";
-                // The DarkPixelThreshold
+                // the DarkPixelThreshold
                 public const string DarkPixelThreshold = "DarkPixelThreshold";
-                // The DarkPixelRatio
+                // the DarkPixelRatio
                 public const string DarkPixelRatio = "DarkPixelRatio";
-                // Key containing the list of most recently used template databases
+                // key containing the list of most recently image sets opened by Timelapse
                 public const string MostRecentlyUsedImageSets = "MostRecentlyUsedImageSets";
-                // Whether to show the CSV dialog window
+                // whether to show the CSV dialog window
                 public const string ShowCsvDialog = "ShowCsvDialog";
             }
 

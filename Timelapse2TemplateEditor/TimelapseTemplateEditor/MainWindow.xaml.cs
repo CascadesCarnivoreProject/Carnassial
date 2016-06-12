@@ -26,8 +26,9 @@ namespace TimelapseTemplateEditor
         // database where the template is stored
         private TemplateDatabase templateDatabase;
 
-        // Booleans for tracking state
+        // state tracking
         private bool generateControlsAndSpreadsheet;
+        private MostRecentlyUsedList<string> mostRecentTemplates;
         private bool rowsActionsOn;
         private bool tabWasPressed; // to make tab trigger row update.
 
@@ -56,8 +57,45 @@ namespace TimelapseTemplateEditor
             this.tabWasPressed = false;
 
             this.InitializeComponent();
-            this.Closing += this.MainWindow_Closing;
             this.ShowAllColumnsMenuItem_Click(this.ShowAllColumns, null);
+
+            // Recall state from prior sessions
+            using (EditorRegistryUserSettings userSettings = new EditorRegistryUserSettings())
+            {
+                this.mostRecentTemplates = userSettings.ReadMostRecentTemplates();  // the last path opened by the user is stored in the registry
+            }
+
+            // populate the most recent databases list
+            this.MenuItemRecentTemplates_Refresh();
+        }
+
+        private void MenuItemRecentTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            string recentTemplatePath = (string)((MenuItem)sender).ToolTip;
+
+            // Open document 
+            this.TrySaveDatabaseBackupFile();
+            this.InitializeDataGrid(recentTemplatePath);
+        }
+
+        /// <summary>
+        /// Update the list of recent databases displayed under File -> Recent Databases.
+        /// </summary>
+        private void MenuItemRecentTemplates_Refresh()
+        {
+            this.MenuItemRecentTemplates.IsEnabled = this.mostRecentTemplates.Count > 0;
+            this.MenuItemRecentTemplates.Items.Clear();
+
+            int index = 1;
+            foreach (string recentTemplatePath in this.mostRecentTemplates)
+            {
+                MenuItem recentImageSetItem = new MenuItem();
+                recentImageSetItem.Click += this.MenuItemRecentTemplate_Click;
+                recentImageSetItem.Header = String.Format("_{0} {1}", index, recentTemplatePath);
+                recentImageSetItem.ToolTip = recentTemplatePath;
+                this.MenuItemRecentTemplates.Items.Add(recentImageSetItem);
+                ++index;
+            }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -89,9 +127,15 @@ namespace TimelapseTemplateEditor
         }
 
         // When the main window closes, apply any pending edits.
-        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             this.TemplateDataGrid.CommitEdit();
+
+            // Save the current filter set and the index of the current image being viewed in that set, and save it into the registry
+            using (EditorRegistryUserSettings userSettings = new EditorRegistryUserSettings())
+            {
+                userSettings.WriteMostRecentTemplates(this.mostRecentTemplates);
+            }
         }
 
         #region DataGrid and New Database Initialization
@@ -101,8 +145,7 @@ namespace TimelapseTemplateEditor
         /// Some listeners are added to the DataTable, and the DataTable is bound. The add row buttons are enabled.
         /// </summary>
         /// <param name="templateDatabaseFilePath">The path of the DB file created or loaded</param>
-        /// <param name="ourTableName">The name of the table loaded in the DB file. Always the same in the current implementation</param>
-        private void InitializeDataGrid(string templateDatabaseFilePath, string ourTableName)
+        private void InitializeDataGrid(string templateDatabaseFilePath)
         {
             MyTrace.MethodName("DG");
 
@@ -127,6 +170,12 @@ namespace TimelapseTemplateEditor
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
             this.InitializeUI();
+
+            // update state
+            // unlike Timelapse, editor processes are currently 1:1 with opened template files
+            // so disable the recent templates list rather than call this.MenuItemRecentTemplates_Refresh
+            this.mostRecentTemplates.SetMostRecent(templateDatabaseFilePath);
+            this.MenuItemRecentTemplates.IsEnabled = false;
         }
 
         // Reload a database into the grid. We do this as part of the convert, where we create the database, but then have to reinitialize the datagrid if we want to see the results.
@@ -261,7 +310,6 @@ namespace TimelapseTemplateEditor
         private void ChoiceListButton_Click(object sender, RoutedEventArgs e)
         {
             Button button = (Button)sender;
-            string choice_list = String.Empty;
 
             // The button tag holds the Control Order of the row the button is in, not the ID.
             // So we have to search through the rows to find the one with the correct control order
@@ -269,13 +317,14 @@ namespace TimelapseTemplateEditor
             DataRow foundRow = this.FindRow(1, button.Tag.ToString());
 
             // It should always find a row, but just in case...
+            string choiceList = String.Empty;
             if (null != foundRow)
             {
-                choice_list = foundRow[Constants.Control.List].ToString();
+                choiceList = foundRow.GetStringField(Constants.Control.List);
             }
 
-            choice_list = Utilities.ConvertBarsToLineBreaks(choice_list);
-            DialogEditChoiceList dlg = new DialogEditChoiceList(button, choice_list);
+            choiceList = Utilities.ConvertBarsToLineBreaks(choiceList);
+            DialogEditChoiceList dlg = new DialogEditChoiceList(button, choiceList);
             dlg.Owner = this;
             bool? result = dlg.ShowDialog();
             if (result == true)
@@ -769,7 +818,7 @@ namespace TimelapseTemplateEditor
                 }
 
                 // Open document 
-                this.InitializeDataGrid(dlg.FileName, Constants.Database.TemplateTable);
+                this.InitializeDataGrid(dlg.FileName);
             }
         }
 
@@ -795,7 +844,7 @@ namespace TimelapseTemplateEditor
                 this.TrySaveDatabaseBackupFile();
 
                 // Open document 
-                this.InitializeDataGrid(dlg.FileName, Constants.Database.TemplateTable);
+                this.InitializeDataGrid(dlg.FileName);
             }
         }
 
@@ -881,7 +930,7 @@ namespace TimelapseTemplateEditor
             }
 
             // Start with the default layout of the data template
-            this.InitializeDataGrid(templateDatabaseFile.FileName, Constants.Database.TemplateTable);
+            this.InitializeDataGrid(templateDatabaseFile.FileName);
 
             // Now convert the code template file into a Data Template, overwriting values and adding rows as required
             Mouse.OverrideCursor = Cursors.Wait;

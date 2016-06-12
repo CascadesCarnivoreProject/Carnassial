@@ -45,5 +45,14 @@ namespace TimelapseTemplateEditor
             public const string Width = "Width";
             public const string SpreadsheetOrder = "Spreadsheet\norder";
         }
+
+        public static class Registry
+        {
+            public static class EditorKey
+            {
+                // key containing the list of most recent template databases opened by the editor
+                public const string MostRecentlyUsedTemplates = "MostRecentlyUsedTemplates";
+            }
+        }
     }
 }

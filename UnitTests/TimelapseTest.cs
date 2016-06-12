@@ -153,8 +153,6 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeOneHourLater ||
                           martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
-            //Assert.IsTrue(martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeOneHourLater);
-
             FileInfo coyoteFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.DaylightBobcatImage));
             ImageProperties bobcatImage = new ImageProperties(imageDatabase.FolderPath, coyoteFileInfo);
             Assert.IsTrue(bobcatImage.TryUseImageTaken((BitmapMetadata)bobcatImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
