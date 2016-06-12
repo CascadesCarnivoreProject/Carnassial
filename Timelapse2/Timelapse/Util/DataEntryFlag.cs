@@ -14,16 +14,16 @@ namespace Timelapse.Util
         {
             get
             {
-                return ((bool)this.ContentControl.IsChecked) ? "true" : "false";
+                return ((bool)this.ContentControl.IsChecked) ? Constants.Boolean.True : Constants.Boolean.False;
             }
             set
             {
                 value = value.ToLower();
-                this.ContentControl.IsChecked = (value == "true") ? true : false;
+                this.ContentControl.IsChecked = (value == Constants.Boolean.True) ? true : false;
             }
         }
 
-        public DataEntryFlag(string dataLabel, Controls dataEntryControls, bool createContextMenu)
+        public DataEntryFlag(string dataLabel, DataEntryControls dataEntryControls, bool createContextMenu)
             : base(dataLabel, dataEntryControls, ControlContentStyle.FlagCodeBar, ControlLabelStyle.LabelCodeBar, createContextMenu)
         {
             this.Container.ToolTip = "Toggle between true (checked) and false (unchecked)";

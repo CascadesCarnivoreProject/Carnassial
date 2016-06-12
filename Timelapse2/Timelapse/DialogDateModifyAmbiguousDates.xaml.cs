@@ -50,7 +50,7 @@ namespace Timelapse
             if (this.rangeStart >= 0)
             {
                 // We found an ambiguous date; provide appropriate feedback
-                int id = this.database.GetImageID(this.rangeStart);
+                long id = this.database.GetImageID(this.rangeStart);
                 if (id >= 0)
                 {
                     imageProperties = new ImageProperties(this.database.ImageDataTable.Rows.Find(id));
@@ -112,7 +112,7 @@ namespace Timelapse
             this.DialogResult = true;
 
             // Refresh the database / datatable to reflect the updated values
-            this.database.TryGetImagesAll();
+            this.database.TryGetImages(ImageQualityFilter.All);
         }
 
         private void NextButton_Click(object sender, RoutedEventArgs e)
@@ -138,7 +138,7 @@ namespace Timelapse
                 // if (this.database.RowIsImageCorrupted(i)) continue;
 
                 // Parse the date. Note that this should never fail at this point, but just in case, put out a debug message
-                string dateAsString = (string)this.database.ImageDataTable.Rows[index][Constants.DatabaseColumn.Date] + " " + (string)this.database.ImageDataTable.Rows[index][Constants.DatabaseColumn.Time];
+                string dateAsString = this.database.ImageDataTable.Rows[index].GetStringField(Constants.DatabaseColumn.Date) + " " + this.database.ImageDataTable.Rows[index].GetStringField(Constants.DatabaseColumn.Time);
                 DateTime date;
                 bool succeeded = DateTime.TryParse(dateAsString, out date);
                 if (succeeded)
@@ -166,7 +166,7 @@ namespace Timelapse
             }
 
             // Parse the provided starting date. Note that this should never fail at this point, but just in case, put out a debug message
-            string startingDateAsString = (string)this.database.ImageDataTable.Rows[startIndex][Constants.DatabaseColumn.Date] + " " + (string)this.database.ImageDataTable.Rows[startIndex][Constants.DatabaseColumn.Time];
+            string startingDateAsString = this.database.ImageDataTable.Rows[startIndex].GetStringField(Constants.DatabaseColumn.Date) + " " + this.database.ImageDataTable.Rows[startIndex].GetStringField(Constants.DatabaseColumn.Time);
             DateTime startingDate;
             if (!DateTime.TryParse(startingDateAsString, out startingDate))
             {
@@ -176,7 +176,7 @@ namespace Timelapse
             for (int index = startIndex + 1; index < this.database.CurrentlySelectedImageCount; index++)
             {
                 // Parse the date for the given record.
-                string currentDateAsString = (string)this.database.ImageDataTable.Rows[index][Constants.DatabaseColumn.Date] + " " + (string)this.database.ImageDataTable.Rows[index][Constants.DatabaseColumn.Time];
+                string currentDateAsString = this.database.ImageDataTable.Rows[index].GetStringField(Constants.DatabaseColumn.Date) + " " + this.database.ImageDataTable.Rows[index].GetStringField(Constants.DatabaseColumn.Time);
                 DateTime currentDate;
                 if (!DateTime.TryParse(currentDateAsString, out currentDate))
                 {

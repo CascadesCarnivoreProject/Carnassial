@@ -249,7 +249,7 @@ namespace Timelapse.Images
                     return false;
                 }
 
-                imageProperties = this.Database.GetImage(imageRow);
+                imageProperties = this.Database.GetImageByRow(imageRow);
                 if (imageProperties.IsDisplayable() == false)
                 {
                     return false;

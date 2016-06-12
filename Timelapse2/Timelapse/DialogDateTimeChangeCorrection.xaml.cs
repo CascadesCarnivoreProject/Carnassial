@@ -66,7 +66,7 @@ namespace Timelapse
                 this.database.AppendToImageSetLog(log);
 
                 // Refresh the database / datatable to reflect the updated values
-                this.database.TryGetImagesAll();
+                this.database.TryGetImages(ImageQualityFilter.All);
                 this.DialogResult = true;
             }
             catch
@@ -94,7 +94,7 @@ namespace Timelapse
                     return;
                 }
                 int hours = ((bool)rbAddHour.IsChecked) ? 1 : -1;
-                lblNewDate.Content = DateTimeHandler.StandardDateString(dateTime) + " " + DateTimeHandler.StandardTimeString(dateTime);
+                lblNewDate.Content = DateTimeHandler.StandardDateString(dateTime) + " " + DateTimeHandler.DatabaseTimeString(dateTime);
                 this.OkButton.IsEnabled = true;
             }
         }

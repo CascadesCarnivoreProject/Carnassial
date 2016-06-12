@@ -87,7 +87,7 @@ namespace Timelapse
             // Get the labels of the selected items so we can 
             // show a message to confirm that we really want to do this
             string label1 = (string)lbSwapList1.SelectedItem; 
-            string label2 = (string)lbSwapList2.SelectedItem; ;
+            string label2 = (string)lbSwapList2.SelectedItem;
             if (Messages.DoYouWantToSwapData(label1, label2) == MessageBoxResult.No) return;
 
             string stmp;

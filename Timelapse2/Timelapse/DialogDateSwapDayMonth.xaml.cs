@@ -24,7 +24,7 @@ namespace Timelapse
             // imgNumber will point to the first image  that is not swappable, else -1
             ImageProperties imageProperties = null;
             int imgNumber = DateTimeHandler.SwapDayMonthIsPossible(this.database);
-            int id = this.database.GetImageID(imgNumber);
+            long id = this.database.GetImageID(imgNumber);
             if (id >= 0)
             {
                 // We can't swap the dates; provide appropriate feedback
@@ -71,10 +71,9 @@ namespace Timelapse
             }
         }
 
-        // If the user click ok, swap the day and month field
+        // If the user click ok, swap the day and month field for all images selected by the current filter
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Todd  is use of an unrestricted range correct behaviour when images have been loaded from multiple folders?
             this.database.ExchangeDayAndMonthInImageDate();
             StringBuilder log = new StringBuilder();
             log.AppendLine("System entry: Swapped the days and months for all dates.");
@@ -82,7 +81,7 @@ namespace Timelapse
             this.database.AppendToImageSetLog(log);
 
             // Refresh the database / datatable to reflect the updated values
-            this.database.TryGetImagesAll();
+            this.database.TryGetImages(ImageQualityFilter.All);
             this.DialogResult = true;
         }
 

@@ -22,7 +22,7 @@ namespace Timelapse.Images
             this.Bitmap = null;
             this.DarkPixelRatioFound = 0;
             this.IsColor = false;
-            this.OldImageQuality = (string)imageRow[Constants.DatabaseColumn.ImageQuality];
+            this.OldImageQuality = imageRow.GetStringField(Constants.DatabaseColumn.ImageQuality);
             this.NewImageQuality = String.Empty;
             this.Update = false;
         }

@@ -8,7 +8,7 @@ namespace Timelapse.Util
 {
     public abstract class DataEntryControl
     {
-        protected Controls ControlsPanel { get; private set; }
+        protected DataEntryControls ControlsPanel { get; private set; }
         protected MenuItem MenuItemPropagateFromLastValue { get; private set; }
         protected MenuItem MenuItemCopyForward { get; private set; }
         protected MenuItem MenuItemCopyCurrentValue { get; private set; }
@@ -50,7 +50,7 @@ namespace Timelapse.Util
 
         public abstract void Focus();
 
-        protected DataEntryControl(string dataLabel, Controls dataEntryControls, bool createContextMenu)
+        protected DataEntryControl(string dataLabel, DataEntryControls dataEntryControls, bool createContextMenu)
         {
             // Set these parameters so they are available in the derived objects
             this.ControlsPanel = dataEntryControls;
@@ -60,7 +60,7 @@ namespace Timelapse.Util
 
             // Create the stack panel
             this.Container = new StackPanel();
-            Style style = dataEntryControls.FindResource("StackPanelCodeBar") as Style;
+            Style style = dataEntryControls.FindResource(Constants.ControlStyle.StackPanelCodeBar) as Style;
             this.Container.Style = style;
 
             // Create the context menu
@@ -166,7 +166,7 @@ namespace Timelapse.Util
             set { this.ContentControl.Width = value; }
         }
 
-        protected DataEntryControl(string dataLabel, Controls dataEntryControls, Nullable<ControlContentStyle> contentStyleName, ControlLabelStyle labelStyleName, bool createContextMenu) : 
+        protected DataEntryControl(string dataLabel, DataEntryControls dataEntryControls, Nullable<ControlContentStyle> contentStyleName, ControlLabelStyle labelStyleName, bool createContextMenu) : 
             base(dataLabel, dataEntryControls, createContextMenu)
         {
             this.ContentControl = new TContent();

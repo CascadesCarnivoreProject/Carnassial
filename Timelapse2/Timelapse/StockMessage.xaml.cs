@@ -130,7 +130,6 @@ namespace Timelapse
             this.SetFieldVisibility();
         }
 
-
         private void SetFieldVisibility()
         {
             this.myGrid.RowDefinitions[1].Height = (this.MessageProblem == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
@@ -139,7 +138,6 @@ namespace Timelapse
             this.myGrid.RowDefinitions[4].Height = (this.MessageSolution == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
             this.myGrid.RowDefinitions[5].Height = (this.MessageResult == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
             this.myGrid.RowDefinitions[6].Height = (this.MessageHint == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-
         }
 
         private void SetIconType()

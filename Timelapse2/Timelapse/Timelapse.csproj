@@ -95,12 +95,20 @@
     <TargetZone>Internet</TargetZone>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\WindowsAPICodePack-Core.1.1.2\lib\Microsoft.WindowsAPICodePack.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.Shell, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\WindowsAPICodePack-Shell.1.1.1\lib\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Data.SQLite, Version=1.0.100.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Data.SQLite.Core.1.0.100.0\lib\net40\System.Data.SQLite.dll</HintPath>
+    <Reference Include="System.Data.SQLite, Version=1.0.101.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Data.SQLite.Core.1.0.101.0\lib\net40\System.Data.SQLite.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Deployment" />
@@ -125,6 +133,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Database\CustomFilterOperator.cs" />
+    <Compile Include="Database\DataRowExtensions.cs" />
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
     <Compile Include="Database\ImageTableEnumerator.cs" />
@@ -137,8 +146,8 @@
     <Compile Include="StockMessage.xaml.cs">
       <DependentUpon>StockMessage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Util\CheckDependencies.cs" />
-    <Compile Include="Util\CheckForUpdate.cs" />
+    <Compile Include="Util\Dependencies.cs" />
+    <Compile Include="Util\VersionClient.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Database\CustomFilter.cs" />
     <Compile Include="Database\ColumnTuple.cs" />
@@ -148,8 +157,8 @@
     <Compile Include="DialogAboutTimelapse.xaml.cs">
       <DependentUpon>DialogAboutTimelapse.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogChooseDataBaseFile.xaml.cs">
-      <DependentUpon>DialogChooseDataBaseFile.xaml</DependentUpon>
+    <Compile Include="DialogChooseDatabaseFile.xaml.cs">
+      <DependentUpon>DialogChooseDatabaseFile.xaml</DependentUpon>
     </Compile>
     <Compile Include="DialogCustomViewFilter.xaml.cs">
       <DependentUpon>DialogCustomViewFilter.xaml</DependentUpon>
@@ -170,7 +179,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogChooseDataBaseFile.xaml">
+    <Page Include="DialogChooseDatabaseFile.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -258,7 +267,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls.xaml">
+    <Page Include="DataEntryControls.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -354,8 +363,8 @@
     <Compile Include="Images\MarkableImageCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
     <Compile Include="Util\RegistryUserSettings.cs" />
-    <Compile Include="Controls.xaml.cs">
-      <DependentUpon>Controls.xaml</DependentUpon>
+    <Compile Include="DataEntryControls.xaml.cs">
+      <DependentUpon>DataEntryControls.xaml</DependentUpon>
     </Compile>
     <Compile Include="ControlWindow.xaml.cs">
       <DependentUpon>ControlWindow.xaml</DependentUpon>
@@ -454,12 +463,12 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\..\packages\System.Data.SQLite.Core.1.0.100.0\build\net40\System.Data.SQLite.Core.targets" Condition="Exists('..\..\packages\System.Data.SQLite.Core.1.0.100.0\build\net40\System.Data.SQLite.Core.targets')" />
+  <Import Project="..\..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets" Condition="Exists('..\..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\System.Data.SQLite.Core.1.0.100.0\build\net40\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\System.Data.SQLite.Core.1.0.100.0\build\net40\System.Data.SQLite.Core.targets'))" />
+    <Error Condition="!Exists('..\..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets'))" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

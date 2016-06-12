@@ -10,7 +10,7 @@ using Timelapse.Util;
 namespace Timelapse.UnitTests
 {
     [TestClass]
-    public class RegistryTests
+    public class RegistryTests : TimelapseTest
     {
         /// <summary>
         /// Basic functional validation of the <see cref="MostRecentlyUsedList" /> class.
@@ -121,7 +121,7 @@ namespace Timelapse.UnitTests
         /// Sanity test against whatever the current state of Timelapse' registry keys is.
         /// </summary>
         [TestMethod]
-        public void ReadWriteProductionKeys()
+        public void ProductionKeysRead()
         {
             using (TimelapseRegistryUserSettings timelapseRegistry = new TimelapseRegistryUserSettings())
             {
@@ -136,7 +136,7 @@ namespace Timelapse.UnitTests
         }
 
         [TestMethod]
-        public void ReadWriteTestKeys()
+        public void TestKeysCreateReuseUpdate()
         {
             string testRootKey = Constants.Registry.RootKey + "UnitTest";
             using (RegistryKey testKey = Registry.CurrentUser.OpenSubKey(testRootKey))
@@ -167,7 +167,7 @@ namespace Timelapse.UnitTests
                 Assert.IsTrue(mostRecentImageSets.Count == 0);
 
                 // write
-                string databasePath = Path.Combine(Environment.CurrentDirectory, Constants.File.DefaultImageDatabaseFileName);
+                string databasePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultImageDatabaseFileName);
                 mostRecentImageSets.SetMostRecent(databasePath);
 
                 timelapseRegistry.WriteAudioFeedback(audioFeedback);

@@ -1,30 +1,32 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Windows;
+using Timelapse.Util;
 
 namespace TimelapseTemplateEditor
 {
     /// <summary>
-    /// Interaction logic for DlgAboutTImelapseEditor.xaml
+    /// Interaction logic for DialogAboutTimelapseEditor.xaml
     /// </summary>
-    public partial class DlgAboutTimelapseEditor : Window
+    public partial class DialogAboutTimelapseEditor : Window
     {
         // TO DO: The Version string is not used. Can delete all references to this argument.
-        public DlgAboutTimelapseEditor()
+        public DialogAboutTimelapseEditor()
         {
-            InitializeComponent();
+            this.InitializeComponent();
             Version curVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
             this.Version.Text = curVersion.ToString();
         }
 
-        private void okButton_Click(object sender, RoutedEventArgs e)
+        private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = true;
         }
 
         private void BtnCheckForUpdate_Click(object sender, RoutedEventArgs e)
         {
-            CheckForUpdate.GetAndParseVersion(this, true);
+            VersionClient updater = new VersionClient(EditorConstant.ApplicationName, EditorConstant.LatestVersionAddress);
+            updater.TryGetAndParseVersion(true);
         }
 
         private void BtnVersionChanges_Click(object sender, RoutedEventArgs e)

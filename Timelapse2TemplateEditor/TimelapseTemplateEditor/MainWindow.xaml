@@ -182,112 +182,6 @@
             </ToolTip>
             <local:ListBoxDBOutputConverter x:Key="listConverter" />
             <local:CellTextBlockConverter x:Key="cellTBConverter" />
-
-
-            <Style  x:Key="RadioButtonCodeBar" TargetType="RadioButton" BasedOn="{ StaticResource {x:Type ToggleButton}}">
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="{x:Type ToggleButton}">
-                            <Border HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="border" Padding="5,5,5,5" CornerRadius="5,5,5,5" Background="Beige" BorderBrush="LightBlue" BorderThickness="1,1,1,4" SnapsToDevicePixels="True">
-                                <ContentPresenter x:Name="contentPresenter"/>
-                            </Border>
-
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsChecked" Value="true">
-                                    <Setter Property="Background" TargetName="border" Value="LightBlue"/>
-                                    <Setter Property="BorderBrush" TargetName="border" Value="Gray"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="Margin" Value="0,0,2,0" />
-            </Style>
-
-            <Style  x:Key="LabelCodeBar" TargetType="Label">
-                <Setter Property="HorizontalAlignment" Value="Right"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Padding" Value="5,5,5,5"/>
-                <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="Height" Value="30" />
-            </Style>
-
-            <Style  x:Key="FlagCodeBar" TargetType="{x:Type CheckBox}">
-                <Setter Property="SnapsToDevicePixels" Value="true"/>
-                <Setter Property="OverridesDefaultStyle" Value="true"/>
-                <Setter Property="FocusVisualStyle" Value="{DynamicResource CheckBoxFocusVisualStyle}" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="CheckBox">
-                            <BulletDecorator Background="Transparent">
-                                <BulletDecorator.Bullet>
-                                    <Border x:Name="Border"  
-                                  Width="17" 
-                                  Height="17" 
-                                  CornerRadius="2" 
-                                  Background="{StaticResource NormalBrush}"
-                                  BorderThickness="1"
-                                  BorderBrush="{StaticResource NormalBorderBrush}">
-                                        <Path 
-                                    Width="11" Height="11" 
-                                    x:Name="CheckMark"
-                                    SnapsToDevicePixels="False" 
-                                    Stroke="{StaticResource GlyphBrush}"
-                                    StrokeThickness="2"
-                                    Data="M 2,4 C 2,4 3,5 5,13 C 5,13 5,3 12,0" />
-                                    </Border>
-                                </BulletDecorator.Bullet>
-                                <ContentPresenter Margin="4,0,0,0"
-                                VerticalAlignment="Center"
-                                HorizontalAlignment="Left"
-                                RecognizesAccessKey="True"/>
-                            </BulletDecorator>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsChecked" Value="false">
-                                    <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
-                                </Trigger>
-                                <Trigger Property="IsChecked" Value="{x:Null}">
-                                    <Setter TargetName="CheckMark" Property="Data" Value="M 0 7 L 7 0" />
-                                </Trigger>
-                                <Trigger Property="IsMouseOver" Value="true">
-                                    <Setter TargetName="Border" Property="Background" Value="{StaticResource DarkBrush}" />
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="true">
-                                    <Setter TargetName="Border" Property="Background" Value="{StaticResource PressedBrush}" />
-                                    <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PressedBorderBrush}" />
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="false">
-                                    <Setter TargetName="Border" Property="Background" Value="{StaticResource DisabledBackgroundBrush}" />
-                                    <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource DisabledBorderBrush}" />
-                                    <Setter Property="Foreground" Value="{StaticResource DisabledForegroundBrush}"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-
-                    </Setter.Value>
-                </Setter>
-                <Setter Property="HorizontalAlignment" Value="Right"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Padding" Value="5,5,5,5"/>
-                <Setter Property="Margin" Value="0,10,0,0"/>
-                <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="Height" Value="30" />
-            </Style>
-
-            <Style  x:Key="TextBoxCodeBar" TargetType="TextBox" >
-                <Setter Property="HorizontalAlignment" Value="Left"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Padding" Value="0,4,5,5"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="BorderBrush" Value="LightBlue"/>
-                <Setter Property="FontWeight" Value="Normal" />
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="Height" Value="30" />
-                <Setter Property="Focusable" Value="True" />
-                <Setter Property="IsReadOnly" Value="False" />
-            </Style>
-
             <Style  x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
                 <Setter Property="HorizontalAlignment" Value="Left"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -300,12 +194,6 @@
                 <Setter Property="Focusable" Value="True" />
                 <Setter Property="IsReadOnly" Value="False" />
                 <Setter Property="IsEditable" Value="False" />
-            </Style>
-
-            <Style  x:Key="StackPanelCodeBar" TargetType="StackPanel">
-                <Setter Property="Orientation" Value="Horizontal"/>
-                <Setter Property="Margin" Value="0,0,10,0" />
-                <Setter Property="Height" Value="40"/>
             </Style>
         </ResourceDictionary>
     </Window.Resources>
@@ -334,7 +222,7 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="ExitFileMenuItem" Header="_Exit" Click="ExitFileMenuItem_Click">
+                    <MenuItem Name="ExitFileMenuItem" Header="E_xit" Click="ExitFileMenuItem_Click">
                         <MenuItem.Icon>
                             <Image Source="Images/Close_16XLG.png" />
                         </MenuItem.Icon>
@@ -345,13 +233,12 @@
                     </MenuItem>
                 </MenuItem>
                 <MenuItem Header="_Help" >
-                    <MenuItem Name="MenuItemTimelapseHomePage" Header="_The Timelapse Web Page (via your web browser)" Click="MenuTimelapseWebPage_Click" ToolTip="Displays the Timelapse Image Analyzer web page in your browser"/>
-                    <MenuItem Name="MenuItemTutorialManual" Header="_Tutorial Manual (via your web browser)" Click="MenuTutorialManual_Click" ToolTip="Displays the Tutorial Manual - a large PDF file - in your browser"/>
-                    <MenuItem Name="MenuItemDownloadSampleImages" Header="Download Tutorial Sample Images (via your web browser)" Click="MenuDownloadSampleImages_Click" ToolTip="Using your browser, it downloads the sample image files used in the  Tutorial Manual for you to practise with"/>
-                    <MenuItem Name="MenuItemJoinMailingList" Header="Timelapse Mailing List - Join it (via your web browser)" Click="MenuJoinTimelapseMailingList_Click" ToolTip="Using your browser, go to the page that lets you join the timelapse mailing list. You will be informed about updates, and you can post requests to it."/>
-                    <MenuItem Name="MenuItemMailToMailingList" Header="Timelapse Mailing List - Send Email " Click="MenuMailToTimelapseMailingList_Click" ToolTip="Post an email to the Timelapse mailing list. You should join the mailing list before doing this."/>
-                    <MenuItem Name="AboutMenuItem" Header="_About" Click="AboutMenuItem_Click" ToolTip="Information about this application version">
-                    </MenuItem>
+                    <MenuItem Name="MenuItemTimelapseHomePage" Header="The Timelapse _web page (via your web browser)" Click="MenuTimelapseWebPage_Click" ToolTip="Displays the Timelapse Image Analyzer web page in your browser"/>
+                    <MenuItem Name="MenuItemTutorialManual" Header="Tutorial _manual (via your web browser)" Click="MenuTutorialManual_Click" ToolTip="Displays the Tutorial Manual - a large PDF file - in your browser"/>
+                    <MenuItem Name="MenuItemDownloadSampleImages" Header="_Download tutorial sample images (via your web browser)" Click="MenuDownloadSampleImages_Click" ToolTip="Using your browser, it downloads the sample image files used in the  Tutorial Manual for you to practise with"/>
+                    <MenuItem Name="MenuItemJoinMailingList" Header="Timelapse mailing list - _Join it (via your web browser)" Click="MenuJoinTimelapseMailingList_Click" ToolTip="Using your browser, go to the page that lets you join the timelapse mailing list. You will be informed about updates, and you can post requests to it."/>
+                    <MenuItem Name="MenuItemMailToMailingList" Header="Timelapse mailing list - Send _email " Click="MenuMailToTimelapseMailingList_Click" ToolTip="Post an email to the Timelapse mailing list. You should join the mailing list before doing this."/>
+                    <MenuItem Name="AboutMenuItem" Header="_About" Click="AboutMenuItem_Click" ToolTip="Displays version information about this program and how to contact its creator"/>
                 </MenuItem>
             </Menu>
             <TextBlock Name="HelpText" Visibility="Collapsed" Grid.Row="0" FontSize="16" Text="Use the File Menu to create or open a template, and to convert an old CodeTemplate.xml file to the new format." Margin =" 10" DockPanel.Dock="Top"/>
@@ -616,7 +503,7 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel>
-                                        <Button Name="btnButton" Tag="{Binding Path=ControlOrder}" Click="btnChoiceListButton_Click"  local:Extensions.ChoiceList="{Binding Path=List, Mode=TwoWay, Converter={StaticResource listConverter}}" Margin="1"  Content="Define List" >
+                                        <Button Name="btnButton" Tag="{Binding Path=ControlOrder}" Click="ChoiceListButton_Click"  local:MainWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay, Converter={StaticResource listConverter}}" Margin="1"  Content="Define List" >
                                             <Button.Style>
                                                 <Style TargetType="{x:Type Button}">
                                                     <Style.Triggers>
@@ -664,14 +551,14 @@
                         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,-1" >
                             <TextBlock  Margin="0,0,0,5" DockPanel.Dock="Top" FontSize="14"  HorizontalAlignment="Center"><Run Text="Add:"/></TextBlock>
                             <UniformGrid Margin="0,0,0,0" Rows="4" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
-                                <Button Content="Count"  Margin="0,0,0,2.5" Tag="Count" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddRowButton_Click" Name="AddCountRowButton"/>
-                                <Button Content="Choice" Margin="0,0,0,2.5" Tag="Choice" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddRowButton_Click " Name="AddChoiceRowButton"/>
-                                <Button Content="Note" Margin="0,0,0,2.5"  Tag="Note" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddRowButton_Click" Name="AddNoteRowButton"/>
-                                <Button Content="Flag" Margin="0,0,0,0"  Tag="Flag" DockPanel.Dock="Bottom"  HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddRowButton_Click" Name="AddFlagRowButton"/>
+                                <Button Content="Count"  Margin="0,0,0,2.5" Tag="Counter" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton"/>
+                                <Button Content="Choice" Margin="0,0,0,2.5" Tag="FixedChoice" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFixedChoiceButton"/>
+                                <Button Content="Note" Margin="0,0,0,2.5"  Tag="Note" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddNoteButton"/>
+                                <Button Content="Flag" Margin="0,0,0,0"  Tag="Flag" DockPanel.Dock="Bottom"  HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFlagButton"/>
                             </UniformGrid>
                         </DockPanel>
                     </Border>
-                    <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center"  DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveRowButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveRowButton_Click" Margin="0,30,0,0"/>
+                    <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center"  DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveControlButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveControlButton_Click" Margin="0,30,0,0"/>
 
                 </DockPanel>
 
@@ -690,14 +577,14 @@
                     <TextBlock Grid.Row="0" Margin="0,10,10,0" FontWeight="Bold" Text="What the interface will (roughly) look like. Drag and drop these controls (by their labels) to re-arrange their order to your preference"></TextBlock>
                     <Border Grid.Row="1" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
                         <ScrollViewer VerticalAlignment="Top">
-                            <WrapPanel x:Name="wp" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="sp_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="sp_PreviewMouseLeftButtonUp" PreviewMouseMove="sp_PreviewMouseMove"
-                                    DragEnter="sp_DragEnter" Drop="sp_Drop" />
+                            <WrapPanel x:Name="controlsPanel" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="OnPreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="OnPreviewMouseLeftButtonUp" PreviewMouseMove="OnPreviewMouseMove"
+                                    DragEnter="OnDragEnter" Drop="OnDragDrop" />
                         </ScrollViewer>
                     </Border>
                     <TextBlock Grid.Row="2" Margin="0,5,10,0" FontWeight="Bold" Text="The spreadsheet column order.  Drag and drop columns to re-arrange their order to your preference"></TextBlock>
                     <Border Grid.Row="3" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
                         <ScrollViewer MinHeight="50" Height="50" HorizontalScrollBarVisibility="Visible" VerticalAlignment="Top">
-                            <DataGrid x:Name="dgSpreadsheet" Margin="0,10,0,0"  MinHeight="25" Height="25" ColumnReordered="ColumnReordered" VerticalAlignment="Top"/>
+                            <DataGrid x:Name="dgSpreadsheet" Margin="0,10,0,0"  MinHeight="25" Height="25" ColumnReordered="OnSpreadsheetOrderChanged" VerticalAlignment="Top"/>
                         </ScrollViewer>
                     </Border>
                 </Grid>

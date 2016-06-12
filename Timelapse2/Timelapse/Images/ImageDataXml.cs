@@ -10,6 +10,7 @@ namespace Timelapse.Images
     {
         // Read all the data into the imageData structure from the XML file in the filepath.
         // Note that we need to know the code controls,as we have to associate any points read in with a particular counter control
+        // TODOSAUL: support periodic insert of chunks rather than one large block?
         public static void Read(string filePath, DataTable templateTable, ImageDatabase imageDatabase)
         {
             // XML Preparation
@@ -17,7 +18,7 @@ namespace Timelapse.Images
             xmlDoc.Load(filePath);
 
             // Import the old log (if any)
-            XmlNodeList nodeLog = xmlDoc.SelectNodes(Constants.DatabaseColumn.Images + Constants.DatabaseColumn.Slash + Constants.DatabaseColumn.Log);
+            XmlNodeList nodeLog = xmlDoc.SelectNodes(Constants.ImageXml.Images + Constants.ImageXml.Slash + Constants.DatabaseColumn.Log);
             if (nodeLog.Count > 0)
             {
                 XmlNode nlog = nodeLog[0];
@@ -31,16 +32,16 @@ namespace Timelapse.Images
             List<string> choiceControlNames = new List<string>();
             for (int control = 0; control < templateTable.Rows.Count; control++)
             {
-                string dataLabel = (string)templateTable.Rows[control][Constants.Control.DataLabel];
-                switch ((string)templateTable.Rows[control][Constants.Database.Type])
+                string dataLabel = templateTable.Rows[control].GetStringField(Constants.Control.DataLabel);
+                switch (templateTable.Rows[control].GetStringField(Constants.Control.Type))
                 {
-                    case Constants.DatabaseColumn.Counter:
+                    case Constants.Control.Counter:
                         counterControlNames.Add(dataLabel);
                         break;
-                    case Constants.DatabaseColumn.FixedChoice:
+                    case Constants.Control.FixedChoice:
                         choiceControlNames.Add(dataLabel);
                         break;
-                    case Constants.DatabaseColumn.Note:
+                    case Constants.Control.Note:
                         noteControlNames.Add(dataLabel);
                         break;
                     default:
@@ -49,7 +50,7 @@ namespace Timelapse.Images
                 }
             }
 
-            XmlNodeList nodeList = xmlDoc.SelectNodes(Constants.DatabaseColumn.Images + Constants.DatabaseColumn.Slash + Constants.DatabaseColumn.Image);
+            XmlNodeList nodeList = xmlDoc.SelectNodes(Constants.ImageXml.Images + Constants.ImageXml.Slash + Constants.DatabaseColumn.Image);
             int imageID = 0;
             List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
             List<ColumnTuplesWithWhere> markersToUpdate = new List<ColumnTuplesWithWhere>();
@@ -59,7 +60,7 @@ namespace Timelapse.Images
 
                 List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>(); // Populate the data 
                 // File Field - We use the file name as a key into a particular database row. We don't change the database field as it is our key.
-                string imageFileName = node[Constants.DatabaseColumn._File].InnerText;
+                string imageFileName = node[Constants.ImageXml.File].InnerText;
 
                 // If the Folder Path differs from where we had previously loaded it, 
                 // warn the user that the new path will be substituted in its place
@@ -69,11 +70,11 @@ namespace Timelapse.Images
                 string imageFolder = node[Constants.DatabaseColumn.Folder].InnerText;
 
                 // Date - We use the original date, as the analyst may have adjusted them 
-                string date = node[Constants.DatabaseColumn._Date].InnerText;
+                string date = node[Constants.ImageXml.Date].InnerText;
                 columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, date));
 
                 // Date - We use the original time, although its almost certainly identical
-                string time = node[Constants.DatabaseColumn._Time].InnerText;
+                string time = node[Constants.ImageXml.Time].InnerText;
                 columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Time, time));
 
                 // We don't use the imagequality, as the new system may have altered how quality is determined (e.g., deleted files)
@@ -83,7 +84,7 @@ namespace Timelapse.Images
 
                 // Notes: Iterate through 
                 int innerNodeIndex = 0;
-                XmlNodeList innerNodeList = node.SelectNodes(Constants.DatabaseColumn.Note);
+                XmlNodeList innerNodeList = node.SelectNodes(Constants.Control.Note);
                 foreach (XmlNode innerNode in innerNodeList)
                 {
                     columnsToUpdate.Add(new ColumnTuple(noteControlNames[innerNodeIndex++], innerNode.InnerText));
@@ -91,7 +92,7 @@ namespace Timelapse.Images
 
                 // Choices: Iterate through 
                 innerNodeIndex = 0;
-                innerNodeList = node.SelectNodes(Constants.DatabaseColumn.FixedChoice);
+                innerNodeList = node.SelectNodes(Constants.Control.FixedChoice);
                 foreach (XmlNode innerNode in innerNodeList)
                 {
                     columnsToUpdate.Add(new ColumnTuple(choiceControlNames[innerNodeIndex++], innerNode.InnerText));
@@ -100,7 +101,7 @@ namespace Timelapse.Images
                 // Counters: Iterate through  
                 List<ColumnTuple> counterCoordinates = new List<ColumnTuple>();
                 innerNodeIndex = 0;
-                innerNodeList = node.SelectNodes(Constants.DatabaseColumn.Counter);
+                innerNodeList = node.SelectNodes(Constants.Control.Counter);
                 string where = String.Empty;
                 foreach (XmlNode innerNode in innerNodeList)
                 {
@@ -139,7 +140,7 @@ namespace Timelapse.Images
 
                 // add this image's updates to the update lists
                 ColumnTuplesWithWhere imageToUpdate = new ColumnTuplesWithWhere(columnsToUpdate);
-                imageToUpdate.SetWhere(imageFolder, imageFileName);
+                imageToUpdate.SetWhere(imageFolder, null, imageFileName);
                 imagesToUpdate.Add(imageToUpdate);
 
                 ColumnTuplesWithWhere markerToUpdate = new ColumnTuplesWithWhere(counterCoordinates);
