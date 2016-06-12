@@ -57,7 +57,7 @@ namespace Timelapse
             this.InitializeComponent();
 
             // Abort if some of the required dependencies are missing
-            if (Dependencies.AreRequiredBinariesPresent(Assembly.GetExecutingAssembly()) == false)
+            if (Dependencies.AreRequiredBinariesPresent(Constants.ApplicationName, Assembly.GetExecutingAssembly()) == false)
             {
                 Dependencies.ShowMissingBinariesDialog(Constants.ApplicationName);
                 Application.Current.Shutdown();

@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Timelapse.Util;
+using TimelapseTemplateEditor;
 
 namespace Timelapse.UnitTests
 {
@@ -9,7 +10,8 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void RequiredBinaries()
         {
-            Assert.IsTrue(Dependencies.AreRequiredBinariesPresent(this.GetType().Assembly));
+            Assert.IsTrue(Dependencies.AreRequiredBinariesPresent(Constants.ApplicationName, this.GetType().Assembly));
+            Assert.IsTrue(Dependencies.AreRequiredBinariesPresent(EditorConstant.ApplicationName, this.GetType().Assembly));
         }
     }
 }

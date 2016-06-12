@@ -44,9 +44,9 @@ namespace TimelapseTemplateEditor
         public MainWindow()
         {
             // Abort if some of the required dependencies are missing
-            if (Dependencies.AreRequiredBinariesPresent(Assembly.GetExecutingAssembly()) == false)
+            if (Dependencies.AreRequiredBinariesPresent(EditorConstant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
             {
-                Dependencies.ShowMissingBinariesDialog(Constants.ApplicationName);
+                Dependencies.ShowMissingBinariesDialog(EditorConstant.ApplicationName);
                 Application.Current.Shutdown();
             }
 
