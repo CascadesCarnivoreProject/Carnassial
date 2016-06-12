@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.Windows.Data;
-using TimelapseTemplateEditor.Util;
+using Timelapse.Util;
 
 namespace TimelapseTemplateEditor
 {
@@ -14,7 +14,7 @@ namespace TimelapseTemplateEditor
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            string newList = CsvHelper.ConvertLineBreaksToBars(value as string);
+            string newList = Utilities.ConvertLineBreaksToBars(value as string);
             return newList;
         }
 

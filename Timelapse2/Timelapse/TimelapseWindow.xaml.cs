@@ -747,9 +747,9 @@ namespace Timelapse
         {
             // Add callbacks to all our controls. When the user changes an image's attribute using a particular control,
             // the callback updates the matching field for that image in the imageData structure.
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
             {
-                string controlType = this.imageDatabase.ControlTypeFromDataLabel[pair.Key];
+                string controlType = this.imageDatabase.ImageDataColumnsByDataLabel[pair.Key].ControlType;
                 if (null == controlType)
                 {
                     return;
@@ -1025,7 +1025,7 @@ namespace Timelapse
         /// </summary>
         private void BtnCopy_MouseEnter(object sender, MouseEventArgs e)
         {
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
             {
                 DataEntryControl control = (DataEntryControl)pair.Value;
                 if (control.Copyable)
@@ -1042,7 +1042,7 @@ namespace Timelapse
         /// </summary>
         private void BtnCopy_MouseLeave(object sender, MouseEventArgs e)
         {
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
             {
                 DataEntryControl control = (DataEntryControl)pair.Value;
                 control.Container.ClearValue(Control.BackgroundProperty);
@@ -1200,9 +1200,9 @@ namespace Timelapse
             // For each control, we get its type and then update its contents from the current data table row
             // this is always done as it's assumed either the image changed or that a control refresh is required due to database changes
             // the call to TryMoveToImage() above refreshes the data stored under this.imageCache.Current
-            foreach (KeyValuePair<string, DataEntryControl> control in this.dataEntryControls.ControlFromDataLabel)
+            foreach (KeyValuePair<string, DataEntryControl> control in this.dataEntryControls.ControlsByDataLabel)
             {
-                string controlType = this.imageDatabase.ControlTypeFromDataLabel[control.Key];
+                string controlType = this.imageDatabase.ImageDataColumnsByDataLabel[control.Key].ControlType;
                 switch (controlType)
                 {
                     case Constants.DatabaseColumn.File:
@@ -1458,7 +1458,7 @@ namespace Timelapse
             else
             {
                 // An existing marker has been deleted.
-                DataEntryCounter myCounter = (DataEntryCounter)this.dataEntryControls.ControlFromDataLabel[e.MetaTag.DataLabel];
+                DataEntryCounter myCounter = (DataEntryCounter)this.dataEntryControls.ControlsByDataLabel[e.MetaTag.DataLabel];
 
                 // Part 1. Decrement the count 
                 string old_counter_data = myCounter.Content;
@@ -1621,9 +1621,9 @@ namespace Timelapse
                 MetaTagCounter mtagCounter = this.counterCoords[i];
                 DataEntryControl control;
                 DataEntryCounter current_counter;
-                if (true == this.dataEntryControls.ControlFromDataLabel.TryGetValue(mtagCounter.DataLabel, out control))
+                if (true == this.dataEntryControls.ControlsByDataLabel.TryGetValue(mtagCounter.DataLabel, out control))
                 {
-                    current_counter = (DataEntryCounter)this.dataEntryControls.ControlFromDataLabel[mtagCounter.DataLabel];
+                    current_counter = (DataEntryCounter)this.dataEntryControls.ControlsByDataLabel[mtagCounter.DataLabel];
                 }
                 else
                 {
@@ -1854,7 +1854,45 @@ namespace Timelapse
             }
 
             CsvReaderWriter csvReader = new CsvReaderWriter();
-            csvReader.ImportFromCsv(this.imageDatabase, csvFilePath);
+            try
+            {
+                List<string> importErrors;
+                if (csvReader.TryImportFromCsv(csvFilePath, this.imageDatabase, out importErrors) == false)
+                {
+                    DialogMessageBox messageBox = new DialogMessageBox();
+                    messageBox.IconType = MessageBoxImage.Error;
+                    messageBox.ButtonType = MessageBoxButton.OK;
+                    messageBox.MessageTitle = "Can't import the CSV file.";
+                    messageBox.MessageProblem = String.Format("The file {0} could not be read.", csvFilePath);
+                    messageBox.MessageReason = "The CSV file is not compatible with the current image set.";
+                    messageBox.MessageSolution = "Check that:" + Environment.NewLine;
+                    messageBox.MessageSolution += "\u2022 The first row of the CSV file is a header line." + Environment.NewLine;
+                    messageBox.MessageSolution += "\u2022 The column names in the header line match the database.";
+                    messageBox.MessageSolution += "\u2022 Choice values use the correct case.";
+                    messageBox.MessageSolution += "\u2022 Counter values are numbers.";
+                    messageBox.MessageSolution += "\u2022 Flag values are either 'true' or 'false'.";
+                    messageBox.MessageResult = "Either no data was imported or invalid parts of the CSV were skipped.";
+                    messageBox.MessageHint = "The errors encountered were:";
+                    foreach (string importError in importErrors)
+                    {
+                        messageBox.MessageHint += "\u2022 " + importError;
+                    }
+                    messageBox.ShowDialog();
+                }
+            }
+            catch (Exception exception)
+            {
+                DialogMessageBox messageBox = new DialogMessageBox();
+                messageBox.IconType = MessageBoxImage.Error;
+                messageBox.ButtonType = MessageBoxButton.OK;
+                messageBox.MessageTitle = "Can't import the CSV file.";
+                messageBox.MessageProblem = String.Format("The file {0} could not be opened.", csvFilePath);
+                messageBox.MessageReason = "Most likely the file is open in another program.";
+                messageBox.MessageSolution = "If the file is open in another program, close it.";
+                messageBox.MessageResult = String.Format("{0}: {1}", exception.GetType().FullName, exception.Message);
+                messageBox.MessageHint = "Is the file open in Excel?";
+                messageBox.ShowDialog();
+            }
 
             this.OnImageLoadingComplete();
             StatusBarUpdate.Message(this.statusBar, "CSV file imported.");
@@ -2093,9 +2131,9 @@ namespace Timelapse
                 return; // We are already on the first image, so there is nothing to copy
             }
 
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlFromDataLabel)
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
             {
-                string type = this.imageDatabase.ControlTypeFromDataLabel[pair.Key];
+                string type = this.imageDatabase.ImageDataColumnsByDataLabel[pair.Key].ControlType;
                 if (null == type)
                 {
                     type = "Not a control";

@@ -125,7 +125,6 @@
     </ApplicationDefinition>
     <Compile Include="Util\CodeTemplateImporter.cs" />
     <Compile Include="EditorConstant.cs" />
-    <Compile Include="Util\CsvHelper.cs" />
     <Compile Include="DialogAboutTimelapseEditor.xaml.cs">
       <DependentUpon>DialogAboutTimelapseEditor.xaml</DependentUpon>
     </Compile>

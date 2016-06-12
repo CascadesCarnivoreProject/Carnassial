@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using Timelapse.Database;
 using Timelapse.Images;
+using Timelapse.Util;
 
 namespace Timelapse.UnitTests
 {
@@ -243,7 +244,7 @@ namespace Timelapse.UnitTests
                 DataEntryControls controls = new DataEntryControls();
                 controls.Generate(imageDatabase, imageEnumerator);
 
-                Assert.IsTrue(controls.ControlFromDataLabel.Count == databaseExpectation.ExpectedControls, "Expected {0} controls to be generated but {1} were.", databaseExpectation.ExpectedControls, controls.ControlFromDataLabel.Count);
+                Assert.IsTrue(controls.ControlsByDataLabel.Count == databaseExpectation.ExpectedControls, "Expected {0} controls to be generated but {1} were.", databaseExpectation.ExpectedControls, controls.ControlsByDataLabel.Count);
             }
         }
 
@@ -379,7 +380,9 @@ namespace Timelapse.UnitTests
             CsvReaderWriter csvReaderWriter = new CsvReaderWriter();
             string initialCsvFilePath = this.GetUniqueFilePathForTest(Path.GetFileNameWithoutExtension(Constants.File.DefaultImageDatabaseFileName) + Constants.File.CsvFileExtension);
             csvReaderWriter.ExportToCsv(imageDatabase, initialCsvFilePath);
-            csvReaderWriter.ImportFromCsv(imageDatabase, initialCsvFilePath);
+            List<string> importErrors;
+            Assert.IsTrue(csvReaderWriter.TryImportFromCsv(initialCsvFilePath, imageDatabase, out importErrors));
+            Assert.IsTrue(importErrors.Count == 0);
 
             string roundtripCsvFilePath = Path.Combine(Path.GetDirectoryName(initialCsvFilePath), Path.GetFileNameWithoutExtension(initialCsvFilePath) + "-roundtrip" + Constants.File.CsvFileExtension);
             csvReaderWriter.ExportToCsv(imageDatabase, roundtripCsvFilePath);
