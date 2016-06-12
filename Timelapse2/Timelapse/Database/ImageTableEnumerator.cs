@@ -13,7 +13,7 @@ namespace Timelapse.Database
         public int CurrentRow { get; private set; }
 
         public ImageTableEnumerator(ImageDatabase database) :
-            this(database, -1)
+            this(database, Constants.Database.InvalidRow)
         {
         }
 
@@ -46,7 +46,8 @@ namespace Timelapse.Database
 
         public virtual void Reset()
         {
-            this.TryMoveToImage(Constants.DefaultImageRowIndex);
+            this.Current = null;
+            this.CurrentRow = Constants.Database.InvalidRow;
         }
 
         /// <summary>

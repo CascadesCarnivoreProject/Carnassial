@@ -1,17 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Forms;
-using System.Windows.Media.Imaging;
 
 namespace Timelapse.Util
 {
     /// <summary>
     /// Utilities collect a variety of miscellaneous utility functions
     /// </summary>
-    internal class Utilities
+    public class Utilities
     {
-        #region Folder paths and folder names
+        private static readonly char[] BarDelimiter = { '|' };
+        private static readonly string[] NewLineDelimiters = { Environment.NewLine };
+
         // get a location for the template database from the user
         public static bool TryGetFileFromUser(string title, string defaultFilePath, string filter, out string selectedFilePath)
         {
@@ -46,39 +48,54 @@ namespace Timelapse.Util
             return false;
         }
 
-        /// <summary>Given a bitmap, load it with the image specified in the resource file</summary>
-        /// <param name="bitmap">bitmap to populate with the image</param>
-        /// <param name="resource">embedded resource to load bitmap data from</param>
-        /// <param name="cache">true to enable caching of the bitmap, false to disable caching</param>
-        /// <returns>the passed in bitmap</returns>
-        public static BitmapImage BitmapFromResource(BitmapImage bitmap, string resource, bool cache)
+        public static string ConvertBarsToLineBreaks(string barSeparatedChoices)
         {
-            bitmap.BeginInit();
-            if (!cache)
+            string[] choices = barSeparatedChoices.Split(Utilities.BarDelimiter);
+
+            string newlineSeparatedChoices = String.Empty;
+            foreach (string choice in choices)
             {
-                bitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+                string trimmedItem = choice.Trim();
+                if (String.IsNullOrEmpty(trimmedItem))
+                {
+                    continue; // ignore blank items
+                }
+                if (!String.IsNullOrEmpty(newlineSeparatedChoices))
+                {
+                    newlineSeparatedChoices += Environment.NewLine; // Add a newline if there is already a string in there
+                }
+                newlineSeparatedChoices += trimmedItem;
             }
-            bitmap.UriSource = new Uri("pack://application:,,/Resources/" + resource);
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.EndInit();
-            bitmap.Freeze();
-            return bitmap;
+            newlineSeparatedChoices = newlineSeparatedChoices.TrimEnd('\r', '\n'); // remove the last "newline" if items exists
+            return newlineSeparatedChoices;
         }
 
-        public static BitmapImage BitmapFromFile(BitmapImage bi, string imageFilepath, bool use_cached_images)
+        public static List<string> ConvertBarsToList(string barSeparatedChoices)
         {
-            bi.BeginInit();
-            if (!use_cached_images)
-            {
-                bi.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-            }
-            bi.UriSource = new Uri(imageFilepath);
-            bi.CacheOption = BitmapCacheOption.OnLoad;
-            bi.EndInit();
-            bi.Freeze(); // this makes the BitmapImage threadsafe!
-            return bi;
+            return new List<string>(barSeparatedChoices.Split(Utilities.BarDelimiter));
         }
-        #endregion
+
+        public static string ConvertLineBreaksToBars(string newlineSeparatedChoices)
+        {
+            string[] choices = newlineSeparatedChoices.Split(Utilities.NewLineDelimiters, StringSplitOptions.RemoveEmptyEntries);
+
+            string barSeparatedChoices = String.Empty;
+            foreach (string choice in choices)
+            {
+                string trimmedItem = choice.Trim();
+                if (String.IsNullOrEmpty(trimmedItem))
+                {
+                    continue; // ignore blank items
+                }
+                if (!String.IsNullOrEmpty(barSeparatedChoices))
+                {
+                    barSeparatedChoices += "|"; // Add a '|' if there is already a string in there
+                }
+                barSeparatedChoices += trimmedItem;
+            }
+            barSeparatedChoices = barSeparatedChoices.TrimEnd(BarDelimiter); // remove the last "|" if items exists
+            return barSeparatedChoices;
+        }
 
         // Calculate the point as a ratio of its position on the image, so we can locate it regardless of the actual image size
         public static Point ConvertPointToRatio(Point p, double width, double height)
@@ -88,7 +105,7 @@ namespace Timelapse.Util
         }
 
         // The inverse of the above operation
-        public static Point ConvertRatioToPoint(System.Windows.Point p, double width, double height)
+        public static Point ConvertRatioToPoint(Point p, double width, double height)
         {
             Point imagePt = new Point(p.X * width, p.Y * height);
             return imagePt;

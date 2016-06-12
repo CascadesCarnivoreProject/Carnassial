@@ -24,6 +24,8 @@ namespace Timelapse.Database
 
         public Dictionary<string, string> DataLabelFromStandardControlType { get; private set; }
 
+        public Dictionary<string, ImageDataColumn> ImageDataColumnsByDataLabel { get; private set; }
+
         // contains the results of the data query
         public DataTable ImageDataTable { get; private set; }
 
@@ -31,8 +33,6 @@ namespace Timelapse.Database
         public DataTable MarkersTable { get; private set; }
 
         public List<string> TemplateSynchronizationIssues { get; private set; }
-
-        public Dictionary<string, string> ControlTypeFromDataLabel { get; private set; }
 
         public ImageDatabase(string filePath, TemplateDatabase templateDatabase)
             : base(filePath, templateDatabase)
@@ -42,11 +42,11 @@ namespace Timelapse.Database
             // What we really need is a function that we can call that will essentially bring the system back to its
             // virgin state, that we can invoke from various conditions. 
             // Alternately, we can just exit Timelapse (a poor solution but it could suffice for now)
-            this.ControlTypeFromDataLabel = new Dictionary<string, string>();
             this.DataLabelFromStandardControlType = new Dictionary<string, string>();
             this.disposed = false;
             this.FolderPath = Path.GetDirectoryName(filePath);
             this.FileName = Path.GetFileName(filePath);
+            this.ImageDataColumnsByDataLabel = new Dictionary<string, ImageDataColumn>();
 
             // load the marker table from the database
             string command = "Select * FROM " + Constants.Database.MarkersTable;
@@ -78,7 +78,7 @@ namespace Timelapse.Database
                     continue;
                 }
 
-                string controlType = this.ControlTypeFromDataLabel[columnName];
+                string controlType = this.ImageDataColumnsByDataLabel[columnName].ControlType;
                 if (controlType.Equals(Constants.Control.Counter))
                 {
                     counterList.Add(columnName);
@@ -116,10 +116,10 @@ namespace Timelapse.Database
                         string columnName = this.ImageDataTable.Columns[column].ColumnName;
                         if (columnName == Constants.DatabaseColumn.ID)
                         {
-                            // no control type is associated with the ID, as it's not added to this.ControlTypeFromDataLabel
+                            // don't specify an ID in the insert statement as it's an autoincrement primary key
                             continue;
                         }
-                        string controlType = this.ControlTypeFromDataLabel[columnName];
+                        string controlType = this.ImageDataColumnsByDataLabel[columnName].ControlType;
 
                         ImageProperties imageProperties = imagePropertiesList[insertIndex];
                         switch (controlType)
@@ -303,12 +303,12 @@ namespace Timelapse.Database
             this.TemplateSynchronizationIssues = new List<string>();
             foreach (string dataLabel in dataLabelsInTemplateButNotImageDatabase)
             {
-                this.TemplateSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the Template, but nothing matches that in the Data." + Environment.NewLine);
+                this.TemplateSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the template, but nothing matches that in the image data file." + Environment.NewLine);
             }
             List<string> dataLabelsInImageButNotTemplateDatabase = dataLabels.Except(templateDataLabels).ToList();
             foreach (string dataLabel in dataLabelsInImageButNotTemplateDatabase)
             {
-                this.TemplateSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the Data, but nothing matches that in the Template." + Environment.NewLine);
+                this.TemplateSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the image data file, but nothing matches that in the template." + Environment.NewLine);
             }
 
             // perform DataTable migrations
@@ -359,16 +359,14 @@ namespace Timelapse.Database
         {
             foreach (DataRow row in this.TemplateTable.Rows)
             {
-                long id = (long)row[Constants.DatabaseColumn.ID];
-                string dataLabel = row.GetStringField(Constants.Control.DataLabel);
-                string controlType = row.GetStringField(Constants.Control.Type);
+                ImageDataColumn column = ImageDataColumn.Create(row);
+                this.ImageDataColumnsByDataLabel.Add(column.DataLabel, column);
 
                 // don't type map user defined controls as if there are multiple ones the key would not be unique
-                if (Constants.Control.StandardTypes.Contains(controlType))
+                if (Constants.Control.StandardTypes.Contains(column.ControlType))
                 {
-                    this.DataLabelFromStandardControlType.Add(controlType, dataLabel);
+                    this.DataLabelFromStandardControlType.Add(column.ControlType, column.DataLabel);
                 }
-                this.ControlTypeFromDataLabel.Add(dataLabel, controlType);
             }
         }
 
@@ -805,11 +803,11 @@ namespace Timelapse.Database
         {
             List<long> idList = new List<long>(); // Create a list containing one ID, and
             idList.Add(id);
-            this.DeleteImage(idList);             // invoke the version of DeleteImage that operates over that list
+            this.DeleteImages(idList);             // invoke the version of DeleteImage that operates over that list
         }
 
         // Delete the data (including markers associated with the images identified by the list of IDs.
-        public void DeleteImage(List<long> idList)
+        public void DeleteImages(List<long> idList)
         {
             List<string> idClauses = new List<string>();
             foreach (long id in idList)

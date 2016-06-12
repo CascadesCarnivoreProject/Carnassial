@@ -102,7 +102,7 @@ namespace Timelapse.UnitTests
             coyoteImageUpdate.Columns.Add(new ColumnTuple("TriggerSource", "critter"));
             coyoteImageUpdate.Columns.Add(new ColumnTuple("Identification", "coyote"));
             coyoteImageUpdate.Columns.Add(new ColumnTuple("Confidence", "high"));
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("GroupType", "individual"));
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("GroupType", "single"));
             coyoteImageUpdate.Columns.Add(new ColumnTuple("Age", "adult"));
             coyoteImageUpdate.Columns.Add(new ColumnTuple("Pelage", String.Empty));
             coyoteImageUpdate.Columns.Add(new ColumnTuple("Activity", "unknown"));

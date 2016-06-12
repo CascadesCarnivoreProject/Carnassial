@@ -9,29 +9,58 @@ namespace Timelapse.Util
 {
     public class Dependencies
     {
-        private static readonly List<string> RequiredBinaries = new List<string>()
+        private static readonly List<string> CommonRequiredBinaries = new List<string>()
         {
-            "exiftool(-k).exe",
-            "Microsoft.WindowsAPICodePack.dll",
-            "Microsoft.WindowsAPICodePack.Shell.dll",
             "System.Data.SQLite.dll",
             "System.Data.SQLite.xml",
             "x64/SQLite.Interop.dll",
-            "x86/SQLite.Interop.dll",
+            "x86/SQLite.Interop.dll"
+        };
+
+        private static readonly List<string> EditorRequiredBinaries = new List<string>()
+        {
             "Timelapse2.exe"
+        };
+
+        private static readonly List<string> TimelapseRequiredBinaries = new List<string>()
+        {
+            "exiftool(-k).exe",
+            "Microsoft.WindowsAPICodePack.dll", // required by Microsoft.WindowsAPICodePack.Shell.dll
+            "Microsoft.WindowsAPICodePack.Shell.dll" // just for TimelapseWindow's use of CommonOpenFileDialog
         };
 
         /// <summary>
         /// If any dependency files are missing, return false else true
         /// </summary>
-        public static bool AreRequiredBinariesPresent(Assembly executingAssembly)
+        public static bool AreRequiredBinariesPresent(string applicationName, Assembly executingAssembly)
         {
             string directoryContainingCurrentExecutable = Path.GetDirectoryName(executingAssembly.Location);
-            foreach (string dependency in Dependencies.RequiredBinaries)
+            foreach (string binaryName in Dependencies.CommonRequiredBinaries)
             {
-                if (false == File.Exists(Path.Combine(directoryContainingCurrentExecutable, dependency)))
+                if (false == File.Exists(Path.Combine(directoryContainingCurrentExecutable, binaryName)))
                 {
                     return false;
+                }
+            }
+
+            if (applicationName == Constants.ApplicationName)
+            {
+                foreach (string binaryName in Dependencies.TimelapseRequiredBinaries)
+                {
+                    if (false == File.Exists(Path.Combine(directoryContainingCurrentExecutable, binaryName)))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                foreach (string binaryName in Dependencies.EditorRequiredBinaries)
+                {
+                    if (false == File.Exists(Path.Combine(directoryContainingCurrentExecutable, binaryName)))
+                    {
+                        return false;
+                    }
                 }
             }
             return true;

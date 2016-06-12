@@ -44,9 +44,9 @@ namespace TimelapseTemplateEditor
         public MainWindow()
         {
             // Abort if some of the required dependencies are missing
-            if (Dependencies.AreRequiredBinariesPresent(Assembly.GetExecutingAssembly()) == false)
+            if (Dependencies.AreRequiredBinariesPresent(EditorConstant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
             {
-                Dependencies.ShowMissingBinariesDialog(Constants.ApplicationName);
+                Dependencies.ShowMissingBinariesDialog(EditorConstant.ApplicationName);
                 Application.Current.Shutdown();
             }
 
@@ -274,7 +274,7 @@ namespace TimelapseTemplateEditor
                 choice_list = foundRow[Constants.Control.List].ToString();
             }
 
-            choice_list = CsvHelper.ConvertBarsToLineBreaks(choice_list);
+            choice_list = Utilities.ConvertBarsToLineBreaks(choice_list);
             DialogEditChoiceList dlg = new DialogEditChoiceList(button, choice_list);
             dlg.Owner = this;
             bool? result = dlg.ShowDialog();
@@ -282,13 +282,13 @@ namespace TimelapseTemplateEditor
             {
                 if (null != foundRow)
                 {
-                    foundRow[Constants.Control.List] = CsvHelper.ConvertLineBreaksToBars(dlg.ItemList);
+                    foundRow[Constants.Control.List] = Utilities.ConvertLineBreaksToBars(dlg.ItemList);
                 }
                 else
                 {
                     // We should never be null, so shouldn't get here. But just in case this does happen, 
                     // I am setting the itemList to be the one in the ControlOrder row. This was the original buggy version that didn't work, but what the heck.
-                    this.templateDatabase.TemplateTable.Rows[Convert.ToInt32(button.Tag) - 1][Constants.Control.List] = CsvHelper.ConvertLineBreaksToBars(dlg.ItemList);
+                    this.templateDatabase.TemplateTable.Rows[Convert.ToInt32(button.Tag) - 1][Constants.Control.List] = Utilities.ConvertLineBreaksToBars(dlg.ItemList);
                 }
             }
         }

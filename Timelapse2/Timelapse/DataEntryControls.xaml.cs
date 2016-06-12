@@ -14,7 +14,7 @@ namespace Timelapse
     public partial class DataEntryControls : UserControl
     {
         // Given a key, return its associated control
-        public Dictionary<string, DataEntryControl> ControlFromDataLabel { get; private set; }
+        public Dictionary<string, DataEntryControl> ControlsByDataLabel { get; private set; }
         public List<DataEntryControl> Controls { get; private set; } // list of all our counter controls
         // The wrap panel will contain all our controls. If we want to reparent things, we do it by reparenting the wrap panel
         public PropagateControl Propagate { get; private set; }
@@ -22,7 +22,7 @@ namespace Timelapse
         public DataEntryControls()
         {
             this.InitializeComponent();
-            this.ControlFromDataLabel = new Dictionary<string, DataEntryControl>();
+            this.ControlsByDataLabel = new Dictionary<string, DataEntryControl>();
             this.Controls = new List<DataEntryControl>();
         }
 
@@ -108,7 +108,7 @@ namespace Timelapse
                 controlToAdd.Tooltip = tooltip;
                 this.ControlGrid.Inlines.Add(controlToAdd.Container);
                 this.Controls.Add(controlToAdd);
-                this.ControlFromDataLabel.Add(dataLabel, controlToAdd);
+                this.ControlsByDataLabel.Add(dataLabel, controlToAdd);
             }
         }
 

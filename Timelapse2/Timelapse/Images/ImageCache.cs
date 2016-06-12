@@ -99,7 +99,7 @@ namespace Timelapse.Images
         public override void Reset()
         {
             base.Reset();
-            this.CurrentDifferenceState = ImageDifference.Unaltered;
+            this.ResetDifferenceState(null);
         }
 
         public ImageDifferenceResult TryCalculateDifference()
@@ -170,6 +170,22 @@ namespace Timelapse.Images
             return differenceBitmap != null ? ImageDifferenceResult.Success : ImageDifferenceResult.NotCalculable;
         }
 
+        public bool TryInvalidate(long id)
+        {
+            if (this.unalteredBitmapsByID.ContainsKey(id) == false)
+            {
+                return false;
+            }
+
+            if (this.Current.ID == id)
+            {
+                this.Reset();
+            }
+
+            this.unalteredBitmapsByID.Remove(id);
+            return this.mostRecentlyUsedIDs.TryRemove(id);
+        }
+
         public override bool TryMoveToImage(int imageRowIndex)
         {
             bool ignored;
@@ -199,21 +215,26 @@ namespace Timelapse.Images
 
                 // all moves are to display of unaltered images and invalidate any cached differences
                 // it is assumed images on disk are not altered while Timelapse is running and hence unaltered bitmaps can safely be cached by their IDs
-                this.CurrentDifferenceState = ImageDifference.Unaltered;
-                this.differenceBitmapCache[ImageDifference.Unaltered] = unalteredImage;
-                this.differenceBitmapCache[ImageDifference.Previous] = null;
-                this.differenceBitmapCache[ImageDifference.Next] = null;
-                this.differenceBitmapCache[ImageDifference.Combined] = null;
+                this.ResetDifferenceState(unalteredImage);
             }
 
             return true;
+        }
+
+        private void ResetDifferenceState(WriteableBitmap unalteredImage)
+        {
+            this.CurrentDifferenceState = ImageDifference.Unaltered;
+            this.differenceBitmapCache[ImageDifference.Unaltered] = unalteredImage;
+            this.differenceBitmapCache[ImageDifference.Previous] = null;
+            this.differenceBitmapCache[ImageDifference.Next] = null;
+            this.differenceBitmapCache[ImageDifference.Combined] = null;
         }
 
         private bool TryGetBitmap(ImageProperties image, out WriteableBitmap bitmap)
         {
             if (this.unalteredBitmapsByID.TryGetValue(image.ID, out bitmap) == false)
             {
-                // load the requested bitmap from disk as isn't cached
+                // load the requested bitmap from disk as it isn't cached
                 bitmap = image.LoadWriteableBitmap(this.Database.FolderPath);
 
                 // if the bitmap cache is full make room for the newly loaded bitmap

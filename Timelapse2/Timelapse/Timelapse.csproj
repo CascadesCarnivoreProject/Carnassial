@@ -133,7 +133,12 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Database\CustomFilterOperator.cs" />
+    <Compile Include="Database\ImageDataChoiceColumn.cs" />
+    <Compile Include="Database\ImageDataColumn.cs" />
     <Compile Include="Database\DataRowExtensions.cs" />
+    <Compile Include="Database\ImageDataCounterColumn.cs" />
+    <Compile Include="Database\ImageDataFlagColumn.cs" />
+    <Compile Include="Database\ImageDataNoteColumn.cs" />
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
     <Compile Include="Database\ImageTableEnumerator.cs" />
