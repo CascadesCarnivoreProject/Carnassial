@@ -34,9 +34,28 @@ namespace Timelapse.UnitTests
 
             bool newImageToDisplay;
             Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsFalse(newImageToDisplay);
             Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsFalse(newImageToDisplay);
             Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsTrue(newImageToDisplay);
             Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsFalse(newImageToDisplay);
+
+            Assert.IsTrue(cache.TryInvalidate(1));
+            Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsTrue(newImageToDisplay);
+            Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsTrue(newImageToDisplay);
+
+            Assert.IsTrue(cache.TryInvalidate(2));
+            Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsTrue(newImageToDisplay);
+            Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsFalse(newImageToDisplay);
+            Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsTrue(newImageToDisplay);
+
             Assert.IsFalse(cache.TryMoveToImage(2, out newImageToDisplay));
             Assert.IsFalse(cache.TryMoveToImage(2, out newImageToDisplay));
 
@@ -67,9 +86,9 @@ namespace Timelapse.UnitTests
             }
 
             cache.Reset();
-            Assert.IsNotNull(cache.Current);
+            Assert.IsNull(cache.Current);
             Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
-            Assert.IsTrue(cache.CurrentRow == 0);
+            Assert.IsTrue(cache.CurrentRow == Constants.Database.InvalidRow);
         }
 
         [TestMethod]

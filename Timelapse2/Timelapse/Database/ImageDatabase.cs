@@ -805,11 +805,11 @@ namespace Timelapse.Database
         {
             List<long> idList = new List<long>(); // Create a list containing one ID, and
             idList.Add(id);
-            this.DeleteImage(idList);             // invoke the version of DeleteImage that operates over that list
+            this.DeleteImages(idList);             // invoke the version of DeleteImage that operates over that list
         }
 
         // Delete the data (including markers associated with the images identified by the list of IDs.
-        public void DeleteImage(List<long> idList)
+        public void DeleteImages(List<long> idList)
         {
             List<string> idClauses = new List<string>();
             foreach (long id in idList)

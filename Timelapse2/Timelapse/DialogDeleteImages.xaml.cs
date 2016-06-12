@@ -36,13 +36,14 @@ namespace Timelapse
         /// </summary>
         public DialogDeleteImages(ImageDatabase database, DataTable deletedImageTable, bool deleteData, bool useDeleteFlags)
         {
-            string imageFolderPath = database.FolderPath;
             this.InitializeComponent();
             Mouse.OverrideCursor = Cursors.Wait;
             this.deletedImageTable = deletedImageTable;
-            this.imageFolderPath = imageFolderPath;
+            this.imageFolderPath = database.FolderPath;
             this.deleteData = deleteData;
             this.database = database;
+
+            this.ImageFilesRemovedByID = new List<long>();
 
             if (this.deleteData)
             {
@@ -104,7 +105,7 @@ namespace Timelapse
             this.Title = this.Message.MessageTitle;
 
             // Set the local variables to the passed in parameters
-            int col = 0;
+            int column = 0;
             int row = 0;
 
             GridLength gridlength200 = new GridLength(1, GridUnitType.Auto);
@@ -119,7 +120,7 @@ namespace Timelapse
                 ImageProperties imageProperties = new ImageProperties(deletedImageTable.Rows[i]);
                 ImageSource bitmap = imageProperties.LoadBitmapThumbnail(database.FolderPath, 400);
 
-                if (col == 0)
+                if (column == 0)
                 {
                     this.GridGallery.RowDefinitions.Add(new RowDefinition() { Height = gridlength20 });
                     this.GridGallery.RowDefinitions.Add(new RowDefinition() { Height = gridlength200 });
@@ -130,20 +131,20 @@ namespace Timelapse
                 imageLabel.Height = 25;
                 imageLabel.VerticalAlignment = VerticalAlignment.Top;
 
-                System.Windows.Controls.Image imageControl = new System.Windows.Controls.Image();
+                Image imageControl = new Image();
                 imageControl.Source = bitmap;
 
                 Grid.SetRow(imageLabel, row);
                 Grid.SetRow(imageControl, row + 1);
-                Grid.SetColumn(imageLabel, col);
-                Grid.SetColumn(imageControl, col);
+                Grid.SetColumn(imageLabel, column);
+                Grid.SetColumn(imageControl, column);
                 this.GridGallery.Children.Add(imageLabel);
                 this.GridGallery.Children.Add(imageControl);
-                col++;
-                if (col == 5)
+                column++;
+                if (column == 5)
                 {
-                    // A new row is started every 5th time
-                    col = 0;
+                    // A new row is started every five columns
+                    column = 0;
                     row += 2;
                 }
             }
@@ -151,8 +152,9 @@ namespace Timelapse
             this.scroller.CanContentScroll = true;
             Mouse.OverrideCursor = null;
         }
-
         #endregion
+
+        public List<long> ImageFilesRemovedByID { get; private set; }
 
         #region Private methods
         /// <summary>
@@ -182,30 +184,32 @@ namespace Timelapse
                 this.DialogResult = false;
                 return;
             }
-            List<long> imagesIDsToDelete = new List<long>();
+
+            List<long> imageIDsToDeleteFromDatabase = new List<long>();
             Mouse.OverrideCursor = Cursors.Wait;
             for (int i = 0; i < this.deletedImageTable.Rows.Count; i++)
             {
                 ImageProperties imageProperties = new ImageProperties(this.deletedImageTable.Rows[i]);
 
                 string markForDeletionDataLabel = this.database.DataLabelFromStandardControlType[Constants.Control.DeleteFlag];
-                this.database.UpdateImage((int)imageProperties.ID, markForDeletionDataLabel, Constants.Boolean.False);
+                this.database.UpdateImage(imageProperties.ID, markForDeletionDataLabel, Constants.Boolean.False);
                 if (this.deleteData)
                 {
-                    imagesIDsToDelete.Add(imageProperties.ID);
+                    imageIDsToDeleteFromDatabase.Add(imageProperties.ID);
                 }
                 else
                 {
-                    // As only the image was deleted, mark its image quality as missing.
+                    // as only the image file was deleted, change its image quality to missing in the database
                     string imageQualityDataLabel = this.database.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality];
-                    this.database.UpdateImage((int)imageProperties.ID, imageQualityDataLabel, ImageQualityFilter.Missing.ToString());
+                    this.database.UpdateImage(imageProperties.ID, imageQualityDataLabel, ImageQualityFilter.Missing.ToString());
+                    this.ImageFilesRemovedByID.Add(imageProperties.ID);
                 }
                 this.TryMoveImageToDeletedImagesFolder(this.imageFolderPath, imageProperties);
             }
 
             if (this.deleteData)
             {
-                this.database.DeleteImage(imagesIDsToDelete);
+                this.database.DeleteImages(imageIDsToDeleteFromDatabase);
             }
 
             this.DialogResult = true;
@@ -253,7 +257,7 @@ namespace Timelapse
             }
             catch (IOException e)
             {
-                System.Diagnostics.Debug.Print(e.Message);
+                Debug.Print(e.Message);
                 return false;
             }
         }

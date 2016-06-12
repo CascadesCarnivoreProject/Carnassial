@@ -1190,12 +1190,6 @@ namespace Timelapse
         // Show the image in the current row, forcing a refresh of that image. 
         private void ShowImage(int newImageRow)
         {
-            this.ShowImage(newImageRow, false);
-        }
-
-        // Show the image in the current row
-        private void ShowImage(int newImageRow, bool forceRefresh)
-        {
             // for the bitmap caching logic below to work this should be the only place where code in TimelapseWindow moves the image enumerator
             bool newImageToDisplay;
             if (this.imageCache.TryMoveToImage(newImageRow, out newImageToDisplay) == false)
@@ -1253,17 +1247,12 @@ namespace Timelapse
             // this avoids unnecessary image reloads and refreshes in cases where ShowImage() is just being called to refresh controls
             // the image row can't be tested against as its meaning changes when filters are changed; use the image ID as that's both
             // unique and immutable
-            if (forceRefresh)
-            {
-                newImageToDisplay = true;
-            }
             if (newImageToDisplay)
             {
-                WriteableBitmap unalteredImage = this.imageCache.Current.LoadWriteableBitmap(this.imageDatabase.FolderPath);
+                WriteableBitmap unalteredImage = this.imageCache.GetCurrentImage();
                 this.markableCanvas.ImageToDisplay.Source = unalteredImage;
 
-                // Set the magImage to the source so the unaltered image will appear on the magnifying glass
-                // Although its probably not needed, also make the magCanvas the same size as the image
+                // Set the image to magnify so the unaltered image will appear on the magnifying glass
                 this.markableCanvas.ImageToMagnify.Source = unalteredImage;
 
                 // Whenever we navigate to a new image, delete any markers that were displayed on the current image 
@@ -2029,7 +2018,6 @@ namespace Timelapse
                 isUseDeleteFlag = false;
                 isUseDeleteData = mi.Name.Equals(this.MenuItemDeleteImage.Name) ? false : true;
             }
-            long currentID = this.imageCache.Current.ID;
 
             // If no images are selected for deletion. Warn the user.
             // Note that this should never happen, as the invoking menu item should be disabled (and thus not selectable)
@@ -2046,25 +2034,31 @@ namespace Timelapse
                 return;
             }
 
-            DialogDeleteImages dlg;
+            DialogDeleteImages deleteImagesDialog;
             if (mi.Name.Equals(this.MenuItemDeleteImages.Name) || mi.Name.Equals(this.MenuItemDeleteImagesAndData.Name))
             {
-                dlg = new DialogDeleteImages(this.imageDatabase, deletedImages, isUseDeleteData, isUseDeleteFlag);   // don't delete data
+                deleteImagesDialog = new DialogDeleteImages(this.imageDatabase, deletedImages, isUseDeleteData, isUseDeleteFlag);   // don't delete data
             }
             else
             {
                 ImageProperties imageProperties = new ImageProperties(this.imageDatabase.ImageDataTable.Rows[this.imageCache.CurrentRow]);
-                dlg = new DialogDeleteImages(this.imageDatabase, deletedImages, isUseDeleteData, isUseDeleteFlag);   // delete data
+                deleteImagesDialog = new DialogDeleteImages(this.imageDatabase, deletedImages, isUseDeleteData, isUseDeleteFlag);   // delete data
             }
-            dlg.Owner = this;
+            deleteImagesDialog.Owner = this;
 
-            bool? result = dlg.ShowDialog();
+            bool? result = deleteImagesDialog.ShowDialog();
             if (result == true)
             {
+                long currentID = this.imageCache.Current.ID;
+                foreach (long id in deleteImagesDialog.ImageFilesRemovedByID)
+                {
+                    this.imageCache.TryInvalidate(id);
+                }
+
                 if (mi.Name.Equals(this.MenuItemDeleteImage.Name) || mi.Name.Equals(this.MenuItemDeleteImages.Name))
                 {
                     // We only deleted the image, not the data. We invoke ShowImage with a forced refresh to show missing image placeholder
-                    this.ShowImage(this.imageCache.CurrentRow, true);
+                    this.ShowImage(this.imageCache.CurrentRow);
                 }
                 else
                 {
@@ -2073,7 +2067,7 @@ namespace Timelapse
                     this.SetImageFilterAndIndex(0, this.state.ImageFilter); // Reset the filter to retrieve the remaining images
 
                     int currentRow = this.imageDatabase.FindClosestImage(currentID);
-                    this.ShowImage(currentRow, true);
+                    this.ShowImage(currentRow);
                 }
             }
         }
