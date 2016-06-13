@@ -99,7 +99,7 @@ namespace Timelapse
 
             public const string FileTooltip = "The image file name";
             public const string FileWidth = "100";
-            public const string RelativePathTooltip = "The path between the folders containing the data file and the image";
+            public const string RelativePathTooltip = "Name of the folder originally containing the template and image data files";
             public const string RelativePathWidth = "100";
             public const string FolderTooltip = "Name of the folder containing the images";
             public const string FolderWidth = "100";
