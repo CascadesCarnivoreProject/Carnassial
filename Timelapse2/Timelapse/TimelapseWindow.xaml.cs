@@ -2036,6 +2036,7 @@ namespace Timelapse
             DataTable deletedImages;
             bool isUseDeleteData;
             bool isUseDeleteFlag;
+            int savedRow;
 
             // This callback is invoked by either variatons of DeleteImage (which deletes the current image) or 
             // DeleteImages (which deletes the images marked by the deletion flag)
@@ -2088,6 +2089,7 @@ namespace Timelapse
             if (result == true)
             {
                 long currentID = this.imageCache.Current.ID;
+                savedRow = this.imageCache.CurrentRow;  // TryInvalidate may reset the current row to -1, so we need to save it.
                 foreach (long id in deleteImagesDialog.ImageFilesRemovedByID)
                 {
                     this.imageCache.TryInvalidate(id);
@@ -2095,8 +2097,8 @@ namespace Timelapse
 
                 if (mi.Name.Equals(this.MenuItemDeleteImage.Name) || mi.Name.Equals(this.MenuItemDeleteImages.Name))
                 {
-                    // We only deleted the image, not the data. We invoke ShowImage with a forced refresh to show missing image placeholder
-                    this.ShowImage(this.imageCache.CurrentRow);
+                    // We only deleted the image, not the data. We invoke ShowImage with the saved current row to show the missing image placeholder
+                    this.ShowImage(savedRow);
                 }
                 else
                 {

@@ -465,6 +465,8 @@
     <Content Include="..\Dependencies\exiftool%28-k%29.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\missing_thumbnail.jpg" />
+    <Resource Include="Resources\corrupted_thumbnail.jpg" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

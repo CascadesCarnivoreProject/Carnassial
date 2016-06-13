@@ -220,28 +220,14 @@ namespace Timelapse
             static Images()
             {
                 // Create a variety of images.
-                // SAULTODO: Thumbnail access had occassionaly introduces a threading violation, but I need to replicate it before I can fix it.
                 Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Corrupt.Freeze();
                 Images.Missing = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Missing.Freeze();
-
-                // Create thumbnails of both the above images
-                BitmapImage missingThumbnail = new BitmapImage();
-                missingThumbnail.BeginInit();
-                missingThumbnail.DecodePixelWidth = 400;
-                missingThumbnail.CacheOption = BitmapCacheOption.OnLoad;
-                missingThumbnail.UriSource = new Uri("pack://application:,,/Resources/missing.jpg");
-                missingThumbnail.EndInit();
-
-                Images.MissingThumbnail = BitmapFrame.Create(missingThumbnail);
-                BitmapImage corruptThumbnail = new BitmapImage();
-                corruptThumbnail.BeginInit();
-                corruptThumbnail.DecodePixelWidth = 400;
-                corruptThumbnail.CacheOption = BitmapCacheOption.OnLoad;
-                corruptThumbnail.UriSource = new Uri("pack://application:,,/Resources/corrupted.jpg");
-                corruptThumbnail.EndInit();
-                Images.CorruptThumbnail = BitmapFrame.Create(corruptThumbnail);
+                Images.CorruptThumbnail = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted_thumbnail.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.CorruptThumbnail.Freeze();
+                Images.MissingThumbnail = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing_thumbnail.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.MissingThumbnail.Freeze();
             }
         }
 
