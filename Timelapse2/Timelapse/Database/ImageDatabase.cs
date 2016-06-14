@@ -319,7 +319,7 @@ namespace Timelapse.Database
                 long id = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
                 DataRow control = this.TemplateTable.Rows.Find(id);
                 ColumnTuple columnDefinition = this.CreateImageDataColumnDefinition(control);
-                this.Database.AddColumnToEndOfTable(Constants.Database.ImageDataTable, columnDefinition);
+                this.Database.AddColumnToTable(Constants.Database.ImageDataTable, 2, columnDefinition);
             }
 
             // perform ImageSetTable migrations

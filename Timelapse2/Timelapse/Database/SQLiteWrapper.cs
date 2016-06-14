@@ -297,6 +297,18 @@ namespace Timelapse.Database
             this.ExecuteNonQueryWrappedInBeginEnd(queries);
         }
 
+        public void fooUpdateID(string tableName)
+        {
+            List<string> queries = new List<string>();
+            string query = "Update " + tableName + " SET Id = Id + 1000 + 1 WHERE Id > 1";
+            queries.Add(query);
+            query = "Update " + tableName + " SET Id = Id - 1000 WHERE Id > 1";
+            queries.Add(query);
+            query = "Update " + tableName + " SET Id = 2 WHERE Type='RelativePath'";
+            queries.Add(query);
+            this.ExecuteNonQueryWrappedInBeginEnd(queries);
+        }
+
         /// <summary>
         /// Update specific rows in the DB as specified in the where clause.
         /// </summary>
@@ -456,7 +468,7 @@ namespace Timelapse.Database
         /// <summary>
         /// Add a column to the table named sourceTable at position columnNumber using the provided columnDefinition
         /// </summary>
-        public bool AddColumnToEndOfTable(string sourceTable, int columnNumber, string columnDefinition)
+        public bool AddColumnToTable(string sourceTable, int columnNumber, ColumnTuple columnDefinition)
         {
             try
             {
@@ -467,11 +479,9 @@ namespace Timelapse.Database
                     // Some basic error checking to make sure we can do the operation
                     List<string> columnNames = this.GetColumnNamesAsList(connection, sourceTable);
 
-                    // get the column name (the first word) from the column definition
-                    string columnName = (columnDefinition.IndexOf(" ") == -1) ? columnDefinition : columnDefinition.Substring(0, columnDefinition.IndexOf(" "));
 
-                    // Check if a column called columnName already exists in the source Table. If so, abort as we cannot add duplicate column names
-                    if (columnNames.Contains(columnName))
+                    // Check if a column named Name already exists in the source Table. If so, abort as we cannot add duplicate column names
+                    if (columnNames.Contains(columnDefinition.Name))
                     {
                         return false; // A column called columnName already exists in the source Table
                     }
@@ -479,7 +489,7 @@ namespace Timelapse.Database
                     // If columnNumber would result in the column being inserted at the end of the table, then use the more efficient method to do so.
                     if (columnNumber >= columnNames.Count)
                     {
-                        this.AddColumnToEndOfTable(connection, sourceTable, columnDefinition);
+                        this.AddColumnToEndOfTable(sourceTable, columnDefinition);
                         return true;
                     }
 
@@ -489,7 +499,7 @@ namespace Timelapse.Database
 
                     // Get a schema definition identical to the schema in the existing table, 
                     // but with a new column definition added at the given position 
-                    string newSchema = this.CloneSchemaButWithAddedColumn(connection, sourceTable, columnNumber, columnDefinition);
+                    string newSchema = this.CloneSchemaButWithAddedColumn(connection, sourceTable, columnNumber, columnDefinition.Name + " " + columnDefinition.Value);
 
                     // Create a new table 
                     string destTable = sourceTable + "NEW";

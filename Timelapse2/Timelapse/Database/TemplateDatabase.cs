@@ -134,6 +134,11 @@ namespace Timelapse.Database
             return this.Database.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Control.ControlOrder);
         }
 
+        private DataTable GetControlsSortedByIdOrder()
+        {
+            return this.Database.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.DatabaseColumn.ID);
+        }
+
         public List<string> GetDataLabels()
         {
             List<string> dataLabels = new List<string>();
@@ -481,6 +486,7 @@ namespace Timelapse.Database
         protected virtual void OnExistingDatabaseOpened(TemplateDatabase other)
         {
             this.TemplateTable = this.GetControlsSortedByControlOrder();
+            //this.TemplateTable = this.GetControlsSortedByIdOrder();
             this.EnsureDataLabelsAndLabelsNotEmpty();
 
             // add a relative path control to pre v2.1 databases if one hasn't already been inserted
@@ -491,8 +497,37 @@ namespace Timelapse.Database
                 int order = this.TemplateTable.Rows.Count + 1;
                 List<ColumnTuple> relativePathControl = this.GetRelativePathTuples(order, order, false);
                 this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { relativePathControl });
+                //this.Database.fooUpdateID(Constants.Database.TemplateTable);
                 this.TemplateTable = this.GetControlsSortedByControlOrder();
+                //this.TemplateTable = this.GetControlsSortedByIdOrder();
             }
+
+            // Update the control order
+           // foo();
+           // this.TemplateTable = this.GetControlsSortedByControlOrder();
+        }
+        private void foo ()
+        {
+            DataTable tempTable = this.GetControlsSortedByControlOrder();
+            Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>();
+            Dictionary<string, int> newSpreadsheetOrderByDataLabel = new Dictionary<string, int>();
+            DataRow row;
+            for (int i = 0; i < tempTable.Rows.Count; i++ )
+            {
+                row = tempTable.Rows[i];
+               
+                int currentControlOrder = (Convert.ToInt32( row [Constants.Control.ControlOrder]));
+                if (currentControlOrder > 1) currentControlOrder++;
+                if (i == tempTable.Rows.Count - 1) currentControlOrder = 3;
+                newControlOrderByDataLabel.Add((string)row[Constants.Control.DataLabel], currentControlOrder);
+
+                int currentSpreadsheetOrder = (Convert.ToInt32(row[Constants.Control.SpreadsheetOrder]));
+                if (currentSpreadsheetOrder > 1) currentSpreadsheetOrder++;
+                if (i == tempTable.Rows.Count - 1) currentSpreadsheetOrder = 3;
+                newSpreadsheetOrderByDataLabel.Add((string)row[Constants.Control.DataLabel], currentSpreadsheetOrder);
+            }
+            this.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
+            this.UpdateDisplayOrder(Constants.Control.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
         }
 
         private string GetNextUniqueDataLabel(string dataLabelPrefix)
