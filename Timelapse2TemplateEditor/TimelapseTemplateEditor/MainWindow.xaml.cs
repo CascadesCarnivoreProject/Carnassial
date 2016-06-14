@@ -269,6 +269,7 @@ namespace TimelapseTemplateEditor
             string controlType = button.Tag.ToString();
             this.templateDatabase.AddUserDefinedControl(controlType);
 
+            this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.OnControlOrderChanged();
@@ -296,6 +297,7 @@ namespace TimelapseTemplateEditor
 
             this.rowsActionsOn = true;
             this.templateDatabase.RemoveUserDefinedControl(selectedRowView.Row);
+            this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
 
             // update the control panel so it reflects the current values in the database
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
