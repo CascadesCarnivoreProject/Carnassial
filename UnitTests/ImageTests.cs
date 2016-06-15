@@ -110,10 +110,10 @@ namespace Timelapse.UnitTests
         {
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
             {
-                new ImageExpectations(TestConstant.Expectations.DaylightBobcatImage),
-                new ImageExpectations(TestConstant.Expectations.DaylightCoyoteImage),
-                new ImageExpectations(TestConstant.Expectations.DaylightMartenPairImage),
-                new ImageExpectations(TestConstant.Expectations.InfraredMartenImage)
+                new ImageExpectations(TestConstant.DefaultExpectation.DaylightBobcatImage),
+                new ImageExpectations(TestConstant.DefaultExpectation.DaylightCoyoteImage),
+                new ImageExpectations(TestConstant.DefaultExpectation.DaylightMartenPairImage),
+                new ImageExpectations(TestConstant.DefaultExpectation.InfraredMartenImage)
             };
 
             foreach (ImageExpectations imageExpectation in imageExpectations)

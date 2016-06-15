@@ -87,7 +87,7 @@ namespace Timelapse.UnitTests
             public const string Flag3 = "Flag3";
         }
 
-        public static class Expectations
+        public static class DefaultExpectation
         {
             // controls
             public static readonly ControlExpectations File;
@@ -120,149 +120,149 @@ namespace Timelapse.UnitTests
             public static readonly ImageExpectations DaylightMartenPairImage;
             public static readonly ImageExpectations InfraredMartenImage;
 
-            static Expectations()
+            static DefaultExpectation()
             {
                 // standard controls
-                Expectations.File = ControlExpectations.CreateNote(Constants.DatabaseColumn.File, 1);
-                Expectations.File.Copyable = false;
-                Expectations.File.DefaultValue = " ";
-                Expectations.File.List = " ";
-                Expectations.File.TextBoxWidth = Constants.ControlDefault.FileWidth;
-                Expectations.File.Tooltip = Constants.ControlDefault.FileTooltip;
-                Expectations.File.Type = Constants.DatabaseColumn.File;
-                Expectations.RelativePath = ControlExpectations.CreateNote(Constants.DatabaseColumn.RelativePath, 23);
-                Expectations.RelativePath.Copyable = false;
-                Expectations.RelativePath.DefaultValue = Constants.ControlDefault.Value;
-                Expectations.RelativePath.List = Constants.ControlDefault.Value;
-                Expectations.RelativePath.TextBoxWidth = Constants.ControlDefault.RelativePathWidth;
-                Expectations.RelativePath.Tooltip = Constants.ControlDefault.RelativePathTooltip;
-                Expectations.RelativePath.Type = Constants.DatabaseColumn.RelativePath;
-                Expectations.RelativePath.Visible = false;
-                Expectations.Folder = ControlExpectations.CreateNote(Constants.DatabaseColumn.Folder, 2);
-                Expectations.Folder.Copyable = false;
-                Expectations.Folder.DefaultValue = " ";
-                Expectations.Folder.List = " ";
-                Expectations.Folder.TextBoxWidth = Constants.ControlDefault.FolderWidth;
-                Expectations.Folder.Tooltip = Constants.ControlDefault.FolderTooltip;
-                Expectations.Folder.Type = Constants.DatabaseColumn.Folder;
-                Expectations.Date = ControlExpectations.CreateNote(Constants.DatabaseColumn.Date, 3);
-                Expectations.Date.Copyable = false;
-                Expectations.Date.DefaultValue = " ";
-                Expectations.Date.List = " ";
-                Expectations.Date.TextBoxWidth = Constants.ControlDefault.DateWidth;
-                Expectations.Date.Tooltip = Constants.ControlDefault.DateTooltip;
-                Expectations.Date.Type = Constants.DatabaseColumn.Date;
-                Expectations.Time = ControlExpectations.CreateNote(Constants.DatabaseColumn.Time, 4);
-                Expectations.Time.Copyable = false;
-                Expectations.Time.DefaultValue = " ";
-                Expectations.Time.List = " ";
-                Expectations.Time.TextBoxWidth = Constants.ControlDefault.TimeWidth;
-                Expectations.Time.Tooltip = Constants.ControlDefault.TimeTooltip;
-                Expectations.Time.Type = Constants.DatabaseColumn.Time;
-                Expectations.ImageQuality = ControlExpectations.CreateFlag(Constants.DatabaseColumn.ImageQuality, 5);
-                Expectations.ImageQuality.Copyable = false;
-                Expectations.ImageQuality.DefaultValue = " ";
-                Expectations.ImageQuality.List = TestConstant.ImageQuality.LegacyListOfValues;
-                Expectations.ImageQuality.TextBoxWidth = Constants.ControlDefault.ImageQualityWidth;
-                Expectations.ImageQuality.Tooltip = Constants.ControlDefault.ImageQualityTooltip;
-                Expectations.ImageQuality.Type = Constants.DatabaseColumn.ImageQuality;
-                Expectations.MarkForDeletion = ControlExpectations.CreateFlag(EditorConstant.Control.MarkForDeletion, 6);
-                Expectations.MarkForDeletion.Copyable = false;
-                Expectations.MarkForDeletion.Label = EditorConstant.Control.MarkForDeletionLabel;
-                Expectations.MarkForDeletion.List = " ";
-                Expectations.MarkForDeletion.Tooltip = Constants.ControlDefault.MarkForDeletionTooltip;
-                Expectations.MarkForDeletion.Type = Constants.Control.DeleteFlag;
+                DefaultExpectation.File = ControlExpectations.CreateNote(Constants.DatabaseColumn.File, 1);
+                DefaultExpectation.File.Copyable = false;
+                DefaultExpectation.File.DefaultValue = " ";
+                DefaultExpectation.File.List = " ";
+                DefaultExpectation.File.TextBoxWidth = Constants.ControlDefault.FileWidth;
+                DefaultExpectation.File.Tooltip = Constants.ControlDefault.FileTooltip;
+                DefaultExpectation.File.Type = Constants.DatabaseColumn.File;
+                DefaultExpectation.RelativePath = ControlExpectations.CreateNote(Constants.DatabaseColumn.RelativePath, 2);
+                DefaultExpectation.RelativePath.Copyable = false;
+                DefaultExpectation.RelativePath.DefaultValue = Constants.ControlDefault.Value;
+                DefaultExpectation.RelativePath.List = Constants.ControlDefault.Value;
+                DefaultExpectation.RelativePath.TextBoxWidth = Constants.ControlDefault.RelativePathWidth;
+                DefaultExpectation.RelativePath.Tooltip = Constants.ControlDefault.RelativePathTooltip;
+                DefaultExpectation.RelativePath.Type = Constants.DatabaseColumn.RelativePath;
+                DefaultExpectation.RelativePath.Visible = false;
+                DefaultExpectation.Folder = ControlExpectations.CreateNote(Constants.DatabaseColumn.Folder, 3);
+                DefaultExpectation.Folder.Copyable = false;
+                DefaultExpectation.Folder.DefaultValue = " ";
+                DefaultExpectation.Folder.List = " ";
+                DefaultExpectation.Folder.TextBoxWidth = Constants.ControlDefault.FolderWidth;
+                DefaultExpectation.Folder.Tooltip = Constants.ControlDefault.FolderTooltip;
+                DefaultExpectation.Folder.Type = Constants.DatabaseColumn.Folder;
+                DefaultExpectation.Date = ControlExpectations.CreateNote(Constants.DatabaseColumn.Date, 4);
+                DefaultExpectation.Date.Copyable = false;
+                DefaultExpectation.Date.DefaultValue = " ";
+                DefaultExpectation.Date.List = " ";
+                DefaultExpectation.Date.TextBoxWidth = Constants.ControlDefault.DateWidth;
+                DefaultExpectation.Date.Tooltip = Constants.ControlDefault.DateTooltip;
+                DefaultExpectation.Date.Type = Constants.DatabaseColumn.Date;
+                DefaultExpectation.Time = ControlExpectations.CreateNote(Constants.DatabaseColumn.Time, 5);
+                DefaultExpectation.Time.Copyable = false;
+                DefaultExpectation.Time.DefaultValue = " ";
+                DefaultExpectation.Time.List = " ";
+                DefaultExpectation.Time.TextBoxWidth = Constants.ControlDefault.TimeWidth;
+                DefaultExpectation.Time.Tooltip = Constants.ControlDefault.TimeTooltip;
+                DefaultExpectation.Time.Type = Constants.DatabaseColumn.Time;
+                DefaultExpectation.ImageQuality = ControlExpectations.CreateFlag(Constants.DatabaseColumn.ImageQuality, 6);
+                DefaultExpectation.ImageQuality.Copyable = false;
+                DefaultExpectation.ImageQuality.DefaultValue = " ";
+                DefaultExpectation.ImageQuality.List = TestConstant.ImageQuality.LegacyListOfValues;
+                DefaultExpectation.ImageQuality.TextBoxWidth = Constants.ControlDefault.ImageQualityWidth;
+                DefaultExpectation.ImageQuality.Tooltip = Constants.ControlDefault.ImageQualityTooltip;
+                DefaultExpectation.ImageQuality.Type = Constants.DatabaseColumn.ImageQuality;
+                DefaultExpectation.MarkForDeletion = ControlExpectations.CreateFlag(EditorConstant.Control.MarkForDeletion, 7);
+                DefaultExpectation.MarkForDeletion.Copyable = false;
+                DefaultExpectation.MarkForDeletion.Label = EditorConstant.Control.MarkForDeletionLabel;
+                DefaultExpectation.MarkForDeletion.List = " ";
+                DefaultExpectation.MarkForDeletion.Tooltip = Constants.ControlDefault.MarkForDeletionTooltip;
+                DefaultExpectation.MarkForDeletion.Type = Constants.Control.DeleteFlag;
 
                 // controls
-                Expectations.Counter0 = ControlExpectations.CreateCounter(TestConstant.DefaultDatabaseColumn.Counter0, 7);
-                Expectations.Counter0.List = " ";
-                Expectations.Choice0 = ControlExpectations.CreateChoice(TestConstant.DefaultDatabaseColumn.Choice0, 8);
-                Expectations.Choice0.DefaultValue = " ";
-                Expectations.Choice0.List = "choice a|choice b|choice c";
-                Expectations.Note0 = ControlExpectations.CreateNote(TestConstant.DefaultDatabaseColumn.Note0, 9);
-                Expectations.Note0.DefaultValue = " ";
-                Expectations.Note0.List = " ";
-                Expectations.Flag0 = ControlExpectations.CreateFlag(TestConstant.DefaultDatabaseColumn.Flag0, 10);
-                Expectations.Flag0.List = " ";
-                Expectations.CounterWithCustomDataLabel = ControlExpectations.CreateCounter(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, 11);
-                Expectations.CounterWithCustomDataLabel.DefaultValue = "100";
-                Expectations.CounterWithCustomDataLabel.Label = "CounterWithCustomLabel";
-                Expectations.CounterWithCustomDataLabel.List = " ";
-                Expectations.CounterWithCustomDataLabel.TextBoxWidth = "75";
-                Expectations.CounterWithCustomDataLabel.Tooltip = "Counter with custom label.";
-                Expectations.ChoiceWithCustomDataLabel = ControlExpectations.CreateChoice(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, 12);
-                Expectations.ChoiceWithCustomDataLabel.DefaultValue = " ";
-                Expectations.ChoiceWithCustomDataLabel.Label = "ChoiceWithCustomLabel";
-                Expectations.ChoiceWithCustomDataLabel.List = " ";
-                Expectations.ChoiceWithCustomDataLabel.List = "value|Genus species|Genus species subspecies|with , comma|with ' apostrophe";
-                Expectations.ChoiceWithCustomDataLabel.TextBoxWidth = "90";
-                Expectations.ChoiceWithCustomDataLabel.Tooltip = "Choice with custom label and some values of interest.";
-                Expectations.NoteWithCustomDataLabel = ControlExpectations.CreateNote(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, 13);
-                Expectations.NoteWithCustomDataLabel.DefaultValue = " ";
-                Expectations.NoteWithCustomDataLabel.Label = "NoteWithCustomLabel";
-                Expectations.NoteWithCustomDataLabel.List = " ";
-                Expectations.NoteWithCustomDataLabel.TextBoxWidth = "200";
-                Expectations.NoteWithCustomDataLabel.Tooltip = "Note with custom label.";
-                Expectations.FlagWithCustomDataLabel = ControlExpectations.CreateFlag(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, 14);
-                Expectations.FlagWithCustomDataLabel.DefaultValue = Constants.Boolean.True;
-                Expectations.FlagWithCustomDataLabel.Label = "FlagWithCustomLabel";
-                Expectations.FlagWithCustomDataLabel.List = " ";
-                Expectations.FlagWithCustomDataLabel.TextBoxWidth = "30";
-                Expectations.FlagWithCustomDataLabel.Tooltip = "Flag with custom label.";
+                DefaultExpectation.Counter0 = ControlExpectations.CreateCounter(TestConstant.DefaultDatabaseColumn.Counter0, 8);
+                DefaultExpectation.Counter0.List = " ";
+                DefaultExpectation.Choice0 = ControlExpectations.CreateChoice(TestConstant.DefaultDatabaseColumn.Choice0, 9);
+                DefaultExpectation.Choice0.DefaultValue = " ";
+                DefaultExpectation.Choice0.List = "choice a|choice b|choice c";
+                DefaultExpectation.Note0 = ControlExpectations.CreateNote(TestConstant.DefaultDatabaseColumn.Note0, 10);
+                DefaultExpectation.Note0.DefaultValue = " ";
+                DefaultExpectation.Note0.List = " ";
+                DefaultExpectation.Flag0 = ControlExpectations.CreateFlag(TestConstant.DefaultDatabaseColumn.Flag0, 11);
+                DefaultExpectation.Flag0.List = " ";
+                DefaultExpectation.CounterWithCustomDataLabel = ControlExpectations.CreateCounter(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, 12);
+                DefaultExpectation.CounterWithCustomDataLabel.DefaultValue = "100";
+                DefaultExpectation.CounterWithCustomDataLabel.Label = "CounterWithCustomLabel";
+                DefaultExpectation.CounterWithCustomDataLabel.List = " ";
+                DefaultExpectation.CounterWithCustomDataLabel.TextBoxWidth = "75";
+                DefaultExpectation.CounterWithCustomDataLabel.Tooltip = "Counter with custom label.";
+                DefaultExpectation.ChoiceWithCustomDataLabel = ControlExpectations.CreateChoice(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, 13);
+                DefaultExpectation.ChoiceWithCustomDataLabel.DefaultValue = " ";
+                DefaultExpectation.ChoiceWithCustomDataLabel.Label = "ChoiceWithCustomLabel";
+                DefaultExpectation.ChoiceWithCustomDataLabel.List = " ";
+                DefaultExpectation.ChoiceWithCustomDataLabel.List = "value|Genus species|Genus species subspecies|with , comma|with ' apostrophe";
+                DefaultExpectation.ChoiceWithCustomDataLabel.TextBoxWidth = "90";
+                DefaultExpectation.ChoiceWithCustomDataLabel.Tooltip = "Choice with custom label and some values of interest.";
+                DefaultExpectation.NoteWithCustomDataLabel = ControlExpectations.CreateNote(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, 14);
+                DefaultExpectation.NoteWithCustomDataLabel.DefaultValue = " ";
+                DefaultExpectation.NoteWithCustomDataLabel.Label = "NoteWithCustomLabel";
+                DefaultExpectation.NoteWithCustomDataLabel.List = " ";
+                DefaultExpectation.NoteWithCustomDataLabel.TextBoxWidth = "200";
+                DefaultExpectation.NoteWithCustomDataLabel.Tooltip = "Note with custom label.";
+                DefaultExpectation.FlagWithCustomDataLabel = ControlExpectations.CreateFlag(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, 15);
+                DefaultExpectation.FlagWithCustomDataLabel.DefaultValue = Constants.Boolean.True;
+                DefaultExpectation.FlagWithCustomDataLabel.Label = "FlagWithCustomLabel";
+                DefaultExpectation.FlagWithCustomDataLabel.List = " ";
+                DefaultExpectation.FlagWithCustomDataLabel.TextBoxWidth = "30";
+                DefaultExpectation.FlagWithCustomDataLabel.Tooltip = "Flag with custom label.";
 
-                Expectations.CounterNotVisible = ControlExpectations.CreateCounter(TestConstant.DefaultDatabaseColumn.CounterNotVisible, 15);
-                Expectations.CounterNotVisible.DefaultValue = "3";
-                Expectations.CounterNotVisible.Label = "InvisibleCounter";
-                Expectations.CounterNotVisible.List = " ";
-                Expectations.CounterNotVisible.TextBoxWidth = "111";
-                Expectations.CounterNotVisible.Tooltip = "Counter which can't be seen.";
-                Expectations.CounterNotVisible.Visible = false;
-                Expectations.ChoiceNotVisible = ControlExpectations.CreateChoice(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, 16);
-                Expectations.ChoiceNotVisible.DefaultValue = " ";
-                Expectations.ChoiceNotVisible.Label = "InvisibleChoice";
-                Expectations.ChoiceNotVisible.List = "you can't see me";
-                Expectations.ChoiceNotVisible.TextBoxWidth = "150";
-                Expectations.ChoiceNotVisible.Tooltip = "Choice which can't be seen.";
-                Expectations.ChoiceNotVisible.Visible = false;
-                Expectations.NoteNotVisible = ControlExpectations.CreateNote(TestConstant.DefaultDatabaseColumn.NoteNotVisible, 17);
-                Expectations.NoteNotVisible.DefaultValue = " ";
-                Expectations.NoteNotVisible.Label = "InvisibleNote";
-                Expectations.NoteNotVisible.List = " ";
-                Expectations.NoteNotVisible.TextBoxWidth = "32";
-                Expectations.NoteNotVisible.Tooltip = "Note which can't be seen.";
-                Expectations.NoteNotVisible.Visible = false;
-                Expectations.FlagNotVisible = ControlExpectations.CreateFlag(TestConstant.DefaultDatabaseColumn.FlagNotVisible, 18);
-                Expectations.FlagNotVisible.Label = "InvisibleFlag";
-                Expectations.FlagNotVisible.List = " ";
-                Expectations.FlagNotVisible.TextBoxWidth = "17";
-                Expectations.FlagNotVisible.Tooltip = "Flag which can't be seen.";
-                Expectations.FlagNotVisible.Visible = false;
+                DefaultExpectation.CounterNotVisible = ControlExpectations.CreateCounter(TestConstant.DefaultDatabaseColumn.CounterNotVisible, 16);
+                DefaultExpectation.CounterNotVisible.DefaultValue = "3";
+                DefaultExpectation.CounterNotVisible.Label = "InvisibleCounter";
+                DefaultExpectation.CounterNotVisible.List = " ";
+                DefaultExpectation.CounterNotVisible.TextBoxWidth = "111";
+                DefaultExpectation.CounterNotVisible.Tooltip = "Counter which can't be seen.";
+                DefaultExpectation.CounterNotVisible.Visible = false;
+                DefaultExpectation.ChoiceNotVisible = ControlExpectations.CreateChoice(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, 17);
+                DefaultExpectation.ChoiceNotVisible.DefaultValue = " ";
+                DefaultExpectation.ChoiceNotVisible.Label = "InvisibleChoice";
+                DefaultExpectation.ChoiceNotVisible.List = "you can't see me";
+                DefaultExpectation.ChoiceNotVisible.TextBoxWidth = "150";
+                DefaultExpectation.ChoiceNotVisible.Tooltip = "Choice which can't be seen.";
+                DefaultExpectation.ChoiceNotVisible.Visible = false;
+                DefaultExpectation.NoteNotVisible = ControlExpectations.CreateNote(TestConstant.DefaultDatabaseColumn.NoteNotVisible, 18);
+                DefaultExpectation.NoteNotVisible.DefaultValue = " ";
+                DefaultExpectation.NoteNotVisible.Label = "InvisibleNote";
+                DefaultExpectation.NoteNotVisible.List = " ";
+                DefaultExpectation.NoteNotVisible.TextBoxWidth = "32";
+                DefaultExpectation.NoteNotVisible.Tooltip = "Note which can't be seen.";
+                DefaultExpectation.NoteNotVisible.Visible = false;
+                DefaultExpectation.FlagNotVisible = ControlExpectations.CreateFlag(TestConstant.DefaultDatabaseColumn.FlagNotVisible, 19);
+                DefaultExpectation.FlagNotVisible.Label = "InvisibleFlag";
+                DefaultExpectation.FlagNotVisible.List = " ";
+                DefaultExpectation.FlagNotVisible.TextBoxWidth = "17";
+                DefaultExpectation.FlagNotVisible.Tooltip = "Flag which can't be seen.";
+                DefaultExpectation.FlagNotVisible.Visible = false;
 
-                Expectations.Counter3 = ControlExpectations.CreateCounter(TestConstant.DefaultDatabaseColumn.Counter3, 19);
-                Expectations.Counter3.Copyable = true;
-                Expectations.Counter3.Label = "CopyableCounter";
-                Expectations.Counter3.List = " ";
-                Expectations.Counter3.Tooltip = "Counter which can be copied (rather than the default of not being copyable).";
-                Expectations.Choice3 = ControlExpectations.CreateChoice(TestConstant.DefaultDatabaseColumn.Choice3, 20);
-                Expectations.Choice3.Copyable = false;
-                Expectations.Choice3.DefaultValue = " ";
-                Expectations.Choice3.Label = "NotCopyableChoice";
-                Expectations.Choice3.List = " ";
-                Expectations.Choice3.Tooltip = "Choice which can't be copied (rather than the default of copyable).";
-                Expectations.Note3 = ControlExpectations.CreateNote(TestConstant.DefaultDatabaseColumn.Note3, 21);
-                Expectations.Note3.Copyable = false;
-                Expectations.Note3.DefaultValue = " ";
-                Expectations.Note3.Label = "NotCopyableNote";
-                Expectations.Note3.List = " ";
-                Expectations.Note3.Tooltip = "Note which can't be copied (rather than the default of copyable).";
-                Expectations.Flag3 = ControlExpectations.CreateFlag(TestConstant.DefaultDatabaseColumn.Flag3, 22);
-                Expectations.Flag3.Copyable = false;
-                Expectations.Flag3.Label = "NotCopyableFlag";
-                Expectations.Flag3.List = " ";
-                Expectations.Flag3.Tooltip = "Flag which can't be copied (rather than the default of copyable).";
+                DefaultExpectation.Counter3 = ControlExpectations.CreateCounter(TestConstant.DefaultDatabaseColumn.Counter3, 20);
+                DefaultExpectation.Counter3.Copyable = true;
+                DefaultExpectation.Counter3.Label = "CopyableCounter";
+                DefaultExpectation.Counter3.List = " ";
+                DefaultExpectation.Counter3.Tooltip = "Counter which can be copied (rather than the default of not being copyable).";
+                DefaultExpectation.Choice3 = ControlExpectations.CreateChoice(TestConstant.DefaultDatabaseColumn.Choice3, 21);
+                DefaultExpectation.Choice3.Copyable = false;
+                DefaultExpectation.Choice3.DefaultValue = " ";
+                DefaultExpectation.Choice3.Label = "NotCopyableChoice";
+                DefaultExpectation.Choice3.List = " ";
+                DefaultExpectation.Choice3.Tooltip = "Choice which can't be copied (rather than the default of copyable).";
+                DefaultExpectation.Note3 = ControlExpectations.CreateNote(TestConstant.DefaultDatabaseColumn.Note3, 22);
+                DefaultExpectation.Note3.Copyable = false;
+                DefaultExpectation.Note3.DefaultValue = " ";
+                DefaultExpectation.Note3.Label = "NotCopyableNote";
+                DefaultExpectation.Note3.List = " ";
+                DefaultExpectation.Note3.Tooltip = "Note which can't be copied (rather than the default of copyable).";
+                DefaultExpectation.Flag3 = ControlExpectations.CreateFlag(TestConstant.DefaultDatabaseColumn.Flag3, 23);
+                DefaultExpectation.Flag3.Copyable = false;
+                DefaultExpectation.Flag3.Label = "NotCopyableFlag";
+                DefaultExpectation.Flag3.List = " ";
+                DefaultExpectation.Flag3.Tooltip = "Flag which can't be copied (rather than the default of copyable).";
 
                 // images
-                Expectations.DaylightBobcatImage = new ImageExpectations()
+                DefaultExpectation.DaylightBobcatImage = new ImageExpectations()
                 {
                     DarkPixelFraction = 0.24222145485288338,
                     Date = "05-Aug-2015",
@@ -272,7 +272,7 @@ namespace Timelapse.UnitTests
                     Time = "08:06:23"
                 };
 
-                Expectations.DaylightCoyoteImage = new ImageExpectations()
+                DefaultExpectation.DaylightCoyoteImage = new ImageExpectations()
                 {
                     DarkPixelFraction = 0.60847930235235814,
                     Date = "21-Apr-2016",
@@ -283,7 +283,7 @@ namespace Timelapse.UnitTests
                     Time = "06:31:13"
                 };
 
-                Expectations.DaylightMartenPairImage = new ImageExpectations()
+                DefaultExpectation.DaylightMartenPairImage = new ImageExpectations()
                 {
                     DarkPixelFraction = 0.70253739978510621,
                     Date = "28-Jan-2015",
@@ -295,7 +295,7 @@ namespace Timelapse.UnitTests
                     Time = "11:17:34"
                 };
 
-                Expectations.InfraredMartenImage = new ImageExpectations()
+                DefaultExpectation.InfraredMartenImage = new ImageExpectations()
                 {
                     DarkPixelFraction = 0.0743353174106539,
                     Date = "24-Feb-2016",
@@ -322,7 +322,8 @@ namespace Timelapse.UnitTests
             // databases generated dynamically by tests
             // see also use of Constants.File.Default*DatabaseFileName
             public const string CarnivoreNewImageDatabaseFileName = "CarnivoreDatabaseTest.ddb";
-            public const string DefaultNewTemplateDatabaseFileName = "TemplateDatabaseTest.tdb";
+            public const string DefaultNewImageDatabaseFileName = "DefaultUnitTest.ddb";
+            public const string DefaultNewTemplateDatabaseFileName = "DefaultUnitTest.tdb";
 
             public const string DaylightBobcatImage = "BushnellTrophyHD-119677C-20160805-926.JPG";
             public const string DaylightCoyoteImage = "BushnellTrophyHDAggressor-119777C-20160421-112.JPG";

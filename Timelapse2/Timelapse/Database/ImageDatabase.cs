@@ -34,8 +34,8 @@ namespace Timelapse.Database
 
         public List<string> TemplateSynchronizationIssues { get; private set; }
 
-        public ImageDatabase(string filePath, TemplateDatabase templateDatabase)
-            : base(filePath, templateDatabase)
+        private ImageDatabase(string filePath)
+            : base(filePath)
         {
             // TODOSAUL: Hmm. I've never seen database creation failure. Nonetheless, while I can pop up a messagebox here, the real issue is how
             // to revert the system back to some reasonable state. I will need to look at this closely 
@@ -47,12 +47,32 @@ namespace Timelapse.Database
             this.FolderPath = Path.GetDirectoryName(filePath);
             this.FileName = Path.GetFileName(filePath);
             this.ImageDataColumnsByDataLabel = new Dictionary<string, ImageDataColumn>();
+            this.TemplateSynchronizationIssues = new List<string>();
+        }
+
+        public static ImageDatabase CreateOrOpen(string filePath, TemplateDatabase templateDatabase)
+        {
+            // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
+            bool populateDatabase = !File.Exists(filePath);
+
+            ImageDatabase imageDatabase = new ImageDatabase(filePath);
+            if (populateDatabase)
+            {
+                // initialize the database if it's newly created
+                imageDatabase.OnDatabaseCreated(templateDatabase);
+            }
+            else
+            {
+                // if it's an existing database check if it needs updating to current structure and load data tables
+                imageDatabase.OnExistingDatabaseOpened(templateDatabase);
+            }
 
             // load the marker table from the database
             string command = "Select * FROM " + Constants.Database.MarkersTable;
-            this.MarkersTable = this.Database.GetDataTableFromSelect(command);
+            imageDatabase.MarkersTable = imageDatabase.Database.GetDataTableFromSelect(command);
 
-            this.PopulateDataLabelMaps();
+            imageDatabase.PopulateDataLabelMaps();
+            return imageDatabase;
         }
 
         /// <summary>Gets the number of images currently in the image table.</summary>
@@ -286,21 +306,16 @@ namespace Timelapse.Database
                 }
             }
             this.Database.CreateTable(Constants.Database.MarkersTable, columnDefinitions);
-
-            // for symmetry with OnExistingDatabaseOpened()
-            this.TemplateSynchronizationIssues = new List<string>();
         }
 
         protected override void OnExistingDatabaseOpened(TemplateDatabase templateDatabase)
         {
             // perform TemplateTable initializations and migrations, then check for synchronization issues
-            // TemplateSynchronizationIssues is instantiated here as this function's called from the base class constructor
             base.OnExistingDatabaseOpened(templateDatabase);
 
             List<string> templateDataLabels = templateDatabase.GetDataLabels();
             List<string> dataLabels = this.GetDataLabels();
             List<string> dataLabelsInTemplateButNotImageDatabase = templateDataLabels.Except(dataLabels).ToList();
-            this.TemplateSynchronizationIssues = new List<string>();
             foreach (string dataLabel in dataLabelsInTemplateButNotImageDatabase)
             {
                 this.TemplateSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the template, but nothing matches that in the image data file." + Environment.NewLine);
@@ -309,6 +324,50 @@ namespace Timelapse.Database
             foreach (string dataLabel in dataLabelsInImageButNotTemplateDatabase)
             {
                 this.TemplateSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the image data file, but nothing matches that in the template." + Environment.NewLine);
+            }
+
+            if (this.TemplateSynchronizationIssues.Count == 0)
+            {
+                foreach (string dataLabel in dataLabels)
+                {
+                    DataRow imageDatabaseControl = this.GetControlFromTemplateTable(dataLabel);
+                    DataRow templateControl = templateDatabase.GetControlFromTemplateTable(dataLabel);
+
+                    string imageDatabaseType = imageDatabaseControl.GetStringField(Constants.Control.Type);
+                    string templateType = templateControl.GetStringField(Constants.Control.Type);
+                    if (imageDatabaseType != templateType)
+                    {
+                        this.TemplateSynchronizationIssues.Add(String.Format("- The field with DataLabel '{0}' is of type '{1}' in the image data file but of type '{2}' in the template.{3}", dataLabel, imageDatabaseType, templateType, Environment.NewLine));
+                    }
+
+                    List<string> imageDatabaseList = Utilities.ConvertBarsToList(imageDatabaseControl.GetStringField(Constants.Control.List));
+                    List<string> templateList = Utilities.ConvertBarsToList(templateControl.GetStringField(Constants.Control.List));
+                    List<string> choiceValuesRemovedInTemplate = imageDatabaseList.Except(templateList).ToList();
+                    foreach (string removedValue in choiceValuesRemovedInTemplate)
+                    {
+                        this.TemplateSynchronizationIssues.Add(String.Format("- The choice with DataLabel '{0}' allows the value of '{1}' in the image data file but not in the template.{2}", dataLabel, removedValue, Environment.NewLine));
+                    }
+                }
+            }
+
+            // if there are no synchronization difficulties synchronize the image database's TemplateTable with the template's TemplateTable
+            if (this.TemplateSynchronizationIssues.Count == 0)
+            {
+                foreach (string dataLabel in dataLabels)
+                {
+                    DataRow imageDatabaseControl = this.GetControlFromTemplateTable(dataLabel);
+                    DataRow templateControl = templateDatabase.GetControlFromTemplateTable(dataLabel);
+
+                    imageDatabaseControl[Constants.Control.SpreadsheetOrder] = templateControl[Constants.Control.SpreadsheetOrder];
+                    imageDatabaseControl[Constants.Control.ControlOrder] = templateControl[Constants.Control.ControlOrder];
+                    imageDatabaseControl[Constants.Control.DefaultValue] = templateControl[Constants.Control.DefaultValue];
+                    imageDatabaseControl[Constants.Control.Label] = templateControl[Constants.Control.Label];
+                    imageDatabaseControl[Constants.Control.Tooltip] = templateControl[Constants.Control.Tooltip];
+                    imageDatabaseControl[Constants.Control.TextBoxWidth] = templateControl[Constants.Control.TextBoxWidth];
+                    imageDatabaseControl[Constants.Control.Copyable] = templateControl[Constants.Control.Copyable];
+                    imageDatabaseControl[Constants.Control.Visible] = templateControl[Constants.Control.Visible];
+                    this.SyncControlToDatabase(imageDatabaseControl);
+                }
             }
 
             // perform DataTable migrations

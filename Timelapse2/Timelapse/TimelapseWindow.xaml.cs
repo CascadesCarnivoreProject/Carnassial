@@ -201,7 +201,7 @@ namespace Timelapse
         internal bool TryOpenTemplateAndLoadImages(string templateDatabasePath)
         {
             // Create the template to the Timelapse Template database
-            if (!TemplateDatabase.TryOpen(templateDatabasePath, out this.template))
+            if (!TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out this.template))
             {
                 this.OnImageDatabaseNotLoaded();
                 // notify the user the template couldn't be loaded rather than silently doing nothing
@@ -234,7 +234,7 @@ namespace Timelapse
 
             // When we are loading from an existing image database, ensure that the template in the template database matches the template stored in
             // the image database
-            this.imageDatabase = new ImageDatabase(imageDatabaseFilePath, this.template);
+            this.imageDatabase = ImageDatabase.CreateOrOpen(imageDatabaseFilePath, this.template);
             if (this.imageDatabase.TemplateSynchronizationIssues.Count > 0)
             {
                 DialogTemplatesDontMatch dlg = new DialogTemplatesDontMatch(this.imageDatabase.TemplateSynchronizationIssues);

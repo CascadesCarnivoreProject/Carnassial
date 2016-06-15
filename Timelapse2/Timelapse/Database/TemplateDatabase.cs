@@ -15,33 +15,13 @@ namespace Timelapse.Database
         private bool disposed;
 
         // default constructor
-        public TemplateDatabase(string filePath)
-            : this(filePath, null)
-        {
-        }
-
-        // optional clone constructor
-        protected TemplateDatabase(string filePath, TemplateDatabase other)
+        protected TemplateDatabase(string filePath)
         {
             this.disposed = false;
-
-            // check for an existing database before instantiating the SQL wrapper as its instantiation creates the file
-            bool populateDatabase = !File.Exists(filePath);
 
             // open or create database
             this.Database = new SQLiteWrapper(filePath);
             this.FilePath = filePath;
-
-            if (populateDatabase)
-            {
-                // initialize the database if it's newly created
-                this.OnDatabaseCreated(other);
-            }
-            else
-            {
-                // if it's an existing database check if it needs updating to current structure and load data tables
-                this.OnExistingDatabaseOpened(other);
-            }
         }
 
         protected SQLiteWrapper Database { get; set; }
@@ -53,6 +33,25 @@ namespace Timelapse.Database
         /// Gets the template table
         /// </summary>
         public DataTable TemplateTable { get; private set; }
+
+        public static TemplateDatabase CreateOrOpen(string filePath)
+        {
+            // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
+            bool populateDatabase = !File.Exists(filePath);
+
+            TemplateDatabase templateDatabase = new TemplateDatabase(filePath);
+            if (populateDatabase)
+            {
+                // initialize the database if it's newly created
+                templateDatabase.OnDatabaseCreated(null);
+            }
+            else
+            {
+                // if it's an existing database check if it needs updating to current structure and load data tables
+                templateDatabase.OnExistingDatabaseOpened(null);
+            }
+            return templateDatabase;
+        }
 
         public DataRow AddUserDefinedControl(string controlType)
         {
@@ -134,11 +133,6 @@ namespace Timelapse.Database
             return this.Database.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Control.ControlOrder);
         }
 
-        private DataTable GetControlsSortedByIdOrder()
-        {
-            return this.Database.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.DatabaseColumn.ID);
-        }
-
         public List<string> GetDataLabels()
         {
             List<string> dataLabels = new List<string>();
@@ -183,7 +177,7 @@ namespace Timelapse.Database
             // drop the control from the database and data table
             string where = Constants.DatabaseColumn.ID + " = " + controlToRemove[Constants.DatabaseColumn.ID];
             this.Database.DeleteRows(Constants.Database.TemplateTable, where);
-            this.TemplateTable.Rows.Remove(controlToRemove);
+            this.TemplateTable = this.GetControlsSortedByControlOrder();
 
             // regenerate counter and spreadsheet orders; if they're greater than the one removed, decrement
             List<ColumnTuplesWithWhere> controlUpdates = new List<ColumnTuplesWithWhere>();
@@ -244,23 +238,22 @@ namespace Timelapse.Database
             this.TemplateTable = this.GetControlsSortedByControlOrder();
         }
 
-        public static bool TryOpen(string filePath, out TemplateDatabase database)
+        public static bool TryCreateOrOpen(string filePath, out TemplateDatabase database)
         {
             try
             {
-                database = new TemplateDatabase(filePath);
+                database = TemplateDatabase.CreateOrOpen(filePath);
                 return true;
             }
             catch (Exception exception)
             {
                 Debug.Assert(false, exception.ToString());
-
                 database = null;
                 return false;
             }
         }
 
-        public void UpdateDisplayOrder(string column, Dictionary<string, int> newOrderByDataLabel)
+        public void UpdateDisplayOrder(string column, Dictionary<string, long> newOrderByDataLabel)
         {
             // argument validation
             if (column != Constants.Control.ControlOrder && column != Constants.Control.SpreadsheetOrder)
@@ -273,7 +266,7 @@ namespace Timelapse.Database
                 throw new NotSupportedException(String.Format("Partial order updates are not supported.  New ordering for {0} controls was passed but {1} controls are present for '{2}'.", newOrderByDataLabel.Count, this.TemplateTable.Rows.Count, column));
             }
 
-            List<int> uniqueOrderValues = newOrderByDataLabel.Values.Distinct().ToList();
+            List<long> uniqueOrderValues = newOrderByDataLabel.Values.Distinct().ToList();
             if (uniqueOrderValues.Count != newOrderByDataLabel.Count)
             {
                 throw new ArgumentException("newOrderByDataLabel", String.Format("Each control must have a unique value for its order.  {0} duplicate values were passed for '{1}'.", newOrderByDataLabel.Count - uniqueOrderValues.Count, column));
@@ -293,7 +286,7 @@ namespace Timelapse.Database
             for (int row = 0; row < this.TemplateTable.Rows.Count; row++)
             {
                 string dataLabel = this.TemplateTable.Rows[row].GetStringField(Constants.Control.DataLabel);
-                int newOrder = newOrderByDataLabel[dataLabel];
+                long newOrder = newOrderByDataLabel[dataLabel];
                 this.TemplateTable.Rows[row][column] = newOrder;
             }
 
@@ -317,6 +310,19 @@ namespace Timelapse.Database
             }
 
             this.disposed = true;
+        }
+
+        /// <summary>Given a data label, get the corresponding data entry control</summary>
+        public DataRow GetControlFromTemplateTable(string dataLabel)
+        {
+            for (int i = 0; i < this.TemplateTable.Rows.Count; i++)
+            {
+                if (dataLabel.Equals(this.TemplateTable.Rows[i][Constants.Control.DataLabel]))
+                {
+                    return this.TemplateTable.Rows[i];
+                }
+            }
+            return null;
         }
 
         /// <summary>Given a data label, get the id of the corresponding data entry control</summary>
@@ -485,8 +491,7 @@ namespace Timelapse.Database
 
         protected virtual void OnExistingDatabaseOpened(TemplateDatabase other)
         {
-            // this.TemplateTable = this.GetControlsSortedByControlOrder();
-            this.TemplateTable = this.GetControlsSortedByIdOrder();
+            this.TemplateTable = this.GetControlsSortedByControlOrder();
             this.EnsureDataLabelsAndLabelsNotEmpty();
 
             // add a relative path control to pre v2.1 databases if one hasn't already been inserted
@@ -494,59 +499,113 @@ namespace Timelapse.Database
             long relativePathID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
             if (relativePathID == -1)
             {
+                // Insert a relative path control, where its ID will be created as the next highest ID
                 int order = this.TemplateTable.Rows.Count + 1;
-                int desiredRelativePathID = 2; // The desired end ID of the RelativePath
                 List<ColumnTuple> relativePathControl = this.GetRelativePathTuples(order, order, false);
-
-                // Insert a relative path row, where its ID will be created as the next highest ID
                 this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { relativePathControl });
 
-                // This hack  adjusts all IDs in the database, where it resets the RelativePath ID  to desiredRelativePathID 
-                this.Database.UpdateToRepositionRelativePathIDInTemplateTable(Constants.Database.TemplateTable, desiredRelativePathID);
-
-                this.TemplateTable = this.GetControlsSortedByIdOrder();
-
-                this.UpdateToRepositionRelativePathControlAndSpreadsheetOrder(desiredRelativePathID);
-                this.TemplateTable = this.GetControlsSortedByControlOrder();
+                // default the relative control to ID and order 2 for consistency with newly created templates
+                int desiredRelativePathID = 2;
+                this.SetControlID(Constants.DatabaseColumn.RelativePath, desiredRelativePathID);
+                this.SetControlOrders(Constants.DatabaseColumn.RelativePath, desiredRelativePathID);
             }
         }
 
-        // This is a hack introduced for backwards compatability when updating the RelativePath type in template table.
-        // It resets the control and spreadsheet order so that RelativePath will be the 2nd in both. 
-        private void UpdateToRepositionRelativePathControlAndSpreadsheetOrder(int desiredRelativePathID)
+        /// <summary>
+        /// Set the order of the specified control to the specified value, shifting other controls' orders as needed.
+        /// </summary>
+        private void SetControlOrders(string dataLabel, int order)
         {
-            DataTable tempTable = this.GetControlsSortedByControlOrder();
-            Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>();
-            Dictionary<string, int> newSpreadsheetOrderByDataLabel = new Dictionary<string, int>();
-            DataRow row;
-            for (int i = 0; i < tempTable.Rows.Count; i++)
+            if ((order < 1) || (order > this.TemplateTable.Rows.Count))
             {
-                row = tempTable.Rows[i];
-               
-                int currentControlOrder = Convert.ToInt32(row[Constants.Control.ControlOrder]);
-                if (currentControlOrder >= desiredRelativePathID)
-                {
-                    currentControlOrder++;
-                }
-                if (i == tempTable.Rows.Count - 1)
-                {
-                    currentControlOrder = desiredRelativePathID; // Reset the last ID (as this will be the relative path) to the desiredID
-                }
-                newControlOrderByDataLabel.Add((string)row[Constants.Control.DataLabel], currentControlOrder);
-
-                int currentSpreadsheetOrder = Convert.ToInt32(row[Constants.Control.SpreadsheetOrder]);
-                if (currentSpreadsheetOrder >= desiredRelativePathID)
-                {
-                    currentSpreadsheetOrder++;
-                }
-                if (i == tempTable.Rows.Count - 1)
-                {
-                    currentSpreadsheetOrder = desiredRelativePathID;
-                }
-                newSpreadsheetOrderByDataLabel.Add((string)row[Constants.Control.DataLabel], currentSpreadsheetOrder);
+                throw new ArgumentOutOfRangeException("order", "Control and spreadsheet orders must be contiguous ones based values.");
             }
+
+            Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
+            Dictionary<string, long> newSpreadsheetOrderByDataLabel = new Dictionary<string, long>();
+            for (int rowIndex = 0; rowIndex < this.TemplateTable.Rows.Count; ++rowIndex)
+            {
+                DataRow control = this.TemplateTable.Rows[rowIndex];
+                string controlDataLabel = control.GetStringField(Constants.Control.DataLabel);
+                if (controlDataLabel == dataLabel)
+                {
+                    newControlOrderByDataLabel.Add(dataLabel, order);
+                    newSpreadsheetOrderByDataLabel.Add(dataLabel, order);
+                }
+                else
+                {
+                    long currentControlOrder = (long)control[Constants.Control.ControlOrder];
+                    if (currentControlOrder >= order)
+                    {
+                        ++currentControlOrder;
+                    }
+                    newControlOrderByDataLabel.Add(controlDataLabel, currentControlOrder);
+
+                    long currentSpreadsheetOrder = (long)control[Constants.Control.SpreadsheetOrder];
+                    if (currentSpreadsheetOrder >= order)
+                    {
+                        ++currentSpreadsheetOrder;
+                    }
+                    newSpreadsheetOrderByDataLabel.Add(controlDataLabel, currentSpreadsheetOrder);
+                }
+            }
+
             this.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
             this.UpdateDisplayOrder(Constants.Control.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
+            this.TemplateTable = this.GetControlsSortedByControlOrder();
+        }
+
+        /// <summary>
+        /// Set the ID of the specified control to the specified value, shifting other controls' IDs as needed.
+        /// </summary>
+        private void SetControlID(string dataLabel, int newID)
+        {
+            // nothing to do
+            long currentID = this.GetControlIDFromTemplateTable(dataLabel);
+            if (currentID == newID)
+            {
+                return;
+            }
+
+            // move other controls out of the way if the requested ID is in use
+            DataRow conflictingControl = this.TemplateTable.Rows.Find(newID);
+            List<string> queries = new List<string>();
+            if (conflictingControl != null)
+            {
+                // First update: because any changed IDs have to be unique, first move them beyond the current ID range
+                long maximumID = 0;
+                for (int row = 0; row < this.TemplateTable.Rows.Count; ++row)
+                {
+                    long id = (long)this.TemplateTable.Rows[row][Constants.DatabaseColumn.ID];
+                    if (maximumID < id)
+                    {
+                        maximumID = id;
+                    }
+                }
+                Debug.Assert((maximumID > 0) && (maximumID <= Int64.MaxValue), String.Format("Maximum ID found is {0}, which is out of range.", maximumID));
+                string jumpAmount = maximumID.ToString();
+
+                string increaseIDs = "Update " + Constants.Database.TemplateTable;
+                increaseIDs += " SET " + Constants.DatabaseColumn.ID + " = " + Constants.DatabaseColumn.ID + " + 1 + " + jumpAmount;
+                increaseIDs += " WHERE " + Constants.DatabaseColumn.ID + " >= " + newID;
+                queries.Add(increaseIDs);
+
+                // Second update: decrease IDs above newID to be one more than their original value
+                // This leaves everything in sequence except for an open spot at newID.
+                string reduceIDs = "Update " + Constants.Database.TemplateTable;
+                reduceIDs += " SET " + Constants.DatabaseColumn.ID + " = " + Constants.DatabaseColumn.ID + " - " + jumpAmount;
+                reduceIDs += " WHERE " + Constants.DatabaseColumn.ID + " >= " + newID;
+                queries.Add(reduceIDs);
+            }
+
+            // 3rd update: change the target ID to the desired ID
+            string setControlID = "Update " + Constants.Database.TemplateTable;
+            setControlID += " SET " + Constants.DatabaseColumn.ID + " = " + newID;
+            setControlID += " WHERE " + Constants.Control.DataLabel + " = '" + dataLabel + "'";
+            queries.Add(setControlID);
+            this.Database.ExecuteNonQueryWrappedInBeginEnd(queries);
+
+            this.TemplateTable = this.GetControlsSortedByControlOrder();
         }
 
         private string GetNextUniqueDataLabel(string dataLabelPrefix)

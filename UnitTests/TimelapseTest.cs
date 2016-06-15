@@ -29,7 +29,7 @@ namespace Timelapse.UnitTests
             string imageDatabaseCloneFilePath = this.GetUniqueFilePathForTest(imageDatabaseFileName);
             File.Copy(imageDatabaseSourceFilePath, imageDatabaseCloneFilePath, true);
 
-            return new ImageDatabase(imageDatabaseCloneFilePath, templateDatabase);
+            return ImageDatabase.CreateOrOpen(imageDatabaseCloneFilePath, templateDatabase);
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace Timelapse.UnitTests
             File.Copy(templateDatabaseSourceFilePath, templateDatabaseCloneFilePath, true);
 
             TemplateDatabase clone;
-            bool result = TemplateDatabase.TryOpen(templateDatabaseCloneFilePath, out clone);
+            bool result = TemplateDatabase.TryCreateOrOpen(templateDatabaseCloneFilePath, out clone);
             Assert.IsTrue(result, "Open of template database '{0}' failed.", templateDatabaseCloneFilePath);
             return clone;
         }
@@ -53,14 +53,21 @@ namespace Timelapse.UnitTests
         protected ImageDatabase CreateImageDatabase(string templateDatabaseBaseFileName, string imageDatabaseBaseFileName)
         {
             TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName);
+            return this.CreateImageDatabase(templateDatabase, imageDatabaseBaseFileName);
+        }
 
+        /// <summary>
+        /// Creates an image database unique to the calling test.
+        /// </summary>
+        protected ImageDatabase CreateImageDatabase(TemplateDatabase templateDatabase, string imageDatabaseBaseFileName)
+        {
             string imageDatabaseFilePath = this.GetUniqueFilePathForTest(imageDatabaseBaseFileName);
             if (File.Exists(imageDatabaseFilePath))
             {
                 File.Delete(imageDatabaseFilePath);
             }
 
-            return new ImageDatabase(imageDatabaseFilePath, templateDatabase);
+            return ImageDatabase.CreateOrOpen(imageDatabaseFilePath, templateDatabase);
         }
 
         /// <summary>
@@ -76,7 +83,7 @@ namespace Timelapse.UnitTests
             }
 
             // create the new database
-            return new TemplateDatabase(templateDatabaseFilePath);
+            return TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
         }
 
         protected List<ImageExpectations> PopulateCarnivoreDatabase(ImageDatabase imageDatabase)
@@ -130,8 +137,8 @@ namespace Timelapse.UnitTests
             // generate expectations
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
             {
-                new ImageExpectations(TestConstant.Expectations.DaylightMartenPairImage),
-                new ImageExpectations(TestConstant.Expectations.DaylightCoyoteImage)
+                new ImageExpectations(TestConstant.DefaultExpectation.DaylightMartenPairImage),
+                new ImageExpectations(TestConstant.DefaultExpectation.DaylightCoyoteImage)
             };
 
             string initialRootFolderName = Path.GetFileName(imageDatabase.FolderPath);
@@ -188,8 +195,8 @@ namespace Timelapse.UnitTests
             // generate expectations
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
             {
-                new ImageExpectations(TestConstant.Expectations.InfraredMartenImage),
-                new ImageExpectations(TestConstant.Expectations.DaylightBobcatImage)
+                new ImageExpectations(TestConstant.DefaultExpectation.InfraredMartenImage),
+                new ImageExpectations(TestConstant.DefaultExpectation.DaylightBobcatImage)
             };
 
             string initialRootFolderName = Path.GetFileName(imageDatabase.FolderPath);

@@ -150,7 +150,7 @@ namespace TimelapseTemplateEditor
             MyTrace.MethodName("DG");
 
             // Create a new DB file if one does not exist, or load a DB file if there is one.
-            this.templateDatabase = new TemplateDatabase(templateDatabaseFilePath);
+            this.templateDatabase = TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
 
             // Have the window title include the database file name
             this.OnlyWindow.Title = EditorConstant.MainWindowBaseTitle + " | File: " + Path.GetFileName(this.templateDatabase.FilePath);
@@ -185,7 +185,7 @@ namespace TimelapseTemplateEditor
             MyTrace.MethodName("DG");
 
             // Create a new DB file if one does not exist, or load a DB file if there is one.
-            this.templateDatabase = new TemplateDatabase(templateDatabaseFilePath);
+            this.templateDatabase = TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
 
             // Have the window title include the database file name
             this.OnlyWindow.Title = EditorConstant.MainWindowBaseTitle + " | File: " + Path.GetFileName(this.templateDatabase.FilePath);
@@ -1046,11 +1046,11 @@ namespace TimelapseTemplateEditor
         private void OnSpreadsheetOrderChanged(object sender, DataGridColumnEventArgs e)
         {
             DataGrid dataGrid = (DataGrid)sender;
-            Dictionary<string, int> spreadsheetOrderByDataLabel = new Dictionary<string, int>();
+            Dictionary<string, long> spreadsheetOrderByDataLabel = new Dictionary<string, long>();
             for (int control = 0; control < dataGrid.Columns.Count; control++)
             {
                 string dataLabelFromColumnHeader = dataGrid.Columns[control].Header.ToString();
-                int newSpreadsheetOrder = dataGrid.Columns[control].DisplayIndex + 1;
+                long newSpreadsheetOrder = dataGrid.Columns[control].DisplayIndex + 1;
                 spreadsheetOrderByDataLabel.Add(dataLabelFromColumnHeader, newSpreadsheetOrder);
             }
 
@@ -1180,8 +1180,8 @@ namespace TimelapseTemplateEditor
 
         private void OnControlOrderChanged()
         {
-            Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>();
-            int controlOrder = 1;
+            Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
+            long controlOrder = 1;
             foreach (UIElement element in this.controlsPanel.Children)
             {
                 StackPanel stackPanel = element as StackPanel;
