@@ -297,14 +297,40 @@ namespace Timelapse.Database
             this.ExecuteNonQueryWrappedInBeginEnd(queries);
         }
 
-        public void fooUpdateID(string tableName)
+        // This is a hack introduced for backwards compatability when updating the RelativePath type in template table.
+        // It really shouldn't be in the wrapper, which should otherwise be agnostic to the actual table details. But no nice place to put it.
+        // Because older templates did not have a relative path, the ID for the RelativePath row is the next highest nubmer. 
+        // We want to reposition its ID at 'position' (normally position 1), which will make old templatetables similar to  new template tables.
+        // This method adds 1 to IDs at the given position and above, thus leaving space for it while keeping the sorted order of rows (identified by IDS) the same. 
+        // We need to ensure that we need to adjust IDs in a Table at a given ID position,
+        // where no row will have that ID. 
+        // Because IDs need to be unique, we first adjust IDs above the increment by offsetting them with a large number plus the position
+        // (which hopefully means that the new IDs are unique), and then substracting that large number from those IDs.
+        // This if we have (say) IDs 1,2,3,4,5 ... 11 and want to make place for an ID at (say) position 2, it will:
+        // change IDS to  1, 100003, 100004, 100005, 100005, ... 100012
+        // change IDs back to 1,3,4,5,6... 12
+        // change last ID (the relative path) to the open ID 1,23,4,5,6... 11
+        public void UpdateToRepositionRelativePathIDInTemplateTable(string templateTable, int position)
         {
+            string jumpAmount = "10000"; // Because any changed IDs have to be unique, we first adjust them by adding a large amount to them that will not be in the current ID range
             List<string> queries = new List<string>();
-            string query = "Update " + tableName + " SET Id = Id + 1000 + 1 WHERE Id > 1";
+                                  
+            // First update: shift IDs from 'position' on up by jumpAmount + 1                                                                                            
+            string query = "Update " + templateTable;                                                                              // Update tableName
+            query += " SET " + Constants.DatabaseColumn.ID + " = " + Constants.DatabaseColumn.ID + " + 1 + " + jumpAmount;     // Update tableName SET ID = ID + 1 + 10000
+            query += " WHERE Id >= " + position;                                                                                // Update tableName SET ID = ID + 1 + 10000 WHERE Id > position
             queries.Add(query);
-            query = "Update " + tableName + " SET Id = Id - 1000 WHERE Id > 1";
+
+            // 2nd update: shift IDs from 'position' on up by substracting jumpAmount. This leaves everything in sequence except for an empty spot at position.
+            query = "Update " + templateTable;                                                                              // Update tableName
+            query += " SET " + Constants.DatabaseColumn.ID + " = " + Constants.DatabaseColumn.ID + " - " + jumpAmount;  // Update tableName SET ID = ID - 10000
+            query += " WHERE Id >= " + position;                                                                         // Update tableName SET ID = ID - 10000 WHERE Id > position
             queries.Add(query);
-            query = "Update " + tableName + " SET Id = 2 WHERE Type='RelativePath'";
+
+            // 3rd update: change the RelativePath ID to the ID at the now-open position
+            query = "Update " + templateTable;                                                                              // Update tableName
+            query += " SET " + Constants.DatabaseColumn.ID + " = " + position;                                          // Update tableName SET ID = position
+            query += " WHERE Type = '" + Constants.DatabaseColumn.RelativePath + "'";                                   // Update tableName SET ID = position WHERE Type='RelativePath'
             queries.Add(query);
             this.ExecuteNonQueryWrappedInBeginEnd(queries);
         }

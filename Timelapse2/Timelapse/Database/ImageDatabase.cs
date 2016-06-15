@@ -312,7 +312,7 @@ namespace Timelapse.Database
             }
 
             // perform DataTable migrations
-            // add RelativePath column if it's not present in the image data table
+            // add RelativePath column if it's not present in the image data table at postion '2'
             this.ImageDataTable = this.GetAllImages();
             if (this.ImageDataTable.Columns.Contains(Constants.DatabaseColumn.RelativePath) == false)
             {
