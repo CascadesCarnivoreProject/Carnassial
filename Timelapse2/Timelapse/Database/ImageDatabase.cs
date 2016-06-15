@@ -312,14 +312,14 @@ namespace Timelapse.Database
             }
 
             // perform DataTable migrations
-            // add RelativePath column if it's not present in the image data table
+            // add RelativePath column if it's not present in the image data table at postion '2'
             this.ImageDataTable = this.GetAllImages();
             if (this.ImageDataTable.Columns.Contains(Constants.DatabaseColumn.RelativePath) == false)
             {
                 long id = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
                 DataRow control = this.TemplateTable.Rows.Find(id);
                 ColumnTuple columnDefinition = this.CreateImageDataColumnDefinition(control);
-                this.Database.AddColumnToEndOfTable(Constants.Database.ImageDataTable, columnDefinition);
+                this.Database.AddColumnToTable(Constants.Database.ImageDataTable, 2, columnDefinition);
             }
 
             // perform ImageSetTable migrations

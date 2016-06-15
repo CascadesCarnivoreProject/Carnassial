@@ -134,6 +134,11 @@ namespace Timelapse.Database
             return this.Database.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Control.ControlOrder);
         }
 
+        private DataTable GetControlsSortedByIdOrder()
+        {
+            return this.Database.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.DatabaseColumn.ID);
+        }
+
         public List<string> GetDataLabels()
         {
             List<string> dataLabels = new List<string>();
@@ -480,7 +485,8 @@ namespace Timelapse.Database
 
         protected virtual void OnExistingDatabaseOpened(TemplateDatabase other)
         {
-            this.TemplateTable = this.GetControlsSortedByControlOrder();
+            // this.TemplateTable = this.GetControlsSortedByControlOrder();
+            this.TemplateTable = this.GetControlsSortedByIdOrder();
             this.EnsureDataLabelsAndLabelsNotEmpty();
 
             // add a relative path control to pre v2.1 databases if one hasn't already been inserted
@@ -489,10 +495,58 @@ namespace Timelapse.Database
             if (relativePathID == -1)
             {
                 int order = this.TemplateTable.Rows.Count + 1;
+                int desiredRelativePathID = 2; // The desired end ID of the RelativePath
                 List<ColumnTuple> relativePathControl = this.GetRelativePathTuples(order, order, false);
+
+                // Insert a relative path row, where its ID will be created as the next highest ID
                 this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { relativePathControl });
+
+                // This hack  adjusts all IDs in the database, where it resets the RelativePath ID  to desiredRelativePathID 
+                this.Database.UpdateToRepositionRelativePathIDInTemplateTable(Constants.Database.TemplateTable, desiredRelativePathID);
+
+                this.TemplateTable = this.GetControlsSortedByIdOrder();
+
+                this.UpdateToRepositionRelativePathControlAndSpreadsheetOrder(desiredRelativePathID);
                 this.TemplateTable = this.GetControlsSortedByControlOrder();
             }
+        }
+
+        // This is a hack introduced for backwards compatability when updating the RelativePath type in template table.
+        // It resets the control and spreadsheet order so that RelativePath will be the 2nd in both. 
+        private void UpdateToRepositionRelativePathControlAndSpreadsheetOrder(int desiredRelativePathID)
+        {
+            DataTable tempTable = this.GetControlsSortedByControlOrder();
+            Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>();
+            Dictionary<string, int> newSpreadsheetOrderByDataLabel = new Dictionary<string, int>();
+            DataRow row;
+            for (int i = 0; i < tempTable.Rows.Count; i++)
+            {
+                row = tempTable.Rows[i];
+               
+                int currentControlOrder = Convert.ToInt32(row[Constants.Control.ControlOrder]);
+                if (currentControlOrder >= desiredRelativePathID)
+                {
+                    currentControlOrder++;
+                }
+                if (i == tempTable.Rows.Count - 1)
+                {
+                    currentControlOrder = desiredRelativePathID; // Reset the last ID (as this will be the relative path) to the desiredID
+                }
+                newControlOrderByDataLabel.Add((string)row[Constants.Control.DataLabel], currentControlOrder);
+
+                int currentSpreadsheetOrder = Convert.ToInt32(row[Constants.Control.SpreadsheetOrder]);
+                if (currentSpreadsheetOrder >= desiredRelativePathID)
+                {
+                    currentSpreadsheetOrder++;
+                }
+                if (i == tempTable.Rows.Count - 1)
+                {
+                    currentSpreadsheetOrder = desiredRelativePathID;
+                }
+                newSpreadsheetOrderByDataLabel.Add((string)row[Constants.Control.DataLabel], currentSpreadsheetOrder);
+            }
+            this.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
+            this.UpdateDisplayOrder(Constants.Control.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
         }
 
         private string GetNextUniqueDataLabel(string dataLabelPrefix)

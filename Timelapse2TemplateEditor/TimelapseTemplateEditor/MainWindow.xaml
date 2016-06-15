@@ -394,7 +394,7 @@
 
                     </DataGrid.Resources>
                     <DataGrid.Columns >
-                        <DataGridTextColumn Header="ID"   CanUserSort="False" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="ID"   CanUserSort="False" IsReadOnly="True" Binding="{Binding Path=Id, Converter={StaticResource cellTBConverter}}" />
                         <DataGridTextColumn Header="Control&#x0a;order" Binding="{Binding Path=ControlOrder, Converter={StaticResource cellTBConverter}}" CanUserSort="False" IsReadOnly="True"/>
                         <DataGridTextColumn Header="Spreadsheet&#x0a;order" Binding="{Binding Path=SpreadsheetOrder, Converter={StaticResource cellTBConverter}}" CanUserSort="False" IsReadOnly="True"/>
                         <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource cellTBConverter}}" CanUserSort="False">

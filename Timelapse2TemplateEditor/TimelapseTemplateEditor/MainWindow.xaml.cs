@@ -320,7 +320,7 @@ namespace TimelapseTemplateEditor
 
             // It should always find a row, but just in case...
             string choiceList = String.Empty;
-            if (null != foundRow)
+            if (foundRow != null)
             {
                 choiceList = foundRow.GetStringField(Constants.Control.List);
             }
@@ -331,7 +331,7 @@ namespace TimelapseTemplateEditor
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                if (null != foundRow)
+                if (foundRow != null)
                 {
                     foundRow[Constants.Control.List] = Utilities.ConvertLineBreaksToBars(dlg.ItemList);
                 }
@@ -701,10 +701,10 @@ namespace TimelapseTemplateEditor
                         // the sortmemberpath is include, not the sort name, so we are accessing by head, which may change.
                         string controlType = thisRow.Row.GetStringField(Constants.Control.Type);
                         string sortMemberPath = this.TemplateDataGrid.Columns[column].SortMemberPath;
-                        if ((sortMemberPath == Constants.DatabaseColumn.ID) ||
-                            (sortMemberPath == Constants.Control.ControlOrder) ||
-                            (sortMemberPath == Constants.Control.SpreadsheetOrder) ||
-                            (sortMemberPath == Constants.Control.Type) ||
+                        if (String.Equals(sortMemberPath, Constants.DatabaseColumn.ID, StringComparison.OrdinalIgnoreCase)  ||
+                            String.Equals(sortMemberPath, Constants.Control.ControlOrder, StringComparison.OrdinalIgnoreCase) ||
+                            String.Equals(sortMemberPath, Constants.Control.SpreadsheetOrder, StringComparison.OrdinalIgnoreCase) ||
+                            String.Equals(sortMemberPath, Constants.Control.Type, StringComparison.OrdinalIgnoreCase) ||
                             (controlType == Constants.DatabaseColumn.Date) ||
                             (controlType == Constants.Control.DeleteFlag) ||
                             (controlType == Constants.DatabaseColumn.File) ||
@@ -1129,7 +1129,7 @@ namespace TimelapseTemplateEditor
                     {
                         // Check if its a stack panel, and if so check to see if its children are the drop target
                         StackPanel stackPanel = element as StackPanel;
-                        if (null != stackPanel)
+                        if (stackPanel != null)
                         {
                             // Check the children...
                             foreach (UIElement subelement in stackPanel.Children)
@@ -1147,7 +1147,7 @@ namespace TimelapseTemplateEditor
                 if (dropTargetIndex != -1)
                 {
                     StackPanel tsp = this.realMouseDragSource as StackPanel;
-                    if (null == tsp)
+                    if (tsp == null)
                     {
                         StackPanel parent = FindVisualParent<StackPanel>(this.realMouseDragSource);
                         this.realMouseDragSource = parent;

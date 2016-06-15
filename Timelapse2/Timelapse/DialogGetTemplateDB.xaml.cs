@@ -38,7 +38,7 @@ namespace Timelapse
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             string templateFile = this.GetTemplatePathFromUser(this.path);
-            if (null != templateFile)
+            if (templateFile != null)
             {
                 File.Copy(templateFile, System.IO.Path.Combine(this.path, Constants.File.DefaultTemplateDatabaseFileName));
                 this.DialogResult = true;

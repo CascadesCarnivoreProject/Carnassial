@@ -126,7 +126,7 @@ namespace Timelapse
             IList<DataGridCellInfo> selectedcells = e.AddedCells;
 
             // Make sure there are actually some selected cells
-            if (null == selectedcells || selectedcells.Count == 0)
+            if (selectedcells == null || selectedcells.Count == 0)
             {
                 return;
             }
