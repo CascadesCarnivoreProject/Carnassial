@@ -37,7 +37,7 @@ namespace Timelapse.Util
             string directoryContainingCurrentExecutable = Path.GetDirectoryName(executingAssembly.Location);
             foreach (string binaryName in Dependencies.CommonRequiredBinaries)
             {
-                if (false == File.Exists(Path.Combine(directoryContainingCurrentExecutable, binaryName)))
+                if (File.Exists(Path.Combine(directoryContainingCurrentExecutable, binaryName)) == false)
                 {
                     return false;
                 }
@@ -47,7 +47,7 @@ namespace Timelapse.Util
             {
                 foreach (string binaryName in Dependencies.TimelapseRequiredBinaries)
                 {
-                    if (false == File.Exists(Path.Combine(directoryContainingCurrentExecutable, binaryName)))
+                    if (File.Exists(Path.Combine(directoryContainingCurrentExecutable, binaryName)) == false)
                     {
                         return false;
                     }
@@ -57,7 +57,7 @@ namespace Timelapse.Util
             {
                 foreach (string binaryName in Dependencies.EditorRequiredBinaries)
                 {
-                    if (false == File.Exists(Path.Combine(directoryContainingCurrentExecutable, binaryName)))
+                    if (File.Exists(Path.Combine(directoryContainingCurrentExecutable, binaryName)) == false)
                     {
                         return false;
                     }

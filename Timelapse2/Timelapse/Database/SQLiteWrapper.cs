@@ -505,7 +505,6 @@ namespace Timelapse.Database
                     // Some basic error checking to make sure we can do the operation
                     List<string> columnNames = this.GetColumnNamesAsList(connection, sourceTable);
 
-
                     // Check if a column named Name already exists in the source Table. If so, abort as we cannot add duplicate column names
                     if (columnNames.Contains(columnDefinition.Name))
                     {

@@ -376,7 +376,7 @@ namespace Timelapse.Images
         {
             this.MarkersRemove(this);
             this.MarkersRemove(this.canvasToMagnify);
-            if (null != this.ImageToDisplay)
+            if (this.ImageToDisplay != null)
             {
                 this.MarkersDraw(this, this.ImageToDisplay.RenderSize, true);
                 this.MarkersDraw(this.canvasToMagnify, this.canvasToMagnify.RenderSize, false);

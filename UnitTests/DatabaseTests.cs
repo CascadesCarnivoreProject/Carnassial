@@ -480,28 +480,28 @@ namespace Timelapse.UnitTests
         {
             Assert.IsTrue(templateDatabase.TemplateTable.Rows.Count == TestConstant.DefaultImageTableColumns.Count - 1);
             TestConstant.Expectations.File.Verify(templateDatabase.TemplateTable.Rows[0]);
-            TestConstant.Expectations.Folder.Verify(templateDatabase.TemplateTable.Rows[1]);
-            TestConstant.Expectations.Date.Verify(templateDatabase.TemplateTable.Rows[2]);
-            TestConstant.Expectations.Time.Verify(templateDatabase.TemplateTable.Rows[3]);
-            TestConstant.Expectations.ImageQuality.Verify(templateDatabase.TemplateTable.Rows[4]);
-            TestConstant.Expectations.MarkForDeletion.Verify(templateDatabase.TemplateTable.Rows[5]);
-            TestConstant.Expectations.Counter0.Verify(templateDatabase.TemplateTable.Rows[6]);
-            TestConstant.Expectations.Choice0.Verify(templateDatabase.TemplateTable.Rows[7]);
-            TestConstant.Expectations.Note0.Verify(templateDatabase.TemplateTable.Rows[8]);
-            TestConstant.Expectations.Flag0.Verify(templateDatabase.TemplateTable.Rows[9]);
-            TestConstant.Expectations.CounterWithCustomDataLabel.Verify(templateDatabase.TemplateTable.Rows[10]);
-            TestConstant.Expectations.ChoiceWithCustomDataLabel.Verify(templateDatabase.TemplateTable.Rows[11]);
-            TestConstant.Expectations.NoteWithCustomDataLabel.Verify(templateDatabase.TemplateTable.Rows[12]);
-            TestConstant.Expectations.FlagWithCustomDataLabel.Verify(templateDatabase.TemplateTable.Rows[13]);
-            TestConstant.Expectations.CounterNotVisible.Verify(templateDatabase.TemplateTable.Rows[14]);
-            TestConstant.Expectations.ChoiceNotVisible.Verify(templateDatabase.TemplateTable.Rows[15]);
-            TestConstant.Expectations.NoteNotVisible.Verify(templateDatabase.TemplateTable.Rows[16]);
-            TestConstant.Expectations.FlagNotVisible.Verify(templateDatabase.TemplateTable.Rows[17]);
-            TestConstant.Expectations.Counter3.Verify(templateDatabase.TemplateTable.Rows[18]);
-            TestConstant.Expectations.Choice3.Verify(templateDatabase.TemplateTable.Rows[19]);
-            TestConstant.Expectations.Note3.Verify(templateDatabase.TemplateTable.Rows[20]);
-            TestConstant.Expectations.Flag3.Verify(templateDatabase.TemplateTable.Rows[21]);
-            TestConstant.Expectations.RelativePath.Verify(templateDatabase.TemplateTable.Rows[22]);
+            TestConstant.Expectations.Folder.Verify(templateDatabase.TemplateTable.Rows[2]);
+            TestConstant.Expectations.Date.Verify(templateDatabase.TemplateTable.Rows[3]);
+            TestConstant.Expectations.Time.Verify(templateDatabase.TemplateTable.Rows[4]);
+            TestConstant.Expectations.ImageQuality.Verify(templateDatabase.TemplateTable.Rows[5]);
+            TestConstant.Expectations.MarkForDeletion.Verify(templateDatabase.TemplateTable.Rows[6]);
+            TestConstant.Expectations.Counter0.Verify(templateDatabase.TemplateTable.Rows[7]);
+            TestConstant.Expectations.Choice0.Verify(templateDatabase.TemplateTable.Rows[8]);
+            TestConstant.Expectations.Note0.Verify(templateDatabase.TemplateTable.Rows[9]);
+            TestConstant.Expectations.Flag0.Verify(templateDatabase.TemplateTable.Rows[10]);
+            TestConstant.Expectations.CounterWithCustomDataLabel.Verify(templateDatabase.TemplateTable.Rows[111]);
+            TestConstant.Expectations.ChoiceWithCustomDataLabel.Verify(templateDatabase.TemplateTable.Rows[12]);
+            TestConstant.Expectations.NoteWithCustomDataLabel.Verify(templateDatabase.TemplateTable.Rows[13]);
+            TestConstant.Expectations.FlagWithCustomDataLabel.Verify(templateDatabase.TemplateTable.Rows[14]);
+            TestConstant.Expectations.CounterNotVisible.Verify(templateDatabase.TemplateTable.Rows[15]);
+            TestConstant.Expectations.ChoiceNotVisible.Verify(templateDatabase.TemplateTable.Rows[16]);
+            TestConstant.Expectations.NoteNotVisible.Verify(templateDatabase.TemplateTable.Rows[17]);
+            TestConstant.Expectations.FlagNotVisible.Verify(templateDatabase.TemplateTable.Rows[18]);
+            TestConstant.Expectations.Counter3.Verify(templateDatabase.TemplateTable.Rows[19]);
+            TestConstant.Expectations.Choice3.Verify(templateDatabase.TemplateTable.Rows[20]);
+            TestConstant.Expectations.Note3.Verify(templateDatabase.TemplateTable.Rows[21]);
+            TestConstant.Expectations.Flag3.Verify(templateDatabase.TemplateTable.Rows[22]);
+            TestConstant.Expectations.RelativePath.Verify(templateDatabase.TemplateTable.Rows[1]);
         }
     }
 }

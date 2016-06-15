@@ -136,7 +136,7 @@ namespace Timelapse.Database
                 if (valueToCopy.Trim().Length > 0)
                 {
                     // TODOSAUL: fix SA1408
-                    if (checkForZero && !valueToCopy.Equals("0") || !checkForZero)
+                    if ((checkForZero && !valueToCopy.Equals("0")) || !checkForZero)
                     {
                         row = i;    // We found a non-empty value
                         break;

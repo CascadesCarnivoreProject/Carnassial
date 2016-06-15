@@ -216,7 +216,7 @@ namespace TimelapseTemplateEditor.Util
         private static string GetColumn(XmlNodeList nodeData, string what)
         {
             string s = TextFromNode(nodeData, 0, what);
-            if (null == s)
+            if (s == null)
             {
                 s = String.Empty;
             }

@@ -255,7 +255,7 @@ namespace Timelapse
         // Set a new value for the dark pixel threshold and update the UI
         private void DarkThresholdSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (null == this.lblDarkPixelRatio)
+            if (this.lblDarkPixelRatio == null)
             {
                 return;
             }
@@ -285,7 +285,7 @@ namespace Timelapse
                 Canvas.SetLeft(thumb, Canvas.GetLeft(thumb) + e.HorizontalChange);
                 this.darkPixelRatio = (Canvas.GetLeft(thumb) + e.HorizontalChange) / this.FeedbackCanvas.ActualWidth;
             }
-            if (null == this.lblDarkPixelRatio)
+            if (this.lblDarkPixelRatio == null)
             {
                 return;
             }

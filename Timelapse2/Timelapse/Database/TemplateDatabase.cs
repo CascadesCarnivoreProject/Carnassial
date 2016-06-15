@@ -485,7 +485,7 @@ namespace Timelapse.Database
 
         protected virtual void OnExistingDatabaseOpened(TemplateDatabase other)
         {
-            //this.TemplateTable = this.GetControlsSortedByControlOrder();
+            // this.TemplateTable = this.GetControlsSortedByControlOrder();
             this.TemplateTable = this.GetControlsSortedByIdOrder();
             this.EnsureDataLabelsAndLabelsNotEmpty();
 
@@ -502,12 +502,11 @@ namespace Timelapse.Database
                 this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { relativePathControl });
 
                 // This hack  adjusts all IDs in the database, where it resets the RelativePath ID  to desiredRelativePathID 
-                this.Database.UpdateToRepositionRelativePathIDInTemplateTable(Constants.Database.TemplateTable, desiredRelativePathID); 
+                this.Database.UpdateToRepositionRelativePathIDInTemplateTable(Constants.Database.TemplateTable, desiredRelativePathID);
 
-                //this.TemplateTable = this.GetControlsSortedByControlOrder();
                 this.TemplateTable = this.GetControlsSortedByIdOrder();
 
-                UpdateToRepositionRelativePathControlAndSpreadsheetOrder(desiredRelativePathID);
+                this.UpdateToRepositionRelativePathControlAndSpreadsheetOrder(desiredRelativePathID);
                 this.TemplateTable = this.GetControlsSortedByControlOrder();
             }
         }
@@ -520,18 +519,30 @@ namespace Timelapse.Database
             Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>();
             Dictionary<string, int> newSpreadsheetOrderByDataLabel = new Dictionary<string, int>();
             DataRow row;
-            for (int i = 0; i < tempTable.Rows.Count; i++ )
+            for (int i = 0; i < tempTable.Rows.Count; i++)
             {
                 row = tempTable.Rows[i];
                
-                int currentControlOrder = (Convert.ToInt32( row [Constants.Control.ControlOrder]));
-                if (currentControlOrder >= desiredRelativePathID) currentControlOrder++;
-                if (i == tempTable.Rows.Count - 1) currentControlOrder = desiredRelativePathID; // Reset the last ID (as this will be the relative path) to the desiredID
+                int currentControlOrder = Convert.ToInt32(row[Constants.Control.ControlOrder]);
+                if (currentControlOrder >= desiredRelativePathID)
+                {
+                    currentControlOrder++;
+                }
+                if (i == tempTable.Rows.Count - 1)
+                {
+                    currentControlOrder = desiredRelativePathID; // Reset the last ID (as this will be the relative path) to the desiredID
+                }
                 newControlOrderByDataLabel.Add((string)row[Constants.Control.DataLabel], currentControlOrder);
 
-                int currentSpreadsheetOrder = (Convert.ToInt32(row[Constants.Control.SpreadsheetOrder]));
-                if (currentSpreadsheetOrder >= desiredRelativePathID) currentSpreadsheetOrder++;
-                if (i == tempTable.Rows.Count - 1) currentSpreadsheetOrder = desiredRelativePathID;
+                int currentSpreadsheetOrder = Convert.ToInt32(row[Constants.Control.SpreadsheetOrder]);
+                if (currentSpreadsheetOrder >= desiredRelativePathID)
+                {
+                    currentSpreadsheetOrder++;
+                }
+                if (i == tempTable.Rows.Count - 1)
+                {
+                    currentSpreadsheetOrder = desiredRelativePathID;
+                }
                 newSpreadsheetOrderByDataLabel.Add((string)row[Constants.Control.DataLabel], currentSpreadsheetOrder);
             }
             this.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);

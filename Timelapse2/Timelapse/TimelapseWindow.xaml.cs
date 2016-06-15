@@ -158,11 +158,11 @@ namespace Timelapse
                 userSettings.WriteShowCsvDialog(this.state.ShowCsvDialog);
             }
 
-            if (null != this.controlWindow)
+            if (this.controlWindow != null)
             {
                 this.controlWindow.Close();
             }
-            if (null != this.dlgDataView)
+            if (this.dlgDataView != null)
             {
                 this.dlgDataView.Close();
             }
@@ -511,7 +511,7 @@ namespace Timelapse
         {
             this.feedbackCtl.ShowMessage = message;
             this.feedbackCtl.ShowProgress = percent;
-            if (null != bmap)
+            if (bmap != null)
             {
                 this.feedbackCtl.ShowImage = bmap;
             }
@@ -655,7 +655,7 @@ namespace Timelapse
 
                 StatusBarUpdate.View(this.statusBar, status);
                 this.MenuItemViewSetSelected(filter);
-                if (null != this.dlgDataView)
+                if (this.dlgDataView != null)
                 {
                     this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
                     if (filter == ImageQualityFilter.MarkedForDeletion)
@@ -766,7 +766,7 @@ namespace Timelapse
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
             {
                 string controlType = this.imageDatabase.ImageDataColumnsByDataLabel[pair.Key].ControlType;
-                if (null == controlType)
+                if (controlType == null)
                 {
                     return;
                 }
@@ -1006,7 +1006,7 @@ namespace Timelapse
 
             ComboBox comboBox = (ComboBox)sender;
             // Make sure an item was actually selected (it could have been cancelled)
-            if (null == comboBox.SelectedItem)
+            if (comboBox.SelectedItem == null)
             {
                 return;
             }
@@ -1465,7 +1465,7 @@ namespace Timelapse
             {
                 // A marker has been added
                 currentCounter = this.FindSelectedCounter(); // No counters are selected, so don't mark anything
-                if (null == currentCounter)
+                if (currentCounter == null)
                 {
                     return;
                 }
@@ -1637,7 +1637,7 @@ namespace Timelapse
                 MetaTagCounter mtagCounter = this.counterCoords[i];
                 DataEntryControl control;
                 DataEntryCounter current_counter;
-                if (true == this.dataEntryControls.ControlsByDataLabel.TryGetValue(mtagCounter.DataLabel, out control))
+                if (this.dataEntryControls.ControlsByDataLabel.TryGetValue(mtagCounter.DataLabel, out control) == true)
                 {
                     current_counter = (DataEntryCounter)this.dataEntryControls.ControlsByDataLabel[mtagCounter.DataLabel];
                 }
@@ -1653,7 +1653,7 @@ namespace Timelapse
                 foreach (MetaTag mtag in mtagCounter.MetaTags)
                 {
                     mtag.Emphasise = (this.state.IsMouseOverCounter == mtagCounter.DataLabel) ? true : false;
-                    if (null != selectedCounter && current_counter.DataLabel == selectedCounter.DataLabel)
+                    if (selectedCounter != null  && current_counter.DataLabel == selectedCounter.DataLabel)
                     {
                         mtag.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.SelectionColour);
                     }
@@ -2077,7 +2077,7 @@ namespace Timelapse
             // If no images are selected for deletion. Warn the user.
             // Note that this should never happen, as the invoking menu item should be disabled (and thus not selectable)
             // if there aren't any images to delete. Still,...
-            if (null == deletedImages)
+            if (deletedImages == null)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "No images are marked for deletion";
@@ -2152,7 +2152,7 @@ namespace Timelapse
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
             {
                 string type = this.imageDatabase.ImageDataColumnsByDataLabel[pair.Key].ControlType;
-                if (null == type)
+                if (type == null)
                 {
                     type = "Not a control";
                 }
@@ -2605,7 +2605,7 @@ namespace Timelapse
         /// <summary>Display the dialog showing the filtered view of the current database contents</summary>
         private void MenuItemViewFilteredDatabaseContents_Click(object sender, RoutedEventArgs e)
         {
-            if (null != this.dlgDataView && this.dlgDataView.IsLoaded)
+            if (this.dlgDataView != null && this.dlgDataView.IsLoaded)
             {
                 return; // If its already displayed, don't bother.
             }
@@ -2759,7 +2759,7 @@ namespace Timelapse
         /// </summary>
         private void ControlsInMainWindow()
         {
-            if (null != this.controlWindow)
+            if (this.controlWindow != null)
             {
                 this.controlWindow.ChildRemove(this.dataEntryControls);
                 this.controlWindow.Close();
