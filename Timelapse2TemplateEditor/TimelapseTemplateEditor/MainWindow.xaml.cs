@@ -701,10 +701,10 @@ namespace TimelapseTemplateEditor
                         // the sortmemberpath is include, not the sort name, so we are accessing by head, which may change.
                         string controlType = thisRow.Row.GetStringField(Constants.Control.Type);
                         string sortMemberPath = this.TemplateDataGrid.Columns[column].SortMemberPath;
-                        if ((sortMemberPath == Constants.DatabaseColumn.ID) ||
-                            (sortMemberPath == Constants.Control.ControlOrder) ||
-                            (sortMemberPath == Constants.Control.SpreadsheetOrder) ||
-                            (sortMemberPath == Constants.Control.Type) ||
+                        if ((String.Equals(sortMemberPath, Constants.DatabaseColumn.ID, StringComparison.OrdinalIgnoreCase))  ||
+                            (String.Equals(sortMemberPath, Constants.Control.ControlOrder, StringComparison.OrdinalIgnoreCase)) ||
+                            (String.Equals(sortMemberPath, Constants.Control.SpreadsheetOrder, StringComparison.OrdinalIgnoreCase)) ||
+                            (String.Equals(sortMemberPath, Constants.Control.Type, StringComparison.OrdinalIgnoreCase)) ||
                             (controlType == Constants.DatabaseColumn.Date) ||
                             (controlType == Constants.Control.DeleteFlag) ||
                             (controlType == Constants.DatabaseColumn.File) ||
