@@ -143,8 +143,7 @@ namespace Timelapse.Images
                 imageToUpdate.SetWhere(imageFolder, null, imageFileName);
                 imagesToUpdate.Add(imageToUpdate);
 
-                ColumnTuplesWithWhere markerToUpdate = new ColumnTuplesWithWhere(counterCoordinates);
-                markerToUpdate.SetWhere(imageID);
+                ColumnTuplesWithWhere markerToUpdate = new ColumnTuplesWithWhere(counterCoordinates, imageID);
                 markersToUpdate.Add(markerToUpdate);
             }
 

@@ -26,7 +26,7 @@ namespace Timelapse.Database
                 // If the data label is an empty string, we use the label instead.
                 // The append sequence results in a trailing comma which is retained when writing the line.
                 StringBuilder header = new StringBuilder();
-                List<string> dataLabels = database.GetDataLabels();
+                List<string> dataLabels = database.GetDataLabelsExceptID();
                 foreach (string dataLabel in dataLabels)
                 {
                     header.Append(this.AddColumnValue(dataLabel));
@@ -73,7 +73,7 @@ namespace Timelapse.Database
         {
             importErrors = new List<string>();
             
-            List<string> dataLabels = imageDatabase.GetDataLabels();
+            List<string> dataLabels = imageDatabase.GetDataLabelsExceptID();
             using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 using (StreamReader csvReader = new StreamReader(stream))

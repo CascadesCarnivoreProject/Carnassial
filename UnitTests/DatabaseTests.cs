@@ -163,14 +163,16 @@ namespace Timelapse.UnitTests
             int iterations = 10;
             for (int iteration = 0; iteration < iterations; ++iteration)
             {
-                newControl = templateDatabase.AddUserDefinedControl(Constants.Control.Note);
+                DataRow noteControl = templateDatabase.AddUserDefinedControl(Constants.Control.Note);
+                this.VerifyControl(noteControl);
+                DataRow flagControl = templateDatabase.AddUserDefinedControl(Constants.Control.Flag);
+                this.VerifyControl(flagControl);
+                DataRow choiceControl = templateDatabase.AddUserDefinedControl(Constants.Control.FixedChoice);
+                choiceControl[Constants.Control.List] = "DefaultChoice|OtherChoice";
+                templateDatabase.SyncControlToDatabase(choiceControl);
                 this.VerifyControl(newControl);
-                newControl = templateDatabase.AddUserDefinedControl(Constants.Control.Flag);
-                this.VerifyControl(newControl);
-                newControl = templateDatabase.AddUserDefinedControl(Constants.Control.FixedChoice);
-                this.VerifyControl(newControl);
-                newControl = templateDatabase.AddUserDefinedControl(Constants.Control.Counter);
-                this.VerifyControl(newControl);
+                DataRow counterControl = templateDatabase.AddUserDefinedControl(Constants.Control.Counter);
+                this.VerifyControl(counterControl);
             }
 
             // modify control and spreadsheet orders
@@ -213,21 +215,28 @@ namespace Timelapse.UnitTests
 
             int defaultValueIndex = numberOfStandardControls + (3 * iterations) - 4;
             DataRow defaultValueControl = templateDatabase.TemplateTable.Rows[defaultValueIndex];
-            string modifiedDefaultValue = "Field modification roundtrip.";
+            string modifiedDefaultValue = "Default value modification roundtrip.";
             defaultValueControl[Constants.Control.DefaultValue] = modifiedDefaultValue;
             templateDatabase.SyncControlToDatabase(defaultValueControl);
             Assert.IsTrue(templateDatabase.TemplateTable.Rows[defaultValueIndex].GetStringField(Constants.Control.DefaultValue) == modifiedDefaultValue);
 
             int labelIndex = numberOfStandardControls + (3 * iterations) - 3;
             DataRow labelControl = templateDatabase.TemplateTable.Rows[labelIndex];
-            string modifiedLabel = "Field modification roundtrip.";
+            string modifiedLabel = "Label modification roundtrip.";
             labelControl[Constants.Control.Label] = modifiedLabel;
             templateDatabase.SyncControlToDatabase(labelControl);
             Assert.IsTrue(templateDatabase.TemplateTable.Rows[labelIndex].GetStringField(Constants.Control.Label) == modifiedLabel);
 
+            int listIndex = numberOfStandardControls + (3 * iterations) - 2;
+            DataRow listControl = templateDatabase.TemplateTable.Rows[listIndex];
+            string modifiedList = listControl.GetStringField(Constants.Control.List) + "|NewChoice0|NewChoice1";
+            listControl[Constants.Control.List] = modifiedList;
+            templateDatabase.SyncControlToDatabase(listControl);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows[listIndex].GetStringField(Constants.Control.List) == modifiedList);
+
             int tooltipIndex = numberOfStandardControls + (3 * iterations) - 3;
             DataRow tooltipControl = templateDatabase.TemplateTable.Rows[tooltipIndex];
-            string modifiedTooltip = "Field modification roundtrip.";
+            string modifiedTooltip = "Tooltip modification roundtrip.";
             tooltipControl[Constants.Control.Tooltip] = modifiedTooltip;
             templateDatabase.SyncControlToDatabase(tooltipControl);
             Assert.IsTrue(templateDatabase.TemplateTable.Rows[tooltipIndex].GetStringField(Constants.Control.Tooltip) == modifiedTooltip);
@@ -256,12 +265,14 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(templateDatabase.TemplateTable.Rows[copyableIndex].GetStringField(Constants.Control.Copyable) == modifiedCopyable.ToString());
             Assert.IsTrue(templateDatabase.TemplateTable.Rows[defaultValueIndex].GetStringField(Constants.Control.DefaultValue) == modifiedDefaultValue);
             Assert.IsTrue(templateDatabase.TemplateTable.Rows[labelIndex].GetStringField(Constants.Control.Label) == modifiedLabel);
+            Assert.IsTrue(templateDatabase.TemplateTable.Rows[listIndex].GetStringField(Constants.Control.List) == modifiedList);
             Assert.IsTrue(templateDatabase.TemplateTable.Rows[tooltipIndex].GetStringField(Constants.Control.Tooltip) == modifiedTooltip);
             Assert.IsTrue(templateDatabase.TemplateTable.Rows[visibleIndex].GetStringField(Constants.Control.Visible) == modifiedVisible.ToString());
             Assert.IsTrue(templateDatabase.TemplateTable.Rows[widthIndex].GetStringField(Constants.Control.TextBoxWidth) == modifiedWidth);
 
             // reopen the image database to synchronize its template table with the modified table in the current template
             imageDatabase = ImageDatabase.CreateOrOpen(imageDatabase.FilePath, templateDatabase);
+            Assert.IsTrue(imageDatabase.TemplateSynchronizationIssues.Count == 0);
             this.VerifyTemplateDatabase(imageDatabase, imageDatabase.FilePath);
             Assert.IsTrue(imageDatabase.TemplateTable.Rows.Count == numberOfStandardControls + (4 * iterations) - 2);
             Assert.IsTrue(imageDatabase.TemplateTable.Columns.Count == TestConstant.TemplateTableColumns.Count);
@@ -269,6 +280,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(imageDatabase.TemplateTable.Rows[copyableIndex].GetStringField(Constants.Control.Copyable) == modifiedCopyable.ToString());
             Assert.IsTrue(imageDatabase.TemplateTable.Rows[defaultValueIndex].GetStringField(Constants.Control.DefaultValue) == modifiedDefaultValue);
             Assert.IsTrue(imageDatabase.TemplateTable.Rows[labelIndex].GetStringField(Constants.Control.Label) == modifiedLabel);
+            Assert.IsTrue(imageDatabase.TemplateTable.Rows[listIndex].GetStringField(Constants.Control.List) == modifiedList);
             Assert.IsTrue(imageDatabase.TemplateTable.Rows[tooltipIndex].GetStringField(Constants.Control.Tooltip) == modifiedTooltip);
             Assert.IsTrue(imageDatabase.TemplateTable.Rows[visibleIndex].GetStringField(Constants.Control.Visible) == modifiedVisible.ToString());
             Assert.IsTrue(imageDatabase.TemplateTable.Rows[widthIndex].GetStringField(Constants.Control.TextBoxWidth) == modifiedWidth);
@@ -396,9 +408,11 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void ImageDatabaseNegative()
         {
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015, TestConstant.File.DefaultImageDatabaseFileName2023);
+            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(templateDatabase, TestConstant.File.DefaultImageDatabaseFileName2023);
             this.PopulateDefaultDatabase(imageDatabase);
 
+            // ImageDatabase methods
             int firstDisplayableImage = imageDatabase.FindFirstDisplayableImage(imageDatabase.CurrentlySelectedImageCount);
             Assert.IsTrue(firstDisplayableImage == imageDatabase.CurrentlySelectedImageCount - 1);
 
@@ -427,6 +441,18 @@ namespace Timelapse.UnitTests
             DataRow imageRow;
             Assert.IsFalse(imageDatabase.TryGetImage(imageProperties, out imageRow));
             Assert.IsNull(imageRow);
+
+            // template table synchronization
+            // remove choices and change a note to a choice to produce a type failure
+            DataRow choiceControl = templateDatabase.GetControlFromTemplateTable(TestConstant.DefaultDatabaseColumn.Choice0);
+            choiceControl[Constants.Control.List] = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
+            templateDatabase.SyncControlToDatabase(choiceControl);
+            DataRow noteControl = templateDatabase.GetControlFromTemplateTable(TestConstant.DefaultDatabaseColumn.Note0);
+            noteControl[Constants.Control.Type] = Constants.Control.FixedChoice;
+            templateDatabase.SyncControlToDatabase(noteControl);
+
+            imageDatabase = ImageDatabase.CreateOrOpen(imageDatabase.FileName, templateDatabase);
+            Assert.IsTrue(imageDatabase.TemplateSynchronizationIssues.Count == 4);
         }
 
         [TestMethod]

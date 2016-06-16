@@ -46,13 +46,13 @@ namespace Timelapse
                 bool copyable = String.Equals(Boolean.TrueString, copyableAsString, StringComparison.OrdinalIgnoreCase) ? true : false;
                 string dataLabel = dataRow.GetStringField(Constants.Control.DataLabel);
                 string defaultValue = dataRow[Constants.Control.DefaultValue].ToString();
-                int id = Convert.ToInt32(dataRow[Constants.DatabaseColumn.ID].ToString()); // TODO Need to use this ID to pass between controls and data
+                long id = (long)dataRow[Constants.DatabaseColumn.ID]; // TODO Need to use this ID to pass between controls and data
                 string label = dataRow[Constants.Control.Label].ToString();
                 string list = dataRow[Constants.Control.List].ToString();
                 string tooltip = dataRow[Constants.Control.Tooltip].ToString();
                 string type = dataRow[Constants.Control.Type].ToString();
                 string widthAsString = dataRow[Constants.Control.TextBoxWidth].ToString();
-                int width = (widthAsString == String.Empty) ? 0 : Convert.ToInt32(widthAsString);
+                int width = (widthAsString == String.Empty) ? 0 : Int32.Parse(widthAsString);
 
                 DataEntryControl controlToAdd;
                 if (type == Constants.DatabaseColumn.File ||

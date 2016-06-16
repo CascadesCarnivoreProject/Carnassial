@@ -20,10 +20,10 @@ namespace Timelapse.Database
             this.Columns = columns;
         }
 
-        public ColumnTuplesWithWhere(List<ColumnTuple> columns, string where)
+        public ColumnTuplesWithWhere(List<ColumnTuple> columns, long id)
             : this(columns)
         {
-            this.Where = where;
+            this.SetWhere(id);
         }
 
         public void SetWhere(long id)

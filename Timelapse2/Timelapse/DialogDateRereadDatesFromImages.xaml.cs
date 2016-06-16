@@ -68,7 +68,7 @@ namespace Timelapse
                 {
                     // We will store the various times here
                     ImageProperties imageProperties = new ImageProperties(database.ImageDataTable.Rows[image]);
-                    string message = String.Empty;
+                    string feedbackMessage = String.Empty;
                     try
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
@@ -79,41 +79,41 @@ namespace Timelapse
                         switch (imageTimeAdjustment)
                         {
                             case DateTimeAdjustment.MetadataNotUsed:
-                                message += " Using file timestamp";
+                                feedbackMessage = " Using file timestamp";
                                 break;
                             // includes DateTimeAdjustment.SameFileAndMetadataTime
                             default:
-                                message += " Using metadata timestamp";
+                                feedbackMessage = " Using metadata timestamp";
                                 break;
                         }
 
                         if (imageProperties.Date.Equals(database.ImageDataTable.Rows[image][Constants.DatabaseColumn.Date].ToString()))
                         {
-                            message += ", same date";
+                            feedbackMessage += ", same date";
                             imageProperties.Date = String.Empty; // If its the same, we won't copy it
                         }
                         else
                         {
-                            message += ", different date";
+                            feedbackMessage += ", different date";
                         }
                         if (imageProperties.Time.Equals(database.ImageDataTable.Rows[image][Constants.DatabaseColumn.Time].ToString()))
                         {
-                            message += ", same time";
+                            feedbackMessage += ", same time";
                             imageProperties.Time = String.Empty; // If its the same, we won't copy it
                         }
                         else
                         {
-                            message += ", different time";
+                            feedbackMessage += ", different time";
                         }
 
                         imagePropertiesList.Add(imageProperties);
                     }
                     catch // Image isn't there
                     {
-                        message += " , skipping as cannot open image.";
+                        feedbackMessage += " , skipping as cannot open image.";
                     }
 
-                    backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, message));
+                    backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, feedbackMessage));
                     if (image % 100 == 0)
                     {
                         Thread.Sleep(25); // Put in a delay every now and then, as otherwise the UI won't update.
@@ -121,45 +121,57 @@ namespace Timelapse
                 }
 
                 // Pass 2. Update each date as needed 
-                string msg = String.Empty;
+                string message = String.Empty;
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Pass 2: For selected images", "Updating only when dates or times differ..."));
 
                 // This tuple list will hold the id, key and value that we will want to update in the database
-                List<Tuple<long, string, string>> list_to_update_db = new List<Tuple<long, string, string>>();
-                for (int i = 0; i < imagePropertiesList.Count; i++)
+                List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
+                for (int image = 0; image < imagePropertiesList.Count; image++)
                 {
-                    if (!imagePropertiesList[i].Date.Equals(String.Empty) && !imagePropertiesList[i].Time.Equals(String.Empty))
+                    ImageProperties imageProperties = imagePropertiesList[image];
+
+                    ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere();
+                    if (!imageProperties.Date.Equals(String.Empty) && !imageProperties.Time.Equals(String.Empty))
                     {
                         // Both date and time need updating
-                        list_to_update_db.Add(new Tuple<long, string, string>(imagePropertiesList[i].ID, Constants.DatabaseColumn.Date, imagePropertiesList[i].Date));
-                        list_to_update_db.Add(new Tuple<long, string, string>(imagePropertiesList[i].ID, Constants.DatabaseColumn.Time, imagePropertiesList[i].Time));
-                        msg = "Date / Time updated to: " + imagePropertiesList[i].Date + " " + imagePropertiesList[i].Time;
+                        imageUpdate.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.Date, imageProperties.Date));
+                        imageUpdate.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.Time, imageProperties.Time));
+                        message = "Date / Time updated to: " + imageProperties.Date + " " + imageProperties.Time;
                     }
-                    else if (!imagePropertiesList[i].Date.Equals(String.Empty))
+                    else if (!imageProperties.Date.Equals(String.Empty))
                     {
                         // Only date needs updating
-                        list_to_update_db.Add(new Tuple<long, string, string>(imagePropertiesList[i].ID, Constants.DatabaseColumn.Date, imagePropertiesList[i].Date));
-                        msg = "Date updated to: " + imagePropertiesList[i].Date;
+                        imageUpdate.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.Date, imageProperties.Date));
+                        message = "Date updated to: " + imageProperties.Date;
                     }
-                    else if (!imagePropertiesList[i].Time.Equals(String.Empty))
+                    else if (!imageProperties.Time.Equals(String.Empty))
                     {
-                        list_to_update_db.Add(new Tuple<long, string, string>(imagePropertiesList[i].ID, Constants.DatabaseColumn.Time, imagePropertiesList[i].Time));
-                        // dbData.RowSetValueFromID(Constants.TIME, imgprop_list[i].FinalTime, imgprop_list[i].ID); // OLD WAY: ONE ROW AT A TIME. Can DELETE THIS
-                        msg = "Time updated to: " + imagePropertiesList[i].Time;
+                        imageUpdate.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.Time, imageProperties.Time));
+                        message = "Time updated to: " + imageProperties.Time;
                     }
                     else
                     {
-                        msg = "Updating not required";
+                        message = "Updating not required";
                     }
-                    backgroundWorker.ReportProgress(0, new FeedbackMessage(imagePropertiesList[i].FileName, msg));
-                    if (i % 100 == 0)
+
+                    if (imageUpdate.Columns.Count > 0)
                     {
+                        imageUpdate.SetWhere(imageProperties.ID);
+                        imagesToUpdate.Add(imageUpdate);
+                    }
+
+                    backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, message));
+                    if (image % 100 == 0)
+                    {
+                        // TODOSAUL: should this be Thread.Yield()?
                         Thread.Sleep(25); // Put in a delay every now and then, as otherwise the UI won't update.
                     }
                 }
+
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Writing to database...", "Please wait"));
+                // TODOSAUL: should this be Thread.Yield()?
                 Thread.Sleep(25);
-                database.UpdateImages(list_to_update_db);  // Write the updates to the database
+                database.UpdateImages(imagesToUpdate);  // Write the updates to the database
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Done", "Done"));
             };
             backgroundWorker.ProgressChanged += (o, ea) =>

@@ -133,16 +133,16 @@ namespace Timelapse
                     // don't save custom filters, revert to All 
                     this.state.ImageFilter = ImageQualityFilter.All;
                 }
-                this.imageDatabase.UpdateImageSetFilter(this.state.ImageFilter);
+                this.imageDatabase.SetImageSetFilter(this.state.ImageFilter);
 
                 if (this.imageCache != null)
                 {
-                    this.imageDatabase.UpdateImageSetRowIndex(this.imageCache.CurrentRow);
+                    this.imageDatabase.SetImageSetRowIndex(this.imageCache.CurrentRow);
                 }
 
                 if (this.markableCanvas != null)
                 {
-                    this.imageDatabase.UpdateMagnifierEnabled(this.markableCanvas.IsMagnifyingGlassVisible);
+                    this.imageDatabase.SetMagnifierEnabled(this.markableCanvas.IsMagnifyingGlassVisible);
                 }
             }
 
@@ -397,7 +397,7 @@ namespace Timelapse
                     // WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.FolderPath);
                     BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
                     // Show progress. Since its slow, we may as well do it every update
-                    int addImageProgress = Convert.ToInt32(Convert.ToDouble(imageIndex) / Convert.ToDouble(imagesToInsert.Count) * 100);
+                    int addImageProgress = (int)((double)imageIndex / (100.0 * (double)imagesToInsert.Count));
                     progressState.Message = String.Format("{0}/{1}: Adding {2}", imageIndex, count, imageProperties.FileName);
                     progressState.Bmap = bitmapFrame;
                     backgroundWorker.ReportProgress(addImageProgress, progressState);
@@ -1542,7 +1542,7 @@ namespace Timelapse
                             point_list += String.Format("{0:0.000},{1:0.000}", point.X, point.Y);   // Add a point in the form 
                         }
                     }
-                    this.imageDatabase.UpdateID(this.imageCache.Current.ID, myCounter.DataLabel, point_list, Constants.Database.MarkersTable);
+                    this.imageDatabase.UpdateRow(this.imageCache.Current.ID, myCounter.DataLabel, point_list, Constants.Database.MarkersTable);
                 }
                 this.RefreshTheMarkableCanvasListOfMetaTags(); // Refresh the Markable Canvas, where it will also delete the metaTag at the same time
             }

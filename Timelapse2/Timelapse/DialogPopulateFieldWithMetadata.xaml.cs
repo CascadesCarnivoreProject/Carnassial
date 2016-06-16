@@ -160,7 +160,7 @@ namespace Timelapse
                     string datalabel = row.GetStringField(Constants.Control.DataLabel);
                     string label = row.GetStringField(Constants.Control.Label);
                     this.dataLabelFromLabel.Add(label, datalabel);
-                    // this.NoteID = Convert.ToInt32(row[Constants.ID].ToString()); // TODOSAUL: Need to use this ID to pass between controls and data
+                    // this.NoteID = (long)row[Constants.ID]; // TODOSAUL: Need to use this ID to pass between controls and data
                     this.lboxNoteFields.Items.Add(label);
                 }
             }
@@ -211,7 +211,7 @@ namespace Timelapse
                 // If we can't decide if we want to leave the data field alone or to clear it depending on the state of the isClearIfNoMetaData (set via the checkbox)
                 // Report progress as needed.
                 // This tuple list will hold the id, key and value that we will want to update in the database
-                List<Tuple<long, string, string>> imageIDKeyValue = new List<Tuple<long, string, string>>();
+                List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
                 for (int image = 0; image < database.CurrentlySelectedImageCount; image++)
                 {
                     ImageProperties imageProperties = database.GetImageByRow(image);
@@ -221,7 +221,10 @@ namespace Timelapse
                     {
                         if (this.isClearIfNoMetaData)
                         {
-                            imageIDKeyValue.Add(new Tuple<long, string, string>(imageProperties.ID, this.dataLabelFromLabel[this.noteLabel], String.Empty)); // Clear the data field if there is no metadata...
+                            // Clear the data field if there is no metadata...
+                            ColumnTuplesWithWhere imageClear = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(this.dataLabelFromLabel[this.noteLabel], String.Empty) },
+                                                                                         imageProperties.ID);
+                            imagesToUpdate.Add(imageClear);
                             backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, "No metadata found - data field is cleared"));
                         }
                         else
@@ -230,17 +233,22 @@ namespace Timelapse
                         }
                         continue;
                     }
+
                     string value = exifData[this.metaDataName];
                     backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, value));
                     if (image % 250 == 0)
                     {
+                        // TODOSAUL: should this be Thread.Yield()?
                         Thread.Sleep(25); // Put in a short delay every now and then, as otherwise the UI may not update.
                     }
-                    imageIDKeyValue.Add(new Tuple<long, string, string>(imageProperties.ID, this.dataLabelFromLabel[this.noteLabel], value));
+
+                    ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(this.dataLabelFromLabel[this.noteLabel], value) },
+                                                                                  imageProperties.ID);
+                    imagesToUpdate.Add(imageUpdate);
                 }
 
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Writing the data...", "Please wait..."));
-                database.UpdateImages(imageIDKeyValue);
+                database.UpdateImages(imagesToUpdate);
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Done", "Done"));
             };
             backgroundWorker.ProgressChanged += (o, ea) =>

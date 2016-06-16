@@ -133,7 +133,7 @@ namespace Timelapse.Database
             return this.Database.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Control.ControlOrder);
         }
 
-        public List<string> GetDataLabels()
+        public List<string> GetDataLabelsExceptID()
         {
             List<string> dataLabels = new List<string>();
             for (int row = 0; row < this.TemplateTable.Rows.Count; row++)
@@ -171,8 +171,8 @@ namespace Timelapse.Database
             }
 
             // capture state
-            int removedControlOrder = Convert.ToInt32((Int64)controlToRemove[Constants.Control.ControlOrder]);
-            int removedSpreadsheetOrder = Convert.ToInt32((Int64)controlToRemove[Constants.Control.SpreadsheetOrder]);
+            long removedControlOrder = (long)controlToRemove[Constants.Control.ControlOrder];
+            long removedSpreadsheetOrder = (long)controlToRemove[Constants.Control.SpreadsheetOrder];
 
             // drop the control from the database and data table
             string where = Constants.DatabaseColumn.ID + " = " + controlToRemove[Constants.DatabaseColumn.ID];
@@ -192,8 +192,7 @@ namespace Timelapse.Database
                     List<ColumnTuple> controlUpdate = new List<ColumnTuple>();
                     controlUpdate.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder - 1));
                     row[Constants.Control.ControlOrder] = controlOrder - 1;
-                    where = Constants.DatabaseColumn.ID + " = " + row[Constants.DatabaseColumn.ID];
-                    controlUpdates.Add(new ColumnTuplesWithWhere(controlUpdate, where));
+                    controlUpdates.Add(new ColumnTuplesWithWhere(controlUpdate, (long)row[Constants.DatabaseColumn.ID]));
                 }
 
                 if (spreadsheetOrder > removedSpreadsheetOrder)
@@ -201,8 +200,7 @@ namespace Timelapse.Database
                     List<ColumnTuple> controlUpdate = new List<ColumnTuple>();
                     controlUpdate.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, spreadsheetOrder - 1));
                     row[Constants.Control.SpreadsheetOrder] = spreadsheetOrder - 1;
-                    where = Constants.DatabaseColumn.ID + " = " + row[Constants.DatabaseColumn.ID];
-                    controlUpdates.Add(new ColumnTuplesWithWhere(controlUpdate, where));
+                    controlUpdates.Add(new ColumnTuplesWithWhere(controlUpdate, (long)row[Constants.DatabaseColumn.ID]));
                 }
             }
             this.Database.Update(Constants.Database.TemplateTable, controlUpdates);
@@ -215,7 +213,7 @@ namespace Timelapse.Database
         public void SyncControlToDatabase(DataRow control)
         {
             List<ColumnTuple> columns = this.GetTuples(this.TemplateTable, control);
-            ColumnTuplesWithWhere updateQuery = new ColumnTuplesWithWhere(columns, Constants.DatabaseColumn.ID + " = " + control[Constants.DatabaseColumn.ID]);
+            ColumnTuplesWithWhere updateQuery = new ColumnTuplesWithWhere(columns, (long)control[Constants.DatabaseColumn.ID]);
             this.Database.Update(Constants.Database.TemplateTable, updateQuery);
 
             // it's possible the passed data row isn't attached to TemplateTable, so refresh the table just in case
@@ -499,15 +497,14 @@ namespace Timelapse.Database
             long relativePathID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
             if (relativePathID == -1)
             {
-                // Insert a relative path control, where its ID will be created as the next highest ID
+                // insert a relative path control, where its ID will be created as the next highest ID
                 int order = this.TemplateTable.Rows.Count + 1;
                 List<ColumnTuple> relativePathControl = this.GetRelativePathTuples(order, order, false);
                 this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { relativePathControl });
 
-                // default the relative control to ID and order 2 for consistency with newly created templates
-                int desiredRelativePathID = 2;
-                this.SetControlID(Constants.DatabaseColumn.RelativePath, desiredRelativePathID);
-                this.SetControlOrders(Constants.DatabaseColumn.RelativePath, desiredRelativePathID);
+                // move the relative path control to ID and order 2 for consistency with newly created templates
+                this.SetControlID(Constants.DatabaseColumn.RelativePath, Constants.Database.RelativePathPosition);
+                this.SetControlOrders(Constants.DatabaseColumn.RelativePath, Constants.Database.RelativePathPosition);
             }
         }
 
