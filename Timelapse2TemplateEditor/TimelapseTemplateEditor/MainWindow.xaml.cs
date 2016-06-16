@@ -272,6 +272,7 @@ namespace TimelapseTemplateEditor
             this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.GenerateSpreadsheet();
             this.OnControlOrderChanged();
         }
 
@@ -1055,6 +1056,7 @@ namespace TimelapseTemplateEditor
             }
 
             this.templateDatabase.UpdateDisplayOrder(Constants.Control.SpreadsheetOrder, spreadsheetOrderByDataLabel);
+            this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable; // Refresh datagrid contents. 
         }
         #endregion
 
@@ -1193,6 +1195,7 @@ namespace TimelapseTemplateEditor
                 controlOrder++;
             }
 
+            this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable; // Refresh datagrid contents. 
             this.templateDatabase.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable); // A contorted to make sure the controls panel updates itself
         }
