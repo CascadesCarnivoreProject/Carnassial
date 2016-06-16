@@ -272,6 +272,7 @@ namespace TimelapseTemplateEditor
             this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.GenerateSpreadsheet();
             this.OnControlOrderChanged();
         }
 
