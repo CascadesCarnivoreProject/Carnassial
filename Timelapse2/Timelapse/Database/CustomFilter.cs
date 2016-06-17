@@ -38,6 +38,7 @@ namespace Timelapse.Database
                     type == Constants.Control.Counter ||
                     type == Constants.Control.FixedChoice ||
                     type == Constants.DatabaseColumn.ImageQuality ||
+                    type == Constants.DatabaseColumn.RelativePath ||
                     type == Constants.Control.Flag)
                 {
                     // Create a new search expression for each row, where each row specifies a particular control and how it can be searched
@@ -133,10 +134,20 @@ namespace Timelapse.Database
                     where += (this.LogicalOperator == CustomFilterOperator.And) ? " And " : " Or ";
                 }
 
-                // Now construct the rest of it: DataLabel expresson Value e.g., foo>"5" 
-                where += st.DataLabel;
-                where += this.TranslateExpression(st.Expression);
-                where += "\"" + st.Value.Trim() + "\""; // Need to quote the value 
+                // Now construct the rest of it
+                // Check to see if the search should match an empty value, in which case we also need to deal with NULLs 
+                if (String.IsNullOrWhiteSpace(st.Value) && st.Expression == Constants.Filter.Equal)
+                {
+                    // The where expression constructed should look something like: (DataLabel IS NULL OR DataLabel = '')
+                    where += " (" + st.DataLabel + " IS NULL OR " + st.DataLabel + " = '') ";
+                }
+                else
+                {
+                   // The where expression constructed should look something like DataLabel > "5"
+                    where += st.DataLabel;
+                    where += this.TranslateExpression(st.Expression);
+                    where += "\"" + st.Value.Trim() + "\""; // Need to quote the value 
+                }
             }
             return where.Trim();
         }
