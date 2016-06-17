@@ -87,7 +87,7 @@ namespace Timelapse
                                 break;
                         }
 
-                        if (imageProperties.Date.Equals(database.ImageDataTable.Rows[image][Constants.DatabaseColumn.Date].ToString()))
+                        if (imageProperties.Date.Equals(database.ImageDataTable.Rows[image].GetStringField(Constants.DatabaseColumn.Date)))
                         {
                             feedbackMessage += ", same date";
                             imageProperties.Date = String.Empty; // If its the same, we won't copy it
@@ -96,7 +96,7 @@ namespace Timelapse
                         {
                             feedbackMessage += ", different date";
                         }
-                        if (imageProperties.Time.Equals(database.ImageDataTable.Rows[image][Constants.DatabaseColumn.Time].ToString()))
+                        if (imageProperties.Time.Equals(database.ImageDataTable.Rows[image].GetStringField(Constants.DatabaseColumn.Time)))
                         {
                             feedbackMessage += ", same time";
                             imageProperties.Time = String.Empty; // If its the same, we won't copy it

@@ -11,7 +11,7 @@ namespace Timelapse.Images
         // Read all the data into the imageData structure from the XML file in the filepath.
         // Note that we need to know the code controls,as we have to associate any points read in with a particular counter control
         // TODOSAUL: support periodic insert of chunks rather than one large block?
-        public static void Read(string filePath, DataTable templateTable, ImageDatabase imageDatabase)
+        public static void Read(string filePath, ImageDatabase imageDatabase)
         {
             // XML Preparation
             XmlDocument xmlDoc = new XmlDocument();
@@ -30,10 +30,10 @@ namespace Timelapse.Images
             List<string> noteControlNames = new List<string>();
             List<string> counterControlNames = new List<string>();
             List<string> choiceControlNames = new List<string>();
-            for (int control = 0; control < templateTable.Rows.Count; control++)
+            for (int control = 0; control < imageDatabase.TemplateTable.Rows.Count; control++)
             {
-                string dataLabel = templateTable.Rows[control].GetStringField(Constants.Control.DataLabel);
-                switch (templateTable.Rows[control].GetStringField(Constants.Control.Type))
+                string dataLabel = imageDatabase.TemplateTable.Rows[control].GetStringField(Constants.Control.DataLabel);
+                switch (imageDatabase.TemplateTable.Rows[control].GetStringField(Constants.Control.Type))
                 {
                     case Constants.Control.Counter:
                         counterControlNames.Add(dataLabel);

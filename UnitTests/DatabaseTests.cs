@@ -287,7 +287,7 @@ namespace Timelapse.UnitTests
         }
 
         [TestMethod]
-        public void GenerateControls()
+        public void GenerateControlsAndPropagate()
         {
             List<DatabaseExpectations> databaseExpectations = new List<DatabaseExpectations>()
             {
@@ -295,25 +295,80 @@ namespace Timelapse.UnitTests
                 {
                     ImageDatabaseFileName = TestConstant.File.CarnivoreNewImageDatabaseFileName,
                     TemplateDatabaseFileName = TestConstant.File.CarnivoreTemplateDatabaseFileName,
-                    ExpectedControls = 5 + 10
+                    ExpectedControls = Constants.Control.StandardTypes.Count - 2 + 10
                 },
                 new DatabaseExpectations()
                 {
                     ImageDatabaseFileName = Constants.File.DefaultImageDatabaseFileName,
                     TemplateDatabaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName2015,
-                    ExpectedControls = 6 + 12
+                    ExpectedControls = TestConstant.DefaultImageTableColumns.Count - 6
                 }
             };
 
             foreach (DatabaseExpectations databaseExpectation in databaseExpectations)
             {
                 ImageDatabase imageDatabase = this.CreateImageDatabase(databaseExpectation.TemplateDatabaseFileName, databaseExpectation.ImageDatabaseFileName);
-                ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(imageDatabase);
+                DataEntryHandler dataHandler = new DataEntryHandler(imageDatabase);
 
                 DataEntryControls controls = new DataEntryControls();
-                controls.Generate(imageDatabase, imageEnumerator);
-
+                controls.Generate(imageDatabase, dataHandler);
                 Assert.IsTrue(controls.ControlsByDataLabel.Count == databaseExpectation.ExpectedControls, "Expected {0} controls to be generated but {1} were.", databaseExpectation.ExpectedControls, controls.ControlsByDataLabel.Count);
+
+                // check copies aren't possible when the image enumerator's not pointing to an image
+                List<DataEntryControl> copyableControls = controls.Controls.Where(control => control.DataLabel != Constants.DatabaseColumn.Folder &&
+                                                                                  control.DataLabel != Constants.DatabaseColumn.RelativePath &&
+                                                                                  control.DataLabel != Constants.DatabaseColumn.File &&
+                                                                                  control.DataLabel != Constants.DatabaseColumn.Date &&
+                                                                                  control.DataLabel != Constants.DatabaseColumn.Time).ToList();
+                foreach (DataEntryControl control in copyableControls)
+                {
+                    Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
+                    Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
+                }
+
+                // check only copy forward is possible when enumerator's on first image
+                if (databaseExpectation.ImageDatabaseFileName == TestConstant.File.CarnivoreNewImageDatabaseFileName)
+                {
+                    this.PopulateCarnivoreDatabase(imageDatabase);
+                }
+                else
+                {
+                    this.PopulateDefaultDatabase(imageDatabase);
+                }
+
+                Assert.IsTrue(dataHandler.ImageCache.MoveNext());
+                foreach (DataEntryControl control in copyableControls)
+                {
+                    Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
+                    Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
+                }
+
+                // check only copy last is possible when enumerator's on last image
+                // check also copy last is not possible if no previous instance of the field has been filled out
+                Assert.IsTrue(dataHandler.ImageCache.MoveNext());
+                foreach (DataEntryControl control in copyableControls)
+                {
+                    Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
+                    if (control.DataLabel == TestConstant.CarnivoreDatabaseColumn.Pelage ||
+                        control.DataLabel == TestConstant.DefaultDatabaseColumn.ChoiceNotVisible ||
+                        control.DataLabel == TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel ||
+                        control.DataLabel == TestConstant.DefaultDatabaseColumn.Choice3 ||
+                        control.DataLabel == TestConstant.DefaultDatabaseColumn.Counter3 ||
+                        control.DataLabel == TestConstant.DefaultDatabaseColumn.Note0 ||
+                        control.DataLabel == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel)
+                    {
+                        Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
+                    }
+                    else
+                    {
+                        Assert.IsTrue(dataHandler.IsCopyFromLastValuePossible(control));
+                    }
+                }
+
+                // methods not covered due to requirement of UX interaction
+                // dataHandler.CopyForward(control);
+                // dataHandler.CopyFromLastValue(control);
+                // dataHandler.CopyToAll(control);
             }
         }
 

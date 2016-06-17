@@ -67,6 +67,11 @@ namespace Timelapse.UnitTests
                 Constants.Control.Type
             }.AsReadOnly();
 
+        public static class CarnivoreDatabaseColumn
+        {
+            public const string Pelage = "Pelage";
+        }
+
         public static class DefaultDatabaseColumn
         {
             public const string Counter0 = "Counter0";

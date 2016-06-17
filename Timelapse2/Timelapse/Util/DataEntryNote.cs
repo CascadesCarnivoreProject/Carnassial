@@ -1,6 +1,4 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 
 namespace Timelapse.Util
 {
@@ -16,12 +14,9 @@ namespace Timelapse.Util
             set { this.ContentControl.Text = value; }
         }
 
-        public DataEntryNote(string dataLabel, DataEntryControls dataEntryControls, bool createContextMenu) : 
-            base(dataLabel, dataEntryControls, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.LabelCodeBar, createContextMenu)
+        public DataEntryNote(string dataLabel, DataEntryControls styleProvider) : 
+            base(dataLabel, styleProvider, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.LabelCodeBar)
         {
-            // Modify the context menu so it can have a propage submenu
-            this.ContentControl.ContextMenu = null;
-
             // Now configure the various elements
             this.Container.ToolTip = "Type in text";
         }

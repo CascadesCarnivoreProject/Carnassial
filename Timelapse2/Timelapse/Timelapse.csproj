@@ -378,7 +378,7 @@
       <DependentUpon>OptionsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Util\TimelapseRegistryUserSettings.cs" />
-    <Compile Include="Database\PropagateControl.cs">
+    <Compile Include="Util\DataEntryHandler.cs">
       <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
     </Compile>
     <Compile Include="Resource1.Designer.cs">

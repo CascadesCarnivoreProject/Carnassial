@@ -12,10 +12,7 @@ namespace Timelapse.Util
         public int DarkPixelThreshold { get; set; }
         public double DarkPixelRatioThreshold { get; set; }
         public ImageQualityFilter ImageFilter { get; set; }
-        public bool IsContentChanged { get; set; }
-        public bool IsContentValueChangedFromOutside { get; set; }
-        public bool IsDateTimeOrder { get; set; }
-        public string IsMouseOverCounter { get; set; }
+        public bool IsMouseOverCounter { get; set; }
         public MostRecentlyUsedList<string> MostRecentImageSets { get; set; }
         public bool ShowCsvDialog { get; set; }
 
@@ -29,10 +26,7 @@ namespace Timelapse.Util
 
             this.ControlWindowSize = new Point(0, 0);
             this.ImageFilter = ImageQualityFilter.All;
-            this.IsContentChanged = false;
-            this.IsMouseOverCounter = String.Empty;
-            this.IsDateTimeOrder = true;
-            this.IsContentValueChangedFromOutside = false;
+            this.IsMouseOverCounter = false;
             this.MostRecentImageSets = null;
             this.ShowCsvDialog = true;
         }

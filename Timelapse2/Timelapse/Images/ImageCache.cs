@@ -5,7 +5,7 @@ using Timelapse.Util;
 
 namespace Timelapse.Images
 {
-    internal class ImageCache : ImageTableEnumerator
+    public class ImageCache : ImageTableEnumerator
     {
         private Dictionary<ImageDifference, WriteableBitmap> differenceBitmapCache;
         private MostRecentlyUsedList<long> mostRecentlyUsedIDs;
@@ -13,8 +13,8 @@ namespace Timelapse.Images
 
         public ImageDifference CurrentDifferenceState { get; private set; }
 
-        public ImageCache(ImageDatabase database) :
-            base(database)
+        public ImageCache(ImageDatabase imageDatabase) :
+            base(imageDatabase)
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
             this.differenceBitmapCache = new Dictionary<ImageDifference, WriteableBitmap>();

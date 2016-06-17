@@ -12,15 +12,15 @@ namespace Timelapse.Database
         public ImageProperties Current { get; private set; }
         public int CurrentRow { get; private set; }
 
-        public ImageTableEnumerator(ImageDatabase database) :
-            this(database, Constants.Database.InvalidRow)
+        public ImageTableEnumerator(ImageDatabase imageDatabase) :
+            this(imageDatabase, Constants.Database.InvalidRow)
         {
         }
 
-        public ImageTableEnumerator(ImageDatabase database, int startingPosition)
+        public ImageTableEnumerator(ImageDatabase imageDatabase, int startingPosition)
         {
             this.CurrentRow = startingPosition;
-            this.Database = database;
+            this.Database = imageDatabase;
 
             // OK if this fails as ImageTableEnumerator..ctor(ImageDatabase) passes -1 to match default enumerator behaviour
             this.TryMoveToImage(startingPosition);

@@ -16,8 +16,6 @@ namespace Timelapse
         // Given a key, return its associated control
         public Dictionary<string, DataEntryControl> ControlsByDataLabel { get; private set; }
         public List<DataEntryControl> Controls { get; private set; } // list of all our counter controls
-        // The wrap panel will contain all our controls. If we want to reparent things, we do it by reparenting the wrap panel
-        public PropagateControl Propagate { get; private set; }
 
         public DataEntryControls()
         {
@@ -26,15 +24,13 @@ namespace Timelapse
             this.Controls = new List<DataEntryControl>();
         }
 
-        public void Generate(ImageDatabase database, ImageTableEnumerator imageEnumerator)
+        public void Generate(ImageDatabase database, DataEntryHandler dataEntryPropagator)
         {
-            this.Propagate = new PropagateControl(database, imageEnumerator);
-
             for (int row = 0; row < database.TemplateTable.Rows.Count; row++)
             {
                 // no point in generating a control if it doesn't render in the UX
                 DataRow dataRow = database.TemplateTable.Rows[row];
-                string visiblityAsString = dataRow[Constants.Control.Visible].ToString();
+                string visiblityAsString = dataRow.GetStringField(Constants.Control.Visible);
                 bool visible = String.Equals(Boolean.TrueString, visiblityAsString, StringComparison.OrdinalIgnoreCase) ? true : false;
                 if (visible == false)
                 {
@@ -42,64 +38,62 @@ namespace Timelapse
                 }
 
                 // get the values for the control
-                string copyableAsString = dataRow[Constants.Control.Copyable].ToString();
+                string copyableAsString = dataRow.GetStringField(Constants.Control.Copyable);
                 bool copyable = String.Equals(Boolean.TrueString, copyableAsString, StringComparison.OrdinalIgnoreCase) ? true : false;
                 string dataLabel = dataRow.GetStringField(Constants.Control.DataLabel);
-                string defaultValue = dataRow[Constants.Control.DefaultValue].ToString();
+                string defaultValue = dataRow.GetStringField(Constants.Control.DefaultValue);
                 long id = (long)dataRow[Constants.DatabaseColumn.ID]; // TODO Need to use this ID to pass between controls and data
-                string label = dataRow[Constants.Control.Label].ToString();
-                string list = dataRow[Constants.Control.List].ToString();
-                string tooltip = dataRow[Constants.Control.Tooltip].ToString();
-                string type = dataRow[Constants.Control.Type].ToString();
-                string widthAsString = dataRow[Constants.Control.TextBoxWidth].ToString();
+                string label = dataRow.GetStringField(Constants.Control.Label);
+                string list = dataRow.GetStringField(Constants.Control.List);
+                string tooltip = dataRow.GetStringField(Constants.Control.Tooltip);
+                string controlType = dataRow.GetStringField(Constants.Control.Type);
+                string widthAsString = dataRow.GetStringField(Constants.Control.TextBoxWidth);
                 int width = (widthAsString == String.Empty) ? 0 : Int32.Parse(widthAsString);
 
                 DataEntryControl controlToAdd;
-                if (type == Constants.DatabaseColumn.File ||
-                    type == Constants.DatabaseColumn.RelativePath ||
-                    type == Constants.DatabaseColumn.Folder ||
-                    type == Constants.DatabaseColumn.Date ||
-                    type == Constants.DatabaseColumn.Time ||
-                    type == Constants.Control.Note)
+                if (controlType == Constants.DatabaseColumn.File ||
+                    controlType == Constants.DatabaseColumn.RelativePath ||
+                    controlType == Constants.DatabaseColumn.Folder ||
+                    controlType == Constants.DatabaseColumn.Date ||
+                    controlType == Constants.DatabaseColumn.Time ||
+                    controlType == Constants.Control.Note)
                 {
-                    bool createContextMenu = (type == Constants.Control.Note) ? true : false;
-                    DataEntryNote noteControl = new DataEntryNote(dataLabel, this, createContextMenu);
+                    DataEntryNote noteControl = new DataEntryNote(dataLabel, this);
                     noteControl.Label = label;
                     noteControl.Width = width;
-                    if (type == Constants.DatabaseColumn.Folder || 
-                        type == Constants.DatabaseColumn.RelativePath ||
-                        type == Constants.DatabaseColumn.File)
+                    if (controlType == Constants.DatabaseColumn.Folder || 
+                        controlType == Constants.DatabaseColumn.RelativePath ||
+                        controlType == Constants.DatabaseColumn.File)
                     {
                         // File name and path aren't editable by the user 
                         noteControl.ReadOnly = true;
                     }
                     controlToAdd = noteControl;
                 }
-                else if (type == Constants.Control.Flag || type == Constants.Control.DeleteFlag)
+                else if (controlType == Constants.Control.Flag || controlType == Constants.Control.DeleteFlag)
                 {
-                    DataEntryFlag flagControl = new DataEntryFlag(dataLabel, this, true);
+                    DataEntryFlag flagControl = new DataEntryFlag(dataLabel, this);
                     flagControl.Label = label;
                     flagControl.Width = width;
                     controlToAdd = flagControl;
                 }
-                else if (type == Constants.Control.Counter)
+                else if (controlType == Constants.Control.Counter)
                 {
-                    DataEntryCounter counterControl = new DataEntryCounter(dataLabel, this, true);
+                    DataEntryCounter counterControl = new DataEntryCounter(dataLabel, this);
                     counterControl.Label = label;
                     counterControl.Width = width;
                     controlToAdd = counterControl;
                 }
-                else if (type == Constants.Control.FixedChoice || type == Constants.DatabaseColumn.ImageQuality)
+                else if (controlType == Constants.Control.FixedChoice || controlType == Constants.DatabaseColumn.ImageQuality)
                 {
-                    bool createContextMenu = (type == Constants.Control.FixedChoice) ? true : false;
-                    DataEntryChoice choiceControl = new DataEntryChoice(dataLabel, this, createContextMenu, list);
+                    DataEntryChoice choiceControl = new DataEntryChoice(dataLabel, this, list);
                     choiceControl.Label = label;
                     choiceControl.Width = width;
                     controlToAdd = choiceControl;
                 }
                 else
                 {
-                    Debug.Assert(false, String.Format("Unhandled control type {0}.", type));
+                    Debug.Assert(false, String.Format("Unhandled control type {0}.", controlType));
                     continue;
                 }
 
@@ -110,6 +104,8 @@ namespace Timelapse
                 this.Controls.Add(controlToAdd);
                 this.ControlsByDataLabel.Add(dataLabel, controlToAdd);
             }
+
+            dataEntryPropagator.SetDataEntryCallbacks(this.ControlsByDataLabel);
         }
 
         public void AddButton(Control button)
