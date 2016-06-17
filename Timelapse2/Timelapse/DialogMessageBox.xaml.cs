@@ -11,19 +11,17 @@ namespace Timelapse
     public partial class DialogMessageBox : Window
     {
         private MessageBoxButton buttonType = MessageBoxButton.OK;
-        private MessageBoxImage iconType = MessageBoxImage.Exclamation;
 
         #region Properties
         public MessageBoxImage IconType
         {
             get
             {
-                return this.iconType;
+                return this.Message.IconType;
             }
             set
             {
-                this.iconType = value;
-                this.SetIconType();
+                this.Message.IconType = value;
             }
         }
 
@@ -45,13 +43,40 @@ namespace Timelapse
         {
             get
             {
+                return this.Message.MessageTitle;
+            }
+            set
+            {
+                this.Message.MessageTitle = value;
+                // if the window title is empty, also set it to the MessageTitle
+                if (String.IsNullOrWhiteSpace(this.WindowTitle))
+                {
+                    this.WindowTitle = value;
+                }
+            }
+        }
+
+        // Property: the Text of the Title Message
+        public string WindowTitle
+        {
+            get
+            {
                 return this.Title;
             }
             set
             {
-                this.txtBlockTitle.Text = value;
                 this.Title = value;
-                this.SetFieldVisibility();
+            }
+        }
+        public string MessageWhat
+        {
+            get
+            {
+                return this.Message.MessageWhat;
+            }
+            set
+            {
+                this.Message.MessageWhat = value;
             }
         }
 
@@ -59,12 +84,11 @@ namespace Timelapse
         {
             get
             {
-                return this.tbProblemText.Text;
+                return this.Message.MessageProblem;
             }
             set
             {
-                this.tbProblemText.Text = value;
-                this.SetFieldVisibility();
+                this.Message.MessageProblem = value;
             }
         }
 
@@ -72,12 +96,11 @@ namespace Timelapse
         {
             get
             {
-                return this.tbReasonText.Text;
+                return this.Message.MessageReason;
             }
             set
             {
-                this.tbReasonText.Text = value;
-                this.SetFieldVisibility();
+                this.Message.MessageReason = value;
             }
         }
 
@@ -85,12 +108,11 @@ namespace Timelapse
         {
             get
             {
-                return this.tbSolutionText.Text;
+                return this.Message.MessageSolution;
             }
             set
             {
-                this.tbSolutionText.Text = value;
-                this.SetFieldVisibility();
+                this.Message.MessageSolution = value;
             }
         }
 
@@ -98,12 +120,11 @@ namespace Timelapse
         {
             get
             {
-                return this.tbResultText.Text;
+                return this.Message.MessageResult;
             }
             set
             {
-                this.tbResultText.Text = value;
-                this.SetFieldVisibility();
+                this.Message.MessageResult = value;
             }
         }
 
@@ -111,12 +132,11 @@ namespace Timelapse
         {
             get
             {
-                return this.tbHintText.Text;
+                return this.Message.MessageHint;
             }
             set
             {
-                this.tbHintText.Text = value;
-                this.SetFieldVisibility();
+                this.Message.MessageHint = value;
             }
         }
         #endregion 
@@ -124,42 +144,7 @@ namespace Timelapse
         public DialogMessageBox()
         {
             this.InitializeComponent();
-            this.Title = "Message";
-            this.SetFieldVisibility();
-        }
-
-        private void SetFieldVisibility()
-        {
-            this.myGrid.RowDefinitions[1].Height = (this.MessageProblem == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[2].Height = (this.MessageReason == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[3].Height = (this.MessageSolution == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[4].Height = (this.MessageResult == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[5].Height = (this.MessageHint == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-        }
-
-        private void SetIconType()
-        {
-            switch (this.IconType)
-            {
-                case MessageBoxImage.Question:
-                    this.lblIconType.Content = "?";
-                    break;
-                case MessageBoxImage.Exclamation:
-                    this.lblIconType.Content = "!";
-                    break;
-                case MessageBoxImage.None:
-                case MessageBoxImage.Information:
-                    this.lblIconType.Content = "i";
-                    break;
-                case MessageBoxImage.Error:
-                    Run run = new Run(); // Create a symbol of a stopped hand
-                    run.FontFamily = new FontFamily("Wingdings 2");
-                    run.Text = "\u004e";
-                    this.lblIconType.Content = run;
-                    break;
-                default:
-                    return;
-            }
+            this.Title = "";
         }
 
         private void SetButtonType()

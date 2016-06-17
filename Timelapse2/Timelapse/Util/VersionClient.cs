@@ -88,7 +88,7 @@ namespace Timelapse.Util
                 // ask the user if he would like to download the new version  
                 DialogMessageBox messageBox = new DialogMessageBox();
                 messageBox.MessageTitle = String.Format("A new version of {0} is available.", this.applicationName);
-                messageBox.MessageProblem = String.Format("You a running an old version of {0}: version {1}", this.applicationName, currentVersion);
+                messageBox.MessageWhat = String.Format("You a running an old version of {0}: version {1}", this.applicationName, currentVersion);
                 messageBox.MessageReason = String.Format("A new version of {0} is available: version {1}", this.applicationName, publicallyAvailableVersion);
                 messageBox.MessageSolution = "Select 'Yes' to go to the website and download it.";
                 messageBox.MessageResult = "The new version will contain these changes and more:";
