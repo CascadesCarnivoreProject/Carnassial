@@ -102,6 +102,12 @@ namespace Timelapse.UnitTests
                 Assert.IsTrue(imageDatabase.TryGetImages(nextFilter));
             }
 
+            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
+            imageDatabase.AdjustAllImageTimes(new TimeSpan(1, 2, 3, 4, 5), 0, imageDatabase.CurrentlySelectedImageCount);
+            imageDatabase.AdjustAllImageTimes(new TimeSpan(-5, -4, -3, -2, -1), 0, imageDatabase.CurrentlySelectedImageCount);
+            int firstNonSwappableImage = DateTimeHandler.SwapDayMonthIsPossible(imageDatabase);
+            Assert.IsTrue(firstNonSwappableImage == 0 || firstNonSwappableImage == 1);
+
             // imageDatabase.TryGetImagesCustom();
             // imageDatabase.UpdateAllImagesInFilteredView();
             // imageDatabase.UpdateID();

@@ -39,8 +39,7 @@ namespace Timelapse.Database
             // of the two to provide a best effort default.  In most cases it's desirable to see if a more accurate time can be obtained
             // from the image's EXIF metadata.
             DateTime earliestTime = imageFile.CreationTime < imageFile.LastWriteTime ? imageFile.CreationTime : imageFile.LastWriteTime;
-            this.Date = DateTimeHandler.StandardDateString(earliestTime);
-            this.Time = DateTimeHandler.DatabaseTimeString(earliestTime);
+            this.SetDateAndTime(earliestTime);
         }
 
         public ImageProperties(DataRow imageRow)
@@ -140,6 +139,12 @@ namespace Timelapse.Database
             {
                 return new WriteableBitmap(Constants.Images.CorruptThumbnail);
             }
+        }
+
+        public void SetDateAndTime(DateTime dateTime)
+        {
+            this.Date = DateTimeHandler.StandardDateString(dateTime);
+            this.Time = DateTimeHandler.DatabaseTimeString(dateTime);
         }
 
         public DateTimeAdjustment TryUseImageTaken(BitmapMetadata metadata)

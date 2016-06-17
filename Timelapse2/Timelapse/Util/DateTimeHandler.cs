@@ -33,35 +33,23 @@ namespace Timelapse.Util
             // First, do a pass to see if swapping the date/time order is even possible
             for (int image = 0; image < database.CurrentlySelectedImageCount; image++)
             {
+                ImageProperties imageProperties = new ImageProperties(database.ImageDataTable.Rows[image]);
                 // Skip over corrupted images for now, as we know those dates are likley wrong
-                if (database.IsImageCorrupt(image))
+                if (imageProperties.ImageQuality == ImageQualityFilter.Corrupted)
                 {
                     continue;
                 }
 
-                // Parse the date, which should always work at this point. But just in case, put out a debug message
-                string dateAsString = database.ImageDataTable.Rows[image].GetStringField(Constants.DatabaseColumn.Date) + " " + database.ImageDataTable.Rows[image].GetStringField(Constants.DatabaseColumn.Time);
-                DateTime date; // Month/Day order
-                bool succeeded = DateTime.TryParse(dateAsString, out date);
-                if (!succeeded)
-                {
-                    Debug.Print("In SwapDayMonth - something went wrong trying to parse a date!");
-                }
-
                 // Now check to see if the reversed date is legit. If it throws an exception, we know it's a problem.
                 // TODOSAUL: add code to check if day and month are swappable rather than throwing
+                DateTime date = imageProperties.GetDateTime();
                 try
                 {
                     DateTime reversedDate = new DateTime(date.Year, date.Day, date.Month); // swapped day and month
-                    succeeded = true;
                 }
                 catch
                 {
                     return image; // return the first image where we couldn't swap the date
-                }
-                if (!succeeded)
-                {
-                    break;
                 }
             }
 

@@ -57,7 +57,7 @@ namespace Timelapse
                     this.lblOriginalDate.Content = imageProperties.Date;
                     this.lblNewDate.Content = DateTimeHandler.SwapSingleDayMonth(imageProperties.Date);
 
-                    this.rangeEnd = this.GetDateRangeWithSameDate(this.rangeStart);
+                    this.rangeEnd = this.GetLastImageOnSameDay(this.rangeStart);
                     this.lblNumberOfImagesWithSameDate.Content = " Images from the same day: ";
                     this.lblNumberOfImagesWithSameDate.Content += (this.rangeEnd - this.rangeStart + 1).ToString();
                 }
@@ -134,23 +134,13 @@ namespace Timelapse
             // Note that if the index is out of range, it will return -1, so that's ok.
             for (int index = startIndex; index < this.database.CurrentlySelectedImageCount; index++)
             {
+                ImageProperties imageProperties = new ImageProperties(this.database.ImageDataTable.Rows[index]);
                 // Ignore corrupted images
                 // if (this.database.RowIsImageCorrupted(i)) continue;
-
-                // Parse the date. Note that this should never fail at this point, but just in case, put out a debug message
-                string dateAsString = this.database.ImageDataTable.Rows[index].GetStringField(Constants.DatabaseColumn.Date) + " " + this.database.ImageDataTable.Rows[index].GetStringField(Constants.DatabaseColumn.Time);
-                DateTime date;
-                bool succeeded = DateTime.TryParse(dateAsString, out date);
-                if (succeeded)
+                DateTime date = imageProperties.GetDateTime();
+                if (date.Day < 13 && date.Month < 13)
                 {
-                    if (date.Day < 13 && date.Month < 13)
-                    {
-                        return index; // If the date is ambiguous, return the row index. 
-                    }
-                }
-                else
-                {
-                    Debug.Print("In SwapDayMonth - something went wrong trying to parse a date!");
+                    return index; // If the date is ambiguous, return the row index. 
                 }
             }
             return -1; // -1 means all dates are fine
@@ -158,7 +148,7 @@ namespace Timelapse
 
         // Given a starting index, find its date and then go through the successive images untilthe date differs.
         // That is, return the final image that is dated the same date as this image
-        private int GetDateRangeWithSameDate(int startIndex)
+        private int GetLastImageOnSameDay(int startIndex)
         {
             if (startIndex >= this.database.CurrentlySelectedImageCount)
             {
@@ -166,22 +156,13 @@ namespace Timelapse
             }
 
             // Parse the provided starting date. Note that this should never fail at this point, but just in case, put out a debug message
-            string startingDateAsString = this.database.ImageDataTable.Rows[startIndex].GetStringField(Constants.DatabaseColumn.Date) + " " + this.database.ImageDataTable.Rows[startIndex].GetStringField(Constants.DatabaseColumn.Time);
-            DateTime startingDate;
-            if (!DateTime.TryParse(startingDateAsString, out startingDate))
-            {
-                return -1; // Should never fail, but just in case.
-            }
-
+            ImageProperties imageProperties = new ImageProperties(this.database.ImageDataTable.Rows[startIndex]);
+            DateTime startingDate = imageProperties.GetDateTime();
             for (int index = startIndex + 1; index < this.database.CurrentlySelectedImageCount; index++)
             {
                 // Parse the date for the given record.
-                string currentDateAsString = this.database.ImageDataTable.Rows[index].GetStringField(Constants.DatabaseColumn.Date) + " " + this.database.ImageDataTable.Rows[index].GetStringField(Constants.DatabaseColumn.Time);
-                DateTime currentDate;
-                if (!DateTime.TryParse(currentDateAsString, out currentDate))
-                {
-                    return index - 1; // If we can't parse the date, the return the previous date 
-                }
+                imageProperties = new ImageProperties(this.database.ImageDataTable.Rows[index]);
+                DateTime currentDate = imageProperties.GetDateTime();
                 if (startingDate.Day == currentDate.Day && startingDate.Month == currentDate.Month && startingDate.Year == currentDate.Year)
                 {
                     continue;

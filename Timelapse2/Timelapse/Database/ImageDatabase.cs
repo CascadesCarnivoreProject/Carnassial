@@ -712,43 +712,28 @@ namespace Timelapse.Database
 
             // We now have an unfiltered temporary data table
             // Get the original value of each, and update each date by the corrected amount if possible
-            bool result;
+            List<ImageProperties> imagePropertiesList = new List<ImageProperties>();
             for (int row = from; row < to; row++)
             {
-                string imageTakenAsString = tempTable.Rows[row].GetStringField(Constants.DatabaseColumn.Date) + " " + tempTable.Rows[row].GetStringField(Constants.DatabaseColumn.Time);
-                DateTime date;
-                result = DateTime.TryParse(imageTakenAsString, out date);
-                if (!result)
-                {
-                    continue; // Since we can't get a correct date/time, just leave it unaltered.
-                }
-
-                // correct the date and modify the temporary datatable rows accordingly
+                ImageProperties imageProperties = new ImageProperties(tempTable.Rows[row]);
+                DateTime date = imageProperties.GetDateTime();
+                // adjust the date
                 date += adjustment;
-                tempTable.Rows[row][Constants.DatabaseColumn.Date] = DateTimeHandler.StandardDateString(date);
-                tempTable.Rows[row][Constants.DatabaseColumn.Time] = DateTimeHandler.DatabaseTimeString(date);
+                imageProperties.SetDateAndTime(date);
+                imagePropertiesList.Add(imageProperties);
             }
 
             // Now update the actual database with the new date/time values stored in the temporary table
-            List<ColumnTuplesWithWhere> updateQuery = new List<ColumnTuplesWithWhere>();
-            for (int i = from; i < to; i++)
+            List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
+            foreach (ImageProperties imageProperties in imagePropertiesList)
             {
-                string original_date = tempTable.Rows[i].GetStringField(Constants.DatabaseColumn.Date) + " " + tempTable.Rows[i].GetStringField(Constants.DatabaseColumn.Time);
-                DateTime date;
-                result = DateTime.TryParse(original_date, out date);
-                if (!result)
-                {
-                    continue; // Since we can't get a correct date/time, don't create an update query for that row.
-                }
-
                 List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>();                       // Update the date and time
-                columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, tempTable.Rows[i].GetStringField(Constants.DatabaseColumn.Date)));
-                columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Time, tempTable.Rows[i].GetStringField(Constants.DatabaseColumn.Time)));
-                long id = (long)tempTable.Rows[i][Constants.DatabaseColumn.ID];
-                updateQuery.Add(new ColumnTuplesWithWhere(columnsToUpdate, id));
+                columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, imageProperties.Date));
+                columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Time, imageProperties.Time));
+                imagesToUpdate.Add(new ColumnTuplesWithWhere(columnsToUpdate, imageProperties.ID));
             }
 
-            this.Database.Update(Constants.Database.ImageDataTable, updateQuery);
+            this.Database.Update(Constants.Database.ImageDataTable, imagesToUpdate);
         }
 
         // Update all the date fields by swapping the days and months.
