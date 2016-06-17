@@ -72,6 +72,7 @@ namespace Timelapse
                 this.SetFieldVisibility();
             }
         }
+
         public string MessageReason
         {
             get
