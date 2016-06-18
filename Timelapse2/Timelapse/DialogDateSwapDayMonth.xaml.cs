@@ -28,8 +28,14 @@ namespace Timelapse
             if (id >= 0)
             {
                 // We can't swap the dates; provide appropriate feedback
-                this.StackPanelCorrect.Visibility = Visibility.Collapsed;
-                this.StackPanelError.Visibility = Visibility.Visible;
+                this.Message.IconType = MessageBoxImage.Exclamation;
+                this.Message.MessageTitle = "Cannot Swap the Date's Day and Month";
+                this.Message.MessageSolution = "Unfortunately, no general solution is possible with this image set." + Environment.NewLine;
+                this.Message.MessageSolution += "At least one of the days is greater than 12, which means that there is no valid matching month." + Environment.NewLine;
+                this.Message.MessageSolution += "The image below is the first example of this found in this image set.";
+                this.Message.MessageHint = "\u2022 Check to see if the dates in this image set were really reversed, or if its due to some other issue." + Environment.NewLine;
+                this.Message.MessageHint += "\u2022 You can correct individual dates using the 'Check and Modify Ambiguous Dates menu option";
+                this.Message.MessageResult = "";
                 this.OkButton.Visibility = Visibility.Collapsed;
 
                 imageProperties = this.database.FindImageByID(id);
