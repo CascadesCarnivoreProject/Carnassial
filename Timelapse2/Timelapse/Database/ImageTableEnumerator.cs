@@ -26,14 +26,15 @@ namespace Timelapse.Database
             this.TryMoveToImage(startingPosition);
         }
 
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         object IEnumerator.Current
         {
             get { return this.Current; }
-        }
-
-        void IDisposable.Dispose()
-        {
-            // nothing to do but required by IEnumerator<T>
         }
 
         /// <summary>
@@ -73,6 +74,11 @@ namespace Timelapse.Database
             }
 
             return false;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            // nothing to do but required by IEnumerator<T>
         }
     }
 }

@@ -14,15 +14,16 @@ namespace Timelapse
     /// <summary>
     /// Interaction logic for DialogOptionsDarkImagesThreshold.xaml
     /// </summary>
-    public partial class DialogOptionsDarkImagesThreshold : Window
+    public partial class DialogOptionsDarkImagesThreshold : Window, IDisposable
     {
         private const int MinimumWidth = 12;
 
         private WriteableBitmap bitmap;
-        private int darkPixelThreshold = 0; // Default value
-        private double darkPixelRatio = 0;  // Default value 
-        private double darkPixelRatioFound = 0;
+        private int darkPixelThreshold;
+        private double darkPixelRatio; 
+        private double darkPixelRatioFound;
         private ImageDatabase database;
+        private bool disposed;
         private ImageTableEnumerator imageEnumerator;
         private bool isColor = false; // Whether the image is color or grey scale
         private TimelapseState state;
@@ -36,6 +37,9 @@ namespace Timelapse
             this.imageEnumerator = new ImageTableEnumerator(database, currentImageIndex);
             this.darkPixelThreshold = state.DarkPixelThreshold;
             this.darkPixelRatio = state.DarkPixelRatioThreshold;
+            this.darkPixelRatioFound = 0;
+            this.disposed = false;
+            this.isColor = false;
             this.state = state;
         }
 
@@ -302,6 +306,30 @@ namespace Timelapse
             this.SetPreviousNextButtonStates();
         }
         #endregion
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                if (this.imageEnumerator != null)
+                {
+                    this.imageEnumerator.Dispose();
+                }
+            }
+
+            this.disposed = true;
+        }
 
         #region Work Utilities
         /// <summary>

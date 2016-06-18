@@ -97,7 +97,7 @@ namespace Timelapse.Database
                     newRow[Constants.Control.Tooltip] = Constants.ControlDefault.FlagTooltip;
                     break;
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}."));
+                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", controlType));
             }
 
             string dataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);

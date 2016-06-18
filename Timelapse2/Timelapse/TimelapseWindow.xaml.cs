@@ -103,12 +103,22 @@ namespace Timelapse
 
         public void Dispose()
         {
-            if (this.disposed == false)
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
             {
                 this.speechSynthesizer.Dispose();
             }
 
-            GC.SuppressFinalize(this);
             this.disposed = true;
         }
 
@@ -122,7 +132,9 @@ namespace Timelapse
         // On exiting, save various attributes so we can use recover them later
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            if ((this.dataHandler.ImageDatabase != null) && (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0))
+            if ((this.dataHandler != null) &&
+                (this.dataHandler.ImageDatabase != null) && 
+                (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0))
             {
                 // Save the following in the database as they are local to this image set
                 if (this.state.ImageFilter == ImageQualityFilter.Custom)

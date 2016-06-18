@@ -81,6 +81,7 @@
     <Compile Include="RegistryTests.cs" />
     <Compile Include="TestConstant.cs" />
     <Compile Include="TimelapseTest.cs" />
+    <Compile Include="UserInterfaceTests.cs" />
     <Compile Include="VersionTests.cs" />
   </ItemGroup>
   <ItemGroup>

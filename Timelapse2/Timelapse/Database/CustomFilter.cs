@@ -26,11 +26,10 @@ namespace Timelapse.Database
             this.SearchTermList = new Dictionary<int, SearchTerm>();
 
             // Initialize the filter to reflect the desired controls in the template (in sorted order)
-            int row_count = 1; // We start at 1 as there is already a header row
-            for (int i = 0; i < this.database.TemplateTable.Rows.Count; i++)
+            for (int rowIndex = 0; rowIndex < this.database.TemplateTable.Rows.Count; rowIndex++)
             {
                 // Get the values for each control
-                DataRow row = this.database.TemplateTable.Rows[i];
+                DataRow row = this.database.TemplateTable.Rows[rowIndex];
                 string type = row[Constants.Control.Type].ToString();
 
                 // We only handle certain types, e.g., we don't give the user the opportunity to search over file names / folders / date / time
@@ -42,30 +41,29 @@ namespace Timelapse.Database
                     type == Constants.Control.Flag)
                 {
                     // Create a new search expression for each row, where each row specifies a particular control and how it can be searched
-                    string default_value = String.Empty;
+                    string defaultValue = String.Empty;
                     string expression = Constants.Filter.Equal;
-                    bool is_use_for_searching = false;
                     if (type == Constants.Control.Counter)
                     {
-                        default_value = "0";
+                        defaultValue = "0";
                         expression = Constants.Filter.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
                     }
                     else if (type == Constants.Control.Flag)
                     {
-                        default_value = Constants.Boolean.False;
+                        defaultValue = Constants.Boolean.False;
                     }
 
                     // Create a new search term and add it to the list
-                    SearchTerm st = new SearchTerm();
-                    st.UseForSearching = is_use_for_searching;
-                    st.Type = type;
-                    st.Label = row.GetStringField(Constants.Control.Label);
-                    st.DataLabel = row.GetStringField(Constants.Control.DataLabel);
-                    st.Expression = expression;
-                    st.Value = default_value;
-                    st.List = row.GetStringField(Constants.Control.List);
-                    this.SearchTermList.Add(row_count, st);
-                    row_count++;
+                    SearchTerm searchTerm = new SearchTerm();
+                    searchTerm.UseForSearching = false;
+                    searchTerm.Type = type;
+                    searchTerm.Label = row.GetStringField(Constants.Control.Label);
+                    searchTerm.DataLabel = row.GetStringField(Constants.Control.DataLabel);
+                    searchTerm.Expression = expression;
+                    searchTerm.Value = defaultValue;
+                    searchTerm.List = row.GetStringField(Constants.Control.List);
+                    // We start at 1 as there is already a header row
+                    this.SearchTermList.Add(rowIndex + 1, searchTerm);
                 }
             }
         }

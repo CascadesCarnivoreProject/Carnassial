@@ -139,6 +139,7 @@
     <Compile Include="Database\ImageDataCounterColumn.cs" />
     <Compile Include="Database\ImageDataFlagColumn.cs" />
     <Compile Include="Database\ImageDataNoteColumn.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
     <Compile Include="Database\ImageTableEnumerator.cs" />

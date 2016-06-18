@@ -16,7 +16,16 @@ namespace Timelapse.UnitTests
 
         public TestContext TestContext { get; set; }
 
-        protected string WorkingDirectory { get; set; }
+        /// <summary>
+        /// Gets the name of an optional subdirectory under the working directory from which all tests in the current class access database and image files.
+        /// Classes wishing to use this mechanism should call EnsureTestClassSubdirectory() in their constructor to set up the subdirectory.
+        /// </summary>
+        protected string TestClassSubdirectory { get; private set; }
+
+        /// <summary>
+        /// Gets the path to the root folder under which all tests execute.
+        /// </summary>
+        protected string WorkingDirectory { get; private set; }
 
         /// <summary>
         /// Clones the specified template and image databases and opens the image database's clone.
@@ -84,6 +93,34 @@ namespace Timelapse.UnitTests
 
             // create the new database
             return TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
+        }
+
+        protected void EnsureTestClassSubdirectory()
+        {
+            // ensure subdirectory exists
+            this.TestClassSubdirectory = this.GetType().Name;
+            string subdirectoryPath = Path.Combine(this.WorkingDirectory, this.TestClassSubdirectory);
+            if (Directory.Exists(subdirectoryPath) == false)
+            {
+                Directory.CreateDirectory(subdirectoryPath);
+            }
+
+            // ensure subdirectory contains default images
+            List<string> defaultImages = new List<string>()
+            {
+                TestConstant.DefaultExpectation.DaylightBobcatImage.FileName,
+                TestConstant.DefaultExpectation.InfraredMartenImage.FileName
+            };
+            foreach (string imageFileName in defaultImages)
+            {
+                FileInfo sourceImageFile = new FileInfo(Path.Combine(this.WorkingDirectory, imageFileName));
+                FileInfo destinationImageFile = new FileInfo(Path.Combine(this.WorkingDirectory, this.TestClassSubdirectory, imageFileName));
+                if (destinationImageFile.Exists == false ||
+                    destinationImageFile.LastWriteTimeUtc < sourceImageFile.LastWriteTimeUtc)
+                {
+                    sourceImageFile.CopyTo(destinationImageFile.FullName, true);
+                }
+            }
         }
 
         protected List<ImageExpectations> PopulateCarnivoreDatabase(ImageDatabase imageDatabase)
@@ -214,7 +251,12 @@ namespace Timelapse.UnitTests
         {
             string uniqueTestIdentifier = String.Format("{0}.{1}", this.GetType().FullName, this.TestContext.TestName);
             string uniqueFileName = String.Format("{0}.{1}{2}", Path.GetFileNameWithoutExtension(baseFileName), uniqueTestIdentifier, Path.GetExtension(baseFileName));
-            return Path.Combine(this.WorkingDirectory, uniqueFileName);
+
+            if (String.IsNullOrWhiteSpace(this.TestClassSubdirectory))
+            {
+                return Path.Combine(this.WorkingDirectory, uniqueFileName);
+            }
+            return Path.Combine(this.WorkingDirectory, this.TestClassSubdirectory, uniqueFileName);
         }
     }
 }

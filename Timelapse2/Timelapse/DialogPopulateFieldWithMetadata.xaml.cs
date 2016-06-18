@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
-using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -42,7 +41,18 @@ namespace Timelapse
 
         public void Dispose()
         {
-            if (this.disposed == false)
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
             {
                 if (this.exifTool != null)
                 {
@@ -50,7 +60,6 @@ namespace Timelapse
                 }
             }
 
-            GC.SuppressFinalize(this);
             this.disposed = true;
         }
 

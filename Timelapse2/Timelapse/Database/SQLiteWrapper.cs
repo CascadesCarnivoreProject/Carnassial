@@ -507,6 +507,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
+                // TODOSAUL: fix CA2241
                 Debug.Assert(false, String.Format("Failure in AddColumn executing query '{0}'."), exception.ToString());
                 return false;
             }
@@ -553,6 +554,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
+                // TODOSAUL: fix CA2241
                 Debug.Assert(false, String.Format("Failure in DeleteColumn executing query '{0}'."), exception.ToString());
                 return false;
             }
@@ -604,6 +606,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
+                // TODOSAUL: fix CA2241
                 Debug.Assert(false, String.Format("Failure in RenameColumn executing query '{0}'."), exception.ToString());
                 return false;
             }
