@@ -17,7 +17,7 @@ namespace Timelapse
         public DialogExportCsv(string filename)
         {
             this.InitializeComponent();
-            this.runFname.Text = filename;
+            this.Message.MessageWhat += filename;
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

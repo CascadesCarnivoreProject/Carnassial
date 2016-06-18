@@ -62,8 +62,7 @@ namespace Timelapse
             {
                 if (deleteData == false)
                 {
-                    // Case 1: Delete the current image, but not its data
-                    this.Message.MessageTitle = "Delete the current image";
+                    // Case 1: Delete the current image, but not its data - This is the default and is coded in the XAML
                     this.Message.MessageWhat = "Deletes the current image (shown below) but not its data.";
                     this.Message.MessageResult = "\u2022 The deleted image file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
                     this.Message.MessageResult += "\u2022 A placeholder image will be shown when you try to view a deleted image.";

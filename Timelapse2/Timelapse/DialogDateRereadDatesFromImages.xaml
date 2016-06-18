@@ -16,7 +16,6 @@
                             MessageResult="Timelapse will replace the current date/time with the original image date / time (if they differ).&#10;A list showing what was done will be displayed below"
                             ShowExplanationVisibilityCheckbox="True"/>
         <StackPanel>
-
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>
         </StackPanel>
         <DockPanel Name="DockPanelImage">

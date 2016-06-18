@@ -86,7 +86,7 @@ namespace Timelapse
                 this.MenuItemControlsInSeparateWindow.IsChecked = userSettings.ReadControlsInSeparateWindow();
                 this.state.DarkPixelThreshold = userSettings.ReadDarkPixelThreshold();
                 this.state.DarkPixelRatioThreshold = userSettings.ReadDarkPixelRatioThreshold();
-                this.state.ShowCsvDialog = userSettings.ReadShowCsvDialog();
+                // SAULTODO: Delete the code saving CSV state across sessions, as this state is only per session. this.state.ShowCsvDialog = userSettings.ReadShowCsvDialog();
                 this.state.MostRecentImageSets = userSettings.ReadMostRecentImageSets();  // the last path opened by the user is stored in the registry
             }
 
@@ -164,7 +164,7 @@ namespace Timelapse
                 userSettings.WriteDarkPixelThreshold(this.state.DarkPixelThreshold);
                 userSettings.WriteDarkPixelRatioThreshold(this.state.DarkPixelRatioThreshold);
                 userSettings.WriteMostRecentImageSets(this.state.MostRecentImageSets);
-                userSettings.WriteShowCsvDialog(this.state.ShowCsvDialog);
+                // SAULTODO: DELETE THIS AS THIS IS SHOULD NOT BE REMEMBERED BETWEEN SESSIONS. userSettings.WriteShowCsvDialog(this.state.ShowCsvDialog);
             }
 
             if (this.controlWindow != null)
