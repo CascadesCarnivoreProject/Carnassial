@@ -22,13 +22,21 @@
                 <ColumnDefinition Width="80"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <StackPanel  Margin="10,10,0,0" Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
-                <Canvas Width="60" Height="60">
+            <Grid  Margin="10,10,0,10" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!--<StackPanel  Margin="10,10,0,0" Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">-->
+                <Canvas Width="60" Height="60" Grid.Column="0">
                     <Ellipse  Width="60" Height="60" Stroke="Black" Fill="#46FD0A0A" />
                     <Label  Name="lblIconType" Content="?" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
                 </Canvas>
-                <TextBlock x:Name="tbTitleText" Text="Title" Padding="10,5,0,0"  FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
-            </StackPanel>
+                <TextBlock x:Name="tbTitleText" Text="Title" Padding="10,5,0,0"  FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Grid.Column="1"/>
+                <CheckBox Name="btnHideText" Content="Hide explanation" Grid.Column="2" Visibility="Collapsed" Margin="10,10,5,0" VerticalAlignment="Center" Checked="HideTextButton_StateChange" Unchecked="HideTextButton_StateChange" IsThreeState="False" />
+            </Grid>
 
             <TextBlock Name="tbProblemLabel" Margin="10,10,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Text="Problem:" />
             <TextBlock Name="tbProblemText" Margin="0,10,10,0"  VerticalAlignment="Top" TextWrapping="Wrap" FontSize="14" Grid.Row="1" Grid.Column="1" Text=""/>

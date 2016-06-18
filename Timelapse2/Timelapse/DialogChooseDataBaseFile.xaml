@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Timelapse"
         mc:Ignorable="d"
-        Title="Choose the Timelapse DataBase File You Want" Height="500" Width="600" MinHeight="500" MinWidth="600">
+        Title="Choose the Timelapse DataBase File You Want" Height="550" Width="650" MinHeight="500" MinWidth="600">
     <DockPanel>
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" IconType="Question"
-                            MessageTitle="Choose the Timelapse DataBase File You Want"
+                            MessageTitle="Choose a Timelapse DataBase"
                             MessageProblem="There are multiple Timelapse database (.ddb) files associated with this image set."
                             MessageSolution="Choose the Timelapse database file you want to use."
                             MessageResult="Timelapse will use and save data to the chosen database file."
@@ -17,7 +17,7 @@
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>
             <StackPanel Orientation="Horizontal">
                 <Label FontWeight="Bold" Content="  Select the database file:"/>
-                <ListBox Name="lbFiles" ScrollViewer.VerticalScrollBarVisibility="Auto"  Width="420" Height="230"/>
+                <ListBox Name="lbFiles" ScrollViewer.VerticalScrollBarVisibility="Auto"  Width="420" Height="270"/>
             </StackPanel>
 
         </StackPanel>

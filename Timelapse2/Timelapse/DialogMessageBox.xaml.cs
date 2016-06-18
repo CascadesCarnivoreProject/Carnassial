@@ -38,6 +38,18 @@ namespace Timelapse
             }
         }
 
+        public bool ShowExplanationVisibilityCheckbox
+        {
+            get
+            {
+                return this.Message.ShowExplanationVisibilityCheckbox;
+            }
+            set
+            {
+                this.Message.ShowExplanationVisibilityCheckbox = value;
+            }
+        }
+
         // Property: the Text of the Title Message
         public string MessageTitle
         {
