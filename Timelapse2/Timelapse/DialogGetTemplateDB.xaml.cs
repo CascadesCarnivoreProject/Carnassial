@@ -15,21 +15,16 @@ namespace Timelapse
         /// <summary>
         /// Ask the user to indicate the path to a code template file (called if there is no code template file in the image folder). 
         /// If a code template file is found, it is copied to the image folder. 
+        /// SAUL TODO: The new structure of Timelapse means this dialog will never be invoked. It can be removed.
         /// </summary>
         public DialogGetTemplateDB(string path)
         {
             this.InitializeComponent();
             this.path = path;
-            this.RunPath.Text += path;
+            this.Message.MessageProblem += path;
             if (File.Exists(Path.Combine(path, Constants.File.XmlTemplateFileName)))
             {
-                this.CodeTemplateMessage1.Visibility = Visibility.Visible;
-                this.CodeTemplateMessage2.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                this.CodeTemplateMessage1.Visibility = Visibility.Collapsed;
-                this.CodeTemplateMessage2.Visibility = Visibility.Collapsed;
+                this.Message.MessageReason = "While there is a CodeTemplate.xml file, these have been replaced by the TimelapseTemplate.tdb.";
             }
         }
 

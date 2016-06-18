@@ -38,24 +38,24 @@
                 <CheckBox Name="btnHideText" Content="Hide explanation" Grid.Column="2" Visibility="Collapsed" Margin="10,10,5,0" VerticalAlignment="Center" Checked="HideTextButton_StateChange" Unchecked="HideTextButton_StateChange" IsThreeState="False" />
             </Grid>
 
-            <TextBlock Name="tbProblemLabel" Margin="10,10,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Text="Problem:" />
-            <TextBlock Name="tbProblemText" Margin="0,10,10,0"  VerticalAlignment="Top" TextWrapping="Wrap" FontSize="14" Grid.Row="1" Grid.Column="1" Text=""/>
+            <TextBlock Name="tbProblemLabel" Margin="10,8,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Text="Problem:" />
+            <TextBlock Name="tbProblemText" Margin="0,10,10,0"  VerticalAlignment="Top" FontSize="12" TextWrapping="Wrap"  Grid.Row="1" Grid.Column="1" Text=""/>
 
-            <TextBlock Name="tbWhatLabel" Margin="10,10,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="2" Grid.Column="0" Text="What:" />
-            <TextBlock Name="tbWhatText" Margin="0,10,10,0"  VerticalAlignment="Top" TextWrapping="Wrap" FontSize="14" Grid.Row="2" Grid.Column="1" Text=""/>
+            <TextBlock Name="tbWhatLabel" Margin="10,8,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="2" Grid.Column="0" Text="What:" />
+            <TextBlock Name="tbWhatText" Margin="0,10,10,0"  VerticalAlignment="Top" FontSize="12" TextWrapping="Wrap"  Grid.Row="2" Grid.Column="1" Text=""/>
 
-            <TextBlock Name="tbReasonLabel" Margin="10,10,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="3" Grid.Column="0" Text="Reason:" />
-            <TextBlock Name="tbReasonText" Margin="0,10,10,0"  VerticalAlignment="Top" TextWrapping="Wrap" FontSize="14" Grid.Row="3" Grid.Column="1" Text=""/>
+            <TextBlock Name="tbReasonLabel" Margin="10,8,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="3" Grid.Column="0" Text="Reason:" />
+            <TextBlock Name="tbReasonText" Margin="0,10,10,0"  VerticalAlignment="Top" FontSize="12" TextWrapping="Wrap"  Grid.Row="3" Grid.Column="1" Text=""/>
 
 
-            <TextBlock Name="tbSolutionLabel" Margin="10,10,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="4" Grid.Column="0" Text="Solution:" />
-            <TextBlock Name="tbSolutionText" Margin="0,10,10,0"  VerticalAlignment="Top" TextWrapping="Wrap" FontSize="14" Grid.Row="4" Grid.Column="1" Text=""/>
+            <TextBlock Name="tbSolutionLabel" Margin="10,8,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="4" Grid.Column="0" Text="Solution:" />
+            <TextBlock Name="tbSolutionText" Margin="0,10,10,0"  VerticalAlignment="Top" FontSize="12" TextWrapping="Wrap"  Grid.Row="4" Grid.Column="1" Text=""/>
 
-            <TextBlock Name="tbResultLabel" Margin="10,10,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="5" Grid.Column="0" Text="Result:" />
-            <TextBlock Name="tbResultText" Margin="0,10,10,0"  VerticalAlignment="Top" TextWrapping="Wrap" FontSize="14" Grid.Row="5" Grid.Column="1" Text=""/>
+            <TextBlock Name="tbResultLabel" Margin="10,8,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="5" Grid.Column="0" Text="Result:" />
+            <TextBlock Name="tbResultText" Margin="0,10,10,0"  VerticalAlignment="Top" FontSize="12" TextWrapping="Wrap"  Grid.Row="5" Grid.Column="1" Text=""/>
 
             <TextBlock Name="tbHintLabel" Margin="10,10,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="6" Grid.Column="0" Text="Hint:" />
-            <TextBlock Name="tbHintText" Margin="0,10,10,0"  VerticalAlignment="Top" TextWrapping="Wrap" FontSize="14" Grid.Row="6" Grid.Column="1" Text=""/>
+            <TextBlock Name="tbHintText" Margin="0,10,10,0"  VerticalAlignment="Top" FontSize="12" TextWrapping="Wrap"  Grid.Row="6" Grid.Column="1" Text=""/>
         </Grid>
     </Grid>
 </UserControl>

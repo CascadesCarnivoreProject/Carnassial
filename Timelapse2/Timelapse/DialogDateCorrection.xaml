@@ -13,8 +13,9 @@
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" IconType="Question"
                             MessageTitle="Add a correction value to the date"
                             MessageProblem="If your field camera was not initialized to the correct date/time, all your image dates will be 'off' by a fixed amount."
-                            MessageSolution="Enter the correct date and time in the box below for the sample image below. The Date format should look like '12-Apr-2011 02:00 pm.'  Then click Okay (which becomes active after you type in a correctly formatted  date/time)"
+                            MessageSolution="Enter the correct date and time in the box below for the sample image below. &#10;Then click Okay (which becomes active after you type in a correctly formatted  date/time)"
                             MessageResult="The difference between the original and correct date will be added to all dates for all images (except corrupted ones)."
+                            MessageHint=" The Date / Time format you enter should look something like '12-Apr-2011 02:00 pm.'"
                             ShowExplanationVisibilityCheckbox="True"/>
         
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">

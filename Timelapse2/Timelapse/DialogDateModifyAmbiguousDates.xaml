@@ -13,9 +13,9 @@
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
                             IconType="Question"
                             MessageTitle="Check and Modify Ambiguous Dates for Each Day"
-                            MessageProblem="Some field cameras record dates in a way that makes it hard to determine if its in Month /Day or Day/Month order. If your dates appear wrong, it could be because the software read them the wrong way round."
-                            MessageSolution="Timelapse will examing the date for the 1st photo of each day to see if it is ambiguous, i.e.,where the day / month order could have been read as month / day as both are 12 or less. &#10;If so, you can use the checkbox to swap the day / month order for all images takenthat day. You can then click 'Next' to examine the next day."
-                            MessageResult="The correction will be applied to all images for that day."
+                            MessageProblem="Some field cameras record dates in a way that makes it hard to determine if its in Month /Day or Day/Month order. &#10;If your dates appear wrong, it could be because the software read them the wrong way round."
+                            MessageSolution="Timelapse will examing the date for the 1st photo of each day to see if it is ambiguous, i.e.,where the day / month order could have been read as month / day as both are 12 or less. &#10;For those dates, you can use the checkbox to swap the day / month order for all images taken that day. &#10;Then click 'Next' to examine the next day."
+                            MessageResult="The correction will be applied to all images with that date."
                             ShowExplanationVisibilityCheckbox="True"/>
         <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
 
