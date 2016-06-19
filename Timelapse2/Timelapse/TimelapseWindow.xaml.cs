@@ -133,7 +133,7 @@ namespace Timelapse
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             if ((this.dataHandler != null) &&
-                (this.dataHandler.ImageDatabase != null) && 
+                (this.dataHandler.ImageDatabase != null) &&
                 (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0))
             {
                 // Save the following in the database as they are local to this image set
@@ -1093,7 +1093,16 @@ namespace Timelapse
             // I tested this, and it seems that this code would not be triggered anyways, so perhaps nothing needs to be done about this. 
         }
 
-        // Show the image in the current row, forcing a refresh of that image. 
+        private void RefreshCurrentImage()
+        {
+            // caller is indicating image data has been updated, so move the image enumerator off current to force a refresh of the cached properties
+            int currentRow = this.dataHandler.ImageCache.CurrentRow;
+            this.dataHandler.ImageCache.Reset();
+            // load the new property values
+            this.ShowImage(currentRow);
+        }
+
+        // Show the image in the specified row
         private void ShowImage(int newImageRow)
         {
             // for the bitmap caching logic below to work this should be the only place where code in TimelapseWindow moves the image enumerator
@@ -1906,10 +1915,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                // dialog updated the image data, so move the image enumerator off current to force a refresh of the cached properties
-                this.dataHandler.ImageCache.Reset();
-                // load the new property values
-                this.ShowImage(this.dataHandler.ImageCache.CurrentRow);
+                this.RefreshCurrentImage();
             }
         }
 
@@ -2163,10 +2169,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                // dialog updated the image data, so move the image enumerator off current to force a refresh of the cached properties
-                this.dataHandler.ImageCache.Reset();
-                // load the new property values
-                this.ShowImage(this.dataHandler.ImageCache.CurrentRow);
+                this.RefreshCurrentImage();
             }
         }
 
@@ -2203,8 +2206,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                // redisplay the current image to show the corrected date
-                this.ShowImage(this.dataHandler.ImageCache.CurrentRow);
+                this.RefreshCurrentImage();
             }
         }
 
@@ -2254,7 +2256,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.ShowImage(this.dataHandler.ImageCache.CurrentRow);
+                this.RefreshCurrentImage();
             }
         }
 
@@ -2287,7 +2289,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.ShowImage(this.dataHandler.ImageCache.CurrentRow);
+                this.RefreshCurrentImage();
             }
         }
 
@@ -2320,10 +2322,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                // dialog updated the image data, so move the image enumerator off current to force a refresh of the cached properties
-                this.dataHandler.ImageCache.Reset();
-                // load the new property values
-                this.ShowImage(this.dataHandler.ImageCache.CurrentRow);
+                this.RefreshCurrentImage();
             }
         }
 
