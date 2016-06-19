@@ -156,7 +156,7 @@ namespace Timelapse
         public DialogMessageBox()
         {
             this.InitializeComponent();
-            this.Title = "";
+            this.Title = String.Empty;
         }
 
         private void SetButtonType()

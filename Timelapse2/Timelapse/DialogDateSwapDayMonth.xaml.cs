@@ -35,7 +35,7 @@ namespace Timelapse
                 this.Message.MessageSolution += "The image below is the first example of this found in this image set.";
                 this.Message.MessageHint = "\u2022 Check to see if the dates in this image set were really reversed, or if its due to some other issue." + Environment.NewLine;
                 this.Message.MessageHint += "\u2022 You can correct individual dates using the 'Check and Modify Ambiguous Dates menu option";
-                this.Message.MessageResult = "";
+                this.Message.MessageResult = String.Empty;
                 this.OkButton.Visibility = Visibility.Collapsed;
 
                 imageProperties = this.database.FindImageByID(id);

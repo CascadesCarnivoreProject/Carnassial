@@ -129,7 +129,7 @@ namespace Timelapse
         {
             get
             {
-                return (btnHideText.Visibility == Visibility.Visible);
+                return btnHideText.Visibility == Visibility.Visible;
             }
             set
             {
@@ -154,11 +154,10 @@ namespace Timelapse
             this.myGrid.RowDefinitions[6].Height = (this.MessageHint == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
         }
 
-
         // This will toggle the visibility of the explanation panel
         private void HideTextButton_StateChange(object sender, RoutedEventArgs e)
         {
-            SetFieldVisibility();
+            this.SetFieldVisibility();
         }
 
         private void SetIconType()
