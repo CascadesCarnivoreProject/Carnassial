@@ -175,11 +175,6 @@ namespace Timelapse
         #endregion
 
         #region Button and Button Menu Callbacks and related methods
-        // /Show/Hide the explanation at the top of the window 
-        private void HideTextButton_StateChange(object sender, RoutedEventArgs e)
-        {
-            this.gridExplanation.Visibility = ((bool)this.btnHideText.IsChecked) ? Visibility.Collapsed : Visibility.Visible;
-        }
 
         // Navigate to the previous image
         private void PreviousButton_Click(object sender, RoutedEventArgs e)
