@@ -1,6 +1,7 @@
 ﻿<Window x:Class="Timelapse.DialogDateModifyAmbiguousDates"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Timelapse"
         Title="Date - Check and Modify Ambiguous Dates" 
 		MinHeight="600" MinWidth="768"
 		Height="856" Width="768"
@@ -9,40 +10,14 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
 
     <DockPanel>
-        <!-- This stack panel is shown if the date can be swapped -->
-        <StackPanel Name="StackPanelCorrect" Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <StackPanel Margin="10,10,0,0" Orientation="Horizontal">
-                <Canvas Width="60" Height="60">
-                    <Ellipse Width="60" Height="60" Stroke="Black" Fill="#46FD0A0A" />
-                    <Label Content="?" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-                </Canvas>
-                <TextBlock x:Name="txtBlockTitle" Text="Check and Modify Ambiguous Dates for Each Day" Padding="10,5,0,0"  FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
-            </StackPanel>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Problem: " FontSize="14"/>
-				<Run Text="Some field cameras record dates in a way that makes it hard to determine if its in Month /Day or Day/Month order." />
-                <LineBreak/> 
-                <Run Text="                    If your dates appear wrong, it could be because the software read them the wrong way round." />
-            </TextBlock>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Solution: " FontSize="14" />
-				<Run Text="Timelapse will examing the date for the 1st photo of each day to see if it is ambiguous," />
-				<LineBreak/> 
-                <Run Text="                    i.e.,where the day / month order could have been read as month / day as both are 12 or less." />
-				<LineBreak/> 
-				<Run Text="                    If so, you can use the checkbox to swap the day / month order for all images takenthat day.." />
-                <LineBreak/> 
-				<Run Text="                    You can then click 'Next' to examine the next day." />
-            </TextBlock>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,10"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Result: " FontSize="14"/>
-				<Run Text="    The correction will be applied to all images for that day." />
-            </TextBlock>
-            <Rectangle Fill="#FF868686" Height="2"></Rectangle>
-        </StackPanel>
+        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+                            IconType="Question"
+                            MessageTitle="Check and Modify Ambiguous Dates for Each Day"
+                            MessageProblem="Some field cameras record dates in a way that makes it hard to determine if its in Month /Day or Day/Month order. &#10;If your dates appear wrong, it could be because the software read them the wrong way round."
+                            MessageSolution="Timelapse will examing the date for the 1st photo of each day to see if it is ambiguous, i.e.,where the day / month order could have been read as month / day as both are 12 or less. &#10;For those dates, you can use the checkbox to swap the day / month order for all images taken that day. &#10;Then click 'Next' to examine the next day."
+                            MessageResult="The correction will be applied to all images with that date."
+                            ShowExplanationVisibilityCheckbox="True"/>
+        <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
 
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Grid>
@@ -77,6 +52,7 @@
                 <Button Name="btnNext" Content="   Next    " Width="100"  HorizontalAlignment="Right" Grid.Row="0" Grid.Column="5" Grid.RowSpan="2" Click="NextButton_Click" />
             </Grid>
         </StackPanel>
+        <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
         <DockPanel Name="DockPanelImage">
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Name="OkButton"  IsDefault="False" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True">Done</Button>

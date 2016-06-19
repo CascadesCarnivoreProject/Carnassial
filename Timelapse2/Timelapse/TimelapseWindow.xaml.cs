@@ -86,7 +86,7 @@ namespace Timelapse
                 this.MenuItemControlsInSeparateWindow.IsChecked = userSettings.ReadControlsInSeparateWindow();
                 this.state.DarkPixelThreshold = userSettings.ReadDarkPixelThreshold();
                 this.state.DarkPixelRatioThreshold = userSettings.ReadDarkPixelRatioThreshold();
-                this.state.ShowCsvDialog = userSettings.ReadShowCsvDialog();
+                // SAULTODO: Delete the code saving CSV state across sessions, as this state is only per session. this.state.ShowCsvDialog = userSettings.ReadShowCsvDialog();
                 this.state.MostRecentImageSets = userSettings.ReadMostRecentImageSets();  // the last path opened by the user is stored in the registry
             }
 
@@ -164,7 +164,7 @@ namespace Timelapse
                 userSettings.WriteDarkPixelThreshold(this.state.DarkPixelThreshold);
                 userSettings.WriteDarkPixelRatioThreshold(this.state.DarkPixelRatioThreshold);
                 userSettings.WriteMostRecentImageSets(this.state.MostRecentImageSets);
-                userSettings.WriteShowCsvDialog(this.state.ShowCsvDialog);
+                // SAULTODO: DELETE THIS AS THIS IS SHOULD NOT BE REMEMBERED BETWEEN SESSIONS. userSettings.WriteShowCsvDialog(this.state.ShowCsvDialog);
             }
 
             if (this.controlWindow != null)
@@ -1597,10 +1597,10 @@ namespace Timelapse
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "Exporting to a CSV file on a filtered view...";
-                dlgMB.MessageProblem = "Only a subset of your data will be exported to the CSV file.";
+                dlgMB.MessageWhat = "Only a subset of your data will be exported to the CSV file.";
 
                 dlgMB.MessageReason = "As your filter (in the Filter menu) is not set to view 'All Images', ";
-                dlgMB.MessageReason = "only data for those images displayed by this filter will be exported. ";
+                dlgMB.MessageReason += "only data for those images displayed by this filter will be exported. ";
 
                 dlgMB.MessageSolution = "If you want to export just this subset, then " + Environment.NewLine;
                 dlgMB.MessageSolution += "\u2022 click Okay" + Environment.NewLine + Environment.NewLine;
@@ -1711,8 +1711,8 @@ namespace Timelapse
             string csvFilePath;
             DialogMessageBox dlgMB = new DialogMessageBox();
             dlgMB.MessageTitle = "Importing CSV data rules...";
-            dlgMB.MessageProblem = "Importing data from a CSV (comma separated value) file will only work if you follow the rules below." + Environment.NewLine;
-            dlgMB.MessageProblem += "Otherwise your Timelapse data may become corrupted.";
+            dlgMB.MessageWhat = "Importing data from a CSV (comma separated value) file will only work if you follow the rules below." + Environment.NewLine;
+            dlgMB.MessageWhat += "Otherwise your Timelapse data may become corrupted.";
 
             dlgMB.MessageReason = "Timelapse requires the CSV file and its data to follow a specific format.";
 

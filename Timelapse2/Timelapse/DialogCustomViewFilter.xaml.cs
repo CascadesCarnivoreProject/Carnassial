@@ -13,9 +13,6 @@ namespace Timelapse
     /// </summary>
     public partial class DialogCustomViewFilter : Window
     {
-        // Whether to show or hide the explanation (state remembered across all these dialog boxes)
-        private static bool hideExplanation = false;
-
         private ImageDatabase database;
         private CustomFilter customFilter;
 
@@ -37,9 +34,6 @@ namespace Timelapse
                 this.Left = this.Owner.Left + (this.Owner.Width - this.ActualWidth) / 2; // Center it horizontally
                 this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
             }
-
-            // Show or hide the explanation depending on the saved state of the static variable
-            btnHideText.IsChecked = DialogCustomViewFilter.hideExplanation;
 
             // And now the real work
             if (this.customFilter.LogicalOperator == CustomFilterOperator.And)
@@ -319,8 +313,8 @@ namespace Timelapse
         #endregion
 
         #region Update the UI
-        // Updates the search criteria shown across all rows to reflect the contents of the search list
-        // i show or hides the search term feedback for that row.
+        // Updates the search criteria shown across all rows to reflect the contents of the search list,
+        // which also show or hides the search term feedback for that row.
         private void UpdateSearchCriteriaFeedback()
         {
             bool lastExpression = true;
@@ -374,13 +368,6 @@ namespace Timelapse
         #endregion
 
         #region Button callbacks
-        // Toggle the visibility of the explanation panel
-        private void HideTextButton_StateChange(object sender, RoutedEventArgs e)
-        {
-            DialogCustomViewFilter.hideExplanation = (bool)btnHideText.IsChecked;
-            gridExplanation.Visibility = DialogCustomViewFilter.hideExplanation ? Visibility.Collapsed : Visibility.Visible;
-        }
-
         // Radio buttons for determing if we use And or Or
         private void AndOrRadioButton_Checked(object sender, RoutedEventArgs e)
         {

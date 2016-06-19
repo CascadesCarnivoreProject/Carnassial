@@ -1,6 +1,7 @@
 ﻿<Window x:Class="Timelapse.DialogDateCorrection"
 		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Timelapse"
 		Title="Date - Add a Correction Value"
 		Name="DlgDateCorrectionName"
 		MinHeight="826" MinWidth="768"
@@ -9,33 +10,15 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="DlgDateCorrectionName_Loaded">
     <DockPanel >
-
+        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" IconType="Question"
+                            MessageTitle="Add a correction value to the date"
+                            MessageProblem="If your field camera was not initialized to the correct date/time, all your image dates will be 'off' by a fixed amount."
+                            MessageSolution="Enter the correct date and time in the box below for the sample image below. &#10;Then click Okay (which becomes active after you type in a correctly formatted  date/time)"
+                            MessageResult="The difference between the original and correct date will be added to all dates for all images (except corrupted ones)."
+                            MessageHint=" The Date / Time format you enter should look something like '12-Apr-2011 02:00 pm.'"
+                            ShowExplanationVisibilityCheckbox="True"/>
+        
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <StackPanel Margin="10,10,0,0" Orientation="Horizontal">
-                <Canvas  Width="60" Height="60">
-                    <Ellipse Width="60" Height="60" Stroke="Black" Fill="#46FD0A0A" />
-                    <Label Content="?" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-                </Canvas>
-                <TextBlock Text="Add a correction value to the date" Padding="10,5,0,0"  FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
-            </StackPanel>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Problem: " FontSize="14"/>
-				<Run Text="If your field camera was not initialized to the correct date/time, all your image dates will be 'off' by a fixed amount." />
-            </TextBlock>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Solution: " FontSize="14" />
-				<Run Text="Enter the correct date and time in the box below for the sample image below formatted like '12-Apr-2011 02:00 pm.'" />
-				<LineBreak/> 
-				<Run Text="                    Then click Okay (which becomes active after you type in a correctly formatted  date/time)" />
-            </TextBlock>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,10"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Result: " FontSize="14"/>
-				<Run Text="    The difference between the original and correct date will be added to all dates for all images (except corrupted ones)." />
-            </TextBlock>
-
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>
             <DockPanel>
                 <Label Content="Image:" Height="28" Margin="5,0,0,0" HorizontalContentAlignment="Left" DockPanel.Dock="Left" FontSize="12" FontWeight="Bold" />

@@ -72,6 +72,7 @@ namespace Timelapse
                 this.SetFieldVisibility();
             }
         }
+
         public string MessageReason
         {
             get
@@ -123,6 +124,19 @@ namespace Timelapse
                 this.SetFieldVisibility();
             }
         }
+
+        public bool ShowExplanationVisibilityCheckbox
+        {
+            get
+            {
+                return btnHideText.Visibility == Visibility.Visible;
+            }
+            set
+            {
+                btnHideText.Visibility = (value == true) ? Visibility.Visible : Visibility.Collapsed;
+                this.SetFieldVisibility();
+            }
+        }
         #endregion 
         public StockMessage()
         {
@@ -132,12 +146,18 @@ namespace Timelapse
 
         private void SetFieldVisibility()
         {
-            this.myGrid.RowDefinitions[1].Height = (this.MessageProblem == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[2].Height = (this.MessageWhat == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[3].Height = (this.MessageReason == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[4].Height = (this.MessageSolution == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[5].Height = (this.MessageResult == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[6].Height = (this.MessageHint == String.Empty) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[1].Height = (this.MessageProblem == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[2].Height = (this.MessageWhat == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[3].Height = (this.MessageReason == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[4].Height = (this.MessageSolution == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[5].Height = (this.MessageResult == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[6].Height = (this.MessageHint == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+        }
+
+        // This will toggle the visibility of the explanation panel
+        private void HideTextButton_StateChange(object sender, RoutedEventArgs e)
+        {
+            this.SetFieldVisibility();
         }
 
         private void SetIconType()

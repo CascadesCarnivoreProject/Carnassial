@@ -12,42 +12,19 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
+        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+                            IconType="Question"
+                            MessageTitle="Populate a Data Field with Image Metadata of your Choosing"
+                            MessageWhat="Images often embed metadata, some of which may be useful to capture as data."
+                            MessageSolution="For all your images, you can choose and populate one of your data fields with each image's metadata of your choosing.
+&#10;1. Select a data field from the left list (only Note, Date and Time fields can be populated)
+&#10;2. Select a metadata field from the right list (which illustrates sample values taken from the current image)
+&#10;3. (Optional) If some images are missing that metatdata, you can use the checkbox below to specify clearing the old data or leave it as is.
+&#10;4. Click the Populate button to apply the above selections to your images. 
+&#10;5. Be patient: if you have a huge number of images as it does take time to do this.!)"
+                            MessageResult="For each image, the chosen data field will be filled in with the chosen metadata from that image."
+                            ShowExplanationVisibilityCheckbox="True"/>
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <StackPanel Margin="10,10,0,0" Orientation="Horizontal">
-                <Canvas  Width="60" Height="60">
-                    <Ellipse Width="60" Height="60" Stroke="Black" Fill="#46FD0A0A" />
-                    <Label Content="?" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-                </Canvas>
-                <TextBlock Text="Populate a Data Field with Image Metadata of your Choosing" Padding="10,5,0,0"  FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
-            </StackPanel>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Problem: " FontSize="14"/>
-				<Run Text="Images often embed metadata, some of which may be useful to capture as data." />
-            </TextBlock>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Solution: " FontSize="14" />
-				<Run Text="For all your images, you can choose and populate one of your data fields with each image's metadata of your choosing." />
-				<LineBreak/> 
-                <Run Text="                     Select:" />
-				<LineBreak/> 
-                <Run Text="                      &#x2022; a data field from the left list (only Note, Date and Time fields can be populated)" />
-            	<LineBreak/> 
-                <Run Text="                      &#x2022; a metadata field from the right list (which illustrates sample values taken from the current image)" />
-                <LineBreak/> 
-                <Run Text="                      &#x2022; (optional) the checkbox at the bottom to clear an image's data field if its metadata is not available" />
-                <LineBreak/> 
-				<Run Text="                      Click the Populate button (actived after you do the above)" />
-                <LineBreak/> 
-                <Run Text="                      &#x2022; (This will be somewhat slow if you have a huge number of images - be patient!)" />
-            </TextBlock>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,10"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Result: " FontSize="14"/>
-				<Run Text="    For each image, the chosen data field will be filled in with the chosen metadata from that image."/>
-            </TextBlock>
-
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>
             <Grid Name="PanelHeader">
                 <Grid.ColumnDefinitions>
@@ -70,7 +47,7 @@
 
         <DockPanel LastChildFill="True" >
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-                <CheckBox Name="cbClearIfNoMetada"  VerticalAlignment="Center" HorizontalAlignment="Left" Padding="5,0,50,0" Margin="10,0,0,0" Checked="ClearIfNoMetadata_Checked">Clear the data field if the file cannot be read or if metadata is not available</CheckBox>
+                <CheckBox Name="cbClearIfNoMetada"  VerticalAlignment="Center" HorizontalAlignment="Left" Padding="5,0,50,0" Margin="10,0,0,0" Checked="ClearIfNoMetadata_Checked">Clear the data field if the image file cannot be read or that file is missing the specified metadata</CheckBox>
                 <Button Name="btnCancel"  IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click" >Cancel</Button>
                 <Button Name="btnPopulate"  IsDefault="False" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10"  IsEnabled="False" Click="PoplulateButton_Click">Populate</Button>
             </StackPanel>

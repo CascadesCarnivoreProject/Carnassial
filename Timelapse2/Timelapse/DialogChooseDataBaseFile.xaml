@@ -5,36 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Timelapse"
         mc:Ignorable="d"
-        Title="Choose the Timelapse DataBase File You Want" Height="500" Width="600" MinHeight="500" MinWidth="600">
+        Title="Choose the Timelapse DataBase File You Want" Height="550" Width="650" MinHeight="500" MinWidth="600">
     <DockPanel>
+        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" IconType="Question"
+                            MessageTitle="Choose a Timelapse DataBase"
+                            MessageProblem="There are multiple Timelapse database (.ddb) files associated with this image set."
+                            MessageSolution="Choose the Timelapse database file you want to use."
+                            MessageResult="Timelapse will use and save data to the chosen database file."
+         />
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <StackPanel Margin="10,10,0,0" Orientation="Horizontal">
-                <Canvas Width="60" Height="60">
-                    <Ellipse Width="60" Height="60" Stroke="Black" Fill="#46FD0A0A" />
-                    <Label Content="!" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-                </Canvas>
-                <StackPanel Orientation="Vertical" Margin="10,20,0,0">
-                    <TextBlock Text="Choose the Timelapse Database File You Want"  FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
-                </StackPanel>
-            </StackPanel>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-                <Run FontWeight="Bold" FontSize="14" Text="Problem:  "/>
-                <Run Text="There are multiple Timelapse database files (*.ddb) in this image set folder."/></TextBlock>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Solution:  " FontSize="14" />
-				<Run Text="Choose the Timelapse database file you want to use." />
-            </TextBlock>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,10"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Result: " FontSize="14"/>
-				<Run Text="      Timelapse will use and save data to the chosen database file." />
-            </TextBlock>
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>
             <StackPanel Orientation="Horizontal">
                 <Label FontWeight="Bold" Content="  Select the database file:"/>
-                <ListBox Name="lbFiles" ScrollViewer.VerticalScrollBarVisibility="Auto"  Width="420" Height="230"/>
+                <ListBox Name="lbFiles" ScrollViewer.VerticalScrollBarVisibility="Auto"  Width="420" Height="270"/>
             </StackPanel>
 
         </StackPanel>

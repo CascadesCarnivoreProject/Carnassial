@@ -224,7 +224,7 @@ namespace Timelapse.Util
             dlgMB.ButtonType = MessageBoxButton.YesNo;
             dlgMB.MessageTitle = "Please confirm 'Copy Forward' for this field...";
 
-            dlgMB.MessageProblem = "The Copy Forward operation is not undoable, and can overwrite existing values.";
+            dlgMB.MessageWhat = "The Copy Forward operation is not undoable, and can overwrite existing values.";
             dlgMB.MessageResult = "If you select yes, this operation will:" + Environment.NewLine;
             if (!checkForZero && text.Equals(String.Empty))
             {
@@ -249,7 +249,7 @@ namespace Timelapse.Util
             dlgMB.ButtonType = MessageBoxButton.YesNo;
             dlgMB.MessageTitle = "Please confirm 'Copy to All' for this field...";
 
-            dlgMB.MessageProblem = "The Copy to All operation is not undoable, and can overwrite existing values.";
+            dlgMB.MessageWhat = "The Copy to All operation is not undoable, and can overwrite existing values.";
             dlgMB.MessageResult = "If you select yes, this operation will:" + Environment.NewLine;
             if (!checkForZero && text.Equals(String.Empty))
             {
@@ -272,7 +272,7 @@ namespace Timelapse.Util
             dlgMB.ButtonType = MessageBoxButton.YesNo;
             dlgMB.MessageTitle = "Please confirm 'Propagate to Here' for this field.";
 
-            dlgMB.MessageProblem = "The 'Propagate to Here' operation is not undoable, and can overwrite existing values.";
+            dlgMB.MessageWhat = "The 'Propagate to Here' operation is not undoable, and can overwrite existing values.";
             dlgMB.MessageReason = "\u2022 The last non-empty value \u00AB" + text + "\u00BB was seen " + imagesAffected.ToString() + " images back." + Environment.NewLine;
             dlgMB.MessageReason += "\u2022 That field's value will be copied across all images between that image and this one in this filtered image set";
             dlgMB.MessageResult = "If you select yes: " + Environment.NewLine;
