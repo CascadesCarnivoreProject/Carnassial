@@ -48,49 +48,52 @@ namespace Timelapse
             }
             rbAnd.Checked += this.AndOrRadioButton_Checked;
             rbOr.Checked += this.AndOrRadioButton_Checked;
-            // We start at 1 as there is already a header row
-            for (int row_count = 1; row_count <= this.customFilter.SearchTermList.Count; row_count++)
+
+            int gridRowIndex = 0;
+            foreach (int key in this.customFilter.SearchTermList.Keys)
             {
-                // Get the values for each control
-
-                string type = this.customFilter.SearchTermList[row_count].Type;
-                Thickness thickness = new Thickness(5, 2, 5, 2);
-
+                SearchTerm searchTerm = this.customFilter.SearchTermList[key];
+                    
                 // Create a new row, where each row specifies a particular control and how it can be searched
+                // start at 1 as there is already a header row
+                ++gridRowIndex;
                 RowDefinition gridRow = new RowDefinition();
                 gridRow.Height = GridLength.Auto;
                 grid.RowDefinitions.Add(gridRow);
 
                 // USE Column: A checkbox to indicate whether the current search row should be used as part of the search
+                Thickness thickness = new Thickness(5, 2, 5, 2);
                 CheckBox useCurrentRow = new CheckBox();
                 useCurrentRow.Margin = thickness;
                 useCurrentRow.VerticalAlignment = VerticalAlignment.Center;
                 useCurrentRow.HorizontalAlignment = HorizontalAlignment.Center;
-                useCurrentRow.IsChecked = this.customFilter.SearchTermList[row_count].UseForSearching;
+                useCurrentRow.IsChecked = searchTerm.UseForSearching;
                 useCurrentRow.Checked += this.ComboBox_CheckHandler;
                 useCurrentRow.Unchecked += this.ComboBox_CheckHandler;
-                Grid.SetRow(useCurrentRow, row_count);
+                Grid.SetRow(useCurrentRow, gridRowIndex);
                 Grid.SetColumn(useCurrentRow, 0);
                 grid.Children.Add(useCurrentRow);
 
                 // LABEL column: The label associated with the control (Note: not the data label)
                 TextBlock controlLabel = new TextBlock();
                 controlLabel.Margin = thickness;
-                controlLabel.Text = this.customFilter.SearchTermList[row_count].Label;
+                controlLabel.Text = searchTerm.Label;
                 controlLabel.Margin = new Thickness(5);
-                Grid.SetRow(controlLabel, row_count);
+                Grid.SetRow(controlLabel, gridRowIndex);
                 Grid.SetColumn(controlLabel, 1);
                 grid.Children.Add(controlLabel);
 
                 // EXPRESSION : creates a combo box where its contents of various expression values depends on the type
                 ComboBox comboboxExpressions = new ComboBox();
-                comboboxExpressions.SelectedValue = this.customFilter.SearchTermList[row_count].Expression; // Default: equals sign
+                comboboxExpressions.SelectedValue = searchTerm.Expression; // Default: equals sign
                 comboboxExpressions.Width = 60;
                 comboboxExpressions.Margin = thickness;
-                comboboxExpressions.IsEnabled = this.customFilter.SearchTermList[row_count].UseForSearching;
+                comboboxExpressions.IsEnabled = searchTerm.UseForSearching;
+
                 // The expressions allowed to compare numbers vs. plain text
+                string controlType = searchTerm.Type;
                 string[] expressions;
-                if (type == Constants.Control.Counter)
+                if (controlType == Constants.Control.Counter)
                 {
                     // No globs in Counters: since that text field only allows numbers, we can't enter the special characters Glob required
                     expressions = new string[]
@@ -103,7 +106,7 @@ namespace Timelapse
                         Constants.Filter.GreaterThanOrEqual
                     };
                 }
-                else if (type == Constants.Control.Flag)
+                else if (controlType == Constants.Control.Flag)
                 {
                     // Only equals and not equals in Flags, as other options don't make sense for booleans
                     expressions = new string[]
@@ -129,70 +132,70 @@ namespace Timelapse
                 comboboxExpressions.ItemsSource = expressions;
                 comboboxExpressions.SelectionChanged += this.CbExpressions_SelectionChanged; // Create the callback that is invoked whenever the user changes the expresison
 
-                Grid.SetRow(comboboxExpressions, row_count);
+                Grid.SetRow(comboboxExpressions, gridRowIndex);
                 Grid.SetColumn(comboboxExpressions, 2);
                 grid.Children.Add(comboboxExpressions);
 
                 // Value column: The value used for comparison in the search
                 // Notes and Counters both uses a text field, so they can be constructed as a textbox
                 // However, Counters textboxes are modified to only allow integer input (both direct typing or pasting are checked)
-                if (type == Constants.Control.Note || type == Constants.Control.Counter || type == Constants.DatabaseColumn.RelativePath)
+                if (controlType == Constants.Control.Note || controlType == Constants.Control.Counter || controlType == Constants.DatabaseColumn.RelativePath)
                 {
                     TextBox tboxValue = new TextBox();
-                    tboxValue.Text = this.customFilter.SearchTermList[row_count].Value;
+                    tboxValue.Text = searchTerm.Value;
                     tboxValue.Width = 150;
                     tboxValue.Height = 22;
                     tboxValue.TextWrapping = TextWrapping.NoWrap;
                     tboxValue.VerticalAlignment = VerticalAlignment.Center;
                     tboxValue.VerticalContentAlignment = VerticalAlignment.Center;
-                    tboxValue.IsEnabled = this.customFilter.SearchTermList[row_count].UseForSearching;
+                    tboxValue.IsEnabled = searchTerm.UseForSearching;
                     tboxValue.Margin = thickness;
 
                     // The following is specific only to Counters
-                    if (type == Constants.Control.Counter)
+                    if (controlType == Constants.Control.Counter)
                     {
                         tboxValue.PreviewTextInput += this.TxtboxCounterValue_PreviewTextInput;
                         DataObject.AddPastingHandler(tboxValue, this.CounterValueText_Paste);
                     }
                     tboxValue.TextChanged += this.Txtbox_TextChanged;
 
-                    Grid.SetRow(tboxValue, row_count);
+                    Grid.SetRow(tboxValue, gridRowIndex);
                     Grid.SetColumn(tboxValue, 3);
                     grid.Children.Add(tboxValue);
                 }
-                else if (type == Constants.Control.FixedChoice || type == Constants.DatabaseColumn.ImageQuality)
+                else if (controlType == Constants.Control.FixedChoice || controlType == Constants.DatabaseColumn.ImageQuality)
                 {
                     // FixedChoice and ImageQuality both present combo boxes, so they can be constructed the same way
                     ComboBox comboBoxValue = new ComboBox();
 
                     comboBoxValue.Width = 150;
                     comboBoxValue.Margin = thickness;
-                    comboBoxValue.IsEnabled = this.customFilter.SearchTermList[row_count].UseForSearching;
+                    comboBoxValue.IsEnabled = searchTerm.UseForSearching;
 
                     // Create the dropdown menu 
-                    string list = this.customFilter.SearchTermList[row_count].List;
+                    string list = searchTerm.List;
                     list += " | "; // Add an empty field so it can be reset to empty by the user
                     string[] choices = list.Split(new char[] { '|' });
                     comboBoxValue.ItemsSource = choices;
-                    comboBoxValue.SelectedItem = this.customFilter.SearchTermList[row_count].Value;
+                    comboBoxValue.SelectedItem = searchTerm.Value;
                     comboBoxValue.SelectionChanged += this.ComboBoxValue_SelectionChanged;
-                    Grid.SetRow(comboBoxValue, row_count);
+                    Grid.SetRow(comboBoxValue, gridRowIndex);
                     Grid.SetColumn(comboBoxValue, 3);
                     grid.Children.Add(comboBoxValue);
                 }
-                else if (type == Constants.Control.Flag)
+                else if (controlType == Constants.Control.Flag)
                 {
                     // Flags present checkboxes
                     CheckBox flagCheckBox = new CheckBox();
                     flagCheckBox.Margin = thickness;
-                    flagCheckBox.IsEnabled = this.customFilter.SearchTermList[row_count].UseForSearching;
+                    flagCheckBox.IsEnabled = searchTerm.UseForSearching;
                     flagCheckBox.VerticalAlignment = VerticalAlignment.Center;
                     flagCheckBox.HorizontalAlignment = HorizontalAlignment.Left;
 
-                    flagCheckBox.IsChecked = (this.customFilter.SearchTermList[row_count].Value.ToLower() == Constants.Boolean.False) ? false : true;
+                    flagCheckBox.IsChecked = (searchTerm.Value.ToLower() == Constants.Boolean.False) ? false : true;
                     flagCheckBox.Checked += this.FlagBox_Check;
                     flagCheckBox.Unchecked += this.FlagBox_Check;
-                    Grid.SetRow(flagCheckBox, row_count);
+                    Grid.SetRow(flagCheckBox, gridRowIndex);
                     Grid.SetColumn(flagCheckBox, 3);
                     grid.Children.Add(flagCheckBox);
                 }
@@ -204,7 +207,7 @@ namespace Timelapse
                 searchCriteria.IsEnabled = true;
                 searchCriteria.VerticalAlignment = VerticalAlignment.Center;
 
-                Grid.SetRow(searchCriteria, row_count);
+                Grid.SetRow(searchCriteria, gridRowIndex);
                 Grid.SetColumn(searchCriteria, 4);
                 grid.Children.Add(searchCriteria);
             }

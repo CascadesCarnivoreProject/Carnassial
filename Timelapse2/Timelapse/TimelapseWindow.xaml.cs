@@ -940,8 +940,8 @@ namespace Timelapse
                 {
                     SolidColorBrush brush = new SolidColorBrush(Color.FromArgb(255, (byte)200, (byte)251, (byte)200));
                     control.Container.Background = brush;
+                    break;
                 }
-                break;
             }
         }
 
@@ -1839,7 +1839,7 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
-                this.dataHandler.ImageDatabase.RenameFile(dlg.NewFilename, this.template);
+                this.dataHandler.ImageDatabase.RenameFile(dlg.NewFilename);
             }
         }
 
@@ -1906,6 +1906,9 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
+                // dialog updated the image data, so move the image enumerator off current to force a refresh of the cached properties
+                this.dataHandler.ImageCache.Reset();
+                // load the new property values
                 this.ShowImage(this.dataHandler.ImageCache.CurrentRow);
             }
         }
@@ -2160,6 +2163,9 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
+                // dialog updated the image data, so move the image enumerator off current to force a refresh of the cached properties
+                this.dataHandler.ImageCache.Reset();
+                // load the new property values
                 this.ShowImage(this.dataHandler.ImageCache.CurrentRow);
             }
         }
@@ -2314,6 +2320,9 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
+                // dialog updated the image data, so move the image enumerator off current to force a refresh of the cached properties
+                this.dataHandler.ImageCache.Reset();
+                // load the new property values
                 this.ShowImage(this.dataHandler.ImageCache.CurrentRow);
             }
         }

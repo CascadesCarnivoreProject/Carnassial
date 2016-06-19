@@ -423,7 +423,7 @@ namespace Timelapse.Database
             }
         }
 
-        public void RenameFile(string newFileName, TemplateDatabase template)
+        public void RenameFile(string newFileName)
         {
             if (File.Exists(Path.Combine(this.FolderPath, this.FileName)))
             {
