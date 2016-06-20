@@ -1886,23 +1886,42 @@ namespace Timelapse
         // Populate a data field from metadata (example metadata displayed from the currently selected image)
         private void MenuItemPopulateFieldFromMetaData_Click(object sender, RoutedEventArgs e)
         {
-            // If we are not in the filter all view, or if its a corrupt image or deleted image, tell the person. Selecting ok will shift the filter..
+            // If we are not in the filter all view, or if its a corrupt image or deleted image, tell the person. Selecting ok will shift the filter.
+            // We want to be on a valid image as otherwise the metadata of interest won't appear
             if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
+                bool? msg_result;
                 dlgMB.MessageTitle = "Populate a data field with image metadata of your choosing.";
-                dlgMB.MessageProblem = "To populate a data field with image metadata of your choosing, Timelapse must first" + Environment.NewLine;
-                dlgMB.MessageProblem += "\u2022 be filtered to view All Images (normally set  in the Filter menu)" + Environment.NewLine;
-                dlgMB.MessageProblem += "\u2022 be displaying a valid image";
-                dlgMB.MessageSolution = "Select 'Ok' for Timelapse to do the above actions for you.";
-                dlgMB.IconType = MessageBoxImage.Exclamation;
-                dlgMB.ButtonType = MessageBoxButton.OKCancel;
-                bool? msg_result = dlgMB.ShowDialog();
 
+                int firstImageDisplayable = this.dataHandler.ImageDatabase.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
+                if (firstImageDisplayable == -1) 
+                {
+                    // There are no displayable images, and thus no metadata to choose from, so abort
+                    dlgMB.MessageProblem = "We can't extract any metada, as there are no valid displayable images." + Environment.NewLine;
+                    dlgMB.MessageReason += "Timelapse must have at least one valid image in order to get its metadata. Yet all images are either missing or corrupted." ;
+                    dlgMB.IconType = MessageBoxImage.Error;
+                    dlgMB.ButtonType = MessageBoxButton.OK;
+                    msg_result = dlgMB.ShowDialog();
+                    return;
+                }
+                else
+                { 
+                    dlgMB.MessageProblem = "To populate a data field with image metadata of your choosing, Timelapse must first" + Environment.NewLine;
+                    dlgMB.MessageProblem += "\u2022 be filtered to view All Images (normally set  in the Filter menu)" + Environment.NewLine;
+                    dlgMB.MessageProblem += "\u2022 be displaying a valid image";
+                    dlgMB.MessageSolution = "Select 'Ok' for Timelapse to do the above actions for you.";
+                    dlgMB.IconType = MessageBoxImage.Exclamation;
+                    dlgMB.ButtonType = MessageBoxButton.OKCancel;
+                    msg_result = dlgMB.ShowDialog();
+                }
                 // Set the filter to show all images and a valid image
+                // SAUL TODO: IF WE DON"T HAVE A VALID IMAGE TO SHOW, THEN THIS WILL LIKELY NOT BE WELL BEHAVED. NEED ANOTHER CHECK
+                // NOT ONLY HERE BUT FOR OTHER SIMILAR UPDATES. IE, IF THERE IS NO DISPLAYABLE IMAGE WE SHOULD PROBABLY ABORT.
                 if (msg_result == true)
                 {
                     this.SetImageFilterAndIndex(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
+                    this.ShowFirstDisplayableImage(Constants.DefaultImageRowIndex);
                 }
                 else
                 {
@@ -1915,7 +1934,13 @@ namespace Timelapse
             bool? result = dlg.ShowDialog();
             if (result == true)
             {
+                // Update the datagrid and the current image after the fields have been populated
+                this.dataHandler.ImageDatabase.TryGetImages(ImageQualityFilter.All);
                 this.RefreshCurrentImage();
+                if (this.dlgDataView != null)
+                {
+                    this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
+                }
             }
         }
 

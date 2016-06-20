@@ -288,7 +288,7 @@ namespace Timelapse
         #endregion
 
         #region UI Button Callbacks
-        private void PoplulateButton_Click(object sender, RoutedEventArgs e)
+        private void PopulateButton_Click(object sender, RoutedEventArgs e)
         {
             this.Populate();
         }
