@@ -1899,7 +1899,7 @@ namespace Timelapse
                 {
                     // There are no displayable images, and thus no metadata to choose from, so abort
                     dlgMB.MessageProblem = "We can't extract any metada, as there are no valid displayable images." + Environment.NewLine;
-                    dlgMB.MessageReason += "Timelapse must have at least one valid image in order to get its metadata. Yet all images are either missing or corrupted." ;
+                    dlgMB.MessageReason += "Timelapse must have at least one valid image in order to get its metadata. Yet all images are either missing or corrupted.";
                     dlgMB.IconType = MessageBoxImage.Error;
                     dlgMB.ButtonType = MessageBoxButton.OK;
                     msg_result = dlgMB.ShowDialog();

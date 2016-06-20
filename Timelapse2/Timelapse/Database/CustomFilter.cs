@@ -84,9 +84,12 @@ namespace Timelapse.Database
         public bool QueryHasMultipleSelectedSearchTerms()
         {
             int count = 0;
-            for (int row = 1; row <= this.SearchTermList.Count; row++)
+            SearchTerm st;
+
+            for (int i = 0; i < this.SearchTermList.Count; i++)
             {
-                if (this.SearchTermList[row].UseForSearching)
+                st = this.SearchTermList.Values.ElementAt(i);
+                if (st.UseForSearching)
                 {
                     count++;
                 }

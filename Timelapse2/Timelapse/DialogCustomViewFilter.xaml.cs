@@ -233,7 +233,7 @@ namespace Timelapse
             int row = Grid.GetRow(cb);  // And you have the row number...
             bool state = cb.IsChecked.Value;
 
-            SearchTerm searchterms = this.customFilter.SearchTermList[row];
+            SearchTerm searchterms = this.customFilter.SearchTermList.Values.ElementAt(row - 1);
             searchterms.UseForSearching = cb.IsChecked.Value;
 
             TextBlock label = (TextBlock)grid.Children.Cast<UIElement>().First(ex => Grid.GetRow(ex) == row && Grid.GetColumn(ex) == 1);
@@ -255,7 +255,7 @@ namespace Timelapse
         {
             ComboBox cb = sender as ComboBox;
             int row = Grid.GetRow(cb);  // Get the row number...
-            this.customFilter.SearchTermList[row].Expression = cb.SelectedValue.ToString(); // Set the corresponding expression to the current selection
+            this.customFilter.SearchTermList.Values.ElementAt(row - 1).Expression = cb.SelectedValue.ToString(); // Set the corresponding expression to the current selection
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -266,7 +266,7 @@ namespace Timelapse
         {
             TextBox tb = sender as TextBox;
             int row = Grid.GetRow(tb);  // Get the row number...
-            this.customFilter.SearchTermList[row].Value = tb.Text; // Set the corresponding value to the current selection
+            this.customFilter.SearchTermList.Values.ElementAt(row - 1).Value = tb.Text;
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -299,7 +299,7 @@ namespace Timelapse
         {
             ComboBox cb = sender as ComboBox;
             int row = Grid.GetRow(cb);  // Get the row number...
-            this.customFilter.SearchTermList[row].Value = cb.SelectedValue.ToString(); // Set the corresponding value to the current selection
+            this.customFilter.SearchTermList.Values.ElementAt(row - 1).Value = cb.SelectedValue.ToString(); // Set the corresponding value to the current selection
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -310,7 +310,7 @@ namespace Timelapse
         {
             CheckBox cb = sender as CheckBox;
             int row = Grid.GetRow(cb);  // Get the row number...
-            this.customFilter.SearchTermList[row].Value = cb.IsChecked.ToString().ToLower(); // Set the corresponding value to the current selection
+            this.customFilter.SearchTermList.Values.ElementAt(row - 1).Value = cb.IsChecked.ToString().ToLower(); // Set the corresponding value to the current selection
             this.UpdateSearchCriteriaFeedback();
         }
         #endregion
@@ -322,6 +322,7 @@ namespace Timelapse
         {
             bool lastExpression = true;
             bool searchTermsExist = false;
+
             // We go backwards, as we don't want to print the AND or OR on the last expression
             for (int index = this.customFilter.SearchTermList.Count - 1; index >= 0; index--)
             {
