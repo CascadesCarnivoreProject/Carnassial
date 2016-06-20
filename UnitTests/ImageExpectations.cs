@@ -61,22 +61,23 @@ namespace Timelapse.UnitTests
 
         public Dictionary<string, string> UserDefinedColumnsByDataLabel { get; private set; }
 
-        public ImageProperties GetImageProperties(string folderPath)
+        public ImageRow GetImageProperties(ImageDatabase imageDatabase)
         {
             string imageFilePath;
             if (String.IsNullOrEmpty(this.RelativePath))
             {
-                imageFilePath = Path.Combine(folderPath, this.FileName);
+                imageFilePath = Path.Combine(imageDatabase.FolderPath, this.FileName);
             }
             else
             {
-                imageFilePath = Path.Combine(folderPath, this.RelativePath, this.FileName);
+                imageFilePath = Path.Combine(imageDatabase.FolderPath, this.RelativePath, this.FileName);
             }
 
-            ImageProperties imageProperties = new ImageProperties(folderPath, new FileInfo(imageFilePath));
+            ImageRow imageProperties;
+            imageDatabase.GetOrCreateImage(new FileInfo(imageFilePath), out imageProperties);
             // imageProperties.Date is defaulted by constructor
             // imageProperties.FileName is set by constructor
-            imageProperties.ID = this.ID;
+            // imageProperties.ID is set when images are refreshed after being added to the database
             // imageProperties.ImageQuality is defaulted by constructor
             // imageProperties.ImageTaken is set by constructor
             // imageProperties.InitialRootFolderName is set by constructor
@@ -89,9 +90,9 @@ namespace Timelapse.UnitTests
         {
             // this.DarkPixelFraction isn't applicable
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.File) == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, image[Constants.DatabaseColumn.File]);
-            Assert.IsTrue((long)image[Constants.DatabaseColumn.ID] == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, image[Constants.DatabaseColumn.ID]);
+            Assert.IsTrue(image.GetID() == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, image.GetID());
             // this.IsColor isn't applicable
-            Assert.IsTrue(Boolean.Parse(image.GetStringField(EditorConstant.Control.MarkForDeletion)) == this.MarkForDeletion, "{0}: Expected MarkForDeletion '{1}' but found '{2}'.", this.FileName, this.MarkForDeletion, image.GetStringField(EditorConstant.Control.MarkForDeletion));
+            Assert.IsTrue(image.GetBooleanField(EditorConstant.Control.MarkForDeletion) == this.MarkForDeletion, "{0}: Expected MarkForDeletion '{1}' but found '{2}'.", this.FileName, this.MarkForDeletion, image.GetStringField(EditorConstant.Control.MarkForDeletion));
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.Folder) == this.InitialRootFolderName, "{0}: Expected InitialRootFolderName '{1}' but found '{2}'.", this.FileName, this.InitialRootFolderName, image.GetStringField(Constants.DatabaseColumn.Folder));
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.ImageQuality) == this.Quality.ToString(), "{0}: Expected ImageQuality '{1}' but found '{2}'.", this.FileName, this.Quality, image.GetStringField(Constants.DatabaseColumn.ImageQuality));
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.RelativePath) == this.RelativePath, "{0}: Expected RelativePath '{1}' but found '{2}'.", this.FileName, this.RelativePath, image.GetStringField(Constants.DatabaseColumn.RelativePath));
@@ -110,7 +111,7 @@ namespace Timelapse.UnitTests
             }
         }
 
-        public void Verify(ImageProperties imageProperties)
+        public void Verify(ImageRow imageProperties)
         {
             // this.DarkPixelFraction isn't applicable
             Assert.IsTrue(imageProperties.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, imageProperties.FileName);

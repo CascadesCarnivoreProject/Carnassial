@@ -136,23 +136,25 @@ namespace Timelapse
                 (this.dataHandler.ImageDatabase != null) &&
                 (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0))
             {
-                // Save the following in the database as they are local to this image set
+                // save image set properties to the database
                 if (this.state.ImageFilter == ImageQualityFilter.Custom)
                 {
                     // don't save custom filters, revert to All 
                     this.state.ImageFilter = ImageQualityFilter.All;
                 }
-                this.dataHandler.ImageDatabase.SetImageSetFilter(this.state.ImageFilter);
+                this.dataHandler.ImageDatabase.ImageSet.ImageQualityFilter = this.state.ImageFilter;
 
                 if (this.dataHandler.ImageCache != null)
                 {
-                    this.dataHandler.ImageDatabase.SetImageSetRowIndex(this.dataHandler.ImageCache.CurrentRow);
+                    this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex = this.dataHandler.ImageCache.CurrentRow;
                 }
 
                 if (this.markableCanvas != null)
                 {
-                    this.dataHandler.ImageDatabase.SetMagnifierEnabled(this.markableCanvas.IsMagnifyingGlassVisible);
+                    this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled = this.markableCanvas.IsMagnifyingGlassVisible;
                 }
+
+                this.dataHandler.ImageDatabase.SyncImageSetToDatabase();
             }
 
             // Save the current filter set and the index of the current image being viewed in that set, and save it into the registry
@@ -335,13 +337,12 @@ namespace Timelapse
                 }));
 
                 // First pass: Examine images to extract their basic properties and build a list of images not already in the database
-                List<ImageProperties> imagesToInsert = new List<ImageProperties>();
+                List<ImageRow> imagesToInsert = new List<ImageRow>();
                 for (int image = 0; image < count; image++)
                 {
                     FileInfo imageFile = imageFilePaths[image];
-                    ImageProperties imageProperties = new ImageProperties(this.FolderPath, imageFile);
-                    DataRow imageRow;
-                    if (this.dataHandler.ImageDatabase.TryGetImage(imageProperties, out imageRow))
+                    ImageRow imageProperties;
+                    if (this.dataHandler.ImageDatabase.GetOrCreateImage(imageFile, out imageProperties))
                     {
                         // the database already has an entry for this image so skip it
                         // if needed, a separate list of images to update could be generated
@@ -400,7 +401,7 @@ namespace Timelapse
 
                 // Third pass: Update database
                 // TODOSAUL This used to be slow... but I think its ok now. But check if its a good place to make it more efficient by having it add multiple values in one shot (it may already be doing that - if so, delete this comment)
-                this.dataHandler.ImageDatabase.AddImages(imagesToInsert, (ImageProperties imageProperties, int imageIndex) =>
+                this.dataHandler.ImageDatabase.AddImages(imagesToInsert, (ImageRow imageProperties, int imageIndex) =>
                 {
                     // Get the bitmap again to show it
                     // WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.FolderPath);
@@ -462,7 +463,7 @@ namespace Timelapse
                     if (dialogResult == true)
                     {
                         ImageDataXml.Read(Path.Combine(this.FolderPath, Constants.File.XmlDataFileName), this.dataHandler.ImageDatabase);
-                        this.SetFilterAndShowImage(this.dataHandler.ImageDatabase.GetImageSetRowIndex(), this.dataHandler.ImageDatabase.GetImageSetFilter()); // to regenerate the controls and markers for this image
+                        this.SetFilterAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageQualityFilter); // to regenerate the controls and markers for this image
                     }
                 }
             };
@@ -537,7 +538,7 @@ namespace Timelapse
 
             // Set the magnifying glass status from the registry. 
             // Note that if it wasn't in the registry, the value returned will be true by default
-            this.markableCanvas.IsMagnifyingGlassVisible = this.dataHandler.ImageDatabase.IsMagnifierEnabled();
+            this.markableCanvas.IsMagnifyingGlassVisible = this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled;
 
             // Now that we have something to show, enable menus and menu items as needed
             // Note that we do not enable those menu items that would have no effect
@@ -573,7 +574,7 @@ namespace Timelapse
             // set the current filter and the image index to the same as the ones in the last session, providing that we are working 
             // with the same image folder. 
             // Doing so also displays the image
-            this.SetFilterAndShowImage(this.dataHandler.ImageDatabase.GetImageSetRowIndex(), this.dataHandler.ImageDatabase.GetImageSetFilter());
+            this.SetFilterAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageQualityFilter);
 
             if (FileBackup.TryCreateBackups(this.FolderPath, this.dataHandler.ImageDatabase.FileName))
             {
@@ -1981,7 +1982,7 @@ namespace Timelapse
             else
             {
                 // Delete current image case. Get the ID of the current image and construct a datatable that contains that image's datarow
-                ImageProperties imageProperties = new ImageProperties(this.dataHandler.ImageDatabase.ImageDataTable.Rows[this.dataHandler.ImageCache.CurrentRow]);
+                ImageRow imageProperties = new ImageRow(this.dataHandler.ImageDatabase.ImageDataTable.Rows[this.dataHandler.ImageCache.CurrentRow]);
                 deletedImages = this.dataHandler.ImageDatabase.GetImageByID(imageProperties.ID);
                 isUseDeleteFlag = false;
                 isUseDeleteData = mi.Name.Equals(this.MenuItemDeleteImage.Name) ? false : true;
@@ -2009,7 +2010,7 @@ namespace Timelapse
             }
             else
             {
-                ImageProperties imageProperties = new ImageProperties(this.dataHandler.ImageDatabase.ImageDataTable.Rows[this.dataHandler.ImageCache.CurrentRow]);
+                ImageRow imageProperties = new ImageRow(this.dataHandler.ImageDatabase.ImageDataTable.Rows[this.dataHandler.ImageCache.CurrentRow]);
                 deleteImagesDialog = new DialogDeleteImages(this.dataHandler.ImageDatabase, deletedImages, isUseDeleteData, isUseDeleteFlag);   // delete data
             }
             deleteImagesDialog.Owner = this;
@@ -2042,12 +2043,13 @@ namespace Timelapse
         /// <summary>Add some text to the image set log</summary>
         private void MenuItemLog_Click(object sender, RoutedEventArgs e)
         {
-            DialogEditLog editImageSetLog = new DialogEditLog(this.dataHandler.ImageDatabase.GetImageSetLog());
+            DialogEditLog editImageSetLog = new DialogEditLog(this.dataHandler.ImageDatabase.ImageSet.Log);
             editImageSetLog.Owner = this;
             bool? result = editImageSetLog.ShowDialog();
             if (result == true)
             {
-                this.dataHandler.ImageDatabase.SetImageSetLog(editImageSetLog.LogContents);
+                this.dataHandler.ImageDatabase.ImageSet.Log = editImageSetLog.LogContents;
+                this.dataHandler.ImageDatabase.SyncImageSetToDatabase();
             }
         }
 

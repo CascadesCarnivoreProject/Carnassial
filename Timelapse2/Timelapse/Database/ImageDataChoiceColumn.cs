@@ -8,11 +8,10 @@ namespace Timelapse.Database
     {
         private List<string> choices;
 
-        public ImageDataChoiceColumn(DataRow templateTableRow)
-            : base(templateTableRow)
+        public ImageDataChoiceColumn(ControlRow control)
+            : base(control)
         {
-            string barSeparatedChoices = templateTableRow.GetStringField(Constants.Control.List);
-            this.choices = Utilities.ConvertBarsToList(barSeparatedChoices);
+            this.choices = Utilities.ConvertBarsToList(control.List);
         }
 
         public override bool IsContentValid(string value)

@@ -132,6 +132,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Database\ControlRow.cs" />
     <Compile Include="Database\CustomFilterOperator.cs" />
     <Compile Include="Database\ImageDataChoiceColumn.cs" />
     <Compile Include="Database\ImageDataColumn.cs" />
@@ -139,6 +140,8 @@
     <Compile Include="Database\ImageDataCounterColumn.cs" />
     <Compile Include="Database\ImageDataFlagColumn.cs" />
     <Compile Include="Database\ImageDataNoteColumn.cs" />
+    <Compile Include="Database\ImageSetRow.cs" />
+    <Compile Include="Database\MarkerRow.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
@@ -152,6 +155,7 @@
     <Compile Include="StockMessage.xaml.cs">
       <DependentUpon>StockMessage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Database\DataRowBackedObject.cs" />
     <Compile Include="Util\Dependencies.cs" />
     <Compile Include="Util\VersionClient.cs" />
     <Compile Include="Constants.cs" />
@@ -326,7 +330,7 @@
     </Compile>
     <Compile Include="Database\FileBackup.cs" />
     <Compile Include="Images\ImageDataXml.cs" />
-    <Compile Include="Database\ImageProperties.cs" />
+    <Compile Include="Database\ImageRow.cs" />
     <Compile Include="Database\ImageQualityFilter.cs" />
     <Compile Include="Images\MetaTagCounter.cs" />
     <Compile Include="Util\ControlLabelStyle.cs" />

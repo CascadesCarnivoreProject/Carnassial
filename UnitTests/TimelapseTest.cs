@@ -126,14 +126,16 @@ namespace Timelapse.UnitTests
         protected List<ImageExpectations> PopulateCarnivoreDatabase(ImageDatabase imageDatabase)
         {
             FileInfo martenFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.CarnivoreDirectoryName, TestConstant.File.DaylightMartenPairImage));
-            ImageProperties martenImage = new ImageProperties(imageDatabase.FolderPath, martenFileInfo);
+            ImageRow martenImage;
+            Assert.IsFalse(imageDatabase.GetOrCreateImage(martenFileInfo, out martenImage));
             Assert.IsTrue(martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataNotUsed);
 
             FileInfo coyoteFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.CarnivoreDirectoryName, TestConstant.File.DaylightCoyoteImage));
-            ImageProperties coyoteImage = new ImageProperties(imageDatabase.FolderPath, coyoteFileInfo);
+            ImageRow coyoteImage;
+            imageDatabase.GetOrCreateImage(coyoteFileInfo, out coyoteImage);
             Assert.IsTrue(coyoteImage.TryUseImageTaken((BitmapMetadata)coyoteImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
-            imageDatabase.AddImages(new List<ImageProperties>() { martenImage, coyoteImage }, null);
+            imageDatabase.AddImages(new List<ImageRow>() { martenImage, coyoteImage }, null);
             Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
 
             ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(imageDatabase);
@@ -192,16 +194,18 @@ namespace Timelapse.UnitTests
         protected List<ImageExpectations> PopulateDefaultDatabase(ImageDatabase imageDatabase)
         {
             FileInfo martenFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.InfraredMartenImage));
-            ImageProperties martenImage = new ImageProperties(imageDatabase.FolderPath, martenFileInfo);
+            ImageRow martenImage;
+            imageDatabase.GetOrCreateImage(martenFileInfo, out martenImage);
             DateTimeAdjustment martenTimeAdjustment = martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata);
             Assert.IsTrue(martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeOneHourLater ||
                           martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
-            FileInfo coyoteFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.DaylightBobcatImage));
-            ImageProperties bobcatImage = new ImageProperties(imageDatabase.FolderPath, coyoteFileInfo);
+            FileInfo bobcatFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.DaylightBobcatImage));
+            ImageRow bobcatImage;
+            imageDatabase.GetOrCreateImage(bobcatFileInfo, out bobcatImage);
             Assert.IsTrue(bobcatImage.TryUseImageTaken((BitmapMetadata)bobcatImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
-            imageDatabase.AddImages(new List<ImageProperties>() { martenImage, bobcatImage }, null);
+            imageDatabase.AddImages(new List<ImageRow>() { martenImage, bobcatImage }, null);
             Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
 
             ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(imageDatabase);

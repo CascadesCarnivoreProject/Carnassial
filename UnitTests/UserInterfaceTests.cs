@@ -106,7 +106,7 @@ namespace Timelapse.UnitTests
 
                 this.ShowDialog(timelapse, new DialogDateCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache.Current));
                 this.ShowDialog(timelapse, new DialogDateTimeChangeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache));
-                this.ShowDialog(timelapse, new DialogEditLog(dataHandler.ImageDatabase.GetImageSetLog()));
+                this.ShowDialog(timelapse, new DialogEditLog(dataHandler.ImageDatabase.ImageSet.Log));
                 this.ShowDialog(timelapse, new DialogDateModifyAmbiguousDates(dataHandler.ImageDatabase));
                 this.ShowDialog(timelapse, new DialogDateSwapDayMonth(dataHandler.ImageDatabase));
                 this.ShowDialog(timelapse, new DialogOptionsDarkImagesThreshold(dataHandler.ImageDatabase, dataHandler.ImageCache.CurrentRow, new TimelapseState()));

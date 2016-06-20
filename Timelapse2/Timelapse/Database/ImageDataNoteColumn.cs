@@ -4,8 +4,8 @@ namespace Timelapse.Database
 {
     public class ImageDataNoteColumn : ImageDataColumn
     {
-        public ImageDataNoteColumn(DataRow templateTableRow)
-            : base(templateTableRow)
+        public ImageDataNoteColumn(ControlRow control)
+            : base(control)
         {
         }
 

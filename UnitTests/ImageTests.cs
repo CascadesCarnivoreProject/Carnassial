@@ -117,10 +117,12 @@ namespace Timelapse.UnitTests
                 new ImageExpectations(TestConstant.DefaultExpectation.InfraredMartenImage)
             };
 
+            TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(templateDatabase, TestConstant.File.DefaultNewImageDatabaseFileName);
             foreach (ImageExpectations imageExpectation in imageExpectations)
             {
                 // Load the image
-                ImageProperties imageProperties = imageExpectation.GetImageProperties(this.WorkingDirectory);
+                ImageRow imageProperties = imageExpectation.GetImageProperties(imageDatabase);
                 WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.WorkingDirectory);
 
                 double darkPixelFraction;
@@ -179,13 +181,13 @@ namespace Timelapse.UnitTests
                     if (imageDatabase.IsImageRowInRange(previousNextImageRow))
                     {
                         WriteableBitmap unalteredBitmap = cache.Current.LoadWriteableBitmap(imageDatabase.FolderPath);
-                        ImageProperties previousNextImage = imageDatabase.GetImageByRow(previousNextImageRow);
+                        ImageRow previousNextImage = imageDatabase.GetImageByRow(previousNextImageRow);
                         WriteableBitmap previousNextBitmap = previousNextImage.LoadWriteableBitmap(imageDatabase.FolderPath);
                         bool mismatched = WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, previousNextBitmap);
 
                         if (imageDatabase.IsImageRowInRange(otherImageRowForCombined))
                         {
-                            ImageProperties otherImageForCombined = imageDatabase.GetImageByRow(otherImageRowForCombined);
+                            ImageRow otherImageForCombined = imageDatabase.GetImageByRow(otherImageRowForCombined);
                             WriteableBitmap otherBitmapForCombined = otherImageForCombined.LoadWriteableBitmap(imageDatabase.FolderPath);
                             mismatched |= WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, otherBitmapForCombined);
                         }

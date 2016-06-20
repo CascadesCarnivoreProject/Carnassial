@@ -46,7 +46,7 @@ namespace Timelapse.Editor.Util
             selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.NotePath);
             for (int index = 0; index < selectedNodes.Count; index++)
             {
-                DataRow note = templateDatabase.AddUserDefinedControl(Constants.Control.Note);
+                ControlRow note = templateDatabase.AddUserDefinedControl(Constants.Control.Note);
                 this.UpdateControl(selectedNodes[index], templateDatabase, Constants.Control.Note, note, ref conversionErrors, ref dataLabels);
             }
 
@@ -54,7 +54,7 @@ namespace Timelapse.Editor.Util
             selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.FixedChoicePath);
             for (int index = 0; index < selectedNodes.Count; index++)
             {
-                DataRow choice = templateDatabase.AddUserDefinedControl(Constants.Control.FixedChoice);
+                ControlRow choice = templateDatabase.AddUserDefinedControl(Constants.Control.FixedChoice);
                 this.UpdateControl(selectedNodes[index], templateDatabase, Constants.Control.FixedChoice, choice, ref conversionErrors, ref dataLabels);
             }
 
@@ -62,23 +62,23 @@ namespace Timelapse.Editor.Util
             selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.CounterPath);
             for (int index = 0; index < selectedNodes.Count; index++)
             {
-                DataRow counter = templateDatabase.AddUserDefinedControl(Constants.Control.Counter);
+                ControlRow counter = templateDatabase.AddUserDefinedControl(Constants.Control.Counter);
                 this.UpdateControl(selectedNodes[index], templateDatabase, Constants.Control.Counter, counter, ref conversionErrors, ref dataLabels);
             }
         }
 
-        private void UpdateControl(XmlNode selectedNode, TemplateDatabase templateDatabase, string typeWanted, DataRow control, ref List<string> errorMessages, ref List<string> dataLabels)
+        private void UpdateControl(XmlNode selectedNode, TemplateDatabase templateDatabase, string typeWanted, ControlRow control, ref List<string> errorMessages, ref List<string> dataLabels)
         {
             XmlNodeList selectedData = selectedNode.SelectNodes(Constants.ImageXml.Data);
-            control[Constants.Control.DefaultValue] = GetColumn(selectedData, Constants.Control.DefaultValue); // Default
-            control[Constants.Control.TextBoxWidth] = GetColumn(selectedData, Constants.Control.TextBoxWidth); // Width
+            control.DefaultValue = GetColumn(selectedData, Constants.Control.DefaultValue); // Default
+            control.TextBoxWidth = Int32.Parse(GetColumn(selectedData, Constants.Control.TextBoxWidth)); // Width
 
             // The tempTable should have defaults filled in at this point for labels, datalabels, and tooltips
             // Thus if we just get empty values, we should use those defaults rather than clearing them
             string label = GetColumn(selectedData, Constants.Control.Label);
             if (!String.IsNullOrEmpty(label))
             {
-                control[Constants.Control.Label] = label;
+                control.Label = label;
             }
 
             string controlType = typeWanted;
@@ -132,7 +132,7 @@ namespace Timelapse.Editor.Util
                     // TODOSAUL: should this be Constants.Control.DeleteFlag?
                     controlType = "DeleteLabel"; // Delete is a reserved word!
                 }
-                control[Constants.Control.DataLabel] = controlType;
+                control.DataLabel = controlType;
             }
             else
             {
@@ -141,7 +141,7 @@ namespace Timelapse.Editor.Util
                 label = Regex.Replace(label, @"\s+", String.Empty);
                 if (label != String.Empty)
                 {
-                    control[Constants.Control.DataLabel] = label;
+                    control.DataLabel = label;
                 }
             }
             dataLabels.Add(controlType); // and add it to the list of data labels seen
@@ -149,45 +149,45 @@ namespace Timelapse.Editor.Util
             string tooltip = GetColumn(selectedData, Constants.Control.Tooltip);
             if (!String.IsNullOrEmpty(tooltip))
             {
-                control[Constants.Control.Tooltip] = tooltip;
+                control.Tooltip = tooltip;
             }
 
             // If there is no value supplied for Copyable, default is false for these data types (as they are already filled in by the system). 
             // Counters are also not copyable be default, as we expect counts to change image by image. But there are cases where they user may want to alter this.
-            string copyable = Constants.Boolean.True;
+            bool defaultCopyable = true;
             if (EditorControls.IsStandardControlType(typeWanted))
             {
-                copyable = Constants.Boolean.False;
+                defaultCopyable = false;
             }
-            control[Constants.Control.Copyable] = ConvertToBool(TextFromNode(selectedData, 0, Constants.Control.Copyable), copyable);
+            control.Copyable = ConvertToBool(TextFromNode(selectedData, 0, Constants.Control.Copyable), defaultCopyable);
 
             // If there is no value supplied for Visibility, default is true (i.e., the control will be visible in the interface)
-            control[Constants.Control.Visible] = ConvertToBool(TextFromNode(selectedData, 0, Constants.Control.Visible), Constants.Boolean.True);
+            control.Visible = ConvertToBool(TextFromNode(selectedData, 0, Constants.Control.Visible), true);
 
             // if the type has a list, we have to do more work.
             if (typeWanted == Constants.DatabaseColumn.ImageQuality)
             {
                 // For Image Quality, use the new list (longer than the one in old templates)
-                control[Constants.Control.List] = Constants.ImageQuality.ListOfValues;
+                control.List = Constants.ImageQuality.ListOfValues;
             }
             else if (typeWanted == Constants.DatabaseColumn.ImageQuality || typeWanted == Constants.Control.FixedChoice)
             {
                 // Load up the menu items
-                control[Constants.Control.List] = String.Empty; // FOr others, generate the list from what is stored
+                control.List = String.Empty; // For others, generate the list from what is stored
 
                 XmlNodeList nodes = selectedData[0].SelectNodes(Constants.Control.List + Constants.ImageXml.Slash + Constants.ImageXml.Item);
-                bool firsttime = true;
+                bool firstTime = true;
                 foreach (XmlNode node in nodes)
                 {
-                    if (firsttime)
+                    if (firstTime)
                     {
-                        control[Constants.Control.List] = node.InnerText; // also clears the list's default values
+                        control.List = node.InnerText; // also clears the list's default values
                     }
                     else
                     {
-                        control[Constants.Control.List] += "|" + node.InnerText;
+                        control.List += "|" + node.InnerText;
                     }
-                    firsttime = false;
+                    firstTime = false;
                 }
             }
 
@@ -201,9 +201,8 @@ namespace Timelapse.Editor.Util
             // assume the database is well formed and contains only a single row of the given standard type
             for (int rowIndex = 0; rowIndex < templateDatabase.TemplateTable.Rows.Count; rowIndex++)
             {
-                DataRow control = templateDatabase.TemplateTable.Rows[rowIndex];
-                string controlType = control.GetStringField(Constants.Control.Type);
-                if (controlType == typeWanted)
+                ControlRow control = new ControlRow(templateDatabase.TemplateTable.Rows[rowIndex]);
+                if (control.Type == typeWanted)
                 {
                     this.UpdateControl(selectedNodes[0], templateDatabase, typeWanted, control, ref errorMessages, ref dataLabels);
                 }
@@ -224,16 +223,16 @@ namespace Timelapse.Editor.Util
         }
 
         // Convert a string to a boolean, where its set to defaultValue if it cannot be converted by its value
-        private static string ConvertToBool(string value, string defaultValue)
+        private static bool ConvertToBool(string value, bool defaultValue)
         {
             string s = value.ToLowerInvariant();
             if (s == Constants.Boolean.True)
             {
-                return Constants.Boolean.True;
+                return true;
             }
             if (s == Constants.Boolean.False)
             {
-                return Constants.Boolean.False;
+                return false;
             }
             return defaultValue;
         }

@@ -18,11 +18,12 @@ namespace Timelapse.Images
             xmlDoc.Load(filePath);
 
             // Import the old log (if any)
-            XmlNodeList nodeLog = xmlDoc.SelectNodes(Constants.ImageXml.Images + Constants.ImageXml.Slash + Constants.DatabaseColumn.Log);
-            if (nodeLog.Count > 0)
+            XmlNodeList logNodes = xmlDoc.SelectNodes(Constants.ImageXml.Images + Constants.ImageXml.Slash + Constants.DatabaseColumn.Log);
+            if (logNodes.Count > 0)
             {
-                XmlNode nlog = nodeLog[0];
-                imageDatabase.SetImageSetLog(nlog.InnerText);
+                XmlNode logNode = logNodes[0];
+                imageDatabase.ImageSet.Log = logNode.InnerText;
+                imageDatabase.SyncImageSetToDatabase();
             }
 
             // Create three lists, each one representing the datalabels (in order found in the template) of notes, counters and choices
@@ -30,19 +31,19 @@ namespace Timelapse.Images
             List<string> noteControlNames = new List<string>();
             List<string> counterControlNames = new List<string>();
             List<string> choiceControlNames = new List<string>();
-            for (int control = 0; control < imageDatabase.TemplateTable.Rows.Count; control++)
+            for (int row = 0; row < imageDatabase.TemplateTable.Rows.Count; row++)
             {
-                string dataLabel = imageDatabase.TemplateTable.Rows[control].GetStringField(Constants.Control.DataLabel);
-                switch (imageDatabase.TemplateTable.Rows[control].GetStringField(Constants.Control.Type))
+                ControlRow control = new ControlRow(imageDatabase.TemplateTable.Rows[row]);
+                switch (control.Type)
                 {
                     case Constants.Control.Counter:
-                        counterControlNames.Add(dataLabel);
+                        counterControlNames.Add(control.DataLabel);
                         break;
                     case Constants.Control.FixedChoice:
-                        choiceControlNames.Add(dataLabel);
+                        choiceControlNames.Add(control.DataLabel);
                         break;
                     case Constants.Control.Note:
-                        noteControlNames.Add(dataLabel);
+                        noteControlNames.Add(control.DataLabel);
                         break;
                     default:
                         // TODOSAUL: why no support for flag controls?

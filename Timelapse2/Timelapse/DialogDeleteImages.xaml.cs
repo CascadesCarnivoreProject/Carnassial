@@ -116,7 +116,7 @@ namespace Timelapse
             // SAULTODO: Need to warn the user, and perhaps see if we can make it more efficient, or if we can alter the user interface. 
             for (int i = 0; i < deletedImageTable.Rows.Count; i++)
             {
-                ImageProperties imageProperties = new ImageProperties(deletedImageTable.Rows[i]);
+                ImageRow imageProperties = new ImageRow(deletedImageTable.Rows[i]);
                 ImageSource bitmap = imageProperties.LoadBitmapThumbnail(database.FolderPath, 400);
 
                 if (column == 0)
@@ -188,7 +188,7 @@ namespace Timelapse
             Mouse.OverrideCursor = Cursors.Wait;
             for (int i = 0; i < this.deletedImageTable.Rows.Count; i++)
             {
-                ImageProperties imageProperties = new ImageProperties(this.deletedImageTable.Rows[i]);
+                ImageRow imageProperties = new ImageRow(this.deletedImageTable.Rows[i]);
 
                 string markForDeletionDataLabel = this.database.DataLabelFromStandardControlType[Constants.Control.DeleteFlag];
                 this.database.UpdateImage(imageProperties.ID, markForDeletionDataLabel, Constants.Boolean.False);
@@ -218,7 +218,7 @@ namespace Timelapse
         /// <summary>
         /// Create a backup of the current image file in the backup folder
         /// </summary>
-        private bool TryMoveImageToDeletedImagesFolder(string folderPath, ImageProperties imageProperties)
+        private bool TryMoveImageToDeletedImagesFolder(string folderPath, ImageRow imageProperties)
         {
             string sourceFilePath = imageProperties.GetImagePath(folderPath);
             if (!File.Exists(sourceFilePath))

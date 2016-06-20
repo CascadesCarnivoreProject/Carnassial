@@ -183,11 +183,11 @@ namespace Timelapse.Editor
         /// <summary>
         /// Updates a given control in the database with the current state of the DataGrid. 
         /// </summary>
-        private void SyncControlToDatabase(DataRow row)
+        private void SyncControlToDatabase(ControlRow control)
         {
             MyTrace.MethodName("DB");
 
-            this.templateDatabase.SyncControlToDatabase(row);
+            this.templateDatabase.SyncControlToDatabase(control);
             if (this.generateControlsAndSpreadsheet)
             {
                 EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
@@ -203,7 +203,7 @@ namespace Timelapse.Editor
             MyTrace.MethodName("DB");
             if (!this.rowsActionsOn)
             {
-                this.SyncControlToDatabase(e.Row);
+                this.SyncControlToDatabase(new ControlRow(e.Row));
             }
         }
         #endregion Data Changed Listeners and Methods=
@@ -224,8 +224,8 @@ namespace Timelapse.Editor
                 return;
             }
 
-            string controlType = selectedRowView.Row.GetStringField(Constants.Control.Type);
-            if (Constants.Control.StandardTypes.Contains(controlType))
+            ControlRow control = new ControlRow(selectedRowView.Row);
+            if (Constants.Control.StandardTypes.Contains(control.Type))
             {
                 this.RemoveControlButton.IsEnabled = false;
                 this.RemoveControlButton.Content = "Item cannot" + Environment.NewLine + "be removed";
@@ -267,15 +267,15 @@ namespace Timelapse.Editor
                 return;
             }
 
-            string controlType = selectedRowView.Row.GetStringField(Constants.Control.Type);
-            if (EditorControls.IsStandardControlType(controlType))
+            ControlRow control = new ControlRow(selectedRowView.Row);
+            if (EditorControls.IsStandardControlType(control.Type))
             {
                 // standard controls cannot be removed
                 return;
             }
 
             this.rowsActionsOn = true;
-            this.templateDatabase.RemoveUserDefinedControl(selectedRowView.Row);
+            this.templateDatabase.RemoveUserDefinedControl(new ControlRow(selectedRowView.Row));
             this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
 
             // update the control panel so it reflects the current values in the database
@@ -295,13 +295,13 @@ namespace Timelapse.Editor
             // The button tag holds the Control Order of the row the button is in, not the ID.
             // So we have to search through the rows to find the one with the correct control order
             // and retrieve / set the ItemList menu in that row.
-            DataRow foundRow = this.FindRow(1, button.Tag.ToString());
+            ControlRow choiceControl = this.FindControl(1, button.Tag.ToString());
 
             // It should always find a row, but just in case...
             string choiceList = String.Empty;
-            if (foundRow != null)
+            if (choiceControl != null)
             {
-                choiceList = foundRow.GetStringField(Constants.Control.List);
+                choiceList = choiceControl.List;
             }
 
             choiceList = Utilities.ConvertBarsToLineBreaks(choiceList);
@@ -310,29 +310,31 @@ namespace Timelapse.Editor
             bool? result = choiceListDialog.ShowDialog();
             if (result == true)
             {
-                if (foundRow != null)
+                if (choiceControl != null)
                 {
-                    foundRow[Constants.Control.List] = Utilities.ConvertLineBreaksToBars(choiceListDialog.Choices);
+                    choiceControl.List = Utilities.ConvertLineBreaksToBars(choiceListDialog.Choices);
+                    this.templateDatabase.SyncControlToDatabase(choiceControl);
                 }
                 else
                 {
-                    // We should never be null, so shouldn't get here. But just in case this does happen, 
+                    // choiceControl should never be null, so shouldn't get here. But just in case this does happen, 
                     // I am setting the itemList to be the one in the ControlOrder row. This was the original buggy version that didn't work, but what the heck.
                     this.templateDatabase.TemplateTable.Rows[Convert.ToInt32(button.Tag) - 1][Constants.Control.List] = Utilities.ConvertLineBreaksToBars(choiceListDialog.Choices);
                 }
             }
         }
+
         // Helper function
         // Find a row in the templateTable given a search value and a column number in a DatTable
-        private DataRow FindRow(int column_number, string searchValue)
+        private ControlRow FindControl(int column, string searchValue)
         {
             int rowIndex = -1;
             foreach (DataRow row in this.templateDatabase.TemplateTable.Rows)
             {
                 rowIndex++;
-                if (row[column_number].ToString().Equals(searchValue))
+                if (row[column].ToString().Equals(searchValue))
                 {
-                    return row;
+                    return new ControlRow(row);
                 }
             }
             // It should never return null, but just in case...
@@ -411,13 +413,13 @@ namespace Timelapse.Editor
                         }
                         else if (this.TemplateDataGrid.CurrentColumn.Header.Equals("Default Value"))
                         {
-                            DataRowView row = selectedRow.Item as DataRowView;
-                            if (row.Row.GetStringField(Constants.Control.Type) == Constants.Control.Counter)
+                            ControlRow control = new ControlRow((selectedRow.Item as DataRowView).Row);
+                            if (control.Type == Constants.Control.Counter)
                             {
                                 // Its a counter. Only allow numbers
                                 e.Handled = !this.AreAllValidNumericChars(e.Text);
                             }
-                            else if (row.Row.GetStringField(Constants.Control.Type) == Constants.Control.Flag)
+                            else if (control.Type == Constants.Control.Flag)
                             {
                                 // Its a flag. Only allow t/f and translate that to true / false
                                 DataRowView dataRow = (DataRowView)this.TemplateDataGrid.SelectedItem;
@@ -425,12 +427,12 @@ namespace Timelapse.Editor
                                 if (e.Text == "t" || e.Text == "T")
                                 {
                                     dataRow.Row[index] = Constants.Boolean.True;
-                                    this.SyncControlToDatabase(dataRow.Row);
+                                    this.SyncControlToDatabase(new ControlRow(dataRow.Row));
                                 }
                                 else if (e.Text == "f" || e.Text == "F")
                                 {
                                     dataRow.Row[index] = Constants.Boolean.False;
-                                    this.SyncControlToDatabase(dataRow.Row);
+                                    this.SyncControlToDatabase(new ControlRow(dataRow.Row));
                                 }
                                 e.Handled = true;
                             }
@@ -514,7 +516,7 @@ namespace Timelapse.Editor
             {
                 this.tabWasPressed = false;
                 DataRowView selectedRowView = this.TemplateDataGrid.SelectedItem as DataRowView; // current cell
-                this.SyncControlToDatabase(selectedRowView.Row);
+                this.SyncControlToDatabase(new ControlRow(selectedRowView.Row));
             }
         }
 
@@ -529,28 +531,12 @@ namespace Timelapse.Editor
                 return;
             }
 
-            TextBox t = e.EditingElement as TextBox;
-            string dataLabel = t.Text;
-
-            // Create a list of existing data labels, so we can compare the data label against it for a unique names
-            List<string> data_label_list = new List<string>();
-            for (int i = 0; i < this.templateDatabase.TemplateTable.Rows.Count; i++)
-            {
-                data_label_list.Add(this.templateDatabase.TemplateTable.Rows[i].GetStringField(Constants.Control.DataLabel));
-            }
+            TextBox textBox = e.EditingElement as TextBox;
+            string dataLabel = textBox.Text;
 
             // Check to see if the data label is empty. If it is, generate a unique data label and warn the user
-            if (dataLabel.Trim().Equals(String.Empty))
+            if (String.IsNullOrWhiteSpace(dataLabel))
             {
-                // We need to generate a unique new datalabel  
-                int suffix = 1;
-                string candidate_datalabel = "DataLabel" + suffix.ToString();
-                while (data_label_list.Contains(candidate_datalabel))
-                {
-                    // Keep on incrementing the suffix until the datalabel is not in the list
-                    suffix++;
-                    candidate_datalabel = "DataLabel" + suffix.ToString();
-                }
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.IconType = MessageBoxImage.Warning;
                 dlgMB.MessageTitle = "Data Labels cannot be empty";
@@ -558,37 +544,28 @@ namespace Timelapse.Editor
                 dlgMB.MessageResult = "We will automatically create a uniquely named Data Label for you.";
                 dlgMB.MessageHint = "You can create your own name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
                 dlgMB.ShowDialog();
-                t.Text = candidate_datalabel;
+                textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
             }
 
             // Check to see if the data label is unique. If not, generate a unique data label and warn the user
-            for (int i = 0; i < this.templateDatabase.TemplateTable.Rows.Count; i++)
+            for (int row = 0; row < this.templateDatabase.TemplateTable.Rows.Count; row++)
             {
-                if (dataLabel.Equals(this.templateDatabase.TemplateTable.Rows[i].GetStringField(Constants.Control.DataLabel)))
+                ControlRow control = new ControlRow(this.templateDatabase.TemplateTable.Rows[row]);
+                if (dataLabel.Equals(control.DataLabel))
                 {
-                    if (this.TemplateDataGrid.SelectedIndex == i)
+                    if (this.TemplateDataGrid.SelectedIndex == row)
                     {
                         continue; // Its the same row, so its the same key, so skip it
                     }
 
-                    // We need to generate a unique new datalabel  
-                    int suffix = 1;
-                    string candidate_datalabel = dataLabel + suffix.ToString();
-                    while (data_label_list.Contains(candidate_datalabel))
-                    {
-                        // Keep on incrementing the suffix until the datalabel is not in the list
-                        suffix++;
-                        candidate_datalabel = dataLabel + suffix.ToString();
-                    }
                     DialogMessageBox dlgMB = new DialogMessageBox();
                     dlgMB.IconType = MessageBoxImage.Warning;
                     dlgMB.MessageTitle = "Data Labels must be unique";
-                    dlgMB.MessageProblem = "'" + t.Text + "' is not a valid Data Label, as you have already used it in another row.";
+                    dlgMB.MessageProblem = "'" + textBox.Text + "' is not a valid Data Label, as you have already used it in another row.";
                     dlgMB.MessageResult = "We will automatically create a unique Data Label for you by adding a number to its end.";
                     dlgMB.MessageHint = "You can create your own unique name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
                     dlgMB.ShowDialog();
-
-                    t.Text = candidate_datalabel;
+                    textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
                     break;
                 }
             }
@@ -605,23 +582,23 @@ namespace Timelapse.Editor
 
                 if (!(alpha.IsMatch(first_letter) && alphanumdash.IsMatch(dataLabel)))
                 {
-                    string candidate_datalabel = dataLabel;
+                    string candidateDataLabel = dataLabel;
 
                     if (!alpha.IsMatch(first_letter))
                     {
-                        candidate_datalabel = "X" + candidate_datalabel.Substring(1);
+                        candidateDataLabel = "X" + candidateDataLabel.Substring(1);
                     }
-                    candidate_datalabel = Regex.Replace(candidate_datalabel, @"[^A-Za-z0-9_]+", "X");
+                    candidateDataLabel = Regex.Replace(candidateDataLabel, @"[^A-Za-z0-9_]+", "X");
 
                     DialogMessageBox dlgMB = new DialogMessageBox();
                     dlgMB.IconType = MessageBoxImage.Warning;
-                    dlgMB.MessageTitle = "'" + t.Text + "' is not a valid Data Label.";
+                    dlgMB.MessageTitle = "'" + textBox.Text + "' is not a valid Data Label.";
                     dlgMB.MessageProblem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
                     dlgMB.MessageResult = "We will replace all dissallowed characters with an 'X'.";
                     dlgMB.MessageHint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
                     dlgMB.ShowDialog();
 
-                    t.Text = candidate_datalabel;
+                    textBox.Text = candidateDataLabel;
                 }
             }
 
@@ -632,7 +609,7 @@ namespace Timelapse.Editor
                 {
                     DialogMessageBox dlgMB = new DialogMessageBox();
                     dlgMB.IconType = MessageBoxImage.Warning;
-                    dlgMB.MessageTitle = "'" + t.Text + "' is not a valid Data Label.";
+                    dlgMB.MessageTitle = "'" + textBox.Text + "' is not a valid Data Label.";
                     dlgMB.MessageProblem = "Data labels cannot match the reserved words.";
                     dlgMB.MessageResult = "We will add an '_' suffix to this Data Label to make it differ from the reserved word";
                     dlgMB.MessageHint = "Avoid the resereved words listed below. Start your label with a letter. Then use any combination of letters, numbers, and '_'." + Environment.NewLine;
@@ -642,7 +619,7 @@ namespace Timelapse.Editor
                     }
                     dlgMB.ShowDialog();
 
-                    t.Text += "_";
+                    textBox.Text += "_";
                     break;
                 }
             }
@@ -659,75 +636,77 @@ namespace Timelapse.Editor
             for (int rowIndex = 0; rowIndex < this.TemplateDataGrid.Items.Count; rowIndex++)
             {
                 DataGridRow row = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex);
-                if (row != null)
+                if (row == null)
                 {
-                    DataGridCellsPresenter presenter = GetVisualChild<DataGridCellsPresenter>(row);
-                    for (int column = 0; column < this.TemplateDataGrid.Columns.Count; column++)
+                    return;
+                }
+
+                DataGridCellsPresenter presenter = GetVisualChild<DataGridCellsPresenter>(row);
+                for (int column = 0; column < this.TemplateDataGrid.Columns.Count; column++)
+                {
+                    // The following attributes should always be editable.
+                    // Note that this is hardwired to the header names in the xaml file, so this could break if that ever changes.. should probably do this so it works no matter what the header text is of the table
+                    string columnHeader = (string)this.TemplateDataGrid.Columns[column].Header;
+                    if ((columnHeader == EditorConstant.Control.Width) || (columnHeader == Constants.Control.Visible) || (columnHeader == Constants.Control.Label) || (columnHeader == Constants.Control.Tooltip))
                     {
-                        // The following attributes should always be editable.
-                        // Note that this is hardwired to the header names in the xaml file, so this could break if that ever changes.. should probably do this so it works no matter what the header text is of the table
-                        string columnHeader = (string)this.TemplateDataGrid.Columns[column].Header;
-                        if ((columnHeader == EditorConstant.Control.Width) || (columnHeader == Constants.Control.Visible) || (columnHeader == Constants.Control.Label) || (columnHeader == Constants.Control.Tooltip))
+                        continue;
+                    }
+
+                    // The following attributes should NOT be editable.
+                    DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
+                    ControlRow control = new ControlRow(((DataRowView)this.TemplateDataGrid.Items[rowIndex]).Row);
+
+                    // more constants to access checkbox columns and combobox columns.
+                    // the sortmemberpath is include, not the sort name, so we are accessing by head, which may change.
+                    string controlType = control.Type;
+                    string sortMemberPath = this.TemplateDataGrid.Columns[column].SortMemberPath;
+                    if (String.Equals(sortMemberPath, Constants.DatabaseColumn.ID, StringComparison.OrdinalIgnoreCase)  ||
+                        String.Equals(sortMemberPath, Constants.Control.ControlOrder, StringComparison.OrdinalIgnoreCase) ||
+                        String.Equals(sortMemberPath, Constants.Control.SpreadsheetOrder, StringComparison.OrdinalIgnoreCase) ||
+                        String.Equals(sortMemberPath, Constants.Control.Type, StringComparison.OrdinalIgnoreCase) ||
+                        (controlType == Constants.DatabaseColumn.Date) ||
+                        (controlType == Constants.Control.DeleteFlag) ||
+                        (controlType == Constants.DatabaseColumn.File) ||
+                        (controlType == Constants.DatabaseColumn.Folder) ||
+                        ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.Copyable)) ||
+                        ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == EditorConstant.Control.DataLabel)) ||
+                        ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.List)) ||
+                        ((controlType == Constants.DatabaseColumn.ImageQuality) && (sortMemberPath == Constants.Control.DefaultValue)) ||
+                        (controlType == Constants.DatabaseColumn.RelativePath) ||
+                        (controlType == Constants.DatabaseColumn.Time) ||
+                        ((controlType == Constants.Control.Counter) && (columnHeader == Constants.Control.List)) ||
+                        ((controlType == Constants.Control.Note) && (columnHeader == Constants.Control.List)))
+                    {
+                        cell.Background = EditorConstant.NotEditableCellColor;
+                        cell.Foreground = Brushes.Gray;
+
+                        // if cell has a checkbox, also disable it.
+                        var cp = cell.Content as ContentPresenter;
+                        if (cp != null)
                         {
-                            continue;
-                        }
-
-                        // The following attributes should NOT be editable.
-                        DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
-                        DataRowView thisRow = (DataRowView)this.TemplateDataGrid.Items[rowIndex];
-
-                        // more constants to access checkbox columns and combobox columns.
-                        // the sortmemberpath is include, not the sort name, so we are accessing by head, which may change.
-                        string controlType = thisRow.Row.GetStringField(Constants.Control.Type);
-                        string sortMemberPath = this.TemplateDataGrid.Columns[column].SortMemberPath;
-                        if (String.Equals(sortMemberPath, Constants.DatabaseColumn.ID, StringComparison.OrdinalIgnoreCase)  ||
-                            String.Equals(sortMemberPath, Constants.Control.ControlOrder, StringComparison.OrdinalIgnoreCase) ||
-                            String.Equals(sortMemberPath, Constants.Control.SpreadsheetOrder, StringComparison.OrdinalIgnoreCase) ||
-                            String.Equals(sortMemberPath, Constants.Control.Type, StringComparison.OrdinalIgnoreCase) ||
-                            (controlType == Constants.DatabaseColumn.Date) ||
-                            (controlType == Constants.Control.DeleteFlag) ||
-                            (controlType == Constants.DatabaseColumn.File) ||
-                            (controlType == Constants.DatabaseColumn.Folder) ||
-                            ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.Copyable)) ||
-                            ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == EditorConstant.Control.DataLabel)) ||
-                            ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.List)) ||
-                            ((controlType == Constants.DatabaseColumn.ImageQuality) && (sortMemberPath == Constants.Control.DefaultValue)) ||
-                            (controlType == Constants.DatabaseColumn.RelativePath) ||
-                            (controlType == Constants.DatabaseColumn.Time) ||
-                            ((controlType == Constants.Control.Counter) && (columnHeader == Constants.Control.List)) ||
-                            ((controlType == Constants.Control.Note) && (columnHeader == Constants.Control.List)))
-                        {
-                            cell.Background = EditorConstant.NotEditableCellColor;
-                            cell.Foreground = Brushes.Gray;
-
-                            // if cell has a checkbox, also disable it.
-                            var cp = cell.Content as ContentPresenter;
-                            if (cp != null)
+                            var checkbox = cp.ContentTemplate.FindName("CheckBox", cp) as CheckBox;
+                            if (checkbox != null)
                             {
-                                var checkbox = cp.ContentTemplate.FindName("CheckBox", cp) as CheckBox;
-                                if (checkbox != null)
-                                {
-                                    checkbox.IsEnabled = false;
-                                }
-                                else if ((controlType == Constants.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[column].Header.Equals("List"))
-                                {
-                                    cell.IsEnabled = false; // Don't let users edit the ImageQuality menu
-                                }
+                                checkbox.IsEnabled = false;
+                            }
+                            else if ((controlType == Constants.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[column].Header.Equals("List"))
+                            {
+                                cell.IsEnabled = false; // Don't let users edit the ImageQuality menu
                             }
                         }
-                        else
-                        {
-                            cell.ClearValue(DataGridCell.BackgroundProperty); // otherwise when scrolling cells offscreen get colored randomly
-                            ContentPresenter cellContent = cell.Content as ContentPresenter;
+                    }
+                    else
+                    {
+                        cell.ClearValue(DataGridCell.BackgroundProperty); // otherwise when scrolling cells offscreen get colored randomly
+                        ContentPresenter cellContent = cell.Content as ContentPresenter;
 
-                            // if cell has a checkbox, enable it.
-                            if (cellContent != null)
+                        // if cell has a checkbox, enable it.
+                        if (cellContent != null)
+                        {
+                            CheckBox checkbox = cellContent.ContentTemplate.FindName("CheckBox", cellContent) as CheckBox;
+                            if (checkbox != null)
                             {
-                                CheckBox checkbox = cellContent.ContentTemplate.FindName("CheckBox", cellContent) as CheckBox;
-                                if (checkbox != null)
-                                {
-                                    checkbox.IsEnabled = true;
-                                }
+                                checkbox.IsEnabled = true;
                             }
                         }
                     }
@@ -838,29 +817,29 @@ namespace Timelapse.Editor
                 return;
             }
 
-            foreach (DataGridColumn col in this.TemplateDataGrid.Columns)
+            foreach (DataGridColumn column in this.TemplateDataGrid.Columns)
             {
                 if (!mi.IsChecked && 
-                    (col.Header.Equals(EditorConstant.Control.ID) || col.Header.Equals(EditorConstant.Control.ControlOrder) || col.Header.Equals(EditorConstant.Control.SpreadsheetOrder)))
+                    (column.Header.Equals(EditorConstant.Control.ID) || column.Header.Equals(EditorConstant.Control.ControlOrder) || column.Header.Equals(EditorConstant.Control.SpreadsheetOrder)))
                 {
-                    col.MinWidth = 0;
-                    col.Width = new DataGridLength(0);
+                    column.MinWidth = 0;
+                    column.Width = new DataGridLength(0);
                 }
                 else
                 {
-                    col.MinWidth = 90;
-                    if (col.Header.Equals(Constants.Control.Visible) || col.Header.Equals(Constants.Control.Copyable) || col.Header.Equals(EditorConstant.Control.Width))
+                    column.MinWidth = 90;
+                    if (column.Header.Equals(Constants.Control.Visible) || column.Header.Equals(Constants.Control.Copyable) || column.Header.Equals(EditorConstant.Control.Width))
                     {
-                        col.MinWidth = 65;
+                        column.MinWidth = 65;
                     }
 
-                    if (col.Header.Equals(Constants.Control.Tooltip))
+                    if (column.Header.Equals(Constants.Control.Tooltip))
                     {
-                        col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+                        column.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
                     }
                     else
                     {
-                        col.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
+                        column.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
                     }
                 }
             }
