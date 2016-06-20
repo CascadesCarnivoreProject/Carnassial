@@ -54,7 +54,7 @@
 
                 <!-- Edit Menu -->
                 <MenuItem Name="MenuItemEdit" Header="_Edit" IsEnabled="false" IsTabStop="false">
-                    <MenuItem Name="MenuItemCopyPreviousValues" IsCheckable="False" Header="_Copy previous values" Click="BtnCopy_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template."/>
+                    <MenuItem Name="MenuItemCopyPreviousValues" IsCheckable="False" Header="_Copy previous values" Click="ButtonCopy_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template."/>
                     <MenuItem Name="MenuItemPopulateFieldFromMetaData" IsCheckable="False" Header="_Populate a field with image metadata..." ToolTip="Match a data field with an image metadata type. Then populate that field across all images with the corresponding image metadata value." Click="MenuItemPopulateFieldFromMetaData_Click"/>
                     <MenuItem Header="D_elete"  IsCheckable="False" SubmenuOpened="Delete_SubmenuOpening"  >
                         <MenuItem Name="MenuItemDeleteImage" IsCheckable="False" Header="The current _image..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the image but not the data associated with that image"/>
@@ -146,7 +146,7 @@
 
                     <StackPanel DockPanel.Dock="Top"  Name="controlsTray" Visibility="Collapsed" Grid.Column="0">
                     </StackPanel>
-                    <Button Name="btnCopy" Background="#C8FBC8" Visibility="Collapsed" Click="BtnCopy_Click"  Margin="5,5,5,5" Padding="5,0,5,0" Grid.Column="1" HorizontalAlignment="Right" 
+                    <Button Name="buttonCopy" Background="#C8FBC8" Visibility="Collapsed" Click="ButtonCopy_Click"  Margin="5,5,5,5" Padding="5,0,5,0" Grid.Column="1" HorizontalAlignment="Right" 
                             Width="Auto" MinHeight="60" VerticalAlignment="Stretch" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template.">
                         <TextBlock TextWrapping="Wrap" FontWeight="Bold">
                             Copy<LineBreak/>Previous<LineBreak/>Values

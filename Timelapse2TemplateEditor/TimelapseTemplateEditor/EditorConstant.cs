@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
 
-namespace TimelapseTemplateEditor
+namespace Timelapse.Editor
 {
     internal static class EditorConstant
     {
-        public const string ApplicationName = "TimelapseTemplateEditor";
+        public const string ApplicationName = "Timelapse.Editor";
         public const string MainWindowBaseTitle = "Timelapse Template Editor";  // The initial title shown in the window title bar
 
         public static readonly SolidColorBrush NotEditableCellColor = Brushes.LightGray; // Color of non-editable data grid items 

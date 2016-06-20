@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace TimelapseTemplateEditor
+namespace Timelapse.Editor
 {
     /// <summary>
     /// Interaction logic for App.xaml

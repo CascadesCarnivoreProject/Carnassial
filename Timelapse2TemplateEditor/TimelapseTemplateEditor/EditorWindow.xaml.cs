@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
@@ -11,17 +12,16 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using Timelapse;
 using Timelapse.Database;
+using Timelapse.Editor.Util;
 using Timelapse.Util;
-using TimelapseTemplateEditor.Util;
 
-namespace TimelapseTemplateEditor
+namespace Timelapse.Editor
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class EditorWindow : Window
     {
         // database where the template is stored
         private TemplateDatabase templateDatabase;
@@ -42,7 +42,7 @@ namespace TimelapseTemplateEditor
         /// <summary>
         /// Starts the UI.
         /// </summary>
-        public MainWindow()
+        public EditorWindow()
         {
             // Abort if some of the required dependencies are missing
             if (Dependencies.AreRequiredBinariesPresent(EditorConstant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
@@ -100,34 +100,12 @@ namespace TimelapseTemplateEditor
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            string executable_folder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-
-            // A check to make sure that users installed Timelapse properly, i.e., that they did not drag it out of its installation folder.
-            if (!File.Exists(Path.Combine(executable_folder, "System.Data.SQLite.dll")))
-            {
-                DialogMessageBox dlgMB = new DialogMessageBox();
-                dlgMB.IconType = MessageBoxImage.Error;
-                dlgMB.MessageTitle = "Timelapse needs to be in its original downloaded folder";
-                dlgMB.MessageProblem = "The Timelapse Programs won't run properly as it was not correctly installed.";
-                dlgMB.MessageReason = "When you downloaded Timelapse, it was in a folder with several other files and folders it needs. You probably dragged Timelapse out of that folder.";
-                dlgMB.MessageSolution = "Put the Timelapse programs back in its original folder, or download it again.";
-                dlgMB.MessageResult = "Timelapse will shut down. Try again after you do the above solution.";
-                dlgMB.MessageHint = "If you want to access these programs from elsewhere, create a shortcut to it." + Environment.NewLine;
-                dlgMB.MessageHint += "1. From its original folder, right-click the Timelapse program icon  and select 'Create Shortcut' from the menu." + Environment.NewLine;
-                dlgMB.MessageHint += "2. Drag the shortcut icon to the location of your choice.";
-
-                dlgMB.ShowDialog();
-                Application.Current.Shutdown();
-            }
-            else
-            {
-                VersionClient updater = new VersionClient(Constants.ApplicationName, Constants.LatestVersionAddress);
-                updater.TryGetAndParseVersion(false);
-            }
+            VersionClient updater = new VersionClient(Constants.ApplicationName, Constants.LatestVersionAddress);
+            updater.TryGetAndParseVersion(false);
         }
 
         // When the main window closes, apply any pending edits.
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void Window_Closing(object sender, CancelEventArgs e)
         {
             this.TemplateDataGrid.CommitEdit();
 
@@ -327,20 +305,20 @@ namespace TimelapseTemplateEditor
             }
 
             choiceList = Utilities.ConvertBarsToLineBreaks(choiceList);
-            DialogEditChoiceList dlg = new DialogEditChoiceList(button, choiceList);
-            dlg.Owner = this;
-            bool? result = dlg.ShowDialog();
+            DialogEditChoiceList choiceListDialog = new DialogEditChoiceList(button, choiceList);
+            choiceListDialog.Owner = this;
+            bool? result = choiceListDialog.ShowDialog();
             if (result == true)
             {
                 if (foundRow != null)
                 {
-                    foundRow[Constants.Control.List] = Utilities.ConvertLineBreaksToBars(dlg.ItemList);
+                    foundRow[Constants.Control.List] = Utilities.ConvertLineBreaksToBars(choiceListDialog.Choices);
                 }
                 else
                 {
                     // We should never be null, so shouldn't get here. But just in case this does happen, 
                     // I am setting the itemList to be the one in the ControlOrder row. This was the original buggy version that didn't work, but what the heck.
-                    this.templateDatabase.TemplateTable.Rows[Convert.ToInt32(button.Tag) - 1][Constants.Control.List] = Utilities.ConvertLineBreaksToBars(dlg.ItemList);
+                    this.templateDatabase.TemplateTable.Rows[Convert.ToInt32(button.Tag) - 1][Constants.Control.List] = Utilities.ConvertLineBreaksToBars(choiceListDialog.Choices);
                 }
             }
         }
@@ -1015,9 +993,9 @@ namespace TimelapseTemplateEditor
 
         private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            DialogAboutTimelapseEditor dlg = new DialogAboutTimelapseEditor();
-            dlg.Owner = this;
-            dlg.ShowDialog();
+            DialogAboutTimelapseEditor about = new DialogAboutTimelapseEditor();
+            about.Owner = this;
+            about.ShowDialog();
         }
         #endregion Menu Listeners
 

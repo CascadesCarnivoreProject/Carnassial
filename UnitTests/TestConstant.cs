@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Timelapse.Database;
-using TimelapseTemplateEditor;
+using Timelapse.Editor;
 
 namespace Timelapse.UnitTests
 {

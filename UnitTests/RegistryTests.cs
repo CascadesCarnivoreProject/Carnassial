@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using Timelapse.Editor.Util;
 using Timelapse.Util;
-using TimelapseTemplateEditor.Util;
 
 namespace Timelapse.UnitTests
 {

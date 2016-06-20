@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using Timelapse.Util;
 
-namespace TimelapseTemplateEditor
+namespace Timelapse.Editor
 {
     /// <summary>
     /// Interaction logic for DialogAboutTimelapseEditor.xaml

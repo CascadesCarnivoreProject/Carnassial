@@ -84,7 +84,7 @@ namespace Timelapse
         #region Loading EXIF into the data grid
         // Use the ExifToolWrapper to load all the metadata
         // Note that this requires the exiftool(-k).exe to be available in the executables folder 
-        internal void LoadExif()
+        private void LoadExif()
         {
             this.exifTool = new ExifToolWrapper();
             this.exifTool.Start();

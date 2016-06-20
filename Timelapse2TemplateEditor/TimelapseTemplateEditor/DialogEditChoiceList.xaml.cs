@@ -2,63 +2,65 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace TimelapseTemplateEditor
+namespace Timelapse.Editor
 {
     /// <summary>
     /// Interaction logic for DialogEditChoiceList.xaml
     /// </summary>
     public partial class DialogEditChoiceList : Window
     {
-        private Button owner;
+        private UIElement positionReference;
 
-        public DialogEditChoiceList(Button owner, string list)
+        public DialogEditChoiceList(UIElement positionReference, string choices)
         {
             this.InitializeComponent();
-            this.ItemList = list;
-            this.tbItemList.Text = this.ItemList;
+            this.ChoiceList.Text = choices;
             this.OkButton.IsEnabled = false;
-            this.owner = owner;
+            this.positionReference = positionReference;
         }
 
         /// <summary>
-        /// Gets or sets the modified text that can be accessed immediately after the dialog exits
+        /// Gets the modified text that can be accessed immediately after the dialog exits
         /// </summary>
-        public string ItemList { get; set; }
+        public string Choices
+        {
+            get { return this.ChoiceList.Text; }
+        }
 
-        // Position the window  so it appears as a popup with its bottom aligned to the top of its owner button
+        // Position the window so it appears as a popup with its bottom aligned to the top of its owner button
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Point p = this.owner.PointToScreen(new Point(0, 0));
-            this.Top = p.Y - this.ActualHeight;
-            this.Left = p.X;
+            Point topLeft = this.positionReference.PointToScreen(new Point(0, 0));
+            this.Top = topLeft.Y - this.ActualHeight;
+            this.Left = topLeft.X;
 
             // On some older window systems, the above positioning doesn't work, where it seems to put it the the right of the main window
-            // So we check to make sure its in the main window, and if not, we try to position it there
-            double choice_right_side = this.Left + this.ActualWidth;
-            double main_window_right_side = Application.Current.MainWindow.Left + Application.Current.MainWindow.ActualWidth;
-            if (choice_right_side > main_window_right_side)
+            // So we check to make sure it's in the main window, and if not, we try to position it there
+            if (Application.Current != null)
             {
-                this.Left = main_window_right_side - this.ActualWidth - 100;
+                double choiceRightSide = this.Left + this.ActualWidth;
+                double mainWindowRightSide = Application.Current.MainWindow.Left + Application.Current.MainWindow.ActualWidth;
+                if (choiceRightSide > mainWindowRightSide)
+                {
+                    this.Left = mainWindowRightSide - this.ActualWidth - 100;
+                }
             }
         }
 
-        #region Private Methods
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            this.ItemList = this.tbItemList.Text;
             this.DialogResult = true;
         }
 
         // Enable the Ok button for non-empty text
         private void ItemList_TextChanged(object sender, TextChangedEventArgs e)
         {
-            this.OkButton.IsEnabled = !this.tbItemList.Text.Trim().Equals(String.Empty);
+            this.OkButton.IsEnabled = !this.ChoiceList.Text.Trim().Equals(String.Empty);
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
         }
-        #endregion
     }
 }

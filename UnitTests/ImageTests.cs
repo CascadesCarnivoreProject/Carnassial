@@ -97,10 +97,11 @@ namespace Timelapse.UnitTests
             string imageFilePath = Path.Combine(this.WorkingDirectory, TestConstant.File.InfraredMartenImage);
 
             ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015, Constants.File.DefaultImageDatabaseFileName);
-            using (DialogPopulateFieldWithMetadata populateFieldDialog = new DialogPopulateFieldWithMetadata(imageDatabase, imageFilePath))
+            using (DialogPopulateFieldWithMetadata populateField = new DialogPopulateFieldWithMetadata(imageDatabase, imageFilePath))
             {
-                populateFieldDialog.LoadExif();
-                Dictionary<string, string> exif = (Dictionary<string, string>)populateFieldDialog.dg.ItemsSource;
+                PrivateObject populateFieldAccessor = new PrivateObject(populateField);
+                populateFieldAccessor.Invoke("LoadExif");
+                Dictionary<string, string> exif = (Dictionary<string, string>)populateField.dg.ItemsSource;
                 Assert.IsTrue(exif.Count > 0, "Expected at least one EXIF field to be retrieved from {0}", imageFilePath);
             }
         }

@@ -7,7 +7,7 @@ using System.Xml;
 using Timelapse;
 using Timelapse.Database;
 
-namespace TimelapseTemplateEditor.Util
+namespace Timelapse.Editor.Util
 {
     // This clase reads in the code_template.xml file (the old way that we used to specify the template) 
     // and converts it into a data template database.

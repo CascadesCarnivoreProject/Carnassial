@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Timelapse.Editor;
 using Timelapse.Util;
-using TimelapseTemplateEditor;
 
 namespace Timelapse.UnitTests
 {

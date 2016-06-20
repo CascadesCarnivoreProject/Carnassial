@@ -8,7 +8,7 @@ using Timelapse;
 using Timelapse.Database;
 using Timelapse.Util;
 
-namespace TimelapseTemplateEditor.Util
+namespace Timelapse.Editor.Util
 {
     /// <summary>Generates controls in the provided wrap panel based upon the information in the data grid templateTable.</summary>
     /// <remarks>
@@ -19,7 +19,7 @@ namespace TimelapseTemplateEditor.Util
     /// </remarks>
     internal class EditorControls
     {
-        public static void Generate(MainWindow mainWindow, WrapPanel parent, DataTable templateTable)
+        public static void Generate(EditorWindow mainWindow, WrapPanel parent, DataTable templateTable)
         {
             // used for styling all content and label controls except ComboBoxes since the combo box style is commented out in DataEntryControls.xaml
             // and defined instead in MainWindow.xaml as an exception workaround
@@ -165,7 +165,7 @@ namespace TimelapseTemplateEditor.Util
             return checkBox;
         }
 
-        private static ComboBox CreateComboBox(MainWindow styleProvider, string list, string tooltip, int width)
+        private static ComboBox CreateComboBox(EditorWindow styleProvider, string list, string tooltip, int width)
         {
             ComboBox comboBox = new ComboBox();
             comboBox.ToolTip = tooltip;

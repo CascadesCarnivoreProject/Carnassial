@@ -1,4 +1,4 @@
-﻿namespace TimelapseTemplateEditor.Util
+﻿namespace Timelapse.Editor.Util
 {
     public class MyTrace
     {

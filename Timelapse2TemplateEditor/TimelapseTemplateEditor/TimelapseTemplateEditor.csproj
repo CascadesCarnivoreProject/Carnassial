@@ -7,7 +7,7 @@
     <ProjectGuid>{38A59036-3982-4DC8-A19A-ADA1D8C1529A}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TimelapseTemplateEditor</RootNamespace>
+    <RootNamespace>Timelapse.Editor</RootNamespace>
     <AssemblyName>Timelapse2TemplateEditor</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -140,7 +140,7 @@
     <Compile Include="Util\CallerMemberNameAttribute.cs" />
     <Compile Include="CellTextBlockConverter.cs" />
     <Compile Include="Util\EditorControls.cs" />
-    <Compile Include="MainWindowExtensions.cs" />
+    <Compile Include="EditorWindowExtensions.cs" />
     <Compile Include="ListBoxDBOutputConverter.cs" />
     <Compile Include="Util\EditorRegistryUserSettings.cs" />
     <Compile Include="Util\MyTrace.cs" />
@@ -152,7 +152,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="MainWindow.xaml">
+    <Page Include="EditorWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -160,8 +160,8 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
+    <Compile Include="EditorWindow.xaml.cs">
+      <DependentUpon>EditorWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
