@@ -18,7 +18,7 @@ namespace Timelapse.UnitTests
 
         public void Verify(DataRow marker)
         {
-            Assert.IsTrue((long)marker[Constants.DatabaseColumn.ID] == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.ID, this.ID, marker[Constants.DatabaseColumn.ID]);
+            Assert.IsTrue(marker.GetID() == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.ID, this.ID, marker.GetID());
 
             foreach (KeyValuePair<string, string> userCounterExpectation in this.UserDefinedCountersByDataLabel)
             {

@@ -1,4 +1,4 @@
-﻿<Window x:Class="TimelapseTemplateEditor.DialogAboutTimelapseEditor"
+﻿<Window x:Class="Timelapse.Editor.DialogAboutTimelapseEditor"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
      Title="About the TimelapseTemplateEdtior" Height="420" Width="550"

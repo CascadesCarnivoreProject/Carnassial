@@ -5,8 +5,8 @@ namespace Timelapse.Database
 {
     public class ImageDataFlagColumn : ImageDataColumn
     {
-        public ImageDataFlagColumn(DataRow templateTableRow)
-            : base(templateTableRow)
+        public ImageDataFlagColumn(ControlRow control)
+            : base(control)
         {
         }
 

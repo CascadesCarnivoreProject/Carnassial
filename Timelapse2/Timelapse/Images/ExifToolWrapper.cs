@@ -26,7 +26,7 @@ namespace Timelapse.Images
         private static readonly int[] OrientationPositions = { 1, 6, 3, 8 };
 
         private readonly StringBuilder output = new StringBuilder();
-        private readonly ProcessStartInfo psi;
+        private readonly ProcessStartInfo processStartInfo;
         private readonly ManualResetEvent waitHandle = new ManualResetEvent(true);
 
         private bool disposed = false;
@@ -57,7 +57,7 @@ namespace Timelapse.Images
                 throw new ExifToolException(ExeName + " not found");
             }
 
-            this.psi = new ProcessStartInfo
+            this.processStartInfo = new ProcessStartInfo
             {
                 FileName = this.Exe,
                 Arguments = Arguments,
@@ -80,9 +80,15 @@ namespace Timelapse.Images
 
             Debug.Assert(this.Status == Statuses.Ready || this.Status == Statuses.Stopped, "Invalid state");
 
-            if (this.exifTool != null && this.Status == Statuses.Ready)
+            if (this.exifTool != null)
             {
-                this.Stop();
+                lock (this.processStartInfo)
+                {
+                    if (this.Status == Statuses.Ready)
+                    {
+                        this.Stop();
+                    }
+                }
             }
 
             this.waitHandle.Dispose();
@@ -171,20 +177,23 @@ namespace Timelapse.Images
                 throw new ExifToolException("Process is not stopped");
             }
 
-            this.Status = Statuses.Starting;
+            lock (this.processStartInfo)
+            {
+                this.Status = Statuses.Starting;
 
-            this.exifTool = new Process { StartInfo = this.psi, EnableRaisingEvents = true };
-            this.exifTool.OutputDataReceived += this.OnOutputDataReceived;
-            this.exifTool.Exited += this.OnExifToolExited;
-            this.exifTool.Start();
+                this.exifTool = new Process { StartInfo = this.processStartInfo, EnableRaisingEvents = true };
+                this.exifTool.OutputDataReceived += this.OnOutputDataReceived;
+                this.exifTool.Exited += this.OnExifToolExited;
+                this.exifTool.Start();
 
-            this.exifTool.BeginOutputReadLine();
+                this.exifTool.BeginOutputReadLine();
 
-            this.waitHandle.Reset();
-            this.exifTool.StandardInput.WriteLine("-ver\n-execute0000");
-            this.waitHandle.WaitOne();
+                this.waitHandle.Reset();
+                this.exifTool.StandardInput.WriteLine("-ver\n-execute0000");
+                this.waitHandle.WaitOne();
 
-            this.Status = Statuses.Ready;
+                this.Status = Statuses.Ready;
+            }
         }
 
         public void Stop()
@@ -196,29 +205,31 @@ namespace Timelapse.Images
                 throw new ExifToolException("Process must be ready");
             }
 
-            this.Status = Statuses.Stopping;
-
-            this.waitHandle.Reset();
-            this.exifTool.StandardInput.WriteLine("-stay_open\nFalse\n");
-            if (!this.waitHandle.WaitOne(5000))
+            lock (this.processStartInfo)
             {
-                if (this.exifTool != null)
+                this.Status = Statuses.Stopping;
+                this.waitHandle.Reset();
+                this.exifTool.StandardInput.WriteLine("-stay_open\nFalse\n");
+                if (!this.waitHandle.WaitOne(TimeSpan.FromSeconds(5)))
                 {
-                    // silently swallow an eventual exception
-                    try
+                    if (this.exifTool != null)
                     {
-                        this.exifTool.Kill();
-                        this.exifTool.WaitForExit(2000);
-                        this.exifTool.Dispose();
-                    }
-                    catch
-                    {
+                        // silently swallow any eventual exception
+                        try
+                        {
+                            this.exifTool.Kill();
+                            this.exifTool.WaitForExit(2000);
+                            this.exifTool.Dispose();
+                        }
+                        catch
+                        {
+                        }
+
+                        this.exifTool = null;
                     }
 
-                    this.exifTool = null;
+                    this.Status = Statuses.Stopped;
                 }
-
-                this.Status = Statuses.Stopped;
             }
         }
 

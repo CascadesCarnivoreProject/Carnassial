@@ -62,12 +62,12 @@ namespace Timelapse
                 }));
 
                 // Pass 1. Check to see what dates/times need updating.
-                List<ImageProperties> imagePropertiesList = new List<ImageProperties>();
+                List<ImageRow> imagePropertiesList = new List<ImageRow>();
                 int count = database.CurrentlySelectedImageCount;
                 for (int image = 0; image < count; image++)
                 {
                     // We will store the various times here
-                    ImageProperties imageProperties = new ImageProperties(database.ImageDataTable.Rows[image]);
+                    ImageRow imageProperties = new ImageRow(database.ImageDataTable.Rows[image]);
                     string feedbackMessage = String.Empty;
                     try
                     {
@@ -128,7 +128,7 @@ namespace Timelapse
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
                 for (int image = 0; image < imagePropertiesList.Count; image++)
                 {
-                    ImageProperties imageProperties = imagePropertiesList[image];
+                    ImageRow imageProperties = imagePropertiesList[image];
 
                     ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere();
                     if (!imageProperties.Date.Equals(String.Empty) && !imageProperties.Time.Equals(String.Empty))

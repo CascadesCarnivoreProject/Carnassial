@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace TimelapseTemplateEditor
+namespace Timelapse.Editor
 {
     /// <summary>
     /// Converter for CellTextBlock. Removes spaces from beginning and end of string.

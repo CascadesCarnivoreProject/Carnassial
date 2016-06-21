@@ -83,15 +83,15 @@ namespace Timelapse
             // user defined controls
             public const string CounterTooltip = "Click the counter button, then click on the image to count the entity. Or just type in a count";
             public const string CounterValue = "0";              // Default for: counters
-            public const string CounterWidth = "80";
+            public const int CounterWidth = 80;
             public const string FixedChoiceTooltip = "Choose an item from the menu";
-            public const string FixedChoiceWidth = "100";
+            public const int FixedChoiceWidth = 100;
 
             public const string FlagTooltip = "Toggle between true and false";
             public const string FlagValue = Constants.Boolean.False;             // Default for: flags
-            public const string FlagWidth = "20";
+            public const int FlagWidth = 20;
             public const string NoteTooltip = "Write a textual note";
-            public const string NoteWidth = "100";
+            public const int NoteWidth = 100;
 
             // standard controls
             public const string DateTooltip = "Date the image was taken";

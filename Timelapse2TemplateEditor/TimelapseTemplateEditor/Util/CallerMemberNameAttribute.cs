@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TimelapseTemplateEditor.Util
+namespace Timelapse.Editor.Util
 {
     public sealed class CallerMemberNameAttribute : Attribute
     {

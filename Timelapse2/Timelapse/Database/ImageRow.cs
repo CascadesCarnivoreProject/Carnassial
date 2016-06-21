@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.IO;
@@ -10,47 +11,64 @@ namespace Timelapse.Database
     /// <summary>
     /// A row in the image database representing a single image.
     /// </summary>
-    public class ImageProperties
+    public class ImageRow : DataRowBackedObject
     {
-        public string Date { get; set; }
-        public string FileName { get; set; }
-        public long ID { get; set; }
-        public ImageQualityFilter ImageQuality { get; set; }
-        public string InitialRootFolderName { get; set; }
-        public string RelativePath { get; set; }
-        public string Time { get; set; }
-
-        public ImageProperties(string imageFolderPath, FileInfo imageFile)
+        public string Date  
         {
-            this.FileName = imageFile.Name;
-            this.ID = Constants.Database.InvalidID;
-            this.ImageQuality = ImageQualityFilter.Ok;
-            this.InitialRootFolderName = Path.GetFileName(imageFolderPath);
-            // GetRelativePath() includes the image's file name; remove that from the relative path as it's stored separately
-            // GetDirectoryName() returns String.Empty if there's no relative path; the SQL layer treats this inconsistently, resulting in 
-            // DataRows returning with RelativePath = String.Empty even if null is passed despite setting String.Empty as a column default
-            // resulting in RelativePath = null.  As a result, String.IsNullOrEmpty() is the appropriate test for lack of a RelativePath.
-            this.RelativePath = NativeMethods.GetRelativePath(imageFolderPath, imageFile.FullName);
-            this.RelativePath = Path.GetDirectoryName(this.RelativePath);
-            
-            // Typically the creation time is the time a file was created in the local file system and the last write time when it was
-            // last modified ever in any file system.  So, for example, copying an image from a camera's SD card to a computer results
-            // in the image file on the computer having a write time which is before its creation time.  Check both and take the lesser 
-            // of the two to provide a best effort default.  In most cases it's desirable to see if a more accurate time can be obtained
-            // from the image's EXIF metadata.
-            DateTime earliestTime = imageFile.CreationTime < imageFile.LastWriteTime ? imageFile.CreationTime : imageFile.LastWriteTime;
-            this.SetDateAndTime(earliestTime);
+            get { return this.Row.GetStringField(Constants.DatabaseColumn.Date); }
+            set { this.Row.SetField(Constants.DatabaseColumn.Date, value); }
         }
 
-        public ImageProperties(DataRow imageRow)
+        public string FileName
         {
-            this.Date = imageRow.GetStringField(Constants.DatabaseColumn.Date);
-            this.FileName = imageRow.GetStringField(Constants.DatabaseColumn.File);
-            this.ID = (long)imageRow[Constants.DatabaseColumn.ID];
-            this.ImageQuality = (ImageQualityFilter)Enum.Parse(typeof(ImageQualityFilter), imageRow.GetStringField(Constants.DatabaseColumn.ImageQuality));
-            this.InitialRootFolderName = imageRow.GetStringField(Constants.DatabaseColumn.Folder);
-            this.RelativePath = imageRow.GetStringField(Constants.DatabaseColumn.RelativePath);
-            this.Time = imageRow.GetStringField(Constants.DatabaseColumn.Time);
+            get { return this.Row.GetStringField(Constants.DatabaseColumn.File); }
+            set { this.Row.SetField(Constants.DatabaseColumn.File, value); }
+        }
+
+        public long ID
+        {
+            get { return this.Row.GetID();  }
+        }
+
+        public ImageQualityFilter ImageQuality
+        {
+            get { return this.Row.GetEnumField<ImageQualityFilter>(Constants.DatabaseColumn.ImageQuality); }
+            set { this.Row.SetField<ImageQualityFilter>(Constants.DatabaseColumn.ImageQuality, value); }
+        }
+
+        public string InitialRootFolderName
+        {
+            get { return this.Row.GetStringField(Constants.DatabaseColumn.Folder); }
+            set { this.Row.SetField(Constants.DatabaseColumn.Folder, value); }
+        }
+
+        public string RelativePath
+        {
+            get { return this.Row.GetStringField(Constants.DatabaseColumn.RelativePath); }
+            set { this.Row.SetField(Constants.DatabaseColumn.RelativePath, value); }
+        }
+
+        public string Time
+        {
+            get { return this.Row.GetStringField(Constants.DatabaseColumn.Time); }
+            set { this.Row.SetField(Constants.DatabaseColumn.Time, value); }
+        }
+
+        public ImageRow(DataRow row)
+            : base(row)
+        {
+        }
+
+        public override ColumnTuplesWithWhere GetColumnTuples()
+        {
+            List<ColumnTuple> columnTuples = new List<ColumnTuple>();
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Date, this.Date));
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.File, this.FileName));
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.ImageQuality, this.ImageQuality.ToString()));
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Folder, this.InitialRootFolderName));
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.RelativePath, this.RelativePath));
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Time, this.Time));
+            return new ColumnTuplesWithWhere(columnTuples, this.ID);
         }
 
         public DateTime GetDateTime()

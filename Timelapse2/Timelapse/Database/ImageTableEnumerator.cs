@@ -4,12 +4,12 @@ using System.Collections.Generic;
 
 namespace Timelapse.Database
 {
-    public class ImageTableEnumerator : IEnumerator<ImageProperties>
+    public class ImageTableEnumerator : IEnumerator<ImageRow>
     {
         protected ImageDatabase Database { get; private set; }
 
         // the current image, null if its no been set or if the database is empty
-        public ImageProperties Current { get; private set; }
+        public ImageRow Current { get; private set; }
         public int CurrentRow { get; private set; }
 
         public ImageTableEnumerator(ImageDatabase imageDatabase) :
@@ -69,7 +69,7 @@ namespace Timelapse.Database
             {
                 this.CurrentRow = imageRowIndex;
                 // rebuild ImageProperties regardless of whether the row changed or not as this seek may be a refresh after a database change
-                this.Current = new ImageProperties(this.Database.ImageDataTable.Rows[imageRowIndex]);
+                this.Current = new ImageRow(this.Database.ImageDataTable.Rows[imageRowIndex]);
                 return true;
             }
 

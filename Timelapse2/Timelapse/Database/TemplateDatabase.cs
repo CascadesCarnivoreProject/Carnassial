@@ -53,73 +53,68 @@ namespace Timelapse.Database
             return templateDatabase;
         }
 
-        public DataRow AddUserDefinedControl(string controlType)
+        public ControlRow AddUserDefinedControl(string controlType)
         {
             // create the row for the new control in the data table
-            DataRow newRow = this.TemplateTable.NewRow();
+            ControlRow newControl = new ControlRow(this.TemplateTable.NewRow());
             string dataLabelPrefix;
             switch (controlType)
             {
                 case Constants.Control.Counter:
                     dataLabelPrefix = Constants.Control.Counter;
-                    newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.CounterValue;
-                    newRow[Constants.Control.Type] = Constants.Control.Counter;
-                    newRow[Constants.Control.TextBoxWidth] = Constants.ControlDefault.CounterWidth;
-                    newRow[Constants.Control.Copyable] = false;
-                    newRow[Constants.Control.Visible] = true;
-                    newRow[Constants.Control.Tooltip] = Constants.ControlDefault.CounterTooltip;
+                    newControl.DefaultValue = Constants.ControlDefault.CounterValue;
+                    newControl.Type = Constants.Control.Counter;
+                    newControl.TextBoxWidth = Constants.ControlDefault.CounterWidth;
+                    newControl.Copyable = false;
+                    newControl.Visible = true;
+                    newControl.Tooltip = Constants.ControlDefault.CounterTooltip;
                     break;
                 case Constants.Control.Note:
                     dataLabelPrefix = Constants.Control.Note;
-                    newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.Value;
-                    newRow[Constants.Control.Type] = Constants.Control.Note;
-                    newRow[Constants.Control.TextBoxWidth] = Constants.ControlDefault.NoteWidth;
-                    newRow[Constants.Control.Copyable] = true;
-                    newRow[Constants.Control.Visible] = true;
-                    newRow[Constants.Control.Tooltip] = Constants.ControlDefault.NoteTooltip;
+                    newControl.DefaultValue = Constants.ControlDefault.Value;
+                    newControl.Type = Constants.Control.Note;
+                    newControl.TextBoxWidth = Constants.ControlDefault.NoteWidth;
+                    newControl.Copyable = true;
+                    newControl.Visible = true;
+                    newControl.Tooltip = Constants.ControlDefault.NoteTooltip;
                     break;
                 case Constants.Control.FixedChoice:
                     dataLabelPrefix = Constants.Control.Choice;
-                    newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.Value;
-                    newRow[Constants.Control.Type] = Constants.Control.FixedChoice;
-                    newRow[Constants.Control.TextBoxWidth] = Constants.ControlDefault.FixedChoiceWidth;
-                    newRow[Constants.Control.Copyable] = true;
-                    newRow[Constants.Control.Visible] = true;
-                    newRow[Constants.Control.Tooltip] = Constants.ControlDefault.FixedChoiceTooltip;
+                    newControl.DefaultValue = Constants.ControlDefault.Value;
+                    newControl.Type = Constants.Control.FixedChoice;
+                    newControl.TextBoxWidth = Constants.ControlDefault.FixedChoiceWidth;
+                    newControl.Copyable = true;
+                    newControl.Visible = true;
+                    newControl.Tooltip = Constants.ControlDefault.FixedChoiceTooltip;
                     break;
                 case Constants.Control.Flag:
                     dataLabelPrefix = Constants.Control.Flag;
-                    newRow[Constants.Control.DefaultValue] = Constants.ControlDefault.FlagValue;
-                    newRow[Constants.Control.Type] = Constants.Control.Flag;
-                    newRow[Constants.Control.TextBoxWidth] = Constants.ControlDefault.FlagWidth;
-                    newRow[Constants.Control.Copyable] = true;
-                    newRow[Constants.Control.Visible] = true;
-                    newRow[Constants.Control.Tooltip] = Constants.ControlDefault.FlagTooltip;
+                    newControl.DefaultValue = Constants.ControlDefault.FlagValue;
+                    newControl.Type = Constants.Control.Flag;
+                    newControl.TextBoxWidth = Constants.ControlDefault.FlagWidth;
+                    newControl.Copyable = true;
+                    newControl.Visible = true;
+                    newControl.Tooltip = Constants.ControlDefault.FlagTooltip;
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", controlType));
             }
 
             string dataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
-            newRow[Constants.Control.ControlOrder] = this.TemplateTable.Rows.Count + 1;
-            newRow[Constants.Control.DataLabel] = dataLabel;
-            newRow[Constants.Control.Label] = dataLabel;
-            newRow[Constants.Control.List] = Constants.ControlDefault.Value;
-            newRow[Constants.Control.SpreadsheetOrder] = this.TemplateTable.Rows.Count + 1;
+            newControl.ControlOrder = this.TemplateTable.Rows.Count + 1;
+            newControl.DataLabel = dataLabel;
+            newControl.Label = dataLabel;
+            newControl.List = Constants.ControlDefault.Value;
+            newControl.SpreadsheetOrder = this.TemplateTable.Rows.Count + 1;
 
             // add the new control to the database
-            List<ColumnTuple> controlInsert = new List<ColumnTuple>();
-            for (int column = 0; column < this.TemplateTable.Columns.Count; column++)
-            {
-                controlInsert.Add(new ColumnTuple(this.TemplateTable.Columns[column].ColumnName, newRow[column].ToString()));
-            }
-            List<List<ColumnTuple>> controlInsertWrapper = new List<List<ColumnTuple>>() { controlInsert };
+            List<List<ColumnTuple>> controlInsertWrapper = new List<List<ColumnTuple>>() { newControl.GetColumnTuples().Columns };
             this.Database.Insert(Constants.Database.TemplateTable, controlInsertWrapper);
 
             // update the in memory table to reflect current database content
             // could just add the new row to the table but this is done in case a bug results in the insert lacking perfect fidelity
             this.TemplateTable = this.GetControlsSortedByControlOrder();
-            return this.TemplateTable.Rows[this.TemplateTable.Rows.Count - 1];
+            return new ControlRow(this.TemplateTable.Rows[this.TemplateTable.Rows.Count - 1]);
         }
 
         public void Dispose()
@@ -138,10 +133,11 @@ namespace Timelapse.Database
             List<string> dataLabels = new List<string>();
             for (int row = 0; row < this.TemplateTable.Rows.Count; row++)
             {
-                string dataLabel = this.TemplateTable.Rows[row].GetStringField(Constants.Control.DataLabel);
+                ControlRow control = new ControlRow(this.TemplateTable.Rows[row]);
+                string dataLabel = control.DataLabel;
                 if (dataLabel == String.Empty)
                 {
-                    dataLabel = this.TemplateTable.Rows[row].GetStringField(Constants.Control.Label);
+                    dataLabel = control.Label;
                 }
                 Debug.Assert(String.IsNullOrWhiteSpace(dataLabel) == false, String.Format("Encountered empty data label and label at row {0} in template table.", row));
 
@@ -157,25 +153,24 @@ namespace Timelapse.Database
         public bool IsControlCopyable(string dataLabel)
         {
             long id = this.GetControlIDFromTemplateTable(dataLabel);
-            DataRow foundRow = this.TemplateTable.Rows.Find(id);
-            bool isCopyable;
-            return bool.TryParse(foundRow.GetStringField(Constants.Control.Copyable), out isCopyable) ? isCopyable : false;
+            ControlRow control = new ControlRow(this.TemplateTable.Rows.Find(id));
+            return control.Copyable;
         }
 
-        public void RemoveUserDefinedControl(DataRow controlToRemove)
+        public void RemoveUserDefinedControl(ControlRow controlToRemove)
         {
-            string controlType = controlToRemove.GetStringField(Constants.Control.Type);
+            string controlType = controlToRemove.Type;
             if (Constants.Control.StandardTypes.Contains(controlType))
             {
                 throw new NotSupportedException(String.Format("Standard control of type {0} cannot be removed.", controlType));
             }
 
             // capture state
-            long removedControlOrder = (long)controlToRemove[Constants.Control.ControlOrder];
-            long removedSpreadsheetOrder = (long)controlToRemove[Constants.Control.SpreadsheetOrder];
+            long removedControlOrder = controlToRemove.ControlOrder;
+            long removedSpreadsheetOrder = controlToRemove.SpreadsheetOrder;
 
             // drop the control from the database and data table
-            string where = Constants.DatabaseColumn.ID + " = " + controlToRemove[Constants.DatabaseColumn.ID];
+            string where = Constants.DatabaseColumn.ID + " = " + controlToRemove.ID;
             this.Database.DeleteRows(Constants.Database.TemplateTable, where);
             this.TemplateTable = this.GetControlsSortedByControlOrder();
 
@@ -183,24 +178,24 @@ namespace Timelapse.Database
             List<ColumnTuplesWithWhere> controlUpdates = new List<ColumnTuplesWithWhere>();
             for (int rowIndex = 0; rowIndex < this.TemplateTable.Rows.Count; rowIndex++)
             {
-                DataRow row = this.TemplateTable.Rows[rowIndex];
-                long controlOrder = (long)row[Constants.Control.ControlOrder];
-                long spreadsheetOrder = (long)row[Constants.Control.SpreadsheetOrder];
+                ControlRow control = new ControlRow(this.TemplateTable.Rows[rowIndex]);
+                long controlOrder = control.ControlOrder;
+                long spreadsheetOrder = control.SpreadsheetOrder;
 
                 if (controlOrder > removedControlOrder)
                 {
                     List<ColumnTuple> controlUpdate = new List<ColumnTuple>();
                     controlUpdate.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder - 1));
-                    row[Constants.Control.ControlOrder] = controlOrder - 1;
-                    controlUpdates.Add(new ColumnTuplesWithWhere(controlUpdate, (long)row[Constants.DatabaseColumn.ID]));
+                    control.ControlOrder = controlOrder - 1;
+                    controlUpdates.Add(new ColumnTuplesWithWhere(controlUpdate, control.ID));
                 }
 
                 if (spreadsheetOrder > removedSpreadsheetOrder)
                 {
                     List<ColumnTuple> controlUpdate = new List<ColumnTuple>();
                     controlUpdate.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, spreadsheetOrder - 1));
-                    row[Constants.Control.SpreadsheetOrder] = spreadsheetOrder - 1;
-                    controlUpdates.Add(new ColumnTuplesWithWhere(controlUpdate, (long)row[Constants.DatabaseColumn.ID]));
+                    control.SpreadsheetOrder = spreadsheetOrder - 1;
+                    controlUpdates.Add(new ColumnTuplesWithWhere(controlUpdate, control.ID));
                 }
             }
             this.Database.Update(Constants.Database.TemplateTable, controlUpdates);
@@ -210,11 +205,9 @@ namespace Timelapse.Database
             this.TemplateTable = this.GetControlsSortedByControlOrder();
         }
 
-        public void SyncControlToDatabase(DataRow control)
+        public void SyncControlToDatabase(ControlRow control)
         {
-            List<ColumnTuple> columns = this.GetTuples(this.TemplateTable, control);
-            ColumnTuplesWithWhere updateQuery = new ColumnTuplesWithWhere(columns, (long)control[Constants.DatabaseColumn.ID]);
-            this.Database.Update(Constants.Database.TemplateTable, updateQuery);
+            this.Database.Update(Constants.Database.TemplateTable, control.GetColumnTuples());
 
             // it's possible the passed data row isn't attached to TemplateTable, so refresh the table just in case
             this.TemplateTable = this.GetControlsSortedByControlOrder();
@@ -311,13 +304,14 @@ namespace Timelapse.Database
         }
 
         /// <summary>Given a data label, get the corresponding data entry control</summary>
-        public DataRow GetControlFromTemplateTable(string dataLabel)
+        public ControlRow GetControlFromTemplateTable(string dataLabel)
         {
-            for (int i = 0; i < this.TemplateTable.Rows.Count; i++)
+            for (int row = 0; row < this.TemplateTable.Rows.Count; row++)
             {
-                if (dataLabel.Equals(this.TemplateTable.Rows[i][Constants.Control.DataLabel]))
+                ControlRow control = new ControlRow(this.TemplateTable.Rows[row]);
+                if (dataLabel.Equals(control.DataLabel))
                 {
-                    return this.TemplateTable.Rows[i];
+                    return control;
                 }
             }
             return null;
@@ -326,14 +320,12 @@ namespace Timelapse.Database
         /// <summary>Given a data label, get the id of the corresponding data entry control</summary>
         protected long GetControlIDFromTemplateTable(string dataLabel)
         {
-            for (int i = 0; i < this.TemplateTable.Rows.Count; i++)
+            ControlRow control = this.GetControlFromTemplateTable(dataLabel);
+            if (control == null)
             {
-                if (dataLabel.Equals(this.TemplateTable.Rows[i][Constants.Control.DataLabel]))
-                {
-                    return (long)this.TemplateTable.Rows[i][Constants.DatabaseColumn.ID];
-                }
+                return -1;
             }
-            return -1;
+            return control.ID;
         }
 
         protected List<ColumnTuple> GetTuples(DataTable dataTable, DataRow row)
@@ -522,28 +514,27 @@ namespace Timelapse.Database
             Dictionary<string, long> newSpreadsheetOrderByDataLabel = new Dictionary<string, long>();
             for (int rowIndex = 0; rowIndex < this.TemplateTable.Rows.Count; ++rowIndex)
             {
-                DataRow control = this.TemplateTable.Rows[rowIndex];
-                string controlDataLabel = control.GetStringField(Constants.Control.DataLabel);
-                if (controlDataLabel == dataLabel)
+                ControlRow control = new ControlRow(this.TemplateTable.Rows[rowIndex]);
+                if (control.DataLabel == dataLabel)
                 {
                     newControlOrderByDataLabel.Add(dataLabel, order);
                     newSpreadsheetOrderByDataLabel.Add(dataLabel, order);
                 }
                 else
                 {
-                    long currentControlOrder = (long)control[Constants.Control.ControlOrder];
+                    long currentControlOrder = control.ControlOrder;
                     if (currentControlOrder >= order)
                     {
                         ++currentControlOrder;
                     }
-                    newControlOrderByDataLabel.Add(controlDataLabel, currentControlOrder);
+                    newControlOrderByDataLabel.Add(control.DataLabel, currentControlOrder);
 
-                    long currentSpreadsheetOrder = (long)control[Constants.Control.SpreadsheetOrder];
+                    long currentSpreadsheetOrder = control.SpreadsheetOrder;
                     if (currentSpreadsheetOrder >= order)
                     {
                         ++currentSpreadsheetOrder;
                     }
-                    newSpreadsheetOrderByDataLabel.Add(controlDataLabel, currentSpreadsheetOrder);
+                    newSpreadsheetOrderByDataLabel.Add(control.DataLabel, currentSpreadsheetOrder);
                 }
             }
 
@@ -573,10 +564,10 @@ namespace Timelapse.Database
                 long maximumID = 0;
                 for (int row = 0; row < this.TemplateTable.Rows.Count; ++row)
                 {
-                    long id = (long)this.TemplateTable.Rows[row][Constants.DatabaseColumn.ID];
-                    if (maximumID < id)
+                    ControlRow control = new ControlRow(this.TemplateTable.Rows[row]);
+                    if (maximumID < control.ID)
                     {
-                        maximumID = id;
+                        maximumID = control.ID;
                     }
                 }
                 Debug.Assert((maximumID > 0) && (maximumID <= Int64.MaxValue), String.Format("Maximum ID found is {0}, which is out of range.", maximumID));
@@ -605,13 +596,14 @@ namespace Timelapse.Database
             this.TemplateTable = this.GetControlsSortedByControlOrder();
         }
 
-        private string GetNextUniqueDataLabel(string dataLabelPrefix)
+        public string GetNextUniqueDataLabel(string dataLabelPrefix)
         {
             // get all existing data labels, as we have to ensure that a new data label doesn't have the same name as an existing one
             List<string> dataLabels = new List<string>();
             for (int row = 0; row < this.TemplateTable.Rows.Count; row++)
             {
-                dataLabels.Add(this.TemplateTable.Rows[row].GetStringField(Constants.Control.DataLabel));
+                ControlRow control = new ControlRow(this.TemplateTable.Rows[row]);
+                dataLabels.Add(control.DataLabel);
             }
 
             // If the data label name exists, keep incrementing the count that is appended to the end
@@ -640,36 +632,30 @@ namespace Timelapse.Database
             // As well, the contents of the template table are loaded into memory.
             for (int rowIndex = 0; rowIndex < this.TemplateTable.Rows.Count; rowIndex++)
             {
-                DataRow row = this.TemplateTable.Rows[rowIndex];
-
-                // Get various values from each row
-                string controlType = row.GetStringField(Constants.Control.Type);
-                string label = row.GetStringField(Constants.Control.Label);
-                string dataLabel = row.GetStringField(Constants.Control.DataLabel);
+                ControlRow control = new ControlRow(this.TemplateTable.Rows[rowIndex]);
 
                 // Check if various values are empty, and if so update the row and fill the dataline with appropriate defaults
                 ColumnTuplesWithWhere columnsToUpdate = new ColumnTuplesWithWhere();    // holds columns which have changed for the current control
-                bool noDataLabel = String.IsNullOrWhiteSpace(dataLabel);
-                if (noDataLabel && String.IsNullOrWhiteSpace(label))
+                bool noDataLabel = String.IsNullOrWhiteSpace(control.DataLabel);
+                if (noDataLabel && String.IsNullOrWhiteSpace(control.Label))
                 {
-                    dataLabel = this.GetNextUniqueDataLabel(controlType);
+                    string dataLabel = this.GetNextUniqueDataLabel(control.Type);
                     columnsToUpdate.Columns.Add(new ColumnTuple(Constants.Control.Label, dataLabel));
                     columnsToUpdate.Columns.Add(new ColumnTuple(Constants.Control.DataLabel, dataLabel));
-                    row[Constants.Control.Label] = dataLabel;
-                    row[Constants.Control.DataLabel] = dataLabel;
+                    control.Label = dataLabel;
+                    control.DataLabel = dataLabel;
                 }
                 else if (noDataLabel)
                 {
                     // No data label but a label, so use the label's value as the data label
-                    columnsToUpdate.Columns.Add(new ColumnTuple(Constants.Control.DataLabel, label));
-                    row[Constants.Control.DataLabel] = label;
+                    columnsToUpdate.Columns.Add(new ColumnTuple(Constants.Control.DataLabel, control.Label));
+                    control.DataLabel = control.Label;
                 }
 
                 // Now add the new values to the database
                 if (columnsToUpdate.Columns.Count > 0)
                 {
-                    long id = (long)row[Constants.DatabaseColumn.ID];
-                    columnsToUpdate.SetWhere(id);
+                    columnsToUpdate.SetWhere(control.ID);
                     this.Database.Update(Constants.Database.TemplateTable, columnsToUpdate);
                 }
             }

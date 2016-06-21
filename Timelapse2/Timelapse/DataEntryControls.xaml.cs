@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.Windows.Controls;
 using Timelapse.Database;
@@ -29,80 +28,65 @@ namespace Timelapse
             for (int row = 0; row < database.TemplateTable.Rows.Count; row++)
             {
                 // no point in generating a control if it doesn't render in the UX
-                DataRow dataRow = database.TemplateTable.Rows[row];
-                string visiblityAsString = dataRow.GetStringField(Constants.Control.Visible);
-                bool visible = String.Equals(Boolean.TrueString, visiblityAsString, StringComparison.OrdinalIgnoreCase) ? true : false;
-                if (visible == false)
+                ControlRow control = new ControlRow(database.TemplateTable.Rows[row]);
+                if (control.Visible == false)
                 {
                     continue;
                 }
 
-                // get the values for the control
-                string copyableAsString = dataRow.GetStringField(Constants.Control.Copyable);
-                bool copyable = String.Equals(Boolean.TrueString, copyableAsString, StringComparison.OrdinalIgnoreCase) ? true : false;
-                string dataLabel = dataRow.GetStringField(Constants.Control.DataLabel);
-                string defaultValue = dataRow.GetStringField(Constants.Control.DefaultValue);
-                long id = (long)dataRow[Constants.DatabaseColumn.ID]; // TODO Need to use this ID to pass between controls and data
-                string label = dataRow.GetStringField(Constants.Control.Label);
-                string list = dataRow.GetStringField(Constants.Control.List);
-                string tooltip = dataRow.GetStringField(Constants.Control.Tooltip);
-                string controlType = dataRow.GetStringField(Constants.Control.Type);
-                string widthAsString = dataRow.GetStringField(Constants.Control.TextBoxWidth);
-                int width = (widthAsString == String.Empty) ? 0 : Int32.Parse(widthAsString);
-
                 DataEntryControl controlToAdd;
-                if (controlType == Constants.DatabaseColumn.File ||
-                    controlType == Constants.DatabaseColumn.RelativePath ||
-                    controlType == Constants.DatabaseColumn.Folder ||
-                    controlType == Constants.DatabaseColumn.Date ||
-                    controlType == Constants.DatabaseColumn.Time ||
-                    controlType == Constants.Control.Note)
+                if (control.Type == Constants.DatabaseColumn.File ||
+                    control.Type == Constants.DatabaseColumn.RelativePath ||
+                    control.Type == Constants.DatabaseColumn.Folder ||
+                    control.Type == Constants.DatabaseColumn.Date ||
+                    control.Type == Constants.DatabaseColumn.Time ||
+                    control.Type == Constants.Control.Note)
                 {
-                    DataEntryNote noteControl = new DataEntryNote(dataLabel, this);
-                    noteControl.Label = label;
-                    noteControl.Width = width;
-                    if (controlType == Constants.DatabaseColumn.Folder || 
-                        controlType == Constants.DatabaseColumn.RelativePath ||
-                        controlType == Constants.DatabaseColumn.File)
+                    DataEntryNote noteControl = new DataEntryNote(control.DataLabel, this);
+                    noteControl.Label = control.Label;
+                    noteControl.Width = control.TextBoxWidth;
+                    if (control.Type == Constants.DatabaseColumn.Folder || 
+                        control.Type == Constants.DatabaseColumn.RelativePath ||
+                        control.Type == Constants.DatabaseColumn.File)
                     {
                         // File name and path aren't editable by the user 
                         noteControl.ReadOnly = true;
                     }
                     controlToAdd = noteControl;
                 }
-                else if (controlType == Constants.Control.Flag || controlType == Constants.Control.DeleteFlag)
+                else if (control.Type == Constants.Control.Flag || control.Type == Constants.Control.DeleteFlag)
                 {
-                    DataEntryFlag flagControl = new DataEntryFlag(dataLabel, this);
-                    flagControl.Label = label;
-                    flagControl.Width = width;
+                    DataEntryFlag flagControl = new DataEntryFlag(control.DataLabel, this);
+                    flagControl.Label = control.Label;
+                    flagControl.Width = control.TextBoxWidth;
                     controlToAdd = flagControl;
                 }
-                else if (controlType == Constants.Control.Counter)
+                else if (control.Type == Constants.Control.Counter)
                 {
-                    DataEntryCounter counterControl = new DataEntryCounter(dataLabel, this);
-                    counterControl.Label = label;
-                    counterControl.Width = width;
+                    DataEntryCounter counterControl = new DataEntryCounter(control.DataLabel, this);
+                    counterControl.Label = control.Label;
+                    counterControl.Width = control.TextBoxWidth;
                     controlToAdd = counterControl;
                 }
-                else if (controlType == Constants.Control.FixedChoice || controlType == Constants.DatabaseColumn.ImageQuality)
+                else if (control.Type == Constants.Control.FixedChoice || control.Type == Constants.DatabaseColumn.ImageQuality)
                 {
-                    DataEntryChoice choiceControl = new DataEntryChoice(dataLabel, this, list);
-                    choiceControl.Label = label;
-                    choiceControl.Width = width;
+                    DataEntryChoice choiceControl = new DataEntryChoice(control.DataLabel, this, control.List);
+                    choiceControl.Label = control.Label;
+                    choiceControl.Width = control.TextBoxWidth;
                     controlToAdd = choiceControl;
                 }
                 else
                 {
-                    Debug.Assert(false, String.Format("Unhandled control type {0}.", controlType));
+                    Debug.Assert(false, String.Format("Unhandled control type {0}.", control.Type));
                     continue;
                 }
 
-                controlToAdd.Content = defaultValue;
-                controlToAdd.Copyable = copyable;
-                controlToAdd.Tooltip = tooltip;
+                controlToAdd.Content = control.DefaultValue;
+                controlToAdd.Copyable = control.Copyable;
+                controlToAdd.Tooltip = control.Tooltip;
                 this.ControlGrid.Inlines.Add(controlToAdd.Container);
                 this.Controls.Add(controlToAdd);
-                this.ControlsByDataLabel.Add(dataLabel, controlToAdd);
+                this.ControlsByDataLabel.Add(control.DataLabel, controlToAdd);
             }
 
             dataEntryPropagator.SetDataEntryCallbacks(this.ControlsByDataLabel);

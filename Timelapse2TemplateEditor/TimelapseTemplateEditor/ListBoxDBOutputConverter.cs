@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows.Data;
 using Timelapse.Util;
 
-namespace TimelapseTemplateEditor
+namespace Timelapse.Editor
 {
     /// <summary>
     /// Converter for ComboBox. Turns the CSV string into an array

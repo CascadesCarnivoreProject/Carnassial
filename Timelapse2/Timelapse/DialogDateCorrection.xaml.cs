@@ -19,7 +19,7 @@ namespace Timelapse
         private ImageDatabase database;
 
         // Create the interface
-        public DialogDateCorrection(ImageDatabase database, ImageProperties imageToCorrect)
+        public DialogDateCorrection(ImageDatabase database, ImageRow imageToCorrect)
         {
             this.InitializeComponent();
             this.database = database;

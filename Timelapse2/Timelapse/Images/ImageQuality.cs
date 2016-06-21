@@ -7,24 +7,23 @@ namespace Timelapse.Images
 {
     // Because the bgw worker is asynchronous, we have to create a copy of the data at each invocation, 
     // otherwise the values may have changed on the other thread.
-    public class ImageQuality : ImageProperties
+    public class ImageQuality
     {
         public WriteableBitmap Bitmap { get; set; }
         public double DarkPixelRatioFound { get; set; }
+        public string FileName { get; set; }
         public bool IsColor { get; set; }
-        public string NewImageQuality { get; set; }
-        public string OldImageQuality { get; set; }
-        public bool Update { get; set; }
+        public Nullable<ImageQualityFilter> NewImageQuality { get; set; }
+        public ImageQualityFilter OldImageQuality { get; set; }
 
-        public ImageQuality(DataRow imageRow)
-            : base(imageRow)
+        public ImageQuality(ImageRow image)
         {
             this.Bitmap = null;
             this.DarkPixelRatioFound = 0;
+            this.FileName = image.FileName;
             this.IsColor = false;
-            this.OldImageQuality = imageRow.GetStringField(Constants.DatabaseColumn.ImageQuality);
-            this.NewImageQuality = String.Empty;
-            this.Update = false;
+            this.OldImageQuality = image.ImageQuality;
+            this.NewImageQuality = null;
         }
     }
 }

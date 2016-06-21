@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -359,14 +360,14 @@ namespace Timelapse
                 int images = database.CurrentlySelectedImageCount;
                 for (int image = 0; image < images; image++)
                 {
-                    ImageQuality imageQuality = new ImageQuality(database.ImageDataTable.Rows[image]);
+                    ImageRow imageRow = new ImageRow(database.ImageDataTable.Rows[image]);
+                    ImageQuality imageQuality = new ImageQuality(imageRow);
 
                     // If its not a valid image, say so and go onto the next one.
-                    if (!imageQuality.OldImageQuality.Equals(Constants.ImageQuality.Ok) && 
-                        !imageQuality.OldImageQuality.Equals(Constants.ImageQuality.Dark))
+                    if (!(imageQuality.OldImageQuality == ImageQualityFilter.Ok) && 
+                        !(imageQuality.OldImageQuality == ImageQualityFilter.Dark))
                     {
-                        imageQuality.NewImageQuality = String.Empty;
-                        imageQuality.Update = false;
+                        imageQuality.NewImageQuality = null;
                         backgroundWorker.ReportProgress(0, imageQuality);
                         continue;
                     }
@@ -376,23 +377,19 @@ namespace Timelapse
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just go to the catch.
-                        imageQuality.Bitmap = imageQuality.LoadWriteableBitmap(this.database.FolderPath);
-                        imageQuality.NewImageQuality = imageQuality.Bitmap.GetImageQuality(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor).ToString();
+                        imageQuality.Bitmap = imageRow.LoadWriteableBitmap(this.database.FolderPath);
+                        imageQuality.NewImageQuality = imageQuality.Bitmap.GetImageQuality(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
                         imageQuality.IsColor = this.isColor;
                         imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
-                        if (imageQuality.OldImageQuality.Equals(imageQuality.NewImageQuality))
+                        if (imageQuality.OldImageQuality != imageQuality.NewImageQuality.Value)
                         {
-                            imageQuality.Update = false;
-                        }
-                        else
-                        {
-                            imageQuality.Update = true;
-                            database.UpdateImage(imageQuality.ID, Constants.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality);
+                            database.UpdateImage(imageRow.ID, Constants.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality.Value.ToString());
                         }
                     }
-                    catch // Image isn't there
+                    catch (Exception exception)
                     {
-                        imageQuality.Update = false;
+                        // Image isn't there
+                        Debug.Assert(false, "Exception while assessing image quality.", exception.ToString());
                     }
                     backgroundWorker.ReportProgress(0, imageQuality);
                 }

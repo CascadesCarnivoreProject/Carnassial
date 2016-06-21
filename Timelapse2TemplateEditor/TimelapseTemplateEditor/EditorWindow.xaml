@@ -1,7 +1,7 @@
-﻿<Window x:Class="TimelapseTemplateEditor.MainWindow"
+﻿<Window x:Class="Timelapse.Editor.EditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:TimelapseTemplateEditor"
+        xmlns:local="clr-namespace:Timelapse.Editor"
         Name="OnlyWindow"
         Title="Timelapse Template Editor" Height="910.957" Width="1244.808" MinHeight="560" MinWidth="800" Icon="32x32.ico" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
@@ -504,7 +504,7 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel>
-                                        <Button Name="btnButton" Tag="{Binding Path=ControlOrder}" Click="ChoiceListButton_Click"  local:MainWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay, Converter={StaticResource listConverter}}" Margin="1"  Content="Define List" >
+                                        <Button Name="btnButton" Tag="{Binding Path=ControlOrder}" Click="ChoiceListButton_Click"  local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay, Converter={StaticResource listConverter}}" Margin="1"  Content="Define List" >
                                             <Button.Style>
                                                 <Style TargetType="{x:Type Button}">
                                                     <Style.Triggers>

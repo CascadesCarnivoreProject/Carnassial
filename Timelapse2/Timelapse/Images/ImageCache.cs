@@ -230,7 +230,7 @@ namespace Timelapse.Images
             this.differenceBitmapCache[ImageDifference.Combined] = null;
         }
 
-        private bool TryGetBitmap(ImageProperties image, out WriteableBitmap bitmap)
+        private bool TryGetBitmap(ImageRow image, out WriteableBitmap bitmap)
         {
             if (this.unalteredBitmapsByID.TryGetValue(image.ID, out bitmap) == false)
             {
@@ -257,7 +257,7 @@ namespace Timelapse.Images
         private bool TryGetBitmap(int imageRow, out WriteableBitmap bitmap)
         {
             // get properties for the image to retrieve
-            ImageProperties imageProperties;
+            ImageRow imageProperties;
             if (imageRow == this.CurrentRow)
             {
                 imageProperties = this.Current;

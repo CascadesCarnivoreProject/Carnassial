@@ -1,11 +1,11 @@
 ﻿using System.Windows;
 
-namespace TimelapseTemplateEditor
+namespace Timelapse.Editor
 {
-    public class MainWindowExtensions
+    public class EditorWindowExtensions
     {
         private static readonly DependencyProperty ChoiceListProperty =
-            DependencyProperty.RegisterAttached("ChoiceList", typeof(string), typeof(MainWindowExtensions), new PropertyMetadata(default(string)));
+            DependencyProperty.RegisterAttached("ChoiceList", typeof(string), typeof(EditorWindowExtensions), new PropertyMetadata(default(string)));
 
         public static void SetChoiceList(UIElement element, string value)
         {

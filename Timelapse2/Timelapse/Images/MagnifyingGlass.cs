@@ -115,7 +115,7 @@ namespace Timelapse.Images
             this.lensCanvas.Children.Add(lineCrosshair2);
         }
 
-        internal void Redraw(Point mousePoint, Point imageControlPoint, double actualWidth, double actualHeight, Canvas canvasToMagnify)
+        public void Redraw(Point mousePoint, Point imageControlPoint, double actualWidth, double actualHeight, Canvas canvasToMagnify)
         {
             // Abort if we don't have an image to magnify
             if (canvasToMagnify == null)
@@ -298,12 +298,12 @@ namespace Timelapse.Images
         }
 
         // Hiding the magnifying glass does not affect its visibility state
-        internal void Hide()
+        public void Hide()
         {
             this.Visibility = Visibility.Collapsed;
         }
 
-        internal void ShowIfIsVisibilityDesired()
+        public void ShowIfIsVisibilityDesired()
         {
             if (this.IsVisibilityDesired)
             {

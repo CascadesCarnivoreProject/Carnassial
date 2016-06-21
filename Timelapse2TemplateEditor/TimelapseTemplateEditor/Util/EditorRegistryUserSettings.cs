@@ -1,7 +1,7 @@
 ﻿using Timelapse;
 using Timelapse.Util;
 
-namespace TimelapseTemplateEditor.Util
+namespace Timelapse.Editor.Util
 {
     internal class EditorRegistryUserSettings : RegistryUserSettings
     {

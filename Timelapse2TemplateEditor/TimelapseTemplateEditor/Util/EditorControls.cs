@@ -4,11 +4,10 @@ using System.Data;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using Timelapse;
 using Timelapse.Database;
 using Timelapse.Util;
 
-namespace TimelapseTemplateEditor.Util
+namespace Timelapse.Editor.Util
 {
     /// <summary>Generates controls in the provided wrap panel based upon the information in the data grid templateTable.</summary>
     /// <remarks>
@@ -19,42 +18,31 @@ namespace TimelapseTemplateEditor.Util
     /// </remarks>
     internal class EditorControls
     {
-        public static void Generate(MainWindow mainWindow, WrapPanel parent, DataTable templateTable)
+        public static void Generate(EditorWindow mainWindow, WrapPanel parent, DataTable templateTable)
         {
             // used for styling all content and label controls except ComboBoxes since the combo box style is commented out in DataEntryControls.xaml
             // and defined instead in MainWindow.xaml as an exception workaround
             DataEntryControls styleProvider = new DataEntryControls();
 
             parent.Children.Clear();
-            foreach (DataRow control in templateTable.Rows)
+            foreach (DataRow row in templateTable.Rows)
             {
-                // unpack control properties
-                string type = control.GetStringField(Constants.Control.Type);
-                string defaultValue = control.GetStringField(Constants.Control.DefaultValue);
-                string label = control.GetStringField(Constants.Control.Label);
-                string dataLabel = control.GetStringField(Constants.Control.DataLabel);
-                string tooltip = control.GetStringField(Constants.Control.Tooltip);
-                string widthAsString = control.GetStringField(Constants.Control.TextBoxWidth);
-                int width = String.IsNullOrEmpty(widthAsString) ? 0 : Convert.ToInt32(widthAsString);
-                string visiblityAsString = control.GetStringField(Constants.Control.Visible);
-                bool visiblity = String.Equals(visiblityAsString, Constants.Boolean.True, StringComparison.OrdinalIgnoreCase) ? true : false;
-                string list = control.GetStringField(Constants.Control.List);
-
-                if (defaultValue == String.Empty)
+                ControlRow control = new ControlRow(row);
+                if (control.DefaultValue == String.Empty)
                 {
-                    if (type == Constants.DatabaseColumn.Date)
+                    if (control.Type == Constants.DatabaseColumn.Date)
                     {
-                        defaultValue = DateTime.Now.ToString(Constants.Time.DateFormat); // "01-Jun-2016"
+                        control.DefaultValue = DateTime.Now.ToString(Constants.Time.DateFormat); // "01-Jun-2016"
                     }
-                    else if (type == Constants.DatabaseColumn.Time)
+                    else if (control.Type == Constants.DatabaseColumn.Time)
                     {
-                        defaultValue = DateTime.Now.ToString(Constants.Time.TimeFormatForUser); // "07:39 PM"
+                        control.DefaultValue = DateTime.Now.ToString(Constants.Time.TimeFormatForUser); // "07:39 PM"
                     }
                 }
 
                 // instantiate control UX objects
                 StackPanel stackPanel;
-                switch (type)
+                switch (control.Type)
                 {
                     case Constants.DatabaseColumn.File:
                     case Constants.DatabaseColumn.RelativePath:
@@ -62,34 +50,34 @@ namespace TimelapseTemplateEditor.Util
                     case Constants.DatabaseColumn.Date:
                     case Constants.DatabaseColumn.Time:
                     case Constants.Control.Note:
-                        Label noteLabel = CreateLabel(styleProvider, label, tooltip);
-                        TextBox noteContent = CreateTextBox(styleProvider, defaultValue, tooltip, width);
+                        Label noteLabel = CreateLabel(styleProvider, control.Label, control.Tooltip);
+                        TextBox noteContent = CreateTextBox(styleProvider, control.DefaultValue, control.Tooltip, control.TextBoxWidth);
                         stackPanel = CreateStackPanel(styleProvider, noteLabel, noteContent);
                         break;
                     case Constants.Control.Counter:
-                        RadioButton counterLabel = CreateRadioButton(styleProvider, label, tooltip);
-                        TextBox coutnerContent = CreateTextBox(styleProvider, defaultValue, tooltip, width);
+                        RadioButton counterLabel = CreateRadioButton(styleProvider, control.Label, control.Tooltip);
+                        TextBox coutnerContent = CreateTextBox(styleProvider, control.DefaultValue, control.Tooltip, control.TextBoxWidth);
                         stackPanel = CreateStackPanel(styleProvider, counterLabel, coutnerContent);
                         break;
                     case Constants.Control.Flag:
                     case Constants.Control.DeleteFlag:
-                        Label flagLabel = CreateLabel(styleProvider, label, tooltip);
-                        CheckBox flagContent = CreateFlag(styleProvider, String.Empty, tooltip);
-                        flagContent.IsChecked = (defaultValue == Constants.Boolean.True) ? true : false;
+                        Label flagLabel = CreateLabel(styleProvider, control.Label, control.Tooltip);
+                        CheckBox flagContent = CreateFlag(styleProvider, String.Empty, control.Tooltip);
+                        flagContent.IsChecked = (control.DefaultValue == Constants.Boolean.True) ? true : false;
                         stackPanel = CreateStackPanel(styleProvider, flagLabel, flagContent);
                         break;
                     case Constants.Control.FixedChoice:
                     case Constants.DatabaseColumn.ImageQuality:
-                        Label choiceLabel = CreateLabel(styleProvider, label, tooltip);
-                        ComboBox choiceContent = CreateComboBox(mainWindow, list, tooltip, width);
+                        Label choiceLabel = CreateLabel(styleProvider, control.Label, control.Tooltip);
+                        ComboBox choiceContent = CreateComboBox(mainWindow, control.List, control.Tooltip, control.TextBoxWidth);
                         stackPanel = CreateStackPanel(styleProvider, choiceLabel, choiceContent);
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled control type {0}.", type));
+                        throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
                 }
 
-                stackPanel.Tag = dataLabel;
-                if (visiblity == false)
+                stackPanel.Tag = control.DataLabel;
+                if (control.Visible == false)
                 {
                     stackPanel.Visibility = Visibility.Collapsed;
                 }
@@ -165,7 +153,7 @@ namespace TimelapseTemplateEditor.Util
             return checkBox;
         }
 
-        private static ComboBox CreateComboBox(MainWindow styleProvider, string list, string tooltip, int width)
+        private static ComboBox CreateComboBox(EditorWindow styleProvider, string list, string tooltip, int width)
         {
             ComboBox comboBox = new ComboBox();
             comboBox.ToolTip = tooltip;

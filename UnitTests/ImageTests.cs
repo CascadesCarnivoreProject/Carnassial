@@ -97,10 +97,11 @@ namespace Timelapse.UnitTests
             string imageFilePath = Path.Combine(this.WorkingDirectory, TestConstant.File.InfraredMartenImage);
 
             ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015, Constants.File.DefaultImageDatabaseFileName);
-            using (DialogPopulateFieldWithMetadata populateFieldDialog = new DialogPopulateFieldWithMetadata(imageDatabase, imageFilePath))
+            using (DialogPopulateFieldWithMetadata populateField = new DialogPopulateFieldWithMetadata(imageDatabase, imageFilePath))
             {
-                populateFieldDialog.LoadExif();
-                Dictionary<string, string> exif = (Dictionary<string, string>)populateFieldDialog.dg.ItemsSource;
+                PrivateObject populateFieldAccessor = new PrivateObject(populateField);
+                populateFieldAccessor.Invoke("LoadExif");
+                Dictionary<string, string> exif = (Dictionary<string, string>)populateField.dg.ItemsSource;
                 Assert.IsTrue(exif.Count > 0, "Expected at least one EXIF field to be retrieved from {0}", imageFilePath);
             }
         }
@@ -116,10 +117,12 @@ namespace Timelapse.UnitTests
                 new ImageExpectations(TestConstant.DefaultExpectation.InfraredMartenImage)
             };
 
+            TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(templateDatabase, TestConstant.File.DefaultNewImageDatabaseFileName);
             foreach (ImageExpectations imageExpectation in imageExpectations)
             {
                 // Load the image
-                ImageProperties imageProperties = imageExpectation.GetImageProperties(this.WorkingDirectory);
+                ImageRow imageProperties = imageExpectation.GetImageProperties(imageDatabase);
                 WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.WorkingDirectory);
 
                 double darkPixelFraction;
@@ -178,13 +181,13 @@ namespace Timelapse.UnitTests
                     if (imageDatabase.IsImageRowInRange(previousNextImageRow))
                     {
                         WriteableBitmap unalteredBitmap = cache.Current.LoadWriteableBitmap(imageDatabase.FolderPath);
-                        ImageProperties previousNextImage = imageDatabase.GetImageByRow(previousNextImageRow);
+                        ImageRow previousNextImage = imageDatabase.GetImageByRow(previousNextImageRow);
                         WriteableBitmap previousNextBitmap = previousNextImage.LoadWriteableBitmap(imageDatabase.FolderPath);
                         bool mismatched = WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, previousNextBitmap);
 
                         if (imageDatabase.IsImageRowInRange(otherImageRowForCombined))
                         {
-                            ImageProperties otherImageForCombined = imageDatabase.GetImageByRow(otherImageRowForCombined);
+                            ImageRow otherImageForCombined = imageDatabase.GetImageByRow(otherImageRowForCombined);
                             WriteableBitmap otherBitmapForCombined = otherImageForCombined.LoadWriteableBitmap(imageDatabase.FolderPath);
                             mismatched |= WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, otherBitmapForCombined);
                         }

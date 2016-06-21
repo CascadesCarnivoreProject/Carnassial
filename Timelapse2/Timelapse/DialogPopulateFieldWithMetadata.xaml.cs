@@ -36,6 +36,7 @@ namespace Timelapse
         {
             this.imageFilePath = imageFilePath;
             this.database = database;
+            this.disposed = false;
             this.InitializeComponent();
         }
 
@@ -84,7 +85,7 @@ namespace Timelapse
         #region Loading EXIF into the data grid
         // Use the ExifToolWrapper to load all the metadata
         // Note that this requires the exiftool(-k).exe to be available in the executables folder 
-        internal void LoadExif()
+        private void LoadExif()
         {
             this.exifTool = new ExifToolWrapper();
             this.exifTool.Start();
@@ -158,19 +159,18 @@ namespace Timelapse
         #region Notefields callbacks
         public void LoadDataFieldLabels()
         {
-            for (int i = 0; i < this.database.TemplateTable.Rows.Count; i++)
+            for (int row = 0; row < this.database.TemplateTable.Rows.Count; row++)
             {
                 // Get the values for each control
-                DataRow row = this.database.TemplateTable.Rows[i];
-                string type = row[Constants.Control.Type].ToString();
+                ControlRow control = new ControlRow(this.database.TemplateTable.Rows[row]);
 
-                if (type == Constants.Control.Note || type == Constants.DatabaseColumn.Date || type == Constants.DatabaseColumn.Time)
+                if (control.Type == Constants.Control.Note ||
+                    control.Type == Constants.DatabaseColumn.Date ||
+                    control.Type == Constants.DatabaseColumn.Time)
                 {
-                    string datalabel = row.GetStringField(Constants.Control.DataLabel);
-                    string label = row.GetStringField(Constants.Control.Label);
-                    this.dataLabelFromLabel.Add(label, datalabel);
-                    // this.NoteID = (long)row[Constants.ID]; // TODOSAUL: Need to use this ID to pass between controls and data
-                    this.lboxNoteFields.Items.Add(label);
+                    this.dataLabelFromLabel.Add(control.Label, control.DataLabel);
+                    // this.NoteID = control.ID; // TODOSAUL: Need to use this ID to pass between controls and data
+                    this.lboxNoteFields.Items.Add(control.Label);
                 }
             }
         }
@@ -223,7 +223,7 @@ namespace Timelapse
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
                 for (int image = 0; image < database.CurrentlySelectedImageCount; image++)
                 {
-                    ImageProperties imageProperties = database.GetImageByRow(image);
+                    ImageRow imageProperties = database.GetImageByRow(image);
                     string[] tags = { this.metaDataName };
                     Dictionary<string, string> exifData = this.exifTool.FetchExifFrom(imageProperties.GetImagePath(database.FolderPath), tags);
                     if (exifData.Count <= 0)

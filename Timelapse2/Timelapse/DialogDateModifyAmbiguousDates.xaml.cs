@@ -46,14 +46,14 @@ namespace Timelapse
         {
             // The search will search inclusively from the given image number, and will return the first image number that is ambiguous, else -1
             this.rangeStart = this.GetNextAmbiguousDate(this.rangeStart);
-            ImageProperties imageProperties = null;
+            ImageRow imageProperties = null;
             if (this.rangeStart >= 0)
             {
                 // We found an ambiguous date; provide appropriate feedback
                 long id = this.database.GetImageID(this.rangeStart);
                 if (id >= 0)
                 {
-                    imageProperties = new ImageProperties(this.database.ImageDataTable.Rows.Find(id));
+                    imageProperties = new ImageRow(this.database.ImageDataTable.Rows.Find(id));
                     this.lblOriginalDate.Content = imageProperties.Date;
                     this.lblNewDate.Content = DateTimeHandler.SwapSingleDayMonth(imageProperties.Date);
 
@@ -134,7 +134,7 @@ namespace Timelapse
             // Note that if the index is out of range, it will return -1, so that's ok.
             for (int index = startIndex; index < this.database.CurrentlySelectedImageCount; index++)
             {
-                ImageProperties imageProperties = new ImageProperties(this.database.ImageDataTable.Rows[index]);
+                ImageRow imageProperties = new ImageRow(this.database.ImageDataTable.Rows[index]);
                 // Ignore corrupted images
                 // if (this.database.RowIsImageCorrupted(i)) continue;
                 DateTime date = imageProperties.GetDateTime();
@@ -156,12 +156,12 @@ namespace Timelapse
             }
 
             // Parse the provided starting date. Note that this should never fail at this point, but just in case, put out a debug message
-            ImageProperties imageProperties = new ImageProperties(this.database.ImageDataTable.Rows[startIndex]);
+            ImageRow imageProperties = new ImageRow(this.database.ImageDataTable.Rows[startIndex]);
             DateTime startingDate = imageProperties.GetDateTime();
             for (int index = startIndex + 1; index < this.database.CurrentlySelectedImageCount; index++)
             {
                 // Parse the date for the given record.
-                imageProperties = new ImageProperties(this.database.ImageDataTable.Rows[index]);
+                imageProperties = new ImageRow(this.database.ImageDataTable.Rows[index]);
                 DateTime currentDate = imageProperties.GetDateTime();
                 if (startingDate.Day == currentDate.Day && startingDate.Month == currentDate.Month && startingDate.Year == currentDate.Year)
                 {

@@ -29,26 +29,26 @@ namespace Timelapse.Database
             for (int rowIndex = 0; rowIndex < this.database.TemplateTable.Rows.Count; rowIndex++)
             {
                 // Get the values for each control
-                DataRow row = this.database.TemplateTable.Rows[rowIndex];
-                string type = row[Constants.Control.Type].ToString();
+                ControlRow control = new ControlRow(this.database.TemplateTable.Rows[rowIndex]);
 
                 // We only handle certain types, e.g., we don't give the user the opportunity to search over file names / folders / date / time
-                if (type == Constants.Control.Note ||
-                    type == Constants.Control.Counter ||
-                    type == Constants.Control.FixedChoice ||
-                    type == Constants.DatabaseColumn.ImageQuality ||
-                    type == Constants.DatabaseColumn.RelativePath ||
-                    type == Constants.Control.Flag)
+                string controlType = control.Type;
+                if (controlType == Constants.Control.Note ||
+                    controlType == Constants.Control.Counter ||
+                    controlType == Constants.Control.FixedChoice ||
+                    controlType == Constants.DatabaseColumn.ImageQuality ||
+                    controlType == Constants.DatabaseColumn.RelativePath ||
+                    controlType == Constants.Control.Flag)
                 {
                     // Create a new search expression for each row, where each row specifies a particular control and how it can be searched
                     string defaultValue = String.Empty;
                     string expression = Constants.Filter.Equal;
-                    if (type == Constants.Control.Counter)
+                    if (controlType == Constants.Control.Counter)
                     {
                         defaultValue = "0";
                         expression = Constants.Filter.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
                     }
-                    else if (type == Constants.Control.Flag)
+                    else if (controlType == Constants.Control.Flag)
                     {
                         defaultValue = Constants.Boolean.False;
                     }
@@ -56,12 +56,12 @@ namespace Timelapse.Database
                     // Create a new search term and add it to the list
                     SearchTerm searchTerm = new SearchTerm();
                     searchTerm.UseForSearching = false;
-                    searchTerm.Type = type;
-                    searchTerm.Label = row.GetStringField(Constants.Control.Label);
-                    searchTerm.DataLabel = row.GetStringField(Constants.Control.DataLabel);
+                    searchTerm.Type = controlType;
+                    searchTerm.Label = control.Label;
+                    searchTerm.DataLabel = control.DataLabel;
                     searchTerm.Expression = expression;
                     searchTerm.Value = defaultValue;
-                    searchTerm.List = row.GetStringField(Constants.Control.List);
+                    searchTerm.List = control.List;
                     // We start at 1 as there is already a header row
                     this.SearchTermList.Add(rowIndex + 1, searchTerm);
                 }
