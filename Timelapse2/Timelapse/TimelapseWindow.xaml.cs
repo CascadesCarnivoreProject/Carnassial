@@ -2177,6 +2177,10 @@ namespace Timelapse
             if (result == true)
             {
                 this.RefreshCurrentImageProperties();
+                if (this.dlgDataView != null)
+                {
+                    this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
+                }
             }
         }
 
