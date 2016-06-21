@@ -236,6 +236,9 @@ namespace Timelapse.Database
                     onImageAdded.Invoke(imagePropertiesList[lastImageInserted], lastImageInserted);
                 }
             }
+            // Load the marker table from the database - Doing so here will make sure that there is one row for each image.
+            string command = "Select * FROM " + Constants.Database.MarkersTable;
+            this.MarkersTable = this.Database.GetDataTableFromSelect(command);
         }
 
         public void AppendToImageSetLog(StringBuilder logEntry)
