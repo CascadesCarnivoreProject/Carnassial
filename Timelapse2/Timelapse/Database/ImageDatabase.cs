@@ -436,7 +436,7 @@ namespace Timelapse.Database
                 File.Move(Path.Combine(this.FolderPath, this.FileName),
                           Path.Combine(this.FolderPath, newFileName));  // Change the file name to the new file name
                 this.FileName = newFileName; // Store the file name
-                this.Database = new SQLiteWrapper(newFileName);          // Recreate the database connecction
+                this.Database = new SQLiteWrapper(Path.Combine(this.FolderPath, newFileName));          // Recreate the database connecction
             }
         }
 
