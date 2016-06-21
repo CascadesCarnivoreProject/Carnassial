@@ -17,7 +17,8 @@ namespace Timelapse
     public partial class DialogDateCorrection : Window
     {
         private ImageDatabase database;
-
+        private DateTime newDate;
+         
         // Create the interface
         public DialogDateCorrection(ImageDatabase database, ImageRow imageToCorrect)
         {
@@ -33,18 +34,34 @@ namespace Timelapse
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
             this.imgDateImage.Source = imageToCorrect.LoadWriteableBitmap(this.database.FolderPath);
 
+            // Configure the initial date of the date picker
+            datePicker.Text = datePicker.DisplayDate.Date.ToString("dd-MMM-yyyy", System.Globalization.CultureInfo.InvariantCulture);
+
             // Try to put the original date / time into the corrected date field. If we can't, leave it as it is (i.e., as dd-mmm-yyyy hh:mm am).
             string format = "dd-MMM-yyyy HH:mm:ss";
             CultureInfo provider = CultureInfo.InvariantCulture;
             string dateAsString = this.lblOriginalDate.Content.ToString();
             try
             {
-                // TODOSAUL: why call ParseExact() here?
-                DateTime.ParseExact(dateAsString, format, provider);
-                this.tbNewDate.Text = this.lblOriginalDate.Content.ToString();
+                // We expect all date formats to be in the above format, and if it isn't something is wrong and we should abort. 
+                // While we could relax this to use other date formats, it reintroduces ambiguities e.g. the month/day uncertainty issue.
+                datePicker.DisplayDate = DateTime.ParseExact(dateAsString, format, provider);
+                datePicker.Text = datePicker.DisplayDate.Date.ToString("dd-MMM-yyyy", System.Globalization.CultureInfo.InvariantCulture);
+                this.tbNewTime.Text = datePicker.DisplayDate.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);  
             }
             catch
             {
+                DialogMessageBox messageBox = new DialogMessageBox();
+                DialogMessageBox dlgMB = new DialogMessageBox();
+                dlgMB.MessageTitle = "Timelapse could not read the date.";
+                dlgMB.MessageProblem = "Timelapse could not read the date and time: " + dateAsString;
+                dlgMB.MessageReason = "The date / time needs to be in a very specific format, for example, 01-Jan-2016 13:00:00.";
+                dlgMB.MessageSolution = "Re-read in the dates from the images (see the Edit/Dates menu), and then try this again.";
+                dlgMB.MessageResult = "Timelapse won't do anything for now.";
+                dlgMB.ButtonType = MessageBoxButton.OK;
+                dlgMB.IconType = MessageBoxImage.Error;
+                dlgMB.ShowDialog();
+                return;
             }
         }
 
@@ -65,12 +82,14 @@ namespace Timelapse
             {
                 // Calculate the date/time difference
                 DateTime originalDateTime = DateTime.Parse((string)this.lblOriginalDate.Content);
-                DateTime correctedDateTime = DateTime.Parse(this.tbNewDate.Text);
+                DateTime time = DateTime.Parse(this.tbNewTime.Text);
+                DateTime correctedDateTime = this.newDate;
+                correctedDateTime = new DateTime(correctedDateTime.Year, correctedDateTime.Month, correctedDateTime.Day, time.Hour, time.Minute, time.Second);
                 TimeSpan timeDifference = correctedDateTime - originalDateTime;
 
                 if (timeDifference == TimeSpan.Zero)
                 {
-                    return; // No difference, so nothing to correct
+                    this.DialogResult = false; // No difference, so nothing to correct
                 }
 
                 // Update the database
@@ -79,7 +98,7 @@ namespace Timelapse
                 // Add an entry into the log detailing what we just did
                 StringBuilder log = new StringBuilder(Environment.NewLine);
                 log.AppendLine("System entry: Added a correction value to all dates.");
-                log.AppendLine("                        Old sample date was: " + (string)this.lblOriginalDate.Content + " and new date is " + this.tbNewDate.Text);
+                log.AppendLine("                        Old sample date was: " + (string)this.lblOriginalDate.Content + " and new date is " + this.tbNewTime.Text);
                 this.database.AppendToImageSetLog(log);
 
                 // Refresh the database / datatable to reflect the updated values
@@ -89,6 +108,7 @@ namespace Timelapse
             catch
             {
                 this.DialogResult = false;
+                return;
             }
         }
 
@@ -102,19 +122,19 @@ namespace Timelapse
         // We could avoid all this if we used a proper date-time picker, but .NET 4 only has a date picker.
         private void NewDate_TextChanged(object sender, TextChangedEventArgs e)
         {
-            string format = "dd-MMM-yyyy HH:mm:ss";
+            string format = "HH:mm:ss";
             CultureInfo provider = CultureInfo.InvariantCulture;
-            string dateAsString = tbNewDate.Text;
+            string dateAsString = tbNewTime.Text;
             try
             {
-                // TODOSAUL: why call ParseExact() here?
+                // We call ParseExact() as we expect this to strictly follow the format, as otherwise there could be screwups due to month/day ambiguity
                 DateTime.ParseExact(dateAsString, format, provider);
                 tblkStatus.Text = "\x221A"; // A checkmark
 
                 BrushConverter bc = new BrushConverter();
                 Brush brush;
                 brush = (Brush)bc.ConvertFrom("#280EE800");
-                this.tbNewDate.BorderBrush = brush;
+                this.tbNewTime.BorderBrush = brush;
                 this.tblkStatus.Background = brush;
 
                 this.OkButton.IsEnabled = true;
@@ -129,11 +149,21 @@ namespace Timelapse
                     BrushConverter bc = new BrushConverter();
                     Brush brush;
                     brush = (Brush)bc.ConvertFrom("#46F50000");
-                    this.tbNewDate.BorderBrush = brush;
+                    this.tbNewTime.BorderBrush = brush;
                     this.tblkStatus.Background = brush;
 
                     this.OkButton.IsEnabled = false;
                 }
+            }
+        }
+
+        private void DatePicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
+        {
+            DatePicker dp = sender as DatePicker;
+            DateTime? dateOrNull = dp.SelectedDate;
+            if (dateOrNull != null)
+            {
+                this.newDate = dateOrNull.Value;
             }
         }
     }
