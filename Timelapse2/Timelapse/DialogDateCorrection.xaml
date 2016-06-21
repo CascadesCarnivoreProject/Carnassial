@@ -15,7 +15,7 @@
                             MessageProblem="If your field camera was not initialized to the correct date/time, all your image dates will be 'off' by a fixed amount."
                             MessageSolution="Enter the correct date and time in the box below for the sample image below. &#10;Then click Okay (which becomes active after you type in a correctly formatted  date/time)"
                             MessageResult="The difference between the original and correct date will be added to all dates for all images (except corrupted ones)."
-                            MessageHint=" The Date / Time format you enter should look something like '12-Apr-2011 02:00 pm.'"
+                            MessageHint=" The Date / Time format you enter should look something like '12-Apr-2011 13:00:00.'"
                             ShowExplanationVisibilityCheckbox="True"/>
         
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
@@ -26,9 +26,9 @@
                 <Label Content="Original date / time:" Height="28" Name="label2" Margin="10,0,0,0" HorizontalContentAlignment="Right" DockPanel.Dock="Left" FontSize="12" FontWeight="Bold" />
                 <Label  Name="lblOriginalDate" MinWidth="140" Content="dd-mmm-yyyy hh:mm am" FontWeight="Normal" FontSize="12" HorizontalAlignment="Stretch" />
                 <Label Content="Correct date and time:" Margin="20,0,0,0" HorizontalContentAlignment="Right" FontSize="12" FontWeight="Bold" />
-                <TextBox  Name="tbNewDate" MinWidth="140" FontWeight="Normal" VerticalContentAlignment="Center" FontSize="12" Text="dd-mmm-yyyy hh:mm am" TextChanged="NewDate_TextChanged" ToolTip="Format: dd-mmm-yyyy hh:mm am (or pm). e.g., 12-Apr-2011 02:00 pm" BorderBrush="#46F50000" BorderThickness="2" />
+                <TextBox  Name="tbNewDate" MinWidth="140" FontWeight="Normal" VerticalContentAlignment="Center" FontSize="12" Text="dd-mmm-yyyy hh:mm:ss" TextChanged="NewDate_TextChanged" ToolTip="Format: dd-mmm-yyyy hh:mm:ss. e.g., 12-Apr-2011 13:00:00" BorderBrush="#46F50000" BorderThickness="2" />
                 <Border BorderThickness="1" BorderBrush="Gray" Name="border" Width="20" HorizontalAlignment="Left">
-                    <TextBlock Text="x" Padding="2,0,2,0" VerticalAlignment="Center" FontSize="16"  FontWeight="Bold" Background="#46F50000" HorizontalAlignment="Center" Name="tblkStatus" ToolTip="Format: dd-mmm-yyyy hh:mm am (or pm). e.g., 12-Apr-2011 02:00 pm"/>
+                    <TextBlock Text="x" Padding="2,0,2,0" VerticalAlignment="Center" FontSize="16"  FontWeight="Bold" Background="#46F50000" HorizontalAlignment="Center" Name="tblkStatus" ToolTip="Format: dd-mmm-yyyy hh:mm:ss. e.g., 12-Apr-2011 13:00:00"/>
                 </Border>
             </DockPanel>
 

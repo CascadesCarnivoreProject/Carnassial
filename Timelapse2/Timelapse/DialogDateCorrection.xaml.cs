@@ -34,7 +34,7 @@ namespace Timelapse
             this.imgDateImage.Source = imageToCorrect.LoadWriteableBitmap(this.database.FolderPath);
 
             // Try to put the original date / time into the corrected date field. If we can't, leave it as it is (i.e., as dd-mmm-yyyy hh:mm am).
-            string format = "dd-MMM-yyyy hh:mm tt";
+            string format = "dd-MMM-yyyy HH:mm:ss";
             CultureInfo provider = CultureInfo.InvariantCulture;
             string dateAsString = this.lblOriginalDate.Content.ToString();
             try
@@ -102,7 +102,7 @@ namespace Timelapse
         // We could avoid all this if we used a proper date-time picker, but .NET 4 only has a date picker.
         private void NewDate_TextChanged(object sender, TextChangedEventArgs e)
         {
-            string format = "dd-MMM-yyyy hh:mm tt";
+            string format = "dd-MMM-yyyy HH:mm:ss";
             CultureInfo provider = CultureInfo.InvariantCulture;
             string dateAsString = tbNewDate.Text;
             try
