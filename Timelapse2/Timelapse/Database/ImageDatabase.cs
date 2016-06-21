@@ -756,7 +756,7 @@ namespace Timelapse.Database
         // It  assumes that the data table is showing All images
         public void ExchangeDayAndMonthInImageDate(int startRow, int endRow)
         {
-            if (this.CurrentlySelectedImageCount == 0 || startRow >= this.CurrentlySelectedImageCount || endRow >= this.CurrentlySelectedImageCount)
+            if (this.CurrentlySelectedImageCount == 0 || startRow >= this.CurrentlySelectedImageCount || endRow > this.CurrentlySelectedImageCount)
             {
                 return;
             }
@@ -765,10 +765,12 @@ namespace Timelapse.Database
             List<ColumnTuplesWithWhere> updateQuery = new List<ColumnTuplesWithWhere>();
             for (int row = startRow; row <= endRow; row++)
             {
-                if (this.IsImageCorrupt(row))
-                {
-                    continue;  // skip over corrupted images
-                }
+                // I originally didn't swap the date for corrupted images, but don't see why I shouldn't 
+                // But in case we decide not to do so, I've left the code here
+                //if (this.IsImageCorrupt(row))
+                //{
+                //    continue;  // skip over corrupted images
+                //}
 
                 DateTime reversedDate;
                 try
