@@ -940,7 +940,6 @@ namespace Timelapse
                 {
                     SolidColorBrush brush = new SolidColorBrush(Color.FromArgb(255, (byte)200, (byte)251, (byte)200));
                     control.Container.Background = brush;
-                    break;
                 }
             }
         }
