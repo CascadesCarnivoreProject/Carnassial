@@ -23,7 +23,7 @@ namespace Timelapse
     {
         // these variables will hold the values of the passed in parameters
         private string imageFolderPath; // the full folder path where that image is located
-        private DataTable deletedImageTable;
+        private DataTableBackedList<ImageRow> deletedImageTable;
         private bool deleteData;
         private ImageDatabase database;
 
@@ -34,7 +34,7 @@ namespace Timelapse
         /// deleteData is true when the associated data should be deleted.
         /// useDeleteFlags is true when the user is trying to delete images with the deletion flag set, otherwise its the current image being deleted
         /// </summary>
-        public DialogDeleteImages(ImageDatabase database, DataTable deletedImageTable, bool deleteData, bool useDeleteFlags)
+        public DialogDeleteImages(ImageDatabase database, DataTableBackedList<ImageRow> deletedImageTable, bool deleteData, bool useDeleteFlags)
         {
             this.InitializeComponent();
             Mouse.OverrideCursor = Cursors.Wait;
@@ -114,9 +114,8 @@ namespace Timelapse
             // - bitmap loading is very slow
             // - the eventual deletion is slow, as we are deleting tons of files
             // SAULTODO: Need to warn the user, and perhaps see if we can make it more efficient, or if we can alter the user interface. 
-            for (int i = 0; i < deletedImageTable.Rows.Count; i++)
+            foreach (ImageRow imageProperties in deletedImageTable)
             {
-                ImageRow imageProperties = new ImageRow(deletedImageTable.Rows[i]);
                 ImageSource bitmap = imageProperties.LoadBitmapThumbnail(database.FolderPath, 400);
 
                 if (column == 0)
@@ -171,7 +170,7 @@ namespace Timelapse
         {
             // Don't allow the user to delete ALL their data. 
             // TODOSAUL: Need a general fix to this throughout, where we allow for an empty dataset 
-            if (this.deleteData && (this.deletedImageTable.Rows.Count >= this.database.GetImageCount()))
+            if (this.deleteData && (this.deletedImageTable.RowCount >= this.database.GetImageCount()))
             {
                 DialogMessageBox dlgMsg = new DialogMessageBox();
                 dlgMsg.IconType = MessageBoxImage.Error;
@@ -186,10 +185,8 @@ namespace Timelapse
 
             List<long> imageIDsToDeleteFromDatabase = new List<long>();
             Mouse.OverrideCursor = Cursors.Wait;
-            for (int i = 0; i < this.deletedImageTable.Rows.Count; i++)
+            foreach (ImageRow imageProperties in this.deletedImageTable)
             {
-                ImageRow imageProperties = new ImageRow(this.deletedImageTable.Rows[i]);
-
                 string markForDeletionDataLabel = this.database.DataLabelFromStandardControlType[Constants.Control.DeleteFlag];
                 this.database.UpdateImage(imageProperties.ID, markForDeletionDataLabel, Constants.Boolean.False);
                 if (this.deleteData)

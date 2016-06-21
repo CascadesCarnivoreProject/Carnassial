@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using Timelapse.Images;
 using Timelapse.Util;
 
@@ -15,6 +16,8 @@ namespace Timelapse.Database
     public class ImageDatabase : TemplateDatabase
     {
         private bool disposed;
+        private DataGrid timelapseDataGrid;
+        private DataRowChangeEventHandler onImageDataTableRowChanged;
 
         /// <summary>Gets the file name of the image database on disk.</summary>
         public string FileName { get; private set; }
@@ -27,12 +30,12 @@ namespace Timelapse.Database
         public Dictionary<string, ImageDataColumn> ImageDataColumnsByDataLabel { get; private set; }
 
         // contains the results of the data query
-        public DataTable ImageDataTable { get; private set; }
+        public DataTableBackedList<ImageRow> ImageDataTable { get; private set; }
 
         public ImageSetRow ImageSet { get; private set; }
 
         // contains the markers
-        public DataTable MarkersTable { get; private set; }
+        public DataTableBackedList<MarkerRow> MarkersTable { get; private set; }
 
         public List<string> TemplateSynchronizationIssues { get; private set; }
 
@@ -75,8 +78,7 @@ namespace Timelapse.Database
             imageDatabase.ImageSet = new ImageSetRow(imageSetTable.Rows[0]);
 
             // load the marker table from the database
-            string markersQuery = "Select * FROM " + Constants.Database.MarkersTable;
-            imageDatabase.MarkersTable = imageDatabase.Database.GetDataTableFromSelect(markersQuery);
+            imageDatabase.GetMarkers();
 
             imageDatabase.PopulateDataLabelMaps();
             return imageDatabase;
@@ -85,7 +87,7 @@ namespace Timelapse.Database
         /// <summary>Gets the number of images currently in the image table.</summary>
         public int CurrentlySelectedImageCount
         {
-            get { return this.ImageDataTable.Rows.Count; }
+            get { return this.ImageDataTable.RowCount; }
         }
 
         [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", Justification = "StyleCop bug.")]
@@ -96,9 +98,8 @@ namespace Timelapse.Database
             List<string> counterList = new List<string>();
             List<string> notesAndFixedChoicesList = new List<string>();
             List<string> flagsList = new List<string>();
-            for (int column = 0; column < this.ImageDataTable.Columns.Count; column++)
+            foreach (string columnName in this.ImageDataTable.ColumnNames)
             {
-                string columnName = this.ImageDataTable.Columns[column].ColumnName;
                 if (columnName == Constants.DatabaseColumn.ID)
                 {
                     // skip the ID column as it's not associated with a data label and doesn't need to be set as it's autoincrement
@@ -137,10 +138,9 @@ namespace Timelapse.Database
                     List<ColumnTuple> imageRow = new List<ColumnTuple>();
                     List<ColumnTuple> markerRow = new List<ColumnTuple>();
 
-                    for (int column = 0; column < this.ImageDataTable.Columns.Count; column++)
+                    foreach (string columnName in this.ImageDataTable.ColumnNames)
                     {
                         // Fill up each column in order
-                        string columnName = this.ImageDataTable.Columns[column].ColumnName;
                         if (columnName == Constants.DatabaseColumn.ID)
                         {
                             // don't specify an ID in the insert statement as it's an autoincrement primary key
@@ -243,15 +243,22 @@ namespace Timelapse.Database
                     onImageAdded.Invoke(imagePropertiesList[lastImageInserted], lastImageInserted);
                 }
             }
+
             // Load the marker table from the database - Doing so here will make sure that there is one row for each image.
-            string command = "Select * FROM " + Constants.Database.MarkersTable;
-            this.MarkersTable = this.Database.GetDataTableFromSelect(command);
+            this.GetMarkers();
         }
 
         public void AppendToImageSetLog(StringBuilder logEntry)
         {
             this.ImageSet.Log += logEntry;
             this.SyncImageSetToDatabase();
+        }
+
+        public void BindToTimelapseDataGrid(DataGrid dataGrid, DataRowChangeEventHandler onRowChanged)
+        {
+            this.timelapseDataGrid = dataGrid;
+            this.onImageDataTableRowChanged = onRowChanged;
+            this.ImageDataTable.BindDataGrid(dataGrid, onRowChanged);
         }
 
         /// <summary>
@@ -268,9 +275,9 @@ namespace Timelapse.Database
             // First, define the creation string based on the contents of the template. 
             List<ColumnTuple> columnDefinitions = new List<ColumnTuple>();
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // It begins with the ID integer primary key
-            foreach (DataRow row in this.TemplateTable.Rows)
+            foreach (ControlRow control in this.TemplateTable)
             {
-                columnDefinitions.Add(this.CreateImageDataColumnDefinition(new ControlRow(row)));
+                columnDefinitions.Add(this.CreateImageDataColumnDefinition(control));
             }
             this.Database.CreateTable(Constants.Database.ImageDataTable, columnDefinitions);
 
@@ -305,9 +312,8 @@ namespace Timelapse.Database
             columnDefinitions.Clear();
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // t begins with the ID integer primary key
             string type = String.Empty;
-            foreach (DataRow row in this.TemplateTable.Rows)
+            foreach (ControlRow control in this.TemplateTable)
             {
-                ControlRow control = new ControlRow(row);
                 if (control.Type.Equals(Constants.Control.Counter))
                 {
                     columnDefinitions.Add(new ColumnTuple(control.DataLabel, "TEXT Default ''"));
@@ -380,10 +386,10 @@ namespace Timelapse.Database
             // perform DataTable migrations
             // add RelativePath column if it's not present in the image data table at postion '2'
             this.ImageDataTable = this.GetAllImages();
-            if (this.ImageDataTable.Columns.Contains(Constants.DatabaseColumn.RelativePath) == false)
+            if (this.ImageDataTable.ColumnNames.Contains(Constants.DatabaseColumn.RelativePath) == false)
             {
                 long id = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
-                ControlRow control = new ControlRow(this.TemplateTable.Rows.Find(id));
+                ControlRow control = this.TemplateTable.Find(id);
                 ColumnTuple columnDefinition = this.CreateImageDataColumnDefinition(control);
                 this.Database.AddColumnToTable(Constants.Database.ImageDataTable, Constants.Database.RelativePathPosition, columnDefinition);
             }
@@ -402,13 +408,16 @@ namespace Timelapse.Database
 
                 // trim the white space from all the data
                 this.Database.TrimWhitespace(Constants.Database.ImageDataTable, dataLabels);
-                this.UpdateImageSet(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True);
+                ColumnTuplesWithWhere columnToUpdate = new ColumnTuplesWithWhere();
+                columnToUpdate.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True)); // Populate the data 
+                columnToUpdate.SetWhere(Constants.Database.ImageSetRowID);
+                this.Database.Update(Constants.Database.ImageSetTable, columnToUpdate);
             }
         }
 
         public ImageRow FindImageByID(long id)
         {
-            return new ImageRow(this.ImageDataTable.Rows.Find(id));
+            return this.ImageDataTable.Find(id);
         }
 
         /// <summary>
@@ -416,9 +425,9 @@ namespace Timelapse.Database
         /// </summary>
         private void PopulateDataLabelMaps()
         {
-            foreach (DataRow row in this.TemplateTable.Rows)
+            foreach (ControlRow control in this.TemplateTable)
             {
-                ImageDataColumn column = ImageDataColumn.Create(new ControlRow(row));
+                ImageDataColumn column = ImageDataColumn.Create(control);
                 this.ImageDataColumnsByDataLabel.Add(column.DataLabel, column);
 
                 // don't type map user defined controls as if there are multiple ones the key would not be unique
@@ -468,7 +477,7 @@ namespace Timelapse.Database
             return this.TryGetImages(where);
         }
 
-        public DataTable GetImagesMarkedForDeletion()
+        public DataTableBackedList<ImageRow> GetImagesMarkedForDeletion()
         {
             string where = this.DataLabelFromStandardControlType[Constants.Control.DeleteFlag] + "=\"true\""; // = value
             return this.GetImages(where);
@@ -477,7 +486,7 @@ namespace Timelapse.Database
         /// <summary>
         /// Return a data table containing a single image row, where that row is identified by the image's ID
         /// </summary>
-        public DataTable GetImageByID(long id)
+        public DataTableBackedList<ImageRow> GetImageByID(long id)
         {
             string where = Constants.DatabaseColumn.ID + "=\"" + id + "\""; // = value
             return this.GetImages(where);
@@ -506,45 +515,38 @@ namespace Timelapse.Database
 
             ColumnTuplesWithWhere imageQuery = new ColumnTuplesWithWhere();
             imageQuery.SetWhere(initialRootFolderName, relativePath, imageFile.Name);
-            DataTable images = this.GetImages(imageQuery.Where);
+            DataTableBackedList<ImageRow> images = this.GetImages(imageQuery.Where);
 
-            if (images != null && images.Rows.Count == 1)
+            if (images != null && images.RowCount == 1)
             {
-                imageProperties = new ImageRow(images.Rows[0]);
+                imageProperties = images[0];
                 return true;
             }
             else
             {
-                imageProperties = new ImageRow(this.ImageDataTable.NewRow());
+                imageProperties = this.ImageDataTable.NewRow();
                 imageProperties.InitialRootFolderName = initialRootFolderName;
                 imageProperties.RelativePath = relativePath;
                 imageProperties.FileName = imageFile.Name;
-
-                // populate new image's default date and time
-                // Typically the creation time is the time a file was created in the local file system and the last write time when it was
-                // last modified ever in any file system.  So, for example, copying an image from a camera's SD card to a computer results
-                // in the image file on the computer having a write time which is before its creation time.  Check both and take the lesser 
-                // of the two to provide a best effort default.  In most cases it's desirable to see if a more accurate time can be obtained
-                // from the image's EXIF metadata.
-                DateTime earliestTime = imageFile.CreationTime < imageFile.LastWriteTime ? imageFile.CreationTime : imageFile.LastWriteTime;
-                imageProperties.SetDateAndTime(earliestTime);
+                imageProperties.SetDateAndTimeFromFileInfo(this.FolderPath);
                 return false;
             }
         }
 
         public bool TryGetImages(string where)
         {
-            DataTable imageTableWithNewSelect = this.GetImages(where);
-            if (imageTableWithNewSelect.Rows.Count == 0)
+            DataTableBackedList<ImageRow> imageTableWithNewSelect = this.GetImages(where);
+            if (imageTableWithNewSelect.RowCount == 0)
             {
                 return false;
             }
 
             this.ImageDataTable = imageTableWithNewSelect;
+            this.ImageDataTable.BindDataGrid(this.timelapseDataGrid, this.onImageDataTableRowChanged);
             return true;
         }
 
-        private DataTable GetImages(string where)
+        private DataTableBackedList<ImageRow> GetImages(string where)
         {
             string query = "Select * FROM " + Constants.Database.ImageDataTable;
             if (!String.IsNullOrEmpty(where))
@@ -553,10 +555,10 @@ namespace Timelapse.Database
             }
 
             DataTable tempTable = this.Database.GetDataTableFromSelect(query);
-            return tempTable;
+            return new DataTableBackedList<ImageRow>(tempTable, (DataRow row) => { return new ImageRow(row); });
         }
 
-        public DataTable GetAllImages()
+        public DataTableBackedList<ImageRow> GetAllImages()
         {
             return this.GetImages(null);
         }
@@ -579,7 +581,7 @@ namespace Timelapse.Database
 
         public ImageRow GetImageByRow(int row)
         {
-            return new ImageRow(this.ImageDataTable.Rows[row]);
+            return this.ImageDataTable[row];
         }
 
         // This first form just returns the count of all images with no filters applied
@@ -613,54 +615,15 @@ namespace Timelapse.Database
         /// </summary>
         public void UpdateImage(long id, string dataLabel, string value)
         {
-            this.UpdateRow(id, dataLabel, value, Constants.Database.ImageDataTable);
-        }
-
-        public void UpdateRow(long id, string dataLabel, string value, string table)
-        {
             // update the row in the database
             ColumnTuplesWithWhere columnToUpdate = new ColumnTuplesWithWhere();
             columnToUpdate.Columns.Add(new ColumnTuple(dataLabel, value)); // Populate the data 
             columnToUpdate.SetWhere(id);
-            this.Database.Update(table, columnToUpdate);
-
-            // update the copy of the row in the loaded data table
-            DataTable dataTable;
-            switch (table)
-            {
-                case Constants.Database.ImageDataTable:
-                    dataTable = this.ImageDataTable;
-                    break;
-                case Constants.Database.ImageSetTable:
-                    // image set operations go directly to database; no data table is in use
-                    return;
-                case Constants.Database.MarkersTable:
-                    dataTable = this.MarkersTable;
-                    break;
-                case Constants.Database.TemplateTable:
-                    dataTable = this.TemplateTable;
-                    break;
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled table {0}.", table));
-            }
-
-            // nothing to do if the data table hasn't been loaded
-            if (dataTable == null)
-            {
-                return;
-            }
+            this.Database.Update(Constants.Database.ImageDataTable, columnToUpdate);
 
             // update the table
-            DataRow[] foundRows = dataTable.Select(Constants.DatabaseColumn.ID + " = " + id);
-            if (foundRows.Length == 1)
-            {
-                int index = dataTable.Rows.IndexOf(foundRows[0]);
-                dataTable.Rows[index][dataLabel] = value;
-            }
-            else
-            {
-                Debug.Assert(false, String.Format("Found {0} rows with ID {1}.", foundRows.Length, id));
-            }
+            ImageRow image = this.ImageDataTable.Find(id);
+            image[dataLabel] = value;
         }
 
         // Update all rows in the filtered view only with the given key/value pair
@@ -669,9 +632,9 @@ namespace Timelapse.Database
             List<ColumnTuplesWithWhere> updateQuery = new List<ColumnTuplesWithWhere>();
             for (int image = 0; image < this.CurrentlySelectedImageCount; image++)
             {
-                this.ImageDataTable.Rows[image][dataLabel] = value;
+                this.ImageDataTable[image][dataLabel] = value;
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
-                long id = this.ImageDataTable.Rows[image].GetID();
+                long id = this.ImageDataTable[image].ID;
                 updateQuery.Add(new ColumnTuplesWithWhere(columnToUpdate, id));
             }
 
@@ -695,12 +658,12 @@ namespace Timelapse.Database
                 // TODOSAUL: is there an off by one error here as .Rows is accessed with a one based count?
                 // Um, I can't recall. I don't think it is an error as a vaguely recall somethings were indexed by 1, and others by 0.
                 // But it should be checked.
-                this.ImageDataTable.Rows[index][dataLabel] = value;
+                ImageRow image = this.ImageDataTable[index];
+                image[dataLabel] = value;
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
-                long id = this.ImageDataTable.Rows[index].GetID();
 
                 // update database
-                ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere(columnToUpdate, id);
+                ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere(columnToUpdate, image.ID);
                 imagesToUpdate.Add(imageUpdate);
             }
 
@@ -715,14 +678,13 @@ namespace Timelapse.Database
         public void AdjustAllImageTimes(TimeSpan adjustment, int from, int to)
         {
             // We create a temporary table. We do this just in case we are currently on a filtered view
-            DataTable tempTable = this.GetAllImages();
+            DataTableBackedList<ImageRow> tempTable = this.GetAllImages();
 
             // We now have an unfiltered temporary data table
             // Get the original value of each, and update each date by the corrected amount if possible
             List<ImageRow> imagePropertiesList = new List<ImageRow>();
-            for (int row = from; row < to; row++)
+            foreach (ImageRow imageProperties in tempTable)
             {
-                ImageRow imageProperties = new ImageRow(tempTable.Rows[row]);
                 DateTime date = imageProperties.GetDateTime();
                 // adjust the date
                 date += adjustment;
@@ -765,9 +727,10 @@ namespace Timelapse.Database
             List<ColumnTuplesWithWhere> updateQuery = new List<ColumnTuplesWithWhere>();
             for (int row = startRow; row <= endRow; row++)
             {
+                ImageRow image = this.ImageDataTable[row];
                 // I originally didn't swap the date for corrupted images, but don't see why I shouldn't 
                 // But in case we decide not to do so, I've left the code here
-                // if (this.IsImageCorrupt(row))
+                // if (image.ImageQuality == ImageQualityFilter.Corrupted)
                 // {
                 //    continue;  // skip over corrupted images
                 // }
@@ -776,8 +739,7 @@ namespace Timelapse.Database
                 try
                 {
                     // If we fail on any of these, continue on to the next date
-                    string dateAsString = this.ImageDataTable.Rows[row].GetStringField(Constants.DatabaseColumn.Date);
-                    DateTime date = DateTime.Parse(dateAsString);
+                    DateTime date = DateTime.Parse(image.Date);
                     reversedDate = new DateTime(date.Year, date.Day, date.Month); // we have swapped the day with the month
                 }
                 catch
@@ -788,8 +750,7 @@ namespace Timelapse.Database
                 // Now update the actual database with the new date/time values stored in the temporary table
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>();               // Update the date 
                 columnToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, DateTimeHandler.StandardDateString(reversedDate)));
-                long id = this.ImageDataTable.Rows[row].GetID();
-                updateQuery.Add(new ColumnTuplesWithWhere(columnToUpdate, id));
+                updateQuery.Add(new ColumnTuplesWithWhere(columnToUpdate, image.ID));
             }
 
             this.Database.Update(Constants.Database.ImageDataTable, updateQuery);
@@ -826,15 +787,14 @@ namespace Timelapse.Database
             {
                 return -1;
             }
-            long id = this.ImageDataTable.Rows[rowIndex].GetID();
-            return id;
+            return this.ImageDataTable[rowIndex].ID;
         }
 
         public string GetImageValue(int rowIndex, string dataLabel)
         {
             if (this.IsImageRowInRange(rowIndex))
             {
-                return this.ImageDataTable.Rows[rowIndex].GetStringField(dataLabel);
+                return this.ImageDataTable[rowIndex][dataLabel];
             }
             else
             {
@@ -856,13 +816,6 @@ namespace Timelapse.Database
         public bool IsImageRowInRange(int imageRowIndex)
         {
             return (imageRowIndex >= 0) && (imageRowIndex < this.CurrentlySelectedImageCount) ? true : false;
-        }
-
-        /// <summary>A convenience routine for checking to see if the image in the given row is corrupted</summary>
-        public bool IsImageCorrupt(int rowIndex)
-        {
-            string result = this.GetImageValue(rowIndex, this.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality]);
-            return result.Equals(Constants.ImageQuality.Corrupted) ? true : false;
         }
 
         // Find the next displayable image after the provided row in the current image set
@@ -904,7 +857,7 @@ namespace Timelapse.Database
         public string GetControlDefaultValue(string dataLabel)
         {
             long id = this.GetControlIDFromTemplateTable(dataLabel);
-            ControlRow control = new ControlRow(this.TemplateTable.Rows.Find(id));
+            ControlRow control = this.TemplateTable.Find(id);
             return control.DefaultValue;
         }
 
@@ -918,17 +871,13 @@ namespace Timelapse.Database
             List<MetaTagCounter> metaTagCounters = new List<MetaTagCounter>();
 
             // Test to see if we actually have a valid result
-            if (this.MarkersTable.Rows.Count == 0)
+            if (this.MarkersTable.RowCount == 0)
             {
                 return metaTagCounters;    // This should not really happen, but just in case
             }
-            if (this.MarkersTable.Columns.Count == 0)
-            {
-                return metaTagCounters; // Should also not happen as this wouldn't be called unless we have at least one counter control
-            }
 
             // Get the current row number of the id in the marker table
-            MarkerRow marker = this.FindMarker(imageID);
+            MarkerRow marker = this.MarkersTable.Find(imageID);
             if (marker == null)
             {
                 return metaTagCounters;
@@ -963,6 +912,12 @@ namespace Timelapse.Database
             return metaTagCounters;
         }
 
+        private void GetMarkers()
+        {
+            string markersQuery = "Select * FROM " + Constants.Database.MarkersTable;
+            this.MarkersTable = new DataTableBackedList<MarkerRow>(this.Database.GetDataTableFromSelect(markersQuery), (DataRow row) => { return new MarkerRow(row); });
+        }
+
         /// <summary>
         /// Set the list of marker points on the current row in the marker table. 
         /// </summary>
@@ -972,7 +927,7 @@ namespace Timelapse.Database
         public void SetMarkerPoints(long imageID, string dataLabel, string pointList)
         {
             // Find the current row number
-            MarkerRow marker = this.FindMarker(imageID);
+            MarkerRow marker = this.MarkersTable.Find(imageID);
             if (marker == null)
             {
                 return;
@@ -980,12 +935,17 @@ namespace Timelapse.Database
 
             // Update the database and datatable
             marker[dataLabel] = pointList;
-            this.UpdateRow(imageID, dataLabel, pointList, Constants.Database.MarkersTable);  // Update the database
+            this.SyncMarkerToDatabase(marker);
         }
 
         public void SyncImageSetToDatabase()
         {
             this.Database.Update(Constants.Database.ImageSetTable, this.ImageSet.GetColumnTuples());
+        }
+
+        public void SyncMarkerToDatabase(MarkerRow marker)
+        {
+            this.Database.Update(Constants.Database.MarkersTable, marker.GetColumnTuples());
         }
 
         // The id is the row to update, the datalabels are the labels of each control to updata, 
@@ -996,29 +956,7 @@ namespace Timelapse.Database
             this.Database.Update(Constants.Database.MarkersTable, markersToUpdate);
 
             // update markers in marker data table
-            char[] quote = { '\'' };
-            foreach (ColumnTuplesWithWhere marker in markersToUpdate)
-            {
-                // We have to parse the id, as its in the form of Id=5 (for example)
-                string idAsString = marker.Where.Substring(marker.Where.IndexOf("=") + 1);
-                idAsString = idAsString.Trim(quote);
-
-                long id;
-                if (!Int64.TryParse(idAsString, out id))
-                {
-                    Debug.Print("Can't get the ID");
-                    break;
-                }
-                foreach (ColumnTuple column in marker.Columns)
-                {
-                    if (!column.Value.Equals(String.Empty))
-                    {
-                        // TODOSAUL: .Rows is being indexed by ID rather than row index; is this correct?
-                        // I think so... but need to check. I think the row ID will get the correct row but the row index (which I think can be reordered) could muck things up 
-                        this.MarkersTable.Rows[(int)id - 1][column.Name] = column.Value;
-                    }
-                }
-            }
+            this.GetMarkers();
         }
 
         protected override void Dispose(bool disposing)
@@ -1049,15 +987,6 @@ namespace Timelapse.Database
             return new ColumnTuple(control.DataLabel, "TEXT '" + control.DefaultValue + "'");
         }
 
-        /// <summary>
-        /// Given an id, find the row number that matches it in the Marker Table
-        /// </summary>
-        /// <returns>-1 on failure</returns>
-        private MarkerRow FindMarker(long imageID)
-        {
-            return new MarkerRow(this.MarkersTable.Rows.Find(imageID));
-        }
-
         private List<Point> ParseCoordinate(string value)
         {
             List<Point> points = new List<Point>();
@@ -1075,11 +1004,6 @@ namespace Timelapse.Database
                 points.Add(point);
             }
             return points;
-        }
-
-        private void UpdateImageSet(string dataLabel, string value)
-        {
-            this.UpdateRow(Constants.Database.ImageSetRowID, dataLabel, value, Constants.Database.ImageSetTable);
         }
     }
 }

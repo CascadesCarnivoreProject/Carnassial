@@ -13,6 +13,17 @@ namespace Timelapse.Database
     /// </summary>
     public class ImageRow : DataRowBackedObject
     {
+        public ImageRow(DataRow row)
+            : base(row)
+        {
+        }
+
+        public string this[string dataLabel]
+        {
+            get { return this.Row.GetStringField(dataLabel); }
+            set { this.Row.SetField(dataLabel, value); }
+        }
+
         public string Date  
         {
             get { return this.Row.GetStringField(Constants.DatabaseColumn.Date); }
@@ -23,11 +34,6 @@ namespace Timelapse.Database
         {
             get { return this.Row.GetStringField(Constants.DatabaseColumn.File); }
             set { this.Row.SetField(Constants.DatabaseColumn.File, value); }
-        }
-
-        public long ID
-        {
-            get { return this.Row.GetID();  }
         }
 
         public ImageQualityFilter ImageQuality
@@ -52,11 +58,6 @@ namespace Timelapse.Database
         {
             get { return this.Row.GetStringField(Constants.DatabaseColumn.Time); }
             set { this.Row.SetField(Constants.DatabaseColumn.Time, value); }
-        }
-
-        public ImageRow(DataRow row)
-            : base(row)
-        {
         }
 
         public override ColumnTuplesWithWhere GetColumnTuples()
@@ -163,6 +164,19 @@ namespace Timelapse.Database
         {
             this.Date = DateTimeHandler.StandardDateString(dateTime);
             this.Time = DateTimeHandler.DatabaseTimeString(dateTime);
+        }
+
+        public void SetDateAndTimeFromFileInfo(string folderPath)
+        {
+            // populate new image's default date and time
+            // Typically the creation time is the time a file was created in the local file system and the last write time when it was
+            // last modified ever in any file system.  So, for example, copying an image from a camera's SD card to a computer results
+            // in the image file on the computer having a write time which is before its creation time.  Check both and take the lesser 
+            // of the two to provide a best effort default.  In most cases it's desirable to see if a more accurate time can be obtained
+            // from the image's EXIF metadata.
+            FileInfo imageFile = this.GetFileInfo(folderPath);
+            DateTime earliestTime = imageFile.CreationTime < imageFile.LastWriteTime ? imageFile.CreationTime : imageFile.LastWriteTime;
+            this.SetDateAndTime(earliestTime);
         }
 
         public DateTimeAdjustment TryUseImageTaken(BitmapMetadata metadata)

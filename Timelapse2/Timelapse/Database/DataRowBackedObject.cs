@@ -11,6 +11,11 @@ namespace Timelapse.Database
             this.Row = row;
         }
 
+        public long ID
+        {
+            get { return this.Row.GetID(); }
+        }
+
         public abstract ColumnTuplesWithWhere GetColumnTuples();
     }
 }

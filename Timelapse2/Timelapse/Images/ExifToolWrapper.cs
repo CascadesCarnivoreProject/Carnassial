@@ -69,6 +69,7 @@ namespace Timelapse.Images
             };
 
             this.Status = Statuses.Stopped;
+            this.stopRequested = false;
         }
 
         public void Dispose()
@@ -80,15 +81,9 @@ namespace Timelapse.Images
 
             Debug.Assert(this.Status == Statuses.Ready || this.Status == Statuses.Stopped, "Invalid state");
 
-            if (this.exifTool != null)
+            lock (this.processStartInfo)
             {
-                lock (this.processStartInfo)
-                {
-                    if (this.Status == Statuses.Ready)
-                    {
-                        this.Stop();
-                    }
-                }
+                this.Stop();
             }
 
             this.waitHandle.Dispose();
@@ -170,8 +165,6 @@ namespace Timelapse.Images
 
         public void Start()
         {
-            this.stopRequested = false;
-
             if (this.Status != Statuses.Stopped)
             {
                 throw new ExifToolException("Process is not stopped");
@@ -179,6 +172,11 @@ namespace Timelapse.Images
 
             lock (this.processStartInfo)
             {
+                if (this.stopRequested)
+                {
+                    return;
+                }
+
                 this.Status = Statuses.Starting;
 
                 this.exifTool = new Process { StartInfo = this.processStartInfo, EnableRaisingEvents = true };
@@ -198,15 +196,15 @@ namespace Timelapse.Images
 
         public void Stop()
         {
-            this.stopRequested = true;
-
-            if (this.Status != Statuses.Ready)
-            {
-                throw new ExifToolException("Process must be ready");
-            }
-
             lock (this.processStartInfo)
             {
+                this.stopRequested = true;
+
+                if (this.Status != Statuses.Ready)
+                {
+                    throw new ExifToolException("Process must be ready");
+                }
+
                 this.Status = Statuses.Stopping;
                 this.waitHandle.Reset();
                 this.exifTool.StandardInput.WriteLine("-stay_open\nFalse\n");

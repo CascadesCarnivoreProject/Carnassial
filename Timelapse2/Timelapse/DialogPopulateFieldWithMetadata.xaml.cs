@@ -159,11 +159,8 @@ namespace Timelapse
         #region Notefields callbacks
         public void LoadDataFieldLabels()
         {
-            for (int row = 0; row < this.database.TemplateTable.Rows.Count; row++)
+            foreach (ControlRow control in this.database.TemplateTable)
             {
-                // Get the values for each control
-                ControlRow control = new ControlRow(this.database.TemplateTable.Rows[row]);
-
                 if (control.Type == Constants.Control.Note ||
                     control.Type == Constants.DatabaseColumn.Date ||
                     control.Type == Constants.DatabaseColumn.Time)

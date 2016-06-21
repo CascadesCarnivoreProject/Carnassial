@@ -181,7 +181,7 @@ namespace Timelapse.UnitTests
             };
 
             string initialRootFolderName = Path.GetFileName(imageDatabase.FolderPath);
-            for (int image = 0; image < imageDatabase.ImageDataTable.Rows.Count; ++image)
+            for (int image = 0; image < imageDatabase.ImageDataTable.RowCount; ++image)
             {
                 ImageExpectations imageExpectation = imageExpectations[image];
                 imageExpectation.ID = image + 1;
@@ -241,7 +241,7 @@ namespace Timelapse.UnitTests
             };
 
             string initialRootFolderName = Path.GetFileName(imageDatabase.FolderPath);
-            for (int image = 0; image < imageDatabase.ImageDataTable.Rows.Count; ++image)
+            for (int image = 0; image < imageDatabase.ImageDataTable.RowCount; ++image)
             {
                 ImageExpectations imageExpectation = imageExpectations[image];
                 imageExpectation.ID = image + 1;

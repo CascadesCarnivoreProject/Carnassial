@@ -16,13 +16,13 @@ namespace Timelapse.UnitTests
 
         public Dictionary<string, string> UserDefinedCountersByDataLabel { get; private set; }
 
-        public void Verify(DataRow marker)
+        public void Verify(MarkerRow marker)
         {
-            Assert.IsTrue(marker.GetID() == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.ID, this.ID, marker.GetID());
+            Assert.IsTrue(marker.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.ID, this.ID, marker.ID);
 
             foreach (KeyValuePair<string, string> userCounterExpectation in this.UserDefinedCountersByDataLabel)
             {
-                Assert.IsTrue(marker.GetStringField(userCounterExpectation.Key) == userCounterExpectation.Value, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.ID, userCounterExpectation.Key, userCounterExpectation.Value, marker.GetStringField(userCounterExpectation.Key));
+                Assert.IsTrue(marker[userCounterExpectation.Key] == userCounterExpectation.Value, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.ID, userCounterExpectation.Key, userCounterExpectation.Value, marker[userCounterExpectation.Key]);
             }
         }
     }

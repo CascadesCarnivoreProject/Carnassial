@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions; // For debugging
 using System.Windows;
@@ -134,8 +135,7 @@ namespace Timelapse.Editor
             this.OnlyWindow.Title = EditorConstant.MainWindowBaseTitle + " | File: " + Path.GetFileName(this.templateDatabase.FilePath);
 
             // Map the data tableto the data grid, and create a callback executed whenever the datatable row changes
-            this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
-            this.templateDatabase.TemplateTable.RowChanged += this.TemplateTable_RowChanged;
+            this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateTable_RowChanged);
 
             // Now that there is a data table, enable the buttons that allows rows to be added.
             this.AddCounterButton.IsEnabled = true;
@@ -169,8 +169,7 @@ namespace Timelapse.Editor
             this.OnlyWindow.Title = EditorConstant.MainWindowBaseTitle + " | File: " + Path.GetFileName(this.templateDatabase.FilePath);
 
             // Map the data table to the data grid, and create a callback executed whenever the datatable row changes
-            this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
-            this.templateDatabase.TemplateTable.RowChanged += this.TemplateTable_RowChanged;
+            this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateTable_RowChanged);
 
             // Update the user interface specified by the contents of the table
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
@@ -276,7 +275,6 @@ namespace Timelapse.Editor
 
             this.rowsActionsOn = true;
             this.templateDatabase.RemoveUserDefinedControl(new ControlRow(selectedRowView.Row));
-            this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
 
             // update the control panel so it reflects the current values in the database
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
@@ -295,9 +293,9 @@ namespace Timelapse.Editor
             // The button tag holds the Control Order of the row the button is in, not the ID.
             // So we have to search through the rows to find the one with the correct control order
             // and retrieve / set the ItemList menu in that row.
-            ControlRow choiceControl = this.FindControl(1, button.Tag.ToString());
+            ControlRow choiceControl = this.templateDatabase.TemplateTable.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
 
-            // It should always find a row, but just in case...
+            // a control should be found but, just in case...
             string choiceList = String.Empty;
             if (choiceControl != null)
             {
@@ -319,26 +317,9 @@ namespace Timelapse.Editor
                 {
                     // choiceControl should never be null, so shouldn't get here. But just in case this does happen, 
                     // I am setting the itemList to be the one in the ControlOrder row. This was the original buggy version that didn't work, but what the heck.
-                    this.templateDatabase.TemplateTable.Rows[Convert.ToInt32(button.Tag) - 1][Constants.Control.List] = Utilities.ConvertLineBreaksToBars(choiceListDialog.Choices);
+                    this.templateDatabase.TemplateTable[Convert.ToInt32(button.Tag) - 1].List = Utilities.ConvertLineBreaksToBars(choiceListDialog.Choices);
                 }
             }
-        }
-
-        // Helper function
-        // Find a row in the templateTable given a search value and a column number in a DatTable
-        private ControlRow FindControl(int column, string searchValue)
-        {
-            int rowIndex = -1;
-            foreach (DataRow row in this.templateDatabase.TemplateTable.Rows)
-            {
-                rowIndex++;
-                if (row[column].ToString().Equals(searchValue))
-                {
-                    return new ControlRow(row);
-                }
-            }
-            // It should never return null, but just in case...
-            return null;
         }
         #endregion
 
@@ -548,9 +529,9 @@ namespace Timelapse.Editor
             }
 
             // Check to see if the data label is unique. If not, generate a unique data label and warn the user
-            for (int row = 0; row < this.templateDatabase.TemplateTable.Rows.Count; row++)
+            for (int row = 0; row < this.templateDatabase.TemplateTable.RowCount; row++)
             {
-                ControlRow control = new ControlRow(this.templateDatabase.TemplateTable.Rows[row]);
+                ControlRow control = this.templateDatabase.TemplateTable[row];
                 if (dataLabel.Equals(control.DataLabel))
                 {
                     if (this.TemplateDataGrid.SelectedIndex == row)
@@ -981,14 +962,12 @@ namespace Timelapse.Editor
         #region SpreadsheetAppearance
         private void GenerateSpreadsheet()
         {
-            DataTable sortedview = this.templateDatabase.TemplateTable.Copy();
-            sortedview.DefaultView.Sort = Constants.Control.SpreadsheetOrder + " " + "ASC";
-            DataTable temptable = sortedview.DefaultView.ToTable();
+            List<ControlRow> controlsInSpreadsheetOrder = this.templateDatabase.TemplateTable.OrderBy(control => control.SpreadsheetOrder).ToList();
             this.dgSpreadsheet.Columns.Clear();
-            for (int i = 0; i < temptable.Rows.Count; i++)
+            foreach (ControlRow control in controlsInSpreadsheetOrder)
             {
                 DataGridTextColumn column = new DataGridTextColumn();
-                string dataLabel = temptable.Rows[i].GetStringField(Constants.Control.DataLabel);
+                string dataLabel = control.DataLabel;
                 if (String.IsNullOrEmpty(dataLabel))
                 {
                     Debug.Assert(false, "Database constructors should guarantee data labels are not null.");
@@ -1013,7 +992,6 @@ namespace Timelapse.Editor
             }
 
             this.templateDatabase.UpdateDisplayOrder(Constants.Control.SpreadsheetOrder, spreadsheetOrderByDataLabel);
-            this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable; // Refresh datagrid contents. 
         }
         #endregion
 
@@ -1152,7 +1130,6 @@ namespace Timelapse.Editor
                 controlOrder++;
             }
 
-            this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable; // Refresh datagrid contents. 
             this.templateDatabase.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable); // A contorted to make sure the controls panel updates itself
         }

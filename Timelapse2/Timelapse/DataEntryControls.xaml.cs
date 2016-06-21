@@ -25,10 +25,9 @@ namespace Timelapse
 
         public void Generate(ImageDatabase database, DataEntryHandler dataEntryPropagator)
         {
-            for (int row = 0; row < database.TemplateTable.Rows.Count; row++)
+            foreach (ControlRow control in database.TemplateTable)
             {
                 // no point in generating a control if it doesn't render in the UX
-                ControlRow control = new ControlRow(database.TemplateTable.Rows[row]);
                 if (control.Visible == false)
                 {
                     continue;

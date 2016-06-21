@@ -109,8 +109,14 @@ namespace Timelapse.UnitTests
                 this.ShowDialog(timelapse, new DialogEditLog(dataHandler.ImageDatabase.ImageSet.Log));
                 this.ShowDialog(timelapse, new DialogDateModifyAmbiguousDates(dataHandler.ImageDatabase));
                 this.ShowDialog(timelapse, new DialogDateSwapDayMonth(dataHandler.ImageDatabase));
-                this.ShowDialog(timelapse, new DialogOptionsDarkImagesThreshold(dataHandler.ImageDatabase, dataHandler.ImageCache.CurrentRow, new TimelapseState()));
-                this.ShowDialog(timelapse, new DialogPopulateFieldWithMetadata(dataHandler.ImageDatabase, dataHandler.ImageCache.Current.GetImagePath(dataHandler.ImageDatabase.FolderPath)));
+                using (DialogOptionsDarkImagesThreshold darkThreshold = new DialogOptionsDarkImagesThreshold(dataHandler.ImageDatabase, dataHandler.ImageCache.CurrentRow, new TimelapseState()))
+                {
+                    this.ShowDialog(timelapse, darkThreshold);
+                }
+                using (DialogPopulateFieldWithMetadata populateField = new DialogPopulateFieldWithMetadata(dataHandler.ImageDatabase, dataHandler.ImageCache.Current.GetImagePath(dataHandler.ImageDatabase.FolderPath)))
+                {
+                    this.ShowDialog(timelapse, populateField);
+                }
                 this.ShowDialog(timelapse, new DialogRenameImageDatabaseFile(dataHandler.ImageDatabase.FileName));
                 this.ShowDialog(timelapse, new DialogDateRereadDatesFromImages(dataHandler.ImageDatabase));
                 this.ShowDialog(timelapse, new DialogStatisticsOfImageCounts(dataHandler.ImageDatabase.GetImageCounts()));

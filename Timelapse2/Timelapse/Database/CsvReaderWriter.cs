@@ -40,7 +40,7 @@ namespace Timelapse.Database
                     StringBuilder row = new StringBuilder();
                     foreach (string dataLabel in dataLabels)
                     {
-                        row.Append(this.AddColumnValue(database.ImageDataTable.Rows[i].GetStringField(dataLabel)));
+                        row.Append(this.AddColumnValue(database.ImageDataTable[i][dataLabel]));
                     }
                     fileWriter.WriteLine(row.ToString());
                 }

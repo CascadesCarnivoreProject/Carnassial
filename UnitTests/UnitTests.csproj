@@ -75,6 +75,7 @@
     <Compile Include="ControlExpectations.cs" />
     <Compile Include="DatabaseExpectations.cs" />
     <Compile Include="DatabaseTests.cs" />
+    <Compile Include="DataTableBackedListExtensions.cs" />
     <Compile Include="DependencyTests.cs" />
     <Compile Include="ImageExpectations.cs" />
     <Compile Include="ImageTests.cs" />

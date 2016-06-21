@@ -26,10 +26,10 @@ namespace Timelapse.Database
             this.SearchTermList = new Dictionary<int, SearchTerm>();
 
             // Initialize the filter to reflect the desired controls in the template (in sorted order)
-            for (int rowIndex = 0; rowIndex < this.database.TemplateTable.Rows.Count; rowIndex++)
+            for (int rowIndex = 0; rowIndex < this.database.TemplateTable.RowCount; rowIndex++)
             {
                 // Get the values for each control
-                ControlRow control = new ControlRow(this.database.TemplateTable.Rows[rowIndex]);
+                ControlRow control = this.database.TemplateTable[rowIndex];
 
                 // We only handle certain types, e.g., we don't give the user the opportunity to search over file names / folders / date / time
                 string controlType = control.Type;

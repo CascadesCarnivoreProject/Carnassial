@@ -134,6 +134,7 @@
     </ApplicationDefinition>
     <Compile Include="Database\ControlRow.cs" />
     <Compile Include="Database\CustomFilterOperator.cs" />
+    <Compile Include="Database\DataTableBackedList.cs" />
     <Compile Include="Database\ImageDataChoiceColumn.cs" />
     <Compile Include="Database\ImageDataColumn.cs" />
     <Compile Include="Database\DataRowExtensions.cs" />

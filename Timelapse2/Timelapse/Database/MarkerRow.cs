@@ -30,11 +30,6 @@ namespace Timelapse.Database
             }
         }
 
-        public long ID
-        {
-            get { return this.Row.GetID(); }
-        }
-
         public override ColumnTuplesWithWhere GetColumnTuples()
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>();

@@ -31,9 +31,8 @@ namespace Timelapse.Images
             List<string> noteControlNames = new List<string>();
             List<string> counterControlNames = new List<string>();
             List<string> choiceControlNames = new List<string>();
-            for (int row = 0; row < imageDatabase.TemplateTable.Rows.Count; row++)
+            foreach (ControlRow control in imageDatabase.TemplateTable)
             {
-                ControlRow control = new ControlRow(imageDatabase.TemplateTable.Rows[row]);
                 switch (control.Type)
                 {
                     case Constants.Control.Counter:

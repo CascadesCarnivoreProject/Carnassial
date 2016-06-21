@@ -18,16 +18,15 @@ namespace Timelapse.Editor.Util
     /// </remarks>
     internal class EditorControls
     {
-        public static void Generate(EditorWindow mainWindow, WrapPanel parent, DataTable templateTable)
+        public static void Generate(EditorWindow mainWindow, WrapPanel parent, DataTableBackedList<ControlRow> templateTable)
         {
             // used for styling all content and label controls except ComboBoxes since the combo box style is commented out in DataEntryControls.xaml
             // and defined instead in MainWindow.xaml as an exception workaround
             DataEntryControls styleProvider = new DataEntryControls();
 
             parent.Children.Clear();
-            foreach (DataRow row in templateTable.Rows)
+            foreach (ControlRow control in templateTable)
             {
-                ControlRow control = new ControlRow(row);
                 if (control.DefaultValue == String.Empty)
                 {
                     if (control.Type == Constants.DatabaseColumn.Date)

@@ -358,9 +358,8 @@ namespace Timelapse
 
                 // TODOSAUL: MAKE DB UPDATE EFFICIENT
                 int images = database.CurrentlySelectedImageCount;
-                for (int image = 0; image < images; image++)
+                foreach (ImageRow imageRow in database.ImageDataTable)
                 {
-                    ImageRow imageRow = new ImageRow(database.ImageDataTable.Rows[image]);
                     ImageQuality imageQuality = new ImageQuality(imageRow);
 
                     // If its not a valid image, say so and go onto the next one.

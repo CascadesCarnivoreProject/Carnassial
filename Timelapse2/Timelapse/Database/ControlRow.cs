@@ -34,11 +34,6 @@ namespace Timelapse.Database
             set { this.Row.SetField(Constants.Control.DefaultValue, value); }
         }
 
-        public long ID
-        {
-            get { return this.Row.GetID(); }
-        }
-
         public string Label
         {
             get { return this.Row.GetStringField(Constants.Control.Label); }

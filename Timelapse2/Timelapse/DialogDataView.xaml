@@ -4,6 +4,7 @@
          xmlns:local="clr-namespace:Timelapse"
         Title="View the (changing) contents of the database" 
         MinHeight="480" MinWidth="768"
+        Closing="Window_Closing"
         Loaded="Window_Loaded"
 		Height="600" Width="768"
 		ResizeMode="CanResizeWithGrip"
@@ -19,7 +20,7 @@
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Name="OkButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">Okay</Button>
             </StackPanel>
-            <DataGrid Name="datagrid" MinHeight="100" MinWidth="100"  DockPanel.Dock="Top" HorizontalAlignment="Stretch" FontSize="12" VerticalScrollBarVisibility="Auto"/>
+            <DataGrid Name="dataGrid" MinHeight="100" MinWidth="100"  DockPanel.Dock="Top" HorizontalAlignment="Stretch" FontSize="12" VerticalScrollBarVisibility="Auto"/>
         </DockPanel>
     </DockPanel>
 </Window>

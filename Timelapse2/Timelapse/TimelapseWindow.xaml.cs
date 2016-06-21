@@ -116,7 +116,15 @@ namespace Timelapse
 
             if (disposing)
             {
+                if (this.dataHandler != null)
+                {
+                    this.dataHandler.Dispose();
+                }
                 this.speechSynthesizer.Dispose();
+                if (this.template != null)
+                {
+                    this.template.Dispose();
+                }
             }
 
             this.disposed = true;
@@ -1445,7 +1453,7 @@ namespace Timelapse
                             pointList += String.Format("{0:0.000},{1:0.000}", point.X, point.Y);   // Add a point in the form 
                         }
                     }
-                    this.dataHandler.ImageDatabase.UpdateRow(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, pointList, Constants.Database.MarkersTable);
+                    this.dataHandler.ImageDatabase.SetMarkerPoints(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, pointList);
                 }
                 this.RefreshTheMarkableCanvasListOfMetaTags(); // Refresh the Markable Canvas, where it will also delete the metaTag at the same time
             }
@@ -1921,17 +1929,19 @@ namespace Timelapse
                 }
             }
 
-            DialogPopulateFieldWithMetadata populateField = new DialogPopulateFieldWithMetadata(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current.GetImagePath(this.FolderPath));
-            populateField.Owner = this;
-            bool? result = populateField.ShowDialog();
-            if (result == true)
+            using (DialogPopulateFieldWithMetadata populateField = new DialogPopulateFieldWithMetadata(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current.GetImagePath(this.FolderPath)))
             {
-                // Update the datagrid and the current image after the fields have been populated
-                this.dataHandler.ImageDatabase.TryGetImages(ImageQualityFilter.All);
-                this.RefreshCurrentImageProperties();
-                if (this.dlgDataView != null)
+                populateField.Owner = this;
+                bool? result = populateField.ShowDialog();
+                if (result == true)
                 {
-                    this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
+                    // Update the datagrid and the current image after the fields have been populated
+                    this.dataHandler.ImageDatabase.TryGetImages(ImageQualityFilter.All);
+                    this.RefreshCurrentImageProperties();
+                    if (this.dlgDataView != null)
+                    {
+                        this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
+                    }
                 }
             }
         }
@@ -1963,7 +1973,7 @@ namespace Timelapse
         private void MenuItemDeleteImages_Click(object sender, RoutedEventArgs e)
         {
             MenuItem mi = sender as MenuItem;
-            DataTable deletedImages;
+            DataTableBackedList<ImageRow> deletedImages;
             bool isUseDeleteData;
             bool isUseDeleteFlag;
             int savedRow;
@@ -1982,7 +1992,7 @@ namespace Timelapse
             else
             {
                 // Delete current image case. Get the ID of the current image and construct a datatable that contains that image's datarow
-                ImageRow imageProperties = new ImageRow(this.dataHandler.ImageDatabase.ImageDataTable.Rows[this.dataHandler.ImageCache.CurrentRow]);
+                ImageRow imageProperties = this.dataHandler.ImageDatabase.ImageDataTable[this.dataHandler.ImageCache.CurrentRow];
                 deletedImages = this.dataHandler.ImageDatabase.GetImageByID(imageProperties.ID);
                 isUseDeleteFlag = false;
                 isUseDeleteData = mi.Name.Equals(this.MenuItemDeleteImage.Name) ? false : true;
@@ -2010,7 +2020,7 @@ namespace Timelapse
             }
             else
             {
-                ImageRow imageProperties = new ImageRow(this.dataHandler.ImageDatabase.ImageDataTable.Rows[this.dataHandler.ImageCache.CurrentRow]);
+                ImageRow imageProperties = this.dataHandler.ImageDatabase.ImageDataTable[this.dataHandler.ImageCache.CurrentRow];
                 deleteImagesDialog = new DialogDeleteImages(this.dataHandler.ImageDatabase, deletedImages, isUseDeleteData, isUseDeleteFlag);   // delete data
             }
             deleteImagesDialog.Owner = this;
@@ -2118,6 +2128,7 @@ namespace Timelapse
             this.markableCanvas.MagnifierZoomOut();
             this.markableCanvas.MagnifierZoomOut();
         }
+
         private void MenuItemOptionsDarkImagesThreshold_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
@@ -2130,9 +2141,11 @@ namespace Timelapse
                 }
             }
 
-            DialogOptionsDarkImagesThreshold darkThreshold = new DialogOptionsDarkImagesThreshold(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.CurrentRow, this.state);
-            darkThreshold.Owner = this;
-            bool? result = darkThreshold.ShowDialog();
+            using (DialogOptionsDarkImagesThreshold darkThreshold = new DialogOptionsDarkImagesThreshold(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.CurrentRow, this.state))
+            {
+                darkThreshold.Owner = this;
+                darkThreshold.ShowDialog();
+            }
         }
 
         /// <summary>Swap the day / month fields if possible</summary>

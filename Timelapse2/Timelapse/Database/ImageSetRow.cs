@@ -49,7 +49,7 @@ namespace Timelapse.Database
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, this.MagnifierEnabled));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Row, this.ImageRowIndex));
             // columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, this.WhitespaceTrimmed));
-            return new ColumnTuplesWithWhere(columnTuples, Constants.Database.ImageSetRowID);
+            return new ColumnTuplesWithWhere(columnTuples, this.ID);
         }
     }
 }

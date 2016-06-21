@@ -33,7 +33,7 @@ namespace Timelapse.Util
             // First, do a pass to see if swapping the date/time order is even possible
             for (int image = 0; image < database.CurrentlySelectedImageCount; image++)
             {
-                ImageRow imageProperties = new ImageRow(database.ImageDataTable.Rows[image]);
+                ImageRow imageProperties = database.ImageDataTable[image];
                 // Skip over corrupted images for now, as we know those dates are likley wrong
                 if (imageProperties.ImageQuality == ImageQualityFilter.Corrupted)
                 {

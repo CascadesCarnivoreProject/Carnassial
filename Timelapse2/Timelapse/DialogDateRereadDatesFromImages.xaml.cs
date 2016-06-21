@@ -63,22 +63,24 @@ namespace Timelapse
 
                 // Pass 1. Check to see what dates/times need updating.
                 List<ImageRow> imagePropertiesList = new List<ImageRow>();
-                int count = database.CurrentlySelectedImageCount;
-                for (int image = 0; image < count; image++)
+                int count = this.database.CurrentlySelectedImageCount;
+                for (int image = 0; image < count; ++image)
                 {
                     // We will store the various times here
-                    ImageRow imageProperties = new ImageRow(database.ImageDataTable.Rows[image]);
+                    ImageRow imageProperties = this.database.ImageDataTable[image];
+                    DateTime originalDateTime = imageProperties.GetDateTime();
                     string feedbackMessage = String.Empty;
                     try
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just to the catch.
                         // see remarks about framework WriteableBitmap.Metadata slicing bug in TimelapseWindow.LoadByScanningImageFolder()
-                        BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(database.FolderPath);
+                        BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(this.database.FolderPath);
                         DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapFrame.Metadata);
                         switch (imageTimeAdjustment)
                         {
                             case DateTimeAdjustment.MetadataNotUsed:
+                                imageProperties.SetDateAndTimeFromFileInfo(this.database.FolderPath);
                                 feedbackMessage = " Using file timestamp";
                                 break;
                             // includes DateTimeAdjustment.SameFileAndMetadataTime
@@ -87,7 +89,8 @@ namespace Timelapse
                                 break;
                         }
 
-                        if (imageProperties.Date.Equals(database.ImageDataTable.Rows[image].GetStringField(Constants.DatabaseColumn.Date)))
+                        DateTime rescannedDateTime = imageProperties.GetDateTime();
+                        if (rescannedDateTime.Date == originalDateTime.Date)
                         {
                             feedbackMessage += ", same date";
                             imageProperties.Date = String.Empty; // If its the same, we won't copy it
@@ -96,7 +99,7 @@ namespace Timelapse
                         {
                             feedbackMessage += ", different date";
                         }
-                        if (imageProperties.Time.Equals(database.ImageDataTable.Rows[image].GetStringField(Constants.DatabaseColumn.Time)))
+                        if (rescannedDateTime.TimeOfDay == originalDateTime.TimeOfDay)
                         {
                             feedbackMessage += ", same time";
                             imageProperties.Time = String.Empty; // If its the same, we won't copy it

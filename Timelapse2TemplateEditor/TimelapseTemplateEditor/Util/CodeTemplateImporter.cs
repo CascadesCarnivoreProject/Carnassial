@@ -197,11 +197,10 @@ namespace Timelapse.Editor.Util
         private void UpdateStandardControl(XmlNodeList selectedNodes, TemplateDatabase templateDatabase, string typeWanted, ref List<string> errorMessages, ref List<string> dataLabels)
         {
             Debug.Assert(selectedNodes != null && selectedNodes.Count == 1, "Row update is supported for only a single XML element.");
-            
+
             // assume the database is well formed and contains only a single row of the given standard type
-            for (int rowIndex = 0; rowIndex < templateDatabase.TemplateTable.Rows.Count; rowIndex++)
+            foreach (ControlRow control in templateDatabase.TemplateTable)
             {
-                ControlRow control = new ControlRow(templateDatabase.TemplateTable.Rows[rowIndex]);
                 if (control.Type == typeWanted)
                 {
                     this.UpdateControl(selectedNodes[0], templateDatabase, typeWanted, control, ref errorMessages, ref dataLabels);

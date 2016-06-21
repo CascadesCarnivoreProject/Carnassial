@@ -12,8 +12,10 @@ namespace Timelapse.Util
     /// The code in here propagates values of a control across the various images in various ways.
     /// TODOSAUL: Update to make this work with the new set of controls
     /// </summary>
-    public class DataEntryHandler
+    public class DataEntryHandler : IDisposable
     {
+        private bool disposed;
+
         private const int CopyForwardIndex = 1;
         private const int PropagateFromLastValueIndex = 0;
 
@@ -23,6 +25,7 @@ namespace Timelapse.Util
 
         public DataEntryHandler(ImageDatabase imageDatabase)
         {
+            this.disposed = false;
             this.ImageCache = new ImageCache(imageDatabase);
             this.ImageDatabase = imageDatabase;  // We need a reference to the database if we are going to update it.
             this.IsProgrammaticControlUpdate = false;
@@ -68,7 +71,7 @@ namespace Timelapse.Util
             for (int index = this.ImageCache.CurrentRow - 1; index >= 0; index--)
             {
                 // Search for the row with some value in it, starting from the previous row
-                valueToCopy = this.ImageDatabase.ImageDataTable.Rows[index].GetStringField(control.DataLabel);
+                valueToCopy = this.ImageDatabase.ImageDataTable[index][control.DataLabel];
                 if (valueToCopy == null)
                 {
                     continue;
@@ -98,13 +101,13 @@ namespace Timelapse.Util
                 dlgMB.MessageTitle = "Nothing to Propagate to Here.";
                 dlgMB.MessageReason = "None of the earlier images have anything in this field, so there are no values to propagate.";
                 dlgMB.ShowDialog();
-                return this.ImageDatabase.ImageDataTable.Rows[this.ImageCache.CurrentRow].GetStringField(control.DataLabel); // No change, so return the current value
+                return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow][control.DataLabel]; // No change, so return the current value
             }
 
             int imagesAffected = this.ImageCache.CurrentRow - targetRow;
             if (this.ConfirmPropagateFromLastValue(valueToCopy, imagesAffected) != true)
             {
-                return this.ImageDatabase.ImageDataTable.Rows[this.ImageCache.CurrentRow].GetStringField(control.DataLabel); // No change, so return the current value
+                return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow][control.DataLabel]; // No change, so return the current value
             }
 
             // Update. Note that we start on the next row, as we are copying from the current row.
@@ -125,6 +128,30 @@ namespace Timelapse.Util
             this.ImageDatabase.UpdateAllImagesInFilteredView(control.DataLabel, valueToCopy);
         }
 
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                if (this.ImageDatabase != null)
+                {
+                    this.ImageDatabase.Dispose();
+                }
+            }
+
+            this.disposed = true;
+        }
+
         public bool IsCopyForwardPossible(DataEntryControl control)
         {
             string valueToCopy = this.ImageDatabase.GetImageValue(this.ImageCache.CurrentRow, control.DataLabel);
@@ -140,7 +167,7 @@ namespace Timelapse.Util
             for (int image = this.ImageCache.CurrentRow - 1; image >= 0; image--)
             {
                 // Search for the row with some value in it, starting from the previous row
-                string valueToCopy = this.ImageDatabase.ImageDataTable.Rows[image].GetStringField(control.DataLabel);
+                string valueToCopy = this.ImageDatabase.ImageDataTable[image][control.DataLabel];
 
                 if (valueToCopy.Trim().Length > 0)
                 {
