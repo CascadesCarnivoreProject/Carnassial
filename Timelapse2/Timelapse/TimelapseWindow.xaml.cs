@@ -2221,11 +2221,10 @@ namespace Timelapse
 
         private void MenuItemCheckModifyAmbiguousDates_Click(object sender, RoutedEventArgs e)
         {
-            // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
+            // If we are not in the filter all view, tell the user. Selecting ok will shift the views..
+            if (this.state.ImageFilter != ImageQualityFilter.All)
             {
-                if (this.TryPromptAndChangeToAllFilter("Check and modify ambiguous dates...",
-                                                       "To check and modify ambiguous dates:") == false)
+                if (this.TryPromptAndChangeToAllFilter("Check and modify ambiguous dates...", "To check and modify ambiguous dates:", false) == false)
                 {
                     return;
                 }
@@ -2532,11 +2531,19 @@ namespace Timelapse
 
         private bool TryPromptAndChangeToAllFilter(string messageTitle, string messageProblemFirstLine)
         {
+            return this.TryPromptAndChangeToAllFilter(messageTitle, messageProblemFirstLine, true);
+        }
+
+        private bool TryPromptAndChangeToAllFilter(string messageTitle, string messageProblemFirstLine, bool validImageRequired)
+        {
             DialogMessageBox dlgMB = new DialogMessageBox();
             dlgMB.MessageTitle = messageTitle;
             dlgMB.MessageProblem = messageProblemFirstLine + Environment.NewLine;
-            dlgMB.MessageProblem += "\u2022 be filtered to view All Images (normally set in the Filter menu)" + Environment.NewLine;
-            dlgMB.MessageProblem += "\u2022 be displaying a valid image";
+            dlgMB.MessageProblem += "\u2022 be filtered to view All Images (normally set in the Filter menu)";
+            if (validImageRequired)
+            { 
+                dlgMB.MessageProblem += Environment.NewLine + "\u2022 be displaying a valid image";
+            }
             dlgMB.MessageSolution = "Select 'Ok' for Timelapse to do the above actions for you.";
             dlgMB.IconType = MessageBoxImage.Exclamation;
             dlgMB.ButtonType = MessageBoxButton.OKCancel;

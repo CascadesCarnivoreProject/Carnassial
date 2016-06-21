@@ -767,10 +767,10 @@ namespace Timelapse.Database
             {
                 // I originally didn't swap the date for corrupted images, but don't see why I shouldn't 
                 // But in case we decide not to do so, I've left the code here
-                //if (this.IsImageCorrupt(row))
-                //{
+                // if (this.IsImageCorrupt(row))
+                // {
                 //    continue;  // skip over corrupted images
-                //}
+                // }
 
                 DateTime reversedDate;
                 try
