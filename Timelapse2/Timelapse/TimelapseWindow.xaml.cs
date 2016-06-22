@@ -690,14 +690,7 @@ namespace Timelapse
 
                 StatusBarUpdate.View(this.statusBar, status);
                 this.MenuItemViewSetSelected(filter);
-                if (this.dlgDataView != null)
-                {
-                    this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
-                    if (filter == ImageQualityFilter.MarkedForDeletion)
-                    {
-                        this.MenuItemViewFilteredDatabaseContents_Click(null, null); // Regenerate the DataView if needed
-                    }
-                }
+                this.RefreshDataViewDialogWindow();  // If its displayed, update the window that shows the filtered view data base
             }
             else
             {
@@ -2288,7 +2281,7 @@ namespace Timelapse
             DialogDateRereadDatesFromImages rereadDates = new DialogDateRereadDatesFromImages(this.dataHandler.ImageDatabase);
             rereadDates.Owner = this;
             bool? result = rereadDates.ShowDialog();
-           if (result == true)
+            if (result == true)
             {
                 this.RefreshCurrentImageProperties();
                 this.RefreshDataViewDialogWindow();
@@ -2466,8 +2459,10 @@ namespace Timelapse
         {
             if (this.dlgDataView != null && this.dlgDataView.IsLoaded)
             {
-                return; // If its already displayed, don't bother.
+                this.RefreshDataViewDialogWindow(); // If its already displayed, just refresh it.
+                return;
             }
+            // We need to create it
             this.dlgDataView = new DialogDataView(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache);
             this.dlgDataView.Show();
         }
@@ -2693,10 +2688,11 @@ namespace Timelapse
 
         #region DataView Window Management
         private void RefreshDataViewDialogWindow()
-        { 
+        {
             if (this.dlgDataView != null)
             {
-                    this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
+                // If its displayed, update the window that shows the filtered view data base
+                this.dlgDataView.RefreshDataTable();
             }
         }
         #endregion
