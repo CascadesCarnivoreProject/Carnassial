@@ -24,7 +24,7 @@ namespace Timelapse.Util
 
         /// <summary>
         /// Check to see if we can swap the day and month in all date fields. It checks to see if this is possible.
-        /// If it isn't, it returns false, else true
+        /// If it isn't, it returns -1, else the index to the first image that is not swappable
         /// Assumes that we are showing all images (i.e., it checks the current data table)
         /// TODOSAUL: Change it to use a temp table?
         /// </summary>
@@ -42,7 +42,11 @@ namespace Timelapse.Util
 
                 // Now check to see if the reversed date is legit. If it throws an exception, we know it's a problem.
                 // TODOSAUL: add code to check if day and month are swappable rather than throwing
-                DateTime date = imageProperties.GetDateTime();
+                DateTime date;
+                if (imageProperties.GetDateTime(out date) == false)
+                {
+                    return image; // Not a valid date, so its not swappable either.
+                }
                 try
                 {
                     DateTime reversedDate = new DateTime(date.Year, date.Day, date.Month); // swapped day and month
@@ -52,17 +56,29 @@ namespace Timelapse.Util
                     return image; // return the first image where we couldn't swap the date
                 }
             }
-
             return -1; // -1 means we can reverse the dates
         }
 
-        public static string SwapSingleDayMonth(string dateAsString)
+        // Swap the day and month, if possible.
+        // However, if the date isn't valid return the date provided
+        // If the date is valid, 
+        public static bool TrySwapSingleDayMonth(string dateAsString, out string swappedDateAsString)
         {
-            // Parse the date, which should always work at this point. 
-            DateTime date = DateTime.Parse(dateAsString);
-
-            DateTime reversedDate = new DateTime(date.Year, date.Day, date.Month); // we have swapped the day with the month
-            return DateTimeHandler.StandardDateString(reversedDate);
+            DateTime date;
+            // Make sure that we have a valid date, and that the day/month is swappable
+            bool result = DateTime.TryParse(dateAsString, out date);
+            if (result == true && date.Day <= 12)
+            { 
+                DateTime reversedDate = new DateTime(date.Year, date.Day, date.Month); // we have swapped the day with the month
+                swappedDateAsString = DateTimeHandler.StandardDateString(reversedDate);
+                return true;
+            }
+            else 
+            {
+               // Failure case, so we don't swap the date. Still, we return a valid date string as either the (possibly reformatted) date provided, or as 01-Jan-0001 if a bad date was provided 
+                swappedDateAsString = (result == true && date.Day > 12) ? DateTimeHandler.StandardDateString(date) : DateTimeHandler.StandardDateString(new DateTime(0));  
+                return false;
+            }
         }
     }
 }

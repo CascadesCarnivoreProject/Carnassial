@@ -326,7 +326,7 @@ namespace Timelapse
             public const string DateFormat = "dd-MMM-yyyy";
             public const string DateTimeFormat = "dd-MMM-yyyy HH:mm:ss";
             public const string TimeFormatForDatabase = "HH:mm:ss";
-            public const string TimeFormatForUser = "hh:mm tt";
+            public const string TimeFormatForUser = "HH:mm:ss"; 
         }
 
         public static class VersionXml

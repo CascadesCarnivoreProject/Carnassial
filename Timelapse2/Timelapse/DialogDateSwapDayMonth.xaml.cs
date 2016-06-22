@@ -51,7 +51,8 @@ namespace Timelapse
                 {
                     imageProperties = this.database.FindImageByID(id);
                     this.lblOriginalDate.Content = imageProperties.Date;
-                    this.lblNewDate.Content = DateTimeHandler.SwapSingleDayMonth(imageProperties.Date);
+                    string swappedDate;
+                    this.lblNewDate.Content = DateTimeHandler.TrySwapSingleDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
                 }
             }
 

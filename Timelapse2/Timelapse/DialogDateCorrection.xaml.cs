@@ -18,12 +18,15 @@ namespace Timelapse
     {
         private ImageDatabase database;
         private DateTime newDate;
-         
+        public bool Abort { get; set; }
+        
         // Create the interface
         public DialogDateCorrection(ImageDatabase database, ImageRow imageToCorrect)
         {
             this.InitializeComponent();
             this.database = database;
+
+            this.Abort = false;
 
             // Get the original date time and display it
             this.lblOriginalDate.Content = imageToCorrect.Date + " " + imageToCorrect.Time;
@@ -47,7 +50,7 @@ namespace Timelapse
                 // While we could relax this to use other date formats, it reintroduces ambiguities e.g. the month/day uncertainty issue.
                 datePicker.DisplayDate = DateTime.ParseExact(dateAsString, format, provider);
                 datePicker.Text = datePicker.DisplayDate.Date.ToString("dd-MMM-yyyy", System.Globalization.CultureInfo.InvariantCulture);
-                this.tbNewTime.Text = datePicker.DisplayDate.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);  
+                this.tbNewTime.Text = datePicker.DisplayDate.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
             }
             catch
             {
@@ -61,6 +64,7 @@ namespace Timelapse
                 dlgMB.ButtonType = MessageBoxButton.OK;
                 dlgMB.IconType = MessageBoxImage.Error;
                 dlgMB.ShowDialog();
+                this.Abort = true;
                 return;
             }
         }

@@ -30,6 +30,7 @@ namespace Timelapse
         {
             // this.CancelButton.IsEnabled = false; // We won't allow the operation to be cancelled, as I am concerned about the database getting corrupted.
             this.RescanDates();
+
             this.CancelButton.IsEnabled = true;
             this.CancelButton.Content = "Done";
         }
@@ -68,8 +69,9 @@ namespace Timelapse
                 {
                     // We will store the various times here
                     ImageRow imageProperties = this.database.ImageDataTable[image];
-                    DateTime originalDateTime = imageProperties.GetDateTime();
+                    DateTime originalDateTime;
                     string feedbackMessage = String.Empty;
+                    bool result = imageProperties.GetDateTime(out originalDateTime); // If the result is false, we know that the originalDateTime will be reset to 01-Jan-0001 00:00:00
                     try
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
@@ -80,7 +82,7 @@ namespace Timelapse
                         switch (imageTimeAdjustment)
                         {
                             case DateTimeAdjustment.MetadataNotUsed:
-                                imageProperties.SetDateAndTimeFromFileInfo(this.database.FolderPath);
+                                imageProperties.SetDateAndTimeFromFileInfo(this.database.FolderPath);  // We couldn't read the metadata, so get a candidate date/time from the file
                                 feedbackMessage = " Using file timestamp";
                                 break;
                             // includes DateTimeAdjustment.SameFileAndMetadataTime
@@ -89,33 +91,40 @@ namespace Timelapse
                                 break;
                         }
 
-                        DateTime rescannedDateTime = imageProperties.GetDateTime();
-                        if (rescannedDateTime.Date == originalDateTime.Date)
+                        DateTime rescannedDateTime;
+                        result = imageProperties.GetDateTime(out rescannedDateTime);
+                        if (result == false)
                         {
-                            feedbackMessage += ", same date";
-                            imageProperties.Date = String.Empty; // If its the same, we won't copy it
+                            feedbackMessage += ", invalid date and time";
+                            imageProperties.Date = String.Empty;
                         }
                         else
                         {
-                            feedbackMessage += ", different date";
+                            if (rescannedDateTime.Date == originalDateTime.Date)
+                            {
+                                feedbackMessage += ", same date";
+                                imageProperties.Date = String.Empty; // If its the same, we won't copy it
+                            }
+                            else
+                            {
+                                feedbackMessage += ", different date";
+                            }
+                            if (rescannedDateTime.TimeOfDay == originalDateTime.TimeOfDay)
+                            {
+                                feedbackMessage += ", same time";
+                                imageProperties.Time = String.Empty; // If its the same, we won't copy it
+                            }
+                            else
+                            {
+                                feedbackMessage += ", different time";
+                            }
                         }
-                        if (rescannedDateTime.TimeOfDay == originalDateTime.TimeOfDay)
-                        {
-                            feedbackMessage += ", same time";
-                            imageProperties.Time = String.Empty; // If its the same, we won't copy it
-                        }
-                        else
-                        {
-                            feedbackMessage += ", different time";
-                        }
-
                         imagePropertiesList.Add(imageProperties);
                     }
                     catch // Image isn't there
                     {
-                        feedbackMessage += " , skipping as cannot open image.";
+                        feedbackMessage += " Skipping: cannot open image (its either missing or corrupted).";
                     }
-
                     backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, feedbackMessage));
                     if (image % 100 == 0)
                     {
@@ -125,12 +134,14 @@ namespace Timelapse
 
                 // Pass 2. Update each date as needed 
                 string message = String.Empty;
+                backgroundWorker.ReportProgress(0, new FeedbackMessage(String.Empty, String.Empty)); // A blank separator
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Pass 2: For selected images", "Updating only when dates or times differ..."));
 
                 // This tuple list will hold the id, key and value that we will want to update in the database
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
                 for (int image = 0; image < imagePropertiesList.Count; image++)
                 {
+                    bool skip = false;
                     ImageRow imageProperties = imagePropertiesList[image];
 
                     ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere();
@@ -155,6 +166,7 @@ namespace Timelapse
                     else
                     {
                         message = "Updating not required";
+                        skip = true;
                     }
 
                     if (imageUpdate.Columns.Count > 0)
@@ -163,17 +175,17 @@ namespace Timelapse
                         imagesToUpdate.Add(imageUpdate);
                     }
 
-                    backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, message));
-                    if (image % 100 == 0)
-                    {
-                        // TODOSAUL: should this be Thread.Yield()?
-                        Thread.Sleep(25); // Put in a delay every now and then, as otherwise the UI won't update.
+                    if (!skip)
+                    { 
+                        backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, message));
+                        if (image % 100 == 0)
+                        {
+                            Thread.Yield(); // Allow the UI to update.
+                        }
                     }
                 }
-
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Writing to database...", "Please wait"));
-                // TODOSAUL: should this be Thread.Yield()?
-                Thread.Sleep(25);
+                Thread.Yield(); // Allow the UI to update.
                 database.UpdateImages(imagesToUpdate);  // Write the updates to the database
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Done", "Done"));
             };
@@ -187,6 +199,7 @@ namespace Timelapse
             {
                 this.OkButton.IsEnabled = false;
                 this.CancelButton.IsEnabled = true;
+                this.database.TryGetImages(ImageQualityFilter.All);
             };
             backgroundWorker.RunWorkerAsync();
         }

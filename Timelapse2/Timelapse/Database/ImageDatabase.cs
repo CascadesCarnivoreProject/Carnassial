@@ -685,11 +685,16 @@ namespace Timelapse.Database
             List<ImageRow> imagePropertiesList = new List<ImageRow>();
             foreach (ImageRow imageProperties in tempTable)
             {
-                DateTime date = imageProperties.GetDateTime();
-                // adjust the date
-                date += adjustment;
-                imageProperties.SetDateAndTime(date);
-                imagePropertiesList.Add(imageProperties);
+                DateTime date;
+                bool result = imageProperties.GetDateTime(out date);
+                if (result)
+                { 
+                    // adjust the date / time
+                    date += adjustment;
+                    imageProperties.SetDateAndTime(date);
+                    imagePropertiesList.Add(imageProperties);
+                }
+                // NOte that there is no else, which means we skip dates that can't be retrieved properly
             }
 
             // Now update the actual database with the new date/time values stored in the temporary table
@@ -711,7 +716,7 @@ namespace Timelapse.Database
         // It also assumes that the data table is showing All images
         public void ExchangeDayAndMonthInImageDate()
         {
-            this.ExchangeDayAndMonthInImageDate(0, this.CurrentlySelectedImageCount);
+            this.ExchangeDayAndMonthInImageDate(0, this.CurrentlySelectedImageCount - 1);
         }
 
         // Update all the date fields between the start and end index by swapping the days and months.

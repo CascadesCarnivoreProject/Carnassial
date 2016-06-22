@@ -14,10 +14,11 @@ namespace Timelapse.Util
     /// </summary>
     public class DataEntryHandler : IDisposable
     {
-        private bool disposed;
-
         private const int CopyForwardIndex = 1;
         private const int PropagateFromLastValueIndex = 0;
+
+        private bool disposed;
+
 
         public ImageCache ImageCache { get; private set; }
         public ImageDatabase ImageDatabase { get; private set; }

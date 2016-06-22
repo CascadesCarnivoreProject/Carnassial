@@ -16,7 +16,7 @@
                             MessageTitle="Swap the Date's Day and Month"
                             MessageProblem="Some cameras record ambiguous dates, where Timelapse has to guess if the date is in Month /Day or Day/Month order. &#10;If your dates appear wrong, it could be because Timelapse guessed the wrong way round."
                             MessageSolution="Click 'Swap Day and Month' to swap the month and day for all images (except corrupt images), as in the sample image below. &#10;Click Cancel if you don't want to do this."
-                            MessageResult="The day and month of all images will be swapped (except for corrupted images)."
+                            MessageResult="The day and month of all images will be swapped (except for corrupted images, or images with unrecognizable dates)."
                             ShowExplanationVisibilityCheckbox="True"/>
 
         <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>

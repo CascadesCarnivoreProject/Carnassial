@@ -55,7 +55,9 @@ namespace Timelapse
                 {
                     imageProperties = this.database.ImageDataTable.Find(id);
                     this.lblOriginalDate.Content = imageProperties.Date;
-                    this.lblNewDate.Content = DateTimeHandler.SwapSingleDayMonth(imageProperties.Date);
+                    // If we can't swap the date, we just return the original unaltered date
+                    string swappedDate;
+                    this.lblNewDate.Content = DateTimeHandler.TrySwapSingleDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
 
                     this.rangeEnd = this.GetLastImageOnSameDay(this.rangeStart);
                     this.lblNumberOfImagesWithSameDate.Content = " Images from the same day: ";
@@ -137,7 +139,13 @@ namespace Timelapse
                 ImageRow imageProperties = this.database.ImageDataTable[index];
                 // Ignore corrupted images
                 // if (this.database.RowIsImageCorrupted(i)) continue;
-                DateTime date = imageProperties.GetDateTime();
+
+                DateTime date;
+                bool result = imageProperties.GetDateTime(out date);
+                if (result == false)
+                {
+                    continue; // if we can't get a valid DateTime, skip over this image i.e., don't consider it ambiguous as we can't alter it anyways.
+                }
                 if (date.Day < 13 && date.Month < 13)
                 {
                     return index; // If the date is ambiguous, return the row index. 
@@ -146,7 +154,7 @@ namespace Timelapse
             return -1; // -1 means all dates are fine
         }
 
-        // Given a starting index, find its date and then go through the successive images untilthe date differs.
+        // Given a starting index, find its date and then go through the successive images until the date differs.
         // That is, return the final image that is dated the same date as this image
         private int GetLastImageOnSameDay(int startIndex)
         {
@@ -157,12 +165,20 @@ namespace Timelapse
 
             // Parse the provided starting date. Note that this should never fail at this point, but just in case, put out a debug message
             ImageRow imageProperties = this.database.ImageDataTable[startIndex];
-            DateTime startingDate = imageProperties.GetDateTime();
+            DateTime startingDate;
+            if (imageProperties.GetDateTime(out startingDate) == false)
+            {
+                return -1;  // The starting date is not a valid date
+            }
             for (int index = startIndex + 1; index < this.database.CurrentlySelectedImageCount; index++)
             {
                 // Parse the date for the given record.
                 imageProperties = this.database.ImageDataTable[index];
-                DateTime currentDate = imageProperties.GetDateTime();
+                DateTime currentDate;
+                if (imageProperties.GetDateTime(out currentDate) == false)
+                {
+                    continue; // if we get to an invalid date, return the prior index
+                }
                 if (startingDate.Day == currentDate.Day && startingDate.Month == currentDate.Month && startingDate.Year == currentDate.Year)
                 {
                     continue;

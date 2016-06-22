@@ -373,11 +373,17 @@ namespace Timelapse
                         if (imageTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed ||
                             imageTimeAdjustment == DateTimeAdjustment.MetadataDateUsed)
                         {
-                            DateTime imageTaken = imageProperties.GetDateTime();
-                            if (imageTaken.Day < 13)
-                            {
-                                unambiguousDayMonthOrder = false;
+                            DateTime imageTaken;
+                            bool result = imageProperties.GetDateTime(out imageTaken);
+                            if (result == true)
+                            { 
+                                if (imageTaken.Day < 13)
+                                {
+                                    unambiguousDayMonthOrder = false;
+                                }
                             }
+                            // No else - thus if the date can't be read, the day/month order is assumed to be unambiguous
+                            // THus invalid dates must be handled elsewhere
                         }
                     }
                     catch (Exception exception)
@@ -1938,10 +1944,7 @@ namespace Timelapse
                     // Update the datagrid and the current image after the fields have been populated
                     this.dataHandler.ImageDatabase.TryGetImages(ImageQualityFilter.All);
                     this.RefreshCurrentImageProperties();
-                    if (this.dlgDataView != null)
-                    {
-                        this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
-                    }
+                    this.RefreshDataViewDialogWindow();
                 }
             }
         }
@@ -2167,6 +2170,7 @@ namespace Timelapse
             if (result == true)
             {
                 this.RefreshCurrentImageProperties();
+                this.RefreshDataViewDialogWindow();
             }
         }
 
@@ -2185,15 +2189,16 @@ namespace Timelapse
 
             // We should be in the right mode for correcting the date
             DialogDateCorrection dateCorrection = new DialogDateCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current);
+            if (dateCorrection.Abort)
+            {
+                return;
+            }
             dateCorrection.Owner = this;
             bool? result = dateCorrection.ShowDialog();
             if (result == true)
             {
                 this.RefreshCurrentImageProperties();
-                if (this.dlgDataView != null)
-                {
-                    this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
-                }
+                this.RefreshDataViewDialogWindow();
             }
         }
 
@@ -2233,6 +2238,7 @@ namespace Timelapse
             if (result == true)
             {
                 this.RefreshCurrentImageProperties();
+                this.RefreshDataViewDialogWindow();
             }
         }
 
@@ -2253,6 +2259,7 @@ namespace Timelapse
             if (result == true)
             {
                 this.RefreshCurrentImageProperties();
+                this.RefreshDataViewDialogWindow();
             }
         }
 
@@ -2271,9 +2278,10 @@ namespace Timelapse
             DialogDateRereadDatesFromImages rereadDates = new DialogDateRereadDatesFromImages(this.dataHandler.ImageDatabase);
             rereadDates.Owner = this;
             bool? result = rereadDates.ShowDialog();
-            if (result == true)
+           if (result == true)
             {
                 this.RefreshCurrentImageProperties();
+                this.RefreshDataViewDialogWindow();
             }
         }
 
@@ -2668,6 +2676,16 @@ namespace Timelapse
 
             this.controlsTray.Children.Add(this.dataEntryControls);
             this.MenuItemControlsInSeparateWindow.IsChecked = false;
+        }
+        #endregion
+
+        #region DataView Window Management
+        private void RefreshDataViewDialogWindow()
+        { 
+            if (this.dlgDataView != null)
+            {
+                    this.dlgDataView.RefreshDataTable();  // If its displayed, update the window that shows the filtered view data base
+            }
         }
         #endregion
 

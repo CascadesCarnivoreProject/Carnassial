@@ -72,9 +72,17 @@ namespace Timelapse.Database
             return new ColumnTuplesWithWhere(columnTuples, this.ID);
         }
 
-        public DateTime GetDateTime()
+        // Try to create a DateTime from the date/time string of the current image.
+        // If we can't, create a date/time of 01-Jan-0001 00:00:00 and return false
+        public bool GetDateTime(out DateTime dateTime)
         {
-            return DateTime.ParseExact(this.Date + " " + this.Time, Constants.Time.DateTimeFormat, CultureInfo.InvariantCulture);
+            DateTime emptydt = new DateTime(0);
+            bool result = DateTime.TryParse(this.Date + " " + this.Time, out dateTime);
+            if (result == false)
+            {
+                dateTime = new DateTime(0);
+            }
+            return result;
         }
 
         public FileInfo GetFileInfo(string rootFolderPath)
@@ -194,7 +202,10 @@ namespace Timelapse.Database
                 if (DateTime.TryParse(metadata.DateTaken, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateImageTaken))
                 {
                     // get the current date time
-                    DateTime currentDateTime = this.GetDateTime();
+                    DateTime currentDateTime;
+                    bool result = this.GetDateTime(out currentDateTime);
+                    // Note that if its not a vaild date, that currentDateTime will now be set to 01-Jan-0001 00:00:00
+                    // This will mean that the dateImageTaken date/time will be used instead of the currentDateTime
 
                     // measure the extent to which the image file time and image taken metadata are consistent
                     bool dateAdjusted = false;
