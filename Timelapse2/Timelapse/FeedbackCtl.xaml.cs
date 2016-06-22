@@ -21,7 +21,7 @@ namespace Timelapse
 
         public ImageSource ShowImage
         {
-            set { this.imageImg.Source = (ImageSource)value; }
+            set { this.imageImg.Source = value; }
         }
 
         public FeedbackCtl()

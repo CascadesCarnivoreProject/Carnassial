@@ -207,7 +207,10 @@ namespace Timelapse.Images
 
         private static void GetColorOffsets(WriteableBitmap image, out int blueOffset, out int greenOffset, out int redOffset)
         {
-            if (image.Format == PixelFormats.Bgr24)
+            if (image.Format == PixelFormats.Bgr24 ||
+                image.Format == PixelFormats.Bgr32 ||
+                image.Format == PixelFormats.Bgra32 ||
+                image.Format == PixelFormats.Pbgra32)
             {
                 blueOffset = 0;
                 greenOffset = 1;

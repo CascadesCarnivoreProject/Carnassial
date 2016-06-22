@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Windows;
@@ -52,8 +53,9 @@ namespace Timelapse
                 datePicker.Text = datePicker.DisplayDate.Date.ToString("dd-MMM-yyyy", System.Globalization.CultureInfo.InvariantCulture);
                 this.tbNewTime.Text = datePicker.DisplayDate.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.Assert(false, String.Format("Parse or display of date '{0}' failed.", dateAsString), exception.ToString());
                 DialogMessageBox messageBox = new DialogMessageBox();
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "Timelapse could not read the date.";
@@ -109,8 +111,9 @@ namespace Timelapse
                 this.database.TryGetImages(ImageQualityFilter.All);
                 this.DialogResult = true;
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.Assert(false, "Adjustment of image times failed.", exception.ToString());
                 this.DialogResult = false;
                 return;
             }
@@ -145,6 +148,8 @@ namespace Timelapse
             }
             catch
             {
+                // TODOSAUL: handle case where new time is left as hh:mm:ss
+                // Debug.Assert(false, String.Format("Parse or display of date '{0}' failed.", dateAsString), exception.ToString());
                 if (this.tblkStatus != null)
                 {
                     // null check in case its not yet created

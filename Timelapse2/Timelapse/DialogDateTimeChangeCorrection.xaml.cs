@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using Timelapse.Database;
@@ -69,8 +70,9 @@ namespace Timelapse
                 this.database.TryGetImages(ImageQualityFilter.All);
                 this.DialogResult = true;
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.Assert(false, "Adjustment of image times failed.", exception.ToString());
                 this.DialogResult = false;
             }
         }

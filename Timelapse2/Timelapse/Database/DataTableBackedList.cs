@@ -9,26 +9,27 @@ namespace Timelapse.Database
     public class DataTableBackedList<TRow> : IDisposable, IEnumerable<TRow> where TRow : DataRowBackedObject
     {
         private Func<DataRow, TRow> createRow;
-        private DataTable dataTable;
         private bool disposed;
+
+        protected DataTable DataTable { get; private set; }
 
         public DataTableBackedList(DataTable dataTable, Func<DataRow, TRow> createRow)
         {
             this.createRow = createRow;
-            this.dataTable = dataTable;
+            this.DataTable = dataTable;
             this.disposed = false;
         }
 
         public TRow this[int index]
         {
-            get { return this.createRow(this.dataTable.Rows[index]); }
+            get { return this.createRow(this.DataTable.Rows[index]); }
         }
 
         public IEnumerable<string> ColumnNames
         {
             get
             {
-                foreach (DataColumn column in this.dataTable.Columns)
+                foreach (DataColumn column in this.DataTable.Columns)
                 {
                     yield return column.ColumnName;
                 }
@@ -37,19 +38,19 @@ namespace Timelapse.Database
 
         public int RowCount
         {
-            get { return this.dataTable.Rows.Count; }
+            get { return this.DataTable.Rows.Count; }
         }
 
         public void BindDataGrid(DataGrid dataGrid, DataRowChangeEventHandler onRowChanged)
         {
             if (dataGrid != null)
             {
-                dataGrid.DataContext = this.dataTable;
+                dataGrid.DataContext = this.DataTable;
             }
             // refresh data grid binding
             if (onRowChanged != null)
             {
-                this.dataTable.RowChanged += onRowChanged;
+                this.DataTable.RowChanged += onRowChanged;
             }
         }
 
@@ -61,7 +62,7 @@ namespace Timelapse.Database
 
         public IEnumerator<TRow> GetEnumerator()
         {
-            foreach (DataRow row in this.dataTable.Rows)
+            foreach (DataRow row in this.DataTable.Rows)
             {
                 yield return this.createRow(row);
             }
@@ -74,7 +75,7 @@ namespace Timelapse.Database
 
         public TRow Find(long id)
         {
-            DataRow row = this.dataTable.Rows.Find(id);
+            DataRow row = this.DataTable.Rows.Find(id);
             if (row == null)
             {
                 return null;
@@ -84,13 +85,13 @@ namespace Timelapse.Database
 
         public TRow NewRow()
         {
-            DataRow row = this.dataTable.NewRow();
+            DataRow row = this.DataTable.NewRow();
             return this.createRow(row);
         }
 
         public void RemoveAt(int index)
         {
-            this.dataTable.Rows.RemoveAt(index);
+            this.DataTable.Rows.RemoveAt(index);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -102,7 +103,7 @@ namespace Timelapse.Database
 
             if (disposing)
             {
-                this.dataTable.Dispose();
+                this.DataTable.Dispose();
             }
             this.disposed = true;
         }

@@ -30,7 +30,7 @@ namespace Timelapse.Database
         public Dictionary<string, ImageDataColumn> ImageDataColumnsByDataLabel { get; private set; }
 
         // contains the results of the data query
-        public DataTableBackedList<ImageRow> ImageDataTable { get; private set; }
+        public ImageDataTable ImageDataTable { get; private set; }
 
         public ImageSetRow ImageSet { get; private set; }
 
@@ -477,7 +477,7 @@ namespace Timelapse.Database
             return this.TryGetImages(where);
         }
 
-        public DataTableBackedList<ImageRow> GetImagesMarkedForDeletion()
+        public ImageDataTable GetImagesMarkedForDeletion()
         {
             string where = this.DataLabelFromStandardControlType[Constants.Control.DeleteFlag] + "=\"true\""; // = value
             return this.GetImages(where);
@@ -486,7 +486,7 @@ namespace Timelapse.Database
         /// <summary>
         /// Return a data table containing a single image row, where that row is identified by the image's ID
         /// </summary>
-        public DataTableBackedList<ImageRow> GetImageByID(long id)
+        public ImageDataTable GetImageByID(long id)
         {
             string where = Constants.DatabaseColumn.ID + "=\"" + id + "\""; // = value
             return this.GetImages(where);
@@ -515,7 +515,7 @@ namespace Timelapse.Database
 
             ColumnTuplesWithWhere imageQuery = new ColumnTuplesWithWhere();
             imageQuery.SetWhere(initialRootFolderName, relativePath, imageFile.Name);
-            DataTableBackedList<ImageRow> images = this.GetImages(imageQuery.Where);
+            ImageDataTable images = this.GetImages(imageQuery.Where);
 
             if (images != null && images.RowCount == 1)
             {
@@ -524,10 +524,9 @@ namespace Timelapse.Database
             }
             else
             {
-                imageProperties = this.ImageDataTable.NewRow();
+                imageProperties = this.ImageDataTable.NewRow(imageFile);
                 imageProperties.InitialRootFolderName = initialRootFolderName;
                 imageProperties.RelativePath = relativePath;
-                imageProperties.FileName = imageFile.Name;
                 imageProperties.SetDateAndTimeFromFileInfo(this.FolderPath);
                 return false;
             }
@@ -535,7 +534,7 @@ namespace Timelapse.Database
 
         public bool TryGetImages(string where)
         {
-            DataTableBackedList<ImageRow> imageTableWithNewSelect = this.GetImages(where);
+            ImageDataTable imageTableWithNewSelect = this.GetImages(where);
             if (imageTableWithNewSelect.RowCount == 0)
             {
                 return false;
@@ -546,7 +545,7 @@ namespace Timelapse.Database
             return true;
         }
 
-        private DataTableBackedList<ImageRow> GetImages(string where)
+        private ImageDataTable GetImages(string where)
         {
             string query = "Select * FROM " + Constants.Database.ImageDataTable;
             if (!String.IsNullOrEmpty(where))
@@ -555,10 +554,10 @@ namespace Timelapse.Database
             }
 
             DataTable tempTable = this.Database.GetDataTableFromSelect(query);
-            return new DataTableBackedList<ImageRow>(tempTable, (DataRow row) => { return new ImageRow(row); });
+            return new ImageDataTable(tempTable);
         }
 
-        public DataTableBackedList<ImageRow> GetAllImages()
+        public ImageDataTable GetAllImages()
         {
             return this.GetImages(null);
         }
@@ -678,7 +677,7 @@ namespace Timelapse.Database
         public void AdjustAllImageTimes(TimeSpan adjustment, int from, int to)
         {
             // We create a temporary table. We do this just in case we are currently on a filtered view
-            DataTableBackedList<ImageRow> tempTable = this.GetAllImages();
+            ImageDataTable tempTable = this.GetAllImages();
 
             // We now have an unfiltered temporary data table
             // Get the original value of each, and update each date by the corrected amount if possible
@@ -745,10 +744,15 @@ namespace Timelapse.Database
                 {
                     // If we fail on any of these, continue on to the next date
                     DateTime date = DateTime.Parse(image.Date);
+                    if (date.Day > Constants.MonthsInYear)
+                    {
+                        continue;
+                    }
                     reversedDate = new DateTime(date.Year, date.Day, date.Month); // we have swapped the day with the month
                 }
-                catch
+                catch (Exception exception)
                 {
+                    Debug.Assert(false, String.Format("Reverse of date {0} failed.", image.Date), exception.ToString());
                     continue;
                 }
 
@@ -901,8 +905,9 @@ namespace Timelapse.Database
                 {
                     value = marker[dataLabel];
                 }
-                catch
+                catch (Exception exception)
                 {
+                    Debug.Assert(false, String.Format("Read of marker failed for dataLabel '{0}'.", dataLabel), exception.ToString());
                     value = String.Empty;
                 }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace Timelapse.Database
@@ -40,8 +41,9 @@ namespace Timelapse.Database
                 }
                 return true; // backups succeeded
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.Assert(false, String.Format("Backup of {0} failed.", databaseFileName), exception.ToString());
                 return false; // One or more backups failed
             }
         }

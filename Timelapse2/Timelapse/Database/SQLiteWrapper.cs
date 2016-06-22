@@ -391,8 +391,9 @@ namespace Timelapse.Database
                     }
                 }
             }
-            catch
+            catch (SQLiteException exception)
             {
+                Debug.Assert(exception.ResultCode == SQLiteErrorCode.Error, String.Format("Unexpected failure in IsColumnInTable checking presence of column '{0}'.", columnName), exception.ToString());
                 return false;
             }
         }

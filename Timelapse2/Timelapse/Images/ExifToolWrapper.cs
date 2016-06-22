@@ -81,11 +81,7 @@ namespace Timelapse.Images
 
             Debug.Assert(this.Status == Statuses.Ready || this.Status == Statuses.Stopped, "Invalid state");
 
-            lock (this.processStartInfo)
-            {
-                this.Stop();
-            }
-
+            this.Stop();
             this.waitHandle.Dispose();
 
             this.disposed = true;
@@ -198,16 +194,18 @@ namespace Timelapse.Images
         {
             lock (this.processStartInfo)
             {
-                this.stopRequested = true;
-
                 if (this.Status != Statuses.Ready)
                 {
                     throw new ExifToolException("Process must be ready");
                 }
 
+                this.stopRequested = true;
                 this.Status = Statuses.Stopping;
                 this.waitHandle.Reset();
+                // tell ExifTool to exit
                 this.exifTool.StandardInput.WriteLine("-stay_open\nFalse\n");
+                // ExifTool responds with -- press RETURN --
+                this.exifTool.StandardInput.WriteLine(String.Empty);
                 if (!this.waitHandle.WaitOne(TimeSpan.FromSeconds(5)))
                 {
                     if (this.exifTool != null)
@@ -219,8 +217,9 @@ namespace Timelapse.Images
                             this.exifTool.WaitForExit(2000);
                             this.exifTool.Dispose();
                         }
-                        catch
+                        catch (Exception exception)
                         {
+                            Debug.Assert(false, "Shutdown of ExifTool failed.", exception.ToString());
                         }
 
                         this.exifTool = null;
@@ -231,7 +230,6 @@ namespace Timelapse.Images
             }
         }
 
-        // detect if process is killed
         private void OnExifToolExited(object sender, EventArgs e)
         {
             if (this.exifTool != null)
@@ -239,7 +237,6 @@ namespace Timelapse.Images
                 this.exifTool.Dispose();
                 this.exifTool = null;
             }
-
             this.Status = Statuses.Stopped;
 
             this.waitHandle.Set();
@@ -266,8 +263,8 @@ namespace Timelapse.Images
             {
                 if (e.Data.ToLower() == string.Format("{{ready{0}}}", this.commandCount))
                 {
-                    this.waitHandle.Set();
-                }
+                        this.waitHandle.Set();
+                    }
                 else
                 {
                     this.output.AppendLine(e.Data);

@@ -49,10 +49,15 @@ namespace Timelapse.Util
                 }
                 try
                 {
+                    if (date.Day > Constants.MonthsInYear)
+                    {
+                        return image;
+                    }
                     DateTime reversedDate = new DateTime(date.Year, date.Day, date.Month); // swapped day and month
                 }
-                catch
+                catch (Exception exception)
                 {
+                    Debug.Assert(false, String.Format("Reverse of date {0} failed.", date), exception.ToString());
                     return image; // return the first image where we couldn't swap the date
                 }
             }

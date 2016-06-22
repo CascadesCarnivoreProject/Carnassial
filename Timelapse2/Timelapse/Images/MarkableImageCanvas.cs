@@ -111,9 +111,9 @@ namespace Timelapse.Images
                     }
                     this.ScaleImage(new Point(100, 100), true);
                 }
-                catch
+                catch (Exception exception)
                 {
-                    Debug.Print("Catch: In MarkableCanvas:Zoom as image cannot be scaled");
+                    Debug.Assert(false, "Zoom as image cannot be scaled.", exception.ToString());
                     this.SetValue(ZoomProperty, value);
                 }
             }
@@ -767,9 +767,9 @@ namespace Timelapse.Images
                 this.translateTransform.X = this.TranslateX;
                 this.translateTransform.Y = this.TranslateY;
             }
-            catch
+            catch (Exception exception)
             {
-                Debug.Print("Catch: In MarkableCanvas:TransformChanged as image cannot be transformed");
+                Debug.Assert(false, "TransformChanged as image cannot be transformed", exception.ToString());
             }
         }
         #endregion

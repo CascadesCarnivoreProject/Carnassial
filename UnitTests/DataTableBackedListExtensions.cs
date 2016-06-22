@@ -9,7 +9,7 @@ namespace Timelapse.UnitTests
         public static DataTable ExtractDataTable<TRow>(this DataTableBackedList<TRow> list) where TRow : DataRowBackedObject
         {
             PrivateObject listAccessor = new PrivateObject(list);
-            return (DataTable)listAccessor.GetField("dataTable");
+            return (DataTable)listAccessor.GetProperty("DataTable");
         }
     }
 }

@@ -17,6 +17,8 @@ namespace Timelapse
         public const string StandardColour = "Gold";
         public const string SelectionColour = "MediumBlue";
 
+        public const int MonthsInYear = 12;
+
         // Update Information, for checking for updates in the timelapse xml file stored on the web site
         public const string ApplicationName = "Timelapse";
         public static readonly Uri LatestVersionAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Installs/timelapse_version.xml");
@@ -160,12 +162,15 @@ namespace Timelapse
 
         public static class File
         {
+            public const string AviFileExtension = ".avi";
             public const string BackupFolder = "Backups"; // Sub-folder that will contain database and csv file backups  
             public const string DeletedImagesFolder = "DeletedImages"; // Sub-folder that will contain backups of deleted images 
             public const string CsvFileExtension = ".csv";
             public const string DefaultImageDatabaseFileName = "TimelapseData.ddb";
             public const string DefaultTemplateDatabaseFileName = "TimelapseTemplate.tdb";
             public const string ImageDatabaseFileExtension = ".ddb";
+            public const string JpgFileExtension = ".jpg";
+            public const string Mp4FileExtension = ".mp4";
             public const string TemplateDatabaseFileExtension = ".tdb";
             public const string XmlTemplateFileName = "CodeTemplate.xml";
             public const string XmlDataFileName = "ImageData.xml";

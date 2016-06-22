@@ -116,7 +116,7 @@ namespace Timelapse
             // SAULTODO: Need to warn the user, and perhaps see if we can make it more efficient, or if we can alter the user interface. 
             foreach (ImageRow imageProperties in deletedImageTable)
             {
-                ImageSource bitmap = imageProperties.LoadBitmapThumbnail(database.FolderPath, 400);
+                ImageSource bitmap = imageProperties.LoadBitmapFrame(database.FolderPath, 400);
 
                 if (column == 0)
                 {

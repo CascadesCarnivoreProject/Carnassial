@@ -19,7 +19,6 @@ namespace Timelapse.Util
 
         private bool disposed;
 
-
         public ImageCache ImageCache { get; private set; }
         public ImageDatabase ImageDatabase { get; private set; }
         public bool IsProgrammaticControlUpdate { get; set; }

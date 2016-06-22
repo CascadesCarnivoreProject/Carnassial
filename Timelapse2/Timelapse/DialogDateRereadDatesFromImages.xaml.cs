@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -121,9 +122,10 @@ namespace Timelapse
                         }
                         imagePropertiesList.Add(imageProperties);
                     }
-                    catch // Image isn't there
+                    catch (Exception exception)
                     {
-                        feedbackMessage += " Skipping: cannot open image (its either missing or corrupted).";
+                        Debug.Assert(false, String.Format("Open of image '{0}' failed.", imageProperties.FileName), exception.ToString());
+                        feedbackMessage += " , skipping as cannot open image.";
                     }
                     backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, feedbackMessage));
                     if (image % 100 == 0)

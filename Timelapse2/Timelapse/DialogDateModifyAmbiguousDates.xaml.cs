@@ -146,7 +146,7 @@ namespace Timelapse
                 {
                     continue; // if we can't get a valid DateTime, skip over this image i.e., don't consider it ambiguous as we can't alter it anyways.
                 }
-                if (date.Day < 13 && date.Month < 13)
+                if (date.Day <= Constants.MonthsInYear)
                 {
                     return index; // If the date is ambiguous, return the row index. 
                 }

@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Speech.Synthesis;
 using System.Windows;
@@ -292,19 +292,27 @@ namespace Timelapse
 
         private bool LoadByScanningImageFolder(string imageFolderPath)
         {
-            FileInfo[] imageFilePaths = new DirectoryInfo(imageFolderPath).GetFiles("*.jpg");
-            int count = imageFilePaths.Length;
-            if (count == 0)
+            DirectoryInfo imageFolder = new DirectoryInfo(imageFolderPath);
+            List<FileInfo> imageFilePaths = new List<FileInfo>();
+            foreach (string extension in new List<string>() { Constants.File.AviFileExtension, Constants.File.Mp4FileExtension, Constants.File.JpgFileExtension })
+            {
+                imageFilePaths.AddRange(imageFolder.GetFiles("*" + extension));
+            }
+            imageFilePaths = imageFilePaths.OrderBy(file => file.FullName).ToList();
+
+            if (imageFilePaths.Count == 0)
             {
                 // no images were found in folder; see if user wants to try again
                 DialogMessageBox messageBox = new DialogMessageBox();
                 messageBox.MessageTitle = "No images found in the image set folder.";
-                messageBox.MessageProblem = "There don't seem to be any JPG images in your chosen image folder:" + Environment.NewLine;
+                messageBox.MessageProblem = "There don't seem to be any images or videos in your chosen folder:" + Environment.NewLine;
                 messageBox.MessageProblem += "\u2022 " + this.FolderPath + Environment.NewLine;
-                messageBox.MessageReason = "\u2022 The folder has no JPG files in it (image files ending in '.jpg'), or" + Environment.NewLine;
-                messageBox.MessageReason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images.";
-                messageBox.MessageSolution = "Check that the chosen folder actually contains JPG images (i.e., a 'jpg' suffix), or" + Environment.NewLine;
-                messageBox.MessageSolution += "open a different folder." + Environment.NewLine;
+                messageBox.MessageReason = "\u2022 The folder has no JPG files in it (image files ending in '.jpg'), and" + Environment.NewLine;
+                messageBox.MessageReason += "\u2022 The folder has no AVI files in it (video files ending in '.avi'), and" + Environment.NewLine;
+                messageBox.MessageReason += "\u2022 The folder has no MP4 files in it (video files ending in '.mp4'), or" + Environment.NewLine;
+                messageBox.MessageReason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images or videos.";
+                messageBox.MessageSolution = "Check that the chosen folder contains images (i.e., a '.jpg' suffix), contains" + Environment.NewLine;
+                messageBox.MessageSolution += "videos (i.e., an '.avi' or '.mp4' suffix), or open a different folder." + Environment.NewLine;
                 messageBox.MessageResult += "Would you like to choose another folder?";
                 messageBox.IconType = MessageBoxImage.Question;
                 messageBox.ButtonType = MessageBoxButton.YesNo;
@@ -346,7 +354,7 @@ namespace Timelapse
 
                 // First pass: Examine images to extract their basic properties and build a list of images not already in the database
                 List<ImageRow> imagesToInsert = new List<ImageRow>();
-                for (int image = 0; image < count; image++)
+                for (int image = 0; image < imageFilePaths.Count; image++)
                 {
                     FileInfo imageFile = imageFilePaths[image];
                     ImageRow imageProperties;
@@ -377,13 +385,13 @@ namespace Timelapse
                             bool result = imageProperties.GetDateTime(out imageTaken);
                             if (result == true)
                             { 
-                                if (imageTaken.Day < 13)
+                                if (imageTaken.Day <= Constants.MonthsInYear)
                                 {
                                     unambiguousDayMonthOrder = false;
                                 }
                             }
                             // No else - thus if the date can't be read, the day/month order is assumed to be unambiguous
-                            // THus invalid dates must be handled elsewhere
+                            // Thus invalid dates must be handled elsewhere
                         }
                     }
                     catch (Exception exception)
@@ -397,9 +405,12 @@ namespace Timelapse
 
                     if (image == 0 || (image % Constants.FolderScanProgressUpdateFrequency == 0))
                     {
-                        progressState.Message = String.Format("{0}/{1}: Examining {2}", image, count, imageProperties.FileName);
-                        progressState.Bmap = bitmapFrame;
-                        int progress = Convert.ToInt32(Convert.ToDouble(image) / Convert.ToDouble(count) * 100);
+                        // Skip showing videos as doing so in the current UX design triggers thread and freezable ownership conflicts within WPF which take down
+                        // Timelapse with System.InvalidOperationException: The calling thread cannot access this object because a different thread owns it. or
+                        // similar.
+                        progressState.Message = String.Format("{0}/{1}: Examining {2}", image, imageFilePaths.Count, imageProperties.FileName);
+                        progressState.Bmap = imageProperties.IsVideo ? null : bitmapFrame;
+                        int progress = Convert.ToInt32(Convert.ToDouble(image) / Convert.ToDouble(imageFilePaths.Count) * 100);
                         backgroundWorker.ReportProgress(progress, progressState);
                     }
                     else
@@ -408,22 +419,25 @@ namespace Timelapse
                     }
                 }
 
-                // Second pass: Determine dates ... This can be pretty quick, so we don't really need to give any feedback on it.
-                progressState.Message = "Second pass";
-                progressState.Bmap = null;
-                backgroundWorker.ReportProgress(0, progressState);
-
-                // Third pass: Update database
-                // TODOSAUL This used to be slow... but I think its ok now. But check if its a good place to make it more efficient by having it add multiple values in one shot (it may already be doing that - if so, delete this comment)
+                // Second pass: Update database
+                // TODOSAUL: This used to be slow... but I think its ok now. But check if its a good place to make it more efficient by having it add multiple values in one shot (it may already be doing that - if so, delete this comment)
                 this.dataHandler.ImageDatabase.AddImages(imagesToInsert, (ImageRow imageProperties, int imageIndex) =>
                 {
-                    // Get the bitmap again to show it
-                    // WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.FolderPath);
-                    BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
-                    // Show progress. Since its slow, we may as well do it every update
+                    // Show progress. Since its slow, we may as well do it every database update
                     int addImageProgress = (int)((double)imageIndex / (100.0 * (double)imagesToInsert.Count));
-                    progressState.Message = String.Format("{0}/{1}: Adding {2}", imageIndex, count, imageProperties.FileName);
-                    progressState.Bmap = bitmapFrame;
+                    progressState.Message = String.Format("{0}/{1}: Adding {2}", imageIndex, imageFilePaths.Count, imageProperties.FileName);
+                    if (imageProperties.IsVideo)
+                    {
+                        // skip showing videos per comments in first pass loop, above
+                        progressState.Bmap = null;
+                    }
+                    else
+                    {
+                        // Get image again to show it
+                        // WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.FolderPath);
+                        BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
+                        progressState.Bmap = bitmapFrame;
+                    }
                     backgroundWorker.ReportProgress(addImageProgress, progressState);
                 });
             };
@@ -1484,10 +1498,12 @@ namespace Timelapse
             int count = 0;
             try
             {
+                // TODOSAUL: why call Convert.ToInt32() instead of Int32.TryParse()?
                 count = Convert.ToInt32(counterContent);
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.Assert(false, String.Format("Counter content '{0}' is not an integer.", counterContent), exception.ToString());
                 count = 0; // If we can't convert it, assume that someone set the default value to a non-integer in the template, and just revert it to zero.
             }
             count++;
@@ -1541,55 +1557,54 @@ namespace Timelapse
             this.RefreshTheMarkableCanvasListOfMetaTags(false); // By default, we don't show the annotation
         }
 
-        private void RefreshTheMarkableCanvasListOfMetaTags(bool show_annotation)
+        private void RefreshTheMarkableCanvasListOfMetaTags(bool showAnnotation)
         {
             // The markable canvas uses a simple list of metatags to decide what to do.
             // So we just create that list here, where we also reset the emphasis of some of the metatags
             List<MetaTag> metaTagList = new List<MetaTag>();
-
-            DataEntryCounter selectedCounter = this.FindSelectedCounter();
-            for (int i = 0; i < this.counterCoordinates.Count; i++)
+            if (this.counterCoordinates != null)
             {
-                MetaTagCounter mtagCounter = this.counterCoordinates[i];
-                DataEntryControl control;
-                DataEntryCounter current_counter;
-                if (this.dataEntryControls.ControlsByDataLabel.TryGetValue(mtagCounter.DataLabel, out control) == true)
+                DataEntryCounter selectedCounter = this.FindSelectedCounter();
+                for (int counter = 0; counter < this.counterCoordinates.Count; counter++)
                 {
-                    current_counter = (DataEntryCounter)this.dataEntryControls.ControlsByDataLabel[mtagCounter.DataLabel];
-                }
-                else
-                {
-                    // If we can't find the counter, its likely because the control was made invisible in the template,
-                    // which means that there is no control associated with the marker. So just don't create the 
-                    // markers associated with this control. Note that if the control is later made visible in the template,
-                    // the markers will then be shown. 
-                    continue;
-                }
-                // Update the emphasise for each tag to reflect how the user is interacting with tags
-                foreach (MetaTag mtag in mtagCounter.MetaTags)
-                {
-                    mtag.Emphasise = this.state.IsMouseOverCounter;
-                    if (selectedCounter != null && current_counter.DataLabel == selectedCounter.DataLabel)
+                    MetaTagCounter mtagCounter = this.counterCoordinates[counter];
+                    DataEntryControl control;
+                    if (this.dataEntryControls.ControlsByDataLabel.TryGetValue(mtagCounter.DataLabel, out control) == false)
                     {
-                        mtag.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.SelectionColour);
-                    }
-                    else
-                    {
-                        mtag.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
+                        // If we can't find the counter, its likely because the control was made invisible in the template,
+                        // which means that there is no control associated with the marker. So just don't create the 
+                        // markers associated with this control. Note that if the control is later made visible in the template,
+                        // the markers will then be shown. 
+                        continue;
                     }
 
-                    // the first time through, show an annotation. Otherwise we clear the flags to hide the annotation.
-                    if (mtag.Annotate && !mtag.AnnotationAlreadyShown)
+                    // Update the emphasise for each tag to reflect how the user is interacting with tags
+                    DataEntryCounter currentCounter = (DataEntryCounter)this.dataEntryControls.ControlsByDataLabel[mtagCounter.DataLabel];
+                    foreach (MetaTag mtag in mtagCounter.MetaTags)
                     {
-                        mtag.Annotate = true;
-                        mtag.AnnotationAlreadyShown = true;
+                        mtag.Emphasise = this.state.IsMouseOverCounter;
+                        if (selectedCounter != null && currentCounter.DataLabel == selectedCounter.DataLabel)
+                        {
+                            mtag.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.SelectionColour);
+                        }
+                        else
+                        {
+                            mtag.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
+                        }
+
+                        // the first time through, show an annotation. Otherwise we clear the flags to hide the annotation.
+                        if (mtag.Annotate && !mtag.AnnotationAlreadyShown)
+                        {
+                            mtag.Annotate = true;
+                            mtag.AnnotationAlreadyShown = true;
+                        }
+                        else
+                        {
+                            mtag.Annotate = false;
+                        }
+                        mtag.Label = currentCounter.Label;
+                        metaTagList.Add(mtag); // Add the MetaTag in the list 
                     }
-                    else
-                    {
-                        mtag.Annotate = false;
-                    }
-                    mtag.Label = current_counter.Label;
-                    metaTagList.Add(mtag); // Add the MetaTag in the list 
                 }
             }
             this.markableCanvas.MetaTags = metaTagList;
@@ -1725,9 +1740,10 @@ namespace Timelapse
                     File.Copy(sourceFileName, destFileName, true);
                     StatusBarUpdate.Message(this.statusBar, sourceFile + " copied to " + destFileName);
                 }
-                catch
+                catch (Exception exception)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "Copy failed for some reason!");
+                    Debug.Assert(false, String.Format("Copy of '{0}' to '{1}' failed.", sourceFile, destFileName), exception.ToString());
+                    StatusBarUpdate.Message(this.statusBar, String.Format("Copy failed with {0}.", exception.GetType().Name));
                 }
             }
         }
@@ -1960,8 +1976,10 @@ namespace Timelapse
                 this.MenuItemDeleteImageAndData.IsEnabled = true;
                 this.MenuItemDeleteImage.IsEnabled = this.dataHandler.ImageCache.Current.IsDisplayable() || this.dataHandler.ImageCache.Current.ImageQuality == ImageQualityFilter.Corrupted;
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.Assert(false, "Delete submenu failed to open.", exception.ToString());
+
                 // This function was blowing up on one user's machine, but not others.
                 // I couldn't figure out why, so I just put this fallback in here to catch that unusual case.
                 this.MenuItemDeleteImages.IsEnabled = true;
@@ -2300,8 +2318,9 @@ namespace Timelapse
             {
                 this.optionsWindow.Show();
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.Assert(false, "Options window failed to open.", exception.ToString());
                 this.optionsWindow = new OptionsWindow(this, this.markableCanvas);
                 this.optionsWindow.Show();
             }
@@ -2470,8 +2489,9 @@ namespace Timelapse
             {
                 this.overviewWindow.Show();
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.Assert(false, "Overview window failed to open.", exception.ToString());
                 this.overviewWindow = new HelpWindow();
                 this.overviewWindow.Show();
             }
@@ -2566,7 +2586,7 @@ namespace Timelapse
             dlgMB.MessageProblem = messageProblemFirstLine + Environment.NewLine;
             dlgMB.MessageProblem += "\u2022 be filtered to view All Images (normally set in the Filter menu)";
             if (validImageRequired)
-            { 
+            {
                 dlgMB.MessageProblem += Environment.NewLine + "\u2022 be displaying a valid image";
             }
             dlgMB.MessageSolution = "Select 'Ok' for Timelapse to do the above actions for you.";

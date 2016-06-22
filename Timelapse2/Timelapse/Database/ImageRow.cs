@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Windows.Media.Imaging;
@@ -40,6 +41,11 @@ namespace Timelapse.Database
         {
             get { return this.Row.GetEnumField<ImageQualityFilter>(Constants.DatabaseColumn.ImageQuality); }
             set { this.Row.SetField<ImageQualityFilter>(Constants.DatabaseColumn.ImageQuality, value); }
+        }
+
+        public virtual bool IsVideo
+        {
+            get { return false; }
         }
 
         public string InitialRootFolderName
@@ -111,6 +117,11 @@ namespace Timelapse.Database
 
         public BitmapFrame LoadBitmapFrame(string imageFolderPath)
         {
+            return this.LoadBitmapFrame(imageFolderPath, null);
+        }
+
+        public virtual BitmapFrame LoadBitmapFrame(string imageFolderPath, Nullable<int> desiredWidth)
+        {
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
             {
@@ -125,47 +136,29 @@ namespace Timelapse.Database
                 // This means we cannot do any file operations on it as it will produce an access violation.
                 // If this comes back to haunt us, then use this (slower) form: 
                 // return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-                return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
+                if (desiredWidth.HasValue == false)
+                {
+                    return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
+                }
+
+                BitmapImage bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.DecodePixelWidth = desiredWidth.Value;
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.UriSource = new Uri(path);
+                bitmap.EndInit();
+                return BitmapFrame.Create(bitmap);
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.Assert(false, String.Format("Loading of {0} failed.", this.FileName), exception.ToString());
                 return Constants.Images.Corrupt;
             }
         }
 
         public WriteableBitmap LoadWriteableBitmap(string imageFolderPath)
         {
-            return new WriteableBitmap(this.LoadBitmapFrame(imageFolderPath));
-        }
-
-        /// <summary>
-        /// Given a file path to an image, return a thumbnail of size thumbnailSize 
-        /// If the file does not exist or if its corrupt, return a placeholder image.
-        /// TO DO: This should be reasonably efficient. However, 
-        /// -- do we really need to convert it to a writeable bitmap ?
-        /// -- it would be good to create stock thumbnails of the missing / corrupt images once, and return those instead of the full size image.
-        /// </summary>
-        public WriteableBitmap LoadBitmapThumbnail(string imageFolderPath, int thumbnailSize)
-        {
-            string path = this.GetImagePath(imageFolderPath);
-            if (!File.Exists(path))
-            {
-                return new WriteableBitmap(Constants.Images.MissingThumbnail);
-            }
-            try
-            {
-                BitmapImage bi = new BitmapImage();
-                bi.BeginInit();
-                bi.DecodePixelWidth = thumbnailSize;
-                bi.CacheOption = BitmapCacheOption.OnLoad;
-                bi.UriSource = new Uri(path);
-                bi.EndInit();
-                return new WriteableBitmap(bi);
-            }
-            catch
-            {
-                return new WriteableBitmap(Constants.Images.CorruptThumbnail);
-            }
+            return new WriteableBitmap(this.LoadBitmapFrame(imageFolderPath, null));
         }
 
         public void SetDateAndTime(DateTime dateTime)
