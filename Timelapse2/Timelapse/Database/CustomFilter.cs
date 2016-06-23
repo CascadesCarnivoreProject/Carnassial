@@ -72,10 +72,10 @@ namespace Timelapse.Database
         /// <summary>Gets the count of how many results will be expected if the query is executed </summary>
         public int GetImageCount()
         {
-            string where = this.CreateWhere();
-            if (where.Trim() == String.Empty)
+            string where = this.GetImagesWhere();
+            if (String.IsNullOrWhiteSpace(where))
             {
-                return this.database.GetImageCount(); // If there is no query, assume it is equivalent to all images
+                return this.database.GetImageCount(ImageQualityFilter.All); // If there is no query, assume it is equivalent to all images
             }
             return this.database.GetImageCountWithCustomFilter(where);
         }
@@ -100,22 +100,10 @@ namespace Timelapse.Database
             }
             return false;
         }
-
-        /// <summary>Run the query on the database</summary>
-        /// <returns>Returns success or failure</returns>
-        public bool TryRunQuery()
-        {
-            string where = this.CreateWhere();
-            if (where == String.Empty)
-            {
-                return this.database.TryGetImages(ImageQualityFilter.All);
-            }
-            return this.database.TryGetImages(where);
-        }
         #endregion
 
         // Create and return the query from the search term list
-        private string CreateWhere()
+        public string GetImagesWhere()
         {
             SearchTerm st;
             string where = String.Empty;

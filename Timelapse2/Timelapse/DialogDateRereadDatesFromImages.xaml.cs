@@ -201,7 +201,7 @@ namespace Timelapse
             {
                 this.OkButton.IsEnabled = false;
                 this.CancelButton.IsEnabled = true;
-                this.database.TryGetImages(ImageQualityFilter.All);
+                this.database.SelectDataTableImagesAll();
             };
             backgroundWorker.RunWorkerAsync();
         }

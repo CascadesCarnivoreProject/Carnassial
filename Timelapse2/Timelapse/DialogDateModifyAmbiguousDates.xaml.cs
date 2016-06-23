@@ -46,23 +46,19 @@ namespace Timelapse
         {
             // The search will search inclusively from the given image number, and will return the first image number that is ambiguous, else -1
             this.rangeStart = this.GetNextAmbiguousDate(this.rangeStart);
-            ImageRow imageProperties = null;
+            ImageRow imageProperties;
             if (this.rangeStart >= 0)
             {
                 // We found an ambiguous date; provide appropriate feedback
-                long id = this.database.GetImageID(this.rangeStart);
-                if (id >= 0)
-                {
-                    imageProperties = this.database.ImageDataTable.Find(id);
-                    this.lblOriginalDate.Content = imageProperties.Date;
-                    // If we can't swap the date, we just return the original unaltered date
-                    string swappedDate;
-                    this.lblNewDate.Content = DateTimeHandler.TrySwapSingleDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
+                imageProperties = this.database.ImageDataTable[this.rangeStart];
+                this.lblOriginalDate.Content = imageProperties.Date;
+                // If we can't swap the date, we just return the original unaltered date
+                string swappedDate;
+                this.lblNewDate.Content = DateTimeHandler.TrySwapSingleDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
 
-                    this.rangeEnd = this.GetLastImageOnSameDay(this.rangeStart);
-                    this.lblNumberOfImagesWithSameDate.Content = " Images from the same day: ";
-                    this.lblNumberOfImagesWithSameDate.Content += (this.rangeEnd - this.rangeStart + 1).ToString();
-                }
+                this.rangeEnd = this.GetLastImageOnSameDay(this.rangeStart);
+                this.lblNumberOfImagesWithSameDate.Content = " Images from the same day: ";
+                this.lblNumberOfImagesWithSameDate.Content += (this.rangeEnd - this.rangeStart + 1).ToString();
             }
             else
             {
@@ -80,11 +76,6 @@ namespace Timelapse
                 this.label3.Visibility = Visibility.Hidden;
                 this.lblNumberOfImagesWithSameDate.Content = "No ambiguous dates left";
                 this.imgDateImage.Source = null;
-            }
-
-            // No valid image to show!
-            if (imageProperties == null)
-            {
                 return false;
             }
 
@@ -114,7 +105,7 @@ namespace Timelapse
             this.DialogResult = true;
 
             // Refresh the database / datatable to reflect the updated values
-            this.database.TryGetImages(ImageQualityFilter.All);
+            this.database.SelectDataTableImagesAll();
         }
 
         private void NextButton_Click(object sender, RoutedEventArgs e)

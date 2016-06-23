@@ -57,7 +57,7 @@ namespace Timelapse
 
                 TimeSpan timeDifference = new TimeSpan(hours, 0, 0);
                 // Update the database
-                this.database.AdjustAllImageTimes(timeDifference, initial, final); // For all rows...
+                this.database.AdjustImageTimes(timeDifference, initial, final); // For all rows...
 
                 // Add an entry into the log detailing what we just did
                 StringBuilder log = new StringBuilder(Environment.NewLine);
@@ -67,7 +67,7 @@ namespace Timelapse
                 this.database.AppendToImageSetLog(log);
 
                 // Refresh the database / datatable to reflect the updated values
-                this.database.TryGetImages(ImageQualityFilter.All);
+                this.database.SelectDataTableImagesAll();
                 this.DialogResult = true;
             }
             catch (Exception exception)

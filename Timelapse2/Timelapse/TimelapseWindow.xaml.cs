@@ -491,7 +491,7 @@ namespace Timelapse
                     if (dialogResult == true)
                     {
                         ImageDataXml.Read(Path.Combine(this.FolderPath, Constants.File.XmlDataFileName), this.dataHandler.ImageDatabase);
-                        this.SetFilterAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageQualityFilter); // to regenerate the controls and markers for this image
+                        this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageQualityFilter); // to regenerate the controls and markers for this image
                     }
                 }
             };
@@ -602,7 +602,7 @@ namespace Timelapse
             // set the current filter and the image index to the same as the ones in the last session, providing that we are working 
             // with the same image folder. 
             // Doing so also displays the image
-            this.SetFilterAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageQualityFilter);
+            this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageQualityFilter);
 
             if (FileBackup.TryCreateBackups(this.FolderPath, this.dataHandler.ImageDatabase.FileName))
             {
@@ -637,9 +637,8 @@ namespace Timelapse
         #endregion
 
         #region Filters
-        private bool SetFilterAndShowImage(int imageRow, ImageQualityFilter filter)
+        private bool SelectDataTableImagesAndShowImage(int imageRow, ImageQualityFilter filter)
         {
-            bool imagesAvailableWithFilter;
             switch (filter)
             {
                 case ImageQualityFilter.All:
@@ -648,16 +647,16 @@ namespace Timelapse
                 case ImageQualityFilter.MarkedForDeletion:
                 case ImageQualityFilter.Missing:
                 case ImageQualityFilter.Ok:
-                    imagesAvailableWithFilter = this.dataHandler.ImageDatabase.TryGetImages(filter);
+                    this.dataHandler.ImageDatabase.SelectDataTableImages(filter);
                     break;
                 case ImageQualityFilter.Custom:
-                    imagesAvailableWithFilter = this.customFilter.GetImageCount() != 0;
+                    this.dataHandler.ImageDatabase.SelectDataTableImages(this.customFilter.GetImagesWhere());
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled image quality filter {0}.", filter));
             }
 
-            if (imagesAvailableWithFilter || filter == ImageQualityFilter.All)
+            if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0 || filter == ImageQualityFilter.All)
             {
                 // Change the filter to reflect what the user selected. Update the menu state accordingly
                 // Set the checked status of the radio button menu items to the filter.
@@ -763,7 +762,7 @@ namespace Timelapse
 
                 if (this.state.ImageFilter == filter)
                 {
-                    return this.SetFilterAndShowImage(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
+                    return this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
                 }
                 this.MenuItemViewSetSelected(this.state.ImageFilter);
                 return false;
@@ -1175,7 +1174,7 @@ namespace Timelapse
                     case Constants.Control.FixedChoice:
                     case Constants.Control.Flag:
                     case Constants.Control.Note:
-                        control.Value.Content = this.dataHandler.ImageDatabase.GetImageValue(this.dataHandler.ImageCache.CurrentRow, control.Value.DataLabel);
+                        control.Value.Content = this.dataHandler.ImageCache.Current[control.Value.DataLabel];
                         break;
                     default:
                         break;
@@ -1958,7 +1957,7 @@ namespace Timelapse
                 if (result == true)
                 {
                     // Update the datagrid and the current image after the fields have been populated
-                    this.dataHandler.ImageDatabase.TryGetImages(ImageQualityFilter.All);
+                    this.dataHandler.ImageDatabase.SelectDataTableImagesAll();
                     this.RefreshCurrentImageProperties();
                     this.RefreshDataViewDialogWindow();
                 }
@@ -1970,7 +1969,7 @@ namespace Timelapse
         {
             try
             {
-                int deletedImages = this.dataHandler.ImageDatabase.GetDeletedImageCount();
+                int deletedImages = this.dataHandler.ImageDatabase.GetImageCount(ImageQualityFilter.MarkedForDeletion);
                 this.MenuItemDeleteImages.IsEnabled = deletedImages > 0;
                 this.MenuItemDeleteImagesAndData.IsEnabled = deletedImages > 0;
                 this.MenuItemDeleteImageAndData.IsEnabled = true;
@@ -1994,10 +1993,9 @@ namespace Timelapse
         private void MenuItemDeleteImages_Click(object sender, RoutedEventArgs e)
         {
             MenuItem mi = sender as MenuItem;
-            DataTableBackedList<ImageRow> deletedImages;
-            bool isUseDeleteData;
-            bool isUseDeleteFlag;
-            int savedRow;
+            List<ImageRow> imagesToDelete;
+            bool deleteData;
+            bool deletingCurrentImage;
 
             // This callback is invoked by either variatons of DeleteImage (which deletes the current image) or 
             // DeleteImages (which deletes the images marked by the deletion flag)
@@ -2006,23 +2004,26 @@ namespace Timelapse
             {
                 // Delete by deletion flags case. 
                 // Construct a table that contains the datarows of all images with their delete flag set, and set various flags
-                deletedImages = this.dataHandler.ImageDatabase.GetImagesMarkedForDeletion();
-                isUseDeleteFlag = true;
-                isUseDeleteData = mi.Name.Equals(this.MenuItemDeleteImages.Name) ? false : true;
+                imagesToDelete = this.dataHandler.ImageDatabase.GetImagesMarkedForDeletion().ToList();
+                deleteData = mi.Name.Equals(this.MenuItemDeleteImages.Name) ? false : true;
+                deletingCurrentImage = false;
             }
             else
             {
                 // Delete current image case. Get the ID of the current image and construct a datatable that contains that image's datarow
-                ImageRow imageProperties = this.dataHandler.ImageDatabase.ImageDataTable[this.dataHandler.ImageCache.CurrentRow];
-                deletedImages = this.dataHandler.ImageDatabase.GetImageByID(imageProperties.ID);
-                isUseDeleteFlag = false;
-                isUseDeleteData = mi.Name.Equals(this.MenuItemDeleteImage.Name) ? false : true;
+                imagesToDelete = new List<ImageRow>();
+                if (this.dataHandler.ImageCache.Current != null)
+                {
+                    imagesToDelete.Add(this.dataHandler.ImageCache.Current);
+                }
+                deleteData = mi.Name.Equals(this.MenuItemDeleteImage.Name) ? false : true;
+                deletingCurrentImage = true;
             }
 
             // If no images are selected for deletion. Warn the user.
             // Note that this should never happen, as the invoking menu item should be disabled (and thus not selectable)
             // if there aren't any images to delete. Still,...
-            if (deletedImages == null)
+            if (imagesToDelete == null || imagesToDelete.Count < 1)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "No images are marked for deletion";
@@ -2034,23 +2035,14 @@ namespace Timelapse
                 return;
             }
 
-            DialogDeleteImages deleteImagesDialog;
-            if (mi.Name.Equals(this.MenuItemDeleteImages.Name) || mi.Name.Equals(this.MenuItemDeleteImagesAndData.Name))
-            {
-                deleteImagesDialog = new DialogDeleteImages(this.dataHandler.ImageDatabase, deletedImages, isUseDeleteData, isUseDeleteFlag);   // don't delete data
-            }
-            else
-            {
-                ImageRow imageProperties = this.dataHandler.ImageDatabase.ImageDataTable[this.dataHandler.ImageCache.CurrentRow];
-                deleteImagesDialog = new DialogDeleteImages(this.dataHandler.ImageDatabase, deletedImages, isUseDeleteData, isUseDeleteFlag);   // delete data
-            }
+            DialogDeleteImages deleteImagesDialog = new DialogDeleteImages(this.dataHandler.ImageDatabase, imagesToDelete, deleteData, deletingCurrentImage);
             deleteImagesDialog.Owner = this;
-
             bool? result = deleteImagesDialog.ShowDialog();
+
             if (result == true)
             {
                 long currentID = this.dataHandler.ImageCache.Current.ID;
-                savedRow = this.dataHandler.ImageCache.CurrentRow;  // TryInvalidate may reset the current row to -1, so we need to save it.
+                int currentRow = this.dataHandler.ImageCache.CurrentRow;  // TryInvalidate may reset the current row to -1, so we need to save it.
                 foreach (long id in deleteImagesDialog.ImageFilesRemovedByID)
                 {
                     this.dataHandler.ImageCache.TryInvalidate(id);
@@ -2059,14 +2051,14 @@ namespace Timelapse
                 if (mi.Name.Equals(this.MenuItemDeleteImage.Name) || mi.Name.Equals(this.MenuItemDeleteImages.Name))
                 {
                     // We only deleted the image, not the data. We invoke ShowImage with the saved current row to show the missing image placeholder
-                    this.ShowImage(savedRow);
+                    this.ShowImage(currentRow);
                 }
                 else
                 {
                     // We deleted images and data, which may also include the current image. 
                     // Because we may be deleting the current image, we need to find the next displayable and non-deleted image after this one.
                     int nextImage = this.dataHandler.ImageDatabase.FindClosestImage(currentID);
-                    this.SetFilterAndShowImage(nextImage, this.state.ImageFilter); // Reset the filter to retrieve the remaining images
+                    this.SelectDataTableImagesAndShowImage(nextImage, this.state.ImageFilter); // Reset the filter to retrieve the remaining images
                 }
             }
         }
@@ -2097,7 +2089,7 @@ namespace Timelapse
                 DataEntryControl control = pair.Value;
                 if (this.dataHandler.ImageDatabase.IsControlCopyable(control.DataLabel))
                 {
-                    control.Content = this.dataHandler.ImageDatabase.GetImageValue(previousRow, control.DataLabel);
+                    control.Content = this.dataHandler.ImageDatabase.ImageDataTable[previousRow][control.DataLabel];
                 }
             }
         }
@@ -2330,13 +2322,13 @@ namespace Timelapse
         #region View Menu Callbacks
         private void View_SubmenuOpening(object sender, RoutedEventArgs e)
         {
-            Dictionary<ImageQualityFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCounts();
+            Dictionary<ImageQualityFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCountByQuality();
 
             this.MenuItemViewLightImages.IsEnabled = counts[ImageQualityFilter.Ok] > 0;
             this.MenuItemViewDarkImages.IsEnabled = counts[ImageQualityFilter.Dark] > 0;
             this.MenuItemViewCorruptedImages.IsEnabled = counts[ImageQualityFilter.Corrupted] > 0;
             this.MenuItemViewMissingImages.IsEnabled = counts[ImageQualityFilter.Missing] > 0;
-            this.MenuItemViewImagesMarkedForDeletion.IsEnabled = this.dataHandler.ImageDatabase.GetDeletedImageCount() > 0;
+            this.MenuItemViewImagesMarkedForDeletion.IsEnabled = this.dataHandler.ImageDatabase.GetImageCount(ImageQualityFilter.MarkedForDeletion) > 0;
         }
 
         private void MenuItemZoomIn_Click(object sender, RoutedEventArgs e)
@@ -2421,7 +2413,7 @@ namespace Timelapse
             }
 
             // Treat the checked status as a radio button i.e., toggle their states so only the clicked menu item is checked.
-            bool result = this.SetFilterAndShowImage(Constants.DefaultImageRowIndex, filter);  // Go to the first result (i.e., index 0) in the given filter set
+            bool result = this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, filter);  // Go to the first result (i.e., index 0) in the given filter set
         }
 
         // helper function to put a checkbox on the currently selected menu item i.e., to make it behave like a radiobutton menu
@@ -2456,14 +2448,14 @@ namespace Timelapse
             if (changeToCustomFilter == true)
             {
                 // MenuItemViewSetSelected(ImageQualityFilters.Custom);
-                this.SetFilterAndShowImage(Constants.DefaultImageRowIndex, ImageQualityFilter.Custom);
+                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageQualityFilter.Custom);
             }
         }
 
         /// <summary>Show a dialog box telling the user how many images were loaded, etc.</summary>
         public void MenuItemImageCounts_Click(object sender, RoutedEventArgs e)
         {
-            Dictionary<ImageQualityFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCounts();
+            Dictionary<ImageQualityFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCountByQuality();
             DialogStatisticsOfImageCounts imageStats = new DialogStatisticsOfImageCounts(counts);
             imageStats.Owner = this;
             imageStats.ShowDialog();
@@ -2597,7 +2589,7 @@ namespace Timelapse
             // Set the filter to show all images and a valid image
             if (changeFilterToAll == true)
             {
-                this.SetFilterAndShowImage(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
+                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
                 return true;
             }
             return false;

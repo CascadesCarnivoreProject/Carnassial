@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -22,10 +21,9 @@ namespace Timelapse
     public partial class DialogDeleteImages : Window
     {
         // these variables will hold the values of the passed in parameters
-        private string imageFolderPath; // the full folder path where that image is located
-        private DataTableBackedList<ImageRow> deletedImageTable;
         private bool deleteData;
-        private ImageDatabase database;
+        private ImageDatabase imageDatabase;
+        private List<ImageRow> imagesToDelete;
 
         #region Public methods
         /// <summary>
@@ -34,14 +32,13 @@ namespace Timelapse
         /// deleteData is true when the associated data should be deleted.
         /// useDeleteFlags is true when the user is trying to delete images with the deletion flag set, otherwise its the current image being deleted
         /// </summary>
-        public DialogDeleteImages(ImageDatabase database, DataTableBackedList<ImageRow> deletedImageTable, bool deleteData, bool useDeleteFlags)
+        public DialogDeleteImages(ImageDatabase database, List<ImageRow> deletedImageTable, bool deleteData, bool deletingCurrentImage)
         {
             this.InitializeComponent();
             Mouse.OverrideCursor = Cursors.Wait;
-            this.deletedImageTable = deletedImageTable;
-            this.imageFolderPath = database.FolderPath;
+            this.imagesToDelete = deletedImageTable;
             this.deleteData = deleteData;
-            this.database = database;
+            this.imageDatabase = database;
 
             this.ImageFilesRemovedByID = new List<long>();
 
@@ -58,7 +55,7 @@ namespace Timelapse
             this.GridGallery.RowDefinitions.Clear();
 
             // Construct the dialog's text based on the state of the flags
-            if (useDeleteFlags == false)
+            if (deletingCurrentImage)
             {
                 if (deleteData == false)
                 {
@@ -170,7 +167,7 @@ namespace Timelapse
         {
             // Don't allow the user to delete ALL their data. 
             // TODOSAUL: Need a general fix to this throughout, where we allow for an empty dataset 
-            if (this.deleteData && (this.deletedImageTable.RowCount >= this.database.GetImageCount()))
+            if (this.deleteData && (this.imagesToDelete.Count >= this.imageDatabase.GetImageCount(ImageQualityFilter.All)))
             {
                 DialogMessageBox dlgMsg = new DialogMessageBox();
                 dlgMsg.IconType = MessageBoxImage.Error;
@@ -185,10 +182,10 @@ namespace Timelapse
 
             List<long> imageIDsToDeleteFromDatabase = new List<long>();
             Mouse.OverrideCursor = Cursors.Wait;
-            foreach (ImageRow imageProperties in this.deletedImageTable)
+            foreach (ImageRow imageProperties in this.imagesToDelete)
             {
-                string markForDeletionDataLabel = this.database.DataLabelFromStandardControlType[Constants.Control.DeleteFlag];
-                this.database.UpdateImage(imageProperties.ID, markForDeletionDataLabel, Constants.Boolean.False);
+                string markForDeletionDataLabel = this.imageDatabase.DataLabelFromStandardControlType[Constants.Control.DeleteFlag];
+                this.imageDatabase.UpdateImage(imageProperties.ID, markForDeletionDataLabel, Constants.Boolean.False);
                 if (this.deleteData)
                 {
                     imageIDsToDeleteFromDatabase.Add(imageProperties.ID);
@@ -196,16 +193,16 @@ namespace Timelapse
                 else
                 {
                     // as only the image file was deleted, change its image quality to missing in the database
-                    string imageQualityDataLabel = this.database.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality];
-                    this.database.UpdateImage(imageProperties.ID, imageQualityDataLabel, ImageQualityFilter.Missing.ToString());
+                    string imageQualityDataLabel = this.imageDatabase.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality];
+                    this.imageDatabase.UpdateImage(imageProperties.ID, imageQualityDataLabel, ImageQualityFilter.Missing.ToString());
                     this.ImageFilesRemovedByID.Add(imageProperties.ID);
                 }
-                this.TryMoveImageToDeletedImagesFolder(this.imageFolderPath, imageProperties);
+                this.TryMoveImageToDeletedImagesFolder(this.imageDatabase.FolderPath, imageProperties);
             }
 
             if (this.deleteData)
             {
-                this.database.DeleteImages(imageIDsToDeleteFromDatabase);
+                this.imageDatabase.DeleteImages(imageIDsToDeleteFromDatabase);
             }
 
             this.DialogResult = true;

@@ -21,11 +21,10 @@ namespace Timelapse
             this.InitializeComponent();
             this.database = database;
 
-            // imgNumber will point to the first image  that is not swappable, else -1
+            // imgNumber will point to the first image that is not swappable, else -1
             ImageRow imageProperties = null;
-            int imgNumber = DateTimeHandler.SwapDayMonthIsPossible(this.database);
-            long id = this.database.GetImageID(imgNumber);
-            if (id >= 0)
+            int indexOfFirstNotSwappableImage = DateTimeHandler.SwapDayMonthIsPossible(this.database);
+            if (indexOfFirstNotSwappableImage != -1)
             {
                 // We can't swap the dates; provide appropriate feedback
                 this.Message.IconType = MessageBoxImage.Exclamation;
@@ -38,18 +37,17 @@ namespace Timelapse
                 this.Message.MessageResult = String.Empty;
                 this.OkButton.Visibility = Visibility.Collapsed;
 
-                imageProperties = this.database.FindImageByID(id);
+                imageProperties = this.database.ImageDataTable[indexOfFirstNotSwappableImage];
                 this.lblOriginalDate.Content = imageProperties.Date;
                 this.lblNewDate.Content = "No valid date possible";
             }
             else
             {
                 // We can swap the dates; provide appropriate feedback
-                imgNumber = this.database.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
-                id = this.database.GetImageID(imgNumber);
-                if (id >= 0)
+                int indexOfFirstDisplayableImage = this.database.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
+                if (indexOfFirstDisplayableImage != -1)
                 {
-                    imageProperties = this.database.FindImageByID(id);
+                    imageProperties = this.database.ImageDataTable[indexOfFirstDisplayableImage];
                     this.lblOriginalDate.Content = imageProperties.Date;
                     string swappedDate;
                     this.lblNewDate.Content = DateTimeHandler.TrySwapSingleDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
@@ -59,7 +57,7 @@ namespace Timelapse
             // Now show the image that we are using as our sample
             if (imageProperties == null)
             {
-                return; // No valid image to show!
+                return; // No displayable, wappable images
             }
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
@@ -88,7 +86,7 @@ namespace Timelapse
             this.database.AppendToImageSetLog(log);
 
             // Refresh the database / datatable to reflect the updated values
-            this.database.TryGetImages(ImageQualityFilter.All);
+            this.database.SelectDataTableImagesAll();
             this.DialogResult = true;
         }
 

@@ -49,7 +49,7 @@ namespace Timelapse.Util
                 return;
             }
 
-            string valueToCopy = this.ImageDatabase.GetImageValue(this.ImageCache.CurrentRow, dataLabel).Trim();
+            string valueToCopy = this.ImageCache.Current[dataLabel].Trim();
             if (this.ConfirmCopyForward(valueToCopy, imagesAffected, checkForZero) != true)
             {
                 return;
@@ -120,12 +120,12 @@ namespace Timelapse.Util
         {
             bool checkForZero = control is DataEntryCounter;
             int imagesAffected = this.ImageDatabase.CurrentlySelectedImageCount;
-            string valueToCopy = this.ImageDatabase.GetImageValue(this.ImageCache.CurrentRow, control.DataLabel).Trim();
+            string valueToCopy = this.ImageCache.Current[control.DataLabel].Trim();
             if (this.ConfirmCopyCurrentValueToAll(valueToCopy, imagesAffected, checkForZero) != true)
             {
                 return;
             }
-            this.ImageDatabase.UpdateAllImagesInFilteredView(control.DataLabel, valueToCopy);
+            this.ImageDatabase.UpdateImagesInDataTable(control.DataLabel, valueToCopy);
         }
 
         public void Dispose()
@@ -154,7 +154,12 @@ namespace Timelapse.Util
 
         public bool IsCopyForwardPossible(DataEntryControl control)
         {
-            string valueToCopy = this.ImageDatabase.GetImageValue(this.ImageCache.CurrentRow, control.DataLabel);
+            if (this.ImageCache.Current == null)
+            {
+                return false;
+            }
+
+            string valueToCopy = this.ImageCache.Current[control.DataLabel];
             int imagesAffected = this.ImageDatabase.CurrentlySelectedImageCount - this.ImageCache.CurrentRow - 1;
             return (imagesAffected > 0) ? true : false;
         }

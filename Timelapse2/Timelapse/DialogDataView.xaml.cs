@@ -31,7 +31,7 @@ namespace Timelapse
         /// </summary>
         public void RefreshDataTable()
         {
-            this.dataGrid.ItemsSource = this.database.ImageDataTable;
+            this.dataGrid.Items.Refresh();
         }
 
         #region Callbacks

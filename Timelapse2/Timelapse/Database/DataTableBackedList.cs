@@ -46,6 +46,7 @@ namespace Timelapse.Database
             if (dataGrid != null)
             {
                 dataGrid.DataContext = this.DataTable;
+                dataGrid.ItemsSource = this.DataTable.DefaultView;
             }
             // refresh data grid binding
             if (onRowChanged != null)

@@ -220,7 +220,7 @@ namespace Timelapse
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
                 for (int image = 0; image < database.CurrentlySelectedImageCount; image++)
                 {
-                    ImageRow imageProperties = database.GetImageByRow(image);
+                    ImageRow imageProperties = database.ImageDataTable[image];
                     string[] tags = { this.metaDataName };
                     Dictionary<string, string> exifData = this.exifTool.FetchExifFrom(imageProperties.GetImagePath(database.FolderPath), tags);
                     if (exifData.Count <= 0)

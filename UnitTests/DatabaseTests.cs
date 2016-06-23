@@ -38,48 +38,40 @@ namespace Timelapse.UnitTests
             List<ImageExpectations> imageExpectations = addImages(imageDatabase);
 
             // sanity coverage of image data table methods
-            int deletedImages = imageDatabase.GetDeletedImageCount();
+            int deletedImages = imageDatabase.GetImageCount(ImageQualityFilter.MarkedForDeletion);
             Assert.IsTrue(deletedImages == 0);
 
-            Assert.IsTrue(imageDatabase.GetImageCount() == imageExpectations.Count);
-            Dictionary<ImageQualityFilter, int> imageCounts = imageDatabase.GetImageCounts();
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageQualityFilter.All) == imageExpectations.Count);
+            Dictionary<ImageQualityFilter, int> imageCounts = imageDatabase.GetImageCountByQuality();
             Assert.IsTrue(imageCounts.Count == 4);
             Assert.IsTrue(imageCounts[ImageQualityFilter.Corrupted] == 0);
             Assert.IsTrue(imageCounts[ImageQualityFilter.Dark] == 0);
             Assert.IsTrue(imageCounts[ImageQualityFilter.Missing] == 0);
             Assert.IsTrue(imageCounts[ImageQualityFilter.Ok] == imageExpectations.Count);
 
+            ImageDataTable imagesToDelete = imageDatabase.GetImagesMarkedForDeletion();
+            Assert.IsTrue(imagesToDelete.RowCount == 0);
+
             // check images after initial add and again after reopen and application of filters
             // checks are not performed after last filter in list is applied
             string currentDirectoryName = Path.GetFileName(imageDatabase.FolderPath);
-            imageDatabase.TryGetImages(ImageQualityFilter.All);
+            imageDatabase.SelectDataTableImagesAll();
             foreach (ImageQualityFilter nextFilter in new List<ImageQualityFilter>() { ImageQualityFilter.All, ImageQualityFilter.Ok, ImageQualityFilter.Ok })
             {
                 Assert.IsTrue(imageDatabase.CurrentlySelectedImageCount == imageExpectations.Count);
-                DataTableBackedList<ImageRow> allImageTable = imageDatabase.GetAllImages();
-                Assert.IsTrue(allImageTable.RowCount == imageExpectations.Count);
+                imageDatabase.SelectDataTableImagesAll();
+                Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == imageExpectations.Count);
                 int firstDisplayableImage = imageDatabase.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
                 Assert.IsTrue(firstDisplayableImage == Constants.DefaultImageRowIndex);
-                DataTableBackedList<ImageRow> markedForDeletionTable = imageDatabase.GetImagesMarkedForDeletion();
-                Assert.IsTrue(markedForDeletionTable.RowCount == 0);
 
                 for (int image = 0; image < imageExpectations.Count; ++image)
                 {
                     // marshalling to ImageProperties
-                    ImageRow imageProperties = imageDatabase.GetImageByRow(image);
+                    ImageRow imageProperties = imageDatabase.ImageDataTable[image];
                     ImageExpectations imageExpectation = imageExpectations[image];
                     imageExpectation.Verify(imageProperties);
 
-                    // row to ID conversion
-                    long id = imageDatabase.GetImageID(image);
-                    Assert.IsTrue(imageProperties.ID == id);
-
-                    // retrieval by ID
-                    DataTableBackedList<ImageRow> imageTable = imageDatabase.GetImageByID(id);
-                    Assert.IsTrue(imageTable != null && imageTable.RowCount == 1);
-                    imageExpectation.Verify(imageTable[0]);
-
-                    List<MetaTagCounter> metaTagCounters = imageDatabase.GetMetaTagCounters(id);
+                    List<MetaTagCounter> metaTagCounters = imageDatabase.GetMetaTagCounters(imageProperties.ID);
                     Assert.IsTrue(metaTagCounters.Count >= 0);
 
                     // retrieval by path
@@ -92,17 +84,19 @@ namespace Timelapse.UnitTests
                     Assert.IsTrue(imageDatabase.IsImageRowInRange(image));
 
                     // retrieval by table
-                    imageExpectation.Verify(allImageTable[image]);
+                    imageExpectation.Verify(imageDatabase.ImageDataTable[image]);
                 }
 
                 // reopen database for test and refresh images so next iteration of the loop checks state after reload
                 imageDatabase = ImageDatabase.CreateOrOpen(imageDatabase.FilePath, imageDatabase);
-                Assert.IsTrue(imageDatabase.TryGetImages(nextFilter));
+                imageDatabase.SelectDataTableImages(nextFilter);
+                Assert.IsTrue(imageDatabase.ImageDataTable.RowCount > 0);
             }
 
-            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
-            imageDatabase.AdjustAllImageTimes(new TimeSpan(1, 2, 3, 4, 5), 0, imageDatabase.CurrentlySelectedImageCount);
-            imageDatabase.AdjustAllImageTimes(new TimeSpan(-5, -4, -3, -2, -1), 0, imageDatabase.CurrentlySelectedImageCount);
+            imageDatabase.SelectDataTableImagesAll();
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount > 0);
+            imageDatabase.AdjustImageTimes(new TimeSpan(1, 2, 3, 4, 5), 0, imageDatabase.CurrentlySelectedImageCount);
+            imageDatabase.AdjustImageTimes(new TimeSpan(-5, -4, -3, -2, -1), 0, imageDatabase.CurrentlySelectedImageCount);
             int firstNonSwappableImage = DateTimeHandler.SwapDayMonthIsPossible(imageDatabase);
             Assert.IsTrue(firstNonSwappableImage == 0 || firstNonSwappableImage == 1);
 
@@ -387,7 +381,8 @@ namespace Timelapse.UnitTests
             // load database
             string imageDatabaseBaseFileName = TestConstant.File.DefaultImageDatabaseFileName2023;
             ImageDatabase imageDatabase = this.CloneImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015, imageDatabaseBaseFileName);
-            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
+            imageDatabase.SelectDataTableImagesAll();
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount > 0);
 
             // verify template portion
             this.VerifyTemplateDatabase(imageDatabase, imageDatabaseBaseFileName);
@@ -483,9 +478,6 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(closestDisplayableImage == imageDatabase.CurrentlySelectedImageCount - 1);
 
             Assert.IsTrue(imageDatabase.GetImageCountWithCustomFilter(Constants.DatabaseColumn.File + " = 'InvalidValue'") == 0);
-
-            Assert.IsTrue(imageDatabase.GetImageValue(-1, Constants.DatabaseColumn.ID) == String.Empty);
-            Assert.IsTrue(imageDatabase.GetImageValue(imageDatabase.CurrentlySelectedImageCount, Constants.DatabaseColumn.ID) == String.Empty);
 
             Assert.IsFalse(imageDatabase.IsImageDisplayable(-1));
             Assert.IsFalse(imageDatabase.IsImageDisplayable(imageDatabase.CurrentlySelectedImageCount));

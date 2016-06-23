@@ -99,7 +99,7 @@ namespace Timelapse
                 }
 
                 // Update the database
-                this.database.AdjustAllImageTimes(timeDifference, 0, this.database.CurrentlySelectedImageCount); // For all rows...
+                this.database.AdjustImageTimes(timeDifference, 0, this.database.CurrentlySelectedImageCount); // For all rows...
 
                 // Add an entry into the log detailing what we just did
                 StringBuilder log = new StringBuilder(Environment.NewLine);
@@ -108,7 +108,7 @@ namespace Timelapse
                 this.database.AppendToImageSetLog(log);
 
                 // Refresh the database / datatable to reflect the updated values
-                this.database.TryGetImages(ImageQualityFilter.All);
+                this.database.SelectDataTableImagesAll();
                 this.DialogResult = true;
             }
             catch (Exception exception)

@@ -181,13 +181,13 @@ namespace Timelapse.UnitTests
                     if (imageDatabase.IsImageRowInRange(previousNextImageRow))
                     {
                         WriteableBitmap unalteredBitmap = cache.Current.LoadWriteableBitmap(imageDatabase.FolderPath);
-                        ImageRow previousNextImage = imageDatabase.GetImageByRow(previousNextImageRow);
+                        ImageRow previousNextImage = imageDatabase.ImageDataTable[previousNextImageRow];
                         WriteableBitmap previousNextBitmap = previousNextImage.LoadWriteableBitmap(imageDatabase.FolderPath);
                         bool mismatched = WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, previousNextBitmap);
 
                         if (imageDatabase.IsImageRowInRange(otherImageRowForCombined))
                         {
-                            ImageRow otherImageForCombined = imageDatabase.GetImageByRow(otherImageRowForCombined);
+                            ImageRow otherImageForCombined = imageDatabase.ImageDataTable[otherImageRowForCombined];
                             WriteableBitmap otherBitmapForCombined = otherImageForCombined.LoadWriteableBitmap(imageDatabase.FolderPath);
                             mismatched |= WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, otherBitmapForCombined);
                         }

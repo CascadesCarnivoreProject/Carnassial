@@ -136,7 +136,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(coyoteImage.TryUseImageTaken((BitmapMetadata)coyoteImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             imageDatabase.AddImages(new List<ImageRow>() { martenImage, coyoteImage }, null);
-            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
+            imageDatabase.SelectDataTableImagesAll();
 
             ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(imageDatabase);
             Assert.IsTrue(imageEnumerator.TryMoveToImage(0));
@@ -158,7 +158,7 @@ namespace Timelapse.UnitTests
             imageDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { coyoteImageUpdate });
 
             // simulate data entry
-            long martenImageID = imageDatabase.GetImageID(0);
+            long martenImageID = imageDatabase.ImageDataTable[0].ID;
             imageDatabase.UpdateImage(martenImageID, "Station", "DS02");
             imageDatabase.UpdateImage(martenImageID, "TriggerSource", "critter");
             imageDatabase.UpdateImage(martenImageID, "Identification", "American marten");
@@ -171,7 +171,7 @@ namespace Timelapse.UnitTests
             imageDatabase.UpdateImage(martenImageID, "Survey", "Timelapse carnivore database unit tests");
 
             // pull the image data table again so the updates are visible to .csv export
-            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
+            imageDatabase.SelectDataTableImagesAll();
 
             // generate expectations
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
@@ -206,7 +206,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(bobcatImage.TryUseImageTaken((BitmapMetadata)bobcatImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             imageDatabase.AddImages(new List<ImageRow>() { martenImage, bobcatImage }, null);
-            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
+            imageDatabase.SelectDataTableImagesAll();
 
             ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(imageDatabase);
             Assert.IsTrue(imageEnumerator.TryMoveToImage(0));
@@ -223,7 +223,7 @@ namespace Timelapse.UnitTests
             imageDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { bobcatUpdate });
 
             // simulate data entry
-            long martenImageID = imageDatabase.GetImageID(0);
+            long martenImageID = imageDatabase.ImageDataTable[0].ID;
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constants.Boolean.True);
@@ -231,7 +231,7 @@ namespace Timelapse.UnitTests
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
 
             // pull the image data table again so the updates are visible to .csv export
-            Assert.IsTrue(imageDatabase.TryGetImages(ImageQualityFilter.All));
+            imageDatabase.SelectDataTableImagesAll();
 
             // generate expectations
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()

@@ -383,7 +383,7 @@ namespace Timelapse
         // Apply the filter if the Ok button is clicked
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            this.customFilter.TryRunQuery();
+            this.database.SelectDataTableImages(this.customFilter.GetImagesWhere());
             this.DialogResult = true;
         }
 
