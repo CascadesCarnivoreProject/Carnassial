@@ -535,7 +535,14 @@ namespace Timelapse.Database
             string where = this.GetImagesWhere(imageQuality);
             if (String.IsNullOrEmpty(where) == false)
             {
-                query += " Where " + this.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality] + " = \"" + imageQuality.ToString() + "\"";
+                if (imageQuality == ImageQualityFilter.MarkedForDeletion)
+                {
+                    query += " Where " + where;
+                }
+                else
+                {
+                    query += " Where " + this.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality] + " = \"" + imageQuality.ToString() + "\"";
+                }
             }
             return this.Database.GetCountFromSelect(query);
         }
