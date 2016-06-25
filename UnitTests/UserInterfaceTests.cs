@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using Timelapse.Database;
 using Timelapse.Editor;
@@ -78,9 +79,9 @@ namespace Timelapse.UnitTests
                 });
                 this.WaitForRenderingComplete();
 
-                Assert.IsTrue((bool)timelapseAccessor.Invoke("TryShowNextImage"));
+                Assert.IsTrue((bool)timelapseAccessor.Invoke("TryShowImageWithoutSliderCallback", true, ModifierKeys.None));
                 this.WaitForRenderingComplete();
-                Assert.IsTrue((bool)timelapseAccessor.Invoke("TryShowPreviousImage"));
+                Assert.IsTrue((bool)timelapseAccessor.Invoke("TryShowImageWithoutSliderCallback", false, ModifierKeys.None));
                 this.WaitForRenderingComplete();
 
                 timelapse.Close();

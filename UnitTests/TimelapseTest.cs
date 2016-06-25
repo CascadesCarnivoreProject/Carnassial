@@ -128,12 +128,12 @@ namespace Timelapse.UnitTests
             FileInfo martenFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.CarnivoreDirectoryName, TestConstant.File.DaylightMartenPairImage));
             ImageRow martenImage;
             Assert.IsFalse(imageDatabase.GetOrCreateImage(martenFileInfo, out martenImage));
-            Assert.IsTrue(martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataNotUsed);
+            Assert.IsTrue(martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmap(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataNotUsed);
 
             FileInfo coyoteFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.CarnivoreDirectoryName, TestConstant.File.DaylightCoyoteImage));
             ImageRow coyoteImage;
             imageDatabase.GetOrCreateImage(coyoteFileInfo, out coyoteImage);
-            Assert.IsTrue(coyoteImage.TryUseImageTaken((BitmapMetadata)coyoteImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
+            Assert.IsTrue(coyoteImage.TryUseImageTaken((BitmapMetadata)coyoteImage.LoadBitmap(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             imageDatabase.AddImages(new List<ImageRow>() { martenImage, coyoteImage }, null);
             imageDatabase.SelectDataTableImagesAll();
@@ -196,14 +196,14 @@ namespace Timelapse.UnitTests
             FileInfo martenFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.InfraredMartenImage));
             ImageRow martenImage;
             imageDatabase.GetOrCreateImage(martenFileInfo, out martenImage);
-            DateTimeAdjustment martenTimeAdjustment = martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata);
+            DateTimeAdjustment martenTimeAdjustment = martenImage.TryUseImageTaken((BitmapMetadata)martenImage.LoadBitmap(imageDatabase.FolderPath).Metadata);
             Assert.IsTrue(martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeOneHourLater ||
                           martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             FileInfo bobcatFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.DaylightBobcatImage));
             ImageRow bobcatImage;
             imageDatabase.GetOrCreateImage(bobcatFileInfo, out bobcatImage);
-            Assert.IsTrue(bobcatImage.TryUseImageTaken((BitmapMetadata)bobcatImage.LoadBitmapFrame(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
+            Assert.IsTrue(bobcatImage.TryUseImageTaken((BitmapMetadata)bobcatImage.LoadBitmap(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             imageDatabase.AddImages(new List<ImageRow>() { martenImage, bobcatImage }, null);
             imageDatabase.SelectDataTableImagesAll();

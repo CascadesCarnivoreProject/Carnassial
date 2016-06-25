@@ -36,7 +36,7 @@ namespace Timelapse
             this.lblImageName.Content = imageToCorrect.FileName;
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            this.imgDateImage.Source = imageToCorrect.LoadWriteableBitmap(this.database.FolderPath);
+            this.imgDateImage.Source = imageToCorrect.LoadBitmap(this.database.FolderPath);
 
             // Configure the initial date of the date picker
             datePicker.Text = datePicker.DisplayDate.Date.ToString("dd-MMM-yyyy", System.Globalization.CultureInfo.InvariantCulture);

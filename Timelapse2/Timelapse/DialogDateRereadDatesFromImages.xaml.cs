@@ -77,9 +77,8 @@ namespace Timelapse
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just to the catch.
-                        // see remarks about framework WriteableBitmap.Metadata slicing bug in TimelapseWindow.LoadByScanningImageFolder()
-                        BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(this.database.FolderPath);
-                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapFrame.Metadata);
+                        BitmapSource bitmapSource = imageProperties.LoadBitmap(this.database.FolderPath);
+                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata);
                         switch (imageTimeAdjustment)
                         {
                             case DateTimeAdjustment.MetadataNotUsed:
@@ -128,9 +127,9 @@ namespace Timelapse
                         feedbackMessage += " , skipping as cannot open image.";
                     }
                     backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, feedbackMessage));
-                    if (image % Constants.SleepForImageRenderInterval == 0)
+                    if (image % Constants.Throttles.SleepForImageRenderInterval == 0)
                     {
-                        Thread.Sleep(Constants.SleepTimeForRender); // Put in a delay every now and then, as otherwise the UI won't update.
+                        Thread.Sleep(Constants.Throttles.RenderingBackoffTime); // Put in a delay every now and then, as otherwise the UI won't update.
                     }
                 }
 
@@ -180,7 +179,7 @@ namespace Timelapse
                     if (!skip)
                     { 
                         backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, message));
-                        if (image % Constants.SleepForImageRenderInterval == 0)
+                        if (image % Constants.Throttles.SleepForImageRenderInterval == 0)
                         {
                             Thread.Yield(); // Allow the UI to update.
                         }

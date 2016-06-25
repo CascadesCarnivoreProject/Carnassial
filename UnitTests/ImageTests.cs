@@ -29,7 +29,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
             Assert.IsTrue(cache.CurrentRow == 0);
 
-            WriteableBitmap currentBitmap = cache.GetCurrentImage();
+            BitmapSource currentBitmap = cache.GetCurrentImage();
             Assert.IsNotNull(currentBitmap);
 
             bool newImageToDisplay;
@@ -123,11 +123,11 @@ namespace Timelapse.UnitTests
             {
                 // Load the image
                 ImageRow imageProperties = imageExpectation.GetImageProperties(imageDatabase);
-                WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.WorkingDirectory);
+                BitmapSource bitmap = imageProperties.LoadBitmap(this.WorkingDirectory);
 
                 double darkPixelFraction;
                 bool isColor;
-                ImageFilter imageQuality = bitmap.GetImageQuality(Constants.Images.DarkPixelThresholdDefault, Constants.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor);
+                ImageFilter imageQuality = bitmap.AsWriteable().GetImageQuality(Constants.Images.DarkPixelThresholdDefault, Constants.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor);
                 Assert.IsTrue(Math.Abs(darkPixelFraction - imageExpectation.DarkPixelFraction) < TestConstant.DarkPixelFractionTolerance, "{0}: Expected dark pixel fraction to be {1}, but was {2}.", imageExpectation.FileName, imageExpectation.DarkPixelFraction, darkPixelFraction);
                 Assert.IsTrue(isColor == imageExpectation.IsColor, "{0}: Expected isColor to be {1}, but it was {2}", imageExpectation.FileName, imageExpectation.IsColor,  isColor);
                 Assert.IsTrue(imageQuality == imageExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}", imageExpectation.FileName, imageExpectation.Quality, imageQuality);
@@ -136,7 +136,7 @@ namespace Timelapse.UnitTests
 
         private void CheckDifferenceResult(ImageDifferenceResult result, ImageCache cache, ImageDatabase imageDatabase)
         {
-            WriteableBitmap currentBitmap = cache.GetCurrentImage();
+            BitmapSource currentBitmap = cache.GetCurrentImage();
             switch (result)
             {
                 case ImageDifferenceResult.CurrentImageNotAvailable:
@@ -180,15 +180,15 @@ namespace Timelapse.UnitTests
                     // check if the image to diff against is matched
                     if (imageDatabase.IsImageRowInRange(previousNextImageRow))
                     {
-                        WriteableBitmap unalteredBitmap = cache.Current.LoadWriteableBitmap(imageDatabase.FolderPath);
+                        WriteableBitmap unalteredBitmap = cache.Current.LoadBitmap(imageDatabase.FolderPath).AsWriteable();
                         ImageRow previousNextImage = imageDatabase.ImageDataTable[previousNextImageRow];
-                        WriteableBitmap previousNextBitmap = previousNextImage.LoadWriteableBitmap(imageDatabase.FolderPath);
+                        WriteableBitmap previousNextBitmap = previousNextImage.LoadBitmap(imageDatabase.FolderPath).AsWriteable();
                         bool mismatched = WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, previousNextBitmap);
 
                         if (imageDatabase.IsImageRowInRange(otherImageRowForCombined))
                         {
                             ImageRow otherImageForCombined = imageDatabase.ImageDataTable[otherImageRowForCombined];
-                            WriteableBitmap otherBitmapForCombined = otherImageForCombined.LoadWriteableBitmap(imageDatabase.FolderPath);
+                            WriteableBitmap otherBitmapForCombined = otherImageForCombined.LoadBitmap(imageDatabase.FolderPath).AsWriteable();
                             mismatched |= WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, otherBitmapForCombined);
                         }
 

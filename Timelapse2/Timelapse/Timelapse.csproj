@@ -146,6 +146,7 @@
     <Compile Include="Database\MarkerRow.cs" />
     <Compile Include="Database\VideoRow.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Images\BitmapSourceExtensions.cs" />
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
     <Compile Include="Database\ImageTableEnumerator.cs" />

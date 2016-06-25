@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using Timelapse.Database;
 using Timelapse.Util;
@@ -7,9 +9,10 @@ namespace Timelapse.Images
 {
     public class ImageCache : ImageTableEnumerator
     {
-        private Dictionary<ImageDifference, WriteableBitmap> differenceBitmapCache;
+        private Dictionary<ImageDifference, BitmapSource> differenceBitmapCache;
         private MostRecentlyUsedList<long> mostRecentlyUsedIDs;
-        private Dictionary<long, WriteableBitmap> unalteredBitmapsByID;
+        private ConcurrentDictionary<long, Task> prefetechesByID;
+        private ConcurrentDictionary<long, BitmapSource> unalteredBitmapsByID;
 
         public ImageDifference CurrentDifferenceState { get; private set; }
 
@@ -17,12 +20,13 @@ namespace Timelapse.Images
             base(imageDatabase)
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
-            this.differenceBitmapCache = new Dictionary<ImageDifference, WriteableBitmap>();
+            this.differenceBitmapCache = new Dictionary<ImageDifference, BitmapSource>();
             this.mostRecentlyUsedIDs = new MostRecentlyUsedList<long>(Constants.Images.BitmapCacheSize);
-            this.unalteredBitmapsByID = new Dictionary<long, WriteableBitmap>();
+            this.prefetechesByID = new ConcurrentDictionary<long, Task>();
+            this.unalteredBitmapsByID = new ConcurrentDictionary<long, BitmapSource>();
         }
 
-        public WriteableBitmap GetCurrentImage()
+        public BitmapSource GetCurrentImage()
         {
             return this.differenceBitmapCache[this.CurrentDifferenceState];
         }
@@ -114,14 +118,14 @@ namespace Timelapse.Images
             WriteableBitmap comparisonBitmap = null;
             if (this.CurrentDifferenceState == ImageDifference.Previous)
             {
-                if (this.TryGetPreviousBitmap(out comparisonBitmap) == false)
+                if (this.TryGetPreviousBitmapAsWriteable(out comparisonBitmap) == false)
                 {
                     return ImageDifferenceResult.PreviousImageNotAvailable;
                 }
             }
             else if (this.CurrentDifferenceState == ImageDifference.Next)
             {
-                if (this.TryGetNextBitmap(out comparisonBitmap) == false)
+                if (this.TryGetNextBitmapAsWriteable(out comparisonBitmap) == false)
                 {
                     return ImageDifferenceResult.NextImageNotAvailable;
                 }
@@ -131,8 +135,10 @@ namespace Timelapse.Images
                 return ImageDifferenceResult.NotCalculable;
             }
 
-            WriteableBitmap unalteredBitmap = this.differenceBitmapCache[ImageDifference.Unaltered];
-            WriteableBitmap differenceBitmap = unalteredBitmap.Subtract(comparisonBitmap);
+            WriteableBitmap unalteredBitmap = this.differenceBitmapCache[ImageDifference.Unaltered].AsWriteable();
+            this.differenceBitmapCache[ImageDifference.Unaltered] = unalteredBitmap;
+
+            BitmapSource differenceBitmap = unalteredBitmap.Subtract(comparisonBitmap);
             this.differenceBitmapCache[this.CurrentDifferenceState] = differenceBitmap;
             return differenceBitmap != null ? ImageDifferenceResult.Success : ImageDifferenceResult.NotCalculable;
         }
@@ -152,20 +158,22 @@ namespace Timelapse.Images
             }
 
             WriteableBitmap previousBitmap;
-            if (this.TryGetPreviousBitmap(out previousBitmap) == false)
+            if (this.TryGetPreviousBitmapAsWriteable(out previousBitmap) == false)
             {
                 return ImageDifferenceResult.PreviousImageNotAvailable;
             }
 
             WriteableBitmap nextBitmap;
-            if (this.TryGetNextBitmap(out nextBitmap) == false)
+            if (this.TryGetNextBitmapAsWriteable(out nextBitmap) == false)
             {
                 return ImageDifferenceResult.NextImageNotAvailable;
             }
 
+            WriteableBitmap unalteredBitmap = this.differenceBitmapCache[ImageDifference.Unaltered].AsWriteable();
+            this.differenceBitmapCache[ImageDifference.Unaltered] = unalteredBitmap;
+
             // all three images are available, so calculate and cache difference
-            WriteableBitmap unalteredBitmap = this.differenceBitmapCache[ImageDifference.Unaltered];
-            WriteableBitmap differenceBitmap = unalteredBitmap.CombinedDifference(previousBitmap, nextBitmap, differenceThreshold);
+            BitmapSource differenceBitmap = unalteredBitmap.CombinedDifference(previousBitmap, nextBitmap, differenceThreshold);
             this.differenceBitmapCache[ImageDifference.Combined] = differenceBitmap;
             return differenceBitmap != null ? ImageDifferenceResult.Success : ImageDifferenceResult.NotCalculable;
         }
@@ -182,8 +190,12 @@ namespace Timelapse.Images
                 this.Reset();
             }
 
-            this.unalteredBitmapsByID.Remove(id);
-            return this.mostRecentlyUsedIDs.TryRemove(id);
+            BitmapSource unused;
+            this.unalteredBitmapsByID.TryRemove(id, out unused);
+            lock (this.mostRecentlyUsedIDs)
+            {
+                return this.mostRecentlyUsedIDs.TryRemove(id);
+            }
         }
 
         public override bool TryMoveToImage(int imageRowIndex)
@@ -210,7 +222,7 @@ namespace Timelapse.Images
             if (newImageToDisplay)
             {
                 // get the image data from cache or disk
-                WriteableBitmap unalteredImage;
+                BitmapSource unalteredImage;
                 this.TryGetBitmap(this.Current, out unalteredImage);
 
                 // all moves are to display of unaltered images and invalidate any cached differences
@@ -221,7 +233,38 @@ namespace Timelapse.Images
             return true;
         }
 
-        private void ResetDifferenceState(WriteableBitmap unalteredImage)
+        private void CacheBitmap(long id, BitmapSource bitmap)
+        {
+            lock (this.mostRecentlyUsedIDs)
+            {
+                // cache the bitmap, replacing any existing bitmap with the one passed
+                this.unalteredBitmapsByID.AddOrUpdate(id,
+                    (long newID) => 
+                    {
+                        // if the bitmap cache is full make room for the incoming bitmap
+                        if (this.mostRecentlyUsedIDs.IsFull())
+                        {
+                            long imageIDToRemove;
+                            if (this.mostRecentlyUsedIDs.TryGetLeastRecent(out imageIDToRemove))
+                            {
+                                BitmapSource ignored;
+                                this.unalteredBitmapsByID.TryRemove(imageIDToRemove, out ignored);
+                            }
+                        }
+
+                        // indicate to add the bitmap
+                        return bitmap;
+                    },
+                    (long existingID, BitmapSource newBitmap) => 
+                    {
+                        // indicate to update the bitmap
+                        return newBitmap;
+                    });
+                this.mostRecentlyUsedIDs.SetMostRecent(id);
+            }
+        }
+
+        private void ResetDifferenceState(BitmapSource unalteredImage)
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
             this.differenceBitmapCache[ImageDifference.Unaltered] = unalteredImage;
@@ -230,65 +273,116 @@ namespace Timelapse.Images
             this.differenceBitmapCache[ImageDifference.Combined] = null;
         }
 
-        private bool TryGetBitmap(ImageRow image, out WriteableBitmap bitmap)
+        private bool TryGetBitmap(ImageRow image, out BitmapSource bitmap)
         {
+            // locate the requested bitmap
             if (this.unalteredBitmapsByID.TryGetValue(image.ID, out bitmap) == false)
             {
-                // load the requested bitmap from disk as it isn't cached
-                bitmap = image.LoadWriteableBitmap(this.Database.FolderPath);
-
-                // if the bitmap cache is full make room for the newly loaded bitmap
-                if (this.mostRecentlyUsedIDs.IsFull())
+                Task prefetch;
+                if (this.prefetechesByID.TryGetValue(image.ID, out prefetch))
                 {
-                    long imageIDToRemove;
-                    if (this.mostRecentlyUsedIDs.TryGetLeastRecent(out imageIDToRemove))
-                    {
-                        this.unalteredBitmapsByID.Remove(imageIDToRemove);
-                    }
+                    // bitmap retrieval's already in progress, so wait for it to complete
+                    prefetch.Wait();
+                    bitmap = this.unalteredBitmapsByID[image.ID];
                 }
-
-                // cache the bitmap
-                this.mostRecentlyUsedIDs.SetMostRecent(image.ID);
-                this.unalteredBitmapsByID.Add(image.ID, bitmap);
+                else
+                {
+                    // synchronously load the requested bitmap from disk as it isn't cached, doesn't have a prefetch running, and is needed right now by the caller
+                    bitmap = image.LoadBitmap(this.Database.FolderPath);
+                    this.CacheBitmap(image.ID, bitmap);
+                }
             }
+
+            // assuming a sequential forward scan order, start on the next bitmap
+            this.TryInitiateBitmapPrefetch(this.CurrentRow + 1);
             return true;
         }
 
-        private bool TryGetBitmap(int imageRow, out WriteableBitmap bitmap)
+        private bool TryGetBitmap(int imageRow, out BitmapSource bitmap)
         {
             // get properties for the image to retrieve
-            ImageRow imageProperties;
-            if (imageRow == this.CurrentRow)
-            {
-                imageProperties = this.Current;
-            }
-            else
+            ImageRow image;
+            if (this.TryGetImage(imageRow, out image) == false)
             {
                 bitmap = null;
-                if (this.Database.IsImageRowInRange(imageRow) == false)
-                {
-                    return false;
-                }
-
-                imageProperties = this.Database.ImageDataTable[imageRow];
-                if (imageProperties.IsDisplayable() == false)
-                {
-                    return false;
-                }
+                return false;
             }
 
             // get the associated bitmap
-            return this.TryGetBitmap(imageProperties, out bitmap);
+            return this.TryGetBitmap(image, out bitmap);
         }
 
-        private bool TryGetNextBitmap(out WriteableBitmap nextBitmap)
+        private bool TryGetBitmapAsWriteable(int imageRow, out WriteableBitmap bitmap)
         {
-            return this.TryGetBitmap(this.CurrentRow + 1, out nextBitmap);
+            ImageRow image;
+            if (this.TryGetImage(imageRow, out image) == false)
+            {
+                bitmap = null;
+                return false;
+            }
+
+            BitmapSource bitmapSource;
+            if (this.TryGetBitmap(image, out bitmapSource) == false)
+            {
+                bitmap = null;
+                return false;
+            }
+
+            bitmap = bitmapSource.AsWriteable();
+            this.CacheBitmap(image.ID, bitmap);
+            return true;
         }
 
-        private bool TryGetPreviousBitmap(out WriteableBitmap previousBitmap)
+        private bool TryGetImage(int imageRow, out ImageRow image)
         {
-            return this.TryGetBitmap(this.CurrentRow - 1, out previousBitmap);
+            if (imageRow == this.CurrentRow)
+            {
+                image = this.Current;
+                return true;
+            }
+
+            if (this.Database.IsImageRowInRange(imageRow) == false)
+            {
+                image = null;
+                return false;
+            }
+
+            image = this.Database.ImageDataTable[imageRow];
+            return image.IsDisplayable();
+        }
+
+        private bool TryGetNextBitmapAsWriteable(out WriteableBitmap nextBitmap)
+        {
+            return this.TryGetBitmapAsWriteable(this.CurrentRow + 1, out nextBitmap);
+        }
+
+        private bool TryGetPreviousBitmapAsWriteable(out WriteableBitmap previousBitmap)
+        {
+            return this.TryGetBitmapAsWriteable(this.CurrentRow - 1, out previousBitmap);
+        }
+
+        private bool TryInitiateBitmapPrefetch(int rowIndex)
+        {
+            if (this.Database.IsImageRowInRange(rowIndex) == false)
+            {
+                return false;
+            }
+
+            ImageRow nextImage = this.Database.ImageDataTable[rowIndex];
+            if (this.unalteredBitmapsByID.ContainsKey(nextImage.ID) || this.prefetechesByID.ContainsKey(nextImage.ID))
+            {
+                return false;
+            }
+
+            Task prefetch = Task.Factory.StartNew(() =>
+            {
+                BitmapSource nextBitmap = nextImage.LoadBitmap(this.Database.FolderPath);
+                this.CacheBitmap(nextImage.ID, nextBitmap);
+                Task ignored;
+                this.prefetechesByID.TryRemove(nextImage.ID, out ignored);
+            });
+            this.prefetechesByID.AddOrUpdate(nextImage.ID, prefetch, (long id, Task newPrefetch) => { return newPrefetch; });
+            return true;
         }
     }
 }

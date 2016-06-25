@@ -21,7 +21,7 @@ namespace Timelapse.Images
                 WriteableBitmapExtensions.BitmapsMismatched(unaltered, next))
             {
                 return null;
-             }
+            }
 
             int blueOffset;
             int greenOffset;
@@ -152,6 +152,38 @@ namespace Timelapse.Images
                 return ImageFilter.Dark;
             }
             return ImageFilter.Ok;
+        }
+
+        // checks whether the image is completely black
+        public static unsafe bool IsBlack(this WriteableBitmap image)
+        {
+            // The RGB offsets from the beginning of the pixel (i.e., 0, 1 or 2)
+            int blueOffset;
+            int greenOffset;
+            int redOffset;
+            WriteableBitmapExtensions.GetColorOffsets(image, out blueOffset, out greenOffset, out redOffset);
+
+            // examine only a subset of pixels as otherwise this is an expensive operation
+            // check pixels from last to first as most cameras put a non-black status bar or at least non-black text at the bottom of the frame,
+            // so reverse order may be a little faster on average in cases of nighttime images with black skies
+            // TODOSAUL: Calculate pixelStride as a function of image size so future high res images will still be processed quickly.
+            byte* currentPixel = (byte*)image.BackBuffer.ToPointer(); // the imageIndex will point to a particular byte in the pixel array
+            int pixelSizeInBytes = image.Format.BitsPerPixel / 8;
+            int pixelStride = Constants.Images.DarkPixelSampleStrideDefault;
+            int totalPixels = image.PixelHeight * image.PixelWidth; // total number of pixels in the image
+            for (int pixelIndex = totalPixels - 1; pixelIndex > 0; pixelIndex -= pixelStride)
+            {
+                // get next pixel of interest
+                byte b = *(currentPixel + blueOffset);
+                byte g = *(currentPixel + greenOffset);
+                byte r = *(currentPixel + redOffset);
+
+                if (r != 0 || b != 0 || g != 0)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         // Given two images, return an image containing the visual difference between them

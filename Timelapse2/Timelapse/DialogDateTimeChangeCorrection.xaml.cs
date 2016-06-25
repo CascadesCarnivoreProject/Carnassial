@@ -27,7 +27,7 @@ namespace Timelapse
             this.lblOriginalDate.Content = image.Current.Date + " " + image.Current.Time;
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            this.imgDateImage.Source = image.Current.LoadWriteableBitmap(this.database.FolderPath);
+            this.imgDateImage.Source = image.Current.LoadBitmap(this.database.FolderPath);
             this.lblImageName.Content = image.Current.FileName;
         }
 

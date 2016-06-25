@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Data;
 using System.Windows.Media.Imaging;
 using Timelapse.Database;
 
 namespace Timelapse.Images
 {
-    // Because the bgw worker is asynchronous, we have to create a copy of the data at each invocation, 
-    // otherwise the values may have changed on the other thread.
     public class ImageQuality
     {
         public WriteableBitmap Bitmap { get; set; }

@@ -115,12 +115,12 @@ namespace Timelapse.Database
             return true;
         }
 
-        public BitmapFrame LoadBitmapFrame(string imageFolderPath)
+        public BitmapSource LoadBitmap(string imageFolderPath)
         {
-            return this.LoadBitmapFrame(imageFolderPath, null);
+            return this.LoadBitmap(imageFolderPath, null);
         }
 
-        public virtual BitmapFrame LoadBitmapFrame(string imageFolderPath, Nullable<int> desiredWidth)
+        public virtual BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth)
         {
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
@@ -138,30 +138,25 @@ namespace Timelapse.Database
                 // return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
                 if (desiredWidth.HasValue == false)
                 {
-                    return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
+                    BitmapFrame frame = BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
+                    frame.Freeze();
+                    return frame;
                 }
 
                 BitmapImage bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.DecodePixelWidth = desiredWidth.Value;
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.CacheOption = BitmapCacheOption.None;
                 bitmap.UriSource = new Uri(path);
                 bitmap.EndInit();
-                return BitmapFrame.Create(bitmap);
+                bitmap.Freeze();
+                return bitmap;
             }
             catch (Exception exception)
             {
                 Debug.Assert(false, String.Format("Loading of {0} failed.", this.FileName), exception.ToString());
                 return Constants.Images.Corrupt;
             }
-        }
-
-        public WriteableBitmap LoadWriteableBitmap(string imageFolderPath)
-        {
-            DateTime start = DateTime.UtcNow;
-            WriteableBitmap wb = new WriteableBitmap(this.LoadBitmapFrame(imageFolderPath, null));
-            TimeSpan duration = DateTime.UtcNow - start;
-            return wb;
         }
 
         public void SetDateAndTime(DateTime dateTime)

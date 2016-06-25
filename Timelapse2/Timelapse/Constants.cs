@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 
 namespace Timelapse
 {
@@ -12,19 +11,16 @@ namespace Timelapse
     {
         // Default Settings
         public const int DefaultImageRowIndex = 0;
-        public const int FolderScanProgressUpdateFrequency = 1;
+        public const int MaximumRenderAttempts = 1000;
         public const int NumberOfMostRecentDatabasesToTrack = 9;
         public const string StandardColour = "Gold";
         public const string SelectionColour = "MediumBlue";
-        public const int SleepForImageRenderInterval = 100;
         public const int MonthsInYear = 12;
 
         // Update Information, for checking for updates in the timelapse xml file stored on the web site
         public const string ApplicationName = "Timelapse";
         public static readonly Uri LatestVersionAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Installs/timelapse_version.xml");
         public static readonly Uri VersionChangesAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.TimelapseVersions#Timelapse");
-
-        public static readonly TimeSpan SleepTimeForRender = TimeSpan.FromMilliseconds(25);
 
         // Boolean.TrueString and FalseString are "True" and "False" and are preferred, but 
         public static class Boolean
@@ -325,6 +321,16 @@ namespace Timelapse
             public const string OpenParenthesis = " ( ";
             public const string CloseParenthesis = " ) ";
             public const string Semicolon = " ; ";
+        }
+
+        public static class Throttles
+        {
+            public const double DesiredMaximumImageRendersPerSecond = 6.0;
+            public const int SleepForImageRenderInterval = 100;
+
+            public static readonly TimeSpan DesiredIntervalBetweenRenders = TimeSpan.FromSeconds(1.0 / Throttles.DesiredMaximumImageRendersPerSecond);
+            public static readonly TimeSpan PollIntervalForVideoLoad = TimeSpan.FromMilliseconds(1.0);
+            public static readonly TimeSpan RenderingBackoffTime = TimeSpan.FromMilliseconds(25);
         }
 
         public static class Time

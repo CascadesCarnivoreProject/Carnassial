@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Speech.Synthesis;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -354,6 +355,7 @@ namespace Timelapse
 
                 // First pass: Examine images to extract their basic properties and build a list of images not already in the database
                 List<ImageRow> imagesToInsert = new List<ImageRow>();
+                DateTime previousImageRender = DateTime.UtcNow - Constants.Throttles.DesiredIntervalBetweenRenders;
                 for (int image = 0; image < imageFilePaths.Count; image++)
                 {
                     FileInfo imageFile = imageFilePaths[image];
@@ -365,19 +367,18 @@ namespace Timelapse
                         continue;
                     }
 
-                    BitmapFrame bitmapFrame = null;
+                    BitmapSource bitmapSource = null;
                     try
                     {
                         // Create the bitmap and determine its ImageQuality
                         // avoid ImageProperties.LoadImage() here as the create exception needs to surface to set the image quality to corrupt
                         // framework bug: WriteableBitmap.Metadata returns null rather than metatada offered by the underlying BitmapFrame, so 
                         // retain the frame and pass its metadata to TryUseImageTaken().
-                        bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
-                        WriteableBitmap bitmap = new WriteableBitmap(bitmapFrame);
-                        imageProperties.ImageQuality = bitmap.GetImageQuality(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
+                        bitmapSource = imageProperties.LoadBitmap(this.FolderPath);
+                        imageProperties.ImageQuality = bitmapSource.AsWriteable().GetImageQuality(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
 
                         // see if the date can be updated from the metadata
-                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapFrame.Metadata);
+                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata);
                         if (imageTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed ||
                             imageTimeAdjustment == DateTimeAdjustment.MetadataDateUsed)
                         {
@@ -397,21 +398,23 @@ namespace Timelapse
                     catch (Exception exception)
                     {
                         Debug.Assert(false, String.Format("Load of {0} failed as it's likely corrupted.", imageProperties.FileName), exception.ToString());
-                        bitmapFrame = Constants.Images.Corrupt;
+                        bitmapSource = Constants.Images.Corrupt;
                         imageProperties.ImageQuality = ImageFilter.Corrupted;
                     }
 
                     imagesToInsert.Add(imageProperties);
 
-                    if (image == 0 || (image % Constants.FolderScanProgressUpdateFrequency == 0))
+                    DateTime utcNow = DateTime.UtcNow;
+                    if (utcNow - previousImageRender > Constants.Throttles.DesiredIntervalBetweenRenders)
                     {
                         // Skip showing videos as doing so in the current UX design triggers thread and freezable ownership conflicts within WPF which take down
                         // Timelapse with System.InvalidOperationException: The calling thread cannot access this object because a different thread owns it. or
                         // similar.
                         progressState.Message = String.Format("{0}/{1}: Examining {2}", image, imageFilePaths.Count, imageProperties.FileName);
-                        progressState.Bmap = imageProperties.IsVideo ? null : bitmapFrame;
+                        progressState.Bmap = imageProperties.IsVideo ? null : bitmapSource;
                         int progress = Convert.ToInt32(Convert.ToDouble(image) / Convert.ToDouble(imageFilePaths.Count) * 100);
                         backgroundWorker.ReportProgress(progress, progressState);
+                        previousImageRender = utcNow;
                     }
                     else
                     {
@@ -434,9 +437,8 @@ namespace Timelapse
                     else
                     {
                         // Get image again to show it
-                        // WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(this.FolderPath);
-                        BitmapFrame bitmapFrame = imageProperties.LoadBitmapFrame(this.FolderPath);
-                        progressState.Bmap = bitmapFrame;
+                        BitmapSource bitmapSource = imageProperties.LoadBitmap(this.FolderPath);
+                        progressState.Bmap = bitmapSource;
                     }
                     backgroundWorker.ReportProgress(addImageProgress, progressState);
                 });
@@ -1084,9 +1086,25 @@ namespace Timelapse
         #endregion
 
         #region Slider Event Handlers and related
-        private void ImageNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void ImageNavigatorSlider_DragCompleted(object sender, DragCompletedEventArgs args)
         {
-            this.ShowImage((int)ImageNavigatorSlider.Value);
+            this.state.ImageNavigatorSliderDragging = false;
+            this.ShowImage((int)this.ImageNavigatorSlider.Value);
+        }
+
+        private void ImageNavigatorSlider_DragStarted(object sender, DragStartedEventArgs args)
+        {
+            this.state.ImageNavigatorSliderDragging = true;
+        }
+
+        private void ImageNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> args)
+        {
+            DateTime utcNow = DateTime.UtcNow;
+            if ((this.state.ImageNavigatorSliderDragging == false) || (utcNow - this.state.MostRecentDragEvent > Constants.Throttles.DesiredIntervalBetweenRenders))
+            {
+                this.ShowImage((int)this.ImageNavigatorSlider.Value);
+                this.state.MostRecentDragEvent = utcNow;
+            }
         }
 
         private void ImageNavigatorSlider_EnableOrDisableValueChangedCallback(bool enableCallback)
@@ -1189,7 +1207,7 @@ namespace Timelapse
             // unique and immutable
             if (newImageToDisplay)
             {
-                WriteableBitmap unalteredImage = this.dataHandler.ImageCache.GetCurrentImage();
+                BitmapSource unalteredImage = this.dataHandler.ImageCache.GetCurrentImage();
                 this.markableCanvas.ImageToDisplay.Source = unalteredImage;
 
                 // Set the image to magnify so the unaltered image will appear on the magnifying glass
@@ -1206,7 +1224,7 @@ namespace Timelapse
         #region Keyboard shortcuts
         // If its an arrow key and the textbox doesn't have the focus,
         // navigate left/right image or up/down to look at differenced image
-        private void Window_PreviewKeyDown(object sender, KeyEventArgs eventData)
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs currentKey)
         {
             if (this.dataHandler == null ||
                 this.dataHandler.ImageDatabase == null ||
@@ -1219,7 +1237,7 @@ namespace Timelapse
             // to the controls within it. That is, if a textbox or combo box has the focus, then take no as this is normal text input
             // and NOT a shortcut key.  Similarly, if a menu is displayed keys should be directed to the menu rather than interpreted as
             // shortcuts.
-            if (this.SendKeyToDataEntryControlOrMenu(eventData))
+            if (this.SendKeyToDataEntryControlOrMenu(currentKey))
             {
                 return;
             }
@@ -1229,13 +1247,14 @@ namespace Timelapse
 
             // Interpret key as a possible shortcut key. 
             // Depending on the key, take the appropriate action
-            switch (eventData.Key)
+            int keyRepeatCount = this.state.GetKeyRepeatCount(currentKey);
+            switch (currentKey.Key)
             {
                 case Key.B:                 // Bookmark (Save) the current pan / zoom level of the image
                     this.markableCanvas.BookmarkSaveZoomPan();
                     break;
                 case Key.Escape:
-                    this.SetTopLevelFocus(false, eventData);
+                    this.SetTopLevelFocus(false, currentKey);
                     break;
                 case Key.OemPlus:           // Restore the zoom level / pan coordinates of the bookmark
                     this.markableCanvas.BookmarkSetZoomPan();
@@ -1254,10 +1273,16 @@ namespace Timelapse
                     this.markableCanvas.MagnifierZoomOut();
                     break;
                 case Key.Right:             // next image
-                    this.TryShowNextImage();
+                    if (keyRepeatCount % this.state.RepeatedKeyAcceptanceInterval == 0)
+                    {
+                        this.TryShowImageWithoutSliderCallback(true, Keyboard.Modifiers);
+                    }
                     break;
                 case Key.Left:              // previous image
-                    this.TryShowPreviousImage();
+                    if (keyRepeatCount % this.state.RepeatedKeyAcceptanceInterval == 0)
+                    {
+                        this.TryShowImageWithoutSliderCallback(false, Keyboard.Modifiers);
+                    }
                     break;
                 case Key.Up:                // show visual difference to next image
                     this.ViewPreviousOrNextDifference();
@@ -1278,7 +1303,7 @@ namespace Timelapse
                 default:
                     return;
             }
-            eventData.Handled = true;
+            currentKey.Handled = true;
         }
 
         private void Window_PreviewKeyUp(object sender, KeyEventArgs e)
@@ -2349,13 +2374,13 @@ namespace Timelapse
         /// <summary>Navigate to the next image in this image set</summary>
         private void MenuItemViewNextImage_Click(object sender, RoutedEventArgs e)
         {
-            this.TryShowNextImage(); // Goto the next image
+            this.TryShowImageWithoutSliderCallback(true, ModifierKeys.None);
         }
 
         /// <summary>Navigate to the previous image in this image set</summary>
         private void MenuItemViewPreviousImage_Click(object sender, RoutedEventArgs e)
         {
-            this.TryShowPreviousImage(); // Goto the previous image
+            this.TryShowImageWithoutSliderCallback(false, ModifierKeys.None);
         }
 
         /// <summary>Cycle through the image differences</summary>
@@ -2591,31 +2616,30 @@ namespace Timelapse
         }
         #endregion
 
-        #region Navigating Images
-        private bool TryShowImageWithSliderDisabled(int imageRow)
+        private bool TryShowImageWithoutSliderCallback(bool forward, ModifierKeys modifiers)
         {
-            if (this.dataHandler.ImageDatabase.IsImageRowInRange(imageRow))
+            // determine how far to move and in which direction
+            int increment = forward ? 1 : -1;
+            if ((modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+            {
+                increment *= 5;
+            }
+            if ((modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                increment *= 10;
+            }
+
+            // try to move
+            int desiredRow = this.dataHandler.ImageCache.CurrentRow + increment;
+            if (this.dataHandler.ImageDatabase.IsImageRowInRange(desiredRow))
             {
                 this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-                this.ShowImage(imageRow);
+                this.ShowImage(desiredRow);
                 this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
                 return true;
             }
             return false;
         }
-
-        // Display the next image if one is available, otherwise do nothing
-        private bool TryShowNextImage()
-        {
-            return this.TryShowImageWithSliderDisabled(this.dataHandler.ImageCache.CurrentRow + 1);
-        }
-
-        // Display the previous image if one is available, otherwise do nothing
-        private bool TryShowPreviousImage()
-        {
-            return this.TryShowImageWithSliderDisabled(this.dataHandler.ImageCache.CurrentRow - 1);
-        }
-        #endregion
 
         #region Bookmarking pan/zoom levels
         // Bookmark (Save) the current pan / zoom level of the image

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Timelapse.Images;
 
 namespace Timelapse.Database
 {
@@ -21,7 +22,7 @@ namespace Timelapse.Database
             get { return true; }
         }
 
-        public override BitmapFrame LoadBitmapFrame(string imageFolderPath, Nullable<int> desiredWidth)
+        public override BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth)
         {
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
@@ -30,6 +31,7 @@ namespace Timelapse.Database
             }
 
             MediaPlayer mediaPlayer = new MediaPlayer();
+            mediaPlayer.Volume = 0.0;
             try
             {
                 mediaPlayer.Open(new Uri(path));
@@ -40,8 +42,13 @@ namespace Timelapse.Database
                 // Open() call but without also Play() only black is rendered
                 while ((mediaPlayer.NaturalVideoWidth < 1) || (mediaPlayer.NaturalVideoHeight < 1))
                 {
-                    Thread.Yield();
+                    // back off briefly to let MediaPlayer do its loading, which typically takes perhaps 75ms
+                    // a brief Sleep() is used rather than Yield() to reduce overhead as 500k to 1M+ yields typically occur
+                    Thread.Sleep(Constants.Throttles.PollIntervalForVideoLoad);
                 }
+
+                // sleep one more time as MediaPlayer has a tendency to still return black frames a moment after the width and height have populated
+                Thread.Sleep(Constants.Throttles.PollIntervalForVideoLoad);
 
                 int pixelWidth = mediaPlayer.NaturalVideoWidth;
                 int pixelHeight = mediaPlayer.NaturalVideoHeight;
@@ -52,6 +59,7 @@ namespace Timelapse.Database
                     pixelHeight = (int)(scaling * pixelHeight);
                 }
 
+                // set up to render frame from the video
                 mediaPlayer.Pause();
                 mediaPlayer.Position = TimeSpan.Zero;
 
@@ -61,13 +69,32 @@ namespace Timelapse.Database
                     drawingContext.DrawVideo(mediaPlayer, new Rect(0, 0, pixelWidth, pixelHeight));
                 }
 
-                RenderTargetBitmap renderBitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, 96, 96, PixelFormats.Default);
-                renderBitmap.Render(drawingVisual);
+                // render and check for black frame
+                // it's assumed the camera doesn't yield all black frames
+                for (int renderAttempt = 1; renderAttempt <= Constants.MaximumRenderAttempts; ++renderAttempt)
+                {
+                    // try render
+                    RenderTargetBitmap renderBitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, 96, 96, PixelFormats.Default);
+                    renderBitmap.Render(drawingVisual);
+                    renderBitmap.Freeze();
 
-                // if the media player is closed before Render() only black is rendered
-                mediaPlayer.Close();
+                    // check if render succeeded
+                    // hopefully it did and most of the overhead here is WriteableBitmap conversion though, at 2-3ms for a 1280x720 frame, this 
+                    // is not an especially expensive operation relative to O(175ms) cost of this function
+                    WriteableBitmap writeableBitmap = renderBitmap.AsWriteable();
+                    if (writeableBitmap.IsBlack() == false)
+                    {
+                        // if the media player is closed before Render() only black is rendered
+                        // Debug.Print("Video render returned black frame {0} times.", renderAttempt - 1);
+                        mediaPlayer.Close();
+                        return writeableBitmap;
+                    }
 
-                return BitmapFrame.Create(renderBitmap);
+                    // black frame was rendered; apply linear backoff and try again
+                    Thread.Sleep(TimeSpan.FromMilliseconds(Constants.Throttles.RenderingBackoffTime.TotalMilliseconds * renderAttempt));
+                }
+
+                throw new ApplicationException(String.Format("Limit of {0} render attempts was reached.", Constants.MaximumRenderAttempts));
             }
             catch (Exception exception)
             {
