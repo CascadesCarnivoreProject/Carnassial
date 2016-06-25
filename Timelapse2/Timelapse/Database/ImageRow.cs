@@ -37,10 +37,10 @@ namespace Timelapse.Database
             set { this.Row.SetField(Constants.DatabaseColumn.File, value); }
         }
 
-        public ImageQualityFilter ImageQuality
+        public ImageFilter ImageQuality
         {
-            get { return this.Row.GetEnumField<ImageQualityFilter>(Constants.DatabaseColumn.ImageQuality); }
-            set { this.Row.SetField<ImageQualityFilter>(Constants.DatabaseColumn.ImageQuality, value); }
+            get { return this.Row.GetEnumField<ImageFilter>(Constants.DatabaseColumn.ImageQuality); }
+            set { this.Row.SetField<ImageFilter>(Constants.DatabaseColumn.ImageQuality, value); }
         }
 
         public virtual bool IsVideo
@@ -108,7 +108,7 @@ namespace Timelapse.Database
 
         public bool IsDisplayable()
         {
-            if (this.ImageQuality == ImageQualityFilter.Corrupted || this.ImageQuality == ImageQualityFilter.Missing)
+            if (this.ImageQuality == ImageFilter.Corrupted || this.ImageQuality == ImageFilter.Missing)
             {
                 return false;
             }
@@ -158,7 +158,10 @@ namespace Timelapse.Database
 
         public WriteableBitmap LoadWriteableBitmap(string imageFolderPath)
         {
-            return new WriteableBitmap(this.LoadBitmapFrame(imageFolderPath, null));
+            DateTime start = DateTime.UtcNow;
+            WriteableBitmap wb = new WriteableBitmap(this.LoadBitmapFrame(imageFolderPath, null));
+            TimeSpan duration = DateTime.UtcNow - start;
+            return wb;
         }
 
         public void SetDateAndTime(DateTime dateTime)

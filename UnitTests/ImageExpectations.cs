@@ -51,7 +51,7 @@ namespace Timelapse.UnitTests
 
         public bool MarkForDeletion { get; set; }
 
-        public ImageQualityFilter Quality { get; set; }
+        public ImageFilter Quality { get; set; }
 
         public string RelativePath { get; set; }
 

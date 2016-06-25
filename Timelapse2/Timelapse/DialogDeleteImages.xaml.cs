@@ -167,7 +167,7 @@ namespace Timelapse
         {
             // Don't allow the user to delete ALL their data. 
             // TODOSAUL: Need a general fix to this throughout, where we allow for an empty dataset 
-            if (this.deleteData && (this.imagesToDelete.Count >= this.imageDatabase.GetImageCount(ImageQualityFilter.All)))
+            if (this.deleteData && (this.imagesToDelete.Count >= this.imageDatabase.GetImageCount(ImageFilter.All)))
             {
                 DialogMessageBox dlgMsg = new DialogMessageBox();
                 dlgMsg.IconType = MessageBoxImage.Error;
@@ -194,7 +194,7 @@ namespace Timelapse
                 {
                     // as only the image file was deleted, change its image quality to missing in the database
                     string imageQualityDataLabel = this.imageDatabase.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality];
-                    this.imageDatabase.UpdateImage(imageProperties.ID, imageQualityDataLabel, ImageQualityFilter.Missing.ToString());
+                    this.imageDatabase.UpdateImage(imageProperties.ID, imageQualityDataLabel, ImageFilter.Missing.ToString());
                     this.ImageFilesRemovedByID.Add(imageProperties.ID);
                 }
                 this.TryMoveImageToDeletedImagesFolder(this.imageDatabase.FolderPath, imageProperties);

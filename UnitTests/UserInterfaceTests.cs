@@ -119,7 +119,7 @@ namespace Timelapse.UnitTests
                 }
                 this.ShowDialog(timelapse, new DialogRenameImageDatabaseFile(dataHandler.ImageDatabase.FileName));
                 this.ShowDialog(timelapse, new DialogDateRereadDatesFromImages(dataHandler.ImageDatabase));
-                this.ShowDialog(timelapse, new DialogStatisticsOfImageCounts(dataHandler.ImageDatabase.GetImageCountByQuality()));
+                this.ShowDialog(timelapse, new DialogStatisticsOfImageCounts(dataHandler.ImageDatabase.GetImageCountsByQuality()));
                 this.ShowDialog(timelapse, new DialogTemplatesDontMatch(dataHandler.ImageDatabase.TemplateSynchronizationIssues));
 
                 timelapse.Close();

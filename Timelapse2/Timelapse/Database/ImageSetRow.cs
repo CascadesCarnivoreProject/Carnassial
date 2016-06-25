@@ -10,9 +10,9 @@ namespace Timelapse.Database
         {
         }
 
-        public ImageQualityFilter ImageQualityFilter
+        public ImageFilter ImageFilter
         {
-            get { return (ImageQualityFilter)this.Row.GetIntegerField(Constants.DatabaseColumn.Filter); }
+            get { return (ImageFilter)this.Row.GetIntegerField(Constants.DatabaseColumn.Filter); }
             set { this.Row.SetField(Constants.DatabaseColumn.Filter, (int)value); }
         }
 
@@ -44,7 +44,7 @@ namespace Timelapse.Database
         public override ColumnTuplesWithWhere GetColumnTuples()
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>();
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, (int)this.ImageQualityFilter));
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, (int)this.ImageFilter));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Log, this.Log));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, this.MagnifierEnabled));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Row, this.ImageRowIndex));

@@ -145,12 +145,12 @@ namespace Timelapse
                 (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0))
             {
                 // save image set properties to the database
-                if (this.state.ImageFilter == ImageQualityFilter.Custom)
+                if (this.state.ImageFilter == ImageFilter.Custom)
                 {
                     // don't save custom filters, revert to All 
-                    this.state.ImageFilter = ImageQualityFilter.All;
+                    this.state.ImageFilter = ImageFilter.All;
                 }
-                this.dataHandler.ImageDatabase.ImageSet.ImageQualityFilter = this.state.ImageFilter;
+                this.dataHandler.ImageDatabase.ImageSet.ImageFilter = this.state.ImageFilter;
 
                 if (this.dataHandler.ImageCache != null)
                 {
@@ -398,7 +398,7 @@ namespace Timelapse
                     {
                         Debug.Assert(false, String.Format("Load of {0} failed as it's likely corrupted.", imageProperties.FileName), exception.ToString());
                         bitmapFrame = Constants.Images.Corrupt;
-                        imageProperties.ImageQuality = ImageQualityFilter.Corrupted;
+                        imageProperties.ImageQuality = ImageFilter.Corrupted;
                     }
 
                     imagesToInsert.Add(imageProperties);
@@ -491,7 +491,7 @@ namespace Timelapse
                     if (dialogResult == true)
                     {
                         ImageDataXml.Read(Path.Combine(this.FolderPath, Constants.File.XmlDataFileName), this.dataHandler.ImageDatabase);
-                        this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageQualityFilter); // to regenerate the controls and markers for this image
+                        this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageFilter); // to regenerate the controls and markers for this image
                     }
                 }
             };
@@ -602,7 +602,7 @@ namespace Timelapse
             // set the current filter and the image index to the same as the ones in the last session, providing that we are working 
             // with the same image folder. 
             // Doing so also displays the image
-            this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageQualityFilter);
+            this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
 
             if (FileBackup.TryCreateBackups(this.FolderPath, this.dataHandler.ImageDatabase.FileName))
             {
@@ -637,51 +637,51 @@ namespace Timelapse
         #endregion
 
         #region Filters
-        private bool SelectDataTableImagesAndShowImage(int imageRow, ImageQualityFilter filter)
+        private bool SelectDataTableImagesAndShowImage(int imageRow, ImageFilter filter)
         {
             switch (filter)
             {
-                case ImageQualityFilter.All:
-                case ImageQualityFilter.Corrupted:
-                case ImageQualityFilter.Dark:
-                case ImageQualityFilter.MarkedForDeletion:
-                case ImageQualityFilter.Missing:
-                case ImageQualityFilter.Ok:
+                case ImageFilter.All:
+                case ImageFilter.Corrupted:
+                case ImageFilter.Dark:
+                case ImageFilter.MarkedForDeletion:
+                case ImageFilter.Missing:
+                case ImageFilter.Ok:
                     this.dataHandler.ImageDatabase.SelectDataTableImages(filter);
                     break;
-                case ImageQualityFilter.Custom:
+                case ImageFilter.Custom:
                     this.dataHandler.ImageDatabase.SelectDataTableImages(this.customFilter.GetImagesWhere());
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled image quality filter {0}.", filter));
             }
 
-            if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0 || filter == ImageQualityFilter.All)
+            if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0 || filter == ImageFilter.All)
             {
                 // Change the filter to reflect what the user selected. Update the menu state accordingly
                 // Set the checked status of the radio button menu items to the filter.
                 string status;
                 switch (filter)
                 {
-                    case ImageQualityFilter.All:
+                    case ImageFilter.All:
                         status = "all images.";
                         break;
-                    case ImageQualityFilter.Corrupted:
+                    case ImageFilter.Corrupted:
                         status = "corrupted images.";
                         break;
-                    case ImageQualityFilter.Custom:
+                    case ImageFilter.Custom:
                         status = "images matching your custom filter.";
                         break;
-                    case ImageQualityFilter.Dark:
+                    case ImageFilter.Dark:
                         status = "dark images.";
                         break;
-                    case ImageQualityFilter.MarkedForDeletion:
+                    case ImageFilter.MarkedForDeletion:
                         status = "images marked for deletion.";
                         break;
-                    case ImageQualityFilter.Missing:
+                    case ImageFilter.Missing:
                         status = "missing images.";
                         break;
-                    case ImageQualityFilter.Ok:
+                    case ImageFilter.Ok:
                         status = "light images.";
                         break;
                     default:
@@ -697,7 +697,7 @@ namespace Timelapse
                 // other than custom filters these cases shouldn't be reachable as the menu options for the filters will be disabled if there aren't any
                 // corresponding images
                 DialogMessageBox messageBox = new DialogMessageBox();
-                if (filter == ImageQualityFilter.Corrupted)
+                if (filter == ImageFilter.Corrupted)
                 {
                     StatusBarUpdate.Message(this.statusBar, "no corrupted images to display.");
                     messageBox.MessageTitle = "Corrupted filter selected, but no images are marked as corrupted.";
@@ -705,14 +705,14 @@ namespace Timelapse
                     messageBox.MessageReason = "None of the images have their 'ImageQuality' field set to Corrupted.";
                     messageBox.MessageHint = "If you have images you think should be marked as 'Corrupted', set their ImageQuality field to Corrupted.";
                 }
-                else if (filter == ImageQualityFilter.Custom)
+                else if (filter == ImageFilter.Custom)
                 {
                     StatusBarUpdate.Message(this.statusBar, "no images to display.");
                     messageBox.MessageTitle = "Custom filter selected, but no images match the specified search.";
                     messageBox.MessageProblem = "None of the images in this image set match the specified search, so nothing can be shown.";
                     messageBox.MessageHint = "Try to create another custom filter.";
                 }
-                else if (filter == ImageQualityFilter.Dark)
+                else if (filter == ImageFilter.Dark)
                 {
                     StatusBarUpdate.Message(this.statusBar, "no dark images to display.");
                     messageBox.MessageTitle = "Dark filter selected, but no images are marked as dark.";
@@ -720,7 +720,7 @@ namespace Timelapse
                     messageBox.MessageReason = "None of the images have their 'ImageQuality' field set to Dark.";
                     messageBox.MessageHint = "If you have images you think should be marked as 'Dark', set their ImageQuality field to Dark.";
                 }
-                else if (filter == ImageQualityFilter.Missing)
+                else if (filter == ImageFilter.Missing)
                 {
                     StatusBarUpdate.Message(this.statusBar, "no missing images to display.");
                     messageBox.MessageTitle = "Missing filter selected, but no images are marked as missing.";
@@ -728,7 +728,7 @@ namespace Timelapse
                     messageBox.MessageReason = "None of the images have their 'ImageQuality' field set to Missing.";
                     messageBox.MessageHint = "If you have images you think should be marked as 'Missing', set their ImageQuality field to Missing.";
                 }
-                else if (filter == ImageQualityFilter.MarkedForDeletion)
+                else if (filter == ImageFilter.MarkedForDeletion)
                 {
                     StatusBarUpdate.Message(this.statusBar, "No images marked for deletion to display.");
                     messageBox.MessageTitle = "Delete filter selected, but no images are marked for deletion";
@@ -736,7 +736,7 @@ namespace Timelapse
                     messageBox.MessageReason = "None of the images have their 'Delete?' field checked.";
                     messageBox.MessageHint = "If you have images you think should be marked for deletion, check their Delete? field.";
                 }
-                else if (filter == ImageQualityFilter.Ok)
+                else if (filter == ImageFilter.Ok)
                 {
                     StatusBarUpdate.Message(this.statusBar, "no light images to display.");
                     messageBox.MessageTitle = "Light filter selected, but no images are marked as light.";
@@ -755,7 +755,7 @@ namespace Timelapse
 
                 if (this.state.ImageFilter == filter)
                 {
-                    return this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageQualityFilter.All);
+                    return this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.All);
                 }
                 this.MenuItemViewSetSelected(this.state.ImageFilter);
                 return false;
@@ -1626,7 +1626,7 @@ namespace Timelapse
         /// <summary>Write the CSV file and preview it in excel.</summary>
         private void MenuItemExportCsv_Click(object sender, RoutedEventArgs e)
         {
-            if (this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.state.ImageFilter != ImageFilter.All)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
                 dlgMB.MessageTitle = "Exporting to a CSV file on a filtered view...";
@@ -1913,7 +1913,7 @@ namespace Timelapse
         {
             // If we are not in the filter all view, or if its a corrupt image or deleted image, tell the person. Selecting ok will shift the filter.
             // We want to be on a valid image as otherwise the metadata of interest won't appear
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageFilter.All)
             {
                 int firstImageDisplayable = this.dataHandler.ImageDatabase.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
                 if (firstImageDisplayable == -1)
@@ -1962,11 +1962,11 @@ namespace Timelapse
         {
             try
             {
-                int deletedImages = this.dataHandler.ImageDatabase.GetImageCount(ImageQualityFilter.MarkedForDeletion);
+                int deletedImages = this.dataHandler.ImageDatabase.GetImageCount(ImageFilter.MarkedForDeletion);
                 this.MenuItemDeleteImages.IsEnabled = deletedImages > 0;
                 this.MenuItemDeleteImagesAndData.IsEnabled = deletedImages > 0;
                 this.MenuItemDeleteImageAndData.IsEnabled = true;
-                this.MenuItemDeleteImage.IsEnabled = this.dataHandler.ImageCache.Current.IsDisplayable() || this.dataHandler.ImageCache.Current.ImageQuality == ImageQualityFilter.Corrupted;
+                this.MenuItemDeleteImage.IsEnabled = this.dataHandler.ImageCache.Current.IsDisplayable() || this.dataHandler.ImageCache.Current.ImageQuality == ImageFilter.Corrupted;
             }
             catch (Exception exception)
             {
@@ -2138,7 +2138,7 @@ namespace Timelapse
         private void MenuItemOptionsDarkImagesThreshold_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.state.ImageFilter != ImageFilter.All)
             {
                 if (this.TryPromptAndChangeToAllFilter("Customize the threshold for determining dark images...",
                                                        "To customize the threshold for determining dark images:") == false)
@@ -2158,7 +2158,7 @@ namespace Timelapse
         private void MenuItemSwapDayMonth_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageFilter.All)
             {
                 if (this.TryPromptAndChangeToAllFilter("Swap the day / month...",
                                                        "To swap the day / month, Timelapse must first:") == false)
@@ -2181,7 +2181,7 @@ namespace Timelapse
         private void MenuItemDateCorrections_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageFilter.All)
             {
                 if (this.TryPromptAndChangeToAllFilter("Add a correction value to every date...",
                                                        "To correct the dates, Timelapse must first:") == false)
@@ -2209,9 +2209,9 @@ namespace Timelapse
         private void MenuItemCorrectDaylightSavings_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageFilter.All)
             {
-                if (this.state.ImageFilter != ImageQualityFilter.All)
+                if (this.state.ImageFilter != ImageFilter.All)
                 {
                     if (this.TryPromptAndChangeToAllFilter("Can't correct for daylight savings time.",
                                                            "To correct for daylight savings time:") == false)
@@ -2248,7 +2248,7 @@ namespace Timelapse
         private void MenuItemCheckModifyAmbiguousDates_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, tell the user. Selecting ok will shift the views..
-            if (this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.state.ImageFilter != ImageFilter.All)
             {
                 if (this.TryPromptAndChangeToAllFilter("Check and modify ambiguous dates...", "To check and modify ambiguous dates:", false) == false)
                 {
@@ -2269,7 +2269,7 @@ namespace Timelapse
         private void MenuItemRereadDatesfromImages_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.state.ImageFilter != ImageQualityFilter.All)
+            if (this.state.ImageFilter != ImageFilter.All)
             {
                 if (this.TryPromptAndChangeToAllFilter("Re-read the dates from the images...",
                                                        "To re-read dates from the images:") == false)
@@ -2315,13 +2315,13 @@ namespace Timelapse
         #region View Menu Callbacks
         private void View_SubmenuOpening(object sender, RoutedEventArgs e)
         {
-            Dictionary<ImageQualityFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCountByQuality();
+            Dictionary<ImageFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCountsByQuality();
 
-            this.MenuItemViewLightImages.IsEnabled = counts[ImageQualityFilter.Ok] > 0;
-            this.MenuItemViewDarkImages.IsEnabled = counts[ImageQualityFilter.Dark] > 0;
-            this.MenuItemViewCorruptedImages.IsEnabled = counts[ImageQualityFilter.Corrupted] > 0;
-            this.MenuItemViewMissingImages.IsEnabled = counts[ImageQualityFilter.Missing] > 0;
-            this.MenuItemViewImagesMarkedForDeletion.IsEnabled = this.dataHandler.ImageDatabase.GetImageCount(ImageQualityFilter.MarkedForDeletion) > 0;
+            this.MenuItemViewLightImages.IsEnabled = counts[ImageFilter.Ok] > 0;
+            this.MenuItemViewDarkImages.IsEnabled = counts[ImageFilter.Dark] > 0;
+            this.MenuItemViewCorruptedImages.IsEnabled = counts[ImageFilter.Corrupted] > 0;
+            this.MenuItemViewMissingImages.IsEnabled = counts[ImageFilter.Missing] > 0;
+            this.MenuItemViewImagesMarkedForDeletion.IsEnabled = this.dataHandler.ImageDatabase.GetImageCount(ImageFilter.MarkedForDeletion) > 0;
         }
 
         private void MenuItemZoomIn_Click(object sender, RoutedEventArgs e)
@@ -2374,35 +2374,35 @@ namespace Timelapse
         private void MenuItemView_Click(object sender, RoutedEventArgs e)
         {
             MenuItem item = (MenuItem)sender;
-            ImageQualityFilter filter;
+            ImageFilter filter;
             // find out which filter was selected
             if (item == this.MenuItemViewAllImages)
             {
-                filter = ImageQualityFilter.All;
+                filter = ImageFilter.All;
             }
             else if (item == this.MenuItemViewLightImages)
             {
-                filter = ImageQualityFilter.Ok;
+                filter = ImageFilter.Ok;
             }
             else if (item == this.MenuItemViewCorruptedImages)
             {
-                filter = ImageQualityFilter.Corrupted;
+                filter = ImageFilter.Corrupted;
             }
             else if (item == this.MenuItemViewDarkImages)
             {
-                filter = ImageQualityFilter.Dark;
+                filter = ImageFilter.Dark;
             }
             else if (item == this.MenuItemViewMissingImages)
             {
-                filter = ImageQualityFilter.Missing;
+                filter = ImageFilter.Missing;
             }
             else if (item == this.MenuItemViewImagesMarkedForDeletion)
             {
-                filter = ImageQualityFilter.MarkedForDeletion;
+                filter = ImageFilter.MarkedForDeletion;
             }
             else
             {
-                filter = ImageQualityFilter.All;   // Just in case
+                filter = ImageFilter.All;   // Just in case
             }
 
             // Treat the checked status as a radio button i.e., toggle their states so only the clicked menu item is checked.
@@ -2421,15 +2421,15 @@ namespace Timelapse
         }
 
         // helper function to put a checkbox on the currently selected menu item i.e., to make it behave like a radiobutton menu
-        private void MenuItemViewSetSelected(ImageQualityFilter filter)
+        private void MenuItemViewSetSelected(ImageFilter filter)
         {
-            this.MenuItemViewAllImages.IsChecked = (filter == ImageQualityFilter.All) ? true : false;
-            this.MenuItemViewCorruptedImages.IsChecked = (filter == ImageQualityFilter.Corrupted) ? true : false;
-            this.MenuItemViewDarkImages.IsChecked = (filter == ImageQualityFilter.Dark) ? true : false;
-            this.MenuItemViewLightImages.IsChecked = (filter == ImageQualityFilter.Ok) ? true : false;
-            this.MenuItemViewMissingImages.IsChecked = (filter == ImageQualityFilter.Missing) ? true : false;
-            this.MenuItemViewImagesMarkedForDeletion.IsChecked = (filter == ImageQualityFilter.MarkedForDeletion) ? true : false;
-            this.MenuItemViewCustomFilter.IsChecked = (filter == ImageQualityFilter.Custom) ? true : false;
+            this.MenuItemViewAllImages.IsChecked = (filter == ImageFilter.All) ? true : false;
+            this.MenuItemViewCorruptedImages.IsChecked = (filter == ImageFilter.Corrupted) ? true : false;
+            this.MenuItemViewDarkImages.IsChecked = (filter == ImageFilter.Dark) ? true : false;
+            this.MenuItemViewLightImages.IsChecked = (filter == ImageFilter.Ok) ? true : false;
+            this.MenuItemViewMissingImages.IsChecked = (filter == ImageFilter.Missing) ? true : false;
+            this.MenuItemViewImagesMarkedForDeletion.IsChecked = (filter == ImageFilter.MarkedForDeletion) ? true : false;
+            this.MenuItemViewCustomFilter.IsChecked = (filter == ImageFilter.Custom) ? true : false;
         }
 
         private void MenuItemViewCustomFilter_Click(object sender, RoutedEventArgs e)
@@ -2440,15 +2440,15 @@ namespace Timelapse
             // Set the filter to show all images and a valid image
             if (changeToCustomFilter == true)
             {
-                // MenuItemViewSetSelected(ImageQualityFilters.Custom);
-                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageQualityFilter.Custom);
+                // MenuItemViewSetSelected(ImageFilters.Custom);
+                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.Custom);
             }
         }
 
         /// <summary>Show a dialog box telling the user how many images were loaded, etc.</summary>
         public void MenuItemImageCounts_Click(object sender, RoutedEventArgs e)
         {
-            Dictionary<ImageQualityFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCountByQuality();
+            Dictionary<ImageFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCountsByQuality();
             DialogStatisticsOfImageCounts imageStats = new DialogStatisticsOfImageCounts(counts);
             imageStats.Owner = this;
             imageStats.ShowDialog();
@@ -2584,7 +2584,7 @@ namespace Timelapse
             // Set the filter to show all images and a valid image
             if (changeFilterToAll == true)
             {
-                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageQualityFilter.All); // Set it to all images
+                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.All); // Set it to all images
                 return true;
             }
             return false;

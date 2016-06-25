@@ -16,13 +16,15 @@ namespace Timelapse
         public const int NumberOfMostRecentDatabasesToTrack = 9;
         public const string StandardColour = "Gold";
         public const string SelectionColour = "MediumBlue";
-
+        public const int SleepForImageRenderInterval = 100;
         public const int MonthsInYear = 12;
 
         // Update Information, for checking for updates in the timelapse xml file stored on the web site
         public const string ApplicationName = "Timelapse";
         public static readonly Uri LatestVersionAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Installs/timelapse_version.xml");
         public static readonly Uri VersionChangesAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.TimelapseVersions#Timelapse");
+
+        public static readonly TimeSpan SleepTimeForRender = TimeSpan.FromMilliseconds(25);
 
         // Boolean.TrueString and FalseString are "True" and "False" and are preferred, but 
         public static class Boolean
@@ -187,7 +189,7 @@ namespace Timelapse
             public const string NotEqual = "\u2260";
         }
 
-        // shorthands for ImageQualityFilter.<value>.ToString()
+        // shorthands for ImageFilter.<value>.ToString()
         public static class ImageQuality
         {
             public const string Corrupted = "Corrupted";

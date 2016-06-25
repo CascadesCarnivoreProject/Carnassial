@@ -128,9 +128,9 @@ namespace Timelapse
                         feedbackMessage += " , skipping as cannot open image.";
                     }
                     backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, feedbackMessage));
-                    if (image % 100 == 0)
+                    if (image % Constants.SleepForImageRenderInterval == 0)
                     {
-                        Thread.Sleep(25); // Put in a delay every now and then, as otherwise the UI won't update.
+                        Thread.Sleep(Constants.SleepTimeForRender); // Put in a delay every now and then, as otherwise the UI won't update.
                     }
                 }
 
@@ -180,7 +180,7 @@ namespace Timelapse
                     if (!skip)
                     { 
                         backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, message));
-                        if (image % 100 == 0)
+                        if (image % Constants.SleepForImageRenderInterval == 0)
                         {
                             Thread.Yield(); // Allow the UI to update.
                         }

@@ -242,10 +242,9 @@ namespace Timelapse
 
                     string value = exifData[this.metaDataName];
                     backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, value));
-                    if (image % 250 == 0)
+                    if (image % Constants.SleepForImageRenderInterval == 0)
                     {
-                        // TODOSAUL: should this be Thread.Yield()?
-                        Thread.Sleep(25); // Put in a short delay every now and then, as otherwise the UI may not update.
+                        Thread.Sleep(Constants.SleepTimeForRender); // Put in a short delay every now and then, as otherwise the UI may not update.
                     }
 
                     ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(this.dataLabelFromLabel[this.noteLabel], value) },

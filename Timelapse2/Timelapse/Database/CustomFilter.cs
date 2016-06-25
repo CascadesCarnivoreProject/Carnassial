@@ -75,7 +75,7 @@ namespace Timelapse.Database
             string where = this.GetImagesWhere();
             if (String.IsNullOrWhiteSpace(where))
             {
-                return this.database.GetImageCount(ImageQualityFilter.All); // If there is no query, assume it is equivalent to all images
+                return this.database.GetImageCount(ImageFilter.All); // If there is no query, assume it is equivalent to all images
             }
             return this.database.GetImageCountWithCustomFilter(where);
         }

@@ -35,7 +35,7 @@ namespace Timelapse.Util
             {
                 ImageRow imageProperties = database.ImageDataTable[image];
                 // Skip over corrupted images for now, as we know those dates are likley wrong
-                if (imageProperties.ImageQuality == ImageQualityFilter.Corrupted)
+                if (imageProperties.ImageQuality == ImageFilter.Corrupted)
                 {
                     continue;
                 }

@@ -1,6 +1,6 @@
 ﻿namespace Timelapse.Database
 {
-    public enum ImageQualityFilter : int
+    public enum ImageFilter : int
     {
         Ok = 0,
         Dark = 1,

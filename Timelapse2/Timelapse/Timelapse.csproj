@@ -334,7 +334,7 @@
     <Compile Include="Database\FileBackup.cs" />
     <Compile Include="Images\ImageDataXml.cs" />
     <Compile Include="Database\ImageRow.cs" />
-    <Compile Include="Database\ImageQualityFilter.cs" />
+    <Compile Include="Database\ImageFilter.cs" />
     <Compile Include="Images\MetaTagCounter.cs" />
     <Compile Include="Util\ControlLabelStyle.cs" />
     <Compile Include="Util\ControlContentStyle.cs" />

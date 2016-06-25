@@ -274,7 +274,7 @@ namespace Timelapse.UnitTests
                     Date = "05-Aug-2015",
                     FileName = TestConstant.File.DaylightBobcatImage,
                     IsColor = true,
-                    Quality = ImageQualityFilter.Ok,
+                    Quality = ImageFilter.Ok,
                     Time = "08:06:23"
                 };
 
@@ -284,7 +284,7 @@ namespace Timelapse.UnitTests
                     Date = "21-Apr-2016",
                     FileName = TestConstant.File.DaylightCoyoteImage,
                     IsColor = true,
-                    Quality = ImageQualityFilter.Ok,
+                    Quality = ImageFilter.Ok,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName,
                     Time = "06:31:13"
                 };
@@ -295,7 +295,7 @@ namespace Timelapse.UnitTests
                     Date = "28-Jan-2015",
                     FileName = TestConstant.File.DaylightMartenPairImage,
                     IsColor = true,
-                    Quality = ImageQualityFilter.Ok,
+                    Quality = ImageFilter.Ok,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName,
                     SkipDateTimeVerification = true,
                     Time = "11:17:34"
@@ -307,7 +307,7 @@ namespace Timelapse.UnitTests
                     Date = "24-Feb-2016",
                     FileName = TestConstant.File.InfraredMartenImage,
                     IsColor = false,
-                    Quality = ImageQualityFilter.Ok,
+                    Quality = ImageFilter.Ok,
                     Time = "04:59:46"
                 };
             }

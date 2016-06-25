@@ -10,7 +10,7 @@ namespace Timelapse.Util
         public Point ControlWindowSize { get; set; }
         public int DarkPixelThreshold { get; set; }
         public double DarkPixelRatioThreshold { get; set; }
-        public ImageQualityFilter ImageFilter { get; set; }
+        public ImageFilter ImageFilter { get; set; }
         public bool IsMouseOverCounter { get; set; }
         public MostRecentlyUsedList<string> MostRecentImageSets { get; set; }
         public bool ShowCsvDialog { get; set; }
@@ -24,7 +24,7 @@ namespace Timelapse.Util
             this.DarkPixelRatioThreshold = Constants.Images.DarkPixelRatioThresholdDefault;
 
             this.ControlWindowSize = new Point(0, 0);
-            this.ImageFilter = ImageQualityFilter.All;
+            this.ImageFilter = ImageFilter.All;
             this.IsMouseOverCounter = false;
             this.MostRecentImageSets = null;
             this.ShowCsvDialog = true;

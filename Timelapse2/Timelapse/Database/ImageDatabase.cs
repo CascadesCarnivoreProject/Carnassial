@@ -284,7 +284,7 @@ namespace Timelapse.Database
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Log, "TEXT DEFAULT 'Add text here.'"));
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, " TEXT DEFAULT 'true'"));
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Row, "TEXT DEFAULT '0'"));
-            int allImages = (int)ImageQualityFilter.All;
+            int allImages = (int)ImageFilter.All;
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, "TEXT DEFAULT '" + allImages.ToString() + "'"));
             // TODOSAUL: columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.Text));
             this.Database.CreateTable(Constants.Database.ImageSetTable, columnDefinitions);
@@ -456,7 +456,7 @@ namespace Timelapse.Database
         /// Populate the image table so that it matches all the entries in its associated database table.
         /// Then set the currentID and currentRow to the the first record in the returned set
         /// </summary>
-        public void SelectDataTableImages(ImageQualityFilter imageQuality)
+        public void SelectDataTableImages(ImageFilter imageQuality)
         {
             this.SelectDataTableImages(this.GetImagesWhere(imageQuality));
         }
@@ -506,7 +506,7 @@ namespace Timelapse.Database
             string query = "Select * FROM " + Constants.Database.ImageDataTable;
             if (String.IsNullOrEmpty(where) == false)
             {
-                query += " WHERE " + where;
+                query += Constants.Sql.Where + where;
             }
             
             DataTable images = this.Database.GetDataTableFromSelect(query);
@@ -516,33 +516,26 @@ namespace Timelapse.Database
 
         public void SelectDataTableImagesAll()
         {
-            this.SelectDataTableImages(ImageQualityFilter.All);
+            this.SelectDataTableImages(ImageFilter.All);
         }
 
-        public Dictionary<ImageQualityFilter, int> GetImageCountByQuality()
+        public Dictionary<ImageFilter, int> GetImageCountsByQuality()
         {
-            Dictionary<ImageQualityFilter, int> counts = new Dictionary<ImageQualityFilter, int>();
-            counts[ImageQualityFilter.Dark] = this.GetImageCount(ImageQualityFilter.Dark);
-            counts[ImageQualityFilter.Corrupted] = this.GetImageCount(ImageQualityFilter.Corrupted);
-            counts[ImageQualityFilter.Missing] = this.GetImageCount(ImageQualityFilter.Missing);
-            counts[ImageQualityFilter.Ok] = this.GetImageCount(ImageQualityFilter.Ok);
+            Dictionary<ImageFilter, int> counts = new Dictionary<ImageFilter, int>();
+            counts[ImageFilter.Dark] = this.GetImageCount(ImageFilter.Dark);
+            counts[ImageFilter.Corrupted] = this.GetImageCount(ImageFilter.Corrupted);
+            counts[ImageFilter.Missing] = this.GetImageCount(ImageFilter.Missing);
+            counts[ImageFilter.Ok] = this.GetImageCount(ImageFilter.Ok);
             return counts;
         }
 
-        public int GetImageCount(ImageQualityFilter imageQuality)
+        public int GetImageCount(ImageFilter imageQuality)
         {
             string query = "Select Count(*) FROM " + Constants.Database.ImageDataTable;
             string where = this.GetImagesWhere(imageQuality);
             if (String.IsNullOrEmpty(where) == false)
             {
-                if (imageQuality == ImageQualityFilter.MarkedForDeletion)
-                {
-                    query += " Where " + where;
-                }
-                else
-                {
-                    query += " Where " + this.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality] + " = \"" + imageQuality.ToString() + "\"";
-                }
+                query += Constants.Sql.Where + where;
             }
             return this.Database.GetCountFromSelect(query);
         }
@@ -563,20 +556,20 @@ namespace Timelapse.Database
             this.Database.Insert(table, insertionStatements);
         }
 
-        private string GetImagesWhere(ImageQualityFilter imageQuality)
+        private string GetImagesWhere(ImageFilter imageQuality)
         {
             switch (imageQuality)
             {
-                case ImageQualityFilter.All:
+                case ImageFilter.All:
                     return String.Empty;
-                case ImageQualityFilter.Corrupted:
-                case ImageQualityFilter.Dark:
-                case ImageQualityFilter.Missing:
-                case ImageQualityFilter.Ok:
+                case ImageFilter.Corrupted:
+                case ImageFilter.Dark:
+                case ImageFilter.Missing:
+                case ImageFilter.Ok:
                     return this.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality] + "=\"" + imageQuality + "\"";
-                case ImageQualityFilter.MarkedForDeletion:
+                case ImageFilter.MarkedForDeletion:
                     return this.DataLabelFromStandardControlType[Constants.Control.DeleteFlag] + "=\"true\"";
-                case ImageQualityFilter.Custom:
+                case ImageFilter.Custom:
                 default:
                     throw new NotSupportedException(String.Format("Unhandled quality filter {0}.  For custom filters call CustomFilter.GetImagesWhere().", imageQuality));
             }
@@ -704,7 +697,7 @@ namespace Timelapse.Database
                 ImageRow image = this.ImageDataTable[row];
                 // I originally didn't swap the date for corrupted images, but don't see why I shouldn't 
                 // But in case we decide not to do so, I've left the code here
-                // if (image.ImageQuality == ImageQualityFilter.Corrupted)
+                // if (image.ImageQuality == ImageFilter.Corrupted)
                 // {
                 //    continue;  // skip over corrupted images
                 // }
@@ -759,8 +752,8 @@ namespace Timelapse.Database
                 return false;
             }
 
-            ImageQualityFilter imageQuality = this.ImageDataTable[rowIndex].ImageQuality;
-            if ((imageQuality == ImageQualityFilter.Corrupted) || (imageQuality == ImageQualityFilter.Missing))
+            ImageFilter imageQuality = this.ImageDataTable[rowIndex].ImageQuality;
+            if ((imageQuality == ImageFilter.Corrupted) || (imageQuality == ImageFilter.Missing))
             {
                 return false;
             }

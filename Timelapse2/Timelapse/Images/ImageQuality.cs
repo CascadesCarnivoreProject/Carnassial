@@ -13,8 +13,8 @@ namespace Timelapse.Images
         public double DarkPixelRatioFound { get; set; }
         public string FileName { get; set; }
         public bool IsColor { get; set; }
-        public Nullable<ImageQualityFilter> NewImageQuality { get; set; }
-        public ImageQualityFilter OldImageQuality { get; set; }
+        public Nullable<ImageFilter> NewImageQuality { get; set; }
+        public ImageFilter OldImageQuality { get; set; }
 
         public ImageQuality(ImageRow image)
         {

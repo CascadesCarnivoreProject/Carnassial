@@ -38,16 +38,17 @@ namespace Timelapse.UnitTests
             List<ImageExpectations> imageExpectations = addImages(imageDatabase);
 
             // sanity coverage of image data table methods
-            int deletedImages = imageDatabase.GetImageCount(ImageQualityFilter.MarkedForDeletion);
+            int deletedImages = imageDatabase.GetImageCount(ImageFilter.MarkedForDeletion);
             Assert.IsTrue(deletedImages == 0);
 
-            Assert.IsTrue(imageDatabase.GetImageCount(ImageQualityFilter.All) == imageExpectations.Count);
-            Dictionary<ImageQualityFilter, int> imageCounts = imageDatabase.GetImageCountByQuality();
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.All) == imageExpectations.Count);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.MarkedForDeletion) == 0);
+            Dictionary<ImageFilter, int> imageCounts = imageDatabase.GetImageCountsByQuality();
             Assert.IsTrue(imageCounts.Count == 4);
-            Assert.IsTrue(imageCounts[ImageQualityFilter.Corrupted] == 0);
-            Assert.IsTrue(imageCounts[ImageQualityFilter.Dark] == 0);
-            Assert.IsTrue(imageCounts[ImageQualityFilter.Missing] == 0);
-            Assert.IsTrue(imageCounts[ImageQualityFilter.Ok] == imageExpectations.Count);
+            Assert.IsTrue(imageCounts[ImageFilter.Corrupted] == 0);
+            Assert.IsTrue(imageCounts[ImageFilter.Dark] == 0);
+            Assert.IsTrue(imageCounts[ImageFilter.Missing] == 0);
+            Assert.IsTrue(imageCounts[ImageFilter.Ok] == imageExpectations.Count);
 
             ImageDataTable imagesToDelete = imageDatabase.GetImagesMarkedForDeletion();
             Assert.IsTrue(imagesToDelete.RowCount == 0);
@@ -56,7 +57,7 @@ namespace Timelapse.UnitTests
             // checks are not performed after last filter in list is applied
             string currentDirectoryName = Path.GetFileName(imageDatabase.FolderPath);
             imageDatabase.SelectDataTableImagesAll();
-            foreach (ImageQualityFilter nextFilter in new List<ImageQualityFilter>() { ImageQualityFilter.All, ImageQualityFilter.Ok, ImageQualityFilter.Ok })
+            foreach (ImageFilter nextFilter in new List<ImageFilter>() { ImageFilter.All, ImageFilter.Ok, ImageFilter.Ok })
             {
                 Assert.IsTrue(imageDatabase.CurrentlySelectedImageCount == imageExpectations.Count);
                 imageDatabase.SelectDataTableImagesAll();
@@ -602,7 +603,7 @@ namespace Timelapse.UnitTests
 
         private void VerifyDefaultImageSetTableContent(ImageDatabase imageDatabase)
         {
-            Assert.IsTrue(imageDatabase.ImageSet.ImageQualityFilter == ImageQualityFilter.All);
+            Assert.IsTrue(imageDatabase.ImageSet.ImageFilter == ImageFilter.All);
             Assert.IsTrue(imageDatabase.ImageSet.ImageRowIndex == 0);
             Assert.IsTrue(imageDatabase.ImageSet.Log == Constants.Database.ImageSetDefaultLog);
             Assert.IsTrue(imageDatabase.ImageSet.MagnifierEnabled);

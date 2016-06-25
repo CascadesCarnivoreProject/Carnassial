@@ -363,8 +363,8 @@ namespace Timelapse
                     ImageQuality imageQuality = new ImageQuality(imageRow);
 
                     // If its not a valid image, say so and go onto the next one.
-                    if (!(imageQuality.OldImageQuality == ImageQualityFilter.Ok) && 
-                        !(imageQuality.OldImageQuality == ImageQualityFilter.Dark))
+                    if (!(imageQuality.OldImageQuality == ImageFilter.Ok) && 
+                        !(imageQuality.OldImageQuality == ImageFilter.Dark))
                     {
                         imageQuality.NewImageQuality = null;
                         backgroundWorker.ReportProgress(0, imageQuality);
