@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Windows.Media.Imaging;
 using Timelapse.Database;
 using Timelapse.Images;
 using Timelapse.Util;
@@ -370,6 +371,56 @@ namespace Timelapse.UnitTests
                 // dataHandler.CopyForward(control);
                 // dataHandler.CopyFromLastValue(control);
                 // dataHandler.CopyToAll(control);
+            }
+        }
+
+        /// <summary>
+        /// Coverage of first and second import passes in TimelapseWindow.LoadByScanningImageFolder() on a mix of image and video files.
+        /// </summary>
+        [TestMethod]
+        public void HybridVideo()
+        {
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
+            List<ImageRow> imagesToInsert = new List<ImageRow>();
+            FileInfo[] imagesAndVideos = new DirectoryInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.HybridVideoDirectoryName)).GetFiles();
+            foreach (FileInfo imageFile in imagesAndVideos)
+            {
+                ImageRow imageRow;
+                Assert.IsFalse(imageDatabase.GetOrCreateImage(imageFile, out imageRow));
+
+                BitmapSource bitmapSource = imageRow.LoadBitmap(imageDatabase.FolderPath);
+                WriteableBitmap writeableBitmap = bitmapSource.AsWriteable();
+                Assert.IsFalse(writeableBitmap.IsBlack());
+                imageRow.ImageQuality = writeableBitmap.GetImageQuality(Constants.Images.DarkPixelThresholdDefault, Constants.Images.DarkPixelRatioThresholdDefault);
+                Assert.IsTrue(imageRow.ImageQuality == ImageFilter.Ok);
+
+                // see if the date can be updated from the metadata
+                // currently supported for images but not for videos
+                DateTimeAdjustment imageTimeAdjustment = imageRow.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata);
+                if (imageRow.IsVideo)
+                {
+                    Assert.IsTrue(imageTimeAdjustment == DateTimeAdjustment.MetadataNotUsed);
+                }
+                else
+                {
+                    Assert.IsTrue(imageTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed ||
+                                  imageTimeAdjustment == DateTimeAdjustment.MetadataTimeUsed ||
+                                  imageTimeAdjustment == DateTimeAdjustment.SameFileAndMetadataTime);
+                }
+
+                imagesToInsert.Add(imageRow);
+            }
+
+            imageDatabase.AddImages(imagesToInsert, (ImageRow imageProperties, int imageIndex) => { });
+            imageDatabase.SelectDataTableImagesAll();
+
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == imagesAndVideos.Length);
+            for (int rowIndex = 0; rowIndex < imageDatabase.ImageDataTable.RowCount; ++rowIndex)
+            {
+                FileInfo imageFile = imagesAndVideos[rowIndex];
+                ImageRow imageRow = imageDatabase.ImageDataTable[rowIndex];
+                bool expectedIsVideo = String.Equals(Path.GetExtension(imageFile.Name), Constants.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase) ? false : true;
+                Assert.IsTrue(imageRow.IsVideo == expectedIsVideo);
             }
         }
 

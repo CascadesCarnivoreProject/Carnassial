@@ -72,7 +72,7 @@ namespace Timelapse
                     // Case 2: Delete the current image and its data
                     this.Message.MessageTitle = String.Format("Delete the current {0} and its data", imageOrVideo);
                     this.Message.MessageWhat = String.Format("Deletes the current {0} (shown below) and the data associated with that {0}.", imageOrVideo);
-                    this.Message.MessageResult = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named DeletedImages.{1}", imageOrVideo, Environment.NewLine); ;
+                    this.Message.MessageResult = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named DeletedImages.{1}", imageOrVideo, Environment.NewLine);
                     this.Message.MessageResult += String.Format("\u2022 However, the data associated with that {0} will be permanently deleted.", imageOrVideo);
                     this.Message.MessageHint = String.Format("You can delete your {0} backups by deleting the DeletedImages folder.", imageOrVideo);
                 }

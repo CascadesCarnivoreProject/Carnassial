@@ -118,6 +118,36 @@
     <Content Include="CarnivoreTestImages\Reconyx-HC500-20150128-201.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="HybridVideo\BushnellTrophyHD-119777C-20160626-008-14MP.JPG">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="HybridVideo\BushnellTrophyHD-119777C-20160626-009-1920x1080.AVI">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="HybridVideo\BushnellTrophyHD-119777C-20160626-020-8MP.JPG">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="HybridVideo\BushnellTrophyHD-119777C-20160626-021-1280x720.AVI">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="HybridVideo\BushnellTrophyHD-119777C-20160626-038-8MP.JPG">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="HybridVideo\BushnellTrophyHD-119777C-20160626-041-3MP.JPG">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="HybridVideo\BushnellTrophyHD-119777C-20160626-042-640x360.AVI">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="HybridVideo\BushnellTrophyHD-119777C-20160626-048-640x360-trimmed.mp4">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="HybridVideo\BushnellTrophyHD-119777C-20160626-048-640x360.AVI">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="HybridVideo\BushnellTrophyHD-119777C-20160626-050-3MP.JPG">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="TimelapseTemplate 2.0.1.5.tdb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

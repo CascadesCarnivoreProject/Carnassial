@@ -294,14 +294,14 @@ namespace Timelapse
         private bool LoadByScanningImageFolder(string imageFolderPath)
         {
             DirectoryInfo imageFolder = new DirectoryInfo(imageFolderPath);
-            List<FileInfo> imageFilePaths = new List<FileInfo>();
+            List<FileInfo> imageFiles = new List<FileInfo>();
             foreach (string extension in new List<string>() { Constants.File.AviFileExtension, Constants.File.Mp4FileExtension, Constants.File.JpgFileExtension })
             {
-                imageFilePaths.AddRange(imageFolder.GetFiles("*" + extension));
+                imageFiles.AddRange(imageFolder.GetFiles("*" + extension));
             }
-            imageFilePaths = imageFilePaths.OrderBy(file => file.FullName).ToList();
+            imageFiles = imageFiles.OrderBy(file => file.FullName).ToList();
 
-            if (imageFilePaths.Count == 0)
+            if (imageFiles.Count == 0)
             {
                 // no images were found in folder; see if user wants to try again
                 DialogMessageBox messageBox = new DialogMessageBox();
@@ -356,9 +356,9 @@ namespace Timelapse
                 // First pass: Examine images to extract their basic properties and build a list of images not already in the database
                 List<ImageRow> imagesToInsert = new List<ImageRow>();
                 DateTime previousImageRender = DateTime.UtcNow - Constants.Throttles.DesiredIntervalBetweenRenders;
-                for (int image = 0; image < imageFilePaths.Count; image++)
+                for (int image = 0; image < imageFiles.Count; image++)
                 {
-                    FileInfo imageFile = imageFilePaths[image];
+                    FileInfo imageFile = imageFiles[image];
                     ImageRow imageProperties;
                     if (this.dataHandler.ImageDatabase.GetOrCreateImage(imageFile, out imageProperties))
                     {
@@ -407,13 +407,10 @@ namespace Timelapse
                     DateTime utcNow = DateTime.UtcNow;
                     if (utcNow - previousImageRender > Constants.Throttles.DesiredIntervalBetweenRenders)
                     {
-                        // Skip showing videos as doing so in the current UX design triggers thread and freezable ownership conflicts within WPF which take down
-                        // Timelapse with System.InvalidOperationException: The calling thread cannot access this object because a different thread owns it. or
-                        // similar.
-                        progressState.Message = String.Format("{0}/{1}: Examining {2}", image, imageFilePaths.Count, imageProperties.FileName);
-                        progressState.Bmap = imageProperties.IsVideo ? null : bitmapSource;
-                        int progress = Convert.ToInt32(Convert.ToDouble(image) / Convert.ToDouble(imageFilePaths.Count) * 100);
-                        backgroundWorker.ReportProgress(progress, progressState);
+                        progressState.Bmap = bitmapSource;
+                        progressState.Message = String.Format("{0}/{1}: Examining {2}", image, imageFiles.Count, imageProperties.FileName);
+                        int percentProgress = (int)(100.0 * image / (double)imageFiles.Count);
+                        backgroundWorker.ReportProgress(percentProgress, progressState);
                         previousImageRender = utcNow;
                     }
                     else
@@ -426,21 +423,11 @@ namespace Timelapse
                 // TODOSAUL: This used to be slow... but I think its ok now. But check if its a good place to make it more efficient by having it add multiple values in one shot (it may already be doing that - if so, delete this comment)
                 this.dataHandler.ImageDatabase.AddImages(imagesToInsert, (ImageRow imageProperties, int imageIndex) =>
                 {
-                    // Show progress. Since its slow, we may as well do it every database update
-                    int addImageProgress = (int)((double)imageIndex / (100.0 * (double)imagesToInsert.Count));
-                    progressState.Message = String.Format("{0}/{1}: Adding {2}", imageIndex, imageFilePaths.Count, imageProperties.FileName);
-                    if (imageProperties.IsVideo)
-                    {
-                        // skip showing videos per comments in first pass loop, above
-                        progressState.Bmap = null;
-                    }
-                    else
-                    {
-                        // Get image again to show it
-                        BitmapSource bitmapSource = imageProperties.LoadBitmap(this.FolderPath);
-                        progressState.Bmap = bitmapSource;
-                    }
-                    backgroundWorker.ReportProgress(addImageProgress, progressState);
+                    // skip reloading images to display as the user's already seen them import
+                    progressState.Bmap = null;
+                    progressState.Message = String.Format("{0}/{1}: Adding {2}", imageIndex, imageFiles.Count, imageProperties.FileName);
+                    int percentProgress = (int)(100.0 * imageIndex / (double)imagesToInsert.Count);
+                    backgroundWorker.ReportProgress(percentProgress, progressState);
                 });
             };
             backgroundWorker.ProgressChanged += (o, ea) =>
@@ -470,8 +457,8 @@ namespace Timelapse
                     dlgMB.MessageSolution += "\u2022 Edit Menu -> Dates -> Swap Day and Month.";
                     dlgMB.MessageHint = "If you are unsure about the correct date, try the following." + Environment.NewLine;
                     dlgMB.MessageHint += "\u2022 If your camera prints the date on the image, check that." + Environment.NewLine;
-                    dlgMB.MessageHint += "\u2022 Look at the images to see what season it is (e.g., winter vs. summer)." + Environment.NewLine;
-                    dlgMB.MessageHint += "\u2022 Examine the creation date of the image file." + Environment.NewLine;
+                    dlgMB.MessageHint += "\u2022 Look at the files to see what season it is (e.g., winter vs. summer)." + Environment.NewLine;
+                    dlgMB.MessageHint += "\u2022 Examine the creation date of the file." + Environment.NewLine;
                     dlgMB.MessageHint += "\u2022 Check your own records.";
                     dlgMB.ButtonType = MessageBoxButton.OK;
                     dlgMB.IconType = MessageBoxImage.Information;

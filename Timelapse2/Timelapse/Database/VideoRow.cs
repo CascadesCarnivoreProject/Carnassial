@@ -71,7 +71,7 @@ namespace Timelapse.Database
 
                 // render and check for black frame
                 // it's assumed the camera doesn't yield all black frames
-                for (int renderAttempt = 1; renderAttempt <= Constants.MaximumRenderAttempts; ++renderAttempt)
+                for (int renderAttempt = 1; renderAttempt <= Constants.Throttles.MaximumRenderAttempts; ++renderAttempt)
                 {
                     // try render
                     RenderTargetBitmap renderBitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, 96, 96, PixelFormats.Default);
@@ -94,7 +94,7 @@ namespace Timelapse.Database
                     Thread.Sleep(TimeSpan.FromMilliseconds(Constants.Throttles.RenderingBackoffTime.TotalMilliseconds * renderAttempt));
                 }
 
-                throw new ApplicationException(String.Format("Limit of {0} render attempts was reached.", Constants.MaximumRenderAttempts));
+                throw new ApplicationException(String.Format("Limit of {0} render attempts was reached.", Constants.Throttles.MaximumRenderAttempts));
             }
             catch (Exception exception)
             {

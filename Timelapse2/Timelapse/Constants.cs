@@ -11,7 +11,6 @@ namespace Timelapse
     {
         // Default Settings
         public const int DefaultImageRowIndex = 0;
-        public const int MaximumRenderAttempts = 1000;
         public const int NumberOfMostRecentDatabasesToTrack = 9;
         public const string StandardColour = "Gold";
         public const string SelectionColour = "MediumBlue";
@@ -326,6 +325,7 @@ namespace Timelapse
         public static class Throttles
         {
             public const double DesiredMaximumImageRendersPerSecond = 6.0;
+            public const int MaximumRenderAttempts = 100;
             public const int SleepForImageRenderInterval = 100;
 
             public static readonly TimeSpan DesiredIntervalBetweenRenders = TimeSpan.FromSeconds(1.0 / Throttles.DesiredMaximumImageRendersPerSecond);
