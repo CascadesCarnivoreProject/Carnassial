@@ -57,7 +57,7 @@ namespace Timelapse
                 this.lblNewDate.Content = DateTimeHandler.TrySwapSingleDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
 
                 this.rangeEnd = this.GetLastImageOnSameDay(this.rangeStart);
-                this.lblNumberOfImagesWithSameDate.Content = " Images from the same day: ";
+                this.lblNumberOfImagesWithSameDate.Content = " Images and videos from the same day: ";
                 this.lblNumberOfImagesWithSameDate.Content += (this.rangeEnd - this.rangeStart + 1).ToString();
             }
             else
@@ -79,7 +79,7 @@ namespace Timelapse
                 return false;
             }
 
-            // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
+            // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted file if needed
             this.imgDateImage.Source = imageProperties.LoadBitmap(this.database.FolderPath);
             this.lblImageName.Content = imageProperties.FileName;
             return true;

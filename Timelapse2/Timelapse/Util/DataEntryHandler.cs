@@ -44,7 +44,7 @@ namespace Timelapse.Util
                 dlgMB.ButtonType = MessageBoxButton.OK;
 
                 dlgMB.MessageTitle = "Nothing to copy forward.";
-                dlgMB.MessageReason = "As you are  on the last image, there are no other images after this.";
+                dlgMB.MessageReason = "As you are on the last file, there are no files after this.";
                 dlgMB.ShowDialog();
                 return;
             }
@@ -99,7 +99,7 @@ namespace Timelapse.Util
                 dlgMB.ButtonType = MessageBoxButton.OK;
 
                 dlgMB.MessageTitle = "Nothing to Propagate to Here.";
-                dlgMB.MessageReason = "None of the earlier images have anything in this field, so there are no values to propagate.";
+                dlgMB.MessageReason = "None of the earlier files have anything in this field, so there are no values to propagate.";
                 dlgMB.ShowDialog();
                 return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow][control.DataLabel]; // No change, so return the current value
             }
@@ -260,19 +260,19 @@ namespace Timelapse.Util
             dlgMB.MessageResult = "If you select yes, this operation will:" + Environment.NewLine;
             if (!checkForZero && text.Equals(String.Empty))
             {
-                dlgMB.MessageResult += "\u2022 copy the (empty) value \u00AB" + text + "\u00BB in this field from here to the last image of your filtered images.";
+                dlgMB.MessageResult += "\u2022 copy the (empty) value \u00AB" + text + "\u00BB in this field from here to the last file of your filtered files.";
             }
             else
             {
-                dlgMB.MessageResult += "\u2022 copy the value \u00AB" + text + "\u00BB in this field from here to the last image of your filtered images.";
+                dlgMB.MessageResult += "\u2022 copy the value \u00AB" + text + "\u00BB in this field from here to the last file of your filtered files.";
             }
             dlgMB.MessageResult += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
-            dlgMB.MessageResult += Environment.NewLine + "\u2022 will affect " + imagesAffected.ToString() + " images.";
+            dlgMB.MessageResult += Environment.NewLine + "\u2022 will affect " + imagesAffected.ToString() + " files.";
             return dlgMB.ShowDialog();
         }
 
         // Ask the user to confirm value propagation
-        private bool? ConfirmCopyCurrentValueToAll(String text, int imagesAffected, bool checkForZero)
+        private bool? ConfirmCopyCurrentValueToAll(String text, int filesAffected, bool checkForZero)
         {
             text = text.Trim();
 
@@ -285,11 +285,11 @@ namespace Timelapse.Util
             dlgMB.MessageResult = "If you select yes, this operation will:" + Environment.NewLine;
             if (!checkForZero && text.Equals(String.Empty))
             {
-                dlgMB.MessageResult += "\u2022 clear this field across all " + imagesAffected.ToString() + " of your filtered images.";
+                dlgMB.MessageResult += "\u2022 clear this field across all " + filesAffected.ToString() + " of your filtered files.";
             }
             else
             {
-                dlgMB.MessageResult += "\u2022  set this field to \u00AB" + text + "\u00BB across all " + imagesAffected.ToString() + " of your filtered images.";
+                dlgMB.MessageResult += "\u2022  set this field to \u00AB" + text + "\u00BB across all " + filesAffected.ToString() + " of your filtered files.";
             }
             dlgMB.MessageResult += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
             return dlgMB.ShowDialog();
@@ -305,10 +305,10 @@ namespace Timelapse.Util
             dlgMB.MessageTitle = "Please confirm 'Propagate to Here' for this field.";
 
             dlgMB.MessageWhat = "The 'Propagate to Here' operation is not undoable, and can overwrite existing values.";
-            dlgMB.MessageReason = "\u2022 The last non-empty value \u00AB" + text + "\u00BB was seen " + imagesAffected.ToString() + " images back." + Environment.NewLine;
-            dlgMB.MessageReason += "\u2022 That field's value will be copied across all images between that image and this one in this filtered image set";
+            dlgMB.MessageReason = "\u2022 The last non-empty value \u00AB" + text + "\u00BB was seen " + imagesAffected.ToString() + " files back." + Environment.NewLine;
+            dlgMB.MessageReason += "\u2022 That field's value will be copied across all files between that file and this one in this filtered image set";
             dlgMB.MessageResult = "If you select yes: " + Environment.NewLine;
-            dlgMB.MessageResult = "\u2022 " + imagesAffected.ToString() + " images will be affected.";
+            dlgMB.MessageResult = "\u2022 " + imagesAffected.ToString() + " files will be affected.";
             return dlgMB.ShowDialog();
         }
 

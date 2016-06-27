@@ -62,8 +62,8 @@ namespace Timelapse
                 // Add an entry into the log detailing what we just did
                 StringBuilder log = new StringBuilder(Environment.NewLine);
                 log.AppendLine("System entry: Corrected for Daylight Saving Times.");
-                log.AppendLine("                        Correction started at image " + this.lblImageName.Content + " and was propagated " + direction);
-                log.AppendLine("                        An hour was " + operation + " to those images");
+                log.AppendLine("                        Correction started at file " + this.lblImageName.Content + " and was propagated " + direction);
+                log.AppendLine("                        An hour was " + operation + " to those images and videos.");
                 this.database.AppendToImageSetLog(log);
 
                 // Refresh the database / datatable to reflect the updated values

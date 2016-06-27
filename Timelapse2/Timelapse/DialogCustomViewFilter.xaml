@@ -14,10 +14,10 @@
     <DockPanel >
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" IconType="Question"
                             MessageTitle="Create a Custom View Filter"
-                            MessageWhat="You may want to view only a subset of your images that fit some criteria of interest to you."
+                            MessageWhat="You may want to view only a subset of your images and videos which fit some criteria of interest to you."
                             MessageSolution="Specify some search terms that describes your criteria, and use that to create a filter.&#10;1. Each row below reflects your data fields.&#10;2. Select one or more data fields that you want to use as part of your search.
                             &#10;3. Select the expresson you want to use.&#10;4. Select or enter the value you want to use to compare against the data field's contents."
-                            MessageResult="Only those images matching your search criteria will be displayed."
+                            MessageResult="Only those images and videos matching your search criteria will be displayed."
                             MessageHint="Glob expressons allow wildcards as follows:&#10;*  matches any number of characters; ? matches any single character; &#10;[abc] matches one of the indicated characters; [a-z] matches the range of indicated characters. "
                             ShowExplanationVisibilityCheckbox="True"/>
 
@@ -28,11 +28,11 @@
                 <StackPanel Orientation="Vertical">
                     <StackPanel Orientation="Horizontal">
                         <RadioButton  VerticalAlignment="Center" Name="rbAnd" Margin="3,3,0,3 " FontWeight="Bold" Content="And" GroupName="LogicalOperators" IsChecked="True"/>
-                        <TextBlock VerticalAlignment="Center" Margin="3,3,0,3" Text="to filter for images matching all selected search terms"/>
+                        <TextBlock VerticalAlignment="Center" Margin="3,3,0,3" Text="to filter for images and videos matching all selected search terms"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <RadioButton Name="rbOr" VerticalAlignment="Center" Margin="3,1,0,3" FontWeight="Bold" Content="Or"  GroupName="LogicalOperators"  />
-                        <TextBlock VerticalAlignment="Center" Margin="3,0,0,3" Text="   to filter for images matching any one of the selected search terms"/>
+                        <TextBlock VerticalAlignment="Center" Margin="3,0,0,3" Text="   to filter for images and videos matching any one of the selected search terms"/>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>

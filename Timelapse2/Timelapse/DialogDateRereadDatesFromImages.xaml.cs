@@ -60,7 +60,7 @@ namespace Timelapse
                 this.Dispatcher.Invoke(new Action(() =>
                 {
                     // First, change the UIprovide some feedback
-                    backgroundWorker.ReportProgress(0, new FeedbackMessage("Pass 1: Examining all images...", "Checking if dates/time differ"));
+                    backgroundWorker.ReportProgress(0, new FeedbackMessage("Pass 1: Examining images and videos...", "Checking if dates/time differ"));
                 }));
 
                 // Pass 1. Check to see what dates/times need updating.
@@ -123,8 +123,8 @@ namespace Timelapse
                     }
                     catch (Exception exception)
                     {
-                        Debug.Assert(false, String.Format("Open of image '{0}' failed.", imageProperties.FileName), exception.ToString());
-                        feedbackMessage += " , skipping as cannot open image.";
+                        Debug.Assert(false, String.Format("Opening '{0}' failed.", imageProperties.FileName), exception.ToString());
+                        feedbackMessage += " , skipping as cannot open file.";
                     }
                     backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, feedbackMessage));
                     if (image % Constants.Throttles.SleepForImageRenderInterval == 0)
@@ -136,7 +136,7 @@ namespace Timelapse
                 // Pass 2. Update each date as needed 
                 string message = String.Empty;
                 backgroundWorker.ReportProgress(0, new FeedbackMessage(String.Empty, String.Empty)); // A blank separator
-                backgroundWorker.ReportProgress(0, new FeedbackMessage("Pass 2: For selected images", "Updating only when dates or times differ..."));
+                backgroundWorker.ReportProgress(0, new FeedbackMessage("Pass 2: For selected images and videos", "Updating only when dates or times differ..."));
 
                 // This tuple list will hold the id, key and value that we will want to update in the database
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();

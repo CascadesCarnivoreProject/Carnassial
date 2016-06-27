@@ -64,7 +64,7 @@ namespace Timelapse
             openFileDialog.DefaultExt = ".tdb";
             openFileDialog.Filter = "Template files (.tdb)|*.tdb";
 
-            openFileDialog.Title = "Select a TimelapseTemplate.tdb file,  which will be copied to your image folder";
+            openFileDialog.Title = "Select a TimelapseTemplate.tdb file,  which will be copied to your folder";
             string path = defaultPath;                     // Retrieve the last opened image path from the registry
             if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {

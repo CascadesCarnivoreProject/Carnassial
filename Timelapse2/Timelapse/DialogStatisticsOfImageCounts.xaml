@@ -9,32 +9,32 @@
     <DockPanel>
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
                             IconType="Information"
-                            MessageTitle="Summary counts of your images"
-                            MessageWhat="Timelapse automatically categorizes the 'Image Quality' of your images."
-                            MessageHint="Use the Filter menu to selectively view and work with image subsets." />
+                            MessageTitle="Summary counts of your files"
+                            MessageWhat="Timelapse automatically categorizes the 'Image Quality' of your images and videos."
+                            MessageHint="Use the Filter menu to selectively view and work with files in the image set." />
 
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
 
             <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
                 <Run FontWeight="Bold" Text="Counts: " FontSize="14"/>
             </TextBlock>
-            <TextBlock HorizontalAlignment="Left" Margin="80,-16,0,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12">
+            <TextBlock HorizontalAlignment="Left" Margin="80,-16,0,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" Width="442">
                 <Run x:Name="Ok"  FontWeight="Bold" Text=" light " />
-                <Run Text="images that can be displayed" />
+                <Run Text="images and videos that can be displayed" />
                  <LineBreak/>
                 <Run x:Name="Dark"  FontWeight="Bold" Text=" dark " />
-                <Run Text="images that can be displayed, but are likely night-time shots" />
+                <Run Text="images and videos that can be displayed, but are likely nighttime shots" />
                  <LineBreak/>
                 <Run x:Name="Corrupted"   FontWeight="Bold" Text=" corrupted " />
-                <Run  Text="images that cannot be displayed" />
+                <Run  Text="images and videos that cannot be displayed" />
                 <LineBreak/>
                  <Run x:Name="Missing" FontWeight="Bold" Text=" missing " />
-                <Run  Text="images that were likely deleted previously" />
+                <Run  Text="images and videos that were likely deleted previously" />
                 <LineBreak/>
                 <Line Stroke="Black" X1="0" Y1="0" X2="25" Y2="0" />
                 <LineBreak/>
                 <Run x:Name="Total"   FontWeight="Bold" Text=" total" />
-                <Run  Text="of all images" />
+                <Run  Text="of all images and videos" />
                 <LineBreak/>
             </TextBlock>
         </StackPanel>

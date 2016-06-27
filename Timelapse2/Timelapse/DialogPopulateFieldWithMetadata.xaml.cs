@@ -196,7 +196,7 @@ namespace Timelapse
             this.dgFeedback.ItemsSource = keyValueList;
 
             // Update the UI to show the feedback datagrid, 
-            this.tbPopulatingMessage.Text = "Populating the data field '" + this.noteDataLabel + "' from each image's '" + this.metaDataName + "' metadata ";
+            this.tbPopulatingMessage.Text = "Populating the data field '" + this.noteDataLabel + "' from each file's '" + this.metaDataName + "' metadata ";
             btnPopulate.Visibility = Visibility.Collapsed; // Hide the populate button, as we are now in the act of populating things
             cbClearIfNoMetada.Visibility = Visibility.Collapsed; // Hide the checkbox button for the same reason
             this.PrimaryPanel.Visibility = Visibility.Collapsed;  // Hide the various panels to reveal the feedback datagrid

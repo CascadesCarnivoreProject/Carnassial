@@ -94,21 +94,21 @@ namespace Timelapse
             public const int NoteWidth = 100;
 
             // standard controls
-            public const string DateTooltip = "Date the image was taken";
+            public const string DateTooltip = "Date taken";
             public const string DateWidth = "100";
 
-            public const string FileTooltip = "The image file name";
+            public const string FileTooltip = "The file name";
             public const string FileWidth = "100";
-            public const string RelativePathTooltip = "Name of the folder originally containing the template and image data files";
+            public const string RelativePathTooltip = "Path from the folder containing the template and image data files to the file";
             public const string RelativePathWidth = "100";
-            public const string FolderTooltip = "Name of the folder containing the images";
+            public const string FolderTooltip = "Name of the folder originally containing the template and image data files";
             public const string FolderWidth = "100";
 
             public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read";
             public const string ImageQualityWidth = "80";
 
-            public const string MarkForDeletionTooltip = "Mark an image as one to be deleted. You can then confirm deletion through the Edit Menu";
-            public const string TimeTooltip = "Time the image was taken";
+            public const string MarkForDeletionTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
+            public const string TimeTooltip = "Time taken";
             public const string TimeWidth = "100";
         }
 
@@ -118,9 +118,9 @@ namespace Timelapse
             public const string CreationStringInteger = "Id integer primary key";
             public const string CreationStringPrimaryKey = "INTEGER PRIMARY KEY AUTOINCREMENT";
             public const string ImageDataTable = "DataTable";         // the table containing the image data
-            public const string ImageSetTable = "ImageSetTable"; // the table containing information commont to the entire image set
+            public const string ImageSetTable = "ImageSetTable"; // the table containing information common to the entire image set
             public const string MarkersTable = "MarkersTable";         // the table containing the marker data
-            public const string TemplateTable = "TemplateTable"; // the data containing the template data
+            public const string TemplateTable = "TemplateTable"; // the table containing the template data
 
             // default values
             public const string ImageSetDefaultLog = "Add text here";

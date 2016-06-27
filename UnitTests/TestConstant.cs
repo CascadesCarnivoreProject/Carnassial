@@ -134,7 +134,7 @@ namespace Timelapse.UnitTests
                 DefaultExpectation.File.DefaultValue = " ";
                 DefaultExpectation.File.List = " ";
                 DefaultExpectation.File.TextBoxWidth = Int32.Parse(Constants.ControlDefault.FileWidth);
-                DefaultExpectation.File.Tooltip = Constants.ControlDefault.FileTooltip;
+                DefaultExpectation.File.Tooltip = "The image file name";
                 DefaultExpectation.File.Type = Constants.DatabaseColumn.File;
                 DefaultExpectation.RelativePath = ControlExpectations.CreateNote(Constants.DatabaseColumn.RelativePath, 2);
                 DefaultExpectation.RelativePath.Copyable = false;
@@ -149,21 +149,21 @@ namespace Timelapse.UnitTests
                 DefaultExpectation.Folder.DefaultValue = " ";
                 DefaultExpectation.Folder.List = " ";
                 DefaultExpectation.Folder.TextBoxWidth = Int32.Parse(Constants.ControlDefault.FolderWidth);
-                DefaultExpectation.Folder.Tooltip = Constants.ControlDefault.FolderTooltip;
+                DefaultExpectation.Folder.Tooltip = "Name of the folder containing the images";
                 DefaultExpectation.Folder.Type = Constants.DatabaseColumn.Folder;
                 DefaultExpectation.Date = ControlExpectations.CreateNote(Constants.DatabaseColumn.Date, 4);
                 DefaultExpectation.Date.Copyable = false;
                 DefaultExpectation.Date.DefaultValue = " ";
                 DefaultExpectation.Date.List = " ";
                 DefaultExpectation.Date.TextBoxWidth = Int32.Parse(Constants.ControlDefault.DateWidth);
-                DefaultExpectation.Date.Tooltip = Constants.ControlDefault.DateTooltip;
+                DefaultExpectation.Date.Tooltip = "Date the image was taken";
                 DefaultExpectation.Date.Type = Constants.DatabaseColumn.Date;
                 DefaultExpectation.Time = ControlExpectations.CreateNote(Constants.DatabaseColumn.Time, 5);
                 DefaultExpectation.Time.Copyable = false;
                 DefaultExpectation.Time.DefaultValue = " ";
                 DefaultExpectation.Time.List = " ";
                 DefaultExpectation.Time.TextBoxWidth = Int32.Parse(Constants.ControlDefault.TimeWidth);
-                DefaultExpectation.Time.Tooltip = Constants.ControlDefault.TimeTooltip;
+                DefaultExpectation.Time.Tooltip = "Time the image was taken";
                 DefaultExpectation.Time.Type = Constants.DatabaseColumn.Time;
                 DefaultExpectation.ImageQuality = ControlExpectations.CreateFlag(Constants.DatabaseColumn.ImageQuality, 6);
                 DefaultExpectation.ImageQuality.Copyable = false;
@@ -176,7 +176,7 @@ namespace Timelapse.UnitTests
                 DefaultExpectation.MarkForDeletion.Copyable = false;
                 DefaultExpectation.MarkForDeletion.Label = EditorConstant.Control.MarkForDeletionLabel;
                 DefaultExpectation.MarkForDeletion.List = " ";
-                DefaultExpectation.MarkForDeletion.Tooltip = Constants.ControlDefault.MarkForDeletionTooltip;
+                DefaultExpectation.MarkForDeletion.Tooltip = "Mark an image as one to be deleted. You can then confirm deletion through the Edit Menu";
                 DefaultExpectation.MarkForDeletion.Type = Constants.Control.DeleteFlag;
 
                 // controls

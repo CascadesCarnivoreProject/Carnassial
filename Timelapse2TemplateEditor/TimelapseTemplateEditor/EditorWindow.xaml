@@ -141,7 +141,7 @@
                 <TextBlock>The width of the data entry field as shown in the user interface</TextBlock>
             </ToolTip>
             <ToolTip x:Key="CopyableToolTip">
-                <TextBlock>Whether the data value from the former image will be copied to the current image if the user selects the ‘Copy’ button in Timelapse</TextBlock>
+                <TextBlock>Whether the data value from the previous will be copied to the current file if the user selects the ‘Copy’ button in Timelapse</TextBlock>
             </ToolTip>
             <ToolTip x:Key="VisibleToolTip">
                 <TextBlock>Whether this item will be displayed in the user interface</TextBlock>
@@ -150,7 +150,7 @@
                 <TextBlock>The Note item accepts free-form text</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeCounterToolTip">
-                <TextBlock>The Count item provides a point and click interface for counting entities in an image</TextBlock>
+                <TextBlock>The Count item provides a point and click interface for counting entities in an image or video</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeFixedChoiceToolTip">
                 <TextBlock>The Choice item provides a drop down menu of possible choices that can be entered. Edit the list to create these choices</TextBlock>
@@ -159,7 +159,7 @@
                 <TextBlock>The Flag item can be toggled between true and false</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeFileToolTip">
-                <TextBlock>The File Item is filled in automatically by the system with the file name of the image</TextBlock>
+                <TextBlock>The File Item is filled in automatically by the system with the file name of the image or video</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeFolderToolTip">
                 <TextBlock>The Folder Item is filled in automatically by the system</TextBlock>
@@ -174,7 +174,7 @@
                 <TextBlock>The Image Quality item is filled in automatically by the system</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeDeletionFlagToolTip">
-                <TextBlock>The Deleted flag is a standard control used to mark images for deletion</TextBlock>
+                <TextBlock>The Deleted flag is a standard control used to mark files for deletion</TextBlock>
             </ToolTip>
             <ToolTip x:Key="ListFixedChoiceToolTip">
                 <TextBlock>A list of items displayed as a menu of choices. Type in new items; right click on an item to edit, move or delete it.</TextBlock>
@@ -250,7 +250,7 @@
                         <Run Text="What the Timelapse Template Editor does"/>
                     </Paragraph>
                     <Paragraph FontSize="12">
-                        <Run Text="The kinds of information that you and/or your organization want to record from each image will be specific to the kinds of images you want to analyze, your data needs and how you will process that data later. This information will differ between organizations, and possibly between different kinds of image sets. This is where the template comes in."/>
+                        <Run Text="The kinds of information that you and/or your organization want to record from each file will be specific to the kinds of files you want to analyze, your data needs and how you will process that data later. This information will differ between organizations, and possibly between different kinds of image sets. This is where the template comes in."/>
                         <LineBreak/>
                         <LineBreak/>
                         <Run Text="The template specifies the custom data required by you and your organization. You define your data needs through this template editor, which saves it as a file usually named "/>

@@ -196,7 +196,7 @@ namespace Timelapse
             // default the template selection dialog to the most recently opened database
             string defaultTemplateDatabasePath;
             this.state.MostRecentImageSets.TryGetMostRecent(out defaultTemplateDatabasePath);
-            if (Utilities.TryGetFileFromUser("Select a TimelapseTemplate.tdb file, which should be one located in your image folder",
+            if (Utilities.TryGetFileFromUser("Select a TimelapseTemplate.tdb file, which should be one located in your image set folder",
                                              defaultTemplateDatabasePath,
                                              String.Format("Template files ({0})|*{0}", Constants.File.TemplateDatabaseFileExtension),
                                              out templateDatabasePath) == false)
@@ -308,9 +308,9 @@ namespace Timelapse
                 messageBox.MessageTitle = "No images found in the image set folder.";
                 messageBox.MessageProblem = "There don't seem to be any images or videos in your chosen folder:" + Environment.NewLine;
                 messageBox.MessageProblem += "\u2022 " + this.FolderPath + Environment.NewLine;
-                messageBox.MessageReason = "\u2022 The folder has no JPG files in it (image files ending in '.jpg'), and" + Environment.NewLine;
-                messageBox.MessageReason += "\u2022 The folder has no AVI files in it (video files ending in '.avi'), and" + Environment.NewLine;
-                messageBox.MessageReason += "\u2022 The folder has no MP4 files in it (video files ending in '.mp4'), or" + Environment.NewLine;
+                messageBox.MessageReason = "\u2022 The folder has no JPG files in it (files ending in '.jpg'), and" + Environment.NewLine;
+                messageBox.MessageReason += "\u2022 The folder has no AVI files in it (files ending in '.avi'), and" + Environment.NewLine;
+                messageBox.MessageReason += "\u2022 The folder has no MP4 files in it (files ending in '.mp4'), or" + Environment.NewLine;
                 messageBox.MessageReason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images or videos.";
                 messageBox.MessageSolution = "Check that the chosen folder contains images (i.e., a '.jpg' suffix), contains" + Environment.NewLine;
                 messageBox.MessageSolution += "videos (i.e., an '.avi' or '.mp4' suffix), or open a different folder." + Environment.NewLine;
@@ -463,9 +463,9 @@ namespace Timelapse
                 if (unambiguousDayMonthOrder == false)
                 {
                     DialogMessageBox dlgMB = new DialogMessageBox();
-                    dlgMB.MessageTitle = "Timelapse was unsure about the month / day order of your image's dates.";
-                    dlgMB.MessageProblem = "Timelapse is extracting the dates from your images. However, it cannot tell if the dates are in day/month order, or month/day order.";
-                    dlgMB.MessageReason = "Image date formats can be ambiguous. For example, is 2015/03/05 March 5 or May 3?";
+                    dlgMB.MessageTitle = "Timelapse was unsure about the month / day order of your file(s) dates.";
+                    dlgMB.MessageProblem = "Timelapse is extracting the dates from your files. However, it cannot tell if the dates are in day/month order, or month/day order.";
+                    dlgMB.MessageReason = "File date formats can be ambiguous. For example, is 2016/03/05 March 5 or May 3?";
                     dlgMB.MessageSolution = "If Timelapse gets it wrong, you can correct the dates by choosing" + Environment.NewLine;
                     dlgMB.MessageSolution += "\u2022 Edit Menu -> Dates -> Swap Day and Month.";
                     dlgMB.MessageHint = "If you are unsure about the correct date, try the following." + Environment.NewLine;
@@ -666,25 +666,25 @@ namespace Timelapse
                 switch (filter)
                 {
                     case ImageFilter.All:
-                        status = "all images.";
+                        status = "all files.";
                         break;
                     case ImageFilter.Corrupted:
-                        status = "corrupted images.";
+                        status = "corrupted files.";
                         break;
                     case ImageFilter.Custom:
-                        status = "images matching your custom filter.";
+                        status = "files matching your custom filter.";
                         break;
                     case ImageFilter.Dark:
-                        status = "dark images.";
+                        status = "dark files.";
                         break;
                     case ImageFilter.MarkedForDeletion:
-                        status = "images marked for deletion.";
+                        status = "files marked for deletion.";
                         break;
                     case ImageFilter.Missing:
-                        status = "missing images.";
+                        status = "missing files.";
                         break;
                     case ImageFilter.Ok:
-                        status = "light images.";
+                        status = "light files.";
                         break;
                     default:
                         throw new NotSupportedException(String.Format("Unhandled image quality filter {0}.", filter));
@@ -701,54 +701,54 @@ namespace Timelapse
                 DialogMessageBox messageBox = new DialogMessageBox();
                 if (filter == ImageFilter.Corrupted)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "no corrupted images to display.");
-                    messageBox.MessageTitle = "Corrupted filter selected, but no images are marked as corrupted.";
-                    messageBox.MessageProblem = "None of the images in this image set are corrupted images, so nothing can be shown.";
-                    messageBox.MessageReason = "None of the images have their 'ImageQuality' field set to Corrupted.";
-                    messageBox.MessageHint = "If you have images you think should be marked as 'Corrupted', set their ImageQuality field to Corrupted.";
+                    StatusBarUpdate.Message(this.statusBar, "no corrupted files to display.");
+                    messageBox.MessageTitle = "Corrupted filter selected, but no files are marked as corrupted.";
+                    messageBox.MessageProblem = "None of the files in this image set are corrupted images, so nothing can be shown.";
+                    messageBox.MessageReason = "None of the files have their 'ImageQuality' field set to Corrupted.";
+                    messageBox.MessageHint = "If you have files you think should be marked as 'Corrupted', set their ImageQuality field to Corrupted.";
                 }
                 else if (filter == ImageFilter.Custom)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "no images to display.");
-                    messageBox.MessageTitle = "Custom filter selected, but no images match the specified search.";
-                    messageBox.MessageProblem = "None of the images in this image set match the specified search, so nothing can be shown.";
+                    StatusBarUpdate.Message(this.statusBar, "no files to display.");
+                    messageBox.MessageTitle = "Custom filter selected, but no files match the specified filter.";
+                    messageBox.MessageProblem = "None of the files in this image set match the specified filter, so nothing can be shown.";
                     messageBox.MessageHint = "Try to create another custom filter.";
                 }
                 else if (filter == ImageFilter.Dark)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "no dark images to display.");
-                    messageBox.MessageTitle = "Dark filter selected, but no images are marked as dark.";
-                    messageBox.MessageProblem = "None of the images in this image set are dark images, so nothing can be shown.";
-                    messageBox.MessageReason = "None of the images have their 'ImageQuality' field set to Dark.";
-                    messageBox.MessageHint = "If you have images you think should be marked as 'Dark', set their ImageQuality field to Dark.";
+                    StatusBarUpdate.Message(this.statusBar, "no dark files to display.");
+                    messageBox.MessageTitle = "Dark filter selected, but no files are marked as dark.";
+                    messageBox.MessageProblem = "None of the files in this image set are dark, so nothing can be shown.";
+                    messageBox.MessageReason = "None of the files have their 'ImageQuality' field set to Dark.";
+                    messageBox.MessageHint = "If you have files you think should be marked as 'Dark', set their ImageQuality field to Dark.";
                 }
                 else if (filter == ImageFilter.Missing)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "no missing images to display.");
-                    messageBox.MessageTitle = "Missing filter selected, but no images are marked as missing.";
-                    messageBox.MessageProblem = "None of the images in this image set are missing images, so nothing can be shown.";
-                    messageBox.MessageReason = "None of the images have their 'ImageQuality' field set to Missing.";
-                    messageBox.MessageHint = "If you have images you think should be marked as 'Missing', set their ImageQuality field to Missing.";
+                    StatusBarUpdate.Message(this.statusBar, "no missing files to display.");
+                    messageBox.MessageTitle = "Missing filter selected, but no files are marked as missing.";
+                    messageBox.MessageProblem = "None of the files in this image set are missing, so nothing can be shown.";
+                    messageBox.MessageReason = "None of the files have their 'ImageQuality' field set to Missing.";
+                    messageBox.MessageHint = "If you have files you think should be marked as 'Missing', set their ImageQuality field to Missing.";
                 }
                 else if (filter == ImageFilter.MarkedForDeletion)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "No images marked for deletion to display.");
-                    messageBox.MessageTitle = "Delete filter selected, but no images are marked for deletion";
-                    messageBox.MessageProblem = "None of the images in this image set are marked for deletion, so nothing can be shown.";
-                    messageBox.MessageReason = "None of the images have their 'Delete?' field checked.";
-                    messageBox.MessageHint = "If you have images you think should be marked for deletion, check their Delete? field.";
+                    StatusBarUpdate.Message(this.statusBar, "No files marked for deletion to display.");
+                    messageBox.MessageTitle = "Delete filter selected, but no files are marked for deletion";
+                    messageBox.MessageProblem = "None of the files in this image set are marked for deletion, so nothing can be shown.";
+                    messageBox.MessageReason = "None of the files have their 'Delete?' field checked.";
+                    messageBox.MessageHint = "If you have files you think should be marked for deletion, check their Delete? field.";
                 }
                 else if (filter == ImageFilter.Ok)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "no light images to display.");
-                    messageBox.MessageTitle = "Light filter selected, but no images are marked as light.";
-                    messageBox.MessageProblem = "None of the images in this image set are light images, so nothing can be shown.";
-                    messageBox.MessageReason = "None of the images have their 'ImageQuality' field set to OK.";
-                    messageBox.MessageHint = "If you have images you think should be marked as 'light', set their ImageQuality field to OK.";
+                    StatusBarUpdate.Message(this.statusBar, "no light files to display.");
+                    messageBox.MessageTitle = "Light filter selected, but no files are marked as light.";
+                    messageBox.MessageProblem = "None of the files in this image set are light, so nothing can be shown.";
+                    messageBox.MessageReason = "None of the files have their 'ImageQuality' field set to OK.";
+                    messageBox.MessageHint = "If you have files you think should be marked as 'light', set their ImageQuality field to OK.";
                 }
                 else
                 {
-                    throw new NotSupportedException(String.Format("Unhandled image quality filter {0}.", filter));
+                    throw new NotSupportedException(String.Format("Unhandled filter {0}.", filter));
                 }
                 messageBox.ButtonType = MessageBoxButton.OK;
                 messageBox.IconType = MessageBoxImage.Information;
@@ -1018,14 +1018,14 @@ namespace Timelapse
                 switch (result)
                 {
                     case ImageDifferenceResult.CurrentImageNotAvailable:
-                        StatusBarUpdate.Message(this.statusBar, "Differences can't be shown unless the current image be loaded");
+                        StatusBarUpdate.Message(this.statusBar, "Differences can't be shown unless the current file be loaded");
                         return;
                     case ImageDifferenceResult.NextImageNotAvailable:
                     case ImageDifferenceResult.PreviousImageNotAvailable:
-                        StatusBarUpdate.Message(this.statusBar, String.Format("View of differences compared to {0} image not available", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next"));
+                        StatusBarUpdate.Message(this.statusBar, String.Format("View of differences compared to {0} file not available", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next"));
                         return;
                     case ImageDifferenceResult.NotCalculable:
-                        StatusBarUpdate.Message(this.statusBar, String.Format("{0} image is not compatible with {1}", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.dataHandler.ImageCache.Current.FileName));
+                        StatusBarUpdate.Message(this.statusBar, String.Format("{0} file is not compatible with {1}", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.dataHandler.ImageCache.Current.FileName));
                         return;
                     case ImageDifferenceResult.Success:
                         break;
@@ -1038,7 +1038,7 @@ namespace Timelapse
             // the magnifying glass always displays the original non-diferenced image so ImageToDisplay is updated and ImageToMagnify left unchnaged
             // this allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
             this.markableCanvas.ImageToDisplay.Source = this.dataHandler.ImageCache.GetCurrentImage();
-            StatusBarUpdate.Message(this.statusBar, "Viewing differences compared to " + (this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next") + " image");
+            StatusBarUpdate.Message(this.statusBar, "Viewing differences compared to " + (this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next") + " file");
         }
 
         private void ViewCombinedDifference()
@@ -1060,16 +1060,16 @@ namespace Timelapse
                 switch (result)
                 {
                     case ImageDifferenceResult.CurrentImageNotAvailable:
-                        StatusBarUpdate.Message(this.statusBar, "Combined differences can't be shown unless the current image be loaded");
+                        StatusBarUpdate.Message(this.statusBar, "Combined differences can't be shown unless the current file be loaded");
                         return;
                     case ImageDifferenceResult.NextImageNotAvailable:
-                        StatusBarUpdate.Message(this.statusBar, "Combined differences can't be shown unless the next image can be loaded");
+                        StatusBarUpdate.Message(this.statusBar, "Combined differences can't be shown unless the next file can be loaded");
                         return;
                     case ImageDifferenceResult.NotCalculable:
-                        StatusBarUpdate.Message(this.statusBar, String.Format("Previous or next image is not compatible with {0}", this.dataHandler.ImageCache.Current.FileName));
+                        StatusBarUpdate.Message(this.statusBar, String.Format("Previous or next file is not compatible with {0}", this.dataHandler.ImageCache.Current.FileName));
                         return;
                     case ImageDifferenceResult.PreviousImageNotAvailable:
-                        StatusBarUpdate.Message(this.statusBar, "Combined differences can't be shown unless the previous image can be loaded");
+                        StatusBarUpdate.Message(this.statusBar, "Combined differences can't be shown unless the previous file can be loaded");
                         return;
                     case ImageDifferenceResult.Success:
                         break;
@@ -1081,7 +1081,7 @@ namespace Timelapse
             // display differenced image
             // see above remarks about not modifying ImageToMagnify
             this.markableCanvas.ImageToDisplay.Source = this.dataHandler.ImageCache.GetCurrentImage();
-            StatusBarUpdate.Message(this.statusBar, "Viewing differences compared to both the next and previous images");
+            StatusBarUpdate.Message(this.statusBar, "Viewing differences compared to both the next and previous files");
         }
         #endregion
 
@@ -1657,14 +1657,14 @@ namespace Timelapse
                 dlgMB.MessageTitle = "Exporting to a CSV file on a filtered view...";
                 dlgMB.MessageWhat = "Only a subset of your data will be exported to the CSV file.";
 
-                dlgMB.MessageReason = "As your filter (in the Filter menu) is not set to view 'All Images', ";
-                dlgMB.MessageReason += "only data for those images displayed by this filter will be exported. ";
+                dlgMB.MessageReason = "As your filter (in the Filter menu) is not set to view 'All', ";
+                dlgMB.MessageReason += "only data for those files displayed by this filter will be exported. ";
 
                 dlgMB.MessageSolution = "If you want to export just this subset, then " + Environment.NewLine;
                 dlgMB.MessageSolution += "\u2022 click Okay" + Environment.NewLine + Environment.NewLine;
-                dlgMB.MessageSolution += "If you want to export all your data for all your images, then " + Environment.NewLine;
+                dlgMB.MessageSolution += "If you want to export all your data for all your files, then " + Environment.NewLine;
                 dlgMB.MessageSolution += "\u2022 click Cancel," + Environment.NewLine;
-                dlgMB.MessageSolution += "\u2022 select 'All Images' in the Filter menu, " + Environment.NewLine;
+                dlgMB.MessageSolution += "\u2022 select 'All Files' in the Filter menu, " + Environment.NewLine;
                 dlgMB.MessageSolution += "\u2022 retry exporting your data as a CSV file.";
 
                 dlgMB.IconType = MessageBoxImage.Warning;
@@ -1725,10 +1725,10 @@ namespace Timelapse
                 dlgMB.IconType = MessageBoxImage.Error;
                 dlgMB.ButtonType = MessageBoxButton.OK;
 
-                dlgMB.MessageTitle = "Can't export this image!";
-                dlgMB.MessageProblem = "We can't export the currently displayed image.";
-                dlgMB.MessageReason = "It is likely a corrupted or missing image.";
-                dlgMB.MessageSolution = "Make sure you have navigated to, and are displaying, a valid image before you try to export it.";
+                dlgMB.MessageTitle = "Can't export this file!";
+                dlgMB.MessageProblem = "We can't export the currently displayed file.";
+                dlgMB.MessageReason = "It is likely a corrupted or missing file.";
+                dlgMB.MessageSolution = "Make sure you have navigated to, and are displaying, a valid file before you try to export it.";
                 dlgMB.ShowDialog();
                 return;
             }
@@ -1737,8 +1737,8 @@ namespace Timelapse
 
             // Set up a Folder Browser with some instructions
             var dialog = new System.Windows.Forms.SaveFileDialog();
-            dialog.Title = "Export a copy of the currently displayed image";
-            dialog.Filter = "JPeg Image|*.jpg";
+            dialog.Title = "Export a copy of the currently displayed file";
+            dialog.Filter = String.Format("*{0}|*{0}", Path.GetExtension(this.dataHandler.ImageCache.Current.FileName));
             dialog.FileName = sourceFile;
             dialog.OverwritePrompt = true;
 
@@ -1946,8 +1946,8 @@ namespace Timelapse
                     // There are no displayable images, and thus no metadata to choose from, so abort
                     DialogMessageBox dlgMB = new DialogMessageBox();
                     dlgMB.MessageTitle = "Populate a data field with image metadata of your choosing.";
-                    dlgMB.MessageProblem = "We can't extract any metadata, as there are no valid displayable images." + Environment.NewLine;
-                    dlgMB.MessageReason += "Timelapse must have at least one valid image in order to get its metadata. Yet all images are either missing or corrupted.";
+                    dlgMB.MessageProblem = "We can't extract any metadata, as there are no valid displayable file." + Environment.NewLine;
+                    dlgMB.MessageReason += "Timelapse must have at least one valid file in order to get its metadata. All files are either missing or corrupted.";
                     dlgMB.IconType = MessageBoxImage.Error;
                     dlgMB.ButtonType = MessageBoxButton.OK;
                     dlgMB.ShowDialog();
@@ -1957,8 +1957,8 @@ namespace Timelapse
                 // Set the filter to show all images and a valid image
                 // TODOSAUL: IF WE DON"T HAVE A VALID IMAGE TO SHOW, THEN THIS WILL LIKELY NOT BE WELL BEHAVED. NEED ANOTHER CHECK
                 // NOT ONLY HERE BUT FOR OTHER SIMILAR UPDATES. IE, IF THERE IS NO DISPLAYABLE IMAGE WE SHOULD PROBABLY ABORT.
-                if (this.TryPromptAndChangeToAllFilter("Populate a data field with image metadata of your choosing.",
-                                                       "To populate a data field with image metadata of your choosing, Timelapse must first:") == false)
+                if (this.TryPromptAndChangeToAllFilter("Populate a data field with metadata of your choosing.",
+                                                       "To populate a data field with metadata of your choosing, Timelapse must first:") == false)
                 {
                     this.ShowFirstDisplayableImage(Constants.DefaultImageRowIndex);
                 }
@@ -2044,9 +2044,9 @@ namespace Timelapse
             if (imagesToDelete == null || imagesToDelete.Count < 1)
             {
                 DialogMessageBox dlgMB = new DialogMessageBox();
-                dlgMB.MessageTitle = "No images are marked for deletion";
-                dlgMB.MessageProblem = "You are trying to delete images marked for deletion, but none of the images have their 'Delete?' field checkmarked.";
-                dlgMB.MessageHint = "If you have images that you think should be deleted, checkmark its Delete? field.";
+                dlgMB.MessageTitle = "No files are marked for deletion";
+                dlgMB.MessageProblem = "You are trying to delete files marked for deletion, but none of the files have their 'Delete?' field checked.";
+                dlgMB.MessageHint = "If you have files that you think should be deleted, check thier Delete? field.";
                 dlgMB.IconType = MessageBoxImage.Information;
                 dlgMB.ButtonType = MessageBoxButton.OK;
                 dlgMB.ShowDialog();
@@ -2165,8 +2165,8 @@ namespace Timelapse
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
             if (this.state.ImageFilter != ImageFilter.All)
             {
-                if (this.TryPromptAndChangeToAllFilter("Customize the threshold for determining dark images...",
-                                                       "To customize the threshold for determining dark images:") == false)
+                if (this.TryPromptAndChangeToAllFilter("Customize the threshold for determining dark files...",
+                                                       "To customize the threshold for determining dark files:") == false)
                 {
                     return;
                 }
@@ -2249,10 +2249,10 @@ namespace Timelapse
                     // Just a corrupted image
                     DialogMessageBox dlgMB = new DialogMessageBox();
                     dlgMB.MessageTitle = "Can't correct for daylight savings time.";
-                    dlgMB.MessageProblem = "This is a corrupted image.  ";
+                    dlgMB.MessageProblem = "This is a corrupted file.  ";
                     dlgMB.MessageSolution = "To correct for daylight savings time, you need to:" + Environment.NewLine;
-                    dlgMB.MessageSolution += "\u2022 be displaying  an image with a valid date ";
-                    dlgMB.MessageSolution += "\u2022 where that image should be the one at the daylight savings time threshold.";
+                    dlgMB.MessageSolution += "\u2022 be displaying a file with a valid date ";
+                    dlgMB.MessageSolution += "\u2022 where that file should be the one at the daylight savings time threshold.";
                     dlgMB.IconType = MessageBoxImage.Exclamation;
                     dlgMB.ButtonType = MessageBoxButton.OK;
                     dlgMB.ShowDialog();
@@ -2296,8 +2296,8 @@ namespace Timelapse
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
             if (this.state.ImageFilter != ImageFilter.All)
             {
-                if (this.TryPromptAndChangeToAllFilter("Re-read the dates from the images...",
-                                                       "To re-read dates from the images:") == false)
+                if (this.TryPromptAndChangeToAllFilter("Re-read the dates from the files...",
+                                                       "To re-read dates from the files:") == false)
                 {
                     return;
                 }
@@ -2596,10 +2596,10 @@ namespace Timelapse
             DialogMessageBox dlgMB = new DialogMessageBox();
             dlgMB.MessageTitle = messageTitle;
             dlgMB.MessageProblem = messageProblemFirstLine + Environment.NewLine;
-            dlgMB.MessageProblem += "\u2022 be filtered to view All Images (normally set in the Filter menu)";
+            dlgMB.MessageProblem += "\u2022 be filtered to view all files (normally set in the Filter menu)";
             if (validImageRequired)
             {
-                dlgMB.MessageProblem += Environment.NewLine + "\u2022 be displaying a valid image";
+                dlgMB.MessageProblem += Environment.NewLine + "\u2022 be displaying a valid file";
             }
             dlgMB.MessageSolution = "Select 'Ok' for Timelapse to do the above actions for you.";
             dlgMB.IconType = MessageBoxImage.Exclamation;

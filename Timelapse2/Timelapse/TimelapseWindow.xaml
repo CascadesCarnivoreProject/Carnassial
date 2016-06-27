@@ -2,7 +2,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:Timelapse"
-    Title="Timelapse 2.0: Helping You Analyze Images from Field Cameras" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"  
+    Title="Timelapse 2.0: Helping You Analyze Images and Videos from Field Cameras" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"  
         Width="1132" Height="676"  Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown" WindowState="Normal" PreviewKeyUp="Window_PreviewKeyUp" Icon="32x32.ico">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -36,16 +36,16 @@
             <Menu DockPanel.Dock="Top">
                 <!-- File Menu -->
                 <MenuItem Header="_File" IsTabStop="false">
-                    <MenuItem Name="MenuItemLoadImages" Header="_Load template and images..." Click="MenuItemLoadImages_Click" ToolTip="Asks for the template location (which should also contain at least one image), either creating a new database or opening an existing one"/>
+                    <MenuItem Name="MenuItemLoadImages" Header="_Load template, images, and videos..." Click="MenuItemLoadImages_Click" ToolTip="Asks for the template location (which should also contain at least one image or video), either creating a new database or opening an existing one"/>
                     <Separator />
-                    <MenuItem Name="MenuItemExportAsCsv" Header="Export data for these images as a _CSV file..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated values) file"/>
-                    <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="Export data for these images as CSV file and preview in _Excel..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated value) file and previews it in Excel"/>
-                    <MenuItem Name="MenuItemImportFromCsv" Header="I_mport data from a CSV file..." IsEnabled="false" Click="MenuItemImportFromCsv_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma-separated values) file"/>
+                    <MenuItem Name="MenuItemExportAsCsv" Header="Export data for this image set as a _CSV file..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma separated value) file"/>
+                    <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="Export data for this image set as CSV file and preview in _Excel..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the (possibly filtered) files in the image set into a CSV (comma separated value) file and previews it in Excel"/>
+                    <MenuItem Name="MenuItemImportFromCsv" Header="I_mport data from a CSV file..." IsEnabled="false" Click="MenuItemImportFromCsv_Click" ToolTip="Exports data for the (possibly filtered) files in the image set into a CSV (comma separated value) file"/>
                     <Separator />
-                    <MenuItem Name="MenuItemExportThisImage" Header="Export this _image..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) this image into a particular folder"/>
+                    <MenuItem Name="MenuItemExportThisImage" Header="Export this _file..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) this file into a particular folder"/>
                     <Separator />
-                    <MenuItem Name="MenuItemRenameImageDatabaseFile" Header="Rename the _data file..." Click="MenuItemRenameImageDatabaseFile_Click" IsEnabled="false" ToolTip="Renames the data file to a name of your choosing"/>
-                    <MenuItem Name="MenuItemAddImagesToImageSet" Header="_Add images to image set..." Click="MenuItemAddImagesToImageSet_Click" IsEnabled="false" ToolTip="Adds more images to the currently opened image set"/>
+                    <MenuItem Name="MenuItemRenameImageDatabaseFile" Header="Rename the _data file..." Click="MenuItemRenameImageDatabaseFile_Click" IsEnabled="false" ToolTip="Renames the image data file to a name of your choosing"/>
+                    <MenuItem Name="MenuItemAddImagesToImageSet" Header="_Add files to image set..." Click="MenuItemAddImagesToImageSet_Click" IsEnabled="false" ToolTip="Add more images or videos to the currently opened image set"/>
                     <Separator />
                     <MenuItem Name="MenuItemRecentImageSets" Header="_Recent image sets" IsEnabled="false" ToolTip="Recently used image sets"/>
                     <Separator />
@@ -54,21 +54,21 @@
 
                 <!-- Edit Menu -->
                 <MenuItem Name="MenuItemEdit" Header="_Edit" IsEnabled="false" IsTabStop="false">
-                    <MenuItem Name="MenuItemCopyPreviousValues" IsCheckable="False" Header="_Copy previous values" Click="ButtonCopy_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template."/>
-                    <MenuItem Name="MenuItemPopulateFieldFromMetaData" IsCheckable="False" Header="_Populate a field with image metadata..." ToolTip="Match a data field with an image metadata type. Then populate that field across all images with the corresponding image metadata value." Click="MenuItemPopulateFieldFromMetaData_Click"/>
+                    <MenuItem Name="MenuItemCopyPreviousValues" IsCheckable="False" Header="_Copy previous values" Click="ButtonCopy_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous file. Applies only to data marked 'Copyable' in the code template."/>
+                    <MenuItem Name="MenuItemPopulateFieldFromMetaData" IsCheckable="False" Header="_Populate a field with metadata..." ToolTip="Match a data field with a metadata type. Then populate that field across all files with the corresponding metadata value." Click="MenuItemPopulateFieldFromMetaData_Click"/>
                     <MenuItem Header="D_elete"  IsCheckable="False" SubmenuOpened="Delete_SubmenuOpening"  >
-                        <MenuItem Name="MenuItemDeleteImage" IsCheckable="False" Header="The current _image..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the image but not the data associated with that image"/>
-                        <MenuItem Name="MenuItemDeleteImageAndData" IsCheckable="False" Header="The current image and its _data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the image and the data associated with it"/>
+                        <MenuItem Name="MenuItemDeleteImage" IsCheckable="False" Header="The current _file..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the file but not the data entered for it"/>
+                        <MenuItem Name="MenuItemDeleteImageAndData" IsCheckable="False" Header="The current file and its _data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the file and the data entered for it"/>
                         <Separator/>
-                        <MenuItem Name="MenuItemDeleteImages" IsCheckable="False" Header="_All images marked for deletion..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes all images marked for deletion, but leaves the data intact"/>
-                        <MenuItem Name="MenuItemDeleteImagesAndData" IsCheckable="False" Header="_All images marked for deletion and their data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes all images marked for deletion, as well as the data associated with those images"/>
+                        <MenuItem Name="MenuItemDeleteImages" IsCheckable="False" Header="_All files marked for deletion..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes all images and videos marked for deletion, but leaves entered data intact"/>
+                        <MenuItem Name="MenuItemDeleteImagesAndData" IsCheckable="False" Header="_All files marked for deletion and their data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes all images and videos marked for deletion, as well as data entered for those files"/>
                     </MenuItem>
                     <MenuItem Header="_Date Correction" IsCheckable="False" >
-                        <MenuItem Name="MenuItemRereadDatesfromImages" Header="_Re-read dates from images..."  Click="MenuItemRereadDatesfromImages_Click"  ToolTip="Re-read the dates from all the images" IsEnabled="True" />
-                        <MenuItem Name="MenuItemCorrectTimeChanges" Header="Correct for _daylight savings time..."  Click="MenuItemCorrectDaylightSavings_Click"  ToolTip="Utilities to correct daylight saving time issues" IsEnabled="True" />
-                        <MenuItem Name="MenuItemCorrectDates" Header="Add a correction value to _every date..."  Click="MenuItemDateCorrections_Click"  ToolTip="Utilities to correct for dates that are not quite right" IsEnabled="True" />
+                        <MenuItem Name="MenuItemRereadDatesfromImages" Header="_Re-read dates from files..."  Click="MenuItemRereadDatesfromImages_Click"  ToolTip="Re-read the dates from all the files" IsEnabled="True" />
+                        <MenuItem Name="MenuItemCorrectTimeChanges" Header="Correct for _daylight savings time..."  Click="MenuItemCorrectDaylightSavings_Click"  ToolTip="Correct daylight saving time issues" IsEnabled="True" />
+                        <MenuItem Name="MenuItemCorrectDates" Header="Add a correction value to _every date..."  Click="MenuItemDateCorrections_Click"  ToolTip="Correct for dates or times which are not quite right" IsEnabled="True" />
                         <MenuItem Name="MenuItemCheckModifyAmbiguousDates" Header="Check and modify _ambiguous dates..."  Click="MenuItemCheckModifyAmbiguousDates_Click"  ToolTip="Check And modify (if needed) ambiguous dates on a day by day basis" IsEnabled="True" />
-                        <MenuItem Name="MenuItemSwapDayMonth" IsCheckable="False" Header="_Swap day and month for all images..."  Click="MenuItemSwapDayMonth_Click" ToolTip="Swaps the day and month value in the Date field across all images, if possible"/>
+                        <MenuItem Name="MenuItemSwapDayMonth" IsCheckable="False" Header="_Swap day and month for all files..."  Click="MenuItemSwapDayMonth_Click" ToolTip="Swaps the day and month value in the Date field across all images and videos, if possible"/>
                     </MenuItem>
 
                     <MenuItem Name="MenuItemLog" Header="Edit _notes for this image set..."  Click="MenuItemLog_Click"  ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this Image Set" IsEnabled="True" />
@@ -85,40 +85,40 @@
                         <MenuItem Name="MenuItemMagnifierDecrease" IsCheckable="False" InputGestureText="D" Header="_Decrease magnification" Click="MenuItemMagnifierDecrease_Click" ToolTip="Decrease the magnification of the magnifying glass"/>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Name="MenuItemImageCounts" Header="Show _image counts..." Click="MenuItemImageCounts_Click" ToolTip="Displays statistics on the number of images and their types"/>
+                    <MenuItem Name="MenuItemImageCounts" Header="Show _file counts..." Click="MenuItemImageCounts_Click" ToolTip="Displays statistics on the number of files and their types"/>
                     <MenuItem Name="MenuItemViewFilteredDatabaseContents" Header="Show _filtered database contents..." Click="MenuItemViewFilteredDatabaseContents_Click" ToolTip="Display the current filtered view of the (changing) database"/>
 
                     <Separator/>
-                    <MenuItem Name="MenuItemOptionsDarkImagesThreshold" Header="Customize the _threshold for determining dark images..."  Click="MenuItemOptionsDarkImagesThreshold_Click"  ToolTip="Adjust two values that determine how images should be classified as dark" IsEnabled="True" />
+                    <MenuItem Name="MenuItemOptionsDarkImagesThreshold" Header="Customize the _threshold for determining dark files..."  Click="MenuItemOptionsDarkImagesThreshold_Click"  ToolTip="Adjust two values that determine how files are classified as dark" IsEnabled="True" />
                     <MenuItem Name="MenuItemOptionsBox" Header="Advanced _settings and operations..."  InputGestureText="Ctl" Click="MenuItemOptions_Click"  ToolTip="Brings up options that should only be used by advanced users" IsEnabled="False" />
                 </MenuItem>
 
                 <!-- View Menu -->
                 <MenuItem x:Name="MenuItemView" Header="_View" IsEnabled="false" IsTabStop="false" SubmenuOpened="View_SubmenuOpening"  ToolTip="Zooming, navigating, and image differencing">
-                    <MenuItem Name="MenuItemViewNextImage" IsCheckable="False" Header="View _next image" Click="MenuItemViewNextImage_Click" InputGestureText="&#x2192;" ToolTip="View the next image in the image set"/>
-                    <MenuItem Name="MenuItemViewPreviousImage" IsCheckable="False" Header="View _previous image"  Click="MenuItemViewPreviousImage_Click" InputGestureText="&#x2190;" ToolTip="View the previous image in the image set"/>
+                    <MenuItem Name="MenuItemViewNextImage" IsCheckable="False" Header="View _next file" Click="MenuItemViewNextImage_Click" InputGestureText="&#x2192;" ToolTip="View the next file in the image set"/>
+                    <MenuItem Name="MenuItemViewPreviousImage" IsCheckable="False" Header="View _previous file"  Click="MenuItemViewPreviousImage_Click" InputGestureText="&#x2190;" ToolTip="View the previous file in the image set"/>
                     <Separator/>
-                    <MenuItem Name="MenuItemZoomIn" IsCheckable="False" Header="Zoom _in" Click="MenuItemZoomIn_Click" InputGestureText="&#x2039;" ToolTip="Zoom into this image"/>
-                    <MenuItem Name="MenuItemZoomOut" IsCheckable="False" Header="Zoom _out"  Click="MenuItemZoomOut_Click" InputGestureText="&#x203A;" ToolTip="Zoom out of this image"/>
+                    <MenuItem Name="MenuItemZoomIn" IsCheckable="False" Header="Zoom _in" Click="MenuItemZoomIn_Click" InputGestureText="&#x2039;" ToolTip="Zoom into this file"/>
+                    <MenuItem Name="MenuItemZoomOut" IsCheckable="False" Header="Zoom _out"  Click="MenuItemZoomOut_Click" InputGestureText="&#x203A;" ToolTip="Zoom out in this file"/>
                     <Separator/>
                     <MenuItem x:Name="MenuItemBookmarkSavePanZoom" IsCheckable="False" Header="_Bookmark current zoom region" InputGestureText="B" ToolTip="Save the current zoom region setting as a bookmark" Click="MenuItem_BookmarkSavePanZoom"/>
                     <MenuItem x:Name="MenuItemBookmarkSetPanZoom" IsCheckable="False"  Header="Zoom to bookmarked _region" InputGestureText="+" ToolTip="Zoom to the region saved in the bookmark" Click="MenuItem_BookmarkSetPanZoom"/>
                     <MenuItem x:Name="MenuItemBookmarkDefaultPanZoom" IsCheckable="False" Header="Zoom out all the _way" InputGestureText="-" ToolTip="Zoom out to see the entire image" Click="MenuItem_BookmarkDefaultPanZoom"/>
                     <Separator/>
-                    <MenuItem Name="MenuItemViewDifferencesCycleThrough" IsCheckable="False" Header="_Cycle through image differences" Click="MenuItemViewDifferencesCycleThrough_Click" InputGestureText="&#x2191;" ToolTip="View an image enhancement that cycles through the visual differences between the current image and the next image, and then the previous image"/>
-                    <MenuItem Name="MenuItemViewDifferencesCombined" IsCheckable="False" Header="_View combined image differences" Click="MenuItemViewDifferencesCombined_Click" InputGestureText="&#x2193;" ToolTip="View an image enhancement that shows, as a single image, the visual differences between the current image and the surrounding two images"/>
+                    <MenuItem Name="MenuItemViewDifferencesCycleThrough" IsCheckable="False" Header="_Cycle through image differences" Click="MenuItemViewDifferencesCycleThrough_Click" InputGestureText="&#x2191;" ToolTip="View an enhancement that cycles through the differences between the current and the next file, and then the previous file"/>
+                    <MenuItem Name="MenuItemViewDifferencesCombined" IsCheckable="False" Header="_View combined image differences" Click="MenuItemViewDifferencesCombined_Click" InputGestureText="&#x2193;" ToolTip="View an enhancement that shows, as a single image, the differences between the current image and the surrounding two files"/>
                     <Separator/>
                 </MenuItem>
 
                 <!-- Filter Menu -->
-                <MenuItem x:Name="MenuItemFilter" Header="F_ilter" IsEnabled="false" IsTabStop="false" SubmenuOpened="View_SubmenuOpening" ToolTip="Filter the data to only show a subset of the images">
-                    <MenuItem x:Name="MenuItemViewAllImages" IsCheckable="True" IsChecked="True" Header="_All images" Click="MenuItemView_Click" ToolTip="Shows all images, including corrupted and dark ones"/>
-                    <MenuItem x:Name="MenuItemViewLightImages"   IsCheckable="True" IsChecked="False" Header="_Light images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to remove those that are dark or corrupted"/>
-                    <MenuItem x:Name="MenuItemViewDarkImages" IsCheckable="True" IsChecked="False" Header="_Dark images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only dark images"/>
-                    <MenuItem x:Name="MenuItemViewCorruptedImages" IsCheckable="True" IsChecked="False" Header="_Corrupted images" Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only corrupted images"/>
-                    <MenuItem x:Name="MenuItemViewMissingImages"   IsCheckable="True" IsChecked="False" Header="_Missing images"   Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only missing images"/>
-                    <MenuItem x:Name="MenuItemViewImagesMarkedForDeletion"  IsCheckable="True" IsChecked="False" Header="_Images marked for deletion"   Click="MenuItemView_Click" ToolTip="Filters the images displayed to show only images marked for deletion"/>
-                    <MenuItem x:Name="MenuItemViewCustomFilter"  IsCheckable="True" IsChecked="False" Header="_Custom filter..."  ToolTip="Create a custom filter to display only particular images" Click="MenuItemViewCustomFilter_Click"/>
+                <MenuItem x:Name="MenuItemFilter" Header="F_ilter" IsEnabled="false" IsTabStop="false" SubmenuOpened="View_SubmenuOpening" ToolTip="Filter to only show a subset of the files">
+                    <MenuItem x:Name="MenuItemViewAllImages" IsCheckable="True" IsChecked="True" Header="_All files" Click="MenuItemView_Click" ToolTip="Shows all files, including corrupted and dark ones"/>
+                    <MenuItem x:Name="MenuItemViewLightImages"   IsCheckable="True" IsChecked="False" Header="_Light files" Click="MenuItemView_Click" ToolTip="Filters the files displayed to remove those that are dark or corrupted"/>
+                    <MenuItem x:Name="MenuItemViewDarkImages" IsCheckable="True" IsChecked="False" Header="_Dark files" Click="MenuItemView_Click" ToolTip="Filters the files displayed to show only dark images"/>
+                    <MenuItem x:Name="MenuItemViewCorruptedImages" IsCheckable="True" IsChecked="False" Header="_Corrupted files" Click="MenuItemView_Click" ToolTip="Filters the files displayed to show only corrupted images"/>
+                    <MenuItem x:Name="MenuItemViewMissingImages"   IsCheckable="True" IsChecked="False" Header="_Missing files"   Click="MenuItemView_Click" ToolTip="Filters the files displayed to show only missing images"/>
+                    <MenuItem x:Name="MenuItemViewImagesMarkedForDeletion"  IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion"   Click="MenuItemView_Click" ToolTip="Filters the files displayed to show only those marked for deletion"/>
+                    <MenuItem x:Name="MenuItemViewCustomFilter"  IsCheckable="True" IsChecked="False" Header="_Custom filter..."  ToolTip="Create a custom filter to display only particular files" Click="MenuItemViewCustomFilter_Click"/>
                 </MenuItem>
 
                 <!-- Help Menu -->
@@ -173,7 +173,7 @@
                     </Button>
                 </Grid>
                 <DockPanel Name="DockPanelNavigator" Visibility="Collapsed" >
-                    <Slider Name="ImageNavigatorSlider" Minimum ="0" Maximum="0" Thumb.DragStarted="ImageNavigatorSlider_DragStarted" Thumb.DragCompleted="ImageNavigatorSlider_DragCompleted" ValueChanged="ImageNavigatorSlider_ValueChanged" IsSnapToTickEnabled="True" TickFrequency="1" LargeChange="1" ToolTip="Scroll through all images" Margin="5,0,5,0"/>
+                    <Slider Name="ImageNavigatorSlider" Minimum ="0" Maximum="0" Thumb.DragStarted="ImageNavigatorSlider_DragStarted" Thumb.DragCompleted="ImageNavigatorSlider_DragCompleted" ValueChanged="ImageNavigatorSlider_ValueChanged" IsSnapToTickEnabled="True" TickFrequency="1" LargeChange="1" ToolTip="Scroll through all files" Margin="5,0,5,0"/>
                 </DockPanel>
             </StackPanel>
             <StatusBar DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Name="statusBar" ItemsSource="{Binding}">

@@ -123,8 +123,8 @@ namespace Timelapse.Database
                             string value = row[field];
 
                             // capture components of image's unique identifier for constructing where clause
-                            // at least for now, it's assumed all image renames or moves are done through Timelapse and hence file name + folder path forms 
-                            // an immutable (and unique) ID for the image
+                            // at least for now, it's assumed all renames or moves are done through Timelapse and hence file name + folder + relative path form 
+                            // an immutable (and unique) ID
                             if (dataLabel == Constants.DatabaseColumn.File)
                             {
                                 imageFileName = value;
@@ -159,7 +159,7 @@ namespace Timelapse.Database
                         }
 
                         // accumulate image
-                        Debug.Assert(String.IsNullOrWhiteSpace(imageFileName) == false, "Image's file name was not loaded.");
+                        Debug.Assert(String.IsNullOrWhiteSpace(imageFileName) == false, "File name was not loaded.");
                         imageToUpdate.SetWhere(folder, relativePath, imageFileName);
                         imagesToUpdate.Add(imageToUpdate);
 

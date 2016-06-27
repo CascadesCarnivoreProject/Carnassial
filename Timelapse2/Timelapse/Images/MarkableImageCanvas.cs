@@ -519,7 +519,7 @@ namespace Timelapse.Images
             }
         }
 
-        // The magnifying glass  is visible only if the current mouse position is over the image. 
+        // The magnifying glass is visible only if the current mouse position is over the image. 
         private void SetMagnifyingGlassVisibility(Point mousePosition)
         {
             // The the actual (transformed) bounds of the image

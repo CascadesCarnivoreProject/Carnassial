@@ -133,13 +133,13 @@ namespace Timelapse
                 if (this.isColor)
                 {
                     // color image 
-                    this.lblThresholdMessage.Text = "Color image - therefore not dark";
+                    this.lblThresholdMessage.Text = "Color - therefore not dark";
                     this.txtPercent.Visibility = Visibility.Hidden;
                     this.lblRatioFound.Content = String.Empty;
                 }
                 else
                 {
-                    this.lblThresholdMessage.Text = "of the image pixels are darker than the threshold";
+                    this.lblThresholdMessage.Text = "of the pixels are darker than the threshold";
                     this.txtPercent.Visibility = Visibility.Visible;
                 }
 
@@ -348,15 +348,6 @@ namespace Timelapse
             };
             backgroundWorker.DoWork += (ow, ea) =>
             {   
-                // this runs on the background thread; its written as an anonymous delegate
-                // We need to invoke this to allow updates on the UI
-                this.Dispatcher.Invoke(new Action(() =>
-                {
-                    // First, change the UIprovide some feedback
-                    // this.txtblockFeedback.Text += "Step 1/2: Examining images..." + Environment.NewLine;
-                }));
-
-                // TODOSAUL: MAKE DB UPDATE EFFICIENT
                 int images = database.CurrentlySelectedImageCount;
                 foreach (ImageRow imageRow in database.ImageDataTable)
                 {
@@ -382,6 +373,7 @@ namespace Timelapse
                         imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
                         if (imageQuality.OldImageQuality != imageQuality.NewImageQuality.Value)
                         {
+                            // TODOSAUL: MAKE DB UPDATE EFFICIENT
                             database.UpdateImage(imageRow.ID, Constants.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality.Value.ToString());
                         }
                     }
@@ -407,13 +399,13 @@ namespace Timelapse
 
                 if (imageQuality.IsColor) // color image 
                 {
-                    this.lblThresholdMessage.Text = "Color image - therefore not dark";
+                    this.lblThresholdMessage.Text = "Color - therefore not dark";
                     this.txtPercent.Visibility = Visibility.Hidden;
                     this.lblRatioFound.Content = String.Empty;
                 }
                 else
                 {
-                    this.lblThresholdMessage.Text = "of the image pixels are darker than the threshold";
+                    this.lblThresholdMessage.Text = "of the pixels are darker than the threshold";
                     this.txtPercent.Visibility = Visibility.Visible;
                 }
 

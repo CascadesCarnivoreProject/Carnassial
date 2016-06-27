@@ -9,7 +9,7 @@ namespace Timelapse
 {
     /// <summary>
     /// Display a dialog box showing the current contents of the dataTable in the database
-    /// Also highlight the current row representing the currently displayed image.
+    /// Also highlight the current row representing the currently displayed file.
     /// </summary>
     public partial class DialogDataView : Window
     {

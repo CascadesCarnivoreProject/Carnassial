@@ -9,14 +9,14 @@
 		ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="DlgSwapDayMonth_Loaded">
-    
+
     <DockPanel>
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
                             IconType="Question"
                             MessageTitle="Swap the Date's Day and Month"
                             MessageProblem="Some cameras record ambiguous dates, where Timelapse has to guess if the date is in Month /Day or Day/Month order. &#10;If your dates appear wrong, it could be because Timelapse guessed the wrong way round."
-                            MessageSolution="Click 'Swap Day and Month' to swap the month and day for all images (except corrupt images), as in the sample image below. &#10;Click Cancel if you don't want to do this."
-                            MessageResult="The day and month of all images will be swapped (except for corrupted images, or images with unrecognizable dates)."
+                            MessageSolution="Click 'Swap Day and Month' to swap the month and day for all non-corrupt images and videos, as in the sample image below. &#10;Click Cancel if you don't want to do this."
+                            MessageResult="The day and month of all non-corrupt images and videos will be swapped, except for unrecognizable dates."
                             ShowExplanationVisibilityCheckbox="True"/>
 
         <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
@@ -29,7 +29,7 @@
                 <Label  Name="lblOriginalDate" MinWidth="140" Content="dd-mmm-yyyy" FontWeight="Normal" FontSize="12" HorizontalAlignment="Stretch" />
                 <Label Content="Date after swapping:" Margin="20,0,0,0" HorizontalContentAlignment="Right" FontSize="12" FontWeight="Bold" />
                 <Label  Name="lblNewDate" MinWidth="140" FontWeight="Normal" VerticalContentAlignment="Center" FontSize="12" Content="dd-mmm-yyyy" 
-                          ToolTip="The current date in the sample image below"  />
+                          ToolTip="The current date in the sample below" />
             </DockPanel>
         </StackPanel>
         <DockPanel Name="DockPanelImage">

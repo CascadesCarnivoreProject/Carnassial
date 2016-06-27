@@ -15,14 +15,14 @@
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
                             IconType="Question"
                             MessageTitle="Populate a Data Field with Image Metadata of your Choosing"
-                            MessageWhat="Images often embed metadata, some of which may be useful to capture as data."
-                            MessageSolution="For all your images, you can choose and populate one of your data fields with each image's metadata of your choosing.
+                            MessageWhat="Images and videos often embed metadata, some of which may be useful to capture as data."
+                            MessageSolution="For all your files, you can choose and populate one of your data fields with metadata of your choosing.
 &#10;1. Select a data field from the left list (only Note, Date and Time fields can be populated)
 &#10;2. Select a metadata field from the right list (which illustrates sample values taken from the current image)
-&#10;3. (Optional) If some images are missing that metatdata, you can use the checkbox below to specify clearing the old data or leave it as is.
-&#10;4. Click the Populate button to apply the above selections to your images. 
-&#10;5. Be patient: if you have a huge number of images as it does take time to do this.!)"
-                            MessageResult="For each image, the chosen data field will be filled in with the chosen metadata from that image."
+&#10;3. (Optional) If some images or videos are missing that metatdata, you can use the checkbox below to specify clearing the old data or leave it as is.
+&#10;4. Click the Populate button to apply the above selections to your files. 
+&#10;5. Be patient: if you have a large number of files as it does take time to do this!)"
+                            MessageResult="For each file, the chosen data field will be filled in with the chosen metadata from that image."
                             ShowExplanationVisibilityCheckbox="True"/>
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>

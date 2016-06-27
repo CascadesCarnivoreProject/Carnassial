@@ -11,9 +11,9 @@ namespace Timelapse
 {
     /// <summary>
     /// Interaction logic for DialogDateCorrection.xaml
-    /// This dialog lets the user specify a corrected date and time of an image. All other image dates and times are then corrected by the same amount.
+    /// This dialog lets the user specify a corrected date and time of an file. All other dates and times are then corrected by the same amount.
     /// This is useful if (say) the camera was not initialized to the correct date and time.
-    /// It assumes that Timelapse is configured to display all images, and the its currently displaying a valid image (and thus a valid date)
+    /// It assumes that Timelapse is configured to display all files, and the its currently displaying a valid file and thus a valid date.
     /// </summary>
     public partial class DialogDateCorrection : Window
     {

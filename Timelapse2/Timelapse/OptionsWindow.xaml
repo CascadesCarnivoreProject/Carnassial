@@ -38,14 +38,14 @@
             </DockPanel>
         </GroupBox>
 
-        <GroupBox Header="Image Differencing" Margin="15,15,15,0" Padding="10,0,10,0" HorizontalAlignment="Left"   VerticalAlignment="Top" FontWeight="Bold" Height="91" Width="792">
+        <GroupBox Header="Differencing" Margin="15,15,15,0" Padding="10,0,10,0" HorizontalAlignment="Left"   VerticalAlignment="Top" FontWeight="Bold" Height="91" Width="792">
             <DockPanel>
                 <StackPanel Orientation="Vertical">
                     <TextBlock Text="The appearance of the differenced black and white image" DockPanel.Dock="Top" FontWeight="Normal" FontStyle="Italic" Height="18" Width="660" />
                     <StackPanel Orientation="Horizontal">
                         <Label Content="Difference threshold" Height="27" FontWeight="Normal" Width="128" VerticalAlignment="Top" />
                         <Slider Name="sldrDifferenceThreshold"  Width="200" ValueChanged="DifferenceThresholdSlider_ValueChanged" Height="25" VerticalAlignment="Top" />
-                        <TextBlock Text="The threshold used to determine differences between images. Note that you need to navigate to a new image before you will see the results " TextWrapping="Wrap" FontWeight="Normal" Height="54" Width="300" />
+                        <TextBlock Text="The threshold used to determine differences between files. Note that you need to navigate to a new file before you will see the results " TextWrapping="Wrap" FontWeight="Normal" Height="54" Width="300" />
                     </StackPanel>
                 </StackPanel>
                 <Button Name="btnResetImageDifferencing" Content="Reset" FontWeight="Normal" Height="30" Width="58" Click="ResetImageDifferencingButton_Click"></Button>

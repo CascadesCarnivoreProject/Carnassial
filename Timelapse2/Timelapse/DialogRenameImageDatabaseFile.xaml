@@ -13,7 +13,7 @@
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
                             IconType="Question"
                             MessageTitle="Rename the Timelapse Data File"
-                            MessageWhat="Timelapse creates a file called 'TimelapseData.ddb' that contains your image set data. &#10;You may want to rename it to something more descriptive."
+                            MessageWhat="By default, Timelapse creates a file called 'TimelapseData.ddb' that contains your image set data. You may want to rename it to something more descriptive."
                             MessageSolution="In the field below, rename that file to whatever you want."
                             MessageResult="The file will be renamed, and Timelapse will subsequently save data to the renamed file."/>
         <StackPanel Name="StackPanelCorrect" Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
