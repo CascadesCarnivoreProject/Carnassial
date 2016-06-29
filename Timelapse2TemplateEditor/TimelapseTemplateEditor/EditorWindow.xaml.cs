@@ -1163,5 +1163,20 @@ namespace Timelapse.Editor
 
             return FileBackup.TryCreateBackups(Path.GetDirectoryName(this.templateDatabase.FilePath), Path.GetFileName(this.templateDatabase.FilePath));
         }
+
+        private void HelpDocument_Drop(object sender, DragEventArgs dropEvent)
+        {
+            string templateDatabaseFilePath;
+            if (Utilities.IsSingleTemplateFileDrag(dropEvent, out templateDatabaseFilePath))
+            {
+                this.TrySaveDatabaseBackupFile();
+                this.InitializeDataGrid(templateDatabaseFilePath);
+            }
+        }
+
+        private void HelpDocument_PreviewDrag(object sender, DragEventArgs dragEvent)
+        {
+            Utilities.OnHelpDocumentPreviewDrag(dragEvent);
+        }
     }
 }

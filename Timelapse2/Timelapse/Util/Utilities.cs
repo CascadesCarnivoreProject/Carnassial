@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Forms;
+using DataFormats = System.Windows.DataFormats;
+using DragDropEffects = System.Windows.DragDropEffects;
+using DragEventArgs = System.Windows.DragEventArgs;
 
 namespace Timelapse.Util
 {
@@ -13,6 +16,39 @@ namespace Timelapse.Util
     {
         private static readonly char[] BarDelimiter = { '|' };
         private static readonly string[] NewLineDelimiters = { Environment.NewLine };
+
+        public static bool IsSingleTemplateFileDrag(DragEventArgs dragEvent, out string templateDatabasePath)
+        {
+            if (dragEvent.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] droppedFiles = (string[])dragEvent.Data.GetData(DataFormats.FileDrop);
+                if (droppedFiles != null && droppedFiles.Length == 1)
+                {
+                    templateDatabasePath = droppedFiles[0];
+                    if (Path.GetExtension(templateDatabasePath) == Constants.File.TemplateDatabaseFileExtension)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            templateDatabasePath = null;
+            return false;
+        }
+
+        public static void OnHelpDocumentPreviewDrag(DragEventArgs dragEvent)
+        {
+            string templateDatabaseFilePath;
+            if (Utilities.IsSingleTemplateFileDrag(dragEvent, out templateDatabaseFilePath))
+            {
+                dragEvent.Effects = DragDropEffects.All;
+            }
+            else
+            {
+                dragEvent.Effects = DragDropEffects.None;
+            }
+            dragEvent.Handled = true;
+        }
 
         // get a location for the template database from the user
         public static bool TryGetFileFromUser(string title, string defaultFilePath, string filter, out string selectedFilePath)

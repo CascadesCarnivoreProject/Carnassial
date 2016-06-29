@@ -244,7 +244,7 @@
             </Menu>
             <TextBlock Name="HelpText" Visibility="Collapsed" Grid.Row="0" FontSize="16" Text="Use the File Menu to create or open a template, and to convert an old CodeTemplate.xml file to the new format." Margin =" 10" DockPanel.Dock="Top"/>
 
-            <FlowDocumentScrollViewer Name="HelpDocument">
+            <FlowDocumentScrollViewer Name="HelpDocument" AllowDrop="True" Drop="HelpDocument_Drop" PreviewDragEnter="HelpDocument_PreviewDrag" PreviewDragOver="HelpDocument_PreviewDrag">
                 <FlowDocument  FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
                     <Paragraph FontWeight="Bold" FontSize="20">
                         <Run Text="What the Timelapse Template Editor does"/>
