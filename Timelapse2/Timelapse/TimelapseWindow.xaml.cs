@@ -48,7 +48,9 @@ namespace Timelapse
         // the database that holds the template
         private TemplateDatabase template;
 
-        private DialogDataView dlgDataView;
+        // Non-modal dialogs
+        private DialogDataView dlgDataView;         // The view of the current database contents
+        private DialogVideoPlayer dlgVideoPlayer;  // The video player 
 
         #region Constructors, Cleaning up, Destructors
         public TimelapseWindow()
@@ -180,6 +182,7 @@ namespace Timelapse
                 // SAULTODO: DELETE THIS AS THIS IS SHOULD NOT BE REMEMBERED BETWEEN SESSIONS. userSettings.WriteShowCsvDialog(this.state.ShowCsvDialog);
             }
 
+            // Close the various non-modal windows if they are opened
             if (this.controlWindow != null)
             {
                 this.controlWindow.Close();
@@ -187,6 +190,10 @@ namespace Timelapse
             if (this.dlgDataView != null)
             {
                 this.dlgDataView.Close();
+            }
+            if (this.dlgVideoPlayer != null)
+            {
+                this.dlgVideoPlayer.Close();
             }
         }
         #endregion
@@ -1207,6 +1214,7 @@ namespace Timelapse
                 this.GetTheMarkableCanvasListOfMetaTags();
                 this.RefreshTheMarkableCanvasListOfMetaTags();
             }
+            this.RefreshVideoPlayerDialogWindow(); // SaulTODO We may wantto put all the refreshes here, rather than scattering them throughout the code
         }
         #endregion
 
@@ -2478,9 +2486,36 @@ namespace Timelapse
             }
             // We need to create it
             this.dlgDataView = new DialogDataView(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache);
+            this.dlgDataView.Owner = this;
             this.dlgDataView.Show();
         }
-        #endregion 
+
+        private void MenuItemVideoViewer_Click(object sender, RoutedEventArgs e)
+        {
+            Uri uri = new System.Uri(Path.Combine(this.dataHandler.ImageDatabase.FolderPath, this.dataHandler.ImageCache.Current.FileName));
+
+            // Check to see if we need to create the Video Player dialog
+            if (this.dlgVideoPlayer == null)
+            {
+                this.dlgVideoPlayer = new DialogVideoPlayer();
+                this.dlgVideoPlayer.Owner = this;
+                this.dlgVideoPlayer.Show();
+            }
+            this.RefreshVideoPlayerDialogWindow();
+        }
+
+        // Update the video player to point to the currently displayed image/video file
+        private void RefreshVideoPlayerDialogWindow()
+        {
+            string filePath = Path.Combine(this.dataHandler.ImageDatabase.FolderPath, this.dataHandler.ImageCache.Current.FileName);
+            Uri uri = File.Exists(filePath) ? new System.Uri(filePath) : null;
+
+            if (this.dlgVideoPlayer != null) 
+            {
+                this.dlgVideoPlayer.Source = uri; // If its already displayed, just refresh the Uri.
+            }
+        }
+        #endregion
 
         #region Help Menu Callbacks
         /// <summary>Display a help window</summary> 
@@ -2488,14 +2523,33 @@ namespace Timelapse
         {
             try
             {
-                this.overviewWindow.Show();
+                // Create and show the overview window if it doesn't exist
+                if (this.overviewWindow == null)
+                {
+                    this.overviewWindow = new HelpWindow();
+                    this.overviewWindow.Closed += new System.EventHandler(this.OverviewWindow_Closed);
+                    this.overviewWindow.Show();
+                }
+                else
+                {
+                    // Raise the overview window to the surface if it exists
+                    if (this.overviewWindow.WindowState == WindowState.Minimized)
+                    {
+                        this.overviewWindow.WindowState = WindowState.Normal;
+                    }
+                    this.overviewWindow.Activate();
+                }
             }
             catch (Exception exception)
             {
                 Debug.Assert(false, "Overview window failed to open.", exception.ToString());
-                this.overviewWindow = new HelpWindow();
-                this.overviewWindow.Show();
             }
+        }
+
+        // Whem we are done with the overview window, set it to null so we can start afresh
+        private void OverviewWindow_Closed(object sender, System.EventArgs e)
+        {
+            this.overviewWindow = null;
         }
 
         /// <summary> Display a message describing the version, etc.</summary> 
