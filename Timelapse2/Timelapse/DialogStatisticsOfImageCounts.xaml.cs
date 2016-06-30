@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Windows;
 using Timelapse.Database;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -16,6 +17,7 @@ namespace Timelapse
         public DialogStatisticsOfImageCounts(Dictionary<ImageFilter, int> counts)
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
 
             // Fill in the counts
             int ok = counts[ImageFilter.Ok];

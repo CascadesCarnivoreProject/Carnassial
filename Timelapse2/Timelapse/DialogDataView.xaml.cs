@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Threading;
 using Timelapse.Database;
 using Timelapse.Images;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -22,6 +23,7 @@ namespace Timelapse
         internal DialogDataView(ImageDatabase database, ImageCache imageCache)
         {
             this.InitializeComponent();
+
             this.database = database;
             this.imageCache = imageCache;
         }
@@ -44,6 +46,9 @@ namespace Timelapse
         // If the current row changes, it resets the selected index to it.
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
+
             this.database.BindToTimelapseDataGrid(this.dataGrid, null);
             this.RefreshDataTable();
 

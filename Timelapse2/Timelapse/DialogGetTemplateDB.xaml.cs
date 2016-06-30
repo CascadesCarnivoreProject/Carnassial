@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Windows;
 using System.Windows.Forms;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -20,6 +21,8 @@ namespace Timelapse
         public DialogGetTemplateDB(string path)
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
+
             this.path = path;
             this.Message.MessageProblem += path;
             if (File.Exists(Path.Combine(path, Constants.File.XmlTemplateFileName)))
@@ -28,7 +31,6 @@ namespace Timelapse
             }
         }
 
-        #region Private methods
         // Browse for a code template file
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
@@ -48,7 +50,6 @@ namespace Timelapse
         {
             this.DialogResult = false;
         }
-        #endregion
 
         // Get a location for the Template file from the user. Return null on failure
         private string GetTemplatePathFromUser(string defaultPath)

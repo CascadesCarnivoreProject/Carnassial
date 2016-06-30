@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Windows;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -15,6 +16,7 @@ namespace Timelapse
         public DialogChooseDatabaseFile(string[] fileNames)
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
             this.SelectedFile = String.Empty;
 
             // file_names contains an array of .ddb files. We add each to the listbox.

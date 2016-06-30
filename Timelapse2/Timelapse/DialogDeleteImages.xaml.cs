@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Timelapse.Database;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -25,7 +26,8 @@ namespace Timelapse
         private ImageDatabase imageDatabase;
         private List<ImageRow> imagesToDelete;
 
-        #region Public methods
+        public List<long> ImageFilesRemovedByID { get; private set; }
+
         /// <summary>
         /// Ask the user if he/she wants to delete one or more images and (depending on whether deleteData is set) the data associated with those images.
         /// Other parameters indicate various specifics of that image that we will use to display and delete it.
@@ -148,11 +150,7 @@ namespace Timelapse
             this.scroller.CanContentScroll = true;
             Mouse.OverrideCursor = null;
         }
-        #endregion
 
-        public List<long> ImageFilesRemovedByID { get; private set; }
-
-        #region Private methods
         /// <summary>
         /// Cancel button selected
         /// </summary>
@@ -255,16 +253,11 @@ namespace Timelapse
                 return false;
             }
         }
-        #endregion
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Make sure the title bar of the dialog box is on the screen. For small screens it may default to being off the screen
-            if (this.Left < 10 || this.Top < 10)
-            {
-                this.Left = this.Owner.Left + (this.Owner.Width - this.ActualWidth) / 2; // Center it horizontally
-                this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
-            }
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
         }
 
         private void ConfirmBox_Checked(object sender, RoutedEventArgs e)

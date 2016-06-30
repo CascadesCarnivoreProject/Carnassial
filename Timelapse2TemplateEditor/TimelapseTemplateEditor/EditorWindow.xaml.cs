@@ -45,6 +45,9 @@ namespace Timelapse.Editor
         /// </summary>
         public EditorWindow()
         {
+            this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
+
             // Abort if some of the required dependencies are missing
             if (Dependencies.AreRequiredBinariesPresent(EditorConstant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
             {
@@ -57,7 +60,6 @@ namespace Timelapse.Editor
             this.rowsActionsOn = false;
             this.tabWasPressed = false;
 
-            this.InitializeComponent();
             this.ShowAllColumnsMenuItem_Click(this.ShowAllColumns, null);
 
             // Recall state from prior sessions

@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using Timelapse.Database;
 using Timelapse.Images;
 using Timelapse.Util;
+using Screen = System.Windows.Forms.Screen;
 
 namespace Timelapse
 {
@@ -53,6 +54,7 @@ namespace Timelapse
         public TimelapseWindow()
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
 
             // Abort if some of the required dependencies are missing
             if (Dependencies.AreRequiredBinariesPresent(Constants.ApplicationName, Assembly.GetExecutingAssembly()) == false)
