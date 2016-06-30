@@ -55,7 +55,7 @@
         <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
         <DockPanel Name="DockPanelImage">
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Name="OkButton"  IsDefault="False" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True">Done</Button>
+                <Button Name="OkButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True">Done</Button>
             </StackPanel>
             <Image Name="imgDateImage" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" DockPanel.Dock="Top" HorizontalAlignment="Stretch" />
         </DockPanel>

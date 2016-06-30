@@ -19,8 +19,8 @@
                             />
         <DockPanel Name="DockPanelImage">
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Name="IgnoreOldDataButton"  IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="IgnoreOldDataButton_Click">Ignore Old Data</Button>
-                <Button Name="UseOldDataButton"  IsDefault="False" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="UseOldDataButton_Click" IsEnabled="True">Use Old Data</Button>
+                <Button Name="IgnoreOldDataButton" IsCancel="True" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="IgnoreOldDataButton_Click">Ignore Old Data</Button>
+                <Button Name="UseOldDataButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="UseOldDataButton_Click" IsEnabled="True">Use Old Data</Button>
             </StackPanel>
             <Image Name="imgDateImage" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" DockPanel.Dock="Top" HorizontalAlignment="Stretch" />
         </DockPanel>

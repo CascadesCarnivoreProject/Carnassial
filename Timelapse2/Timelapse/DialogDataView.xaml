@@ -18,7 +18,7 @@
                             ShowExplanationVisibilityCheckbox="True"/>
         <DockPanel>
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Name="OkButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">Okay</Button>
+                <Button Name="OkButton" IsCancel="True" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">Okay</Button>
             </StackPanel>
             <DataGrid Name="dataGrid" MinHeight="100" MinWidth="100"  DockPanel.Dock="Top" HorizontalAlignment="Stretch" FontSize="12" VerticalScrollBarVisibility="Auto"/>
         </DockPanel>
