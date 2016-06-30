@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Timelapse.Database
@@ -68,7 +68,6 @@ namespace Timelapse.Database
             }
         }
 
-        #region Public methods to Run the Query
         /// <summary>Gets the count of how many results will be expected if the query is executed </summary>
         public int GetImageCount()
         {
@@ -100,18 +99,16 @@ namespace Timelapse.Database
             }
             return false;
         }
-        #endregion
 
         // Create and return the query from the search term list
         public string GetImagesWhere()
         {
-            SearchTerm st;
             string where = String.Empty;
-            for (int i = 0; i < this.SearchTermList.Count; i++)
+            for (int index = 0; index < this.SearchTermList.Count; index++)
             {
-                st = this.SearchTermList.Values.ElementAt(i);
+                SearchTerm searchTerm = this.SearchTermList.Values.ElementAt(index);
 
-                if (!st.UseForSearching)
+                if (!searchTerm.UseForSearching)
                 {
                     continue; // Only consider entries that the user has flagged for searching
                 }
@@ -120,28 +117,39 @@ namespace Timelapse.Database
                 // If there is already an expression in the query, then we add either and 'And' or an 'Or' to it 
                 if (where.Length > 0)
                 {
-                    where += (this.LogicalOperator == CustomFilterOperator.And) ? " And " : " Or ";
+                    switch (this.LogicalOperator)
+                    {
+                        case CustomFilterOperator.And:
+                            where += " And ";
+                            break;
+                        case CustomFilterOperator.Or:
+                            where += " Or ";
+                            break;
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled logical operator {0}.", this.LogicalOperator));
+                    }
                 }
 
                 // Now construct the rest of it
                 // Check to see if the search should match an empty value, in which case we also need to deal with NULLs 
-                if (String.IsNullOrWhiteSpace(st.Value) && st.Expression == Constants.Filter.Equal)
+                if (String.IsNullOrWhiteSpace(searchTerm.Value) && searchTerm.Expression == Constants.Filter.Equal)
                 {
                     // The where expression constructed should look something like: (DataLabel IS NULL OR DataLabel = '')
-                    where += " (" + st.DataLabel + " IS NULL OR " + st.DataLabel + " = '') ";
+                    where += " (" + searchTerm.DataLabel + " IS NULL OR " + searchTerm.DataLabel + " = '') ";
                 }
                 else
                 {
-                   // The where expression constructed should look something like DataLabel > "5"
-                    where += st.DataLabel;
-                    where += this.TranslateExpression(st.Expression);
-                    where += "\"" + st.Value.Trim() + "\""; // Need to quote the value 
+                    // The where expression constructed should look something like DataLabel > "5"
+                    where += searchTerm.DataLabel;
+                    where += this.TranslateExpression(searchTerm.Expression);
+                    Debug.Assert(searchTerm.Value.Contains("\"") == false, String.Format("Search term '{0}' contains quotation marks and could be used for SQL injection.", searchTerm.Value));
+                    where += "\"" + searchTerm.Value.Trim() + "\""; // Need to quote the value 
                 }
             }
             return where.Trim();
         }
 
-        // return pretty printed expressions to database equivalents
+        // return SQL expressions to database equivalents
         private string TranslateExpression(string expression)
         {
             switch (expression)

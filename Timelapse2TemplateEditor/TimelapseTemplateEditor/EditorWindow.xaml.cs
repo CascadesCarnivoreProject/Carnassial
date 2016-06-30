@@ -45,6 +45,9 @@ namespace Timelapse.Editor
         /// </summary>
         public EditorWindow()
         {
+            this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
+
             // Abort if some of the required dependencies are missing
             if (Dependencies.AreRequiredBinariesPresent(EditorConstant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
             {
@@ -57,7 +60,6 @@ namespace Timelapse.Editor
             this.rowsActionsOn = false;
             this.tabWasPressed = false;
 
-            this.InitializeComponent();
             this.ShowAllColumnsMenuItem_Click(this.ShowAllColumns, null);
 
             // Recall state from prior sessions
@@ -1162,6 +1164,21 @@ namespace Timelapse.Editor
             }
 
             return FileBackup.TryCreateBackups(Path.GetDirectoryName(this.templateDatabase.FilePath), Path.GetFileName(this.templateDatabase.FilePath));
+        }
+
+        private void HelpDocument_Drop(object sender, DragEventArgs dropEvent)
+        {
+            string templateDatabaseFilePath;
+            if (Utilities.IsSingleTemplateFileDrag(dropEvent, out templateDatabaseFilePath))
+            {
+                this.TrySaveDatabaseBackupFile();
+                this.InitializeDataGrid(templateDatabaseFilePath);
+            }
+        }
+
+        private void HelpDocument_PreviewDrag(object sender, DragEventArgs dragEvent)
+        {
+            Utilities.OnHelpDocumentPreviewDrag(dragEvent);
         }
     }
 }

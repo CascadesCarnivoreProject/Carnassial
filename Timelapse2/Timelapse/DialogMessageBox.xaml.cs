@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -12,17 +13,10 @@ namespace Timelapse
     {
         private MessageBoxButton buttonType = MessageBoxButton.OK;
 
-        #region Properties
         public MessageBoxImage IconType
         {
-            get
-            {
-                return this.Message.IconType;
-            }
-            set
-            {
-                this.Message.IconType = value;
-            }
+            get { return this.Message.IconType; }
+            set { this.Message.IconType = value; }
         }
 
         public MessageBoxButton ButtonType
@@ -40,14 +34,8 @@ namespace Timelapse
 
         public bool ShowExplanationVisibilityCheckbox
         {
-            get
-            {
-                return this.Message.ShowExplanationVisibilityCheckbox;
-            }
-            set
-            {
-                this.Message.ShowExplanationVisibilityCheckbox = value;
-            }
+            get { return this.Message.ShowExplanationVisibilityCheckbox; }
+            set { this.Message.ShowExplanationVisibilityCheckbox = value; }
         }
 
         // Property: the Text of the Title Message
@@ -71,87 +59,45 @@ namespace Timelapse
         // Property: the Text of the Title Message
         public string WindowTitle
         {
-            get
-            {
-                return this.Title;
-            }
-            set
-            {
-                this.Title = value;
-            }
+            get { return this.Title; }
+            set { this.Title = value; }
         }
+
         public string MessageWhat
         {
-            get
-            {
-                return this.Message.MessageWhat;
-            }
-            set
-            {
-                this.Message.MessageWhat = value;
-            }
+            get { return this.Message.MessageWhat; }
+            set { this.Message.MessageWhat = value; }
         }
 
         public string MessageProblem
         {
-            get
-            {
-                return this.Message.MessageProblem;
-            }
-            set
-            {
-                this.Message.MessageProblem = value;
-            }
+            get { return this.Message.MessageProblem; }
+            set { this.Message.MessageProblem = value; }
         }
 
         public string MessageReason
         {
-            get
-            {
-                return this.Message.MessageReason;
-            }
-            set
-            {
-                this.Message.MessageReason = value;
-            }
+            get { return this.Message.MessageReason; }
+            set { this.Message.MessageReason = value; }
         }
 
         public string MessageSolution
         {
-            get
-            {
-                return this.Message.MessageSolution;
-            }
-            set
-            {
-                this.Message.MessageSolution = value;
-            }
+            get { return this.Message.MessageSolution; }
+            set { this.Message.MessageSolution = value; }
         }
 
         public string MessageResult
         {
-            get
-            {
-                return this.Message.MessageResult;
-            }
-            set
-            {
-                this.Message.MessageResult = value;
-            }
+            get { return this.Message.MessageResult; }
+            set { this.Message.MessageResult = value; }
         }
 
         public string MessageHint
         {
-            get
-            {
-                return this.Message.MessageHint;
-            }
-            set
-            {
-                this.Message.MessageHint = value;
-            }
+            get { return this.Message.MessageHint; }
+            set { this.Message.MessageHint = value; }
         }
-        #endregion 
 
         public DialogMessageBox()
         {
@@ -197,12 +143,8 @@ namespace Timelapse
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Make sure the title bar of the dialog box is on the screen. For small screens it may default to being off the screen
-            if (this.Left < 10 || this.Top < 10)
-            {
-                this.Left = this.Owner.Left + (this.Owner.Width - this.ActualWidth) / 2; // Center it horizontally
-                this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
-            }
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

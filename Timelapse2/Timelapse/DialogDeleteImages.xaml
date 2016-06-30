@@ -24,8 +24,8 @@
                 </TextBlock>
             </CheckBox>
 
-            <Button Name="CancelButton"  IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click" >Cancel</Button>
-            <Button Name="OkButton"  IsEnabled="False" IsDefault="False" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" >Okay</Button>
+            <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click" >Cancel</Button>
+            <Button Name="OkButton" IsDefault="True" IsEnabled="False" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" >Okay</Button>
         </StackPanel>
         <ScrollViewer Name="scroller" HorizontalScrollBarVisibility="Auto"  VerticalScrollBarVisibility="Visible" CanContentScroll="True" PanningMode="Both" DockPanel.Dock="Top">
             <Grid Name="GridGallery" DockPanel.Dock="Top" Margin="10,10,10,10" ShowGridLines="False" >

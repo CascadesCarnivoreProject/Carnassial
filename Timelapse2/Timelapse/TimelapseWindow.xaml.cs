@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using Timelapse.Database;
 using Timelapse.Images;
 using Timelapse.Util;
+using Screen = System.Windows.Forms.Screen;
 
 namespace Timelapse
 {
@@ -53,6 +54,7 @@ namespace Timelapse
         public TimelapseWindow()
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
 
             // Abort if some of the required dependencies are missing
             if (Dependencies.AreRequiredBinariesPresent(Constants.ApplicationName, Assembly.GetExecutingAssembly()) == false)
@@ -349,7 +351,7 @@ namespace Timelapse
                 this.Dispatcher.Invoke(new Action(() =>
                 {
                     // First, change the UI
-                    this.helpControl.Visibility = Visibility.Collapsed;
+                    this.HelpDocument.Visibility = Visibility.Collapsed;
                     this.Feedback(null, 0, "Examining images...");
                 }));
 
@@ -435,14 +437,14 @@ namespace Timelapse
                 // this gets called on the UI thread
                 ProgressState progstate = (ProgressState)ea.UserState;
                 this.Feedback(progressState.Bmap, ea.ProgressPercentage, progressState.Message);
-                this.feedbackCtl.Visibility = Visibility.Visible;
+                this.FeedbackControl.Visibility = Visibility.Visible;
             };
             backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
                 // this.dbData.GetImagesAll(); // Now load up the data table
                 // Get rid of the feedback panel, and show the main interface
-                this.feedbackCtl.Visibility = Visibility.Collapsed;
-                this.feedbackCtl.ShowImage = null;
+                this.FeedbackControl.Visibility = Visibility.Collapsed;
+                this.FeedbackControl.ShowImage = null;
 
                 this.markableCanvas.Visibility = Visibility.Visible;
 
@@ -537,11 +539,11 @@ namespace Timelapse
 
         private void Feedback(BitmapSource bmap, int percent, string message)
         {
-            this.feedbackCtl.ShowMessage = message;
-            this.feedbackCtl.ShowProgress = percent;
+            this.FeedbackControl.ShowMessage = message;
+            this.FeedbackControl.ShowProgress = percent;
             if (bmap != null)
             {
-                this.feedbackCtl.ShowImage = bmap;
+                this.FeedbackControl.ShowImage = bmap;
             }
         }
 
@@ -579,7 +581,7 @@ namespace Timelapse
             this.buttonCopy.Visibility = Visibility.Visible;
             this.controlsTray.Visibility = Visibility.Visible;
             this.DockPanelNavigator.Visibility = Visibility.Visible;
-            this.helpControl.Visibility = Visibility.Collapsed;
+            this.HelpDocument.Visibility = Visibility.Collapsed;
 
             // Set the image set filter to all images. This should also set the correct count, etc. 
             StatusBarUpdate.View(this.statusBar, "all images.");
@@ -2722,5 +2724,24 @@ namespace Timelapse
             }
         }
         #endregion
+
+        private void HelpDocument_Drop(object sender, DragEventArgs dropEvent)
+        {
+            string templateDatabaseFilePath;
+            if (Utilities.IsSingleTemplateFileDrag(dropEvent, out templateDatabaseFilePath))
+            {
+                if (this.TryOpenTemplateAndLoadImages(templateDatabaseFilePath) == false)
+                {
+                    this.state.MostRecentImageSets.TryRemove(templateDatabaseFilePath);
+                    this.MenuItemRecentImageSets_Refresh();
+                }
+                dropEvent.Handled = true;
+            }
+        }
+
+        private void HelpDocument_PreviewDrag(object sender, DragEventArgs dragEvent)
+        {
+            Utilities.OnHelpDocumentPreviewDrag(dragEvent);
+        }
     }
 }

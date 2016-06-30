@@ -29,7 +29,6 @@ namespace Timelapse
         private bool isColor = false; // Whether the image is color or grey scale
         private TimelapseState state;
 
-        #region Window Initialization and Callbacks
         public DialogOptionsDarkImagesThreshold(ImageDatabase database, int currentImageIndex, TimelapseState state)
         {
             this.InitializeComponent();
@@ -48,11 +47,8 @@ namespace Timelapse
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Make sure the title bar of the dialog box is on the screen. For small screens it may default to being off the screen
-            if (this.Left < 10 || this.Top < 10)
-            {
-                this.Left = this.Owner.Left + (this.Owner.Width - this.ActualWidth) / 2; // Center it horizontally
-                this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
-            }
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
 
             this.sldrDarkThreshold.Value = this.state.DarkPixelThreshold;
             this.sldrDarkThreshold.ValueChanged += this.DarkThresholdSlider_ValueChanged;
@@ -86,7 +82,6 @@ namespace Timelapse
             }
             e.Handled = true;
         }
-        #endregion
 
         #region Image Loading and UI Repainting
         public void Repaint()

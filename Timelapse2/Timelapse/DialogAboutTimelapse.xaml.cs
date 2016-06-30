@@ -13,6 +13,8 @@ namespace Timelapse
         public DialogAboutTimelapse()
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
+
             Version curVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
             this.Version.Text = curVersion.ToString();
         }

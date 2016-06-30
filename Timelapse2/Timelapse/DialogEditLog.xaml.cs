@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -21,12 +22,12 @@ namespace Timelapse
         public DialogEditLog(string text)
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
             this.LogContents = text;
             this.tbLog.Text = this.LogContents;
             this.OkButton.IsEnabled = false;
         }
 
-        #region Private Methods
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             this.LogContents = this.tbLog.Text;
@@ -42,6 +43,5 @@ namespace Timelapse
         {
             this.DialogResult = false;
         }
-        #endregion
     }
 }

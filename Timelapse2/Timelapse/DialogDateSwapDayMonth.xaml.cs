@@ -15,7 +15,6 @@ namespace Timelapse
     {
         private ImageDatabase database;
 
-        #region Public methods
         public DialogDateSwapDayMonth(ImageDatabase database)
         {
             this.InitializeComponent();
@@ -63,17 +62,11 @@ namespace Timelapse
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
             this.imgDateImage.Source = imageProperties.LoadBitmap(this.database.FolderPath);
         }
-        #endregion
 
-        #region Private methods
         private void DlgSwapDayMonth_Loaded(object sender, RoutedEventArgs e)
         {
-            // Make sure the title bar of the dialog box is on the screen. For small screens it may default to being off the screen
-            if (this.Left < 10 || this.Top < 10)
-            {
-                this.Left = this.Owner.Left + (this.Owner.Width - this.ActualWidth) / 2; // Center it horizontally
-                this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
-            }
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
         }
 
         // If the user click ok, swap the day and month field for all images selected by the current filter
@@ -94,6 +87,5 @@ namespace Timelapse
         {
             this.DialogResult = false;
         }
-        #endregion
     }
 }

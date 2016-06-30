@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using Timelapse.Database;
 using Timelapse.Images;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -34,10 +34,11 @@ namespace Timelapse
 
         public DialogPopulateFieldWithMetadata(ImageDatabase database, string imageFilePath)
         {
+            this.InitializeComponent();
+
             this.imageFilePath = imageFilePath;
             this.database = database;
             this.disposed = false;
-            this.InitializeComponent();
         }
 
         public void Dispose()
@@ -70,12 +71,8 @@ namespace Timelapse
         // TODOSAUL: ERROR CHECK CORRUPTED, ETC.. that the exiftool exists, AND THAT WE CAN OPEN THE FILE AND GET THE EXIF AND 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Make sure the title bar of the dialog box is on the screen. For small screens it may default to being off the screen
-            if (this.Left < 10 || this.Top < 10)
-            {
-                this.Left = this.Owner.Left + (this.Owner.Width - this.ActualWidth) / 2; // Center it horizontally
-                this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
-            }
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
 
             this.lblImageName.Content = this.imageFilePath;
             this.LoadExif();

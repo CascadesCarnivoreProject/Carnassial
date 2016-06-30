@@ -34,12 +34,11 @@ namespace Timelapse.Database
             set { this.Row.SetField(Constants.DatabaseColumn.Magnifier, value); }
         }
 
-        // can't safely be implemented until issue #34 is addressed as the WhiteSpaceTrimmed is not consistently present
-        // public bool WhitespaceTrimmed
-        // {
-        //    get { return this.Row.GetBooleanField(Constants.DatabaseColumn.WhiteSpaceTrimmed); }
-        //    set { this.Row.SetField(Constants.DatabaseColumn.WhiteSpaceTrimmed, value); }
-        // }
+        public bool WhitespaceTrimmed
+        {
+            get { return this.Row.GetBooleanField(Constants.DatabaseColumn.WhiteSpaceTrimmed); }
+            set { this.Row.SetField(Constants.DatabaseColumn.WhiteSpaceTrimmed, value); }
+        }
 
         public override ColumnTuplesWithWhere GetColumnTuples()
         {
@@ -48,7 +47,7 @@ namespace Timelapse.Database
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Log, this.Log));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, this.MagnifierEnabled));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Row, this.ImageRowIndex));
-            // columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, this.WhitespaceTrimmed));
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, this.WhitespaceTrimmed));
             return new ColumnTuplesWithWhere(columnTuples, this.ID);
         }
     }

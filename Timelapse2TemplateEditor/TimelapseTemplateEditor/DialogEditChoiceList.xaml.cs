@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using Timelapse.Util;
 
 namespace Timelapse.Editor
 {
@@ -14,6 +15,8 @@ namespace Timelapse.Editor
         public DialogEditChoiceList(UIElement positionReference, string choices)
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
+
             this.ChoiceList.Text = choices;
             this.OkButton.IsEnabled = false;
             this.positionReference = positionReference;

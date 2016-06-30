@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -17,6 +18,7 @@ namespace Timelapse
         public DialogExportCsv(string filename)
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
             this.Message.MessageWhat += filename;
         }
 

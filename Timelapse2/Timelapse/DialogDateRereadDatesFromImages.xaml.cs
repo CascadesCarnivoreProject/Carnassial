@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using Timelapse.Database;
 using Timelapse.Images;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -21,10 +22,9 @@ namespace Timelapse
         public DialogDateRereadDatesFromImages(ImageDatabase database)
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
             this.database = database;
         }
-
-        #region Callbacks
 
         // If the user click ok, re-read the dates 
         private void OkButton_Click(object sender, RoutedEventArgs e)
@@ -40,7 +40,6 @@ namespace Timelapse
         {
             this.DialogResult = ((string)CancelButton.Content == "Cancel") ? false : true;
         }
-        #endregion
 
         private void RescanDates()
         {

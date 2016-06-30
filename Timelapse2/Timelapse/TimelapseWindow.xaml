@@ -1,9 +1,13 @@
 ﻿<Window x:Class="Timelapse.TimelapseWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:Timelapse"
-    Title="Timelapse 2.0: Helping You Analyze Images and Videos from Field Cameras" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"  
-        Width="1132" Height="676"  Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown" WindowState="Normal" PreviewKeyUp="Window_PreviewKeyUp" Icon="32x32.ico">
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Timelapse 2.0: Helping You Analyze Images and Videos from Field Cameras"  
+    Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown" PreviewKeyUp="Window_PreviewKeyUp" 
+    Height="800" Width="1200"
+    WindowState="Normal" Icon="32x32.ico">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
 
@@ -134,8 +138,8 @@
                 </MenuItem>
 
             </Menu>
-            <local:HelpUserControl x:Name="helpControl" Visibility="Visible" Height="Auto" ></local:HelpUserControl>
-            <local:FeedbackCtl x:Name="feedbackCtl" Visibility="Collapsed"  ></local:FeedbackCtl>
+            <local:HelpUserControl x:Name="HelpDocument" AllowDrop="True" Drop="HelpDocument_Drop" PreviewDragEnter="HelpDocument_PreviewDrag" PreviewDragOver="HelpDocument_PreviewDrag" Visibility="Visible" Height="Auto" ></local:HelpUserControl>
+            <local:FeedbackCtl x:Name="FeedbackControl" Visibility="Collapsed"  ></local:FeedbackCtl>
 
             <StackPanel Margin="0,0,0,0" DockPanel.Dock="Top">
                 <Grid Name="ControlGrid" VerticalAlignment="Stretch" Margin="1,0,-1,0">
