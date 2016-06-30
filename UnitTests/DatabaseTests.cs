@@ -658,6 +658,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(imageDatabase.ImageSet.ImageRowIndex == 0);
             Assert.IsTrue(imageDatabase.ImageSet.Log == Constants.Database.ImageSetDefaultLog);
             Assert.IsTrue(imageDatabase.ImageSet.MagnifierEnabled);
+            Assert.IsTrue(imageDatabase.ImageSet.WhitespaceTrimmed);
         }
 
         private void VerifyDefaultMarkerTableContent(ImageDatabase imageDatabase, int imagesExpected)

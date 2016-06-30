@@ -286,7 +286,7 @@ namespace Timelapse.Database
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Row, "TEXT DEFAULT '0'"));
             int allImages = (int)ImageFilter.All;
             columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, "TEXT DEFAULT '" + allImages.ToString() + "'"));
-            // TODOSAUL: columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.Text));
+            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.Text));
             this.Database.CreateTable(Constants.Database.ImageSetTable, columnDefinitions);
 
             List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>(); // Populate the data for the image set with defaults
@@ -294,7 +294,7 @@ namespace Timelapse.Database
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, Constants.Boolean.True));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Row, "0"));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, allImages.ToString()));
-            // TODOSAUL: columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True));
+            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True));
             List<List<ColumnTuple>> insertionStatements = new List<List<ColumnTuple>>();
             insertionStatements.Add(columnsToUpdate);
             this.Database.Insert(Constants.Database.ImageSetTable, insertionStatements);
