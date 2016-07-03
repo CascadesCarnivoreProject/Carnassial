@@ -234,8 +234,7 @@ namespace Timelapse
             {
                 this.OnImageDatabaseNotLoaded();
                 // notify the user the template couldn't be loaded rather than silently doing nothing
-                DialogMessageBox messageBox = new DialogMessageBox();
-                DialogMessageBox dlgMB = new DialogMessageBox();
+                DialogMessageBox dlgMB = new DialogMessageBox(this);
                 dlgMB.MessageTitle = "Timelapse could not load the template.";
                 dlgMB.MessageProblem = "Timelapse could not load the Template File:" + Environment.NewLine;
                 dlgMB.MessageProblem += "\u2022 " + templateDatabasePath;
@@ -313,7 +312,7 @@ namespace Timelapse
             if (imageFiles.Count == 0)
             {
                 // no images were found in folder; see if user wants to try again
-                DialogMessageBox messageBox = new DialogMessageBox();
+                DialogMessageBox messageBox = new DialogMessageBox(this);
                 messageBox.MessageTitle = "No images found in the image set folder.";
                 messageBox.MessageProblem = "There don't seem to be any images or videos in your chosen folder:" + Environment.NewLine;
                 messageBox.MessageProblem += "\u2022 " + this.FolderPath + Environment.NewLine;
@@ -394,7 +393,7 @@ namespace Timelapse
                             DateTime imageTaken;
                             bool result = imageProperties.GetDateTime(out imageTaken);
                             if (result == true)
-                            { 
+                            {
                                 if (imageTaken.Day <= Constants.MonthsInYear)
                                 {
                                     unambiguousDayMonthOrder = false;
@@ -458,7 +457,7 @@ namespace Timelapse
                 // warn the user if there are any ambiguous dates in terms of day/month or month/day order
                 if (unambiguousDayMonthOrder == false)
                 {
-                    DialogMessageBox dlgMB = new DialogMessageBox();
+                    DialogMessageBox dlgMB = new DialogMessageBox(this);
                     dlgMB.MessageTitle = "Timelapse was unsure about the month / day order of your file(s) dates.";
                     dlgMB.MessageProblem = "Timelapse is extracting the dates from your files. However, it cannot tell if the dates are in day/month order, or month/day order.";
                     dlgMB.MessageReason = "File date formats can be ambiguous. For example, is 2016/03/05 March 5 or May 3?";
@@ -694,7 +693,7 @@ namespace Timelapse
             {
                 // other than custom filters these cases shouldn't be reachable as the menu options for the filters will be disabled if there aren't any
                 // corresponding images
-                DialogMessageBox messageBox = new DialogMessageBox();
+                DialogMessageBox messageBox = new DialogMessageBox(this);
                 if (filter == ImageFilter.Corrupted)
                 {
                     StatusBarUpdate.Message(this.statusBar, "no corrupted files to display.");
@@ -1650,7 +1649,7 @@ namespace Timelapse
         {
             if (this.state.ImageFilter != ImageFilter.All)
             {
-                DialogMessageBox dlgMB = new DialogMessageBox();
+                DialogMessageBox dlgMB = new DialogMessageBox(this);
                 dlgMB.MessageTitle = "Exporting to a CSV file on a filtered view...";
                 dlgMB.MessageWhat = "Only a subset of your data will be exported to the CSV file.";
 
@@ -1679,7 +1678,24 @@ namespace Timelapse
             string csvFileName = Path.GetFileNameWithoutExtension(this.dataHandler.ImageDatabase.FileName) + ".csv";
             string csvFilePath = Path.Combine(this.FolderPath, csvFileName);
             CsvReaderWriter csvWriter = new CsvReaderWriter();
-            csvWriter.ExportToCsv(this.dataHandler.ImageDatabase, csvFilePath);
+            try
+            {
+                csvWriter.ExportToCsv(this.dataHandler.ImageDatabase, csvFilePath);
+            }
+            catch (IOException exception)
+            {
+                // Can't write the spreadsheet file
+                DialogMessageBox messageBox = new DialogMessageBox(this);
+                messageBox.IconType = MessageBoxImage.Error;
+                messageBox.ButtonType = MessageBoxButton.OK;
+                messageBox.MessageTitle = "Can't write the spreadsheet file.";
+                messageBox.MessageProblem = "The following file can't be written: " + csvFilePath;
+                messageBox.MessageReason = "You may already have it open in Excel or another application.";
+                messageBox.MessageSolution = "If the file is open in another application, close it and try again.";
+                messageBox.MessageHint = String.Format("{0}: {1}", exception.GetType().FullName, exception.Message);
+                messageBox.ShowDialog();
+                return;
+            }
 
             MenuItem mi = (MenuItem)sender;
             if (mi == this.MenuItemExportAsCsvAndPreview)
@@ -1693,18 +1709,15 @@ namespace Timelapse
                 process.StartInfo.FileName = csvFilePath;
                 process.Start();
             }
-            else
+            else if (this.state.ShowCsvDialog)
             {
                 // Since we don't show the file, give the user some feedback about the export operation
-                if (this.state.ShowCsvDialog)
+                DialogExportCsv dlg = new DialogExportCsv(csvFileName);
+                dlg.Owner = this;
+                bool? result = dlg.ShowDialog();
+                if (result != null)
                 {
-                    DialogExportCsv dlg = new DialogExportCsv(csvFileName);
-                    dlg.Owner = this;
-                    bool? result = dlg.ShowDialog();
-                    if (result != null)
-                    {
-                        this.state.ShowCsvDialog = result.Value;
-                    }
+                    this.state.ShowCsvDialog = result.Value;
                 }
             }
             StatusBarUpdate.Message(this.statusBar, "Data exported to " + csvFileName);
@@ -1718,7 +1731,7 @@ namespace Timelapse
         {
             if (!this.dataHandler.ImageCache.Current.IsDisplayable())
             {
-                DialogMessageBox dlgMB = new DialogMessageBox();
+                DialogMessageBox dlgMB = new DialogMessageBox(this);
                 dlgMB.IconType = MessageBoxImage.Error;
                 dlgMB.ButtonType = MessageBoxButton.OK;
 
@@ -1765,7 +1778,7 @@ namespace Timelapse
         private void MenuItemImportFromCsv_Click(object sender, RoutedEventArgs e)
         {
             string csvFilePath;
-            DialogMessageBox dlgMB = new DialogMessageBox();
+            DialogMessageBox dlgMB = new DialogMessageBox(this);
             dlgMB.MessageTitle = "Importing CSV data rules...";
             dlgMB.MessageWhat = "Importing data from a CSV (comma separated value) file will only work if you follow the rules below." + Environment.NewLine;
             dlgMB.MessageWhat += "Otherwise your Timelapse data may become corrupted.";
@@ -1820,7 +1833,7 @@ namespace Timelapse
                 List<string> importErrors;
                 if (csvReader.TryImportFromCsv(csvFilePath, this.dataHandler.ImageDatabase, out importErrors) == false)
                 {
-                    DialogMessageBox messageBox = new DialogMessageBox();
+                    DialogMessageBox messageBox = new DialogMessageBox(this);
                     messageBox.IconType = MessageBoxImage.Error;
                     messageBox.ButtonType = MessageBoxButton.OK;
                     messageBox.MessageTitle = "Can't import the CSV file.";
@@ -1843,7 +1856,7 @@ namespace Timelapse
             }
             catch (Exception exception)
             {
-                DialogMessageBox messageBox = new DialogMessageBox();
+                DialogMessageBox messageBox = new DialogMessageBox(this);
                 messageBox.IconType = MessageBoxImage.Error;
                 messageBox.ButtonType = MessageBoxButton.OK;
                 messageBox.MessageTitle = "Can't import the CSV file.";
@@ -1941,7 +1954,7 @@ namespace Timelapse
                 if (firstImageDisplayable == -1)
                 {
                     // There are no displayable images, and thus no metadata to choose from, so abort
-                    DialogMessageBox dlgMB = new DialogMessageBox();
+                    DialogMessageBox dlgMB = new DialogMessageBox(this);
                     dlgMB.MessageTitle = "Populate a data field with image metadata of your choosing.";
                     dlgMB.MessageProblem = "We can't extract any metadata, as there are no valid displayable file." + Environment.NewLine;
                     dlgMB.MessageReason += "Timelapse must have at least one valid file in order to get its metadata. All files are either missing or corrupted.";
@@ -2040,7 +2053,7 @@ namespace Timelapse
             // if there aren't any images to delete. Still,...
             if (imagesToDelete == null || imagesToDelete.Count < 1)
             {
-                DialogMessageBox dlgMB = new DialogMessageBox();
+                DialogMessageBox dlgMB = new DialogMessageBox(this);
                 dlgMB.MessageTitle = "No files are marked for deletion";
                 dlgMB.MessageProblem = "You are trying to delete files marked for deletion, but none of the files have their 'Delete?' field checked.";
                 dlgMB.MessageHint = "If you have files that you think should be deleted, check thier Delete? field.";
@@ -2244,7 +2257,7 @@ namespace Timelapse
                 else
                 {
                     // Just a corrupted image
-                    DialogMessageBox dlgMB = new DialogMessageBox();
+                    DialogMessageBox dlgMB = new DialogMessageBox(this);
                     dlgMB.MessageTitle = "Can't correct for daylight savings time.";
                     dlgMB.MessageProblem = "This is a corrupted file.  ";
                     dlgMB.MessageSolution = "To correct for daylight savings time, you need to:" + Environment.NewLine;
@@ -2510,7 +2523,7 @@ namespace Timelapse
             string filePath = Path.Combine(this.dataHandler.ImageDatabase.FolderPath, this.dataHandler.ImageCache.Current.FileName);
             Uri uri = File.Exists(filePath) ? new System.Uri(filePath) : null;
 
-            if (this.dlgVideoPlayer != null) 
+            if (this.dlgVideoPlayer != null)
             {
                 this.dlgVideoPlayer.Source = uri; // If its already displayed, just refresh the Uri.
             }
@@ -2636,7 +2649,7 @@ namespace Timelapse
 
         private bool TryPromptAndChangeToAllFilter(string messageTitle, string messageProblemFirstLine, bool validImageRequired)
         {
-            DialogMessageBox dlgMB = new DialogMessageBox();
+            DialogMessageBox dlgMB = new DialogMessageBox(this);
             dlgMB.MessageTitle = messageTitle;
             dlgMB.MessageProblem = messageProblemFirstLine + Environment.NewLine;
             dlgMB.MessageProblem += "\u2022 be filtered to view all files (normally set in the Filter menu)";

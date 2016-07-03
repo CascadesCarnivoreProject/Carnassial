@@ -168,7 +168,7 @@ namespace Timelapse
             // TODOSAUL: Need a general fix to this throughout, where we allow for an empty dataset 
             if (this.deleteData && (this.imagesToDelete.Count >= this.imageDatabase.GetImageCount(ImageFilter.All)))
             {
-                DialogMessageBox dlgMsg = new DialogMessageBox();
+                DialogMessageBox dlgMsg = new DialogMessageBox(this);
                 dlgMsg.IconType = MessageBoxImage.Error;
                 dlgMsg.MessageTitle = "You can't delete all your images";
                 dlgMsg.MessageProblem = "You can't delete all your images";

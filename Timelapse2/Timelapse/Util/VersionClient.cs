@@ -86,7 +86,7 @@ namespace Timelapse.Util
             if (currentVersion < publicallyAvailableVersion)
             {
                 // ask the user if he would like to download the new version  
-                DialogMessageBox messageBox = new DialogMessageBox();
+                DialogMessageBox messageBox = new DialogMessageBox(Application.Current.MainWindow);
                 messageBox.MessageTitle = String.Format("A new version of {0} is available.", this.applicationName);
                 messageBox.MessageWhat = String.Format("You a running an old version of {0}: version {1}", this.applicationName, currentVersion);
                 messageBox.MessageReason = String.Format("A new version of {0} is available: version {1}", this.applicationName, publicallyAvailableVersion);
@@ -108,7 +108,7 @@ namespace Timelapse.Util
             }
             else if (showNoUpdatesMessage)
             {
-                DialogMessageBox messageBox = new DialogMessageBox();
+                DialogMessageBox messageBox = new DialogMessageBox(Application.Current.MainWindow);
                 messageBox.MessageTitle = String.Format("No updates to {0} are available.", this.applicationName);
                 messageBox.MessageReason = String.Format("You a running the latest version of {0}, version: {1}", this.applicationName, currentVersion);
                 messageBox.IconType = MessageBoxImage.Information;

@@ -345,7 +345,7 @@ namespace Timelapse.Editor
                 int keyValue = (int)e.Key;
                 if (e.Key == Key.Space)
                 {
-                    DialogMessageBox dlgMB = new DialogMessageBox();
+                    DialogMessageBox dlgMB = new DialogMessageBox(this);
                     dlgMB.IconType = MessageBoxImage.Warning;
                     dlgMB.MessageTitle = "Data Labels can only contain letters, numbers and '_'";
                     dlgMB.MessageProblem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
@@ -384,7 +384,7 @@ namespace Timelapse.Editor
                             // Only allow alphanumeric and  '_" in data labels
                             if ((!this.AreAllValidAlphaNumericChars(e.Text)) && !e.Text.Equals("_"))
                             {
-                                DialogMessageBox dlgMB = new DialogMessageBox();
+                                DialogMessageBox dlgMB = new DialogMessageBox(this);
                                 dlgMB.IconType = MessageBoxImage.Warning;
                                 dlgMB.MessageTitle = "Data Labels can only contain letters, numbers and '_'";
                                 dlgMB.MessageProblem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
@@ -520,7 +520,7 @@ namespace Timelapse.Editor
             // Check to see if the data label is empty. If it is, generate a unique data label and warn the user
             if (String.IsNullOrWhiteSpace(dataLabel))
             {
-                DialogMessageBox dlgMB = new DialogMessageBox();
+                DialogMessageBox dlgMB = new DialogMessageBox(this);
                 dlgMB.IconType = MessageBoxImage.Warning;
                 dlgMB.MessageTitle = "Data Labels cannot be empty";
                 dlgMB.MessageProblem = "Data Labels cannot be empty. They must begin with a letter, followed only by letters, numbers, and '_'.";
@@ -541,7 +541,7 @@ namespace Timelapse.Editor
                         continue; // Its the same row, so its the same key, so skip it
                     }
 
-                    DialogMessageBox dlgMB = new DialogMessageBox();
+                    DialogMessageBox dlgMB = new DialogMessageBox(this);
                     dlgMB.IconType = MessageBoxImage.Warning;
                     dlgMB.MessageTitle = "Data Labels must be unique";
                     dlgMB.MessageProblem = "'" + textBox.Text + "' is not a valid Data Label, as you have already used it in another row.";
@@ -573,7 +573,7 @@ namespace Timelapse.Editor
                     }
                     candidateDataLabel = Regex.Replace(candidateDataLabel, @"[^A-Za-z0-9_]+", "X");
 
-                    DialogMessageBox dlgMB = new DialogMessageBox();
+                    DialogMessageBox dlgMB = new DialogMessageBox(this);
                     dlgMB.IconType = MessageBoxImage.Warning;
                     dlgMB.MessageTitle = "'" + textBox.Text + "' is not a valid Data Label.";
                     dlgMB.MessageProblem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
@@ -590,7 +590,7 @@ namespace Timelapse.Editor
             {
                 if (String.Equals(sqlKeyword, dataLabel, StringComparison.OrdinalIgnoreCase))
                 {
-                    DialogMessageBox dlgMB = new DialogMessageBox();
+                    DialogMessageBox dlgMB = new DialogMessageBox(this);
                     dlgMB.IconType = MessageBoxImage.Warning;
                     dlgMB.MessageTitle = "'" + textBox.Text + "' is not a valid Data Label.";
                     dlgMB.MessageProblem = "Data labels cannot match the reserved words.";
@@ -890,7 +890,7 @@ namespace Timelapse.Editor
             Mouse.OverrideCursor = null;
             if (conversionErrors.Count > 0)
             {
-                DialogMessageBox dlgMB = new DialogMessageBox();
+                DialogMessageBox dlgMB = new DialogMessageBox(this);
                 dlgMB.IconType = MessageBoxImage.Warning;
                 dlgMB.MessageTitle = "One or more Data Labels were problematic";
                 dlgMB.MessageProblem = conversionErrors.Count.ToString() + " of your Data Labels were problematic." + Environment.NewLine + Environment.NewLine +

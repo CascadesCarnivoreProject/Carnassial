@@ -57,8 +57,7 @@ namespace Timelapse
             catch (Exception exception)
             {
                 Debug.Assert(false, String.Format("Parse or display of date '{0}' failed.", dateAsString), exception.ToString());
-                DialogMessageBox messageBox = new DialogMessageBox();
-                DialogMessageBox dlgMB = new DialogMessageBox();
+                DialogMessageBox dlgMB = new DialogMessageBox(this);
                 dlgMB.MessageTitle = "Timelapse could not read the date.";
                 dlgMB.MessageProblem = "Timelapse could not read the date and time: " + dateAsString;
                 dlgMB.MessageReason = "The date / time needs to be in a very specific format, for example, 01-Jan-2016 13:00:00.";

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Media;
 using Timelapse.Util;
 
 namespace Timelapse
@@ -99,9 +97,10 @@ namespace Timelapse
             set { this.Message.MessageHint = value; }
         }
 
-        public DialogMessageBox()
+        public DialogMessageBox(Window owner)
         {
             this.InitializeComponent();
+            this.Owner = owner;
             this.Title = String.Empty;
         }
 

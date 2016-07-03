@@ -19,8 +19,7 @@ namespace Timelapse.Database
         /// </summary>
         public void ExportToCsv(ImageDatabase database, string filePath)
         {
-            TextWriter fileWriter = new StreamWriter(filePath, false);
-            try
+            using (TextWriter fileWriter = new StreamWriter(filePath, false))
             {
                 // Write the header as defined by the data labels in the template file
                 // If the data label is an empty string, we use the label instead.
@@ -44,28 +43,6 @@ namespace Timelapse.Database
                     }
                     fileWriter.WriteLine(row.ToString());
                 }
-            }
-            catch (Exception exception)
-            {
-                if (exception is IOException == false)
-                {
-                    Debug.Assert(false, "Export to CSV failed unexpectedly.", exception.ToString());
-                }
-
-                // Can't write the spreadsheet file
-                DialogMessageBox messageBox = new DialogMessageBox();
-                messageBox.IconType = MessageBoxImage.Error;
-                messageBox.ButtonType = MessageBoxButton.OK;
-
-                messageBox.MessageTitle = "Can't write the spreadsheet file.";
-                messageBox.MessageProblem = "The following file can't be written: " + filePath + ".";
-                messageBox.MessageReason = "You may already have it open in Excel or another  application.";
-                messageBox.MessageSolution = "If the file is open in another application, close it and try again.";
-                messageBox.ShowDialog();
-            }
-            finally
-            {
-                fileWriter.Close();
             }
         }
 

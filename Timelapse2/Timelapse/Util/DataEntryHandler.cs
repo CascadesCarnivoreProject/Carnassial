@@ -39,7 +39,7 @@ namespace Timelapse.Util
             {
                 // Nothing to propagate. Note that we shouldn't really see this, as the menu shouldn't be highlit if we are on the last image
                 // But just in case...
-                DialogMessageBox dlgMB = new DialogMessageBox();
+                DialogMessageBox dlgMB = new DialogMessageBox(Application.Current.MainWindow);
                 dlgMB.IconType = MessageBoxImage.Exclamation;
                 dlgMB.ButtonType = MessageBoxButton.OK;
 
@@ -94,7 +94,7 @@ namespace Timelapse.Util
             {
                 // Nothing to propagate. Note that we shouldn't see this, as the menu item should be deactivated if this is the case.
                 // But just in case.
-                DialogMessageBox dlgMB = new DialogMessageBox();
+                DialogMessageBox dlgMB = new DialogMessageBox(Application.Current.MainWindow);
                 dlgMB.IconType = MessageBoxImage.Exclamation;
                 dlgMB.ButtonType = MessageBoxButton.OK;
 
@@ -251,7 +251,7 @@ namespace Timelapse.Util
         {
             text = text.Trim();
 
-            DialogMessageBox dlgMB = new DialogMessageBox();
+            DialogMessageBox dlgMB = new DialogMessageBox(Application.Current.MainWindow);
             dlgMB.IconType = MessageBoxImage.Question;
             dlgMB.ButtonType = MessageBoxButton.YesNo;
             dlgMB.MessageTitle = "Please confirm 'Copy Forward' for this field...";
@@ -276,7 +276,7 @@ namespace Timelapse.Util
         {
             text = text.Trim();
 
-            DialogMessageBox dlgMB = new DialogMessageBox();
+            DialogMessageBox dlgMB = new DialogMessageBox(Application.Current.MainWindow);
             dlgMB.IconType = MessageBoxImage.Question;
             dlgMB.ButtonType = MessageBoxButton.YesNo;
             dlgMB.MessageTitle = "Please confirm 'Copy to All' for this field...";
@@ -299,7 +299,7 @@ namespace Timelapse.Util
         private bool? ConfirmPropagateFromLastValue(String text, int imagesAffected)
         {
             text = text.Trim();
-            DialogMessageBox dlgMB = new DialogMessageBox();
+            DialogMessageBox dlgMB = new DialogMessageBox(Application.Current.MainWindow);
             dlgMB.IconType = MessageBoxImage.Question;
             dlgMB.ButtonType = MessageBoxButton.YesNo;
             dlgMB.MessageTitle = "Please confirm 'Propagate to Here' for this field.";

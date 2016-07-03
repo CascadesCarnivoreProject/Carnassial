@@ -54,7 +54,7 @@ namespace Timelapse.Util
 
         public static void SetDefaultDialogPosition(Window window)
         {
-            Debug.Assert(window.Owner != null, "Set dialog's owner property before calling ShowDialog().");
+            Debug.Assert(window.Owner != null, "Window's owner property is null.  Is a set of it prior to calling ShowDialog() missing?");
             window.Left = window.Owner.Left + (window.Owner.Width - window.ActualWidth) / 2; // Center it horizontally
             window.Top = window.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
         }
