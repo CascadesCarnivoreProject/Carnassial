@@ -27,13 +27,13 @@
     </Window.Resources>
     
     <DockPanel >
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" IconType="Question"
-                            MessageTitle="Add a correction value to the date"
-                            MessageProblem="If your camera was not initialized to the correct date/time, all your dates will be 'off' by a fixed amount."
-                            MessageSolution="Enter the correct date and time in the box below for the sample below. &#10;Then click Okay (which becomes active after you type in a correctly formatted date/time)"
-                            MessageResult="The difference between the original and correct date will be added to all dates for all non-corrupt images and videos."
-                            MessageHint="The Date / Time format you enter should look something like '12-Apr-2011 13:00:00.'&#10;For example, changing 12-Apr-2011 13:00:00 to 13-Apr-2011 14:00:00 would add 1 day and 1 hour to all dates/times"
-                            ShowExplanationVisibilityCheckbox="True"/>
+        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" Icon="Question"
+                            Title="Add a correction value to the date"
+                            Problem="If your camera was not initialized to the correct date/time, all your dates will be 'off' by a fixed amount."
+                            Solution="Enter the correct date and time in the box below for the sample below. &#10;Then click Okay (which becomes active after you type in a correctly formatted date/time)"
+                            Result="The difference between the original and correct date will be added to all dates for all non-corrupt images and videos."
+                            Hint="The Date / Time format you enter should look something like '12-Apr-2011 13:00:00.'&#10;For example, changing 12-Apr-2011 13:00:00 to 13-Apr-2011 14:00:00 would add 1 day and 1 hour to all dates/times"
+                            ShowExplanationVisibility="True"/>
         
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>

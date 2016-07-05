@@ -339,19 +339,13 @@ namespace Timelapse.Editor
                 this.tabWasPressed = true;
                 e.Handled = true;
             }
-            if (this.TemplateDataGrid.CurrentColumn.Header.Equals("Data Label"))
+            if (this.TemplateDataGrid.CurrentColumn.Header.Equals(EditorConstant.Control.DataLabel))
             {
                 // No white space in a data label
-                int keyValue = (int)e.Key;
+                // TODOSAUL: check for other disallowed values such as -, =, etc.
                 if (e.Key == Key.Space)
                 {
-                    DialogMessageBox dlgMB = new DialogMessageBox(this);
-                    dlgMB.IconType = MessageBoxImage.Warning;
-                    dlgMB.MessageTitle = "Data Labels can only contain letters, numbers and '_'";
-                    dlgMB.MessageProblem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
-                    dlgMB.MessageResult = "We will automatically ignore any other characters, including spaces";
-                    dlgMB.MessageHint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                    dlgMB.ShowDialog();
+                    this.ShowDataLabelRequirementsDialog();
                     e.Handled = true;
                 }
             }
@@ -379,28 +373,22 @@ namespace Timelapse.Editor
                     }
                     if (!cell.Background.Equals(EditorConstant.NotEditableCellColor))
                     {
-                        if (this.TemplateDataGrid.CurrentColumn.Header.Equals("Data Label"))
+                        if (this.TemplateDataGrid.CurrentColumn.Header.Equals(EditorConstant.Control.DataLabel))
                         {
-                            // Only allow alphanumeric and  '_" in data labels
-                            if ((!this.AreAllValidAlphaNumericChars(e.Text)) && !e.Text.Equals("_"))
+                            // Only allow alphanumeric and '_' in data labels
+                            if ((!this.IsAllValidAlphaNumericChars(e.Text)) && !e.Text.Equals("_"))
                             {
-                                DialogMessageBox dlgMB = new DialogMessageBox(this);
-                                dlgMB.IconType = MessageBoxImage.Warning;
-                                dlgMB.MessageTitle = "Data Labels can only contain letters, numbers and '_'";
-                                dlgMB.MessageProblem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
-                                dlgMB.MessageResult = "We will automatically ignore other characters, including spaces";
-                                dlgMB.MessageHint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                                dlgMB.ShowDialog();
+                                this.ShowDataLabelRequirementsDialog();
                                 e.Handled = true;
                             }
                         }
-                        else if (this.TemplateDataGrid.CurrentColumn.Header.Equals("Default Value"))
+                        else if (this.TemplateDataGrid.CurrentColumn.Header.Equals(EditorConstant.Control.DefaultValue))
                         {
                             ControlRow control = new ControlRow((selectedRow.Item as DataRowView).Row);
                             if (control.Type == Constants.Control.Counter)
                             {
                                 // Its a counter. Only allow numbers
-                                e.Handled = !this.AreAllValidNumericChars(e.Text);
+                                e.Handled = !this.IsAllValidNumericChars(e.Text);
                             }
                             else if (control.Type == Constants.Control.Flag)
                             {
@@ -425,8 +413,7 @@ namespace Timelapse.Editor
             }
         }
 
-        // Helper function for the above
-        private bool AreAllValidNumericChars(string str)
+        private bool IsAllValidNumericChars(string str)
         {
             foreach (char c in str)
             {
@@ -438,8 +425,7 @@ namespace Timelapse.Editor
             return true;
         }
 
-        // Helper function for the above
-        private bool AreAllValidAlphaNumericChars(string str)
+        private bool IsAllValidAlphaNumericChars(string str)
         {
             foreach (char c in str)
             {
@@ -509,7 +495,7 @@ namespace Timelapse.Editor
             MyTrace.MethodName("Main");
 
             // If the edited cell is not in the Data Label column, then just exit.
-            if (!e.Column.Header.Equals("Data Label"))
+            if (!e.Column.Header.Equals(EditorConstant.Control.DataLabel))
             {
                 return;
             }
@@ -520,13 +506,12 @@ namespace Timelapse.Editor
             // Check to see if the data label is empty. If it is, generate a unique data label and warn the user
             if (String.IsNullOrWhiteSpace(dataLabel))
             {
-                DialogMessageBox dlgMB = new DialogMessageBox(this);
-                dlgMB.IconType = MessageBoxImage.Warning;
-                dlgMB.MessageTitle = "Data Labels cannot be empty";
-                dlgMB.MessageProblem = "Data Labels cannot be empty. They must begin with a letter, followed only by letters, numbers, and '_'.";
-                dlgMB.MessageResult = "We will automatically create a uniquely named Data Label for you.";
-                dlgMB.MessageHint = "You can create your own name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                dlgMB.ShowDialog();
+                DialogMessageBox messageBox = new DialogMessageBox("Data Labels cannot be empty", this);
+                messageBox.Message.Icon = MessageBoxImage.Warning;
+                messageBox.Message.Problem = "Data Labels cannot be empty. They must begin with a letter, followed only by letters, numbers, and '_'.";
+                messageBox.Message.Result = "We will automatically create a uniquely named Data Label for you.";
+                messageBox.Message.Hint = "You can create your own name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
+                messageBox.ShowDialog();
                 textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
             }
 
@@ -541,13 +526,12 @@ namespace Timelapse.Editor
                         continue; // Its the same row, so its the same key, so skip it
                     }
 
-                    DialogMessageBox dlgMB = new DialogMessageBox(this);
-                    dlgMB.IconType = MessageBoxImage.Warning;
-                    dlgMB.MessageTitle = "Data Labels must be unique";
-                    dlgMB.MessageProblem = "'" + textBox.Text + "' is not a valid Data Label, as you have already used it in another row.";
-                    dlgMB.MessageResult = "We will automatically create a unique Data Label for you by adding a number to its end.";
-                    dlgMB.MessageHint = "You can create your own unique name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                    dlgMB.ShowDialog();
+                    DialogMessageBox messageBox = new DialogMessageBox("Data Labels must be unique", this);
+                    messageBox.Message.Icon = MessageBoxImage.Warning;
+                    messageBox.Message.Problem = "'" + textBox.Text + "' is not a valid Data Label, as you have already used it in another row.";
+                    messageBox.Message.Result = "We will automatically create a unique Data Label for you by adding a number to its end.";
+                    messageBox.Message.Hint = "You can create your own unique name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
+                    messageBox.ShowDialog();
                     textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
                     break;
                 }
@@ -561,27 +545,27 @@ namespace Timelapse.Editor
                 Regex alphanumdash = new Regex("^[a-zA-Z0-9_]*$");
                 Regex alpha = new Regex("^[a-zA-Z]*$");
 
-                string first_letter = dataLabel[0].ToString();
+                string firstCharacter = dataLabel[0].ToString();
 
-                if (!(alpha.IsMatch(first_letter) && alphanumdash.IsMatch(dataLabel)))
+                if (!(alpha.IsMatch(firstCharacter) && alphanumdash.IsMatch(dataLabel)))
                 {
-                    string candidateDataLabel = dataLabel;
+                    string replacementDataLabel = dataLabel;
 
-                    if (!alpha.IsMatch(first_letter))
+                    if (!alpha.IsMatch(firstCharacter))
                     {
-                        candidateDataLabel = "X" + candidateDataLabel.Substring(1);
+                        replacementDataLabel = "X" + replacementDataLabel.Substring(1);
                     }
-                    candidateDataLabel = Regex.Replace(candidateDataLabel, @"[^A-Za-z0-9_]+", "X");
+                    replacementDataLabel = Regex.Replace(replacementDataLabel, @"[^A-Za-z0-9_]+", "X");
 
-                    DialogMessageBox dlgMB = new DialogMessageBox(this);
-                    dlgMB.IconType = MessageBoxImage.Warning;
-                    dlgMB.MessageTitle = "'" + textBox.Text + "' is not a valid Data Label.";
-                    dlgMB.MessageProblem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
-                    dlgMB.MessageResult = "We will replace all dissallowed characters with an 'X'.";
-                    dlgMB.MessageHint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                    dlgMB.ShowDialog();
+                    // TODOSAUL: should the dialog show the user the replacement label which will be used?
+                    DialogMessageBox messageBox = new DialogMessageBox("'" + textBox.Text + "' is not a valid data label.", this);
+                    messageBox.Message.Icon = MessageBoxImage.Warning;
+                    messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
+                    messageBox.Message.Result = "We will replace all dissallowed characters with an 'X'.";
+                    messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
+                    messageBox.ShowDialog();
 
-                    textBox.Text = candidateDataLabel;
+                    textBox.Text = replacementDataLabel;
                 }
             }
 
@@ -590,17 +574,16 @@ namespace Timelapse.Editor
             {
                 if (String.Equals(sqlKeyword, dataLabel, StringComparison.OrdinalIgnoreCase))
                 {
-                    DialogMessageBox dlgMB = new DialogMessageBox(this);
-                    dlgMB.IconType = MessageBoxImage.Warning;
-                    dlgMB.MessageTitle = "'" + textBox.Text + "' is not a valid Data Label.";
-                    dlgMB.MessageProblem = "Data labels cannot match the reserved words.";
-                    dlgMB.MessageResult = "We will add an '_' suffix to this Data Label to make it differ from the reserved word";
-                    dlgMB.MessageHint = "Avoid the resereved words listed below. Start your label with a letter. Then use any combination of letters, numbers, and '_'." + Environment.NewLine;
-                    foreach (string m in EditorConstant.ReservedSqlKeywords)
+                    DialogMessageBox messageBox = new DialogMessageBox("'" + textBox.Text + "' is not a valid data label.", this);
+                    messageBox.Message.Icon = MessageBoxImage.Warning;
+                    messageBox.Message.Problem = "Data labels cannot match the reserved words.";
+                    messageBox.Message.Result = "We will add an '_' suffix to this Data Label to make it differ from the reserved word";
+                    messageBox.Message.Hint = "Avoid the reserved words listed below. Start your label with a letter. Then use any combination of letters, numbers, and '_'." + Environment.NewLine;
+                    foreach (string keyword in EditorConstant.ReservedSqlKeywords)
                     {
-                        dlgMB.MessageHint += m + " ";
+                        messageBox.Message.Hint += keyword + " ";
                     }
-                    dlgMB.ShowDialog();
+                    messageBox.ShowDialog();
 
                     textBox.Text += "_";
                     break;
@@ -828,6 +811,16 @@ namespace Timelapse.Editor
             }
         }
 
+        private void ShowDataLabelRequirementsDialog()
+        {
+            DialogMessageBox messageBox = new DialogMessageBox("Data Labels can only contain letters, numbers and '_'", this);
+            messageBox.Message.Icon = MessageBoxImage.Warning;
+            messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
+            messageBox.Message.Result = "We will automatically ignore other characters, including spaces";
+            messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
+            messageBox.ShowDialog();
+        }
+
         private void ConvertCodeTemplateFileMenuItem_Click(object sender, RoutedEventArgs e)
         {
             string codeTemplateFileName = String.Empty;  // The code template file name
@@ -890,22 +883,21 @@ namespace Timelapse.Editor
             Mouse.OverrideCursor = null;
             if (conversionErrors.Count > 0)
             {
-                DialogMessageBox dlgMB = new DialogMessageBox(this);
-                dlgMB.IconType = MessageBoxImage.Warning;
-                dlgMB.MessageTitle = "One or more Data Labels were problematic";
-                dlgMB.MessageProblem = conversionErrors.Count.ToString() + " of your Data Labels were problematic." + Environment.NewLine + Environment.NewLine +
+                DialogMessageBox messageBox = new DialogMessageBox("One or more data labels were problematic", this);
+                messageBox.Message.Icon = MessageBoxImage.Warning;
+                messageBox.Message.Problem = conversionErrors.Count.ToString() + " of your Data Labels were problematic." + Environment.NewLine + Environment.NewLine +
                               "Data Labels:" + Environment.NewLine +
                               "\u2022 must be unique," + Environment.NewLine +
                               "\u2022 can only contain alphanumeric characters and '_'," + Environment.NewLine +
                               "\u2022 cannot match particular reserved words.";
-                dlgMB.MessageResult = "We will automatically repair these Data Labels:";
+                messageBox.Message.Result = "We will automatically repair these Data Labels:";
                 foreach (string s in conversionErrors)
                 {
-                    dlgMB.MessageSolution += Environment.NewLine + "\u2022 " + s;
+                    messageBox.Message.Solution += Environment.NewLine + "\u2022 " + s;
                 }
-                dlgMB.MessageHint = "Check if these are the names you want. You can also rename these corrected Data Labels if you want";
+                messageBox.Message.Hint = "Check if these are the names you want. You can also rename these corrected Data Labels if you want";
                
-                dlgMB.ShowDialog();
+                messageBox.ShowDialog();
             }
         }
 

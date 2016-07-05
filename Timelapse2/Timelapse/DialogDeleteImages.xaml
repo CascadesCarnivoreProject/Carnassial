@@ -11,8 +11,8 @@
 
         <DockPanel>
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
-                            IconType="Question"
-                            ShowExplanationVisibilityCheckbox="True"
+                            Icon="Question"
+                            ShowExplanationVisibility="True"
                             />
         <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">

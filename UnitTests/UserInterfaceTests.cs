@@ -123,8 +123,27 @@ namespace Timelapse.UnitTests
                 this.ShowDialog(timelapse, new DialogStatisticsOfImageCounts(dataHandler.ImageDatabase.GetImageCountsByQuality()));
                 this.ShowDialog(timelapse, new DialogTemplatesDontMatch(dataHandler.ImageDatabase.TemplateSynchronizationIssues));
 
+                DialogMessageBox okMessageBox = this.CreateMessageBox(timelapse, MessageBoxButton.OK, MessageBoxImage.Error);
+                this.ShowDialog(timelapse, okMessageBox);
+                DialogMessageBox okCancelMessageBox = this.CreateMessageBox(timelapse, MessageBoxButton.OKCancel, MessageBoxImage.Information);
+                this.ShowDialog(timelapse, okCancelMessageBox);
+                DialogMessageBox yesNoMessageBox = this.CreateMessageBox(timelapse, MessageBoxButton.YesNo, MessageBoxImage.Question);
+                this.ShowDialog(timelapse, yesNoMessageBox);
+
                 timelapse.Close();
             }
+        }
+
+        private DialogMessageBox CreateMessageBox(Window owner, MessageBoxButton buttonType, MessageBoxImage iconType)
+        {
+            DialogMessageBox messageBox = new DialogMessageBox("Message box title", owner, buttonType);
+            messageBox.Message.Icon = iconType;
+            messageBox.Message.Problem = "Problem description.";
+            messageBox.Message.Reason = "Explanation of why issue is an issue.";
+            messageBox.Message.Solution = "Suggested method for resolving the issue.";
+            messageBox.Message.Result = "Current status.";
+            messageBox.Message.Hint = "Additional suggestions as to how to resolve the issue.";
+            return messageBox;
         }
 
         private void ShowDialog(Window owner, Window dialog)

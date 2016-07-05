@@ -12,12 +12,12 @@
 
     <DockPanel>
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
-                            IconType="Information"
-                            MessageTitle="This template cannot be used with this data"
-                            MessageProblem="The fields in the Timelapse Template file do not match those originally used to create this data. &#10;This is likely because Timelapse Template is different from the original one used for this image set."
-                            MessageSolution="We will be changing Timelapse shortly to let you resolve inconsistencies.&#10;However, you can still open the data for this image set, which will use its own copy of the original template."
-                            MessageResult="Depending on your choice, the image set will be opened with the original template, or the program will exit."
-                            ShowExplanationVisibilityCheckbox="True"/>
+                            Icon="Information"
+                            Title="This template cannot be used with this data"
+                            Problem="The fields in the Timelapse Template file do not match those originally used to create this data. &#10;This is likely because Timelapse Template is different from the original one used for this image set."
+                            Solution="We will be changing Timelapse shortly to let you resolve inconsistencies.&#10;However, you can still open the data for this image set, which will use its own copy of the original template."
+                            Result="Depending on your choice, the image set will be opened with the original template, or the program will exit."
+                            ShowExplanationVisibility="True"/>
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="2"/>
             <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Height="150">

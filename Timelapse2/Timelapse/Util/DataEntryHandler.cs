@@ -39,13 +39,10 @@ namespace Timelapse.Util
             {
                 // Nothing to propagate. Note that we shouldn't really see this, as the menu shouldn't be highlit if we are on the last image
                 // But just in case...
-                DialogMessageBox dlgMB = new DialogMessageBox(Application.Current.MainWindow);
-                dlgMB.IconType = MessageBoxImage.Exclamation;
-                dlgMB.ButtonType = MessageBoxButton.OK;
-
-                dlgMB.MessageTitle = "Nothing to copy forward.";
-                dlgMB.MessageReason = "As you are on the last file, there are no files after this.";
-                dlgMB.ShowDialog();
+                DialogMessageBox messageBox = new DialogMessageBox("Nothing to copy forward.", Application.Current.MainWindow);
+                messageBox.Message.Icon = MessageBoxImage.Exclamation;
+                messageBox.Message.Reason = "As you are on the last file, there are no files after this.";
+                messageBox.ShowDialog();
                 return;
             }
 
@@ -94,13 +91,10 @@ namespace Timelapse.Util
             {
                 // Nothing to propagate. Note that we shouldn't see this, as the menu item should be deactivated if this is the case.
                 // But just in case.
-                DialogMessageBox dlgMB = new DialogMessageBox(Application.Current.MainWindow);
-                dlgMB.IconType = MessageBoxImage.Exclamation;
-                dlgMB.ButtonType = MessageBoxButton.OK;
-
-                dlgMB.MessageTitle = "Nothing to Propagate to Here.";
-                dlgMB.MessageReason = "None of the earlier files have anything in this field, so there are no values to propagate.";
-                dlgMB.ShowDialog();
+                DialogMessageBox messageBox = new DialogMessageBox("Nothing to Propagate to Here.", Application.Current.MainWindow);
+                messageBox.Message.Icon = MessageBoxImage.Exclamation;
+                messageBox.Message.Reason = "None of the earlier files have anything in this field, so there are no values to propagate.";
+                messageBox.ShowDialog();
                 return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow][control.DataLabel]; // No change, so return the current value
             }
 
@@ -251,24 +245,21 @@ namespace Timelapse.Util
         {
             text = text.Trim();
 
-            DialogMessageBox dlgMB = new DialogMessageBox(Application.Current.MainWindow);
-            dlgMB.IconType = MessageBoxImage.Question;
-            dlgMB.ButtonType = MessageBoxButton.YesNo;
-            dlgMB.MessageTitle = "Please confirm 'Copy Forward' for this field...";
-
-            dlgMB.MessageWhat = "The Copy Forward operation is not undoable, and can overwrite existing values.";
-            dlgMB.MessageResult = "If you select yes, this operation will:" + Environment.NewLine;
+            DialogMessageBox messageBox = new DialogMessageBox("Please confirm 'Copy Forward' for this field...", Application.Current.MainWindow, MessageBoxButton.YesNo);
+            messageBox.Message.Icon = MessageBoxImage.Question;
+            messageBox.Message.What = "The Copy Forward operation is not undoable, and can overwrite existing values.";
+            messageBox.Message.Result = "If you select yes, this operation will:" + Environment.NewLine;
             if (!checkForZero && text.Equals(String.Empty))
             {
-                dlgMB.MessageResult += "\u2022 copy the (empty) value \u00AB" + text + "\u00BB in this field from here to the last file of your filtered files.";
+                messageBox.Message.Result += "\u2022 copy the (empty) value \u00AB" + text + "\u00BB in this field from here to the last file of your filtered files.";
             }
             else
             {
-                dlgMB.MessageResult += "\u2022 copy the value \u00AB" + text + "\u00BB in this field from here to the last file of your filtered files.";
+                messageBox.Message.Result += "\u2022 copy the value \u00AB" + text + "\u00BB in this field from here to the last file of your filtered files.";
             }
-            dlgMB.MessageResult += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
-            dlgMB.MessageResult += Environment.NewLine + "\u2022 will affect " + imagesAffected.ToString() + " files.";
-            return dlgMB.ShowDialog();
+            messageBox.Message.Result += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
+            messageBox.Message.Result += Environment.NewLine + "\u2022 will affect " + imagesAffected.ToString() + " files.";
+            return messageBox.ShowDialog();
         }
 
         // Ask the user to confirm value propagation
@@ -276,40 +267,34 @@ namespace Timelapse.Util
         {
             text = text.Trim();
 
-            DialogMessageBox dlgMB = new DialogMessageBox(Application.Current.MainWindow);
-            dlgMB.IconType = MessageBoxImage.Question;
-            dlgMB.ButtonType = MessageBoxButton.YesNo;
-            dlgMB.MessageTitle = "Please confirm 'Copy to All' for this field...";
-
-            dlgMB.MessageWhat = "The Copy to All operation is not undoable, and can overwrite existing values.";
-            dlgMB.MessageResult = "If you select yes, this operation will:" + Environment.NewLine;
+            DialogMessageBox messageBox = new DialogMessageBox("Please confirm 'Copy to All' for this field...", Application.Current.MainWindow, MessageBoxButton.YesNo);
+            messageBox.Message.Icon = MessageBoxImage.Question;
+            messageBox.Message.What = "The Copy to All operation is not undoable, and can overwrite existing values.";
+            messageBox.Message.Result = "If you select yes, this operation will:" + Environment.NewLine;
             if (!checkForZero && text.Equals(String.Empty))
             {
-                dlgMB.MessageResult += "\u2022 clear this field across all " + filesAffected.ToString() + " of your filtered files.";
+                messageBox.Message.Result += "\u2022 clear this field across all " + filesAffected.ToString() + " of your filtered files.";
             }
             else
             {
-                dlgMB.MessageResult += "\u2022  set this field to \u00AB" + text + "\u00BB across all " + filesAffected.ToString() + " of your filtered files.";
+                messageBox.Message.Result += "\u2022  set this field to \u00AB" + text + "\u00BB across all " + filesAffected.ToString() + " of your filtered files.";
             }
-            dlgMB.MessageResult += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
-            return dlgMB.ShowDialog();
+            messageBox.Message.Result += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
+            return messageBox.ShowDialog();
         }
 
         // Ask the user to confirm value propagation from the last value
         private bool? ConfirmPropagateFromLastValue(String text, int imagesAffected)
         {
             text = text.Trim();
-            DialogMessageBox dlgMB = new DialogMessageBox(Application.Current.MainWindow);
-            dlgMB.IconType = MessageBoxImage.Question;
-            dlgMB.ButtonType = MessageBoxButton.YesNo;
-            dlgMB.MessageTitle = "Please confirm 'Propagate to Here' for this field.";
-
-            dlgMB.MessageWhat = "The 'Propagate to Here' operation is not undoable, and can overwrite existing values.";
-            dlgMB.MessageReason = "\u2022 The last non-empty value \u00AB" + text + "\u00BB was seen " + imagesAffected.ToString() + " files back." + Environment.NewLine;
-            dlgMB.MessageReason += "\u2022 That field's value will be copied across all files between that file and this one in this filtered image set";
-            dlgMB.MessageResult = "If you select yes: " + Environment.NewLine;
-            dlgMB.MessageResult = "\u2022 " + imagesAffected.ToString() + " files will be affected.";
-            return dlgMB.ShowDialog();
+            DialogMessageBox messageBox = new DialogMessageBox("Please confirm 'Propagate to Here' for this field.", Application.Current.MainWindow, MessageBoxButton.YesNo);
+            messageBox.Message.Icon = MessageBoxImage.Question;
+            messageBox.Message.What = "The 'Propagate to Here' operation is not undoable, and can overwrite existing values.";
+            messageBox.Message.Reason = "\u2022 The last non-empty value \u00AB" + text + "\u00BB was seen " + imagesAffected.ToString() + " files back." + Environment.NewLine;
+            messageBox.Message.Reason += "\u2022 That field's value will be copied across all files between that file and this one in this filtered image set";
+            messageBox.Message.Result = "If you select yes: " + Environment.NewLine;
+            messageBox.Message.Result = "\u2022 " + imagesAffected.ToString() + " files will be affected.";
+            return messageBox.ShowDialog();
         }
 
         // A callback allowing us to enable or disable particular context menu items

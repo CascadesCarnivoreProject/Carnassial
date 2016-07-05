@@ -9,12 +9,12 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
 
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" IconType="Question"
-                            MessageTitle="Re-Read Date and time from images and videos"
-                            MessageProblem="The dates and times in your images and videos may have been incorrectly read by earlier versions of Timelapse, &#10;or you may have previously changed the dates and times and you now want to go back to their original dates"
-                            MessageSolution="Click 'Start' below to replace the existing dates/times with the original dates/times on the files. &#10;Click Cancel if you don't want to do this."
-                            MessageResult="Timelapse will replace the current date/time with the original date/time (if they differ).&#10;A list showing what was done will be displayed below"
-                            ShowExplanationVisibilityCheckbox="True"/>
+        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" Icon="Question"
+                            Title="Re-Read Date and time from images and videos"
+                            Problem="The dates and times in your images and videos may have been incorrectly read by earlier versions of Timelapse, &#10;or you may have previously changed the dates and times and you now want to go back to their original dates"
+                            Solution="Click 'Start' below to replace the existing dates/times with the original dates/times on the files. &#10;Click Cancel if you don't want to do this."
+                            Result="Timelapse will replace the current date/time with the original date/time (if they differ).&#10;A list showing what was done will be displayed below"
+                            ShowExplanationVisibility="True"/>
         <StackPanel>
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>
         </StackPanel>

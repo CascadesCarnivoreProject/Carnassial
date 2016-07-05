@@ -24,10 +24,10 @@ namespace Timelapse
             Utilities.TryFitWindowInWorkingArea(this);
 
             this.path = path;
-            this.Message.MessageProblem += path;
+            this.Message.Problem += path;
             if (File.Exists(Path.Combine(path, Constants.File.XmlTemplateFileName)))
             {
-                this.Message.MessageReason = "While there is a CodeTemplate.xml file, these have been replaced by the TimelapseTemplate.tdb.";
+                this.Message.Reason = "While there is a CodeTemplate.xml file, these have been replaced by the TimelapseTemplate.tdb.";
             }
         }
 

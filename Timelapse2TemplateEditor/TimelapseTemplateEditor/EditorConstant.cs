@@ -41,6 +41,7 @@ namespace Timelapse.Editor
             // these constants are duplicated in MainWindow.xaml and must be kept in sync
             public const string ControlOrder = "Control\norder";
             public const string DataLabel = "Data Label";
+            public const string DefaultValue = "Default Value";
             public const string ID = "ID";
             public const string Width = "Width";
             public const string SpreadsheetOrder = "Spreadsheet\norder";

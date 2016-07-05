@@ -10,12 +10,12 @@
     
     <DockPanel>
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
-                            IconType="Exclamation"
-                            MessageTitle="The Timelapse Template (.tdb) file is missing."
-                            MessageProblem="Timelapse needs a template file, as it specifies the codes you will use to code your data. &#10;However, no Timelapse Template .tdb file was found in the folder : "
-                            MessageSolution="1. Click 'Find a Timelapse Template' to search for a TimelapseTemplate.tdb file, which will then be copied into that folder, or&#10;2. Click 'Cancel'. You can then manually create or copy a TimelapseTemplate.tdb file into your folder."
-                            MessageReason="Your TimelapseTemplate.tdb had likely not been copied into the image folder."
-                            MessageHint="Your group should have its own project-specific custom code template. If not, you need to create or edit one to fit your needs."
+                            Icon="Exclamation"
+                            Title="The Timelapse Template (.tdb) file is missing."
+                            Problem="Timelapse needs a template file, as it specifies the codes you will use to code your data. &#10;However, no Timelapse Template .tdb file was found in the folder : "
+                            Solution="1. Click 'Find a Timelapse Template' to search for a TimelapseTemplate.tdb file, which will then be copied into that folder, or&#10;2. Click 'Cancel'. You can then manually create or copy a TimelapseTemplate.tdb file into your folder."
+                            Reason="Your TimelapseTemplate.tdb had likely not been copied into the image folder."
+                            Hint="Your group should have its own project-specific custom code template. If not, you need to create or edit one to fit your needs."
                             />
         <DockPanel Name="DockPanelImage">
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">

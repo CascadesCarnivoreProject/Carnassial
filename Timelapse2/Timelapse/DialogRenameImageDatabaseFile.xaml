@@ -11,11 +11,11 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
-                            IconType="Question"
-                            MessageTitle="Rename the Timelapse Data File"
-                            MessageWhat="By default, Timelapse creates a file called 'TimelapseData.ddb' that contains your image set data. You may want to rename it to something more descriptive."
-                            MessageSolution="In the field below, rename that file to whatever you want."
-                            MessageResult="The file will be renamed, and Timelapse will subsequently save data to the renamed file."/>
+                            Icon="Question"
+                            Title="Rename the Timelapse Data File"
+                            What="By default, Timelapse creates a file called 'TimelapseData.ddb' that contains your image set data. You may want to rename it to something more descriptive."
+                            Solution="In the field below, rename that file to whatever you want."
+                            Result="The file will be renamed, and Timelapse will subsequently save data to the renamed file."/>
         <StackPanel Name="StackPanelCorrect" Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>
             <StackPanel Orientation="Horizontal">

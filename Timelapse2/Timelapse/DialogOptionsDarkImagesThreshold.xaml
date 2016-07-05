@@ -14,12 +14,12 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" PreviewKeyDown="Window_PreviewKeyDown">
     <DockPanel PreviewKeyDown="Window_PreviewKeyDown">
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
-                            IconType="Question"
-                            MessageTitle="Set Thresholds Used to Determine Dark Images and Videos"
-                            MessageWhat="If Timelapse misclassifies images and videos as 'dark' or 'ok', you can tune how classification is done."
-                            MessageHint="It helps to understand how Timelapse determines darkness through the following steps.&#10;1. If it appears to be in color, then classify it as Ok (i.e., not dark).&#10;2. Otherwise, count the number of pixels darker than a 'grey color threshold'.&#10;3. If the percentage of dark pixels is greater than  the dark percentage threshold, then classify it as dark."
-                            MessageSolution="Go to an image or video that you think is a typical 'borderline' dark versus ok case.The color of the horizontal bar below reflects the current 'grey color threshold', while its length shows how many pixels are below that value. The red line shows the 'dark percentage threshold' needed. &#10;1. Drag the red line and the slider to adjust both thresholds, until satisfied with the classification.&#10;2. Check other borderline images or videos to see if it improves classification. If not, repeat the above steps.&#10;3. If it looks good, Apply those settings to all images and videos. Review and repeat if needed.&#10;4. At any time, you can reset thresholds to their initial values or to the Timelapse defaults, and Apply them."
-            ShowExplanationVisibilityCheckbox="True"/>
+                            Icon="Question"
+                            Title="Set Thresholds Used to Determine Dark Images and Videos"
+                            What="If Timelapse misclassifies images and videos as 'dark' or 'ok', you can tune how classification is done."
+                            Hint="It helps to understand how Timelapse determines darkness through the following steps.&#10;1. If it appears to be in color, then classify it as Ok (i.e., not dark).&#10;2. Otherwise, count the number of pixels darker than a 'grey color threshold'.&#10;3. If the percentage of dark pixels is greater than  the dark percentage threshold, then classify it as dark."
+                            Solution="Go to an image or video that you think is a typical 'borderline' dark versus ok case.The color of the horizontal bar below reflects the current 'grey color threshold', while its length shows how many pixels are below that value. The red line shows the 'dark percentage threshold' needed. &#10;1. Drag the red line and the slider to adjust both thresholds, until satisfied with the classification.&#10;2. Check other borderline images or videos to see if it improves classification. If not, repeat the above steps.&#10;3. If it looks good, Apply those settings to all images and videos. Review and repeat if needed.&#10;4. At any time, you can reset thresholds to their initial values or to the Timelapse defaults, and Apply them."
+            ShowExplanationVisibility="True"/>
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch" >
 
             <Rectangle Fill="#FF868686" Height="2"/>

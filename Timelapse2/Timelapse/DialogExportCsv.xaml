@@ -9,11 +9,11 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
 
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" IconType="Information" 
-                            MessageTitle="Exporting your data"
-                            MessageWhat="Exporting into file: "
-                            MessageResult="This file is over-written every time you export it (but backups can be found in the Backups folder). "
-                            MessageHint="You can open this file with most spreadsheet programs (e.g., Excel). &#10;If you make changes in the spreadsheet file, you will need to import it to see those changes."
+        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" Icon="Information" 
+                            Title="Exporting your data"
+                            What="Exporting into file: "
+                            Result="This file is over-written every time you export it (but backups can be found in the Backups folder). "
+                            Hint="You can open this file with most spreadsheet programs (e.g., Excel). &#10;If you make changes in the spreadsheet file, you will need to import it to see those changes."
                             />
 
         <StackPanel Name="StackPanelCorrect" Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">

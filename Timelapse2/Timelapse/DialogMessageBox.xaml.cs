@@ -9,134 +9,45 @@ namespace Timelapse
     /// </summary>
     public partial class DialogMessageBox : Window
     {
-        private MessageBoxButton buttonType = MessageBoxButton.OK;
-
-        public MessageBoxImage IconType
+        public DialogMessageBox(string title, Window owner)
+            : this(title, owner, MessageBoxButton.OK)
         {
-            get { return this.Message.IconType; }
-            set { this.Message.IconType = value; }
         }
 
-        public MessageBoxButton ButtonType
+        public DialogMessageBox(string title, Window owner, MessageBoxButton buttonType)
         {
-            get
+            if (String.IsNullOrWhiteSpace(title))
             {
-                return this.buttonType;
+                throw new ArgumentException("A title must be specified for the message box.", "title");
             }
-            set
+            if (owner == null)
             {
-                this.buttonType = value;
-                this.SetButtonType();
+                throw new ArgumentNullException("owner");
             }
-        }
 
-        public bool ShowExplanationVisibilityCheckbox
-        {
-            get { return this.Message.ShowExplanationVisibilityCheckbox; }
-            set { this.Message.ShowExplanationVisibilityCheckbox = value; }
-        }
-
-        // Property: the Text of the Title Message
-        public string MessageTitle
-        {
-            get
-            {
-                return this.Message.MessageTitle;
-            }
-            set
-            {
-                this.Message.MessageTitle = value;
-                // if the window title is empty, also set it to the MessageTitle
-                if (String.IsNullOrWhiteSpace(this.WindowTitle))
-                {
-                    this.WindowTitle = value;
-                }
-            }
-        }
-
-        // Property: the Text of the Title Message
-        public string WindowTitle
-        {
-            get { return this.Title; }
-            set { this.Title = value; }
-        }
-
-        public string MessageWhat
-        {
-            get { return this.Message.MessageWhat; }
-            set { this.Message.MessageWhat = value; }
-        }
-
-        public string MessageProblem
-        {
-            get { return this.Message.MessageProblem; }
-            set { this.Message.MessageProblem = value; }
-        }
-
-        public string MessageReason
-        {
-            get { return this.Message.MessageReason; }
-            set { this.Message.MessageReason = value; }
-        }
-
-        public string MessageSolution
-        {
-            get { return this.Message.MessageSolution; }
-            set { this.Message.MessageSolution = value; }
-        }
-
-        public string MessageResult
-        {
-            get { return this.Message.MessageResult; }
-            set { this.Message.MessageResult = value; }
-        }
-
-        public string MessageHint
-        {
-            get { return this.Message.MessageHint; }
-            set { this.Message.MessageHint = value; }
-        }
-
-        public DialogMessageBox(Window owner)
-        {
             this.InitializeComponent();
+            this.Message.Title = title;
             this.Owner = owner;
-            this.Title = String.Empty;
-        }
+            this.Title = title;
 
-        private void SetButtonType()
-        {
-            switch (this.ButtonType)
+            switch (buttonType)
             {
                 case MessageBoxButton.OK:
-                    this.OkButton.Content = "Okay";
-                    this.OkButton.IsDefault = true;
                     this.OkButton.IsCancel = true;
                     this.CancelButton.IsCancel = false;
                     this.CancelButton.IsEnabled = false;
-                    this.CancelButton.Visibility = Visibility.Collapsed;
-
                     break;
                 case MessageBoxButton.OKCancel:
-                    this.OkButton.Content = "Okay";
-                    this.OkButton.IsCancel = false;
-                    this.CancelButton.IsCancel = true;
-                    this.CancelButton.Content = "Cancel";
-                    this.CancelButton.IsEnabled = true;
-                    this.CancelButton.IsDefault = true;
                     this.CancelButton.Visibility = Visibility.Visible;
                     break;
                 case MessageBoxButton.YesNo:
                     this.OkButton.Content = "Yes";
                     this.CancelButton.Content = "No";
-                    this.OkButton.IsCancel = false;
-                    this.CancelButton.IsCancel = true;
-                    this.CancelButton.IsEnabled = true;
-                    this.CancelButton.IsDefault = true;
                     this.CancelButton.Visibility = Visibility.Visible;
                     break;
+                case MessageBoxButton.YesNoCancel:
                 default:
-                    return;
+                    throw new ArgumentOutOfRangeException("buttonType", String.Format("Unhandled button type {0}.", buttonType));
             }
         }
 

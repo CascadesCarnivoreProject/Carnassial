@@ -8,10 +8,10 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
     <DockPanel>
         <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
-                            IconType="Information"
-                            MessageTitle="Summary counts of your files"
-                            MessageWhat="Timelapse automatically categorizes the 'Image Quality' of your images and videos."
-                            MessageHint="Use the Filter menu to selectively view and work with files in the image set." />
+                            Icon="Information"
+                            Title="Summary counts of your files"
+                            What="Timelapse automatically categorizes the 'Image Quality' of your images and videos."
+                            Hint="Use the Filter menu to selectively view and work with files in the image set." />
 
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
 

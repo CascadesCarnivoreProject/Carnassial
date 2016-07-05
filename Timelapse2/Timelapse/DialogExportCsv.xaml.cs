@@ -19,7 +19,7 @@ namespace Timelapse
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
-            this.Message.MessageWhat += filename;
+            this.Message.What += filename;
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

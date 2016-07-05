@@ -57,15 +57,13 @@ namespace Timelapse
             catch (Exception exception)
             {
                 Debug.Assert(false, String.Format("Parse or display of date '{0}' failed.", dateAsString), exception.ToString());
-                DialogMessageBox dlgMB = new DialogMessageBox(this);
-                dlgMB.MessageTitle = "Timelapse could not read the date.";
-                dlgMB.MessageProblem = "Timelapse could not read the date and time: " + dateAsString;
-                dlgMB.MessageReason = "The date / time needs to be in a very specific format, for example, 01-Jan-2016 13:00:00.";
-                dlgMB.MessageSolution = "Re-read in the dates from the images (see the Edit/Dates menu), and then try this again.";
-                dlgMB.MessageResult = "Timelapse won't do anything for now.";
-                dlgMB.ButtonType = MessageBoxButton.OK;
-                dlgMB.IconType = MessageBoxImage.Error;
-                dlgMB.ShowDialog();
+                DialogMessageBox messageBox = new DialogMessageBox("Timelapse could not read the date.", this);
+                messageBox.Message.Problem = "Timelapse could not read the date and time: " + dateAsString;
+                messageBox.Message.Reason = "The date / time needs to be in a very specific format, for example, 01-Jan-2016 13:00:00.";
+                messageBox.Message.Solution = "Re-read in the dates from the images (see the Edit/Dates menu), and then try this again.";
+                messageBox.Message.Result = "Timelapse won't do anything for now.";
+                messageBox.Message.Icon = MessageBoxImage.Error;
+                messageBox.ShowDialog();
                 this.Abort = true;
                 return;
             }

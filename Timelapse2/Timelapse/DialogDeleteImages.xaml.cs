@@ -63,20 +63,20 @@ namespace Timelapse
                 if (deleteData == false)
                 {
                     // Case 1: Delete the current image, but not its data - This is the default and is coded in the XAML
-                    this.Message.MessageWhat = String.Format("Deletes the current {0} (shown below) but not its data.", imageOrVideo);
-                    this.Message.MessageResult = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named DeletedImages.{1}", imageOrVideo, Environment.NewLine);
-                    this.Message.MessageResult += String.Format("\u2022 A placeholder {0} will be shown when you try to view a deleted {0}.", imageOrVideo);
-                    this.Message.MessageHint = String.Format("\u2022 Restore deleted {0}s by manually copying or moving them back to their original location, or{1}", imageOrVideo, Environment.NewLine);
-                    this.Message.MessageHint += String.Format("\u2022 Delete your {0} backups by deleting the DeletedImages folder.", imageOrVideo);
+                    this.Message.What = String.Format("Deletes the current {0} (shown below) but not its data.", imageOrVideo);
+                    this.Message.Result = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named DeletedImages.{1}", imageOrVideo, Environment.NewLine);
+                    this.Message.Result += String.Format("\u2022 A placeholder {0} will be shown when you try to view a deleted {0}.", imageOrVideo);
+                    this.Message.Hint = String.Format("\u2022 Restore deleted {0}s by manually copying or moving them back to their original location, or{1}", imageOrVideo, Environment.NewLine);
+                    this.Message.Hint += String.Format("\u2022 Delete your {0} backups by deleting the DeletedImages folder.", imageOrVideo);
                 }
                 else
                 {
                     // Case 2: Delete the current image and its data
-                    this.Message.MessageTitle = String.Format("Delete the current {0} and its data", imageOrVideo);
-                    this.Message.MessageWhat = String.Format("Deletes the current {0} (shown below) and the data associated with that {0}.", imageOrVideo);
-                    this.Message.MessageResult = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named DeletedImages.{1}", imageOrVideo, Environment.NewLine);
-                    this.Message.MessageResult += String.Format("\u2022 However, the data associated with that {0} will be permanently deleted.", imageOrVideo);
-                    this.Message.MessageHint = String.Format("You can delete your {0} backups by deleting the DeletedImages folder.", imageOrVideo);
+                    this.Message.Title = String.Format("Delete the current {0} and its data", imageOrVideo);
+                    this.Message.What = String.Format("Deletes the current {0} (shown below) and the data associated with that {0}.", imageOrVideo);
+                    this.Message.Result = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named DeletedImages.{1}", imageOrVideo, Environment.NewLine);
+                    this.Message.Result += String.Format("\u2022 However, the data associated with that {0} will be permanently deleted.", imageOrVideo);
+                    this.Message.Hint = String.Format("You can delete your {0} backups by deleting the DeletedImages folder.", imageOrVideo);
                 }
             }
             else
@@ -84,24 +84,24 @@ namespace Timelapse
                 if (deleteData == false)
                 {
                     // Case 3: Delete the images that have the delete flag set, but not their data
-                    this.Message.MessageTitle = "Delete all images and videos marked for deletion";
-                    this.Message.MessageWhat = "\u2022 Deletes the files of images and videos marked for deletion (shown below) but not the data entered for them.";
-                    this.Message.MessageResult = "\u2022 The deleted file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
-                    this.Message.MessageResult += "\u2022 A placeholder image will be shown when you try to view a deleted image.";
-                    this.Message.MessageHint = "\u2022 Restore deleted files by manually copying or moving them back to their original location, or" + Environment.NewLine;
-                    this.Message.MessageHint += "\u2022 Delete the backup files by deleting the DeletedImages folder";
+                    this.Message.Title = "Delete all images and videos marked for deletion";
+                    this.Message.What = "\u2022 Deletes the files of images and videos marked for deletion (shown below) but not the data entered for them.";
+                    this.Message.Result = "\u2022 The deleted file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
+                    this.Message.Result += "\u2022 A placeholder image will be shown when you try to view a deleted image.";
+                    this.Message.Hint = "\u2022 Restore deleted files by manually copying or moving them back to their original location, or" + Environment.NewLine;
+                    this.Message.Hint += "\u2022 Delete the backup files by deleting the DeletedImages folder";
                 }
                 else
                 {
                     // Case 4: Delete the images that have the delete flag set, and their data
-                    this.Message.MessageTitle = "Delete all images and videos marked for deletion and their data";
-                    this.Message.MessageWhat = "Deletes all images and videos marked for deletion (shown below) along with the data entered for them.";
-                    this.Message.MessageResult = "\u2022 The deleted files will be backed up in a sub-folder named DeletedImages" + Environment.NewLine;
-                    this.Message.MessageResult += "\u2022 However, the data entered will be permanently deleted.";
-                    this.Message.MessageHint = "You can delete the backup files by deleting the DeletedImages folder.";
+                    this.Message.Title = "Delete all images and videos marked for deletion and their data";
+                    this.Message.What = "Deletes all images and videos marked for deletion (shown below) along with the data entered for them.";
+                    this.Message.Result = "\u2022 The deleted files will be backed up in a sub-folder named DeletedImages" + Environment.NewLine;
+                    this.Message.Result += "\u2022 However, the data entered will be permanently deleted.";
+                    this.Message.Hint = "You can delete the backup files by deleting the DeletedImages folder.";
                 }
             }
-            this.Title = this.Message.MessageTitle;
+            this.Title = this.Message.Title;
 
             // Set the local variables to the passed in parameters
             int column = 0;
@@ -168,13 +168,12 @@ namespace Timelapse
             // TODOSAUL: Need a general fix to this throughout, where we allow for an empty dataset 
             if (this.deleteData && (this.imagesToDelete.Count >= this.imageDatabase.GetImageCount(ImageFilter.All)))
             {
-                DialogMessageBox dlgMsg = new DialogMessageBox(this);
-                dlgMsg.IconType = MessageBoxImage.Error;
-                dlgMsg.MessageTitle = "You can't delete all your images";
-                dlgMsg.MessageProblem = "You can't delete all your images";
-                dlgMsg.MessageReason = "Timelapse must have at least one image to display.";
-                dlgMsg.MessageSolution = "Select only a subset of images to delete.";
-                dlgMsg.ShowDialog();
+                DialogMessageBox messageBox = new DialogMessageBox("You can't delete all your images", this);
+                messageBox.Message.Icon = MessageBoxImage.Error;
+                messageBox.Message.Problem = "You can't delete all your images";
+                messageBox.Message.Reason = "Timelapse must have at least one image to display.";
+                messageBox.Message.Solution = "Select only a subset of images to delete.";
+                messageBox.ShowDialog();
                 this.DialogResult = false;
                 return;
             }

@@ -14,7 +14,7 @@ namespace Timelapse
         private MessageBoxImage iconType = MessageBoxImage.Exclamation;
 
         #region Properties
-        public MessageBoxImage IconType
+        public MessageBoxImage Icon
         {
             get
             {
@@ -27,109 +27,111 @@ namespace Timelapse
             }
         }
 
-        public string MessageTitle
+        public string Title
         {
             get
             {
-                return this.tbTitleText.Text;
+                return this.TitleTextBox.Text;
             }
             set
             {
-                this.tbTitleText.Text = value;
+                this.TitleTextBox.Text = value;
                 this.SetFieldVisibility();
             }
         }
 
-        public string MessageWhat
+        public string What
         {
             get
             {
-                return this.tbWhatText.Text;
+                return this.WhatTextBox.Text;
             }
             set
             {
-                this.tbWhatText.Text = value;
-                this.SetFieldVisibility();
-            }
-        }
-        public string MessageProblem
-        {
-            get
-            {
-                return this.tbProblemText.Text;
-            }
-            set
-            {
-                this.tbProblemText.Text = value;
+                this.WhatTextBox.Text = value;
                 this.SetFieldVisibility();
             }
         }
 
-        public string MessageReason
+        public string Problem
         {
             get
             {
-                return this.tbReasonText.Text;
+                return this.ProblemTextBox.Text;
             }
             set
             {
-                this.tbReasonText.Text = value;
+                this.ProblemTextBox.Text = value;
                 this.SetFieldVisibility();
             }
         }
 
-        public string MessageSolution
+        public string Reason
         {
             get
             {
-                return this.tbSolutionText.Text;
+                return this.ReasonTextBox.Text;
             }
             set
             {
-                this.tbSolutionText.Text = value;
+                this.ReasonTextBox.Text = value;
                 this.SetFieldVisibility();
             }
         }
 
-        public string MessageResult
+        public string Solution
         {
             get
             {
-                return this.tbResultText.Text;
+                return this.SolutionTextBox.Text;
             }
             set
             {
-                this.tbResultText.Text = value;
+                this.SolutionTextBox.Text = value;
                 this.SetFieldVisibility();
             }
         }
 
-        public string MessageHint
+        public string Result
         {
             get
             {
-                return this.tbHintText.Text;
+                return this.ResultTextBox.Text;
             }
             set
             {
-                this.tbHintText.Text = value;
+                this.ResultTextBox.Text = value;
                 this.SetFieldVisibility();
             }
         }
 
-        public bool ShowExplanationVisibilityCheckbox
+        public string Hint
         {
             get
             {
-                return btnHideText.Visibility == Visibility.Visible;
+                return this.HintTextBox.Text;
             }
             set
             {
-                btnHideText.Visibility = (value == true) ? Visibility.Visible : Visibility.Collapsed;
+                this.HintTextBox.Text = value;
+                this.SetFieldVisibility();
+            }
+        }
+
+        public bool ShowExplanationVisibility
+        {
+            get
+            {
+                return this.HideText.Visibility == Visibility.Visible;
+            }
+            set
+            {
+                this.HideText.Visibility = (value == true) ? Visibility.Visible : Visibility.Collapsed;
                 this.SetFieldVisibility();
             }
         }
         #endregion 
+
         public StockMessage()
         {
             this.InitializeComponent();
@@ -138,12 +140,12 @@ namespace Timelapse
 
         private void SetFieldVisibility()
         {
-            this.myGrid.RowDefinitions[1].Height = (this.MessageProblem == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[2].Height = (this.MessageWhat == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[3].Height = (this.MessageReason == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[4].Height = (this.MessageSolution == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[5].Height = (this.MessageResult == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[6].Height = (this.MessageHint == String.Empty || this.btnHideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[1].Height = (String.IsNullOrEmpty(this.Problem) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[2].Height = (String.IsNullOrEmpty(this.What) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[3].Height = (String.IsNullOrEmpty(this.Reason) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[4].Height = (String.IsNullOrEmpty(this.Solution) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[5].Height = (String.IsNullOrEmpty(this.Result) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            this.myGrid.RowDefinitions[6].Height = (String.IsNullOrEmpty(this.Hint) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
         }
 
         // This will toggle the visibility of the explanation panel
@@ -154,12 +156,16 @@ namespace Timelapse
 
         private void SetIconType()
         {
-            switch (this.IconType)
+            // the MessageBoxImage enum contains duplicate values:
+            // Hand = Stop = Error
+            // Exclamation = Warning
+            // Asterisk = Information
+            switch (this.Icon)
             {
                 case MessageBoxImage.Question:
                     this.lblIconType.Content = "?";
                     break;
-                case MessageBoxImage.Exclamation:
+                case MessageBoxImage.Warning:
                     this.lblIconType.Content = "!";
                     break;
                 case MessageBoxImage.None:
@@ -173,7 +179,7 @@ namespace Timelapse
                     this.lblIconType.Content = run;
                     break;
                 default:
-                    return;
+                    throw new NotSupportedException(String.Format("Unhandled icon type {0}.", this.Icon));
             }
         }
     }

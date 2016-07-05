@@ -234,18 +234,16 @@ namespace Timelapse
             {
                 this.OnImageDatabaseNotLoaded();
                 // notify the user the template couldn't be loaded rather than silently doing nothing
-                DialogMessageBox dlgMB = new DialogMessageBox(this);
-                dlgMB.MessageTitle = "Timelapse could not load the template.";
-                dlgMB.MessageProblem = "Timelapse could not load the Template File:" + Environment.NewLine;
-                dlgMB.MessageProblem += "\u2022 " + templateDatabasePath;
-                dlgMB.MessageReason = "The template may be corrupted or somehow otherwise invalid. ";
-                dlgMB.MessageSolution = "You may have to recreate the template, or use another copy of it (if you have one).";
-                dlgMB.MessageResult = "Timelapse won't do anything. You can try to select another template file.";
-                dlgMB.MessageHint = "See if you can examine the template file in the Timelapse Template Editor.";
-                dlgMB.MessageHint += "If you can't, there is likley something wrong with it and you will have to recreate it.";
-                dlgMB.ButtonType = MessageBoxButton.OK;
-                dlgMB.IconType = MessageBoxImage.Error;
-                dlgMB.ShowDialog();
+                DialogMessageBox messageBox = new DialogMessageBox("Timelapse could not load the template.", this);
+                messageBox.Message.Problem = "Timelapse could not load the Template File:" + Environment.NewLine;
+                messageBox.Message.Problem += "\u2022 " + templateDatabasePath;
+                messageBox.Message.Reason = "The template may be corrupted or somehow otherwise invalid. ";
+                messageBox.Message.Solution = "You may have to recreate the template, or use another copy of it (if you have one).";
+                messageBox.Message.Result = "Timelapse won't do anything. You can try to select another template file.";
+                messageBox.Message.Hint = "See if you can examine the template file in the Timelapse Template Editor.";
+                messageBox.Message.Hint += "If you can't, there is likley something wrong with it and you will have to recreate it.";
+                messageBox.Message.Icon = MessageBoxImage.Error;
+                messageBox.ShowDialog();
                 return false;
             }
 
@@ -312,19 +310,17 @@ namespace Timelapse
             if (imageFiles.Count == 0)
             {
                 // no images were found in folder; see if user wants to try again
-                DialogMessageBox messageBox = new DialogMessageBox(this);
-                messageBox.MessageTitle = "No images found in the image set folder.";
-                messageBox.MessageProblem = "There don't seem to be any images or videos in your chosen folder:" + Environment.NewLine;
-                messageBox.MessageProblem += "\u2022 " + this.FolderPath + Environment.NewLine;
-                messageBox.MessageReason = "\u2022 The folder has no JPG files in it (files ending in '.jpg'), and" + Environment.NewLine;
-                messageBox.MessageReason += "\u2022 The folder has no AVI files in it (files ending in '.avi'), and" + Environment.NewLine;
-                messageBox.MessageReason += "\u2022 The folder has no MP4 files in it (files ending in '.mp4'), or" + Environment.NewLine;
-                messageBox.MessageReason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images or videos.";
-                messageBox.MessageSolution = "Check that the chosen folder contains images (i.e., a '.jpg' suffix), contains" + Environment.NewLine;
-                messageBox.MessageSolution += "videos (i.e., an '.avi' or '.mp4' suffix), or open a different folder." + Environment.NewLine;
-                messageBox.MessageResult += "Would you like to choose another folder?";
-                messageBox.IconType = MessageBoxImage.Question;
-                messageBox.ButtonType = MessageBoxButton.YesNo;
+                DialogMessageBox messageBox = new DialogMessageBox("No images found in the image set folder.", this, MessageBoxButton.YesNo);
+                messageBox.Message.Problem = "There don't seem to be any images or videos in your chosen folder:" + Environment.NewLine;
+                messageBox.Message.Problem += "\u2022 " + this.FolderPath + Environment.NewLine;
+                messageBox.Message.Reason = "\u2022 The folder has no JPG files in it (files ending in '.jpg'), and" + Environment.NewLine;
+                messageBox.Message.Reason += "\u2022 The folder has no AVI files in it (files ending in '.avi'), and" + Environment.NewLine;
+                messageBox.Message.Reason += "\u2022 The folder has no MP4 files in it (files ending in '.mp4'), or" + Environment.NewLine;
+                messageBox.Message.Reason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images or videos.";
+                messageBox.Message.Solution = "Check that the chosen folder contains images (i.e., a '.jpg' suffix), contains" + Environment.NewLine;
+                messageBox.Message.Solution += "videos (i.e., an '.avi' or '.mp4' suffix), or open a different folder." + Environment.NewLine;
+                messageBox.Message.Result += "Would you like to choose another folder?";
+                messageBox.Message.Icon = MessageBoxImage.Question;
                 if (messageBox.ShowDialog() == false)
                 {
                     return false;
@@ -457,20 +453,18 @@ namespace Timelapse
                 // warn the user if there are any ambiguous dates in terms of day/month or month/day order
                 if (unambiguousDayMonthOrder == false)
                 {
-                    DialogMessageBox dlgMB = new DialogMessageBox(this);
-                    dlgMB.MessageTitle = "Timelapse was unsure about the month / day order of your file(s) dates.";
-                    dlgMB.MessageProblem = "Timelapse is extracting the dates from your files. However, it cannot tell if the dates are in day/month order, or month/day order.";
-                    dlgMB.MessageReason = "File date formats can be ambiguous. For example, is 2016/03/05 March 5 or May 3?";
-                    dlgMB.MessageSolution = "If Timelapse gets it wrong, you can correct the dates by choosing" + Environment.NewLine;
-                    dlgMB.MessageSolution += "\u2022 Edit Menu -> Dates -> Swap Day and Month.";
-                    dlgMB.MessageHint = "If you are unsure about the correct date, try the following." + Environment.NewLine;
-                    dlgMB.MessageHint += "\u2022 If your camera prints the date on the image, check that." + Environment.NewLine;
-                    dlgMB.MessageHint += "\u2022 Look at the files to see what season it is (e.g., winter vs. summer)." + Environment.NewLine;
-                    dlgMB.MessageHint += "\u2022 Examine the creation date of the file." + Environment.NewLine;
-                    dlgMB.MessageHint += "\u2022 Check your own records.";
-                    dlgMB.ButtonType = MessageBoxButton.OK;
-                    dlgMB.IconType = MessageBoxImage.Information;
-                    dlgMB.ShowDialog();
+                    DialogMessageBox messageBox = new DialogMessageBox("Timelapse was unsure about the month / day order of your file(s) dates.", this);
+                    messageBox.Message.Problem = "Timelapse is extracting the dates from your files. However, it cannot tell if the dates are in day/month order, or month/day order.";
+                    messageBox.Message.Reason = "File date formats can be ambiguous. For example, is 2016/03/05 March 5 or May 3?";
+                    messageBox.Message.Solution = "If Timelapse gets it wrong, you can correct the dates by choosing" + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 Edit Menu -> Dates -> Swap Day and Month.";
+                    messageBox.Message.Hint = "If you are unsure about the correct date, try the following." + Environment.NewLine;
+                    messageBox.Message.Hint += "\u2022 If your camera prints the date on the image, check that." + Environment.NewLine;
+                    messageBox.Message.Hint += "\u2022 Look at the files to see what season it is (e.g., winter vs. summer)." + Environment.NewLine;
+                    messageBox.Message.Hint += "\u2022 Examine the creation date of the file." + Environment.NewLine;
+                    messageBox.Message.Hint += "\u2022 Check your own records.";
+                    messageBox.Message.Icon = MessageBoxImage.Information;
+                    messageBox.ShowDialog();
                 }
                 this.OnImageLoadingComplete();
 
@@ -693,61 +687,73 @@ namespace Timelapse
             {
                 // other than custom filters these cases shouldn't be reachable as the menu options for the filters will be disabled if there aren't any
                 // corresponding images
-                DialogMessageBox messageBox = new DialogMessageBox(this);
+                string status;
+                string title;
+                string problem;
+                string reason = null;
+                string hint;
                 if (filter == ImageFilter.Corrupted)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "no corrupted files to display.");
-                    messageBox.MessageTitle = "Corrupted filter selected, but no files are marked as corrupted.";
-                    messageBox.MessageProblem = "None of the files in this image set are corrupted images, so nothing can be shown.";
-                    messageBox.MessageReason = "None of the files have their 'ImageQuality' field set to Corrupted.";
-                    messageBox.MessageHint = "If you have files you think should be marked as 'Corrupted', set their ImageQuality field to Corrupted.";
+                    status = "no corrupted files to display.";
+                    title = "Corrupted filter selected, but no files are marked as corrupted.";
+                    problem = "None of the files in this image set are corrupted images, so nothing can be shown.";
+                    reason = "None of the files have their 'ImageQuality' field set to Corrupted.";
+                    hint = "If you have files you think should be marked as 'Corrupted', set their ImageQuality field to Corrupted.";
                 }
                 else if (filter == ImageFilter.Custom)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "no files to display.");
-                    messageBox.MessageTitle = "Custom filter selected, but no files match the specified filter.";
-                    messageBox.MessageProblem = "None of the files in this image set match the specified filter, so nothing can be shown.";
-                    messageBox.MessageHint = "Try to create another custom filter.";
+                    status = "no files to display.";
+                    title = "Custom filter selected, but no files match the specified filter.";
+                    problem = "None of the files in this image set match the specified filter, so nothing can be shown.";
+                    hint = "Try to create another custom filter.";
                 }
                 else if (filter == ImageFilter.Dark)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "no dark files to display.");
-                    messageBox.MessageTitle = "Dark filter selected, but no files are marked as dark.";
-                    messageBox.MessageProblem = "None of the files in this image set are dark, so nothing can be shown.";
-                    messageBox.MessageReason = "None of the files have their 'ImageQuality' field set to Dark.";
-                    messageBox.MessageHint = "If you have files you think should be marked as 'Dark', set their ImageQuality field to Dark.";
+                    status = "no dark files to display.";
+                    title = "Dark filter selected, but no files are marked as dark.";
+                    problem = "None of the files in this image set are dark, so nothing can be shown.";
+                    reason = "None of the files have their 'ImageQuality' field set to Dark.";
+                    hint = "If you have files you think should be marked as 'Dark', set their ImageQuality field to Dark.";
                 }
                 else if (filter == ImageFilter.Missing)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "no missing files to display.");
-                    messageBox.MessageTitle = "Missing filter selected, but no files are marked as missing.";
-                    messageBox.MessageProblem = "None of the files in this image set are missing, so nothing can be shown.";
-                    messageBox.MessageReason = "None of the files have their 'ImageQuality' field set to Missing.";
-                    messageBox.MessageHint = "If you have files you think should be marked as 'Missing', set their ImageQuality field to Missing.";
+                    status = "no missing files to display.";
+                    title = "Missing filter selected, but no files are marked as missing.";
+                    problem = "None of the files in this image set are missing, so nothing can be shown.";
+                    reason = "None of the files have their 'ImageQuality' field set to Missing.";
+                    hint = "If you have files you think should be marked as 'Missing', set their ImageQuality field to Missing.";
                 }
                 else if (filter == ImageFilter.MarkedForDeletion)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "No files marked for deletion to display.");
-                    messageBox.MessageTitle = "Delete filter selected, but no files are marked for deletion";
-                    messageBox.MessageProblem = "None of the files in this image set are marked for deletion, so nothing can be shown.";
-                    messageBox.MessageReason = "None of the files have their 'Delete?' field checked.";
-                    messageBox.MessageHint = "If you have files you think should be marked for deletion, check their Delete? field.";
+                    status = "No files marked for deletion to display.";
+                    title = "Delete filter selected, but no files are marked for deletion";
+                    problem = "None of the files in this image set are marked for deletion, so nothing can be shown.";
+                    reason = "None of the files have their 'Delete?' field checked.";
+                    hint = "If you have files you think should be marked for deletion, check their Delete? field.";
                 }
                 else if (filter == ImageFilter.Ok)
                 {
-                    StatusBarUpdate.Message(this.statusBar, "no light files to display.");
-                    messageBox.MessageTitle = "Light filter selected, but no files are marked as light.";
-                    messageBox.MessageProblem = "None of the files in this image set are light, so nothing can be shown.";
-                    messageBox.MessageReason = "None of the files have their 'ImageQuality' field set to OK.";
-                    messageBox.MessageHint = "If you have files you think should be marked as 'light', set their ImageQuality field to OK.";
+                    status = "no light files to display.";
+                    title = "Light filter selected, but no files are marked as light.";
+                    problem = "None of the files in this image set are light, so nothing can be shown.";
+                    reason = "None of the files have their 'ImageQuality' field set to OK.";
+                    hint = "If you have files you think should be marked as 'light', set their ImageQuality field to OK.";
                 }
                 else
                 {
                     throw new NotSupportedException(String.Format("Unhandled filter {0}.", filter));
                 }
-                messageBox.ButtonType = MessageBoxButton.OK;
-                messageBox.IconType = MessageBoxImage.Information;
-                messageBox.MessageResult = "The filter will not be applied.";
+
+                StatusBarUpdate.Message(this.statusBar, status);
+                DialogMessageBox messageBox = new DialogMessageBox(title, this);
+                messageBox.Message.Icon = MessageBoxImage.Information;
+                messageBox.Message.Problem = problem;
+                if (reason != null)
+                {
+                    messageBox.Message.Reason = reason;
+                }
+                messageBox.Message.Hint = hint;
+                messageBox.Message.Result = "The filter will not be applied.";
                 messageBox.ShowDialog();
 
                 if (this.state.ImageFilter == filter)
@@ -1649,23 +1655,21 @@ namespace Timelapse
         {
             if (this.state.ImageFilter != ImageFilter.All)
             {
-                DialogMessageBox dlgMB = new DialogMessageBox(this);
-                dlgMB.MessageTitle = "Exporting to a CSV file on a filtered view...";
-                dlgMB.MessageWhat = "Only a subset of your data will be exported to the CSV file.";
+                DialogMessageBox messageBox = new DialogMessageBox("Exporting to a CSV file on a filtered view...", this, MessageBoxButton.OKCancel);
+                messageBox.Message.What = "Only a subset of your data will be exported to the CSV file.";
 
-                dlgMB.MessageReason = "As your filter (in the Filter menu) is not set to view 'All', ";
-                dlgMB.MessageReason += "only data for those files displayed by this filter will be exported. ";
+                messageBox.Message.Reason = "As your filter (in the Filter menu) is not set to view 'All', ";
+                messageBox.Message.Reason += "only data for those files displayed by this filter will be exported. ";
 
-                dlgMB.MessageSolution = "If you want to export just this subset, then " + Environment.NewLine;
-                dlgMB.MessageSolution += "\u2022 click Okay" + Environment.NewLine + Environment.NewLine;
-                dlgMB.MessageSolution += "If you want to export all your data for all your files, then " + Environment.NewLine;
-                dlgMB.MessageSolution += "\u2022 click Cancel," + Environment.NewLine;
-                dlgMB.MessageSolution += "\u2022 select 'All Files' in the Filter menu, " + Environment.NewLine;
-                dlgMB.MessageSolution += "\u2022 retry exporting your data as a CSV file.";
+                messageBox.Message.Solution = "If you want to export just this subset, then " + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 click Okay" + Environment.NewLine + Environment.NewLine;
+                messageBox.Message.Solution += "If you want to export all your data for all your files, then " + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 click Cancel," + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 select 'All Files' in the Filter menu, " + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 retry exporting your data as a CSV file.";
 
-                dlgMB.IconType = MessageBoxImage.Warning;
-                dlgMB.ButtonType = MessageBoxButton.OKCancel;
-                bool? msg_result = dlgMB.ShowDialog();
+                messageBox.Message.Icon = MessageBoxImage.Warning;
+                bool? msg_result = messageBox.ShowDialog();
 
                 // Set the filter to show all images and a valid image
                 if (msg_result != true)
@@ -1685,14 +1689,12 @@ namespace Timelapse
             catch (IOException exception)
             {
                 // Can't write the spreadsheet file
-                DialogMessageBox messageBox = new DialogMessageBox(this);
-                messageBox.IconType = MessageBoxImage.Error;
-                messageBox.ButtonType = MessageBoxButton.OK;
-                messageBox.MessageTitle = "Can't write the spreadsheet file.";
-                messageBox.MessageProblem = "The following file can't be written: " + csvFilePath;
-                messageBox.MessageReason = "You may already have it open in Excel or another application.";
-                messageBox.MessageSolution = "If the file is open in another application, close it and try again.";
-                messageBox.MessageHint = String.Format("{0}: {1}", exception.GetType().FullName, exception.Message);
+                DialogMessageBox messageBox = new DialogMessageBox("Can't write the spreadsheet file.", this);
+                messageBox.Message.Icon = MessageBoxImage.Error;
+                messageBox.Message.Problem = "The following file can't be written: " + csvFilePath;
+                messageBox.Message.Reason = "You may already have it open in Excel or another application.";
+                messageBox.Message.Solution = "If the file is open in another application, close it and try again.";
+                messageBox.Message.Hint = String.Format("{0}: {1}", exception.GetType().FullName, exception.Message);
                 messageBox.ShowDialog();
                 return;
             }
@@ -1731,15 +1733,12 @@ namespace Timelapse
         {
             if (!this.dataHandler.ImageCache.Current.IsDisplayable())
             {
-                DialogMessageBox dlgMB = new DialogMessageBox(this);
-                dlgMB.IconType = MessageBoxImage.Error;
-                dlgMB.ButtonType = MessageBoxButton.OK;
-
-                dlgMB.MessageTitle = "Can't export this file!";
-                dlgMB.MessageProblem = "We can't export the currently displayed file.";
-                dlgMB.MessageReason = "It is likely a corrupted or missing file.";
-                dlgMB.MessageSolution = "Make sure you have navigated to, and are displaying, a valid file before you try to export it.";
-                dlgMB.ShowDialog();
+                DialogMessageBox messageBox = new DialogMessageBox("Can't export this file!", this);
+                messageBox.Message.Icon = MessageBoxImage.Error;
+                messageBox.Message.Problem = "We can't export the currently displayed file.";
+                messageBox.Message.Reason = "It is likely a corrupted or missing file.";
+                messageBox.Message.Solution = "Make sure you have navigated to, and are displaying, a valid file before you try to export it.";
+                messageBox.ShowDialog();
                 return;
             }
             // Get the file name of the current image 
@@ -1778,30 +1777,28 @@ namespace Timelapse
         private void MenuItemImportFromCsv_Click(object sender, RoutedEventArgs e)
         {
             string csvFilePath;
-            DialogMessageBox dlgMB = new DialogMessageBox(this);
-            dlgMB.MessageTitle = "Importing CSV data rules...";
-            dlgMB.MessageWhat = "Importing data from a CSV (comma separated value) file will only work if you follow the rules below." + Environment.NewLine;
-            dlgMB.MessageWhat += "Otherwise your Timelapse data may become corrupted.";
+            DialogMessageBox messageBox = new DialogMessageBox("Importing CSV data rules...", this, MessageBoxButton.OKCancel);
+            messageBox.Message.What = "Importing data from a CSV (comma separated value) file will only work if you follow the rules below." + Environment.NewLine;
+            messageBox.Message.What += "Otherwise your Timelapse data may become corrupted.";
 
-            dlgMB.MessageReason = "Timelapse requires the CSV file and its data to follow a specific format.";
+            messageBox.Message.Reason = "Timelapse requires the CSV file and its data to follow a specific format.";
 
-            dlgMB.MessageSolution = "\u2022 Only modify and import a CSV file previously exported by Timelapse." + Environment.NewLine;
-            dlgMB.MessageSolution = "\u2022 Don't change the File or Folder names" + Environment.NewLine;
-            dlgMB.MessageSolution += "\u2022 Do not change the order or names of any of the columns" + Environment.NewLine;
-            dlgMB.MessageSolution += "\u2022 Restrict data modification as follows:" + Environment.NewLine;
-            dlgMB.MessageSolution += "    \u2022 Counter data to positive integers" + Environment.NewLine;
-            dlgMB.MessageSolution += "    \u2022 Flag data to either 'true' or 'false'" + Environment.NewLine;
-            dlgMB.MessageSolution += "    \u2022 FixedChoice data to a string that exactly match one of the FixedChoice menu options, or empty." + Environment.NewLine;
-            dlgMB.MessageSolution += "    \u2022 Note data to any string, or empty." + Environment.NewLine;
-            dlgMB.MessageSolution += "    \u2022 As Date / Time field formats are sometimes altered by spreadsheets," + Environment.NewLine;
-            dlgMB.MessageSolution += "           any changes to those fields will be ignored during the import.";
+            messageBox.Message.Solution = "\u2022 Only modify and import a CSV file previously exported by Timelapse." + Environment.NewLine;
+            messageBox.Message.Solution = "\u2022 Don't change the File or Folder names" + Environment.NewLine;
+            messageBox.Message.Solution += "\u2022 Do not change the order or names of any of the columns" + Environment.NewLine;
+            messageBox.Message.Solution += "\u2022 Restrict data modification as follows:" + Environment.NewLine;
+            messageBox.Message.Solution += "    \u2022 Counter data to positive integers" + Environment.NewLine;
+            messageBox.Message.Solution += "    \u2022 Flag data to either 'true' or 'false'" + Environment.NewLine;
+            messageBox.Message.Solution += "    \u2022 FixedChoice data to a string that exactly match one of the FixedChoice menu options, or empty." + Environment.NewLine;
+            messageBox.Message.Solution += "    \u2022 Note data to any string, or empty." + Environment.NewLine;
+            messageBox.Message.Solution += "    \u2022 As Date / Time field formats are sometimes altered by spreadsheets," + Environment.NewLine;
+            messageBox.Message.Solution += "           any changes to those fields will be ignored during the import.";
 
-            dlgMB.MessageResult = "Timelapse will create a backup .ddb file in the Backups folder, and will then try its best.";
-            dlgMB.MessageHint = "After you import, check your data. If it is not what you expect, restore your data by using that backup file.";
+            messageBox.Message.Result = "Timelapse will create a backup .ddb file in the Backups folder, and will then try its best.";
+            messageBox.Message.Hint = "After you import, check your data. If it is not what you expect, restore your data by using that backup file.";
 
-            dlgMB.IconType = MessageBoxImage.Warning;
-            dlgMB.ButtonType = MessageBoxButton.OKCancel;
-            bool? msg_result = dlgMB.ShowDialog();
+            messageBox.Message.Icon = MessageBoxImage.Warning;
+            bool? msg_result = messageBox.ShowDialog();
 
             // Set the filter to show all images and a valid image
             if (msg_result != true)
@@ -1833,38 +1830,34 @@ namespace Timelapse
                 List<string> importErrors;
                 if (csvReader.TryImportFromCsv(csvFilePath, this.dataHandler.ImageDatabase, out importErrors) == false)
                 {
-                    DialogMessageBox messageBox = new DialogMessageBox(this);
-                    messageBox.IconType = MessageBoxImage.Error;
-                    messageBox.ButtonType = MessageBoxButton.OK;
-                    messageBox.MessageTitle = "Can't import the CSV file.";
-                    messageBox.MessageProblem = String.Format("The file {0} could not be read.", csvFilePath);
-                    messageBox.MessageReason = "The CSV file is not compatible with the current image set.";
-                    messageBox.MessageSolution = "Check that:" + Environment.NewLine;
-                    messageBox.MessageSolution += "\u2022 The first row of the CSV file is a header line." + Environment.NewLine;
-                    messageBox.MessageSolution += "\u2022 The column names in the header line match the database.";
-                    messageBox.MessageSolution += "\u2022 Choice values use the correct case.";
-                    messageBox.MessageSolution += "\u2022 Counter values are numbers.";
-                    messageBox.MessageSolution += "\u2022 Flag values are either 'true' or 'false'.";
-                    messageBox.MessageResult = "Either no data was imported or invalid parts of the CSV were skipped.";
-                    messageBox.MessageHint = "The errors encountered were:";
+                    messageBox = new DialogMessageBox("Can't import the CSV file.", this);
+                    messageBox.Message.Icon = MessageBoxImage.Error;
+                    messageBox.Message.Problem = String.Format("The file {0} could not be read.", csvFilePath);
+                    messageBox.Message.Reason = "The CSV file is not compatible with the current image set.";
+                    messageBox.Message.Solution = "Check that:" + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 The first row of the CSV file is a header line." + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 The column names in the header line match the database.";
+                    messageBox.Message.Solution += "\u2022 Choice values use the correct case.";
+                    messageBox.Message.Solution += "\u2022 Counter values are numbers.";
+                    messageBox.Message.Solution += "\u2022 Flag values are either 'true' or 'false'.";
+                    messageBox.Message.Result = "Either no data was imported or invalid parts of the CSV were skipped.";
+                    messageBox.Message.Hint = "The errors encountered were:";
                     foreach (string importError in importErrors)
                     {
-                        messageBox.MessageHint += "\u2022 " + importError;
+                        messageBox.Message.Hint += "\u2022 " + importError;
                     }
                     messageBox.ShowDialog();
                 }
             }
             catch (Exception exception)
             {
-                DialogMessageBox messageBox = new DialogMessageBox(this);
-                messageBox.IconType = MessageBoxImage.Error;
-                messageBox.ButtonType = MessageBoxButton.OK;
-                messageBox.MessageTitle = "Can't import the CSV file.";
-                messageBox.MessageProblem = String.Format("The file {0} could not be opened.", csvFilePath);
-                messageBox.MessageReason = "Most likely the file is open in another program.";
-                messageBox.MessageSolution = "If the file is open in another program, close it.";
-                messageBox.MessageResult = String.Format("{0}: {1}", exception.GetType().FullName, exception.Message);
-                messageBox.MessageHint = "Is the file open in Excel?";
+                messageBox = new DialogMessageBox("Can't import the CSV file.", this);
+                messageBox.Message.Icon = MessageBoxImage.Error;
+                messageBox.Message.Problem = String.Format("The file {0} could not be opened.", csvFilePath);
+                messageBox.Message.Reason = "Most likely the file is open in another program.";
+                messageBox.Message.Solution = "If the file is open in another program, close it.";
+                messageBox.Message.Result = String.Format("{0}: {1}", exception.GetType().FullName, exception.Message);
+                messageBox.Message.Hint = "Is the file open in Excel?";
                 messageBox.ShowDialog();
             }
 
@@ -1954,13 +1947,11 @@ namespace Timelapse
                 if (firstImageDisplayable == -1)
                 {
                     // There are no displayable images, and thus no metadata to choose from, so abort
-                    DialogMessageBox dlgMB = new DialogMessageBox(this);
-                    dlgMB.MessageTitle = "Populate a data field with image metadata of your choosing.";
-                    dlgMB.MessageProblem = "We can't extract any metadata, as there are no valid displayable file." + Environment.NewLine;
-                    dlgMB.MessageReason += "Timelapse must have at least one valid file in order to get its metadata. All files are either missing or corrupted.";
-                    dlgMB.IconType = MessageBoxImage.Error;
-                    dlgMB.ButtonType = MessageBoxButton.OK;
-                    dlgMB.ShowDialog();
+                    DialogMessageBox messageBox = new DialogMessageBox("Populate a data field with image metadata of your choosing.", this);
+                    messageBox.Message.Problem = "We can't extract any metadata, as there are no valid displayable file." + Environment.NewLine;
+                    messageBox.Message.Reason += "Timelapse must have at least one valid file in order to get its metadata. All files are either missing or corrupted.";
+                    messageBox.Message.Icon = MessageBoxImage.Error;
+                    messageBox.ShowDialog();
                     return;
                 }
 
@@ -2053,13 +2044,11 @@ namespace Timelapse
             // if there aren't any images to delete. Still,...
             if (imagesToDelete == null || imagesToDelete.Count < 1)
             {
-                DialogMessageBox dlgMB = new DialogMessageBox(this);
-                dlgMB.MessageTitle = "No files are marked for deletion";
-                dlgMB.MessageProblem = "You are trying to delete files marked for deletion, but none of the files have their 'Delete?' field checked.";
-                dlgMB.MessageHint = "If you have files that you think should be deleted, check thier Delete? field.";
-                dlgMB.IconType = MessageBoxImage.Information;
-                dlgMB.ButtonType = MessageBoxButton.OK;
-                dlgMB.ShowDialog();
+                DialogMessageBox messageBox = new DialogMessageBox("No files are marked for deletion", this);
+                messageBox.Message.Problem = "You are trying to delete files marked for deletion, but none of the files have their 'Delete?' field checked.";
+                messageBox.Message.Hint = "If you have files that you think should be deleted, check thier Delete? field.";
+                messageBox.Message.Icon = MessageBoxImage.Information;
+                messageBox.ShowDialog();
                 return;
             }
 
@@ -2257,15 +2246,13 @@ namespace Timelapse
                 else
                 {
                     // Just a corrupted image
-                    DialogMessageBox dlgMB = new DialogMessageBox(this);
-                    dlgMB.MessageTitle = "Can't correct for daylight savings time.";
-                    dlgMB.MessageProblem = "This is a corrupted file.  ";
-                    dlgMB.MessageSolution = "To correct for daylight savings time, you need to:" + Environment.NewLine;
-                    dlgMB.MessageSolution += "\u2022 be displaying a file with a valid date ";
-                    dlgMB.MessageSolution += "\u2022 where that file should be the one at the daylight savings time threshold.";
-                    dlgMB.IconType = MessageBoxImage.Exclamation;
-                    dlgMB.ButtonType = MessageBoxButton.OK;
-                    dlgMB.ShowDialog();
+                    DialogMessageBox messageBox = new DialogMessageBox("Can't correct for daylight savings time.", this);
+                    messageBox.Message.Problem = "This is a corrupted file.  ";
+                    messageBox.Message.Solution = "To correct for daylight savings time, you need to:" + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 be displaying a file with a valid date ";
+                    messageBox.Message.Solution += "\u2022 where that file should be the one at the daylight savings time threshold.";
+                    messageBox.Message.Icon = MessageBoxImage.Exclamation;
+                    messageBox.ShowDialog();
                     return;
                 }
             }
@@ -2649,18 +2636,16 @@ namespace Timelapse
 
         private bool TryPromptAndChangeToAllFilter(string messageTitle, string messageProblemFirstLine, bool validImageRequired)
         {
-            DialogMessageBox dlgMB = new DialogMessageBox(this);
-            dlgMB.MessageTitle = messageTitle;
-            dlgMB.MessageProblem = messageProblemFirstLine + Environment.NewLine;
-            dlgMB.MessageProblem += "\u2022 be filtered to view all files (normally set in the Filter menu)";
+            DialogMessageBox messageBox = new DialogMessageBox(messageTitle, this, MessageBoxButton.OKCancel);
+            messageBox.Message.Problem = messageProblemFirstLine + Environment.NewLine;
+            messageBox.Message.Problem += "\u2022 be filtered to view all files (normally set in the Filter menu)";
             if (validImageRequired)
             {
-                dlgMB.MessageProblem += Environment.NewLine + "\u2022 be displaying a valid file";
+                messageBox.Message.Problem += Environment.NewLine + "\u2022 be displaying a valid file";
             }
-            dlgMB.MessageSolution = "Select 'Ok' for Timelapse to do the above actions for you.";
-            dlgMB.IconType = MessageBoxImage.Exclamation;
-            dlgMB.ButtonType = MessageBoxButton.OKCancel;
-            bool? changeFilterToAll = dlgMB.ShowDialog();
+            messageBox.Message.Solution = "Select 'Ok' for Timelapse to do the above actions for you.";
+            messageBox.Message.Icon = MessageBoxImage.Exclamation;
+            bool? changeFilterToAll = messageBox.ShowDialog();
 
             // Set the filter to show all images and a valid image
             if (changeFilterToAll == true)

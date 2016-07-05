@@ -86,17 +86,16 @@ namespace Timelapse.Util
             if (currentVersion < publicallyAvailableVersion)
             {
                 // ask the user if he would like to download the new version  
-                DialogMessageBox messageBox = new DialogMessageBox(Application.Current.MainWindow);
-                messageBox.MessageTitle = String.Format("A new version of {0} is available.", this.applicationName);
-                messageBox.MessageWhat = String.Format("You a running an old version of {0}: version {1}", this.applicationName, currentVersion);
-                messageBox.MessageReason = String.Format("A new version of {0} is available: version {1}", this.applicationName, publicallyAvailableVersion);
-                messageBox.MessageSolution = "Select 'Yes' to go to the website and download it.";
-                messageBox.MessageResult = "The new version will contain these changes and more:";
-                messageBox.MessageResult += changes;
-                messageBox.MessageHint = "\u2022 We recommend downloading the latest version." + Environment.NewLine;
-                messageBox.MessageHint += "\u2022 To see all changes, go to http://saul.cpsc.ucalgary.ca/timelapse. Select 'Version history' from the side bar.";
-                messageBox.IconType = MessageBoxImage.Exclamation;
-                messageBox.ButtonType = MessageBoxButton.YesNo;
+                string title = String.Format("A new version of {0} is available.", this.applicationName);
+                DialogMessageBox messageBox = new DialogMessageBox(title, Application.Current.MainWindow, MessageBoxButton.YesNo);
+                messageBox.Message.What = String.Format("You a running an old version of {0}: version {1}", this.applicationName, currentVersion);
+                messageBox.Message.Reason = String.Format("A new version of {0} is available: version {1}", this.applicationName, publicallyAvailableVersion);
+                messageBox.Message.Solution = "Select 'Yes' to go to the website and download it.";
+                messageBox.Message.Result = "The new version will contain these changes and more:";
+                messageBox.Message.Result += changes;
+                messageBox.Message.Hint = "\u2022 We recommend downloading the latest version." + Environment.NewLine;
+                messageBox.Message.Hint += "\u2022 To see all changes, go to http://saul.cpsc.ucalgary.ca/timelapse. Select 'Version history' from the side bar.";
+                messageBox.Message.Icon = MessageBoxImage.Exclamation;
                 bool? messageBoxResult = messageBox.ShowDialog();
 
                 // Set the filter to show all images and a valid image
@@ -108,11 +107,9 @@ namespace Timelapse.Util
             }
             else if (showNoUpdatesMessage)
             {
-                DialogMessageBox messageBox = new DialogMessageBox(Application.Current.MainWindow);
-                messageBox.MessageTitle = String.Format("No updates to {0} are available.", this.applicationName);
-                messageBox.MessageReason = String.Format("You a running the latest version of {0}, version: {1}", this.applicationName, currentVersion);
-                messageBox.IconType = MessageBoxImage.Information;
-                messageBox.ButtonType = MessageBoxButton.OK;
+                DialogMessageBox messageBox = new DialogMessageBox(String.Format("No updates to {0} are available.", this.applicationName), Application.Current.MainWindow);
+                messageBox.Message.Reason = String.Format("You a running the latest version of {0}, version: {1}", this.applicationName, currentVersion);
+                messageBox.Message.Icon = MessageBoxImage.Information;
                 bool? messageBoxResult = messageBox.ShowDialog();
             }
 
