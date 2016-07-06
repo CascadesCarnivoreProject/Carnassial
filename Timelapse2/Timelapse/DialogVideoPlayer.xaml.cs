@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -59,9 +60,14 @@ namespace Timelapse
         #endregion
 
         #region Initializing, loading and unloading
-        public DialogVideoPlayer()
+        public DialogVideoPlayer(Window owner)
         {
+            if (owner == null)
+            {
+                throw new ArgumentNullException("owner");
+            }
             this.InitializeComponent();
+            this.Owner = owner;
             this.timer.Interval = TimeSpan.FromSeconds(1);
             this.timer.Tick += this.Timer_Tick;
         }
@@ -69,6 +75,8 @@ namespace Timelapse
         // When the video player is loaded, try to start playing the video
         private void VidPlayer_Loaded(object sender, RoutedEventArgs e)
         {
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
             this.Play();
         }
 

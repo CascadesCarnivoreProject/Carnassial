@@ -2490,18 +2490,28 @@ namespace Timelapse
             this.dlgDataView.Show();
         }
 
+        // Display the Video Player Window
         private void MenuItemVideoViewer_Click(object sender, RoutedEventArgs e)
         {
             Uri uri = new System.Uri(Path.Combine(this.dataHandler.ImageDatabase.FolderPath, this.dataHandler.ImageCache.Current.FileName));
 
             // Check to see if we need to create the Video Player dialog
-            if (this.dlgVideoPlayer == null)
+            if (this.dlgVideoPlayer == null || this.dlgVideoPlayer.IsLoaded != true)
             {
-                this.dlgVideoPlayer = new DialogVideoPlayer();
+                this.dlgVideoPlayer = new DialogVideoPlayer(this);
                 this.dlgVideoPlayer.Owner = this;
+            }
+
+            // If the video player is already loaded, ensure that it is not minimized
+            if (this.dlgVideoPlayer.IsLoaded)
+            {
+                this.dlgVideoPlayer.WindowState = WindowState.Normal;
+            }
+            else
+            { 
                 this.dlgVideoPlayer.Show();
             }
-            this.RefreshVideoPlayerDialogWindow();
+            this.RefreshVideoPlayerDialogWindow(); // refreshing causes the video (if any) to play
         }
 
         // Update the video player to point to the currently displayed image/video file
