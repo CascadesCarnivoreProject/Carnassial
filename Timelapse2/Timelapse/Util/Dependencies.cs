@@ -26,7 +26,8 @@ namespace Timelapse.Util
         {
             "exiftool(-k).exe",
             "Microsoft.WindowsAPICodePack.dll", // required by Microsoft.WindowsAPICodePack.Shell.dll
-            "Microsoft.WindowsAPICodePack.Shell.dll" // just for TimelapseWindow's use of CommonOpenFileDialog
+            "Microsoft.WindowsAPICodePack.Shell.dll", // just for TimelapseWindow's use of CommonOpenFileDialog
+            "Xceed.Wpf.Toolkit.dll"
         };
 
         /// <summary>

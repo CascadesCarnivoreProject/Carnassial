@@ -117,7 +117,10 @@ namespace Timelapse.Database
                             else if (dataLabel == Constants.DatabaseColumn.Date ||
                                      dataLabel == Constants.DatabaseColumn.Time)
                             {
-                                // also don't update date and time, as Excel will often change the date format when the csv file is opened, changed and saved.
+                                // as a quick fix also don't update date and time as Excel tends to change 
+                                // - dates from dd-MMM-yyyy to dd-MMM-yy 
+                                // - times from HH:mm:ss to H:mm:ss
+                                // when saving csv files
                                 continue;
                             }
                             else

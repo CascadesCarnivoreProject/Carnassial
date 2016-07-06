@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Input;
-using Timelapse.Database;
 
 namespace Timelapse.Util
 {
@@ -15,7 +14,6 @@ namespace Timelapse.Util
         public Point ControlWindowSize { get; set; }
         public int DarkPixelThreshold { get; set; }
         public double DarkPixelRatioThreshold { get; set; }
-        public ImageFilter ImageFilter { get; set; }
         public bool ImageNavigatorSliderDragging { get; set; }
         public bool IsMouseOverCounter { get; set; }
         public DateTime MostRecentDragEvent { get; set; }
@@ -32,7 +30,6 @@ namespace Timelapse.Util
             this.DarkPixelRatioThreshold = Constants.Images.DarkPixelRatioThresholdDefault;
 
             this.ControlWindowSize = new Point(0, 0);
-            this.ImageFilter = ImageFilter.All;
             this.ImageNavigatorSliderDragging = false;
             this.IsMouseOverCounter = false;
             this.keyRepeatCount = 0;
@@ -45,7 +42,9 @@ namespace Timelapse.Util
 
         public int GetKeyRepeatCount(KeyEventArgs key)
         {
-            if (key.IsRepeat && this.mostRecentKey.IsRepeat && (key.Key == this.mostRecentKey.Key))
+            // check mostRecentKey for null as key delivery is not entirely deterministic
+            // it's possible WPF will send the first key as a repeat if the user holds a key down or starts typing while the main window is opening
+            if (key.IsRepeat && this.mostRecentKey != null && this.mostRecentKey.IsRepeat && (key.Key == this.mostRecentKey.Key))
             {
                 ++this.keyRepeatCount;
             }

@@ -57,11 +57,11 @@ namespace Timelapse.UnitTests
             // check images after initial add and again after reopen and application of filters
             // checks are not performed after last filter in list is applied
             string currentDirectoryName = Path.GetFileName(imageDatabase.FolderPath);
-            imageDatabase.SelectDataTableImagesAll();
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
             foreach (ImageFilter nextFilter in new List<ImageFilter>() { ImageFilter.All, ImageFilter.Ok, ImageFilter.Ok })
             {
                 Assert.IsTrue(imageDatabase.CurrentlySelectedImageCount == imageExpectations.Count);
-                imageDatabase.SelectDataTableImagesAll();
+                imageDatabase.SelectDataTableImages(ImageFilter.All);
                 Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == imageExpectations.Count);
                 int firstDisplayableImage = imageDatabase.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
                 Assert.IsTrue(firstDisplayableImage == Constants.DefaultImageRowIndex);
@@ -95,13 +95,6 @@ namespace Timelapse.UnitTests
                 Assert.IsTrue(imageDatabase.ImageDataTable.RowCount > 0);
             }
 
-            imageDatabase.SelectDataTableImagesAll();
-            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount > 0);
-            imageDatabase.AdjustImageTimes(new TimeSpan(1, 2, 3, 4, 5), 0, imageDatabase.CurrentlySelectedImageCount);
-            imageDatabase.AdjustImageTimes(new TimeSpan(-5, -4, -3, -2, -1), 0, imageDatabase.CurrentlySelectedImageCount);
-            int firstNonSwappableImage = DateTimeHandler.SwapDayMonthIsPossible(imageDatabase);
-            Assert.IsTrue(firstNonSwappableImage == 0 || firstNonSwappableImage == 1);
-
             // imageDatabase.TryGetImagesCustom();
             // imageDatabase.UpdateAllImagesInFilteredView();
             // imageDatabase.UpdateID();
@@ -119,6 +112,103 @@ namespace Timelapse.UnitTests
             // this.VerifyDefaultMarkerTableContent(imageDatabase, imageExpectations.Count);
             // imageDatabase.SetMarkerPoints();
             // imageDatabase.UpdateMarkers();
+
+            // date manipulation
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount > 0);
+            List<DateTime> imageTimesBeforeAdjustment = imageDatabase.GetImageTimes().ToList();
+            TimeSpan adjustment = new TimeSpan(0, 1, 2, 3, 0);
+            imageDatabase.AdjustImageTimes(adjustment);
+            this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, imageDatabase.GetImageTimes().ToList(), adjustment);
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
+            this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, imageDatabase.GetImageTimes().ToList(), adjustment);
+
+            imageTimesBeforeAdjustment = imageDatabase.GetImageTimes().ToList();
+            adjustment = new TimeSpan(-1, -2, -3, -4, 0);
+            int startRow = 1;
+            int endRow = imageDatabase.CurrentlySelectedImageCount - 1; 
+            imageDatabase.AdjustImageTimes(adjustment, startRow, endRow);
+            this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, imageDatabase.GetImageTimes().ToList(), startRow, endRow, adjustment);
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
+            this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, imageDatabase.GetImageTimes().ToList(), startRow, endRow, adjustment);
+
+            int firstNonSwappableImage = DateTimeHandler.SwapDayMonthIsPossible(imageDatabase);
+            Assert.IsTrue(firstNonSwappableImage == 0 || firstNonSwappableImage == 1);
+            imageDatabase.ExchangeDayAndMonthInImageDates();
+            imageDatabase.ExchangeDayAndMonthInImageDates(0, imageDatabase.ImageDataTable.RowCount - 1);
+
+            // custom filter coverage
+            // currently, search terms should be created for all controls except Folder and Time
+            Assert.IsTrue((imageDatabase.TemplateTable.RowCount - 2) == imageDatabase.CustomFilter.SearchTerms.Count);
+            bool dateFilteringRequired;
+            Assert.IsTrue(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
+            Assert.IsFalse(dateFilteringRequired);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Custom) == -1);
+
+            SearchTerm date = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.Date);
+            SearchTerm file = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.File);
+            SearchTerm imageQuality = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.ImageQuality);
+            SearchTerm relativePath = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.RelativePath);
+            SearchTerm markedForDeletion = imageDatabase.CustomFilter.SearchTerms.Single(term => term.Type == Constants.Control.DeleteFlag);
+
+            date.UseForSearching = true;
+            date.Value = DateTimeHandler.ToStandardDateString(new DateTime(2000, 1, 1));
+            Assert.IsTrue(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
+            Assert.IsTrue(dateFilteringRequired);
+            imageDatabase.SelectDataTableImages(ImageFilter.Custom);
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
+
+            date.Operator = Constants.SearchTermOperator.Equal;
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
+            Assert.IsFalse(dateFilteringRequired);
+            imageDatabase.SelectDataTableImages(ImageFilter.Custom);
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 0);
+
+            date.UseForSearching = false;
+            imageDatabase.CustomFilter.TermCombiningOperator = CustomFilterOperator.And;
+
+            file.UseForSearching = true;
+            file.Operator = Constants.SearchTermOperator.Glob;
+            file.Value = "*" + Constants.File.JpgFileExtension.ToUpperInvariant();
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
+            Assert.IsFalse(dateFilteringRequired);
+            imageDatabase.SelectDataTableImages(ImageFilter.Custom);
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
+
+            imageQuality.UseForSearching = true;
+            imageQuality.Operator = Constants.SearchTermOperator.Equal;
+            imageQuality.Value = ImageFilter.Ok.ToString();
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
+            Assert.IsFalse(dateFilteringRequired);
+            imageDatabase.SelectDataTableImages(ImageFilter.Custom);
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
+
+            relativePath.UseForSearching = true;
+            relativePath.Operator = Constants.SearchTermOperator.Equal;
+            relativePath.Value = imageExpectations[0].RelativePath;
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
+            Assert.IsFalse(dateFilteringRequired);
+            imageDatabase.SelectDataTableImages(ImageFilter.Custom);
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
+
+            markedForDeletion.UseForSearching = true;
+            markedForDeletion.Operator = Constants.SearchTermOperator.Equal;
+            markedForDeletion.Value = Constants.Boolean.False;
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
+            Assert.IsFalse(dateFilteringRequired);
+            imageDatabase.SelectDataTableImages(ImageFilter.Custom);
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
+
+            imageQuality.Value = ImageFilter.Dark.ToString();
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
+            Assert.IsFalse(dateFilteringRequired);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.All) == 2);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Corrupted) == 0);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Custom) == 0);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Dark) == 0);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.MarkedForDeletion) == 0);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Missing) == 0);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Ok) == 2);
         }
 
         [TestMethod]
@@ -412,7 +502,7 @@ namespace Timelapse.UnitTests
             }
 
             imageDatabase.AddImages(imagesToInsert, (ImageRow imageProperties, int imageIndex) => { });
-            imageDatabase.SelectDataTableImagesAll();
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
 
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == imagesAndVideos.Length);
             for (int rowIndex = 0; rowIndex < imageDatabase.ImageDataTable.RowCount; ++rowIndex)
@@ -433,7 +523,7 @@ namespace Timelapse.UnitTests
             // load database
             string imageDatabaseBaseFileName = TestConstant.File.DefaultImageDatabaseFileName2023;
             ImageDatabase imageDatabase = this.CloneImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015, imageDatabaseBaseFileName);
-            imageDatabase.SelectDataTableImagesAll();
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount > 0);
 
             // verify template portion
@@ -529,8 +619,6 @@ namespace Timelapse.UnitTests
             closestDisplayableImage = imageDatabase.FindClosestImage(Int64.MaxValue);
             Assert.IsTrue(closestDisplayableImage == imageDatabase.CurrentlySelectedImageCount - 1);
 
-            Assert.IsTrue(imageDatabase.GetImageCountWithCustomFilter(Constants.DatabaseColumn.File + " = 'InvalidValue'") == 0);
-
             Assert.IsFalse(imageDatabase.IsImageDisplayable(-1));
             Assert.IsFalse(imageDatabase.IsImageDisplayable(imageDatabase.CurrentlySelectedImageCount));
 
@@ -616,6 +704,30 @@ namespace Timelapse.UnitTests
 
                 // verify controls are sorted in control order and that control order is ones based
                 Assert.IsTrue(control.ControlOrder == row + 1);
+            }
+        }
+
+        private void VerifyImageTimeAdjustment(List<DateTime> imageTimesBeforeAdjustment, List<DateTime> imageTimesAfterAdjustment, TimeSpan expectedAdjustment)
+        {
+            this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, imageTimesAfterAdjustment, 0, imageTimesBeforeAdjustment.Count - 1, expectedAdjustment);
+        }
+
+        private void VerifyImageTimeAdjustment(List<DateTime> imageTimesBeforeAdjustment, List<DateTime> imageTimesAfterAdjustment, int startRow, int endRow, TimeSpan expectedAdjustment)
+        {
+            for (int row = 0; row < startRow; ++row)
+            {
+                TimeSpan actualAdjustment = imageTimesAfterAdjustment[row] - imageTimesBeforeAdjustment[row];
+                Assert.IsTrue(actualAdjustment == TimeSpan.Zero, "Expected image time not to change but it shifted by {0}.", actualAdjustment);
+            }
+            for (int row = startRow; row <= endRow; ++row)
+            {
+                TimeSpan actualAdjustment = imageTimesAfterAdjustment[row] - imageTimesBeforeAdjustment[row];
+                Assert.IsTrue(actualAdjustment == expectedAdjustment, "Expected image time to change by {0} but it shifted by {1}.", expectedAdjustment, actualAdjustment);
+            }
+            for (int row = endRow + 1; row < imageTimesBeforeAdjustment.Count; ++row)
+            {
+                TimeSpan actualAdjustment = imageTimesAfterAdjustment[row] - imageTimesBeforeAdjustment[row];
+                Assert.IsTrue(actualAdjustment == TimeSpan.Zero, "Expected image time not to change but it shifted by {0}.", actualAdjustment);
             }
         }
 

@@ -31,11 +31,11 @@ namespace Timelapse.Editor.Util
                 {
                     if (control.Type == Constants.DatabaseColumn.Date)
                     {
-                        control.DefaultValue = DateTime.Now.ToString(Constants.Time.DateFormat); // "01-Jun-2016"
+                        control.DefaultValue = DateTimeHandler.ToStandardDateString(DateTime.Now); // "01-Jun-2016"
                     }
                     else if (control.Type == Constants.DatabaseColumn.Time)
                     {
-                        control.DefaultValue = DateTime.Now.ToString(Constants.Time.TimeFormatForUser); // "07:39 PM"
+                        control.DefaultValue = DateTimeHandler.ToStandardTimeString(DateTime.Now);
                     }
                 }
 

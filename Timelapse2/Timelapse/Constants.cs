@@ -173,7 +173,7 @@ namespace Timelapse
             public const string XmlDataFileName = "ImageData.xml";
         }
 
-        public static class Filter
+        public static class SearchTermOperator
         {
             public const string Equal = "\u003D";
             public const string Glob = " GLOB ";
@@ -338,9 +338,8 @@ namespace Timelapse
             // The standard date format, e.g., 05-Apr-2011
             public const string DateFormat = "dd-MMM-yyyy";
             public const string DateTimeFormat = "dd-MMM-yyyy HH:mm:ss";
-            public const string TimeFormatForDatabase = "HH:mm:ss";
-            public const string TimeFormatForUser = "HH:mm:ss"; 
-        }
+            public const string TimeFormat = "HH:mm:ss";
+       }
 
         public static class VersionXml
         {

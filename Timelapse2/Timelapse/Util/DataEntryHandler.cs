@@ -31,6 +31,11 @@ namespace Timelapse.Util
             this.IsProgrammaticControlUpdate = false;
         }
 
+        public bool CanBulkEditImages()
+        {
+            return this.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All || this.ImageDatabase.ImageSet.ImageFilter == ImageFilter.Custom;
+        }
+
         /// <summary>Propagate the current value of this control forward from this point across the current set of filtered images.</summary>
         public void CopyForward(string dataLabel, bool checkForZero)
         {

@@ -136,7 +136,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(coyoteImage.TryUseImageTaken((BitmapMetadata)coyoteImage.LoadBitmap(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             imageDatabase.AddImages(new List<ImageRow>() { martenImage, coyoteImage }, null);
-            imageDatabase.SelectDataTableImagesAll();
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
 
             ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(imageDatabase);
             Assert.IsTrue(imageEnumerator.TryMoveToImage(0));
@@ -171,7 +171,7 @@ namespace Timelapse.UnitTests
             imageDatabase.UpdateImage(martenImageID, "Survey", "Timelapse carnivore database unit tests");
 
             // pull the image data table again so the updates are visible to .csv export
-            imageDatabase.SelectDataTableImagesAll();
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
 
             // generate expectations
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
@@ -206,7 +206,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(bobcatImage.TryUseImageTaken((BitmapMetadata)bobcatImage.LoadBitmap(imageDatabase.FolderPath).Metadata) == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             imageDatabase.AddImages(new List<ImageRow>() { martenImage, bobcatImage }, null);
-            imageDatabase.SelectDataTableImagesAll();
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
 
             ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(imageDatabase);
             Assert.IsTrue(imageEnumerator.TryMoveToImage(0));
@@ -231,7 +231,7 @@ namespace Timelapse.UnitTests
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
 
             // pull the image data table again so the updates are visible to .csv export
-            imageDatabase.SelectDataTableImagesAll();
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
 
             // generate expectations
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()

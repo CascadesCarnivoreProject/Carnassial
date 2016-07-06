@@ -80,7 +80,7 @@ namespace Timelapse.Database
 
         // Try to create a DateTime from the date/time string of the current image.
         // If we can't, create a date/time of 01-Jan-0001 00:00:00 and return false
-        public bool GetDateTime(out DateTime dateTime)
+        public bool TryGetDateTime(out DateTime dateTime)
         {
             DateTime emptydt = new DateTime(0);
             bool result = DateTime.TryParse(this.Date + " " + this.Time, out dateTime);
@@ -161,8 +161,8 @@ namespace Timelapse.Database
 
         public void SetDateAndTime(DateTime dateTime)
         {
-            this.Date = DateTimeHandler.StandardDateString(dateTime);
-            this.Time = DateTimeHandler.DatabaseTimeString(dateTime);
+            this.Date = DateTimeHandler.ToStandardDateString(dateTime);
+            this.Time = DateTimeHandler.ToStandardTimeString(dateTime);
         }
 
         public void SetDateAndTimeFromFileInfo(string folderPath)
@@ -194,7 +194,7 @@ namespace Timelapse.Database
                 {
                     // get the current date time
                     DateTime currentDateTime;
-                    bool result = this.GetDateTime(out currentDateTime);
+                    bool result = this.TryGetDateTime(out currentDateTime);
                     // Note that if its not a vaild date, that currentDateTime will now be set to 01-Jan-0001 00:00:00
                     // This will mean that the dateImageTaken date/time will be used instead of the currentDateTime
 
@@ -202,14 +202,14 @@ namespace Timelapse.Database
                     bool dateAdjusted = false;
                     if (currentDateTime.Date != dateImageTaken.Date)
                     {
-                        this.Date = DateTimeHandler.StandardDateString(dateImageTaken);
+                        this.Date = DateTimeHandler.ToStandardDateString(dateImageTaken);
                         dateAdjusted = true;
                     }
 
                     bool timeAdjusted = false;
                     if (currentDateTime.TimeOfDay != dateImageTaken.TimeOfDay)
                     {
-                        this.Time = DateTimeHandler.DatabaseTimeString(dateImageTaken);
+                        this.Time = DateTimeHandler.ToStandardTimeString(dateImageTaken);
                         timeAdjusted = true;
                     }
 

@@ -69,8 +69,9 @@
                     </MenuItem>
                     <MenuItem Header="_Date Correction" IsCheckable="False" >
                         <MenuItem Name="MenuItemRereadDatesfromImages" Header="_Re-read dates from files..."  Click="MenuItemRereadDatesfromImages_Click"  ToolTip="Re-read the dates from all the files" IsEnabled="True" />
-                        <MenuItem Name="MenuItemCorrectTimeChanges" Header="Correct for _daylight savings time..."  Click="MenuItemCorrectDaylightSavings_Click"  ToolTip="Correct daylight saving time issues" IsEnabled="True" />
-                        <MenuItem Name="MenuItemCorrectDates" Header="Add a correction value to _every date..."  Click="MenuItemDateCorrections_Click"  ToolTip="Correct for dates or times which are not quite right" IsEnabled="True" />
+                        <MenuItem Name="MenuItemDaylightSavingsTimeCorrection" Header="Correct for _daylight savings time..."  Click="MenuItemDaylightSavingsTimeCorrection_Click"  ToolTip="Correct daylight saving time issues" IsEnabled="True" />
+                        <MenuItem Name="MenuItemDateTimeFixedCorrection" Header="Add a _fixed correction value to every date..."  Click="MenuItemDateTimeFixedCorrection_Click"  ToolTip="Correct for dates or times which are not quite right" IsEnabled="True" />
+                        <MenuItem Name="MenuItemDateTimeLinearCorrection" Header="Correct for camera cloc_k drift..."  Click="MenuItemDateTimeLinearCorrection_Click"  ToolTip="Correct for a camera's clock running fast or slow" IsEnabled="True" />
                         <MenuItem Name="MenuItemCheckModifyAmbiguousDates" Header="Check and modify _ambiguous dates..."  Click="MenuItemCheckModifyAmbiguousDates_Click"  ToolTip="Check And modify (if needed) ambiguous dates on a day by day basis" IsEnabled="True" />
                         <MenuItem Name="MenuItemSwapDayMonth" IsCheckable="False" Header="_Swap day and month for all files..."  Click="MenuItemSwapDayMonth_Click" ToolTip="Swaps the day and month value in the Date field across all images and videos, if possible"/>
                     </MenuItem>

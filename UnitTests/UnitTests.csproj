@@ -77,7 +77,9 @@
     <Compile Include="DatabaseTests.cs" />
     <Compile Include="DataTableBackedListExtensions.cs" />
     <Compile Include="DependencyTests.cs" />
+    <Compile Include="ImageDatabaseExtensions.cs" />
     <Compile Include="ImageExpectations.cs" />
+    <Compile Include="ImageRowExtensions.cs" />
     <Compile Include="ImageTests.cs" />
     <Compile Include="MarkerExpectation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

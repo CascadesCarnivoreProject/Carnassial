@@ -124,6 +124,10 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="Xceed.Wpf.Toolkit, Version=2.9.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Extended.Wpf.Toolkit.2.9\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -145,6 +149,9 @@
     <Compile Include="Database\ImageSetRow.cs" />
     <Compile Include="Database\MarkerRow.cs" />
     <Compile Include="Database\VideoRow.cs" />
+    <Compile Include="DialogDateTimeLinearCorrection.xaml.cs">
+      <DependentUpon>DialogDateTimeLinearCorrection.xaml</DependentUpon>
+    </Compile>
     <Compile Include="DialogVideoPlayer.xaml.cs">
       <DependentUpon>DialogVideoPlayer.xaml</DependentUpon>
     </Compile>
@@ -153,7 +160,7 @@
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
     <Compile Include="Database\ImageTableEnumerator.cs" />
-    <Compile Include="Images\FeedbackMessage.cs" />
+    <Compile Include="Images\FeedbackTuple.cs" />
     <Compile Include="Database\DateTimeAdjustment.cs" />
     <Compile Include="Images\ImageDifference.cs" />
     <Compile Include="Images\ImageQuality.cs" />
@@ -180,14 +187,14 @@
     <Compile Include="DialogCustomViewFilter.xaml.cs">
       <DependentUpon>DialogCustomViewFilter.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDateModifyAmbiguousDates.xaml.cs">
-      <DependentUpon>DialogDateModifyAmbiguousDates.xaml</DependentUpon>
+    <Compile Include="DialogDateSwapDayMonth.xaml.cs">
+      <DependentUpon>DialogDateSwapDayMonth.xaml</DependentUpon>
     </Compile>
     <Compile Include="DialogDataView.xaml.cs">
       <DependentUpon>DialogDataView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDateRereadDatesFromImages.xaml.cs">
-      <DependentUpon>DialogDateRereadDatesFromImages.xaml</DependentUpon>
+    <Compile Include="DialogRereadDateTimesFromFiles.xaml.cs">
+      <DependentUpon>DialogRereadDateTimesFromFiles.xaml</DependentUpon>
     </Compile>
     <Compile Include="DialogDeleteImages.xaml.cs">
       <DependentUpon>DialogDeleteImages.xaml</DependentUpon>
@@ -204,7 +211,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateModifyAmbiguousDates.xaml">
+    <Page Include="DialogDateSwapDayMonth.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -212,11 +219,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateCorrection.xaml">
+    <Page Include="DialogDateTimeLinearCorrection.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="DialogDateTimeFixedCorrection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateRereadDatesFromImages.xaml">
+    <Page Include="DialogRereadDateTimesFromFiles.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -260,7 +271,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateSwapDayMonth.xaml">
+    <Page Include="DialogDateSwapDayMonthBulk.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -268,7 +279,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateTimeChangeCorrection.xaml">
+    <Page Include="DialogDaylightSavingsTimeCorrection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -354,8 +365,8 @@
     <Compile Include="Util\DataEntryNote.cs" />
     <Compile Include="Util\NativeMethods.cs" />
     <Compile Include="Database\CsvReaderWriter.cs" />
-    <Compile Include="DialogDateCorrection.xaml.cs">
-      <DependentUpon>DialogDateCorrection.xaml</DependentUpon>
+    <Compile Include="DialogDateTimeFixedCorrection.xaml.cs">
+      <DependentUpon>DialogDateTimeFixedCorrection.xaml</DependentUpon>
     </Compile>
     <Compile Include="DialogEditLog.xaml.cs">
       <DependentUpon>DialogEditLog.xaml</DependentUpon>
@@ -369,11 +380,11 @@
     <Compile Include="DialogStatisticsOfImageCounts.xaml.cs">
       <DependentUpon>DialogStatisticsOfImageCounts.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDateSwapDayMonth.xaml.cs">
-      <DependentUpon>DialogDateSwapDayMonth.xaml</DependentUpon>
+    <Compile Include="DialogDateSwapDayMonthBulk.xaml.cs">
+      <DependentUpon>DialogDateSwapDayMonthBulk.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDateTimeChangeCorrection.xaml.cs">
-      <DependentUpon>DialogDateTimeChangeCorrection.xaml</DependentUpon>
+    <Compile Include="DialogDaylightSavingsTimeCorrection.xaml.cs">
+      <DependentUpon>DialogDaylightSavingsTimeCorrection.xaml</DependentUpon>
     </Compile>
     <Compile Include="HelpUserControl.xaml.cs">
       <DependentUpon>HelpUserControl.xaml</DependentUpon>

@@ -8,16 +8,16 @@ using Timelapse.Util;
 namespace Timelapse
 {
     /// <summary>
-    /// Interaction logic for DialogTimeChangeCorrection.xaml
-    /// This dialog lets a user enter a time change correction of + / - 1 hour, which is propagated backwards/forwards 
-    /// the current image as set by the user in the radio buttons.
+    /// Interaction logic for DialogDaylightSavingsTimeCorrection.xaml
+    /// This dialog lets a user enter a time change correction of +/-1 hour, which is propagated backwards/forwards.
+    /// The current image as set by the user in the radio buttons.
     /// </summary>
-    public partial class DialogDateTimeChangeCorrection : Window
+    public partial class DialogDaylightSavingsTimeCorrection : Window
     {
         private int currentImageRow;
         private ImageDatabase database;
 
-        public DialogDateTimeChangeCorrection(ImageDatabase database, ImageTableEnumerator image)
+        public DialogDaylightSavingsTimeCorrection(ImageDatabase database, ImageTableEnumerator image)
         {
             this.InitializeComponent();
             this.database = database;
@@ -42,28 +42,24 @@ namespace Timelapse
         {
             try
             {
-                int hours = (bool)rbAddHour.IsChecked ? 1 : -1;
                 bool forward = (bool)rbForward.IsChecked;
+                int startRow;
+                int endRow;
+                if (forward)
+                {
+                    startRow = this.currentImageRow;
+                    endRow = this.database.CurrentlySelectedImageCount - 1;
+                }
+                else
+                {
+                    startRow = 0;
+                    endRow = this.currentImageRow;
+                }
 
-                string direction = forward ? "forward" : "backwards";
-                string operation = hours == 1 ? "added" : "subtracted";
-
-                int initial = forward ? this.currentImageRow : 0;
-                int final = forward ? this.database.CurrentlySelectedImageCount : this.currentImageRow + 1;
-
-                TimeSpan timeDifference = new TimeSpan(hours, 0, 0);
                 // Update the database
-                this.database.AdjustImageTimes(timeDifference, initial, final); // For all rows...
-
-                // Add an entry into the log detailing what we just did
-                StringBuilder log = new StringBuilder(Environment.NewLine);
-                log.AppendLine("System entry: Corrected for Daylight Saving Times.");
-                log.AppendLine("                        Correction started at file " + this.lblImageName.Content + " and was propagated " + direction);
-                log.AppendLine("                        An hour was " + operation + " to those images and videos.");
-                this.database.AppendToImageSetLog(log);
-
-                // Refresh the database / datatable to reflect the updated values
-                this.database.SelectDataTableImagesAll();
+                int hours = (bool)rbAddHour.IsChecked ? 1 : -1;
+                TimeSpan daylightSavingsAdjustment = new TimeSpan(hours, 0, 0);
+                this.database.AdjustImageTimes(daylightSavingsAdjustment, startRow, endRow); // For all rows...
                 this.DialogResult = true;
             }
             catch (Exception exception)
@@ -92,7 +88,7 @@ namespace Timelapse
                     return;
                 }
                 int hours = ((bool)rbAddHour.IsChecked) ? 1 : -1;
-                lblNewDate.Content = DateTimeHandler.StandardDateString(dateTime) + " " + DateTimeHandler.DatabaseTimeString(dateTime);
+                lblNewDate.Content = DateTimeHandler.ToStandardDateString(dateTime) + " " + DateTimeHandler.ToStandardTimeString(dateTime);
                 this.OkButton.IsEnabled = true;
             }
         }

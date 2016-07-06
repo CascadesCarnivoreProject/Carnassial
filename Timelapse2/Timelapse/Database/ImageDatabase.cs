@@ -19,6 +19,8 @@ namespace Timelapse.Database
         private DataGrid timelapseDataGrid;
         private DataRowChangeEventHandler onImageDataTableRowChanged;
 
+        public CustomFilter CustomFilter { get; private set; }
+
         /// <summary>Gets the file name of the image database on disk.</summary>
         public string FileName { get; private set; }
 
@@ -80,6 +82,7 @@ namespace Timelapse.Database
             // load the marker table from the database
             imageDatabase.GetMarkers();
 
+            imageDatabase.CustomFilter = new CustomFilter(imageDatabase.TemplateTable, CustomFilterOperator.Or);
             imageDatabase.PopulateDataLabelMaps();
             return imageDatabase;
         }
@@ -276,7 +279,7 @@ namespace Timelapse.Database
             // this is necessary as images can't be added unless ImageDataTable.Columns is available
             // can't use TryGetImagesAll() here as that function's contract is not to update ImageDataTable if the select against the underlying database table 
             // finds no rows, which is the case for a database being created
-            this.SelectDataTableImagesAll();
+            this.SelectDataTableImages(ImageFilter.All);
 
             // Create the ImageSetTable and initialize a single row in it
             columnDefinitions.Clear();
@@ -376,7 +379,7 @@ namespace Timelapse.Database
 
             // perform DataTable migrations
             // add RelativePath column if it's not present in the image data table at postion '2'
-            this.SelectDataTableImagesAll();
+            this.SelectDataTableImages(ImageFilter.All);
             if (this.ImageDataTable.ColumnNames.Contains(Constants.DatabaseColumn.RelativePath) == false)
             {
                 long id = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
@@ -456,9 +459,24 @@ namespace Timelapse.Database
         /// Populate the image table so that it matches all the entries in its associated database table.
         /// Then set the currentID and currentRow to the the first record in the returned set
         /// </summary>
-        public void SelectDataTableImages(ImageFilter imageQuality)
+        public void SelectDataTableImages(ImageFilter filter)
         {
-            this.SelectDataTableImages(this.GetImagesWhere(imageQuality));
+            string query = "Select * FROM " + Constants.Database.ImageDataTable;
+            bool dateFilteringRequired = false;
+            string where = this.GetImagesWhere(filter, out dateFilteringRequired);
+            if (String.IsNullOrEmpty(where) == false)
+            {
+                query += Constants.Sql.Where + where;
+            }
+
+            DataTable images = this.Database.GetDataTableFromSelect(query);
+            if (dateFilteringRequired)
+            {
+                this.CustomFilter.FilterByDate(images);
+            }
+
+            this.ImageDataTable = new ImageDataTable(images);
+            this.ImageDataTable.BindDataGrid(this.timelapseDataGrid, this.onImageDataTableRowChanged);
         }
 
         public ImageDataTable GetImagesMarkedForDeletion()
@@ -501,24 +519,6 @@ namespace Timelapse.Database
             }
         }
 
-        public void SelectDataTableImages(string where)
-        {
-            string query = "Select * FROM " + Constants.Database.ImageDataTable;
-            if (String.IsNullOrEmpty(where) == false)
-            {
-                query += Constants.Sql.Where + where;
-            }
-            
-            DataTable images = this.Database.GetDataTableFromSelect(query);
-            this.ImageDataTable = new ImageDataTable(images);
-            this.ImageDataTable.BindDataGrid(this.timelapseDataGrid, this.onImageDataTableRowChanged);
-        }
-
-        public void SelectDataTableImagesAll()
-        {
-            this.SelectDataTableImages(ImageFilter.All);
-        }
-
         public Dictionary<ImageFilter, int> GetImageCountsByQuality()
         {
             Dictionary<ImageFilter, int> counts = new Dictionary<ImageFilter, int>();
@@ -532,22 +532,36 @@ namespace Timelapse.Database
         public int GetImageCount(ImageFilter imageQuality)
         {
             string query = "Select Count(*) FROM " + Constants.Database.ImageDataTable;
-            string where = this.GetImagesWhere(imageQuality);
+            bool dateFilteringRequired = false;
+            string where = this.GetImagesWhere(imageQuality, out dateFilteringRequired);
+            if (String.IsNullOrEmpty(where))
+            {
+                if ((imageQuality == ImageFilter.Custom) && (dateFilteringRequired == false))
+                {
+                    // if no custom filter search terms are selected the image count is undefined as no filter is in operation
+                    return -1;
+                }
+                // otherwise, the query is for all images as no where clause is present
+            }
+            else
+            {
+                query += Constants.Sql.Where + where;
+            }
+
+            if (dateFilteringRequired == false)
+            {
+                return this.Database.GetCountFromSelect(query);
+            }
+
+            query = "Select * FROM " + Constants.Database.ImageDataTable;
             if (String.IsNullOrEmpty(where) == false)
             {
                 query += Constants.Sql.Where + where;
             }
-            return this.Database.GetCountFromSelect(query);
-        }
 
-        public int GetImageCountWithCustomFilter(string where)
-        {
-            if (String.IsNullOrWhiteSpace(where))
-            {
-                throw new ArgumentException("where", "A filter must be specified.");
-            }
-            string query = "Select Count(*) FROM " + Constants.Database.ImageDataTable + " Where " + where;
-            return this.Database.GetCountFromSelect(query);
+            DataTable images = this.Database.GetDataTableFromSelect(query);
+            this.CustomFilter.FilterByDate(images);
+            return images.Rows.Count;
         }
 
         // Insert one or more rows into a table
@@ -556,8 +570,9 @@ namespace Timelapse.Database
             this.Database.Insert(table, insertionStatements);
         }
 
-        private string GetImagesWhere(ImageFilter imageQuality)
+        private string GetImagesWhere(ImageFilter imageQuality, out bool dateFilteringRequired)
         {
+            dateFilteringRequired = false;
             switch (imageQuality)
             {
                 case ImageFilter.All:
@@ -570,6 +585,7 @@ namespace Timelapse.Database
                 case ImageFilter.MarkedForDeletion:
                     return this.DataLabelFromStandardControlType[Constants.Control.DeleteFlag] + "=\"true\"";
                 case ImageFilter.Custom:
+                    return this.CustomFilter.GetImagesWhere(out dateFilteringRequired);
                 default:
                     throw new NotSupportedException(String.Format("Unhandled quality filter {0}.  For custom filters call CustomFilter.GetImagesWhere().", imageQuality));
             }
@@ -635,97 +651,170 @@ namespace Timelapse.Database
             this.Database.Update(Constants.Database.ImageDataTable, imagesToUpdate);
         }
 
+        public void AdjustImageTimes(TimeSpan adjustment)
+        {
+            this.AdjustImageTimes(adjustment, 0, this.CurrentlySelectedImageCount - 1);
+        }
+
+        public void AdjustImageTimes(TimeSpan adjustment, int startRow, int endRow)
+        {
+            if (adjustment.Milliseconds != 0)
+            {
+                throw new ArgumentOutOfRangeException("adjustment", "The current format of the time column does not support milliseconds.");
+            }
+            this.AdjustImageTimes((DateTime imageTime) => { return adjustment; }, startRow, endRow);
+        }
+
         // Given a time difference in ticks, update all the date / time field in the database
         // Note that it does NOT update the dataTable - this has to be done outside of this routine by regenerating the datatables with whatever filter is being used..
         // TODOSAUL: modify this to include argments showing the current filtered view and row number, perhaps, so we could restore the datatable and the view?? 
         // But that would add complications if there are unanticipated filtered views.
         // Another option is to go through whatever the current datatable is and just update those fields. 
-        public void AdjustImageTimes(TimeSpan adjustment, int from, int to)
+        public void AdjustImageTimes(Func<DateTime, TimeSpan> adjustment, int startRow, int endRow)
         {
+            if (this.IsImageRowInRange(startRow) == false)
+            {
+                throw new ArgumentOutOfRangeException("startRow");
+            }
+            if (this.IsImageRowInRange(endRow) == false)
+            {
+                throw new ArgumentOutOfRangeException("endRow");
+            }
+            if (endRow < startRow)
+            {
+                throw new ArgumentOutOfRangeException("endRow", "endRow must be greater than or equal to startRow.");
+            }
+            if (this.CurrentlySelectedImageCount == 0)
+            {
+                return;
+            }
+
             // We now have an unfiltered temporary data table
             // Get the original value of each, and update each date by the corrected amount if possible
-            List<ImageRow> imagePropertiesList = new List<ImageRow>();
-            foreach (ImageRow imageProperties in this.ImageDataTable)
+            List<ImageRow> imagesToAdjust = new List<ImageRow>();
+            TimeSpan mostRecentAdjustment = TimeSpan.Zero;
+            for (int row = startRow; row <= endRow; ++row)
             {
-                DateTime date;
-                bool result = imageProperties.GetDateTime(out date);
-                if (result)
-                { 
+                ImageRow image = this.ImageDataTable[row];
+                DateTime imageDateTime;
+                if (image.TryGetDateTime(out imageDateTime))
+                {
                     // adjust the date / time
-                    date += adjustment;
-                    imageProperties.SetDateAndTime(date);
-                    imagePropertiesList.Add(imageProperties);
+                    mostRecentAdjustment = adjustment.Invoke(imageDateTime);
+                    if (mostRecentAdjustment == TimeSpan.Zero)
+                    {
+                        continue;
+                    }
+                    imageDateTime += mostRecentAdjustment;
+                    image.SetDateAndTime(imageDateTime);
+                    imagesToAdjust.Add(image);
                 }
-                // NOte that there is no else, which means we skip dates that can't be retrieved properly
+                // Note that there is no else, which means we skip dates that can't be retrieved properly
             }
 
             // Now update the actual database with the new date/time values stored in the temporary table
             List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
-            foreach (ImageRow imageProperties in imagePropertiesList)
+            foreach (ImageRow image in imagesToAdjust)
             {
                 List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>();                       // Update the date and time
-                columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, imageProperties.Date));
-                columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Time, imageProperties.Time));
-                imagesToUpdate.Add(new ColumnTuplesWithWhere(columnsToUpdate, imageProperties.ID));
+                columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, image.Date));
+                columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Time, image.Time));
+                imagesToUpdate.Add(new ColumnTuplesWithWhere(columnsToUpdate, image.ID));
             }
 
-            this.Database.Update(Constants.Database.ImageDataTable, imagesToUpdate);
+            if (imagesToUpdate.Count > 0)
+            {
+                this.Database.Update(Constants.Database.ImageDataTable, imagesToUpdate);
+
+                // Add an entry into the log detailing what we just did
+                StringBuilder log = new StringBuilder(Environment.NewLine);
+                log.AppendFormat("System entry: Adjusted dates and times of {0} selected files.{1}", imagesToAdjust.Count, Environment.NewLine);
+                log.AppendFormat("The first file adjusted was '{0}', the last '{1}', and the last file was adjusted by {2}.{3}", imagesToAdjust[0].FileName, imagesToAdjust[imagesToAdjust.Count - 1].FileName, mostRecentAdjustment, Environment.NewLine);
+                this.AppendToImageSetLog(log);
+            }
         }
 
         // Update all the date fields by swapping the days and months.
         // This should ONLY be called if such swapping across all dates (excepting corrupt ones) is possible
         // as otherwise it will only swap those dates it can
         // It also assumes that the data table is showing All images
-        public void ExchangeDayAndMonthInImageDate()
+        public void ExchangeDayAndMonthInImageDates()
         {
-            this.ExchangeDayAndMonthInImageDate(0, this.CurrentlySelectedImageCount - 1);
+            this.ExchangeDayAndMonthInImageDates(0, this.CurrentlySelectedImageCount - 1);
         }
 
         // Update all the date fields between the start and end index by swapping the days and months.
-        // It  assumes that the data table is showing All images
-        public void ExchangeDayAndMonthInImageDate(int startRow, int endRow)
+        public void ExchangeDayAndMonthInImageDates(int startRow, int endRow)
         {
-            if (this.CurrentlySelectedImageCount == 0 || startRow >= this.CurrentlySelectedImageCount || endRow > this.CurrentlySelectedImageCount)
+            if (this.IsImageRowInRange(startRow) == false)
+            {
+                throw new ArgumentOutOfRangeException("startRow");
+            }
+            if (this.IsImageRowInRange(endRow) == false)
+            {
+                throw new ArgumentOutOfRangeException("endRow");
+            }
+            if (endRow < startRow)
+            {
+                throw new ArgumentOutOfRangeException("endRow", "endRow must be greater than or equal to startRow.");
+            }
+            if (this.CurrentlySelectedImageCount == 0)
             {
                 return;
             }
 
             // Get the original date value of each. If we can swap the date order, do so. 
-            List<ColumnTuplesWithWhere> updateQuery = new List<ColumnTuplesWithWhere>();
+            List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
+            ImageRow firstImage = this.ImageDataTable[startRow];
+            ImageRow lastImage = null;
+            DateTime mostRecentOriginalDate = DateTime.MinValue;
+            DateTime mostRecentReversedDate = DateTime.MinValue;
             for (int row = startRow; row <= endRow; row++)
             {
                 ImageRow image = this.ImageDataTable[row];
-                // I originally didn't swap the date for corrupted images, but don't see why I shouldn't 
-                // But in case we decide not to do so, I've left the code here
-                // if (image.ImageQuality == ImageFilter.Corrupted)
-                // {
-                //    continue;  // skip over corrupted images
-                // }
-
+                DateTime originalDateTime;
                 DateTime reversedDate;
-                try
+                if (image.TryGetDateTime(out originalDateTime))
                 {
                     // If we fail on any of these, continue on to the next date
-                    DateTime date = DateTime.Parse(image.Date);
-                    if (date.Day > Constants.MonthsInYear)
+                    if (originalDateTime.Day > Constants.MonthsInYear)
                     {
                         continue;
                     }
-                    reversedDate = new DateTime(date.Year, date.Day, date.Month); // we have swapped the day with the month
+                    try
+                    {
+                        reversedDate = new DateTime(originalDateTime.Year, originalDateTime.Day, originalDateTime.Month); // we have swapped the day with the month
+                    }
+                    catch (Exception exception)
+                    {
+                        Debug.Assert(false, String.Format("Reverse of date '{0}' failed.", image.Date), exception.ToString());
+                        continue;
+                    }
                 }
-                catch (Exception exception)
+                else
                 {
-                    Debug.Assert(false, String.Format("Reverse of date {0} failed.", image.Date), exception.ToString());
                     continue;
                 }
 
                 // Now update the actual database with the new date/time values stored in the temporary table
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>();               // Update the date 
-                columnToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, DateTimeHandler.StandardDateString(reversedDate)));
-                updateQuery.Add(new ColumnTuplesWithWhere(columnToUpdate, image.ID));
+                columnToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, DateTimeHandler.ToStandardDateString(reversedDate)));
+                imagesToUpdate.Add(new ColumnTuplesWithWhere(columnToUpdate, image.ID));
+                lastImage = image;
+                mostRecentOriginalDate = originalDateTime;
+                mostRecentReversedDate = reversedDate;
             }
 
-            this.Database.Update(Constants.Database.ImageDataTable, updateQuery);
+            if (imagesToUpdate.Count > 0)
+            {
+                this.Database.Update(Constants.Database.ImageDataTable, imagesToUpdate);
+
+                StringBuilder log = new StringBuilder(Environment.NewLine);
+                log.AppendFormat("System entry: Swapped days and months for {0} files.{1}", imagesToUpdate.Count, Environment.NewLine);
+                log.AppendFormat("The first file adjusted was '{0}' and the last '{1}'.{2}", firstImage.FileName, lastImage.FileName, Environment.NewLine);
+                log.AppendFormat("The last file's date was changed from '{0}' to '{1}'.{2}", DateTimeHandler.ToStandardDateString(mostRecentOriginalDate), DateTimeHandler.ToStandardDateString(mostRecentReversedDate), Environment.NewLine);
+                this.AppendToImageSetLog(log);
+            }
         }
 
         // Delete the data (including markers associated with the images identified by the list of IDs.

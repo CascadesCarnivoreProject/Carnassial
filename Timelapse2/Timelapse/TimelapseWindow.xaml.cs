@@ -17,7 +17,6 @@ using System.Windows.Threading;
 using Timelapse.Database;
 using Timelapse.Images;
 using Timelapse.Util;
-using Screen = System.Windows.Forms.Screen;
 
 namespace Timelapse
 {
@@ -29,7 +28,6 @@ namespace Timelapse
         // Handles to the controls window and to the controls
         private ControlWindow controlWindow;
         private List<MetaTagCounter> counterCoordinates = null;
-        private CustomFilter customFilter;
 
         private DataEntryControls dataEntryControls;
         private DataEntryHandler dataHandler;
@@ -158,12 +156,11 @@ namespace Timelapse
                 (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0))
             {
                 // save image set properties to the database
-                if (this.state.ImageFilter == ImageFilter.Custom)
+                if (this.dataHandler.ImageDatabase.ImageSet.ImageFilter == ImageFilter.Custom)
                 {
                     // don't save custom filters, revert to All 
-                    this.state.ImageFilter = ImageFilter.All;
+                    this.dataHandler.ImageDatabase.ImageSet.ImageFilter = ImageFilter.All;
                 }
-                this.dataHandler.ImageDatabase.ImageSet.ImageFilter = this.state.ImageFilter;
 
                 if (this.dataHandler.ImageCache != null)
                 {
@@ -395,7 +392,7 @@ namespace Timelapse
                             imageTimeAdjustment == DateTimeAdjustment.MetadataDateUsed)
                         {
                             DateTime imageTaken;
-                            bool result = imageProperties.GetDateTime(out imageTaken);
+                            bool result = imageProperties.TryGetDateTime(out imageTaken);
                             if (result == true)
                             {
                                 if (imageTaken.Day <= Constants.MonthsInYear)
@@ -560,9 +557,6 @@ namespace Timelapse
         /// </summary>
         private void OnImageLoadingComplete()
         {
-            // Create a Custom Filter, which will hold the current custom filter expression (if any) that may be set in the DialogCustomViewFilter
-            this.customFilter = new CustomFilter(this.dataHandler.ImageDatabase);
-
             // Set the magnifying glass status from the registry. 
             // Note that if it wasn't in the registry, the value returned will be true by default
             this.markableCanvas.IsMagnifyingGlassVisible = this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled;
@@ -636,25 +630,9 @@ namespace Timelapse
         #endregion
 
         #region Filters
-        private bool SelectDataTableImagesAndShowImage(int imageRow, ImageFilter filter)
+        private void SelectDataTableImagesAndShowImage(int imageRow, ImageFilter filter)
         {
-            switch (filter)
-            {
-                case ImageFilter.All:
-                case ImageFilter.Corrupted:
-                case ImageFilter.Dark:
-                case ImageFilter.MarkedForDeletion:
-                case ImageFilter.Missing:
-                case ImageFilter.Ok:
-                    this.dataHandler.ImageDatabase.SelectDataTableImages(filter);
-                    break;
-                case ImageFilter.Custom:
-                    this.dataHandler.ImageDatabase.SelectDataTableImages(this.customFilter.GetImagesWhere());
-                    break;
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled image quality filter {0}.", filter));
-            }
-
+            this.dataHandler.ImageDatabase.SelectDataTableImages(filter);
             if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0 || filter == ImageFilter.All)
             {
                 // Change the filter to reflect what the user selected. Update the menu state accordingly
@@ -764,12 +742,8 @@ namespace Timelapse
                 messageBox.Message.Result = "The filter will not be applied.";
                 messageBox.ShowDialog();
 
-                if (this.state.ImageFilter == filter)
-                {
-                    return this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.All);
-                }
-                this.MenuItemViewSetSelected(this.state.ImageFilter);
-                return false;
+                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.All);
+                return;
             }
 
             // Display the first available image under the new filter
@@ -788,8 +762,7 @@ namespace Timelapse
             StatusBarUpdate.CurrentImageNumber(this.statusBar, this.dataHandler.ImageCache.CurrentRow + 1);  // We add 1 because its a 0-based list
             StatusBarUpdate.TotalCount(this.statusBar, this.dataHandler.ImageDatabase.CurrentlySelectedImageCount);
             this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
-            this.state.ImageFilter = filter;    // Remember the current filter
-            return true;
+            this.dataHandler.ImageDatabase.ImageSet.ImageFilter = filter;    // Remember the current filter
         }
 
         #endregion
@@ -1140,6 +1113,18 @@ namespace Timelapse
             this.timerImageNavigator.Stop(); 
         }
         #endregion
+
+        private void ShowBulkImageEditDialog(Window dialog)
+        {
+            dialog.Owner = this;
+            bool? result = dialog.ShowDialog();
+            if (result == true)
+            {
+                this.dataHandler.ImageDatabase.SelectDataTableImages(this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
+                this.RefreshCurrentImageProperties();
+                this.RefreshDataViewDialogWindow();
+            }
+        }
 
         #region Showing images
         private void ShowFirstDisplayableImage(int firstRowInSearch)
@@ -1673,7 +1658,7 @@ namespace Timelapse
         /// <summary>Write the CSV file and preview it in excel.</summary>
         private void MenuItemExportCsv_Click(object sender, RoutedEventArgs e)
         {
-            if (this.state.ImageFilter != ImageFilter.All)
+            if (this.dataHandler.ImageDatabase.ImageSet.ImageFilter != ImageFilter.All)
             {
                 DialogMessageBox messageBox = new DialogMessageBox("Exporting to a CSV file on a filtered view...", this, MessageBoxButton.OKCancel);
                 messageBox.Message.What = "Only a subset of your data will be exported to the CSV file.";
@@ -1961,7 +1946,8 @@ namespace Timelapse
         {
             // If we are not in the filter all view, or if its a corrupt image or deleted image, tell the person. Selecting ok will shift the filter.
             // We want to be on a valid image as otherwise the metadata of interest won't appear
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageFilter.All)
+            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false ||
+                this.dataHandler.CanBulkEditImages() == false)
             {
                 int firstImageDisplayable = this.dataHandler.ImageDatabase.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
                 if (firstImageDisplayable == -1)
@@ -1976,10 +1962,10 @@ namespace Timelapse
                 }
 
                 // Set the filter to show all images and a valid image
-                // TODOSAUL: IF WE DON"T HAVE A VALID IMAGE TO SHOW, THEN THIS WILL LIKELY NOT BE WELL BEHAVED. NEED ANOTHER CHECK
+                // TODOSAUL: IF WE DON'T HAVE A VALID IMAGE TO SHOW, THEN THIS WILL LIKELY NOT BE WELL BEHAVED. NEED ANOTHER CHECK
                 // NOT ONLY HERE BUT FOR OTHER SIMILAR UPDATES. IE, IF THERE IS NO DISPLAYABLE IMAGE WE SHOULD PROBABLY ABORT.
-                if (this.TryPromptAndChangeToAllFilter("Populate a data field with metadata of your choosing.",
-                                                       "To populate a data field with metadata of your choosing, Timelapse must first:") == false)
+                if (this.TryPromptAndChangeToBulkEditCompatibleFilter("Populate a data field with metadata of your choosing.",
+                                                                      "To populate a data field with metadata of your choosing, Timelapse must first:") == false)
                 {
                     this.ShowFirstDisplayableImage(Constants.DefaultImageRowIndex);
                 }
@@ -1991,15 +1977,7 @@ namespace Timelapse
 
             using (DialogPopulateFieldWithMetadata populateField = new DialogPopulateFieldWithMetadata(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current.GetImagePath(this.FolderPath)))
             {
-                populateField.Owner = this;
-                bool? result = populateField.ShowDialog();
-                if (result == true)
-                {
-                    // Update the datagrid and the current image after the fields have been populated
-                    this.dataHandler.ImageDatabase.SelectDataTableImagesAll();
-                    this.RefreshCurrentImageProperties();
-                    this.RefreshDataViewDialogWindow();
-                }
+                this.ShowBulkImageEditDialog(populateField);
             }
         }
 
@@ -2095,7 +2073,7 @@ namespace Timelapse
                     // We deleted images and data, which may also include the current image. 
                     // Because we may be deleting the current image, we need to find the next displayable and non-deleted image after this one.
                     int nextImage = this.dataHandler.ImageDatabase.FindClosestImage(currentID);
-                    this.SelectDataTableImagesAndShowImage(nextImage, this.state.ImageFilter); // Reset the filter to retrieve the remaining images
+                    this.SelectDataTableImagesAndShowImage(nextImage, this.dataHandler.ImageDatabase.ImageSet.ImageFilter); // Reset the filter to retrieve the remaining images
                 }
             }
         }
@@ -2182,13 +2160,11 @@ namespace Timelapse
         private void MenuItemOptionsDarkImagesThreshold_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.state.ImageFilter != ImageFilter.All)
+            if (this.dataHandler.CanBulkEditImages() == false &&
+                this.TryPromptAndChangeToBulkEditCompatibleFilter("Customize the threshold for determining dark files...",
+                                                                  "To customize the threshold for determining dark files:") == false)
             {
-                if (this.TryPromptAndChangeToAllFilter("Customize the threshold for determining dark files...",
-                                                       "To customize the threshold for determining dark files:") == false)
-                {
-                    return;
-                }
+                return;
             }
 
             using (DialogOptionsDarkImagesThreshold darkThreshold = new DialogOptionsDarkImagesThreshold(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.CurrentRow, this.state))
@@ -2202,132 +2178,119 @@ namespace Timelapse
         private void MenuItemSwapDayMonth_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageFilter.All)
+            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false ||
+                this.dataHandler.CanBulkEditImages() == false)
             {
-                if (this.TryPromptAndChangeToAllFilter("Swap the day / month...",
-                                                       "To swap the day / month, Timelapse must first:") == false)
+                if (this.TryPromptAndChangeToBulkEditCompatibleFilter("Swap the day / month...",
+                                                                      "To swap the day / month, Timelapse must first:") == false)
                 {
                     return;
                 }
             }
 
-            DialogDateSwapDayMonth swapDayMonth = new DialogDateSwapDayMonth(this.dataHandler.ImageDatabase);
-            swapDayMonth.Owner = this;
-            bool? result = swapDayMonth.ShowDialog();
-            if (result == true)
-            {
-                this.RefreshCurrentImageProperties();
-                this.RefreshDataViewDialogWindow();
-            }
+            DialogDateSwapDayMonthBulk swapDayMonth = new DialogDateSwapDayMonthBulk(this.dataHandler.ImageDatabase);
+            this.ShowBulkImageEditDialog(swapDayMonth);
         }
 
         /// <summary>Correct the date by specifying an offset</summary>
-        private void MenuItemDateCorrections_Click(object sender, RoutedEventArgs e)
+        private void MenuItemDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageFilter.All)
+            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false ||
+                this.dataHandler.CanBulkEditImages() == false)
             {
-                if (this.TryPromptAndChangeToAllFilter("Add a correction value to every date...",
-                                                       "To correct the dates, Timelapse must first:") == false)
+                if (this.TryPromptAndChangeToBulkEditCompatibleFilter("Add a fixed correction value to every date...",
+                                                                      "To correct the dates, Timelapse must first:") == false)
                 {
                     return;
                 }
             }
 
             // We should be in the right mode for correcting the date
-            DialogDateCorrection dateCorrection = new DialogDateCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current);
+            DialogDateTimeFixedCorrection dateCorrection = new DialogDateTimeFixedCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current);
             if (dateCorrection.Abort)
             {
                 return;
             }
-            dateCorrection.Owner = this;
-            bool? result = dateCorrection.ShowDialog();
-            if (result == true)
-            {
-                this.RefreshCurrentImageProperties();
-                this.RefreshDataViewDialogWindow();
-            }
+            this.ShowBulkImageEditDialog(dateCorrection);
         }
 
-        /// <summary>Correct for daylight savings time</summary>
-        private void MenuItemCorrectDaylightSavings_Click(object sender, RoutedEventArgs e)
+        /// <summary>Correct the date by specifying an offset</summary>
+        private void MenuItemDateTimeLinearCorrection_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false || this.state.ImageFilter != ImageFilter.All)
+            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false ||
+                this.dataHandler.CanBulkEditImages() == false)
             {
-                if (this.state.ImageFilter != ImageFilter.All)
+                if (this.TryPromptAndChangeToBulkEditCompatibleFilter("Correct for a camera's clock running fast or slow...",
+                                                                      "To correct the dates, Timelapse must first:") == false)
                 {
-                    if (this.TryPromptAndChangeToAllFilter("Can't correct for daylight savings time.",
-                                                           "To correct for daylight savings time:") == false)
-                    {
-                        return;
-                    }
-                }
-                else
-                {
-                    // Just a corrupted image
-                    DialogMessageBox messageBox = new DialogMessageBox("Can't correct for daylight savings time.", this);
-                    messageBox.Message.Problem = "This is a corrupted file.  ";
-                    messageBox.Message.Solution = "To correct for daylight savings time, you need to:" + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 be displaying a file with a valid date ";
-                    messageBox.Message.Solution += "\u2022 where that file should be the one at the daylight savings time threshold.";
-                    messageBox.Message.Icon = MessageBoxImage.Exclamation;
-                    messageBox.ShowDialog();
                     return;
                 }
             }
 
-            DialogDateTimeChangeCorrection dateTimeChange = new DialogDateTimeChangeCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache);
-            dateTimeChange.Owner = this;
-            bool? result = dateTimeChange.ShowDialog();
-            if (result == true)
+            // We should be in the right mode for correcting the date
+            DialogDateTimeLinearCorrection dateCorrection = new DialogDateTimeLinearCorrection(this.dataHandler.ImageDatabase);
+            if (dateCorrection.Abort)
             {
-                this.RefreshCurrentImageProperties();
-                this.RefreshDataViewDialogWindow();
+                return;
             }
+            this.ShowBulkImageEditDialog(dateCorrection);
+        }
+
+        /// <summary>Correct for daylight savings time</summary>
+        private void MenuItemDaylightSavingsTimeCorrection_Click(object sender, RoutedEventArgs e)
+        {
+            // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
+            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false)
+            {
+                // Just a corrupted image
+                DialogMessageBox messageBox = new DialogMessageBox("Can't correct for daylight savings time.", this);
+                messageBox.Message.Problem = "This is a corrupted file.";
+                messageBox.Message.Solution = "To correct for daylight savings time, you need to:" + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 be displaying a file with a valid date ";
+                messageBox.Message.Solution += "\u2022 where that file should be the one at the daylight savings time threshold.";
+                messageBox.Message.Icon = MessageBoxImage.Exclamation;
+                messageBox.ShowDialog();
+                return;
+            }
+
+            if (this.dataHandler.CanBulkEditImages() == false &&
+                this.TryPromptAndChangeToBulkEditCompatibleFilter("Can't correct for daylight savings time.",
+                                                                  "To correct for daylight savings time:") == false)
+            {
+                return;
+            }
+
+            DialogDaylightSavingsTimeCorrection dateTimeChange = new DialogDaylightSavingsTimeCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache);
+            this.ShowBulkImageEditDialog(dateTimeChange);
         }
 
         private void MenuItemCheckModifyAmbiguousDates_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, tell the user. Selecting ok will shift the views..
-            if (this.state.ImageFilter != ImageFilter.All)
+            if (this.dataHandler.CanBulkEditImages() == false &&
+                this.TryPromptAndChangeToAllFilter("Check and modify ambiguous dates...", "To check and modify ambiguous dates:", false) == false)
             {
-                if (this.TryPromptAndChangeToAllFilter("Check and modify ambiguous dates...", "To check and modify ambiguous dates:", false) == false)
-                {
-                    return;
-                }
+                return;
             }
 
-            DialogDateModifyAmbiguousDates modifyDates = new DialogDateModifyAmbiguousDates(this.dataHandler.ImageDatabase);
-            modifyDates.Owner = this;
-            bool? result = modifyDates.ShowDialog();
-            if (result == true)
-            {
-                this.RefreshCurrentImageProperties();
-                this.RefreshDataViewDialogWindow();
-            }
+            DialogDateSwapDayMonth modifyDates = new DialogDateSwapDayMonth(this.dataHandler.ImageDatabase);
+            this.ShowBulkImageEditDialog(modifyDates);
         }
 
         private void MenuItemRereadDatesfromImages_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.state.ImageFilter != ImageFilter.All)
+            if (this.dataHandler.CanBulkEditImages() == false &&
+                this.TryPromptAndChangeToBulkEditCompatibleFilter("Re-read the dates from the files...",
+                                                                  "To re-read dates from the files:") == false)
             {
-                if (this.TryPromptAndChangeToAllFilter("Re-read the dates from the files...",
-                                                       "To re-read dates from the files:") == false)
-                {
-                    return;
-                }
+                return;
             }
 
-            DialogDateRereadDatesFromImages rereadDates = new DialogDateRereadDatesFromImages(this.dataHandler.ImageDatabase);
-            rereadDates.Owner = this;
-            bool? result = rereadDates.ShowDialog();
-            if (result == true)
-            {
-                this.RefreshCurrentImageProperties();
-                this.RefreshDataViewDialogWindow();
-            }
+            DialogRereadDateTimesFromFiles rereadDates = new DialogRereadDateTimesFromFiles(this.dataHandler.ImageDatabase);
+            this.ShowBulkImageEditDialog(rereadDates);
         }
 
         /// <summary> Toggle the audio feedback on and off</summary>
@@ -2448,7 +2411,7 @@ namespace Timelapse
             }
 
             // Treat the checked status as a radio button i.e., toggle their states so only the clicked menu item is checked.
-            bool result = this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, filter);  // Go to the first result (i.e., index 0) in the given filter set
+            this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, filter);  // Go to the first result (i.e., index 0) in the given filter set
         }
 
         // helper function to put a checkbox on the currently selected menu item i.e., to make it behave like a radiobutton menu
@@ -2476,13 +2439,12 @@ namespace Timelapse
 
         private void MenuItemViewCustomFilter_Click(object sender, RoutedEventArgs e)
         {
-            DialogCustomViewFilter customFilter = new DialogCustomViewFilter(this.dataHandler.ImageDatabase, this.customFilter);
+            DialogCustomViewFilter customFilter = new DialogCustomViewFilter(this.dataHandler.ImageDatabase);
             customFilter.Owner = this;
             bool? changeToCustomFilter = customFilter.ShowDialog();
             // Set the filter to show all images and a valid image
             if (changeToCustomFilter == true)
             {
-                // MenuItemViewSetSelected(ImageFilters.Custom);
                 this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.Custom);
             }
         }
@@ -2659,7 +2621,7 @@ namespace Timelapse
             }
         }
 
-        private bool TryPromptAndChangeToAllFilter(string messageTitle, string messageProblemFirstLine)
+        private bool TryPromptAndChangeToBulkEditCompatibleFilter(string messageTitle, string messageProblemFirstLine)
         {
             return this.TryPromptAndChangeToAllFilter(messageTitle, messageProblemFirstLine, true);
         }

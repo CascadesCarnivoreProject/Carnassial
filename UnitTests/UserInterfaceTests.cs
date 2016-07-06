@@ -101,15 +101,22 @@ namespace Timelapse.UnitTests
                 this.ShowDialog(timelapse, new DialogAboutTimelapse());
                 this.ShowDialog(timelapse, new DialogChooseDatabaseFile(new string[] { TestConstant.File.DefaultNewImageDatabaseFileName }));
 
-                CustomFilter customFilter = (CustomFilter)timelapseAccessor.GetField("customFilter");
                 DataEntryHandler dataHandler = (DataEntryHandler)timelapseAccessor.GetField("dataHandler");
-                this.ShowDialog(timelapse, new DialogCustomViewFilter(dataHandler.ImageDatabase, customFilter));
+                this.ShowDialog(timelapse, new DialogCustomViewFilter(dataHandler.ImageDatabase));
 
-                this.ShowDialog(timelapse, new DialogDateCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache.Current));
-                this.ShowDialog(timelapse, new DialogDateTimeChangeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache));
-                this.ShowDialog(timelapse, new DialogEditLog(dataHandler.ImageDatabase.ImageSet.Log));
-                this.ShowDialog(timelapse, new DialogDateModifyAmbiguousDates(dataHandler.ImageDatabase));
                 this.ShowDialog(timelapse, new DialogDateSwapDayMonth(dataHandler.ImageDatabase));
+                this.ShowDialog(timelapse, new DialogDateSwapDayMonthBulk(dataHandler.ImageDatabase));
+
+                DialogDateTimeFixedCorrection clockSetCorrection = new DialogDateTimeFixedCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache.Current);
+                Assert.IsFalse(clockSetCorrection.Abort);
+                this.ShowDialog(timelapse, clockSetCorrection);
+                DialogDateTimeLinearCorrection clockDriftCorrection = new DialogDateTimeLinearCorrection(dataHandler.ImageDatabase);
+                Assert.IsFalse(clockDriftCorrection.Abort);
+                this.ShowDialog(timelapse, clockDriftCorrection);
+
+                this.ShowDialog(timelapse, new DialogDaylightSavingsTimeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache));
+                this.ShowDialog(timelapse, new DialogEditLog(dataHandler.ImageDatabase.ImageSet.Log));
+
                 using (DialogOptionsDarkImagesThreshold darkThreshold = new DialogOptionsDarkImagesThreshold(dataHandler.ImageDatabase, dataHandler.ImageCache.CurrentRow, new TimelapseState()))
                 {
                     this.ShowDialog(timelapse, darkThreshold);
@@ -119,7 +126,7 @@ namespace Timelapse.UnitTests
                     this.ShowDialog(timelapse, populateField);
                 }
                 this.ShowDialog(timelapse, new DialogRenameImageDatabaseFile(dataHandler.ImageDatabase.FileName));
-                this.ShowDialog(timelapse, new DialogDateRereadDatesFromImages(dataHandler.ImageDatabase));
+                this.ShowDialog(timelapse, new DialogRereadDateTimesFromFiles(dataHandler.ImageDatabase));
                 this.ShowDialog(timelapse, new DialogStatisticsOfImageCounts(dataHandler.ImageDatabase.GetImageCountsByQuality()));
                 this.ShowDialog(timelapse, new DialogTemplatesDontMatch(dataHandler.ImageDatabase.TemplateSynchronizationIssues));
 
