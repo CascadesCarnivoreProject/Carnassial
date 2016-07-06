@@ -135,7 +135,7 @@ namespace Timelapse
                 // Value column: The value used for comparison in the search
                 // Notes and Counters both uses a text field, so they can be constructed as a textbox
                 // However, Counters textboxes are modified to only allow integer input (both direct typing or pasting are checked)
-                if (controlType == Constants.Control.Note || controlType == Constants.Control.Counter || controlType == Constants.DatabaseColumn.RelativePath)
+                if (controlType == Constants.Control.Note || controlType == Constants.Control.Counter || controlType == Constants.DatabaseColumn.RelativePath || controlType == Constants.DatabaseColumn.File)
                 {
                     TextBox tboxValue = new TextBox();
                     tboxValue.Text = searchTerm.Value;

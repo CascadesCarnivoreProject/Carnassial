@@ -38,6 +38,7 @@ namespace Timelapse.Database
                     controlType == Constants.Control.FixedChoice ||
                     controlType == Constants.DatabaseColumn.ImageQuality ||
                     controlType == Constants.DatabaseColumn.RelativePath ||
+                    controlType == Constants.DatabaseColumn.File ||
                     controlType == Constants.Control.Flag)
                 {
                     // Create a new search expression for each row, where each row specifies a particular control and how it can be searched
