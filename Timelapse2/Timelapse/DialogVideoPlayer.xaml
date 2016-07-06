@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Timelapse"
         mc:Ignorable="d"
-        Title="Video Player" Height="480" Width="640">
+        Title="Video Player" Height="480" Width="640" Topmost="False">
     <Window.Resources>
     <Style x:Key="OnOffToggleImageStyle" TargetType="ToggleButton">
             <Style.Triggers>
@@ -35,7 +35,7 @@
                       LoadedBehavior="Manual" 
                       ScrubbingEnabled="True" Name="VidPlayer" Loaded="VidPlayer_Loaded" Grid.Row="0" Visibility="Visible" Unloaded="VidPlayer_Unloaded"/>
         <Grid Name="EmptyPlayer" Background="Gray" Visibility="Collapsed">
-            <TextBlock Name="txtblockNoVideo" FontSize="36" Text="No Video to Play" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            <TextBlock Name="txtblockNoVideo" FontSize="24" Text="No Video to Play" VerticalAlignment="Center" HorizontalAlignment="Center"/>
         </Grid>
         <StackPanel Name="VideoPlayerControls" Grid.Row="1">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" >

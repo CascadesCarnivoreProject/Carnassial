@@ -1219,7 +1219,7 @@ namespace Timelapse
                 this.GetTheMarkableCanvasListOfMetaTags();
                 this.RefreshTheMarkableCanvasListOfMetaTags();
             }
-            this.RefreshVideoPlayerDialogWindow(); // SaulTODO We may wantto put all the refreshes here, rather than scattering them throughout the code
+            this.SetVideoPlayerToCurrentRow(); // SaulTODO We may wantto put all the refreshes here, rather than scattering them throughout the code
         }
         #endregion
 
@@ -2490,30 +2490,40 @@ namespace Timelapse
             this.dlgDataView.Show();
         }
 
+        // Display the Video Player Window
         private void MenuItemVideoViewer_Click(object sender, RoutedEventArgs e)
         {
             Uri uri = new System.Uri(Path.Combine(this.dataHandler.ImageDatabase.FolderPath, this.dataHandler.ImageCache.Current.FileName));
 
-            // Check to see if we need to create the Video Player dialog
-            if (this.dlgVideoPlayer == null)
+            // Check to see if we need to create the Video Player dialog window
+            if (this.dlgVideoPlayer == null || this.dlgVideoPlayer.IsLoaded != true)
             {
-                this.dlgVideoPlayer = new DialogVideoPlayer();
+                this.dlgVideoPlayer = new DialogVideoPlayer(this, this.FolderPath);
                 this.dlgVideoPlayer.Owner = this;
+            }
+
+            // Initialize the video player to display the file held by the current row
+            this.SetVideoPlayerToCurrentRow();
+
+            // If the video player is already loaded, ensure that it is not minimized
+            if (this.dlgVideoPlayer.IsLoaded)
+            {
+                this.dlgVideoPlayer.WindowState = WindowState.Normal;
+            }
+            else
+            { 
                 this.dlgVideoPlayer.Show();
             }
-            this.RefreshVideoPlayerDialogWindow();
         }
 
-        // Update the video player to point to the currently displayed image/video file
-        private void RefreshVideoPlayerDialogWindow()
+        // Set the video player to the current row, where it will try to display it (or provide appropriate feedback)
+        private void SetVideoPlayerToCurrentRow()
         {
-            string filePath = Path.Combine(this.dataHandler.ImageDatabase.FolderPath, this.dataHandler.ImageCache.Current.FileName);
-            Uri uri = File.Exists(filePath) ? new System.Uri(filePath) : null;
-
-            if (this.dlgVideoPlayer != null)
+            if (this.dlgVideoPlayer == null)
             {
-                this.dlgVideoPlayer.Source = uri; // If its already displayed, just refresh the Uri.
+                return;
             }
+            this.dlgVideoPlayer.CurrentRow = this.dataHandler.ImageCache.Current;
         }
         #endregion
 
