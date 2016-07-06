@@ -112,7 +112,7 @@
                     <MenuItem Name="MenuItemViewDifferencesCycleThrough" IsCheckable="False" Header="_Cycle through image differences" Click="MenuItemViewDifferencesCycleThrough_Click" InputGestureText="&#x2191;" ToolTip="View an enhancement that cycles through the differences between the current and the next file, and then the previous file"/>
                     <MenuItem Name="MenuItemViewDifferencesCombined" IsCheckable="False" Header="_View combined image differences" Click="MenuItemViewDifferencesCombined_Click" InputGestureText="&#x2193;" ToolTip="View an enhancement that shows, as a single image, the differences between the current image and the surrounding two files"/>
                     <Separator/>
-                    <MenuItem Name="MenuItemVideoViewer" IsCheckable="False" Header="_View the Video"  ToolTip="View the video in a video player" Click="MenuItemVideoViewer_Click"/>
+                    <MenuItem Name="MenuItemVideoViewer" IsCheckable="False" Header="_Show Video Player"  ToolTip="The Video Player lets you  play video files" Click="MenuItemVideoViewer_Click"/>
                 </MenuItem>
 
                 <!-- Filter Menu -->
