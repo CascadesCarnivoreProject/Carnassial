@@ -158,15 +158,19 @@
 
                 </List>
 
-                <Paragraph FontSize="20" FontWeight="Bold">Exporting and Previewing your Data</Paragraph>
-                <Paragraph>You can export your data into a'comma separated values' format via the
+                <Paragraph FontSize="20" FontWeight="Bold">Exporting, Previewing and Importing your Data to and from a .CSV file</Paragraph>
+                <Paragraph>You can export your data into 'comma separated values' (
+                    <Italic>.csv</Italic> ) format, or import edits made to your
+                    <Italic>.csv</Italic> file via the
                     <Bold>File Menu</Bold> , where
                 </Paragraph>
                 <List>
                     <ListItem>
                         <Paragraph>
-                            <Bold>Export</Bold> will export your data in a file named
-                            <Italic>TimelapseData.CSV</Italic>
+                            <Bold>Export</Bold> will export your data to a file with the same name as your data file but with a
+                            <Italic>.csv</Italic> suffix (e.g.,
+                            <Italic>TimelapseData.ddb</Italic> is exported as
+                            <Italic>TimelapseData.csv</Italic>)
                         </Paragraph>
                     </ListItem>
                     <ListItem>
@@ -174,11 +178,18 @@
                             <Bold>Export and Preview</Bold> will export your data and then try to open Excel so you can preview it immediately
                         </Paragraph>
                     </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>Import</Bold> will import your previously exported and subsequently edited
+                            <Italic>.csv</Italic> file, where it wil apply those edits to your data. However, this is fragile: read the manual on permitted edits.
+                        </Paragraph>
+                    </ListItem>
                 </List>
                 <Paragraph>
                     <Bold>
                         <Italic>Important:</Italic>
-                    </Bold> Exporting always overwrites the TimelapseData.csv file. Thus you do NOT want to edit the TimelapseData.csv if you plan on re-exporting it, as those changes will be lost. Of course, after you are done with this image set, you can use that file as you see fit.
+                    </Bold> Exporting always overwrites the
+                    <Italic>.csv</Italic> file. Thus edits made to the old <Italic>.csv</Italic> file will be lost.
                 </Paragraph>
 
 
