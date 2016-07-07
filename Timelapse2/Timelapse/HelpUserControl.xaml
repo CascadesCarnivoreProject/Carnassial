@@ -118,7 +118,7 @@
                 <List>
                     <ListItem>
                         <Paragraph>
-                            <Bold>Navigating.</Bold> Use the left/right arrow keys, or the slider to go between files.
+                            <Bold>Navigating.</Bold> Use the left/right arrow keys, or the slider to go between files. Shift-left/right arrow skips 5 images,  while Control-left/right arrow skips 10 images.
                         </Paragraph>
                     </ListItem>
                     <ListItem>
@@ -187,6 +187,16 @@
                     <ListItem>
                         <Paragraph>
                             <Bold>Left/Right arrow</Bold> to go to the left or right image
+                        </Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>Shift-left/Shift-right arrow</Bold> skips to the 5th left or right image
+                        </Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>Control-left/Control-right arrow</Bold> skips to the 10th left or right image
                         </Paragraph>
                     </ListItem>
                     <ListItem>

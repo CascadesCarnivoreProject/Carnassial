@@ -129,7 +129,7 @@ namespace Timelapse
         {
             TimeSpan timespan = TimeSpan.FromSeconds(sldrPosition.Value);
             VidPlayer.Position = timespan;
-            ShowPosition();
+            this.ShowPosition();
         }
         #endregion
 

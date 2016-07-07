@@ -13,6 +13,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Timelapse.Database;
 using Timelapse.Images;
 using Timelapse.Util;
@@ -42,10 +43,13 @@ namespace Timelapse
         // Status information concerning the state of the UI
         private TimelapseState state = new TimelapseState();
 
+        // Timer for periodically updating images as the ImageNavigator slider is being used
+        private DispatcherTimer timerImageNavigator = new DispatcherTimer();
+
         // Speech feedback
         private SpeechSynthesizer speechSynthesizer = new SpeechSynthesizer();
 
-        // the database that holds the template
+        // The database that holds the template
         private TemplateDatabase template;
 
         // Non-modal dialogs
@@ -76,6 +80,10 @@ namespace Timelapse
             // Callbacks so the controls will highlight if they are copyable when one enters the copy button
             this.buttonCopy.MouseEnter += this.ButtonCopy_MouseEnter;
             this.buttonCopy.MouseLeave += this.ButtonCopy_MouseLeave;
+
+            // Timer callback so the image will update to the current slider position when the user pauses dragging the image slider 
+            this.timerImageNavigator.Interval = Constants.Throttles.DesiredIntervalBetweenRenders;
+            this.timerImageNavigator.Tick += this.TimerImageNavigator_Tick;
 
             // Create data controls, including reparenting the copy button from the main window into the my control window.
             this.dataEntryControls = new DataEntryControls();
@@ -1087,19 +1095,24 @@ namespace Timelapse
         #endregion
 
         #region Slider Event Handlers and related
+
         private void ImageNavigatorSlider_DragCompleted(object sender, DragCompletedEventArgs args)
         {
             this.state.ImageNavigatorSliderDragging = false;
             this.ShowImage((int)this.ImageNavigatorSlider.Value);
+            this.timerImageNavigator.Stop(); 
         }
 
         private void ImageNavigatorSlider_DragStarted(object sender, DragStartedEventArgs args)
         {
+            this.timerImageNavigator.Start(); // The timer forces an image display update to the current slider position if the user pauses longer than the timer's interval. 
             this.state.ImageNavigatorSliderDragging = true;
         }
 
         private void ImageNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> args)
         {
+            this.timerImageNavigator.Stop(); // Restart the timer 
+            this.timerImageNavigator.Start();
             DateTime utcNow = DateTime.UtcNow;
             if ((this.state.ImageNavigatorSliderDragging == false) || (utcNow - this.state.MostRecentDragEvent > Constants.Throttles.DesiredIntervalBetweenRenders))
             {
@@ -1118,6 +1131,13 @@ namespace Timelapse
             {
                 this.ImageNavigatorSlider.ValueChanged -= new RoutedPropertyChangedEventHandler<double>(this.ImageNavigatorSlider_ValueChanged);
             }
+        }
+
+        // Timer callback that forces image update to the current slider position. Invoked as the user pauses dragging the image slider 
+        private void TimerImageNavigator_Tick(object sender, EventArgs e)
+        {
+            this.ShowImage((int)this.ImageNavigatorSlider.Value);
+            this.timerImageNavigator.Stop(); 
         }
         #endregion
 
@@ -2680,16 +2700,27 @@ namespace Timelapse
                 increment *= 10;
             }
 
-            // try to move
             int desiredRow = this.dataHandler.ImageCache.CurrentRow + increment;
-            if (this.dataHandler.ImageDatabase.IsImageRowInRange(desiredRow))
+
+            // Set the desiredRow to either the maximum or minimum row if it exceeds the bounds
+            if (desiredRow >= this.dataHandler.ImageDatabase.CurrentlySelectedImageCount)
             {
+                desiredRow = this.dataHandler.ImageDatabase.CurrentlySelectedImageCount - 1;
+            }
+            else if (desiredRow < 0)
+            {
+                desiredRow = 0;
+            }
+
+            // If the desired row is the same as the current row, the image us already being displayed
+            if (desiredRow != this.dataHandler.ImageCache.CurrentRow)
+            {
+                // Move to the desired row
                 this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
                 this.ShowImage(desiredRow);
                 this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
-                return true;
             }
-            return false;
+            return true;
         }
 
         #region Bookmarking pan/zoom levels
