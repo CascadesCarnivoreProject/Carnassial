@@ -9,42 +9,70 @@
         <FlowDocumentScrollViewer>
             <FlowDocument  FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
 
-
-                <Paragraph FontSize="20" FontWeight="Bold">Getting Started</Paragraph>
+                <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">What you need</Paragraph>
+                <Paragraph>Timelapse assumes you have a folder containing:</Paragraph>
                 <List>
                     <ListItem>
                         <Paragraph>
-                            <Bold>Load your images and videos.</Bold> From the File menu, load the folder containing your image set.
+                            <Bold>Timelapse Template</Bold>
+                            <Italic>.tdb</Italic> file  defines your analysis codes. It is normally supplied by the managing biologist.
                         </Paragraph>
                     </ListItem>
                     <ListItem>
                         <Paragraph>
-                            <Bold>Make this window full screen.</Bold> You will get the best results as the display will be as large as possible.
+                            <Bold>Image</Bold>
+                            <Italic>(.jpg)</Italic> and/or
+                            <Bold>video</Bold>
+                            (<Italic>.avi</Italic> or
+                            <Italic>.mp4</Italic> ) files located in sub-folders, or directly in the main folder.
                         </Paragraph>
                     </ListItem>
                 </List>
 
-                <Paragraph FontSize="20" FontWeight="Bold">What you need</Paragraph>
-                <Paragraph>This program assumes the following:</Paragraph>
+                <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">Getting Started</Paragraph>
                 <List>
                     <ListItem>
-                        <Paragraph>Images and videos should be sorted in alphabetic order</Paragraph>
+                        <Paragraph>
+                            <Bold>Load your template.</Bold> Select
+                            <Italic>File/Load template, images and videos...</Italic> menu item.
+                            <LineBreak/>Then follow instructions to locate and load the above folder and its contents.
+                        </Paragraph>
+                    </ListItem>
+    
+                    <ListItem>
+                        <Paragraph>
+                            <Bold>Make this window full screen.</Bold> You will get the best results if your images are displayed as large as possible.
+                        </Paragraph>
                     </ListItem>
                     <ListItem>
-                        <Paragraph>The folder contains a
-                            <Italic>TimelapseTemplate.tdb</Italic> file that defines your analysis codes. This is normally created and supplied to you by the primary biologist.
+                        <Paragraph>
+                            <Bold>Analyze your images.</Bold> Examine each image, and enter the data appropriate for that image (see below).
                         </Paragraph>
                     </ListItem>
                 </List>
 
+                <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">Your Data</Paragraph>
+                <Paragraph>Timelapse creates a
+                    <Italic>.ddb</Italic> database file in the same folder:</Paragraph>
+                <List>
+                    <ListItem>
+                        <Paragraph>
+                            As you record your data, it automatically saves that data into the database.
+                        </Paragraph>
+                    </ListItem>
+                    <ListItem>
+                        <Paragraph>
+                            You can export your data to a <Italic>.csv</Italic> file that can be opened with a spreadsheet (see below).
+                        </Paragraph>
+                    </ListItem>
+                </List>
 
-                <Paragraph FontSize="20" FontWeight="Bold">Go through the Tutorial</Paragraph>
+                <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">Go through the Tutorial</Paragraph>
                 <Paragraph>The tutorial manual includes sample images so that you can read and try out the software at the same time.  Its worth going through it. This overview is intended only as a reminder, and doesn't cover everything.
                     <LineBreak></LineBreak> Through the
                     <Bold>Help Menu</Bold> you can:
                 </Paragraph>
                 <List>
-
                     <ListItem>
                         <Paragraph>
                             <Bold>view the Tutorial Manual</Bold> in a web browser
@@ -62,7 +90,7 @@
                     </ListItem>
                 </List>
 
-                <Paragraph FontSize="20" FontWeight="Bold">How to Code Your Files</Paragraph>
+                <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">How to Code Your Files</Paragraph>
                 <Paragraph>There are four kinds of controls that you can use to code your files.</Paragraph>
 
                 <List>
@@ -99,7 +127,7 @@
                     </ListItem>
                 </List>
 
-                <Paragraph FontSize="20" FontWeight="Bold">Counting by marking over files, navigating, and zooming files</Paragraph>
+                <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">Counting by marking over files, navigating, and zooming files</Paragraph>
                 <List>
                     <ListItem>
                         <Paragraph>
@@ -113,7 +141,7 @@
                     </ListItem>
                 </List>
 
-                <Paragraph FontSize="20" FontWeight="Bold">Viewing files: navigating, comparing, filtering, magnifying and zooming files</Paragraph>
+                <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">Viewing files: navigating, comparing, filtering, magnifying and zooming files</Paragraph>
                 <Paragraph>You can do several things while viewing files.</Paragraph>
                 <List>
                     <ListItem>
@@ -143,22 +171,9 @@
                                 Experiment with it. It may help you see things in a file you may otherwise have missed. We've found it works really well with some images but not as well with others.
                         </Paragraph>
                     </ListItem>
-
-
                 </List>
 
-                <Paragraph FontSize="20" FontWeight="Bold">Your Data</Paragraph>
-                <Paragraph>The program keeps track of all the things that you do. As you change your data, it will automatically save it into a database file:</Paragraph>
-                <List>
-                    <ListItem>
-                        <Paragraph>
-                            <Bold>TemplateData.ddb</Bold> is where all your data is stored. You can rename it if you wish (but keep the .ddb suffix).
-                        </Paragraph>
-                    </ListItem>
-
-                </List>
-
-                <Paragraph FontSize="20" FontWeight="Bold">Exporting, Previewing and Importing your Data to and from a .CSV file</Paragraph>
+                <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">Exporting, Previewing and Importing your Data to and from a .CSV file</Paragraph>
                 <Paragraph>You can export your data into 'comma separated values' (
                     <Italic>.csv</Italic> ) format, or import edits made to your
                     <Italic>.csv</Italic> file via the
@@ -193,7 +208,7 @@
                 </Paragraph>
 
 
-                <Paragraph FontSize="20" FontWeight="Bold">Keyboard Shortcuts</Paragraph>
+                <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">Keyboard Shortcuts</Paragraph>
                 <List>
                     <ListItem>
                         <Paragraph>

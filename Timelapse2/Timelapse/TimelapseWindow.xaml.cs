@@ -384,7 +384,15 @@ namespace Timelapse
                         // framework bug: WriteableBitmap.Metadata returns null rather than metatada offered by the underlying BitmapFrame, so 
                         // retain the frame and pass its metadata to TryUseImageTaken().
                         bitmapSource = imageProperties.LoadBitmap(this.FolderPath);
-                        imageProperties.ImageQuality = bitmapSource.AsWriteable().GetImageQuality(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
+                        // Set the ImageQuality to corrupt if the returned bitmap is the corrupt image, otherwise set it to its Ok/Dark setting
+                        if (bitmapSource == Constants.Images.Corrupt)
+                        {
+                            imageProperties.ImageQuality = ImageFilter.Corrupted;
+                        }
+                        else
+                        { 
+                            imageProperties.ImageQuality = bitmapSource.AsWriteable().GetImageQuality(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
+                        }
 
                         // see if the date can be updated from the metadata
                         DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata);
