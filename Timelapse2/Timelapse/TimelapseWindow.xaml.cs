@@ -384,7 +384,16 @@ namespace Timelapse
                         // framework bug: WriteableBitmap.Metadata returns null rather than metatada offered by the underlying BitmapFrame, so 
                         // retain the frame and pass its metadata to TryUseImageTaken().
                         bitmapSource = imageProperties.LoadBitmap(this.FolderPath);
-                        imageProperties.ImageQuality = bitmapSource.AsWriteable().GetImageQuality(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
+ 
+                        // Set the ImageQuality to corrupt i                       int foo = Constants.Images.Foo;f the returned bitmap is the corrupt image, otherwise set it to its Ok/Dark setting
+                        if (bitmapSource == Constants.Images.Corrupt)
+                        {
+                            imageProperties.ImageQuality = ImageFilter.Corrupted;
+                        }
+                        else
+                        { 
+                            imageProperties.ImageQuality = bitmapSource.AsWriteable().GetImageQuality(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
+                        }
 
                         // see if the date can be updated from the metadata
                         DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata);
@@ -671,59 +680,50 @@ namespace Timelapse
             }
             else
             {
-                // other than custom filters these cases shouldn't be reachable as the menu options for the filters will be disabled if there aren't any
+                // These cases are typically reached only when a user deletes all images that fit that filter.  
                 // corresponding images
                 string status;
                 string title;
                 string problem;
                 string reason = null;
                 string hint;
+                status = "Resetting filter to All Images";
+                title = "Resetting filter to All Images (no files currently match the current filter)";
                 if (filter == ImageFilter.Corrupted)
                 {
-                    status = "no corrupted files to display.";
-                    title = "Corrupted filter selected, but no files are marked as corrupted.";
-                    problem = "None of the files in this image set are corrupted images, so nothing can be shown.";
+                    problem = "The 'Corrupted filter' was previously selected. Yet no files  currently match that filter, so nothing can be shown.";
                     reason = "None of the files have their 'ImageQuality' field set to Corrupted.";
-                    hint = "If you have files you think should be marked as 'Corrupted', set their ImageQuality field to Corrupted.";
+                    hint = "If you have files you think should be marked as 'Corrupted', set their 'ImageQuality' field to 'Corrupted' and then reapply the filter to view only those corrupted files.";
                 }
                 else if (filter == ImageFilter.Custom)
                 {
-                    status = "no files to display.";
-                    title = "Custom filter selected, but no files match the specified filter.";
-                    problem = "None of the files in this image set match the specified filter, so nothing can be shown.";
-                    hint = "Try to create another custom filter.";
+                    problem = "The 'Custom filter' was previously selected. Yet no files currently match that filter, so nothing can be shown.";
+                    reason = "None of the files match the criteria set in the current Custom Filter.";
+                    hint = "Try to create another custom filter and then reapply the filter to view only those files matching the filter.";
                 }
                 else if (filter == ImageFilter.Dark)
                 {
-                    status = "no dark files to display.";
-                    title = "Dark filter selected, but no files are marked as dark.";
-                    problem = "None of the files in this image set are dark, so nothing can be shown.";
+                    problem = "The 'Dark filter' was previously selected. Yet no files currently match that filter, so nothing can be shown.";
                     reason = "None of the files have their 'ImageQuality' field set to Dark.";
-                    hint = "If you have files you think should be marked as 'Dark', set their ImageQuality field to Dark.";
+                    hint = "If you have files you think should be marked as 'Dark', set their 'ImageQuality' field to 'Dark' and then reapply the filter to view only those dark files.";
                 }
                 else if (filter == ImageFilter.Missing)
                 {
-                    status = "no missing files to display.";
-                    title = "Missing filter selected, but no files are marked as missing.";
-                    problem = "None of the files in this image set are missing, so nothing can be shown.";
+                    problem = "The 'Missing filter' was previously selected. Yet no files currently match that filter, so nothing can be shown.";
                     reason = "None of the files have their 'ImageQuality' field set to Missing.";
-                    hint = "If you have files you think should be marked as 'Missing', set their ImageQuality field to Missing.";
+                    hint = "If you have files you think should be marked as 'Missing', set their 'ImageQuality' field to 'Missing' and then reapply the filter to view only those missing files.";
                 }
                 else if (filter == ImageFilter.MarkedForDeletion)
                 {
-                    status = "No files marked for deletion to display.";
-                    title = "Delete filter selected, but no files are marked for deletion";
-                    problem = "None of the files in this image set are marked for deletion, so nothing can be shown.";
+                    problem = "The 'Marked for Deletion' filter was previously selected. Yet no files currently match that filter, so nothing can be shown.";
                     reason = "None of the files have their 'Delete?' field checked.";
-                    hint = "If you have files you think should be marked for deletion, check their Delete? field.";
+                    hint = "If you have files you think should be marked for deletion, check their 'Delete?' field and then reapply the filter to view only those files marked for deletion.";
                 }
                 else if (filter == ImageFilter.Ok)
                 {
-                    status = "no light files to display.";
-                    title = "Light filter selected, but no files are marked as light.";
-                    problem = "None of the files in this image set are light, so nothing can be shown.";
+                    problem = "The 'Ok filter' was previously selected. Yet no files currently match that filter, so nothing can be shown.";
                     reason = "None of the files have their 'ImageQuality' field set to OK.";
-                    hint = "If you have files you think should be marked as 'light', set their ImageQuality field to OK.";
+                    hint = "If you have files you think should be marked as 'Ok', set their 'ImageQuality' field to 'Ok' and then reapply the filter to view only those Ok files.";
                 }
                 else
                 {
@@ -739,7 +739,7 @@ namespace Timelapse
                     messageBox.Message.Reason = reason;
                 }
                 messageBox.Message.Hint = hint;
-                messageBox.Message.Result = "The filter will not be applied.";
+                messageBox.Message.Result = "The 'All Images' filter will be applied, where all images in your image set will be displayed.";
                 messageBox.ShowDialog();
 
                 this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.All);
@@ -749,7 +749,6 @@ namespace Timelapse
             // Display the first available image under the new filter
             if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0)
             {
-                // this.ShowFirstDisplayableImage(imageRow); // TODOSAUL: It used to be this call, but changed it to ShowImage. Check, but seems to work.
                 this.ShowImage(imageRow);
             }
 
@@ -2057,23 +2056,24 @@ namespace Timelapse
             if (result == true)
             {
                 long currentID = this.dataHandler.ImageCache.Current.ID;
-                int currentRow = this.dataHandler.ImageCache.CurrentRow;  // TryInvalidate may reset the current row to -1, so we need to save it.
-                foreach (long id in deleteImagesDialog.ImageFilesRemovedByID)
-                {
-                    this.dataHandler.ImageCache.TryInvalidate(id);
-                }
-
+                int currentRow;
                 if (mi.Name.Equals(this.MenuItemDeleteImage.Name) || mi.Name.Equals(this.MenuItemDeleteImages.Name))
                 {
                     // We only deleted the image, not the data. We invoke ShowImage with the saved current row to show the missing image placeholder
+                    currentRow = this.dataHandler.ImageCache.CurrentRow;  // TryInvalidate may reset the current row to -1, so we need to save it.
+                    foreach (long id in deleteImagesDialog.ImageFilesRemovedByID)
+                    {
+                        this.dataHandler.ImageCache.TryInvalidate(id);
+                    }
                     this.ShowImage(currentRow);
                 }
                 else
                 {
-                    // We deleted images and data, which may also include the current image. 
-                    // Because we may be deleting the current image, we need to find the next displayable and non-deleted image after this one.
+                    // Data has been deleted as well.
+                    // Reload the datatable. Then find and show the image closest to the last one shown
+                    this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageFilter); // Reset the filter to retrieve the remaining images
                     int nextImage = this.dataHandler.ImageDatabase.FindClosestImage(currentID);
-                    this.SelectDataTableImagesAndShowImage(nextImage, this.dataHandler.ImageDatabase.ImageSet.ImageFilter); // Reset the filter to retrieve the remaining images
+                    this.ShowImage(nextImage); // Reset the filter to retrieve the remaining images
                 }
             }
         }
@@ -2651,6 +2651,11 @@ namespace Timelapse
 
         private bool TryShowImageWithoutSliderCallback(bool forward, ModifierKeys modifiers)
         {
+            // Check to see if there are any images to show, 
+            if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount <= 0)
+            {
+                return false;
+            }
             // determine how far to move and in which direction
             int increment = forward ? 1 : -1;
             if ((modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
@@ -2662,9 +2667,22 @@ namespace Timelapse
                 increment *= 10;
             }
 
+            // SAUL TODO 
+            // ORIGINAL CODE. DELETE After Unit Testing bug is fixed.
+            // try to move
+            //int desiredRow = this.dataHandler.ImageCache.CurrentRow + increment;
+            //if (this.dataHandler.ImageDatabase.IsImageRowInRange(desiredRow))
+            //{
+            //    this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
+            //    this.ShowImage(desiredRow);
+            //    this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
+            //    return true;
+            //}
+            //return false;
+
             int desiredRow = this.dataHandler.ImageCache.CurrentRow + increment;
 
-            // Set the desiredRow to either the maximum or minimum row if it exceeds the bounds
+            // Set the desiredRow to either the maximum or minimum row if it exceeds the bounds,
             if (desiredRow >= this.dataHandler.ImageDatabase.CurrentlySelectedImageCount)
             {
                 desiredRow = this.dataHandler.ImageDatabase.CurrentlySelectedImageCount - 1;

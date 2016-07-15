@@ -40,18 +40,17 @@
             <Menu DockPanel.Dock="Top">
                 <!-- File Menu -->
                 <MenuItem Header="_File" IsTabStop="false">
-                    <MenuItem Name="MenuItemLoadImages" Header="_Load template, images, and videos..." Click="MenuItemLoadImages_Click" ToolTip="Asks for the template location (which should also contain at least one image or video), either creating a new database or opening an existing one"/>
+                    <MenuItem Name="MenuItemLoadImages" Header="_Load template, images, and video files..." Click="MenuItemLoadImages_Click" ToolTip="Asks for the template location, and then opens an existing database, or creates a new database after asking for the image/video locations"/>
+                    <MenuItem Name="MenuItemRecentImageSets" Header="Load a _recently used image set" IsEnabled="false" ToolTip="Load a recently used image set into Timelapse"/>
+                    <MenuItem Name="MenuItemAddImagesToImageSet" Header="_Add image and video files to image set..." Click="MenuItemAddImagesToImageSet_Click" IsEnabled="false" ToolTip="Add more images or videos to the currently opened image set"/>
                     <Separator />
                     <MenuItem Name="MenuItemExportAsCsv" Header="Export data for this image set as a _CSV file..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the (possibly filtered) images into a CSV (comma separated value) file"/>
-                    <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="Export data for this image set as CSV file and preview in _Excel..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the (possibly filtered) files in the image set into a CSV (comma separated value) file and previews it in Excel"/>
+                    <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="Export data for this image set as a CSV file and preview in _Excel..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the (possibly filtered) files in the image set into a CSV (comma separated value) file and previews it in Excel"/>
                     <MenuItem Name="MenuItemImportFromCsv" Header="I_mport data from a CSV file..." IsEnabled="false" Click="MenuItemImportFromCsv_Click" ToolTip="Exports data for the (possibly filtered) files in the image set into a CSV (comma separated value) file"/>
                     <Separator />
-                    <MenuItem Name="MenuItemExportThisImage" Header="Export this _file..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) this file into a particular folder"/>
+                    <MenuItem Name="MenuItemExportThisImage" Header="Export the current image or video _file..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) the displayed image or video file into a location of your choosing"/>
                     <Separator />
                     <MenuItem Name="MenuItemRenameImageDatabaseFile" Header="Rename the _data file..." Click="MenuItemRenameImageDatabaseFile_Click" IsEnabled="false" ToolTip="Renames the image data file to a name of your choosing"/>
-                    <MenuItem Name="MenuItemAddImagesToImageSet" Header="_Add files to image set..." Click="MenuItemAddImagesToImageSet_Click" IsEnabled="false" ToolTip="Add more images or videos to the currently opened image set"/>
-                    <Separator />
-                    <MenuItem Name="MenuItemRecentImageSets" Header="_Recent image sets" IsEnabled="false" ToolTip="Recently used image sets"/>
                     <Separator />
                     <MenuItem Name="MenuItemExit" Header="E_xit" Click="MenuItemExit_Click" ToolTip="Quits the program"/>
                 </MenuItem>

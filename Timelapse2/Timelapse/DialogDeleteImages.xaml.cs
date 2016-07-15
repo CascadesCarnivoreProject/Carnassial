@@ -62,7 +62,8 @@ namespace Timelapse
                 string imageOrVideo = deletedImageTable[0].IsVideo ? "video" : "image";
                 if (deleteData == false)
                 {
-                    // Case 1: Delete the current image, but not its data - This is the default and is coded in the XAML
+                    // Case 1: Delete the current image, but not its data.
+                    this.Message.Title = String.Format("Delete the current {0} but not its data.", imageOrVideo);
                     this.Message.What = String.Format("Deletes the current {0} (shown below) but not its data.", imageOrVideo);
                     this.Message.Result = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named DeletedImages.{1}", imageOrVideo, Environment.NewLine);
                     this.Message.Result += String.Format("\u2022 A placeholder {0} will be shown when you try to view a deleted {0}.", imageOrVideo);

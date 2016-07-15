@@ -465,27 +465,21 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\corrupted.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="32x32.ico" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="16x16.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\missing.jpg" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="..\Dependencies\exiftool%28-k%29.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\corrupted_thumbnail.jpg" />
+    <Resource Include="Resources\missing_thumbnail.jpg" />
+    <Resource Include="Resources\corrupted.jpg" />
+    <Resource Include="Resources\missing.jpg" />
     <Resource Include="Resources\play_icon.png" />
     <Resource Include="Resources\pause_icon.png" />
-    <Resource Include="Resources\missing_thumbnail.jpg" />
-    <Resource Include="Resources\corrupted_thumbnail.jpg" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

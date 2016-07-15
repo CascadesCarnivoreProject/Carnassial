@@ -129,16 +129,16 @@ namespace Timelapse.Database
             }
             try
             {
-                // scanning through images with BitmapCacheOption.None results in less than 6% CPU in BitmapFrame.Create() and
+                // SAUL TODO: Look at CA1001 https://msdn.microsoft.com/en-us/library/ms182172.aspx as a different strategy
+                // Scanning through images with BitmapCacheOption.None results in less than 6% CPU in BitmapFrame.Create() and
                 // 90% in System.Windows.Application.Run(), suggesting little scope for optimization within Timelapse proper
                 // this is significantly faster than BitmapCacheOption.Default
-                // Note that using BitmapCacheOption.None locks the file as it is being accessed (rather than a memory copy being created when using a cache)
+                // However, using BitmapCacheOption.None locks the file as it is being accessed (rather than a memory copy being created when using a cache)
                 // This means we cannot do any file operations on it as it will produce an access violation.
-                // If this comes back to haunt us, then use this (slower) form: 
-                // return BitmapFrame.Create(new Uri(path), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                // For now, we use the (slower) form of BitmapCacheOption.OnLoad.
                 if (desiredWidth.HasValue == false)
                 {
-                    BitmapFrame frame = BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.None);
+                    BitmapFrame frame = BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
                     frame.Freeze();
                     return frame;
                 }
@@ -146,7 +146,7 @@ namespace Timelapse.Database
                 BitmapImage bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.DecodePixelWidth = desiredWidth.Value;
-                bitmap.CacheOption = BitmapCacheOption.None;
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 bitmap.UriSource = new Uri(path);
                 bitmap.EndInit();
                 bitmap.Freeze();
