@@ -824,7 +824,7 @@ namespace Timelapse.Database
             foreach (long id in idList)
             {
                 idClauses.Add(Constants.DatabaseColumn.ID + " = " + id.ToString());
-            }
+            }           
             if (idClauses.Count > 0)
             {
                 // Delete the data and markers associated with that image

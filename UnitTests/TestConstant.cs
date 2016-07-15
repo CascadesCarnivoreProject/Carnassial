@@ -270,7 +270,7 @@ namespace Timelapse.UnitTests
                 // images
                 DefaultExpectation.DaylightBobcatImage = new ImageExpectations()
                 {
-                    DarkPixelFraction = 0.24222145485288338,
+                    DarkPixelFraction = 0.242364344315876,
                     Date = "05-Aug-2015",
                     FileName = TestConstant.File.DaylightBobcatImage,
                     IsColor = true,
@@ -280,7 +280,7 @@ namespace Timelapse.UnitTests
 
                 DefaultExpectation.DaylightCoyoteImage = new ImageExpectations()
                 {
-                    DarkPixelFraction = 0.60847930235235814,
+                    DarkPixelFraction = 0.610071236552411,
                     Date = "21-Apr-2016",
                     FileName = TestConstant.File.DaylightCoyoteImage,
                     IsColor = true,
@@ -291,7 +291,7 @@ namespace Timelapse.UnitTests
 
                 DefaultExpectation.DaylightMartenPairImage = new ImageExpectations()
                 {
-                    DarkPixelFraction = 0.70253739978510621,
+                    DarkPixelFraction = 0.705627292783256,
                     Date = "28-Jan-2015",
                     FileName = TestConstant.File.DaylightMartenPairImage,
                     IsColor = true,
@@ -303,7 +303,7 @@ namespace Timelapse.UnitTests
 
                 DefaultExpectation.InfraredMartenImage = new ImageExpectations()
                 {
-                    DarkPixelFraction = 0.0743353174106539,
+                    DarkPixelFraction = 0.077128711384332,
                     Date = "24-Feb-2016",
                     FileName = TestConstant.File.InfraredMartenImage,
                     IsColor = false,
