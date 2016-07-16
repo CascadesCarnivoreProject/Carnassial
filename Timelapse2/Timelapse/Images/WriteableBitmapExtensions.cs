@@ -133,7 +133,6 @@ namespace Timelapse.Images
                 ++countedPixels;
                 currentPixel += pixelSizeInBytes * pixelStride; // Advance the pointer to the beginning of the next pixel of interest
             }
-
             // Check if its a grey scale image, i.e., at least 90% of the pixels in this image (given this slop) are grey scale.
             // If not, its a color image so judge it as not dark
             double uncoloredPixelFraction = 1d * uncoloredPixels / countedPixels;
