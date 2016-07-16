@@ -184,9 +184,9 @@ namespace Timelapse.Images
                     if (this.ImageToDisplay.ActualWidth > 0)
                     {
                         this.magnifyingGlass.Redraw(NativeMethods.CorrectGetPosition(this),
-                                                    NativeMethods.CorrectGetPosition(this.ImageToDisplay), 
-                                                    this.ImageToDisplay.ActualWidth, 
-                                                    this.ImageToDisplay.ActualHeight, 
+                                                    NativeMethods.CorrectGetPosition(this.ImageToDisplay),
+                                                    this.ImageToDisplay.ActualWidth,
+                                                    this.ImageToDisplay.ActualHeight,
                                                     this.canvasToMagnify);
                     }
                 }

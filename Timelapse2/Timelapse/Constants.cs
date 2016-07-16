@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Media.Imaging;
 
 namespace Timelapse
@@ -197,6 +198,7 @@ namespace Timelapse
 
         public static class Images
         {
+            public const int NoImagesInImageSet = -1;  // an indicator that there is no image to show
             public const int BitmapCacheSize = 9;
 
             // The default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
@@ -220,13 +222,21 @@ namespace Timelapse
             public static readonly BitmapFrame CorruptThumbnail;  
             public static readonly BitmapFrame Missing;
             public static readonly BitmapFrame MissingThumbnail;
+            public static readonly BitmapFrame EmptyImageSet;
 
             static Images()
             {
+                // Saul TODO: This appears needed for unit tests to pass. To verify..
+                if (Application.ResourceAssembly == null)
+                { 
+                    Application.ResourceAssembly = typeof(App).Assembly; //typeof(MainWindow).Assembly
+                }
                 // Create a variety of images.
                 Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Corrupt.Freeze();
                 Images.Missing = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.Missing.Freeze();
+                Images.EmptyImageSet = BitmapFrame.Create(new Uri("pack://application:,,/Resources/empty_imageset.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Missing.Freeze();
                 Images.CorruptThumbnail = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted_thumbnail.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.CorruptThumbnail.Freeze();

@@ -11,11 +11,8 @@ using Timelapse.Util;
 
 namespace Timelapse
 {
-    // TODOSAUL: Modify this so it tells the user that they can't delete an image that is not there.
-    // TODOSAUL: Here and elsewhere, show the placeholder images scaled to the correct size. May have to keep width/height of original image to do this.
-
     /// <summary>
-    /// This dialog box asks the user if he/she wants to delete the following images
+    /// This dialog box asks the user if he/she wants to delete the images (and possibly the data) of images rows as specified in the deletedImageTable
     /// What actually happens is that the image is replaced by a 'dummy' placeholder image,
     /// and the original image is copied into a subfolder called Deleted.
     /// </summary>
@@ -30,9 +27,9 @@ namespace Timelapse
 
         /// <summary>
         /// Ask the user if he/she wants to delete one or more images and (depending on whether deleteData is set) the data associated with those images.
-        /// Other parameters indicate various specifics of that image that we will use to display and delete it.
-        /// deleteData is true when the associated data should be deleted.
-        /// useDeleteFlags is true when the user is trying to delete images with the deletion flag set, otherwise its the current image being deleted
+        /// Other parameters indicate various specifics of how the deletion was specified, which also determines what is displayed in the interface:
+        /// -deleteData is true when the data associated with that image should be deleted.
+        /// -useDeleteFlags is true when the user is trying to delete images with the deletion flag set, otherwise its the current image being deleted
         /// </summary>
         public DialogDeleteImages(ImageDatabase database, List<ImageRow> deletedImageTable, bool deleteData, bool deletingCurrentImage)
         {
@@ -64,7 +61,7 @@ namespace Timelapse
                 {
                     // Case 1: Delete the current image, but not its data.
                     this.Message.Title = String.Format("Delete the current {0} but not its data.", imageOrVideo);
-                    this.Message.What = String.Format("Deletes the current {0} (shown below) but not its data.", imageOrVideo);
+                    this.Message.What = String.Format("Deletes the current {0} file (shown below) but not its data.", imageOrVideo);
                     this.Message.Result = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named DeletedImages.{1}", imageOrVideo, Environment.NewLine);
                     this.Message.Result += String.Format("\u2022 A placeholder {0} will be shown when you try to view a deleted {0}.", imageOrVideo);
                     this.Message.Hint = String.Format("\u2022 Restore deleted {0}s by manually copying or moving them back to their original location, or{1}", imageOrVideo, Environment.NewLine);
@@ -74,10 +71,10 @@ namespace Timelapse
                 {
                     // Case 2: Delete the current image and its data
                     this.Message.Title = String.Format("Delete the current {0} and its data", imageOrVideo);
-                    this.Message.What = String.Format("Deletes the current {0} (shown below) and the data associated with that {0}.", imageOrVideo);
+                    this.Message.What = String.Format("Deletes the current {0} file (shown below) and the data associated with that {0}.", imageOrVideo);
                     this.Message.Result = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named DeletedImages.{1}", imageOrVideo, Environment.NewLine);
                     this.Message.Result += String.Format("\u2022 However, the data associated with that {0} will be permanently deleted.", imageOrVideo);
-                    this.Message.Hint = String.Format("You can delete your {0} backups by deleting the DeletedImages folder.", imageOrVideo);
+                    this.Message.Hint = String.Format("You can permanently delete your {0} backup by deleting the DeletedImages folder.", imageOrVideo);
                 }
             }
             else
@@ -85,8 +82,8 @@ namespace Timelapse
                 if (deleteData == false)
                 {
                     // Case 3: Delete the images that have the delete flag set, but not their data
-                    this.Message.Title = "Delete all images and videos marked for deletion";
-                    this.Message.What = "\u2022 Deletes the files of images and videos marked for deletion (shown below) but not the data entered for them.";
+                    this.Message.Title = "Delete the images and videos marked for deletion in this filter";
+                    this.Message.What = "\u2022 Deletes the image and video files in this filter that are marked for deletion (shown below), but not the data entered for them.";
                     this.Message.Result = "\u2022 The deleted file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
                     this.Message.Result += "\u2022 A placeholder image will be shown when you try to view a deleted image.";
                     this.Message.Hint = "\u2022 Restore deleted files by manually copying or moving them back to their original location, or" + Environment.NewLine;
@@ -95,11 +92,11 @@ namespace Timelapse
                 else
                 {
                     // Case 4: Delete the images that have the delete flag set, and their data
-                    this.Message.Title = "Delete all images and videos marked for deletion and their data";
-                    this.Message.What = "Deletes all images and videos marked for deletion (shown below) along with the data entered for them.";
+                    this.Message.Title = "Delete those images and videos marked for deletion and their data in this filter";
+                    this.Message.What = "Deletes the image and video files that are marked for deletion (shown below), along with the data entered for them.";
                     this.Message.Result = "\u2022 The deleted files will be backed up in a sub-folder named DeletedImages" + Environment.NewLine;
-                    this.Message.Result += "\u2022 However, the data entered will be permanently deleted.";
-                    this.Message.Hint = "You can delete the backup files by deleting the DeletedImages folder.";
+                    this.Message.Result += "\u2022 However, the data associated with those files will be permanently deleted.";
+                    this.Message.Hint = "You can permanently delete those backup files by deleting the DeletedImages folder.";
                 }
             }
             this.Title = this.Message.Title;
@@ -165,20 +162,6 @@ namespace Timelapse
         /// </summary>
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            // Don't allow the user to delete ALL their data. 
-            // TODOSAUL: Need a general fix to this throughout, where we allow for an empty dataset 
-            if (this.deleteData && (this.imagesToDelete.Count >= this.imageDatabase.GetImageCount(ImageFilter.All)))
-            {
-                DialogMessageBox messageBox = new DialogMessageBox("You can't delete all your images", this);
-                messageBox.Message.Icon = MessageBoxImage.Error;
-                messageBox.Message.Problem = "You can't delete all your images";
-                messageBox.Message.Reason = "Timelapse must have at least one image to display.";
-                messageBox.Message.Solution = "Select only a subset of images to delete.";
-                messageBox.ShowDialog();
-                this.DialogResult = false;
-                return;
-            }
-
             List<long> imageIDsToDeleteFromDatabase = new List<long>();
             Mouse.OverrideCursor = Cursors.Wait;
             foreach (ImageRow imageProperties in this.imagesToDelete)

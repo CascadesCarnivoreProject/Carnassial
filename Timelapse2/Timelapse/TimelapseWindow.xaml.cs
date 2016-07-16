@@ -231,13 +231,12 @@ namespace Timelapse
         /// Load the specified database template and then the associated images.
         /// </summary>
         /// <param name="templateDatabasePath">Fully qualified path to the template database file.</param>
-        /// <returns>true if the template and images were loaded, false otherwise</returns>
+        /// <returns>true only if both the template and image database file are loaded (regardless of whether any images were loaded) , false otherwise</returns>
         private bool TryOpenTemplateAndLoadImages(string templateDatabasePath)
         {
-            // Create the template to the Timelapse Template database
+            // Try to create or open the template database
             if (!TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out this.template))
             {
-                this.OnImageDatabaseNotLoaded();
                 // notify the user the template couldn't be loaded rather than silently doing nothing
                 DialogMessageBox messageBox = new DialogMessageBox("Timelapse could not load the template.", this);
                 messageBox.Message.Problem = "Timelapse could not load the Template File:" + Environment.NewLine;
@@ -252,18 +251,18 @@ namespace Timelapse
                 return false;
             }
 
-            // Find the .ddb file in the image set folder. If a single .ddb file is found, use that one
-            // If there are multiple .ddb files, ask the use to choose one and use that
-            // However, if the user cancels that choice, just abort.
+            // Try to get the image database file path (imageDatabaseFilePath)
+            // If its a new image database file, importImages will be true (meaning we should later ask the user to try to import some images)
             string imageDatabaseFilePath;
             bool importImages;
             if (this.TrySelectDatabaseFile(templateDatabasePath, out imageDatabaseFilePath, out importImages) == false)
             {
-                this.OnImageDatabaseNotLoaded();
+                // No database file was selected
                 return false;
             }
 
-            // When we are loading from an existing image database, ensure that the template in the template database matches the template stored in
+            // We now have a template and an image database.
+            // Before loading from an existing image database, ensure that the template in the template database matches the template stored in
             // the image database
             ImageDatabase imageDatabase = ImageDatabase.CreateOrOpen(imageDatabaseFilePath, this.template);
             if (imageDatabase.TemplateSynchronizationIssues.Count > 0)
@@ -273,31 +272,29 @@ namespace Timelapse
                 bool? result = templateMismatchDialog.ShowDialog();
                 if (result == true)
                 {
-                    // user indicated not to update to the current template so exit
+                    // user indicated not to update to the current template so exit.
+                    // Saul ToDo: We could probably alter this to revert back to the initial UI state instead of shutting down, but that will require some cleanup
                     Application.Current.Shutdown();
                     return false;
                 }
-                // user indicated to run with the stale copy of the template in the image database
+                // user indicated to run with the stale copy of the template found in the image database
             }
 
+            // At this point, we should have a valid template and image database loaded
+            // Generate and render the data entry controls, regardless of whether there are actually any images in the image database.
             this.dataHandler = new DataEntryHandler(imageDatabase);
-            if (importImages)
-            {
-                if (this.LoadByScanningImageFolder(this.FolderPath) == false)
-                {
-                    // revert UI to no database loaded state
-                    this.OnImageDatabaseNotLoaded();
-                    return false;
-                }
-            }
-
-            // generate and render the data entry controls
             this.dataEntryControls.Generate(imageDatabase, this.dataHandler);
             this.SetUserInterfaceCallbacks();
             this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
 
             this.state.MostRecentImageSets.SetMostRecent(templateDatabasePath);
             this.MenuItemRecentImageSets_Refresh();
+
+            // If this is a new image database, try to load images (if any) from the folder...  
+            if (importImages)
+            {
+                this.LoadByScanningImageFolder(this.FolderPath);
+            }
             this.OnImageLoadingComplete();
             return true;
         }
@@ -316,7 +313,7 @@ namespace Timelapse
             {
                 // no images were found in folder; see if user wants to try again
                 DialogMessageBox messageBox = new DialogMessageBox("No images found in the image set folder.", this, MessageBoxButton.YesNo);
-                messageBox.Message.Problem = "There don't seem to be any images or videos in your chosen folder:" + Environment.NewLine;
+                messageBox.Message.Problem = "There doesn't seem to be any images or videos in your chosen folder:" + Environment.NewLine;
                 messageBox.Message.Problem += "\u2022 " + this.FolderPath + Environment.NewLine;
                 messageBox.Message.Reason = "\u2022 The folder has no JPG files in it (files ending in '.jpg'), and" + Environment.NewLine;
                 messageBox.Message.Reason += "\u2022 The folder has no AVI files in it (files ending in '.avi'), and" + Environment.NewLine;
@@ -505,6 +502,10 @@ namespace Timelapse
             return true;
         }
 
+        // Given the location path of the template,  return:
+        // - true if a database file was specified
+        // - databaseFilePath: the path to the data database file (or null if none was specified).
+        // - importImages: true when the database file has just been created, which means images still have to be imported.
         private bool TrySelectDatabaseFile(string templateDatabasePath, out string databaseFilePath, out bool importImages)
         {
             importImages = false;
@@ -614,27 +615,46 @@ namespace Timelapse
             {
                 StatusBarUpdate.Message(this.statusBar, "No file backups were made.");
             }
+            this.OnAreImagesInSet(this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0);
         }
 
         /// <summary>
-        /// If an image set could not be opened or the user canceled loading revert the UI to its initial state so the user can try
-        /// loading another image set and isn't presented with menu options applicable only when an image set is open.
+        /// If no images are currently loaded, inform the user and disable those UI aspects that would not apply.
         /// </summary>
-        private void OnImageDatabaseNotLoaded()
+        private void OnAreImagesInSet(bool imagesExist)
         {
-            this.MenuItemAddImagesToImageSet.IsEnabled = false;
-            this.MenuItemLoadImages.IsEnabled = true;
-            this.MenuItemExportThisImage.IsEnabled = false;
-            this.MenuItemExportAsCsvAndPreview.IsEnabled = false;
-            this.MenuItemExportAsCsv.IsEnabled = false;
-            this.MenuItemImportFromCsv.IsEnabled = false;
-            this.MenuItemRecentImageSets.IsEnabled = true;
-            this.MenuItemRenameImageDatabaseFile.IsEnabled = false;
-            this.MenuItemEdit.IsEnabled = false;
-            this.MenuItemDeleteImage.IsEnabled = false;
-            this.MenuItemView.IsEnabled = false;
-            this.MenuItemFilter.IsEnabled = false;
-            this.MenuItemOptions.IsEnabled = false;
+            // Depending upon whether images exist in the data set,
+            // enable / disable menus and menu items as needed
+            this.MenuItemAddImagesToImageSet.IsEnabled = true;
+            this.MenuItemLoadImages.IsEnabled = false;
+
+            this.MenuItemExportThisImage.IsEnabled = imagesExist;
+            this.MenuItemExportAsCsvAndPreview.IsEnabled = imagesExist;
+            this.MenuItemExportAsCsv.IsEnabled = imagesExist;
+            this.MenuItemImportFromCsv.IsEnabled = imagesExist;
+            this.MenuItemRenameImageDatabaseFile.IsEnabled = imagesExist;
+            this.MenuItemEdit.IsEnabled = imagesExist;
+            this.MenuItemDeleteImage.IsEnabled = imagesExist;
+            this.MenuItemView.IsEnabled = imagesExist;
+            this.MenuItemFilter.IsEnabled = imagesExist;
+            this.MenuItemOptions.IsEnabled = imagesExist;
+
+            // Also adjust the enablement of the various other UI components.
+            if (this.controlWindow != null)
+            {
+                this.controlWindow.IsEnabled = imagesExist;
+            }
+            this.controlsTray.IsEnabled = imagesExist;  // If images don't exist, the user shouldn't be allowed to interact with the control tray
+            this.ImageNavigatorSlider.IsEnabled = imagesExist;
+            this.markableCanvas.IsEnabled = imagesExist;
+            if (imagesExist == false)
+            {
+                this.ShowImage(Constants.Images.NoImagesInImageSet);
+                StatusBarUpdate.Message(this.statusBar, "Image set is empty.");
+                StatusBarUpdate.CurrentImageNumber(this.statusBar, 0);
+                StatusBarUpdate.TotalCount(this.statusBar, 0);
+            }
+            this.HelpDocument.Visibility = Visibility.Collapsed;
         }
         #endregion
 
@@ -1151,6 +1171,21 @@ namespace Timelapse
         // Show the image in the specified row
         private void ShowImage(int imageRow)
         {
+            // If there is no image to show, then show an image indicating the empty image set.
+            if (imageRow == Constants.Images.NoImagesInImageSet)
+            {
+                BitmapSource unalteredImage = Constants.Images.EmptyImageSet;
+                this.markableCanvas.ImageToDisplay.Source = unalteredImage;
+                this.markableCanvas.ImageToMagnify.Source = unalteredImage; // Probably not needed
+
+                // Delete any markers that may have been previously displayed 
+                this.ClearTheMarkableCanvasListOfMetaTags();
+                this.RefreshTheMarkableCanvasListOfMetaTags();
+
+                // We could invalidate the cache here, but it will be reset anyways when images are loaded. 
+                return;
+            }
+
             // for the bitmap caching logic below to work this should be the only place where code in TimelapseWindow moves the image enumerator
             bool newImageToDisplay;
             if (this.dataHandler.ImageCache.TryMoveToImage(imageRow, out newImageToDisplay) == false)
@@ -1632,6 +1667,12 @@ namespace Timelapse
             }
             this.markableCanvas.MetaTags = metaTagList;
         }
+
+        // Clear the counters' metatags (if any) from the current row in the database
+        private void ClearTheMarkableCanvasListOfMetaTags()
+        {
+            this.counterCoordinates = null;
+        }
         #endregion
 
         #region File Menu Callbacks and Support Functions
@@ -1642,6 +1683,8 @@ namespace Timelapse
             {
                 this.LoadByScanningImageFolder(folderPath);
             }
+            // SAUL TODO: The state should be set before this, so we can likely delete this call
+            this.OnAreImagesInSet(this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0);
         }
 
         /// <summary>Load the images from a folder.</summary>
@@ -1650,8 +1693,11 @@ namespace Timelapse
             string templateDatabasePath;
             if (this.TryGetTemplatePath(out templateDatabasePath))
             {
-                this.TryOpenTemplateAndLoadImages(templateDatabasePath);
-            }
+                if (this.TryOpenTemplateAndLoadImages(templateDatabasePath))
+                { 
+                    this.OnAreImagesInSet(this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0);
+                }
+            }     
         }
 
         /// <summary>Write the CSV file and preview it in excel.</summary>
@@ -1784,20 +1830,16 @@ namespace Timelapse
             DialogMessageBox messageBox = new DialogMessageBox("Importing CSV data rules...", this, MessageBoxButton.OKCancel);
             messageBox.Message.What = "Importing data from a CSV (comma separated value) file will only work if you follow the rules below." + Environment.NewLine;
             messageBox.Message.What += "Otherwise your Timelapse data may become corrupted.";
-
             messageBox.Message.Reason = "Timelapse requires the CSV file and its data to follow a specific format.";
-
             messageBox.Message.Solution = "\u2022 Only modify and import a CSV file previously exported by Timelapse." + Environment.NewLine;
-            messageBox.Message.Solution = "\u2022 Don't change the File or Folder names" + Environment.NewLine;
-            messageBox.Message.Solution += "\u2022 Do not change the order or names of any of the columns" + Environment.NewLine;
-            messageBox.Message.Solution += "\u2022 Restrict data modification as follows:" + Environment.NewLine;
+            messageBox.Message.Solution += "\u2022 Do not change data in the File, Folder, Data or Time fields (those changes will be ignored)" + Environment.NewLine;
+            messageBox.Message.Solution += "\u2022 Do not change the the column names" + Environment.NewLine;
+            messageBox.Message.Solution += "\u2022 Do not add or delete rows (those changes will be ignored)";
+            messageBox.Message.Solution += "\u2022 Restrict modifications in the remaining columns as follows:" + Environment.NewLine;
             messageBox.Message.Solution += "    \u2022 Counter data to positive integers" + Environment.NewLine;
             messageBox.Message.Solution += "    \u2022 Flag data to either 'true' or 'false'" + Environment.NewLine;
             messageBox.Message.Solution += "    \u2022 FixedChoice data to a string that exactly match one of the FixedChoice menu options, or empty." + Environment.NewLine;
-            messageBox.Message.Solution += "    \u2022 Note data to any string, or empty." + Environment.NewLine;
-            messageBox.Message.Solution += "    \u2022 As Date / Time field formats are sometimes altered by spreadsheets," + Environment.NewLine;
-            messageBox.Message.Solution += "           any changes to those fields will be ignored during the import.";
-
+            messageBox.Message.Solution += "    \u2022 Note data to any string, or empty.";
             messageBox.Message.Result = "Timelapse will create a backup .ddb file in the Backups folder, and will then try its best.";
             messageBox.Message.Hint = "After you import, check your data. If it is not what you expect, restore your data by using that backup file.";
 
@@ -1840,9 +1882,9 @@ namespace Timelapse
                     messageBox.Message.Reason = "The CSV file is not compatible with the current image set.";
                     messageBox.Message.Solution = "Check that:" + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 The first row of the CSV file is a header line." + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 The column names in the header line match the database.";
-                    messageBox.Message.Solution += "\u2022 Choice values use the correct case.";
-                    messageBox.Message.Solution += "\u2022 Counter values are numbers.";
+                    messageBox.Message.Solution += "\u2022 The column names in the header line match the database." + Environment.NewLine; 
+                    messageBox.Message.Solution += "\u2022 Choice values use the correct case." + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 Counter values are numbers." + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 Flag values are either 'true' or 'false'.";
                     messageBox.Message.Result = "Either no data was imported or invalid parts of the CSV were skipped.";
                     messageBox.Message.Hint = "The errors encountered were:";
@@ -1864,8 +1906,8 @@ namespace Timelapse
                 messageBox.Message.Hint = "Is the file open in Excel?";
                 messageBox.ShowDialog();
             }
-
-            this.OnImageLoadingComplete();
+            // Reload the data table
+            this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
             StatusBarUpdate.Message(this.statusBar, "CSV file imported.");
         }
 
@@ -1877,6 +1919,7 @@ namespace Timelapse
                 this.state.MostRecentImageSets.TryRemove(recentDatabasePath);
                 this.MenuItemRecentImageSets_Refresh();
             }
+            this.OnAreImagesInSet(this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0);
         }
 
         /// <summary>
@@ -2021,6 +2064,14 @@ namespace Timelapse
                 // Delete by deletion flags case. 
                 // Construct a table that contains the datarows of all images with their delete flag set, and set various flags
                 imagesToDelete = this.dataHandler.ImageDatabase.GetImagesMarkedForDeletion().ToList();
+                // Prune image rows that are not in the current filter 
+                for (int i = imagesToDelete.Count - 1; i >= 0;  i--)
+                {
+                    if (this.dataHandler.ImageDatabase.ImageDataTable.Find(imagesToDelete[i].ID) == null)
+                    {
+                        imagesToDelete.Remove(imagesToDelete[i]);
+                    }
+                }
                 deleteData = mi.Name.Equals(this.MenuItemDeleteImages.Name) ? false : true;
                 deletingCurrentImage = false;
             }
@@ -2073,7 +2124,14 @@ namespace Timelapse
                     // Reload the datatable. Then find and show the image closest to the last one shown
                     this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageFilter); // Reset the filter to retrieve the remaining images
                     int nextImage = this.dataHandler.ImageDatabase.FindClosestImage(currentID);
-                    this.ShowImage(nextImage); // Reset the filter to retrieve the remaining images
+                    if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0)
+                    {
+                        this.ShowImage(nextImage); // Reset the filter to retrieve the remaining images
+                    }
+                    else
+                    { 
+                         this.OnAreImagesInSet(false);
+                    }
                 }
             }
         }
@@ -2670,15 +2728,15 @@ namespace Timelapse
             // SAUL TODO 
             // ORIGINAL CODE. DELETE After Unit Testing bug is fixed.
             // try to move
-            //int desiredRow = this.dataHandler.ImageCache.CurrentRow + increment;
-            //if (this.dataHandler.ImageDatabase.IsImageRowInRange(desiredRow))
-            //{
+            // int desiredRow = this.dataHandler.ImageCache.CurrentRow + increment;
+            // if (this.dataHandler.ImageDatabase.IsImageRowInRange(desiredRow))
+            // {
             //    this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
             //    this.ShowImage(desiredRow);
             //    this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
             //    return true;
-            //}
-            //return false;
+            // }
+            // return false;
 
             int desiredRow = this.dataHandler.ImageCache.CurrentRow + increment;
 
