@@ -811,6 +811,13 @@ namespace Timelapse.Editor
             }
         }
 
+        private void MenuItemInspectImageMetaData_Click(object sender, RoutedEventArgs e)
+        {
+            DialogInspectMetaData dlg = new DialogInspectMetaData(this.templateDatabase.FilePath);
+            dlg.Owner = this;
+            dlg.Show();
+        }
+
         private void ShowDataLabelRequirementsDialog()
         {
             DialogMessageBox messageBox = new DialogMessageBox("Data Labels can only contain letters, numbers and '_'", this);

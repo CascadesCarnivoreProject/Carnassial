@@ -1978,7 +1978,7 @@ namespace Timelapse
         private bool ShowFolderSelectionDialog(out string folderPath)
         {
             CommonOpenFileDialog folderSelectionDialog = new CommonOpenFileDialog();
-            folderSelectionDialog.Title = "Select a folder to add image files from...";
+            folderSelectionDialog.Title = "Select a folder ...";
             folderSelectionDialog.DefaultDirectory = this.mostRecentImageAddFolderPath == null ? this.FolderPath : this.mostRecentImageAddFolderPath;
             folderSelectionDialog.IsFolderPicker = true;
             if (folderSelectionDialog.ShowDialog() == CommonFileDialogResult.Ok)

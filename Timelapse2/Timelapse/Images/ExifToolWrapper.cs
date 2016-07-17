@@ -17,7 +17,7 @@ using System.Threading;
 
 namespace Timelapse.Images
 {
-    internal class ExifToolWrapper : IDisposable
+    public class ExifToolWrapper : IDisposable
     {
         // -g for groups
         private const string Arguments = "-fast -m -q -q -stay_open True -@ - -common_args -d \"%Y.%m.%d %H:%M:%S\" -c \"%d %d %.6f\" -t";

@@ -232,6 +232,8 @@
                 <MenuItem Name="ViewMenu" Header="_View" IsEnabled="False">
                     <MenuItem Name="ShowAllColumns"  IsCheckable="True" IsChecked="False" Header="_Show All Columns" Click="ShowAllColumnsMenuItem_Click" ToolTip="Show all the columns, which includes how sort orders are tracked">
                     </MenuItem>
+                    <MenuItem Name="MenuItemInspectImageMetaData" Header="_Inspect Image MetaData" ToolTip="Inspect what metadata is available in an image of your choosing" Click="MenuItemInspectImageMetaData_Click">
+                    </MenuItem>
                 </MenuItem>
                 <MenuItem Header="_Help" >
                     <MenuItem Name="MenuItemTimelapseHomePage" Header="The Timelapse _web page (via your web browser)" Click="MenuTimelapseWebPage_Click" ToolTip="Displays the Timelapse Image Analyzer web page in your browser"/>
