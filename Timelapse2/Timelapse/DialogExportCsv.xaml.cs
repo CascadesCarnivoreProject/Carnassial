@@ -10,11 +10,16 @@ namespace Timelapse
     /// </summary>
     public partial class DialogExportCsv : Window
     {
-        /// <summary>
-        /// Tell the user that files are being exported, along with the option to not show this dialog again
-        /// True: show again
-        /// False: don't show again
-        /// </summary>
+        // Whether to display the dialog box next time around
+        private bool showAgain = true;
+        public bool ShowAgain
+        {
+            get
+            {
+                return this.showAgain;
+            }
+        }
+
         public DialogExportCsv(string filename)
         {
             this.InitializeComponent();
@@ -24,7 +29,13 @@ namespace Timelapse
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = (this.chkboxShowAgain.IsChecked == true) ? true : false;
+            this.showAgain = (this.chkboxShowAgain.IsChecked == true) ? true : false;
+            this.DialogResult = true; 
+        }
+
+        private void ChkboxShowAgain_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            this.showAgain = ((bool)chkboxShowAgain.IsChecked) ? true : false;
         }
     }
 }

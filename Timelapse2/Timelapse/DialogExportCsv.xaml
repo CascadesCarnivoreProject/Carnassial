@@ -17,12 +17,12 @@
                             />
 
         <StackPanel Name="StackPanelCorrect" Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <CheckBox x:Name="chkboxShowAgain" Margin="10,30,10,0" IsChecked="True" Content="Always show this message in this session "/>
+            <CheckBox x:Name="chkboxShowAgain" Margin="10,30,10,0" IsChecked="True" Content="Always show this message in this session" Checked="ChkboxShowAgain_CheckedChanged" Unchecked="ChkboxShowAgain_CheckedChanged"/>
         </StackPanel>
 
         <DockPanel Name="DockPanelImage">
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Name="OkButton" IsCancel="True" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True">Okay</Button>
+                <Button Name="OkButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" >Okay</Button>
             </StackPanel>
         </DockPanel>
     </DockPanel>

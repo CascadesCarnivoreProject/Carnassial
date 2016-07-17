@@ -162,6 +162,7 @@ namespace Timelapse
         {
             public const string AviFileExtension = ".avi";
             public const string BackupFolder = "Backups"; // Sub-folder that will contain database and csv file backups  
+            public const int NumberOfBackupFilesToKeep = 8; // Maximum number of backup files to keep
             public const string DeletedImagesFolder = "DeletedImages"; // Sub-folder that will contain backups of deleted images 
             public const string CsvFileExtension = ".csv";
             public const string DefaultImageDatabaseFileName = "TimelapseData.ddb";
@@ -229,7 +230,7 @@ namespace Timelapse
                 // Saul TODO: This appears needed for unit tests to pass. To verify..
                 if (Application.ResourceAssembly == null)
                 { 
-                    Application.ResourceAssembly = typeof(App).Assembly; //typeof(MainWindow).Assembly
+                    Application.ResourceAssembly = typeof(App).Assembly; 
                 }
                 // Create a variety of images.
                 Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);

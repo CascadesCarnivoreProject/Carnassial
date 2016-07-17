@@ -1,49 +1,41 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-
+using System.Linq;
 namespace Timelapse.Database
 {
     /// <summary>
-    /// Make a time-stamped backup of the database and csv files, if they exist 
+    /// Make a time-stamped backup of the given file in the backup folder.
+    /// At the same time, limit the number of backup files, where we prune older files with the same extension as needed. 
     /// </summary>
     public class FileBackup
     {
-        public static bool TryCreateBackups(string folderPath, string databaseFileName)
+        public static bool TryCreateBackups(string folderPath, string sourceFile)
         {
             string backupFolderPath = Path.Combine(folderPath, Constants.File.BackupFolder);   // The Backup Folder 
-            string databaseFilePath = Path.Combine(folderPath, databaseFileName);
+            string sourceFilePath = Path.Combine(folderPath, sourceFile);
+            string extension = Path.GetExtension(sourceFile);
             try
             {
                 // Backup the database file
-                if (File.Exists(databaseFilePath))
+                if (File.Exists(sourceFilePath))
                 {
-                    // While this file almost certainly exists, may as well check for it.
+                    // Create the backup folder if needed.
                     if (!Directory.Exists(backupFolderPath))
                     {
                         Directory.CreateDirectory(backupFolderPath);  // Create the backup folder if needed
                     }
-
-                    string databaseBackupFileName = FileBackup.CreateTimeStampedFileName(databaseFileName);
-                    string databaseBackupFilePath = Path.Combine(backupFolderPath, databaseBackupFileName);
-                    File.Copy(databaseFilePath, databaseBackupFilePath, true);
-                }
-
-                // Backup the CSV file if it exists
-                // there won't be one for template databases and one may never be never be exported from an image database
-                string csvFileName = Path.GetFileNameWithoutExtension(databaseFileName) + Constants.File.CsvFileExtension;
-                string csvFilePath = Path.Combine(folderPath, csvFileName);
-                if (File.Exists(csvFilePath))
-                {
-                    string csvBackupFileName = FileBackup.CreateTimeStampedFileName(csvFileName);
-                    string csvBackupFilePath = Path.Combine(folderPath, Constants.File.BackupFolder, csvBackupFileName);
-                    File.Copy(csvFilePath, csvBackupFilePath, true);
-                }
+                    // create a  timestamped destination file name
+                    string destinationFile = FileBackup.CreateTimeStampedFileName(sourceFile);
+                    string destinationFilePath = Path.Combine(backupFolderPath, destinationFile);
+                    File.Copy(sourceFilePath, destinationFilePath, true);
+                } 
+                PruneBackups(backupFolderPath, extension); // Remove older backup files
                 return true; // backups succeeded
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Backup of {0} failed.", databaseFileName), exception.ToString());
+                Debug.Assert(false, String.Format("Backup of {0} failed.", sourceFile), exception.ToString());
                 return false; // One or more backups failed
             }
         }
@@ -56,6 +48,18 @@ namespace Timelapse.Database
             string extension = Path.GetExtension(fileName);
             string date = DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss");
             return String.Concat(name, ".", date, extension);
+        }
+
+        // When the backup files with the same extension exceed the NumberOfBackupFilesToKeep, we remove the oldest ones
+        private static void PruneBackups(string backupFolderPath, string extension)
+        {
+            foreach (FileInfo file in new DirectoryInfo(backupFolderPath)
+                .GetFiles("*" + extension)
+                .OrderByDescending(x => x.LastWriteTime)
+                .Skip(Constants.File.NumberOfBackupFilesToKeep))
+            {
+                File.Delete(file.FullName);
+            }
         }
     }
 }

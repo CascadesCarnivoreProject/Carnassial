@@ -295,7 +295,10 @@ namespace Timelapse
             {
                 this.LoadByScanningImageFolder(this.FolderPath);
             }
-            this.OnImageLoadingComplete();
+            else
+            { 
+                this.OnImageLoadingComplete();
+            }
             return true;
         }
 
@@ -609,7 +612,7 @@ namespace Timelapse
 
             if (FileBackup.TryCreateBackups(this.FolderPath, this.dataHandler.ImageDatabase.FileName))
             {
-                StatusBarUpdate.Message(this.statusBar, "Backups of files made.");
+                StatusBarUpdate.Message(this.statusBar, "Backup of data file made.");
             }
             else
             {
@@ -1728,9 +1731,20 @@ namespace Timelapse
                 }
             }
 
-            // Write the file
+            // Generate the file names/path
             string csvFileName = Path.GetFileNameWithoutExtension(this.dataHandler.ImageDatabase.FileName) + ".csv";
             string csvFilePath = Path.Combine(this.FolderPath, csvFileName);
+
+            // Backup the csv file if it exists, as the export will overwrite it. 
+            if (FileBackup.TryCreateBackups(this.FolderPath, csvFileName))
+            {
+                StatusBarUpdate.Message(this.statusBar, "Backup of csv file made.");
+            }
+            else
+            {
+                StatusBarUpdate.Message(this.statusBar, "No csv file backup was made.");
+            }
+
             CsvReaderWriter csvWriter = new CsvReaderWriter();
             try
             {
@@ -1769,7 +1783,7 @@ namespace Timelapse
                 bool? result = dlg.ShowDialog();
                 if (result != null)
                 {
-                    this.state.ShowCsvDialog = result.Value;
+                    this.state.ShowCsvDialog = dlg.ShowAgain;
                 }
             }
             StatusBarUpdate.Message(this.statusBar, "Data exported to " + csvFileName);
@@ -1852,22 +1866,23 @@ namespace Timelapse
                 return;
             }
 
+            string csvFileName = Path.GetFileNameWithoutExtension(this.dataHandler.ImageDatabase.FileName) + Constants.File.CsvFileExtension;
             if (Utilities.TryGetFileFromUser("Select a .csv file to merge into the current image set",
-                                             Path.Combine(this.dataHandler.ImageDatabase.FolderPath, Path.GetFileNameWithoutExtension(this.dataHandler.ImageDatabase.FileName) + Constants.File.CsvFileExtension),
+                                             Path.Combine(this.dataHandler.ImageDatabase.FolderPath, csvFileName),
                                              String.Format("Comma separated value files ({0})|*{0}", Constants.File.CsvFileExtension),
                                              out csvFilePath) == false)
             {
                 return;
             }
 
-            // Create a backup file
+            // Create a backup database file
             if (FileBackup.TryCreateBackups(this.FolderPath, this.dataHandler.ImageDatabase.FileName))
             {
-                StatusBarUpdate.Message(this.statusBar, "Backups of files made.");
+                StatusBarUpdate.Message(this.statusBar, "Backup of data file made.");
             }
             else
             {
-                StatusBarUpdate.Message(this.statusBar, "No file backups were made.");
+                StatusBarUpdate.Message(this.statusBar, "No data file backup was made.");
             }
 
             CsvReaderWriter csvReader = new CsvReaderWriter();
