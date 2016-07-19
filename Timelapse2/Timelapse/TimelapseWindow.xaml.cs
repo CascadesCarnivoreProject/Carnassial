@@ -210,7 +210,7 @@ namespace Timelapse
             // default the template selection dialog to the most recently opened database
             string defaultTemplateDatabasePath;
             this.state.MostRecentImageSets.TryGetMostRecent(out defaultTemplateDatabasePath);
-            if (Utilities.TryGetFileFromUser("Select a TimelapseTemplate.tdb file, which should be one located in your image set folder",
+            if (Utilities.TryGetFileFromUser("Select a TimelapseTemplate.tdb file, which should be located in the root folder containing your images and videos",
                                              defaultTemplateDatabasePath,
                                              String.Format("Template files ({0})|*{0}", Constants.File.TemplateDatabaseFileExtension),
                                              out templateDatabasePath) == false)
@@ -225,6 +225,12 @@ namespace Timelapse
             }
 
             return true;
+        }
+
+        // Return if a template file exists
+        private bool ExistsTemplateFile(string templateDatabasePath)
+        {
+            return File.Exists(templateDatabasePath);
         }
 
         /// <summary>
@@ -315,16 +321,15 @@ namespace Timelapse
             if (imageFiles.Count == 0)
             {
                 // no images were found in folder; see if user wants to try again
-                DialogMessageBox messageBox = new DialogMessageBox("No images found in the image set folder.", this, MessageBoxButton.YesNo);
-                messageBox.Message.Problem = "There doesn't seem to be any images or videos in your chosen folder:" + Environment.NewLine;
+                DialogMessageBox messageBox = new DialogMessageBox("Select a folder containing images or videos", this, MessageBoxButton.YesNo);
+                messageBox.Message.Problem = "Select a folder containing images or videos, as there aren't any images or videos in the folder:" + Environment.NewLine;
                 messageBox.Message.Problem += "\u2022 " + this.FolderPath + Environment.NewLine;
-                messageBox.Message.Reason = "\u2022 The folder has no JPG files in it (files ending in '.jpg'), and" + Environment.NewLine;
-                messageBox.Message.Reason += "\u2022 The folder has no AVI files in it (files ending in '.avi'), and" + Environment.NewLine;
-                messageBox.Message.Reason += "\u2022 The folder has no MP4 files in it (files ending in '.mp4'), or" + Environment.NewLine;
-                messageBox.Message.Reason += "\u2022 You may have selected the wrong folder, i.e., a folder other than the one containing the images or videos.";
-                messageBox.Message.Solution = "Check that the chosen folder contains images (i.e., a '.jpg' suffix), contains" + Environment.NewLine;
-                messageBox.Message.Solution += "videos (i.e., an '.avi' or '.mp4' suffix), or open a different folder." + Environment.NewLine;
-                messageBox.Message.Result += "Would you like to choose another folder?";
+                messageBox.Message.Reason = "\u2022 This folder has no JPG files in it (files ending in '.jpg'), and" + Environment.NewLine;
+                messageBox.Message.Reason += "\u2022 This folder has no AVI files in it (files ending in '.avi'), and" + Environment.NewLine;
+                messageBox.Message.Reason += "\u2022 This folder has no MP4 files in it (files ending in '.mp4'), or" + Environment.NewLine;
+                messageBox.Message.Reason += "\u2022 The images / videos may be located in a subfolder to this one.";
+                messageBox.Message.Solution = "Select a folder containing images (files with a '.jpg' suffix) and/or" + Environment.NewLine;
+                messageBox.Message.Solution += "videos ('.avi' or '.mp4' files)." + Environment.NewLine;
                 messageBox.Message.Icon = MessageBoxImage.Question;
                 if (messageBox.ShowDialog() == false)
                 {
@@ -1679,6 +1684,10 @@ namespace Timelapse
         #endregion
 
         #region File Menu Callbacks and Support Functions
+        private void File_SubmenuOpening(object sender, RoutedEventArgs e)
+        {
+            this.MenuItemRecentImageSets_Refresh();
+        }
         private void MenuItemAddImagesToImageSet_Click(object sender, RoutedEventArgs e)
         {
             string folderPath;
@@ -1945,14 +1954,37 @@ namespace Timelapse
             this.MenuItemRecentImageSets.IsEnabled = this.state.MostRecentImageSets.Count > 0;
             this.MenuItemRecentImageSets.Items.Clear();
 
+            // If some of the paths in the recency list don't exist, remove them from the list. 
+            // This is a bit cludgy as we can't remember an item while iterating, but it works.
+            List<string> invalidPaths = new List<string>();
+            foreach (string recentImageSetPath in this.state.MostRecentImageSets)
+            {
+                if (this.ExistsTemplateFile(recentImageSetPath) == false)
+                {
+                    invalidPaths.Add(recentImageSetPath);
+                }
+            }
+            // Now that we are out of the loop, we can delete invalidate paths from the recency list 
+            foreach (string path in invalidPaths)
+            {
+                this.state.MostRecentImageSets.TryRemove(path);
+            }
+
             int index = 1;
             foreach (string recentImageSetPath in this.state.MostRecentImageSets)
             {
+                // Create a menu item for each path
                 MenuItem recentImageSetItem = new MenuItem();
                 recentImageSetItem.Click += this.MenuItemRecentImageSet_Click;
                 recentImageSetItem.Header = String.Format("_{0} {1}", index++, recentImageSetPath);
                 recentImageSetItem.ToolTip = recentImageSetPath;
                 this.MenuItemRecentImageSets.Items.Add(recentImageSetItem);
+            }
+
+            // Now that we are out of the loop, we can delete invalidate paths from the recency list 
+            foreach (string path in invalidPaths)
+            {
+                this.state.MostRecentImageSets.TryRemove(path);
             }
         }
 
@@ -2247,7 +2279,7 @@ namespace Timelapse
             }
         }
 
-        /// <summary>Swap the day / month fields if possible</summary>
+        /// <summary>Swap the day / fields if possible</summary>
         private void MenuItemSwapDayMonth_Click(object sender, RoutedEventArgs e)
         {
             // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..

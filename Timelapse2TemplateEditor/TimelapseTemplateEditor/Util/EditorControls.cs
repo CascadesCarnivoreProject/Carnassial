@@ -31,11 +31,15 @@ namespace Timelapse.Editor.Util
                 {
                     if (control.Type == Constants.DatabaseColumn.Date)
                     {
-                        control.DefaultValue = DateTimeHandler.ToStandardDateString(DateTime.Now); // "01-Jun-2016"
+                        // Default Date: should be "01-Jan-1900
+                        DateTime defaultDateTime = new DateTime(Constants.Time.DefaultYear, Constants.Time.DefaultMonth, Constants.Time.DefaultDay, Constants.Time.DefaultHours, Constants.Time.DefaultMinutes, Constants.Time.DefaultSeconds);
+                        control.DefaultValue = DateTimeHandler.ToStandardDateString(defaultDateTime);  
                     }
                     else if (control.Type == Constants.DatabaseColumn.Time)
                     {
-                        control.DefaultValue = DateTimeHandler.ToStandardTimeString(DateTime.Now);
+                        // Default Time: should be "12:00:00"
+                        DateTime defaultDateTime = new DateTime(Constants.Time.DefaultYear, Constants.Time.DefaultMonth, Constants.Time.DefaultDay, Constants.Time.DefaultHours, Constants.Time.DefaultMinutes, Constants.Time.DefaultSeconds);
+                        control.DefaultValue = DateTimeHandler.ToStandardTimeString(defaultDateTime);
                     }
                 }
 

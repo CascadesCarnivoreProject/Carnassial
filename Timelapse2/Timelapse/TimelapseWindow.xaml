@@ -39,7 +39,7 @@
         <DockPanel Name="mainUI">
             <Menu DockPanel.Dock="Top">
                 <!-- File Menu -->
-                <MenuItem Header="_File" IsTabStop="false">
+                <MenuItem Header="_File" IsTabStop="false" SubmenuOpened="File_SubmenuOpening">
                     <MenuItem Name="MenuItemLoadImages" Header="_Load template, images, and video files..." Click="MenuItemLoadImages_Click" ToolTip="Asks for the template location, and then opens an existing database, or creates a new database after asking for the image/video locations"/>
                     <MenuItem Name="MenuItemRecentImageSets" Header="Load a _recently used image set" IsEnabled="false" ToolTip="Load a recently used image set into Timelapse"/>
                     <MenuItem Name="MenuItemAddImagesToImageSet" Header="_Add image and video files to image set..." Click="MenuItemAddImagesToImageSet_Click" IsEnabled="false" ToolTip="Add more images or videos to the currently opened image set"/>
