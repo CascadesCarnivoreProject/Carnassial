@@ -38,7 +38,7 @@
             </DockPanel>
         </GroupBox>
 
-        <GroupBox Header="Differencing" Margin="15,15,15,0" Padding="10,0,10,0" HorizontalAlignment="Left"   VerticalAlignment="Top" FontWeight="Bold" Height="91" Width="792">
+        <GroupBox Header="Differencing" Margin="15,15,15,0" Padding="10,0,10,0" HorizontalAlignment="Left"   VerticalAlignment="Top" FontWeight="Bold" Height="91" Width="777">
             <DockPanel>
                 <StackPanel Orientation="Vertical">
                     <TextBlock Text="The appearance of the differenced black and white image" DockPanel.Dock="Top" FontWeight="Normal" FontStyle="Italic" Height="18" Width="660" />
@@ -51,22 +51,7 @@
                 <Button Name="btnResetImageDifferencing" Content="Reset" FontWeight="Normal" Height="30" Width="58" Click="ResetImageDifferencingButton_Click"></Button>
             </DockPanel>
         </GroupBox>
-        <GroupBox Header="Swap Data Between Fields" Margin="15,15,15,0" Padding="10,0,10,0" HorizontalAlignment="Left"   VerticalAlignment="Top" FontWeight="Bold" Height="273" Width="776" Visibility="Collapsed">
-            <Grid Height="251" Width="761">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="27*" />
-                    <RowDefinition Height="223*" />
-                </Grid.RowDefinitions>
-                <ListBox Height="180" HorizontalAlignment="Left" Margin="19,29,0,0" Name="lbSwapList1" VerticalAlignment="Top" Width="287" SelectionChanged="SwapListBox_SelectionChanged" Grid.Row="1" />
-                <Label Content="To swap data between fields, choose the type of code, then select the two desired fields and press Swap " Height="32" HorizontalAlignment="Left" Margin="20,1,0,0" Name="label1" VerticalAlignment="Top" Width="691" Grid.RowSpan="2" FontWeight="Normal" FontStyle="Italic" />
-                <ListBox Height="180" HorizontalAlignment="Left" Margin="326,29,0,0" Name="lbSwapList2" VerticalAlignment="Top" Width="334" SelectionChanged="SwapListBox_SelectionChanged" Grid.Row="1" />
-                <Button Content="Swap" Height="27" HorizontalAlignment="Left" Margin="680,0,0,168" Name="button1" VerticalAlignment="Bottom" Width="56" FontWeight="Normal" Grid.Row="1" Click="SwapDataButton_Click" IsEnabled="False" />
-                <RadioButton Content="Notes" Grid.Row="1" Height="16" HorizontalAlignment="Left" Margin="20,6,0,0" Name="rbNotes" VerticalAlignment="Top" IsChecked="True" Checked="RadioButtonControl_Checked" />
-                <RadioButton Content="Fixed Choices" Height="16" HorizontalAlignment="Left" IsChecked="False" Margin="84,6,0,0" Name="rbFixedChoices" VerticalAlignment="Top" Grid.Row="1" Checked="RadioButtonControl_Checked"/>
-                <RadioButton Content="Counters" Height="16" HorizontalAlignment="Left" IsChecked="False" Margin="191,6,0,0" Name="rbCounters" VerticalAlignment="Top" Grid.Row="1" Checked="RadioButtonControl_Checked"/>
-            </Grid>
-        </GroupBox>
-        <Button Margin="15,15,15,0" Name="btnCloseWindow" Content="Done" Height="34" Width="759" Click="CloseWindowButton_Click" />
+        <Button Margin="15,15,15,0" Name="btnCloseWindow" Content="Done" Height="34" Width="745" Click="CloseWindowButton_Click" />
 
     </StackPanel>
 </Window>

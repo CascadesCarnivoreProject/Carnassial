@@ -117,8 +117,8 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(control.Label == this.Label, "{0}: Expected Label '{1}' but found '{2}'.", this.DataLabel, this.Label, control.Label);
             Assert.IsTrue(control.List == this.List, "{0}: Expected List '{1}' but found '{2}'.", this.DataLabel, this.List, control.List);
             Assert.IsTrue(control.SpreadsheetOrder == this.SpreadsheetOrder, "{0}: Expected SpreadsheetOrder '{1}' but found '{2}'.", this.DataLabel, this.SpreadsheetOrder, control.SpreadsheetOrder);
-            //Assert.IsTrue(control.TextBoxWidth == this.TextBoxWidth, "{0}: Expected TextBoxWidth '{1}' but found '{2}'.", this.DataLabel, this.TextBoxWidth, control.TextBoxWidth);
-            //Assert.IsTrue(control.Tooltip == this.Tooltip, "{0}: Expected Tooltip '{1}' but found '{2}'.", this.DataLabel, this.Tooltip, control.Tooltip);
+            Assert.IsTrue(control.TextBoxWidth == this.TextBoxWidth, "{0}: Expected TextBoxWidth '{1}' but found '{2}'.", this.DataLabel, this.TextBoxWidth, control.TextBoxWidth);
+            Assert.IsTrue(control.Tooltip == this.Tooltip, "{0}: Expected Tooltip '{1}' but found '{2}'.", this.DataLabel, this.Tooltip, control.Tooltip);
             Assert.IsTrue(control.Type == this.Type, "{0}: Expected Type '{1}' but found '{2}'.", this.DataLabel, this.Type, control.Type);
             Assert.IsTrue(control.Visible == this.Visible, "{0}: Expected Visible '{1}' but found '{2}'.", this.DataLabel, this.Visible, control.Visible);
         }

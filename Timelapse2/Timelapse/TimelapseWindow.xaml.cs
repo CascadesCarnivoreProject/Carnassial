@@ -2409,14 +2409,13 @@ namespace Timelapse
         /// <summary>Show advanced options</summary>
         private void MenuItemOptions_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                this.optionsWindow.Show();
-            }
-            catch (Exception exception)
-            {
-                Debug.Assert(false, "Options window failed to open.", exception.ToString());
+            if (this.optionsWindow == null)
+            { 
                 this.optionsWindow = new OptionsWindow(this, this.markableCanvas);
+                this.optionsWindow.Show();
+            } 
+            else
+            {
                 this.optionsWindow.Show();
             }
         }

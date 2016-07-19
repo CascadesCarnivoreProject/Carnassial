@@ -105,7 +105,7 @@ namespace Timelapse
             public const string FolderWidth = "100";
 
             public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
-            public const string ImageQualityWidth = "80";
+            public const string ImageQualityWidth = "85";
 
             public const string MarkForDeletionTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
             public const string TimeTooltip = "Time taken";
