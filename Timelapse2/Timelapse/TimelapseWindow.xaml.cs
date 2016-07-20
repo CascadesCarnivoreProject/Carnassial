@@ -2551,6 +2551,11 @@ namespace Timelapse
             {
                 this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.Custom);
             }
+            else
+            {
+                // Resets the checked menu item filter to the currently active filter 
+                this.MenuItemViewSetSelected(this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
+            }
         }
 
         /// <summary>Show a dialog box telling the user how many images were loaded, etc.</summary>
