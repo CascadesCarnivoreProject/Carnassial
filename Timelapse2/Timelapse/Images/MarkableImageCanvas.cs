@@ -24,6 +24,9 @@ namespace Timelapse.Images
 
         private const int MarkDiameter = 10;
         private const int MarkStrokeThickness = 2;
+        private const int MarkGlowDiameterIncrease = 15;
+        private const int MarkGlowStrokeThickness = 7;
+        private const double MarkGlowOpacity = 0.35;
 
         private const double ZoomMaximum = 10;   // Maximum amount of zoom
         private const double ZoomMaximumUpperBound = 50;   // Maximum amount of zoom
@@ -834,11 +837,11 @@ namespace Timelapse.Images
             if (mtag.Emphasise)
             {
                 glow = new Ellipse();
-                glow.Width = ellipse1.Width + 9;
-                glow.Height = ellipse1.Height + 9;
-                glow.StrokeThickness = 3;
+                glow.Width = ellipse1.Width + MarkGlowDiameterIncrease;
+                glow.Height = ellipse1.Height + MarkGlowDiameterIncrease;
+                glow.StrokeThickness = MarkGlowStrokeThickness;
                 glow.Stroke = ellipse.Stroke;
-                glow.Opacity = .5;
+                glow.Opacity = MarkGlowOpacity;
                 max_diameter = glow.Width;
             }
 
