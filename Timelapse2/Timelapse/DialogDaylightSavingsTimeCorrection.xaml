@@ -42,8 +42,8 @@
                 </Grid>
                 <GroupBox Header="Time Correction" FontWeight="Bold" Margin="10,0,10,0">
                     <StackPanel>
-                        <RadioButton Name="rbAddHour"  Content="Add an hour" FontWeight="Normal"  />
-                        <RadioButton Name="rbSubtractHour" Content="Subtract an hour" FontWeight="Normal" />
+                        <RadioButton Name="rbAddHour"  Content="Add an hour" FontWeight="Normal" Checked="RadioButton_Checked" />
+                        <RadioButton Name="rbSubtractHour" Content="Subtract an hour" FontWeight="Normal" Checked="RadioButton_Checked"/>
                     </StackPanel>
                 </GroupBox>
                 <GroupBox Header="Propagate Correction" FontWeight="Bold">
