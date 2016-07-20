@@ -95,7 +95,7 @@ namespace Timelapse
 
             // standard controls
             public const string DateTooltip = "Date taken";
-            public const string DateWidth = "100";
+            public const string DateWidth = "85";
 
             public const string FileTooltip = "The file name";
             public const string FileWidth = "100";
@@ -104,12 +104,12 @@ namespace Timelapse
             public const string FolderTooltip = "Name of the folder originally containing the template and image data files";
             public const string FolderWidth = "100";
 
-            public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read";
-            public const string ImageQualityWidth = "80";
+            public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
+            public const string ImageQualityWidth = "85";
 
             public const string MarkForDeletionTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
             public const string TimeTooltip = "Time taken";
-            public const string TimeWidth = "100";
+            public const string TimeWidth = "60";
         }
 
         public static class Database
@@ -350,7 +350,13 @@ namespace Timelapse
             public const string DateFormat = "dd-MMM-yyyy";
             public const string DateTimeFormat = "dd-MMM-yyyy HH:mm:ss";
             public const string TimeFormat = "HH:mm:ss";
-       }
+            public const int DefaultYear = 1900; // Default date/time  is January 1st, 1900 12:00:00
+            public const int DefaultMonth = 1;
+            public const int DefaultDay = 1;
+            public const int DefaultHours = 12;
+            public const int DefaultMinutes = 0;
+            public const int DefaultSeconds = 0;
+        }
 
         public static class VersionXml
         {

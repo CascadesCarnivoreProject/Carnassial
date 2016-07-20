@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Windows;
 using Timelapse.Database;
 using Timelapse.Util;
@@ -18,7 +19,7 @@ namespace Timelapse
         {
             this.InitializeComponent();
             this.database = database;
-
+            
             // imgNumber will point to the first image that is not swappable, else -1
             ImageRow imageProperties = null;
             int indexOfFirstNotSwappableImage = DateTimeHandler.SwapDayMonthIsPossible(this.database);
@@ -38,6 +39,7 @@ namespace Timelapse
                 imageProperties = this.database.ImageDataTable[indexOfFirstNotSwappableImage];
                 this.lblOriginalDate.Content = imageProperties.Date;
                 this.lblNewDate.Content = "No valid date possible";
+                this.lblImageName.Content = Path.GetFileName(imageProperties.FileName);
             }
             else
             {
@@ -60,6 +62,7 @@ namespace Timelapse
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
             this.imgDateImage.Source = imageProperties.LoadBitmap(this.database.FolderPath);
+            this.lblImageName.Content = Path.GetFileName(imageProperties.FileName);
         }
 
         private void DlgSwapDayMonth_Loaded(object sender, RoutedEventArgs e)

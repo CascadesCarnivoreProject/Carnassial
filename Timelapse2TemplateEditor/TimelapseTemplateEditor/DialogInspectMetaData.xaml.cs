@@ -16,7 +16,6 @@ namespace Timelapse.Editor
     // Note: There are lots of commonalities between this dialog and DialogPopulate, but its not clear if its worth the effort of factoring the two.
     public partial class DialogInspectMetaData : Window
     {
-
         private Dictionary<string, string> dataLabelFromLabel = new Dictionary<string, string>();  // DataLabel, Label
         private bool disposed;
         private ExifToolWrapper exifTool;

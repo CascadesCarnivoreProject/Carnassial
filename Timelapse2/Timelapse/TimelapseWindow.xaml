@@ -39,7 +39,7 @@
         <DockPanel Name="mainUI">
             <Menu DockPanel.Dock="Top">
                 <!-- File Menu -->
-                <MenuItem Header="_File" IsTabStop="false">
+                <MenuItem Header="_File" IsTabStop="false" SubmenuOpened="File_SubmenuOpening">
                     <MenuItem Name="MenuItemLoadImages" Header="_Load template, images, and video files..." Click="MenuItemLoadImages_Click" ToolTip="Asks for the template location, and then opens an existing database, or creates a new database after asking for the image/video locations"/>
                     <MenuItem Name="MenuItemRecentImageSets" Header="Load a _recently used image set" IsEnabled="false" ToolTip="Load a recently used image set into Timelapse"/>
                     <MenuItem Name="MenuItemAddImagesToImageSet" Header="_Add image and video files to image set..." Click="MenuItemAddImagesToImageSet_Click" IsEnabled="false" ToolTip="Add more images or videos to the currently opened image set"/>
@@ -70,11 +70,11 @@
                         <MenuItem Name="MenuItemRereadDatesfromImages" Header="_Re-read dates from files..."  Click="MenuItemRereadDatesfromImages_Click"  ToolTip="Re-read the dates from all the files" IsEnabled="True" />
                         <MenuItem Name="MenuItemDaylightSavingsTimeCorrection" Header="Correct for _daylight savings time..."  Click="MenuItemDaylightSavingsTimeCorrection_Click"  ToolTip="Correct daylight saving time issues" IsEnabled="True" />
                         <MenuItem Name="MenuItemDateTimeFixedCorrection" Header="Add a _fixed correction value to every date..."  Click="MenuItemDateTimeFixedCorrection_Click"  ToolTip="Correct for dates or times which are not quite right" IsEnabled="True" />
-                        <MenuItem Name="MenuItemDateTimeLinearCorrection" Header="Correct for camera cloc_k drift..."  Click="MenuItemDateTimeLinearCorrection_Click"  ToolTip="Correct for a camera's clock running fast or slow" IsEnabled="True" />
+                        <!--<MenuItem Name="MenuItemDateTimeLinearCorrection" Header="Correct for camera cloc_k drift..."  Click="MenuItemDateTimeLinearCorrection_Click"  ToolTip="Correct for a camera's clock running fast or slow" IsEnabled="True" />-->
                         <MenuItem Name="MenuItemCheckModifyAmbiguousDates" Header="Check and modify _ambiguous dates..."  Click="MenuItemCheckModifyAmbiguousDates_Click"  ToolTip="Check And modify (if needed) ambiguous dates on a day by day basis" IsEnabled="True" />
                         <MenuItem Name="MenuItemSwapDayMonth" IsCheckable="False" Header="_Swap day and month for all files..."  Click="MenuItemSwapDayMonth_Click" ToolTip="Swaps the day and month value in the Date field across all images and videos, if possible"/>
                     </MenuItem>
-
+                    <MenuItem Name="MenuItemOptionsDarkImagesThreshold" Header="Edit the _threshold for determining dark files..."  Click="MenuItemOptionsDarkImagesThreshold_Click"  ToolTip="Edit how Timelapse determines which images are dark vs. light, and have TIMELAPSE2 reclassify your images" IsEnabled="True" />
                     <MenuItem Name="MenuItemLog" Header="Edit _notes for this image set..."  Click="MenuItemLog_Click"  ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this Image Set" IsEnabled="True" />
                 </MenuItem>
 
@@ -93,7 +93,6 @@
                     <MenuItem Name="MenuItemViewFilteredDatabaseContents" Header="Show _filtered database contents..." Click="MenuItemViewFilteredDatabaseContents_Click" ToolTip="Display the current filtered view of the (changing) database"/>
 
                     <Separator/>
-                    <MenuItem Name="MenuItemOptionsDarkImagesThreshold" Header="Customize the _threshold for determining dark files..."  Click="MenuItemOptionsDarkImagesThreshold_Click"  ToolTip="Adjust two values that determine how files are classified as dark" IsEnabled="True" />
                     <MenuItem Name="MenuItemOptionsBox" Header="Advanced _settings and operations..."  InputGestureText="Ctl" Click="MenuItemOptions_Click"  ToolTip="Brings up options that should only be used by advanced users" IsEnabled="False" />
                 </MenuItem>
 

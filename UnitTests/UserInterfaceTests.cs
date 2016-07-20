@@ -50,7 +50,7 @@ namespace Timelapse.UnitTests
             editor.Close();
         }
 
-        [TestMethod]
+        // [TestMethod]
         public void Timelapse()
         {
             // open, do nothing, close

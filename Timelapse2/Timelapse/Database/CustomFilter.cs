@@ -19,6 +19,7 @@ namespace Timelapse.Database
         /// <summary>
         /// Create a CustomFilter, where we build a list of potential search terms based on the controls found in the sorted template table
         /// The search term will be used only if its 'UseForSearching' field is true
+        /// The initial date to display is passed into the constructor
         /// </summary>
         public CustomFilter(DataTableBackedList<ControlRow> templateTable, CustomFilterOperator termCombiningOperator)
         {
@@ -28,9 +29,11 @@ namespace Timelapse.Database
             // Initialize the filter to reflect the desired controls in the template (in control order)
             foreach (ControlRow control in templateTable)
             {
+                // SAUL TODO: We temporarily disable the date until we fie the date problem in the custom filter (see issue 96)
                 string controlType = control.Type;
                 if (controlType == Constants.DatabaseColumn.Folder ||
-                    controlType == Constants.DatabaseColumn.Time)
+                    controlType == Constants.DatabaseColumn.Time ||
+                    controlType == Constants.DatabaseColumn.Date) 
                 {
                     continue;
                 }
@@ -71,6 +74,7 @@ namespace Timelapse.Database
         public void FilterByDate(DataTable images)
         {
             SearchTerm dateTerm = this.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.Date);
+            Debug.Print(dateTerm.Value.ToString());
             Debug.Assert(dateTerm.UseForSearching, "Date search term is not selected.");
 
             Func<DateTime, DateTime, bool> dateFilter;

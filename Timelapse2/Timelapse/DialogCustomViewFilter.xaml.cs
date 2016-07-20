@@ -16,6 +16,7 @@ namespace Timelapse
     public partial class DialogCustomViewFilter : Window
     {
         private const int DefaultControlWidth = 150;
+        private const double DefaultSearchCriteriaWidth = Double.NaN; // Same as xaml Width = "Auto"
 
         private const int SelectColumn = 0;
         private const int LabelColumn = 1;
@@ -87,10 +88,13 @@ namespace Timelapse
                 string controlType = searchTerm.Type;
                 string[] termOperators;
                 if (controlType == Constants.Control.Counter ||
-                    controlType == Constants.DatabaseColumn.Date)
+                    controlType == Constants.DatabaseColumn.Date ||
+                    controlType == Constants.DatabaseColumn.ImageQuality ||
+                    controlType == Constants.Control.FixedChoice)
                 {
-                    // No globs in Counters: since that text field only allows numbers, we can't enter the special characters Glob required
-                    // same for date picking
+                    // No globs in Counters as that text field only allows numbers, we can't enter the special characters Glob required
+                    // No globs in Dates the date entries are constrained by the date picker
+                    // No globs in Fixed Choices as choice entries are constrained by menu selection
                     termOperators = new string[]
                     {
                         Constants.SearchTermOperator.Equal,
@@ -227,10 +231,11 @@ namespace Timelapse
 
                 // Search Criteria Column: initially as an empty textblock
                 TextBlock searchCriteria = new TextBlock();
-                searchCriteria.Width = DialogCustomViewFilter.DefaultControlWidth;
+                searchCriteria.Width = DialogCustomViewFilter.DefaultSearchCriteriaWidth;
                 searchCriteria.Margin = thickness;
                 searchCriteria.IsEnabled = true;
                 searchCriteria.VerticalAlignment = VerticalAlignment.Center;
+                searchCriteria.HorizontalAlignment = HorizontalAlignment.Left;
 
                 Grid.SetRow(searchCriteria, gridRowIndex);
                 Grid.SetColumn(searchCriteria, DialogCustomViewFilter.SearchCriteriaColumn);

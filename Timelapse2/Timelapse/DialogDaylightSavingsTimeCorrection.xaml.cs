@@ -77,7 +77,7 @@ namespace Timelapse
         // Examine the checkboxes to see what state our selection is in, and provide feedback as appropriate
         private void RadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            if (((bool)rbAddHour.IsChecked || (bool)rbSubtractHour.IsChecked) && ((bool)rbBackwards.IsChecked || (bool)rbForward.IsChecked))
+            if ((bool)rbAddHour.IsChecked || (bool)rbSubtractHour.IsChecked) // && ((bool)rbBackwards.IsChecked || (bool)rbForward.IsChecked))
             {
                 DateTime dateTime;
                 bool succeeded = DateTime.TryParse(this.lblOriginalDate.Content.ToString(), out dateTime);
@@ -88,8 +88,17 @@ namespace Timelapse
                     return;
                 }
                 int hours = ((bool)rbAddHour.IsChecked) ? 1 : -1;
+                TimeSpan daylightSavingsAdjustment = new TimeSpan(hours, 0, 0);
+                dateTime = dateTime.Add(daylightSavingsAdjustment);
                 lblNewDate.Content = DateTimeHandler.ToStandardDateString(dateTime) + " " + DateTimeHandler.ToStandardTimeString(dateTime);
+            }
+            if ( ((bool)rbAddHour.IsChecked || (bool)rbSubtractHour.IsChecked) && ((bool)rbBackwards.IsChecked || (bool)rbForward.IsChecked))
+            {
                 this.OkButton.IsEnabled = true;
+            }
+            else
+            {
+                this.OkButton.IsEnabled = false;
             }
         }
     }

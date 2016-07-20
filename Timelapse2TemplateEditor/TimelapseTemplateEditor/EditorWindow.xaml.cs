@@ -1138,8 +1138,8 @@ namespace Timelapse.Editor
 
         private void InitializeUI()
         {
-            this.HelpText.Text = "Type directly in the white fields to edit them. Gray fields are not editable." + Environment.NewLine +
-                "List items: create  menu items by typing. Click 'v' to view the menu, and raise each item's context menu to re-order its position.";
+            this.HelpText.Text = "Click the white fields to edit their contents. Gray fields are not editable." + Environment.NewLine +
+                "List items: Click 'Define List' to create or edit menu items, one per line.";
             this.HelpDocument.Visibility = Visibility.Collapsed;
             this.HelpText.Visibility = Visibility.Visible;
             this.TemplateDataGrid.Visibility = Visibility.Visible;

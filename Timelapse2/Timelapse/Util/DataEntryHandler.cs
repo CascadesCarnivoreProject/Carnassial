@@ -282,7 +282,7 @@ namespace Timelapse.Util
             }
             else
             {
-                messageBox.Message.Result += "\u2022  set this field to \u00AB" + text + "\u00BB across all " + filesAffected.ToString() + " of your filtered files.";
+                messageBox.Message.Result += "\u2022 set this field to \u00AB" + text + "\u00BB across all " + filesAffected.ToString() + " of your filtered files.";
             }
             messageBox.Message.Result += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
             return messageBox.ShowDialog();

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -24,7 +25,6 @@ namespace Timelapse
         private ExifToolWrapper exifTool;
         private string metaDataName = String.Empty;
         private string noteLabel = String.Empty;
-        private string noteDataLabel = String.Empty;
 
         private ImageDatabase database;
         private string imageFilePath;
@@ -74,7 +74,7 @@ namespace Timelapse
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            this.lblImageName.Content = this.imageFilePath;
+            this.lblImageName.Content = Path.GetFileName(this.imageFilePath);
             this.LoadExif();
             this.LoadDataFieldLabels();
         }
@@ -193,7 +193,7 @@ namespace Timelapse
             this.dgFeedback.ItemsSource = keyValueList;
 
             // Update the UI to show the feedback datagrid, 
-            this.tbPopulatingMessage.Text = "Populating the data field '" + this.noteDataLabel + "' from each file's '" + this.metaDataName + "' metadata ";
+            this.tbPopulatingMessage.Text = "Populating the data field '" + this.noteLabel + "' from each file's '" + this.metaDataName + "' metadata ";
             btnPopulate.Visibility = Visibility.Collapsed; // Hide the populate button, as we are now in the act of populating things
             cbClearIfNoMetada.Visibility = Visibility.Collapsed; // Hide the checkbox button for the same reason
             this.PrimaryPanel.Visibility = Visibility.Collapsed;  // Hide the various panels to reveal the feedback datagrid
