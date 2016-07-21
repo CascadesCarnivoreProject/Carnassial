@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <timelapse>
-  <version>2.0.2.3</version>
+  <version>2.1.0.2</version>
   <url>http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.Download2</url>
   <changes>
-- 2.0.2.3: Two significant new features and one change.
-
-New Edit menu item: Populate a Field with Image Metadata. 
-A dialog lists your data fields, and the metadata fields found in one of your images. You then select the ones of interest. That data field will then be populated (across all images) with a metadata value from the corresponding image file. For example, if your image files have a metadata field called 'Temperature' you can import that image's recorded temperature into one of your data fields (for example, a Note field called 'Temperature' that you could create using the Template Editor).
-
-New Filter menu item: Custom Filter. A dialog box lets you select one or more of your data fields, a search condition (e.g., '=') and some value (including regular expression matchings). As you create the expression, it tells you how many images match your search condition. When you are done, it will filter the images to show only those that match. 
-
-Enhancement of CSV export: will export only the data associated with the currently filtered images i.e., you can export a subset of your data.
-
+2.1.0.2: Major release.
+- Video files (.avi, .mpg) now supported (.avi, .mpg) 
+   --- see the Video Player
+- New organization of images: 
+   --- images can be stored in sub-folders 
+   --- image subfolders can be added at any time
+   --- RelativePath field stores subfolder location  
+- Myriads of interface changes and bug fixes
+- User maual updated
+- Considerable changes made under the covers.
+ 
 To see other version history details, select Help/About and click the Version History button.
 </changes>
 </timelapse>
