@@ -31,6 +31,9 @@ namespace Timelapse
             this.oldestImageDateTime = DateTime.MaxValue;
 
             // locate the oldest and newest images in the selected set
+            // SAULTODO: What if there is a corrupt image whose date is  out of range of the rest of the images?
+            // SAULTODO: Maybe we need the ability to order images by date rather than sequence number? Add as General Issue?
+            // SAUL TODO: MAYBE SHOW EACH IMAGE SIDE BY SIDE?
             ImageRow newestImage = null;
             foreach (ImageRow image in imageDatabase.ImageDataTable)
             {
@@ -38,6 +41,7 @@ namespace Timelapse
                 if (image.TryGetDateTime(out imageDateTime) == false)
                 {
                     DateTimeHandler.ShowDateTimeParseFailureDialog(image, this);
+                    // SAUL TODO: INSTEAD OF ABORTING, JUST SKIP IMAGES WITH BAD DATES?
                     this.Abort = true;
                     return;
                 }
