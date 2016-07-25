@@ -862,7 +862,7 @@ namespace Timelapse
         /// <param name="e">event information</param>
         private void CounterCtl_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            e.Handled = !this.IsAllValidNumericChars(e.Text);
+            e.Handled =  (this.IsAllValidNumericChars(e.Text) || String.IsNullOrWhiteSpace(e.Text)) ? false : true;
             this.OnPreviewTextInput(e);
         }
 

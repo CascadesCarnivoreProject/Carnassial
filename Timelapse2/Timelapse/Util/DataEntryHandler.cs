@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -323,14 +324,22 @@ namespace Timelapse.Util
             }
 
             TextBox textBox = (TextBox)sender;
-            textBox.Text = textBox.Text.TrimStart();  // Don't allow leading spaces in the counter
+            // Remove any characters that are not numbers
+            Regex rgx = new Regex("[^0-9]");
+            textBox.Text = rgx.Replace(textBox.Text, "");
 
+
+            // At this point, the field is either a number or empty. We do allow the field to be empty (i.e., blank).
+            // If we change our minds about this, uncomment the code below and replace the regexp expression above with the Trim. 
+            // However, users have asked for empty counters, as they treat it differently from a 0.
             // If the field is now empty, make the text a 0.  But, as this can make editing awkward, we select the 0 so that further editing will overwrite it.
-            if (textBox.Text == String.Empty)
-            {
-                textBox.Text = "0";
-                textBox.SelectAll();
-            }
+            // textBox.Text = textBox.Text.Trim();  // Don't allow leading or trailing spaces in the counter
+            //if (textBox.Text == String.Empty)
+            //{
+            //textBox.Text = "0";
+            //textBox.Text = String.Empty;
+            //textBox.SelectAll();
+            //}
 
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)textBox.Tag;
