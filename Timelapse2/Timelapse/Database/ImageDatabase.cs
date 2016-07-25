@@ -695,7 +695,6 @@ namespace Timelapse.Database
             TimeSpan mostRecentAdjustment = TimeSpan.Zero;
             for (int row = startRow; row <= endRow; ++row)
             { 
-
                 ImageRow image = this.ImageDataTable[row];
                 DateTime imageDateTime;
                 if (image.TryGetDateTime(out imageDateTime))

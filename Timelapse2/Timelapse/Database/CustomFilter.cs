@@ -30,9 +30,9 @@ namespace Timelapse.Database
             foreach (ControlRow control in templateTable)
             {
                 string controlType = control.Type;
+                // SAUL TODO: if we want to disable DATE in CustomFilter, add controlType == Constants.DatabaseColumn.Date)  // 
                 if (controlType == Constants.DatabaseColumn.Folder ||
-                    controlType == Constants.DatabaseColumn.Time )   // SAUL TODO: DATE in CustomFilter is enabled. Remove comments and edit to disable it.
-                    // controlType == Constants.DatabaseColumn.Date)  // 
+                    controlType == Constants.DatabaseColumn.Time) 
                 {
                     continue;
                 }

@@ -17,6 +17,7 @@ namespace Timelapse
     {
         private DateTime latestImageDateTime;
         private DateTime earliestImageDateTime;
+        private DateTime lastDateEnteredWithDateTimePicker; // Keeps track of the last valid date in the date picker so we can revert to it if needed.
         private ImageDatabase imageDatabase;
 
         public bool Abort { get; private set; }
@@ -49,7 +50,7 @@ namespace Timelapse
                     this.latestImageDateTime = currentImageDateTime;
                 }
 
-                if (currentImageDateTime <= this.earliestImageDateTime  )
+                if (currentImageDateTime <= this.earliestImageDateTime)
                 {
                     earliestImageRow = currentImageRow;
                     this.earliestImageDateTime = currentImageDateTime;
@@ -64,7 +65,7 @@ namespace Timelapse
                 return;
             }
 
-            // Configure feedback for earliest date and its iage
+            // Configure feedback for earliest date and its image
             this.earliestImageName.Content = earliestImageRow.FileName;
             this.earliestImageDate.Content = DateTimeHandler.ToStandardDateTimeString(this.earliestImageDateTime);
             this.imageEarliest.Source = earliestImageRow.LoadBitmap(this.imageDatabase.FolderPath);
@@ -76,6 +77,7 @@ namespace Timelapse
             this.dateTimePickerLatestDateTime.TimeFormat = DateTimeFormat.Custom;
             this.dateTimePickerLatestDateTime.TimeFormatString = Constants.Time.TimeFormat;
             this.dateTimePickerLatestDateTime.Value = this.latestImageDateTime;
+            this.lastDateEnteredWithDateTimePicker = this.latestImageDateTime; 
             this.dateTimePickerLatestDateTime.ValueChanged += this.DateTimePicker_ValueChanged;
             this.imageLatest.Source = latestImageRow.LoadBitmap(this.imageDatabase.FolderPath);
         }
@@ -96,8 +98,8 @@ namespace Timelapse
             }
 
             // Calculate the date/time difference
-            DateTime originalDateTime = DateTimeHandler.FromStandardDateTimeString((string)this.earliestImageDate.Content);
-            TimeSpan newestImageAdjustment = this.dateTimePickerLatestDateTime.Value.Value - latestImageDateTime;
+            // DateTime originalDateTime = DateTimeHandler.FromStandardDateTimeString((string)this.earliestImageDate.Content);
+            TimeSpan newestImageAdjustment = this.dateTimePickerLatestDateTime.Value.Value - this.latestImageDateTime;
             if (newestImageAdjustment == TimeSpan.Zero)
             {
                 // nothing to do
@@ -139,7 +141,26 @@ namespace Timelapse
 
         private void DateTimePicker_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            this.OkButton.IsEnabled = true;
+            // Don't let the date picker go below the oldest time. If it does, don't change the date and play a beep.
+            if (this.dateTimePickerLatestDateTime.Value.Value <= this.earliestImageDateTime)
+            {
+                this.dateTimePickerLatestDateTime.Value = this.lastDateEnteredWithDateTimePicker;
+                DialogMessageBox messageBox = new DialogMessageBox("Your new time has to be later than the earliest time", this);
+                messageBox.Message.Icon = MessageBoxImage.Exclamation;
+                messageBox.Message.Problem = "Your new time has to be later than the earliest time   ";
+                messageBox.Message.Reason = "Even the slowest clock gains some time.";
+                messageBox.Message.Solution = "The date/time was unchanged from where you last left it.";
+                messageBox.Message.Hint = "The image on the left shows the earliest time recorded for images in this filtered view  shown over the left image";
+                messageBox.ShowDialog();
+            }
+            else
+            {
+                // Keep track of the last valid date in the date picker so we can revert to it if needed.
+                this.lastDateEnteredWithDateTimePicker = this.dateTimePickerLatestDateTime.Value.Value;
+            }
+            // Enable the Ok button only if the latest time has actually changed from its original version
+            TimeSpan newestImageAdjustment = this.dateTimePickerLatestDateTime.Value.Value - this.latestImageDateTime;
+            this.OkButton.IsEnabled = (newestImageAdjustment == TimeSpan.Zero) ? false : true;
         }
     }
 }

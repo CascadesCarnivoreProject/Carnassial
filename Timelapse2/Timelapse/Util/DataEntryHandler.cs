@@ -33,7 +33,7 @@ namespace Timelapse.Util
 
         public bool CanBulkEditImages()
         {
-            return this.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All || this.ImageDatabase.ImageSet.ImageFilter == ImageFilter.Custom;
+            return this.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All || this.ImageDatabase.ImageSet.ImageFilter == ImageFilter.Custom; // SAUL TODO: WHY DID TODD ADD IMAGEFILTER.CUSTOM?
         }
 
         /// <summary>Propagate the current value of this control forward from this point across the current set of filtered images.</summary>
