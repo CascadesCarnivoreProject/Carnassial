@@ -1482,9 +1482,12 @@ namespace Timelapse
                 // Part 1. Decrement the count 
                 string oldCounterData = counter.Content;
                 string newCounterData = String.Empty;
-                int count = Convert.ToInt32(oldCounterData);
-                count = (count == 0) ? 0 : count - 1;           // Make sure its never negative, which could happen if a person manually enters the count 
-                newCounterData = count.ToString();
+                if (oldCounterData != String.Empty) // Decrement the counter only if there is a number in it
+                {
+                    int count = Convert.ToInt32(oldCounterData);
+                    count = (count == 0) ? 0 : count - 1;           // Make sure its never negative, which could happen if a person manually enters the count 
+                    newCounterData = count.ToString();
+                }
                 if (!newCounterData.Equals(oldCounterData))
                 {
                     // Don't bother updating if the value hasn't changed (i.e., already at a 0 count)
