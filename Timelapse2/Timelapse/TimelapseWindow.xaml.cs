@@ -583,11 +583,11 @@ namespace Timelapse
             // Note that we do not enable those menu items that would have no effect
             this.MenuItemAddImagesToImageSet.IsEnabled = true;
             this.MenuItemLoadImages.IsEnabled = false;
+            this.MenuItemRecentImageSets.IsEnabled = false;
             this.MenuItemExportThisImage.IsEnabled = true;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = true;
             this.MenuItemExportAsCsv.IsEnabled = true;
             this.MenuItemImportFromCsv.IsEnabled = true;
-            this.MenuItemRecentImageSets.IsEnabled = false;
             this.MenuItemRenameImageDatabaseFile.IsEnabled = true;
             this.MenuItemEdit.IsEnabled = true;
             this.MenuItemDeleteImage.IsEnabled = true;
@@ -635,6 +635,7 @@ namespace Timelapse
             // enable / disable menus and menu items as needed
             this.MenuItemAddImagesToImageSet.IsEnabled = true;
             this.MenuItemLoadImages.IsEnabled = false;
+            this.MenuItemRecentImageSets.IsEnabled = false;
 
             this.MenuItemExportThisImage.IsEnabled = imagesExist;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = imagesExist;
@@ -1953,7 +1954,8 @@ namespace Timelapse
         /// </summary>
         private void MenuItemRecentImageSets_Refresh()
         {
-            this.MenuItemRecentImageSets.IsEnabled = this.state.MostRecentImageSets.Count > 0;
+            // Enable the menu only when there are items in it and only if the load menu is also enabled (i.e., that we haven't loaded anything yet)
+            this.MenuItemRecentImageSets.IsEnabled = (this.state.MostRecentImageSets.Count > 0 && this.MenuItemLoadImages.IsEnabled);
             this.MenuItemRecentImageSets.Items.Clear();
 
             // If some of the paths in the recency list don't exist, remove them from the list. 
