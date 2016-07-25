@@ -15,8 +15,8 @@ namespace Timelapse
     /// </summary>
     public partial class DialogDateTimeLinearCorrection : Window
     {
-        private DateTime newestImageDateTime;
-        private DateTime oldestImageDateTime;
+        private DateTime latestImageDateTime;
+        private DateTime earliestImageDateTime;
         private ImageDatabase imageDatabase;
 
         public bool Abort { get; private set; }
@@ -27,49 +27,57 @@ namespace Timelapse
             this.InitializeComponent();
             this.Abort = false;
             this.imageDatabase = imageDatabase;
-            this.newestImageDateTime = DateTime.MinValue;
-            this.oldestImageDateTime = DateTime.MaxValue;
+            this.latestImageDateTime = DateTime.MinValue;
+            this.earliestImageDateTime = DateTime.MaxValue;
 
-            // locate the oldest and newest images in the selected set
-            // SAULTODO: What if there is a corrupt image whose date is  out of range of the rest of the images?
-            // SAULTODO: Maybe we need the ability to order images by date rather than sequence number? Add as General Issue?
-            // SAUL TODO: MAYBE SHOW EACH IMAGE SIDE BY SIDE?
-            ImageRow newestImage = null;
-            foreach (ImageRow image in imageDatabase.ImageDataTable)
+            // Skip images with bad dates
+            ImageRow latestImageRow = null;
+            ImageRow earliestImageRow = null;
+            foreach (ImageRow currentImageRow in imageDatabase.ImageDataTable)
             {
-                DateTime imageDateTime;
-                if (image.TryGetDateTime(out imageDateTime) == false)
+                DateTime currentImageDateTime;
+                // Skip images with bad dates
+                if (currentImageRow.TryGetDateTime(out currentImageDateTime) == false)
                 {
-                    DateTimeHandler.ShowDateTimeParseFailureDialog(image, this);
-                    // SAUL TODO: INSTEAD OF ABORTING, JUST SKIP IMAGES WITH BAD DATES?
-                    this.Abort = true;
-                    return;
+                    continue;
                 }
 
-                if (newestImage == null || imageDateTime >= this.newestImageDateTime)
+                // If the current image's date is later, then its a candidate latest image  
+                if (currentImageDateTime >= this.latestImageDateTime)
                 {
-                    newestImage = image;
-                    this.newestImageDateTime = imageDateTime;
+                    latestImageRow = currentImageRow;
+                    this.latestImageDateTime = currentImageDateTime;
                 }
 
-                if (this.oldestImageDateTime > imageDateTime)
+                if (currentImageDateTime <= this.earliestImageDateTime  )
                 {
-                    this.oldestImageDateTime = imageDateTime;
+                    earliestImageRow = currentImageRow;
+                    this.earliestImageDateTime = currentImageDateTime;
                 }
             }
 
-            // configure datetime picker
-            this.originalDate.Content = DateTimeHandler.ToStandardDateTimeString(this.newestImageDateTime);
-            this.dateTimePicker.Format = DateTimeFormat.Custom;
-            this.dateTimePicker.FormatString = Constants.Time.DateTimeFormat;
-            this.dateTimePicker.TimeFormat = DateTimeFormat.Custom;
-            this.dateTimePicker.TimeFormatString = Constants.Time.TimeFormat;
-            this.dateTimePicker.Value = this.newestImageDateTime;
-            this.dateTimePicker.ValueChanged += this.DateTimePicker_ValueChanged;
+            // At this point, we should have succeeded getting the oldest and newest data/time
+            // If not, we should abort
+            if (this.earliestImageDateTime == null || this.latestImageDateTime == null)
+            {
+                this.Abort = true;
+                return;
+            }
 
-            // display the newest image
-            this.imageName.Content = newestImage.FileName;
-            this.image.Source = newestImage.LoadBitmap(this.imageDatabase.FolderPath);
+            // Configure feedback for earliest date and its iage
+            this.earliestImageName.Content = earliestImageRow.FileName;
+            this.earliestImageDate.Content = DateTimeHandler.ToStandardDateTimeString(this.earliestImageDateTime);
+            this.imageEarliest.Source = earliestImageRow.LoadBitmap(this.imageDatabase.FolderPath);
+
+            // Configure feedback for latest date (in datetime picker) and its image
+            this.latestImageName.Content = latestImageRow.FileName;
+            this.dateTimePickerLatestDateTime.Format = DateTimeFormat.Custom;
+            this.dateTimePickerLatestDateTime.FormatString = Constants.Time.DateTimeFormat;
+            this.dateTimePickerLatestDateTime.TimeFormat = DateTimeFormat.Custom;
+            this.dateTimePickerLatestDateTime.TimeFormatString = Constants.Time.TimeFormat;
+            this.dateTimePickerLatestDateTime.Value = this.latestImageDateTime;
+            this.dateTimePickerLatestDateTime.ValueChanged += this.DateTimePicker_ValueChanged;
+            this.imageLatest.Source = latestImageRow.LoadBitmap(this.imageDatabase.FolderPath);
         }
 
         private void DlgDateCorrectionName_Loaded(object sender, RoutedEventArgs e)
@@ -81,15 +89,15 @@ namespace Timelapse
         // Try to update the database if the OK button is clicked
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.dateTimePicker.Value.HasValue == false)
+            if (this.dateTimePickerLatestDateTime.Value.HasValue == false)
             {
                 this.DialogResult = false;
                 return;
             }
 
-            // calculate the date/time difference
-            DateTime originalDateTime = DateTimeHandler.FromStandardDateTimeString((string)this.originalDate.Content);
-            TimeSpan newestImageAdjustment = this.dateTimePicker.Value.Value - originalDateTime;
+            // Calculate the date/time difference
+            DateTime originalDateTime = DateTimeHandler.FromStandardDateTimeString((string)this.earliestImageDate.Content);
+            TimeSpan newestImageAdjustment = this.dateTimePickerLatestDateTime.Value.Value - latestImageDateTime;
             if (newestImageAdjustment == TimeSpan.Zero)
             {
                 // nothing to do
@@ -97,10 +105,10 @@ namespace Timelapse
                 return;
             }
 
-            // update the database
-            // in the single image case the the oldest and newest times will be the same
+            // Update the database
+            // In the single image case the the oldest and newest times will be the same
             // since Timelapse has only whole seconds resolution it's also possible with small selections from fast cameras that multiple images have the same time
-            TimeSpan intervalFromOldestToNewestImage = this.newestImageDateTime - this.oldestImageDateTime;
+            TimeSpan intervalFromOldestToNewestImage = this.latestImageDateTime - this.earliestImageDateTime;
             if (intervalFromOldestToNewestImage == TimeSpan.Zero)
             {
                 this.imageDatabase.AdjustImageTimes(newestImageAdjustment);
@@ -110,10 +118,11 @@ namespace Timelapse
                 this.imageDatabase.AdjustImageTimes(
                     (DateTime imageDateTime) =>
                     {
-                        double imagePositionInInterval = (double)(imageDateTime - this.oldestImageDateTime).Ticks / (double)intervalFromOldestToNewestImage.Ticks;
+                        double imagePositionInInterval = (double)(imageDateTime - this.earliestImageDateTime).Ticks / (double)intervalFromOldestToNewestImage.Ticks;
                         Debug.Assert((-0.0000001 < imagePositionInInterval) && (imagePositionInInterval < 1.0000001), String.Format("Interval position {0} is not between 0.0 and 1.0.", imagePositionInInterval));
-                        TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * newestImageAdjustment.Ticks + 0.5));
-                        Debug.Assert((TimeSpan.Zero <= adjustment) && (adjustment <= newestImageAdjustment), String.Format("Expected adjustment {0} to be within [{1} {2}].", adjustment, TimeSpan.Zero, newestImageAdjustment));
+                        TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * newestImageAdjustment.Ticks + 0.5)); // I think the .5 is to force rounding upwards
+                        // TimeSpan.Duration means we do these checks on the absolute value (positive) of the Timespan, as slow clocks will have negative adjustments.
+                        Debug.Assert((TimeSpan.Zero <= adjustment.Duration()) && (adjustment.Duration() <= newestImageAdjustment.Duration()), String.Format("Expected adjustment {0} to be within [{1} {2}].", adjustment, TimeSpan.Zero, newestImageAdjustment));
                         return adjustment;
                     },
                     0,
