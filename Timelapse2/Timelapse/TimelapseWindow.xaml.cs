@@ -862,7 +862,7 @@ namespace Timelapse
         /// <param name="e">event information</param>
         private void CounterCtl_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            e.Handled =  (this.IsAllValidNumericChars(e.Text) || String.IsNullOrWhiteSpace(e.Text)) ? false : true;
+            e.Handled = (this.IsAllValidNumericChars(e.Text) || String.IsNullOrWhiteSpace(e.Text)) ? false : true;
             this.OnPreviewTextInput(e);
         }
 
@@ -1482,7 +1482,9 @@ namespace Timelapse
                 // Part 1. Decrement the count 
                 string oldCounterData = counter.Content;
                 string newCounterData = String.Empty;
-                if (oldCounterData != String.Empty) // Decrement the counter only if there is a number in it
+
+                // Decrement the counter only if there is a number in it
+                if (oldCounterData != String.Empty) 
                 {
                     int count = Convert.ToInt32(oldCounterData);
                     count = (count == 0) ? 0 : count - 1;           // Make sure its never negative, which could happen if a person manually enters the count 
@@ -1958,7 +1960,7 @@ namespace Timelapse
         private void MenuItemRecentImageSets_Refresh()
         {
             // Enable the menu only when there are items in it and only if the load menu is also enabled (i.e., that we haven't loaded anything yet)
-            this.MenuItemRecentImageSets.IsEnabled = (this.state.MostRecentImageSets.Count > 0 && this.MenuItemLoadImages.IsEnabled);
+            this.MenuItemRecentImageSets.IsEnabled = this.state.MostRecentImageSets.Count > 0 && this.MenuItemLoadImages.IsEnabled;
             this.MenuItemRecentImageSets.Items.Clear();
 
             // If some of the paths in the recency list don't exist, remove them from the list. 

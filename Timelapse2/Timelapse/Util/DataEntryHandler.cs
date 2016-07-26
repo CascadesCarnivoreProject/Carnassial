@@ -326,20 +326,19 @@ namespace Timelapse.Util
             TextBox textBox = (TextBox)sender;
             // Remove any characters that are not numbers
             Regex rgx = new Regex("[^0-9]");
-            textBox.Text = rgx.Replace(textBox.Text, "");
+            textBox.Text = rgx.Replace(textBox.Text, String.Empty);
 
-
-            // At this point, the field is either a number or empty. We do allow the field to be empty (i.e., blank).
+            // In this version of Timelapse, we allow the field tp be either a number or empty. We do allow the field to be empty (i.e., blank).
             // If we change our minds about this, uncomment the code below and replace the regexp expression above with the Trim. 
             // However, users have asked for empty counters, as they treat it differently from a 0.
             // If the field is now empty, make the text a 0.  But, as this can make editing awkward, we select the 0 so that further editing will overwrite it.
             // textBox.Text = textBox.Text.Trim();  // Don't allow leading or trailing spaces in the counter
-            //if (textBox.Text == String.Empty)
-            //{
-            //textBox.Text = "0";
-            //textBox.Text = String.Empty;
-            //textBox.SelectAll();
-            //}
+            // if (textBox.Text == String.Empty)
+            // {
+            // textBox.Text = "0";
+            // textBox.Text = String.Empty;
+            // textBox.SelectAll();
+            // }
 
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)textBox.Tag;
@@ -472,6 +471,22 @@ namespace Timelapse.Util
 
             control.Container.ContextMenu = menu;
             control.Container.PreviewMouseRightButtonDown += this.Container_PreviewMouseRightButtonDown;
+
+            if (control is DataEntryCounter)
+            {
+                DataEntryCounter counter = control as DataEntryCounter;
+                counter.ContentControl.ContextMenu = menu;
+            }
+            else if (control is DataEntryNote)
+            {
+                DataEntryNote note = control as DataEntryNote;
+                note.ContentControl.ContextMenu = menu;
+            }
+            else if (control is DataEntryChoice)
+            {
+                DataEntryChoice choice = control as DataEntryChoice;
+                choice.ContentControl.ContextMenu = menu;
+            }
         }
     }
 }
