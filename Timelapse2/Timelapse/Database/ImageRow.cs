@@ -154,7 +154,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Loading of {0} failed.", this.FileName), exception.ToString());
+                // SAUL TORESTORE: Debug.Assert(false, String.Format("Loading of {0} failed.", this.FileName), exception.ToString());
                 return Constants.Images.Corrupt;
             }
         }

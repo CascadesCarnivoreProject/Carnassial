@@ -583,11 +583,11 @@ namespace Timelapse
             // Note that we do not enable those menu items that would have no effect
             this.MenuItemAddImagesToImageSet.IsEnabled = true;
             this.MenuItemLoadImages.IsEnabled = false;
+            this.MenuItemRecentImageSets.IsEnabled = false;
             this.MenuItemExportThisImage.IsEnabled = true;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = true;
             this.MenuItemExportAsCsv.IsEnabled = true;
             this.MenuItemImportFromCsv.IsEnabled = true;
-            this.MenuItemRecentImageSets.IsEnabled = false;
             this.MenuItemRenameImageDatabaseFile.IsEnabled = true;
             this.MenuItemEdit.IsEnabled = true;
             this.MenuItemDeleteImage.IsEnabled = true;
@@ -635,6 +635,7 @@ namespace Timelapse
             // enable / disable menus and menu items as needed
             this.MenuItemAddImagesToImageSet.IsEnabled = true;
             this.MenuItemLoadImages.IsEnabled = false;
+            this.MenuItemRecentImageSets.IsEnabled = false;
 
             this.MenuItemExportThisImage.IsEnabled = imagesExist;
             this.MenuItemExportAsCsvAndPreview.IsEnabled = imagesExist;
@@ -861,7 +862,7 @@ namespace Timelapse
         /// <param name="e">event information</param>
         private void CounterCtl_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            e.Handled = !this.IsAllValidNumericChars(e.Text);
+            e.Handled = (this.IsAllValidNumericChars(e.Text) || String.IsNullOrWhiteSpace(e.Text)) ? false : true;
             this.OnPreviewTextInput(e);
         }
 
@@ -1141,6 +1142,8 @@ namespace Timelapse
         }
         #endregion
 
+        // Various dialogs perform a bulk edit, after which various states have to be refreshed
+        // This method shows the dialog and (if a bulk edit is done) refreshes those states.
         private void ShowBulkImageEditDialog(Window dialog)
         {
             dialog.Owner = this;
@@ -1479,9 +1482,14 @@ namespace Timelapse
                 // Part 1. Decrement the count 
                 string oldCounterData = counter.Content;
                 string newCounterData = String.Empty;
-                int count = Convert.ToInt32(oldCounterData);
-                count = (count == 0) ? 0 : count - 1;           // Make sure its never negative, which could happen if a person manually enters the count 
-                newCounterData = count.ToString();
+
+                // Decrement the counter only if there is a number in it
+                if (oldCounterData != String.Empty) 
+                {
+                    int count = Convert.ToInt32(oldCounterData);
+                    count = (count == 0) ? 0 : count - 1;           // Make sure its never negative, which could happen if a person manually enters the count 
+                    newCounterData = count.ToString();
+                }
                 if (!newCounterData.Equals(oldCounterData))
                 {
                     // Don't bother updating if the value hasn't changed (i.e., already at a 0 count)
@@ -1951,7 +1959,8 @@ namespace Timelapse
         /// </summary>
         private void MenuItemRecentImageSets_Refresh()
         {
-            this.MenuItemRecentImageSets.IsEnabled = this.state.MostRecentImageSets.Count > 0;
+            // Enable the menu only when there are items in it and only if the load menu is also enabled (i.e., that we haven't loaded anything yet)
+            this.MenuItemRecentImageSets.IsEnabled = this.state.MostRecentImageSets.Count > 0 && this.MenuItemLoadImages.IsEnabled;
             this.MenuItemRecentImageSets.Items.Clear();
 
             // If some of the paths in the recency list don't exist, remove them from the list. 
@@ -2320,27 +2329,19 @@ namespace Timelapse
             this.ShowBulkImageEditDialog(dateCorrection);
         }
 
-        /// <summary>Correct the date by specifying an offset</summary>
+        /// <summary>Correct for drifting clock times. Correction applied only to images in the filtered view.</summary>
         private void MenuItemDateTimeLinearCorrection_Click(object sender, RoutedEventArgs e)
         {
-            // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false ||
-                this.dataHandler.CanBulkEditImages() == false)
-            {
-                if (this.TryPromptAndChangeToBulkEditCompatibleFilter("Correct for a camera's clock running fast or slow...",
-                                                                      "To correct the dates, Timelapse must first:") == false)
+            // Warn user that they are in a filtered view, and verify that they want to continue
+            if (this.TryPromptApplyOperationToThisFilteredView("'Correct for camera clock drift'"))
+            { 
+                DialogDateTimeLinearCorrection dateCorrection = new DialogDateTimeLinearCorrection(this.dataHandler.ImageDatabase);
+                if (dateCorrection.Abort)
                 {
                     return;
                 }
+                this.ShowBulkImageEditDialog(dateCorrection);
             }
-
-            // We should be in the right mode for correcting the date
-            DialogDateTimeLinearCorrection dateCorrection = new DialogDateTimeLinearCorrection(this.dataHandler.ImageDatabase);
-            if (dateCorrection.Abort)
-            {
-                return;
-            }
-            this.ShowBulkImageEditDialog(dateCorrection);
         }
 
         /// <summary>Correct for daylight savings time</summary>
@@ -2755,6 +2756,37 @@ namespace Timelapse
                 return true;
             }
             return false;
+        }
+
+        // If we are not showing all images, then warn the user and make sure they want to continue.
+        private bool TryPromptApplyOperationToThisFilteredView(string operationName)
+        {
+            // If we are showing all images, then no need for showing the warning message
+            if (this.dataHandler.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All)
+            {
+                return true;
+            }
+
+            string title = "Apply " + operationName + " to this filtered view?";
+            DialogMessageBox messageBox = new DialogMessageBox(title, this, MessageBoxButton.OKCancel);
+
+            messageBox.Message.What = operationName + " will be applied only to the subset of images shown by the " + this.dataHandler.ImageDatabase.ImageSet.ImageFilter + " filter." + Environment.NewLine;
+            messageBox.Message.What += "Is this what you want?";
+
+            messageBox.Message.Reason = "You have the following filter on: " + this.dataHandler.ImageDatabase.ImageSet.ImageFilter + " filter." + Environment.NewLine;
+            messageBox.Message.Reason += "Only data for those images available in this " + this.dataHandler.ImageDatabase.ImageSet.ImageFilter + " filter view will be affected" + Environment.NewLine;
+            messageBox.Message.Reason += "Data for images not shown in this " + this.dataHandler.ImageDatabase.ImageSet.ImageFilter + " filter view will be unaffected." + Environment.NewLine;
+
+            messageBox.Message.Solution = "Select " + Environment.NewLine;
+            messageBox.Message.Solution += "\u2022 'Ok' for Timelapse to continue to " + operationName + Environment.NewLine;
+            messageBox.Message.Solution += "\u2022 'Cancel' to abort";
+
+            messageBox.Message.Hint = "This is not an error." + Environment.NewLine;
+            messageBox.Message.Hint += "\u2022 We are asking just in case you forgot you had the " + this.dataHandler.ImageDatabase.ImageSet.ImageFilter + " filter on. " + Environment.NewLine;
+            messageBox.Message.Hint += "\u2022 You can use the 'Filter' menu to change to other filters (including viewing All Images)";
+
+            messageBox.Message.Icon = MessageBoxImage.Question;
+            return (bool)messageBox.ShowDialog();
         }
         #endregion
 
