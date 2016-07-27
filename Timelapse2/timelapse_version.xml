@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <timelapse>
-  <version>2.1.0.2</version>
+  <version>2.1.0.3</version>
   <url>http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.Download2</url>
   <changes>
-2.1.0.2: Major release.
+2.1.0.3: 
+- New features
+  --- Date correction for cameras with slow/fast clocks
+- Fixes
+  --- 3x speedup on image loading
+  --- 2x speedup on image scrolling when using arrow keys
+  --- Counter data controls can be cleared (i.e., empty)
+  --- Context menu (Copy Forward etc) now appears properly
+From Previous release
 - Video files (.avi, .mpg) now supported (.avi, .mpg) 
    --- see the Video Player
 - New organization of images: 
