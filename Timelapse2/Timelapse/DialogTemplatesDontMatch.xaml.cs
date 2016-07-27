@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Documents;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -12,6 +13,8 @@ namespace Timelapse
         public DialogTemplatesDontMatch(List<string> errors)
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
+
             foreach (string error in errors)
             {
                 this.TextBlockDetails.Inlines.Add(new Run { Text = "     " + error });

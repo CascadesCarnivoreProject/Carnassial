@@ -1,20 +1,22 @@
 ﻿using System;
 using System.IO;
 using System.Windows;
+using Timelapse.Util;
 
 namespace Timelapse
 {
     /// <summary>
     /// When there is more than one .ddb file in the image set folder, this dialog asks the user to choose the one they want.
     /// </summary>
-    public partial class DialogChooseDataBaseFile : Window
+    public partial class DialogChooseDatabaseFile : Window
     {
         // This will contain the file selected by the user
         public string SelectedFile { get; set; }
 
-        public DialogChooseDataBaseFile(string[] fileNames)
+        public DialogChooseDatabaseFile(string[] fileNames)
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
             this.SelectedFile = String.Empty;
 
             // file_names contains an array of .ddb files. We add each to the listbox.

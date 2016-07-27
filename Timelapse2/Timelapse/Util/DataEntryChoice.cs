@@ -20,8 +20,8 @@ namespace Timelapse.Util
             set { this.ContentControl.SelectedValue = value; }
         }
 
-        public DataEntryChoice(string dataLabel, Controls dataEntryControls, bool createContextMenu, string choicesAsString)
-            : base(dataLabel, dataEntryControls, null, ControlLabelStyle.LabelCodeBar, createContextMenu)
+        public DataEntryChoice(string dataLabel, DataEntryControls styleProvider, string choicesAsString)
+            : base(dataLabel, styleProvider, null, ControlLabelStyle.LabelCodeBar)
         {
             // The look of the combobox
             this.ContentControl.Height = 25;

@@ -1,59 +1,65 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
-
+using System.Linq;
 namespace Timelapse.Database
 {
     /// <summary>
-    /// Make a time-stamped backup of the database and csv files, if they exist 
+    /// Make a time-stamped backup of the given file in the backup folder.
+    /// At the same time, limit the number of backup files, where we prune older files with the same extension as needed. 
     /// </summary>
-    internal class FileBackup
+    public class FileBackup
     {
-        public static bool CreateBackups(string folderPath, string databaseFileName)
+        public static bool TryCreateBackups(string folderPath, string sourceFile)
         {
             string backupFolderPath = Path.Combine(folderPath, Constants.File.BackupFolder);   // The Backup Folder 
-            string databaseFilePath = Path.Combine(folderPath, databaseFileName);
-            string databaseBackupFileName = FileBackup.CreateTimeStampedFileName(databaseFileName);
-            string databaseBackupFilePath = Path.Combine(backupFolderPath, databaseBackupFileName);
-
+            string sourceFilePath = Path.Combine(folderPath, sourceFile);
+            string extension = Path.GetExtension(sourceFile);
             try
             {
                 // Backup the database file
-                if (File.Exists(databaseFilePath))
+                if (File.Exists(sourceFilePath))
                 {
-                    // While this file almost certainly exists, may as well check for it.
+                    // Create the backup folder if needed.
                     if (!Directory.Exists(backupFolderPath))
                     {
                         Directory.CreateDirectory(backupFolderPath);  // Create the backup folder if needed
                     }
-                    File.Copy(databaseFilePath, databaseBackupFilePath, true);
-                }
-
-                // Backup the CSV file
-                string csvFilename = Path.GetFileNameWithoutExtension(databaseFileName) + Constants.File.CsvFileExtension;
-                string csvFile = Path.Combine(folderPath, csvFilename);
-                string csvBackupFilename = CreateTimeStampedFileName(csvFilename);
-                string csvBackupFile = Path.Combine(folderPath, Constants.File.BackupFolder, csvBackupFilename);
-                if (File.Exists(csvFile))
-                {
-                    // The csv file doesn't always exist.
-                    File.Copy(csvFile, csvBackupFile, true);
-                }
+                    // create a  timestamped destination file name
+                    string destinationFile = FileBackup.CreateTimeStampedFileName(sourceFile);
+                    string destinationFilePath = Path.Combine(backupFolderPath, destinationFile);
+                    File.Copy(sourceFilePath, destinationFilePath, true);
+                } 
+                PruneBackups(backupFolderPath, extension); // Remove older backup files
                 return true; // backups succeeded
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.Assert(false, String.Format("Backup of {0} failed.", sourceFile), exception.ToString());
                 return false; // One or more backups failed
             }
         }
 
         // Given a filename, create a timestamped version of it by inserting a timestamp just before the suffix extension.
         // For example, TimelapseData.ddb becomes TimelapseData.2016-02-03.13-57-28.ddb (if done at Feb 3, 2016 at time 13:57:28)
-        private static string CreateTimeStampedFileName(string fname)
+        private static string CreateTimeStampedFileName(string fileName)
         {
-            string prefix = Path.GetFileNameWithoutExtension(fname);
-            string suffix = Path.GetExtension(fname);
+            string name = Path.GetFileNameWithoutExtension(fileName);
+            string extension = Path.GetExtension(fileName);
             string date = DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss");
-            return String.Concat(prefix, ".", date, suffix);
+            return String.Concat(name, ".", date, extension);
+        }
+
+        // When the backup files with the same extension exceed the NumberOfBackupFilesToKeep, we remove the oldest ones
+        private static void PruneBackups(string backupFolderPath, string extension)
+        {
+            foreach (FileInfo file in new DirectoryInfo(backupFolderPath)
+                .GetFiles("*" + extension)
+                .OrderByDescending(x => x.LastWriteTime)
+                .Skip(Constants.File.NumberOfBackupFilesToKeep))
+            {
+                File.Delete(file.FullName);
+            }
         }
     }
 }

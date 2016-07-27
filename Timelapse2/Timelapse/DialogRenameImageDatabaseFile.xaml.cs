@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -14,13 +15,17 @@ namespace Timelapse
 
         public DialogRenameImageDatabaseFile(string fileName)
         {
+            this.InitializeComponent();
+
             this.originalFileName = fileName;
             this.NewFilename = Path.GetFileNameWithoutExtension(fileName);
-            this.InitializeComponent();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
+
             this.runOriginalFileName.Text = this.originalFileName;
             this.txtboxNewFileName.Text = this.NewFilename;
             this.OkButton.IsEnabled = false;

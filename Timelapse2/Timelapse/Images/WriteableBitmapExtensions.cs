@@ -21,7 +21,7 @@ namespace Timelapse.Images
                 WriteableBitmapExtensions.BitmapsMismatched(unaltered, next))
             {
                 return null;
-             }
+            }
 
             int blueOffset;
             int greenOffset;
@@ -69,7 +69,7 @@ namespace Timelapse.Images
         // at or higher than the given darkPercent.
         // We also check to see if the image is predominantly color. We do this by checking to see if pixels are grey scale
         // (where r=g=b, with a bit of slop added) and then check that against a threshold.
-        public static ImageQualityFilter GetImageQuality(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio)
+        public static ImageFilter GetImageQuality(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio)
         {
             double ignored1;
             bool ignored2;
@@ -81,7 +81,7 @@ namespace Timelapse.Images
         // at or higher than the given darkPercent.
         // We also check to see if the image is predominantly color. We do this by checking to see if pixels are grey scale
         // (where r=g=b, with a bit of slop added) and then check that against a threshold.
-        public static unsafe ImageQualityFilter GetImageQuality(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio, out double darkPixelFraction, out bool isColor)
+        public static unsafe ImageFilter GetImageQuality(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio, out double darkPixelFraction, out bool isColor)
         {
             // The RGB offsets from the beginning of the pixel (i.e., 0, 1 or 2)
             int blueOffset;
@@ -133,7 +133,6 @@ namespace Timelapse.Images
                 ++countedPixels;
                 currentPixel += pixelSizeInBytes * pixelStride; // Advance the pointer to the beginning of the next pixel of interest
             }
-
             // Check if its a grey scale image, i.e., at least 90% of the pixels in this image (given this slop) are grey scale.
             // If not, its a color image so judge it as not dark
             double uncoloredPixelFraction = 1d * uncoloredPixels / countedPixels;
@@ -141,7 +140,7 @@ namespace Timelapse.Images
             {
                 darkPixelFraction = 1 - uncoloredPixelFraction;
                 isColor = true;
-                return ImageQualityFilter.Ok;
+                return ImageFilter.Ok;
             }
 
             // It is a grey scale image. If the fraction of dark pixels are higher than the threshold, it is dark.
@@ -149,9 +148,41 @@ namespace Timelapse.Images
             isColor = false;
             if (darkPixelFraction >= darkPixelRatio)
             {
-                return ImageQualityFilter.Dark;
+                return ImageFilter.Dark;
             }
-            return ImageQualityFilter.Ok;
+            return ImageFilter.Ok;
+        }
+
+        // checks whether the image is completely black
+        public static unsafe bool IsBlack(this WriteableBitmap image)
+        {
+            // The RGB offsets from the beginning of the pixel (i.e., 0, 1 or 2)
+            int blueOffset;
+            int greenOffset;
+            int redOffset;
+            WriteableBitmapExtensions.GetColorOffsets(image, out blueOffset, out greenOffset, out redOffset);
+
+            // examine only a subset of pixels as otherwise this is an expensive operation
+            // check pixels from last to first as most cameras put a non-black status bar or at least non-black text at the bottom of the frame,
+            // so reverse order may be a little faster on average in cases of nighttime images with black skies
+            // TODOSAUL: Calculate pixelStride as a function of image size so future high res images will still be processed quickly.
+            byte* currentPixel = (byte*)image.BackBuffer.ToPointer(); // the imageIndex will point to a particular byte in the pixel array
+            int pixelSizeInBytes = image.Format.BitsPerPixel / 8;
+            int pixelStride = Constants.Images.DarkPixelSampleStrideDefault;
+            int totalPixels = image.PixelHeight * image.PixelWidth; // total number of pixels in the image
+            for (int pixelIndex = totalPixels - 1; pixelIndex > 0; pixelIndex -= pixelStride)
+            {
+                // get next pixel of interest
+                byte b = *(currentPixel + blueOffset);
+                byte g = *(currentPixel + greenOffset);
+                byte r = *(currentPixel + redOffset);
+
+                if (r != 0 || b != 0 || g != 0)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         // Given two images, return an image containing the visual difference between them
@@ -207,7 +238,10 @@ namespace Timelapse.Images
 
         private static void GetColorOffsets(WriteableBitmap image, out int blueOffset, out int greenOffset, out int redOffset)
         {
-            if (image.Format == PixelFormats.Bgr24)
+            if (image.Format == PixelFormats.Bgr24 ||
+                image.Format == PixelFormats.Bgr32 ||
+                image.Format == PixelFormats.Bgra32 ||
+                image.Format == PixelFormats.Pbgra32)
             {
                 blueOffset = 0;
                 greenOffset = 1;

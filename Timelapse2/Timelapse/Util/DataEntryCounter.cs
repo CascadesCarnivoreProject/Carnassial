@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -22,8 +21,8 @@ namespace Timelapse.Util
             get { return this.LabelControl.IsChecked.HasValue ? (bool)this.LabelControl.IsChecked : false; }
         }
 
-        public DataEntryCounter(string dataLabel, Controls dataEntryControls, bool createContextMenu) : 
-            base(dataLabel, dataEntryControls, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.RadioButtonCodeBar, createContextMenu)
+        public DataEntryCounter(string dataLabel, DataEntryControls styleProvider) : 
+            base(dataLabel, styleProvider, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.RadioButtonCodeBar)
         {
             // Modify the context menu so it can have a propage submenu
             // TODOSAUL: the context menu's attached to the container rather than the content?
@@ -35,43 +34,6 @@ namespace Timelapse.Util
 
             // Make this part of a group with all the other radio buttons of this type
             this.LabelControl.GroupName = "A";
-
-            // Change the menu text to indicate that propagate goes back to the last non-zero value
-            this.MenuItemPropagateFromLastValue.Header = "Propagate from the last non-zero value to here";
-        }
-
-        // Menu selections for propagating or copying the current value of this control to all images
-        // Note that this overrides the default where checkForZero is false, as Counters use '0' as the empty value
-        protected override void MenuItemPropagateFromLastValue_Click(object sender, RoutedEventArgs e)
-        {
-            bool checkForZero = true;
-            bool isflag = false;
-            this.PassingContentValue = this.ControlsPanel.Propagate.FromLastValue(this.DataLabel, checkForZero, isflag);
-            this.Refresh();
-        }
-
-        // Copy the current value of this control to all images
-        protected override void MenuItemCopyCurrentValue_Click(object sender, RoutedEventArgs e)
-        {
-            bool checkForZero = true;
-            this.ControlsPanel.Propagate.CopyValues(this.DataLabel, checkForZero);
-        }
-
-        // Propagate the current value of this control forward from this point across the current set of filtered images
-        protected override void MenuItemPropagateForward_Click(object sender, RoutedEventArgs e)
-        {
-            bool checkForZero = true;
-            this.ControlsPanel.Propagate.Forward(this.DataLabel, checkForZero);
-        }
-
-        // A callback allowing us to enable or disable particular context menu items
-        protected override void Container_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            // Decide which context menu items to enable
-            // May not be able to do this without the dbData!
-            bool checkForZero = true;
-            this.CopyForwardEnabled = this.ControlsPanel.Propagate.Forward_IsPossible(this.DataLabel);
-            this.PropagateFromLastValueEnabled = this.ControlsPanel.Propagate.FromLastValue_IsPossible(this.DataLabel, checkForZero);
         }
     }
 }

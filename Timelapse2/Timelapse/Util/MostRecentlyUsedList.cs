@@ -27,7 +27,7 @@ namespace Timelapse.Util
             return this.list.GetEnumerator();
         }
 
-        IEnumerator<TElement> IEnumerable<TElement>.GetEnumerator()
+        public IEnumerator<TElement> GetEnumerator()
         {
             return this.list.GetEnumerator();
         }

@@ -10,32 +10,13 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
+        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+                            Icon="Question"
+                            Title="Rename the Timelapse Data File"
+                            What="By default, Timelapse creates a file called 'TimelapseData.ddb' that contains your image set data. You may want to rename it to something more descriptive."
+                            Solution="In the field below, rename that file to whatever you want."
+                            Result="The file will be renamed, and Timelapse will subsequently save data to the renamed file."/>
         <StackPanel Name="StackPanelCorrect" Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <StackPanel Margin="10,10,0,0" Orientation="Horizontal">
-                <Canvas Width="60" Height="60">
-                    <Ellipse Width="60" Height="60" Stroke="Black" Fill="#46FD0A0A" />
-                    <Label Content="?" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-                </Canvas>
-                <StackPanel Orientation="Vertical" Margin="10,20,0,0">
-                    <TextBlock Text="Rename the Timelapse Data File"  FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
-                </StackPanel>
-            </StackPanel>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-                <Run FontWeight="Bold" FontSize="14" Text="Problem:  "/>
-                <Run Text="Timelapse creates a file called "/> <Run  FontStyle="Italic" Text="TimelapseData.ddb"/>  <Run Text=" that contains your image set data."/>
-                <LineBreak/>
-                <Run Text="                      You may want to rename it to something more descriptive."/></TextBlock>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Solution:  " FontSize="14" />
-				<Run Text="In the field below, rename that file to whatever you want." />
-            </TextBlock>
-
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,10"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				<Run FontWeight="Bold" Text="Result: " FontSize="14"/>
-				<Run Text="      The file will be renamed, and Timelapse will subsequently save data to the renamed file." />
-            </TextBlock>
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>
             <StackPanel Orientation="Horizontal">
                 <TextBlock HorizontalAlignment="Left" Margin="10,10,10,10"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
@@ -51,8 +32,8 @@
         </StackPanel>
         <DockPanel>
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Name="CancelButton"  IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">Cancel</Button>
-                <Button Name="OkButton"  IsDefault="False" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">Okay</Button>
+                <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">Cancel</Button>
+                <Button Name="OkButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">Okay</Button>
             </StackPanel>
         </DockPanel>
     </DockPanel>

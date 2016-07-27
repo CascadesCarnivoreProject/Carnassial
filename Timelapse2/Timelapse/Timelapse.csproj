@@ -80,7 +80,7 @@
     <ManifestKeyFile>Timelapse_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <GenerateManifests>true</GenerateManifests>
+    <GenerateManifests>false</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
     <SignManifests>false</SignManifests>
@@ -95,12 +95,20 @@
     <TargetZone>Internet</TargetZone>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\WindowsAPICodePack-Core.1.1.2\lib\Microsoft.WindowsAPICodePack.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.Shell, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\WindowsAPICodePack-Shell.1.1.1\lib\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Data.SQLite, Version=1.0.100.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Data.SQLite.Core.1.0.100.0\lib\net40\System.Data.SQLite.dll</HintPath>
+    <Reference Include="System.Data.SQLite, Version=1.0.101.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Data.SQLite.Core.1.0.101.0\lib\net40\System.Data.SQLite.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Deployment" />
@@ -116,6 +124,10 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="Xceed.Wpf.Toolkit, Version=2.9.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Extended.Wpf.Toolkit.2.9\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -124,21 +136,43 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Database\ControlRow.cs" />
     <Compile Include="Database\CustomFilterOperator.cs" />
+    <Compile Include="Database\DataTableBackedList.cs" />
+    <Compile Include="Database\ImageDataChoiceColumn.cs" />
+    <Compile Include="Database\ImageDataColumn.cs" />
+    <Compile Include="Database\DataRowExtensions.cs" />
+    <Compile Include="Database\ImageDataCounterColumn.cs" />
+    <Compile Include="Database\ImageDataFlagColumn.cs" />
+    <Compile Include="Database\ImageDataNoteColumn.cs" />
+    <Compile Include="Database\ImageDataTable.cs" />
+    <Compile Include="Database\ImageSetRow.cs" />
+    <Compile Include="Database\MarkerRow.cs" />
+    <Compile Include="Database\VideoRow.cs" />
+    <Compile Include="DialogDateTimeLinearCorrection.xaml.cs">
+      <DependentUpon>DialogDateTimeLinearCorrection.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DialogVideoPlayer.xaml.cs">
+      <DependentUpon>DialogVideoPlayer.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Images\BitmapSourceExtensions.cs" />
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
     <Compile Include="Database\ImageTableEnumerator.cs" />
-    <Compile Include="Images\FeedbackMessage.cs" />
+    <Compile Include="Images\FeedbackTuple.cs" />
     <Compile Include="Database\DateTimeAdjustment.cs" />
     <Compile Include="Images\ImageDifference.cs" />
+    <Compile Include="Images\ImageExpectedUsage.cs" />
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
     <Compile Include="Images\MetaTagEventArgs.cs" />
     <Compile Include="StockMessage.xaml.cs">
       <DependentUpon>StockMessage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Util\CheckDependencies.cs" />
-    <Compile Include="Util\CheckForUpdate.cs" />
+    <Compile Include="Database\DataRowBackedObject.cs" />
+    <Compile Include="Util\Dependencies.cs" />
+    <Compile Include="Util\VersionClient.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Database\CustomFilter.cs" />
     <Compile Include="Database\ColumnTuple.cs" />
@@ -148,20 +182,20 @@
     <Compile Include="DialogAboutTimelapse.xaml.cs">
       <DependentUpon>DialogAboutTimelapse.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogChooseDataBaseFile.xaml.cs">
-      <DependentUpon>DialogChooseDataBaseFile.xaml</DependentUpon>
+    <Compile Include="DialogChooseDatabaseFile.xaml.cs">
+      <DependentUpon>DialogChooseDatabaseFile.xaml</DependentUpon>
     </Compile>
     <Compile Include="DialogCustomViewFilter.xaml.cs">
       <DependentUpon>DialogCustomViewFilter.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDateModifyAmbiguousDates.xaml.cs">
-      <DependentUpon>DialogDateModifyAmbiguousDates.xaml</DependentUpon>
+    <Compile Include="DialogDateSwapDayMonth.xaml.cs">
+      <DependentUpon>DialogDateSwapDayMonth.xaml</DependentUpon>
     </Compile>
     <Compile Include="DialogDataView.xaml.cs">
       <DependentUpon>DialogDataView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDateRereadDatesFromImages.xaml.cs">
-      <DependentUpon>DialogDateRereadDatesFromImages.xaml</DependentUpon>
+    <Compile Include="DialogRereadDateTimesFromFiles.xaml.cs">
+      <DependentUpon>DialogRereadDateTimesFromFiles.xaml</DependentUpon>
     </Compile>
     <Compile Include="DialogDeleteImages.xaml.cs">
       <DependentUpon>DialogDeleteImages.xaml</DependentUpon>
@@ -170,7 +204,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogChooseDataBaseFile.xaml">
+    <Page Include="DialogChooseDatabaseFile.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -178,7 +212,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateModifyAmbiguousDates.xaml">
+    <Page Include="DialogDateSwapDayMonth.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -186,11 +220,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateCorrection.xaml">
+    <Page Include="DialogDateTimeLinearCorrection.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="DialogDateTimeFixedCorrection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateRereadDatesFromImages.xaml">
+    <Page Include="DialogRereadDateTimesFromFiles.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -234,7 +272,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateSwapDayMonth.xaml">
+    <Page Include="DialogDateSwapDayMonthBulk.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -242,9 +280,13 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateTimeChangeCorrection.xaml">
+    <Page Include="DialogDaylightSavingsTimeCorrection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DialogVideoPlayer.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="FeedbackCtl.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -258,7 +300,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls.xaml">
+    <Page Include="DataEntryControls.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -311,8 +353,8 @@
     </Compile>
     <Compile Include="Database\FileBackup.cs" />
     <Compile Include="Images\ImageDataXml.cs" />
-    <Compile Include="Database\ImageProperties.cs" />
-    <Compile Include="Database\ImageQualityFilter.cs" />
+    <Compile Include="Database\ImageRow.cs" />
+    <Compile Include="Database\ImageFilter.cs" />
     <Compile Include="Images\MetaTagCounter.cs" />
     <Compile Include="Util\ControlLabelStyle.cs" />
     <Compile Include="Util\ControlContentStyle.cs" />
@@ -324,8 +366,8 @@
     <Compile Include="Util\DataEntryNote.cs" />
     <Compile Include="Util\NativeMethods.cs" />
     <Compile Include="Database\CsvReaderWriter.cs" />
-    <Compile Include="DialogDateCorrection.xaml.cs">
-      <DependentUpon>DialogDateCorrection.xaml</DependentUpon>
+    <Compile Include="DialogDateTimeFixedCorrection.xaml.cs">
+      <DependentUpon>DialogDateTimeFixedCorrection.xaml</DependentUpon>
     </Compile>
     <Compile Include="DialogEditLog.xaml.cs">
       <DependentUpon>DialogEditLog.xaml</DependentUpon>
@@ -339,11 +381,11 @@
     <Compile Include="DialogStatisticsOfImageCounts.xaml.cs">
       <DependentUpon>DialogStatisticsOfImageCounts.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDateSwapDayMonth.xaml.cs">
-      <DependentUpon>DialogDateSwapDayMonth.xaml</DependentUpon>
+    <Compile Include="DialogDateSwapDayMonthBulk.xaml.cs">
+      <DependentUpon>DialogDateSwapDayMonthBulk.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDateTimeChangeCorrection.xaml.cs">
-      <DependentUpon>DialogDateTimeChangeCorrection.xaml</DependentUpon>
+    <Compile Include="DialogDaylightSavingsTimeCorrection.xaml.cs">
+      <DependentUpon>DialogDaylightSavingsTimeCorrection.xaml</DependentUpon>
     </Compile>
     <Compile Include="HelpUserControl.xaml.cs">
       <DependentUpon>HelpUserControl.xaml</DependentUpon>
@@ -354,8 +396,8 @@
     <Compile Include="Images\MarkableImageCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
     <Compile Include="Util\RegistryUserSettings.cs" />
-    <Compile Include="Controls.xaml.cs">
-      <DependentUpon>Controls.xaml</DependentUpon>
+    <Compile Include="DataEntryControls.xaml.cs">
+      <DependentUpon>DataEntryControls.xaml</DependentUpon>
     </Compile>
     <Compile Include="ControlWindow.xaml.cs">
       <DependentUpon>ControlWindow.xaml</DependentUpon>
@@ -364,13 +406,8 @@
       <DependentUpon>OptionsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Util\TimelapseRegistryUserSettings.cs" />
-    <Compile Include="Database\PropagateControl.cs">
+    <Compile Include="Util\DataEntryHandler.cs">
       <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
-    </Compile>
-    <Compile Include="Resource1.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resource1.resx</DependentUpon>
     </Compile>
     <Compile Include="Database\SQLiteWrapper.cs" />
     <Compile Include="Util\StatusBarUpdates.cs" />
@@ -402,11 +439,6 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resource1.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resource1.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
@@ -434,32 +466,31 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\corrupted.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="32x32.ico" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="16x16.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\missing.jpg" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="..\Dependencies\exiftool%28-k%29.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\empty_imageset.jpg" />
+    <Resource Include="Resources\corrupted_thumbnail.jpg" />
+    <Resource Include="Resources\missing_thumbnail.jpg" />
+    <Resource Include="Resources\corrupted.jpg" />
+    <Resource Include="Resources\missing.jpg" />
+    <Resource Include="Resources\play_icon.png" />
+    <Resource Include="Resources\pause_icon.png" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\..\packages\System.Data.SQLite.Core.1.0.100.0\build\net40\System.Data.SQLite.Core.targets" Condition="Exists('..\..\packages\System.Data.SQLite.Core.1.0.100.0\build\net40\System.Data.SQLite.Core.targets')" />
+  <Import Project="..\..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets" Condition="Exists('..\..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\System.Data.SQLite.Core.1.0.100.0\build\net40\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\System.Data.SQLite.Core.1.0.100.0\build\net40\System.Data.SQLite.Core.targets'))" />
+    <Error Condition="!Exists('..\..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets'))" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

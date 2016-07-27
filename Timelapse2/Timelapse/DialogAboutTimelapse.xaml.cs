@@ -13,6 +13,8 @@ namespace Timelapse
         public DialogAboutTimelapse()
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
+
             Version curVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
             this.Version.Text = curVersion.ToString();
         }
@@ -24,7 +26,8 @@ namespace Timelapse
 
         private void CheckForUpdateButton_Click(object sender, RoutedEventArgs e)
         {
-            CheckForUpdate.GetAndParseVersion(this, true);
+            VersionClient updater = new VersionClient(Constants.ApplicationName, Constants.LatestVersionAddress);
+            updater.TryGetAndParseVersion(true);
         }
 
         private void VersionChangesButton_Click(object sender, RoutedEventArgs e)

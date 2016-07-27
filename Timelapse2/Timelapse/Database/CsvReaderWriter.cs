@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows;
+using Timelapse.Util;
 
 namespace Timelapse.Database
 {
@@ -17,14 +19,13 @@ namespace Timelapse.Database
         /// </summary>
         public void ExportToCsv(ImageDatabase database, string filePath)
         {
-            TextWriter fileWriter = new StreamWriter(filePath, false);
-            try
+            using (TextWriter fileWriter = new StreamWriter(filePath, false))
             {
                 // Write the header as defined by the data labels in the template file
                 // If the data label is an empty string, we use the label instead.
                 // The append sequence results in a trailing comma which is retained when writing the line.
                 StringBuilder header = new StringBuilder();
-                List<string> dataLabels = this.GetDataLabels(database);
+                List<string> dataLabels = database.GetDataLabelsExceptID();
                 foreach (string dataLabel in dataLabels)
                 {
                     header.Append(this.AddColumnValue(dataLabel));
@@ -38,119 +39,122 @@ namespace Timelapse.Database
                     StringBuilder row = new StringBuilder();
                     foreach (string dataLabel in dataLabels)
                     {
-                        row.Append(this.AddColumnValue((string)database.ImageDataTable.Rows[i][dataLabel]));
+                        row.Append(this.AddColumnValue(database.ImageDataTable[i][dataLabel]));
                     }
                     fileWriter.WriteLine(row.ToString());
                 }
             }
-            catch
-            {
-                // Can't write the spreadsheet file
-                DialogMessageBox messageBox = new DialogMessageBox();
-                messageBox.IconType = MessageBoxImage.Error;
-                messageBox.ButtonType = MessageBoxButton.OK;
-
-                messageBox.MessageTitle = "Can't write the spreadsheet file.";
-                messageBox.MessageProblem = "The following file can't be written: " + filePath + ".";
-                messageBox.MessageReason = "You may already have it open in Excel or another  application.";
-                messageBox.MessageSolution = "If the file is open in another application, close it and try again.";
-                messageBox.ShowDialog();
-            }
-            finally
-            {
-                fileWriter.Close();
-            }
         }
 
-        public void ImportFromCsv(ImageDatabase database, string filePath)
+        public bool TryImportFromCsv(string filePath, ImageDatabase imageDatabase, out List<string> importErrors)
         {
-            List<string> dataLabels = this.GetDataLabels(database);
-            try
+            importErrors = new List<string>();
+            
+            List<string> dataLabels = imageDatabase.GetDataLabelsExceptID();
+            using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (StreamReader csvReader = new StreamReader(stream))
                 {
-                    using (StreamReader csvReader = new StreamReader(stream))
+                    // validate CSV file headers against the database
+                    List<string> dataLabelsFromHeader = this.ReadAndParseLine(csvReader);
+                    List<string> dataLabelsInImageDatabaseButNotInHeader = dataLabels.Except(dataLabelsFromHeader).ToList();
+                    foreach (string dataLabel in dataLabelsInImageDatabaseButNotInHeader)
                     {
-                        List<string> header = this.ReadAndParseLine(csvReader);
+                        importErrors.Add("- A column with the DataLabel '" + dataLabel + "' is present in the database but nothing matches that in the CSV file." + Environment.NewLine);
+                    }
+                    List<string> dataLabelsInHeaderButNotImageDatabase = dataLabelsFromHeader.Except(dataLabels).ToList();
+                    foreach (string dataLabel in dataLabelsInHeaderButNotImageDatabase)
+                    {
+                        importErrors.Add("- A column with the DataLabel '" + dataLabel + "' is present in the CSV file but nothing matches that in the database." + Environment.NewLine);
+                    }
 
-                        List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
-                        for (List<string> row = this.ReadAndParseLine(csvReader); row != null; row = this.ReadAndParseLine(csvReader))
+                    if (importErrors.Count > 0)
+                    {
+                        return false;
+                    }
+
+                    // read image updates from the CSV file
+                    List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
+                    for (List<string> row = this.ReadAndParseLine(csvReader); row != null; row = this.ReadAndParseLine(csvReader))
+                    {
+                        if (row.Count == dataLabels.Count - 1)
                         {
-                            if (row.Count == dataLabels.Count - 1)
-                            {
-                                // .csv files are ambiguous in the sense a trailing comma may or may not be present at the end of the line
-                                // if the final field has a value this case isn't a concern, but if the final field has no value then there's
-                                // no way for the parser to know the exact number of fields in the line
-                                row.Add(String.Empty);
-                            }
-                            else if (row.Count != dataLabels.Count)
-                            {
-                                Debug.Assert(false, String.Format("Expected {0} fields in line {1} but found {2}.", dataLabels.Count, String.Join(",", row), row.Count));
-                            }
+                            // .csv files are ambiguous in the sense a trailing comma may or may not be present at the end of the line
+                            // if the final field has a value this case isn't a concern, but if the final field has no value then there's
+                            // no way for the parser to know the exact number of fields in the line
+                            row.Add(String.Empty);
+                        }
+                        else if (row.Count != dataLabels.Count)
+                        {
+                            Debug.Assert(false, String.Format("Expected {0} fields in line {1} but found {2}.", dataLabels.Count, String.Join(",", row), row.Count));
+                        }
 
-                            // assemble set of column values to update
-                            string imageFileName = null;
-                            string folder = null;
-                            ColumnTuplesWithWhere imageToUpdate = new ColumnTuplesWithWhere();
-                            for (int field = 0; field < row.Count; ++field)
-                            {
-                                string dataLabel = dataLabels[field];
-                                string value = row[field];
+                        // assemble set of column values to update
+                        string imageFileName = null;
+                        string folder = null;
+                        string relativePath = null;
+                        ColumnTuplesWithWhere imageToUpdate = new ColumnTuplesWithWhere();
+                        for (int field = 0; field < row.Count; ++field)
+                        {
+                            string dataLabel = dataLabelsFromHeader[field];
+                            string value = row[field];
 
-                                // capture components of image's unique identifier for constructing where clause
-                                // at least for now, it's assumed all image renames or moves are done through Timelapse and hence file name + folder path forms 
-                                // an immutable (and unique) ID for the image
-                                // Also don't update date and time, as Excel will often change the date format  when the csv file is opened, changed and saved.
-                                if (dataLabel == Constants.DatabaseColumn.File)
+                            // capture components of image's unique identifier for constructing where clause
+                            // at least for now, it's assumed all renames or moves are done through Timelapse and hence file name + folder + relative path form 
+                            // an immutable (and unique) ID
+                            if (dataLabel == Constants.DatabaseColumn.File)
+                            {
+                                imageFileName = value;
+                            }
+                            else if (dataLabel == Constants.DatabaseColumn.Folder)
+                            {
+                                folder = value;
+                            }
+                            else if (dataLabel == Constants.DatabaseColumn.RelativePath)
+                            {
+                                relativePath = value;
+                            }
+                            else if (dataLabel == Constants.DatabaseColumn.Date ||
+                                     dataLabel == Constants.DatabaseColumn.Time)
+                            {
+                                // as a quick fix also don't update date and time as Excel tends to change 
+                                // - dates from dd-MMM-yyyy to dd-MMM-yy 
+                                // - times from HH:mm:ss to H:mm:ss
+                                // when saving csv files
+                                continue;
+                            }
+                            else
+                            {
+                                // check field value for validity
+                                if (imageDatabase.ImageDataColumnsByDataLabel[dataLabel].IsContentValid(value))
                                 {
-                                    imageFileName = value;
-                                }
-                                else if (dataLabel == Constants.DatabaseColumn.Folder)
-                                {
-                                    folder = value;
-                                }
-                                else if (dataLabel == Constants.DatabaseColumn.Date ||
-                                         dataLabel == Constants.DatabaseColumn.Time)
-                                {
-                                    continue;
+                                    // include column in update query
+                                    imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, value));
                                 }
                                 else
                                 {
-                                    // above columns are excluded for now
-                                    imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, value));
+                                    importErrors.Add(String.Format("Value '{0}' is not valid for the column {1}.", value, dataLabel));
                                 }
-                            }
-
-                            // accumulate image
-                            Debug.Assert(String.IsNullOrWhiteSpace(imageFileName) == false, "Image's file name was not loaded.");
-                            imageToUpdate.SetWhere(folder, imageFileName);
-                            imagesToUpdate.Add(imageToUpdate);
-
-                            // write current batch of updates to database
-                            if (imagesToUpdate.Count >= 100)
-                            {
-                                database.UpdateImages(imagesToUpdate);
-                                imagesToUpdate.Clear();
                             }
                         }
 
-                        // perform any remaining updates
-                        database.UpdateImages(imagesToUpdate);
+                        // accumulate image
+                        Debug.Assert(String.IsNullOrWhiteSpace(imageFileName) == false, "File name was not loaded.");
+                        imageToUpdate.SetWhere(folder, relativePath, imageFileName);
+                        imagesToUpdate.Add(imageToUpdate);
+
+                        // write current batch of updates to database
+                        if (imagesToUpdate.Count >= 100)
+                        {
+                            imageDatabase.UpdateImages(imagesToUpdate);
+                            imagesToUpdate.Clear();
+                        }
                     }
+
+                    // perform any remaining updates
+                    imageDatabase.UpdateImages(imagesToUpdate);
+                    return true;
                 }
-            }
-            catch (Exception exception)
-            {
-                DialogMessageBox messageBox = new DialogMessageBox();
-                messageBox.IconType = MessageBoxImage.Error;
-                messageBox.ButtonType = MessageBoxButton.OK;
-                messageBox.MessageTitle = "Can't import the CSV file.";
-                messageBox.MessageProblem = String.Format("The file {0} could not be opened.", filePath);
-                messageBox.MessageReason = "Most likely the file is open in another program.";
-                messageBox.MessageSolution = "If the file is open in another program, close it.";
-                messageBox.MessageResult = String.Format("{0}: {1}", exception.GetType().FullName, exception.Message);
-                messageBox.MessageHint = "Is the file open in Excel?";
-                messageBox.ShowDialog();
             }
         }
 
@@ -170,28 +174,6 @@ namespace Timelapse.Database
             {
                 return value + ",";
             }
-        }
-
-        private List<string> GetDataLabels(ImageDatabase database)
-        {
-            List<string> dataLabels = new List<string>();
-            for (int row = 0; row < database.TemplateTable.Rows.Count; row++)
-            {
-                string label = (string)database.TemplateTable.Rows[row][Constants.Control.Label];
-                string dataLabel = (string)database.TemplateTable.Rows[row][Constants.Control.DataLabel];
-                if (dataLabel == String.Empty)
-                {
-                    dataLabel = label;
-                }
-                Debug.Assert(String.IsNullOrWhiteSpace(dataLabel) == false, String.Format("Encountered empty data label '{0}' at row {1} in template table.", dataLabel, row));
-
-                // get a list of datalabels so we can add columns in the order that matches the current template table order
-                if (Constants.Database.ID != dataLabel)
-                {
-                    dataLabels.Add(dataLabel);
-                }
-            }
-            return dataLabels;
         }
 
         private List<string> ReadAndParseLine(StreamReader csvReader)
@@ -264,7 +246,7 @@ namespace Timelapse.Database
             // final empty fields are ambiguous at this level and therefore handled by the caller
             if (inField)
             {
-                string field = unparsedLine.Substring(fieldStart, unparsedLine.Length - fieldStart ); 
+                string field = unparsedLine.Substring(fieldStart, unparsedLine.Length - fieldStart); 
                 parsedLine.Add(field);
             }
 

@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data;
 using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using Timelapse.Database;
 using Timelapse.Images;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -25,7 +25,6 @@ namespace Timelapse
         private ExifToolWrapper exifTool;
         private string metaDataName = String.Empty;
         private string noteLabel = String.Empty;
-        private string noteDataLabel = String.Empty;
 
         private ImageDatabase database;
         private string imageFilePath;
@@ -35,14 +34,27 @@ namespace Timelapse
 
         public DialogPopulateFieldWithMetadata(ImageDatabase database, string imageFilePath)
         {
+            this.InitializeComponent();
+
             this.imageFilePath = imageFilePath;
             this.database = database;
-            this.InitializeComponent();
+            this.disposed = false;
         }
 
         public void Dispose()
         {
-            if (this.disposed == false)
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
             {
                 if (this.exifTool != null)
                 {
@@ -50,24 +62,19 @@ namespace Timelapse
                 }
             }
 
-            GC.SuppressFinalize(this);
             this.disposed = true;
         }
 
         // After the interface is loaded, 
         // - Load the Exif data into the data grid
         // - Load the names of the note controls into the listbox
-        // TODO: ERROR CHECK CORRUPTED, ETC.. that the exiftool exists, AND THAT WE CAN OPEN THE FILE AND GET THE EXIF AND 
+        // TODOSAUL: ERROR CHECK CORRUPTED, ETC.. that the exiftool exists, AND THAT WE CAN OPEN THE FILE AND GET THE EXIF AND 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Make sure the title bar of the dialog box is on the screen. For small screens it may default to being off the screen
-            if (this.Left < 10 || this.Top < 10)
-            {
-                this.Left = this.Owner.Left + (this.Owner.Width - this.ActualWidth) / 2; // Center it horizontally
-                this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
-            }
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
 
-            this.lblImageName.Content = this.imageFilePath;
+            this.lblImageName.Content = Path.GetFileName(this.imageFilePath);
             this.LoadExif();
             this.LoadDataFieldLabels();
         }
@@ -75,7 +82,7 @@ namespace Timelapse
         #region Loading EXIF into the data grid
         // Use the ExifToolWrapper to load all the metadata
         // Note that this requires the exiftool(-k).exe to be available in the executables folder 
-        internal void LoadExif()
+        private void LoadExif()
         {
             this.exifTool = new ExifToolWrapper();
             this.exifTool.Start();
@@ -126,7 +133,7 @@ namespace Timelapse
             IList<DataGridCellInfo> selectedcells = e.AddedCells;
 
             // Make sure there are actually some selected cells
-            if (null == selectedcells || selectedcells.Count == 0)
+            if (selectedcells == null || selectedcells.Count == 0)
             {
                 return;
             }
@@ -149,20 +156,15 @@ namespace Timelapse
         #region Notefields callbacks
         public void LoadDataFieldLabels()
         {
-            DataTable sortedTemplateTable = this.database.GetControlsSortedByControlOrder();
-            for (int i = 0; i < sortedTemplateTable.Rows.Count; i++)
+            foreach (ControlRow control in this.database.TemplateTable)
             {
-                // Get the values for each control
-                DataRow row = sortedTemplateTable.Rows[i];
-                string type = row[Constants.Database.Type].ToString();
-
-                if (type == Constants.DatabaseColumn.Note || type == Constants.DatabaseColumn.Date || type == Constants.DatabaseColumn.Time)
+                if (control.Type == Constants.Control.Note ||
+                    control.Type == Constants.DatabaseColumn.Date ||
+                    control.Type == Constants.DatabaseColumn.Time)
                 {
-                    string datalabel = (string)row[Constants.Control.DataLabel];
-                    string label = (string)row[Constants.Control.Label];
-                    this.dataLabelFromLabel.Add(label, datalabel);
-                    // this.NoteID = Convert.ToInt32(row[Constants.ID].ToString()); // TODO Need to use this ID to pass between controls and data
-                    this.lboxNoteFields.Items.Add(label);
+                    this.dataLabelFromLabel.Add(control.Label, control.DataLabel);
+                    // this.NoteID = control.ID; // TODOSAUL: Need to use this ID to pass between controls and data
+                    this.lboxNoteFields.Items.Add(control.Label);
                 }
             }
         }
@@ -191,7 +193,7 @@ namespace Timelapse
             this.dgFeedback.ItemsSource = keyValueList;
 
             // Update the UI to show the feedback datagrid, 
-            this.tbPopulatingMessage.Text = "Populating the data field '" + this.noteDataLabel + "' from each image's '" + this.metaDataName + "' metadata ";
+            this.tbPopulatingMessage.Text = "Populating the data field '" + this.noteLabel + "' from each file's '" + this.metaDataName + "' metadata ";
             btnPopulate.Visibility = Visibility.Collapsed; // Hide the populate button, as we are now in the act of populating things
             cbClearIfNoMetada.Visibility = Visibility.Collapsed; // Hide the checkbox button for the same reason
             this.PrimaryPanel.Visibility = Visibility.Collapsed;  // Hide the various panels to reveal the feedback datagrid
@@ -212,17 +214,20 @@ namespace Timelapse
                 // If we can't decide if we want to leave the data field alone or to clear it depending on the state of the isClearIfNoMetaData (set via the checkbox)
                 // Report progress as needed.
                 // This tuple list will hold the id, key and value that we will want to update in the database
-                List<Tuple<long, string, string>> imageIDKeyValue = new List<Tuple<long, string, string>>();
+                List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
                 for (int image = 0; image < database.CurrentlySelectedImageCount; image++)
                 {
-                    ImageProperties imageProperties = database.GetImage(image);
+                    ImageRow imageProperties = database.ImageDataTable[image];
                     string[] tags = { this.metaDataName };
-                    Dictionary<string, string> dictTemp = this.exifTool.FetchExifFrom(imageProperties.GetImagePath(database.FolderPath), tags);
-                    if (dictTemp.Count <= 0)
+                    Dictionary<string, string> exifData = this.exifTool.FetchExifFrom(imageProperties.GetImagePath(database.FolderPath), tags);
+                    if (exifData.Count <= 0)
                     {
                         if (this.isClearIfNoMetaData)
                         {
-                            imageIDKeyValue.Add(new Tuple<long, string, string>(imageProperties.ID, this.dataLabelFromLabel[this.noteLabel], String.Empty)); // Clear the data field if there is no metadata...
+                            // Clear the data field if there is no metadata...
+                            ColumnTuplesWithWhere imageClear = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(this.dataLabelFromLabel[this.noteLabel], String.Empty) },
+                                                                                         imageProperties.ID);
+                            imagesToUpdate.Add(imageClear);
                             backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, "No metadata found - data field is cleared"));
                         }
                         else
@@ -231,17 +236,21 @@ namespace Timelapse
                         }
                         continue;
                     }
-                    string value = dictTemp[this.metaDataName];
+
+                    string value = exifData[this.metaDataName];
                     backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, value));
-                    if (image % 250 == 0)
+                    if (image % Constants.Throttles.SleepForImageRenderInterval == 0)
                     {
-                        Thread.Sleep(25); // Put in a short delay every now and then, as otherwise the UI may not update.
+                        Thread.Sleep(Constants.Throttles.RenderingBackoffTime); // Put in a short delay every now and then, as otherwise the UI may not update.
                     }
-                    imageIDKeyValue.Add(new Tuple<long, string, string>(imageProperties.ID, this.dataLabelFromLabel[this.noteLabel], value));
+
+                    ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(this.dataLabelFromLabel[this.noteLabel], value) },
+                                                                                  imageProperties.ID);
+                    imagesToUpdate.Add(imageUpdate);
                 }
 
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Writing the data...", "Please wait..."));
-                database.UpdateImages(imageIDKeyValue);
+                database.UpdateImages(imagesToUpdate);
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Done", "Done"));
             };
             backgroundWorker.ProgressChanged += (o, ea) =>
@@ -272,7 +281,7 @@ namespace Timelapse
         #endregion
 
         #region UI Button Callbacks
-        private void PoplulateButton_Click(object sender, RoutedEventArgs e)
+        private void PopulateButton_Click(object sender, RoutedEventArgs e)
         {
             this.Populate();
         }

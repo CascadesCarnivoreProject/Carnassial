@@ -1,47 +1,46 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Timelapse.Database;
+using Timelapse.Util;
 
 namespace Timelapse
 {
-    // TODO Modify this so it tells the user that they can't delete an image that is not there.
-    // TODO Here and elsewhere, show the placeholder images scaled to the correct size. May have to keep width/height of original image to do this.
-
     /// <summary>
-    /// This dialog box asks the user if he/she wants to delete the following images
+    /// This dialog box asks the user if he/she wants to delete the images (and possibly the data) of images rows as specified in the deletedImageTable
     /// What actually happens is that the image is replaced by a 'dummy' placeholder image,
     /// and the original image is copied into a subfolder called Deleted.
     /// </summary>
     public partial class DialogDeleteImages : Window
     {
         // these variables will hold the values of the passed in parameters
-        private string imageFolderPath; // the full folder path where that image is located
-        private DataTable deletedImageTable;
         private bool deleteData;
-        private ImageDatabase database;
+        private ImageDatabase imageDatabase;
+        private List<ImageRow> imagesToDelete;
 
-        #region Public methods
+        public List<long> ImageFilesRemovedByID { get; private set; }
+
         /// <summary>
         /// Ask the user if he/she wants to delete one or more images and (depending on whether deleteData is set) the data associated with those images.
-        /// Other parameters indicate various specifics of that image that we will use to display and delete it.
-        /// deleteData is true when the associated data should be deleted.
-        /// useDeleteFlags is true when the user is trying to delete images with the deletion flag set, otherwise its the current image being deleted
+        /// Other parameters indicate various specifics of how the deletion was specified, which also determines what is displayed in the interface:
+        /// -deleteData is true when the data associated with that image should be deleted.
+        /// -useDeleteFlags is true when the user is trying to delete images with the deletion flag set, otherwise its the current image being deleted
         /// </summary>
-        public DialogDeleteImages(ImageDatabase database, DataTable deletedImageTable, bool deleteData, bool useDeleteFlags)
+        public DialogDeleteImages(ImageDatabase database, List<ImageRow> deletedImageTable, bool deleteData, bool deletingCurrentImage)
         {
-            string imageFolderPath = database.FolderPath; 
             this.InitializeComponent();
             Mouse.OverrideCursor = Cursors.Wait;
-            this.deletedImageTable = deletedImageTable;
-            this.imageFolderPath = imageFolderPath;
+            this.imagesToDelete = deletedImageTable;
             this.deleteData = deleteData;
-            this.database = database;
+            this.imageDatabase = database;
+
+            this.ImageFilesRemovedByID = new List<long>();
 
             if (this.deleteData)
             {
@@ -56,54 +55,55 @@ namespace Timelapse
             this.GridGallery.RowDefinitions.Clear();
 
             // Construct the dialog's text based on the state of the flags
-            if (useDeleteFlags == false )
+            if (deletingCurrentImage)
             {
+                string imageOrVideo = deletedImageTable[0].IsVideo ? "video" : "image";
                 if (deleteData == false)
                 {
-                    // Case 1: Delete the current image, but not its data
-                    this.Message.MessageTitle = "Delete the current image";
-                    this.Message.MessageWhat = "Deletes the current image (shown below) but not its data.";
-                    this.Message.MessageResult = "\u2022 The deleted image file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
-                    this.Message.MessageResult += "\u2022 A placeholder image will be shown when you try to view a deleted image.";
-                    this.Message.MessageHint = "\u2022 Restore deleted images by manually copying or moving them back to their original location, or" + Environment.NewLine;
-                    this.Message.MessageHint += "\u2022 Delete your image backups by deleting the DeletedImages folder.";
+                    // Case 1: Delete the current image, but not its data.
+                    this.Message.Title = String.Format("Delete the current {0} but not its data.", imageOrVideo);
+                    this.Message.What = String.Format("Deletes the current {0} file (shown below) but not its data.", imageOrVideo);
+                    this.Message.Result = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named DeletedImages.{1}", imageOrVideo, Environment.NewLine);
+                    this.Message.Result += String.Format("\u2022 A placeholder {0} will be shown when you try to view a deleted {0}.", imageOrVideo);
+                    this.Message.Hint = String.Format("\u2022 Restore deleted {0}s by manually copying or moving them back to their original location, or{1}", imageOrVideo, Environment.NewLine);
+                    this.Message.Hint += String.Format("\u2022 Delete your {0} backups by deleting the DeletedImages folder.", imageOrVideo);
                 }
                 else
                 {
                     // Case 2: Delete the current image and its data
-                    this.Message.MessageTitle = "Delete the current image and its data";
-                    this.Message.MessageWhat  = "Deletes the current image (shown below) and the data associated with that image.";
-                    this.Message.MessageResult = "\u2022 The deleted image file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
-                    this.Message.MessageResult += "\u2022 However, the data associated with that image will be permanently deleted.";
-                    this.Message.MessageHint = "You can delete your image backups by deleting the DeletedImages folder.";
+                    this.Message.Title = String.Format("Delete the current {0} and its data", imageOrVideo);
+                    this.Message.What = String.Format("Deletes the current {0} file (shown below) and the data associated with that {0}.", imageOrVideo);
+                    this.Message.Result = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named DeletedImages.{1}", imageOrVideo, Environment.NewLine);
+                    this.Message.Result += String.Format("\u2022 However, the data associated with that {0} will be permanently deleted.", imageOrVideo);
+                    this.Message.Hint = String.Format("You can permanently delete your {0} backup by deleting the DeletedImages folder.", imageOrVideo);
                 }
             }
-            else 
+            else
             {
                 if (deleteData == false)
                 {
                     // Case 3: Delete the images that have the delete flag set, but not their data
-                    this.Message.MessageTitle = "Delete all images marked for deletion";
-                    this.Message.MessageWhat = "\u2022 Deletes all images marked for deletion (shown below) but not the data associated with those images.";
-                    this.Message.MessageResult = "\u2022 The deleted image file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
-                    this.Message.MessageResult += "\u2022 A placeholder image will be shown when you try to view a deleted image.";
-                    this.Message.MessageHint = "\u2022 Restore deleted images by manually copying or moving them back to their original location, or" + Environment.NewLine;
-                    this.Message.MessageHint += "\u2022 Delete your image backups by deleting the DeletedImages folder";
+                    this.Message.Title = "Delete the images and videos marked for deletion in this filter";
+                    this.Message.What = "\u2022 Deletes the image and video files in this filter that are marked for deletion (shown below), but not the data entered for them.";
+                    this.Message.Result = "\u2022 The deleted file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
+                    this.Message.Result += "\u2022 A placeholder image will be shown when you try to view a deleted image.";
+                    this.Message.Hint = "\u2022 Restore deleted files by manually copying or moving them back to their original location, or" + Environment.NewLine;
+                    this.Message.Hint += "\u2022 Delete the backup files by deleting the DeletedImages folder";
                 }
                 else
                 {
                     // Case 4: Delete the images that have the delete flag set, and their data
-                    this.Message.MessageTitle = "Delete all images marked for deletion and their data";
-                    this.Message.MessageWhat = "Deletes all images marked for deletion (shown below) along with the data associated with those images.";
-                    this.Message.MessageResult = "\u2022 The deleted image file will be backed up in a sub-folder named DeletedImages" + Environment.NewLine;
-                    this.Message.MessageResult += "\u2022 However, the data associated with those images will be permanently deleted.";
-                    this.Message.MessageHint = "You can delete your image backups by deleting the DeletedImages folder. ";
+                    this.Message.Title = "Delete those images and videos marked for deletion and their data in this filter";
+                    this.Message.What = "Deletes the image and video files that are marked for deletion (shown below), along with the data entered for them.";
+                    this.Message.Result = "\u2022 The deleted files will be backed up in a sub-folder named DeletedImages" + Environment.NewLine;
+                    this.Message.Result += "\u2022 However, the data associated with those files will be permanently deleted.";
+                    this.Message.Hint = "You can permanently delete those backup files by deleting the DeletedImages folder.";
                 }
             }
-            this.Title = this.Message.MessageTitle;
+            this.Title = this.Message.Title;
 
             // Set the local variables to the passed in parameters
-            int col = 0;
+            int column = 0;
             int row = 0;
 
             GridLength gridlength200 = new GridLength(1, GridUnitType.Auto);
@@ -113,12 +113,11 @@ namespace Timelapse
             // - bitmap loading is very slow
             // - the eventual deletion is slow, as we are deleting tons of files
             // SAULTODO: Need to warn the user, and perhaps see if we can make it more efficient, or if we can alter the user interface. 
-            for (int i = 0; i < deletedImageTable.Rows.Count; i++)
+            foreach (ImageRow imageProperties in deletedImageTable)
             {
-                ImageProperties imageProperties = new ImageProperties(deletedImageTable.Rows[i]);
-                ImageSource bitmap = imageProperties.LoadBitmapThumbnail(database.FolderPath, 400);
-
-                if (col == 0)
+                ImageSource bitmap = imageProperties.LoadBitmap(database.FolderPath, Constants.Images.ThumbnailSmall);
+                
+                if (column == 0)
                 {
                     this.GridGallery.RowDefinitions.Add(new RowDefinition() { Height = gridlength20 });
                     this.GridGallery.RowDefinitions.Add(new RowDefinition() { Height = gridlength200 });
@@ -129,20 +128,20 @@ namespace Timelapse
                 imageLabel.Height = 25;
                 imageLabel.VerticalAlignment = VerticalAlignment.Top;
 
-                System.Windows.Controls.Image imageControl = new System.Windows.Controls.Image();
+                Image imageControl = new Image();
                 imageControl.Source = bitmap;
 
                 Grid.SetRow(imageLabel, row);
                 Grid.SetRow(imageControl, row + 1);
-                Grid.SetColumn(imageLabel, col);
-                Grid.SetColumn(imageControl, col);
+                Grid.SetColumn(imageLabel, column);
+                Grid.SetColumn(imageControl, column);
                 this.GridGallery.Children.Add(imageLabel);
                 this.GridGallery.Children.Add(imageControl);
-                col++;
-                if (col == 5)
+                column++;
+                if (column == 5)
                 {
-                    // A new row is started every 5th time
-                    col = 0;
+                    // A new row is started every five columns
+                    column = 0;
                     row += 2;
                 }
             }
@@ -151,9 +150,6 @@ namespace Timelapse
             Mouse.OverrideCursor = null;
         }
 
-        #endregion
-
-        #region Private methods
         /// <summary>
         /// Cancel button selected
         /// </summary>
@@ -167,45 +163,29 @@ namespace Timelapse
         /// </summary>
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            // Don't allow the user to delete ALL their data. 
-            // TODOSAUL: Need a general fix to this throughout, where we allow for an empty dataset 
-            if (this.deleteData && (this.deletedImageTable.Rows.Count >= this.database.GetImageCount()))
-            {
-                DialogMessageBox dlgMsg = new DialogMessageBox();
-                dlgMsg.IconType = MessageBoxImage.Error;
-                dlgMsg.MessageTitle = "You can't delete all your images";
-                dlgMsg.MessageProblem = "You can't delete all your images";
-                dlgMsg.MessageReason = "Timelapse must have at least one image to display.";
-                dlgMsg.MessageSolution = "Select only a subset of images to delete.";
-                dlgMsg.ShowDialog();
-                this.DialogResult = false;
-                return;
-            }
-            List<long> imagesIDsToDelete = new List<long>();
+            List<long> imageIDsToDeleteFromDatabase = new List<long>();
             Mouse.OverrideCursor = Cursors.Wait;
-            for (int i = 0; i < this.deletedImageTable.Rows.Count; i++)
+            foreach (ImageRow imageProperties in this.imagesToDelete)
             {
-                ImageProperties imageProperties = new ImageProperties(this.deletedImageTable.Rows[i]);
-
-                string deleteFlag = this.database.DataLabelFromColumnName[Constants.DatabaseColumn.DeleteFlag];
-                this.database.UpdateImage((int)imageProperties.ID, deleteFlag, "false");
+                string markForDeletionDataLabel = this.imageDatabase.DataLabelFromStandardControlType[Constants.Control.DeleteFlag];
+                this.imageDatabase.UpdateImage(imageProperties.ID, markForDeletionDataLabel, Constants.Boolean.False);
                 if (this.deleteData)
                 {
-                    imagesIDsToDelete.Add(imageProperties.ID);
+                    imageIDsToDeleteFromDatabase.Add(imageProperties.ID);
                 }
                 else
                 {
-                    // As only the image was deleted, mark its image quality as missing.
-                    string dataLabel = this.database.DataLabelFromColumnName[Constants.DatabaseColumn.ImageQuality];
-                    this.database.UpdateImage((int)imageProperties.ID, dataLabel, ImageQualityFilter.Missing.ToString());
+                    // as only the image file was deleted, change its image quality to missing in the database
+                    string imageQualityDataLabel = this.imageDatabase.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality];
+                    this.imageDatabase.UpdateImage(imageProperties.ID, imageQualityDataLabel, ImageFilter.Missing.ToString());
+                    this.ImageFilesRemovedByID.Add(imageProperties.ID);
                 }
-                this.TryMoveImageToDeletedImagesFolder(this.imageFolderPath, imageProperties);
-
+                this.TryMoveImageToDeletedImagesFolder(this.imageDatabase.FolderPath, imageProperties);
             }
 
             if (this.deleteData)
             {
-                this.database.DeleteImage(imagesIDsToDelete);
+                this.imageDatabase.DeleteImages(imageIDsToDeleteFromDatabase);
             }
 
             this.DialogResult = true;
@@ -215,33 +195,34 @@ namespace Timelapse
         /// <summary>
         /// Create a backup of the current image file in the backup folder
         /// </summary>
-        private bool TryMoveImageToDeletedImagesFolder(string folderPath, ImageProperties imageProperties)
+        private bool TryMoveImageToDeletedImagesFolder(string folderPath, ImageRow imageProperties)
         {
             string sourceFilePath = imageProperties.GetImagePath(folderPath);
             if (!File.Exists(sourceFilePath))
             {
                 return false;  // If there is no source file, its a missing file so we can't back it up
             }
-            
+
             // Create a new target folder, if necessary.
             string destinationFolder = Path.Combine(folderPath, Constants.File.DeletedImagesFolder);
             if (!Directory.Exists(destinationFolder))
             {
                 Directory.CreateDirectory(destinationFolder);
             }
-            
+
             // Move the image file to the backup location.           
             string destinationFilePath = Path.Combine(destinationFolder, imageProperties.FileName);
-            if (File.Exists(destinationFilePath))  // Becaue move doesn't allow overwriting, delete  the destination file if it already exists .
+            if (File.Exists(destinationFilePath))
             {
                 try
                 {
+                    // Becaue move doesn't allow overwriting, delete the destination file if it already exists.
                     File.Delete(sourceFilePath);
                     return true;
                 }
                 catch (IOException e)
                 {
-                    System.Diagnostics.Debug.Print(e.Message);
+                    Debug.Print(e.Message);
                     return false;
                 }
             }
@@ -252,20 +233,15 @@ namespace Timelapse
             }
             catch (IOException e)
             {
-                System.Diagnostics.Debug.Print(e.Message);
+                Debug.Print(e.Message);
                 return false;
             }
         }
-        #endregion
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Make sure the title bar of the dialog box is on the screen. For small screens it may default to being off the screen
-            if (this.Left < 10 || this.Top < 10)
-            {
-                this.Left = this.Owner.Left + (this.Owner.Width - this.ActualWidth) / 2; // Center it horizontally
-                this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
-            }
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
         }
 
         private void ConfirmBox_Checked(object sender, RoutedEventArgs e)

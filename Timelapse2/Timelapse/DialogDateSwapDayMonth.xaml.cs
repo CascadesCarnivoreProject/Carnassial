@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Windows;
 using Timelapse.Database;
 using Timelapse.Util;
@@ -7,89 +6,156 @@ using Timelapse.Util;
 namespace Timelapse
 {
     /// <summary>
-    /// Interaction logic for DialogSwapDayMonth.xaml
-    /// This Dialog box lets the user swap the day and months across all images.
-    /// However, if this isn't doable (because a day field > 12) appropriate feedback is provided
+    /// Interaction logic for DialogDateSwapDayMonth.xaml
     /// </summary>
     public partial class DialogDateSwapDayMonth : Window
     {
         private ImageDatabase database;
+        private int rangeStart = 0;
+        private int rangeEnd = -1;
 
-        #region Public methods
         public DialogDateSwapDayMonth(ImageDatabase database)
         {
             this.InitializeComponent();
             this.database = database;
 
-            // imgNumber will point to the first image  that is not swappable, else -1
-            ImageProperties imageProperties = null;
-            int imgNumber = DateTimeHandler.SwapDayMonthIsPossible(this.database);
-            int id = this.database.GetImageID(imgNumber);
-            if (id >= 0)
-            {
-                // We can't swap the dates; provide appropriate feedback
-                this.StackPanelCorrect.Visibility = Visibility.Collapsed;
-                this.StackPanelError.Visibility = Visibility.Visible;
-                this.OkButton.Visibility = Visibility.Collapsed;
+            // We add this in code behind as we don't want to invoke these callbacks when the interface is created.
+            // TODOSAUL: both combo boxes route to the same handler which doesn't vary its action depending on the sending control; is this a bug?
+            this.cboxOriginalDate.Checked += this.DateBox_Checked;
+            this.cboxNewDate.Checked += this.DateBox_Checked;
 
-                imageProperties = this.database.FindImageByID(id);
+            // Find the first ambiguous date
+            this.NextAmbiguousDate();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
+        }
+
+        private bool NextAmbiguousDate()
+        {
+            // The search will search inclusively from the given image number, and will return the first image number that is ambiguous, else -1
+            this.rangeStart = this.GetNextAmbiguousDate(this.rangeStart);
+            ImageRow imageProperties;
+            if (this.rangeStart >= 0)
+            {
+                // We found an ambiguous date; provide appropriate feedback
+                imageProperties = this.database.ImageDataTable[this.rangeStart];
                 this.lblOriginalDate.Content = imageProperties.Date;
-                this.lblNewDate.Content = "No valid date possible";
+                // If we can't swap the date, we just return the original unaltered date
+                string swappedDate;
+                this.lblNewDate.Content = DateTimeHandler.TrySwapSingleDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
+
+                this.rangeEnd = this.GetLastImageOnSameDay(this.rangeStart);
+                this.lblNumberOfImagesWithSameDate.Content = " Images and videos from the same day: ";
+                this.lblNumberOfImagesWithSameDate.Content += (this.rangeEnd - this.rangeStart + 1).ToString();
             }
             else
             {
-                // We can swap the dates; provide appropriate feedback
-                imgNumber = this.database.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
-                id = this.database.GetImageID(imgNumber);
-                if (id >= 0)
-                {
-                    imageProperties = this.database.FindImageByID(id);
-                    this.lblOriginalDate.Content = imageProperties.Date;
-                    this.lblNewDate.Content = DateTimeHandler.SwapSingleDayMonth(imageProperties.Date);
-                }
+                // No dates are ambiguous; provide appropriate feedback
+                this.btnNext.IsEnabled = false; // Disable the 'Next' button
+
+                // Hide date-specific items so they are no longer visible on the screen
+                this.lblOriginalDate.Visibility = Visibility.Hidden;
+                this.lblNewDate.Visibility = Visibility.Hidden;
+                this.cboxOriginalDate.Visibility = Visibility.Hidden;
+                this.cboxNewDate.Visibility = Visibility.Hidden;
+                this.lblImageName.Visibility = Visibility.Hidden;
+                this.spImageArea.Visibility = Visibility.Hidden;
+                this.label2.Visibility = Visibility.Hidden;
+                this.label3.Visibility = Visibility.Hidden;
+                this.lblNumberOfImagesWithSameDate.Content = "No ambiguous dates left";
+                this.imgDateImage.Source = null;
+                return false;
             }
 
-            // Now show the image that we are using as our sample
-            if (imageProperties == null)
-            {
-                return; // No valid image to show!
-            }
-
-            // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            this.imgDateImage.Source = imageProperties.LoadWriteableBitmap(this.database.FolderPath);
+            // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted file if needed
+            this.imgDateImage.Source = imageProperties.LoadBitmap(this.database.FolderPath);
+            this.lblImageName.Content = imageProperties.FileName;
+            return true;
         }
-        #endregion
 
-        #region Private methods
-        private void DlgSwapDayMonth_Loaded(object sender, RoutedEventArgs e)
+        #region Callbacks
+        private void DateBox_Checked(object sender, RoutedEventArgs e)
         {
-            // Make sure the title bar of the dialog box is on the screen. For small screens it may default to being off the screen
-            if (this.Left < 10 || this.Top < 10)
-            {
-                this.Left = this.Owner.Left + (this.Owner.Width - this.ActualWidth) / 2; // Center it horizontally
-                this.Top = this.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
-            }
+            this.database.ExchangeDayAndMonthInImageDates(this.rangeStart, this.rangeEnd);
         }
 
-        // If the user click ok, swap the day and month field
+        // If the user click ok, then exit
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Todd  is use of an unrestricted range correct behaviour when images have been loaded from multiple folders?
-            this.database.ExchangeDayAndMonthInImageDate();
-            StringBuilder log = new StringBuilder();
-            log.AppendLine("System entry: Swapped the days and months for all dates.");
-            log.AppendLine("                       Old sample date was: " + this.lblOriginalDate.Content + " and new date is " + this.lblNewDate.Content);
-            this.database.AppendToImageSetLog(log);
-
-            // Refresh the database / datatable to reflect the updated values
-            this.database.TryGetImagesAll();
             this.DialogResult = true;
         }
 
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        private void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = false;
+            this.rangeStart = this.rangeEnd + 1; // Go to the next image
+            this.NextAmbiguousDate();
+
+            // Set the radio button back to the orginal date (default)
+            // As we do this, unlink and then relink the callback as we don't want to invoke the data update
+            this.cboxOriginalDate.Checked -= this.DateBox_Checked;
+            this.cboxOriginalDate.IsChecked = true;
+            this.cboxOriginalDate.Checked += this.DateBox_Checked;
         }
         #endregion
+
+        private int GetNextAmbiguousDate(int startIndex)
+        {
+            // Starting from the index, get the date from successive rows and see if the date is ambiguous
+            // Note that if the index is out of range, it will return -1, so that's ok.
+            for (int index = startIndex; index < this.database.CurrentlySelectedImageCount; index++)
+            {
+                ImageRow imageProperties = this.database.ImageDataTable[index];
+                DateTime imageDateTime;
+                if (imageProperties.TryGetDateTime(out imageDateTime) == false)
+                {
+                    continue; // if we can't get a valid DateTime, skip over this image i.e., don't consider it ambiguous as we can't alter it anyways.
+                }
+                if (imageDateTime.Day <= Constants.MonthsInYear)
+                {
+                    return index; // If the date is ambiguous, return the row index. 
+                }
+            }
+            return -1; // -1 means all dates are unambiguous
+        }
+
+        // Given a starting index, find its date and then go through the successive images until the date differs.
+        // That is, return the final image that is dated the same date as this image
+        private int GetLastImageOnSameDay(int startIndex)
+        {
+            if (startIndex >= this.database.CurrentlySelectedImageCount)
+            {
+                return -1;   // Make sure index is in range.
+            }
+
+            // Parse the provided starting date. Note that this should never fail at this point, but just in case, put out a debug message
+            ImageRow imageProperties = this.database.ImageDataTable[startIndex];
+            DateTime desiredDateTime;
+            if (imageProperties.TryGetDateTime(out desiredDateTime) == false)
+            {
+                return -1;  // The starting date is not a valid date
+            }
+            for (int index = startIndex + 1; index < this.database.CurrentlySelectedImageCount; index++)
+            {
+                // Parse the date for the given record.
+                imageProperties = this.database.ImageDataTable[index];
+                DateTime imageDateTime;
+                if (imageProperties.TryGetDateTime(out imageDateTime) == false)
+                {
+                    // TODOSAUL: code and comment are inconsistent; which is the desired behaviour?
+                    continue; // if we get to an invalid date, return the prior index
+                }
+
+                if (desiredDateTime.Date == imageDateTime.Date)
+                {
+                    continue;
+                }
+                return index - 1;
+            }
+            return this.database.CurrentlySelectedImageCount - 1; // if we got here, it means that we arrived at the end of the records
+        }
     }
 }

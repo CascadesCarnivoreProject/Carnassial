@@ -24,6 +24,9 @@ namespace Timelapse.Images
 
         private const int MarkDiameter = 10;
         private const int MarkStrokeThickness = 2;
+        private const int MarkGlowDiameterIncrease = 15;
+        private const int MarkGlowStrokeThickness = 7;
+        private const double MarkGlowOpacity = 0.35;
 
         private const double ZoomMaximum = 10;   // Maximum amount of zoom
         private const double ZoomMaximumUpperBound = 50;   // Maximum amount of zoom
@@ -111,9 +114,9 @@ namespace Timelapse.Images
                     }
                     this.ScaleImage(new Point(100, 100), true);
                 }
-                catch
+                catch (Exception exception)
                 {
-                    Debug.Print("Catch: In MarkableCanvas:Zoom as image cannot be scaled");
+                    Debug.Assert(false, "Zoom as image cannot be scaled.", exception.ToString());
                     this.SetValue(ZoomProperty, value);
                 }
             }
@@ -184,9 +187,9 @@ namespace Timelapse.Images
                     if (this.ImageToDisplay.ActualWidth > 0)
                     {
                         this.magnifyingGlass.Redraw(NativeMethods.CorrectGetPosition(this),
-                                                    NativeMethods.CorrectGetPosition(this.ImageToDisplay), 
-                                                    this.ImageToDisplay.ActualWidth, 
-                                                    this.ImageToDisplay.ActualHeight, 
+                                                    NativeMethods.CorrectGetPosition(this.ImageToDisplay),
+                                                    this.ImageToDisplay.ActualWidth,
+                                                    this.ImageToDisplay.ActualHeight,
                                                     this.canvasToMagnify);
                     }
                 }
@@ -376,7 +379,7 @@ namespace Timelapse.Images
         {
             this.MarkersRemove(this);
             this.MarkersRemove(this.canvasToMagnify);
-            if (null != this.ImageToDisplay)
+            if (this.ImageToDisplay != null)
             {
                 this.MarkersDraw(this, this.ImageToDisplay.RenderSize, true);
                 this.MarkersDraw(this.canvasToMagnify, this.canvasToMagnify.RenderSize, false);
@@ -519,7 +522,7 @@ namespace Timelapse.Images
             }
         }
 
-        // The magnifying glass  is visible only if the current mouse position is over the image. 
+        // The magnifying glass is visible only if the current mouse position is over the image. 
         private void SetMagnifyingGlassVisibility(Point mousePosition)
         {
             // The the actual (transformed) bounds of the image
@@ -767,9 +770,9 @@ namespace Timelapse.Images
                 this.translateTransform.X = this.TranslateX;
                 this.translateTransform.Y = this.TranslateY;
             }
-            catch
+            catch (Exception exception)
             {
-                Debug.Print("Catch: In MarkableCanvas:TransformChanged as image cannot be transformed");
+                Debug.Assert(false, "TransformChanged as image cannot be transformed", exception.ToString());
             }
         }
         #endregion
@@ -834,11 +837,11 @@ namespace Timelapse.Images
             if (mtag.Emphasise)
             {
                 glow = new Ellipse();
-                glow.Width = ellipse1.Width + 9;
-                glow.Height = ellipse1.Height + 9;
-                glow.StrokeThickness = 3;
+                glow.Width = ellipse1.Width + MarkGlowDiameterIncrease;
+                glow.Height = ellipse1.Height + MarkGlowDiameterIncrease;
+                glow.StrokeThickness = MarkGlowStrokeThickness;
                 glow.Stroke = ellipse.Stroke;
-                glow.Opacity = .5;
+                glow.Opacity = MarkGlowOpacity;
                 max_diameter = glow.Width;
             }
 

@@ -4,36 +4,37 @@ using System.Collections.Generic;
 
 namespace Timelapse.Database
 {
-    public class ImageTableEnumerator : IEnumerator<ImageProperties>
+    public class ImageTableEnumerator : IEnumerator<ImageRow>
     {
         protected ImageDatabase Database { get; private set; }
 
         // the current image, null if its no been set or if the database is empty
-        public ImageProperties Current { get; private set; }
+        public ImageRow Current { get; private set; }
         public int CurrentRow { get; private set; }
 
-        public ImageTableEnumerator(ImageDatabase database) :
-            this(database, -1)
+        public ImageTableEnumerator(ImageDatabase imageDatabase) :
+            this(imageDatabase, Constants.Database.InvalidRow)
         {
         }
 
-        public ImageTableEnumerator(ImageDatabase database, int startingPosition)
+        public ImageTableEnumerator(ImageDatabase imageDatabase, int startingPosition)
         {
             this.CurrentRow = startingPosition;
-            this.Database = database;
+            this.Database = imageDatabase;
 
             // OK if this fails as ImageTableEnumerator..ctor(ImageDatabase) passes -1 to match default enumerator behaviour
             this.TryMoveToImage(startingPosition);
         }
 
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         object IEnumerator.Current
         {
             get { return this.Current; }
-        }
-
-        void IDisposable.Dispose()
-        {
-            // nothing to do but required by IEnumerator<T>
         }
 
         /// <summary>
@@ -46,7 +47,8 @@ namespace Timelapse.Database
 
         public virtual void Reset()
         {
-            this.TryMoveToImage(Constants.DefaultImageRowIndex);
+            this.Current = null;
+            this.CurrentRow = Constants.Database.InvalidRow;
         }
 
         /// <summary>
@@ -67,11 +69,16 @@ namespace Timelapse.Database
             {
                 this.CurrentRow = imageRowIndex;
                 // rebuild ImageProperties regardless of whether the row changed or not as this seek may be a refresh after a database change
-                this.Current = new ImageProperties(this.Database.ImageDataTable.Rows[imageRowIndex]);
+                this.Current = this.Database.ImageDataTable[imageRowIndex];
                 return true;
             }
 
             return false;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            // nothing to do but required by IEnumerator<T>
         }
     }
 }

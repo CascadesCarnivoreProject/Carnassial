@@ -20,20 +20,24 @@ namespace Timelapse.Database
             this.Columns = columns;
         }
 
-        public ColumnTuplesWithWhere(List<ColumnTuple> columns, string where)
+        public ColumnTuplesWithWhere(List<ColumnTuple> columns, long id)
             : this(columns)
         {
-            this.Where = where;
+            this.SetWhere(id);
         }
 
         public void SetWhere(long id)
         {
-            this.Where = Constants.Database.ID + " = " + id.ToString();
+            this.Where = Constants.DatabaseColumn.ID + " = " + id.ToString();
         }
 
-        public void SetWhere(string folder, string file)
+        public void SetWhere(string folder, string relativePath, string file)
         {
             this.Where = String.Format("{0} = {1}", Constants.DatabaseColumn.File, Utilities.QuoteForSql(file));
+            if (String.IsNullOrEmpty(relativePath) == false)
+            {
+                this.Where += String.Format(" AND {0} = {1}", Constants.DatabaseColumn.RelativePath, Utilities.QuoteForSql(relativePath));
+            }
             if (String.IsNullOrEmpty(folder) == false)
             {
                 this.Where += String.Format(" AND {0} = {1}", Constants.DatabaseColumn.Folder, Utilities.QuoteForSql(folder));

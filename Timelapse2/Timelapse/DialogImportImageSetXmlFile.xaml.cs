@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -15,6 +16,7 @@ namespace Timelapse
         public DialogImportImageSetXmlFile()
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
         }
 
         // Browse for a code template file

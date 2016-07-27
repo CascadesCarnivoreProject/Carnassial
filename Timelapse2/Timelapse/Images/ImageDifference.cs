@@ -3,7 +3,7 @@
     // These are used for image differencing
     // If a person toggles between the current image and its two differenced imaes, those images are stored
     // in a 'cache' so they can be redisplayed more quickly (vs. re-reading it from a file or regenerating it)
-    internal enum ImageDifference
+    public enum ImageDifference
     {
         Previous = 0,
         Unaltered = 1,

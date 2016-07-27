@@ -1,17 +1,68 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Win32;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using Timelapse.Editor.Util;
 using Timelapse.Util;
 
 namespace Timelapse.UnitTests
 {
     [TestClass]
-    public class RegistryTests
+    public class RegistryTests : TimelapseTest
     {
+        /// <summary>
+        /// Sanity test against whatever the current state of the editor's registry keys is.
+        /// </summary>
+        [TestMethod]
+        public void EditorProductionKeysRead()
+        {
+            using (EditorRegistryUserSettings editorRegistry = new EditorRegistryUserSettings())
+            {
+                MostRecentlyUsedList<string> mostRecentTemplates = editorRegistry.ReadMostRecentTemplates();
+            }
+        }
+
+        [TestMethod]
+        public void EditorTestKeysCreateReuseUpdate()
+        {
+            string testRootKey = Constants.Registry.RootKey + "EditorUnitTest";
+            using (RegistryKey testKey = Registry.CurrentUser.OpenSubKey(testRootKey))
+            {
+                if (testKey != null)
+                {
+                    Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
+                }
+            }
+
+            using (EditorRegistryUserSettings editorRegistry = new EditorRegistryUserSettings(testRootKey))
+            {
+                // read
+                MostRecentlyUsedList<string> mostRecentTemplates = editorRegistry.ReadMostRecentTemplates();
+                Assert.IsTrue(mostRecentTemplates != null);
+                Assert.IsTrue(mostRecentTemplates.Count == 0);
+
+                // write
+                string templatePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultTemplateDatabaseFileName);
+                mostRecentTemplates.SetMostRecent(templatePath);
+                editorRegistry.WriteMostRecentTemplates(mostRecentTemplates);
+
+                // loopback
+                mostRecentTemplates = editorRegistry.ReadMostRecentTemplates();
+                Assert.IsTrue(mostRecentTemplates != null);
+                Assert.IsTrue(mostRecentTemplates.Count == 1);
+                string mostRecentTemplatePath;
+                Assert.IsTrue(mostRecentTemplates.TryGetMostRecent(out mostRecentTemplatePath));
+                Assert.IsTrue(mostRecentTemplatePath == templatePath);
+
+                // overwrite
+                editorRegistry.WriteMostRecentTemplates(mostRecentTemplates);
+            }
+
+            Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
+        }
+
         /// <summary>
         /// Basic functional validation of the <see cref="MostRecentlyUsedList" /> class.
         /// </summary>
@@ -121,7 +172,7 @@ namespace Timelapse.UnitTests
         /// Sanity test against whatever the current state of Timelapse' registry keys is.
         /// </summary>
         [TestMethod]
-        public void ReadWriteProductionKeys()
+        public void TimelapseProductionKeysRead()
         {
             using (TimelapseRegistryUserSettings timelapseRegistry = new TimelapseRegistryUserSettings())
             {
@@ -136,9 +187,9 @@ namespace Timelapse.UnitTests
         }
 
         [TestMethod]
-        public void ReadWriteTestKeys()
+        public void TimelapseTestKeysCreateReuseUpdate()
         {
-            string testRootKey = Constants.Registry.RootKey + "UnitTest";
+            string testRootKey = Constants.Registry.RootKey + "TimelapseUnitTest";
             using (RegistryKey testKey = Registry.CurrentUser.OpenSubKey(testRootKey))
             {
                 if (testKey != null)
@@ -167,7 +218,7 @@ namespace Timelapse.UnitTests
                 Assert.IsTrue(mostRecentImageSets.Count == 0);
 
                 // write
-                string databasePath = Path.Combine(Environment.CurrentDirectory, Constants.File.DefaultImageDatabaseFileName);
+                string databasePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultImageDatabaseFileName);
                 mostRecentImageSets.SetMostRecent(databasePath);
 
                 timelapseRegistry.WriteAudioFeedback(audioFeedback);

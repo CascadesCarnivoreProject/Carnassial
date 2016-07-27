@@ -14,10 +14,10 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void Cache()
         {
-            ImageDatabase database = this.CreateImageDatabase(TestConstants.File.CarnivoreTemplateDatabaseFileName, TestConstants.File.CarnivoreImageDatabaseFileName);
-            this.PopulateCarnivoreDatabase(database);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
+            this.PopulateCarnivoreDatabase(imageDatabase);
 
-            ImageCache cache = new ImageCache(database);
+            ImageCache cache = new ImageCache(imageDatabase);
             Assert.IsNull(cache.Current);
             Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
             Assert.IsTrue(cache.CurrentRow == -1);
@@ -29,14 +29,33 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
             Assert.IsTrue(cache.CurrentRow == 0);
 
-            WriteableBitmap currentBitmap = cache.GetCurrentImage();
+            BitmapSource currentBitmap = cache.GetCurrentImage();
             Assert.IsNotNull(currentBitmap);
 
             bool newImageToDisplay;
             Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsFalse(newImageToDisplay);
             Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsFalse(newImageToDisplay);
             Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsTrue(newImageToDisplay);
             Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsFalse(newImageToDisplay);
+
+            Assert.IsTrue(cache.TryInvalidate(1));
+            Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsTrue(newImageToDisplay);
+            Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsTrue(newImageToDisplay);
+
+            Assert.IsTrue(cache.TryInvalidate(2));
+            Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsTrue(newImageToDisplay);
+            Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsFalse(newImageToDisplay);
+            Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsTrue(newImageToDisplay);
+
             Assert.IsFalse(cache.TryMoveToImage(2, out newImageToDisplay));
             Assert.IsFalse(cache.TryMoveToImage(2, out newImageToDisplay));
 
@@ -51,7 +70,7 @@ namespace Timelapse.UnitTests
                               (cache.CurrentDifferenceState == ImageDifference.Unaltered));
 
                 ImageDifferenceResult combinedDifferenceResult = cache.TryCalculateCombinedDifference(Constants.Images.DifferenceThresholdDefault - 2);
-                this.CheckDifferenceResult(combinedDifferenceResult, cache, database);
+                this.CheckDifferenceResult(combinedDifferenceResult, cache, imageDatabase);
             }
 
             Assert.IsTrue(cache.TryMoveToImage(0));
@@ -63,26 +82,26 @@ namespace Timelapse.UnitTests
                               (cache.CurrentDifferenceState == ImageDifference.Unaltered));
 
                 ImageDifferenceResult differenceResult = cache.TryCalculateDifference();
-                this.CheckDifferenceResult(differenceResult, cache, database);
+                this.CheckDifferenceResult(differenceResult, cache, imageDatabase);
             }
 
             cache.Reset();
-            Assert.IsNotNull(cache.Current);
+            Assert.IsNull(cache.Current);
             Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
-            Assert.IsTrue(cache.CurrentRow == 0);
+            Assert.IsTrue(cache.CurrentRow == Constants.Database.InvalidRow);
         }
 
         [TestMethod]
         public void Exif()
         {
-            string folderPath = Environment.CurrentDirectory;
-            string imageFilePath = Path.Combine(folderPath, TestConstants.File.InfraredMartenImage);
+            string imageFilePath = Path.Combine(this.WorkingDirectory, TestConstant.File.InfraredMartenImage);
 
-            ImageDatabase database = new ImageDatabase(folderPath, Constants.File.DefaultImageDatabaseFileName);
-            using (DialogPopulateFieldWithMetadata populateFieldDialog = new DialogPopulateFieldWithMetadata(database, imageFilePath))
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015, Constants.File.DefaultImageDatabaseFileName);
+            using (DialogPopulateFieldWithMetadata populateField = new DialogPopulateFieldWithMetadata(imageDatabase, imageFilePath))
             {
-                populateFieldDialog.LoadExif();
-                Dictionary<string, string> exif = (Dictionary<string, string>)populateFieldDialog.dg.ItemsSource;
+                PrivateObject populateFieldAccessor = new PrivateObject(populateField);
+                populateFieldAccessor.Invoke("LoadExif");
+                Dictionary<string, string> exif = (Dictionary<string, string>)populateField.dg.ItemsSource;
                 Assert.IsTrue(exif.Count > 0, "Expected at least one EXIF field to be retrieved from {0}", imageFilePath);
             }
         }
@@ -90,43 +109,34 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void ImageQuality()
         {
-            string folderPath = Environment.CurrentDirectory;
-            List<ImageExpectations> images = new List<ImageExpectations>()
+            List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
             {
-                new ImageExpectations()
-                {
-                    FileName = TestConstants.File.DaylightBobcatImage,
-                    DarkPixelFraction = 0.24222145485288338,
-                    IsColor = true,
-                    Quality = ImageQualityFilter.Ok
-                },
-                new ImageExpectations()
-                {
-                    FileName = TestConstants.File.InfraredMartenImage,
-                    DarkPixelFraction = 0.0743353174106539,
-                    IsColor = false,
-                    Quality = ImageQualityFilter.Ok
-                }
+                new ImageExpectations(TestConstant.DefaultExpectation.DaylightBobcatImage),
+                new ImageExpectations(TestConstant.DefaultExpectation.DaylightCoyoteImage),
+                new ImageExpectations(TestConstant.DefaultExpectation.DaylightMartenPairImage),
+                new ImageExpectations(TestConstant.DefaultExpectation.InfraredMartenImage)
             };
 
-            foreach (ImageExpectations image in images)
+            TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(templateDatabase, TestConstant.File.DefaultNewImageDatabaseFileName);
+            foreach (ImageExpectations imageExpectation in imageExpectations)
             {
                 // Load the image
-                ImageProperties imageProperties = image.GetImageProperties(folderPath);
-                WriteableBitmap bitmap = imageProperties.LoadWriteableBitmap(folderPath);
+                ImageRow imageProperties = imageExpectation.GetImageProperties(imageDatabase);
+                BitmapSource bitmap = imageProperties.LoadBitmap(this.WorkingDirectory);
 
                 double darkPixelFraction;
                 bool isColor;
-                ImageQualityFilter imageQuality = bitmap.GetImageQuality(Constants.Images.DarkPixelThresholdDefault, Constants.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor);
-                Assert.IsTrue(Math.Abs(darkPixelFraction - image.DarkPixelFraction) < TestConstants.DarkPixelFractionTolerance, "Expected dark pixel fraction to be {0}, but was {1}.", image.DarkPixelFraction, darkPixelFraction);
-                Assert.IsTrue(isColor == image.IsColor, "Expected isColor to be {0}, but it was {1}", image.IsColor,  isColor);
-                Assert.IsTrue(imageQuality == image.Quality, "Expected image quality {0}, but it was {1}", image.Quality, imageQuality);
+                ImageFilter imageQuality = bitmap.AsWriteable().GetImageQuality(Constants.Images.DarkPixelThresholdDefault, Constants.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor);
+                Assert.IsTrue(Math.Abs(darkPixelFraction - imageExpectation.DarkPixelFraction) < TestConstant.DarkPixelFractionTolerance, "{0}: Expected dark pixel fraction to be {1}, but was {2}.", imageExpectation.FileName, imageExpectation.DarkPixelFraction, darkPixelFraction);
+                Assert.IsTrue(isColor == imageExpectation.IsColor, "{0}: Expected isColor to be {1}, but it was {2}", imageExpectation.FileName, imageExpectation.IsColor,  isColor);
+                Assert.IsTrue(imageQuality == imageExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}", imageExpectation.FileName, imageExpectation.Quality, imageQuality);
             }
         }
 
-        private void CheckDifferenceResult(ImageDifferenceResult result, ImageCache cache, ImageDatabase database)
+        private void CheckDifferenceResult(ImageDifferenceResult result, ImageCache cache, ImageDatabase imageDatabase)
         {
-            WriteableBitmap currentBitmap = cache.GetCurrentImage();
+            BitmapSource currentBitmap = cache.GetCurrentImage();
             switch (result)
             {
                 case ImageDifferenceResult.CurrentImageNotAvailable:
@@ -149,12 +159,12 @@ namespace Timelapse.UnitTests
                     {
                         // as a default assume images are matched and expect differences to be calculable if the necessary images are available
                         case ImageDifference.Combined:
-                            expectNullBitmap = (cache.CurrentRow == 0) || (cache.CurrentRow == database.CurrentlySelectedImageCount - 1);
+                            expectNullBitmap = (cache.CurrentRow == 0) || (cache.CurrentRow == imageDatabase.CurrentlySelectedImageCount - 1);
                             previousNextImageRow = cache.CurrentRow - 1;
                             otherImageRowForCombined = cache.CurrentRow + 1;
                             break;
                         case ImageDifference.Next:
-                            expectNullBitmap = cache.CurrentRow == database.CurrentlySelectedImageCount - 1;
+                            expectNullBitmap = cache.CurrentRow == imageDatabase.CurrentlySelectedImageCount - 1;
                             previousNextImageRow = cache.CurrentRow + 1;
                             break;
                         case ImageDifference.Previous:
@@ -168,17 +178,17 @@ namespace Timelapse.UnitTests
                     }
 
                     // check if the image to diff against is matched
-                    if (database.IsImageRowInRange(previousNextImageRow))
+                    if (imageDatabase.IsImageRowInRange(previousNextImageRow))
                     {
-                        WriteableBitmap unalteredBitmap = cache.Current.LoadWriteableBitmap(database.FolderPath);
-                        ImageProperties previousNextImage = database.GetImage(previousNextImageRow);
-                        WriteableBitmap previousNextBitmap = previousNextImage.LoadWriteableBitmap(database.FolderPath);
+                        WriteableBitmap unalteredBitmap = cache.Current.LoadBitmap(imageDatabase.FolderPath).AsWriteable();
+                        ImageRow previousNextImage = imageDatabase.ImageDataTable[previousNextImageRow];
+                        WriteableBitmap previousNextBitmap = previousNextImage.LoadBitmap(imageDatabase.FolderPath).AsWriteable();
                         bool mismatched = WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, previousNextBitmap);
 
-                        if (database.IsImageRowInRange(otherImageRowForCombined))
+                        if (imageDatabase.IsImageRowInRange(otherImageRowForCombined))
                         {
-                            ImageProperties otherImageForCombined = database.GetImage(otherImageRowForCombined);
-                            WriteableBitmap otherBitmapForCombined = otherImageForCombined.LoadWriteableBitmap(database.FolderPath);
+                            ImageRow otherImageForCombined = imageDatabase.ImageDataTable[otherImageRowForCombined];
+                            WriteableBitmap otherBitmapForCombined = otherImageForCombined.LoadBitmap(imageDatabase.FolderPath).AsWriteable();
                             mismatched |= WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, otherBitmapForCombined);
                         }
 

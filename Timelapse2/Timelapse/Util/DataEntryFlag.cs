@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 
 namespace Timelapse.Util
@@ -14,30 +13,19 @@ namespace Timelapse.Util
         {
             get
             {
-                return ((bool)this.ContentControl.IsChecked) ? "true" : "false";
+                return ((bool)this.ContentControl.IsChecked) ? Constants.Boolean.True : Constants.Boolean.False;
             }
             set
             {
                 value = value.ToLower();
-                this.ContentControl.IsChecked = (value == "true") ? true : false;
+                this.ContentControl.IsChecked = (value == Constants.Boolean.True) ? true : false;
             }
         }
 
-        public DataEntryFlag(string dataLabel, Controls dataEntryControls, bool createContextMenu)
-            : base(dataLabel, dataEntryControls, ControlContentStyle.FlagCodeBar, ControlLabelStyle.LabelCodeBar, createContextMenu)
+        public DataEntryFlag(string dataLabel, DataEntryControls styleProvider)
+            : base(dataLabel, styleProvider, ControlContentStyle.FlagCodeBar, ControlLabelStyle.LabelCodeBar)
         {
             this.Container.ToolTip = "Toggle between true (checked) and false (unchecked)";
-
-            // Change the menu text to indicate that propagate goes back to the last non-zero value
-            this.MenuItemPropagateFromLastValue.Header = "Propagate from the last non-zero value to here";
-        }
-
-        protected override void MenuItemPropagateFromLastValue_Click(object sender, RoutedEventArgs e)
-        {
-            bool checkForZero = false;
-            bool isflag = true;
-            this.PassingContentValue = this.ControlsPanel.Propagate.FromLastValue(this.DataLabel, checkForZero, isflag);
-            this.Refresh();
         }
     }
 }

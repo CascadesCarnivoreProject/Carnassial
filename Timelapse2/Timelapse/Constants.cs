@@ -1,23 +1,24 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 
 namespace Timelapse
 {
     // Keep all constants in one place. 
     // This helps ensure we are not setting values differently across multiple files, etc.
-    internal static class Constants
+    public static class Constants
     {
         // Default Settings
         public const int DefaultImageRowIndex = 0;
-        public const int FolderScanProgressUpdateFrequency = 1;
         public const int NumberOfMostRecentDatabasesToTrack = 9;
         public const string StandardColour = "Gold";
         public const string SelectionColour = "MediumBlue";
+        public const int MonthsInYear = 12;
 
         // Update Information, for checking for updates in the timelapse xml file stored on the web site
-        public const string ApplicationName = "timelapse";
+        public const string ApplicationName = "Timelapse";
         public static readonly Uri LatestVersionAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Installs/timelapse_version.xml");
         public static readonly Uri VersionChangesAddress = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.TimelapseVersions#Timelapse");
 
@@ -28,36 +29,106 @@ namespace Timelapse
             public const string False = "false";
         }
 
-        // Generic Codes
-        // These are generic to all controls that want to use them
         public static class Control
         {
+            // columns unique to the template table
+            public const string ControlOrder = "ControlOrder";
             public const string Copyable = "Copyable";     // whether the content of this item should be copied from previous values
             public const string DataLabel = "DataLabel";   // if not empty, its used instead of the label as the header for the column when writing the spreadsheet
-            public const string DefaultValue = "DefaultValue";  // a default value for that code
-            public const string List = "List";             // indicates a list of items
+            public const string DefaultValue = "DefaultValue"; // a default value for that code
             public const string Label = "Label";           // a label used to describe that code
-            public const string TextBoxWidth = "TXTBOXWIDTH";      // the width of the textbox
-            public const string Tooltop = "Tooltip";       // the tooltip text that describes the code
-            public const string Visible = "Visible";        // whether an item should be visible (used by standard items)
+            public const string SpreadsheetOrder = "SpreadsheetOrder";
+            public const string TextBoxWidth = "TXTBOXWIDTH";  // the width of the textbox
+            public const string Tooltip = "Tooltip";       // the tooltip text that describes the code
+            public const string Type = "Type";             // the data type
+            public const string Visible = "Visible";       // whether an item should be visible (used by standard items)
+
+            // control types
+            public const string Counter = "Counter";           // a counter
+            public const string FixedChoice = "FixedChoice";   // a fixed choice
+            public const string Flag = "Flag";                 // A boolean
+            public const string List = "List";             // indicates a list of items
+            public const string Note = "Note";                 // A note
+
+            // default data labels
+            public const string Choice = "Choice";            // Label for: a choice
+
+            // things which should be data labels but are used in the TemplateTable's Type column
+            public const string DeleteFlag = "DeleteFlag";    // a flag data type for marking deletion
+
+            public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
+            {
+                Constants.DatabaseColumn.Date,
+                Constants.Control.DeleteFlag,
+                Constants.DatabaseColumn.File,
+                Constants.DatabaseColumn.Folder,
+                Constants.DatabaseColumn.ImageQuality,
+                Constants.DatabaseColumn.RelativePath,
+                Constants.DatabaseColumn.Time
+            }.AsReadOnly();
+        }
+
+        // see also ControlLabelStyle and ControlContentStyle
+        public static class ControlStyle
+        {
+            public const string ComboBoxCodeBar = "ComboBoxCodeBar";
+            public const string StackPanelCodeBar = "StackPanelCodeBar";
+        }
+
+        public static class ControlDefault
+        {
+            // general defaults
+            public const string Value = "";
+
+            // user defined controls
+            public const string CounterTooltip = "Click the counter button, then click on the image to count the entity. Or just type in a count";
+            public const string CounterValue = "0";              // Default for: counters
+            public const int CounterWidth = 80;
+            public const string FixedChoiceTooltip = "Choose an item from the menu";
+            public const int FixedChoiceWidth = 100;
+
+            public const string FlagTooltip = "Toggle between true and false";
+            public const string FlagValue = Constants.Boolean.False;             // Default for: flags
+            public const int FlagWidth = 20;
+            public const string NoteTooltip = "Write a textual note";
+            public const int NoteWidth = 100;
+
+            // standard controls
+            public const string DateTooltip = "Date taken";
+            public const string DateWidth = "85";
+
+            public const string FileTooltip = "The file name";
+            public const string FileWidth = "100";
+            public const string RelativePathTooltip = "Path from the folder containing the template and image data files to the file";
+            public const string RelativePathWidth = "100";
+            public const string FolderTooltip = "Name of the folder originally containing the template and image data files";
+            public const string FolderWidth = "100";
+
+            public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
+            public const string ImageQualityWidth = "85";
+
+            public const string MarkForDeletionTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
+            public const string TimeTooltip = "Time taken";
+            public const string TimeWidth = "60";
         }
 
         public static class Database
         {
-            // db query phrases
-            public const string ControlOrder = "ControlOrder";
-            public const string SelectStarFrom = "SELECT * FROM ";
-            public const string SpreadsheetOrder = "SpreadsheetOrder";
-
-            // db table names and related strings
+            // database table names and related strings
             public const string CreationStringInteger = "Id integer primary key";
             public const string CreationStringPrimaryKey = "INTEGER PRIMARY KEY AUTOINCREMENT";
             public const string ImageDataTable = "DataTable";         // the table containing the image data
-            public const string ID = "Id";                       // the unique id of the table row
-            public const string ImageSetTable = "ImageSetTable"; // the table containing information commont to the entire image set
+            public const string ImageSetTable = "ImageSetTable"; // the table containing information common to the entire image set
             public const string MarkersTable = "MarkersTable";         // the table containing the marker data
-            public const string TemplateTable = "TemplateTable"; // the data containing the template data
-            public const string Type = "Type";                   // the data type
+            public const string TemplateTable = "TemplateTable"; // the table containing the template data
+
+            // default values
+            public const string ImageSetDefaultLog = "Add text here";
+            public const long ImageSetRowID = 1;
+            public const long InvalidID = -1;
+            public const int InvalidRow = -1;
+            public const int RelativePathPosition = 2;
+            public const int RowsPerInsert = 100;
 
             // Special characters
             public const char MarkerBar = '|';              // Separator used to separate marker points in the database i.e. "2.3,5.6 | 7.1, 3.3"
@@ -66,55 +137,45 @@ namespace Timelapse
         // Names of standard database columns, always included but not always made visible in the user controls
         public static class DatabaseColumn
         {
-            public const string Counter = "Counter";           // a counter
             public const string Data = "Data";                 // the data describing the attributes of that control
             public const string Date = "Date";
-            public const string DeleteFlag = "DeleteFlag";    // a flag data type for marking deletion
             public const string File = "File";
-            public const string FixedChoice = "FixedChoice";   // a fixed choice
-            public const string Flag = "Flag";                 // A boolean
             public const string Folder = "Folder";
             public const string ID = "Id";
             public const string Image = "Image";               // A single image and its associated data
             public const string ImageQuality = "ImageQuality";
-            public const string Images = "Images";             // There are multiple images
-            public const string Note = "Note";                 // A note
             public const string Point = "Point";               // a single point
+            public const string RelativePath = "RelativePath";
             public const string Time = "Time";
             public const string X = "X";                       // Every point has an X and Y
             public const string Y = "Y";
 
-            // Keys defining columns in our ImageSetTable
+            // columns in ImageSetTable
             public const string Filter = "Filter";         // string holding the currently selected filter
             public const string Log = "Log";                   // String holding a user-created text log
             public const string Magnifier = "Magnifier";          // string holding the true/false state of the magnifying glass (on or off)
             public const string Row = "Row";                    // string holding the currently selected row
             public const string WhiteSpaceTrimmed = "WhiteSpaceTrimmed";          // string holding the true/false state of whether the white space has been trimmed from the data.
-
-            // Paths to standard elements, always included but not always made visible
-            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1309:FieldNamesMustNotBeginWithUnderscore", Justification = "Accuracy")]
-            public const string _Date = "_Date";
-            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1309:FieldNamesMustNotBeginWithUnderscore", Justification = "Accuracy")]
-            public const string _File = "_File";
-            [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1309:FieldNamesMustNotBeginWithUnderscore", Justification = "Accuracy")]
-            public const string _Time = "_Time";
-            public const string Slash = "/";
         }
 
         public static class File
         {
+            public const string AviFileExtension = ".avi";
             public const string BackupFolder = "Backups"; // Sub-folder that will contain database and csv file backups  
+            public const int NumberOfBackupFilesToKeep = 8; // Maximum number of backup files to keep
             public const string DeletedImagesFolder = "DeletedImages"; // Sub-folder that will contain backups of deleted images 
             public const string CsvFileExtension = ".csv";
             public const string DefaultImageDatabaseFileName = "TimelapseData.ddb";
             public const string DefaultTemplateDatabaseFileName = "TimelapseTemplate.tdb";
             public const string ImageDatabaseFileExtension = ".ddb";
+            public const string JpgFileExtension = ".jpg";
+            public const string Mp4FileExtension = ".mp4";
             public const string TemplateDatabaseFileExtension = ".tdb";
             public const string XmlTemplateFileName = "CodeTemplate.xml";
             public const string XmlDataFileName = "ImageData.xml";
         }
 
-        public static class Filter
+        public static class SearchTermOperator
         {
             public const string Equal = "\u003D";
             public const string Glob = " GLOB ";
@@ -125,16 +186,20 @@ namespace Timelapse
             public const string NotEqual = "\u2260";
         }
 
+        // shorthands for ImageFilter.<value>.ToString()
         public static class ImageQuality
         {
             public const string Corrupted = "Corrupted";
             public const string Dark = "Dark";
             public const string Missing = "Missing";
             public const string Ok = "Ok";
+
+            public const string ListOfValues = "Ok|Dark|Corrupted|Missing";
         }
 
         public static class Images
         {
+            public const int NoImagesInImageSet = -1;  // an indicator that there is no image to show
             public const int BitmapCacheSize = 9;
 
             // The default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
@@ -154,58 +219,85 @@ namespace Timelapse
             // A grey scale pixel has r = g = b. But we will allow some slop in here just in case a bit of color creeps in
             public const int GreyScalePixelThreshold = 40;
 
+            // Various thumbnail sizes
+            public const int ThumbnailSmall = 300;
+            public const int ThumbnailMedium = 512;
+            public const int ThumbnailLarge = 1024;
+            public const int ThumbnailNone = 0;
+
             public static readonly BitmapFrame Corrupt;
             public static readonly BitmapFrame CorruptThumbnail;  
             public static readonly BitmapFrame Missing;
             public static readonly BitmapFrame MissingThumbnail;
+            public static readonly BitmapFrame EmptyImageSet;
 
             static Images()
             {
+                // Saul TODO: This appears needed for unit tests to pass. To verify..
+                if (Application.ResourceAssembly == null)
+                { 
+                    Application.ResourceAssembly = typeof(App).Assembly; 
+                }
                 // Create a variety of images.
-                // SAULTODO: Thumbnail access had occassionaly introduces a threading violation, but I need to replicate it before I can fix it.
                 Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Corrupt.Freeze();
                 Images.Missing = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Missing.Freeze();
-
-                // Create thumbnails of both the above images
-                BitmapImage bmMissingThumbnail = new BitmapImage();
-                bmMissingThumbnail.BeginInit();
-                bmMissingThumbnail.DecodePixelWidth = 400;
-                bmMissingThumbnail.CacheOption = BitmapCacheOption.OnLoad;
-                bmMissingThumbnail.UriSource = new Uri("pack://application:,,/Resources/missing.jpg");
-                bmMissingThumbnail.EndInit();
-
-                Images.MissingThumbnail = BitmapFrame.Create(bmMissingThumbnail);
-                BitmapImage bmCorruptThumbnail = new BitmapImage();
-                bmCorruptThumbnail.BeginInit();
-                bmCorruptThumbnail.DecodePixelWidth = 400;
-                bmCorruptThumbnail.CacheOption = BitmapCacheOption.OnLoad;
-                bmCorruptThumbnail.UriSource = new Uri("pack://application:,,/Resources/corrupted.jpg");
-                bmCorruptThumbnail.EndInit();
-                Images.CorruptThumbnail = BitmapFrame.Create(bmCorruptThumbnail);
+                Images.EmptyImageSet = BitmapFrame.Create(new Uri("pack://application:,,/Resources/empty_imageset.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.Missing.Freeze();
+                Images.CorruptThumbnail = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted_thumbnail.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.CorruptThumbnail.Freeze();
+                Images.MissingThumbnail = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing_thumbnail.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.MissingThumbnail.Freeze();
             }
+        }
+
+        public static class ImageXml
+        {
+            // standard elements, always included but not always made visible
+            public const string Date = "_Date";
+            public const string File = "_File";
+            public const string Time = "_Time";
+
+            // paths to standard elements, always included but not always made visible
+            public const string DatePath = "Codes/_Date";
+            public const string FilePath = "Codes/_File";
+            public const string FolderPath = "Codes/_Folder";
+            public const string ImageQualityPath = "Codes/_ImageQuality";
+            public const string TimePath = "Codes/_Time";
+
+            // elements
+            public const string Codes = "Codes";
+            public const string Data = "Data";             // the data describing the attributes of that code
+            public const string Images = "Images";
+            public const string Item = "Item";             // and item in a list
+            public const string Slash = "/";
+
+            // paths to notes, counters, and fixed choices
+            public const string CounterPath = ImageXml.Codes + ImageXml.Slash + Constants.Control.Counter;
+            public const string FixedChoicePath = ImageXml.Codes + ImageXml.Slash + Constants.Control.FixedChoice;
+            public const string NotePath = ImageXml.Codes + ImageXml.Slash + Constants.Control.Note;
         }
 
         public static class Registry
         {
-            public static class Key
+            public static class TimelapseKey
             {
-                // The image filter used on exit
+                // the image filter used on exit
                 public const string AudioFeedback = "AudioFeedback";
-                // Whether the controls are in a separate window (true) or in the Timelapse Window (false)
+                // whether the controls are in a separate window (true) or in the Timelapse Window (false)
                 public const string ControlsInSeparateWindow = "ControlWindowSeparate";
-                // The width of the controlWindow
+                // the width of the controlWindow
                 public const string ControlWindowHeight = "ControlWindowHeight";
-                // The width of the controlWindow
+                // the width of the controlWindow
                 public const string ControlWindowWidth = "ControlWindowWidth";
-                // The DarkPixelThreshold
+                // the DarkPixelThreshold
                 public const string DarkPixelThreshold = "DarkPixelThreshold";
-                // The DarkPixelRatio
+                // the DarkPixelRatio
                 public const string DarkPixelRatio = "DarkPixelRatio";
-                // Key containing the list of most recently used template databases
+                // key containing the list of most recently image sets opened by Timelapse
                 public const string MostRecentlyUsedImageSets = "MostRecentlyUsedImageSets";
-                // Whether to show the CSV dialog window
+                // whether to show the CSV dialog window
                 public const string ShowCsvDialog = "ShowCsvDialog";
             }
 
@@ -234,6 +326,8 @@ namespace Timelapse
             public const string Begin = " BEGIN ";
             public const string End = " END ";
             public const string EqualsCaseID = " = CASE Id";
+            public const string SelectStarFrom = "SELECT * FROM ";
+            public const string Text = "TEXT";
             public const string WhereIDIn = Where + "Id IN ";
 
             public const string Null = "NULL";
@@ -243,6 +337,40 @@ namespace Timelapse
             public const string OpenParenthesis = " ( ";
             public const string CloseParenthesis = " ) ";
             public const string Semicolon = " ; ";
+        }
+
+        public static class Throttles
+        {
+            // public const double DesiredMaximumImageRendersPerSecond = 6.0; // Saul TODO This is a doubling of what Todd originally had in here. To revisit...
+            public const double DesiredMaximumImageRendersPerSecond = 12.0;
+            public const int MaximumRenderAttempts = 100;
+            public const int SleepForImageRenderInterval = 100;
+
+            public static readonly TimeSpan DesiredIntervalBetweenRenders = TimeSpan.FromSeconds(1.0 / Throttles.DesiredMaximumImageRendersPerSecond);
+            public static readonly TimeSpan PollIntervalForVideoLoad = TimeSpan.FromMilliseconds(1.0);
+            public static readonly TimeSpan RenderingBackoffTime = TimeSpan.FromMilliseconds(25);
+        }
+
+        public static class Time
+        {
+            // The standard date format, e.g., 05-Apr-2011
+            public const string DateFormat = "dd-MMM-yyyy";
+            public const string DateTimeFormat = "dd-MMM-yyyy HH:mm:ss";
+            public const string TimeFormat = "HH:mm:ss";
+            public const int DefaultYear = 1900; // Default date/time  is January 1st, 1900 12:00:00
+            public const int DefaultMonth = 1;
+            public const int DefaultDay = 1;
+            public const int DefaultHours = 12;
+            public const int DefaultMinutes = 0;
+            public const int DefaultSeconds = 0;
+        }
+
+        public static class VersionXml
+        {
+            public const string Changes = "changes";
+            public const string Timelapse = "timelapse";
+            public const string Url = "url";
+            public const string Version = "version";
         }
     }
 }

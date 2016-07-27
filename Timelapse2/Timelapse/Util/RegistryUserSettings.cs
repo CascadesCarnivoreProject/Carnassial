@@ -1,13 +1,12 @@
 using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 
 namespace Timelapse.Util
 {
     /// <summary>
     /// Base class for manipulating an application's user preferences and related information in the registry.
     /// </summary>
-    internal class RegistryUserSettings : IDisposable
+    public class RegistryUserSettings : IDisposable
     {
         private bool disposed;
         protected RegistryKey RegistryKey { get; private set; }

@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Windows;
 using System.Windows.Forms;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -15,30 +16,26 @@ namespace Timelapse
         /// <summary>
         /// Ask the user to indicate the path to a code template file (called if there is no code template file in the image folder). 
         /// If a code template file is found, it is copied to the image folder. 
+        /// SAUL TODO: The new structure of Timelapse means this dialog will never be invoked. It can be removed.
         /// </summary>
         public DialogGetTemplateDB(string path)
         {
             this.InitializeComponent();
+            Utilities.TryFitWindowInWorkingArea(this);
+
             this.path = path;
-            this.RunPath.Text += path;
+            this.Message.Problem += path;
             if (File.Exists(Path.Combine(path, Constants.File.XmlTemplateFileName)))
             {
-                this.CodeTemplateMessage1.Visibility = Visibility.Visible;
-                this.CodeTemplateMessage2.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                this.CodeTemplateMessage1.Visibility = Visibility.Collapsed;
-                this.CodeTemplateMessage2.Visibility = Visibility.Collapsed;
+                this.Message.Reason = "While there is a CodeTemplate.xml file, these have been replaced by the TimelapseTemplate.tdb.";
             }
         }
 
-        #region Private methods
         // Browse for a code template file
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             string templateFile = this.GetTemplatePathFromUser(this.path);
-            if (null != templateFile)
+            if (templateFile != null)
             {
                 File.Copy(templateFile, System.IO.Path.Combine(this.path, Constants.File.DefaultTemplateDatabaseFileName));
                 this.DialogResult = true;
@@ -53,7 +50,6 @@ namespace Timelapse
         {
             this.DialogResult = false;
         }
-        #endregion
 
         // Get a location for the Template file from the user. Return null on failure
         private string GetTemplatePathFromUser(string defaultPath)
@@ -69,7 +65,7 @@ namespace Timelapse
             openFileDialog.DefaultExt = ".tdb";
             openFileDialog.Filter = "Template files (.tdb)|*.tdb";
 
-            openFileDialog.Title = "Select a TimelapseTemplate.tdb file,  which will be copied to your image folder";
+            openFileDialog.Title = "Select a TimelapseTemplate.tdb file,  which will be copied to your folder";
             string path = defaultPath;                     // Retrieve the last opened image path from the registry
             if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {

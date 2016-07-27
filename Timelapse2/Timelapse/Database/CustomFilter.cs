@@ -1,167 +1,188 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
+using Timelapse.Util;
 
 namespace Timelapse.Database
 {
     /// <summary>
-    /// Class CustomFilter holds a dictionary of search term expressions, each entry reflecting search terms for a given field
+    /// Class CustomFilter holds a list search term particles, each reflecting criteria for a given field
     /// </summary>
     public class CustomFilter
     {
-        private ImageDatabase database;
-
-        public Dictionary<int, SearchTerm> SearchTermList { get; private set; }
-        public CustomFilterOperator LogicalOperator { get; set; }
+        public List<SearchTerm> SearchTerms { get; private set; }
+        public CustomFilterOperator TermCombiningOperator { get; set; }
 
         /// <summary>
-        /// Create a CustomFilter, where we build a list of potential search term expressions based on the controls found in the sorted template table
+        /// Create a CustomFilter, where we build a list of potential search terms based on the controls found in the sorted template table
         /// The search term will be used only if its 'UseForSearching' field is true
+        /// The initial date to display is passed into the constructor
         /// </summary>
-        public CustomFilter(ImageDatabase database)
+        public CustomFilter(DataTableBackedList<ControlRow> templateTable, CustomFilterOperator termCombiningOperator)
         {
-            this.database = database;
-            this.LogicalOperator = CustomFilterOperator.Or; // We default the search operation to this logical operation
-            this.SearchTermList = new Dictionary<int, SearchTerm>();
+            this.SearchTerms = new List<SearchTerm>();
+            this.TermCombiningOperator = termCombiningOperator;
 
-            DataTable sortedTemplateTable = this.database.GetControlsSortedByControlOrder();
-
-            // Initialize the filter to reflect the desired controls in the template (in sorted order)
-            int row_count = 1; // We start at 1 as there is already a header row
-            for (int i = 0; i < sortedTemplateTable.Rows.Count; i++)
+            // Initialize the filter to reflect the desired controls in the template (in control order)
+            foreach (ControlRow control in templateTable)
             {
-                // Get the values for each control
-                DataRow row = sortedTemplateTable.Rows[i];
-                string type = row[Constants.Database.Type].ToString();
-
-                // We only handle certain types, e.g., we don't give the user the opportunity to search over file names / folders / date / time
-                if (type == Constants.DatabaseColumn.Note ||
-                    type == Constants.DatabaseColumn.Counter ||
-                    type == Constants.DatabaseColumn.FixedChoice ||
-                    type == Constants.DatabaseColumn.ImageQuality ||
-                    type == Constants.DatabaseColumn.Flag)
+                string controlType = control.Type;
+                // SAUL TODO: if we want to disable DATE in CustomFilter, add controlType == Constants.DatabaseColumn.Date)  // 
+                if (controlType == Constants.DatabaseColumn.Folder ||
+                    controlType == Constants.DatabaseColumn.Time) 
                 {
-                    // Create a new search expression for each row, where each row specifies a particular control and how it can be searched
-                    string default_value = String.Empty;
-                    string expression = Constants.Filter.Equal;
-                    bool is_use_for_searching = false;
-                    if (type == Constants.DatabaseColumn.Counter)
-                    {
-                        default_value = "0";
-                        expression = Constants.Filter.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
-                    }
-                    else if (type == Constants.DatabaseColumn.Flag)
-                    {
-                        default_value = "false";
-                    }
+                    continue;
+                }
 
-                    // Create a new search term and add it to the list
-                    SearchTerm st = new SearchTerm();
-                    st.UseForSearching = is_use_for_searching;
-                    st.Type = type;
-                    st.Label = (string)row[Constants.Control.Label];
-                    st.DataLabel = (string)row[Constants.Control.DataLabel];
-                    st.Expression = expression;
-                    st.Value = default_value;
-                    st.List = (string)row[Constants.Control.List];
-                    this.SearchTermList.Add(row_count, st);
-                    row_count++;
+                // Create a new search term for each row, where each row specifies a particular control and how it can be searched
+                string defaultValue = String.Empty;
+                string termOperator = Constants.SearchTermOperator.Equal;
+                if (controlType == Constants.Control.Counter)
+                {
+                    defaultValue = "0";
+                    termOperator = Constants.SearchTermOperator.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
+                }
+                else if (controlType == Constants.DatabaseColumn.Date)
+                {
+                    // most likely case for date filtering is to select files from the most recent station service
+                    // as a default, assume a roughly monthly servicing cadence
+                    defaultValue = DateTimeHandler.ToStandardDateString(DateTime.Now - TimeSpan.FromDays(30));
+                    termOperator = Constants.SearchTermOperator.GreaterThanOrEqual;
+                }
+                else if (controlType == Constants.Control.Flag)
+                {
+                    defaultValue = Constants.Boolean.False;
+                }
+
+                // Create a new search term and add it to the list
+                SearchTerm searchTerm = new SearchTerm();
+                searchTerm.UseForSearching = false;
+                searchTerm.Type = controlType;
+                searchTerm.Label = control.Label;
+                searchTerm.DataLabel = control.DataLabel;
+                searchTerm.Operator = termOperator;
+                searchTerm.Value = defaultValue;
+                searchTerm.List = control.List;
+                this.SearchTerms.Add(searchTerm);
+            }
+        }
+
+        public void FilterByDate(DataTable images)
+        {
+            SearchTerm dateTerm = this.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.Date);
+            Debug.Print(dateTerm.Value.ToString());
+            Debug.Assert(dateTerm.UseForSearching, "Date search term is not selected.");
+
+            Func<DateTime, DateTime, bool> dateFilter;
+            switch (dateTerm.Operator)
+            {
+                case Constants.SearchTermOperator.GreaterThan:
+                    dateFilter = (DateTime imageDate, DateTime dateTermDate) => { return imageDate > dateTermDate; };
+                    break;
+                case Constants.SearchTermOperator.GreaterThanOrEqual:
+                    dateFilter = (DateTime imageDate, DateTime dateTermDate) => { return imageDate >= dateTermDate; };
+                    break;
+                case Constants.SearchTermOperator.LessThan:
+                    dateFilter = (DateTime imageDate, DateTime dateTermDate) => { return imageDate < dateTermDate; };
+                    break;
+                case Constants.SearchTermOperator.LessThanOrEqual:
+                    dateFilter = (DateTime imageDate, DateTime dateTermDate) => { return imageDate <= dateTermDate; };
+                    break;
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled search term operator '{0}'.", dateTerm.Operator));
+            }
+
+            DateTime dateTermValue = DateTimeHandler.FromStandardDateString(dateTerm.Value);
+            for (int row = 0; row < images.Rows.Count; ++row)
+            {
+                ImageRow image = new ImageRow(images.Rows[row]);
+                DateTime imageDatetime;
+                if (image.TryGetDateTime(out imageDatetime) == false)
+                {
+                    // ambiguous what to do if an image doesn't have a valid timestamp; leave such images in the set for now
+                    continue;
+                }
+
+                if (dateFilter(imageDatetime.Date, dateTermValue.Date) == false)
+                {
+                    images.Rows.RemoveAt(row);
+                    --row;
                 }
             }
         }
-
-        #region Public methods to Run the Query
-        /// <summary>Gets the count of how many results will be expected if the query is executed </summary>
-        public int GetImageCount()
-        {
-            string query = this.CreateQuery();
-            if (query.Trim() == String.Empty)
-            {
-                return this.database.GetImageCount(); // If there is no query, assume it is equivalent to all images
-            }
-            return this.database.GetImageCountWithCustomFilter(query);
-        }
-
-        /// <summary>Gets a value indicating whether there are two or more search terms selected in this query</summary>
-        public bool QueryHasMultipleSelectedSearchTerms()
-        {
-            int count = 0;
-            for (int row = 1; row <= this.SearchTermList.Count; row++)
-            {
-                if (this.SearchTermList[row].UseForSearching)
-                {
-                    count++;
-                }
-                if (count > 1)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /// <summary>Run the query on the database</summary>
-        /// <returns>Returns success or failure</returns>
-        public bool TryRunQuery()
-        {
-            string query = this.CreateQuery();
-            if (query == String.Empty)
-            {
-                return this.database.TryGetImagesAll();
-            }
-            return this.database.TryGetImagesCustom(query);
-        }
-        #endregion
 
         // Create and return the query from the search term list
-        private string CreateQuery()
+        public string GetImagesWhere(out bool dateFilteringRequired)
         {
-            SearchTerm st;
-            string query = String.Empty;
-            for (int i = 0; i < this.SearchTermList.Count; i++)
+            dateFilteringRequired = false;
+            string where = String.Empty;
+            // Construct and show the search term only if that search row is activated
+            foreach (SearchTerm searchTerm in this.SearchTerms.Where(term => term.UseForSearching))
             {
-                st = this.SearchTermList.Values.ElementAt(i);
-
-                if (!st.UseForSearching)
+                string whereForTerm;
+                // Check to see if the search should match an empty value, in which case we also need to deal with NULLs 
+                if (String.IsNullOrEmpty(searchTerm.Value))
                 {
-                    continue; // Only consider entries that the user has flagged for searching
+                    // The where expression constructed should look something like: (DataLabel IS NULL OR DataLabel = '')
+                    whereForTerm = " (" + searchTerm.DataLabel + " IS NULL OR " + searchTerm.DataLabel + " = '') ";
+                }
+                else if (searchTerm.DataLabel == Constants.DatabaseColumn.Date &&
+                        ((searchTerm.Operator != Constants.SearchTermOperator.Equal) && (searchTerm.Operator != Constants.SearchTermOperator.NotEqual)))
+                {
+                    // Date column is not in a format supported by SQLite (#81) so operators other than equality must be done in code
+                    dateFilteringRequired = true;
+                    continue;
+                }
+                else
+                {
+                    // The where expression constructed should look something like DataLabel > "5"
+                    Debug.Assert(searchTerm.Value.Contains("\"") == false, String.Format("Search term '{0}' contains quotation marks and could be used for SQL injection.", searchTerm.Value));
+                    whereForTerm = searchTerm.DataLabel + this.TermToSqlOperator(searchTerm.Operator) + "\"" + searchTerm.Value.Trim() + "\""; // Need to quote the value 
                 }
 
-                // Construct and show the search term only if that search row is activated
-                // If there is already an expression in the query, then we add either and 'And' or an 'Or' to it 
-                if (query.Length > 0)
+                // if there is already a term in the query add either and 'And' or an 'Or' to it 
+                if (where.Length > 0)
                 {
-                    query += (this.LogicalOperator == CustomFilterOperator.And) ? " And " : " Or ";
+                    switch (this.TermCombiningOperator)
+                    {
+                        case CustomFilterOperator.And:
+                            where += " And ";
+                            break;
+                        case CustomFilterOperator.Or:
+                            where += " Or ";
+                            break;
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled logical operator {0}.", this.TermCombiningOperator));
+                    }
                 }
 
-                // Now construct the rest of it: DataLabel expresson Value e.g., foo>"5" 
-                query += st.DataLabel;
-                query += this.TranslateExpression(st.Expression);
-                query += "\"" + st.Value.Trim() + "\""; // Need to quote the value 
+                where += whereForTerm;
             }
-            return query.Trim();
+            return where.Trim();
         }
 
-        // return pretty printed expressions to database equivalents
-        private string TranslateExpression(string expression)
+        // return SQL expressions to database equivalents
+        private string TermToSqlOperator(string expression)
         {
             switch (expression)
             {
-                case Constants.Filter.Equal:
+                case Constants.SearchTermOperator.Equal:
                     return "=";
-                case Constants.Filter.NotEqual:
+                case Constants.SearchTermOperator.NotEqual:
                     return "<>";
-                case Constants.Filter.LessThan:
+                case Constants.SearchTermOperator.LessThan:
                     return "<";
-                case Constants.Filter.GreaterThan:
+                case Constants.SearchTermOperator.GreaterThan:
                     return ">";
-                case Constants.Filter.LessThanOrEqual:
+                case Constants.SearchTermOperator.LessThanOrEqual:
                     return "<=";
-                case Constants.Filter.GreaterThanOrEqual:
+                case Constants.SearchTermOperator.GreaterThanOrEqual:
                     return ">=";
-                case Constants.Filter.Glob:
-                    return Constants.Filter.Glob;
+                case Constants.SearchTermOperator.Glob:
+                    return Constants.SearchTermOperator.Glob;
                 default:
                     return String.Empty;
             }
