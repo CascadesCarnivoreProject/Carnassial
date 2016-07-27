@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Windows.Media.Imaging;
 using Timelapse.Util;
+using Timelapse.Images;
 
 namespace Timelapse.Database
 {
@@ -115,13 +116,36 @@ namespace Timelapse.Database
             return true;
         }
 
+        // Load defaults to full size image, and to Persistent (as its safer)
         public BitmapSource LoadBitmap(string imageFolderPath)
         {
-            return this.LoadBitmap(imageFolderPath, null);
+            return this.LoadBitmap(imageFolderPath, null, ImageExpectedUsage.Persistent);
         }
 
+        // Load defaults to Persistent (as its safer)
         public virtual BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth)
         {
+            return this.LoadBitmap(imageFolderPath, desiredWidth, ImageExpectedUsage.Persistent);
+        }
+
+        // Load defaults to thumbnail size if we are TransientNavigating, else full size
+        public virtual BitmapSource LoadBitmap(string imageFolderPath, ImageExpectedUsage imageExpectedUsage)
+        {
+            if (imageExpectedUsage == ImageExpectedUsage.TransientNavigating)
+            { 
+                return this.LoadBitmap(imageFolderPath, 32, imageExpectedUsage);
+            }
+            else
+            {
+                return this.LoadBitmap(imageFolderPath, null, imageExpectedUsage);
+            }
+        }
+
+        // Load full form
+        public virtual BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth, ImageExpectedUsage imageExpectedDisplayTime)
+        {
+            // If its a transient image, BitmapCacheOption of None as its faster than OnLoad. 
+            BitmapCacheOption bitmapCacheOption = (imageExpectedDisplayTime == ImageExpectedUsage.TransientLoading) ? BitmapCacheOption.None : BitmapCacheOption.OnLoad;
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
             {
@@ -138,7 +162,7 @@ namespace Timelapse.Database
                 // For now, we use the (slower) form of BitmapCacheOption.OnLoad.
                 if (desiredWidth.HasValue == false)
                 {
-                    BitmapFrame frame = BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                    BitmapFrame frame = BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, bitmapCacheOption);
                     frame.Freeze();
                     return frame;
                 }
@@ -146,7 +170,7 @@ namespace Timelapse.Database
                 BitmapImage bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.DecodePixelWidth = desiredWidth.Value;
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.CacheOption = bitmapCacheOption;
                 bitmap.UriSource = new Uri(path);
                 bitmap.EndInit();
                 bitmap.Freeze();

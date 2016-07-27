@@ -163,6 +163,7 @@
     <Compile Include="Images\FeedbackTuple.cs" />
     <Compile Include="Database\DateTimeAdjustment.cs" />
     <Compile Include="Images\ImageDifference.cs" />
+    <Compile Include="Images\ImageExpectedUsage.cs" />
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
     <Compile Include="Images\MetaTagEventArgs.cs" />

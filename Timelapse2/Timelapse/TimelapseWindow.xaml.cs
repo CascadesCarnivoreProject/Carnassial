@@ -388,9 +388,9 @@ namespace Timelapse
                         // avoid ImageProperties.LoadImage() here as the create exception needs to surface to set the image quality to corrupt
                         // framework bug: WriteableBitmap.Metadata returns null rather than metatada offered by the underlying BitmapFrame, so 
                         // retain the frame and pass its metadata to TryUseImageTaken().
-                        bitmapSource = imageProperties.LoadBitmap(this.FolderPath);
+                        bitmapSource = imageProperties.LoadBitmap(this.FolderPath, ImageExpectedUsage.TransientLoading);
  
-                        // Set the ImageQuality to corrupt i                       int foo = Constants.Images.Foo;f the returned bitmap is the corrupt image, otherwise set it to its Ok/Dark setting
+                        // Set the ImageQuality to corrupt if the returned bitmap is the corrupt image, otherwise set it to its Ok/Dark setting
                         if (bitmapSource == Constants.Images.Corrupt)
                         {
                             imageProperties.ImageQuality = ImageFilter.Corrupted;
@@ -459,6 +459,7 @@ namespace Timelapse
                 ProgressState progstate = (ProgressState)ea.UserState;
                 this.Feedback(progressState.Bmap, ea.ProgressPercentage, progressState.Message);
                 this.FeedbackControl.Visibility = Visibility.Visible;
+                progressState.Bmap = null;
             };
             backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {

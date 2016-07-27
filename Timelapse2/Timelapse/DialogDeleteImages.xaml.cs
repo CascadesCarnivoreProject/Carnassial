@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Timelapse.Database;
 using Timelapse.Util;
 
@@ -114,8 +115,8 @@ namespace Timelapse
             // SAULTODO: Need to warn the user, and perhaps see if we can make it more efficient, or if we can alter the user interface. 
             foreach (ImageRow imageProperties in deletedImageTable)
             {
-                ImageSource bitmap = imageProperties.LoadBitmap(database.FolderPath, 400);
-
+                ImageSource bitmap = imageProperties.LoadBitmap(database.FolderPath, Constants.Images.ThumbnailSmall);
+                
                 if (column == 0)
                 {
                     this.GridGallery.RowDefinitions.Add(new RowDefinition() { Height = gridlength20 });

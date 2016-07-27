@@ -225,6 +225,12 @@ namespace Timelapse
             public static readonly BitmapFrame MissingThumbnail;
             public static readonly BitmapFrame EmptyImageSet;
 
+            // Various thumbnail sizes
+            public const int ThumbnailSmall = 300;
+            public const int ThumbnailMedium = 512;
+            public const int ThumbnailLarge = 1024;
+            public const int ThumbnailNone = 0;
+
             static Images()
             {
                 // Saul TODO: This appears needed for unit tests to pass. To verify..
@@ -335,7 +341,8 @@ namespace Timelapse
 
         public static class Throttles
         {
-            public const double DesiredMaximumImageRendersPerSecond = 6.0;
+            //public const double DesiredMaximumImageRendersPerSecond = 6.0; // Saul TODO This is a doubling of what Todd originally had in here. To revisit...
+            public const double DesiredMaximumImageRendersPerSecond = 12.0;
             public const int MaximumRenderAttempts = 100;
             public const int SleepForImageRenderInterval = 100;
 

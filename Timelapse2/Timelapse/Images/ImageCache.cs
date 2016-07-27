@@ -185,7 +185,7 @@ namespace Timelapse.Images
                 return false;
             }
 
-            if (this.Current.ID == id)
+            if (this.Current == null || this.Current.ID == id)
             {
                 this.Reset();
             }
@@ -282,7 +282,7 @@ namespace Timelapse.Images
                 if (this.prefetechesByID.TryGetValue(image.ID, out prefetch))
                 {
                     // bitmap retrieval's already in progress, so wait for it to complete
-                    // SAUL TODO: This is dangerous as it can end up in an infinite loop on failure. Put a stopping condition in.
+                    // SAUL TODO: Is this dangerous ? Check if it can end up in an infinite loop on failure. Put a stopping condition in.
                     prefetch.Wait();
                     bitmap = this.unalteredBitmapsByID[image.ID];
                 }

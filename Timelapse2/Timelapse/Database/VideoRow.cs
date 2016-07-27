@@ -22,7 +22,7 @@ namespace Timelapse.Database
             get { return true; }
         }
 
-        public override BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth)
+        public override BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth, ImageExpectedUsage imageExpectedDisplayTime)
         {
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
