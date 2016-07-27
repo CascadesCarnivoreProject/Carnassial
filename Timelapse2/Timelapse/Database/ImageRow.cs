@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Windows.Media.Imaging;
-using Timelapse.Util;
 using Timelapse.Images;
+using Timelapse.Util;
 
 namespace Timelapse.Database
 {

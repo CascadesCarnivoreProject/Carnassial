@@ -852,10 +852,10 @@ namespace Timelapse
         {
             if (eventArgs.Key == Key.Enter)
             {
-                // The false means don't check to see if a textbox or control has the focus, as we want to reset the focus elsewhere
                 this.SetTopLevelFocus(false, eventArgs);
                 eventArgs.Handled = true;
             }
+            // The 'empty else' means don't check to see if a textbox or control has the focus, as we want to reset the focus elsewhere
         }
 
         /// <summary>Preview callback for counters, to ensure ensure that we only accept numbers</summary>
@@ -1378,10 +1378,13 @@ namespace Timelapse
             this.SetTopLevelFocus(true, eventArgs);
         }
 
-        // When we move over the canvas, reset the top level focus
+        // When we move over the canvas and the user isn't in the midst of typing into a text field, reset the top level focus
         private void MarkableCanvas_MouseEnter(object sender, MouseEventArgs eventArgs)
         {
-            this.SetTopLevelFocus(true, eventArgs);
+            if (this.DoesDataEntryTextControlHaveFocus() == false)
+            {
+                this.SetTopLevelFocus(true, eventArgs);
+            }  
         }
 
         // Actually set the top level keyboard focus to the image control
@@ -1443,6 +1446,20 @@ namespace Timelapse
             }
 
             return false;
+        }
+
+        // True if the user is in the midst of entering text in a data control that has a text field in it.
+        // e.g., Note, or similar timelapse-provided data controls that use a text field
+        private bool DoesDataEntryTextControlHaveFocus()
+        {
+            // If there is no focus, return false
+            IInputElement focusedElement = FocusManager.GetFocusedElement(this);
+            if (focusedElement == null)
+            {
+                return false;
+            }
+            // Check if the focus is on a text-entry style of data control 
+            return (typeof(TextBox) == focusedElement.GetType()) ? true : false;
         }
         #endregion
 

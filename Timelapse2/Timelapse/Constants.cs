@@ -219,17 +219,17 @@ namespace Timelapse
             // A grey scale pixel has r = g = b. But we will allow some slop in here just in case a bit of color creeps in
             public const int GreyScalePixelThreshold = 40;
 
-            public static readonly BitmapFrame Corrupt;
-            public static readonly BitmapFrame CorruptThumbnail;  
-            public static readonly BitmapFrame Missing;
-            public static readonly BitmapFrame MissingThumbnail;
-            public static readonly BitmapFrame EmptyImageSet;
-
             // Various thumbnail sizes
             public const int ThumbnailSmall = 300;
             public const int ThumbnailMedium = 512;
             public const int ThumbnailLarge = 1024;
             public const int ThumbnailNone = 0;
+
+            public static readonly BitmapFrame Corrupt;
+            public static readonly BitmapFrame CorruptThumbnail;  
+            public static readonly BitmapFrame Missing;
+            public static readonly BitmapFrame MissingThumbnail;
+            public static readonly BitmapFrame EmptyImageSet;
 
             static Images()
             {
@@ -341,7 +341,7 @@ namespace Timelapse
 
         public static class Throttles
         {
-            //public const double DesiredMaximumImageRendersPerSecond = 6.0; // Saul TODO This is a doubling of what Todd originally had in here. To revisit...
+            // public const double DesiredMaximumImageRendersPerSecond = 6.0; // Saul TODO This is a doubling of what Todd originally had in here. To revisit...
             public const double DesiredMaximumImageRendersPerSecond = 12.0;
             public const int MaximumRenderAttempts = 100;
             public const int SleepForImageRenderInterval = 100;
