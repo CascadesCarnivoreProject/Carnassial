@@ -10,7 +10,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
 
         <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Question"
                             ShowExplanationVisibility="True"
                             />

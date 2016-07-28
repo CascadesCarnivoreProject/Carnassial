@@ -128,6 +128,7 @@ namespace Timelapse
             {
                 this.PreviewDateTimeChanges();
                 this.displayingPreview = true;
+                this.OkButton.Content = "Apply Changes";
                 return;
             }
 

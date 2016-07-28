@@ -13,7 +13,7 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" PreviewKeyDown="Window_PreviewKeyDown">
     <DockPanel PreviewKeyDown="Window_PreviewKeyDown">
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Question"
                             Title="Set Thresholds Used to Determine Dark Images and Videos"
                             What="If Timelapse misclassifies images and videos as 'dark' or 'ok', you can tune how classification is done."

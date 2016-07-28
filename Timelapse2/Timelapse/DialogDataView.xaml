@@ -12,7 +12,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Icon="32x32.ico">
 
     <DockPanel >
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" Icon="Information"
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Information"
                             Title="View the contents of the database as it updates"
                             What="Displays the contents of the database, including changes as they occur.&#10;The row representing the current file is highlighted"
                             ShowExplanationVisibility="True"/>

@@ -8,7 +8,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
 
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Information" 
                             Title="About Timelapse"/>
         <StackPanel Name="StackPanelCorrect" Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">

@@ -1,4 +1,5 @@
-﻿using Microsoft.WindowsAPICodePack.Dialogs;
+﻿#define ShowDebugAssert
+using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -420,7 +421,9 @@ namespace Timelapse
                     }
                     catch (Exception exception)
                     {
-                        Debug.Assert(false, String.Format("Load of {0} failed as it's likely corrupted.", imageProperties.FileName), exception.ToString());
+                        #if ShowDebugAssert
+                            Debug.Assert(false, String.Format("Load of {0} failed as it's likely corrupted.", imageProperties.FileName), exception.ToString());
+                        #endif 
                         bitmapSource = Constants.Images.Corrupt;
                         imageProperties.ImageQuality = ImageFilter.Corrupted;
                     }
@@ -1588,16 +1591,12 @@ namespace Timelapse
             }
 
             int count = 0;
-            try
+            // If we can't convert it to an int, assume that someone set the default value to eithera non-integer in the template, or that its a space. In either case, revert it to zero.
+            if (Int32.TryParse (counterContent, out count) == false)
             {
-                // TODOSAUL: why call Convert.ToInt32() instead of Int32.TryParse()?
-                count = Convert.ToInt32(counterContent);
+                count = 0; // 
             }
-            catch (Exception exception)
-            {
-                Debug.Assert(false, String.Format("Counter content '{0}' is not an integer.", counterContent), exception.ToString());
-                count = 0; // If we can't convert it, assume that someone set the default value to a non-integer in the template, and just revert it to zero.
-            }
+  
             count++;
             counterContent = count.ToString();
             this.dataHandler.IsProgrammaticControlUpdate = true;

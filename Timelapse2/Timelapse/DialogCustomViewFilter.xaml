@@ -12,7 +12,7 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner"  Loaded="Window_Loaded" >
     <DockPanel >
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" Icon="Question"
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Question"
                             Title="Create a Custom View Filter"
                             What="You may want to view only a subset of your images and videos which fit some criteria of interest to you."
                             Solution="Specify some search terms that describes your criteria, and use that to create a filter.&#10;1. Each row below reflects your data fields.&#10;2. Select one or more data fields that you want to use as part of your search.

@@ -21,13 +21,13 @@ namespace Timelapse
     /// The primary way to invoke this is to add the control to the UI, and then invoke
     /// AddFeedbackRow (...), which will add a row to the grid whose contents reflect the contents of the various parameters.
     /// </summary>
-    public partial class DateChangesFeedbackCtl : UserControl
+    public partial class DateChangesFeedbackControl : UserControl
     {
         // This collection will hold tuples, where each tuple contains the contents for a row that will be shown in the datagrid  
         private ObservableCollection<FeedbackRowTuple> feedbackRows;
 
         // Initialization: Bind the collection to the datagrid, where any change in the collection will be displayed in the datagrid
-        public DateChangesFeedbackCtl()
+        public DateChangesFeedbackControl()
         {
             this.InitializeComponent();
             this.feedbackRows = new ObservableCollection<FeedbackRowTuple>();

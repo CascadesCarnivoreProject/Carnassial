@@ -11,10 +11,13 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="DlgDateCorrectionName_Loaded">
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" Icon="Question"
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Question"
                             Title="Add a correction value to the date / time"
                             Problem="If your camera was not initialized to the correct date/time every file's time will be off by a fixed amount."
-                            Solution="Enter the correct date and time in the box below for the sample below. &#10;Then click Okay (which becomes active after you type in a correctly formatted date/time)"
+                            Solution="Your currently selected image is shown below.
+&#10;&#x2022; Adjust the date/time for this image the correct data and time
+&#10;&#x2022; Click Start (which becomes active after you enter an adjusted date/time) to preview the changes that will be made
+&#10;&#x2022; Click Apply Changes to apply those changes."
                             Result="The difference between the original and correct date will be added to all dates for all images and videos selected by the current filter."
                             Hint="The date / time format you enter should look something like '12-Apr-2016 13:00:00.'&#10;For example, changing 12-Apr-2016 13:00:00 to 13-Apr-2016 14:00:00 would add 1 day and 1 hour to all dates/times"
                             ShowExplanationVisibility="True"/>
@@ -28,7 +31,7 @@
             <!-- Ok/Cancel buttons-->
             <StackPanel  Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
                 <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">Cancel</Button>
-                <Button Name="OkButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">Okay</Button>
+                <Button Name="OkButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">Start</Button>
             </StackPanel>
 
         <DockPanel Name="PrimaryPanel" DockPanel.Dock="Top" >
@@ -47,9 +50,9 @@
         </DockPanel>
 
         <DockPanel  Name="FeedbackPanel" Visibility="Collapsed" DockPanel.Dock="Top" >
-            <Label FontSize="14" FontWeight="Bold" Content="The following changes to dates and times will occur if you select Okay." DockPanel.Dock="Top"/>
-            <local:DateChangesFeedbackCtl x:Name="DateUpdateFeedbackCtl"  DockPanel.Dock="Bottom">
-            </local:DateChangesFeedbackCtl>
+            <Label FontSize="14" FontWeight="Bold" Content="The following changes to dates and times will occur if you select Apply Changes." DockPanel.Dock="Top"/>
+            <local:DateChangesFeedbackControl x:Name="DateUpdateFeedbackCtl"  DockPanel.Dock="Bottom">
+            </local:DateChangesFeedbackControl>
         </DockPanel>
     </DockPanel>
 </Window>

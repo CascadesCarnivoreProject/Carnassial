@@ -11,7 +11,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="DlgSwapDayMonth_Loaded">
 
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Question"
                             Title="Swap the Date's Day and Month"
                             Problem="Some cameras record ambiguous dates, where Timelapse has to guess if the date is in Month /Day or Day/Month order. &#10;If your dates appear wrong, it could be because Timelapse guessed the wrong way round."

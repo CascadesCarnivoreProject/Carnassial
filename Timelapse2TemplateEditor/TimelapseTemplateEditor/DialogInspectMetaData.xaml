@@ -12,7 +12,7 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Question"
                             Title="Inspect what metadata is available in an image of your choosing"
                             What="Particular cameras often embed metadata into an image, some of which may be useful to capture as data. 

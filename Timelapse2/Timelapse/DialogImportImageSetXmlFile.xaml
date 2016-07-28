@@ -9,7 +9,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
 
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Question"
                             Title="Do you want to import the data from ImageData.xml file"
                             Problem="An old-style ImageData.xml file, created with an earlier version of Timelapse, exists in this folder.&#10;It may have previously entered data about this image set that you may want to keep."

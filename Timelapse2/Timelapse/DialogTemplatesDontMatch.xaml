@@ -11,7 +11,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
 
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Information"
                             Title="This template cannot be used with this data"
                             Problem="The fields in the Timelapse Template file do not match those originally used to create this data. &#10;This is likely because Timelapse Template is different from the original one used for this image set."

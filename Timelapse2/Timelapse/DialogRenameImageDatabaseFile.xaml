@@ -10,7 +10,7 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Question"
                             Title="Rename the Timelapse Data File"
                             What="By default, Timelapse creates a file called 'TimelapseData.ddb' that contains your image set data. You may want to rename it to something more descriptive."

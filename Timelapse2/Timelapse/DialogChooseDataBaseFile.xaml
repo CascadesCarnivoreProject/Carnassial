@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="Choose the Timelapse DataBase File You Want" Height="550" Width="650" MinHeight="500" MinWidth="600">
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" Icon="Question"
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Question"
                             Title="Choose a Timelapse DataBase"
                             Problem="There are multiple Timelapse database (.ddb) files associated with this image set."
                             Solution="Choose the Timelapse database file you want to use."

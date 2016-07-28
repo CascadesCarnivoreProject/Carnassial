@@ -7,7 +7,7 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Information"
                             Title="Summary counts of your files"
                             What="Timelapse automatically categorizes the 'Image Quality' of your images and videos."

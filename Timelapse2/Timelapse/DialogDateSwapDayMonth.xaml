@@ -9,7 +9,7 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Question"
                             Title="Check and Modify Ambiguous Dates for Each Day"
                             Problem="Some field cameras record dates in a way that makes it hard to determine if its in Month /Day or Day/Month order. &#10;If your dates appear wrong, it could be because the software read them the wrong way round."

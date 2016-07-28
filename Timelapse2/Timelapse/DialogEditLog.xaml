@@ -11,7 +11,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
        
     <DockPanel >
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" Icon="Question" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Question" 
                             What="Record any notes about this image set that you may want to refer to in the future. Your notes will be saved and viewable at any time through this software, but it will not be saved in the spreadsheet csv file. Typical uses are to log activities, list to-do items, leave messages for others, etc."
                             Title="Edit your notes for this image set"/>
         <DockPanel>

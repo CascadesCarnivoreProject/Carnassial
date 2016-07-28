@@ -149,8 +149,8 @@
     <Compile Include="Database\ImageSetRow.cs" />
     <Compile Include="Database\MarkerRow.cs" />
     <Compile Include="Database\VideoRow.cs" />
-    <Compile Include="MyUserControls\DateChangesFeedbackCtl.xaml.cs">
-      <DependentUpon>DateChangesFeedbackCtl.xaml</DependentUpon>
+    <Compile Include="MyUserControls\DateChangesFeedbackControl.xaml.cs">
+      <DependentUpon>DateChangesFeedbackControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="DialogDateTimeLinearCorrection.xaml.cs">
       <DependentUpon>DialogDateTimeLinearCorrection.xaml</DependentUpon>
@@ -170,8 +170,8 @@
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
     <Compile Include="Images\MetaTagEventArgs.cs" />
-    <Compile Include="StockMessage.xaml.cs">
-      <DependentUpon>StockMessage.xaml</DependentUpon>
+    <Compile Include="MyUserControls\StockMessageControl.xaml.cs">
+      <DependentUpon>StockMessageControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Database\DataRowBackedObject.cs" />
     <Compile Include="Util\Dependencies.cs" />
@@ -203,7 +203,7 @@
     <Compile Include="DialogDeleteImages.xaml.cs">
       <DependentUpon>DialogDeleteImages.xaml</DependentUpon>
     </Compile>
-    <Page Include="MyUserControls\DateChangesFeedbackCtl.xaml">
+    <Page Include="MyUserControls\DateChangesFeedbackControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -299,7 +299,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="HelpUserControl.xaml">
+    <Page Include="MyUserControls\HelpUserControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -307,7 +307,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DataEntryControls.xaml">
+    <Page Include="MyUserControls\DataEntryControls.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -319,7 +319,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="StockMessage.xaml">
+    <Page Include="MyUserControls\StockMessageControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -394,7 +394,7 @@
     <Compile Include="DialogDaylightSavingsTimeCorrection.xaml.cs">
       <DependentUpon>DialogDaylightSavingsTimeCorrection.xaml</DependentUpon>
     </Compile>
-    <Compile Include="HelpUserControl.xaml.cs">
+    <Compile Include="MyUserControls\HelpUserControl.xaml.cs">
       <DependentUpon>HelpUserControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="HelpWindow.xaml.cs">
@@ -403,7 +403,7 @@
     <Compile Include="Images\MarkableImageCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
     <Compile Include="Util\RegistryUserSettings.cs" />
-    <Compile Include="DataEntryControls.xaml.cs">
+    <Compile Include="MyUserControls\DataEntryControls.xaml.cs">
       <DependentUpon>DataEntryControls.xaml</DependentUpon>
     </Compile>
     <Compile Include="ControlWindow.xaml.cs">

@@ -9,7 +9,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
     
     <DockPanel>
-        <local:StockMessage x:Name="Message" DockPanel.Dock="Top" 
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Exclamation"
                             Title="The Timelapse Template (.tdb) file is missing."
                             Problem="Timelapse needs a template file, as it specifies the codes you will use to code your data. &#10;However, no Timelapse Template .tdb file was found in the folder : "

@@ -9,7 +9,7 @@ namespace Timelapse
     /// <summary>
     /// Interaction logic for StockMessage.xaml
     /// </summary>
-    public partial class StockMessage : UserControl
+    public partial class StockMessageControl : UserControl
     {
         private MessageBoxImage iconType = MessageBoxImage.Exclamation;
 
@@ -132,7 +132,7 @@ namespace Timelapse
         }
         #endregion 
 
-        public StockMessage()
+        public StockMessageControl()
         {
             this.InitializeComponent();
             this.SetFieldVisibility();
