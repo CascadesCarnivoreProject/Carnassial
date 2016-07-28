@@ -88,6 +88,74 @@ namespace Timelapse
             Utilities.TryFitWindowInWorkingArea(this);
         }
 
+        private void PreviewDateTimeChanges()
+        {
+            this.PrimaryPanel.Visibility = Visibility.Collapsed;
+            this.FeedbackPanel.Visibility = Visibility.Visible;
+
+            // Preview the changes
+            TimeSpan newestImageAdjustment = this.dateTimePickerLatestDateTime.Value.Value - this.latestImageDateTime;
+            TimeSpan intervalFromOldestToNewestImage = this.latestImageDateTime - this.earliestImageDateTime;
+            TimeSpan mostRecentAdjustment = TimeSpan.Zero;
+            foreach (ImageRow row in this.imageDatabase.ImageDataTable)
+            {
+                string oldDT = row.Date + " " + row.Time;
+                string newDT = String.Empty;
+                string status = "Skipped: invalid date/time";
+                string difference = string.Empty;
+
+                DateTime imageDateTime;
+                TimeSpan oneSecond = TimeSpan.FromSeconds(1);
+
+                if (row.TryGetDateTime(out imageDateTime))
+                {
+                    double imagePositionInInterval;
+                    // adjust the date / time
+                    if (intervalFromOldestToNewestImage == TimeSpan.Zero)
+                    {
+                        imagePositionInInterval = 1;
+                    }
+                    else
+                    {
+                        imagePositionInInterval = (double)(imageDateTime - this.earliestImageDateTime).Ticks / (double)intervalFromOldestToNewestImage.Ticks;
+                    }
+
+                    TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * newestImageAdjustment.Ticks));
+
+                    // Pretty print the adjustment time
+                    if (adjustment.Duration() >= oneSecond)
+                    {
+                        string sign = (adjustment < TimeSpan.Zero) ? "-" : "+";
+                        status = "Changed";
+
+                        // Pretty print the adjustment time, depending upon how many day(s) were included 
+                        string format;
+                        if (adjustment.Days == 0)
+                        {
+                            format = "{0:s}{1:D2}:{2:D2}:{3:D2}"; // Don't show the days field
+                        }
+                        else if (adjustment.Duration().Days == 1)
+                        {
+                            format = "{0:s}{1:D2}:{2:D2}:{3:D2} {0:s} {4:D} day";
+                        }
+                        else
+                        {
+                            format = "{0:s}{1:D2}:{2:D2}:{3:D2} {0:s} {4:D} days";
+                        }
+                        difference = string.Format(format, sign, adjustment.Duration().Hours, adjustment.Duration().Minutes, adjustment.Duration().Seconds, adjustment.Duration().Days);
+
+                        // Get the new date/time
+                        newDT = DateTimeHandler.ToStandardDateTimeString(imageDateTime + adjustment);
+                    }
+                    else
+                    {
+                        status = "Unchanged";
+                    }
+                }
+                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, oldDT, newDT, difference);
+            }
+        }
+
         // 1st click of Ok: Show a preview of the changes.
         // 2nd click of OK: Update the database if the OK button is clicked
         private void OkButton_Click(object sender, RoutedEventArgs e)
@@ -148,74 +216,6 @@ namespace Timelapse
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
-        }
-
-        private void PreviewDateTimeChanges()
-        {
-            this.PrimaryPanel.Visibility = Visibility.Collapsed;
-            this.FeedbackPanel.Visibility = Visibility.Visible;
-
-            // Preview the changes
-            TimeSpan newestImageAdjustment = this.dateTimePickerLatestDateTime.Value.Value - this.latestImageDateTime;
-            TimeSpan intervalFromOldestToNewestImage = this.latestImageDateTime - this.earliestImageDateTime;
-            TimeSpan mostRecentAdjustment = TimeSpan.Zero;
-            foreach (ImageRow row in this.imageDatabase.ImageDataTable)
-            {
-                string oldDT = row.Date + " " + row.Time;
-                string newDT = String.Empty;
-                string status = "Skipped: invalid date/time";
-                string difference = string.Empty;
-
-                DateTime imageDateTime;
-                TimeSpan oneSecond = TimeSpan.FromSeconds(1);
-
-                if (row.TryGetDateTime(out imageDateTime))
-                {
-                    double imagePositionInInterval;
-                    // adjust the date / time
-                    if (intervalFromOldestToNewestImage == TimeSpan.Zero)
-                    {
-                        imagePositionInInterval = 1;
-                    }
-                    else
-                    { 
-                        imagePositionInInterval = (double)(imageDateTime - this.earliestImageDateTime).Ticks / (double)intervalFromOldestToNewestImage.Ticks;
-                    }
-
-                    TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * newestImageAdjustment.Ticks));
-
-                    // Pretty print the adjustment time
-                    if (adjustment.Duration() >= oneSecond)
-                    {
-                        string sign = (adjustment < TimeSpan.Zero) ? "-" : "+";
-                        status = "Changed";
-
-                        // Pretty print the adjustment time, depending upon how many day(s) were included 
-                        string format;
-                        if (adjustment.Days == 0)
-                        {
-                            format = "{0:s}{1:D2}:{2:D2}:{3:D2}"; // Don't show the days field
-                        }
-                        else if (adjustment.Duration().Days == 1)
-                        {
-                            format = "{0:s}{1:D2}:{2:D2}:{3:D2} {0:s} {4:D} day";
-                        }
-                        else
-                        {
-                            format = "{0:s}{1:D2}:{2:D2}:{3:D2} {0:s} {4:D} days";
-                        }
-                        difference = string.Format(format, sign, adjustment.Duration().Hours, adjustment.Duration().Minutes, adjustment.Duration().Seconds, adjustment.Duration().Days);
-
-                        // Get the new date/time
-                        newDT = DateTimeHandler.ToStandardDateTimeString(imageDateTime + adjustment);
-                    }
-                    else
-                    {
-                        status = "Unchanged";
-                    }
-                }
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, oldDT, newDT, difference);
-            }
         }
 
         private void DateTimePicker_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)

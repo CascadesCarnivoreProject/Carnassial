@@ -2327,24 +2327,27 @@ namespace Timelapse
         /// <summary>Correct the date by specifying an offset</summary>
         private void MenuItemDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
         {
-            // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false ||
-                this.dataHandler.CanBulkEditImages() == false)
+             // Warn user that they are in a filtered view, and verify that they want to continue
+            if (this.TryPromptApplyOperationToThisFilteredView("'Add a fixed correction value to every date/time...'"))
             {
-                if (this.TryPromptAndChangeToBulkEditCompatibleFilter("Add a fixed correction value to every date...",
-                                                                      "To correct the dates, Timelapse must first:") == false)
+                DialogDateTimeFixedCorrection dateCorrection = new DialogDateTimeFixedCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current);
+                if (dateCorrection.Abort)
                 {
+                    DialogMessageBox messageBox = new DialogMessageBox("Can't add a fixed correction value to every date/time...", this);
+                    messageBox.Message.Problem = "Can't add a fixed correction value to every date/time in this filtered view.";
+                    messageBox.Message.Reason = "This operation requires using the current image's date and time fields. " + Environment.NewLine;
+                    messageBox.Message.Reason += "However, " + this.dataHandler.ImageCache.Current.Date + " " + this.dataHandler.ImageCache.Current.Time + " is not a recognizable date/time." + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 dates should look like DD-MMM-YYYY e.g., 16-Jan-2016" + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 times should look like HH:MM:SS using 24 hour time e.g., 01:05:30 or 13:30:00";
+                    messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
+                    messageBox.Message.Hint = "\u2022 Check the format of this image's date and time." + Environment.NewLine;
+                    messageBox.Message.Hint += "\u2022 Or, navigate to another image that has a properly formatted date and time.";
+                    messageBox.Message.Icon = MessageBoxImage.Error;
+                    messageBox.ShowDialog();
                     return;
                 }
+                this.ShowBulkImageEditDialog(dateCorrection);
             }
-
-            // We should be in the right mode for correcting the date
-            DialogDateTimeFixedCorrection dateCorrection = new DialogDateTimeFixedCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current);
-            if (dateCorrection.Abort)
-            {
-                return;
-            }
-            this.ShowBulkImageEditDialog(dateCorrection);
         }
 
         /// <summary>Correct for drifting clock times. Correction applied only to images in the filtered view.</summary>
@@ -2358,12 +2361,12 @@ namespace Timelapse
                 {
                     DialogMessageBox messageBox = new DialogMessageBox("Can't correct for clock drift", this);
                     messageBox.Message.Problem = "Can't correct for clock drift in this filtered view.";
-                    messageBox.Message.Reason = "All of the images in this filtered view have date/times fields whose contents are not recognizable as dates or times." + Environment.NewLine;
-                    messageBox.Message.Reason += "\u2022 Dates should be entered as DD-MMM-YYYY e.g., 16-Jan-2016" + Environment.NewLine;
-                    messageBox.Message.Reason += "\u2022 Times should be entered as HH:MM:SS using 24 hour time e.g., 01:05:30 or 13:30:00";
+                    messageBox.Message.Reason = "All of the images in this filtered view have date/time fields whose contents are not recognizable as dates or times." + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 dates should look like DD-MMM-YYYY e.g., 16-Jan-2016" + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 times should look like HH:MM:SS using 24 hour time e.g., 01:05:30 or 13:30:00";
                     messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
                     messageBox.Message.Hint = "Check the format of your dates and times. You may also want to change your filter (if your not viewing All Images)";
-                    messageBox.Message.Icon = MessageBoxImage.Exclamation;
+                    messageBox.Message.Icon = MessageBoxImage.Error;
                     messageBox.ShowDialog();
                     return;
                 }
@@ -2789,7 +2792,7 @@ namespace Timelapse
         private bool TryPromptApplyOperationToThisFilteredView(string operationName)
         {
             // If we are showing all images, then no need for showing the warning message
-            if (this.dataHandler.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All)
+            if (this.IsFilterSetToAllImages())
             {
                 return true;
             }
@@ -2814,6 +2817,12 @@ namespace Timelapse
 
             messageBox.Message.Icon = MessageBoxImage.Question;
             return (bool)messageBox.ShowDialog();
+        }
+
+        // Returns true if the current image filter is set to All
+        private bool IsFilterSetToAllImages()
+        {
+            return this.dataHandler.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All;
         }
         #endregion
 
