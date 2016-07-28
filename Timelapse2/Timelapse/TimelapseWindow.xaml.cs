@@ -2356,6 +2356,15 @@ namespace Timelapse
                 DialogDateTimeLinearCorrection dateCorrection = new DialogDateTimeLinearCorrection(this.dataHandler.ImageDatabase);
                 if (dateCorrection.Abort)
                 {
+                    DialogMessageBox messageBox = new DialogMessageBox("Can't correct for clock drift", this);
+                    messageBox.Message.Problem = "Can't correct for clock drift in this filtered view.";
+                    messageBox.Message.Reason = "All of the images in this filtered view have date/times fields whose contents are not recognizable as dates or times." + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 Dates should be entered as DD-MMM-YYYY e.g., 16-Jan-2016" + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 Times should be entered as HH:MM:SS using 24 hour time e.g., 01:05:30 or 13:30:00";
+                    messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
+                    messageBox.Message.Hint = "Check the format of your dates and times. You may also want to change your filter (if your not viewing All Images)";
+                    messageBox.Message.Icon = MessageBoxImage.Exclamation;
+                    messageBox.ShowDialog();
                     return;
                 }
                 this.ShowBulkImageEditDialog(dateCorrection);

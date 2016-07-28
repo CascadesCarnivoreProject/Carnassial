@@ -9,9 +9,8 @@ namespace Timelapse
 {
     /// <summary>
     /// Interaction logic for DialogDateTimeLinearCorrection.xaml
-    /// This dialog lets the user specify a corrected date and time of an file. All other dates and times are then corrected by the same amount.
+    /// This dialog lets the user specify a corrected date and time of a file. All other dates and times are then corrected by the same amount.
     /// This is useful if (say) the camera was not initialized to the correct date and time.
-    /// It assumes that Timelapse is configured to display all files, and the its currently displaying a valid file and thus a valid date.
     /// </summary>
     public partial class DialogDateTimeLinearCorrection : Window
     {
@@ -19,6 +18,7 @@ namespace Timelapse
         private DateTime earliestImageDateTime;
         private DateTime lastDateEnteredWithDateTimePicker; // Keeps track of the last valid date in the date picker so we can revert to it if needed.
         private ImageDatabase imageDatabase;
+        private bool displayingPreview = false;
 
         public bool Abort { get; private set; }
         
@@ -59,7 +59,7 @@ namespace Timelapse
 
             // At this point, we should have succeeded getting the oldest and newest data/time
             // If not, we should abort
-            if (this.earliestImageDateTime == null || this.latestImageDateTime == null)
+            if (this.earliestImageDateTime == DateTime.MaxValue || this.latestImageDateTime == DateTime.MinValue)
             {
                 this.Abort = true;
                 return;
@@ -88,17 +88,17 @@ namespace Timelapse
             Utilities.TryFitWindowInWorkingArea(this);
         }
 
-        // Try to update the database if the OK button is clicked
+        // 1st click of Ok: Show a preview of the changes.
+        // 2nd click of OK: Update the database if the OK button is clicked
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
+            // A few checks just to make sure we actually have something to do...
             if (this.dateTimePickerLatestDateTime.Value.HasValue == false)
             {
                 this.DialogResult = false;
                 return;
             }
 
-            // Calculate the date/time difference
-            // DateTime originalDateTime = DateTimeHandler.FromStandardDateTimeString((string)this.earliestImageDate.Content);
             TimeSpan newestImageAdjustment = this.dateTimePickerLatestDateTime.Value.Value - this.latestImageDateTime;
             if (newestImageAdjustment == TimeSpan.Zero)
             {
@@ -107,7 +107,18 @@ namespace Timelapse
                 return;
             }
 
-            // Update the database
+            // 1st real click of Ok: Show the preview before actually making any changes.
+            if (this.displayingPreview == false)
+            {
+                this.PreviewDateTimeChanges();
+                this.displayingPreview = true;
+                return;
+            }
+
+            // 2nd click of Ok
+            // We've shown the preview, which means the user actually wants to do the changes. 
+            // Calculate the date/time difference and Update the database
+
             // In the single image case the the oldest and newest times will be the same
             // since Timelapse has only whole seconds resolution it's also possible with small selections from fast cameras that multiple images have the same time
             TimeSpan intervalFromOldestToNewestImage = this.latestImageDateTime - this.earliestImageDateTime;
@@ -122,7 +133,7 @@ namespace Timelapse
                     {
                         double imagePositionInInterval = (double)(imageDateTime - this.earliestImageDateTime).Ticks / (double)intervalFromOldestToNewestImage.Ticks;
                         Debug.Assert((-0.0000001 < imagePositionInInterval) && (imagePositionInInterval < 1.0000001), String.Format("Interval position {0} is not between 0.0 and 1.0.", imagePositionInInterval));
-                        TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * newestImageAdjustment.Ticks + 0.5)); // I think the .5 is to force rounding upwards
+                        TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * newestImageAdjustment.Ticks)); // Used to have a  .5 increment, I think to force rounding upwards
                         // TimeSpan.Duration means we do these checks on the absolute value (positive) of the Timespan, as slow clocks will have negative adjustments.
                         Debug.Assert((TimeSpan.Zero <= adjustment.Duration()) && (adjustment.Duration() <= newestImageAdjustment.Duration()), String.Format("Expected adjustment {0} to be within [{1} {2}].", adjustment, TimeSpan.Zero, newestImageAdjustment));
                         return adjustment;
@@ -137,6 +148,74 @@ namespace Timelapse
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
+        }
+
+        private void PreviewDateTimeChanges()
+        {
+            this.PrimaryPanel.Visibility = Visibility.Collapsed;
+            this.FeedbackPanel.Visibility = Visibility.Visible;
+
+            // Preview the changes
+            TimeSpan newestImageAdjustment = this.dateTimePickerLatestDateTime.Value.Value - this.latestImageDateTime;
+            TimeSpan intervalFromOldestToNewestImage = this.latestImageDateTime - this.earliestImageDateTime;
+            TimeSpan mostRecentAdjustment = TimeSpan.Zero;
+            foreach (ImageRow row in this.imageDatabase.ImageDataTable)
+            {
+                string oldDT = row.Date + " " + row.Time;
+                string newDT = String.Empty;
+                string status = "Skipped: invalid date/time";
+                string difference = string.Empty;
+
+                DateTime imageDateTime;
+                TimeSpan oneSecond = TimeSpan.FromSeconds(1);
+
+                if (row.TryGetDateTime(out imageDateTime))
+                {
+                    double imagePositionInInterval;
+                    // adjust the date / time
+                    if (intervalFromOldestToNewestImage == TimeSpan.Zero)
+                    {
+                        imagePositionInInterval = 1;
+                    }
+                    else
+                    { 
+                        imagePositionInInterval = (double)(imageDateTime - this.earliestImageDateTime).Ticks / (double)intervalFromOldestToNewestImage.Ticks;
+                    }
+
+                    TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * newestImageAdjustment.Ticks));
+
+                    // Pretty print the adjustment time
+                    if (adjustment.Duration() >= oneSecond)
+                    {
+                        string sign = (adjustment < TimeSpan.Zero) ? "-" : "+";
+                        status = "Changed";
+
+                        // Pretty print the adjustment time, depending upon how many day(s) were included 
+                        string format;
+                        if (adjustment.Days == 0)
+                        {
+                            format = "{0:s}{1:D2}:{2:D2}:{3:D2}"; // Don't show the days field
+                        }
+                        else if (adjustment.Duration().Days == 1)
+                        {
+                            format = "{0:s}{1:D2}:{2:D2}:{3:D2} {0:s} {4:D} day";
+                        }
+                        else
+                        {
+                            format = "{0:s}{1:D2}:{2:D2}:{3:D2} {0:s} {4:D} days";
+                        }
+                        difference = string.Format(format, sign, adjustment.Duration().Hours, adjustment.Duration().Minutes, adjustment.Duration().Seconds, adjustment.Duration().Days);
+
+                        // Get the new date/time
+                        newDT = DateTimeHandler.ToStandardDateTimeString(imageDateTime + adjustment);
+                    }
+                    else
+                    {
+                        status = "Unchanged";
+                    }
+                }
+                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, oldDT, newDT, difference);
+            }
         }
 
         private void DateTimePicker_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)

@@ -149,6 +149,9 @@
     <Compile Include="Database\ImageSetRow.cs" />
     <Compile Include="Database\MarkerRow.cs" />
     <Compile Include="Database\VideoRow.cs" />
+    <Compile Include="MyUserControls\DateChangesFeedbackCtl.xaml.cs">
+      <DependentUpon>DateChangesFeedbackCtl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="DialogDateTimeLinearCorrection.xaml.cs">
       <DependentUpon>DialogDateTimeLinearCorrection.xaml</DependentUpon>
     </Compile>
@@ -200,6 +203,10 @@
     <Compile Include="DialogDeleteImages.xaml.cs">
       <DependentUpon>DialogDeleteImages.xaml</DependentUpon>
     </Compile>
+    <Page Include="MyUserControls\DateChangesFeedbackCtl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DialogAboutTimelapse.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

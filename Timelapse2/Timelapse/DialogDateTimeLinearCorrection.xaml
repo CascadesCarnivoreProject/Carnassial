@@ -25,7 +25,7 @@
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>
         </StackPanel>
 
-        <DockPanel>
+        <DockPanel >
 
             <!-- Ok/Cancel buttons-->
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
@@ -34,7 +34,7 @@
             </StackPanel>
 
             <!-- Content area -->
-            <Grid  DockPanel.Dock="Top" Margin="10,0,10,0" >
+            <Grid  Name="PrimaryPanel" DockPanel.Dock="Top" Margin="10,0,10,0" >
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -55,7 +55,7 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Label Content="Earliest:"       HorizontalAlignment="Left" HorizontalContentAlignment="Right" FontWeight="Bold"   Grid.Row="0" Grid.Column="0"/>
-                    <Label Content="earliest.jpg"               HorizontalAlignment="Left"  HorizontalContentAlignment="Left"  FontWeight="Normal" Grid.Row="0" Grid.Column="1" Name="earliestImageName"   />
+                    <Label Content="earliest.jpg"    HorizontalAlignment="Left" HorizontalContentAlignment="Left"  FontWeight="Normal" Grid.Row="0" Grid.Column="1" Name="earliestImageName"   />
                     <Label Content="dd-MMM-yyyy HH:mm:ss"  HorizontalAlignment="Left"  HorizontalContentAlignment="Left"  FontWeight="Normal" Grid.Row="0" Grid.Column="2" Name="earliestImageDate"/>
                 </Grid>
                 <Image Name="imageEarliest" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both"  VerticalAlignment="Top" HorizontalAlignment="Stretch" Grid.Row="1" Grid.Column="0"/>
@@ -71,13 +71,20 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Label Content="Latest:"               HorizontalAlignment="Left"  HorizontalContentAlignment="Right" FontWeight="Bold"   Grid.Row="0" Grid.Column="0"/>
-                    <Label Content="latest.jpg"                     HorizontalAlignment="Left"  HorizontalContentAlignment="Left"  FontWeight="Normal" Grid.Row="0" Grid.Column="1" Name="latestImageName"/>
-                    <xctk:DateTimePicker HorizontalAlignment="Right"  HorizontalContentAlignment="Left"  Grid.Row="0" Grid.Column="1" x:Name="dateTimePickerLatestDateTime" Grid.ColumnSpan="2" Margin="0,0,1.333,0"/>
+                    <Label Content="latest.jpg"            HorizontalAlignment="Left"  HorizontalContentAlignment="Left"  FontWeight="Normal" Grid.Row="0" Grid.Column="1" Name="latestImageName"/>
+                    <xctk:DateTimePicker HorizontalAlignment="Right"  HorizontalContentAlignment="Left"  Grid.Row="0" Grid.Column="2" x:Name="dateTimePickerLatestDateTime" Margin="10,0,0,0"/>
 
                     <!-- <Label Content="dd-MMM-yyyy HH:mm:ss"       HorizontalAlignment="Left"  HorizontalContentAlignment="Left"  FontWeight="Normal" Grid.Row="1" Grid.Column="1" Margin="0,-8,0,0" Name="imageLatestDate"    />-->
                 </Grid>
                 <Image Name="imageLatest" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both"  VerticalAlignment="Top" HorizontalAlignment="Stretch" Grid.Row="1" Grid.Column="1"/>
             </Grid>
+            <DockPanel Name="FeedbackPanel" Visibility="Collapsed" DockPanel.Dock="Top" Margin="10,0,10,0">
+                <DockPanel>
+                    <Label FontSize="14" FontWeight="Bold" Content="The following changes to dates and times will occur if you select Okay." DockPanel.Dock="Top"/>
+                    <local:DateChangesFeedbackCtl x:Name="DateUpdateFeedbackCtl"  DockPanel.Dock="Bottom">
+                    </local:DateChangesFeedbackCtl>
+                </DockPanel>
+            </DockPanel>
         </DockPanel>
     </DockPanel>
 </Window>
