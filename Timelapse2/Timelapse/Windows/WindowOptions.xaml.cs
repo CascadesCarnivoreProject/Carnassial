@@ -6,12 +6,12 @@ namespace Timelapse
     /// <summary>
     /// Interaction logic for OptionsWindow.xaml
     /// </summary>
-    public partial class OptionsWindow : Window
+    public partial class WindowOptions : Window
     {
         private Timelapse.Images.MarkableImageCanvas markableCanvas;
         private TimelapseWindow mainProgram;
 
-        public OptionsWindow(TimelapseWindow mainWindow, Timelapse.Images.MarkableImageCanvas mcanvas)
+        public WindowOptions(TimelapseWindow mainWindow, Timelapse.Images.MarkableImageCanvas mcanvas)
         {
             this.InitializeComponent();
             this.Topmost = true;

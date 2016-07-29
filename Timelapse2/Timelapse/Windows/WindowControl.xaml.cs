@@ -10,7 +10,7 @@ namespace Timelapse
     /// Its use is to place image data entry controls in a separate rather than within the main Timelapse window.
     /// The window automatically adjusts its height to fit the user controls' height.
     /// </summary>
-    public partial class ControlWindow : Window
+    public partial class WindowControl : Window
     {
         private static readonly TimeSpan QuarterSecond = TimeSpan.FromSeconds(0.25);
 
@@ -19,10 +19,10 @@ namespace Timelapse
         private DispatcherTimer timer = new DispatcherTimer();
         private TimelapseState state; // We need to access the state so we can post the current window size
 
-        public ControlWindow(TimelapseState state)
+        public WindowControl(TimelapseState state)
         {
             this.timer.Tick += this.Timer_Tick;
-            this.timer.Interval = ControlWindow.QuarterSecond;
+            this.timer.Interval = WindowControl.QuarterSecond;
 
             // Restore the window size 
             this.state = state;
@@ -58,7 +58,7 @@ namespace Timelapse
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             this.timer.Start();
-            this.timer.Interval = ControlWindow.QuarterSecond;
+            this.timer.Interval = WindowControl.QuarterSecond;
         }
 
         // Resize the window to fit its content

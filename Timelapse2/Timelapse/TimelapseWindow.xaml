@@ -139,7 +139,7 @@
 
             </Menu>
             <local:HelpUserControl x:Name="HelpDocument" AllowDrop="True" Drop="HelpDocument_Drop" PreviewDragEnter="HelpDocument_PreviewDrag" PreviewDragOver="HelpDocument_PreviewDrag" Visibility="Visible" Height="Auto" ></local:HelpUserControl>
-            <local:FeedbackCtl x:Name="FeedbackControl" Visibility="Collapsed"  ></local:FeedbackCtl>
+            <local:FeedbackControl x:Name="FeedbackControl" Visibility="Collapsed"  ></local:FeedbackControl>
 
             <StackPanel Margin="0,0,0,0" DockPanel.Dock="Top">
                 <Grid Name="ControlGrid" VerticalAlignment="Stretch" Margin="1,0,-1,0">

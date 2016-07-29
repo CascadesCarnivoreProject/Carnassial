@@ -10,7 +10,7 @@ namespace Timelapse
     /// <summary>
     /// Interaction logic for DialogVideoPlayer.xaml
     /// </summary>
-    public partial class DialogVideoPlayer : Window
+    public partial class WindowVideoPlayer : Window
     {
         #region Public Properties
         // Set the video to display a file.
@@ -59,7 +59,7 @@ namespace Timelapse
         #endregion
 
         #region Initializing, loading and unloading
-        public DialogVideoPlayer(Window owner, string folderPath)
+        public WindowVideoPlayer(Window owner, string folderPath)
         {
             if (owner == null)
             {

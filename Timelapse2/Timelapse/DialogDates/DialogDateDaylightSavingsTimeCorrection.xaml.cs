@@ -12,12 +12,12 @@ namespace Timelapse
     /// This dialog lets a user enter a time change correction of +/-1 hour, which is propagated backwards/forwards.
     /// The current image as set by the user in the radio buttons.
     /// </summary>
-    public partial class DialogDaylightSavingsTimeCorrection : Window
+    public partial class DialogDateDaylightSavingsTimeCorrection : Window
     {
         private int currentImageRow;
         private ImageDatabase database;
 
-        public DialogDaylightSavingsTimeCorrection(ImageDatabase database, ImageTableEnumerator image)
+        public DialogDateDaylightSavingsTimeCorrection(ImageDatabase database, ImageTableEnumerator image)
         {
             this.InitializeComponent();
             this.database = database;

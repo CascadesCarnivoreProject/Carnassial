@@ -15,11 +15,11 @@ namespace Timelapse
     /// <summary>
     /// Interaction logic for DialogRereadDateTimesFromFiles.xaml
     /// </summary>
-    public partial class DialogRereadDateTimesFromFiles : Window
+    public partial class DialogDateRereadFromFiles : Window
     {
         private ImageDatabase database;
 
-        public DialogRereadDateTimesFromFiles(ImageDatabase database)
+        public DialogDateRereadFromFiles(ImageDatabase database)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);

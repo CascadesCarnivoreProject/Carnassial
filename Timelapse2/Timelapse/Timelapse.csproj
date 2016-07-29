@@ -152,11 +152,11 @@
     <Compile Include="MyUserControls\DateChangesFeedbackControl.xaml.cs">
       <DependentUpon>DateChangesFeedbackControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDateTimeLinearCorrection.xaml.cs">
+    <Compile Include="DialogDates\DialogDateTimeLinearCorrection.xaml.cs">
       <DependentUpon>DialogDateTimeLinearCorrection.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogVideoPlayer.xaml.cs">
-      <DependentUpon>DialogVideoPlayer.xaml</DependentUpon>
+    <Compile Include="Windows\WindowVideoPlayer.xaml.cs">
+      <DependentUpon>WindowVideoPlayer.xaml</DependentUpon>
     </Compile>
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Images\BitmapSourceExtensions.cs" />
@@ -182,120 +182,120 @@
     <Compile Include="Database\ColumnTuplesWithWhere.cs" />
     <Compile Include="Database\ImageDatabase.cs" />
     <Compile Include="Database\SearchTerm.cs" />
-    <Compile Include="DialogAboutTimelapse.xaml.cs">
+    <Compile Include="DialogInformation\DialogAboutTimelapse.xaml.cs">
       <DependentUpon>DialogAboutTimelapse.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogChooseDatabaseFile.xaml.cs">
+    <Compile Include="DialogOthers\DialogChooseDatabaseFile.xaml.cs">
       <DependentUpon>DialogChooseDatabaseFile.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogCustomViewFilter.xaml.cs">
+    <Compile Include="DialogOthers\DialogCustomViewFilter.xaml.cs">
       <DependentUpon>DialogCustomViewFilter.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDateSwapDayMonth.xaml.cs">
+    <Compile Include="DialogDates\DialogDateSwapDayMonth.xaml.cs">
       <DependentUpon>DialogDateSwapDayMonth.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDataView.xaml.cs">
+    <Compile Include="DialogInformation\DialogDataView.xaml.cs">
       <DependentUpon>DialogDataView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogRereadDateTimesFromFiles.xaml.cs">
-      <DependentUpon>DialogRereadDateTimesFromFiles.xaml</DependentUpon>
+    <Compile Include="DialogDates\DialogDateRereadFromFiles.xaml.cs">
+      <DependentUpon>DialogDateRereadFromFiles.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDeleteImages.xaml.cs">
+    <Compile Include="DialogOthers\DialogDeleteImages.xaml.cs">
       <DependentUpon>DialogDeleteImages.xaml</DependentUpon>
     </Compile>
     <Page Include="MyUserControls\DateChangesFeedbackControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogAboutTimelapse.xaml">
+    <Page Include="DialogInformation\DialogAboutTimelapse.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogChooseDatabaseFile.xaml">
+    <Page Include="DialogOthers\DialogChooseDatabaseFile.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogCustomViewFilter.xaml">
+    <Page Include="DialogOthers\DialogCustomViewFilter.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateSwapDayMonth.xaml">
+    <Page Include="DialogDates\DialogDateSwapDayMonth.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDataView.xaml">
+    <Page Include="DialogInformation\DialogDataView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateTimeLinearCorrection.xaml">
+    <Page Include="DialogDates\DialogDateTimeLinearCorrection.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="DialogDateTimeFixedCorrection.xaml">
+    <Page Include="DialogDates\DialogDateTimeFixedCorrection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogRereadDateTimesFromFiles.xaml">
+    <Page Include="DialogDates\DialogDateRereadFromFiles.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDeleteImages.xaml">
+    <Page Include="DialogOthers\DialogDeleteImages.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="DialogEditLog.xaml">
+    <Page Include="DialogOthers\DialogEditLog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogImportImageSetXmlFile.xaml">
+    <Page Include="DialogOthers\DialogImportImageSetXmlFile.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="DialogGetTemplateDB.xaml">
+    <Page Include="DialogOthers\DialogGetTemplateDB.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogMessageBox.xaml">
+    <Page Include="DialogInformation\DialogMessageBox.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="DialogExportCsv.xaml">
+    <Page Include="DialogInformation\DialogExportCsv.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogOptionsDarkImagesThreshold.xaml">
+    <Page Include="DialogOthers\DialogOptionsDarkImagesThreshold.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogPopulateFieldWithMetadata.xaml">
+    <Page Include="DialogOthers\DialogPopulateFieldWithMetadata.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogRenameImageDatabaseFile.xaml">
+    <Page Include="DialogOthers\DialogRenameImageDatabaseFile.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogStatisticsOfImageCounts.xaml">
+    <Page Include="DialogInformation\DialogStatisticsOfImageCounts.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDateSwapDayMonthBulk.xaml">
+    <Page Include="DialogDates\DialogDateSwapDayMonthBulk.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogTemplatesDontMatch.xaml">
+    <Page Include="DialogOthers\DialogTemplatesDontMatch.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogDaylightSavingsTimeCorrection.xaml">
+    <Page Include="DialogDates\DialogDateDaylightSavingsTimeCorrection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogVideoPlayer.xaml">
+    <Page Include="Windows\WindowVideoPlayer.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="FeedbackCtl.xaml">
+    <Page Include="MyUserControls\FeedbackControl.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -303,7 +303,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="HelpWindow.xaml">
+    <Page Include="Windows\WindowHelp.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -311,11 +311,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="ControlWindow.xaml">
+    <Page Include="Windows\WindowControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="OptionsWindow.xaml">
+    <Page Include="Windows\WindowOptions.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -335,28 +335,28 @@
     </Compile>
     <Compile Include="Images\MetaTag.cs" />
     <Compile Include="Images\WriteableBitmapExtensions.cs" />
-    <Compile Include="DialogImportImageSetXmlFile.xaml.cs">
+    <Compile Include="DialogOthers\DialogImportImageSetXmlFile.xaml.cs">
       <DependentUpon>DialogImportImageSetXmlFile.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogMessageBox.xaml.cs">
+    <Compile Include="DialogInformation\DialogMessageBox.xaml.cs">
       <DependentUpon>DialogMessageBox.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogOptionsDarkImagesThreshold.xaml.cs">
+    <Compile Include="DialogOthers\DialogOptionsDarkImagesThreshold.xaml.cs">
       <DependentUpon>DialogOptionsDarkImagesThreshold.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogPopulateFieldWithMetadata.xaml.cs">
+    <Compile Include="DialogOthers\DialogPopulateFieldWithMetadata.xaml.cs">
       <DependentUpon>DialogPopulateFieldWithMetadata.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogRenameImageDatabaseFile.xaml.cs">
+    <Compile Include="DialogOthers\DialogRenameImageDatabaseFile.xaml.cs">
       <DependentUpon>DialogRenameImageDatabaseFile.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogTemplatesDontMatch.xaml.cs">
+    <Compile Include="DialogOthers\DialogTemplatesDontMatch.xaml.cs">
       <DependentUpon>DialogTemplatesDontMatch.xaml</DependentUpon>
     </Compile>
     <Compile Include="Images\ExifToolException.cs" />
     <Compile Include="Images\ExifToolWrapper.cs" />
-    <Compile Include="FeedbackCtl.xaml.cs">
-      <DependentUpon>FeedbackCtl.xaml</DependentUpon>
+    <Compile Include="MyUserControls\FeedbackControl.xaml.cs">
+      <DependentUpon>FeedbackControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Database\FileBackup.cs" />
     <Compile Include="Images\ImageDataXml.cs" />
@@ -373,32 +373,32 @@
     <Compile Include="Util\DataEntryNote.cs" />
     <Compile Include="Util\NativeMethods.cs" />
     <Compile Include="Database\CsvReaderWriter.cs" />
-    <Compile Include="DialogDateTimeFixedCorrection.xaml.cs">
+    <Compile Include="DialogDates\DialogDateTimeFixedCorrection.xaml.cs">
       <DependentUpon>DialogDateTimeFixedCorrection.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogEditLog.xaml.cs">
+    <Compile Include="DialogOthers\DialogEditLog.xaml.cs">
       <DependentUpon>DialogEditLog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogGetTemplateDB.xaml.cs">
+    <Compile Include="DialogOthers\DialogGetTemplateDB.xaml.cs">
       <DependentUpon>DialogGetTemplateDB.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogExportCsv.xaml.cs">
+    <Compile Include="DialogInformation\DialogExportCsv.xaml.cs">
       <DependentUpon>DialogExportCsv.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogStatisticsOfImageCounts.xaml.cs">
+    <Compile Include="DialogInformation\DialogStatisticsOfImageCounts.xaml.cs">
       <DependentUpon>DialogStatisticsOfImageCounts.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDateSwapDayMonthBulk.xaml.cs">
+    <Compile Include="DialogDates\DialogDateSwapDayMonthBulk.xaml.cs">
       <DependentUpon>DialogDateSwapDayMonthBulk.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDaylightSavingsTimeCorrection.xaml.cs">
-      <DependentUpon>DialogDaylightSavingsTimeCorrection.xaml</DependentUpon>
+    <Compile Include="DialogDates\DialogDateDaylightSavingsTimeCorrection.xaml.cs">
+      <DependentUpon>DialogDateDaylightSavingsTimeCorrection.xaml</DependentUpon>
     </Compile>
     <Compile Include="MyUserControls\HelpUserControl.xaml.cs">
       <DependentUpon>HelpUserControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="HelpWindow.xaml.cs">
-      <DependentUpon>HelpWindow.xaml</DependentUpon>
+    <Compile Include="Windows\WindowHelp.xaml.cs">
+      <DependentUpon>WindowHelp.xaml</DependentUpon>
     </Compile>
     <Compile Include="Images\MarkableImageCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
@@ -406,11 +406,11 @@
     <Compile Include="MyUserControls\DataEntryControls.xaml.cs">
       <DependentUpon>DataEntryControls.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ControlWindow.xaml.cs">
-      <DependentUpon>ControlWindow.xaml</DependentUpon>
+    <Compile Include="Windows\WindowControl.xaml.cs">
+      <DependentUpon>WindowControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="OptionsWindow.xaml.cs">
-      <DependentUpon>OptionsWindow.xaml</DependentUpon>
+    <Compile Include="Windows\WindowOptions.xaml.cs">
+      <DependentUpon>WindowOptions.xaml</DependentUpon>
     </Compile>
     <Compile Include="Util\TimelapseRegistryUserSettings.cs" />
     <Compile Include="Util\DataEntryHandler.cs">

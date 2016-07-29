@@ -27,7 +27,7 @@ namespace Timelapse
     public partial class TimelapseWindow : Window, IDisposable
     {
         // Handles to the controls window and to the controls
-        private ControlWindow controlWindow;
+        private WindowControl controlWindow;
         private List<MetaTagCounter> counterCoordinates = null;
 
         private DataEntryControls dataEntryControls;
@@ -35,8 +35,8 @@ namespace Timelapse
         private bool disposed;
 
         private string mostRecentImageAddFolderPath;
-        private HelpWindow overviewWindow; // Create the help window. 
-        private OptionsWindow optionsWindow; // Create the options window
+        private WindowHelp overviewWindow; // Create the help window. 
+        private WindowOptions optionsWindow; // Create the options window
         private MarkableImageCanvas markableCanvas;
 
         // Status information concerning the state of the UI
@@ -53,7 +53,7 @@ namespace Timelapse
 
         // Non-modal dialogs
         private DialogDataView dlgDataView;         // The view of the current database contents
-        private DialogVideoPlayer dlgVideoPlayer;  // The video player 
+        private WindowVideoPlayer dlgVideoPlayer;  // The video player 
 
         #region Constructors, Cleaning up, Destructors
         public TimelapseWindow()
@@ -1592,9 +1592,9 @@ namespace Timelapse
 
             int count = 0;
             // If we can't convert it to an int, assume that someone set the default value to eithera non-integer in the template, or that its a space. In either case, revert it to zero.
-            if (Int32.TryParse (counterContent, out count) == false)
+            if (Int32.TryParse(counterContent, out count) == false)
             {
-                count = 0; // 
+                count = 0; 
             }
   
             count++;
@@ -2397,7 +2397,7 @@ namespace Timelapse
                 return;
             }
 
-            DialogDaylightSavingsTimeCorrection dateTimeChange = new DialogDaylightSavingsTimeCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache);
+            DialogDateDaylightSavingsTimeCorrection dateTimeChange = new DialogDateDaylightSavingsTimeCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache);
             this.ShowBulkImageEditDialog(dateTimeChange);
         }
 
@@ -2424,7 +2424,7 @@ namespace Timelapse
                 return;
             }
 
-            DialogRereadDateTimesFromFiles rereadDates = new DialogRereadDateTimesFromFiles(this.dataHandler.ImageDatabase);
+            DialogDateRereadFromFiles rereadDates = new DialogDateRereadFromFiles(this.dataHandler.ImageDatabase);
             this.ShowBulkImageEditDialog(rereadDates);
         }
 
@@ -2441,7 +2441,7 @@ namespace Timelapse
         {
             if (this.optionsWindow == null)
             { 
-                this.optionsWindow = new OptionsWindow(this, this.markableCanvas);
+                this.optionsWindow = new WindowOptions(this, this.markableCanvas);
                 this.optionsWindow.Show();
             } 
             else
@@ -2619,7 +2619,7 @@ namespace Timelapse
             // Check to see if we need to create the Video Player dialog window
             if (this.dlgVideoPlayer == null || this.dlgVideoPlayer.IsLoaded != true)
             {
-                this.dlgVideoPlayer = new DialogVideoPlayer(this, this.FolderPath);
+                this.dlgVideoPlayer = new WindowVideoPlayer(this, this.FolderPath);
                 this.dlgVideoPlayer.Owner = this;
             }
 
@@ -2657,7 +2657,7 @@ namespace Timelapse
                 // Create and show the overview window if it doesn't exist
                 if (this.overviewWindow == null)
                 {
-                    this.overviewWindow = new HelpWindow();
+                    this.overviewWindow = new WindowHelp();
                     this.overviewWindow.Closed += new System.EventHandler(this.OverviewWindow_Closed);
                     this.overviewWindow.Show();
                 }
@@ -2925,7 +2925,7 @@ namespace Timelapse
             // this.controlsTray.Children.Clear();
             this.controlsTray.Children.Remove(this.dataEntryControls);
 
-            this.controlWindow = new ControlWindow(this.state);    // Handles to the control window and to the controls
+            this.controlWindow = new WindowControl(this.state);    // Handles to the control window and to the controls
             this.controlWindow.Owner = this;             // Keeps this window atop its parent no matter what
             this.controlWindow.Closed += this.ControlWindow_Closing;
             this.controlWindow.AddControls(this.dataEntryControls);

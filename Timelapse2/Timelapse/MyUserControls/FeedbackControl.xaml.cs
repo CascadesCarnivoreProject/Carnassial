@@ -7,7 +7,7 @@ namespace Timelapse
     /// <summary>
     /// Interaction logic for the feedback control.
     /// </summary>
-    public partial class FeedbackCtl : UserControl
+    public partial class FeedbackControl : UserControl
     {
         public int ShowProgress
         {
@@ -24,7 +24,7 @@ namespace Timelapse
             set { this.imageImg.Source = value; }
         }
 
-        public FeedbackCtl()
+        public FeedbackControl()
         {
             this.InitializeComponent();
             this.ShowMessage = String.Empty;
