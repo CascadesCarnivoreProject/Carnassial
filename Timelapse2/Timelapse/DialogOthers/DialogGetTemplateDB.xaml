@@ -1,0 +1,28 @@
+﻿<Window x:Class="Timelapse.DialogGetTemplateDB"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Timelapse"
+        Title="Find a TimelapseTemplate.tdb file " 
+        Height="400" Width="750"
+        ResizeMode="NoResize"
+		ShowInTaskbar="False"
+		WindowStartupLocation="CenterOwner" BorderBrush="Black">
+    
+    <DockPanel>
+        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
+                            Icon="Exclamation"
+                            Title="The Timelapse Template (.tdb) file is missing."
+                            Problem="Timelapse needs a template file, as it specifies the codes you will use to code your data. &#10;However, no Timelapse Template .tdb file was found in the folder : "
+                            Solution="1. Click 'Find a Timelapse Template' to search for a TimelapseTemplate.tdb file, which will then be copied into that folder, or&#10;2. Click 'Cancel'. You can then manually create or copy a TimelapseTemplate.tdb file into your folder."
+                            Reason="Your TimelapseTemplate.tdb had likely not been copied into the image folder."
+                            Hint="Your group should have its own project-specific custom code template. If not, you need to create or edit one to fit your needs."
+                            />
+        <DockPanel Name="DockPanelImage">
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">Cancel</Button>
+                <Button Name="OkButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True">Find a Timelapse Template</Button>
+            </StackPanel>
+            <Image Name="imgDateImage" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" DockPanel.Dock="Top" HorizontalAlignment="Stretch" />
+        </DockPanel>
+    </DockPanel>
+</Window>

@@ -1,4 +1,5 @@
-﻿using Microsoft.WindowsAPICodePack.Dialogs;
+﻿#define ShowDebugAssert
+using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -26,7 +27,7 @@ namespace Timelapse
     public partial class TimelapseWindow : Window, IDisposable
     {
         // Handles to the controls window and to the controls
-        private ControlWindow controlWindow;
+        private WindowControl controlWindow;
         private List<MetaTagCounter> counterCoordinates = null;
 
         private DataEntryControls dataEntryControls;
@@ -34,8 +35,8 @@ namespace Timelapse
         private bool disposed;
 
         private string mostRecentImageAddFolderPath;
-        private HelpWindow overviewWindow; // Create the help window. 
-        private OptionsWindow optionsWindow; // Create the options window
+        private WindowHelp overviewWindow; // Create the help window. 
+        private WindowOptions optionsWindow; // Create the options window
         private MarkableImageCanvas markableCanvas;
 
         // Status information concerning the state of the UI
@@ -52,7 +53,7 @@ namespace Timelapse
 
         // Non-modal dialogs
         private DialogDataView dlgDataView;         // The view of the current database contents
-        private DialogVideoPlayer dlgVideoPlayer;  // The video player 
+        private WindowVideoPlayer dlgVideoPlayer;  // The video player 
 
         #region Constructors, Cleaning up, Destructors
         public TimelapseWindow()
@@ -420,7 +421,9 @@ namespace Timelapse
                     }
                     catch (Exception exception)
                     {
-                        Debug.Assert(false, String.Format("Load of {0} failed as it's likely corrupted.", imageProperties.FileName), exception.ToString());
+                        #if ShowDebugAssert
+                            Debug.Assert(false, String.Format("Load of {0} failed as it's likely corrupted.", imageProperties.FileName), exception.ToString());
+                        #endif 
                         bitmapSource = Constants.Images.Corrupt;
                         imageProperties.ImageQuality = ImageFilter.Corrupted;
                     }
@@ -1588,16 +1591,12 @@ namespace Timelapse
             }
 
             int count = 0;
-            try
+            // If we can't convert it to an int, assume that someone set the default value to eithera non-integer in the template, or that its a space. In either case, revert it to zero.
+            if (Int32.TryParse(counterContent, out count) == false)
             {
-                // TODOSAUL: why call Convert.ToInt32() instead of Int32.TryParse()?
-                count = Convert.ToInt32(counterContent);
+                count = 0; 
             }
-            catch (Exception exception)
-            {
-                Debug.Assert(false, String.Format("Counter content '{0}' is not an integer.", counterContent), exception.ToString());
-                count = 0; // If we can't convert it, assume that someone set the default value to a non-integer in the template, and just revert it to zero.
-            }
+  
             count++;
             counterContent = count.ToString();
             this.dataHandler.IsProgrammaticControlUpdate = true;
@@ -2327,24 +2326,27 @@ namespace Timelapse
         /// <summary>Correct the date by specifying an offset</summary>
         private void MenuItemDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
         {
-            // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false ||
-                this.dataHandler.CanBulkEditImages() == false)
+             // Warn user that they are in a filtered view, and verify that they want to continue
+            if (this.TryPromptApplyOperationToThisFilteredView("'Add a fixed correction value to every date/time...'"))
             {
-                if (this.TryPromptAndChangeToBulkEditCompatibleFilter("Add a fixed correction value to every date...",
-                                                                      "To correct the dates, Timelapse must first:") == false)
+                DialogDateTimeFixedCorrection dateCorrection = new DialogDateTimeFixedCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current);
+                if (dateCorrection.Abort)
                 {
+                    DialogMessageBox messageBox = new DialogMessageBox("Can't add a fixed correction value to every date/time...", this);
+                    messageBox.Message.Problem = "Can't add a fixed correction value to every date/time in this filtered view.";
+                    messageBox.Message.Reason = "This operation requires using the current image's date and time fields. " + Environment.NewLine;
+                    messageBox.Message.Reason += "However, " + this.dataHandler.ImageCache.Current.Date + " " + this.dataHandler.ImageCache.Current.Time + " is not a recognizable date/time." + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 dates should look like DD-MMM-YYYY e.g., 16-Jan-2016" + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 times should look like HH:MM:SS using 24 hour time e.g., 01:05:30 or 13:30:00";
+                    messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
+                    messageBox.Message.Hint = "\u2022 Check the format of this image's date and time." + Environment.NewLine;
+                    messageBox.Message.Hint += "\u2022 Or, navigate to another image that has a properly formatted date and time.";
+                    messageBox.Message.Icon = MessageBoxImage.Error;
+                    messageBox.ShowDialog();
                     return;
                 }
+                this.ShowBulkImageEditDialog(dateCorrection);
             }
-
-            // We should be in the right mode for correcting the date
-            DialogDateTimeFixedCorrection dateCorrection = new DialogDateTimeFixedCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current);
-            if (dateCorrection.Abort)
-            {
-                return;
-            }
-            this.ShowBulkImageEditDialog(dateCorrection);
         }
 
         /// <summary>Correct for drifting clock times. Correction applied only to images in the filtered view.</summary>
@@ -2356,6 +2358,15 @@ namespace Timelapse
                 DialogDateTimeLinearCorrection dateCorrection = new DialogDateTimeLinearCorrection(this.dataHandler.ImageDatabase);
                 if (dateCorrection.Abort)
                 {
+                    DialogMessageBox messageBox = new DialogMessageBox("Can't correct for clock drift", this);
+                    messageBox.Message.Problem = "Can't correct for clock drift in this filtered view.";
+                    messageBox.Message.Reason = "All of the images in this filtered view have date/time fields whose contents are not recognizable as dates or times." + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 dates should look like DD-MMM-YYYY e.g., 16-Jan-2016" + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 times should look like HH:MM:SS using 24 hour time e.g., 01:05:30 or 13:30:00";
+                    messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
+                    messageBox.Message.Hint = "Check the format of your dates and times. You may also want to change your filter (if your not viewing All Images)";
+                    messageBox.Message.Icon = MessageBoxImage.Error;
+                    messageBox.ShowDialog();
                     return;
                 }
                 this.ShowBulkImageEditDialog(dateCorrection);
@@ -2386,7 +2397,7 @@ namespace Timelapse
                 return;
             }
 
-            DialogDaylightSavingsTimeCorrection dateTimeChange = new DialogDaylightSavingsTimeCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache);
+            DialogDateDaylightSavingsTimeCorrection dateTimeChange = new DialogDateDaylightSavingsTimeCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache);
             this.ShowBulkImageEditDialog(dateTimeChange);
         }
 
@@ -2413,7 +2424,7 @@ namespace Timelapse
                 return;
             }
 
-            DialogRereadDateTimesFromFiles rereadDates = new DialogRereadDateTimesFromFiles(this.dataHandler.ImageDatabase);
+            DialogDateRereadFromFiles rereadDates = new DialogDateRereadFromFiles(this.dataHandler.ImageDatabase);
             this.ShowBulkImageEditDialog(rereadDates);
         }
 
@@ -2430,7 +2441,7 @@ namespace Timelapse
         {
             if (this.optionsWindow == null)
             { 
-                this.optionsWindow = new OptionsWindow(this, this.markableCanvas);
+                this.optionsWindow = new WindowOptions(this, this.markableCanvas);
                 this.optionsWindow.Show();
             } 
             else
@@ -2562,7 +2573,7 @@ namespace Timelapse
 
         private void MenuItemViewCustomFilter_Click(object sender, RoutedEventArgs e)
         {
-            DialogCustomViewFilter customFilter = new DialogCustomViewFilter(this.dataHandler.ImageDatabase);
+            DialogCustomViewFilter customFilter = new DialogCustomViewFilter(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current.Date);
             customFilter.Owner = this;
             bool? changeToCustomFilter = customFilter.ShowDialog();
             // Set the filter to show all images and a valid image
@@ -2608,7 +2619,7 @@ namespace Timelapse
             // Check to see if we need to create the Video Player dialog window
             if (this.dlgVideoPlayer == null || this.dlgVideoPlayer.IsLoaded != true)
             {
-                this.dlgVideoPlayer = new DialogVideoPlayer(this, this.FolderPath);
+                this.dlgVideoPlayer = new WindowVideoPlayer(this, this.FolderPath);
                 this.dlgVideoPlayer.Owner = this;
             }
 
@@ -2646,7 +2657,7 @@ namespace Timelapse
                 // Create and show the overview window if it doesn't exist
                 if (this.overviewWindow == null)
                 {
-                    this.overviewWindow = new HelpWindow();
+                    this.overviewWindow = new WindowHelp();
                     this.overviewWindow.Closed += new System.EventHandler(this.OverviewWindow_Closed);
                     this.overviewWindow.Show();
                 }
@@ -2780,7 +2791,7 @@ namespace Timelapse
         private bool TryPromptApplyOperationToThisFilteredView(string operationName)
         {
             // If we are showing all images, then no need for showing the warning message
-            if (this.dataHandler.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All)
+            if (this.IsFilterSetToAllImages())
             {
                 return true;
             }
@@ -2805,6 +2816,12 @@ namespace Timelapse
 
             messageBox.Message.Icon = MessageBoxImage.Question;
             return (bool)messageBox.ShowDialog();
+        }
+
+        // Returns true if the current image filter is set to All
+        private bool IsFilterSetToAllImages()
+        {
+            return this.dataHandler.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All;
         }
         #endregion
 
@@ -2908,7 +2925,7 @@ namespace Timelapse
             // this.controlsTray.Children.Clear();
             this.controlsTray.Children.Remove(this.dataEntryControls);
 
-            this.controlWindow = new ControlWindow(this.state);    // Handles to the control window and to the controls
+            this.controlWindow = new WindowControl(this.state);    // Handles to the control window and to the controls
             this.controlWindow.Owner = this;             // Keeps this window atop its parent no matter what
             this.controlWindow.Closed += this.ControlWindow_Closing;
             this.controlWindow.AddControls(this.dataEntryControls);

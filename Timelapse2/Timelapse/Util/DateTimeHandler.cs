@@ -8,6 +8,11 @@ namespace Timelapse.Util
 {
     public class DateTimeHandler
     {
+        public static bool TryFromStandardDateString(string dateTimeAsString, out DateTime dateAsDateTime)
+        {
+            return DateTime.TryParseExact(dateTimeAsString, Constants.Time.DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateAsDateTime);
+        }
+
         public static DateTime FromStandardDateString(string dateTimeAsString)
         {
             return DateTime.ParseExact(dateTimeAsString, Constants.Time.DateFormat, CultureInfo.InvariantCulture);

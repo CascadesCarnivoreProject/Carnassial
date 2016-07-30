@@ -114,7 +114,7 @@ namespace Timelapse.UnitTests
                 Assert.IsFalse(clockDriftCorrection.Abort);
                 this.ShowDialog(timelapse, clockDriftCorrection);
 
-                this.ShowDialog(timelapse, new DialogDaylightSavingsTimeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache));
+                this.ShowDialog(timelapse, new DialogDateDaylightSavingsTimeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache));
                 this.ShowDialog(timelapse, new DialogEditLog(dataHandler.ImageDatabase.ImageSet.Log));
 
                 using (DialogOptionsDarkImagesThreshold darkThreshold = new DialogOptionsDarkImagesThreshold(dataHandler.ImageDatabase, dataHandler.ImageCache.CurrentRow, new TimelapseState()))
@@ -126,7 +126,7 @@ namespace Timelapse.UnitTests
                     this.ShowDialog(timelapse, populateField);
                 }
                 this.ShowDialog(timelapse, new DialogRenameImageDatabaseFile(dataHandler.ImageDatabase.FileName));
-                this.ShowDialog(timelapse, new DialogRereadDateTimesFromFiles(dataHandler.ImageDatabase));
+                this.ShowDialog(timelapse, new DialogDateRereadFromFiles(dataHandler.ImageDatabase));
                 this.ShowDialog(timelapse, new DialogStatisticsOfImageCounts(dataHandler.ImageDatabase.GetImageCountsByQuality()));
                 this.ShowDialog(timelapse, new DialogTemplatesDontMatch(dataHandler.ImageDatabase.TemplateSynchronizationIssues));
 
