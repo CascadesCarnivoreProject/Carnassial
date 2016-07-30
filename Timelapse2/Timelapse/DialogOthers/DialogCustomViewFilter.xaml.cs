@@ -12,6 +12,8 @@ namespace Timelapse
 {
     /// <summary>
     /// Interaction logic for DialogCustomViewFilter.xaml
+    /// Present a dialog that allows a user to create a custom filter by 
+    /// selecting various data fields and the conditions they have to meet to pass the filter. 
     /// </summary>
     public partial class DialogCustomViewFilter : Window
     {
@@ -24,21 +26,30 @@ namespace Timelapse
         private const int ValueColumn = 3;
         private const int SearchCriteriaColumn = 4;
 
+        // To hold the values of passed in arguments
         private ImageDatabase database;
+        private string dateOnCurrentImageAsString = String.Empty;
 
-        public DialogCustomViewFilter(ImageDatabase database)
+        #region Constructors and Loading
+        /// <summary>
+        /// Constructor. Date should be the contents of the date data field of the current image
+        /// </summary>
+        public DialogCustomViewFilter(ImageDatabase database, string date)
         {
             this.database = database;
+            this.dateOnCurrentImageAsString = date; 
             this.InitializeComponent();
         }
 
         // When the window is loaded, add all the controls to it dynamically
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // Adjust this dialog window position 
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            // And now the real work
+            // And now the real work. Restore the custom filter from its last (or default) state
+            // And vs Or conditional
             if (this.database.CustomFilter.TermCombiningOperator == CustomFilterOperator.And)
             {
                 rbAnd.IsChecked = true;
@@ -52,10 +63,11 @@ namespace Timelapse
             rbAnd.Checked += this.AndOrRadioButton_Checked;
             rbOr.Checked += this.AndOrRadioButton_Checked;
 
+            // Create a new row for each search term. 
+            // Each row specifies a particular control and how it can be searched
             int gridRowIndex = 0;
             foreach (SearchTerm searchTerm in this.database.CustomFilter.SearchTerms)
             {
-                // Create a new row, where each row specifies a particular control and how it can be searched
                 // start at 1 as there is already a header row
                 ++gridRowIndex;
                 RowDefinition gridRow = new RowDefinition();
@@ -84,7 +96,7 @@ namespace Timelapse
                 Grid.SetColumn(controlLabel, DialogCustomViewFilter.LabelColumn);
                 this.grid.Children.Add(controlLabel);
 
-                // The operators allowed for the search term
+                // The operators allowed for each search term type
                 string controlType = searchTerm.Type;
                 string[] termOperators;
                 if (controlType == Constants.Control.Counter ||
@@ -151,7 +163,25 @@ namespace Timelapse
                     dateValue.Format = DateTimeFormat.Custom;
                     dateValue.FormatString = Constants.Time.DateFormat;
                     dateValue.IsEnabled = searchTerm.UseForSearching;
-                    dateValue.Value = DateTimeHandler.FromStandardDateString(searchTerm.Value);
+
+                    // The default date used in the datepicker is preferably the date passed into this dialog (i.e., the date on the current image being displayed).,
+                    // If that is not a valid date, fallback the default date (which should be in the correct format, but just in case...) or Now.
+                    DateTime dateAsDateTime;
+                    if (DateTimeHandler.TryFromStandardDateString(this.dateOnCurrentImageAsString, out dateAsDateTime))
+                    {
+                        dateValue.Value = dateAsDateTime;
+                        searchTerm.Value = this.dateOnCurrentImageAsString;
+                    }
+                    else if (DateTimeHandler.TryFromStandardDateString(searchTerm.Value, out dateAsDateTime))
+                    {
+                        dateValue.Value = dateAsDateTime;
+                    }
+                    else
+                    {
+                        dateValue.Value = DateTime.Now;
+                        searchTerm.Value = DateTimeHandler.ToStandardDateString((DateTime)dateValue.Value);
+                    }
+
                     dateValue.ValueChanged += this.Date_SelectedDateChanged;
                     dateValue.TimePickerVisibility = Visibility.Hidden;
                     dateValue.Width = DialogCustomViewFilter.DefaultControlWidth;
@@ -229,7 +259,7 @@ namespace Timelapse
                     throw new NotSupportedException(String.Format("Unhandled control type '{0}'.", controlType));
                 }
 
-                // Search Criteria Column: initially as an empty textblock
+                // Search Criteria Column: initially as an empty textblock. Indicates the constructed query expression for this row
                 TextBlock searchCriteria = new TextBlock();
                 searchCriteria.Width = DialogCustomViewFilter.DefaultSearchCriteriaWidth;
                 searchCriteria.Margin = thickness;
@@ -243,12 +273,15 @@ namespace Timelapse
             }
             this.UpdateSearchCriteriaFeedback();
         }
+        #endregion
 
-        // Value(Counter) Helper function: checks if the text contains only numbers
-        private static bool IsNumbersOnly(string text)
+        #region Query formation callbacks
+        // Radio buttons for determing if we use And or Or
+        private void AndOrRadioButton_Checked(object sender, RoutedEventArgs args)
         {
-            Regex regex = new Regex("[^0-9.-]+"); // regex that matches allowed text
-            return regex.IsMatch(text);
+            RadioButton radioButton = sender as RadioButton;
+            this.database.CustomFilter.TermCombiningOperator = (radioButton == this.rbAnd) ? CustomFilterOperator.And : CustomFilterOperator.Or;
+            this.UpdateSearchCriteriaFeedback();
         }
 
         // Select: When the use checks or unchecks the checkbox for a row
@@ -303,22 +336,7 @@ namespace Timelapse
             args.Handled = IsNumbersOnly(args.Text);
         }
 
-        // Value (Counter) Helper function:  textbox accept only pasted numbers 
-        private void Counter_Paste(object sender, DataObjectPastingEventArgs args)
-        {
-            bool isText = args.SourceDataObject.GetDataPresent(DataFormats.UnicodeText, true);
-            if (!isText)
-            {
-                args.CancelCommand();
-            }
-
-            string text = args.SourceDataObject.GetData(DataFormats.UnicodeText) as string;
-            if (DialogCustomViewFilter.IsNumbersOnly(text))
-            {
-                args.CancelCommand();
-            }
-        }
-
+        // Value (Dates): we need to construct a string DateTime from it
         private void Date_SelectedDateChanged(object sender, RoutedPropertyChangedEventArgs<object> args)
         {
             DateTimePicker datePicker = sender as DateTimePicker;
@@ -334,7 +352,7 @@ namespace Timelapse
             this.UpdateSearchCriteriaFeedback();
         }
 
-        // Value (for FixedChoices): The user has selected a new value 
+        // Value (FixedChoice): The user has selected a new value 
         // - set its corresponding search term in the searchList data structure
         // - update the UI to show the search criteria 
         private void FixedChoice_SelectionChanged(object sender, SelectionChangedEventArgs args)
@@ -345,7 +363,7 @@ namespace Timelapse
             this.UpdateSearchCriteriaFeedback();
         }
 
-        // Value (for Flags): The user has checked or unchecked a new value 
+        // Value (Flags): The user has checked or unchecked a new value 
         // - set its corresponding search term in the searchList data structure
         // - update the UI to show the search criteria 
         private void Flag_CheckedOrUnchecked(object sender, RoutedEventArgs e)
@@ -356,6 +374,18 @@ namespace Timelapse
             this.UpdateSearchCriteriaFeedback();
         }
 
+        // When this button is pressed, all the search terms checkboxes are cleared, which is equivalent to showing all images
+        private void ShowAllButton_Click(object sender, RoutedEventArgs e)
+        {
+            for (int row = 1; row <= this.database.CustomFilter.SearchTerms.Count; row++)
+            {
+                CheckBox select = this.GetGridElement<CheckBox>(DialogCustomViewFilter.SelectColumn, row);
+                select.IsChecked = false;
+            }
+        }
+        #endregion
+
+        #region Search Criteria feedback for each row
         // Updates the search criteria shown across all rows to reflect the contents of the search list,
         // which also show or hides the search term feedback for that row.
         private void UpdateSearchCriteriaFeedback()
@@ -401,15 +431,9 @@ namespace Timelapse
 
             this.btnShowAll.IsEnabled = lastExpression == false;
         }
+        #endregion
 
-        // Radio buttons for determing if we use And or Or
-        private void AndOrRadioButton_Checked(object sender, RoutedEventArgs args)
-        {
-            RadioButton radioButton = sender as RadioButton;
-            this.database.CustomFilter.TermCombiningOperator = (radioButton == this.rbAnd) ? CustomFilterOperator.And : CustomFilterOperator.Or;
-            this.UpdateSearchCriteriaFeedback();
-        }
-
+        #region Ok/Cancel buttons
         // Apply the filter if the Ok button is clicked
         private void OkButton_Click(object sender, RoutedEventArgs args)
         {
@@ -422,20 +446,37 @@ namespace Timelapse
         {
             this.DialogResult = false;
         }
+        #endregion
 
+        #region Helper functions
+        // Get the corresponding grid element from a given a column, row, 
         private TElement GetGridElement<TElement>(int column, int row) where TElement : UIElement
         {
             return (TElement)this.grid.Children.Cast<UIElement>().First(control => Grid.GetRow(control) == row && Grid.GetColumn(control) == column);
         }
 
-        // When this button is pressed, all the search terms checkboxes are cleared, which is equivalent to showing all images
-        private void ShowAllButton_Click(object sender, RoutedEventArgs e)
+        // Value (Counter) Helper function:  textbox accept only pasted numbers 
+        private void Counter_Paste(object sender, DataObjectPastingEventArgs args)
         {
-            for (int row = 1; row <= this.database.CustomFilter.SearchTerms.Count; row++)
+            bool isText = args.SourceDataObject.GetDataPresent(DataFormats.UnicodeText, true);
+            if (!isText)
             {
-                CheckBox select = this.GetGridElement<CheckBox>(DialogCustomViewFilter.SelectColumn, row);
-                select.IsChecked = false;
+                args.CancelCommand();
+            }
+
+            string text = args.SourceDataObject.GetData(DataFormats.UnicodeText) as string;
+            if (DialogCustomViewFilter.IsNumbersOnly(text))
+            {
+                args.CancelCommand();
             }
         }
+
+        // Value(Counter) Helper function: checks if the text contains only numbers
+        private static bool IsNumbersOnly(string text)
+        {
+            Regex regex = new Regex("[^0-9.-]+"); // regex that matches allowed text
+            return regex.IsMatch(text);
+        }
+        #endregion
     }
 }

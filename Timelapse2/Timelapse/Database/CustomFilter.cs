@@ -19,7 +19,6 @@ namespace Timelapse.Database
         /// <summary>
         /// Create a CustomFilter, where we build a list of potential search terms based on the controls found in the sorted template table
         /// The search term will be used only if its 'UseForSearching' field is true
-        /// The initial date to display is passed into the constructor
         /// </summary>
         public CustomFilter(DataTableBackedList<ControlRow> templateTable, CustomFilterOperator termCombiningOperator)
         {
@@ -30,7 +29,7 @@ namespace Timelapse.Database
             foreach (ControlRow control in templateTable)
             {
                 string controlType = control.Type;
-                // SAUL TODO: if we want to disable DATE in CustomFilter, add controlType == Constants.DatabaseColumn.Date)  // 
+                // If we want to disable any controls from appearing in the CustomFilter, add it here  // 
                 if (controlType == Constants.DatabaseColumn.Folder ||
                     controlType == Constants.DatabaseColumn.Time) 
                 {
@@ -47,8 +46,10 @@ namespace Timelapse.Database
                 }
                 else if (controlType == Constants.DatabaseColumn.Date)
                 {
-                    // most likely case for date filtering is to select files from the most recent station service
-                    // as a default, assume a roughly monthly servicing cadence
+                    // The Custom Filter dialog will try to replace this default with the date on the current image.
+                    // However, if that date is not a valid one, it will revert to this default, which is a month before the current date. 
+                    // The assumption behind that default is that the cameras have a roughly monthly servicing cadence, which in practice is the
+                    // case for only a few users. 
                     defaultValue = DateTimeHandler.ToStandardDateString(DateTime.Now - TimeSpan.FromDays(30));
                     termOperator = Constants.SearchTermOperator.GreaterThanOrEqual;
                 }
@@ -70,6 +71,7 @@ namespace Timelapse.Database
             }
         }
 
+        // Dates require special treatment
         public void FilterByDate(DataTable images)
         {
             SearchTerm dateTerm = this.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.Date);
@@ -114,7 +116,7 @@ namespace Timelapse.Database
             }
         }
 
-        // Create and return the query from the search term list
+        // Create and return the query composed from the search term list
         public string GetImagesWhere(out bool dateFilteringRequired)
         {
             dateFilteringRequired = false;
@@ -158,13 +160,14 @@ namespace Timelapse.Database
                             throw new NotSupportedException(String.Format("Unhandled logical operator {0}.", this.TermCombiningOperator));
                     }
                 }
-
                 where += whereForTerm;
             }
             return where.Trim();
         }
 
         // return SQL expressions to database equivalents
+        // this is needed as the searchterm operators are unicodes representing symbols rather than real opeators 
+        // e.g., \u003d is the symbol for '='
         private string TermToSqlOperator(string expression)
         {
             switch (expression)

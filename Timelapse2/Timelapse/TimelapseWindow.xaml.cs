@@ -2573,7 +2573,7 @@ namespace Timelapse
 
         private void MenuItemViewCustomFilter_Click(object sender, RoutedEventArgs e)
         {
-            DialogCustomViewFilter customFilter = new DialogCustomViewFilter(this.dataHandler.ImageDatabase);
+            DialogCustomViewFilter customFilter = new DialogCustomViewFilter(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current.Date);
             customFilter.Owner = this;
             bool? changeToCustomFilter = customFilter.ShowDialog();
             // Set the filter to show all images and a valid image
