@@ -149,6 +149,9 @@
     <Compile Include="Database\ImageSetRow.cs" />
     <Compile Include="Database\MarkerRow.cs" />
     <Compile Include="Database\VideoRow.cs" />
+    <Compile Include="DialogDates\DialogDateCorrectAmbiguous.xaml.cs">
+      <DependentUpon>DialogDateCorrectAmbiguous.xaml</DependentUpon>
+    </Compile>
     <Compile Include="MyUserControls\DateChangesFeedbackControl.xaml.cs">
       <DependentUpon>DateChangesFeedbackControl.xaml</DependentUpon>
     </Compile>
@@ -203,6 +206,10 @@
     <Compile Include="DialogOthers\DialogDeleteImages.xaml.cs">
       <DependentUpon>DialogDeleteImages.xaml</DependentUpon>
     </Compile>
+    <Page Include="DialogDates\DialogDateCorrectAmbiguous.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MyUserControls\DateChangesFeedbackControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
