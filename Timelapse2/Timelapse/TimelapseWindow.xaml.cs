@@ -478,15 +478,19 @@ namespace Timelapse
                 if (unambiguousDayMonthOrder == false)
                 {
                     DialogMessageBox messageBox = new DialogMessageBox("Timelapse was unsure about the month / day order of your file(s) dates.", this);
-                    messageBox.Message.Problem = "Timelapse is extracting the dates from your files. However, it cannot tell if the dates are in day/month order, or month/day order.";
-                    messageBox.Message.Reason = "File date formats can be ambiguous. For example, is 2016/03/05 March 5 or May 3?";
-                    messageBox.Message.Solution = "If Timelapse gets it wrong, you can correct the dates by choosing" + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 Edit Menu -> Dates -> Swap Day and Month.";
+                    messageBox.Message.Problem = "Timelapse is extracting the dates from your files. However, File date formats can be ambiguous: is 2016/03/05 March 5 or May 3?";
+                    messageBox.Message.Problem += "Timelapse tries its best by using the date format specified in the Windows Control Panel";
+                    messageBox.Message.Solution = "If the month/day order is wrong, you can correct the dates by choosing" + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 Edit -> Date correction -> Correct ambiguous dates.";
+                    messageBox.Message.Solution += "Alternately, go to your Windows Control Panel" + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 go to your Windows Control Panel" + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 change the short date format in the Windows Control Panel to match the correct date shown in the image e.g., to yyyy-MM-dd.";
+                    messageBox.Message.Solution += "\u2022 then select 'Edit/Date correction/Reread dates from files...' and see if it fixed the problem.";
                     messageBox.Message.Hint = "If you are unsure about the correct date, try the following." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 If your camera prints the date on the image, check that." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 Look at the files to see what season it is (e.g., winter vs. summer)." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 Examine the creation date of the file." + Environment.NewLine;
+                    messageBox.Message.Hint += "\u2022 If your camera prints the date on the image or video, check that." + Environment.NewLine;
+                    messageBox.Message.Hint += "\u2022 Look at the image / video to see what season it is (e.g., winter vs. summer)." + Environment.NewLine;
                     messageBox.Message.Hint += "\u2022 Check your own records.";
+
                     messageBox.Message.Icon = MessageBoxImage.Information;
                     messageBox.ShowDialog();
                 }
@@ -2409,20 +2413,16 @@ namespace Timelapse
             if (this.TryPromptApplyOperationToThisFilteredView("'Correct ambiguous dates...'"))
             {
                 DialogDateCorrectAmbiguous dateCorrection = new DialogDateCorrectAmbiguous(this.dataHandler.ImageDatabase);
-                //if (dateCorrection.Abort)
-                //{
-                //    DialogMessageBox messageBox = new DialogMessageBox("Can't correct for clock drift", this);
-                //    messageBox.Message.Problem = "Can't correct for clock drift in this filtered view.";
-                //    messageBox.Message.Reason = "All of the images in this filtered view have date/time fields whose contents are not recognizable as dates or times." + Environment.NewLine;
-                //    messageBox.Message.Reason += "\u2022 dates should look like DD-MMM-YYYY e.g., 16-Jan-2016" + Environment.NewLine;
-                //    messageBox.Message.Reason += "\u2022 times should look like HH:MM:SS using 24 hour time e.g., 01:05:30 or 13:30:00";
-                //    messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
-                //    messageBox.Message.Hint = "Check the format of your dates and times. You may also want to change your filter (if your not viewing All Images)";
-                //    messageBox.Message.Icon = MessageBoxImage.Error;
-                //    messageBox.ShowDialog();
-                //    return;
-                //}
-                this.ShowBulkImageEditDialog(dateCorrection);
+                if (dateCorrection.Abort)
+                {
+                    DialogMessageBox messageBox = new DialogMessageBox("No ambiguous dates found", this);
+                    messageBox.Message.What = "No ambiguous dates found.";
+                    messageBox.Message.Reason = "All of the images in this filtered view have unambguous date fields." + Environment.NewLine;
+                    messageBox.Message.Icon = MessageBoxImage.Information;
+                    messageBox.ShowDialog();
+                    return;
+                 }
+                 this.ShowBulkImageEditDialog(dateCorrection);
             }
         }
 
