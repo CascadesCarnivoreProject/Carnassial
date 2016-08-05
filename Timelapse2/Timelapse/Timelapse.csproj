@@ -194,9 +194,6 @@
     <Compile Include="DialogOthers\DialogCustomViewFilter.xaml.cs">
       <DependentUpon>DialogCustomViewFilter.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogDates\DialogDateSwapDayMonth.xaml.cs">
-      <DependentUpon>DialogDateSwapDayMonth.xaml</DependentUpon>
-    </Compile>
     <Compile Include="DialogInformation\DialogDataView.xaml.cs">
       <DependentUpon>DialogDataView.xaml</DependentUpon>
     </Compile>
@@ -223,10 +220,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="DialogOthers\DialogCustomViewFilter.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="DialogDates\DialogDateSwapDayMonth.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -283,10 +276,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="DialogInformation\DialogStatisticsOfImageCounts.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="DialogDates\DialogDateSwapDayMonthBulk.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -394,9 +383,6 @@
     </Compile>
     <Compile Include="DialogInformation\DialogStatisticsOfImageCounts.xaml.cs">
       <DependentUpon>DialogStatisticsOfImageCounts.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="DialogDates\DialogDateSwapDayMonthBulk.xaml.cs">
-      <DependentUpon>DialogDateSwapDayMonthBulk.xaml</DependentUpon>
     </Compile>
     <Compile Include="DialogDates\DialogDateDaylightSavingsTimeCorrection.xaml.cs">
       <DependentUpon>DialogDateDaylightSavingsTimeCorrection.xaml</DependentUpon>

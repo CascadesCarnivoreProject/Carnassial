@@ -2036,6 +2036,7 @@ namespace Timelapse
         private void MenuItemExit_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+            Application.Current.Shutdown();
         }
 
         private bool ShowFolderSelectionDialog(out string folderPath)
@@ -2310,24 +2311,6 @@ namespace Timelapse
             }
         }
 
-        /// <summary>Swap the day / fields if possible</summary>
-        private void MenuItemSwapDayMonth_Click(object sender, RoutedEventArgs e)
-        {
-            // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false ||
-                this.dataHandler.CanBulkEditImages() == false)
-            {
-                if (this.TryPromptAndChangeToBulkEditCompatibleFilter("Swap the day / month...",
-                                                                      "To swap the day / month, Timelapse must first:") == false)
-                {
-                    return;
-                }
-            }
-
-            DialogDateSwapDayMonthBulk swapDayMonth = new DialogDateSwapDayMonthBulk(this.dataHandler.ImageDatabase);
-            this.ShowBulkImageEditDialog(swapDayMonth);
-        }
-
         /// <summary>Correct the date by specifying an offset</summary>
         private void MenuItemDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
         {
@@ -2418,25 +2401,14 @@ namespace Timelapse
                     DialogMessageBox messageBox = new DialogMessageBox("No ambiguous dates found", this);
                     messageBox.Message.What = "No ambiguous dates found.";
                     messageBox.Message.Reason = "All of the images in this filtered view have unambguous date fields." + Environment.NewLine;
+                    messageBox.Message.Result = "No corrections needed, and no changes have been made." + Environment.NewLine;
                     messageBox.Message.Icon = MessageBoxImage.Information;
                     messageBox.ShowDialog();
+                    messageBox.Close();
                     return;
                  }
                  this.ShowBulkImageEditDialog(dateCorrection);
             }
-        }
-
-        private void MenuItemCheckModifyAmbiguousDates_Click(object sender, RoutedEventArgs e)
-        {
-            // If we are not in the filter all view, tell the user. Selecting ok will shift the views..
-            if (this.dataHandler.CanBulkEditImages() == false &&
-                this.TryPromptAndChangeToAllFilter("Check and modify ambiguous dates...", "To check and modify ambiguous dates:", false) == false)
-            {
-                return;
-            }
-
-            DialogDateSwapDayMonth modifyDates = new DialogDateSwapDayMonth(this.dataHandler.ImageDatabase);
-            this.ShowBulkImageEditDialog(modifyDates);
         }
 
         private void MenuItemRereadDatesfromImages_Click(object sender, RoutedEventArgs e)
