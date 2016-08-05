@@ -16,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Timelapse.Database;
+using Timelapse.DialogDates;
 using Timelapse.Images;
 using Timelapse.Util;
 
@@ -477,15 +478,19 @@ namespace Timelapse
                 if (unambiguousDayMonthOrder == false)
                 {
                     DialogMessageBox messageBox = new DialogMessageBox("Timelapse was unsure about the month / day order of your file(s) dates.", this);
-                    messageBox.Message.Problem = "Timelapse is extracting the dates from your files. However, it cannot tell if the dates are in day/month order, or month/day order.";
-                    messageBox.Message.Reason = "File date formats can be ambiguous. For example, is 2016/03/05 March 5 or May 3?";
-                    messageBox.Message.Solution = "If Timelapse gets it wrong, you can correct the dates by choosing" + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 Edit Menu -> Dates -> Swap Day and Month.";
+                    messageBox.Message.Problem = "Timelapse is extracting the dates from your files. However, File date formats can be ambiguous: is 2016/03/05 March 5 or May 3?";
+                    messageBox.Message.Problem += "Timelapse tries its best by using the date format specified in the Windows Control Panel";
+                    messageBox.Message.Solution = "If the month/day order is wrong, you can correct the dates by choosing" + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 Edit -> Date correction -> Correct ambiguous dates.";
+                    messageBox.Message.Solution += "Alternately, go to your Windows Control Panel" + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 go to your Windows Control Panel" + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 change the short date format in the Windows Control Panel to match the correct date shown in the image e.g., to yyyy-MM-dd.";
+                    messageBox.Message.Solution += "\u2022 then select 'Edit/Date correction/Reread dates from files...' and see if it fixed the problem.";
                     messageBox.Message.Hint = "If you are unsure about the correct date, try the following." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 If your camera prints the date on the image, check that." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 Look at the files to see what season it is (e.g., winter vs. summer)." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 Examine the creation date of the file." + Environment.NewLine;
+                    messageBox.Message.Hint += "\u2022 If your camera prints the date on the image or video, check that." + Environment.NewLine;
+                    messageBox.Message.Hint += "\u2022 Look at the image / video to see what season it is (e.g., winter vs. summer)." + Environment.NewLine;
                     messageBox.Message.Hint += "\u2022 Check your own records.";
+
                     messageBox.Message.Icon = MessageBoxImage.Information;
                     messageBox.ShowDialog();
                 }
@@ -2031,6 +2036,7 @@ namespace Timelapse
         private void MenuItemExit_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+            Application.Current.Shutdown();
         }
 
         private bool ShowFolderSelectionDialog(out string folderPath)
@@ -2305,24 +2311,6 @@ namespace Timelapse
             }
         }
 
-        /// <summary>Swap the day / fields if possible</summary>
-        private void MenuItemSwapDayMonth_Click(object sender, RoutedEventArgs e)
-        {
-            // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.dataHandler.ImageCache.Current.IsDisplayable() == false ||
-                this.dataHandler.CanBulkEditImages() == false)
-            {
-                if (this.TryPromptAndChangeToBulkEditCompatibleFilter("Swap the day / month...",
-                                                                      "To swap the day / month, Timelapse must first:") == false)
-                {
-                    return;
-                }
-            }
-
-            DialogDateSwapDayMonthBulk swapDayMonth = new DialogDateSwapDayMonthBulk(this.dataHandler.ImageDatabase);
-            this.ShowBulkImageEditDialog(swapDayMonth);
-        }
-
         /// <summary>Correct the date by specifying an offset</summary>
         private void MenuItemDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
         {
@@ -2401,17 +2389,26 @@ namespace Timelapse
             this.ShowBulkImageEditDialog(dateTimeChange);
         }
 
-        private void MenuItemCheckModifyAmbiguousDates_Click(object sender, RoutedEventArgs e)
+        // Correct ambiguous dates dialog (i.e. dates that could be read as either month/day or day/month
+        private void MenuItemCorrectAmbiguousDates_Click(object sender, RoutedEventArgs e)
         {
-            // If we are not in the filter all view, tell the user. Selecting ok will shift the views..
-            if (this.dataHandler.CanBulkEditImages() == false &&
-                this.TryPromptAndChangeToAllFilter("Check and modify ambiguous dates...", "To check and modify ambiguous dates:", false) == false)
+            // Warn user that they are in a filtered view, and verify that they want to continue
+            if (this.TryPromptApplyOperationToThisFilteredView("'Correct ambiguous dates...'"))
             {
-                return;
+                DialogDateCorrectAmbiguous dateCorrection = new DialogDateCorrectAmbiguous(this.dataHandler.ImageDatabase);
+                if (dateCorrection.Abort)
+                {
+                    DialogMessageBox messageBox = new DialogMessageBox("No ambiguous dates found", this);
+                    messageBox.Message.What = "No ambiguous dates found.";
+                    messageBox.Message.Reason = "All of the images in this filtered view have unambguous date fields." + Environment.NewLine;
+                    messageBox.Message.Result = "No corrections needed, and no changes have been made." + Environment.NewLine;
+                    messageBox.Message.Icon = MessageBoxImage.Information;
+                    messageBox.ShowDialog();
+                    messageBox.Close();
+                    return;
+                 }
+                 this.ShowBulkImageEditDialog(dateCorrection);
             }
-
-            DialogDateSwapDayMonth modifyDates = new DialogDateSwapDayMonth(this.dataHandler.ImageDatabase);
-            this.ShowBulkImageEditDialog(modifyDates);
         }
 
         private void MenuItemRereadDatesfromImages_Click(object sender, RoutedEventArgs e)

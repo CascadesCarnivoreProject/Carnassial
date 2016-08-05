@@ -23,6 +23,9 @@ namespace Timelapse
     /// </summary>
     public partial class DateChangesFeedbackControl : UserControl
     {
+        // Whether to show the difference column
+        public bool ShowDifferenceColumn { get; set; }
+
         // This collection will hold tuples, where each tuple contains the contents for a row that will be shown in the datagrid  
         private ObservableCollection<FeedbackRowTuple> feedbackRows;
 
@@ -51,6 +54,10 @@ namespace Timelapse
             this.feedbackGrid.Columns[2].Header = "Original date/time";
             this.feedbackGrid.Columns[3].Header = "New date/time";
             this.feedbackGrid.Columns[4].Header = "Difference";
+            if (this.ShowDifferenceColumn == false)
+            {
+                this.feedbackGrid.Columns[4].Visibility = Visibility.Collapsed;
+            }
         }
 
         // This class defines a row tuple containing 5 elements, which is used as a row in the datagrid.
