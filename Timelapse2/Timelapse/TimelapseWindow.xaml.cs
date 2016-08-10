@@ -713,7 +713,7 @@ namespace Timelapse
                 }
 
                 StatusBarUpdate.View(this.statusBar, status);
-                this.MenuItemViewSetSelected(filter);
+                this.MenuItemFilterSetSelected(filter);
                 this.RefreshDataViewDialogWindow();  // If its displayed, update the window that shows the filtered view data base
             }
             else
@@ -1423,9 +1423,9 @@ namespace Timelapse
             // NOTE: this must be kept in sync with 
             if (this.MenuItemExit.IsVisible || // file menu
                 this.MenuItemCopyPreviousValues.IsVisible || // edit menu
-                this.MenuItemViewFilteredDatabaseContents.IsVisible || // options menu
+                this.MenuItemControlsInSeparateWindow.IsVisible || // options menu
                 this.MenuItemViewNextImage.IsVisible || // view menu
-                this.MenuItemViewAllImages.IsVisible || // filter menu, and then the help menu...
+                this.MenuItemFilterAllImages.IsVisible || // filter menu, and then the help menu...
                 this.MenuItemOverview.IsVisible)
             {
                 return true;
@@ -2449,15 +2449,15 @@ namespace Timelapse
         #endregion
 
         #region View Menu Callbacks
-        private void View_SubmenuOpening(object sender, RoutedEventArgs e)
+        private void Filter_SubmenuOpening(object sender, RoutedEventArgs e)
         {
             Dictionary<ImageFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCountsByQuality();
 
-            this.MenuItemViewLightImages.IsEnabled = counts[ImageFilter.Ok] > 0;
-            this.MenuItemViewDarkImages.IsEnabled = counts[ImageFilter.Dark] > 0;
-            this.MenuItemViewCorruptedImages.IsEnabled = counts[ImageFilter.Corrupted] > 0;
-            this.MenuItemViewMissingImages.IsEnabled = counts[ImageFilter.Missing] > 0;
-            this.MenuItemViewImagesMarkedForDeletion.IsEnabled = this.dataHandler.ImageDatabase.GetImageCount(ImageFilter.MarkedForDeletion) > 0;
+            this.MenuItemFilterLightImages.IsEnabled = counts[ImageFilter.Ok] > 0;
+            this.MenuItemFilterDarkImages.IsEnabled = counts[ImageFilter.Dark] > 0;
+            this.MenuItemFilterCorruptedImages.IsEnabled = counts[ImageFilter.Corrupted] > 0;
+            this.MenuItemFilterMissingImages.IsEnabled = counts[ImageFilter.Missing] > 0;
+            this.MenuItemFilterImagesMarkedForDeletion.IsEnabled = this.dataHandler.ImageDatabase.GetImageCount(ImageFilter.MarkedForDeletion) > 0;
         }
 
         private void MenuItemZoomIn_Click(object sender, RoutedEventArgs e)
@@ -2506,85 +2506,6 @@ namespace Timelapse
             this.ViewCombinedDifference();
         }
 
-        /// <summary>Select the appropriate filter and update the view</summary>
-        private void MenuItemView_Click(object sender, RoutedEventArgs e)
-        {
-            MenuItem item = (MenuItem)sender;
-            ImageFilter filter;
-            // find out which filter was selected
-            if (item == this.MenuItemViewAllImages)
-            {
-                filter = ImageFilter.All;
-            }
-            else if (item == this.MenuItemViewLightImages)
-            {
-                filter = ImageFilter.Ok;
-            }
-            else if (item == this.MenuItemViewCorruptedImages)
-            {
-                filter = ImageFilter.Corrupted;
-            }
-            else if (item == this.MenuItemViewDarkImages)
-            {
-                filter = ImageFilter.Dark;
-            }
-            else if (item == this.MenuItemViewMissingImages)
-            {
-                filter = ImageFilter.Missing;
-            }
-            else if (item == this.MenuItemViewImagesMarkedForDeletion)
-            {
-                filter = ImageFilter.MarkedForDeletion;
-            }
-            else
-            {
-                filter = ImageFilter.All;   // Just in case
-            }
-
-            // Treat the checked status as a radio button i.e., toggle their states so only the clicked menu item is checked.
-            this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, filter);  // Go to the first result (i.e., index 0) in the given filter set
-        }
-
-        // helper function to put a checkbox on the currently selected menu item i.e., to make it behave like a radiobutton menu
-        private void MenuItemViewSetSelected(MenuItem checked_item)
-        {
-            this.MenuItemViewAllImages.IsChecked = (this.MenuItemViewAllImages == checked_item) ? true : false;
-            this.MenuItemViewCorruptedImages.IsChecked = (this.MenuItemViewCorruptedImages == checked_item) ? true : false;
-            this.MenuItemViewDarkImages.IsChecked = (this.MenuItemViewDarkImages == checked_item) ? true : false;
-            this.MenuItemViewLightImages.IsChecked = (this.MenuItemViewLightImages == checked_item) ? true : false;
-            this.MenuItemViewImagesMarkedForDeletion.IsChecked = (this.MenuItemViewImagesMarkedForDeletion == checked_item) ? true : false;
-            this.MenuItemView.IsChecked = false;
-        }
-
-        // helper function to put a checkbox on the currently selected menu item i.e., to make it behave like a radiobutton menu
-        private void MenuItemViewSetSelected(ImageFilter filter)
-        {
-            this.MenuItemViewAllImages.IsChecked = (filter == ImageFilter.All) ? true : false;
-            this.MenuItemViewCorruptedImages.IsChecked = (filter == ImageFilter.Corrupted) ? true : false;
-            this.MenuItemViewDarkImages.IsChecked = (filter == ImageFilter.Dark) ? true : false;
-            this.MenuItemViewLightImages.IsChecked = (filter == ImageFilter.Ok) ? true : false;
-            this.MenuItemViewMissingImages.IsChecked = (filter == ImageFilter.Missing) ? true : false;
-            this.MenuItemViewImagesMarkedForDeletion.IsChecked = (filter == ImageFilter.MarkedForDeletion) ? true : false;
-            this.MenuItemViewCustomFilter.IsChecked = (filter == ImageFilter.Custom) ? true : false;
-        }
-
-        private void MenuItemViewCustomFilter_Click(object sender, RoutedEventArgs e)
-        {
-            DialogCustomViewFilter customFilter = new DialogCustomViewFilter(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current.Date);
-            customFilter.Owner = this;
-            bool? changeToCustomFilter = customFilter.ShowDialog();
-            // Set the filter to show all images and a valid image
-            if (changeToCustomFilter == true)
-            {
-                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.Custom);
-            }
-            else
-            {
-                // Resets the checked menu item filter to the currently active filter 
-                this.MenuItemViewSetSelected(this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
-            }
-        }
-
         /// <summary>Show a dialog box telling the user how many images were loaded, etc.</summary>
         public void MenuItemImageCounts_Click(object sender, RoutedEventArgs e)
         {
@@ -2592,20 +2513,6 @@ namespace Timelapse
             DialogStatisticsOfImageCounts imageStats = new DialogStatisticsOfImageCounts(counts);
             imageStats.Owner = this;
             imageStats.ShowDialog();
-        }
-
-        /// <summary>Display the dialog showing the filtered view of the current database contents</summary>
-        private void MenuItemViewFilteredDatabaseContents_Click(object sender, RoutedEventArgs e)
-        {
-            if (this.dlgDataView != null && this.dlgDataView.IsLoaded)
-            {
-                this.RefreshDataViewDialogWindow(); // If its already displayed, just refresh it.
-                return;
-            }
-            // We need to create it
-            this.dlgDataView = new DialogDataView(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache);
-            this.dlgDataView.Owner = this;
-            this.dlgDataView.Show();
         }
 
         // Display the Video Player Window
@@ -2629,7 +2536,7 @@ namespace Timelapse
                 this.dlgVideoPlayer.WindowState = WindowState.Normal;
             }
             else
-            { 
+            {
                 this.dlgVideoPlayer.Show();
             }
         }
@@ -2643,6 +2550,103 @@ namespace Timelapse
             }
             this.dlgVideoPlayer.CurrentRow = this.dataHandler.ImageCache.Current;
         }
+        #endregion
+
+        #region Filter Menu
+        /// <summary>Select the appropriate filter and update the view</summary>
+        private void MenuItemFilter_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem item = (MenuItem)sender;
+            ImageFilter filter;
+            // find out which filter was selected
+            if (item == this.MenuItemFilterAllImages)
+            {
+                filter = ImageFilter.All;
+            }
+            else if (item == this.MenuItemFilterLightImages)
+            {
+                filter = ImageFilter.Ok;
+            }
+            else if (item == this.MenuItemFilterCorruptedImages)
+            {
+                filter = ImageFilter.Corrupted;
+            }
+            else if (item == this.MenuItemFilterDarkImages)
+            {
+                filter = ImageFilter.Dark;
+            }
+            else if (item == this.MenuItemFilterMissingImages)
+            {
+                filter = ImageFilter.Missing;
+            }
+            else if (item == this.MenuItemFilterImagesMarkedForDeletion)
+            {
+                filter = ImageFilter.MarkedForDeletion;
+            }
+            else
+            {
+                filter = ImageFilter.All;   // Just in case
+            }
+
+            // Treat the checked status as a radio button i.e., toggle their states so only the clicked menu item is checked.
+            this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, filter);  // Go to the first result (i.e., index 0) in the given filter set
+        }
+
+        // helper function to put a checkbox on the currently selected menu item i.e., to make it behave like a radiobutton menu
+        private void MenuItemFilterSetSelected(MenuItem checked_item)
+        {
+            this.MenuItemFilterAllImages.IsChecked = (this.MenuItemFilterAllImages == checked_item) ? true : false;
+            this.MenuItemFilterCorruptedImages.IsChecked = (this.MenuItemFilterCorruptedImages == checked_item) ? true : false;
+            this.MenuItemFilterDarkImages.IsChecked = (this.MenuItemFilterDarkImages == checked_item) ? true : false;
+            this.MenuItemFilterLightImages.IsChecked = (this.MenuItemFilterLightImages == checked_item) ? true : false;
+            this.MenuItemFilterImagesMarkedForDeletion.IsChecked = (this.MenuItemFilterImagesMarkedForDeletion == checked_item) ? true : false;
+            this.MenuItemView.IsChecked = false;
+        }
+
+        // helper function to put a checkbox on the currently selected menu item i.e., to make it behave like a radiobutton menu
+        private void MenuItemFilterSetSelected(ImageFilter filter)
+        {
+            this.MenuItemFilterAllImages.IsChecked = (filter == ImageFilter.All) ? true : false;
+            this.MenuItemFilterCorruptedImages.IsChecked = (filter == ImageFilter.Corrupted) ? true : false;
+            this.MenuItemFilterDarkImages.IsChecked = (filter == ImageFilter.Dark) ? true : false;
+            this.MenuItemFilterLightImages.IsChecked = (filter == ImageFilter.Ok) ? true : false;
+            this.MenuItemFilterMissingImages.IsChecked = (filter == ImageFilter.Missing) ? true : false;
+            this.MenuItemFilterImagesMarkedForDeletion.IsChecked = (filter == ImageFilter.MarkedForDeletion) ? true : false;
+            this.MenuItemFilterCustomFilter.IsChecked = (filter == ImageFilter.Custom) ? true : false;
+        }
+
+        private void MenuItemFilterCustomFilter_Click(object sender, RoutedEventArgs e)
+        {
+            DialogCustomViewFilter customFilter = new DialogCustomViewFilter(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current.Date);
+            customFilter.Owner = this;
+            bool? changeToCustomFilter = customFilter.ShowDialog();
+            // Set the filter to show all images and a valid image
+            if (changeToCustomFilter == true)
+            {
+                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.Custom);
+            }
+            else
+            {
+                // Resets the checked menu item filter to the currently active filter 
+                this.MenuItemFilterSetSelected(this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
+            }
+        }
+
+        /// <summary>Display the dialog showing the filtered view of the current database contents</summary>
+        private void MenuItemViewFilteredDatabaseContents_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.dlgDataView != null && this.dlgDataView.IsLoaded)
+            {
+                this.RefreshDataViewDialogWindow(); // If its already displayed, just refresh it.
+                return;
+            }
+            // We need to create it
+            this.dlgDataView = new DialogDataView(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache);
+            this.dlgDataView.Owner = this;
+            this.dlgDataView.Show();
+        }
+
+
         #endregion
 
         #region Help Menu Callbacks
