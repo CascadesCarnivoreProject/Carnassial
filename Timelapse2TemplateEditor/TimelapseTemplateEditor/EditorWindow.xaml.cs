@@ -24,6 +24,7 @@ namespace Timelapse.Editor
     /// </summary>
     public partial class EditorWindow : Window
     {
+        #region Private Variables
         // database where the template is stored
         private TemplateDatabase templateDatabase;
 
@@ -39,7 +40,9 @@ namespace Timelapse.Editor
         private Point startPoint;
         private UIElement realMouseDragSource;
         private UIElement dummyMouseDragSource;
+        #endregion
 
+        #region Initialization, Window Loading and Closing
         /// <summary>
         /// Starts the UI.
         /// </summary>
@@ -72,35 +75,6 @@ namespace Timelapse.Editor
             this.MenuItemRecentTemplates_Refresh();
         }
 
-        private void MenuItemRecentTemplate_Click(object sender, RoutedEventArgs e)
-        {
-            string recentTemplatePath = (string)((MenuItem)sender).ToolTip;
-
-            // Open document 
-            this.TrySaveDatabaseBackupFile();
-            this.InitializeDataGrid(recentTemplatePath);
-        }
-
-        /// <summary>
-        /// Update the list of recent databases displayed under File -> Recent Databases.
-        /// </summary>
-        private void MenuItemRecentTemplates_Refresh()
-        {
-            this.MenuItemRecentTemplates.IsEnabled = this.mostRecentTemplates.Count > 0;
-            this.MenuItemRecentTemplates.Items.Clear();
-
-            int index = 1;
-            foreach (string recentTemplatePath in this.mostRecentTemplates)
-            {
-                MenuItem recentImageSetItem = new MenuItem();
-                recentImageSetItem.Click += this.MenuItemRecentTemplate_Click;
-                recentImageSetItem.Header = String.Format("_{0} {1}", index, recentTemplatePath);
-                recentImageSetItem.ToolTip = recentTemplatePath;
-                this.MenuItemRecentTemplates.Items.Add(recentImageSetItem);
-                ++index;
-            }
-        }
-
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             VersionClient updater = new VersionClient(Constants.ApplicationName, Constants.LatestVersionAddress);
@@ -118,6 +92,265 @@ namespace Timelapse.Editor
                 userSettings.WriteMostRecentTemplates(this.mostRecentTemplates);
             }
         }
+        #endregion
+
+        #region File Menu Callbacks
+        /// <summary>
+        /// Creates a new database file of a user chosen name in a user chosen location.
+        /// </summary>
+        private void NewFileMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            this.TemplateDataGrid.CommitEdit(); // to apply edits that the enter key was not pressed
+
+            // Configure save file dialog box
+            SaveFileDialog dlg = new SaveFileDialog();
+            dlg.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
+            dlg.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
+            dlg.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            dlg.Title = "Select Location to Save New Template File";
+
+            // Show save file dialog box
+            Nullable<bool> result = dlg.ShowDialog();
+
+            // Process save file dialog box results 
+            if (result == true)
+            {
+                this.TrySaveDatabaseBackupFile();
+
+                // Overwrite the file if it exists
+                if (File.Exists(dlg.FileName))
+                {
+                    File.Delete(dlg.FileName);
+                }
+
+                // Open document 
+                this.InitializeDataGrid(dlg.FileName);
+            }
+        }
+
+        /// <summary>
+        /// Opens an existing database file.
+        /// </summary>
+        private void OpenFileMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
+
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
+            dlg.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
+            dlg.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            dlg.Title = "Select an Existing Template File to Open";
+
+            // Show open file dialog box
+            Nullable<bool> result = dlg.ShowDialog();
+
+            // Process open file dialog box results 
+            if (result == true)
+            {
+                this.TrySaveDatabaseBackupFile();
+
+                // Open document 
+                this.InitializeDataGrid(dlg.FileName);
+            }
+        }
+
+        // Opern a rencently used template
+        private void MenuItemRecentTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            string recentTemplatePath = (string)((MenuItem)sender).ToolTip;
+
+            // Open document 
+            this.TrySaveDatabaseBackupFile();
+            this.InitializeDataGrid(recentTemplatePath);
+        }
+
+        /// <summary>
+        /// Convert an old style xml template to the new ddb style
+        /// </summary>
+        private void ConvertCodeTemplateFileMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            string codeTemplateFileName = String.Empty;  // The code template file name
+
+            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
+
+            // Get the name of the Code Template file to open
+            OpenFileDialog codeTemplateFile = new OpenFileDialog();
+            codeTemplateFile.FileName = Path.GetFileName(Constants.File.XmlDataFileName); // Default file name
+            string xmlDataFileExtension = Path.GetExtension(Constants.File.XmlDataFileName);
+            codeTemplateFile.DefaultExt = xmlDataFileExtension; // Default file extension
+            codeTemplateFile.Filter = "Code Template Files (" + xmlDataFileExtension + ")|*" + xmlDataFileExtension; // Filter files by extension 
+            codeTemplateFile.Title = "Select Code Template File to convert...";
+
+            Nullable<bool> result = codeTemplateFile.ShowDialog(); // Show the open file dialog box
+            if (result == true)
+            {
+                codeTemplateFileName = codeTemplateFile.FileName;  // Process open file dialog box results 
+            }
+            else
+            {
+                return;
+            }
+
+            // Get the name of the new database file to create (over-writes it if it exists)
+            SaveFileDialog templateDatabaseFile = new SaveFileDialog();
+            templateDatabaseFile.Title = "Select Location to Save the Converted Template File";
+            templateDatabaseFile.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name
+            templateDatabaseFile.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
+            templateDatabaseFile.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            result = templateDatabaseFile.ShowDialog(); // Show open file dialog box
+
+            // Process open file dialog box results 
+            if (result == true)
+            {
+                this.TrySaveDatabaseBackupFile();
+
+                // Overwrite the file if it exists
+                if (File.Exists(templateDatabaseFile.FileName))
+                {
+                    File.Delete(templateDatabaseFile.FileName);
+                }
+            }
+
+            // Start with the default layout of the data template
+            this.InitializeDataGrid(templateDatabaseFile.FileName);
+
+            // Now convert the code template file into a Data Template, overwriting values and adding rows as required
+            Mouse.OverrideCursor = Cursors.Wait;
+
+            this.generateControlsAndSpreadsheet = false;
+            List<string> conversionErrors;
+            CodeTemplateImporter importer = new CodeTemplateImporter();
+            importer.Import(codeTemplateFileName, this.templateDatabase, out conversionErrors);
+            this.generateControlsAndSpreadsheet = true;
+
+            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.GenerateSpreadsheet();
+            this.ReInitializeDataGrid(this.templateDatabase.FilePath);
+            Mouse.OverrideCursor = null;
+            if (conversionErrors.Count > 0)
+            {
+                DialogMessageBox messageBox = new DialogMessageBox("One or more data labels were problematic", this);
+                messageBox.Message.Icon = MessageBoxImage.Warning;
+                messageBox.Message.Problem = conversionErrors.Count.ToString() + " of your Data Labels were problematic." + Environment.NewLine + Environment.NewLine +
+                              "Data Labels:" + Environment.NewLine +
+                              "\u2022 must be unique," + Environment.NewLine +
+                              "\u2022 can only contain alphanumeric characters and '_'," + Environment.NewLine +
+                              "\u2022 cannot match particular reserved words.";
+                messageBox.Message.Result = "We will automatically repair these Data Labels:";
+                foreach (string s in conversionErrors)
+                {
+                    messageBox.Message.Solution += Environment.NewLine + "\u2022 " + s;
+                }
+                messageBox.Message.Hint = "Check if these are the names you want. You can also rename these corrected Data Labels if you want";
+
+                messageBox.ShowDialog();
+            }
+        }
+
+        /// <summary>
+        /// Exits the application.
+        /// </summary>
+        private void ExitFileMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
+            Application.Current.Shutdown();
+        }
+        #endregion
+
+        #region View Menu Callbacks
+        /// <summary>
+        /// Depending on the menu's checkbox state, show all columns or hide selected columns
+        /// </summary>
+        private void ShowAllColumnsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem mi = sender as MenuItem;
+            if (mi == null)
+            {
+                return;
+            }
+
+            foreach (DataGridColumn column in this.TemplateDataGrid.Columns)
+            {
+                if (!mi.IsChecked &&
+                    (column.Header.Equals(EditorConstant.Control.ID) || column.Header.Equals(EditorConstant.Control.ControlOrder) || column.Header.Equals(EditorConstant.Control.SpreadsheetOrder)))
+                {
+                    column.MinWidth = 0;
+                    column.Width = new DataGridLength(0);
+                }
+                else
+                {
+                    column.MinWidth = 90;
+                    if (column.Header.Equals(Constants.Control.Visible) || column.Header.Equals(Constants.Control.Copyable) || column.Header.Equals(EditorConstant.Control.Width))
+                    {
+                        column.MinWidth = 65;
+                    }
+
+                    if (column.Header.Equals(Constants.Control.Tooltip))
+                    {
+                        column.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+                    }
+                    else
+                    {
+                        column.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Show the dialog that allows a user to inspect image metadata
+        /// </summary>
+        private void MenuItemInspectImageMetaData_Click(object sender, RoutedEventArgs e)
+        {
+            DialogInspectMetaData dlg = new DialogInspectMetaData(this.templateDatabase.FilePath);
+            dlg.Owner = this;
+            dlg.Show();
+        }
+        #endregion
+
+        #region Help Menu Callbacks
+        /// <summary>Display the Timelapse home page </summary> 
+        private void MenuTimelapseWebPage_Click(object sender, RoutedEventArgs e)
+        {
+            Uri tutorialUri = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/");
+            Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
+        }
+
+        /// <summary>Display the manual in a web browser </summary> 
+        private void MenuTutorialManual_Click(object sender, RoutedEventArgs e)
+        {
+            Uri tutorialUri = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Installs/Timelapse2/Timelapse2Manual.pdf");
+            Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
+        }
+
+        /// <summary>Display the page in the web browser that lets you join the Timelapse mailing list</summary>
+        private void MenuJoinTimelapseMailingList_Click(object sender, RoutedEventArgs e)
+        {
+            Uri tutorialUri = new Uri("http://mailman.ucalgary.ca/mailman/listinfo/timelapse-l");
+            Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
+        }
+
+        /// <summary>Download the sample images from a web browser</summary>
+        private void MenuDownloadSampleImages_Click(object sender, RoutedEventArgs e)
+        {
+            Uri tutorialUri = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Main/TutorialImageSet.zip");
+            Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
+        }
+
+        /// <summary>Send mail to the timelapse mailing list</summary> 
+        private void MenuMailToTimelapseMailingList_Click(object sender, RoutedEventArgs e)
+        {
+            Uri tutorialUri = new Uri("mailto:timelapse-l@mailman.ucalgary.ca");
+            Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
+        }
+
+        private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            DialogAboutTimelapseEditor about = new DialogAboutTimelapseEditor();
+            about.Owner = this;
+            about.ShowDialog();
+        }
+        #endregion
 
         #region DataGrid and New Database Initialization
         /// <summary>
@@ -156,6 +389,22 @@ namespace Timelapse.Editor
             // so disable the recent templates list rather than call this.MenuItemRecentTemplates_Refresh
             this.mostRecentTemplates.SetMostRecent(templateDatabaseFilePath);
             this.MenuItemRecentTemplates.IsEnabled = false;
+        }
+
+        private void InitializeUI()
+        {
+            this.HelpText.Text = "Click the white fields to edit their contents. Gray fields are not editable." + Environment.NewLine +
+                "List items: Click 'Define List' to create or edit menu items, one per line.";
+            this.HelpDocument.Visibility = Visibility.Collapsed;
+            this.HelpText.Visibility = Visibility.Visible;
+            this.TemplateDataGrid.Visibility = Visibility.Visible;
+            this.RowControls.Visibility = Visibility.Visible;
+            this.TextMessage1.Visibility = Visibility.Visible;
+            this.OtherGrids.Visibility = Visibility.Visible;
+            this.NewFileMenuItem.IsEnabled = false;
+            this.OpenFileMenuItem.IsEnabled = false;
+            this.ConvertFileMenuItem.IsEnabled = false;
+            this.ViewMenu.IsEnabled = true;
         }
 
         // Reload a database into the grid. We do this as part of the convert, where we create the database, but then have to reinitialize the datagrid if we want to see the results.
@@ -714,108 +963,25 @@ namespace Timelapse.Editor
         }
         #endregion Cell Editing / Coloring Listeners and Methods
 
-        #region Menu listeners
+        #region Other menu related items
         /// <summary>
-        /// Creates a new database file of a user chosen name in a user chosen location.
+        /// Update the list of recent databases displayed under File -> Recent Databases.
         /// </summary>
-        private void NewFileMenuItem_Click(object sender, RoutedEventArgs e)
+        private void MenuItemRecentTemplates_Refresh()
         {
-            this.TemplateDataGrid.CommitEdit(); // to apply edits that the enter key was not pressed
+            this.MenuItemRecentTemplates.IsEnabled = this.mostRecentTemplates.Count > 0;
+            this.MenuItemRecentTemplates.Items.Clear();
 
-            // Configure save file dialog box
-            SaveFileDialog dlg = new SaveFileDialog();
-            dlg.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            dlg.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
-            dlg.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
-            dlg.Title = "Select Location to Save New Template File";
-
-            // Show save file dialog box
-            Nullable<bool> result = dlg.ShowDialog();
-
-            // Process save file dialog box results 
-            if (result == true)
+            int index = 1;
+            foreach (string recentTemplatePath in this.mostRecentTemplates)
             {
-                this.TrySaveDatabaseBackupFile();
-
-                // Overwrite the file if it exists
-                if (File.Exists(dlg.FileName))
-                {
-                    File.Delete(dlg.FileName);
-                }
-
-                // Open document 
-                this.InitializeDataGrid(dlg.FileName);
+                MenuItem recentImageSetItem = new MenuItem();
+                recentImageSetItem.Click += this.MenuItemRecentTemplate_Click;
+                recentImageSetItem.Header = String.Format("_{0} {1}", index, recentTemplatePath);
+                recentImageSetItem.ToolTip = recentTemplatePath;
+                this.MenuItemRecentTemplates.Items.Add(recentImageSetItem);
+                ++index;
             }
-        }
-
-        /// <summary>
-        /// Opens a database file.
-        /// </summary>
-        private void OpenFileMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
-
-            OpenFileDialog dlg = new OpenFileDialog();
-            dlg.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            dlg.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
-            dlg.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
-            dlg.Title = "Select an Existing Template File to Open";
-
-            // Show open file dialog box
-            Nullable<bool> result = dlg.ShowDialog();
-
-            // Process open file dialog box results 
-            if (result == true)
-            {
-                this.TrySaveDatabaseBackupFile();
-
-                // Open document 
-                this.InitializeDataGrid(dlg.FileName);
-            }
-        }
-
-        // Depending on the menu's checkbox state, show all columns or hide selected columns
-        private void ShowAllColumnsMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            MenuItem mi = sender as MenuItem;
-            if (mi == null)
-            {
-                return;
-            }
-
-            foreach (DataGridColumn column in this.TemplateDataGrid.Columns)
-            {
-                if (!mi.IsChecked && 
-                    (column.Header.Equals(EditorConstant.Control.ID) || column.Header.Equals(EditorConstant.Control.ControlOrder) || column.Header.Equals(EditorConstant.Control.SpreadsheetOrder)))
-                {
-                    column.MinWidth = 0;
-                    column.Width = new DataGridLength(0);
-                }
-                else
-                {
-                    column.MinWidth = 90;
-                    if (column.Header.Equals(Constants.Control.Visible) || column.Header.Equals(Constants.Control.Copyable) || column.Header.Equals(EditorConstant.Control.Width))
-                    {
-                        column.MinWidth = 65;
-                    }
-
-                    if (column.Header.Equals(Constants.Control.Tooltip))
-                    {
-                        column.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
-                    }
-                    else
-                    {
-                        column.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
-                    }
-                }
-            }
-        }
-
-        private void MenuItemInspectImageMetaData_Click(object sender, RoutedEventArgs e)
-        {
-            DialogInspectMetaData dlg = new DialogInspectMetaData(this.templateDatabase.FilePath);
-            dlg.Owner = this;
-            dlg.Show();
         }
 
         private void ShowDataLabelRequirementsDialog()
@@ -827,138 +993,7 @@ namespace Timelapse.Editor
             messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
             messageBox.ShowDialog();
         }
-
-        private void ConvertCodeTemplateFileMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            string codeTemplateFileName = String.Empty;  // The code template file name
-
-            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
-
-            // Get the name of the Code Template file to open
-            OpenFileDialog codeTemplateFile = new OpenFileDialog();
-            codeTemplateFile.FileName = Path.GetFileName(Constants.File.XmlDataFileName); // Default file name
-            string xmlDataFileExtension = Path.GetExtension(Constants.File.XmlDataFileName);
-            codeTemplateFile.DefaultExt = xmlDataFileExtension; // Default file extension
-            codeTemplateFile.Filter = "Code Template Files (" + xmlDataFileExtension + ")|*" + xmlDataFileExtension; // Filter files by extension 
-            codeTemplateFile.Title = "Select Code Template File to convert...";
-
-            Nullable<bool> result = codeTemplateFile.ShowDialog(); // Show the open file dialog box
-            if (result == true)
-            {
-                codeTemplateFileName = codeTemplateFile.FileName;  // Process open file dialog box results 
-            }
-            else
-            {
-                return;
-            }
-
-            // Get the name of the new database file to create (over-writes it if it exists)
-            SaveFileDialog templateDatabaseFile = new SaveFileDialog();
-            templateDatabaseFile.Title = "Select Location to Save the Converted Template File";
-            templateDatabaseFile.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name
-            templateDatabaseFile.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
-            templateDatabaseFile.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
-            result = templateDatabaseFile.ShowDialog(); // Show open file dialog box
-
-            // Process open file dialog box results 
-            if (result == true)
-            {
-                this.TrySaveDatabaseBackupFile();
-
-                // Overwrite the file if it exists
-                if (File.Exists(templateDatabaseFile.FileName))
-                {
-                    File.Delete(templateDatabaseFile.FileName);
-                }
-            }
-
-            // Start with the default layout of the data template
-            this.InitializeDataGrid(templateDatabaseFile.FileName);
-
-            // Now convert the code template file into a Data Template, overwriting values and adding rows as required
-            Mouse.OverrideCursor = Cursors.Wait;
-
-            this.generateControlsAndSpreadsheet = false;
-            List<string> conversionErrors;
-            CodeTemplateImporter importer = new CodeTemplateImporter();
-            importer.Import(codeTemplateFileName, this.templateDatabase, out conversionErrors);
-            this.generateControlsAndSpreadsheet = true;
-
-            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
-            this.GenerateSpreadsheet();
-            this.ReInitializeDataGrid(this.templateDatabase.FilePath);
-            Mouse.OverrideCursor = null;
-            if (conversionErrors.Count > 0)
-            {
-                DialogMessageBox messageBox = new DialogMessageBox("One or more data labels were problematic", this);
-                messageBox.Message.Icon = MessageBoxImage.Warning;
-                messageBox.Message.Problem = conversionErrors.Count.ToString() + " of your Data Labels were problematic." + Environment.NewLine + Environment.NewLine +
-                              "Data Labels:" + Environment.NewLine +
-                              "\u2022 must be unique," + Environment.NewLine +
-                              "\u2022 can only contain alphanumeric characters and '_'," + Environment.NewLine +
-                              "\u2022 cannot match particular reserved words.";
-                messageBox.Message.Result = "We will automatically repair these Data Labels:";
-                foreach (string s in conversionErrors)
-                {
-                    messageBox.Message.Solution += Environment.NewLine + "\u2022 " + s;
-                }
-                messageBox.Message.Hint = "Check if these are the names you want. You can also rename these corrected Data Labels if you want";
-               
-                messageBox.ShowDialog();
-            }
-        }
-
-        /// <summary>
-        /// Exits the application.
-        /// </summary>
-        private void ExitFileMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
-            Application.Current.Shutdown();
-        }
-
-        /// <summary>Display the Timelapse home page </summary> 
-        private void MenuTimelapseWebPage_Click(object sender, RoutedEventArgs e)
-        {
-            Uri tutorialUri = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/");
-            Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
-        }
-
-        /// <summary>Display the manual in a web browser </summary> 
-        private void MenuTutorialManual_Click(object sender, RoutedEventArgs e)
-        {
-            Uri tutorialUri = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Installs/Timelapse2/Timelapse2Manual.pdf");
-            Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
-        }
-
-        /// <summary>Display the page in the web browser that lets you join the Timelapse mailing list</summary>
-        private void MenuJoinTimelapseMailingList_Click(object sender, RoutedEventArgs e)
-        {
-            Uri tutorialUri = new Uri("http://mailman.ucalgary.ca/mailman/listinfo/timelapse-l");
-            Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
-        }
-
-        /// <summary>Download the sample images from a web browser</summary>
-        private void MenuDownloadSampleImages_Click(object sender, RoutedEventArgs e)
-        {
-            Uri tutorialUri = new Uri("http://saul.cpsc.ucalgary.ca/timelapse/uploads/Main/TutorialImageSet.zip");
-            Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
-        }
-
-        /// <summary>Send mail to the timelapse mailing list</summary> 
-        private void MenuMailToTimelapseMailingList_Click(object sender, RoutedEventArgs e)
-        {
-            Uri tutorialUri = new Uri("mailto:timelapse-l@mailman.ucalgary.ca");
-            Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
-        }
-
-        private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            DialogAboutTimelapseEditor about = new DialogAboutTimelapseEditor();
-            about.Owner = this;
-            about.ShowDialog();
-        }
-        #endregion Menu Listeners
+        #endregion
 
         #region SpreadsheetAppearance
         private void GenerateSpreadsheet()
@@ -1136,35 +1171,7 @@ namespace Timelapse.Editor
         }
         #endregion
 
-        private void InitializeUI()
-        {
-            this.HelpText.Text = "Click the white fields to edit their contents. Gray fields are not editable." + Environment.NewLine +
-                "List items: Click 'Define List' to create or edit menu items, one per line.";
-            this.HelpDocument.Visibility = Visibility.Collapsed;
-            this.HelpText.Visibility = Visibility.Visible;
-            this.TemplateDataGrid.Visibility = Visibility.Visible;
-            this.RowControls.Visibility = Visibility.Visible;
-            this.TextMessage1.Visibility = Visibility.Visible;
-            this.OtherGrids.Visibility = Visibility.Visible;
-            this.NewFileMenuItem.IsEnabled = false;
-            this.OpenFileMenuItem.IsEnabled = false;
-            this.ConvertFileMenuItem.IsEnabled = false;
-            this.ViewMenu.IsEnabled = true;
-        }
-
-        /// <summary>
-        /// Helper method that creates a database backup. Used when performing file menu options.
-        /// </summary>
-        private bool TrySaveDatabaseBackupFile()
-        {
-            if (this.templateDatabase == null)
-            {
-                return false;
-            }
-
-            return FileBackup.TryCreateBackups(Path.GetDirectoryName(this.templateDatabase.FilePath), Path.GetFileName(this.templateDatabase.FilePath));
-        }
-
+        #region Template Drag and Drop
         private void HelpDocument_Drop(object sender, DragEventArgs dropEvent)
         {
             string templateDatabaseFilePath;
@@ -1179,5 +1186,21 @@ namespace Timelapse.Editor
         {
             Utilities.OnHelpDocumentPreviewDrag(dragEvent);
         }
+        #endregion
+
+        #region Backups
+        /// <summary>
+        /// Helper method that creates a database backup. Used when performing file menu options.
+        /// </summary>
+        private bool TrySaveDatabaseBackupFile()
+        {
+            if (this.templateDatabase == null)
+            {
+                return false;
+            }
+
+            return FileBackup.TryCreateBackups(Path.GetDirectoryName(this.templateDatabase.FilePath), Path.GetFileName(this.templateDatabase.FilePath));
+        }
+        #endregion 
     }
 }

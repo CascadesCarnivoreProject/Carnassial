@@ -2645,8 +2645,6 @@ namespace Timelapse
             this.dlgDataView.Owner = this;
             this.dlgDataView.Show();
         }
-
-
         #endregion
 
         #region Help Menu Callbacks

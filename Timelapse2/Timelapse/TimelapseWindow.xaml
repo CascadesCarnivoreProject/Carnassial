@@ -37,7 +37,9 @@
     -->
     <Grid >
         <DockPanel Name="mainUI">
+            <!-- Menu Bar -->
             <Menu DockPanel.Dock="Top">
+                
                 <!-- File Menu -->
                 <MenuItem Header="_File" IsTabStop="false" SubmenuOpened="File_SubmenuOpening">
                     <MenuItem Name="MenuItemLoadImages" Header="_Load template, images, and video files..." Click="MenuItemLoadImages_Click" ToolTip="Asks for the template location, and then opens an existing database, or creates a new database after asking for the image/video locations"/>
@@ -134,8 +136,8 @@
                     <MenuItem Name="MenuItemMailToMailingList" Header="Timelapse mailing list - Send _email " Click="MenuMailToTimelapseMailingList_Click" ToolTip="Post an email to the Timelapse mailing list. You should join the mailing list before doing this."/>
                     <MenuItem Name="MenuItemAbout" Header="_About..." Click="MenuOverview_About" ToolTip="Displays version information about this program and how to contact its creator"/>
                 </MenuItem>
-
             </Menu>
+            
             <local:HelpUserControl x:Name="HelpDocument" AllowDrop="True" Drop="HelpDocument_Drop" PreviewDragEnter="HelpDocument_PreviewDrag" PreviewDragOver="HelpDocument_PreviewDrag" Visibility="Visible" Height="Auto" ></local:HelpUserControl>
             <local:FeedbackControl x:Name="FeedbackControl" Visibility="Collapsed"  ></local:FeedbackControl>
 
@@ -146,8 +148,10 @@
                         <ColumnDefinition  Width="Auto"  />
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel DockPanel.Dock="Top"  Name="controlsTray" Visibility="Collapsed" Grid.Column="0">
-                    </StackPanel>
+                    <!-- Controls Tray panel (to hold controls) -->
+                    <StackPanel Name="controlsTray" Visibility="Collapsed" Grid.Column="0"/>
+
+                    <!-- Copy Previous Button -->
                     <Button Name="buttonCopy" Background="#C8FBC8" Visibility="Collapsed" Click="ButtonCopy_Click"  Margin="5,5,5,5" Padding="5,0,5,0" Grid.Column="1" HorizontalAlignment="Right" 
                             Width="Auto" MinHeight="60" VerticalAlignment="Stretch" ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template.">
                         <TextBlock TextWrapping="Wrap" FontWeight="Bold">
@@ -174,10 +178,14 @@
                         </Button.Style>
                     </Button>
                 </Grid>
+                
+                <!-- Slider Navigator -->
                 <DockPanel Name="DockPanelNavigator" Visibility="Collapsed" >
                     <Slider Name="ImageNavigatorSlider" Minimum ="0" Maximum="0" Thumb.DragStarted="ImageNavigatorSlider_DragStarted" Thumb.DragCompleted="ImageNavigatorSlider_DragCompleted" ValueChanged="ImageNavigatorSlider_ValueChanged" IsSnapToTickEnabled="True" TickFrequency="1" LargeChange="1" ToolTip="Scroll through all files" Margin="5,0,5,0"/>
                 </DockPanel>
             </StackPanel>
+            
+            <!-- Status bar -->
             <StatusBar DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Name="statusBar" ItemsSource="{Binding}">
                 <StatusBarItem Content="Image number: " FontWeight="Bold" />
                 <StatusBarItem Content="0"/>
@@ -186,6 +194,7 @@
                 <StatusBarItem Content=""/>
                 <StatusBarItem Content="" HorizontalAlignment="Right" />
             </StatusBar>
+            
         </DockPanel>
     </Grid>
 </Window>
