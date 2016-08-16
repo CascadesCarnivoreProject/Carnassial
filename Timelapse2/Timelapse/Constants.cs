@@ -55,6 +55,8 @@ namespace Timelapse
 
             // things which should be data labels but are used in the TemplateTable's Type column
             public const string DeleteFlag = "DeleteFlag";    // a flag data type for marking deletion
+            public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
+
 
             public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
             {
