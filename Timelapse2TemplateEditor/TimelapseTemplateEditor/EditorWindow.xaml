@@ -387,7 +387,7 @@
                 <TextBlock Name="TextMessage1" Visibility=" Collapsed" Grid.Row="0" Text="Create a new template, read in an existing template, or convert and old XML template. Grey Boxes aren't editable"/>
 
                 <DataGrid MinHeight="250" VerticalAlignment="Top"  Name="TemplateDataGrid"  Visibility="Collapsed" PreviewKeyDown="TemplateDataGrid_PreviewKeyDown" PreviewTextInput="TemplateDataGrid_PreviewTextInput" Grid.Row="0" 
-                          BeginningEdit="NewTemplateDataGrid_BeginningEdit" RowHeight="25" LayoutUpdated="TemplateDataGrid_LayoutUpdated" 
+                          BeginningEdit="NewTemplateDataGrid_BeginningEdit" RowHeight="25" LayoutUpdated="TemplateDataGrid_LayoutUpdated"  VirtualizingStackPanel.IsVirtualizing="False"
                           SelectionChanged="TemplateDataGrid_SelectionChanged" SelectionMode="Single" CanUserReorderColumns="False" 
                           CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" CurrentCellChanged="TemplateDataGrid_CurrentCellChanged" 
                           ItemsSource="{Binding}" Margin="0,0,10,0" ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}" CellEditEnding="NewTemplateDataGrid_CellEditEnding" >

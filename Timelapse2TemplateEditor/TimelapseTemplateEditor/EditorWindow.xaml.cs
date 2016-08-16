@@ -850,6 +850,10 @@ namespace Timelapse.Editor
         {
             for (int rowIndex = 0; rowIndex < this.TemplateDataGrid.Items.Count; rowIndex++)
             {
+                // In order for ItemContainerGenerator to work, we need to set the TemplateGrid in the XAML to VirtualizingStackPanel.IsVirtualizing="False"
+                // Alternately, we could just do the following, which may be more efficient for large grids (which we normally don't have)
+                // this.TemplateDataGrid.UpdateLayout();
+                // this.TemplateDataGrid.ScrollIntoView(rowIndex + 1);
                 DataGridRow row = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex);
                 if (row == null)
                 {
@@ -890,6 +894,7 @@ namespace Timelapse.Editor
                         (controlType == Constants.DatabaseColumn.RelativePath) ||
                         (controlType == Constants.DatabaseColumn.Time) ||
                         ((controlType == Constants.Control.Counter) && (columnHeader == Constants.Control.List)) ||
+                        ((controlType == Constants.Control.Flag) && (columnHeader == Constants.Control.List)) ||
                         ((controlType == Constants.Control.Note) && (columnHeader == Constants.Control.List)))
                     {
                         cell.Background = EditorConstant.NotEditableCellColor;
