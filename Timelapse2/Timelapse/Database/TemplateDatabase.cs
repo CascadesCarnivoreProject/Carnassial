@@ -77,6 +77,8 @@ namespace Timelapse.Database
                     newControl.Copyable = false;
                     newControl.Visible = true;
                     newControl.Tooltip = Constants.ControlDefault.CounterTooltip;
+                    newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
+                    newControl.Label = newControl.DataLabel;
                     break;
                 case Constants.Control.Note:
                     dataLabelPrefix = Constants.Control.Note;
@@ -86,6 +88,8 @@ namespace Timelapse.Database
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constants.ControlDefault.NoteTooltip;
+                    newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
+                    newControl.Label = newControl.DataLabel;
                     break;
                 case Constants.Control.FixedChoice:
                     dataLabelPrefix = Constants.Control.Choice;
@@ -95,6 +99,8 @@ namespace Timelapse.Database
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constants.ControlDefault.FixedChoiceTooltip;
+                    newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
+                    newControl.Label = newControl.DataLabel;
                     break;
                 case Constants.Control.Flag:
                     dataLabelPrefix = Constants.Control.Flag;
@@ -104,15 +110,25 @@ namespace Timelapse.Database
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constants.ControlDefault.FlagTooltip;
+                    newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
+                    newControl.Label = newControl.DataLabel;
+                    break;
+                // While this isn't a user-defined control, we include it here as we need to add it
+                // for backwards compatability with old templates
+                case Constants.Control.DeleteFlag:
+                    newControl.DefaultValue = Constants.ControlDefault.FlagValue;
+                    newControl.Type = Constants.Control.DeleteFlag;
+                    newControl.TextBoxWidth = Constants.ControlDefault.FlagWidth;
+                    newControl.Copyable = false;
+                    newControl.Visible = true;
+                    newControl.Tooltip = Constants.ControlDefault.MarkForDeletionTooltip;
+                    newControl.DataLabel = Constants.Control.DeleteFlag;
+                    newControl.Label = Constants.Control.DeleteFlagLabel;
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", controlType));
             }
-
-            string dataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
             newControl.ControlOrder = this.TemplateTable.RowCount + 1;
-            newControl.DataLabel = dataLabel;
-            newControl.Label = dataLabel;
             newControl.List = Constants.ControlDefault.Value;
             newControl.SpreadsheetOrder = this.TemplateTable.RowCount + 1;
 
@@ -466,7 +482,7 @@ namespace Timelapse.Database
             markForDeletion.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
             markForDeletion.Add(new ColumnTuple(Constants.Control.Type, Constants.Control.DeleteFlag));
             markForDeletion.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.FlagValue));
-            markForDeletion.Add(new ColumnTuple(Constants.Control.Label, Constants.Control.DeleteFlag));
+            markForDeletion.Add(new ColumnTuple(Constants.Control.Label, Constants.Control.DeleteFlagLabel));
             markForDeletion.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.Control.DeleteFlag));
             markForDeletion.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.MarkForDeletionTooltip));
             markForDeletion.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FlagWidth));
@@ -487,7 +503,7 @@ namespace Timelapse.Database
             this.GetControlsSortedByControlOrder();
             this.EnsureDataLabelsAndLabelsNotEmpty();
 
-            // add a relative path control to pre v2.1 databases if one hasn't already been inserted
+            //  Backwards compatability. Add a relative path control to pre v2.1 databases if one hasn't already been inserted
             // the control is inserted with visible = false for backwards compatibility
             long relativePathID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
             if (relativePathID == -1)
@@ -500,6 +516,13 @@ namespace Timelapse.Database
                 // move the relative path control to ID and order 2 for consistency with newly created templates
                 this.SetControlID(Constants.DatabaseColumn.RelativePath, Constants.Database.RelativePathPosition);
                 this.SetControlOrders(Constants.DatabaseColumn.RelativePath, Constants.Database.RelativePathPosition);
+            }
+
+            // Backwards compatability. Add a DeleteFlag row (if it is missing) to pre v2.1 templates
+            if (this.GetControlIDFromTemplateTable(Constants.Control.DeleteFlag) < 0)
+            { 
+                Debug.Assert(false, "Delete flag row is missing, likley due to old template being used. It will be added for backwards compatability.");
+                this.AddUserDefinedControl(Constants.Control.DeleteFlag);
             }
         }
 

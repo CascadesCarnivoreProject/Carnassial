@@ -102,10 +102,10 @@ namespace Timelapse.UnitTests
                 this.ShowDialog(timelapse, new DialogChooseDatabaseFile(new string[] { TestConstant.File.DefaultNewImageDatabaseFileName }));
 
                 DataEntryHandler dataHandler = (DataEntryHandler)timelapseAccessor.GetField("dataHandler");
-                //this.ShowDialog(timelapse, new DialogCustomViewFilter(dataHandler.ImageDatabase));
+                // this.ShowDialog(timelapse, new DialogCustomViewFilter(dataHandler.ImageDatabase));
 
-                //this.ShowDialog(timelapse, new DialogDateSwapDayMonth(dataHandler.ImageDatabase));
-                //this.ShowDialog(timelapse, new DialogDateSwapDayMonthBulk(dataHandler.ImageDatabase));
+                // this.ShowDialog(timelapse, new DialogDateSwapDayMonth(dataHandler.ImageDatabase));
+                // this.ShowDialog(timelapse, new DialogDateSwapDayMonthBulk(dataHandler.ImageDatabase));
 
                 DialogDateTimeFixedCorrection clockSetCorrection = new DialogDateTimeFixedCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache.Current);
                 Assert.IsFalse(clockSetCorrection.Abort);

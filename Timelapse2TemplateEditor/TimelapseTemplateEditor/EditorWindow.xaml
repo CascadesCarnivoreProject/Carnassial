@@ -202,8 +202,12 @@
                 <Setter Property="Margin" Value="0,0,0,5" />
             </Style>
         </Grid.Resources>
+        
+        <!-- Menus -->
         <DockPanel Name="mainUI">
             <Menu DockPanel.Dock="Top">
+                
+                <!-- File Menu -->
                 <MenuItem Name="FileMenu" Header="_File" >
                     <MenuItem Name="NewFileMenuItem" Header="_New" Click="NewFileMenuItem_Click" ToolTip="Create a new data template file">
                         <MenuItem.Icon>
@@ -229,12 +233,16 @@
                         </MenuItem.Icon>
                     </MenuItem>
                 </MenuItem>
+                
+                <!-- View Menu -->
                 <MenuItem Name="ViewMenu" Header="_View" IsEnabled="False">
                     <MenuItem Name="ShowAllColumns"  IsCheckable="True" IsChecked="False" Header="_Show All Columns" Click="ShowAllColumnsMenuItem_Click" ToolTip="Show all the columns, which includes how sort orders are tracked">
                     </MenuItem>
                     <MenuItem Name="MenuItemInspectImageMetaData" Header="_Inspect Image MetaData" ToolTip="Inspect what metadata is available in an image of your choosing" Click="MenuItemInspectImageMetaData_Click">
                     </MenuItem>
                 </MenuItem>
+                
+                <!-- Help Menu -->
                 <MenuItem Header="_Help" >
                     <MenuItem Name="MenuItemTimelapseHomePage" Header="The Timelapse _web page (via your web browser)" Click="MenuTimelapseWebPage_Click" ToolTip="Displays the Timelapse Image Analyzer web page in your browser"/>
                     <MenuItem Name="MenuItemTutorialManual" Header="Tutorial _manual (via your web browser)" Click="MenuTutorialManual_Click" ToolTip="Displays the Tutorial Manual - a large PDF file - in your browser"/>
@@ -244,6 +252,7 @@
                     <MenuItem Name="AboutMenuItem" Header="_About" Click="AboutMenuItem_Click" ToolTip="Displays version information about this program and how to contact its creator"/>
                 </MenuItem>
             </Menu>
+            
             <TextBlock Name="HelpText" Visibility="Collapsed" Grid.Row="0" FontSize="16" Text="Use the File Menu to create or open a template, and to convert an old CodeTemplate.xml file to the new format." Margin =" 10" DockPanel.Dock="Top"/>
 
             <FlowDocumentScrollViewer Name="HelpDocument" AllowDrop="True" Drop="HelpDocument_Drop" PreviewDragEnter="HelpDocument_PreviewDrag" PreviewDragOver="HelpDocument_PreviewDrag">
@@ -378,7 +387,7 @@
                 <TextBlock Name="TextMessage1" Visibility=" Collapsed" Grid.Row="0" Text="Create a new template, read in an existing template, or convert and old XML template. Grey Boxes aren't editable"/>
 
                 <DataGrid MinHeight="250" VerticalAlignment="Top"  Name="TemplateDataGrid"  Visibility="Collapsed" PreviewKeyDown="TemplateDataGrid_PreviewKeyDown" PreviewTextInput="TemplateDataGrid_PreviewTextInput" Grid.Row="0" 
-                          BeginningEdit="NewTemplateDataGrid_BeginningEdit" RowHeight="25" LayoutUpdated="TemplateDataGrid_LayoutUpdated" 
+                          BeginningEdit="NewTemplateDataGrid_BeginningEdit" RowHeight="25" LayoutUpdated="TemplateDataGrid_LayoutUpdated"  VirtualizingStackPanel.IsVirtualizing="False"
                           SelectionChanged="TemplateDataGrid_SelectionChanged" SelectionMode="Single" CanUserReorderColumns="False" 
                           CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" CurrentCellChanged="TemplateDataGrid_CurrentCellChanged" 
                           ItemsSource="{Binding}" Margin="0,0,10,0" ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}" CellEditEnding="NewTemplateDataGrid_CellEditEnding" >
