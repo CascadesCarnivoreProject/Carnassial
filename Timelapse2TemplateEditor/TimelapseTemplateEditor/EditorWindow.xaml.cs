@@ -245,6 +245,7 @@ namespace Timelapse.Editor
 
                 messageBox.ShowDialog();
             }
+
         }
 
         /// <summary>
@@ -361,7 +362,7 @@ namespace Timelapse.Editor
         /// <param name="templateDatabaseFilePath">The path of the DB file created or loaded</param>
         private void InitializeDataGrid(string templateDatabaseFilePath)
         {
-            MyTrace.MethodName("DG");
+            MyTrace.MethodName("DG InitializeDataGrid");
 
             // Create a new DB file if one does not exist, or load a DB file if there is one.
             this.templateDatabase = TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
@@ -393,6 +394,7 @@ namespace Timelapse.Editor
 
         private void InitializeUI()
         {
+            MyTrace.MethodName("DG InitializeUI");
             this.HelpText.Text = "Click the white fields to edit their contents. Gray fields are not editable." + Environment.NewLine +
                 "List items: Click 'Define List' to create or edit menu items, one per line.";
             this.HelpDocument.Visibility = Visibility.Collapsed;
@@ -411,7 +413,7 @@ namespace Timelapse.Editor
         // So this is actually a reduced form of INitializeDataGrid
         private void ReInitializeDataGrid(string templateDatabaseFilePath)
         {
-            MyTrace.MethodName("DG");
+            MyTrace.MethodName("DG ReInitializeDataGrid");
 
             // Create a new DB file if one does not exist, or load a DB file if there is one.
             this.templateDatabase = TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
@@ -426,6 +428,7 @@ namespace Timelapse.Editor
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
             this.InitializeUI();
+           
         }
         #endregion DataGrid and New Database Initialization
 
@@ -435,7 +438,7 @@ namespace Timelapse.Editor
         /// </summary>
         private void SyncControlToDatabase(ControlRow control)
         {
-            MyTrace.MethodName("DB");
+            MyTrace.MethodName("DB SyncControlToDatabase");
 
             this.templateDatabase.SyncControlToDatabase(control);
             if (this.generateControlsAndSpreadsheet)
@@ -450,11 +453,12 @@ namespace Timelapse.Editor
         /// </summary>
         private void TemplateTable_RowChanged(object sender, DataRowChangeEventArgs e)
         {
-            MyTrace.MethodName("DB");
+            MyTrace.MethodName("DB TemplateTable_RowChanged");
             if (!this.rowsActionsOn)
             {
                 this.SyncControlToDatabase(new ControlRow(e.Row));
             }
+            DataGridRow selectedRow = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.SelectedIndex);
         }
         #endregion Data Changed Listeners and Methods=
 
@@ -465,7 +469,7 @@ namespace Timelapse.Editor
         /// </summary>
         private void TemplateDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            MyTrace.MethodName("DG");
+            MyTrace.MethodName("DG TemplateDataGrid_SelectionChanged");
             DataRowView selectedRowView = this.TemplateDataGrid.SelectedItem as DataRowView;
             if (selectedRowView == null)
             {
@@ -582,7 +586,7 @@ namespace Timelapse.Editor
         /// </summary>
         private void TemplateDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            MyTrace.MethodName("DG");
+            MyTrace.MethodName("DG TemplateDataGrid_PreviewKeyDow");
             if (e.Key == Key.Tab)
             {
                 this.tabWasPressed = true;
@@ -604,7 +608,7 @@ namespace Timelapse.Editor
         // This could probably be done way simpler
         private void TemplateDataGrid_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            MyTrace.MethodName("DG");
+            MyTrace.MethodName("DG TemplateDataGrid_PreviewTextInput");
             if (this.TemplateDataGrid.SelectedIndex != -1)
             {
                 // this is how you can get an actual cell.
@@ -660,6 +664,7 @@ namespace Timelapse.Editor
                     }
                 }
             }
+
         }
 
         private bool IsAllValidNumericChars(string str)
@@ -693,7 +698,7 @@ namespace Timelapse.Editor
         /// </summary>
         private void NewTemplateDataGrid_BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
         {
-            MyTrace.MethodName("DG");
+            MyTrace.MethodName("DG NewTemplateDataGrid_BeginningEdit");
             if (this.TemplateDataGrid.SelectedIndex != -1)
             {
                 // this is how you can get an actual cell.
@@ -710,6 +715,7 @@ namespace Timelapse.Editor
                     }
                 }
             }
+
         }
 
         /// <summary>
@@ -718,7 +724,7 @@ namespace Timelapse.Editor
         /// </summary>
         private void TemplateDataGrid_CurrentCellChanged(object sender, EventArgs e)
         {
-            MyTrace.MethodName("DG");
+            MyTrace.MethodName("DG TemplateDataGrid_CurrentCellChanged");
             if (this.TemplateDataGrid.SelectedIndex != -1)
             {
                 // this is how you can get an actual cell.
@@ -734,7 +740,10 @@ namespace Timelapse.Editor
             {
                 this.tabWasPressed = false;
                 DataRowView selectedRowView = this.TemplateDataGrid.SelectedItem as DataRowView; // current cell
-                this.SyncControlToDatabase(new ControlRow(selectedRowView.Row));
+                if (selectedRowView.Row != null)
+                { 
+                    this.SyncControlToDatabase(new ControlRow(selectedRowView.Row));
+                }
             }
         }
 
@@ -742,7 +751,6 @@ namespace Timelapse.Editor
         private void NewTemplateDataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
             MyTrace.MethodName("Main");
-
             // If the edited cell is not in the Data Label column, then just exit.
             if (!e.Column.Header.Equals(EditorConstant.Control.DataLabel))
             {
@@ -848,6 +856,7 @@ namespace Timelapse.Editor
         /// </summary>
         private void UpdateCellColors()
         {
+            MyTrace.MethodName("UpdateCellColors");
             for (int rowIndex = 0; rowIndex < this.TemplateDataGrid.Items.Count; rowIndex++)
             {
                 // In order for ItemContainerGenerator to work, we need to set the TemplateGrid in the XAML to VirtualizingStackPanel.IsVirtualizing="False"
@@ -939,6 +948,7 @@ namespace Timelapse.Editor
         /// </summary>
         private void TemplateDataGrid_LayoutUpdated(object sender, EventArgs e)
         {
+            MyTrace.MethodName("TemplateDataGrid_LayoutUpdated");
             this.UpdateCellColors();
         }
 
