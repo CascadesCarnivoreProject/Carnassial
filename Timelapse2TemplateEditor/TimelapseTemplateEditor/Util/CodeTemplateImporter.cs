@@ -26,6 +26,7 @@ namespace Timelapse.Editor.Util
 
             // merge standard controls which existed in code templates
             // MarkForDeletion and Relative path weren't available in code templates
+            // SAUL TODO: UPDATE THIS TO NEWER DELETEFLAG
             XmlNodeList selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.FilePath); // Convert the File type 
             this.UpdateStandardControl(selectedNodes, templateDatabase, Constants.DatabaseColumn.File, ref conversionErrors, ref dataLabels);
 

@@ -398,10 +398,15 @@ namespace Timelapse.Database
             }
         }
 
-        // This method will create a column in a table, where it is added to its end
+        // This method will create a column in a table of type TEXT, where it is added to its end
+        // It assumes that the value, if not empty, should be treated as the default value for that column
         public void AddColumnToEndOfTable(string tableName, ColumnTuple columnDefinition)
         {
-            string query = "ALTER TABLE " + tableName + " ADD COLUMN " + columnDefinition.Name + " " + columnDefinition.Value;
+            string query = "ALTER TABLE " + tableName + " ADD COLUMN " + columnDefinition.Name + " TEXT ";
+            if (columnDefinition.Value.Trim() != String.Empty)
+            {
+                query += "DEFAULT '" + columnDefinition.Value + "'"; // Note that values are quoted
+            }
             this.ExecuteNonQuery(query);
         }
         #endregion
@@ -456,6 +461,7 @@ namespace Timelapse.Database
         #region Public methods for Add/Delete/Rename Columns
         /// <summary>
         /// Add a column to the table named sourceTable at position columnNumber using the provided columnDefinition
+        /// The value in columnDefinition is assumed to be the desired default value
         /// </summary>
         public bool AddColumnToTable(string sourceTable, int columnNumber, ColumnTuple columnDefinition)
         {
@@ -486,8 +492,8 @@ namespace Timelapse.Database
                     // and rename the new table to the name of the old one.
 
                     // Get a schema definition identical to the schema in the existing table, 
-                    // but with a new column definition added at the given position 
-                    string newSchema = this.CloneSchemaButWithAddedColumn(connection, sourceTable, columnNumber, columnDefinition.Name + " " + columnDefinition.Value);
+                    // but with a new column definition of type TEXT added at the given position, where the value is assumed to be the default value
+                    string newSchema = this.CloneSchemaButWithAddedColumn(connection, sourceTable, columnNumber, columnDefinition.Name, columnDefinition.Value);
 
                     // Create a new table 
                     string destTable = sourceTable + "NEW";
@@ -759,7 +765,7 @@ namespace Timelapse.Database
         /// <summary>
         /// Add a column definition into the provided schema at the given column location
         /// </summary>
-        private string CloneSchemaButWithAddedColumn(SQLiteConnection connection, string tableName, int columnNumber, string columnDefinition)
+        private string CloneSchemaButWithAddedColumn(SQLiteConnection connection, string tableName, int columnNumber, string columnDefinition, string columnDefaultValue)
         {
             string newSchema = String.Empty;
             int currentColumn = 0;
@@ -772,7 +778,14 @@ namespace Timelapse.Database
                 // If we are at the spot where we should insert the new columm definition, do so.
                 if (currentColumn == columnNumber)
                 {
-                    existingColumnDefinition += columnDefinition + ", ";
+                    if (columnDefaultValue.Trim() == String.Empty)
+                    {
+                        existingColumnDefinition += columnDefinition + ", ";
+                    }
+                    else
+                    {
+                        existingColumnDefinition += columnDefinition + " TEXT DEFAULT '" + columnDefaultValue + "'";
+                    }
                     columnAdded = true;
                 }
 
@@ -816,7 +829,14 @@ namespace Timelapse.Database
             // So add it to the end.
             if (columnAdded == false)
             {
-                newSchema += columnDefinition + ", ";
+                if (columnDefaultValue.Trim() == String.Empty)
+                {
+                    newSchema += columnDefinition + ", ";
+                }
+                else
+                {
+                    newSchema += columnDefinition + " TEXT DEFAULT '" + columnDefaultValue + "',";
+                }
             }
             newSchema = newSchema.TrimEnd(',', ' '); // remove last comma
             return newSchema;

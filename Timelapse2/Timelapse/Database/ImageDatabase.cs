@@ -356,7 +356,8 @@ namespace Timelapse.Database
                 }
             }
 
-            // if there are no synchronization difficulties synchronize the image database's TemplateTable with the template's TemplateTable
+            // if there are no synchronization difficulties synchronize the image database's TemplateTable with the template's TemplateTable          
+
             if (this.TemplateSynchronizationIssues.Count == 0)
             {
                 foreach (string dataLabel in dataLabels)
@@ -378,6 +379,10 @@ namespace Timelapse.Database
             }
 
             // perform DataTable migrations
+            // Correct for backwards compatability as needed, where:
+            // - RelativePath (if missing) needs to be added 
+            // - MarkForDeletion (if present) needs to be removed 
+            // - DeleteFlag (if missing) needs to be added
             // add RelativePath column if it's not present in the image data table at postion '2'
             this.SelectDataTableImages(ImageFilter.All);
             if (this.ImageDataTable.ColumnNames.Contains(Constants.DatabaseColumn.RelativePath) == false)
@@ -386,6 +391,24 @@ namespace Timelapse.Database
                 ControlRow control = this.TemplateTable.Find(id);
                 ColumnTuple columnDefinition = this.CreateImageDataColumnDefinition(control);
                 this.Database.AddColumnToTable(Constants.Database.ImageDataTable, Constants.Database.RelativePathPosition, columnDefinition);
+                Debug.Assert(false, "Upgrade to older data db table: a RelativePath has been added.");
+            }
+
+            // For backwards compatability, check if there is a MarkForDeletion column. If there is, remove it as it has been renamed to DeleteFlag.
+            if (this.Database.IsColumnInTable(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion) == true)
+            {
+                this.Database.DeleteColumn(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion);
+                Debug.Assert(false, "Upgrade to older data db table: the MarkForDeletion has been removed.");
+            }
+
+            // For backwards compatability, check if there is a DeleteFlag Column. If not, add one.
+            if (this.Database.IsColumnInTable(Constants.Database.ImageDataTable, Constants.Control.DeleteFlag) == false)
+            {
+                long id = this.GetControlIDFromTemplateTable(Constants.Control.DeleteFlag);
+                ControlRow control = this.TemplateTable.Find(id);
+                ColumnTuple columnDefinition = this.CreateImageDataColumnDefinition(control);
+                this.Database.AddColumnToEndOfTable(Constants.Database.ImageDataTable, columnDefinition);
+                Debug.Assert(false, "Upgrade to older data db table: a DeleteFlag has been added. ");
             }
 
             // perform ImageSetTable migrations
@@ -398,7 +421,7 @@ namespace Timelapse.Database
             if (!whiteSpaceColumnExists)
             {
                 // create the whitespace column
-                this.Database.AddColumnToEndOfTable(Constants.Database.ImageSetTable, new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.Text));
+                this.Database.AddColumnToEndOfTable(Constants.Database.ImageSetTable, new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.False));
 
                 // trim the white space from all the data
                 this.Database.TrimWhitespace(Constants.Database.ImageDataTable, dataLabels);
@@ -406,6 +429,7 @@ namespace Timelapse.Database
                 columnToUpdate.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True)); // Populate the data 
                 columnToUpdate.SetWhere(Constants.Database.ImageSetRowID);
                 this.Database.Update(Constants.Database.ImageSetTable, columnToUpdate);
+                Debug.Assert(false, "Upgrade to older imageset db table: a WhiteSpaceTrimmed has been added. ");
             }
         }
 
@@ -1021,7 +1045,14 @@ namespace Timelapse.Database
 
         private ColumnTuple CreateImageDataColumnDefinition(ControlRow control)
         {
-            return new ColumnTuple(control.DataLabel, "TEXT '" + control.DefaultValue + "'");
+            if (control.DefaultValue.Trim() == String.Empty)
+            { 
+                 return new ColumnTuple(control.DataLabel, String.Empty);
+            }
+            else
+            {
+                return new ColumnTuple(control.DataLabel, control.DefaultValue);
+            }
         }
 
         private List<Point> ParseMarkerPoints(string value)

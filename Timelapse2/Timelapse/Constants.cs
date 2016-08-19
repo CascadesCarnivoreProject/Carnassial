@@ -57,7 +57,6 @@ namespace Timelapse
             public const string DeleteFlag = "DeleteFlag";    // a flag data type for marking deletion
             public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
 
-
             public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
             {
                 Constants.DatabaseColumn.Date,
@@ -109,11 +108,16 @@ namespace Timelapse
             public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
             public const string ImageQualityWidth = "85";
 
-            public const string MarkForDeletionTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
+            public const string DeleteFlagTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
             public const string TimeTooltip = "Time taken";
             public const string TimeWidth = "60";
         }
 
+        // Controls that have been deprecated
+        public static class ControlsDeprecated
+        {
+            public const string MarkForDeletion = "MarkForDeletion";
+        }
         public static class Database
         {
             // database table names and related strings
@@ -330,6 +334,7 @@ namespace Timelapse
             public const string EqualsCaseID = " = CASE Id";
             public const string SelectStarFrom = "SELECT * FROM ";
             public const string Text = "TEXT";
+            public const string False = "false";
             public const string WhereIDIn = Where + "Id IN ";
 
             public const string Null = "NULL";

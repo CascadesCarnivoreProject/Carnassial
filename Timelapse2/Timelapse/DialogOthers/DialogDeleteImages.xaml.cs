@@ -167,8 +167,8 @@ namespace Timelapse
             Mouse.OverrideCursor = Cursors.Wait;
             foreach (ImageRow imageProperties in this.imagesToDelete)
             {
-                string markForDeletionDataLabel = this.imageDatabase.DataLabelFromStandardControlType[Constants.Control.DeleteFlag];
-                this.imageDatabase.UpdateImage(imageProperties.ID, markForDeletionDataLabel, Constants.Boolean.False);
+                string DeleteFlageDataLabel = this.imageDatabase.DataLabelFromStandardControlType[Constants.Control.DeleteFlag];
+                this.imageDatabase.UpdateImage(imageProperties.ID, DeleteFlageDataLabel, Constants.Boolean.False);
                 if (this.deleteData)
                 {
                     imageIDsToDeleteFromDatabase.Add(imageProperties.ID);

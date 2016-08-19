@@ -1,13 +1,13 @@
 <stylecopresultscache>
   <version>12</version>
-  <project key="-1042216594">
+  <project key="1427976556">
     <configuration>TRACE;DEBUG</configuration>
   </project>
   <sourcecode name="CellTextBlockConverter.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.219</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.219</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -29,8 +29,8 @@
   <sourcecode name="EditorConstant.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.227</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.227</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -52,8 +52,8 @@
   <sourcecode name="EditorWindowExtensions.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.256</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.256</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -75,8 +75,8 @@
   <sourcecode name="ListBoxDBOutputConverter.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.256</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.256</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -98,8 +98,8 @@
   <sourcecode name="AssemblyInfo.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.257</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.257</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -121,8 +121,8 @@
   <sourcecode name="Resources.Designer.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.257</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.257</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -144,8 +144,8 @@
   <sourcecode name="CallerMemberNameAttribute.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.268</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.268</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -167,8 +167,8 @@
   <sourcecode name="CodeTemplateImporter.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.273</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.273</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -190,8 +190,8 @@
   <sourcecode name="EditorControls.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.277</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.277</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -213,8 +213,8 @@
   <sourcecode name="EditorRegistryUserSettings.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.277</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.277</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -236,8 +236,8 @@
   <sourcecode name="MyTrace.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.278</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-08-16 12:49:15.936</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -259,8 +259,8 @@
   <sourcecode name="App.xaml.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.218</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.218</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -282,8 +282,8 @@
   <sourcecode name="DialogAboutTimelapseEditor.xaml.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.623</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.623</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -305,8 +305,8 @@
   <sourcecode name="DialogEditChoiceList.xaml.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.223</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.223</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -328,8 +328,8 @@
   <sourcecode name="DialogInspectMetaData.xaml.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.224</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.224</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -351,8 +351,8 @@
   <sourcecode name="Settings.Designer.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-07-27 08:03:07.258</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-07-27 09:03:07.258</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -371,14 +371,14 @@
     </timestamps>
     <violations />
   </sourcecode>
-  <project key="1427976556">
+  <project key="-1042216594">
     <configuration>TRACE;DEBUG</configuration>
   </project>
   <sourcecode name="EditorWindow.xaml.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
-      <settingsFile>2016-07-27 08:03:07.262</settingsFile>
-      <sourceFile>2016-08-10 21:16:45.401</sourceFile>
+      <settingsFile>2016-07-27 09:03:07.262</settingsFile>
+      <sourceFile>2016-08-19 09:11:02.544</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>

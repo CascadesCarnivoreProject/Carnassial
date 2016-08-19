@@ -245,7 +245,6 @@ namespace Timelapse.Editor
 
                 messageBox.ShowDialog();
             }
-
         }
 
         /// <summary>
@@ -427,8 +426,7 @@ namespace Timelapse.Editor
             // Update the user interface specified by the contents of the table
             EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
-            this.InitializeUI();
-           
+            this.InitializeUI();       
         }
         #endregion DataGrid and New Database Initialization
 
@@ -664,7 +662,6 @@ namespace Timelapse.Editor
                     }
                 }
             }
-
         }
 
         private bool IsAllValidNumericChars(string str)
@@ -715,7 +712,6 @@ namespace Timelapse.Editor
                     }
                 }
             }
-
         }
 
         /// <summary>
