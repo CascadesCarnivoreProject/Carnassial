@@ -319,7 +319,9 @@ namespace Timelapse.UnitTests
             // version is the editor version used for creation
             public const string CarnivoreDirectoryName = "CarnivoreTestImages";
             public const string CarnivoreTemplateDatabaseFileName = "CarnivoreTemplate 2.0.1.5.tdb";
+            public const string CarnivoreTemplateDatabaseFileName2104 = "CarnivoreTemplate 2.1.0.4.tdb";
             public const string DefaultTemplateDatabaseFileName2015 = "TimelapseTemplate 2.0.1.5.tdb";
+            public const string DefaultTemplateDatabaseFileName2104 = "TimelapseTemplate 2.1.0.4.tdb";
             public const string HybridVideoDirectoryName = "HybridVideo";
 
             // image databases for backwards compatibility testing
@@ -329,6 +331,7 @@ namespace Timelapse.UnitTests
             // databases generated dynamically by tests
             // see also use of Constants.File.Default*DatabaseFileName
             public const string CarnivoreNewImageDatabaseFileName = "CarnivoreDatabaseTest.ddb";
+            public const string CarnivoreNewImageDatabaseFileName2104 = "CarnivoreDatabaseTest2104.ddb";
             public const string DefaultNewImageDatabaseFileName = "DefaultUnitTest.ddb";
             public const string DefaultNewTemplateDatabaseFileName = "DefaultUnitTest.tdb";
 

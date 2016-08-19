@@ -405,7 +405,8 @@ namespace Timelapse.Database
             string query = "ALTER TABLE " + tableName + " ADD COLUMN " + columnDefinition.Name + " TEXT ";
             if (columnDefinition.Value.Trim() != String.Empty)
             {
-                query += "DEFAULT '" + columnDefinition.Value + "'"; // Note that values are quoted
+                string quote = (columnDefinition.Value[0] == '\'') ? "" : "'"; 
+                query += "DEFAULT " + quote + columnDefinition.Value + quote; // Note that default values are quoted if they aren't already quoted
             }
             this.ExecuteNonQuery(query);
         }

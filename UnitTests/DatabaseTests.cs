@@ -17,7 +17,7 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void CreateReuseCarnivoreImageDatabase()
         {
-            this.CreateReuseImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName, (ImageDatabase imageDatabase) =>
+            this.CreateReuseImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName2104, TestConstant.File.CarnivoreNewImageDatabaseFileName, (ImageDatabase imageDatabase) =>
             {
                 return this.PopulateCarnivoreDatabase(imageDatabase);
             });
@@ -385,14 +385,14 @@ namespace Timelapse.UnitTests
             {
                 new DatabaseExpectations()
                 {
-                    ImageDatabaseFileName = TestConstant.File.CarnivoreNewImageDatabaseFileName,
-                    TemplateDatabaseFileName = TestConstant.File.CarnivoreTemplateDatabaseFileName,
-                    ExpectedControls = Constants.Control.StandardTypes.Count - 2 + 10
+                    ImageDatabaseFileName = TestConstant.File.CarnivoreNewImageDatabaseFileName2104,
+                    TemplateDatabaseFileName = TestConstant.File.CarnivoreTemplateDatabaseFileName2104,
+                    ExpectedControls = Constants.Control.StandardTypes.Count - 1 + 10
                 },
                 new DatabaseExpectations()
                 {
                     ImageDatabaseFileName = Constants.File.DefaultImageDatabaseFileName,
-                    TemplateDatabaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName2015,
+                    TemplateDatabaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName2104,
                     ExpectedControls = TestConstant.DefaultImageTableColumns.Count - 6
                 }
             };
@@ -419,7 +419,7 @@ namespace Timelapse.UnitTests
                 }
 
                 // check only copy forward is possible when enumerator's on first image
-                if (databaseExpectation.ImageDatabaseFileName == TestConstant.File.CarnivoreNewImageDatabaseFileName)
+                if (databaseExpectation.ImageDatabaseFileName == TestConstant.File.CarnivoreNewImageDatabaseFileName2104)
                 {
                     this.PopulateCarnivoreDatabase(imageDatabase);
                 }
@@ -431,8 +431,17 @@ namespace Timelapse.UnitTests
                 Assert.IsTrue(dataHandler.ImageCache.MoveNext());
                 foreach (DataEntryControl control in copyableControls)
                 {
-                    Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
-                    Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
+                   System.Diagnostics.Debug.Print(control.DataLabel);
+                   if (control.DataLabel == TestConstant.DefaultDatabaseColumn.Counter0)
+                   {
+                       Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
+                       Assert.IsTrue(dataHandler.IsCopyFromLastValuePossible(control));
+                   }
+                   else
+                   { 
+                       Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
+                       Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
+                   }
                 }
 
                 // check only copy last is possible when enumerator's on last image
