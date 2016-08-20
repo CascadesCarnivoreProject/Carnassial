@@ -31,10 +31,10 @@ namespace Timelapse.Editor
         public static class Control
         {
             // columns
-            public const string MarkForDeletion = "MarkForDeletion";     // Data Label for: the Deletion
+            public const string DeleteFlag = "DeleteFlag";     // Data Label for: the Deletion
 
             // labels for the few cases where the default label isn't the same as the data label
-            public const string MarkForDeletionLabel = "Delete?";        // Label for: the Deletion
+            public const string DeleteFlagLabel = "Delete?";        // Label for: the Deletion
 
             // data grid column headers
             // these are human friendly forms of data labels
