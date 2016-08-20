@@ -173,7 +173,17 @@ namespace Timelapse.Database
 
         public void RemoveUserDefinedControl(ControlRow controlToRemove)
         {
-            string controlType = controlToRemove.Type;
+            string controlType;
+            // For backwards compatability: MarkForDeletion DataLabel is of the type DeleteFlag,
+            // which is a standard control. So we coerce it into thinking its a different type.
+            if (controlToRemove.DataLabel == Constants.ControlsDeprecated.MarkForDeletion)
+            {
+                controlType = Constants.ControlsDeprecated.MarkForDeletion;
+            }
+            else
+            { 
+                controlType = controlToRemove.Type;
+            }
             if (Constants.Control.StandardTypes.Contains(controlType))
             {
                 throw new NotSupportedException(String.Format("Standard control of type {0} cannot be removed.", controlType));
@@ -514,10 +524,9 @@ namespace Timelapse.Database
             long markForDeletionID = this.GetControlIDFromTemplateTable(Constants.ControlsDeprecated.MarkForDeletion);
             if (markForDeletionID >= 0)
             {
-                string where = Constants.DatabaseColumn.ID + " = " + markForDeletionID.ToString();
-                this.Database.DeleteRows(Constants.Database.TemplateTable, where);
+                ControlRow controlToRemove = this.GetControlFromTemplateTable(Constants.ControlsDeprecated.MarkForDeletion);
+                this.RemoveUserDefinedControl(controlToRemove);
                 Debug.Assert(false, "Upgrade to older template db table: the MarkForDeletion has been removed.");
-                this.GetControlsSortedByControlOrder(); // Because we removed a control, we get them again for the next testS to work properly
             }
 
             // Backwards compatability: Add a DeleteFlag control missing from pre v2.1 templates. 

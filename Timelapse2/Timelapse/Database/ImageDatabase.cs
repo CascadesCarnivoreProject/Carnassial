@@ -1051,7 +1051,7 @@ namespace Timelapse.Database
             }
             else
             {
-                return new ColumnTuple(control.DataLabel, control.DefaultValue);
+                return new ColumnTuple(control.DataLabel, "'" + control.DefaultValue + "'"); // We quote defaults
             }
         }
 

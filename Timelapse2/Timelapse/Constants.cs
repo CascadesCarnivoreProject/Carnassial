@@ -150,6 +150,7 @@ namespace Timelapse
             public const string ID = "Id";
             public const string Image = "Image";               // A single image and its associated data
             public const string ImageQuality = "ImageQuality";
+            public const string DeleteFlag = "DeleteFlag";
             public const string Point = "Point";               // a single point
             public const string RelativePath = "RelativePath";
             public const string Time = "Time";

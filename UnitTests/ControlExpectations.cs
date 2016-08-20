@@ -33,16 +33,20 @@ namespace Timelapse.UnitTests
 
         public static ControlExpectations CreateCounter(string dataLabel, long id)
         {
+            return CreateCounter(dataLabel, id, id, id);
+        }
+        public static ControlExpectations CreateCounter(string dataLabel, long id, long controlOrder, long spreadsheetOrder)
+        {
             return new ControlExpectations()
             {
-                ControlOrder = id,
+                ControlOrder = controlOrder,
                 Copyable = false,
                 DataLabel = dataLabel,
                 DefaultValue = Constants.ControlDefault.CounterValue,
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
-                SpreadsheetOrder = id,
+                SpreadsheetOrder = spreadsheetOrder,
                 TextBoxWidth = Constants.ControlDefault.CounterWidth,
                 Tooltip = Constants.ControlDefault.CounterTooltip,
                 Type = Constants.Control.Counter,
@@ -52,16 +56,20 @@ namespace Timelapse.UnitTests
 
         public static ControlExpectations CreateChoice(string dataLabel, long id)
         {
+            return CreateChoice(dataLabel, id, id, id);
+        }
+        public static ControlExpectations CreateChoice(string dataLabel, long id, long controlOrder, long spreadsheetOrder)
+        {
             return new ControlExpectations()
             {
-                ControlOrder = id,
+                ControlOrder = controlOrder,
                 Copyable = true,
                 DataLabel = dataLabel,
                 DefaultValue = Constants.ControlDefault.Value,
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
-                SpreadsheetOrder = id,
+                SpreadsheetOrder = spreadsheetOrder,
                 TextBoxWidth = Constants.ControlDefault.FixedChoiceWidth,
                 Tooltip = Constants.ControlDefault.FixedChoiceTooltip,
                 Type = Constants.Control.FixedChoice,
@@ -71,16 +79,20 @@ namespace Timelapse.UnitTests
 
         public static ControlExpectations CreateFlag(string dataLabel, long id)
         {
+            return CreateFlag(dataLabel, id, id, id);
+        }
+        public static ControlExpectations CreateFlag(string dataLabel, long id, long controlOrder, long spreadsheetOrder)
+        {
             return new ControlExpectations()
             {
-                ControlOrder = id,
+                ControlOrder = controlOrder,
                 Copyable = true,
                 DataLabel = dataLabel,
                 DefaultValue = Constants.ControlDefault.FlagValue,
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
-                SpreadsheetOrder = id,
+                SpreadsheetOrder = spreadsheetOrder,
                 TextBoxWidth = Constants.ControlDefault.FlagWidth,
                 Tooltip = Constants.ControlDefault.FlagTooltip,
                 Type = Constants.Control.Flag,
@@ -90,16 +102,21 @@ namespace Timelapse.UnitTests
 
         public static ControlExpectations CreateNote(string dataLabel, long id)
         {
+            return CreateNote(dataLabel, id, id, id);
+
+        }
+        public static ControlExpectations CreateNote(string dataLabel, long id, long controlOrder, long spreadsheetOrder)
+        {
             return new ControlExpectations()
             {
-                ControlOrder = id,
+                ControlOrder = controlOrder,
                 Copyable = true,
                 DataLabel = dataLabel,
                 DefaultValue = Constants.ControlDefault.Value,
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
-                SpreadsheetOrder = id,
+                SpreadsheetOrder = spreadsheetOrder,
                 TextBoxWidth = Constants.ControlDefault.NoteWidth,
                 Tooltip = Constants.ControlDefault.NoteTooltip,
                 Type = Constants.Control.Note,

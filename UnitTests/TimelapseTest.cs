@@ -247,7 +247,6 @@ namespace Timelapse.UnitTests
                 imageExpectation.ID = image + 1;
                 imageExpectation.InitialRootFolderName = initialRootFolderName;
             }
-
             return imageExpectations;
         }
 

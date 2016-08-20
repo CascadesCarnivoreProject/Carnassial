@@ -17,7 +17,7 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void CreateReuseCarnivoreImageDatabase()
         {
-            this.CreateReuseImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName, (ImageDatabase imageDatabase) =>
+            this.CreateReuseImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName2104, TestConstant.File.CarnivoreNewImageDatabaseFileName, (ImageDatabase imageDatabase) =>
             {
                 return this.PopulateCarnivoreDatabase(imageDatabase);
             });
@@ -385,14 +385,14 @@ namespace Timelapse.UnitTests
             {
                 new DatabaseExpectations()
                 {
-                    ImageDatabaseFileName = TestConstant.File.CarnivoreNewImageDatabaseFileName,
-                    TemplateDatabaseFileName = TestConstant.File.CarnivoreTemplateDatabaseFileName,
-                    ExpectedControls = Constants.Control.StandardTypes.Count - 2 + 10
+                    ImageDatabaseFileName = TestConstant.File.CarnivoreNewImageDatabaseFileName2104,
+                    TemplateDatabaseFileName = TestConstant.File.CarnivoreTemplateDatabaseFileName2104,
+                    ExpectedControls = Constants.Control.StandardTypes.Count - 1 + 10
                 },
                 new DatabaseExpectations()
                 {
                     ImageDatabaseFileName = Constants.File.DefaultImageDatabaseFileName,
-                    TemplateDatabaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName2015,
+                    TemplateDatabaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName2104,
                     ExpectedControls = TestConstant.DefaultImageTableColumns.Count - 6
                 }
             };
@@ -411,7 +411,10 @@ namespace Timelapse.UnitTests
                                                                                   control.DataLabel != Constants.DatabaseColumn.RelativePath &&
                                                                                   control.DataLabel != Constants.DatabaseColumn.File &&
                                                                                   control.DataLabel != Constants.DatabaseColumn.Date &&
-                                                                                  control.DataLabel != Constants.DatabaseColumn.Time).ToList();
+                                                                                  control.DataLabel != Constants.DatabaseColumn.Time &&
+                                                                                  control.DataLabel != Constants.DatabaseColumn.ImageQuality &&
+                                                                                  control.DataLabel != Constants.DatabaseColumn.DeleteFlag
+                                                                                  ).ToList();
                 foreach (DataEntryControl control in copyableControls)
                 {
                     Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
@@ -419,7 +422,7 @@ namespace Timelapse.UnitTests
                 }
 
                 // check only copy forward is possible when enumerator's on first image
-                if (databaseExpectation.ImageDatabaseFileName == TestConstant.File.CarnivoreNewImageDatabaseFileName)
+                if (databaseExpectation.ImageDatabaseFileName == TestConstant.File.CarnivoreNewImageDatabaseFileName2104)
                 {
                     this.PopulateCarnivoreDatabase(imageDatabase);
                 }
@@ -431,8 +434,17 @@ namespace Timelapse.UnitTests
                 Assert.IsTrue(dataHandler.ImageCache.MoveNext());
                 foreach (DataEntryControl control in copyableControls)
                 {
-                    Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
-                    Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
+                   System.Diagnostics.Debug.Print(control.DataLabel);
+                   if (control.DataLabel == TestConstant.DefaultDatabaseColumn.Counter0)
+                   {
+                       Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
+                       Assert.IsTrue(dataHandler.IsCopyFromLastValuePossible(control));
+                   }
+                   else
+                   { 
+                       Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
+                       Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
+                   }
                 }
 
                 // check only copy last is possible when enumerator's on last image
@@ -470,7 +482,7 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void HybridVideo()
         {
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName2104, TestConstant.File.CarnivoreNewImageDatabaseFileName);
             List<ImageRow> imagesToInsert = new List<ImageRow>();
             FileInfo[] imagesAndVideos = new DirectoryInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.HybridVideoDirectoryName)).GetFiles();
             foreach (FileInfo imageFile in imagesAndVideos)
@@ -604,49 +616,10 @@ namespace Timelapse.UnitTests
         }
 
         [TestMethod]
-        public void ImageDatabaseNegative()
-        {
-            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015);
-            ImageDatabase imageDatabase = this.CreateImageDatabase(templateDatabase, TestConstant.File.DefaultImageDatabaseFileName2023);
-            this.PopulateDefaultDatabase(imageDatabase);
-
-            // ImageDatabase methods
-            int firstDisplayableImage = imageDatabase.FindFirstDisplayableImage(imageDatabase.CurrentlySelectedImageCount);
-            Assert.IsTrue(firstDisplayableImage == imageDatabase.CurrentlySelectedImageCount - 1);
-
-            int closestDisplayableImage = imageDatabase.FindClosestImage(Int64.MinValue);
-            Assert.IsTrue(closestDisplayableImage == 0);
-            closestDisplayableImage = imageDatabase.FindClosestImage(Int64.MaxValue);
-            Assert.IsTrue(closestDisplayableImage == imageDatabase.CurrentlySelectedImageCount - 1);
-
-            Assert.IsFalse(imageDatabase.IsImageDisplayable(-1));
-            Assert.IsFalse(imageDatabase.IsImageDisplayable(imageDatabase.CurrentlySelectedImageCount));
-
-            Assert.IsFalse(imageDatabase.IsImageRowInRange(-1));
-            Assert.IsFalse(imageDatabase.IsImageRowInRange(imageDatabase.CurrentlySelectedImageCount));
-
-            ImageRow imageProperties = imageDatabase.ImageDataTable[0];
-            FileInfo imageFile = imageProperties.GetFileInfo(imageDatabase.FolderPath);
-            Assert.IsTrue(imageDatabase.GetOrCreateImage(imageFile, out imageProperties));
-
-            // template table synchronization
-            // remove choices and change a note to a choice to produce a type failure
-            ControlRow choiceControl = templateDatabase.GetControlFromTemplateTable(TestConstant.DefaultDatabaseColumn.Choice0);
-            choiceControl.List = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
-            templateDatabase.SyncControlToDatabase(choiceControl);
-            ControlRow noteControl = templateDatabase.GetControlFromTemplateTable(TestConstant.DefaultDatabaseColumn.Note0);
-            noteControl.Type = Constants.Control.FixedChoice;
-            templateDatabase.SyncControlToDatabase(noteControl);
-
-            imageDatabase = ImageDatabase.CreateOrOpen(imageDatabase.FileName, templateDatabase);
-            Assert.IsTrue(imageDatabase.TemplateSynchronizationIssues.Count == 4);
-        }
-
-        [TestMethod]
         public void RoundtripCsv()
         {
             // create database, push test images into the database, and load the image data table
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName2104, TestConstant.File.CarnivoreNewImageDatabaseFileName);
             this.PopulateCarnivoreDatabase(imageDatabase);
 
             // roundtrip data through .csv
@@ -782,30 +755,32 @@ namespace Timelapse.UnitTests
 
         private void VerifyDefaultTemplateTableContent(TemplateDatabase templateDatabase)
         {
+            int i = 0;
             Assert.IsTrue(templateDatabase.TemplateTable.RowCount == TestConstant.DefaultImageTableColumns.Count - 1);
-            TestConstant.DefaultExpectation.File.Verify(templateDatabase.TemplateTable[0]);
-            TestConstant.DefaultExpectation.RelativePath.Verify(templateDatabase.TemplateTable[1]);
-            TestConstant.DefaultExpectation.Folder.Verify(templateDatabase.TemplateTable[2]);
-            TestConstant.DefaultExpectation.Date.Verify(templateDatabase.TemplateTable[3]);
-            TestConstant.DefaultExpectation.Time.Verify(templateDatabase.TemplateTable[4]);
-            TestConstant.DefaultExpectation.ImageQuality.Verify(templateDatabase.TemplateTable[5]);
-            TestConstant.DefaultExpectation.MarkForDeletion.Verify(templateDatabase.TemplateTable[6]);
-            TestConstant.DefaultExpectation.Counter0.Verify(templateDatabase.TemplateTable[7]);
-            TestConstant.DefaultExpectation.Choice0.Verify(templateDatabase.TemplateTable[8]);
-            TestConstant.DefaultExpectation.Note0.Verify(templateDatabase.TemplateTable[9]);
-            TestConstant.DefaultExpectation.Flag0.Verify(templateDatabase.TemplateTable[10]);
-            TestConstant.DefaultExpectation.CounterWithCustomDataLabel.Verify(templateDatabase.TemplateTable[11]);
-            TestConstant.DefaultExpectation.ChoiceWithCustomDataLabel.Verify(templateDatabase.TemplateTable[12]);
-            TestConstant.DefaultExpectation.NoteWithCustomDataLabel.Verify(templateDatabase.TemplateTable[13]);
-            TestConstant.DefaultExpectation.FlagWithCustomDataLabel.Verify(templateDatabase.TemplateTable[14]);
-            TestConstant.DefaultExpectation.CounterNotVisible.Verify(templateDatabase.TemplateTable[15]);
-            TestConstant.DefaultExpectation.ChoiceNotVisible.Verify(templateDatabase.TemplateTable[16]);
-            TestConstant.DefaultExpectation.NoteNotVisible.Verify(templateDatabase.TemplateTable[17]);
-            TestConstant.DefaultExpectation.FlagNotVisible.Verify(templateDatabase.TemplateTable[18]);
-            TestConstant.DefaultExpectation.Counter3.Verify(templateDatabase.TemplateTable[19]);
-            TestConstant.DefaultExpectation.Choice3.Verify(templateDatabase.TemplateTable[20]);
-            TestConstant.DefaultExpectation.Note3.Verify(templateDatabase.TemplateTable[21]);
-            TestConstant.DefaultExpectation.Flag3.Verify(templateDatabase.TemplateTable[22]);
+            TestConstant.DefaultExpectation.File.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.RelativePath.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.Folder.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.Date.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.Time.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.ImageQuality.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.Counter0.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.Choice0.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.Note0.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.Flag0.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.CounterWithCustomDataLabel.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.ChoiceWithCustomDataLabel.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.NoteWithCustomDataLabel.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.FlagWithCustomDataLabel.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.CounterNotVisible.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.ChoiceNotVisible.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.NoteNotVisible.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.FlagNotVisible.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.Counter3.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.Choice3.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.Note3.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.Flag3.Verify(templateDatabase.TemplateTable[i++]);
+            TestConstant.DefaultExpectation.DeleteFlag.Verify(templateDatabase.TemplateTable[i++]);
+
         }
     }
 }
