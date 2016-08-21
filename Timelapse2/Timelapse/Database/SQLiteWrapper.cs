@@ -65,7 +65,7 @@ namespace Timelapse.Database
             string query = Constants.Sql.CreateTable + tableName + Constants.Sql.OpenParenthesis + Environment.NewLine;               // CREATE TABLE <tablename> (
             foreach (ColumnTuple column in columnDefinitions)
             {
-                query += column.Name + " " + column.Value + Constants.Sql.Comma + Environment.NewLine;             // columnname datatype,
+                query += column.Name + " " + column.Value + Constants.Sql.Comma + Environment.NewLine;             // columnname TEXT default value,
             }
             query = query.Remove(query.Length - Constants.Sql.Comma.Length - Environment.NewLine.Length);         // remove last comma / new line and replace with );
             query += Constants.Sql.CloseParenthesis + Constants.Sql.Semicolon;
@@ -372,6 +372,19 @@ namespace Timelapse.Database
         // This method will check if a column exists in a table
         public bool IsColumnInTable(string tableName, string columnName)
         {
+            // Open the connection
+            using (SQLiteConnection connection = new SQLiteConnection(this.connectionString))
+            {
+                connection.Open();
+                List<string> columnNames = this.GetColumnNamesAsList(connection, tableName);
+
+                // Return if a column named columnName  exists in the given table. 
+                return (columnNames.Contains(columnName));
+            }
+        }
+
+        public bool xIsColumnInTable(string tableName, string columnName)
+        {
             // TODO: change this to a proper IF EXISTS rather than relying on a try catch
             try
             {
@@ -405,8 +418,8 @@ namespace Timelapse.Database
             string query = "ALTER TABLE " + tableName + " ADD COLUMN " + columnDefinition.Name + " TEXT ";
             if (columnDefinition.Value.Trim() != String.Empty)
             {
-                string quote = (columnDefinition.Value[0] == '\'') ? "" : "'"; 
-                query += "DEFAULT " + quote + columnDefinition.Value + quote; // Note that default values are quoted if they aren't already quoted
+                string quote = (columnDefinition.Value[0] == '\'') ? String.Empty : "'"; 
+                query += "DEFAULT " + Utilities.QuoteForSql(columnDefinition.Value); // Note that default values are quoted if they aren't already quoted
             }
             this.ExecuteNonQuery(query);
         }
@@ -785,7 +798,7 @@ namespace Timelapse.Database
                     }
                     else
                     {
-                        existingColumnDefinition += columnDefinition + " TEXT DEFAULT '" + columnDefaultValue + "'";
+                        existingColumnDefinition += columnDefinition + " TEXT DEFAULT " + Utilities.QuoteForSql(columnDefaultValue);
                     }
                     columnAdded = true;
                 }
@@ -810,7 +823,7 @@ namespace Timelapse.Database
                         case 4:  // dflt_value (Column has a default value)
                             if (reader[i].ToString() != String.Empty)
                             {
-                                existingColumnDefinition += "DEFAULT " + reader[i].ToString() + " ";
+                                existingColumnDefinition += "DEFAULT " + Utilities.QuoteForSql(reader[i].ToString()) + " ";
                             }
                             break;
                         case 5:  // pk (Column is part of the primary key)
@@ -836,7 +849,7 @@ namespace Timelapse.Database
                 }
                 else
                 {
-                    newSchema += columnDefinition + " TEXT DEFAULT '" + columnDefaultValue + "',";
+                    newSchema += columnDefinition + " TEXT DEFAULT '" + Utilities.QuoteForSql(columnDefaultValue) + "',";
                 }
             }
             newSchema = newSchema.TrimEnd(',', ' '); // remove last comma
@@ -879,7 +892,7 @@ namespace Timelapse.Database
                         case 4:  // dflt_value (Column has a default value)
                             if (reader[i].ToString() != String.Empty)
                             {
-                                existingColumnDefinition += "DEFAULT " + reader[i].ToString() + " ";
+                                existingColumnDefinition += "DEFAULT " + Utilities.QuoteForSql(reader[i].ToString()) + " ";
                             }
                             break;
                         case 5:  // pk (Column is part of the primary key)
@@ -933,7 +946,7 @@ namespace Timelapse.Database
                         case 4:  // dflt_value (Column has a default value)
                             if (reader[field].ToString() != String.Empty)
                             {
-                                existingColumnDefinition += "DEFAULT " + reader[field].ToString() + " ";
+                                existingColumnDefinition += "DEFAULT " + Utilities.QuoteForSql(reader[field].ToString()) + " ";
                             }
                             break;
                         case 5:  // pk (Column is part of the primary key)

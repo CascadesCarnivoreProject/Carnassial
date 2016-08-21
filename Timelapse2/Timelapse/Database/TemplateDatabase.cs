@@ -526,7 +526,6 @@ namespace Timelapse.Database
             {
                 ControlRow controlToRemove = this.GetControlFromTemplateTable(Constants.ControlsDeprecated.MarkForDeletion);
                 this.RemoveUserDefinedControl(controlToRemove);
-                Debug.Assert(false, "Upgrade to older template db table: the MarkForDeletion has been removed.");
             }
 
             // Backwards compatability: Add a DeleteFlag control missing from pre v2.1 templates. 
@@ -536,7 +535,6 @@ namespace Timelapse.Database
                 int order = this.TemplateTable.RowCount + 1;
                 List<ColumnTuple> deleteFlagControl = this.GetDeleteFlagTuples(order, order, true);
                 this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { deleteFlagControl });
-                Debug.Assert(false, "Upgrade to older templates: a DeleteFlag has been added.");
             }
         }
 

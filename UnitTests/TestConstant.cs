@@ -269,7 +269,7 @@ namespace Timelapse.UnitTests
                 DefaultExpectation.DeleteFlag = ControlExpectations.CreateFlag(EditorConstant.Control.DeleteFlag, i++, j, j++);
                 DefaultExpectation.DeleteFlag.Copyable = false;
                 DefaultExpectation.DeleteFlag.Label = EditorConstant.Control.DeleteFlagLabel;
-                DefaultExpectation.DeleteFlag.List = "";
+                DefaultExpectation.DeleteFlag.List = String.Empty;
                 DefaultExpectation.DeleteFlag.Tooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
                 DefaultExpectation.DeleteFlag.Type = Constants.Control.DeleteFlag;
 
@@ -333,6 +333,7 @@ namespace Timelapse.UnitTests
             // image databases for backwards compatibility testing
             // version is the Timelapse version used for creation
             public const string DefaultImageDatabaseFileName2023 = "TimelapseData 2.0.2.3.ddb";
+            public const string DefaultImageDatabaseFileName2104 = "TimelapseData 2.1.0.4.ddb";
 
             // databases generated dynamically by tests
             // see also use of Constants.File.Default*DatabaseFileName

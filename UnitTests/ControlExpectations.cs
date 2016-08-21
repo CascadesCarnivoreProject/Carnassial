@@ -35,6 +35,7 @@ namespace Timelapse.UnitTests
         {
             return CreateCounter(dataLabel, id, id, id);
         }
+
         public static ControlExpectations CreateCounter(string dataLabel, long id, long controlOrder, long spreadsheetOrder)
         {
             return new ControlExpectations()
@@ -58,6 +59,7 @@ namespace Timelapse.UnitTests
         {
             return CreateChoice(dataLabel, id, id, id);
         }
+
         public static ControlExpectations CreateChoice(string dataLabel, long id, long controlOrder, long spreadsheetOrder)
         {
             return new ControlExpectations()
@@ -81,6 +83,7 @@ namespace Timelapse.UnitTests
         {
             return CreateFlag(dataLabel, id, id, id);
         }
+
         public static ControlExpectations CreateFlag(string dataLabel, long id, long controlOrder, long spreadsheetOrder)
         {
             return new ControlExpectations()
@@ -103,8 +106,8 @@ namespace Timelapse.UnitTests
         public static ControlExpectations CreateNote(string dataLabel, long id)
         {
             return CreateNote(dataLabel, id, id, id);
-
         }
+
         public static ControlExpectations CreateNote(string dataLabel, long id, long controlOrder, long spreadsheetOrder)
         {
             return new ControlExpectations()

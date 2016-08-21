@@ -26,7 +26,7 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void CreateReuseDefaultImageDatabase()
         {
-            this.CreateReuseImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015, TestConstant.File.DefaultImageDatabaseFileName2023, (ImageDatabase imageDatabase) =>
+            this.CreateReuseImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, TestConstant.File.DefaultImageDatabaseFileName2023, (ImageDatabase imageDatabase) =>
             {
                 return this.PopulateDefaultDatabase(imageDatabase);
             });
@@ -413,8 +413,7 @@ namespace Timelapse.UnitTests
                                                                                   control.DataLabel != Constants.DatabaseColumn.Date &&
                                                                                   control.DataLabel != Constants.DatabaseColumn.Time &&
                                                                                   control.DataLabel != Constants.DatabaseColumn.ImageQuality &&
-                                                                                  control.DataLabel != Constants.DatabaseColumn.DeleteFlag
-                                                                                  ).ToList();
+                                                                                  control.DataLabel != Constants.DatabaseColumn.DeleteFlag).ToList();
                 foreach (DataEntryControl control in copyableControls)
                 {
                     Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
@@ -435,16 +434,8 @@ namespace Timelapse.UnitTests
                 foreach (DataEntryControl control in copyableControls)
                 {
                    System.Diagnostics.Debug.Print(control.DataLabel);
-                   if (control.DataLabel == TestConstant.DefaultDatabaseColumn.Counter0)
-                   {
-                       Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
-                       Assert.IsTrue(dataHandler.IsCopyFromLastValuePossible(control));
-                   }
-                   else
-                   { 
-                       Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
-                       Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
-                   }
+                   Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
+                   Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
                 }
 
                 // check only copy last is possible when enumerator's on last image
@@ -616,6 +607,45 @@ namespace Timelapse.UnitTests
         }
 
         [TestMethod]
+        public void ImageDatabaseNegative()
+        {
+            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(templateDatabase, TestConstant.File.DefaultImageDatabaseFileName2104);
+            this.PopulateDefaultDatabase(imageDatabase);
+
+            // ImageDatabase methods
+            int firstDisplayableImage = imageDatabase.FindFirstDisplayableImage(imageDatabase.CurrentlySelectedImageCount);
+            Assert.IsTrue(firstDisplayableImage == imageDatabase.CurrentlySelectedImageCount - 1);
+
+            int closestDisplayableImage = imageDatabase.FindClosestImage(Int64.MinValue);
+            Assert.IsTrue(closestDisplayableImage == 0);
+            closestDisplayableImage = imageDatabase.FindClosestImage(Int64.MaxValue);
+            Assert.IsTrue(closestDisplayableImage == imageDatabase.CurrentlySelectedImageCount - 1);
+
+            Assert.IsFalse(imageDatabase.IsImageDisplayable(-1));
+            Assert.IsFalse(imageDatabase.IsImageDisplayable(imageDatabase.CurrentlySelectedImageCount));
+
+            Assert.IsFalse(imageDatabase.IsImageRowInRange(-1));
+            Assert.IsFalse(imageDatabase.IsImageRowInRange(imageDatabase.CurrentlySelectedImageCount));
+
+            ImageRow imageProperties = imageDatabase.ImageDataTable[0];
+            FileInfo imageFile = imageProperties.GetFileInfo(imageDatabase.FolderPath);
+            Assert.IsTrue(imageDatabase.GetOrCreateImage(imageFile, out imageProperties));
+
+            // template table synchronization
+            // remove choices and change a note to a choice to produce a type failure
+            ControlRow choiceControl = templateDatabase.GetControlFromTemplateTable(TestConstant.DefaultDatabaseColumn.Choice0);
+            choiceControl.List = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
+            templateDatabase.SyncControlToDatabase(choiceControl);
+            ControlRow noteControl = templateDatabase.GetControlFromTemplateTable(TestConstant.DefaultDatabaseColumn.Note0);
+            noteControl.Type = Constants.Control.FixedChoice;
+            templateDatabase.SyncControlToDatabase(noteControl);
+
+            imageDatabase = ImageDatabase.CreateOrOpen(imageDatabase.FileName, templateDatabase);
+            Assert.IsTrue(imageDatabase.TemplateSynchronizationIssues.Count == 4);
+        }
+
+        [TestMethod]
         public void RoundtripCsv()
         {
             // create database, push test images into the database, and load the image data table
@@ -780,7 +810,6 @@ namespace Timelapse.UnitTests
             TestConstant.DefaultExpectation.Note3.Verify(templateDatabase.TemplateTable[i++]);
             TestConstant.DefaultExpectation.Flag3.Verify(templateDatabase.TemplateTable[i++]);
             TestConstant.DefaultExpectation.DeleteFlag.Verify(templateDatabase.TemplateTable[i++]);
-
         }
     }
 }

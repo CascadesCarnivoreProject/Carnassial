@@ -158,6 +158,7 @@ namespace Timelapse.Util
             {
                 return false;
             }
+
             string valueToCopy = this.ImageCache.Current[control.DataLabel]; 
             int imagesAffected = this.ImageDatabase.CurrentlySelectedImageCount - this.ImageCache.CurrentRow - 1;
             return (imagesAffected > 0) ? true : false;

@@ -391,14 +391,12 @@ namespace Timelapse.Database
                 ControlRow control = this.TemplateTable.Find(id);
                 ColumnTuple columnDefinition = this.CreateImageDataColumnDefinition(control);
                 this.Database.AddColumnToTable(Constants.Database.ImageDataTable, Constants.Database.RelativePathPosition, columnDefinition);
-                Debug.Assert(false, "Upgrade to older data db table: a RelativePath has been added.");
             }
 
             // For backwards compatability, check if there is a MarkForDeletion column. If there is, remove it as it has been renamed to DeleteFlag.
             if (this.Database.IsColumnInTable(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion) == true)
             {
                 this.Database.DeleteColumn(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion);
-                Debug.Assert(false, "Upgrade to older data db table: the MarkForDeletion has been removed.");
             }
 
             // For backwards compatability, check if there is a DeleteFlag Column. If not, add one.
@@ -408,7 +406,6 @@ namespace Timelapse.Database
                 ControlRow control = this.TemplateTable.Find(id);
                 ColumnTuple columnDefinition = this.CreateImageDataColumnDefinition(control);
                 this.Database.AddColumnToEndOfTable(Constants.Database.ImageDataTable, columnDefinition);
-                Debug.Assert(false, "Upgrade to older data db table: a DeleteFlag has been added. ");
             }
 
             // perform ImageSetTable migrations
@@ -429,7 +426,6 @@ namespace Timelapse.Database
                 columnToUpdate.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True)); // Populate the data 
                 columnToUpdate.SetWhere(Constants.Database.ImageSetRowID);
                 this.Database.Update(Constants.Database.ImageSetTable, columnToUpdate);
-                Debug.Assert(false, "Upgrade to older imageset db table: a WhiteSpaceTrimmed has been added. ");
             }
         }
 
@@ -1047,11 +1043,11 @@ namespace Timelapse.Database
         {
             if (control.DefaultValue.Trim() == String.Empty)
             { 
-                 return new ColumnTuple(control.DataLabel, String.Empty);
+                 return new ColumnTuple(control.DataLabel + " TEXT", String.Empty);
             }
             else
             {
-                return new ColumnTuple(control.DataLabel, "'" + control.DefaultValue + "'"); // We quote defaults
+                return new ColumnTuple(control.DataLabel + " TEXT DEFAULT ", Utilities.QuoteForSql(control.DefaultValue)); // We quote defaults
             }
         }
 
