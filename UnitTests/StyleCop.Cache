@@ -3,14 +3,11 @@
   <project key="-1422605837">
     <configuration>DEBUG;TRACE</configuration>
   </project>
-  <project key="507697437">
-    <configuration>DEBUG;TRACE</configuration>
-  </project>
   <sourcecode name="ControlExpectations.cs" parser="StyleCop.CSharp.CsParser">
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
       <settingsFile>2016-07-27 09:03:07.505</settingsFile>
-      <sourceFile>2016-08-21 11:12:45.161</sourceFile>
+      <sourceFile>2016-08-21 12:38:00.859</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -56,7 +53,7 @@
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
       <settingsFile>2016-07-27 09:03:07.505</settingsFile>
-      <sourceFile>2016-08-21 11:12:45.146</sourceFile>
+      <sourceFile>2016-08-21 12:38:00.865</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -286,7 +283,7 @@
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
       <settingsFile>2016-07-27 09:03:07.505</settingsFile>
-      <sourceFile>2016-08-21 11:12:45.165</sourceFile>
+      <sourceFile>2016-08-21 12:38:00.870</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -309,7 +306,7 @@
     <timestamps>
       <styleCop>2016-05-12 20:26:32.000</styleCop>
       <settingsFile>2016-07-27 09:03:07.505</settingsFile>
-      <sourceFile>2016-08-21 10:05:21.322</sourceFile>
+      <sourceFile>2016-08-21 12:38:00.876</sourceFile>
       <parser>2016-05-12 20:26:32.000</parser>
       <StyleCop.CSharp.DocumentationRules>2016-05-12 20:26:32.000</StyleCop.CSharp.DocumentationRules>
       <StyleCop.CSharp.DocumentationRules.FilesHashCode>-26055145</StyleCop.CSharp.DocumentationRules.FilesHashCode>
@@ -374,4 +371,7 @@
     </timestamps>
     <violations />
   </sourcecode>
+  <project key="507697437">
+    <configuration>DEBUG;TRACE</configuration>
+  </project>
 </stylecopresultscache>

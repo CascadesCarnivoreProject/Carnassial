@@ -581,10 +581,11 @@ namespace Timelapse.Editor
         /// Informs application tab was used, which allows it to more quickly visualize the grid values in the preview.
         /// Tab does not normal raise the row edited listener, which we are using to do the update.
         /// Note that by setting the e.handled to true, we ignore the tab navigation (as this was introducing problems)
+        /// We also disallow spaces
         /// </summary>
         private void TemplateDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            MyTrace.MethodName("DG TemplateDataGrid_PreviewKeyDow");
+            MyTrace.MethodName("DG TemplateDataGrid_PreviewKeyDown");
             if (e.Key == Key.Tab)
             {
                 this.tabWasPressed = true;
@@ -592,8 +593,8 @@ namespace Timelapse.Editor
             }
             if (this.TemplateDataGrid.CurrentColumn.Header.Equals(EditorConstant.Control.DataLabel))
             {
-                // No white space in a data label
-                // TODOSAUL: check for other disallowed values such as -, =, etc.
+                // No space allowed in a data label.
+                // The PreviewTextInput below will check for all other characters.
                 if (e.Key == Key.Space)
                 {
                     this.ShowDataLabelRequirementsDialog();
@@ -810,11 +811,10 @@ namespace Timelapse.Editor
                     }
                     replacementDataLabel = Regex.Replace(replacementDataLabel, @"[^A-Za-z0-9_]+", "X");
 
-                    // TODOSAUL: should the dialog show the user the replacement label which will be used?
                     DialogMessageBox messageBox = new DialogMessageBox("'" + textBox.Text + "' is not a valid data label.", this);
                     messageBox.Message.Icon = MessageBoxImage.Warning;
                     messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
-                    messageBox.Message.Result = "We will replace all dissallowed characters with an 'X'.";
+                    messageBox.Message.Result = "We replaced all dissallowed characters with an 'X': " + replacementDataLabel;
                     messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
                     messageBox.ShowDialog();
 

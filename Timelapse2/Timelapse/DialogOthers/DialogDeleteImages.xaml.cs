@@ -20,6 +20,7 @@ namespace Timelapse
     public partial class DialogDeleteImages : Window
     {
         // these variables will hold the values of the passed in parameters
+        private const int LargeNumberOfDeletedImages = 30;
         private bool deleteData;
         private ImageDatabase imageDatabase;
         private List<ImageRow> imagesToDelete;
@@ -39,6 +40,7 @@ namespace Timelapse
             this.imagesToDelete = deletedImageTable;
             this.deleteData = deleteData;
             this.imageDatabase = database;
+            int imagecount = this.imagesToDelete.Count;
 
             this.ImageFilesRemovedByID = new List<long>();
 
@@ -83,9 +85,14 @@ namespace Timelapse
                 if (deleteData == false)
                 {
                     // Case 3: Delete the images that have the delete flag set, but not their data
-                    this.Message.Title = "Delete the images and videos marked for deletion in this filter";
-                    this.Message.What = "\u2022 Deletes the image and video files in this filter that are marked for deletion (shown below), but not the data entered for them.";
-                    this.Message.Result = "\u2022 The deleted file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
+                    this.Message.Title = "Delete " + imagecount.ToString() + " images and videos marked for deletion in this filter";
+                    this.Message.What = "Deletes " + imagecount.ToString() + " image and video file(s) in this filter that are marked for deletion (shown below), but not the data entered for them.";
+                    this.Message.Result = String.Empty;
+                    if (imagecount > LargeNumberOfDeletedImages)
+                    {
+                        this.Message.Result += "Deleting " + imagecount.ToString() + " files will take a few moments. Please be patient." + Environment.NewLine;
+                    }
+                    this.Message.Result += "\u2022 The deleted file will be backed up in a sub-folder named DeletedImages." + Environment.NewLine;
                     this.Message.Result += "\u2022 A placeholder image will be shown when you try to view a deleted image.";
                     this.Message.Hint = "\u2022 Restore deleted files by manually copying or moving them back to their original location, or" + Environment.NewLine;
                     this.Message.Hint += "\u2022 Delete the backup files by deleting the DeletedImages folder";
@@ -93,9 +100,14 @@ namespace Timelapse
                 else
                 {
                     // Case 4: Delete the images that have the delete flag set, and their data
-                    this.Message.Title = "Delete those images and videos marked for deletion and their data in this filter";
+                    this.Message.Title = "Delete " + imagecount.ToString() + " images and videos marked for deletion and their data in this filter";
                     this.Message.What = "Deletes the image and video files that are marked for deletion (shown below), along with the data entered for them.";
-                    this.Message.Result = "\u2022 The deleted files will be backed up in a sub-folder named DeletedImages" + Environment.NewLine;
+                    this.Message.Result = String.Empty;
+                    if (imagecount > LargeNumberOfDeletedImages)
+                    {
+                        this.Message.Result += "Deleting " + imagecount.ToString() + " files will take a few moments. Please be patient." + Environment.NewLine;
+                    }
+                    this.Message.Result += "\u2022 The deleted files will be backed up in a sub-folder named DeletedImages" + Environment.NewLine;
                     this.Message.Result += "\u2022 However, the data associated with those files will be permanently deleted.";
                     this.Message.Hint = "You can permanently delete those backup files by deleting the DeletedImages folder.";
                 }
@@ -109,10 +121,6 @@ namespace Timelapse
             GridLength gridlength200 = new GridLength(1, GridUnitType.Auto);
             GridLength gridlength20 = new GridLength(1, GridUnitType.Auto);
 
-            // SAULTODO: If the number of images to delete is really large, then:
-            // - bitmap loading is very slow
-            // - the eventual deletion is slow, as we are deleting tons of files
-            // SAULTODO: Need to warn the user, and perhaps see if we can make it more efficient, or if we can alter the user interface. 
             foreach (ImageRow imageProperties in deletedImageTable)
             {
                 ImageSource bitmap = imageProperties.LoadBitmap(database.FolderPath, Constants.Images.ThumbnailSmall);

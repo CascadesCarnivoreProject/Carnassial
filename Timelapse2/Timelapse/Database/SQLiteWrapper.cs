@@ -269,20 +269,21 @@ namespace Timelapse.Database
         #endregion
 
         #region Updates
-        // Trims all the white space from the data held in the list of column_names int table_name
+        // Trims all the white space from the data held in the list of column_names in table_name
         // Note: this is needed as earlier versions didn't trim the white space from the data. This allows us to trim it in the database after the fact.
         public void TrimWhitespace(string tableName, List<string> columnNames)
         {
+            List<string> queries = new List<string>();
             foreach (string columnName in columnNames)
             {
-                string command = "Update " + tableName + " SET " + columnName + " = TRIM (" + columnName + ")"; // Form: UPDATE tablename SET columname = TRIM(columnname)
-                this.ExecuteNonQuery(command);  // TODO MAKE THIS ALL IN ONE OPERATION
+                string query = "Update " + tableName + " SET " + columnName + " = TRIM (" + columnName + ");"; // Form: UPDATE tablename SET columname = TRIM(columnname);
+                queries.Add(query);
             }
+            this.ExecuteNonQueryWrappedInBeginEnd(queries);
         }
 
         public void Update(string tableName, List<ColumnTuplesWithWhere> updateQueryList)
         {
-            // TODOSAUL: support splitting the query into 100 row (or similar size) chunks here rather than requiring all callers implement it
             List<string> queries = new List<string>();
             foreach (ColumnTuplesWithWhere updateQuery in updateQueryList)
             {
@@ -293,8 +294,7 @@ namespace Timelapse.Database
                 }
                 queries.Add(query);
             }
-
-            this.ExecuteNonQueryWrappedInBeginEnd(queries);
+            this.ExecuteNonQueryWrappedInBeginEnd(queries); 
         }
 
         /// <summary>
@@ -379,35 +379,7 @@ namespace Timelapse.Database
                 List<string> columnNames = this.GetColumnNamesAsList(connection, tableName);
 
                 // Return if a column named columnName  exists in the given table. 
-                return (columnNames.Contains(columnName));
-            }
-        }
-
-        public bool xIsColumnInTable(string tableName, string columnName)
-        {
-            // TODO: change this to a proper IF EXISTS rather than relying on a try catch
-            try
-            {
-                // Open the connection
-                using (SQLiteConnection connection = new SQLiteConnection(this.connectionString))
-                {
-                    connection.Open();
-                    using (SQLiteCommand command = new SQLiteCommand(connection))
-                    {
-                        command.CommandText = "SELECT " + columnName + " from " + tableName;
-                        using (SQLiteDataReader reader = command.ExecuteReader())
-                        {
-                            DataTable dataTable = new DataTable();
-                            dataTable.Load(reader);
-                            return true;
-                        }
-                    }
-                }
-            }
-            catch (SQLiteException exception)
-            {
-                Debug.Assert(exception.ResultCode == SQLiteErrorCode.Error, String.Format("Unexpected failure in IsColumnInTable checking presence of column '{0}'.", columnName), exception.ToString());
-                return false;
+                return columnNames.Contains(columnName);
             }
         }
 
@@ -528,8 +500,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                // TODOSAUL: fix CA2241
-                Debug.Assert(false, String.Format("Failure in AddColumn executing query '{0}'."), exception.ToString());
+                Debug.Assert(false, String.Format("Failure in AddColumn."), exception.ToString());
                 return false;
             }
         }
@@ -575,8 +546,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                // TODOSAUL: fix CA2241
-                Debug.Assert(false, String.Format("Failure in DeleteColumn executing query '{0}'."), exception.ToString());
+                Debug.Assert(false, String.Format("Failure in DeleteColumn."), exception.ToString());
                 return false;
             }
         }
@@ -627,8 +597,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                // TODOSAUL: fix CA2241
-                Debug.Assert(false, String.Format("Failure in RenameColumn executing query '{0}'."), exception.ToString());
+                Debug.Assert(false, String.Format("Failure in RenameColumn."), exception.ToString());
                 return false;
             }
         }

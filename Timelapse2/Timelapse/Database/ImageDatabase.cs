@@ -44,11 +44,6 @@ namespace Timelapse.Database
         private ImageDatabase(string filePath)
             : base(filePath)
         {
-            // TODOSAUL: Hmm. I've never seen database creation failure. Nonetheless, while I can pop up a messagebox here, the real issue is how
-            // to revert the system back to some reasonable state. I will need to look at this closely 
-            // What we really need is a function that we can call that will essentially bring the system back to its
-            // virgin state, that we can invoke from various conditions. 
-            // Alternately, we can just exit Timelapse (a poor solution but it could suffice for now)
             this.DataLabelFromStandardControlType = new Dictionary<string, string>();
             this.disposed = false;
             this.FolderPath = Path.GetDirectoryName(filePath);
@@ -656,9 +651,6 @@ namespace Timelapse.Database
             for (int index = fromRow; index <= toRow; index++)
             {
                 // update data table
-                // TODOSAUL: is there an off by one error here as .Rows is accessed with a one based count?
-                // Um, I can't recall. I don't think it is an error as a vaguely recall somethings were indexed by 1, and others by 0.
-                // But it should be checked.
                 ImageRow image = this.ImageDataTable[index];
                 image[dataLabel] = value;
                 List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };

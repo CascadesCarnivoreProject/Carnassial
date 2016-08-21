@@ -176,7 +176,6 @@ namespace Timelapse.Util
 
                 if (valueToCopy.Trim().Length > 0)
                 {
-                    // TODOSAUL: fix SA1408
                     if ((checkForZero && !valueToCopy.Equals("0")) || !checkForZero)
                     {
                         row = image;    // We found a non-empty value

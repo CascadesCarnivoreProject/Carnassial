@@ -1,5 +1,4 @@
-﻿#define ShowDebugAssert
-using Microsoft.WindowsAPICodePack.Dialogs;
+﻿using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -99,7 +98,6 @@ namespace Timelapse
                 this.MenuItemControlsInSeparateWindow.IsChecked = userSettings.ReadControlsInSeparateWindow();
                 this.state.DarkPixelThreshold = userSettings.ReadDarkPixelThreshold();
                 this.state.DarkPixelRatioThreshold = userSettings.ReadDarkPixelRatioThreshold();
-                // SAULTODO: Delete the code saving CSV state across sessions, as this state is only per session. this.state.ShowCsvDialog = userSettings.ReadShowCsvDialog();
                 this.state.MostRecentImageSets = userSettings.ReadMostRecentImageSets();  // the last path opened by the user is stored in the registry
             }
 
@@ -186,7 +184,6 @@ namespace Timelapse
                 userSettings.WriteDarkPixelThreshold(this.state.DarkPixelThreshold);
                 userSettings.WriteDarkPixelRatioThreshold(this.state.DarkPixelRatioThreshold);
                 userSettings.WriteMostRecentImageSets(this.state.MostRecentImageSets);
-                // SAULTODO: DELETE THIS AS THIS IS SHOULD NOT BE REMEMBERED BETWEEN SESSIONS. userSettings.WriteShowCsvDialog(this.state.ShowCsvDialog);
             }
 
             // Close the various non-modal windows if they are opened
@@ -281,7 +278,6 @@ namespace Timelapse
                 if (result == true)
                 {
                     // user indicated not to update to the current template so exit.
-                    // Saul ToDo: We could probably alter this to revert back to the initial UI state instead of shutting down, but that will require some cleanup
                     Application.Current.Shutdown();
                     return false;
                 }
@@ -422,9 +418,7 @@ namespace Timelapse
                     }
                     catch (Exception exception)
                     {
-                        #if ShowDebugAssert
-                            Debug.Assert(false, String.Format("Load of {0} failed as it's likely corrupted.", imageProperties.FileName), exception.ToString());
-                        #endif 
+                        Debug.Assert(false, String.Format("Load of {0} failed as it's likely corrupted.", imageProperties.FileName), exception.ToString());
                         bitmapSource = Constants.Images.Corrupt;
                         imageProperties.ImageQuality = ImageFilter.Corrupted;
                     }
@@ -447,7 +441,6 @@ namespace Timelapse
                 }
 
                 // Second pass: Update database
-                // TODOSAUL: This used to be slow... but I think its ok now. But check if its a good place to make it more efficient by having it add multiple values in one shot (it may already be doing that - if so, delete this comment)
                 this.dataHandler.ImageDatabase.AddImages(imagesToInsert, (ImageRow imageProperties, int imageIndex) =>
                 {
                     // skip reloading images to display as the user's already seen them import
@@ -1173,7 +1166,6 @@ namespace Timelapse
             {
                 this.ShowImage(firstImageDisplayable);
             }
-            // TODOSAUL: what if there's no displayable image?
         }
 
         /// <summary>
@@ -1278,7 +1270,7 @@ namespace Timelapse
                 this.GetTheMarkableCanvasListOfMetaTags();
                 this.RefreshTheMarkableCanvasListOfMetaTags();
             }
-            this.SetVideoPlayerToCurrentRow(); // SaulTODO We may wantto put all the refreshes here, rather than scattering them throughout the code
+            this.SetVideoPlayerToCurrentRow(); 
         }
         #endregion
 
@@ -1725,8 +1717,6 @@ namespace Timelapse
             {
                 this.LoadByScanningImageFolder(folderPath);
             }
-            // SAUL TODO: The state should be set before this, so we can likely delete this call
-            this.OnAreImagesInSet(this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0);
         }
 
         /// <summary>Load the images from a folder.</summary>
@@ -2083,8 +2073,6 @@ namespace Timelapse
                 }
 
                 // Set the filter to show all images and a valid image
-                // TODOSAUL: IF WE DON'T HAVE A VALID IMAGE TO SHOW, THEN THIS WILL LIKELY NOT BE WELL BEHAVED. NEED ANOTHER CHECK
-                // NOT ONLY HERE BUT FOR OTHER SIMILAR UPDATES. IE, IF THERE IS NO DISPLAYABLE IMAGE WE SHOULD PROBABLY ABORT.
                 if (this.TryPromptAndChangeToBulkEditCompatibleFilter("Populate a data field with metadata of your choosing.",
                                                                       "To populate a data field with metadata of your choosing, Timelapse must first:") == false)
                 {
@@ -2841,19 +2829,6 @@ namespace Timelapse
             {
                 increment *= 10;
             }
-
-            // SAUL TODO 
-            // ORIGINAL CODE. DELETE After Unit Testing bug is fixed.
-            // try to move
-            // int desiredRow = this.dataHandler.ImageCache.CurrentRow + increment;
-            // if (this.dataHandler.ImageDatabase.IsImageRowInRange(desiredRow))
-            // {
-            //    this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-            //    this.ShowImage(desiredRow);
-            //    this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
-            //    return true;
-            // }
-            // return false;
 
             int desiredRow = this.dataHandler.ImageCache.CurrentRow + increment;
 
