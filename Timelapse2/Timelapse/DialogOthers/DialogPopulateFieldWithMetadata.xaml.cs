@@ -68,7 +68,6 @@ namespace Timelapse
         // After the interface is loaded, 
         // - Load the Exif data into the data grid
         // - Load the names of the note controls into the listbox
-        // TODOSAUL: ERROR CHECK CORRUPTED, ETC.. that the exiftool exists, AND THAT WE CAN OPEN THE FILE AND GET THE EXIF AND 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Utilities.SetDefaultDialogPosition(this);
@@ -163,7 +162,7 @@ namespace Timelapse
                     control.Type == Constants.DatabaseColumn.Time)
                 {
                     this.dataLabelFromLabel.Add(control.Label, control.DataLabel);
-                    // this.NoteID = control.ID; // TODOSAUL: Need to use this ID to pass between controls and data
+                    // this.NoteID = control.ID; // Not sure why this line wasn't deleted, but and old note says to use this ID to pass between controls and data
                     this.lboxNoteFields.Items.Add(control.Label);
                 }
             }
@@ -239,9 +238,9 @@ namespace Timelapse
 
                     string value = exifData[this.metaDataName];
                     backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, value));
-                    if (image % Constants.Throttles.SleepForImageRenderInterval == 0)
+                    if (image % Constants.ThrottleValues.SleepForImageRenderInterval == 0)
                     {
-                        Thread.Sleep(Constants.Throttles.RenderingBackoffTime); // Put in a short delay every now and then, as otherwise the UI may not update.
+                        Thread.Sleep(Constants.ThrottleValues.RenderingBackoffTime); // Put in a short delay every now and then, as otherwise the UI may not update.
                     }
 
                     ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(this.dataLabelFromLabel[this.noteLabel], value) },

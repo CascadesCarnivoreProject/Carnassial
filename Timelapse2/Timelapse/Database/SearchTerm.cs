@@ -17,7 +17,6 @@ namespace Timelapse.Database
 
         public SearchTerm()
         {
-            // TODOSAUL: can these be made consistent with this.List by defaulting to null?
             this.DataLabel = String.Empty;
             this.Label = String.Empty;
             this.Operator = String.Empty;

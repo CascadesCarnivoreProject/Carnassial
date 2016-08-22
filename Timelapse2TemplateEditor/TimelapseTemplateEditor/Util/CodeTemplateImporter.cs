@@ -26,7 +26,7 @@ namespace Timelapse.Editor.Util
 
             // merge standard controls which existed in code templates
             // MarkForDeletion and Relative path weren't available in code templates
-            // SAUL TODO: UPDATE THIS TO NEWER DELETEFLAG
+            // NOTE THAT WE NEED TO UPDATE THIS TO NEWER DELETEFLAG
             XmlNodeList selectedNodes = xmlDoc.SelectNodes(Constants.ImageXml.FilePath); // Convert the File type 
             this.UpdateStandardControl(selectedNodes, templateDatabase, Constants.DatabaseColumn.File, ref conversionErrors, ref dataLabels);
 
@@ -130,8 +130,7 @@ namespace Timelapse.Editor.Util
             {
                 if (controlType.Equals("Delete"))
                 {
-                    // TODOSAUL: should this be Constants.Control.DeleteFlag?
-                    controlType = "DeleteLabel"; // Delete is a reserved word!
+                    controlType = Constants.Control.DeleteFlagLabel; // Delete is a reserved word!
                 }
                 control.DataLabel = controlType;
             }
@@ -205,6 +204,7 @@ namespace Timelapse.Editor.Util
                 if (control.Type == typeWanted)
                 {
                     this.UpdateControl(selectedNodes[0], templateDatabase, typeWanted, control, ref errorMessages, ref dataLabels);
+                    return;
                 }
             }
 

@@ -10,7 +10,6 @@ namespace Timelapse.Images
     {
         // Read all the data into the imageData structure from the XML file in the filepath.
         // Note that we need to know the code controls,as we have to associate any points read in with a particular counter control
-        // TODOSAUL: support periodic insert of chunks rather than one large block?
         public static void Read(string filePath, ImageDatabase imageDatabase)
         {
             // XML Preparation
@@ -33,6 +32,7 @@ namespace Timelapse.Images
             List<string> choiceControlNames = new List<string>();
             foreach (ControlRow control in imageDatabase.TemplateTable)
             {
+                // Note that code should be modified to  deal with flag controls 
                 switch (control.Type)
                 {
                     case Constants.Control.Counter:
@@ -45,7 +45,7 @@ namespace Timelapse.Images
                         noteControlNames.Add(control.DataLabel);
                         break;
                     default:
-                        // TODOSAUL: why no support for flag controls?
+                        
                         break;
                 }
             }
@@ -58,16 +58,18 @@ namespace Timelapse.Images
             {
                 imageID++;
 
+                // We ignore:
+                // - Folder and Relative path, as the new template will have the correct values
+                // - ImageQuality, as the new Timelapse version probably has a better determination of it
+                // - DeleteFlag, as the old-style xml templates didn't have them
+                // - Flags as the old-style xml templates didn't have them
+
                 List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>(); // Populate the data 
                 // File Field - We use the file name as a key into a particular database row. We don't change the database field as it is our key.
                 string imageFileName = node[Constants.ImageXml.File].InnerText;
 
                 // If the Folder Path differs from where we had previously loaded it, 
                 // warn the user that the new path will be substituted in its place
-
-                // Folder - this field is left unchanged but, since an image ID is not available here, is used to form a unique identifier to
-                // constrain which image is updated
-                string imageFolder = node[Constants.DatabaseColumn.Folder].InnerText;
 
                 // Date - We use the original date, as the analyst may have adjusted them 
                 string date = node[Constants.ImageXml.Date].InnerText;
@@ -76,11 +78,6 @@ namespace Timelapse.Images
                 // Date - We use the original time, although its almost certainly identical
                 string time = node[Constants.ImageXml.Time].InnerText;
                 columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Time, time));
-
-                // We don't use the imagequality, as the new system may have altered how quality is determined (e.g., deleted files)
-                // imagequality = n[IMAGEQUALITY].InnerText;
-                // dataline.Add(Constants.IMAGEQUALITY, imagequality);
-                // System.Diagnostics.Debug.Print("----" + filename + " " + date + " " + time + " " + imagequality);
 
                 // Notes: Iterate through 
                 int innerNodeIndex = 0;
@@ -140,7 +137,7 @@ namespace Timelapse.Images
 
                 // add this image's updates to the update lists
                 ColumnTuplesWithWhere imageToUpdate = new ColumnTuplesWithWhere(columnsToUpdate);
-                imageToUpdate.SetWhere(imageFolder, null, imageFileName);
+                imageToUpdate.SetWhere(null, null, imageFileName);
                 imagesToUpdate.Add(imageToUpdate);
 
                 ColumnTuplesWithWhere markerToUpdate = new ColumnTuplesWithWhere(counterCoordinates, imageID);

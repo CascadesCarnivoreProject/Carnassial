@@ -5,7 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Timelapse 2: Helping You Analyze Images and Videos Captured from Field Cameras"  
-    Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown" PreviewKeyUp="Window_PreviewKeyUp" 
+    Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown" 
     Height="800" Width="1200"
     WindowState="Normal" Icon="32x32.ico">
     <Window.Resources>
@@ -93,7 +93,7 @@
                     <MenuItem Name="MenuItemImageCounts" Header="Show _file counts..." Click="MenuItemImageCounts_Click" ToolTip="Displays statistics on the number of files and their types"/>
                     <MenuItem Name="MenuItemViewFilteredDatabaseContents" Header="Show _filtered database contents..." Click="MenuItemViewFilteredDatabaseContents_Click" ToolTip="Display the current filtered view of the (changing) database"/>
                     <Separator/>
-                    <MenuItem Name="MenuItemOptionsBox" Header="Advanced _settings and operations..."  InputGestureText="Ctl" Click="MenuItemOptions_Click"  ToolTip="Brings up options that should only be used by advanced users" IsEnabled="False" />
+                    <MenuItem Name="MenuItemOptionsBox" Header="Advanced _Options..."  Click="MenuItemOptions_Click"  ToolTip="Options that should only be used by advanced users"/>
                 </MenuItem>
 
                 <!-- View Menu -->

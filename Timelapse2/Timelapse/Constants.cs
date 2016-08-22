@@ -265,6 +265,7 @@ namespace Timelapse
             // standard elements, always included but not always made visible
             public const string Date = "_Date";
             public const string File = "_File";
+            public const string Folder = "_Folder";
             public const string Time = "_Time";
 
             // paths to standard elements, always included but not always made visible
@@ -307,6 +308,8 @@ namespace Timelapse
                 public const string MostRecentlyUsedImageSets = "MostRecentlyUsedImageSets";
                 // whether to show the CSV dialog window
                 public const string ShowCsvDialog = "ShowCsvDialog";
+                // the value for rendering
+                public const string DesiredImageRendersPerSecond = "DesiredImageRendersPerSecond";
             }
 
             public const string RootKey = @"Software\Greenberg Consulting\Timelapse\2.0";   // Defines the KEY path under HKEY_CURRENT_USER
@@ -348,14 +351,14 @@ namespace Timelapse
             public const string Semicolon = " ; ";
         }
 
-        public static class Throttles
+        public static class ThrottleValues
         {
-            // public const double DesiredMaximumImageRendersPerSecond = 6.0; // TODOSaul This is a doubling of what Todd originally had in here. To revisit...
-            public const double DesiredMaximumImageRendersPerSecond = 12.0;
+            public const double DesiredMaximumImageRendersPerSecondLowerBound = 4.0;     // Likely very safe render rate 
+            public const double DesiredMaximumImageRendersPerSecondDefault = 9.0;   // Default render rate - could exhibit stalls on poor machines
+            public const double DesiredMaximumImageRendersPerSecondUpperBound = 12.0;    // Riskier render rater that should still work on most machines
             public const int MaximumRenderAttempts = 100;
             public const int SleepForImageRenderInterval = 100;
 
-            public static readonly TimeSpan DesiredIntervalBetweenRenders = TimeSpan.FromSeconds(1.0 / Throttles.DesiredMaximumImageRendersPerSecond);
             public static readonly TimeSpan PollIntervalForVideoLoad = TimeSpan.FromMilliseconds(1.0);
             public static readonly TimeSpan RenderingBackoffTime = TimeSpan.FromMilliseconds(25);
         }

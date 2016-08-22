@@ -57,10 +57,11 @@ namespace Timelapse.Util
         }
 
         /// <summary>
+        /// TODO DISCRETIONARY: THIS IS NO LONGER USED EXCEPT IN THE UNIT TEST. 
+        /// REVISIT THIS AFTER ALL THE DATE ROUTINES HAVE BEEN UPDATED, AND DELETE IF NO LONGER NEEDED.
         /// Check to see if we can swap the day and month in all date fields. It checks to see if this is possible.
         /// If it isn't, it returns -1, else the index to the first image that is not swappable
         /// Assumes that we are showing all images (i.e., it checks the current data table)
-        /// TODOSAUL: Change it to use a temp table?
         /// </summary>
         public static int SwapDayMonthIsPossible(ImageDatabase database)
         {
@@ -75,7 +76,6 @@ namespace Timelapse.Util
                 }
 
                 // Now check to see if the reversed date is legit. If it throws an exception, we know it's a problem.
-                // TODOSAUL: add code to check if day and month are swappable rather than throwing
                 DateTime date;
                 if (imageProperties.TryGetDateTime(out date) == false)
                 {

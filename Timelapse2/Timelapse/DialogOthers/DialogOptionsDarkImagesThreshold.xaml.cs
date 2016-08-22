@@ -368,7 +368,7 @@ namespace Timelapse
                         imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
                         if (imageQuality.OldImageQuality != imageQuality.NewImageQuality.Value)
                         {
-                            // TODOSAUL: MAKE DB UPDATE EFFICIENT
+                            // TODO DISCRETIONARY (SAULS SUGGESTION): MAKE DB UPDATE EFFICIENT
                             database.UpdateImage(imageRow.ID, Constants.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality.Value.ToString());
                         }
                     }

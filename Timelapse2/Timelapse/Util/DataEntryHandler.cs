@@ -11,7 +11,7 @@ namespace Timelapse.Util
 {
     /// <summary>
     /// The code in here propagates values of a control across the various images in various ways.
-    /// TODOSAUL: Update to make this work with the new set of controls
+    /// Note that this is control-type specific, which means this code would have to be modified to handle new control types
     /// </summary>
     public class DataEntryHandler : IDisposable
     {
@@ -34,7 +34,7 @@ namespace Timelapse.Util
 
         public bool CanBulkEditImages()
         {
-            return this.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All || this.ImageDatabase.ImageSet.ImageFilter == ImageFilter.Custom; // SAUL TODO: WHY DID TODD ADD IMAGEFILTER.CUSTOM?
+            return this.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All; 
         }
 
         /// <summary>Propagate the current value of this control forward from this point across the current set of filtered images.</summary>

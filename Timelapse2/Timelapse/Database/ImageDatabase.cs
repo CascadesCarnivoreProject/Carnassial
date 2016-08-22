@@ -206,7 +206,7 @@ namespace Timelapse.Database
                                     if (columnName.Equals(controlName))
                                     {
                                         imageRow.Add(new ColumnTuple(controlName, this.GetControlDefaultValue(controlName))); // Default as specified in the template file
-                                        markerRow.Add(new ColumnTuple(controlName, String.Empty));        // TODOSAUL: ASSUMES THAT MARKER LIST IS IN SAME ORDER AS COUNTERS. THIS MAY NOT BE CORRECT ONCE WE SWITCH ROWS, SO SHOULD DO THIS SEPARATELY
+                                        markerRow.Add(new ColumnTuple(controlName, String.Empty));
                                     }
                                 }
                                 break;
@@ -679,9 +679,6 @@ namespace Timelapse.Database
 
         // Given a time difference in ticks, update all the date / time field in the database
         // Note that it does NOT update the dataTable - this has to be done outside of this routine by regenerating the datatables with whatever filter is being used..
-        // TODOSAUL: modify this to include argments showing the current filtered view and row number, perhaps, so we could restore the datatable and the view?? 
-        // But that would add complications if there are unanticipated filtered views.
-        // Another option is to go through whatever the current datatable is and just update those fields. 
         public void AdjustImageTimes(Func<DateTime, TimeSpan> adjustment, int startRow, int endRow)
         {
             if (this.IsImageRowInRange(startRow) == false)

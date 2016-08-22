@@ -11,11 +11,16 @@
     <DockPanel>
         <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Question"
-                            Title="Do you want to import the data from ImageData.xml file"
+                            Title="Do you want to import the data from ImageData.xml file?"
                             Problem="An old-style ImageData.xml file, created with an earlier version of Timelapse, exists in this folder.&#10;It may have previously entered data about this image set that you may want to keep."
-                            Solution="1. Click 'Use Old Data' - this will import your data into a new-style data file. &#10;2. Click 'Ignore Old Data' - this will create an empty new-style data file."
-                            Result="The dates and times will be adjusted forwards or backwards from this image by +/- one hour (except corrupted ones)."
-                            Hint="This will only work if you had previously converted your old template.xml file into the new format, where: &#10;- you did not add any new fields or delete any old ones.&#10;- you did not change any of the DataLabel names."
+                            Solution="1. Click 'Use Old Data' - this will import your data into a new-style .ddb data file. 
+                                   &#10;2. Click 'Ignore Old Data' - this will create an empty new-style .ddb data file."
+                            Hint="Correct importing will only work if:
+                                   &#10;- you had converted your old template.xml file into the new .tdb template using the Template Editor 
+                                   &#10;- that old template.xml file was used to create the old-style ImageData.xml file 
+                                   &#10;- you did not add any new fields or delete any old ones from the template.
+                                   &#10;- you did not reorder any of the fields.
+                                   &#10;&#10;Check the results carefully."
                             />
         <DockPanel Name="DockPanelImage">
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">

@@ -132,9 +132,9 @@ namespace Timelapse
                     }
 
                     backgroundWorker.ReportProgress(0, new FeedbackTuple(image.FileName, feedbackMessage));
-                    if (row % Constants.Throttles.SleepForImageRenderInterval == 0)
+                    if (row % Constants.ThrottleValues.SleepForImageRenderInterval == 0)
                     {
-                        Thread.Sleep(Constants.Throttles.RenderingBackoffTime); // Put in a delay every now and then, as otherwise the UI won't update.
+                        Thread.Sleep(Constants.ThrottleValues.RenderingBackoffTime); // Put in a delay every now and then, as otherwise the UI won't update.
                     }
                 }
 

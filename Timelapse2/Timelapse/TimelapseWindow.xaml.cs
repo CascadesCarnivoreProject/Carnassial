@@ -26,6 +26,9 @@ namespace Timelapse
     /// </summary>
     public partial class TimelapseWindow : Window, IDisposable
     {
+        // Throttle values for determining how rapidly images should be updated when navigating
+        private Throttles throttle;
+
         // Handles to the controls window and to the controls
         private WindowControl controlWindow;
         private List<MetaTagCounter> counterCoordinates = null;
@@ -40,7 +43,7 @@ namespace Timelapse
         private MarkableImageCanvas markableCanvas;
 
         // Status information concerning the state of the UI
-        private TimelapseState state = new TimelapseState();
+        private TimelapseState state;
 
         // Timer for periodically updating images as the ImageNavigator slider is being used
         private DispatcherTimer timerImageNavigator = new DispatcherTimer();
@@ -67,7 +70,7 @@ namespace Timelapse
                 Dependencies.ShowMissingBinariesDialog(Constants.ApplicationName);
                 Application.Current.Shutdown();
             }
-
+            this.throttle = new Throttles();
             this.ResetDifferenceThreshold();
             this.markableCanvas = new MarkableImageCanvas();
             this.markableCanvas.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -81,13 +84,15 @@ namespace Timelapse
             this.buttonCopy.MouseLeave += this.ButtonCopy_MouseLeave;
 
             // Timer callback so the image will update to the current slider position when the user pauses dragging the image slider 
-            this.timerImageNavigator.Interval = Constants.Throttles.DesiredIntervalBetweenRenders;
+            this.timerImageNavigator.Interval = this.throttle.DesiredIntervalBetweenRenders;
             this.timerImageNavigator.Tick += this.TimerImageNavigator_Tick;
 
             // Create data controls, including reparenting the copy button from the main window into the my control window.
             this.dataEntryControls = new DataEntryControls();
             this.ControlGrid.Children.Remove(this.buttonCopy);
             this.dataEntryControls.AddButton(this.buttonCopy);
+
+            this.state = new TimelapseState(this.throttle);
 
             // Recall state from prior sessions
             using (TimelapseRegistryUserSettings userSettings = new TimelapseRegistryUserSettings())
@@ -99,6 +104,7 @@ namespace Timelapse
                 this.state.DarkPixelThreshold = userSettings.ReadDarkPixelThreshold();
                 this.state.DarkPixelRatioThreshold = userSettings.ReadDarkPixelRatioThreshold();
                 this.state.MostRecentImageSets = userSettings.ReadMostRecentImageSets();  // the last path opened by the user is stored in the registry
+                this.throttle.DesiredImageRendersPerSecond = userSettings.ReadDesiredImageRendersPerSecond();
             }
 
             // populate the most recent databases list
@@ -184,6 +190,7 @@ namespace Timelapse
                 userSettings.WriteDarkPixelThreshold(this.state.DarkPixelThreshold);
                 userSettings.WriteDarkPixelRatioThreshold(this.state.DarkPixelRatioThreshold);
                 userSettings.WriteMostRecentImageSets(this.state.MostRecentImageSets);
+                userSettings.WriteDesiredImageRendersPerSecond(this.throttle.DesiredImageRendersPerSecond);
             }
 
             // Close the various non-modal windows if they are opened
@@ -367,7 +374,7 @@ namespace Timelapse
 
                 // First pass: Examine images to extract their basic properties and build a list of images not already in the database
                 List<ImageRow> imagesToInsert = new List<ImageRow>();
-                DateTime previousImageRender = DateTime.UtcNow - Constants.Throttles.DesiredIntervalBetweenRenders;
+                DateTime previousImageRender = DateTime.UtcNow - this.throttle.DesiredIntervalBetweenRenders;
                 for (int image = 0; image < imageFiles.Count; image++)
                 {
                     FileInfo imageFile = imageFiles[image];
@@ -426,7 +433,7 @@ namespace Timelapse
                     imagesToInsert.Add(imageProperties);
 
                     DateTime utcNow = DateTime.UtcNow;
-                    if (utcNow - previousImageRender > Constants.Throttles.DesiredIntervalBetweenRenders)
+                    if (utcNow - previousImageRender > this.throttle.DesiredIntervalBetweenRenders)
                     {
                         progressState.Bmap = bitmapSource;
                         progressState.Message = String.Format("{0}/{1}: Examining {2}", image, imageFiles.Count, imageProperties.FileName);
@@ -1115,9 +1122,10 @@ namespace Timelapse
         private void ImageNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> args)
         {
             this.timerImageNavigator.Stop(); // Restart the timer 
+            this.timerImageNavigator.Interval = this.throttle.DesiredIntervalBetweenRenders; // Throttle values may have changed, so we reset it just in case.
             this.timerImageNavigator.Start();
             DateTime utcNow = DateTime.UtcNow;
-            if ((this.state.ImageNavigatorSliderDragging == false) || (utcNow - this.state.MostRecentDragEvent > Constants.Throttles.DesiredIntervalBetweenRenders))
+            if ((this.state.ImageNavigatorSliderDragging == false) || (utcNow - this.state.MostRecentDragEvent > this.throttle.DesiredIntervalBetweenRenders))
             {
                 this.ShowImage((int)this.ImageNavigatorSlider.Value);
                 this.state.MostRecentDragEvent = utcNow;
@@ -1346,10 +1354,6 @@ namespace Timelapse
                 case Key.C:
                     this.ButtonCopy_Click(null, null);
                     break;
-                case Key.LeftCtrl:
-                case Key.RightCtrl:
-                    this.MenuItemOptionsBox.IsEnabled = true;
-                    break;
                 case Key.Tab:
                     this.MoveFocusToNextOrPreviousControlOrImageSlider(Keyboard.Modifiers == ModifierKeys.Shift);
                     break;
@@ -1357,14 +1361,6 @@ namespace Timelapse
                     return;
             }
             currentKey.Handled = true;
-        }
-
-        private void Window_PreviewKeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)
-            {
-                this.MenuItemOptionsBox.IsEnabled = false;
-            }
         }
         #endregion
 
@@ -2426,11 +2422,13 @@ namespace Timelapse
         {
             if (this.optionsWindow == null)
             { 
-                this.optionsWindow = new WindowOptions(this, this.markableCanvas);
+                this.optionsWindow = new WindowOptions(this, this.markableCanvas, this.throttle);
                 this.optionsWindow.Show();
             } 
             else
             {
+                this.optionsWindow.Close();
+                this.optionsWindow = new WindowOptions(this, this.markableCanvas, this.throttle);
                 this.optionsWindow.Show();
             }
         }

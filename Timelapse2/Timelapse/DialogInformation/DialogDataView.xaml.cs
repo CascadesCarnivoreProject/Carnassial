@@ -67,7 +67,6 @@ namespace Timelapse
             // A workaround to autoscroll the currently selected items, where the item always appears at the top of the window.
             // We check the last index and only autoscroll if it hasn't changed since then.
             // This workaround means that the user can manually scroll to a new spot, where it won't jump back unless the image number has changed.
-            // SAULTODO:  We can do better. I think it should only scroll when the row is out of view.
             if (lastIndex != this.dataGrid.SelectedIndex)
             { 
                 this.dataGrid.ScrollIntoView(dataGrid.Items[this.dataGrid.Items.Count - 1]);
