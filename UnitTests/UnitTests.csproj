@@ -116,6 +116,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <None Include="CarnivoreTemplate 2.1.0.4.tdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
     <Content Include="CarnivoreTestImages\Reconyx-HC500-20150128-201.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -156,6 +159,12 @@
     <Content Include="TimelapseData 2.0.2.3.ddb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="TimelapseData 2.1.0.4.ddb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="TimelapseTemplate 2.1.0.4.tdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
