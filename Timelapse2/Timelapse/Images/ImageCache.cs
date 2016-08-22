@@ -282,7 +282,7 @@ namespace Timelapse.Images
                 if (this.prefetechesByID.TryGetValue(image.ID, out prefetch))
                 {
                     // bitmap retrieval's already in progress, so wait for it to complete
-                    // SAUL TODO: Is this dangerous ? Check if it can end up in an infinite loop on failure. Put a stopping condition in.
+                    // Note that we don't check to see if it can end up in an infinite loop on repeated failure. May have to put a stopping condition in if there are issues.
                     prefetch.Wait();
                     bitmap = this.unalteredBitmapsByID[image.ID];
                 }

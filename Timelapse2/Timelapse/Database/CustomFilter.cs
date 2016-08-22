@@ -75,7 +75,6 @@ namespace Timelapse.Database
         public void FilterByDate(DataTable images)
         {
             SearchTerm dateTerm = this.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.Date);
-            Debug.Print(dateTerm.Value.ToString());
             Debug.Assert(dateTerm.UseForSearching, "Date search term is not selected.");
 
             Func<DateTime, DateTime, bool> dateFilter;

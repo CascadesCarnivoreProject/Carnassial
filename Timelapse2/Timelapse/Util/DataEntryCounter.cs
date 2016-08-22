@@ -25,7 +25,7 @@ namespace Timelapse.Util
             base(dataLabel, styleProvider, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.RadioButtonCodeBar)
         {
             // Modify the context menu so it can have a propage submenu
-            // TODOSAUL: the context menu's attached to the container rather than the content?
+            // TODO DISCRETIONARY: the context menu's attached to the container rather than the content?
             //             and if the context menu is nulled out after creation why is it possible to pass createContextMenu = true?
             this.ContentControl.ContextMenu = null;
 

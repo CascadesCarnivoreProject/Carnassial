@@ -60,7 +60,6 @@ namespace Timelapse.Editor
         // After the interface is loaded, 
         // - Load the Exif data into the data grid
         // - Load the names of the note controls into the listbox
-        // TODOSAUL: ERROR CHECK CORRUPTED, ETC.. that the exiftool exists, AND THAT WE CAN OPEN THE FILE AND GET THE EXIF AND 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Utilities.SetDefaultDialogPosition(this);

@@ -18,11 +18,21 @@ namespace Timelapse.Util
         public bool IsMouseOverCounter { get; set; }
         public DateTime MostRecentDragEvent { get; set; }
         public MostRecentlyUsedList<string> MostRecentImageSets { get; set; }
-        public int RepeatedKeyAcceptanceInterval { get; private set; }
+
+        private Throttles throttle;
+        public int RepeatedKeyAcceptanceInterval
+        {
+            get
+            {
+                return (int)(((double)SystemParameters.KeyboardSpeed + 0.5 * this.throttle.DesiredImageRendersPerSecond) / this.throttle.DesiredImageRendersPerSecond);
+            }
+        }
+
         public bool ShowCsvDialog { get; set; }
 
-        public TimelapseState()
+        public TimelapseState(Throttles throttle)
         {
+            this.throttle = throttle;
             this.AudioFeedback = false;
 
             // thresholds used for determining image darkness
@@ -33,10 +43,9 @@ namespace Timelapse.Util
             this.ImageNavigatorSliderDragging = false;
             this.IsMouseOverCounter = false;
             this.keyRepeatCount = 0;
-            this.MostRecentDragEvent = DateTime.UtcNow - Constants.Throttles.DesiredIntervalBetweenRenders;
+            this.MostRecentDragEvent = DateTime.UtcNow - throttle.DesiredIntervalBetweenRenders;
             this.MostRecentImageSets = null;
             this.mostRecentKey = null;
-            this.RepeatedKeyAcceptanceInterval = (int)(((double)SystemParameters.KeyboardSpeed + 0.5 * Constants.Throttles.DesiredMaximumImageRendersPerSecond) / Constants.Throttles.DesiredMaximumImageRendersPerSecond);
             this.ShowCsvDialog = true;
         }
 

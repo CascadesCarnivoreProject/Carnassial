@@ -210,6 +210,10 @@ namespace Timelapse.Editor
                     File.Delete(templateDatabaseFile.FileName);
                 }
             }
+            else
+            {
+                return;
+            }
 
             // Start with the default layout of the data template
             this.InitializeDataGrid(templateDatabaseFile.FileName);

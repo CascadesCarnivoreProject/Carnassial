@@ -433,7 +433,6 @@ namespace Timelapse.UnitTests
                 Assert.IsTrue(dataHandler.ImageCache.MoveNext());
                 foreach (DataEntryControl control in copyableControls)
                 {
-                   System.Diagnostics.Debug.Print(control.DataLabel);
                    Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
                    Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
                 }

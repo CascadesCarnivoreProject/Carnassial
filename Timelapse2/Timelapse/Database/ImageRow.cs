@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Windows.Media.Imaging;
@@ -152,7 +153,7 @@ namespace Timelapse.Database
             }
             try
             {
-                // SAUL TODO: Look at CA1001 https://msdn.microsoft.com/en-us/library/ms182172.aspx as a different strategy
+                // TODO DISCRETIONARY: Look at CA1001 https://msdn.microsoft.com/en-us/library/ms182172.aspx as a different strategy
                 // Scanning through images with BitmapCacheOption.None results in less than 6% CPU in BitmapFrame.Create() and
                 // 90% in System.Windows.Application.Run(), suggesting little scope for optimization within Timelapse proper
                 // this is significantly faster than BitmapCacheOption.Default
@@ -177,7 +178,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                // SAUL TORESTORE: Debug.Assert(false, String.Format("Loading of {0} failed.", this.FileName), exception.ToString());
+                Debug.Assert(false, String.Format("Loading of {0} failed.", this.FileName), exception.ToString());
                 return Constants.Images.Corrupt;
             }
         }

@@ -117,7 +117,8 @@ namespace Timelapse.UnitTests
                 this.ShowDialog(timelapse, new DialogDateDaylightSavingsTimeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache));
                 this.ShowDialog(timelapse, new DialogEditLog(dataHandler.ImageDatabase.ImageSet.Log));
 
-                using (DialogOptionsDarkImagesThreshold darkThreshold = new DialogOptionsDarkImagesThreshold(dataHandler.ImageDatabase, dataHandler.ImageCache.CurrentRow, new TimelapseState()))
+                Throttles throttle = new Throttles();
+                using (DialogOptionsDarkImagesThreshold darkThreshold = new DialogOptionsDarkImagesThreshold(dataHandler.ImageDatabase, dataHandler.ImageCache.CurrentRow, new TimelapseState(throttle)))
                 {
                     this.ShowDialog(timelapse, darkThreshold);
                 }

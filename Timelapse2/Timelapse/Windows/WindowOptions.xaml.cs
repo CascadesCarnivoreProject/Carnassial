@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using Timelapse.Util;
 
 namespace Timelapse
 {
@@ -10,41 +11,65 @@ namespace Timelapse
     {
         private Timelapse.Images.MarkableImageCanvas markableCanvas;
         private TimelapseWindow mainProgram;
+        private Throttles throttle;
 
-        public WindowOptions(TimelapseWindow mainWindow, Timelapse.Images.MarkableImageCanvas mcanvas)
+        public WindowOptions(TimelapseWindow mainWindow, Timelapse.Images.MarkableImageCanvas mcanvas, Throttles throttle)
         {
             this.InitializeComponent();
+            this.throttle = throttle;
             this.Topmost = true;
             this.markableCanvas = mcanvas;
             this.mainProgram = mainWindow;
 
+            // Throttles
+            this.sldrMaxThrottle.Minimum = Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondLowerBound;
+            this.sldrMaxThrottle.Maximum = Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound;
+            this.sldrMaxThrottle.Value = this.throttle.DesiredImageRendersPerSecond;
+            this.sldrMaxThrottle.ValueChanged += this.SldrMaxThrottle_ValueChanged;
+            this.sldrMaxThrottle.ToolTip = this.throttle.DesiredImageRendersPerSecond;
+
             // The Max Zoom Value
-            sldrMaxZoom.Value = this.markableCanvas.MaxZoom;
-            sldrMaxZoom.ToolTip = this.markableCanvas.MaxZoom;
-            sldrMaxZoom.Maximum = this.markableCanvas.MaxZoomUpperBound;
-            sldrMaxZoom.Minimum = 1;
+            this.sldrMaxZoom.Value = this.markableCanvas.MaxZoom;
+            this.sldrMaxZoom.ToolTip = this.markableCanvas.MaxZoom;
+            this.sldrMaxZoom.Maximum = this.markableCanvas.MaxZoomUpperBound;
+            this.sldrMaxZoom.Minimum = 2;
 
             // Image Differencing Thresholds
-            sldrDifferenceThreshold.Value = this.mainProgram.DifferenceThreshold;
-            sldrDifferenceThreshold.ToolTip = this.mainProgram.DifferenceThreshold;
-            sldrDifferenceThreshold.Maximum = Constants.Images.DifferenceThresholdMax;
-            sldrDifferenceThreshold.Minimum = Constants.Images.DifferenceThresholdMin;
+            this.sldrDifferenceThreshold.Value = this.mainProgram.DifferenceThreshold;
+            this.sldrDifferenceThreshold.ToolTip = this.mainProgram.DifferenceThreshold;
+            this.sldrDifferenceThreshold.Maximum = Constants.Images.DifferenceThresholdMax;
+            this.sldrDifferenceThreshold.Minimum = Constants.Images.DifferenceThresholdMin;
         }
+
+        #region Throttling
+        private void SldrMaxThrottle_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            this.throttle.DesiredImageRendersPerSecond = this.sldrMaxThrottle.Value;
+            this.sldrMaxThrottle.ToolTip = this.throttle.DesiredImageRendersPerSecond;
+        }
+
+        private void BtnResetThrottle_Click(object sender, RoutedEventArgs e)
+        {
+            this.throttle.SetToSystemDefaults();
+            this.sldrMaxThrottle.Value = this.throttle.DesiredImageRendersPerSecond;
+            this.sldrMaxThrottle.ToolTip = this.throttle.DesiredImageRendersPerSecond;
+        }
+        #endregion
 
         #region Maximum Zoom levels
         // Reset the maximum zoom to the amount specified in Max Zoom;
         private void ResetMaxZoomButton_Click(object sender, RoutedEventArgs e)
         {
             this.markableCanvas.ResetMaxZoom();
-            sldrMaxZoom.Value = this.markableCanvas.MaxZoom;
-            sldrMaxZoom.ToolTip = this.markableCanvas.MaxZoom;
+            this.sldrMaxZoom.Value = this.markableCanvas.MaxZoom;
+            this.sldrMaxZoom.ToolTip = this.markableCanvas.MaxZoom;
         }
 
         // Callback: The user has changed the maximum zoom value
         private void MaxZoomSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            this.markableCanvas.MaxZoom = (int)sldrMaxZoom.Value;
-            sldrMaxZoom.ToolTip = this.markableCanvas.MaxZoom;
+            this.markableCanvas.MaxZoom = (int)this.sldrMaxZoom.Value;
+            this.sldrMaxZoom.ToolTip = this.markableCanvas.MaxZoom;
         }
         #endregion
 
@@ -52,19 +77,20 @@ namespace Timelapse
         private void ResetImageDifferencingButton_Click(object sender, RoutedEventArgs e)
         {
             this.mainProgram.ResetDifferenceThreshold();
-            sldrDifferenceThreshold.Value = this.mainProgram.DifferenceThreshold;
-            sldrDifferenceThreshold.ToolTip = this.mainProgram.DifferenceThreshold;
+            this.sldrDifferenceThreshold.Value = this.mainProgram.DifferenceThreshold;
+            this.sldrDifferenceThreshold.ToolTip = this.mainProgram.DifferenceThreshold;
         }
 
         private void DifferenceThresholdSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            this.mainProgram.DifferenceThreshold = (byte)sldrDifferenceThreshold.Value;
-            sldrDifferenceThreshold.ToolTip = this.mainProgram.DifferenceThreshold;
+            this.mainProgram.DifferenceThreshold = (byte)this.sldrDifferenceThreshold.Value;
+            this.sldrDifferenceThreshold.ToolTip = this.mainProgram.DifferenceThreshold;
         }
         #endregion
+
         private void CloseWindowButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
-        }
+        } 
     }
 }

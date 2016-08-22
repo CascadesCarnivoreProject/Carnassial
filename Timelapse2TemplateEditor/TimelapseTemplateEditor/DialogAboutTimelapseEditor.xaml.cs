@@ -10,7 +10,6 @@ namespace Timelapse.Editor
     /// </summary>
     public partial class DialogAboutTimelapseEditor : Window
     {
-        // TODOSAUL: The Version string is not used. Can delete all references to this argument.
         public DialogAboutTimelapseEditor()
         {
             this.InitializeComponent();

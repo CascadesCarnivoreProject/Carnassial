@@ -106,5 +106,15 @@ namespace Timelapse.Util
         {
             return this.ReadBooleanFromRegistry(Constants.Registry.TimelapseKey.ShowCsvDialog, true);
         }
+
+        public double ReadDesiredImageRendersPerSecond()
+        {
+            return this.ReadDoubleFromRegistry(Constants.Registry.TimelapseKey.DesiredImageRendersPerSecond, Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
+        }
+
+        public void WriteDesiredImageRendersPerSecond(double desiredMaximumImageRendersPerSecond)
+        {
+            this.WriteToRegistry(Constants.Registry.TimelapseKey.DesiredImageRendersPerSecond, Convert.ToString(desiredMaximumImageRendersPerSecond));
+        }
     }
 }
