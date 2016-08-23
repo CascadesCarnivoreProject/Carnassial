@@ -178,7 +178,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Loading of {0} failed.", this.FileName), exception.ToString());
+                Debug.Assert(false, String.Format("LoadBitmap: Loading of {0} failed.", this.FileName), exception.ToString());
                 return Constants.Images.Corrupt;
             }
         }

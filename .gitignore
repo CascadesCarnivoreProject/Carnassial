@@ -16,3 +16,6 @@ Backups/
 
 # Visual Studio 2015 cache/options directory 
 .vs/ 
+
+# Style Cop cache files
+StyleCop.Cache

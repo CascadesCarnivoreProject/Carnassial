@@ -37,7 +37,7 @@ namespace Timelapse.DialogDates
             // Find the ambiguous dates in the current filtered set
             if (this.FindAllAmbiguousDatesInFilteredImageSet() == true)
             {
-                this.MoveToNextOrPreviousAmbiguousDate(true); // Go forward
+                this.MoveToAmbiguousDate(null); // Go to first ambiguous date
             }
             else
             {
@@ -157,9 +157,17 @@ namespace Timelapse.DialogDates
 
         // From the current starting range, show the next or previous ambiguous date in the list. 
         // While it tests to ensure there is one, this really should be done before this is called
-        private bool MoveToNextOrPreviousAmbiguousDate(bool directionForward)
+        private bool MoveToAmbiguousDate(bool? directionForward)
         {
-            int index = directionForward ? this.ambiguousDatesListIndex + 1 : this.ambiguousDatesListIndex - 1;
+            int index;
+            if (directionForward == null)
+            {
+                index = this.ambiguousDatesListIndex;
+            }
+            else
+            { 
+                index = (bool)directionForward ? this.ambiguousDatesListIndex + 1 : this.ambiguousDatesListIndex - 1;
+            }
 
             // It shouldn't be out of range, but if it is, return false
             if (index > this.ambiguousDatesList.Count || index < 0)
@@ -183,6 +191,7 @@ namespace Timelapse.DialogDates
             // Display the image. While we expect it to be on a valid image (our assumption), we can still show a missing or corrupted file if needed
             this.imgDateImage.Source = imageProperties.LoadBitmap(this.database.FolderPath);
             this.lblImageName.Content = imageProperties.FileName;
+
             return true;
         }
         #endregion
@@ -313,7 +322,7 @@ namespace Timelapse.DialogDates
         private void NextPreviousButton_Click(object sender, RoutedEventArgs e)
         {
             Button btnDirection = sender as Button;
-            bool result = this.MoveToNextOrPreviousAmbiguousDate(btnDirection == btnNext);
+            bool result = this.MoveToAmbiguousDate(btnDirection == btnNext);
             this.UpdateDisplay(result);
         }
 
