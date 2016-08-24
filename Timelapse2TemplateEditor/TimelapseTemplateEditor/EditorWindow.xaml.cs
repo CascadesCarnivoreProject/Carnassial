@@ -13,15 +13,14 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using Timelapse.Controls;
 using Timelapse.Database;
 using Timelapse.Editor.Util;
 using Timelapse.Util;
+using MessageBox = Timelapse.Dialog.MessageBox;
 
 namespace Timelapse.Editor
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class EditorWindow : Window
     {
         #region Private Variables
@@ -233,7 +232,7 @@ namespace Timelapse.Editor
             Mouse.OverrideCursor = null;
             if (conversionErrors.Count > 0)
             {
-                DialogMessageBox messageBox = new DialogMessageBox("One or more data labels were problematic", this);
+                MessageBox messageBox = new MessageBox("One or more data labels were problematic", this);
                 messageBox.Message.Icon = MessageBoxImage.Warning;
                 messageBox.Message.Problem = conversionErrors.Count.ToString() + " of your Data Labels were problematic." + Environment.NewLine + Environment.NewLine +
                               "Data Labels:" + Environment.NewLine +
@@ -764,7 +763,7 @@ namespace Timelapse.Editor
             // Check to see if the data label is empty. If it is, generate a unique data label and warn the user
             if (String.IsNullOrWhiteSpace(dataLabel))
             {
-                DialogMessageBox messageBox = new DialogMessageBox("Data Labels cannot be empty", this);
+                MessageBox messageBox = new MessageBox("Data Labels cannot be empty", this);
                 messageBox.Message.Icon = MessageBoxImage.Warning;
                 messageBox.Message.Problem = "Data Labels cannot be empty. They must begin with a letter, followed only by letters, numbers, and '_'.";
                 messageBox.Message.Result = "We will automatically create a uniquely named Data Label for you.";
@@ -784,7 +783,7 @@ namespace Timelapse.Editor
                         continue; // Its the same row, so its the same key, so skip it
                     }
 
-                    DialogMessageBox messageBox = new DialogMessageBox("Data Labels must be unique", this);
+                    MessageBox messageBox = new MessageBox("Data Labels must be unique", this);
                     messageBox.Message.Icon = MessageBoxImage.Warning;
                     messageBox.Message.Problem = "'" + textBox.Text + "' is not a valid Data Label, as you have already used it in another row.";
                     messageBox.Message.Result = "We will automatically create a unique Data Label for you by adding a number to its end.";
@@ -815,7 +814,7 @@ namespace Timelapse.Editor
                     }
                     replacementDataLabel = Regex.Replace(replacementDataLabel, @"[^A-Za-z0-9_]+", "X");
 
-                    DialogMessageBox messageBox = new DialogMessageBox("'" + textBox.Text + "' is not a valid data label.", this);
+                    MessageBox messageBox = new MessageBox("'" + textBox.Text + "' is not a valid data label.", this);
                     messageBox.Message.Icon = MessageBoxImage.Warning;
                     messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
                     messageBox.Message.Result = "We replaced all dissallowed characters with an 'X': " + replacementDataLabel;
@@ -831,7 +830,7 @@ namespace Timelapse.Editor
             {
                 if (String.Equals(sqlKeyword, dataLabel, StringComparison.OrdinalIgnoreCase))
                 {
-                    DialogMessageBox messageBox = new DialogMessageBox("'" + textBox.Text + "' is not a valid data label.", this);
+                    MessageBox messageBox = new MessageBox("'" + textBox.Text + "' is not a valid data label.", this);
                     messageBox.Message.Icon = MessageBoxImage.Warning;
                     messageBox.Message.Problem = "Data labels cannot match the reserved words.";
                     messageBox.Message.Result = "We will add an '_' suffix to this Data Label to make it differ from the reserved word";
@@ -1001,7 +1000,7 @@ namespace Timelapse.Editor
 
         private void ShowDataLabelRequirementsDialog()
         {
-            DialogMessageBox messageBox = new DialogMessageBox("Data Labels can only contain letters, numbers and '_'", this);
+            MessageBox messageBox = new MessageBox("Data Labels can only contain letters, numbers and '_'", this);
             messageBox.Message.Icon = MessageBoxImage.Warning;
             messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
             messageBox.Message.Result = "We will automatically ignore other characters, including spaces";

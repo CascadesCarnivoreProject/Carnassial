@@ -14,7 +14,7 @@
         <DockPanel>
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="5,5,5,5" Click="CancelButton_Click">Cancel</Button>
-                <Button Name="OkButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,5,5,5" Click="OkButton_Click" IsEnabled="False">Ok</Button>
+                <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,5,5,5" Click="OkButton_Click" IsEnabled="False">Ok</Button>
             </StackPanel>
             <TextBox Name="ChoiceList" FontSize="12" DockPanel.Dock="Top" MinHeight="100" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
                      TextWrapping="NoWrap"  AcceptsTab="True" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextChanged="ItemList_TextChanged" ToolTip="Define the choice menu by editing 1 choice item per line" />

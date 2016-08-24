@@ -5,6 +5,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Windows.Media.Imaging;
+using Timelapse.Controls;
 using Timelapse.Database;
 using Timelapse.Images;
 using Timelapse.Util;
@@ -467,7 +468,7 @@ namespace Timelapse.UnitTests
         }
 
         /// <summary>
-        /// Coverage of first and second import passes in TimelapseWindow.LoadByScanningImageFolder() on a mix of image and video files.
+        /// Coverage of first and second import passes in TimelapseWindow.TryBeginImageFolderLoadAsync() on a mix of image and video files.
         /// </summary>
         [TestMethod]
         public void HybridVideo()
@@ -530,7 +531,8 @@ namespace Timelapse.UnitTests
 
             // verify template portion
             this.VerifyTemplateDatabase(imageDatabase, imageDatabaseBaseFileName);
-            this.VerifyDefaultTemplateTableContent(imageDatabase);
+            DefaultTemplateTableExpectation templateTableExpectation = new DefaultTemplateTableExpectation(new Version(2, 0, 1, 5));
+            templateTableExpectation.Verify(imageDatabase);
 
             // verify image set table
             this.VerifyDefaultImageSetTableContent(imageDatabase);
@@ -560,7 +562,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == imagesExpected);
 
             string initialRootFolderName = "Timelapse 2.0.2.3";
-            ImageExpectations martenExpectation = new ImageExpectations(TestConstant.DefaultExpectation.InfraredMartenImage);
+            ImageExpectations martenExpectation = new ImageExpectations(TestConstant.ImageExpectation.InfraredMarten);
             martenExpectation.ID = 1;
             martenExpectation.InitialRootFolderName = initialRootFolderName;
             martenExpectation.RelativePath = null;
@@ -572,7 +574,7 @@ namespace Timelapse.UnitTests
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, "Genus species");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, "custom label");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, Constants.Boolean.False);
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, TestConstant.DefaultExpectation.CounterNotVisible.DefaultValue);
+            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, templateTableExpectation.CounterNotVisible.DefaultValue);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, Constants.ControlDefault.Value);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, Constants.ControlDefault.Value);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constants.ControlDefault.FlagValue);
@@ -582,11 +584,11 @@ namespace Timelapse.UnitTests
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Constants.Boolean.True);
             martenExpectation.Verify(imageDatabase.ImageDataTable[0]);
 
-            ImageExpectations bobcatExpectation = new ImageExpectations(TestConstant.DefaultExpectation.DaylightBobcatImage);
+            ImageExpectations bobcatExpectation = new ImageExpectations(TestConstant.ImageExpectation.DaylightBobcat);
             bobcatExpectation.ID = 2;
             bobcatExpectation.InitialRootFolderName = initialRootFolderName;
             bobcatExpectation.RelativePath = null;
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, TestConstant.DefaultExpectation.Counter0.DefaultValue);
+            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, templateTableExpectation.Counter0.DefaultValue);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice a");
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "1");
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, Constants.Boolean.True);
@@ -594,11 +596,11 @@ namespace Timelapse.UnitTests
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, "with , comma");
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, Constants.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, Constants.Boolean.True);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, TestConstant.DefaultExpectation.CounterNotVisible.DefaultValue);
+            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, templateTableExpectation.CounterNotVisible.DefaultValue);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, Constants.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, Constants.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constants.ControlDefault.FlagValue);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, TestConstant.DefaultExpectation.Counter3.DefaultValue);
+            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, templateTableExpectation.Counter3.DefaultValue);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, Constants.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, Constants.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Constants.Boolean.True);
@@ -780,35 +782,6 @@ namespace Timelapse.UnitTests
             DataTable markersTable = imageDatabase.MarkersTable.ExtractDataTable();
             Assert.IsTrue(markersTable.Columns.Count == TestConstant.DefaultMarkerTableColumns.Count);
             Assert.IsTrue(imageDatabase.MarkersTable.RowCount == imagesExpected);
-        }
-
-        private void VerifyDefaultTemplateTableContent(TemplateDatabase templateDatabase)
-        {
-            int i = 0;
-            Assert.IsTrue(templateDatabase.TemplateTable.RowCount == TestConstant.DefaultImageTableColumns.Count - 1);
-            TestConstant.DefaultExpectation.File.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.RelativePath.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.Folder.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.Date.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.Time.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.ImageQuality.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.Counter0.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.Choice0.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.Note0.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.Flag0.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.CounterWithCustomDataLabel.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.ChoiceWithCustomDataLabel.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.NoteWithCustomDataLabel.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.FlagWithCustomDataLabel.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.CounterNotVisible.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.ChoiceNotVisible.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.NoteNotVisible.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.FlagNotVisible.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.Counter3.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.Choice3.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.Note3.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.Flag3.Verify(templateDatabase.TemplateTable[i++]);
-            TestConstant.DefaultExpectation.DeleteFlag.Verify(templateDatabase.TemplateTable[i++]);
         }
     }
 }

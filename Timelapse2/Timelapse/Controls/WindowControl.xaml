@@ -1,0 +1,12 @@
+﻿<Window x:Class="Timelapse.Controls.WindowControl"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Timelapse Controls" 
+        Width="1000"
+        SizeToContent="Height"
+        Topmost="True"
+        SizeChanged="Window_SizeChanged"
+        ShowInTaskbar="False"> 
+    <Grid x:Name="TopLevelGrid">
+    </Grid>
+</Window>

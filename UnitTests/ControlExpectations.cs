@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Data;
 using Timelapse.Database;
 
 namespace Timelapse.UnitTests

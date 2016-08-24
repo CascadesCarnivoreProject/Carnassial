@@ -10,7 +10,6 @@ using Timelapse.Util;
 namespace Timelapse.Editor
 {
     /// <summary>
-    /// Interaction logic for DialogInspectMetaData.xaml
     /// This dialog displays a list of metadata found in a selected image. 
     /// </summary>
     // Note: There are lots of commonalities between this dialog and DialogPopulate, but its not clear if its worth the effort of factoring the two.

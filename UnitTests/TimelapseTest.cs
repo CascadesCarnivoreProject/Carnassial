@@ -108,8 +108,8 @@ namespace Timelapse.UnitTests
             // ensure subdirectory contains default images
             List<string> defaultImages = new List<string>()
             {
-                TestConstant.DefaultExpectation.DaylightBobcatImage.FileName,
-                TestConstant.DefaultExpectation.InfraredMartenImage.FileName
+                TestConstant.ImageExpectation.DaylightBobcat.FileName,
+                TestConstant.ImageExpectation.InfraredMarten.FileName
             };
             foreach (string imageFileName in defaultImages)
             {
@@ -176,8 +176,8 @@ namespace Timelapse.UnitTests
             // generate expectations
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
             {
-                new ImageExpectations(TestConstant.DefaultExpectation.DaylightMartenPairImage),
-                new ImageExpectations(TestConstant.DefaultExpectation.DaylightCoyoteImage)
+                new ImageExpectations(TestConstant.ImageExpectation.DaylightMartenPair),
+                new ImageExpectations(TestConstant.ImageExpectation.DaylightCoyote)
             };
 
             string initialRootFolderName = Path.GetFileName(imageDatabase.FolderPath);
@@ -236,8 +236,8 @@ namespace Timelapse.UnitTests
             // generate expectations
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
             {
-                new ImageExpectations(TestConstant.DefaultExpectation.InfraredMartenImage),
-                new ImageExpectations(TestConstant.DefaultExpectation.DaylightBobcatImage)
+                new ImageExpectations(TestConstant.ImageExpectation.InfraredMarten),
+                new ImageExpectations(TestConstant.ImageExpectation.DaylightBobcat)
             };
 
             string initialRootFolderName = Path.GetFileName(imageDatabase.FolderPath);

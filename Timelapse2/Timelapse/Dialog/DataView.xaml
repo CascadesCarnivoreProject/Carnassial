@@ -1,0 +1,26 @@
+﻿<Window x:Class="Timelapse.Dialog.DataView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Timelapse.Controls"
+        xmlns:local="clr-namespace:Timelapse"
+        Title="View the (changing) contents of the database" 
+        MinHeight="480" MinWidth="768"
+        Closing="Window_Closing"
+        Loaded="Window_Loaded"
+		Height="600" Width="768"
+		ResizeMode="CanResizeWithGrip"
+		ShowInTaskbar="True">
+    <DockPanel>
+        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Information"
+                            Title="View the contents of the database as it updates"
+                            What="Displays the contents of the database, including changes as they occur.&#10;The row representing the current file is highlighted"
+                            ShowExplanationVisibility="True" />
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Name="OkButton" IsCancel="True" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">Okay</Button>
+            </StackPanel>
+            <DataGrid Name="dataGrid" MinHeight="100" MinWidth="100"  DockPanel.Dock="Top" HorizontalAlignment="Stretch" FontSize="12" VerticalScrollBarVisibility="Auto"/>
+        </DockPanel>
+    </DockPanel>
+</Window>
+

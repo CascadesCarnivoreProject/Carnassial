@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows.Media.Imaging;
 using Timelapse.Database;
+using Timelapse.Dialog;
 using Timelapse.Images;
 
 namespace Timelapse.UnitTests
@@ -97,7 +98,7 @@ namespace Timelapse.UnitTests
             string imageFilePath = Path.Combine(this.WorkingDirectory, TestConstant.File.InfraredMartenImage);
 
             ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, Constants.File.DefaultImageDatabaseFileName);
-            using (DialogPopulateFieldWithMetadata populateField = new DialogPopulateFieldWithMetadata(imageDatabase, imageFilePath))
+            using (PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(imageDatabase, imageFilePath))
             {
                 PrivateObject populateFieldAccessor = new PrivateObject(populateField);
                 populateFieldAccessor.Invoke("LoadExif");
@@ -111,10 +112,10 @@ namespace Timelapse.UnitTests
         {
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
             {
-                new ImageExpectations(TestConstant.DefaultExpectation.DaylightBobcatImage),
-                new ImageExpectations(TestConstant.DefaultExpectation.DaylightCoyoteImage),
-                new ImageExpectations(TestConstant.DefaultExpectation.DaylightMartenPairImage),
-                new ImageExpectations(TestConstant.DefaultExpectation.InfraredMartenImage)
+                new ImageExpectations(TestConstant.ImageExpectation.DaylightBobcat),
+                new ImageExpectations(TestConstant.ImageExpectation.DaylightCoyote),
+                new ImageExpectations(TestConstant.ImageExpectation.DaylightMartenPair),
+                new ImageExpectations(TestConstant.ImageExpectation.InfraredMarten)
             };
 
             TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName);

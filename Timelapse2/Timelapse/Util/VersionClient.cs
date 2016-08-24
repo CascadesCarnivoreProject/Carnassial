@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 using System.Xml;
+using MessageBox = Timelapse.Dialog.MessageBox;
 
 namespace Timelapse.Util
 {
@@ -87,7 +88,7 @@ namespace Timelapse.Util
             {
                 // ask the user if he would like to download the new version  
                 string title = String.Format("A new version of {0} is available.", this.applicationName);
-                DialogMessageBox messageBox = new DialogMessageBox(title, Application.Current.MainWindow, MessageBoxButton.YesNo);
+                MessageBox messageBox = new MessageBox(title, Application.Current.MainWindow, MessageBoxButton.YesNo);
                 messageBox.Message.What = String.Format("You a running an old version of {0}: version {1}", this.applicationName, currentVersion);
                 messageBox.Message.Reason = String.Format("A new version of {0} is available: version {1}", this.applicationName, publicallyAvailableVersion);
                 messageBox.Message.Solution = "Select 'Yes' to go to the website and download it.";
@@ -107,7 +108,7 @@ namespace Timelapse.Util
             }
             else if (showNoUpdatesMessage)
             {
-                DialogMessageBox messageBox = new DialogMessageBox(String.Format("No updates to {0} are available.", this.applicationName), Application.Current.MainWindow);
+                MessageBox messageBox = new MessageBox(String.Format("No updates to {0} are available.", this.applicationName), Application.Current.MainWindow);
                 messageBox.Message.Reason = String.Format("You a running the latest version of {0}, version: {1}", this.applicationName, currentVersion);
                 messageBox.Message.Icon = MessageBoxImage.Information;
                 bool? messageBoxResult = messageBox.ShowDialog();

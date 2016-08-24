@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:Timelapse.Controls;assembly=Timelapse2"
         xmlns:local="clr-namespace:Timelapse;assembly=Timelapse2"
         mc:Ignorable="d"
         Title="Inspect what metadata is available in an image..." 
@@ -12,7 +13,7 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
-        <local:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
+        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Question"
                             Title="Inspect what metadata is available in an image of your choosing"
                             What="Particular cameras often embed metadata into an image, some of which may be useful to capture as data. 

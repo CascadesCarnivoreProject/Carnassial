@@ -57,6 +57,8 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Xaml" />
+    <Reference Include="UIAutomationClient" />
+    <Reference Include="UIAutomationTypes" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <Choose>
@@ -76,6 +78,7 @@
     <Compile Include="DatabaseExpectations.cs" />
     <Compile Include="DatabaseTests.cs" />
     <Compile Include="DataTableBackedListExtensions.cs" />
+    <Compile Include="DefaultTemplateTableExpectation.cs" />
     <Compile Include="DependencyTests.cs" />
     <Compile Include="ImageDatabaseExtensions.cs" />
     <Compile Include="ImageExpectations.cs" />
@@ -84,6 +87,7 @@
     <Compile Include="MarkerExpectation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegistryTests.cs" />
+    <Compile Include="TemplateTableExpectation.cs" />
     <Compile Include="TestConstant.cs" />
     <Compile Include="TimelapseTest.cs" />
     <Compile Include="UserInterfaceTests.cs" />

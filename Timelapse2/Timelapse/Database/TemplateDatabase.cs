@@ -116,9 +116,9 @@ namespace Timelapse.Database
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", controlType));
             }
-            newControl.ControlOrder = this.TemplateTable.RowCount + 1;
+            newControl.ControlOrder = this.GetOrderForNewControl();
             newControl.List = Constants.ControlDefault.Value;
-            newControl.SpreadsheetOrder = this.TemplateTable.RowCount + 1;
+            newControl.SpreadsheetOrder = newControl.ControlOrder;
 
             // add the new control to the database
             List<List<ColumnTuple>> controlInsertWrapper = new List<List<ColumnTuple>>() { newControl.GetColumnTuples().Columns };
@@ -393,8 +393,8 @@ namespace Timelapse.Database
 
             // no existing table to clone, so add standard controls to template table
             List<List<ColumnTuple>> standardControls = new List<List<ColumnTuple>>();
-            int controlOrder = 0; // The control order, a one based count incremented for every new entry
-            int spreadsheetOrder = 0; // The spreadsheet order, a one based count incremented for every new entry
+            long controlOrder = 0; // The control order, a one based count incremented for every new entry
+            long spreadsheetOrder = 0; // The spreadsheet order, a one based count incremented for every new entry
 
             // file
             List<ColumnTuple> file = new List<ColumnTuple>();
@@ -475,19 +475,7 @@ namespace Timelapse.Database
             standardControls.Add(imageQuality);
 
             // delete flag
-            List<ColumnTuple> deleteFlag = new List<ColumnTuple>();
-            deleteFlag.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Type, Constants.Control.DeleteFlag));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.FlagValue));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Label, Constants.Control.DeleteFlagLabel));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.Control.DeleteFlag));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DeleteFlagTooltip));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FlagWidth));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
-            standardControls.Add(deleteFlag);
+            standardControls.Add(this.GetDeleteFlagTuples(++controlOrder, ++spreadsheetOrder, true));
 
             // insert standard controls into the template table
             this.Database.Insert(Constants.Database.TemplateTable, standardControls);
@@ -500,18 +488,18 @@ namespace Timelapse.Database
         {
             this.GetControlsSortedByControlOrder();
             this.EnsureDataLabelsAndLabelsNotEmpty();
-            this.EnsureBackwardsCompatability();
+            this.EnsureCurrentSchema();
         }
 
         // Do various checks and corrections to the Template DB to maintain backwards compatability. 
-        private void EnsureBackwardsCompatability()
+        private void EnsureCurrentSchema()
         {
-            // Backwards compatability: Add a RelativePath control to pre v2.1 databases if one hasn't already been inserted
+            // Add a RelativePath control to pre v2.1 databases if one hasn't already been inserted
             long relativePathID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
             if (relativePathID == -1)
             {
                 // insert a relative path control, where its ID will be created as the next highest ID
-                int order = this.TemplateTable.RowCount + 1;
+                long order = this.GetOrderForNewControl();
                 List<ColumnTuple> relativePathControl = this.GetRelativePathTuples(order, order, true);
                 this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { relativePathControl });
 
@@ -520,21 +508,21 @@ namespace Timelapse.Database
                 this.SetControlOrders(Constants.DatabaseColumn.RelativePath, Constants.Database.RelativePathPosition);
             }
 
-            // Backwards compatability: Remove the MarkedForDeletion control defined in pre v2.1 templates
-            long markForDeletionID = this.GetControlIDFromTemplateTable(Constants.ControlsDeprecated.MarkForDeletion);
-            if (markForDeletionID >= 0)
+            // Backwards compatability: ensure a DeleteFlag control exists, replacing the MarkForDeletion data label used in pre 2.1.0.4 templates if necessary
+            ControlRow markForDeletion = this.GetControlFromTemplateTable(Constants.ControlsDeprecated.MarkForDeletion);
+            if (markForDeletion != null)
             {
-                ControlRow controlToRemove = this.GetControlFromTemplateTable(Constants.ControlsDeprecated.MarkForDeletion);
-                this.RemoveUserDefinedControl(controlToRemove);
+                List<ColumnTuple> deleteFlagControl = this.GetDeleteFlagTuples(markForDeletion.ControlOrder, markForDeletion.SpreadsheetOrder, markForDeletion.Visible);
+                this.Database.Update(Constants.Database.TemplateTable, new ColumnTuplesWithWhere(deleteFlagControl, markForDeletion.ID));
+                this.GetControlsSortedByControlOrder();
             }
-
-            // Backwards compatability: Add a DeleteFlag control missing from pre v2.1 templates. 
-            if (this.GetControlIDFromTemplateTable(Constants.Control.DeleteFlag) < 0)
+            else if (this.GetControlIDFromTemplateTable(Constants.Control.DeleteFlag) < 0)
             {
                 // insert a DeleteFlag control, where its ID will be created as the next highest ID
-                int order = this.TemplateTable.RowCount + 1;
+                long order = this.GetOrderForNewControl();
                 List<ColumnTuple> deleteFlagControl = this.GetDeleteFlagTuples(order, order, true);
                 this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { deleteFlagControl });
+                this.GetControlsSortedByControlOrder();
             }
         }
 
@@ -654,6 +642,11 @@ namespace Timelapse.Database
             return nextDataLabel;
         }
 
+        private long GetOrderForNewControl()
+        {
+            return this.TemplateTable.RowCount + 1;
+        }
+
         /// <summary>
         /// Supply default values for any empty labels or data labels are non-empty, updating both TemplateTable and the database as needed
         /// </summary>
@@ -695,7 +688,7 @@ namespace Timelapse.Database
         }
 
         // Defines a RelativePath column. The definition is used by its caller to insert a RelativePath column into the template for backwards compatability. 
-        private List<ColumnTuple> GetRelativePathTuples(int controlOrder, int spreadsheetOrder, bool visible)
+        private List<ColumnTuple> GetRelativePathTuples(long controlOrder, long spreadsheetOrder, bool visible)
         {
             List<ColumnTuple> relativePath = new List<ColumnTuple>();
             relativePath.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder));
@@ -713,7 +706,7 @@ namespace Timelapse.Database
         }
 
         // Defines a DeleteFlag column. The definition is used by its caller to insert a DeleteFlag column into the template for backwards compatability. 
-        private List<ColumnTuple> GetDeleteFlagTuples(int controlOrder, int spreadsheetOrder, bool visible)
+        private List<ColumnTuple> GetDeleteFlagTuples(long controlOrder, long spreadsheetOrder, bool visible)
         {
             List<ColumnTuple> deleteFlag = new List<ColumnTuple>();
             deleteFlag.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder));

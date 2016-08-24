@@ -74,6 +74,12 @@ namespace Timelapse.Images
 
         public void Dispose()
         {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
             if (this.disposed)
             {
                 return;
@@ -85,7 +91,6 @@ namespace Timelapse.Images
             this.waitHandle.Dispose();
 
             this.disposed = true;
-            GC.SuppressFinalize(this);
         }
 
         public Dictionary<string, string> FetchExifFrom(string path, IEnumerable<string> tagsToKeep = null, bool keepKeysWithEmptyValues = true)

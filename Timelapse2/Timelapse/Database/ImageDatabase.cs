@@ -352,7 +352,6 @@ namespace Timelapse.Database
             }
 
             // if there are no synchronization difficulties synchronize the image database's TemplateTable with the template's TemplateTable          
-
             if (this.TemplateSynchronizationIssues.Count == 0)
             {
                 foreach (string dataLabel in dataLabels)

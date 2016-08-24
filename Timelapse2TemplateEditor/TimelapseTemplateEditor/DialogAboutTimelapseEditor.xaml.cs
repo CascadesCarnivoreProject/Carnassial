@@ -5,9 +5,6 @@ using Timelapse.Util;
 
 namespace Timelapse.Editor
 {
-    /// <summary>
-    /// Interaction logic for DialogAboutTimelapseEditor.xaml
-    /// </summary>
     public partial class DialogAboutTimelapseEditor : Window
     {
         public DialogAboutTimelapseEditor()

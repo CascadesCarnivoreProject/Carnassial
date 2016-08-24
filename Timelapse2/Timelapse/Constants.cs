@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Windows;
+using System.Diagnostics;
+using System.Reflection;
 using System.Windows.Media.Imaging;
 
 namespace Timelapse
@@ -240,12 +241,6 @@ namespace Timelapse
 
             static Images()
             {
-                // Previously, this test for ResourceAssembly appeared to be needed for unit tests to pass. 
-                // However, it no longer seems to be the case. I have left the commented out code here just in case there are future problems.
-                // if (Application.ResourceAssembly == null)
-                // { 
-                //    Application.ResourceAssembly = typeof(App).Assembly; 
-                // }
                 // Create a variety of images.
                 Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Corrupt.Freeze();

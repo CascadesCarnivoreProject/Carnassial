@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using Timelapse.Database;
+using MessageBox = Timelapse.Dialog.MessageBox;
 
 namespace Timelapse.Util
 {
@@ -47,7 +48,7 @@ namespace Timelapse.Util
         public static void ShowDateTimeParseFailureDialog(ImageRow image, Window owner)
         {
             Debug.Assert(false, String.Format("Parse of '{0} {1}' failed.", image.Date, image.Time));
-            DialogMessageBox messageBox = new DialogMessageBox("Timelapse could not read the date / time.", owner);
+            MessageBox messageBox = new MessageBox("Timelapse could not read the date / time.", owner);
             messageBox.Message.Problem = String.Format("Timelapse could not read the date and time '{0} {1}'", image.Date, image.Time);
             messageBox.Message.Reason = "The date / time needs to be in a very specific format, for example, 01-Jan-2016 13:00:00.";
             messageBox.Message.Solution = "Re-read in the dates from the images (see the Edit/Dates menu), and then try this again.";

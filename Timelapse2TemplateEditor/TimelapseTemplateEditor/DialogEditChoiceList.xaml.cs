@@ -5,9 +5,6 @@ using Timelapse.Util;
 
 namespace Timelapse.Editor
 {
-    /// <summary>
-    /// Interaction logic for DialogEditChoiceList.xaml
-    /// </summary>
     public partial class DialogEditChoiceList : Window
     {
         private UIElement positionReference;
