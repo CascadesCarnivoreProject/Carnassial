@@ -6,6 +6,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using Timelapse.Database;
 using Timelapse.Images;
+using Timelapse.Util;
+using Xceed.Wpf.Toolkit;
 using MessageBox = Timelapse.Dialog.MessageBox;
 
 namespace Timelapse.Controls
@@ -33,6 +35,16 @@ namespace Timelapse.Controls
             this.IsProgrammaticControlUpdate = false;
         }
 
+        public static void Configure(DateTimePicker dateTimePicker, Nullable<DateTime> defaultValue)
+        {
+            dateTimePicker.AutoCloseCalendar = true;
+            dateTimePicker.Format = DateTimeFormat.Custom;
+            dateTimePicker.FormatString = Constants.Time.DateTimeDisplayFormat;
+            dateTimePicker.TimeFormat = DateTimeFormat.Custom;
+            dateTimePicker.TimeFormatString = Constants.Time.TimeFormat;
+            dateTimePicker.Value = defaultValue;
+        }
+
         /// <summary>Propagate the current value of this control forward from this point across the current set of filtered images.</summary>
         public void CopyForward(string dataLabel, bool checkForZero)
         {
@@ -48,29 +60,33 @@ namespace Timelapse.Controls
                 return;
             }
 
-            string valueToCopy = this.ImageCache.Current[dataLabel].Trim();
+            TimeZoneInfo imageSetTimeZone = this.ImageDatabase.ImageSet.GetTimeZone();
+            string valueToCopy = this.ImageCache.Current.GetValueDisplayString(dataLabel, imageSetTimeZone);
             if (this.ConfirmCopyForward(valueToCopy, imagesAffected, checkForZero) != true)
             {
                 return;
             }
 
             // Update. Note that we start on the next row, as we are copying from the current row.
-            this.ImageDatabase.UpdateImages(dataLabel, valueToCopy, this.ImageCache.CurrentRow + 1, this.ImageDatabase.CurrentlySelectedImageCount - 1);
+            this.ImageDatabase.UpdateImages(this.ImageCache.Current, dataLabel, this.ImageCache.CurrentRow + 1, this.ImageDatabase.CurrentlySelectedImageCount - 1);
         }
 
         /// <summary>
         /// Copy the last non-empty value in this control preceding this image up to the current image
         /// </summary>
-        public string CopyFromLastValue(DataEntryControl control)
+        public string CopyFromLastNonEmptyValue(DataEntryControl control)
         {
             bool checkForZero = control is DataEntryCounter;
             bool isFlag = control is DataEntryFlag;
+
+            int indexToCopyFrom = -1;
+            ImageRow valueSource = null;
             string valueToCopy = checkForZero ? "0" : String.Empty;
-            int targetRow = -1;
-            for (int index = this.ImageCache.CurrentRow - 1; index >= 0; index--)
+            for (int previousIndex = this.ImageCache.CurrentRow - 1; previousIndex >= 0; previousIndex--)
             {
                 // Search for the row with some value in it, starting from the previous row
-                valueToCopy = this.ImageDatabase.ImageDataTable[index][control.DataLabel];
+                ImageRow image = this.ImageDatabase.ImageDataTable[previousIndex];
+                valueToCopy = image.GetValueDatabaseString(control.DataLabel);
                 if (valueToCopy == null)
                 {
                     continue;
@@ -83,13 +99,15 @@ namespace Timelapse.Controls
                         || (isFlag && !valueToCopy.Equals(Constants.Boolean.False, StringComparison.OrdinalIgnoreCase)) // Skip over false values for flags
                         || (!checkForZero && !isFlag))
                     {
-                        targetRow = index;    // We found a non-empty value
+                        indexToCopyFrom = previousIndex;    // We found a non-empty value
+                        valueSource = image;
                         break;
                     }
                 }
             }
 
-            if (targetRow < 0)
+            TimeZoneInfo imageSetTimeZone = this.ImageDatabase.ImageSet.GetTimeZone();
+            if (indexToCopyFrom < 0)
             {
                 // Nothing to propagate. Note that we shouldn't see this, as the menu item should be deactivated if this is the case.
                 // But just in case.
@@ -97,17 +115,17 @@ namespace Timelapse.Controls
                 messageBox.Message.Icon = MessageBoxImage.Exclamation;
                 messageBox.Message.Reason = "None of the earlier files have anything in this field, so there are no values to propagate.";
                 messageBox.ShowDialog();
-                return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow][control.DataLabel]; // No change, so return the current value
+                return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow].GetValueDisplayString(control.DataLabel, imageSetTimeZone); // No change, so return the current value
             }
 
-            int imagesAffected = this.ImageCache.CurrentRow - targetRow;
+            int imagesAffected = this.ImageCache.CurrentRow - indexToCopyFrom;
             if (this.ConfirmPropagateFromLastValue(valueToCopy, imagesAffected) != true)
             {
-                return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow][control.DataLabel]; // No change, so return the current value
+                return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow].GetValueDisplayString(control.DataLabel, imageSetTimeZone); // No change, so return the current value
             }
 
             // Update. Note that we start on the next row, as we are copying from the current row.
-            this.ImageDatabase.UpdateImages(control.DataLabel, valueToCopy, targetRow + 1, this.ImageCache.CurrentRow);
+            this.ImageDatabase.UpdateImages(valueSource, control.DataLabel, indexToCopyFrom + 1, this.ImageCache.CurrentRow);
             return valueToCopy;
         }
 
@@ -116,12 +134,13 @@ namespace Timelapse.Controls
         {
             bool checkForZero = control is DataEntryCounter;
             int imagesAffected = this.ImageDatabase.CurrentlySelectedImageCount;
-            string valueToCopy = this.ImageCache.Current[control.DataLabel].Trim();
-            if (this.ConfirmCopyCurrentValueToAll(valueToCopy, imagesAffected, checkForZero) != true)
+            TimeZoneInfo imageSetTimeZone = this.ImageDatabase.ImageSet.GetTimeZone();
+            string displayValueToCopy = this.ImageCache.Current.GetValueDisplayString(control.DataLabel, imageSetTimeZone);
+            if (this.ConfirmCopyCurrentValueToAll(displayValueToCopy, imagesAffected, checkForZero) != true)
             {
                 return;
             }
-            this.ImageDatabase.UpdateImagesInDataTable(control.DataLabel, valueToCopy);
+            this.ImageDatabase.UpdateImages(this.ImageCache.Current, control.DataLabel);
         }
 
         public void Dispose()
@@ -155,31 +174,29 @@ namespace Timelapse.Controls
                 return false;
             }
 
-            string valueToCopy = this.ImageCache.Current[control.DataLabel]; 
             int imagesAffected = this.ImageDatabase.CurrentlySelectedImageCount - this.ImageCache.CurrentRow - 1;
             return (imagesAffected > 0) ? true : false;
         }
 
-        // Return true if there is an actual non-empty value that we can copy
-        public bool IsCopyFromLastValuePossible(DataEntryControl control)
+        // Return true if there is a non-empty value available
+        public bool IsCopyFromLastNonEmptyValuePossible(DataEntryControl control)
         {
             bool checkForZero = control is DataEntryCounter;
-            int row = -1;
+            int nearestRowWithCopyableValue = -1;
             for (int image = this.ImageCache.CurrentRow - 1; image >= 0; image--)
             {
                 // Search for the row with some value in it, starting from the previous row
-                string valueToCopy = this.ImageDatabase.ImageDataTable[image][control.DataLabel];
-
-                if (valueToCopy.Trim().Length > 0)
+                string valueToCopy = this.ImageDatabase.ImageDataTable[image].GetValueDatabaseString(control.DataLabel);
+                if (String.IsNullOrWhiteSpace(valueToCopy) == false)
                 {
                     if ((checkForZero && !valueToCopy.Equals("0")) || !checkForZero)
                     {
-                        row = image;    // We found a non-empty value
+                        nearestRowWithCopyableValue = image;    // We found a non-empty value
                         break;
                     }
                 }
             }
-            return (row >= 0) ? true : false;
+            return (nearestRowWithCopyableValue >= 0) ? true : false;
         }
 
         /// <summary>
@@ -207,11 +224,18 @@ namespace Timelapse.Controls
                     case Constants.DatabaseColumn.Time:
                         DataEntryNote note = (DataEntryNote)pair.Value;
                         note.ContentControl.TextChanged += this.NoteControl_TextChanged;
-                        bool createContextMenu = (controlType == Constants.Control.Note) ? true : false;
-                        if (createContextMenu)
+                        if (controlType == Constants.Control.Note)
                         {
                             this.SetContextMenuCallbacks(note);
                         }
+                        break;
+                    case Constants.DatabaseColumn.DateTime:
+                        DataEntryDateTime dateTime = (DataEntryDateTime)pair.Value;
+                        dateTime.ContentControl.ValueChanged += this.DateTimeControl_ValueChanged;
+                        break;
+                    case Constants.DatabaseColumn.UtcOffset:
+                        DataEntryUtcOffset utcOffset = (DataEntryUtcOffset)pair.Value;
+                        utcOffset.ContentControl.ValueChanged += this.UtcOffsetControl_ValueChanged;
                         break;
                     case Constants.DatabaseColumn.DeleteFlag:
                     case Constants.Control.Flag:
@@ -224,8 +248,7 @@ namespace Timelapse.Controls
                     case Constants.Control.FixedChoice:
                         DataEntryChoice choice = (DataEntryChoice)pair.Value;
                         choice.ContentControl.SelectionChanged += this.ChoiceControl_SelectionChanged;
-                        createContextMenu = (controlType == Constants.Control.FixedChoice) ? true : false;
-                        if (createContextMenu)
+                        if (controlType == Constants.Control.FixedChoice)
                         {
                             this.SetContextMenuCallbacks(choice);
                         }
@@ -239,6 +262,39 @@ namespace Timelapse.Controls
                         break;
                 }
             }
+        }
+
+        public static bool TryFindFocusedControl(IInputElement focusedElement, out DataEntryControl focusedControl)
+        {
+            if (focusedElement is FrameworkElement)
+            {
+                FrameworkElement focusedFrameworkElement = (FrameworkElement)focusedElement;
+                focusedControl = (DataEntryControl)focusedFrameworkElement.Tag;
+                if (focusedControl != null)
+                {
+                    return true;
+                }
+
+                // for complex controls which dynamic generate child controls, such as date time pickers, the tag of the focused element can't be set
+                // so try to locate a parent of the focused element with a tag indicating the control
+                FrameworkElement parent = null;
+                if (focusedFrameworkElement.Parent != null && focusedFrameworkElement.TemplatedParent is FrameworkElement)
+                {
+                    parent = (FrameworkElement)focusedFrameworkElement.Parent;
+                }
+                else if (focusedFrameworkElement.TemplatedParent != null && focusedFrameworkElement.TemplatedParent is FrameworkElement)
+                {
+                    parent = (FrameworkElement)focusedFrameworkElement.TemplatedParent;
+                }
+
+                if (parent != null)
+                {
+                    return DataEntryHandler.TryFindFocusedControl(parent, out focusedControl);
+                }
+            }
+
+            focusedControl = null;
+            return false;
         }
 
         // Ask the user to confirm value propagation from the last value
@@ -307,7 +363,7 @@ namespace Timelapse.Controls
             MenuItem menuItemCopyForward = (MenuItem)stackPanel.ContextMenu.Items[DataEntryHandler.CopyForwardIndex];
             menuItemCopyForward.IsEnabled = this.IsCopyForwardPossible(control);
             MenuItem menuItemPropagateFromLastValue = (MenuItem)stackPanel.ContextMenu.Items[DataEntryHandler.PropagateFromLastValueIndex];
-            menuItemPropagateFromLastValue.IsEnabled = this.IsCopyFromLastValuePossible(control);
+            menuItemPropagateFromLastValue.IsEnabled = this.IsCopyFromLastNonEmptyValuePossible(control);
         }
 
         // Whenever the text in a particular counter box changes, update the particular counter field in the database
@@ -361,6 +417,36 @@ namespace Timelapse.Controls
             this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, comboBox.SelectedItem.ToString().Trim());
         }
 
+        private void DateTimeControl_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            if (this.IsProgrammaticControlUpdate)
+            {
+                return;
+            }
+
+            DateTimePicker dateTimePicker = (DateTimePicker)sender;
+            if (dateTimePicker.Value.HasValue == false)
+            {
+                return;
+            }
+
+            // umdate image data table and write the new DateTime, Date, and Time to the database
+            this.ImageCache.Current.SetDateAndTime(dateTimePicker.Value.Value);
+            List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
+            this.ImageDatabase.UpdateImages(imageToUpdate);
+
+            // update date and time controls if they're displayed
+            DataEntryDateTime control = (DataEntryDateTime)dateTimePicker.Tag;
+            if (control.DateControl != null)
+            {
+                control.DateControl.Content = this.ImageCache.Current.Date;
+            }
+            if (control.TimeControl != null)
+            {
+                control.TimeControl.Content = this.ImageCache.Current.Time;
+            }
+        }
+
         // Whenever the checked state in a Flag  changes, update the particular choice field in the database
         private void FlagControl_CheckedChanged(object sender, RoutedEventArgs e)
         {
@@ -381,7 +467,7 @@ namespace Timelapse.Controls
         protected virtual void MenuItemPropagateFromLastValue_Click(object sender, RoutedEventArgs e)
         {
             DataEntryControl control = (DataEntryControl)((MenuItem)sender).Tag;
-            control.Content = this.CopyFromLastValue(control);
+            control.Content = this.CopyFromLastNonEmptyValue(control);
         }
 
         // Copy the current value of this control to all images
@@ -491,6 +577,32 @@ namespace Timelapse.Controls
             {
                 throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.GetType().Name));
             }
+        }
+
+        private void UtcOffsetControl_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            if (this.IsProgrammaticControlUpdate)
+            {
+                return;
+            }
+
+            UtcOffsetUpDown utcOffsetPicker = (UtcOffsetUpDown)sender;
+            if (utcOffsetPicker.Value.HasValue == false)
+            {
+                return;
+            }
+            DataEntryControl control = (DataEntryControl)utcOffsetPicker.Tag;
+
+            DateTimeOffset currentImageDateTime;
+            TimeZoneInfo imageSetDateTime = this.ImageDatabase.ImageSet.GetTimeZone();
+            if (this.ImageCache.Current.TryGetDateTime(imageSetDateTime, out currentImageDateTime) == false)
+            {
+                return;
+            }
+            DateTimeOffset newImageDateTime = currentImageDateTime.SetOffset(utcOffsetPicker.Value.Value);
+            this.ImageCache.Current.SetDateAndTime(newImageDateTime);
+            List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
+            this.ImageDatabase.UpdateImages(imageToUpdate);  // write the new UtcOffset to the database
         }
     }
 }

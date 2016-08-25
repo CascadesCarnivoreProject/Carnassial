@@ -24,6 +24,7 @@ namespace Timelapse.Util
         public bool SuppressFilteredDaylightSavingsCorrectionPrompt { get; set; }
         public bool SuppressFilteredPopulateFieldFromMetadataPrompt { get; set; }
         public bool SuppressFilteredRereadDatesFromFilesPrompt { get; set; }
+        public bool SuppressFilteredSetTimeZonePrompt { get; set; }
         public Throttles Throttles { get; private set; }
 
         public TimelapseUserRegistrySettings() :
@@ -63,6 +64,7 @@ namespace Timelapse.Util
                 this.SuppressFilteredDaylightSavingsCorrectionPrompt = registryKey.ReadBoolean(Constants.Registry.TimelapseKey.SuppressFilteredDaylightSavingsCorrectionPrompt, false);
                 this.SuppressFilteredPopulateFieldFromMetadataPrompt = registryKey.ReadBoolean(Constants.Registry.TimelapseKey.SuppressFilteredPopulateFieldFromMetadataPrompt, false);
                 this.SuppressFilteredRereadDatesFromFilesPrompt = registryKey.ReadBoolean(Constants.Registry.TimelapseKey.SuppressFilteredRereadDatesFromFilesPrompt, false);
+                this.SuppressFilteredSetTimeZonePrompt = registryKey.ReadBoolean(Constants.Registry.TimelapseKey.SuppressFilteredSetTimeZonePrompt, false);
                 this.Throttles.SetDesiredImageRendersPerSecond(registryKey.ReadDouble(Constants.Registry.TimelapseKey.DesiredImageRendersPerSecond, Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault));
             }
         }
@@ -92,6 +94,7 @@ namespace Timelapse.Util
                 registryKey.Write(Constants.Registry.TimelapseKey.SuppressFilteredDateTimeLinearCorrectionPrompt, this.SuppressFilteredDateTimeLinearCorrectionPrompt);
                 registryKey.Write(Constants.Registry.TimelapseKey.SuppressFilteredDaylightSavingsCorrectionPrompt, this.SuppressFilteredDaylightSavingsCorrectionPrompt);
                 registryKey.Write(Constants.Registry.TimelapseKey.SuppressFilteredPopulateFieldFromMetadataPrompt, this.SuppressFilteredPopulateFieldFromMetadataPrompt);
+                registryKey.Write(Constants.Registry.TimelapseKey.SuppressFilteredSetTimeZonePrompt, this.SuppressFilteredSetTimeZonePrompt);
                 registryKey.Write(Constants.Registry.TimelapseKey.SuppressFilteredRereadDatesFromFilesPrompt, this.SuppressFilteredRereadDatesFromFilesPrompt);
             }
         }

@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using Timelapse.Database;
 
 namespace Timelapse.Controls
 {
@@ -22,8 +23,8 @@ namespace Timelapse.Controls
             }
         }
 
-        public DataEntryFlag(string dataLabel, DataEntryControls styleProvider)
-            : base(dataLabel, styleProvider, ControlContentStyle.FlagCodeBar, ControlLabelStyle.LabelCodeBar)
+        public DataEntryFlag(ControlRow control, DataEntryControls styleProvider)
+            : base(control, styleProvider, ControlContentStyle.FlagCodeBar, ControlLabelStyle.LabelCodeBar)
         {
             this.Container.ToolTip = "Toggle between true (checked) and false (unchecked)";
         }

@@ -22,11 +22,11 @@ namespace Timelapse.Editor
 {
     public partial class EditorWindow : Window
     {
-        #region Private Variables
         // database where the template is stored
         private TemplateDatabase templateDatabase;
 
         // state tracking
+        private EditorControls controls;
         private bool generateControlsAndSpreadsheet;
         private bool rowsActionsOn;
         private bool tabWasPressed; // to make tab trigger row update.
@@ -38,7 +38,6 @@ namespace Timelapse.Editor
         private Point startPoint;
         private UIElement realMouseDragSource;
         private UIElement dummyMouseDragSource;
-        #endregion
 
         #region Initialization, Window Loading and Closing
         /// <summary>
@@ -56,6 +55,7 @@ namespace Timelapse.Editor
                 Application.Current.Shutdown();
             }
 
+            this.controls = new EditorControls();
             this.dummyMouseDragSource = new UIElement();
             this.generateControlsAndSpreadsheet = true;
             this.rowsActionsOn = false;
@@ -218,7 +218,7 @@ namespace Timelapse.Editor
             importer.Import(codeTemplateFileName, this.templateDatabase, out conversionErrors);
             this.generateControlsAndSpreadsheet = true;
 
-            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
             this.ReInitializeDataGrid(this.templateDatabase.FilePath);
             Mouse.OverrideCursor = null;
@@ -376,7 +376,7 @@ namespace Timelapse.Editor
 
             // Update the user interface specified by the contents of the table
             // Change the help text message
-            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
             this.InitializeUI();
 
@@ -420,7 +420,7 @@ namespace Timelapse.Editor
             this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateTable_RowChanged);
 
             // Update the user interface specified by the contents of the table
-            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
             this.InitializeUI();       
         }
@@ -437,7 +437,7 @@ namespace Timelapse.Editor
             this.templateDatabase.SyncControlToDatabase(control);
             if (this.generateControlsAndSpreadsheet)
             {
-                EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+                this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
                 this.GenerateSpreadsheet();
             }
         }
@@ -497,7 +497,7 @@ namespace Timelapse.Editor
 
             this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
-            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
             this.OnControlOrderChanged();
         }
@@ -526,7 +526,7 @@ namespace Timelapse.Editor
             this.templateDatabase.RemoveUserDefinedControl(new ControlRow(selectedRowView.Row));
 
             // update the control panel so it reflects the current values in the database
-            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
 
             this.rowsActionsOn = false;
@@ -860,30 +860,33 @@ namespace Timelapse.Editor
                     return;
                 }
 
+                // grid cells are editable by default
+                // disable cells which should not be editable
                 DataGridCellsPresenter presenter = GetVisualChild<DataGridCellsPresenter>(row);
                 for (int column = 0; column < this.TemplateDataGrid.Columns.Count; column++)
                 {
-                    // The following attributes should always be editable.
-                    // Note that this is hardwired to the header names in the xaml file, so this could break if that ever changes.. should probably do this so it works no matter what the header text is of the table
+                    DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
+                    ControlRow control = new ControlRow(((DataRowView)this.TemplateDataGrid.Items[rowIndex]).Row);
+                    string controlType = control.Type;
+
                     string columnHeader = (string)this.TemplateDataGrid.Columns[column].Header;
-                    if ((columnHeader == EditorConstant.Control.Width) || (columnHeader == Constants.Control.Visible) || (columnHeader == Constants.Control.Label) || (columnHeader == Constants.Control.Tooltip))
+                    if ((columnHeader == Constants.Control.Label) || 
+                        (columnHeader == Constants.Control.Tooltip) ||
+                        (columnHeader == Constants.Control.Visible) ||
+                        (columnHeader == EditorConstant.Control.Width))
                     {
                         continue;
                     }
 
                     // The following attributes should NOT be editable.
-                    DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
-                    ControlRow control = new ControlRow(((DataRowView)this.TemplateDataGrid.Items[rowIndex]).Row);
-
-                    // more constants to access checkbox columns and combobox columns.
-                    // the sortmemberpath is include, not the sort name, so we are accessing by head, which may change.
-                    string controlType = control.Type;
+                    ContentPresenter cellContent = cell.Content as ContentPresenter;
                     string sortMemberPath = this.TemplateDataGrid.Columns[column].SortMemberPath;
                     if (String.Equals(sortMemberPath, Constants.DatabaseColumn.ID, StringComparison.OrdinalIgnoreCase)  ||
                         String.Equals(sortMemberPath, Constants.Control.ControlOrder, StringComparison.OrdinalIgnoreCase) ||
                         String.Equals(sortMemberPath, Constants.Control.SpreadsheetOrder, StringComparison.OrdinalIgnoreCase) ||
                         String.Equals(sortMemberPath, Constants.Control.Type, StringComparison.OrdinalIgnoreCase) ||
                         (controlType == Constants.DatabaseColumn.Date) ||
+                        (controlType == Constants.DatabaseColumn.DateTime) ||
                         (controlType == Constants.DatabaseColumn.DeleteFlag) ||
                         (controlType == Constants.DatabaseColumn.File) ||
                         (controlType == Constants.DatabaseColumn.Folder) ||
@@ -893,6 +896,7 @@ namespace Timelapse.Editor
                         ((controlType == Constants.DatabaseColumn.ImageQuality) && (sortMemberPath == Constants.Control.DefaultValue)) ||
                         (controlType == Constants.DatabaseColumn.RelativePath) ||
                         (controlType == Constants.DatabaseColumn.Time) ||
+                        (controlType == Constants.DatabaseColumn.UtcOffset) ||
                         ((controlType == Constants.Control.Counter) && (columnHeader == Constants.Control.List)) ||
                         ((controlType == Constants.Control.Flag) && (columnHeader == Constants.Control.List)) ||
                         ((controlType == Constants.Control.Note) && (columnHeader == Constants.Control.List)))
@@ -901,10 +905,9 @@ namespace Timelapse.Editor
                         cell.Foreground = Brushes.Gray;
 
                         // if cell has a checkbox, also disable it.
-                        var cp = cell.Content as ContentPresenter;
-                        if (cp != null)
+                        if (cellContent != null)
                         {
-                            var checkbox = cp.ContentTemplate.FindName("CheckBox", cp) as CheckBox;
+                            CheckBox checkbox = cellContent.ContentTemplate.FindName("CheckBox", cellContent) as CheckBox;
                             if (checkbox != null)
                             {
                                 checkbox.IsEnabled = false;
@@ -918,7 +921,6 @@ namespace Timelapse.Editor
                     else
                     {
                         cell.ClearValue(DataGridCell.BackgroundProperty); // otherwise when scrolling cells offscreen get colored randomly
-                        ContentPresenter cellContent = cell.Content as ContentPresenter;
 
                         // if cell has a checkbox, enable it.
                         if (cellContent != null)
@@ -1173,7 +1175,7 @@ namespace Timelapse.Editor
             }
 
             this.templateDatabase.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
-            EditorControls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable); // A contorted to make sure the controls panel updates itself
+            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable); // A contorted to make sure the controls panel updates itself
         }
         #endregion
 

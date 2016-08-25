@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Xml;
 using Timelapse.Database;
+using Timelapse.Util;
 
 namespace Timelapse.Images
 {
@@ -52,6 +52,7 @@ namespace Timelapse.Images
 
             XmlNodeList nodeList = xmlDoc.SelectNodes(Constants.ImageXml.Images + Constants.ImageXml.Slash + Constants.DatabaseColumn.Image);
             int imageID = 0;
+            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
             List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
             List<ColumnTuplesWithWhere> markersToUpdate = new List<ColumnTuplesWithWhere>();
             foreach (XmlNode node in nodeList)
@@ -78,6 +79,14 @@ namespace Timelapse.Images
                 // Date - We use the original time, although its almost certainly identical
                 string time = node[Constants.ImageXml.Time].InnerText;
                 columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Time, time));
+
+                // DateTime
+                DateTimeOffset dateTime;
+                if (DateTimeHandler.TryParseLegacyDateTime(date, time, imageSetTimeZone, out dateTime))
+                {
+                    columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.DateTime, dateTime.UtcDateTime));
+                    columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.UtcOffset, dateTime.Offset));
+                }
 
                 // Notes: Iterate through 
                 int innerNodeIndex = 0;

@@ -227,6 +227,7 @@ namespace Timelapse.UnitTests
             userSettings.SuppressFilteredDaylightSavingsCorrectionPrompt = true;
             userSettings.SuppressFilteredPopulateFieldFromMetadataPrompt = true;
             userSettings.SuppressFilteredRereadDatesFromFilesPrompt = true;
+            userSettings.SuppressFilteredSetTimeZonePrompt = true;
             userSettings.Throttles.SetDesiredImageRendersPerSecond(Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
 
             userSettings.WriteToRegistry();
@@ -254,6 +255,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(userSettings.SuppressFilteredDaylightSavingsCorrectionPrompt);
             Assert.IsTrue(userSettings.SuppressFilteredPopulateFieldFromMetadataPrompt);
             Assert.IsTrue(userSettings.SuppressFilteredRereadDatesFromFilesPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredSetTimeZonePrompt);
             Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
 
             Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
@@ -283,6 +285,7 @@ namespace Timelapse.UnitTests
             Assert.IsFalse(userSettings.SuppressFilteredDateTimeLinearCorrectionPrompt);
             Assert.IsFalse(userSettings.SuppressFilteredPopulateFieldFromMetadataPrompt);
             Assert.IsFalse(userSettings.SuppressFilteredRereadDatesFromFilesPrompt);
+            Assert.IsFalse(userSettings.SuppressFilteredSetTimeZonePrompt);
         }
     }
 }

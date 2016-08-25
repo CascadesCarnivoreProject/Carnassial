@@ -1,9 +1,11 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Media.Imaging;
 using Timelapse.Controls;
 using Timelapse.Database;
@@ -59,6 +61,7 @@ namespace Timelapse.UnitTests
             // checks are not performed after last filter in list is applied
             string currentDirectoryName = Path.GetFileName(imageDatabase.FolderPath);
             imageDatabase.SelectDataTableImages(ImageFilter.All);
+            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
             foreach (ImageFilter nextFilter in new List<ImageFilter>() { ImageFilter.All, ImageFilter.Ok, ImageFilter.Ok })
             {
                 Assert.IsTrue(imageDatabase.CurrentlySelectedImageCount == imageExpectations.Count);
@@ -67,27 +70,26 @@ namespace Timelapse.UnitTests
                 int firstDisplayableImage = imageDatabase.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
                 Assert.IsTrue(firstDisplayableImage == Constants.DefaultImageRowIndex);
 
-                for (int image = 0; image < imageExpectations.Count; ++image)
+                for (int imageIndex = 0; imageIndex < imageExpectations.Count; ++imageIndex)
                 {
-                    // marshalling to ImageProperties
-                    ImageRow imageProperties = imageDatabase.ImageDataTable[image];
-                    ImageExpectations imageExpectation = imageExpectations[image];
-                    imageExpectation.Verify(imageProperties);
+                    ImageRow image = imageDatabase.ImageDataTable[imageIndex];
+                    ImageExpectations imageExpectation = imageExpectations[imageIndex];
+                    imageExpectation.Verify(image, imageSetTimeZone);
 
-                    List<MetaTagCounter> metaTagCounters = imageDatabase.GetMetaTagCounters(imageProperties.ID);
+                    List<MetaTagCounter> metaTagCounters = imageDatabase.GetMetaTagCounters(image.ID);
                     Assert.IsTrue(metaTagCounters.Count >= 0);
 
                     // retrieval by path
-                    FileInfo imageFile = imageProperties.GetFileInfo(imageDatabase.FolderPath);
-                    Assert.IsTrue(imageDatabase.GetOrCreateImage(imageFile, out imageProperties));
+                    FileInfo imageFile = image.GetFileInfo(imageDatabase.FolderPath);
+                    Assert.IsTrue(imageDatabase.GetOrCreateImage(imageFile, imageSetTimeZone, out image));
 
                     // retrieval by specific method
                     // imageDatabase.GetImageValue();
-                    Assert.IsTrue(imageDatabase.IsImageDisplayable(image));
-                    Assert.IsTrue(imageDatabase.IsImageRowInRange(image));
+                    Assert.IsTrue(imageDatabase.IsImageDisplayable(imageIndex));
+                    Assert.IsTrue(imageDatabase.IsImageRowInRange(imageIndex));
 
                     // retrieval by table
-                    imageExpectation.Verify(imageDatabase.ImageDataTable[image]);
+                    imageExpectation.Verify(imageDatabase.ImageDataTable[imageIndex], imageSetTimeZone);
                 }
 
                 // reopen database for test and refresh images so next iteration of the loop checks state after reload
@@ -96,28 +98,34 @@ namespace Timelapse.UnitTests
                 Assert.IsTrue(imageDatabase.ImageDataTable.RowCount > 0);
             }
 
-            // imageDatabase.TryGetImagesCustom();
-            // imageDatabase.UpdateAllImagesInFilteredView();
-            // imageDatabase.UpdateID();
-            // imageDatabase.UpdateImage();
-            // imageDatabase.UpdateImages();
-
             // sanity coverage of image set table methods
+            string originalTimeZoneID = imageDatabase.ImageSet.TimeZone;
+
             this.VerifyDefaultImageSetTableContent(imageDatabase);
-            // imageDatabase.SetImageSetLog();
-            // imageDatabase.UpdateImageSetFilter();
-            // imageDatabase.UpdateImageSetRowIndex();
-            // imageDatabase.UpdateMagnifierEnabled();
+            imageDatabase.ImageSet.ImageFilter = ImageFilter.Custom;
+            imageDatabase.ImageSet.ImageRowIndex = -1;
+            imageDatabase.AppendToImageSetLog(new StringBuilder("Test log entry."));
+            imageDatabase.ImageSet.MagnifierEnabled = false;
+            imageDatabase.ImageSet.TimeZone = "Test Time Zone";
+            imageDatabase.SyncImageSetToDatabase();
+            Assert.IsTrue(imageDatabase.ImageSet.ID == 1);
+            Assert.IsTrue(imageDatabase.ImageSet.ImageFilter == ImageFilter.Custom);
+            Assert.IsTrue(imageDatabase.ImageSet.ImageRowIndex == -1);
+            Assert.IsTrue(imageDatabase.ImageSet.Log == Constants.Database.ImageSetDefaultLog + "Test log entry.");
+            Assert.IsTrue(imageDatabase.ImageSet.MagnifierEnabled == false);
+            Assert.IsTrue(imageDatabase.ImageSet.TimeZone == "Test Time Zone");
+
+            imageDatabase.ImageSet.TimeZone = originalTimeZoneID;
 
             // sanity coverage of marker table methods
-            // this.VerifyDefaultMarkerTableContent(imageDatabase, imageExpectations.Count);
+            this.VerifyDefaultMarkerTableContent(imageDatabase, imageExpectations.Count);
             // imageDatabase.SetMarkerPoints();
             // imageDatabase.UpdateMarkers();
 
             // date manipulation
             imageDatabase.SelectDataTableImages(ImageFilter.All);
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount > 0);
-            List<DateTime> imageTimesBeforeAdjustment = imageDatabase.GetImageTimes().ToList();
+            List<DateTimeOffset> imageTimesBeforeAdjustment = imageDatabase.GetImageTimes().ToList();
             TimeSpan adjustment = new TimeSpan(0, 1, 2, 3, 0);
             imageDatabase.AdjustImageTimes(adjustment);
             this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, imageDatabase.GetImageTimes().ToList(), adjustment);
@@ -137,70 +145,60 @@ namespace Timelapse.UnitTests
             imageDatabase.ExchangeDayAndMonthInImageDates(0, imageDatabase.ImageDataTable.RowCount - 1);
 
             // custom filter coverage
-            // currently, search terms should be created for all controls except Folder and Time
-            Assert.IsTrue((imageDatabase.TemplateTable.RowCount - 2) == imageDatabase.CustomFilter.SearchTerms.Count);
-            bool dateFilteringRequired;
-            Assert.IsTrue(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
-            Assert.IsFalse(dateFilteringRequired);
+            // search terms should be created for all controls except Date, Folder, and Time
+            Assert.IsTrue((imageDatabase.TemplateTable.RowCount - 3) == imageDatabase.CustomFilter.SearchTerms.Count);
+            Assert.IsTrue(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Custom) == -1);
 
-            SearchTerm date = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.Date);
-            SearchTerm file = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.File);
-            SearchTerm imageQuality = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.ImageQuality);
-            SearchTerm relativePath = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.RelativePath);
-            SearchTerm markedForDeletion = imageDatabase.CustomFilter.SearchTerms.Single(term => term.Type == Constants.DatabaseColumn.DeleteFlag);
-
-            date.UseForSearching = true;
-            date.Value = DateTimeHandler.ToStandardDateString(new DateTime(2000, 1, 1));
-            Assert.IsTrue(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
-            Assert.IsTrue(dateFilteringRequired);
+            SearchTerm dateTime = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.DateTime);
+            dateTime.UseForSearching = true;
+            dateTime.DatabaseValue = DateTimeHandler.ToDisplayDateString(new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero));
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             imageDatabase.SelectDataTableImages(ImageFilter.Custom);
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
 
-            date.Operator = Constants.SearchTermOperator.Equal;
-            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
-            Assert.IsFalse(dateFilteringRequired);
+            dateTime.Operator = Constants.SearchTermOperator.Equal;
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             imageDatabase.SelectDataTableImages(ImageFilter.Custom);
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 0);
 
-            date.UseForSearching = false;
+            dateTime.UseForSearching = false;
             imageDatabase.CustomFilter.TermCombiningOperator = CustomFilterOperator.And;
 
+            SearchTerm file = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.File);
             file.UseForSearching = true;
             file.Operator = Constants.SearchTermOperator.Glob;
-            file.Value = "*" + Constants.File.JpgFileExtension.ToUpperInvariant();
-            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
-            Assert.IsFalse(dateFilteringRequired);
+            file.DatabaseValue = "*" + Constants.File.JpgFileExtension.ToUpperInvariant();
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             imageDatabase.SelectDataTableImages(ImageFilter.Custom);
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
 
+            SearchTerm imageQuality = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.ImageQuality);
             imageQuality.UseForSearching = true;
             imageQuality.Operator = Constants.SearchTermOperator.Equal;
-            imageQuality.Value = ImageFilter.Ok.ToString();
-            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
-            Assert.IsFalse(dateFilteringRequired);
+            imageQuality.DatabaseValue = ImageFilter.Ok.ToString();
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             imageDatabase.SelectDataTableImages(ImageFilter.Custom);
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
 
+            SearchTerm relativePath = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.RelativePath);
             relativePath.UseForSearching = true;
             relativePath.Operator = Constants.SearchTermOperator.Equal;
-            relativePath.Value = imageExpectations[0].RelativePath;
-            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
-            Assert.IsFalse(dateFilteringRequired);
+            relativePath.DatabaseValue = imageExpectations[0].RelativePath;
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             imageDatabase.SelectDataTableImages(ImageFilter.Custom);
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
 
+            SearchTerm markedForDeletion = imageDatabase.CustomFilter.SearchTerms.Single(term => term.Type == Constants.DatabaseColumn.DeleteFlag);
             markedForDeletion.UseForSearching = true;
             markedForDeletion.Operator = Constants.SearchTermOperator.Equal;
-            markedForDeletion.Value = Constants.Boolean.False;
-            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
-            Assert.IsFalse(dateFilteringRequired);
+            markedForDeletion.DatabaseValue = Constants.Boolean.False;
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             imageDatabase.SelectDataTableImages(ImageFilter.Custom);
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
 
-            imageQuality.Value = ImageFilter.Dark.ToString();
-            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere(out dateFilteringRequired)));
-            Assert.IsFalse(dateFilteringRequired);
+            imageQuality.DatabaseValue = ImageFilter.Dark.ToString();
+            Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.All) == 2);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Corrupted) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Custom) == 0);
@@ -378,6 +376,119 @@ namespace Timelapse.UnitTests
         }
 
         [TestMethod]
+        public void DateTimeHandling()
+        {
+            // DateTimeExtensions
+            DateTime utcNow = DateTime.UtcNow;
+            DateTime utcNowUnspecified = utcNow.AsUnspecifed();
+            Assert.IsTrue(utcNow.Date == utcNowUnspecified.Date);
+            Assert.IsTrue((utcNow.Hour == utcNowUnspecified.Hour) && 
+                          (utcNow.Minute == utcNowUnspecified.Minute) && 
+                          (utcNow.Second == utcNowUnspecified.Second) && 
+                          (utcNow.Millisecond == utcNowUnspecified.Millisecond));
+            Assert.IsTrue(utcNowUnspecified.Kind == DateTimeKind.Unspecified);
+
+            // DateTimeOffsetExtensions
+            DateTime utcNowWithoutMicroseconds = new DateTime(utcNow.Year, utcNow.Month, utcNow.Day, utcNow.Hour, utcNow.Minute, utcNow.Second, utcNow.Millisecond, DateTimeKind.Utc);
+            DateTimeOffset utcNowOffset = new DateTimeOffset(utcNowWithoutMicroseconds);
+            TimeZoneInfo minUtcOffsetTimeZone = TimeZoneInfo.FindSystemTimeZoneById(TestConstant.TimeZone.Dateline);
+            TimeZoneInfo maxUtcOffsetTimeZone = TimeZoneInfo.FindSystemTimeZoneById(TestConstant.TimeZone.LineIslands);
+            DateTimeOffset minUtcOffset = utcNowOffset.SetOffset(minUtcOffsetTimeZone.BaseUtcOffset);
+            DateTimeOffset localUtcOffset = utcNowOffset.SetOffset(TimeZoneInfo.Local.BaseUtcOffset);
+            DateTimeOffset utcOffsetRoundtrip = utcNowOffset.SetOffset(TimeZoneInfo.Utc.BaseUtcOffset);
+            DateTimeOffset maxUtcOffset = utcNowOffset.SetOffset(maxUtcOffsetTimeZone.BaseUtcOffset);
+
+            Assert.IsTrue((minUtcOffset.Date == utcNowOffset.Date) &&
+                          (minUtcOffset.TimeOfDay == utcNowOffset.TimeOfDay) &&
+                          (minUtcOffset.Offset == minUtcOffsetTimeZone.BaseUtcOffset));
+            Assert.IsTrue(minUtcOffset.DateTime == utcNowUnspecified);
+            Assert.IsTrue((localUtcOffset.Date == utcNowOffset.Date) &&
+                          (localUtcOffset.TimeOfDay == utcNowOffset.TimeOfDay) &&
+                          (localUtcOffset.Offset == TimeZoneInfo.Local.BaseUtcOffset));
+            Assert.IsTrue(localUtcOffset.DateTime == utcNowUnspecified);
+            Assert.IsTrue((utcOffsetRoundtrip.Date == utcNowOffset.Date) &&
+                          (utcOffsetRoundtrip.TimeOfDay == utcNowOffset.TimeOfDay) &&
+                          (utcOffsetRoundtrip.Offset == TimeZoneInfo.Utc.BaseUtcOffset));
+            Assert.IsTrue(utcOffsetRoundtrip.DateTime == utcNowUnspecified);
+            Assert.IsTrue(utcOffsetRoundtrip.UtcDateTime == utcNowOffset.UtcDateTime);
+            Assert.IsTrue(utcOffsetRoundtrip.UtcDateTime == utcNowUnspecified);
+            Assert.IsTrue((maxUtcOffset.Date == utcNowOffset.Date) &&
+                          (maxUtcOffset.TimeOfDay == utcNowOffset.TimeOfDay) &&
+                          (maxUtcOffset.Offset == maxUtcOffsetTimeZone.BaseUtcOffset));
+            Assert.IsTrue(maxUtcOffset.DateTime == utcNowUnspecified);
+
+            // DateTimeHandler
+            this.DateTimeHandling(new DateTimeOffset(utcNowUnspecified, minUtcOffsetTimeZone.GetUtcOffset(utcNowUnspecified)), minUtcOffsetTimeZone);
+
+            DateTime now = DateTime.Now;
+            DateTime nowWithoutMicroseconds = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second, now.Millisecond, DateTimeKind.Local);
+            this.DateTimeHandling(new DateTimeOffset(nowWithoutMicroseconds), TimeZoneInfo.Local);
+            DateTime nowUnspecified = now.AsUnspecifed();
+            this.DateTimeHandling(new DateTimeOffset(nowUnspecified, TimeZoneInfo.Local.GetUtcOffset(nowUnspecified)), TimeZoneInfo.Local);
+
+            this.DateTimeHandling(new DateTimeOffset(utcNowWithoutMicroseconds), TimeZoneInfo.Utc);
+
+            this.DateTimeHandling(new DateTimeOffset(utcNowUnspecified, maxUtcOffsetTimeZone.GetUtcOffset(utcNowUnspecified)), maxUtcOffsetTimeZone);
+
+            DateTime nowWithoutMilliseconds = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second, DateTimeKind.Local);
+            string metadataDateAsString = now.ToString("yyyy:MM:dd HH:mm:ss");
+            DateTimeOffset metadataDateParsed;
+            Assert.IsTrue(DateTimeHandler.TryParseMetadataDateTaken(metadataDateAsString, TimeZoneInfo.Local, out metadataDateParsed));
+            Assert.IsTrue((metadataDateParsed.Date == nowWithoutMilliseconds.Date) &&
+                          (metadataDateParsed.TimeOfDay == nowWithoutMilliseconds.TimeOfDay) &&
+                          (metadataDateParsed.Offset == TimeZoneInfo.Local.GetUtcOffset(nowWithoutMilliseconds)));
+
+            DateTimeOffset swappable = new DateTimeOffset(new DateTime(now.Year, 1, 12, now.Day, now.Hour, now.Second, now.Millisecond), TimeZoneInfo.Local.BaseUtcOffset);
+            DateTimeOffset swapped;
+            Assert.IsTrue(DateTimeHandler.TrySwapDayMonth(swappable, out swapped));
+            DateTimeOffset notSwappable = new DateTimeOffset(new DateTime(now.Year, 1, 13, now.Day, now.Hour, now.Second, now.Millisecond), TimeZoneInfo.Local.BaseUtcOffset);
+            Assert.IsFalse(DateTimeHandler.TrySwapDayMonth(notSwappable, out swapped));
+        }
+
+        private void DateTimeHandling(DateTimeOffset dateTimeOffset, TimeZoneInfo timeZone)
+        {
+            // database format roundtrips
+            string dateTimeAsDatabaseString = DateTimeHandler.ToDatabaseDateTimeString(dateTimeOffset);
+            DateTime dateTimeParse = DateTimeHandler.ParseDatabaseDateTimeString(dateTimeAsDatabaseString);
+            DateTime dateTimeTryParse;
+            Assert.IsTrue(DateTimeHandler.TryParseDatabaseDateTime(dateTimeAsDatabaseString, out dateTimeTryParse));
+
+            Assert.IsTrue(dateTimeParse == dateTimeOffset.UtcDateTime);
+            Assert.IsTrue(dateTimeTryParse == dateTimeOffset.UtcDateTime);
+
+            string utcOffsetAsDatabaseString = DateTimeHandler.ToDatabaseUtcOffsetString(dateTimeOffset.Offset);
+            TimeSpan utcOffsetParse = DateTimeHandler.ParseDatabaseUtcOffsetString(utcOffsetAsDatabaseString);
+            TimeSpan utcOffsetTryParse;
+            Assert.IsTrue(DateTimeHandler.TryParseDatabaseUtcOffsetString(utcOffsetAsDatabaseString, out utcOffsetTryParse));
+
+            Assert.IsTrue(utcOffsetParse == dateTimeOffset.Offset);
+            Assert.IsTrue(utcOffsetTryParse == dateTimeOffset.Offset);
+
+            // display format roundtrips
+            string dateTimeAsDisplayString = DateTimeHandler.ToDisplayDateTimeString(dateTimeOffset);
+            dateTimeParse = DateTimeHandler.ParseDisplayDateTimeString(dateTimeAsDisplayString);
+            Assert.IsTrue(DateTimeHandler.TryParseDisplayDateTime(dateTimeAsDisplayString, out dateTimeTryParse));
+
+            string dateAsDisplayString = DateTimeHandler.ToDisplayDateString(dateTimeOffset);
+            string timeAsDisplayString = DateTimeHandler.ToDisplayTimeString(dateTimeOffset);
+            DateTimeOffset dateTimeParseLegacy;
+            Assert.IsTrue(DateTimeHandler.TryParseLegacyDateTime(dateAsDisplayString, timeAsDisplayString, timeZone, out dateTimeParseLegacy));
+
+            DateTimeOffset dateTimeOffsetWithoutMilliseconds = new DateTimeOffset(new DateTime(dateTimeOffset.Year, dateTimeOffset.Month, dateTimeOffset.Day, dateTimeOffset.Hour, dateTimeOffset.Minute, dateTimeOffset.Second), dateTimeOffset.Offset);
+            Assert.IsTrue(dateTimeParse == dateTimeOffsetWithoutMilliseconds.DateTime);
+            Assert.IsTrue(dateTimeTryParse == dateTimeOffsetWithoutMilliseconds.DateTime);
+
+            // display only formats
+            string dateTimeOffsetAsDisplayString = DateTimeHandler.ToDisplayDateTimeUtcOffsetString(dateTimeOffset);
+            string utcOffsetAsDisplayString = DateTimeHandler.ToDisplayUtcOffsetString(dateTimeOffset.Offset);
+
+            Assert.IsTrue(dateAsDisplayString.Length == Constants.Time.DateFormat.Length);
+            Assert.IsTrue(timeAsDisplayString.Length == Constants.Time.TimeFormat.Length);
+            Assert.IsTrue(dateTimeOffsetAsDisplayString.Length > Constants.Time.DateFormat.Length + Constants.Time.TimeFormat.Length);
+            Assert.IsTrue(utcOffsetAsDisplayString.Length >= Constants.Time.UtcOffsetDisplayFormat.Length - 1);
+        }
+
+        [TestMethod]
         public void GenerateControlsAndPropagate()
         {
             List<DatabaseExpectations> databaseExpectations = new List<DatabaseExpectations>()
@@ -386,13 +497,13 @@ namespace Timelapse.UnitTests
                 {
                     ImageDatabaseFileName = TestConstant.File.CarnivoreNewImageDatabaseFileName2104,
                     TemplateDatabaseFileName = TestConstant.File.CarnivoreTemplateDatabaseFileName,
-                    ExpectedControls = Constants.Control.StandardTypes.Count - 1 + 10
+                    ExpectedControls = Constants.Control.StandardTypes.Count - 4 + 10
                 },
                 new DatabaseExpectations()
                 {
                     ImageDatabaseFileName = Constants.File.DefaultImageDatabaseFileName,
                     TemplateDatabaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName2104,
-                    ExpectedControls = TestConstant.DefaultImageTableColumns.Count - 6
+                    ExpectedControls = TestConstant.DefaultImageTableColumns.Count - 9
                 }
             };
 
@@ -416,7 +527,7 @@ namespace Timelapse.UnitTests
                 foreach (DataEntryControl control in copyableControls)
                 {
                     Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
-                    Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
+                    Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
                 }
 
                 // check only copy forward is possible when enumerator's on first image
@@ -433,7 +544,7 @@ namespace Timelapse.UnitTests
                 foreach (DataEntryControl control in copyableControls)
                 {
                    Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
-                   Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
+                   Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
                 }
 
                 // check only copy last is possible when enumerator's on last image
@@ -450,11 +561,11 @@ namespace Timelapse.UnitTests
                         control.DataLabel == TestConstant.DefaultDatabaseColumn.Note0 ||
                         control.DataLabel == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel)
                     {
-                        Assert.IsFalse(dataHandler.IsCopyFromLastValuePossible(control));
+                        Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
                     }
                     else
                     {
-                        Assert.IsTrue(dataHandler.IsCopyFromLastValuePossible(control));
+                        Assert.IsTrue(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
                     }
                 }
 
@@ -472,12 +583,13 @@ namespace Timelapse.UnitTests
         public void HybridVideo()
         {
             ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
+            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
             List<ImageRow> imagesToInsert = new List<ImageRow>();
             FileInfo[] imagesAndVideos = new DirectoryInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.HybridVideoDirectoryName)).GetFiles();
             foreach (FileInfo imageFile in imagesAndVideos)
             {
                 ImageRow imageRow;
-                Assert.IsFalse(imageDatabase.GetOrCreateImage(imageFile, out imageRow));
+                Assert.IsFalse(imageDatabase.GetOrCreateImage(imageFile, imageSetTimeZone, out imageRow));
 
                 BitmapSource bitmapSource = imageRow.LoadBitmap(imageDatabase.FolderPath);
                 WriteableBitmap writeableBitmap = bitmapSource.AsWriteable();
@@ -487,7 +599,7 @@ namespace Timelapse.UnitTests
 
                 // see if the date can be updated from the metadata
                 // currently supported for images but not for videos
-                DateTimeAdjustment imageTimeAdjustment = imageRow.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata);
+                DateTimeAdjustment imageTimeAdjustment = imageRow.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata, imageSetTimeZone);
                 if (imageRow.IsVideo)
                 {
                     Assert.IsTrue(imageTimeAdjustment == DateTimeAdjustment.MetadataNotUsed);
@@ -559,6 +671,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(imageDatabase.ImageDataTable.ColumnNames.Count() == TestConstant.DefaultImageTableColumns.Count);
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == imagesExpected);
 
+            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
             string initialRootFolderName = "Timelapse 2.0.2.3";
             ImageExpectations martenExpectation = new ImageExpectations(TestConstant.ImageExpectation.InfraredMarten);
             martenExpectation.ID = 1;
@@ -580,7 +693,7 @@ namespace Timelapse.UnitTests
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, Constants.ControlDefault.Value);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "note");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Constants.Boolean.True);
-            martenExpectation.Verify(imageDatabase.ImageDataTable[0]);
+            martenExpectation.Verify(imageDatabase.ImageDataTable[0], imageSetTimeZone);
 
             ImageExpectations bobcatExpectation = new ImageExpectations(TestConstant.ImageExpectation.DaylightBobcat);
             bobcatExpectation.ID = 2;
@@ -602,7 +715,7 @@ namespace Timelapse.UnitTests
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, Constants.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, Constants.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Constants.Boolean.True);
-            bobcatExpectation.Verify(imageDatabase.ImageDataTable[1]);
+            bobcatExpectation.Verify(imageDatabase.ImageDataTable[1], imageSetTimeZone);
         }
 
         [TestMethod]
@@ -629,7 +742,8 @@ namespace Timelapse.UnitTests
 
             ImageRow imageProperties = imageDatabase.ImageDataTable[0];
             FileInfo imageFile = imageProperties.GetFileInfo(imageDatabase.FolderPath);
-            Assert.IsTrue(imageDatabase.GetOrCreateImage(imageFile, out imageProperties));
+            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
+            Assert.IsTrue(imageDatabase.GetOrCreateImage(imageFile, imageSetTimeZone, out imageProperties));
 
             // template table synchronization
             // remove choices and change a note to a choice to produce a type failure
@@ -649,7 +763,7 @@ namespace Timelapse.UnitTests
         {
             // create database, push test images into the database, and load the image data table
             ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
-            this.PopulateCarnivoreDatabase(imageDatabase);
+            List<ImageExpectations> imageExpectations = this.PopulateCarnivoreDatabase(imageDatabase);
 
             // roundtrip data through .csv
             CsvReaderWriter csvReaderWriter = new CsvReaderWriter();
@@ -659,6 +773,16 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(csvReaderWriter.TryImportFromCsv(initialCsvFilePath, imageDatabase, out importErrors));
             Assert.IsTrue(importErrors.Count == 0);
 
+            // verify ImageDataTable content hasn't changed
+            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
+            for (int imageIndex = 0; imageIndex < imageExpectations.Count; ++imageIndex)
+            {
+                ImageRow image = imageDatabase.ImageDataTable[imageIndex];
+                ImageExpectations imageExpectation = imageExpectations[imageIndex];
+                imageExpectation.Verify(image, imageSetTimeZone);
+            }
+
+            // verify consistency of .csv export
             string roundtripCsvFilePath = Path.Combine(Path.GetDirectoryName(initialCsvFilePath), Path.GetFileNameWithoutExtension(initialCsvFilePath) + "-roundtrip" + Constants.File.CsvFileExtension);
             csvReaderWriter.ExportToCsv(imageDatabase, roundtripCsvFilePath);
 
@@ -678,6 +802,84 @@ namespace Timelapse.UnitTests
             TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName);
 
             this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+        }
+
+        [TestMethod]
+        public void TimeZones()
+        {
+            // no change - daylight savings -> UTC
+            // change from Pacific time to mountain standard time as it has the same UTC offset as Pacific daylight savings time
+            this.TimeZones(TestConstant.TimeZone.Pacific, TestConstant.TimeZone.Arizona);
+
+            // daylight savings -> UTC
+            this.TimeZones(TestConstant.TimeZone.Pacific, "UTC-08");
+            this.TimeZones(TestConstant.TimeZone.Pacific, "UTC-09");
+
+            // daylight savings -> daylight savings - hour earlier
+            this.TimeZones(TestConstant.TimeZone.Pacific, TestConstant.TimeZone.Mountain);
+            // daylight savings -> daylight savings - hour later
+            this.TimeZones(TestConstant.TimeZone.Pacific, TestConstant.TimeZone.Alaska);
+
+            // UTC -> UTC - hour earlier
+            this.TimeZones(TestConstant.TimeZone.CapeVerde, TestConstant.TimeZone.Utc);
+            // UTC -> UTC - hour later
+            this.TimeZones(TestConstant.TimeZone.Utc, TestConstant.TimeZone.WestCentralAfrica);
+
+            // UTC -> daylight savings
+            this.TimeZones(TestConstant.TimeZone.Utc, TestConstant.TimeZone.Gmt);
+        }
+
+        private void TimeZones(string initialTimeZoneID, string secondTimeZoneID)
+        {
+            // create image database and populate images in initial time zone
+            // TimeZoneInfo doesn't implement operator == so Equals() must be called
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, Constants.File.DefaultImageDatabaseFileName);
+            Assert.IsTrue(imageDatabase.ImageSet.TimeZone == TimeZoneInfo.Local.Id);
+            Assert.IsTrue(TimeZoneInfo.Local.Equals(imageDatabase.ImageSet.GetTimeZone()));
+
+            imageDatabase.ImageSet.TimeZone = initialTimeZoneID;
+            imageDatabase.SyncImageSetToDatabase();
+
+            TimeZoneInfo initialImageSetTimeZone = TimeZoneInfo.FindSystemTimeZoneById(initialTimeZoneID);
+            Assert.IsTrue(imageDatabase.ImageSet.TimeZone == initialTimeZoneID);
+            Assert.IsTrue(initialImageSetTimeZone.Equals(imageDatabase.ImageSet.GetTimeZone()));
+
+            List<ImageExpectations> imageExpectations = this.PopulateDefaultDatabase(imageDatabase);
+
+            // change to second time zone
+            imageDatabase.ImageSet.TimeZone = secondTimeZoneID;
+            imageDatabase.SyncImageSetToDatabase();
+
+            TimeZoneInfo secondImageSetTimeZone = TimeZoneInfo.FindSystemTimeZoneById(secondTimeZoneID);
+            Assert.IsTrue(imageDatabase.ImageSet.TimeZone == secondTimeZoneID);
+            Assert.IsTrue(secondImageSetTimeZone.Equals(imageDatabase.ImageSet.GetTimeZone()));
+
+            // verify date times of existing images haven't changed
+            int initialImageCount = imageDatabase.ImageDataTable.RowCount;
+            this.VerifyImages(imageDatabase, imageExpectations, initialImageSetTimeZone, initialImageCount, secondImageSetTimeZone);
+
+            // add more images
+            DateTimeAdjustment timeAdjustment;
+            ImageRow martenPairImage = this.CreateImage(imageDatabase, secondImageSetTimeZone, TestConstant.ImageExpectation.DaylightMartenPair, out timeAdjustment);
+            ImageRow coyoteImage = this.CreateImage(imageDatabase, secondImageSetTimeZone, TestConstant.ImageExpectation.DaylightCoyote, out timeAdjustment);
+
+            imageDatabase.AddImages(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
+
+            // generate expectations for new images
+            string initialRootFolderName = imageExpectations[0].InitialRootFolderName;
+            ImageExpectations martenPairExpectation = new ImageExpectations(TestConstant.ImageExpectation.DaylightMartenPair);
+            martenPairExpectation.ID = imageExpectations.Count + 1;
+            martenPairExpectation.InitialRootFolderName = initialRootFolderName;
+            imageExpectations.Add(martenPairExpectation);
+
+            ImageExpectations daylightCoyoteExpectation = new ImageExpectations(TestConstant.ImageExpectation.DaylightCoyote);
+            daylightCoyoteExpectation.ID = imageExpectations.Count + 1;
+            daylightCoyoteExpectation.InitialRootFolderName = initialRootFolderName;
+            imageExpectations.Add(daylightCoyoteExpectation);
+
+            // verify new images pick up the current timezone
+            this.VerifyImages(imageDatabase, imageExpectations, initialImageSetTimeZone, initialImageCount, secondImageSetTimeZone);
         }
 
         private void VerifyControl(ControlRow control)
@@ -709,12 +911,22 @@ namespace Timelapse.UnitTests
             }
         }
 
-        private void VerifyImageTimeAdjustment(List<DateTime> imageTimesBeforeAdjustment, List<DateTime> imageTimesAfterAdjustment, TimeSpan expectedAdjustment)
+        private void VerifyImages(ImageDatabase imageDatabase, List<ImageExpectations> imageExpectations, TimeZoneInfo initialImageSetTimeZone, int initialImageCount, TimeZoneInfo secondImageSetTimeZone)
+        {
+            for (int image = 0; image < imageExpectations.Count; ++image)
+            {
+                TimeZoneInfo expectedTimeZone = image >= initialImageCount ? secondImageSetTimeZone : initialImageSetTimeZone;
+                ImageExpectations imageExpectation = imageExpectations[image];
+                imageExpectation.Verify(imageDatabase.ImageDataTable[image], expectedTimeZone);
+            }
+        }
+
+        private void VerifyImageTimeAdjustment(List<DateTimeOffset> imageTimesBeforeAdjustment, List<DateTimeOffset> imageTimesAfterAdjustment, TimeSpan expectedAdjustment)
         {
             this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, imageTimesAfterAdjustment, 0, imageTimesBeforeAdjustment.Count - 1, expectedAdjustment);
         }
 
-        private void VerifyImageTimeAdjustment(List<DateTime> imageTimesBeforeAdjustment, List<DateTime> imageTimesAfterAdjustment, int startRow, int endRow, TimeSpan expectedAdjustment)
+        private void VerifyImageTimeAdjustment(List<DateTimeOffset> imageTimesBeforeAdjustment, List<DateTimeOffset> imageTimesAfterAdjustment, int startRow, int endRow, TimeSpan expectedAdjustment)
         {
             for (int row = 0; row < startRow; ++row)
             {
@@ -772,14 +984,45 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(imageDatabase.ImageSet.ImageRowIndex == 0);
             Assert.IsTrue(imageDatabase.ImageSet.Log == Constants.Database.ImageSetDefaultLog);
             Assert.IsTrue(imageDatabase.ImageSet.MagnifierEnabled);
+            Assert.IsTrue(imageDatabase.ImageSet.TimeZone == TimeZoneInfo.Local.Id);
             Assert.IsTrue(imageDatabase.ImageSet.WhitespaceTrimmed);
         }
 
         private void VerifyDefaultMarkerTableContent(ImageDatabase imageDatabase, int imagesExpected)
         {
             DataTable markersTable = imageDatabase.MarkersTable.ExtractDataTable();
-            Assert.IsTrue(markersTable.Columns.Count == TestConstant.DefaultMarkerTableColumns.Count);
-            Assert.IsTrue(imageDatabase.MarkersTable.RowCount == imagesExpected);
+
+            List<string> expectedColumns = new List<string>() { Constants.DatabaseColumn.ID };
+            foreach (ControlRow control in imageDatabase.TemplateTable)
+            {
+                if (control.Type == Constants.Control.Counter)
+                {
+                    expectedColumns.Add(control.DataLabel);
+                }
+            }
+
+            Assert.IsTrue(markersTable.Columns.Count == expectedColumns.Count);
+            for (int column = 0; column < expectedColumns.Count; ++column)
+            {
+                Assert.IsTrue(expectedColumns[column] == markersTable.Columns[column].ColumnName, "Expected column named '{0}' but found '{1}'.", expectedColumns[column], markersTable.Columns[column].ColumnName);
+            }
+            if (expectedColumns.Count == TestConstant.DefaultMarkerTableColumns.Count)
+            {
+                for (int column = 0; column < expectedColumns.Count; ++column)
+                {
+                    Assert.IsTrue(expectedColumns[column] == TestConstant.DefaultMarkerTableColumns[column], "Expected column named '{0}' but found '{1}'.", expectedColumns[column], TestConstant.DefaultMarkerTableColumns[column]);
+                }
+            }
+
+            // marker rows aren't populated if no counters are present in the database
+            if (expectedColumns.Count == 1)
+            {
+                Assert.IsTrue(imageDatabase.MarkersTable.RowCount == 0);
+            }
+            else
+            {
+                Assert.IsTrue(imageDatabase.MarkersTable.RowCount == imagesExpected);
+            }
         }
     }
 }

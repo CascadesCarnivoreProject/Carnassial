@@ -2,6 +2,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using Timelapse.Database;
 
 namespace Timelapse.Controls
 {
@@ -29,12 +31,14 @@ namespace Timelapse.Controls
             set { this.Container.ToolTip = value; }
         }
 
-        public abstract void Focus();
+        public abstract void Focus(DependencyObject focusScope);
 
-        protected DataEntryControl(string dataLabel, DataEntryControls styleProvider)
+        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider)
         {
-            // The dataLabel used as the column header in the spreadsheet and database column name
-            this.DataLabel = dataLabel;
+            // populate properties from database definition of control
+            // this.Content and Tooltip can't be set, however, as the caller hasn't instantiated the content control yet
+            this.Copyable = control.Copyable;
+            this.DataLabel = control.DataLabel;
 
             // Create the stack panel
             this.Container = new StackPanel();
@@ -80,18 +84,21 @@ namespace Timelapse.Controls
             set { this.ContentControl.Width = value; }
         }
 
-        protected DataEntryControl(string dataLabel, DataEntryControls styleProvider, Nullable<ControlContentStyle> contentStyleName, ControlLabelStyle labelStyleName) : 
-            base(dataLabel, styleProvider)
+        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, Nullable<ControlContentStyle> contentStyleName, ControlLabelStyle labelStyleName) : 
+            base(control, styleProvider)
         {
             this.ContentControl = new TContent();
 
             // configure the content
+            this.Content = control.DefaultValue;
             this.ContentControl.IsTabStop = true;
             if (contentStyleName.HasValue)
             {
                 this.ContentControl.Style = (Style)styleProvider.FindResource(contentStyleName.Value.ToString());
             }
             this.ReadOnly = false;
+            this.Tooltip = control.Tooltip;
+            this.Width = control.TextBoxWidth;
 
             // use the content's tag to point back to this so event handlers can access the DataEntryControl as well as just ContentControl
             // the data update callback for each control type in TimelapseWindow, such as NoteControl_TextChanged(), rely on this
@@ -99,6 +106,7 @@ namespace Timelapse.Controls
 
             // Create the label (which is an actual label)
             this.LabelControl = new TLabel();
+            this.Label = control.Label;
             this.LabelControl.Style = (Style)styleProvider.FindResource(labelStyleName.ToString());
 
             // add the label and content to the stack panel
@@ -106,9 +114,12 @@ namespace Timelapse.Controls
             this.Container.Children.Add(this.ContentControl);
         }
 
-        public override void Focus()
+        public override void Focus(DependencyObject focusScope)
         {
-            this.ContentControl.Focus();
+            // request the focus manager figure out how to assign focus within the edit control as not all controls are focusable at their top level
+            // This is not reliable at small focus scopes, possibly due to interaction with TimelapseWindow's focus management, but seems reasonably
+            // well behaved at application scope.
+            FocusManager.SetFocusedElement(focusScope, this.ContentControl);
         }
     }
 }

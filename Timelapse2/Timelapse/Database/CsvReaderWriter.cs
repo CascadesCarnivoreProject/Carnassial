@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Windows;
 using Timelapse.Util;
 
 namespace Timelapse.Database
@@ -34,14 +33,15 @@ namespace Timelapse.Database
 
                 // For each row in the data table, write out the columns in the same order as the 
                 // data labels in the template file
-                for (int i = 0; i < database.CurrentlySelectedImageCount; i++)
+                for (int row = 0; row < database.CurrentlySelectedImageCount; row++)
                 {
-                    StringBuilder row = new StringBuilder();
+                    StringBuilder csvRow = new StringBuilder();
+                    ImageRow image = database.ImageDataTable[row];
                     foreach (string dataLabel in dataLabels)
                     {
-                        row.Append(this.AddColumnValue(database.ImageDataTable[i][dataLabel]));
+                        csvRow.Append(this.AddColumnValue(image.GetValueDatabaseString(dataLabel)));
                     }
-                    fileWriter.WriteLine(row.ToString());
+                    fileWriter.WriteLine(csvRow.ToString());
                 }
             }
         }
@@ -102,6 +102,8 @@ namespace Timelapse.Database
                             // capture components of image's unique identifier for constructing where clause
                             // at least for now, it's assumed all renames or moves are done through Timelapse and hence file name + folder + relative path form 
                             // an immutable (and unique) ID
+                            DateTime dateTime;
+                            TimeSpan utcOffset;
                             if (dataLabel == Constants.DatabaseColumn.File)
                             {
                                 imageFileName = value;
@@ -117,24 +119,33 @@ namespace Timelapse.Database
                             else if (dataLabel == Constants.DatabaseColumn.Date ||
                                      dataLabel == Constants.DatabaseColumn.Time)
                             {
-                                // as a quick fix also don't update date and time as Excel tends to change 
+                                // ignore date and time for now as they're redundant with the DateTime column
+                                // if neeeded these two fields can be combined, put to DateTime.ParseExact(), and conflict checking done with DateTime
+                                // Excel tends to change 
                                 // - dates from dd-MMM-yyyy to dd-MMM-yy 
                                 // - times from HH:mm:ss to H:mm:ss
                                 // when saving csv files
                                 continue;
                             }
+                            else if (dataLabel == Constants.DatabaseColumn.DateTime && DateTimeHandler.TryParseDatabaseDateTime(value, out dateTime))
+                            {
+                                // pass DateTime to ColumnTuple rather than the string as ColumnTuple owns validation and formatting
+                                imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, dateTime));
+                            }
+                            else if (dataLabel == Constants.DatabaseColumn.UtcOffset && DateTimeHandler.TryParseDatabaseUtcOffsetString(value, out utcOffset))
+                            {
+                                // as with DateTime, pass parsed UTC offset to ColumnTuple rather than the string as ColumnTuple owns validation and formatting
+                                imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, utcOffset));
+                            }
+                            else if (imageDatabase.ImageDataColumnsByDataLabel[dataLabel].IsContentValid(value))
+                            {
+                                // include column in update query if value is valid
+                                imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, value));
+                            }
                             else
                             {
-                                // check field value for validity
-                                if (imageDatabase.ImageDataColumnsByDataLabel[dataLabel].IsContentValid(value))
-                                {
-                                    // include column in update query
-                                    imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, value));
-                                }
-                                else
-                                {
-                                    importErrors.Add(String.Format("Value '{0}' is not valid for the column {1}.", value, dataLabel));
-                                }
+                                // if value wasn't processed by a previous clause it's invalid (or there's a parsing bug)
+                                importErrors.Add(String.Format("Value '{0}' is not valid for the column {1}.", value, dataLabel));
                             }
                         }
 

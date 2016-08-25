@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Reflection;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media.Imaging;
+using Xceed.Wpf.Toolkit;
 
 namespace Timelapse
 {
@@ -16,7 +17,6 @@ namespace Timelapse
         public const int NumberOfMostRecentDatabasesToTrack = 9;
         public const string StandardColour = "Gold";
         public const string SelectionColour = "MediumBlue";
-        public const int MonthsInYear = 12;
 
         // Update Information, for checking for updates in the timelapse xml file stored on the web site
         public const string ApplicationName = "Timelapse";
@@ -45,24 +45,37 @@ namespace Timelapse
             public const string Visible = "Visible";       // whether an item should be visible (used by standard items)
 
             // control types
-            public const string Counter = "Counter";           // a counter
-            public const string FixedChoice = "FixedChoice";   // a fixed choice
-            public const string Flag = "Flag";                 // A boolean
+            public const string Counter = "Counter";       // a counter
+            public const string FixedChoice = "FixedChoice";  // a fixed choice
+            public const string Flag = "Flag";             // A boolean
             public const string List = "List";             // indicates a list of items
-            public const string Note = "Note";                 // A note
+            public const string Note = "Note";             // A note
 
             // default data labels
-            public const string Choice = "Choice";            // Label for: a choice
+            public const string Choice = "Choice";         // Label for: a choice
+
+            public static readonly ReadOnlyCollection<Type> KeyboardInputTypes = new List<Type>()
+            {
+                typeof(Calendar),          // date time control
+                typeof(CalendarDayButton), // date time control
+                typeof(CheckBox),          // flag controls
+                typeof(ComboBox),          // choice controls
+                typeof(ComboBoxItem),      // choice controls
+                typeof(TextBox),           // note and counter controls
+                typeof(WatermarkTextBox)   // date time control
+            }.AsReadOnly();
 
             public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
             {
                 Constants.DatabaseColumn.Date,
+                Constants.DatabaseColumn.DateTime,
                 Constants.DatabaseColumn.DeleteFlag,
                 Constants.DatabaseColumn.File,
                 Constants.DatabaseColumn.Folder,
                 Constants.DatabaseColumn.ImageQuality,
                 Constants.DatabaseColumn.RelativePath,
-                Constants.DatabaseColumn.Time
+                Constants.DatabaseColumn.Time,
+                Constants.DatabaseColumn.UtcOffset
             }.AsReadOnly();
         }
 
@@ -95,6 +108,9 @@ namespace Timelapse
             public const string DateTooltip = "Date taken";
             public const string DateWidth = "85";
 
+            public const string DateTimeTooltip = "Date and time taken";
+            public const string DateTimeWidth = "170";
+
             public const string FileTooltip = "The file name";
             public const string FileWidth = "100";
             public const string RelativePathTooltip = "Path from the folder containing the template and image data files to the file";
@@ -111,7 +127,10 @@ namespace Timelapse
             public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
             public const string DeleteFlagTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
 
-            public static readonly DateTime DateTimeValue = new DateTime(1900, 1, 1, 12, 0, 0, DateTimeKind.Local);
+            public const string UtcOffsetTooltip = "Universal Time offset of the time zone for date and time taken";
+            public const string UtcOffsetWidth = "60";
+
+            public static readonly DateTimeOffset DateTimeValue = new DateTimeOffset(1900, 1, 1, 12, 0, 0, 0, TimeSpan.Zero);
         }
 
         public static class ControlsDeprecated
@@ -131,12 +150,14 @@ namespace Timelapse
             public const string TemplateTable = "TemplateTable"; // the table containing the template data
 
             // default values
+            public const int DateTimePosition = 4;
             public const string ImageSetDefaultLog = "Add text here";
             public const long ImageSetRowID = 1;
             public const long InvalidID = -1;
             public const int InvalidRow = -1;
             public const int RelativePathPosition = 2;
             public const int RowsPerInsert = 100;
+            public const int UtcOffsetPosition = 5;
 
             // Special characters
             public const char MarkerBar = '|';              // Separator used to separate marker points in the database i.e. "2.3,5.6 | 7.1, 3.3"
@@ -147,6 +168,7 @@ namespace Timelapse
         {
             public const string Data = "Data";                 // the data describing the attributes of that control
             public const string Date = "Date";
+            public const string DateTime = "DateTime";
             public const string File = "File";
             public const string Folder = "Folder";
             public const string ID = "Id";
@@ -156,6 +178,8 @@ namespace Timelapse
             public const string Point = "Point";               // a single point
             public const string RelativePath = "RelativePath";
             public const string Time = "Time";
+            public const string TimeZone = "TimeZone";
+            public const string UtcOffset = "UtcOffset";
             public const string X = "X";                       // Every point has an X and Y
             public const string Y = "Y";
 
@@ -325,6 +349,7 @@ namespace Timelapse
                 public const string SuppressFilteredDaylightSavingsCorrectionPrompt = "SuppressFilteredDaylightSavingsCorrectionPrompt";
                 public const string SuppressFilteredPopulateFieldFromMetadataPrompt = "SuppressFilteredPopulateFieldFromMetadataPrompt";
                 public const string SuppressFilteredRereadDatesFromFilesPrompt = "SuppressFilteredRereadDatesFromFilesPrompt";
+                public const string SuppressFilteredSetTimeZonePrompt = "SuppressFilteredSetTimeZonePrompt";
             }
 
             public const string RootKey = @"Software\Greenberg Consulting\Timelapse\2.0";   // Defines the KEY path under HKEY_CURRENT_USER
@@ -365,7 +390,6 @@ namespace Timelapse
             public const string EqualsCaseID = " = CASE Id";
             public const string SelectStarFrom = "SELECT * FROM ";
             public const string Text = "TEXT";
-            public const string False = "false";
             public const string WhereIDIn = Where + "Id IN ";
 
             public const string Null = "NULL";
@@ -393,8 +417,42 @@ namespace Timelapse
         {
             // The standard date format, e.g., 05-Apr-2011
             public const string DateFormat = "dd-MMM-yyyy";
-            public const string DateTimeFormat = "dd-MMM-yyyy HH:mm:ss";
+            public const string DateTimeDatabaseFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
+            public const string DateTimeDisplayFormat = "dd-MMM-yyyy HH:mm:ss";
+            // must be kept in sync with ExifToolWrapper.Arguments 
+            public const string DateTimeExifToolFormat = "yyyy:MM:dd HH:mm:ss";
+            public const int MonthsInYear = 12;
             public const string TimeFormat = "HH:mm:ss";
+            public const string UtcOffsetDatabaseFormat = "0.00";
+            public const string UtcOffsetDisplayFormat = @"hh\:mm";
+
+            public static readonly TimeSpan DateTimeDatabaseResolution = TimeSpan.FromMilliseconds(1.0);
+            public static readonly TimeSpan MaximumUtcOffset = TimeSpan.FromHours(14.0);
+            public static readonly TimeSpan MinimumUtcOffset = TimeSpan.FromHours(-12.0);
+            public static readonly TimeSpan UtcOffsetGranularity = TimeSpan.FromTicks(9000000000); // 15 minutes
+
+            public static readonly string[] DateTimeMetadataFormats =
+            {
+                "yyyy:MM:dd HH:mm:ss.fff",
+                "yyyy:MM:dd HH:mm:ss",
+                "yyyy:MM:dd HH:mm",
+                "yyyy-MM-dd HH:mm:ss",
+                "yyyy-MM-dd HH:mm",
+                "yyyy.MM.dd HH:mm:ss",
+                "yyyy.MM.dd HH:mm",
+                "yyyy-MM-ddTHH:mm:ss.fff",
+                "yyyy-MM-ddTHH:mm:ss.ff",
+                "yyyy-MM-ddTHH:mm:ss.f",
+                "yyyy-MM-ddTHH:mm:ss",
+                "yyyy-MM-ddTHH:mm.fff",
+                "yyyy-MM-ddTHH:mm.ff",
+                "yyyy-MM-ddTHH:mm.f",
+                "yyyy-MM-ddTHH:mm",
+                "yyyy:MM:dd",
+                "yyyy-MM-dd",
+                "yyyy-MM",
+                "yyyy"
+            };
         }
 
         public static class VersionXml

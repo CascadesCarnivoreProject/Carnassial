@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Windows.Media.Imaging;
 using Timelapse.Images;
@@ -20,16 +19,16 @@ namespace Timelapse.Database
         {
         }
 
-        public string this[string dataLabel]
-        {
-            get { return this.Row.GetStringField(dataLabel); }
-            set { this.Row.SetField(dataLabel, value); }
-        }
-
         public string Date  
         {
             get { return this.Row.GetStringField(Constants.DatabaseColumn.Date); }
             private set { this.Row.SetField(Constants.DatabaseColumn.Date, value); }
+        }
+
+        public DateTime DateTime
+        {
+            get { return this.Row.GetDateTimeField(Constants.DatabaseColumn.DateTime); }
+            private set { this.Row.SetField(Constants.DatabaseColumn.DateTime, value); }
         }
 
         public string FileName
@@ -67,28 +66,53 @@ namespace Timelapse.Database
             private set { this.Row.SetField(Constants.DatabaseColumn.Time, value); }
         }
 
+        public TimeSpan UtcOffset
+        {
+            get { return this.Row.GetUtcOffsetField(Constants.DatabaseColumn.UtcOffset); }
+            private set { this.Row.SetUtcOffsetField(Constants.DatabaseColumn.UtcOffset, value); }
+        }
+
         public override ColumnTuplesWithWhere GetColumnTuples()
         {
-            List<ColumnTuple> columnTuples = new List<ColumnTuple>();
+            ColumnTuplesWithWhere columnTuples = this.GetDateTimeColumnTuples();
+            columnTuples.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.File, this.FileName));
+            columnTuples.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.ImageQuality, this.ImageQuality.ToString()));
+            columnTuples.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.Folder, this.InitialRootFolderName));
+            columnTuples.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.RelativePath, this.RelativePath));
+            return columnTuples;
+        }
+
+        public ColumnTuplesWithWhere GetDateTimeColumnTuples()
+        {
+            List<ColumnTuple> columnTuples = new List<ColumnTuple>(3);
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Date, this.Date));
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.File, this.FileName));
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.ImageQuality, this.ImageQuality.ToString()));
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Folder, this.InitialRootFolderName));
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.RelativePath, this.RelativePath));
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.DateTime, this.DateTime));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Time, this.Time));
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.UtcOffset, this.UtcOffset));
             return new ColumnTuplesWithWhere(columnTuples, this.ID);
         }
 
-        // Try to create a DateTime from the date/time string of the current image.
-        // If we can't, create a date/time of 01-Jan-0001 00:00:00 and return false
-        public bool TryGetDateTime(out DateTime dateTime)
+        public string GetDisplayDateTime(TimeZoneInfo imageSetTimeZone)
         {
-            bool result = DateTime.TryParse(this.Date + " " + this.Time, out dateTime);
-            if (result == false)
+            DateTimeOffset dateTime;
+            if (this.TryGetDateTime(imageSetTimeZone, out dateTime))
             {
-                dateTime = new DateTime(0);
+                return DateTimeHandler.ToDisplayDateTimeString(dateTime);
             }
-            return result;
+            return this.Date + " " + this.Time;
+        }
+
+        public bool TryGetDateTime(TimeZoneInfo imageSetTimeZone, out DateTimeOffset dateTimeOffset)
+        {
+            DateTime dateTime = this.DateTime;
+            if (dateTime != Constants.ControlDefault.DateTimeValue)
+            {
+                TimeSpan utcOffset = this.UtcOffset;
+                dateTime += utcOffset;
+                dateTimeOffset = new DateTimeOffset(dateTime.AsUnspecifed(), this.UtcOffset);
+                return true;
+            }
+            return DateTimeHandler.TryParseLegacyDateTime(this.Date, this.Time, imageSetTimeZone, out dateTimeOffset);
         }
 
         public FileInfo GetFileInfo(string rootFolderPath)
@@ -104,6 +128,37 @@ namespace Timelapse.Database
                 return Path.Combine(rootFolderPath, this.FileName);
             }
             return Path.Combine(rootFolderPath, this.RelativePath, this.FileName);
+        }
+
+        public string GetValueDatabaseString(string dataLabel)
+        {
+            switch (dataLabel)
+            {
+                case Constants.DatabaseColumn.DateTime:
+                    return DateTimeHandler.ToDatabaseDateTimeString(this.DateTime);
+                default:
+                    return this.GetValueDisplayString(dataLabel, null);
+            }
+        }
+
+        public string GetValueDisplayString(string dataLabel, TimeZoneInfo imageSetTimeZone)
+        {
+            switch (dataLabel)
+            {
+                case Constants.DatabaseColumn.DateTime:
+                    DateTimeOffset dateTime;
+                    if (this.TryGetDateTime(imageSetTimeZone, out dateTime))
+                    {
+                        return DateTimeHandler.ToDisplayDateTimeString(dateTime);
+                    }
+                    return null;
+                case Constants.DatabaseColumn.UtcOffset:
+                    return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
+                case Constants.DatabaseColumn.ImageQuality:
+                    return this.ImageQuality.ToString();
+                default:
+                    return this.Row.GetStringField(dataLabel);
+            }
         }
 
         public bool IsDisplayable()
@@ -184,13 +239,15 @@ namespace Timelapse.Database
             }
         }
 
-        public void SetDateAndTime(DateTime dateTime)
+        public void SetDateAndTime(DateTimeOffset dateTime)
         {
-            this.Date = DateTimeHandler.ToStandardDateString(dateTime);
-            this.Time = DateTimeHandler.ToStandardTimeString(dateTime);
+            this.Date = DateTimeHandler.ToDisplayDateString(dateTime);
+            this.DateTime = dateTime.UtcDateTime;
+            this.UtcOffset = dateTime.Offset;
+            this.Time = DateTimeHandler.ToDisplayTimeString(dateTime);
         }
 
-        public void SetDateAndTimeFromFileInfo(string folderPath)
+        public void SetDateAndTimeFromFileInfo(string folderPath, TimeZoneInfo imageSetTimeZone)
         {
             // populate new image's default date and time
             // Typically the creation time is the time a file was created in the local file system and the last write time when it was
@@ -199,11 +256,30 @@ namespace Timelapse.Database
             // of the two to provide a best effort default.  In most cases it's desirable to see if a more accurate time can be obtained
             // from the image's EXIF metadata.
             FileInfo imageFile = this.GetFileInfo(folderPath);
-            DateTime earliestTime = imageFile.CreationTime < imageFile.LastWriteTime ? imageFile.CreationTime : imageFile.LastWriteTime;
-            this.SetDateAndTime(earliestTime);
+            DateTime earliestTimeLocal = imageFile.CreationTime < imageFile.LastWriteTime ? imageFile.CreationTime : imageFile.LastWriteTime;
+            this.SetDateAndTime(new DateTimeOffset(earliestTimeLocal));
         }
 
-        public DateTimeAdjustment TryUseImageTaken(BitmapMetadata metadata)
+        public void SetValueFromDatabaseString(string dataLabel, string value)
+        {
+            switch (dataLabel)
+            {
+                case Constants.DatabaseColumn.DateTime:
+                    this.DateTime = DateTimeHandler.ParseDatabaseDateTimeString(value);
+                    break;
+                case Constants.DatabaseColumn.UtcOffset:
+                    this.UtcOffset = DateTimeHandler.ParseDatabaseUtcOffsetString(value);
+                    break;
+                case Constants.DatabaseColumn.ImageQuality:
+                    this.ImageQuality = (ImageFilter)Enum.Parse(typeof(ImageFilter), value);
+                    break;
+                default:
+                    this.Row.SetField(dataLabel, value);
+                    break;
+            }
+        }
+
+        public DateTimeAdjustment TryUseImageTaken(BitmapMetadata metadata, TimeZoneInfo imageSetTimeZone)
         {
             if (metadata == null)
             {
@@ -213,29 +289,29 @@ namespace Timelapse.Database
             if (String.IsNullOrWhiteSpace(metadata.DateTaken) == false)
             {
                 // try to get the date from the metadata
-                // all the different formats used by cameras, including ambiguities in month/day vs day/month orders.
-                DateTime dateImageTaken;
-                if (DateTime.TryParse(metadata.DateTaken, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateImageTaken))
+                // Per the EXIF standard this should be in yyyy:MM:dd HH:mm:ss format but, at least for Bushnell and some Primos images, yyyy-MM-dd HH:mm:ss is returned.
+                DateTimeOffset metadataDateTime;
+                if (DateTimeHandler.TryParseDateTaken(metadata.DateTaken, imageSetTimeZone, out metadataDateTime))
                 {
-                    // get the current date time
-                    DateTime currentDateTime;
-                    bool result = this.TryGetDateTime(out currentDateTime);
-                    // Note that if its not a vaild date, that currentDateTime will now be set to 01-Jan-0001 00:00:00
-                    // This will mean that the dateImageTaken date/time will be used instead of the currentDateTime
-
-                    // measure the extent to which the image file time and image taken metadata are consistent
-                    bool dateAdjusted = false;
-                    if (currentDateTime.Date != dateImageTaken.Date)
+                    // get the current date time and measure the extent to which the image file time and image taken metadata are consistent
+                    DateTimeOffset currentDateTime;
+                    bool dateDiffers;
+                    bool timeDiffers;
+                    if (this.TryGetDateTime(imageSetTimeZone, out currentDateTime))
                     {
-                        this.Date = DateTimeHandler.ToStandardDateString(dateImageTaken);
-                        dateAdjusted = true;
+                        dateDiffers = currentDateTime.Date != metadataDateTime.Date;
+                        timeDiffers = (currentDateTime.TimeOfDay != metadataDateTime.TimeOfDay) || (currentDateTime.Offset != metadataDateTime.Offset);
+                    }
+                    else
+                    {
+                        dateDiffers = true;
+                        timeDiffers = true;
                     }
 
-                    bool timeAdjusted = false;
-                    if (currentDateTime.TimeOfDay != dateImageTaken.TimeOfDay)
+                    // change image's time to to date taken
+                    if (dateDiffers || timeDiffers)
                     {
-                        this.Time = DateTimeHandler.ToStandardTimeString(dateImageTaken);
-                        timeAdjusted = true;
+                        this.SetDateAndTime(metadataDateTime);
                     }
 
                     // At least with several Bushnell Trophy HD and Aggressor models (119677C, 119775C, 119777C) file times are sometimes
@@ -245,22 +321,22 @@ namespace Timelapse.Database
                     // daylight-standard transition occurred but the camera hadn't yet been serviced to put its clock on the new time,
                     // and needs to be reported separately as the change of day in images taken just after midnight is not an indicator
                     // of day-month ordering ambiguity in the image taken metadata.
-                    bool standardTimeAdjustment = dateImageTaken - currentDateTime == TimeSpan.FromHours(1);
+                    bool standardTimeAdjustment = metadataDateTime - currentDateTime == TimeSpan.FromHours(1);
 
                     // snap to metadata time and return the extent of the time adjustment
                     if (standardTimeAdjustment)
                     {
                         return DateTimeAdjustment.MetadataDateAndTimeOneHourLater;
                     }
-                    if (dateAdjusted && timeAdjusted)
+                    if (dateDiffers && timeDiffers)
                     {
                         return DateTimeAdjustment.MetadataDateAndTimeUsed;
                     }
-                    if (dateAdjusted)
+                    if (dateDiffers)
                     {
                         return DateTimeAdjustment.MetadataDateUsed;
                     }
-                    if (timeAdjusted)
+                    if (timeDiffers)
                     {
                         return DateTimeAdjustment.MetadataTimeUsed;
                     }

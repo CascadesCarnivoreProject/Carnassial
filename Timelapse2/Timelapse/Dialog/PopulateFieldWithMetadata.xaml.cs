@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Windows;
@@ -23,7 +24,7 @@ namespace Timelapse.Dialog
         private bool disposed;
         private ExifToolWrapper exifTool;
         private string metadataName = String.Empty;
-        private string noteLabel = String.Empty;
+        private string dataFieldLabel = String.Empty;
 
         private ImageDatabase database;
         private string imageFilePath;
@@ -148,7 +149,7 @@ namespace Timelapse.Dialog
 
             // Note that metadata name may still has spaces in it. We will have to strip it out and check it to make sure its an acceptable data label
             this.isSelectedMetadata = true;
-            this.btnPopulate.IsEnabled = this.isSelectedDataField && this.isSelectedMetadata;
+            this.PopulateButton.IsEnabled = this.isSelectedDataField && this.isSelectedMetadata;
         }
         #endregion
 
@@ -158,12 +159,11 @@ namespace Timelapse.Dialog
             foreach (ControlRow control in this.database.TemplateTable)
             {
                 if (control.Type == Constants.Control.Note ||
-                    control.Type == Constants.DatabaseColumn.Date ||
-                    control.Type == Constants.DatabaseColumn.Time)
+                    control.Type == Constants.DatabaseColumn.DateTime)
                 {
                     this.dataLabelFromLabel.Add(control.Label, control.DataLabel);
                     // this.NoteID = control.ID; // Not sure why this line wasn't deleted, but and old note says to use this ID to pass between controls and data
-                    this.lboxNoteFields.Items.Add(control.Label);
+                    this.DataFields.Items.Add(control.Label);
                 }
             }
         }
@@ -171,38 +171,37 @@ namespace Timelapse.Dialog
         // Listbox Callback indicating the user has selected a data field. 
         private void NoteFieldsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (lboxNoteFields.SelectedItem != null)
+            if (this.DataFields.SelectedItem != null)
             {
-                this.NoteField.Content = lboxNoteFields.SelectedItem as String;
-                this.noteLabel = lboxNoteFields.SelectedItem as String;
+                this.DataField.Content = this.DataFields.SelectedItem as string;
+                this.dataFieldLabel = this.DataFields.SelectedItem as string;
                 this.isSelectedDataField = true;
             }
             // If both the 
-            this.btnPopulate.IsEnabled = this.isSelectedDataField && this.isSelectedMetadata;
+            this.PopulateButton.IsEnabled = this.isSelectedDataField && this.isSelectedMetadata;
         }
         #endregion
 
-        #region Populate the database with the metadata for that note field
-        // Populate the database with the metadata for that note field
+        // Populate the database with the metadata for the selected note field
         private void Populate()
         {
             // This list will hold key / value pairs that will be bound to the datagrid feedback, 
             // which is the way to make those pairs appear in the data grid during background worker progress updates
             ObservableCollection<KeyValuePair<string, string>> keyValueList = new ObservableCollection<KeyValuePair<string, string>>();
-            this.dgFeedback.ItemsSource = keyValueList;
+            this.FeedbackGrid.ItemsSource = keyValueList;
 
             // Update the UI to show the feedback datagrid, 
-            this.tbPopulatingMessage.Text = "Populating the data field '" + this.noteLabel + "' from each file's '" + this.metadataName + "' metadata ";
-            btnPopulate.Visibility = Visibility.Collapsed; // Hide the populate button, as we are now in the act of populating things
-            cbClearIfNoMetada.Visibility = Visibility.Collapsed; // Hide the checkbox button for the same reason
+            this.PopulatingMessage.Text = "Populating the data field '" + this.dataFieldLabel + "' from each file's '" + this.metadataName + "' metadata ";
+            this.PopulateButton.Visibility = Visibility.Collapsed; // Hide the populate button, as we are now in the act of populating things
+            this.ClearIfNoMetadata.Visibility = Visibility.Collapsed; // Hide the checkbox button for the same reason
             this.PrimaryPanel.Visibility = Visibility.Collapsed;  // Hide the various panels to reveal the feedback datagrid
-            this.lboxNoteFields.Visibility = Visibility.Collapsed;
+            this.DataFields.Visibility = Visibility.Collapsed;
             this.FeedbackPanel.Visibility = Visibility.Visible;
             this.PanelHeader.Visibility = Visibility.Collapsed;
 
             BackgroundWorker backgroundWorker = new BackgroundWorker() { WorkerReportsProgress = true };
             backgroundWorker.DoWork += (ow, ea) =>
-            {  
+            {
                 // this runs on the background thread; its written as an anonymous delegate
                 // We need to invoke this to allow updates on the UI
                 this.Dispatcher.Invoke(new Action(() =>
@@ -213,7 +212,9 @@ namespace Timelapse.Dialog
                 // If we can't decide if we want to leave the data field alone or to clear it depending on the state of the isClearIfNoMetadata (set via the checkbox)
                 // Report progress as needed.
                 // This tuple list will hold the id, key and value that we will want to update in the database
+                string dataLabelToUpdate = this.dataLabelFromLabel[this.dataFieldLabel];
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
+                TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
                 for (int image = 0; image < database.CurrentlySelectedImageCount; image++)
                 {
                     ImageRow imageProperties = database.ImageDataTable[image];
@@ -224,7 +225,7 @@ namespace Timelapse.Dialog
                         if (this.isClearIfNoMetadata)
                         {
                             // Clear the data field if there is no metadata...
-                            ColumnTuplesWithWhere imageClear = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(this.dataLabelFromLabel[this.noteLabel], String.Empty) },
+                            ColumnTuplesWithWhere imageClear = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(this.dataLabelFromLabel[this.dataFieldLabel], String.Empty) },
                                                                                          imageProperties.ID);
                             imagesToUpdate.Add(imageClear);
                             backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, "No metadata found - data field is cleared"));
@@ -236,16 +237,34 @@ namespace Timelapse.Dialog
                         continue;
                     }
 
-                    string value = exifData[this.metadataName];
-                    backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, value));
+                    string metadataValue = exifData[this.metadataName];
+                    ColumnTuplesWithWhere imageUpdate;
+                    if (dataLabelToUpdate == Constants.DatabaseColumn.DateTime)
+                    {
+                        DateTimeOffset metadataDateTime;
+                        if (DateTimeHandler.TryParseMetadataDateTaken(metadataValue, imageSetTimeZone, out metadataDateTime))
+                        {
+                            imageProperties.SetDateAndTime(metadataDateTime);
+                            imageUpdate = imageProperties.GetDateTimeColumnTuples();
+                            backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, metadataValue));
+                        }
+                        else
+                        {
+                            backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, String.Format("'{0}' - data field remains unaltered - not a valid date/time.", metadataValue)));
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        imageUpdate = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(dataLabelToUpdate, metadataValue) }, imageProperties.ID);
+                        backgroundWorker.ReportProgress(0, new FeedbackMessage(imageProperties.FileName, metadataValue));
+                    }
+                    imagesToUpdate.Add(imageUpdate);
+
                     if (image % Constants.ThrottleValues.SleepForImageRenderInterval == 0)
                     {
                         Thread.Sleep(Constants.ThrottleValues.RenderingBackoffTime); // Put in a short delay every now and then, as otherwise the UI may not update.
                     }
-
-                    ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(this.dataLabelFromLabel[this.noteLabel], value) },
-                                                                                  imageProperties.ID);
-                    imagesToUpdate.Add(imageUpdate);
                 }
 
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Writing the data...", "Please wait..."));
@@ -256,10 +275,10 @@ namespace Timelapse.Dialog
             {
                 // Get the message and add it to the data structure 
                 FeedbackMessage message = (FeedbackMessage)ea.UserState;
-                keyValueList.Add(new KeyValuePair<string, string>(message.FileName, message.MetadataValue));
+                keyValueList.Add(new KeyValuePair<string, string>(message.FileName, message.Message));
 
                 // Scrolls so the last object added is visible
-                this.dgFeedback.ScrollIntoView(dgFeedback.Items[dgFeedback.Items.Count - 1]);
+                this.FeedbackGrid.ScrollIntoView(FeedbackGrid.Items[FeedbackGrid.Items.Count - 1]);
             };
             backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
@@ -268,14 +287,13 @@ namespace Timelapse.Dialog
             };
             backgroundWorker.RunWorkerAsync();
         }
-        #endregion
 
         #region Datagrid appearance
         // Ensures that the columns will have appropriate header names. Can't be set directly in code otherwise
         private void FeedbackDatagrid_AutoGeneratedColumns(object sender, EventArgs e)
         {
-            this.dgFeedback.Columns[0].Header = "Image Name";
-            this.dgFeedback.Columns[1].Header = "The Metadata Value for " + this.metadataName;
+            this.FeedbackGrid.Columns[0].Header = "Image Name";
+            this.FeedbackGrid.Columns[1].Header = "The Metadata Value for " + this.metadataName;
         }
         #endregion
 
@@ -293,7 +311,7 @@ namespace Timelapse.Dialog
         // This checkbox sets the state as to whether the data field should be cleared or left alone if there is no metadata
         private void ClearIfNoMetadata_Checked(object sender, RoutedEventArgs e)
         {
-            this.isClearIfNoMetadata = (cbClearIfNoMetada.IsChecked == true) ? true : false;
+            this.isClearIfNoMetadata = (ClearIfNoMetadata.IsChecked == true) ? true : false;
         }
         #endregion
 
@@ -302,12 +320,12 @@ namespace Timelapse.Dialog
         private class FeedbackMessage
         {
             public string FileName { get; set; }
-            public string MetadataValue { get; set; }
+            public string Message { get; set; }
 
-            public FeedbackMessage(string fileName, string metadataValue)
+            public FeedbackMessage(string fileName, string message)
             {
                 this.FileName = fileName;
-                this.MetadataValue = metadataValue;
+                this.Message = message;
             }
         }
     }

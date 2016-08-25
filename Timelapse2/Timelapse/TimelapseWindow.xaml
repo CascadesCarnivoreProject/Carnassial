@@ -70,20 +70,21 @@
                         <MenuItem Name="MenuItemDeleteImagesAndData" Header="All image or video files in the _current filter marked for deletion and their data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes those images and videos in the current filter that are marked for deletion, as well as data entered for those files"/>
                     </MenuItem>
                     <MenuItem Header="_Date correction" >
-                        <MenuItem Name="MenuItemRereadDatesfromImages" Header="_Re-read dates from files..."  Click="MenuItemRereadDatesfromImages_Click"  ToolTip="Re-read the dates from all the files" IsEnabled="True" />
-                        <MenuItem Name="MenuItemDaylightSavingsTimeCorrection" Header="Correct for _daylight savings time..."  Click="MenuItemDaylightSavingsTimeCorrection_Click"  ToolTip="Correct daylight saving time issues" IsEnabled="True" />
-                        <MenuItem Name="MenuItemDateTimeFixedCorrection" Header="Add a _fixed correction value to every date/time..."  Click="MenuItemDateTimeFixedCorrection_Click"  ToolTip="Correct for dates or times which are all off by a fixed amount, which happens if your camera was not set to the correct date/time." IsEnabled="True" />
-                        <MenuItem Name="MenuItemDateTimeLinearCorrection" Header="Correct for camera cloc_k drift..."  Click="MenuItemDateTimeLinearCorrection_Click"  ToolTip="Correct for a camera's clock running fast or slow" IsEnabled="True" />
-                        <MenuItem Name="MenuItemModifyAmbiguousDates" Header="Correct for _ambiguous dates..."  Click="MenuItemCorrectAmbiguousDates_Click"  ToolTip="Check and optionally correct ambiguous dates (day-month vs month-day)" IsEnabled="True" />
+                        <MenuItem Name="MenuItemRereadDatesfromImages" Header="_Re-read dates from files..." Click="MenuItemRereadDatesfromImages_Click"  ToolTip="Re-read the dates from all the files" IsEnabled="True" />
+                        <MenuItem Name="MenuItemDaylightSavingsTimeCorrection" Header="Correct for _daylight savings time..." Click="MenuItemDaylightSavingsTimeCorrection_Click"  ToolTip="Correct daylight saving time issues" IsEnabled="True" />
+                        <MenuItem Name="MenuItemDateTimeFixedCorrection" Header="Add a _fixed correction value to every date/time..." Click="MenuItemDateTimeFixedCorrection_Click"  ToolTip="Correct for dates or times which are all off by a fixed amount, which happens if your camera was not set to the correct date/time." IsEnabled="True" />
+                        <MenuItem Name="MenuItemDateTimeLinearCorrection" Header="Correct for camera cloc_k drift..." Click="MenuItemDateTimeLinearCorrection_Click"  ToolTip="Correct for a camera's clock running fast or slow" IsEnabled="True" />
+                        <MenuItem Name="MenuItemModifyAmbiguousDates" Header="Correct for _ambiguous dates..." Click="MenuItemCorrectAmbiguousDates_Click"  ToolTip="Check and optionally correct ambiguous dates (day-month vs month-day)" IsEnabled="True" />
+                        <MenuItem Name="MenuItemSetTimeZone" Header="Set time _zone..." Click="MenuItemSetTimeZone_Click" ToolTip="Reassign a group of images to a particular time zone " IsEnabled="True" />
                     </MenuItem>
-                    <MenuItem Name="MenuItemOptionsDarkImagesThreshold" Header="Edit the _threshold for determining dark files..."  Click="MenuItemOptionsDarkImagesThreshold_Click"  ToolTip="Edit how Timelapse determines which images are dark vs. light, and have TIMELAPSE2 reclassify your images" IsEnabled="True" />
-                    <MenuItem Name="MenuItemLog" Header="Edit _notes for this image set..."  Click="MenuItemLog_Click"  ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this Image Set" IsEnabled="True" />
+                    <MenuItem Name="MenuItemOptionsDarkImagesThreshold" Header="Edit the _threshold for determining dark files..." Click="MenuItemOptionsDarkImagesThreshold_Click"  ToolTip="Edit how Timelapse determines which images are dark vs. light, and have TIMELAPSE2 reclassify your images" IsEnabled="True" />
+                    <MenuItem Name="MenuItemLog" Header="Edit _notes for this image set..." Click="MenuItemLog_Click"  ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this Image Set" IsEnabled="True" />
                 </MenuItem>
 
                 <!-- Options Menu -->
-                <MenuItem Name="MenuItemOptions" Header="_Options" IsEnabled="false" IsTabStop="false">
-                    <MenuItem Name="MenuItemControlsInSeparateWindow" IsCheckable="True" IsChecked="False" Header="_Controls in separate window" Click="MenuItemControlsInSeparateWindow_Click" ToolTip="Toggles whether your coding controls should appear in the main window or in a separate window"/>
-                    <MenuItem Name="MenuItemAudioFeedback" IsCheckable="True" IsChecked="False" Header="_Audio feedback" Click="MenuItemAudioFeedback_Click" ToolTip="Toggles the audio that speaks the count whenever you add a counting mark to the image"/>
+                <MenuItem Name="MenuItemOptions" Header="_Options" IsEnabled="False" IsTabStop="false">
+                    <MenuItem Name="MenuItemControlsInSeparateWindow" IsCheckable="True" IsChecked="False" IsEnabled="False" Header="_Controls in separate window" Click="MenuItemControlsInSeparateWindow_Click" ToolTip="Toggles whether your coding controls should appear in the main window or in a separate window"/>
+                    <MenuItem Name="MenuItemAudioFeedback" IsCheckable="True" IsChecked="False" IsEnabled="False" Header="_Audio feedback" Click="MenuItemAudioFeedback_Click" ToolTip="Toggles the audio that speaks the count whenever you add a counting mark to the image"/>
                     <Separator/>
                     <MenuItem Name="MenuItemMagnifyingGlass" Header="_Magnifying Glass" IsEnabled="False">
                         <MenuItem Name="MenuItemDisplayMagnifier" IsCheckable="True" IsChecked="False" InputGestureText="M" Header="Display _magnifier" Click="MenuItemDisplayMagnifier_Click" ToolTip="Toggles the presence of the magnifying glass"/>
@@ -91,8 +92,8 @@
                         <MenuItem Name="MenuItemMagnifierDecrease" InputGestureText="D" Header="_Decrease magnification" Click="MenuItemMagnifierDecrease_Click" ToolTip="Decrease the magnification of the magnifying glass"/>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Name="MenuItemImageCounts" Header="Show _file counts..." Click="MenuItemImageCounts_Click" ToolTip="Displays statistics on the number of files and their types"/>
-                    <MenuItem Name="MenuItemViewFilteredDatabaseContents" Header="Show _filtered database contents..." Click="MenuItemViewFilteredDatabaseContents_Click" ToolTip="Display the current filtered view of the (changing) database"/>
+                    <MenuItem Name="MenuItemImageCounts" Header="Show _file counts..." Click="MenuItemImageCounts_Click" IsEnabled="False" ToolTip="Displays statistics on the number of files and their types"/>
+                    <MenuItem Name="MenuItemViewFilteredDatabaseContents" Header="Show _filtered database contents..." Click="MenuItemViewFilteredDatabaseContents_Click" IsEnabled="False" ToolTip="Display the current filtered view of the (changing) database"/>
                     <Separator/>
                     <MenuItem Name="MenuItemDialogsOnOrOff" Header="Turn _dialogs on or off" IsEnabled="False">
                         <MenuItem Name="MenuItemEnableAmbiguousDatesDialog" IsCheckable="True" Header="Display _ambiguous dates imported dialog" Click="MenuItemAmbiguousDatesDialog_Click" ToolTip="Turn on or off the informational dialog displayed when files with ambiguous dates are added to an image set" />
@@ -107,18 +108,22 @@
                         <MenuItem Name="MenuItemEnableFilteredDateTimeFixedCorrectionPrompt" IsCheckable="True" Header="Display _fixed date/time correction filter prompt" Click="MenuItemEnableFilteredDateTimeFixedCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when fixed date/time correction is performed with a filter" />
                         <MenuItem Name="MenuItemEnableFilteredPopulateFieldFromMetadataPrompt" IsCheckable="True" Header="Display _metadata filter prompt" Click="MenuItemEnableFilteredPopulateFieldFromMetadataPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when metadata is read from with a filter" />
                         <MenuItem Name="MenuItemEnableFilteredRereadDatesFromFilesPrompt" IsCheckable="True" Header="Display _reread dates filter prompt" Click="MenuItemEnableFilteredRereadDatesFromFilesPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when dates are reloaded from files with a filter" />
+                        <MenuItem Name="MenuItemEnableFilteredSetTimeZonePrompt" IsCheckable="True" Header="Display set time _zone filter prompt" Click="MenuItemEnableFilteredSetTimeZonePrompt_Click" ToolTip="Turn on or off the informational dialog displayed when time zones are assigned with a filter" />
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Name="MenuItemAdvancedTimelapseOptions" Header="Advanced _Timelapse options..."  Click="MenuItemAdvancedTimelapseOptions_Click"  ToolTip="Timelapse configuration options that should only be used by advanced users"/>
+                    <MenuItem Header="Ad_vanced">
+                        <MenuItem Name="MenuItemOptionsBox" Header="_Image set options..." Click="MenuItemAdvancedImageSetOptions_Click" ToolTip="Image set configuration options that should only be used by advanced users"/>
+                        <MenuItem Name="MenuItemAdvancedTimelapseOptions" Header="_Timelapse options..." Click="MenuItemAdvancedTimelapseOptions_Click" IsEnabled="False" ToolTip="Timelapse configuration options that should only be used by advanced users"/>
+                    </MenuItem>
                 </MenuItem>
 
                 <!-- View Menu -->
                 <MenuItem x:Name="MenuItemView" Header="_View" IsEnabled="false" IsTabStop="false"  ToolTip="Zooming, navigating, and image differencing">
                     <MenuItem Name="MenuItemViewNextImage" Header="View _next file" Click="MenuItemViewNextImage_Click" InputGestureText="&#x2192;" ToolTip="View the next file in the image set"/>
-                    <MenuItem Name="MenuItemViewPreviousImage" Header="View _previous file"  Click="MenuItemViewPreviousImage_Click" InputGestureText="&#x2190;" ToolTip="View the previous file in the image set"/>
+                    <MenuItem Name="MenuItemViewPreviousImage" Header="View _previous file" Click="MenuItemViewPreviousImage_Click" InputGestureText="&#x2190;" ToolTip="View the previous file in the image set"/>
                     <Separator/>
                     <MenuItem Name="MenuItemZoomIn" Header="Zoom _in" Click="MenuItemZoomIn_Click" InputGestureText="&#x2039;" ToolTip="Zoom into this file"/>
-                    <MenuItem Name="MenuItemZoomOut" Header="Zoom _out"  Click="MenuItemZoomOut_Click" InputGestureText="&#x203A;" ToolTip="Zoom out in this file"/>
+                    <MenuItem Name="MenuItemZoomOut" Header="Zoom _out" Click="MenuItemZoomOut_Click" InputGestureText="&#x203A;" ToolTip="Zoom out in this file"/>
                     <Separator/>
                     <MenuItem x:Name="MenuItemBookmarkSavePanZoom" Header="_Bookmark current zoom region" InputGestureText="B" ToolTip="Save the current zoom region setting as a bookmark" Click="MenuItem_BookmarkSavePanZoom"/>
                     <MenuItem x:Name="MenuItemBookmarkSetPanZoom"  Header="Zoom to bookmarked _region" InputGestureText="+" ToolTip="Zoom to the region saved in the bookmark" Click="MenuItem_BookmarkSetPanZoom"/>
@@ -136,8 +141,8 @@
                     <MenuItem x:Name="MenuItemFilterLightImages"   IsCheckable="True" IsChecked="False" Header="_Light files" Click="MenuItemFilter_Click" ToolTip="Filters the files displayed to remove those that are dark or corrupted"/>
                     <MenuItem x:Name="MenuItemFilterDarkImages" IsCheckable="True" IsChecked="False" Header="_Dark files" Click="MenuItemFilter_Click" ToolTip="Filters the files displayed to show only dark images"/>
                     <MenuItem x:Name="MenuItemFilterCorruptedImages" IsCheckable="True" IsChecked="False" Header="_Corrupted files" Click="MenuItemFilter_Click" ToolTip="Filters the files displayed to show only corrupted images"/>
-                    <MenuItem x:Name="MenuItemFilterMissingImages"   IsCheckable="True" IsChecked="False" Header="_Missing files"   Click="MenuItemFilter_Click" ToolTip="Filters the files displayed to show only missing images"/>
-                    <MenuItem x:Name="MenuItemFilterImagesMarkedForDeletion"  IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion"   Click="MenuItemFilter_Click" ToolTip="Filters the files displayed to show only those marked for deletion"/>
+                    <MenuItem x:Name="MenuItemFilterMissingImages"   IsCheckable="True" IsChecked="False" Header="_Missing files" Click="MenuItemFilter_Click" ToolTip="Filters the files displayed to show only missing images"/>
+                    <MenuItem x:Name="MenuItemFilterImagesMarkedForDeletion"  IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion" Click="MenuItemFilter_Click" ToolTip="Filters the files displayed to show only those marked for deletion"/>
                     <MenuItem x:Name="MenuItemFilterCustomFilter"  IsCheckable="True" IsChecked="False" Header="_Custom filter..."  ToolTip="Create a custom filter to display only particular files" Click="MenuItemFilterCustomFilter_Click"/>
                 </MenuItem>
 
@@ -203,9 +208,9 @@
             
             <!-- Status bar -->
             <StatusBar DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Name="statusBar" ItemsSource="{Binding}">
-                <StatusBarItem Content="Image number: " FontWeight="Bold" />
+                <StatusBarItem Content="File:" FontWeight="Bold" />
                 <StatusBarItem Content="0"/>
-                <StatusBarItem Content="of "/>
+                <StatusBarItem Content="of"/>
                 <StatusBarItem Content="Unknown"/>
                 <StatusBarItem Content=""/>
                 <StatusBarItem Content="" HorizontalAlignment="Right" />

@@ -1,4 +1,5 @@
 ﻿using System.Windows.Controls;
+using Timelapse.Database;
 
 namespace Timelapse.Controls
 {
@@ -19,8 +20,8 @@ namespace Timelapse.Controls
             get { return this.LabelControl.IsChecked.HasValue ? (bool)this.LabelControl.IsChecked : false; }
         }
 
-        public DataEntryCounter(string dataLabel, DataEntryControls styleProvider) : 
-            base(dataLabel, styleProvider, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.RadioButtonCodeBar)
+        public DataEntryCounter(ControlRow control, DataEntryControls styleProvider) : 
+            base(control, styleProvider, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.RadioButtonCodeBar)
         {
             // Modify the context menu so it can have a propage submenu
             // TODO DISCRETIONARY: the context menu's attached to the container rather than the content?

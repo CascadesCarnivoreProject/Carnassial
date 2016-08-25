@@ -13,7 +13,7 @@ namespace Timelapse.Database
         public string Operator { get; set; }
         public string Type { get; set; }
         public bool UseForSearching { get; set; }
-        public string Value { get; set; }
+        public string DatabaseValue { get; set; }
 
         public SearchTerm()
         {
@@ -22,7 +22,7 @@ namespace Timelapse.Database
             this.Operator = String.Empty;
             this.Type = String.Empty;
             this.UseForSearching = false;
-            this.Value = String.Empty;
+            this.DatabaseValue = String.Empty;
         }
     }
 }

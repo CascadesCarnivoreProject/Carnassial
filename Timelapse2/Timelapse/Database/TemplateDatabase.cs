@@ -408,8 +408,8 @@ namespace Timelapse.Database
             file.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.File));
             file.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.FileTooltip));
             file.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FileWidth));
-            file.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
-            file.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
+            file.Add(new ColumnTuple(Constants.Control.Copyable, false));
+            file.Add(new ColumnTuple(Constants.Control.Visible, true));
             file.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
             standardControls.Add(file);
 
@@ -426,23 +426,29 @@ namespace Timelapse.Database
             folder.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Folder));
             folder.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.FolderTooltip));
             folder.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FolderWidth));
-            folder.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
-            folder.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
+            folder.Add(new ColumnTuple(Constants.Control.Copyable, false));
+            folder.Add(new ColumnTuple(Constants.Control.Visible, true));
             folder.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
             standardControls.Add(folder);
+
+            // datetime
+            standardControls.Add(this.GetDateTimeTuples(++controlOrder, ++spreadsheetOrder, true));
+
+            // utcOffset
+            standardControls.Add(this.GetUtcOffsetTuples(++controlOrder, ++spreadsheetOrder, false));
 
             // date
             List<ColumnTuple> date = new List<ColumnTuple>();
             date.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             date.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
             date.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Date));
-            date.Add(new ColumnTuple(Constants.Control.DefaultValue, DateTimeHandler.ToStandardDateString(Constants.ControlDefault.DateTimeValue)));
+            date.Add(new ColumnTuple(Constants.Control.DefaultValue, DateTimeHandler.ToDisplayDateString(Constants.ControlDefault.DateTimeValue)));
             date.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Date));
             date.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Date));
             date.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DateTooltip));
             date.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.DateWidth));
-            date.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
-            date.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
+            date.Add(new ColumnTuple(Constants.Control.Copyable, false));
+            date.Add(new ColumnTuple(Constants.Control.Visible, false));
             date.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
             standardControls.Add(date);
 
@@ -451,13 +457,13 @@ namespace Timelapse.Database
             time.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             time.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
             time.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Time));
-            time.Add(new ColumnTuple(Constants.Control.DefaultValue, DateTimeHandler.ToStandardTimeString(Constants.ControlDefault.DateTimeValue)));
+            time.Add(new ColumnTuple(Constants.Control.DefaultValue, DateTimeHandler.ToDisplayDateString(Constants.ControlDefault.DateTimeValue)));
             time.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Time));
             time.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Time));
             time.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.TimeTooltip));
             time.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.TimeWidth));
-            time.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
-            time.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
+            time.Add(new ColumnTuple(Constants.Control.Copyable, false));
+            time.Add(new ColumnTuple(Constants.Control.Visible, false));
             time.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
             standardControls.Add(time);
 
@@ -471,8 +477,8 @@ namespace Timelapse.Database
             imageQuality.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.ImageQuality));
             imageQuality.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.ImageQualityTooltip));
             imageQuality.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.ImageQualityWidth));
-            imageQuality.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
-            imageQuality.Add(new ColumnTuple(Constants.Control.Visible, Constants.Boolean.True));
+            imageQuality.Add(new ColumnTuple(Constants.Control.Copyable, false));
+            imageQuality.Add(new ColumnTuple(Constants.Control.Visible, true));
             imageQuality.Add(new ColumnTuple(Constants.Control.List, Constants.ImageQuality.ListOfValues));
             standardControls.Add(imageQuality);
 
@@ -508,6 +514,50 @@ namespace Timelapse.Database
                 // move the relative path control to ID and order 2 for consistency with newly created templates
                 this.SetControlID(Constants.DatabaseColumn.RelativePath, Constants.Database.RelativePathPosition);
                 this.SetControlOrders(Constants.DatabaseColumn.RelativePath, Constants.Database.RelativePathPosition);
+            }
+
+            // add DateTime and UtcOffset controls to pre v2.1.0.5 databases if they haven't already been inserted
+            long dateTimeID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.DateTime);
+            if (dateTimeID == -1)
+            {
+                ControlRow date = this.GetControlFromTemplateTable(Constants.DatabaseColumn.Date);
+                ControlRow time = this.GetControlFromTemplateTable(Constants.DatabaseColumn.Time);
+
+                // insert a date time control, where its ID will be created as the next highest ID
+                // if either the date or time was visible make the date time visible
+                bool dateTimeVisible = date.Visible || time.Visible;
+                long order = this.GetOrderForNewControl();
+                List<ColumnTuple> dateTimeControl = this.GetDateTimeTuples(order, order, dateTimeVisible);
+                this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { dateTimeControl });
+
+                // make date and time controls invisible as they're replaced by the date time control
+                if (date.Visible)
+                {
+                    date.Visible = false;
+                    this.SyncControlToDatabase(date);
+                }
+                if (time.Visible)
+                {
+                    time.Visible = false;
+                    this.SyncControlToDatabase(time);
+                }
+
+                // move the date time control to ID and order 2 for consistency with newly created templates
+                this.SetControlID(Constants.DatabaseColumn.DateTime, Constants.Database.DateTimePosition);
+                this.SetControlOrders(Constants.DatabaseColumn.DateTime, Constants.Database.DateTimePosition);
+            }
+
+            long utcOffsetID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.UtcOffset);
+            if (utcOffsetID == -1)
+            {
+                // insert a relative path control, where its ID will be created as the next highest ID
+                long order = this.GetOrderForNewControl();
+                List<ColumnTuple> utcOffsetControl = this.GetUtcOffsetTuples(order, order, false);
+                this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { utcOffsetControl });
+
+                // move the relative path control to ID and order 2 for consistency with newly created templates
+                this.SetControlID(Constants.DatabaseColumn.UtcOffset, Constants.Database.UtcOffsetPosition);
+                this.SetControlOrders(Constants.DatabaseColumn.UtcOffset, Constants.Database.UtcOffsetPosition);
             }
 
             // Backwards compatability: ensure a DeleteFlag control exists, replacing the MarkForDeletion data label used in pre 2.1.0.4 templates if necessary
@@ -689,6 +739,23 @@ namespace Timelapse.Database
             }
         }
 
+        private List<ColumnTuple> GetDateTimeTuples(long controlOrder, long spreadsheetOrder, bool visible)
+        {
+            List<ColumnTuple> dateTime = new List<ColumnTuple>();
+            dateTime.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder));
+            dateTime.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, spreadsheetOrder));
+            dateTime.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.DateTime));
+            dateTime.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.DateTimeValue.UtcDateTime));
+            dateTime.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.DateTime));
+            dateTime.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.DateTime));
+            dateTime.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DateTimeTooltip));
+            dateTime.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.DateTimeWidth));
+            dateTime.Add(new ColumnTuple(Constants.Control.Copyable, false));
+            dateTime.Add(new ColumnTuple(Constants.Control.Visible, visible));
+            dateTime.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
+            return dateTime;
+        }
+
         // Defines a RelativePath control. The definition is used by its caller to insert a RelativePath control into the template for backwards compatability. 
         private List<ColumnTuple> GetRelativePathTuples(long controlOrder, long spreadsheetOrder, bool visible)
         {
@@ -701,7 +768,7 @@ namespace Timelapse.Database
             relativePath.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.RelativePath));
             relativePath.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.RelativePathTooltip));
             relativePath.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.RelativePathWidth));
-            relativePath.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
+            relativePath.Add(new ColumnTuple(Constants.Control.Copyable, false));
             relativePath.Add(new ColumnTuple(Constants.Control.Visible, visible));
             relativePath.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
             return relativePath;
@@ -719,10 +786,27 @@ namespace Timelapse.Database
             deleteFlag.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.DeleteFlag));
             deleteFlag.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DeleteFlagTooltip));
             deleteFlag.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FlagWidth));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));
+            deleteFlag.Add(new ColumnTuple(Constants.Control.Copyable, false));
             deleteFlag.Add(new ColumnTuple(Constants.Control.Visible, visible));
             deleteFlag.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
             return deleteFlag;
+        }
+
+        private List<ColumnTuple> GetUtcOffsetTuples(long controlOrder, long spreadsheetOrder, bool visible)
+        {
+            List<ColumnTuple> utcOffset = new List<ColumnTuple>();
+            utcOffset.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder));
+            utcOffset.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, spreadsheetOrder));
+            utcOffset.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.UtcOffset));
+            utcOffset.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.DateTimeValue.Offset));
+            utcOffset.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.UtcOffset));
+            utcOffset.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.UtcOffset));
+            utcOffset.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.UtcOffsetTooltip));
+            utcOffset.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.UtcOffsetWidth));
+            utcOffset.Add(new ColumnTuple(Constants.Control.Copyable, false));
+            utcOffset.Add(new ColumnTuple(Constants.Control.Visible, visible));
+            utcOffset.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
+            return utcOffset;
         }
     }
 }

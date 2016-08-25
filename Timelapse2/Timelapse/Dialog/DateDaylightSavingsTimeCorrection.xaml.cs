@@ -23,10 +23,10 @@ namespace Timelapse.Dialog
             this.Owner = owner;
 
             // Get the original date and display it
-            this.OriginalDate.Content = image.Current.Date + " " + image.Current.Time;
+            this.OriginalDate.Content = image.Current.GetDisplayDateTime(database.ImageSet.GetTimeZone());
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
-            this.imgDateImage.Source = image.Current.LoadBitmap(this.database.FolderPath);
+            this.Image.Source = image.Current.LoadBitmap(this.database.FolderPath);
             this.ImageName.Content = image.Current.FileName;
         }
 
@@ -79,17 +79,16 @@ namespace Timelapse.Dialog
             if ((bool)rbAddHour.IsChecked || (bool)rbSubtractHour.IsChecked) 
             {
                 DateTime dateTime;
-                bool succeeded = DateTime.TryParse(this.OriginalDate.Content.ToString(), out dateTime);
-                if (!succeeded)
+                if (DateTimeHandler.TryParseDisplayDateTime((string)this.OriginalDate.Content, out dateTime) == false)
                 {
-                    lblNewDate.Content = "Problem with this date...";
+                    this.NewDate.Content = "Problem with this date...";
                     this.OkButton.IsEnabled = false;
                     return;
                 }
                 int hours = ((bool)rbAddHour.IsChecked) ? 1 : -1;
                 TimeSpan daylightSavingsAdjustment = new TimeSpan(hours, 0, 0);
                 dateTime = dateTime.Add(daylightSavingsAdjustment);
-                lblNewDate.Content = DateTimeHandler.ToStandardDateString(dateTime) + " " + DateTimeHandler.ToStandardTimeString(dateTime);
+                this.NewDate.Content = DateTimeHandler.ToDisplayDateTimeString(dateTime);
             }
             if (((bool)rbAddHour.IsChecked || (bool)rbSubtractHour.IsChecked) && ((bool)rbBackwards.IsChecked || (bool)rbForward.IsChecked))
             {

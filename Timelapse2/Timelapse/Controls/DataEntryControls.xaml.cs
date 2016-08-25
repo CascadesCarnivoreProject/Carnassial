@@ -38,45 +38,42 @@ namespace Timelapse.Controls
                 }
 
                 DataEntryControl controlToAdd;
-                if (control.Type == Constants.DatabaseColumn.File ||
-                    control.Type == Constants.DatabaseColumn.RelativePath ||
-                    control.Type == Constants.DatabaseColumn.Folder ||
-                    control.Type == Constants.DatabaseColumn.Date ||
-                    control.Type == Constants.DatabaseColumn.Time ||
-                    control.Type == Constants.Control.Note)
+                if (control.Type == Constants.DatabaseColumn.DateTime)
                 {
-                    DataEntryNote noteControl = new DataEntryNote(control.DataLabel, this);
-                    noteControl.Label = control.Label;
-                    noteControl.Width = control.TextBoxWidth;
-                    if (control.Type == Constants.DatabaseColumn.Folder || 
-                        control.Type == Constants.DatabaseColumn.RelativePath ||
-                        control.Type == Constants.DatabaseColumn.File)
-                    {
-                        // File name and path aren't editable by the user 
-                        noteControl.ReadOnly = true;
-                    }
+                    DataEntryDateTime dateTimeControl = new DataEntryDateTime(control, this);
+                    controlToAdd = dateTimeControl;
+                }
+                else if (control.Type == Constants.DatabaseColumn.File ||
+                         control.Type == Constants.DatabaseColumn.RelativePath ||
+                         control.Type == Constants.DatabaseColumn.Folder ||
+                         control.Type == Constants.DatabaseColumn.Date ||
+                         control.Type == Constants.DatabaseColumn.Time ||
+                         control.Type == Constants.Control.Note)
+                {
+                    // standard controls rendering as notes aren't editable by the user 
+                    DataEntryNote noteControl = new DataEntryNote(control, this);
+                    noteControl.ReadOnly = control.Type != Constants.Control.Note;
                     controlToAdd = noteControl;
                 }
                 else if (control.Type == Constants.Control.Flag || control.Type == Constants.DatabaseColumn.DeleteFlag)
                 {
-                    DataEntryFlag flagControl = new DataEntryFlag(control.DataLabel, this);
-                    flagControl.Label = control.Label;
-                    flagControl.Width = control.TextBoxWidth;
+                    DataEntryFlag flagControl = new DataEntryFlag(control, this);
                     controlToAdd = flagControl;
                 }
                 else if (control.Type == Constants.Control.Counter)
                 {
-                    DataEntryCounter counterControl = new DataEntryCounter(control.DataLabel, this);
-                    counterControl.Label = control.Label;
-                    counterControl.Width = control.TextBoxWidth;
+                    DataEntryCounter counterControl = new DataEntryCounter(control, this);
                     controlToAdd = counterControl;
                 }
                 else if (control.Type == Constants.Control.FixedChoice || control.Type == Constants.DatabaseColumn.ImageQuality)
                 {
-                    DataEntryChoice choiceControl = new DataEntryChoice(control.DataLabel, this, control.List);
-                    choiceControl.Label = control.Label;
-                    choiceControl.Width = control.TextBoxWidth;
+                    DataEntryChoice choiceControl = new DataEntryChoice(control, this, control.List);
                     controlToAdd = choiceControl;
+                }
+                else if (control.Type == Constants.DatabaseColumn.UtcOffset)
+                {
+                    DataEntryUtcOffset utcOffsetControl = new DataEntryUtcOffset(control, this);
+                    controlToAdd = utcOffsetControl;
                 }
                 else
                 {
@@ -84,9 +81,6 @@ namespace Timelapse.Controls
                     continue;
                 }
 
-                controlToAdd.Content = control.DefaultValue;
-                controlToAdd.Copyable = control.Copyable;
-                controlToAdd.Tooltip = control.Tooltip;
                 this.ControlGrid.Inlines.Add(controlToAdd.Container);
                 this.Controls.Add(controlToAdd);
                 this.ControlsByDataLabel.Add(control.DataLabel, controlToAdd);

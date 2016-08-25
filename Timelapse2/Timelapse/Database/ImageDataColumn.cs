@@ -32,11 +32,15 @@ namespace Timelapse.Database
                     return new ImageDataChoiceColumn(control);
                 case Constants.Control.Counter:
                     return new ImageDataCounterColumn(control);
+                case Constants.DatabaseColumn.DateTime:
+                    return new ImageDataDateTimeColumn(control);
                 case Constants.DatabaseColumn.DeleteFlag:
                 case Constants.Control.Flag:
                     return new ImageDataFlagColumn(control);
                 case Constants.Control.FixedChoice:
                     return new ImageDataChoiceColumn(control);
+                case Constants.DatabaseColumn.UtcOffset:
+                    return new ImageDataUtcOffsetColumn(control);
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
             }

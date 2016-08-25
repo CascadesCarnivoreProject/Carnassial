@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Windows;
+using Timelapse.Controls;
 using Timelapse.Database;
 using Timelapse.Util;
-using Xceed.Wpf.Toolkit;
 
 namespace Timelapse.Dialog
 {
@@ -14,7 +14,7 @@ namespace Timelapse.Dialog
     public partial class DateTimeFixedCorrection : Window
     {
         private ImageDatabase imageDatabase;
-        private DateTime initialDate;
+        private DateTimeOffset initialDate;
         private bool displayingPreview = false;
 
         public bool Abort { get; private set; }
@@ -35,15 +35,12 @@ namespace Timelapse.Dialog
             this.image.Source = imageToCorrect.LoadBitmap(this.imageDatabase.FolderPath);
 
             // configure datetime picker
-            if (imageToCorrect.TryGetDateTime(out this.initialDate))
+            TimeZoneInfo imageSetTimeZone = this.imageDatabase.ImageSet.GetTimeZone();
+            if (imageToCorrect.TryGetDateTime(imageSetTimeZone, out this.initialDate))
             {
-                this.originalDate.Content = DateTimeHandler.ToStandardDateTimeString(this.initialDate);
-                this.dateTimePicker.Format = DateTimeFormat.Custom;
-                this.dateTimePicker.FormatString = Constants.Time.DateTimeFormat;
-                this.dateTimePicker.TimeFormat = DateTimeFormat.Custom;
-                this.dateTimePicker.TimeFormatString = Constants.Time.TimeFormat;
-                this.dateTimePicker.Value = this.initialDate;
-                this.dateTimePicker.ValueChanged += this.DateTimePicker_ValueChanged;
+                this.originalDate.Content = DateTimeHandler.ToDisplayDateTimeString(this.initialDate);
+                DataEntryHandler.Configure(this.DateTimePicker, this.initialDate.DateTime);
+                this.DateTimePicker.ValueChanged += this.DateTimePicker_ValueChanged;
             }
             else
             {
@@ -63,25 +60,20 @@ namespace Timelapse.Dialog
             this.PrimaryPanel.Visibility = Visibility.Collapsed;
             this.FeedbackPanel.Visibility = Visibility.Visible;
 
-            TimeSpan adjustment = this.dateTimePicker.Value.Value - this.initialDate;
+            TimeSpan adjustment = this.DateTimePicker.Value.Value - this.initialDate.DateTime;
 
             // Preview the changes
+            TimeZoneInfo imageSetTimeZone = this.imageDatabase.ImageSet.GetTimeZone();
             foreach (ImageRow row in this.imageDatabase.ImageDataTable)
             {
-                string currentDateTime = row.Date + " " + row.Time;
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
                 string difference = String.Empty;
-
-                DateTime imageDateTime;
-                TimeSpan oneSecond = TimeSpan.FromSeconds(1);
-
-                if (row.TryGetDateTime(out imageDateTime))
+                DateTimeOffset imageDateTime;
+                if (row.TryGetDateTime(imageSetTimeZone, out imageDateTime))
                 {
-                    DateTime originalDateTime = DateTimeHandler.FromStandardDateTimeString((string)this.originalDate.Content);
-
                     // Pretty print the adjustment time
-                    if (adjustment.Duration() >= oneSecond)
+                    if (adjustment.Duration() >= Constants.Time.DateTimeDatabaseResolution)
                     {
                         string sign = (adjustment < TimeSpan.Zero) ? "-" : "+";
                         status = "Changed";
@@ -100,42 +92,41 @@ namespace Timelapse.Dialog
                         {
                             format = "{0:s}{1:D2}:{2:D2}:{3:D2} {0:s} {4:D} days";
                         }
-                        difference = string.Format(format, sign, adjustment.Duration().Hours, adjustment.Duration().Minutes, adjustment.Duration().Seconds, adjustment.Duration().Days);
+                        difference = String.Format(format, sign, adjustment.Duration().Hours, adjustment.Duration().Minutes, adjustment.Duration().Seconds, adjustment.Duration().Days);
 
                         // Get the new date/time
-                        newDateTime = DateTimeHandler.ToStandardDateTimeString(imageDateTime + adjustment);
+                        newDateTime = DateTimeHandler.ToDisplayDateTimeString(imageDateTime + adjustment);
                     }
                     else
                     {
                         status = "Unchanged";
                     }
                 }
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, currentDateTime, newDateTime, difference);
+                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, row.GetDisplayDateTime(imageSetTimeZone), newDateTime, difference);
             }
         }
 
-        // Try to update the database if the OK button is clicked
-        private void OkButton_Click(object sender, RoutedEventArgs e)
+        private void StartButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.dateTimePicker.Value.HasValue == false)
+            if (this.DateTimePicker.Value.HasValue == false)
             {
                 this.DialogResult = false;
                 return;
             }
 
-            // 1st real click of Ok: Show the preview before actually making any changes.
+            // 1st click: Show the preview before actually making any changes.
             if (this.displayingPreview == false)
             {
                 this.PreviewDateTimeChanges();
                 this.displayingPreview = true;
-                this.OkButton.Content = "Apply Changes";
+                this.StartButton.Content = "_Apply Changes";
                 return;
             }
 
-            // 2nd click of Ok
+            // 2nd click
             // Calculate and apply the date/time difference
-            DateTime originalDateTime = DateTimeHandler.FromStandardDateTimeString((string)this.originalDate.Content);
-            TimeSpan adjustment = this.dateTimePicker.Value.Value - originalDateTime;
+            DateTime originalDateTime = DateTimeHandler.ParseDisplayDateTimeString((string)this.originalDate.Content);
+            TimeSpan adjustment = this.DateTimePicker.Value.Value - originalDateTime;
             if (adjustment == TimeSpan.Zero)
             {
                 this.DialogResult = false; // No difference, so nothing to correct
@@ -155,8 +146,8 @@ namespace Timelapse.Dialog
 
         private void DateTimePicker_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            TimeSpan difference = this.dateTimePicker.Value.Value - this.initialDate;
-            this.OkButton.IsEnabled = (difference == TimeSpan.Zero) ? false : true;
+            TimeSpan difference = this.DateTimePicker.Value.Value - this.initialDate;
+            this.StartButton.IsEnabled = (difference == TimeSpan.Zero) ? false : true;
         }
     }
 }

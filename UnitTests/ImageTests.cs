@@ -1,10 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Globalization;
 using System.Windows.Media.Imaging;
 using Timelapse.Database;
-using Timelapse.Dialog;
 using Timelapse.Images;
 
 namespace Timelapse.UnitTests
@@ -93,18 +92,31 @@ namespace Timelapse.UnitTests
         }
 
         [TestMethod]
-        public void Exif()
+        public void ExifBushnell()
         {
-            string imageFilePath = Path.Combine(this.WorkingDirectory, TestConstant.File.InfraredMartenImage);
-
             ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, Constants.File.DefaultImageDatabaseFileName);
-            using (PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(imageDatabase, imageFilePath, null))
-            {
-                PrivateObject populateFieldAccessor = new PrivateObject(populateField);
-                populateFieldAccessor.Invoke("LoadExif");
-                Dictionary<string, string> exif = (Dictionary<string, string>)populateField.dg.ItemsSource;
-                Assert.IsTrue(exif.Count > 0, "Expected at least one EXIF field to be retrieved from {0}", imageFilePath);
-            }
+            Dictionary<string, string> exif = this.LoadExif(imageDatabase, TestConstant.ImageExpectation.InfraredMarten);
+
+            DateTime createDate;
+            Assert.IsTrue(DateTime.TryParseExact(exif[TestConstant.Exif.Bushnell.CreateDate], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out createDate));
+            DateTime modifyDate;
+            Assert.IsTrue(DateTime.TryParseExact(exif[TestConstant.Exif.Bushnell.ModifyDate], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out modifyDate));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Bushnell.Software]));
+        }
+
+        [TestMethod]
+        public void ExifReconyx()
+        {
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, Constants.File.DefaultImageDatabaseFileName);
+            Dictionary<string, string> exif = this.LoadExif(imageDatabase, TestConstant.ImageExpectation.DaylightMartenPair);
+
+            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.AmbientTemperature]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.FirmwareVersion]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.InfraredIlluminator]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.Sequence]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.SerialNumber]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.TriggerMode]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.UserLabel]));
         }
 
         [TestMethod]
@@ -130,7 +142,7 @@ namespace Timelapse.UnitTests
                 bool isColor;
                 ImageFilter imageQuality = bitmap.AsWriteable().GetImageQuality(Constants.Images.DarkPixelThresholdDefault, Constants.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor);
                 Assert.IsTrue(Math.Abs(darkPixelFraction - imageExpectation.DarkPixelFraction) < TestConstant.DarkPixelFractionTolerance, "{0}: Expected dark pixel fraction to be {1}, but was {2}.", imageExpectation.FileName, imageExpectation.DarkPixelFraction, darkPixelFraction);
-                Assert.IsTrue(isColor == imageExpectation.IsColor, "{0}: Expected isColor to be {1}, but it was {2}", imageExpectation.FileName, imageExpectation.IsColor,  isColor);
+                Assert.IsTrue(isColor == imageExpectation.IsColor, "{0}: Expected isColor to be {1}, but it was {2}", imageExpectation.FileName, imageExpectation.IsColor, isColor);
                 Assert.IsTrue(imageQuality == imageExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}", imageExpectation.FileName, imageExpectation.Quality, imageQuality);
             }
         }

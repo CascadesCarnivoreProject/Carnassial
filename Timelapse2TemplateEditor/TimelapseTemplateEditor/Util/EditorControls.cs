@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Timelapse.Controls;
 using Timelapse.Database;
-using Timelapse.Util;
+using Xceed.Wpf.Toolkit;
 
 namespace Timelapse.Editor.Util
 {
@@ -18,7 +18,7 @@ namespace Timelapse.Editor.Util
     /// </remarks>
     internal class EditorControls
     {
-        public static void Generate(EditorWindow mainWindow, WrapPanel parent, DataTableBackedList<ControlRow> templateTable)
+        public void Generate(EditorWindow mainWindow, WrapPanel parent, DataTableBackedList<ControlRow> templateTable)
         {
             // used for styling all content and label controls except ComboBoxes since the combo box style is commented out in DataEntryControls.xaml
             // and defined instead in MainWindow.xaml as an exception workaround
@@ -37,27 +37,37 @@ namespace Timelapse.Editor.Util
                     case Constants.DatabaseColumn.Folder:
                     case Constants.DatabaseColumn.RelativePath:
                     case Constants.DatabaseColumn.Time:
-                        Label noteLabel = CreateLabel(styleProvider, control.Label, control.Tooltip);
-                        TextBox noteContent = CreateTextBox(styleProvider, control.DefaultValue, control.Tooltip, control.TextBoxWidth);
-                        stackPanel = CreateStackPanel(styleProvider, noteLabel, noteContent);
+                        Label noteLabel = this.CreateLabel(styleProvider, control);
+                        TextBox noteContent = this.CreateTextBox(styleProvider, control);
+                        stackPanel = this.CreateStackPanel(styleProvider, noteLabel, noteContent);
                         break;
                     case Constants.Control.Counter:
-                        RadioButton counterLabel = CreateRadioButton(styleProvider, control.Label, control.Tooltip);
-                        TextBox coutnerContent = CreateTextBox(styleProvider, control.DefaultValue, control.Tooltip, control.TextBoxWidth);
-                        stackPanel = CreateStackPanel(styleProvider, counterLabel, coutnerContent);
+                        RadioButton counterLabel = this.CreateRadioButton(styleProvider, control);
+                        TextBox coutnerContent = this.CreateTextBox(styleProvider, control);
+                        stackPanel = this.CreateStackPanel(styleProvider, counterLabel, coutnerContent);
                         break;
                     case Constants.Control.Flag:
                     case Constants.DatabaseColumn.DeleteFlag:
-                        Label flagLabel = CreateLabel(styleProvider, control.Label, control.Tooltip);
-                        CheckBox flagContent = CreateFlag(styleProvider, String.Empty, control.Tooltip);
+                        Label flagLabel = this.CreateLabel(styleProvider, control);
+                        CheckBox flagContent = this.CreateFlag(styleProvider, control);
                         flagContent.IsChecked = (control.DefaultValue == Constants.Boolean.True) ? true : false;
-                        stackPanel = CreateStackPanel(styleProvider, flagLabel, flagContent);
+                        stackPanel = this.CreateStackPanel(styleProvider, flagLabel, flagContent);
                         break;
                     case Constants.Control.FixedChoice:
                     case Constants.DatabaseColumn.ImageQuality:
-                        Label choiceLabel = CreateLabel(styleProvider, control.Label, control.Tooltip);
-                        ComboBox choiceContent = CreateComboBox(mainWindow, control.List, control.Tooltip, control.TextBoxWidth);
-                        stackPanel = CreateStackPanel(styleProvider, choiceLabel, choiceContent);
+                        Label choiceLabel = this.CreateLabel(styleProvider, control);
+                        ComboBox choiceContent = this.CreateComboBox(mainWindow, control);
+                        stackPanel = this.CreateStackPanel(styleProvider, choiceLabel, choiceContent);
+                        break;
+                    case Constants.DatabaseColumn.DateTime:
+                        Label dateTimeLabel = this.CreateLabel(styleProvider, control);
+                        DateTimePicker dateTimeContent = this.CreateDateTimePicker(control);
+                        stackPanel = this.CreateStackPanel(styleProvider, dateTimeLabel, dateTimeContent);
+                        break;
+                    case Constants.DatabaseColumn.UtcOffset:
+                        Label utcOffsetLabel = this.CreateLabel(styleProvider, control);
+                        UtcOffsetUpDown utcOffsetContent = this.CreateUtcOffsetPicker(control);
+                        stackPanel = this.CreateStackPanel(styleProvider, utcOffsetLabel, utcOffsetContent);
                         break;
                     default:
                         throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
@@ -79,10 +89,19 @@ namespace Timelapse.Editor.Util
             return Constants.Control.StandardTypes.Contains(controlType);
         }
 
+        private DateTimePicker CreateDateTimePicker(ControlRow control)
+        {
+            DateTimePicker dateTimePicker = new DateTimePicker();
+            dateTimePicker.ToolTip = control.Tooltip;
+            dateTimePicker.Width = control.TextBoxWidth;
+            DataEntryHandler.Configure(dateTimePicker, Constants.ControlDefault.DateTimeValue.DateTime);
+            return dateTimePicker;
+        }
+
         // Returns a stack panel containing two controls
         // The stack panel ensures that controls are layed out as a single unit with certain spatial characteristcs 
         // i.e.,  a given height, right margin, where contents will not be broken durring (say) panel wrapping
-        private static StackPanel CreateStackPanel(DataEntryControls styleProvider, Control label, Control content)
+        private StackPanel CreateStackPanel(DataEntryControls styleProvider, Control label, Control content)
         {
             StackPanel stackPanel = new StackPanel();
             stackPanel.Children.Add(label);
@@ -93,59 +112,67 @@ namespace Timelapse.Editor.Util
             return stackPanel;
         }
 
-        private static Label CreateLabel(DataEntryControls styleProvider, string labelText, string tooltip)
+        private UtcOffsetUpDown CreateUtcOffsetPicker(ControlRow control)
+        {
+            UtcOffsetUpDown utcOffsetPicker = new UtcOffsetUpDown();
+            utcOffsetPicker.ToolTip = control.Tooltip;
+            utcOffsetPicker.Value = Constants.ControlDefault.DateTimeValue.Offset;
+            utcOffsetPicker.Width = control.TextBoxWidth;
+            return utcOffsetPicker;
+        }
+
+        private Label CreateLabel(DataEntryControls styleProvider, ControlRow control)
         {
             Label label = new Label();
-            label.Content = labelText;
-            label.ToolTip = tooltip;
+            label.Content = control.Label;
+            label.ToolTip = control.Tooltip;
 
             Style style = styleProvider.FindResource(ControlLabelStyle.LabelCodeBar.ToString()) as Style;
             label.Style = style;
             return label;
         }
 
-        private static TextBox CreateTextBox(DataEntryControls styleProvider, string textBoxText, string tooltip, int width)
+        private TextBox CreateTextBox(DataEntryControls styleProvider, ControlRow control)
         {
             TextBox textBox = new TextBox();
-            textBox.Width = width;
-            textBox.Text = textBoxText;
-            textBox.ToolTip = tooltip;
+            textBox.Text = control.DefaultValue;
+            textBox.ToolTip = control.Tooltip;
+            textBox.Width = control.TextBoxWidth;
 
             Style style = styleProvider.FindResource(ControlContentStyle.TextBoxCodeBar.ToString()) as Style;
             textBox.Style = style;
             return textBox;
         }
 
-        private static RadioButton CreateRadioButton(DataEntryControls styleProvider, string labelText, string tooltip)
+        private RadioButton CreateRadioButton(DataEntryControls styleProvider, ControlRow control)
         {
             RadioButton radioButton = new RadioButton();
             radioButton.GroupName = "A";
-            radioButton.Content = labelText;
-            radioButton.ToolTip = tooltip;
+            radioButton.Content = control.Label;
+            radioButton.ToolTip = control.Tooltip;
 
             Style style = styleProvider.FindResource(ControlLabelStyle.RadioButtonCodeBar.ToString()) as Style;
             radioButton.Style = style;
             return radioButton;
         }
 
-        private static CheckBox CreateFlag(DataEntryControls styleProvider, string labelText, string tooltip)
+        private CheckBox CreateFlag(DataEntryControls styleProvider, ControlRow control)
         {
             CheckBox checkBox = new CheckBox();
-            checkBox.Content = labelText;
             checkBox.Visibility = Visibility.Visible;
-            checkBox.ToolTip = tooltip;
+            checkBox.ToolTip = control.Tooltip;
 
             Style style = styleProvider.FindResource(ControlContentStyle.FlagCodeBar.ToString()) as Style;
             checkBox.Style = style;
             return checkBox;
         }
 
-        private static ComboBox CreateComboBox(EditorWindow styleProvider, string list, string tooltip, int width)
+        private ComboBox CreateComboBox(EditorWindow styleProvider, ControlRow control)
         {
             ComboBox comboBox = new ComboBox();
-            comboBox.ToolTip = tooltip;
-            comboBox.Width = width;
-            List<string> result = list.Split(new char[] { '|' }).ToList();
+            comboBox.ToolTip = control.Tooltip;
+            comboBox.Width = control.TextBoxWidth;
+            List<string> result = control.List.Split(new char[] { '|' }).ToList();
             foreach (string str in result)
             {
                 comboBox.Items.Add(str.Trim());

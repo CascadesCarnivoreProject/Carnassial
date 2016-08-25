@@ -78,6 +78,7 @@
     <Compile Include="DatabaseExpectations.cs" />
     <Compile Include="DatabaseTests.cs" />
     <Compile Include="DataTableBackedListExtensions.cs" />
+    <Compile Include="DateTimeOffsetExtensions.cs" />
     <Compile Include="DefaultTemplateTableExpectation.cs" />
     <Compile Include="DependencyTests.cs" />
     <Compile Include="ImageDatabaseExtensions.cs" />

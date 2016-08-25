@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Timelapse.Controls;
 using Timelapse.Database;
 using Timelapse.Util;
 using Xceed.Wpf.Toolkit;
@@ -11,13 +12,12 @@ using Xceed.Wpf.Toolkit;
 namespace Timelapse.Dialog
 {
     /// <summary>
-    /// Interaction logic for DialogCustomViewFilter.xaml
     /// Present a dialog that allows a user to create a custom filter by 
     /// selecting various data fields and the conditions they have to meet to pass the filter. 
     /// </summary>
     public partial class CustomViewFilter : Window
     {
-        private const int DefaultControlWidth = 150;
+        private const int DefaultControlWidth = 200;
         private const double DefaultSearchCriteriaWidth = Double.NaN; // Same as xaml Width = "Auto"
 
         private const int SelectColumn = 0;
@@ -28,18 +28,18 @@ namespace Timelapse.Dialog
 
         // To hold the values of passed in arguments
         private ImageDatabase database;
-        private DateTime defaultDate;
+        private DateTimeOffset defaultDateTime;
 
         #region Constructors and Loading
         /// <summary>
         /// Constructor. Date should be the contents of the date data field of the current image
         /// </summary>
-        public CustomViewFilter(ImageDatabase database, DateTime defaultDate, Window owner)
+        public CustomViewFilter(ImageDatabase database, DateTimeOffset defaultDate, Window owner)
         {
             this.InitializeComponent();
 
             this.database = database;
-            this.defaultDate = defaultDate;
+            this.defaultDateTime = defaultDate;
             this.Owner = owner;
         }
 
@@ -102,7 +102,7 @@ namespace Timelapse.Dialog
                 string controlType = searchTerm.Type;
                 string[] termOperators;
                 if (controlType == Constants.Control.Counter ||
-                    controlType == Constants.DatabaseColumn.Date ||
+                    controlType == Constants.DatabaseColumn.DateTime ||
                     controlType == Constants.DatabaseColumn.ImageQuality ||
                     controlType == Constants.Control.FixedChoice)
                 {
@@ -159,18 +159,17 @@ namespace Timelapse.Dialog
                 // Value column: The value used for comparison in the search
                 // Notes and Counters both uses a text field, so they can be constructed as a textbox
                 // However, counter textboxes are modified to only allow integer input (both direct typing or pasting are checked)
-                if (controlType == Constants.DatabaseColumn.Date)
+                if (controlType == Constants.DatabaseColumn.DateTime)
                 {
                     DateTimePicker dateValue = new DateTimePicker();
                     dateValue.Format = DateTimeFormat.Custom;
-                    dateValue.FormatString = Constants.Time.DateFormat;
+                    dateValue.FormatString = Constants.Time.DateTimeDisplayFormat;
                     dateValue.IsEnabled = searchTerm.UseForSearching;
-                    dateValue.Value = this.defaultDate;
-                    dateValue.ValueChanged += this.Date_SelectedDateChanged;
-                    dateValue.TimePickerVisibility = Visibility.Hidden;
+                    dateValue.Value = this.defaultDateTime.DateTime;
+                    dateValue.ValueChanged += this.DateTime_SelectedDateChanged;
                     dateValue.Width = CustomViewFilter.DefaultControlWidth;
 
-                    searchTerm.Value = DateTimeHandler.ToStandardDateString(this.defaultDate);
+                    searchTerm.DatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(this.defaultDateTime);
 
                     Grid.SetRow(dateValue, gridRowIndex);
                     Grid.SetColumn(dateValue, CustomViewFilter.ValueColumn);
@@ -183,7 +182,7 @@ namespace Timelapse.Dialog
                 {
                     TextBox textBoxValue = new TextBox();
                     textBoxValue.IsEnabled = searchTerm.UseForSearching;
-                    textBoxValue.Text = searchTerm.Value;
+                    textBoxValue.Text = searchTerm.DatabaseValue;
                     textBoxValue.Margin = thickness;
                     textBoxValue.Width = CustomViewFilter.DefaultControlWidth;
                     textBoxValue.Height = 22;
@@ -217,7 +216,7 @@ namespace Timelapse.Dialog
                     list += " | "; // Add an empty field so it can be reset to empty by the user
                     string[] choices = list.Split(new char[] { '|' });
                     comboBoxValue.ItemsSource = choices;
-                    comboBoxValue.SelectedItem = searchTerm.Value;
+                    comboBoxValue.SelectedItem = searchTerm.DatabaseValue;
                     comboBoxValue.SelectionChanged += this.FixedChoice_SelectionChanged;
                     Grid.SetRow(comboBoxValue, gridRowIndex);
                     Grid.SetColumn(comboBoxValue, CustomViewFilter.ValueColumn);
@@ -231,14 +230,30 @@ namespace Timelapse.Dialog
                     flagCheckBox.Margin = thickness;
                     flagCheckBox.VerticalAlignment = VerticalAlignment.Center;
                     flagCheckBox.HorizontalAlignment = HorizontalAlignment.Left;
-                    flagCheckBox.IsChecked = (searchTerm.Value.ToLower() == Constants.Boolean.False) ? false : true;
+                    flagCheckBox.IsChecked = (searchTerm.DatabaseValue.ToLower() == Constants.Boolean.False) ? false : true;
                     flagCheckBox.IsEnabled = searchTerm.UseForSearching;
                     flagCheckBox.Checked += this.Flag_CheckedOrUnchecked;
                     flagCheckBox.Unchecked += this.Flag_CheckedOrUnchecked;
 
+                    searchTerm.DatabaseValue = flagCheckBox.IsChecked.Value ? Constants.Boolean.True : Constants.Boolean.False;
+
                     Grid.SetRow(flagCheckBox, gridRowIndex);
                     Grid.SetColumn(flagCheckBox, CustomViewFilter.ValueColumn);
                     this.grid.Children.Add(flagCheckBox);
+                }
+                else if (controlType == Constants.DatabaseColumn.UtcOffset)
+                {
+                    UtcOffsetUpDown utcOffsetValue = new UtcOffsetUpDown();
+                    utcOffsetValue.IsEnabled = searchTerm.UseForSearching;
+                    utcOffsetValue.Value = this.defaultDateTime.Offset;
+                    utcOffsetValue.ValueChanged += this.UtcOffset_SelectedDateChanged;
+                    utcOffsetValue.Width = CustomViewFilter.DefaultControlWidth;
+
+                    searchTerm.DatabaseValue = DateTimeHandler.ToDatabaseUtcOffsetString(this.defaultDateTime.Offset);
+
+                    Grid.SetRow(utcOffsetValue, gridRowIndex);
+                    Grid.SetColumn(utcOffsetValue, CustomViewFilter.ValueColumn);
+                    this.grid.Children.Add(utcOffsetValue);
                 }
                 else
                 {
@@ -312,7 +327,7 @@ namespace Timelapse.Dialog
         {
             TextBox textBox = sender as TextBox;
             int row = Grid.GetRow(textBox);  // Get the row number...
-            this.database.CustomFilter.SearchTerms[row - 1].Value = textBox.Text;
+            this.database.CustomFilter.SearchTerms[row - 1].DatabaseValue = textBox.Text;
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -322,18 +337,20 @@ namespace Timelapse.Dialog
             args.Handled = IsNumbersOnly(args.Text);
         }
 
-        // Value (Dates): we need to construct a string DateTime from it
-        private void Date_SelectedDateChanged(object sender, RoutedPropertyChangedEventArgs<object> args)
+        // Value (DateTime): we need to construct a string DateTime from it
+        private void DateTime_SelectedDateChanged(object sender, RoutedPropertyChangedEventArgs<object> args)
         {
             DateTimePicker datePicker = sender as DateTimePicker;
             int row = Grid.GetRow(datePicker);  // Get the row number...
             if (datePicker.Value.HasValue)
             {
-                this.database.CustomFilter.SearchTerms[row - 1].Value = DateTimeHandler.ToStandardDateString(datePicker.Value.Value);
+                TimeSpan utcOffset = this.database.ImageSet.GetTimeZone().GetUtcOffset(datePicker.Value.Value);
+                DateTimeOffset imageSetDateTime = new DateTimeOffset(datePicker.Value.Value, utcOffset);
+                this.database.CustomFilter.SearchTerms[row - 1].DatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(imageSetDateTime);
             }
             else
             {
-                this.database.CustomFilter.SearchTerms[row - 1].Value = null;
+                this.database.CustomFilter.SearchTerms[row - 1].DatabaseValue = null;
             }
             this.UpdateSearchCriteriaFeedback();
         }
@@ -345,7 +362,7 @@ namespace Timelapse.Dialog
         {
             ComboBox comboBox = sender as ComboBox;
             int row = Grid.GetRow(comboBox);  // Get the row number...
-            this.database.CustomFilter.SearchTerms[row - 1].Value = comboBox.SelectedValue.ToString(); // Set the corresponding value to the current selection
+            this.database.CustomFilter.SearchTerms[row - 1].DatabaseValue = comboBox.SelectedValue.ToString(); // Set the corresponding value to the current selection
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -356,7 +373,7 @@ namespace Timelapse.Dialog
         {
             CheckBox checkBox = sender as CheckBox;
             int row = Grid.GetRow(checkBox);  // Get the row number...
-            this.database.CustomFilter.SearchTerms[row - 1].Value = checkBox.IsChecked.ToString().ToLower(); // Set the corresponding value to the current selection
+            this.database.CustomFilter.SearchTerms[row - 1].DatabaseValue = checkBox.IsChecked.ToString().ToLower(); // Set the corresponding value to the current selection
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -368,6 +385,23 @@ namespace Timelapse.Dialog
                 CheckBox select = this.GetGridElement<CheckBox>(CustomViewFilter.SelectColumn, row);
                 select.IsChecked = false;
             }
+        }
+
+        // Value (UtcOffset): we need to construct a string TimeSpan from it
+        private void UtcOffset_SelectedDateChanged(object sender, RoutedPropertyChangedEventArgs<object> args)
+        {
+            UtcOffsetUpDown utcOffsetPicker = sender as UtcOffsetUpDown;
+            int row = Grid.GetRow(utcOffsetPicker);  // Get the row number...
+            if (utcOffsetPicker.Value.HasValue)
+            {
+                TimeSpan utcOffset = utcOffsetPicker.Value.Value;
+                this.database.CustomFilter.SearchTerms[row - 1].DatabaseValue = DateTimeHandler.ToDatabaseUtcOffsetString(utcOffset);
+            }
+            else
+            {
+                this.database.CustomFilter.SearchTerms[row - 1].DatabaseValue = null;
+            }
+            this.UpdateSearchCriteriaFeedback();
         }
         #endregion
 
@@ -394,7 +428,7 @@ namespace Timelapse.Dialog
                 // Construct the search term 
                 string searchCriteriaText = searchTerm.DataLabel + " " + searchTerm.Operator + " "; // So far, we have "Data Label = "
 
-                string value = searchTerm.Value.Trim();    // the Value, but if its 
+                string value = searchTerm.DatabaseValue.Trim();    // the Value, but if its 
                 if (value.Length == 0)
                 {
                     value = "\"\"";  // an empty string, display it as ""

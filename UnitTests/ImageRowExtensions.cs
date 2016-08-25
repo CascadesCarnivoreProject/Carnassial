@@ -6,11 +6,11 @@ namespace Timelapse.UnitTests
 {
     internal static class ImageRowExtensions
     {
-        public static DateTime GetDateTime(this ImageRow image)
+        public static DateTimeOffset GetDateTime(this ImageRow image, TimeZoneInfo imageSetTimeZone)
         {
-            DateTime imageDate;
-            Assert.IsTrue(image.TryGetDateTime(out imageDate));
-            return imageDate;
+            DateTimeOffset imageDateTime;
+            Assert.IsTrue(image.TryGetDateTime(imageSetTimeZone, out imageDateTime));
+            return imageDateTime;
         }
     }
 }

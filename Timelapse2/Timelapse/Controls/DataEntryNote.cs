@@ -1,4 +1,5 @@
 ﻿using System.Windows.Controls;
+using Timelapse.Database;
 
 namespace Timelapse.Controls
 {
@@ -14,8 +15,8 @@ namespace Timelapse.Controls
             set { this.ContentControl.Text = value; }
         }
 
-        public DataEntryNote(string dataLabel, DataEntryControls styleProvider) : 
-            base(dataLabel, styleProvider, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.LabelCodeBar)
+        public DataEntryNote(ControlRow control, DataEntryControls styleProvider) : 
+            base(control, styleProvider, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.LabelCodeBar)
         {
             // Now configure the various elements
             this.Container.ToolTip = "Type in text";

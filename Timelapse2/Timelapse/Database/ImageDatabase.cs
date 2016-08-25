@@ -165,6 +165,14 @@ namespace Timelapse.Database
                                 dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.Date];
                                 imageRow.Add(new ColumnTuple(dataLabel, imageProperties.Date));
                                 break;
+                            case Constants.DatabaseColumn.DateTime:
+                                dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.DateTime];
+                                imageRow.Add(new ColumnTuple(dataLabel, imageProperties.DateTime));
+                                break;
+                            case Constants.DatabaseColumn.UtcOffset:
+                                dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.UtcOffset];
+                                imageRow.Add(new ColumnTuple(dataLabel, imageProperties.UtcOffset));
+                                break;
                             case Constants.DatabaseColumn.Time:
                                 // Add the time
                                 dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.Time];
@@ -284,6 +292,7 @@ namespace Timelapse.Database
             int allImages = (int)ImageFilter.All;
             columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.Filter, Constants.Sql.Text, allImages));
             columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.Text));
+            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.TimeZone, Constants.Sql.Text));
             this.Database.CreateTable(Constants.Database.ImageSetTable, columnDefinitions);
 
             List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>(); // Populate the data for the image set with defaults
@@ -292,6 +301,7 @@ namespace Timelapse.Database
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Row, Constants.DefaultImageRowIndex));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, allImages.ToString()));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True));
+            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.TimeZone, TimeZoneInfo.Local.Id));
             List<List<ColumnTuple>> insertionStatements = new List<List<ColumnTuple>>();
             insertionStatements.Add(columnsToUpdate);
             this.Database.Insert(Constants.Database.ImageSetTable, insertionStatements);
@@ -388,6 +398,24 @@ namespace Timelapse.Database
                 refreshImageDataTable = true;
             }
 
+            if (this.ImageDataTable.ColumnNames.Contains(Constants.DatabaseColumn.DateTime) == false)
+            {
+                long dateTimeID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.DateTime);
+                ControlRow dateTimeControl = this.TemplateTable.Find(dateTimeID);
+                ColumnDefinition columnDefinition = this.CreateImageDataColumnDefinition(dateTimeControl);
+                this.Database.AddColumnToTable(Constants.Database.ImageDataTable, Constants.Database.DateTimePosition, columnDefinition);
+                refreshImageDataTable = true;
+            }
+
+            if (this.ImageDataTable.ColumnNames.Contains(Constants.DatabaseColumn.UtcOffset) == false)
+            {
+                long utcOffsetID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.UtcOffset);
+                ControlRow utcOffsetControl = this.TemplateTable.Find(utcOffsetID);
+                ColumnDefinition columnDefinition = this.CreateImageDataColumnDefinition(utcOffsetControl);
+                this.Database.AddColumnToTable(Constants.Database.ImageDataTable, Constants.Database.UtcOffsetPosition, columnDefinition);
+                refreshImageDataTable = true;
+            }
+
             // deprecate MarkForDeletion and converge to DeleteFlag
             bool hasMarkForDeletion = this.Database.IsColumnInTable(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion);
             bool hasDeleteFlag = this.Database.IsColumnInTable(Constants.Database.ImageDataTable, Constants.DatabaseColumn.DeleteFlag);
@@ -402,6 +430,7 @@ namespace Timelapse.Database
             {
                 // if both MarkForDeletion and DeleteFlag are present drop MarkForDeletion
                 // this is not expected to occur
+                // TODOSAUL: unit test coverage for this
                 this.Database.DeleteColumn(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion);
                 refreshImageDataTable = true;
             }
@@ -440,6 +469,30 @@ namespace Timelapse.Database
                 this.GetImageSet();
                 this.ImageSet.WhitespaceTrimmed = true;
                 this.SyncImageSetToDatabase();
+            }
+
+            bool timeZoneColumnExists = this.Database.IsColumnInTable(Constants.Database.ImageSetTable, Constants.DatabaseColumn.TimeZone);
+            if (!timeZoneColumnExists)
+            {
+                // create default time zone entry
+                this.Database.AddColumnToEndOfTable(Constants.Database.ImageSetTable, new ColumnDefinition(Constants.DatabaseColumn.TimeZone, Constants.Sql.Text));
+                this.GetImageSet();
+                this.ImageSet.TimeZone = TimeZoneInfo.Local.Id;
+                this.SyncImageSetToDatabase();
+
+                // populate DateTime column
+                TimeZoneInfo imageSetTimeZone = this.ImageSet.GetTimeZone();
+                List<ColumnTuplesWithWhere> updateQuery = new List<ColumnTuplesWithWhere>();
+                foreach (ImageRow image in this.ImageDataTable)
+                {
+                    DateTimeOffset imageDateTime;
+                    if (image.TryGetDateTime(imageSetTimeZone, out imageDateTime))
+                    {
+                        image.SetDateAndTime(imageDateTime);
+                        updateQuery.Add(image.GetDateTimeColumnTuples());
+                    }
+                }
+                this.Database.Update(Constants.Database.ImageDataTable, updateQuery);
             }
         }
 
@@ -496,19 +549,13 @@ namespace Timelapse.Database
         public void SelectDataTableImages(ImageFilter filter)
         {
             string query = "Select * FROM " + Constants.Database.ImageDataTable;
-            bool dateFilteringRequired = false;
-            string where = this.GetImagesWhere(filter, out dateFilteringRequired);
+            string where = this.GetImagesWhere(filter);
             if (String.IsNullOrEmpty(where) == false)
             {
                 query += Constants.Sql.Where + where;
             }
 
             DataTable images = this.Database.GetDataTableFromSelect(query);
-            if (dateFilteringRequired)
-            {
-                this.CustomFilter.FilterByDate(images);
-            }
-
             this.ImageDataTable = new ImageDataTable(images);
             this.ImageDataTable.BindDataGrid(this.timelapseDataGrid, this.onImageDataTableRowChanged);
         }
@@ -525,7 +572,7 @@ namespace Timelapse.Database
         /// Get the row matching the specified image or create a new image.  The caller is responsible to add newly created images the database and data table.
         /// </summary>
         /// <returns>true if the image is already in the database</returns>
-        public bool GetOrCreateImage(FileInfo imageFile, out ImageRow imageProperties)
+        public bool GetOrCreateImage(FileInfo imageFile, TimeZoneInfo imageSetTimeZone, out ImageRow imageProperties)
         {
             string initialRootFolderName = Path.GetFileName(this.FolderPath);
             // GetRelativePath() includes the image's file name; remove that from the relative path as it's stored separately
@@ -548,7 +595,7 @@ namespace Timelapse.Database
                 imageProperties = this.ImageDataTable.NewRow(imageFile);
                 imageProperties.InitialRootFolderName = initialRootFolderName;
                 imageProperties.RelativePath = relativePath;
-                imageProperties.SetDateAndTimeFromFileInfo(this.FolderPath);
+                imageProperties.SetDateAndTimeFromFileInfo(this.FolderPath, imageSetTimeZone);
                 return false;
             }
         }
@@ -566,11 +613,10 @@ namespace Timelapse.Database
         public int GetImageCount(ImageFilter imageQuality)
         {
             string query = "Select Count(*) FROM " + Constants.Database.ImageDataTable;
-            bool dateFilteringRequired = false;
-            string where = this.GetImagesWhere(imageQuality, out dateFilteringRequired);
+            string where = this.GetImagesWhere(imageQuality);
             if (String.IsNullOrEmpty(where))
             {
-                if ((imageQuality == ImageFilter.Custom) && (dateFilteringRequired == false))
+                if (imageQuality == ImageFilter.Custom)
                 {
                     // if no custom filter search terms are selected the image count is undefined as no filter is in operation
                     return -1;
@@ -582,11 +628,6 @@ namespace Timelapse.Database
                 query += Constants.Sql.Where + where;
             }
 
-            if (dateFilteringRequired == false)
-            {
-                return this.Database.GetCountFromSelect(query);
-            }
-
             query = "Select * FROM " + Constants.Database.ImageDataTable;
             if (String.IsNullOrEmpty(where) == false)
             {
@@ -594,7 +635,6 @@ namespace Timelapse.Database
             }
 
             DataTable images = this.Database.GetDataTableFromSelect(query);
-            this.CustomFilter.FilterByDate(images);
             return images.Rows.Count;
         }
 
@@ -604,9 +644,8 @@ namespace Timelapse.Database
             this.Database.Insert(table, insertionStatements);
         }
 
-        private string GetImagesWhere(ImageFilter imageQuality, out bool dateFilteringRequired)
+        private string GetImagesWhere(ImageFilter imageQuality)
         {
-            dateFilteringRequired = false;
             switch (imageQuality)
             {
                 case ImageFilter.All:
@@ -619,7 +658,7 @@ namespace Timelapse.Database
                 case ImageFilter.MarkedForDeletion:
                     return this.DataLabelFromStandardControlType[Constants.DatabaseColumn.DeleteFlag] + "=\"true\"";
                 case ImageFilter.Custom:
-                    return this.CustomFilter.GetImagesWhere(out dateFilteringRequired);
+                    return this.CustomFilter.GetImagesWhere();
                 default:
                     throw new NotSupportedException(String.Format("Unhandled quality filter {0}.  For custom filters call CustomFilter.GetImagesWhere().", imageQuality));
             }
@@ -631,29 +670,21 @@ namespace Timelapse.Database
         /// </summary>
         public void UpdateImage(long id, string dataLabel, string value)
         {
+            // update the table
+            ImageRow image = this.ImageDataTable.Find(id);
+            image.SetValueFromDatabaseString(dataLabel, value);
+
             // update the row in the database
             ColumnTuplesWithWhere columnToUpdate = new ColumnTuplesWithWhere();
             columnToUpdate.Columns.Add(new ColumnTuple(dataLabel, value)); // Populate the data 
             columnToUpdate.SetWhere(id);
             this.Database.Update(Constants.Database.ImageDataTable, columnToUpdate);
-
-            // update the table
-            ImageRow image = this.ImageDataTable.Find(id);
-            image[dataLabel] = value;
         }
 
-        // Update all rows in the filtered view only with the given key/value pair
-        public void UpdateImagesInDataTable(string dataLabel, string value)
+        // Set one property on all rows in the filtered view to a given value
+        public void UpdateImages(ImageRow valueSource, string dataLabel)
         {
-            List<ColumnTuplesWithWhere> updateQuery = new List<ColumnTuplesWithWhere>();
-            foreach (ImageRow image in this.ImageDataTable)
-            {
-                image[dataLabel] = value;
-                List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
-                updateQuery.Add(new ColumnTuplesWithWhere(columnToUpdate, image.ID));
-            }
-
-            this.Database.Update(Constants.Database.ImageDataTable, updateQuery);
+            this.UpdateImages(valueSource, dataLabel, 0, this.CurrentlySelectedImageCount - 1);
         }
 
         // Given a list of column/value pairs (the string,object) and the FILE name indicating a row, update it
@@ -662,17 +693,27 @@ namespace Timelapse.Database
             this.Database.Update(Constants.Database.ImageDataTable, imagesToUpdate);
         }
 
-        public void UpdateImages(string dataLabel, string value, int fromRow, int toRow)
+        public void UpdateImages(ImageRow valueSource, string dataLabel, int fromIndex, int toIndex)
         {
+            if (fromIndex < 0)
+            {
+                throw new ArgumentOutOfRangeException("fromIndex");
+            }
+            if (toIndex < fromIndex || toIndex > this.CurrentlySelectedImageCount - 1)
+            {
+                throw new ArgumentOutOfRangeException("toIndex");
+            }
+
+            string value = valueSource.GetValueDatabaseString(dataLabel);
             List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
-            for (int index = fromRow; index <= toRow; index++)
+            for (int index = fromIndex; index <= toIndex; index++)
             {
                 // update data table
                 ImageRow image = this.ImageDataTable[index];
-                image[dataLabel] = value;
-                List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
+                image.SetValueFromDatabaseString(dataLabel, value);
 
                 // update database
+                List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
                 ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere(columnToUpdate, image.ID);
                 imagesToUpdate.Add(imageUpdate);
             }
@@ -691,12 +732,12 @@ namespace Timelapse.Database
             {
                 throw new ArgumentOutOfRangeException("adjustment", "The current format of the time column does not support milliseconds.");
             }
-            this.AdjustImageTimes((DateTime imageTime) => { return adjustment; }, startRow, endRow);
+            this.AdjustImageTimes((DateTimeOffset imageTime) => { return imageTime + adjustment; }, startRow, endRow);
         }
 
         // Given a time difference in ticks, update all the date/time field in the database
         // Note that it does NOT update the dataTable - this has to be done outside of this routine by regenerating the datatables with whatever filter is being used..
-        public void AdjustImageTimes(Func<DateTime, TimeSpan> adjustment, int startRow, int endRow)
+        public void AdjustImageTimes(Func<DateTimeOffset, DateTimeOffset> adjustment, int startRow, int endRow)
         {
             if (this.IsImageRowInRange(startRow) == false)
             {
@@ -718,34 +759,32 @@ namespace Timelapse.Database
             // We now have an unfiltered temporary data table
             // Get the original value of each, and update each date by the corrected amount if possible
             List<ImageRow> imagesToAdjust = new List<ImageRow>();
+            TimeZoneInfo imageSetTimeZone = this.ImageSet.GetTimeZone();
             TimeSpan mostRecentAdjustment = TimeSpan.Zero;
             for (int row = startRow; row <= endRow; ++row)
             { 
                 ImageRow image = this.ImageDataTable[row];
-                DateTime imageDateTime;
-                if (image.TryGetDateTime(out imageDateTime))
+                DateTimeOffset currentImageDateTime;
+                if (image.TryGetDateTime(imageSetTimeZone, out currentImageDateTime))
                 {
                     // adjust the date/time
-                    mostRecentAdjustment = adjustment.Invoke(imageDateTime);
-                    if (mostRecentAdjustment == TimeSpan.Zero)
+                    DateTimeOffset newImageDateTime = adjustment.Invoke(currentImageDateTime);
+                    if (newImageDateTime == currentImageDateTime)
                     {
                         continue;
                     }
-                    imageDateTime += mostRecentAdjustment;
-                    image.SetDateAndTime(imageDateTime);
+                    mostRecentAdjustment = newImageDateTime - currentImageDateTime;
+                    image.SetDateAndTime(newImageDateTime);
                     imagesToAdjust.Add(image);
                 }
                 // Note that there is no else, which means we skip dates that can't be retrieved properly
             }
 
-            // Now update the actual database with the new date/time values stored in the temporary table
+            // update the database with the new date/time values
             List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
             foreach (ImageRow image in imagesToAdjust)
             {
-                List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>();                       // Update the date and time
-                columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, image.Date));
-                columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Time, image.Time));
-                imagesToUpdate.Add(new ColumnTuplesWithWhere(columnsToUpdate, image.ID));
+                imagesToUpdate.Add(image.GetDateTimeColumnTuples());
             }
 
             if (imagesToUpdate.Count > 0)
@@ -793,27 +832,18 @@ namespace Timelapse.Database
             List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
             ImageRow firstImage = this.ImageDataTable[startRow];
             ImageRow lastImage = null;
-            DateTime mostRecentOriginalDate = DateTime.MinValue;
-            DateTime mostRecentReversedDate = DateTime.MinValue;
+            TimeZoneInfo imageSetTimeZone = this.ImageSet.GetTimeZone();
+            DateTimeOffset mostRecentOriginalDateTime = DateTime.MinValue;
+            DateTimeOffset mostRecentReversedDateTime = DateTime.MinValue;
             for (int row = startRow; row <= endRow; row++)
             {
                 ImageRow image = this.ImageDataTable[row];
-                DateTime originalDateTime;
-                DateTime reversedDate;
-                if (image.TryGetDateTime(out originalDateTime))
+                DateTimeOffset originalDateTime;
+                DateTimeOffset reversedDateTime;
+                if (image.TryGetDateTime(imageSetTimeZone, out originalDateTime))
                 {
-                    // If we fail on any of these, continue on to the next date
-                    if (originalDateTime.Day > Constants.MonthsInYear)
+                    if (DateTimeHandler.TrySwapDayMonth(originalDateTime, out reversedDateTime) == false)
                     {
-                        continue;
-                    }
-                    try
-                    {
-                        reversedDate = new DateTime(originalDateTime.Year, originalDateTime.Day, originalDateTime.Month); // we have swapped the day with the month
-                    }
-                    catch (Exception exception)
-                    {
-                        Debug.Fail(String.Format("Reverse of date '{0}' failed.", image.Date), exception.ToString());
                         continue;
                     }
                 }
@@ -823,12 +853,11 @@ namespace Timelapse.Database
                 }
 
                 // Now update the actual database with the new date/time values stored in the temporary table
-                List<ColumnTuple> columnToUpdate = new List<ColumnTuple>();               // Update the date 
-                columnToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Date, DateTimeHandler.ToStandardDateString(reversedDate)));
-                imagesToUpdate.Add(new ColumnTuplesWithWhere(columnToUpdate, image.ID));
+                image.SetDateAndTime(reversedDateTime);
+                imagesToUpdate.Add(image.GetDateTimeColumnTuples());
                 lastImage = image;
-                mostRecentOriginalDate = originalDateTime;
-                mostRecentReversedDate = reversedDate;
+                mostRecentOriginalDateTime = originalDateTime;
+                mostRecentReversedDateTime = reversedDateTime;
             }
 
             if (imagesToUpdate.Count > 0)
@@ -838,7 +867,7 @@ namespace Timelapse.Database
                 StringBuilder log = new StringBuilder(Environment.NewLine);
                 log.AppendFormat("System entry: Swapped days and months for {0} files.{1}", imagesToUpdate.Count, Environment.NewLine);
                 log.AppendFormat("The first file adjusted was '{0}' and the last '{1}'.{2}", firstImage.FileName, lastImage.FileName, Environment.NewLine);
-                log.AppendFormat("The last file's date was changed from '{0}' to '{1}'.{2}", DateTimeHandler.ToStandardDateString(mostRecentOriginalDate), DateTimeHandler.ToStandardDateString(mostRecentReversedDate), Environment.NewLine);
+                log.AppendFormat("The last file's date was changed from '{0}' to '{1}'.{2}", DateTimeHandler.ToDisplayDateString(mostRecentOriginalDateTime), DateTimeHandler.ToDisplayDateString(mostRecentReversedDateTime), Environment.NewLine);
                 this.AppendToImageSetLog(log);
             }
         }
@@ -1054,10 +1083,28 @@ namespace Timelapse.Database
 
         private ColumnDefinition CreateImageDataColumnDefinition(ControlRow control)
         {
-            { 
+            if (control.DataLabel == Constants.DatabaseColumn.DateTime)
+            {
+                return new ColumnDefinition(control.DataLabel, "DATETIME", DateTimeHandler.ToDatabaseDateTimeString(Constants.ControlDefault.DateTimeValue));
+            }
+            if (control.DataLabel == Constants.DatabaseColumn.UtcOffset)
+            {
+                // UTC offsets are typically represented as TimeSpans but the least awkward way to store them in SQLite is as a real column containing the offset in
+                // hours.  This is because SQLite
+                // - handles TIME columns as DateTime rather than TimeSpan, requiring the associated DataTable column also be of type DateTime
+                // - doesn't support negative values in time formats, requiring offsets for time zones west of Greenwich be represented as positive values
+                // - imposes an upper bound of 24 hours on time formats, meaning the 26 hour range of UTC offsets (UTC-12 to UTC+14) cannot be accomodated
+                // - lacks support for DateTimeOffset, so whilst offset information can be written to the database it cannot be read from the database as .NET
+                //   supports only DateTimes whose offset matches the current system time zone
+                // Storing offsets as ticks, milliseconds, seconds, minutes, or days offers equivalent functionality.  Potential for rounding error in roundtrip 
+                // calculations on offsets is similar to hours for all formats other than an INTEGER (long) column containing ticks.  Ticks are a common 
+                // implementation choice but testing shows no roundoff errors at single tick precision (100 nanoseconds) when using hours.  Even with TimeSpans 
+                // near the upper bound of 256M hours, well beyond the plausible range of time zone calculations.  So there does not appear to be any reason to 
+                // avoid using hours for readability when working with the database directly.
+                return new ColumnDefinition(control.DataLabel, "REAL", DateTimeHandler.ToDatabaseUtcOffsetString(Constants.ControlDefault.DateTimeValue.Offset));
             }
             if (String.IsNullOrWhiteSpace(control.DefaultValue))
-            {
+            { 
                  return new ColumnDefinition(control.DataLabel, Constants.Sql.Text);
             }
             return new ColumnDefinition(control.DataLabel, Constants.Sql.Text, control.DefaultValue);

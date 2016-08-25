@@ -1,43 +1,18 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Globalization;
 using System.IO;
 using Timelapse.Database;
-using Timelapse.Editor;
+using Timelapse.Util;
 
 namespace Timelapse.UnitTests
 {
     public class ImageExpectations
     {
-        public ImageExpectations()
-        {
-            this.RelativePath = String.Empty;
-            this.UserDefinedColumnsByDataLabel = new Dictionary<string, string>();
-        }
+        private TimeZoneInfo timeZoneForDateTime;
 
-        public ImageExpectations(ImageExpectations other)
-            : this()
-        {
-            this.Date = other.Date;
-            this.DarkPixelFraction = other.DarkPixelFraction;
-            this.FileName = other.FileName;
-            this.ID = other.ID;
-            this.InitialRootFolderName = other.InitialRootFolderName;
-            this.IsColor = other.IsColor;
-            this.DeleteFlag = other.DeleteFlag;
-            this.Quality = other.Quality;
-            this.RelativePath = other.RelativePath;
-            this.SkipDateTimeVerification = other.SkipDateTimeVerification;
-            this.Time = other.Time;
-
-            foreach (KeyValuePair<string, string> columnExpectation in other.UserDefinedColumnsByDataLabel)
-            {
-                this.UserDefinedColumnsByDataLabel.Add(columnExpectation.Key, columnExpectation.Value);
-            }
-        }
-
-        public string Date { get; set; }
+        public DateTimeOffset DateTime { get; set; }
 
         public double DarkPixelFraction { get; set; }
 
@@ -57,9 +32,54 @@ namespace Timelapse.UnitTests
 
         public bool SkipDateTimeVerification { get; set; }
 
-        public string Time { get; set; }
-
         public Dictionary<string, string> UserDefinedColumnsByDataLabel { get; private set; }
+
+        public ImageExpectations(TimeZoneInfo timeZone)
+        {
+            this.RelativePath = String.Empty;
+            this.UserDefinedColumnsByDataLabel = new Dictionary<string, string>();
+            this.timeZoneForDateTime = timeZone;
+        }
+
+        public ImageExpectations(ImageExpectations other)
+            : this(other.timeZoneForDateTime)
+        {
+            this.DateTime = other.DateTime;
+            this.DarkPixelFraction = other.DarkPixelFraction;
+            this.FileName = other.FileName;
+            this.ID = other.ID;
+            this.InitialRootFolderName = other.InitialRootFolderName;
+            this.IsColor = other.IsColor;
+            this.DeleteFlag = other.DeleteFlag;
+            this.Quality = other.Quality;
+            this.RelativePath = other.RelativePath;
+            this.SkipDateTimeVerification = other.SkipDateTimeVerification;
+
+            foreach (KeyValuePair<string, string> columnExpectation in other.UserDefinedColumnsByDataLabel)
+            {
+                this.UserDefinedColumnsByDataLabel.Add(columnExpectation.Key, columnExpectation.Value);
+            }
+        }
+
+        private DateTimeOffset ConvertDateTimeToTimeZone(TimeZoneInfo imageSetDateTime)
+        {
+            bool currentlyDaylightSavings = this.timeZoneForDateTime.IsDaylightSavingTime(this.DateTime);
+            TimeSpan utcOffsetChange = imageSetDateTime.BaseUtcOffset - this.timeZoneForDateTime.BaseUtcOffset;
+            DateTimeOffset expectedDateTime = this.DateTime.ToNewOffset(utcOffsetChange);
+
+            bool newlyDaylightSavings = imageSetDateTime.IsDaylightSavingTime(this.DateTime);
+            if (newlyDaylightSavings != currentlyDaylightSavings)
+            {
+                TimeSpan daylightSavingsAdjustment = TimeSpan.FromHours(-1.0);
+                if (newlyDaylightSavings && (currentlyDaylightSavings == false))
+                {
+                    daylightSavingsAdjustment = daylightSavingsAdjustment.Duration();
+                }
+                expectedDateTime = expectedDateTime.ToNewOffset(daylightSavingsAdjustment);
+            }
+
+            return expectedDateTime;
+        }
 
         public ImageRow GetImageProperties(ImageDatabase imageDatabase)
         {
@@ -73,9 +93,11 @@ namespace Timelapse.UnitTests
                 imageFilePath = Path.Combine(imageDatabase.FolderPath, this.RelativePath, this.FileName);
             }
 
+            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
             ImageRow imageProperties;
-            imageDatabase.GetOrCreateImage(new FileInfo(imageFilePath), out imageProperties);
+            imageDatabase.GetOrCreateImage(new FileInfo(imageFilePath), imageSetTimeZone, out imageProperties);
             // imageProperties.Date is defaulted by constructor
+            // imageProperties.DateTime is defaulted by constructor
             // imageProperties.FileName is set by constructor
             // imageProperties.ID is set when images are refreshed after being added to the database
             // imageProperties.ImageQuality is defaulted by constructor
@@ -86,34 +108,15 @@ namespace Timelapse.UnitTests
             return imageProperties;
         }
 
-        public void Verify(DataRow image)
+        public static DateTimeOffset ParseDateTimeOffsetString(string dateTimeAsString)
         {
-            // this.DarkPixelFraction isn't applicable
-            Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.File) == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, image[Constants.DatabaseColumn.File]);
-            Assert.IsTrue(image.GetID() == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, image.GetID());
-            // this.IsColor isn't applicable
-            Assert.IsTrue(image.GetBooleanField(Constants.DatabaseColumn.DeleteFlag) == this.DeleteFlag, "{0}: Expected DeleteFlag '{1}' but found '{2}'.", this.FileName, this.DeleteFlag, image.GetStringField(Constants.DatabaseColumn.DeleteFlag));
-            Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.Folder) == this.InitialRootFolderName, "{0}: Expected InitialRootFolderName '{1}' but found '{2}'.", this.FileName, this.InitialRootFolderName, image.GetStringField(Constants.DatabaseColumn.Folder));
-            Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.ImageQuality) == this.Quality.ToString(), "{0}: Expected ImageQuality '{1}' but found '{2}'.", this.FileName, this.Quality, image.GetStringField(Constants.DatabaseColumn.ImageQuality));
-            Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.RelativePath) == this.RelativePath, "{0}: Expected RelativePath '{1}' but found '{2}'.", this.FileName, this.RelativePath, image.GetStringField(Constants.DatabaseColumn.RelativePath));
-            // this.UserDefinedColumnsByDataLabel isn't current applicable
-
-            // bypass checking of Date and Time properties if requested, for example if the camera didn't generate image taken metadata
-            if (this.SkipDateTimeVerification == false)
-            {
-                Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.Date) == this.Date, "{0}: Expected Date '{1}' but found '{2}'.", this.FileName, this.Date, image[Constants.DatabaseColumn.Date]);
-                Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.Time) == this.Time, "{0}: Expected Time '{1}' but found '{2}'.", this.FileName, this.Time, image.GetStringField(Constants.DatabaseColumn.Time));
-            }
-
-            foreach (KeyValuePair<string, string> userFieldExpectation in this.UserDefinedColumnsByDataLabel)
-            {
-                Assert.IsTrue(image.GetStringField(userFieldExpectation.Key) == userFieldExpectation.Value, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userFieldExpectation.Key, userFieldExpectation.Value, image.GetStringField(userFieldExpectation.Key));
-            }
+            return DateTimeOffset.ParseExact(dateTimeAsString, TestConstant.DateTimeWithOffsetFormat, CultureInfo.InvariantCulture);
         }
 
-        public void Verify(ImageRow imageProperties)
+        public void Verify(ImageRow imageProperties, TimeZoneInfo timeZone)
         {
             // this.DarkPixelFraction isn't applicable
+            Assert.IsTrue(imageProperties.DateTime.Kind == DateTimeKind.Utc);
             Assert.IsTrue(imageProperties.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, imageProperties.FileName);
             Assert.IsTrue(imageProperties.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, imageProperties.ID);
             Assert.IsTrue(imageProperties.ImageQuality == this.Quality, "{0}: Expected ImageQuality '{1}' but found '{2}'.", this.FileName, this.Quality, imageProperties.ImageQuality);
@@ -125,8 +128,17 @@ namespace Timelapse.UnitTests
             // bypass checking of Date and Time properties if requested, for example if the camera didn't generate image taken metadata
             if (this.SkipDateTimeVerification == false)
             {
-                Assert.IsTrue(imageProperties.Date == this.Date, "{0}: Expected Date '{1}' but found '{2}'.", this.FileName, this.Date, imageProperties.Date);
-                Assert.IsTrue(imageProperties.Time == this.Time, "{0}: Expected Time '{1}' but found '{2}'.", this.FileName, this.Time, imageProperties.Time);
+                DateTimeOffset imageDateTime = imageProperties.GetDateTime(timeZone);
+                DateTimeOffset expectedDateTime = this.ConvertDateTimeToTimeZone(timeZone);
+                Assert.IsTrue(imageDateTime.UtcDateTime == expectedDateTime.UtcDateTime, "{0}: Expected date time '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(imageDateTime.UtcDateTime));
+                Assert.IsTrue(imageDateTime.Offset == expectedDateTime.Offset, "{0}: Expected date time offset '{1}' but found '{2}'.", this.FileName, expectedDateTime.Offset, imageDateTime.Offset);
+
+                string expectedDate = DateTimeHandler.ToDisplayDateString(expectedDateTime);
+                Assert.IsTrue(imageProperties.Date == expectedDate, "{0}: Expected Date '{1}' but found '{2}'.", this.FileName, expectedDate, imageProperties.Date);
+                Assert.IsTrue(imageProperties.DateTime == expectedDateTime.UtcDateTime, "{0}: Expected DateTime '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(imageProperties.DateTime));
+                string expectedTime = DateTimeHandler.ToDisplayTimeString(expectedDateTime);
+                Assert.IsTrue(imageProperties.Time == expectedTime, "{0}: Expected Time '{1}' but found '{2}'.", this.FileName, expectedTime, imageProperties.Time);
+                Assert.IsTrue(imageProperties.UtcOffset == expectedDateTime.Offset, "{0}: Expected UtcOffset '{1}' but found '{2}'.", this.FileName, expectedDateTime.Offset, imageProperties.UtcOffset);
             }
         }
     }

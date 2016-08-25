@@ -64,23 +64,24 @@ namespace Timelapse.Dialog
                 // Pass 1. Check to see what dates/times need updating.
                 List<ImageRow> imagesToAdjust = new List<ImageRow>();
                 int count = this.database.CurrentlySelectedImageCount;
+                TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
                 for (int row = 0; row < count; ++row)
                 {
                     // We will store the various times here
                     ImageRow image = this.database.ImageDataTable[row];
-                    DateTime originalDateTime;
+                    DateTimeOffset originalDateTime;
                     string feedbackMessage = String.Empty;
-                    bool result = image.TryGetDateTime(out originalDateTime); // If the result is false, we know that the originalDateTime will be reset to 01-Jan-0001 00:00:00
+                    bool result = image.TryGetDateTime(imageSetTimeZone, out originalDateTime); // If the result is false, we know that the originalDateTime will be reset to 01-Jan-0001 00:00:00
                     try
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just to the catch.
                         BitmapSource bitmapSource = image.LoadBitmap(this.database.FolderPath);
-                        DateTimeAdjustment imageTimeAdjustment = image.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata);
+                        DateTimeAdjustment imageTimeAdjustment = image.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata, imageSetTimeZone);
                         switch (imageTimeAdjustment)
                         {
                             case DateTimeAdjustment.MetadataNotUsed:
-                                image.SetDateAndTimeFromFileInfo(this.database.FolderPath);  // We couldn't read the metadata, so get a candidate date/time from the file
+                                image.SetDateAndTimeFromFileInfo(this.database.FolderPath, imageSetTimeZone);  // We couldn't read the metadata, so get a candidate date/time from the file
                                 feedbackMessage = "Using file timestamp: ";
                                 break;
                             // includes DateTimeAdjustment.SameFileAndMetadataTime
@@ -89,8 +90,8 @@ namespace Timelapse.Dialog
                                 break;
                         }
 
-                        DateTime rescannedDateTime;
-                        result = image.TryGetDateTime(out rescannedDateTime);
+                        DateTimeOffset rescannedDateTime;
+                        result = image.TryGetDateTime(imageSetTimeZone, out rescannedDateTime);
                         if (result == false)
                         {
                             feedbackMessage += "invalid date and time, skipping.";
@@ -110,12 +111,22 @@ namespace Timelapse.Dialog
 
                         if (rescannedDateTime.TimeOfDay == originalDateTime.TimeOfDay)
                         {
-                            feedbackMessage += "same time";
+                            feedbackMessage += "same time, ";
                         }
                         else
                         {
                             updateNeeded = true;
-                            feedbackMessage += "different time";
+                            feedbackMessage += "different time, ";
+                        }
+
+                        if (rescannedDateTime.Offset == originalDateTime.Offset)
+                        {
+                            feedbackMessage += "same UTC offset";
+                        }
+                        else
+                        {
+                            updateNeeded = true;
+                            feedbackMessage += "different UTC offset";
                         }
 
                         if (updateNeeded)
@@ -145,14 +156,8 @@ namespace Timelapse.Dialog
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
                 foreach (ImageRow image in imagesToAdjust)
                 {
-                    List<ColumnTuple> imageUpdate = new List<ColumnTuple>()
-                    {
-                        new ColumnTuple(Constants.DatabaseColumn.Date, image.Date),
-                        new ColumnTuple(Constants.DatabaseColumn.Time, image.Time)
-                    };
-                    imagesToUpdate.Add(new ColumnTuplesWithWhere(imageUpdate, image.ID));
+                    imagesToUpdate.Add(image.GetDateTimeColumnTuples());
                 }
-
                 database.UpdateImages(imagesToUpdate);  // Write the updates to the database
                 backgroundWorker.ReportProgress(0, new FeedbackTuple(null, "Done."));
             };

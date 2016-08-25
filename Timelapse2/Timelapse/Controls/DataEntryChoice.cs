@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Timelapse.Database;
 
 namespace Timelapse.Controls
 {
@@ -20,8 +21,8 @@ namespace Timelapse.Controls
             set { this.ContentControl.SelectedValue = value; }
         }
 
-        public DataEntryChoice(string dataLabel, DataEntryControls styleProvider, string choicesAsString)
-            : base(dataLabel, styleProvider, null, ControlLabelStyle.LabelCodeBar)
+        public DataEntryChoice(ControlRow control, DataEntryControls styleProvider, string choicesAsString)
+            : base(control, styleProvider, null, ControlLabelStyle.LabelCodeBar)
         {
             // The look of the combobox
             this.ContentControl.Height = 25;
@@ -32,10 +33,9 @@ namespace Timelapse.Controls
             this.ContentControl.BorderBrush = Brushes.LightBlue;
 
             // The behaviour of the combobox
-            this.ContentControl.IsTextSearchEnabled = true;
             this.ContentControl.Focusable = true;
-            this.ContentControl.IsReadOnly = true;
             this.ContentControl.IsEditable = false;
+            this.ContentControl.IsTextSearchEnabled = true;
 
             // Callback used to allow Enter to select the highlit item
             this.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
@@ -61,15 +61,15 @@ namespace Timelapse.Controls
         // and sets the combobox to that value.
         private void ContentCtl_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == System.Windows.Input.Key.Return || e.Key == System.Windows.Input.Key.Enter)
+            if (e.Key == Key.Return || e.Key == Key.Enter)
             {
-                ComboBox cb = sender as ComboBox;
-                for (int i = 0; i < cb.Items.Count; i++)
+                ComboBox comboBox = sender as ComboBox;
+                for (int i = 0; i < comboBox.Items.Count; i++)
                 {
-                    ComboBoxItem cbi = (ComboBoxItem)cb.ItemContainerGenerator.ContainerFromIndex(i);
-                    if (cbi.IsHighlighted)
+                    ComboBoxItem comboBoxItem = (ComboBoxItem)comboBox.ItemContainerGenerator.ContainerFromIndex(i);
+                    if (comboBoxItem != null && comboBoxItem.IsHighlighted)
                     {
-                        cb.SelectedValue = cbi.Content.ToString();
+                        comboBox.SelectedValue = comboBoxItem.Content.ToString();
                     }
                 }
             }

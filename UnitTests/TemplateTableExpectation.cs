@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using Timelapse.Database;
-using Timelapse.Editor;
+using Timelapse.Util;
 
 namespace Timelapse.UnitTests
 {
@@ -11,6 +11,8 @@ namespace Timelapse.UnitTests
         public ControlExpectations RelativePath { get; private set; }
         public ControlExpectations Folder { get; private set; }
         public ControlExpectations Date { get; private set; }
+        public ControlExpectations DateTime { get; private set; }
+        public ControlExpectations UtcOffset { get; private set; }
         public ControlExpectations Time { get; private set; }
         public ControlExpectations ImageQuality { get; private set; }
         public ControlExpectations DeleteFlag { get; private set; }
@@ -40,6 +42,21 @@ namespace Timelapse.UnitTests
             this.Folder.TextBoxWidth = Int32.Parse(Constants.ControlDefault.FolderWidth);
             this.Folder.Tooltip = Constants.ControlDefault.FolderTooltip;
             this.Folder.Type = Constants.DatabaseColumn.Folder;
+            this.DateTime = ControlExpectations.CreateNote(Constants.DatabaseColumn.DateTime, id++);
+            this.DateTime.Copyable = false;
+            this.DateTime.DefaultValue = DateTimeHandler.ToDatabaseDateTimeString(Constants.ControlDefault.DateTimeValue);
+            this.DateTime.List = Constants.ControlDefault.Value;
+            this.DateTime.TextBoxWidth = Int32.Parse(Constants.ControlDefault.DateTimeWidth);
+            this.DateTime.Tooltip = Constants.ControlDefault.DateTimeTooltip;
+            this.DateTime.Type = Constants.DatabaseColumn.DateTime;
+            this.UtcOffset = ControlExpectations.CreateNote(Constants.DatabaseColumn.UtcOffset, id++);
+            this.UtcOffset.Copyable = false;
+            this.UtcOffset.DefaultValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constants.ControlDefault.DateTimeValue.Offset);
+            this.UtcOffset.List = Constants.ControlDefault.Value;
+            this.UtcOffset.TextBoxWidth = Int32.Parse(Constants.ControlDefault.UtcOffsetWidth);
+            this.UtcOffset.Tooltip = Constants.ControlDefault.UtcOffsetTooltip;
+            this.UtcOffset.Type = Constants.DatabaseColumn.UtcOffset;
+            this.UtcOffset.Visible = false;
             this.Date = ControlExpectations.CreateNote(Constants.DatabaseColumn.Date, id++);
             this.Date.Copyable = false;
             this.Date.DefaultValue = Constants.ControlDefault.Value;
@@ -47,6 +64,7 @@ namespace Timelapse.UnitTests
             this.Date.TextBoxWidth = Int32.Parse(Constants.ControlDefault.DateWidth);
             this.Date.Tooltip = Constants.ControlDefault.DateTooltip;
             this.Date.Type = Constants.DatabaseColumn.Date;
+            this.Date.Visible = false;
             this.Time = ControlExpectations.CreateNote(Constants.DatabaseColumn.Time, id++);
             this.Time.Copyable = false;
             this.Time.DefaultValue = Constants.ControlDefault.Value;
@@ -54,6 +72,7 @@ namespace Timelapse.UnitTests
             this.Time.TextBoxWidth = Int32.Parse(Constants.ControlDefault.TimeWidth);
             this.Time.Tooltip = Constants.ControlDefault.TimeTooltip;
             this.Time.Type = Constants.DatabaseColumn.Time;
+            this.Time.Visible = false;
             this.ImageQuality = ControlExpectations.CreateChoice(Constants.DatabaseColumn.ImageQuality, id++);
             this.ImageQuality.Copyable = false;
             this.ImageQuality.DefaultValue = Constants.ControlDefault.Value;
@@ -105,6 +124,8 @@ namespace Timelapse.UnitTests
             this.File.Verify(templateDatabase.TemplateTable[rowIndex++]);
             this.RelativePath.Verify(templateDatabase.TemplateTable[rowIndex++]);
             this.Folder.Verify(templateDatabase.TemplateTable[rowIndex++]);
+            this.DateTime.Verify(templateDatabase.TemplateTable[rowIndex++]);
+            this.UtcOffset.Verify(templateDatabase.TemplateTable[rowIndex++]);
             this.Date.Verify(templateDatabase.TemplateTable[rowIndex++]);
             this.Time.Verify(templateDatabase.TemplateTable[rowIndex++]);
             this.ImageQuality.Verify(templateDatabase.TemplateTable[rowIndex++]);

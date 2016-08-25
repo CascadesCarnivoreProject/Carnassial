@@ -35,7 +35,7 @@
                     <Label Content="Original date/time:" Height="28" Name="label2" Margin="10,0,0,0" HorizontalContentAlignment="Right" FontSize="12" FontWeight="Bold" VerticalAlignment="Top" Grid.Row="0" Grid.Column="0"/>
                     <Label Name="OriginalDate" MinWidth="140" Content="yyyy-MMM-dd HH:mm.ss" FontWeight="Normal" FontSize="12" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="0" Grid.Column="1" Margin="0,2,0,0" />
                     <Label Content="New date/time:" Height="28"  Margin="10,0,0,0" HorizontalContentAlignment="Right"  FontSize="12" FontWeight="Bold" VerticalAlignment="Top" Grid.Row="1" Grid.Column="0"/>
-                    <Label Name="lblNewDate" MinWidth="140" Content="yyyy-MMM-dd HH:mm.ss" FontWeight="Normal" FontSize="12" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="1" Grid.Column="1" />
+                    <Label Name="NewDate" MinWidth="140" Content="yyyy-MMM-dd HH:mm.ss" FontWeight="Normal" FontSize="12" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="1" Grid.Column="1" />
                 </Grid>
                 <GroupBox Header="Time Correction" FontWeight="Bold" Margin="10,0,10,0">
                     <StackPanel>
@@ -58,7 +58,7 @@
                 <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
                 <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">_Okay</Button>
             </StackPanel>
-            <Image Name="imgDateImage" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" DockPanel.Dock="Top" HorizontalAlignment="Stretch" />
+            <Image Name="Image" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" DockPanel.Dock="Top" HorizontalAlignment="Stretch" />
         </DockPanel>
     </DockPanel>
 </Window>

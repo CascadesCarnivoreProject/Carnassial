@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
@@ -29,6 +30,7 @@ namespace Timelapse.Database
             }
             SQLiteConnectionStringBuilder connectionStringBuilder = new SQLiteConnectionStringBuilder();
             connectionStringBuilder.DataSource = inputFile;
+            connectionStringBuilder.DateTimeKind = DateTimeKind.Utc;
             this.connectionString = connectionStringBuilder.ConnectionString;
         }
 
@@ -52,6 +54,18 @@ namespace Timelapse.Database
             query = query.Remove(query.Length - Constants.Sql.Comma.Length - Environment.NewLine.Length);         // remove last comma / new line and replace with );
             query += Constants.Sql.CloseParenthesis + Constants.Sql.Semicolon;
             this.ExecuteNonQuery(query);
+        }
+
+        private void DataTableColumns_Changed(object sender, CollectionChangeEventArgs columnChange)
+        {
+            // DateTime columns default to DataSetDateTime.UnspecifiedLocal, which converts fully qualified DateTimes returned from SQLite to DateTimeKind.Unspecified
+            // Since the DATETIME and TIME columns in Timelapse are UTC change this to DataSetDateTime.Utc to get DateTimeKind.Utc.  This must be done before any rows 
+            // are added to the table.  This callback is the only way to access the column schema from within DataTable.Load() to make the change.
+            DataColumn columnChanged = (DataColumn)columnChange.Element;
+            if (columnChanged.DataType == typeof(DateTime))
+            {
+                columnChanged.DateTimeMode = DataSetDateTime.Utc;
+            }
         }
 
         public void Insert(string tableName, List<List<ColumnTuple>> insertionStatements)
@@ -115,6 +129,7 @@ namespace Timelapse.Database
                         using (SQLiteDataReader reader = command.ExecuteReader())
                         {
                             DataTable dataTable = new DataTable();
+                            dataTable.Columns.CollectionChanged += this.DataTableColumns_Changed;
                             dataTable.Load(reader);
                             return dataTable;
                         }
@@ -444,8 +459,10 @@ namespace Timelapse.Database
                     // Create a new table 
                     string destTable = tableName + "NEW";
                     string sql = "CREATE TABLE " + destTable + " (" + newSchema + ")";
-                    SQLiteCommand command = new SQLiteCommand(sql, connection);
-                    command.ExecuteNonQuery();
+                    using (SQLiteCommand command = new SQLiteCommand(sql, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
 
                     // Copy the old table's contents to the new table
                     this.CopyAllValuesFromTable(connection, tableName, tableName, destTable);
@@ -489,8 +506,10 @@ namespace Timelapse.Database
                     // Create a new table 
                     string destTable = sourceTable + "NEW";
                     string sql = "CREATE TABLE " + destTable + " (" + newSchema + ")";
-                    SQLiteCommand command = new SQLiteCommand(sql, connection);
-                    command.ExecuteNonQuery();
+                    using (SQLiteCommand command = new SQLiteCommand(sql, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
 
                     // Copy the old table's contents to the new table
                     this.CopyAllValuesFromTable(connection, destTable, sourceTable, destTable);
@@ -542,8 +561,10 @@ namespace Timelapse.Database
                     // Create a new table 
                     string destTable = sourceTable + "NEW";
                     string sql = "CREATE TABLE " + destTable + " (" + newSchema + ")";
-                    SQLiteCommand command = new SQLiteCommand(sql, connection);
-                    command.ExecuteNonQuery();
+                    using (SQLiteCommand command = new SQLiteCommand(sql, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
 
                     // Copy the old table's contents to the new table
                     this.CopyAllValuesBetweenTables(connection, sourceTable, destTable, sourceTable, destTable);
@@ -599,8 +620,10 @@ namespace Timelapse.Database
         private void AddColumnToEndOfTable(SQLiteConnection connection, string tableName, string columnDefinition)
         {
             string sql = "ALTER TABLE " + tableName + " ADD COLUMN " + columnDefinition;
-            SQLiteCommand command = new SQLiteCommand(sql, connection);
-            command.ExecuteNonQuery();
+            using (SQLiteCommand command = new SQLiteCommand(sql, connection))
+            {
+                command.ExecuteNonQuery();
+            }
         }
 
         /// <summary>
@@ -611,8 +634,10 @@ namespace Timelapse.Database
             string commaSeparatedColumns = this.GetColumnNamesAsString(connection, schemaFromTable);
             string sql = "INSERT INTO " + dataDestinationTable + " (" + commaSeparatedColumns + ") SELECT " + commaSeparatedColumns + " FROM " + dataSourceTable;
 
-            SQLiteCommand command = new SQLiteCommand(sql, connection);
-            command.ExecuteNonQuery();
+            using (SQLiteCommand command = new SQLiteCommand(sql, connection))
+            {
+                command.ExecuteNonQuery();
+            }
         }
 
         /// <summary>
@@ -624,8 +649,10 @@ namespace Timelapse.Database
             string commaSeparatedColumnsDestination = this.GetColumnNamesAsString(connection, schemaFromDestinationTable);
             string sql = "INSERT INTO " + dataDestinationTable + " (" + commaSeparatedColumnsDestination + ") SELECT " + commaSeparatedColumnsSource + " FROM " + dataSourceTable;
 
-            SQLiteCommand command = new SQLiteCommand(sql, connection);
-            command.ExecuteNonQuery();
+            using (SQLiteCommand command = new SQLiteCommand(sql, connection))
+            {
+                command.ExecuteNonQuery();
+            }
         }
 
         /// <summary>
@@ -636,8 +663,10 @@ namespace Timelapse.Database
         private void DropTable(SQLiteConnection connection, string tableName)
         {
             string sql = "DROP TABLE " + tableName;
-            SQLiteCommand command = new SQLiteCommand(sql, connection);
-            command.ExecuteNonQuery();
+            using (SQLiteCommand command = new SQLiteCommand(sql, connection))
+            {
+                command.ExecuteNonQuery();
+            }
         }
 
         private List<string> GetColumnDefinitions(SQLiteConnection connection, string tableName)
@@ -758,18 +787,18 @@ namespace Timelapse.Database
             List<string> columnDefinitions = this.GetColumnDefinitions(connection, tableName);
             int columnToRemove = -1;
             for (int column = 0; column < columnDefinitions.Count; ++column)
-                {
+            {
                 string columnDefinition = columnDefinitions[column];
                 if (columnDefinition.StartsWith(columnName))
-                    {
+                {
                     columnToRemove = column;
-                            break;
-                            }
-                            }
+                    break;
+                }
+            }
             if (columnToRemove == -1)
-                            {
+            {
                 throw new ArgumentOutOfRangeException(String.Format("Column '{0}' not found in table '{1}'.", columnName, tableName));
-                    }
+            }
 
             columnDefinitions.RemoveAt(columnToRemove);
             return String.Join(", ", columnDefinitions);
@@ -837,8 +866,10 @@ namespace Timelapse.Database
         private void RenameTable(SQLiteConnection connection, string tableName, string newTableName)
         {
             string sql = "ALTER TABLE " + tableName + " RENAME TO " + newTableName;
-            SQLiteCommand command = new SQLiteCommand(sql, connection);
-            command.ExecuteNonQuery();
+            using (SQLiteCommand command = new SQLiteCommand(sql, connection))
+            {
+                command.ExecuteNonQuery();
+            }
         }
     }
 }

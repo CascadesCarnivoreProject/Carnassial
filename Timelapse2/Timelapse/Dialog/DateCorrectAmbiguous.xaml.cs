@@ -76,15 +76,16 @@ namespace Timelapse.Dialog
         // If it can't find an ambiguous date, it will return -1.
         private int SearchForNextAmbiguousDateInFilteredImageSet(int startIndex)
         {
+            TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
             for (int index = startIndex; index < this.database.CurrentlySelectedImageCount; index++)
             {
                 ImageRow imageProperties = this.database.ImageDataTable[index];
-                DateTime imageDateTime;
-                if (imageProperties.TryGetDateTime(out imageDateTime) == false)
+                DateTimeOffset imageDateTime;
+                if (imageProperties.TryGetDateTime(imageSetTimeZone, out imageDateTime) == false)
                 {
                     continue; // if we can't get a valid DateTime, skip over this image i.e., don't consider it ambiguous as we can't alter it anyways.
                 }
-                if (imageDateTime.Day <= Constants.MonthsInYear)
+                if (imageDateTime.Day <= Constants.Time.MonthsInYear)
                 {
                     return index; // If the date is ambiguous, return the row index. 
                 }
@@ -109,8 +110,9 @@ namespace Timelapse.Dialog
 
             // Parse the provided starting date. Return -1 if it cannot.
             ImageRow imageProperties = this.database.ImageDataTable[startIndex];
-            DateTime desiredDateTime;
-            if (imageProperties.TryGetDateTime(out desiredDateTime) == false)
+            TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
+            DateTimeOffset desiredDateTime;
+            if (imageProperties.TryGetDateTime(imageSetTimeZone, out desiredDateTime) == false)
             {
                 return -1;  // The starting date is not a valid date
             }
@@ -120,8 +122,8 @@ namespace Timelapse.Dialog
             {
                 // Parse the date for the given row.
                 imageProperties = this.database.ImageDataTable[index];
-                DateTime imageDateTime;
-                if (imageProperties.TryGetDateTime(out imageDateTime) == false)
+                DateTimeOffset imageDateTime;
+                if (imageProperties.TryGetDateTime(imageSetTimeZone, out imageDateTime) == false)
                 {
                     // skip over invalid dates
                     continue; // if we get to an invalid date, return the prior index
@@ -178,17 +180,17 @@ namespace Timelapse.Dialog
 
             // We found an ambiguous date; provide appropriate feedback
             imageProperties = this.database.ImageDataTable[this.ambiguousDatesList[index].StartRange];
-            this.lblOriginalDate.Content = imageProperties.Date;
+            this.OriginalDateLabel.Content = imageProperties.Date;
 
             // If we can't swap the date, we just return the original unaltered date. However, we expect that swapping would always work at this point.
-            string swappedDate;
-            this.lblNewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
+            DateTimeOffset swappedDate;
+            this.NewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : imageProperties.Date;
 
-            this.lblNumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
+            this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
             // Display the image. While we expect it to be on a valid image (our assumption), we can still show a missing or corrupted file if needed
-            this.imgDateImage.Source = imageProperties.LoadBitmap(this.database.FolderPath);
-            this.lblImageName.Content = imageProperties.FileName;
+            this.Image.Source = imageProperties.LoadBitmap(this.database.FolderPath);
+            this.ImageName.Content = imageProperties.FileName;
 
             return true;
         }
@@ -206,17 +208,17 @@ namespace Timelapse.Dialog
             {
                 ImageRow imageProperties;
                 imageProperties = this.database.ImageDataTable[this.ambiguousDatesList[this.ambiguousDatesListIndex].StartRange];
-                this.lblOriginalDate.Content = imageProperties.Date;
+                this.OriginalDateLabel.Content = imageProperties.Date;
 
                 // If we can't swap the date, we just return the original unaltered date. However, we expect that swapping would always work at this point.
-                string swappedDate;
-                this.lblNewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
+                DateTimeOffset swappedDate;
+                this.NewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : imageProperties.Date;
 
-                this.lblNumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
+                this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
                 // Display the image. While we expect it to be on a valid image (our assumption), we can still show a missing or corrupted file if needed
-                this.imgDateImage.Source = imageProperties.LoadBitmap(this.database.FolderPath);
-                this.lblImageName.Content = imageProperties.FileName;
+                this.Image.Source = imageProperties.LoadBitmap(this.database.FolderPath);
+                this.ImageName.Content = imageProperties.FileName;
 
                 // Set the next button and the radio button back to their defaults
                 // As we do this, unlink and then relink the callback as we don't want to invoke the data update
@@ -228,15 +230,15 @@ namespace Timelapse.Dialog
             else
             {
                 // Hide date-specific items so they are no longer visible on the screen
-                this.lblOriginalDate.Visibility = Visibility.Hidden;
-                this.lblNewDate.Visibility = Visibility.Hidden;
+                this.OriginalDateLabel.Visibility = Visibility.Hidden;
+                this.NewDate.Visibility = Visibility.Hidden;
 
                 this.OriginalDate.Visibility = Visibility.Hidden;
                 this.SwappedDate.Visibility = Visibility.Hidden;
 
-                this.lblImageName.Content = "--";
-                this.lblNumberOfImagesWithSameDate.Content = "No ambiguous dates left";
-                this.imgDateImage.Source = null;
+                this.ImageName.Content = "--";
+                this.NumberOfImagesWithSameDate.Content = "No ambiguous dates left";
+                this.Image.Source = null;
             }
         }
         #endregion
@@ -253,7 +255,9 @@ namespace Timelapse.Dialog
                 string newDate = String.Empty;
                 if (ambiguousDate.Swapped)
                 {
-                    DateTimeHandler.TrySwapDayMonth(imageProperties.Date, out newDate);
+                    DateTimeOffset swappedDate;
+                    DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate);
+                    newDate = DateTimeHandler.ToDisplayDateTimeString(swappedDate);
                 }
 
                 string status = ambiguousDate.Swapped ? "Swapped: " : "Unchanged: ";
@@ -294,18 +298,18 @@ namespace Timelapse.Dialog
             }
         }
 
-        // If the user click ok, then exit
-        private void OkButton_Click(object sender, RoutedEventArgs e)
+        private void PreviewChangesButton_Click(object sender, RoutedEventArgs e)
         {
-            // 1st real click of Ok: Show the preview before actually making any changes.
+            // 1st click: Show the preview before actually making any changes.
             if (this.displayingPreview == false)
             {
                 this.displayingPreview = true;
                 this.PreviewDateTimeChanges();
-                this.OkButton.Content = "Apply Changes";
+                this.PreviewChangesButton.Content = "_Apply Changes";
                 return;
             }
-            // 2nd real click of Ok: Make the changes
+
+            // 2nd click: Make the changes
             this.ApplyDateTimeChanges();
             this.DialogResult = true;
         }

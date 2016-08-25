@@ -529,6 +529,12 @@
                                                         <DataTrigger Binding="{Binding Type}" Value="Folder">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="DateTime">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="UtcOffset">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
                                                         <DataTrigger Binding="{Binding Type}" Value="Date">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>

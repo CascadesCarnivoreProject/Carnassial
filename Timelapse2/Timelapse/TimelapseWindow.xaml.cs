@@ -293,7 +293,7 @@ namespace Timelapse
             }
             else
             { 
-                this.OnImageLoadingComplete();
+                this.OnImageLoadingComplete(false);
             }
 
             return true;
@@ -363,12 +363,13 @@ namespace Timelapse
 
                 // First pass: Examine images to extract their basic properties and build a list of images not already in the database
                 List<ImageRow> imagesToInsert = new List<ImageRow>();
+                TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
                 DateTime previousImageRender = DateTime.UtcNow - this.state.Throttles.DesiredIntervalBetweenRenders;
                 for (int image = 0; image < imageFiles.Count; image++)
                 {
                     FileInfo imageFile = imageFiles[image];
                     ImageRow imageProperties;
-                    if (this.dataHandler.ImageDatabase.GetOrCreateImage(imageFile, out imageProperties))
+                    if (this.dataHandler.ImageDatabase.GetOrCreateImage(imageFile, imageSetTimeZone, out imageProperties))
                     {
                         // the database already has an entry for this image so skip it
                         // if needed, a separate list of images to update could be generated
@@ -395,15 +396,15 @@ namespace Timelapse
                         }
 
                         // see if the date can be updated from the metadata
-                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata);
+                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata, imageSetTimeZone);
                         if (imageTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed ||
                             imageTimeAdjustment == DateTimeAdjustment.MetadataDateUsed)
                         {
-                            DateTime imageTaken;
-                            bool result = imageProperties.TryGetDateTime(out imageTaken);
+                            DateTimeOffset imageTaken;
+                            bool result = imageProperties.TryGetDateTime(imageSetTimeZone, out imageTaken);
                             if (result == true)
                             {
-                                if (imageTaken.Day <= Constants.MonthsInYear)
+                                if (imageTaken.Day <= Constants.Time.MonthsInYear)
                                 {
                                     unambiguousDayMonthOrder = false;
                                 }
@@ -489,7 +490,7 @@ namespace Timelapse
                         this.MenuItemEnableAmbiguousDatesDialog.IsChecked = !this.state.SuppressAmbiguousDatesDialog;
                     }
                 }
-                this.OnImageLoadingComplete();
+                this.OnImageLoadingComplete(true);
 
                 // Finally, tell the user how many images were loaded, etc.
                 this.ShowImageCountsDialog(true);
@@ -578,7 +579,7 @@ namespace Timelapse
         /// <summary>
         /// When image loading has completed add callbacks, prepare the UI, set up the image set, and show the image.
         /// </summary>
-        private void OnImageLoadingComplete()
+        private void OnImageLoadingComplete(bool imagesJustImported)
         {
             // Set the magnifying glass status from the registry. 
             // Note that if it wasn't in the registry, the value returned will be true by default
@@ -594,9 +595,17 @@ namespace Timelapse
             this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
             this.markableCanvas.Focus(); // We start with this having the focus so it can interpret keyboard shortcuts if needed. 
 
-            // Set the current filter and the image index to the same as the ones in the last session, providing that we are working 
-            // with the same image folder.  Doing so also displays the image.
-            this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
+            // if this is completion of an existing .ddb open set the current filter and the image index to the ones from the previous session with the image set
+            // also if this is completion of import to a new .ddb
+            int imageRow = this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex;
+            ImageFilter imageFilter = this.dataHandler.ImageDatabase.ImageSet.ImageFilter;
+            if (imagesJustImported && this.dataHandler.ImageCache.CurrentRow != Constants.Database.InvalidRow)
+            {
+                // if this is completion of an add to an existing image set stay on the image and, ideally, filter selected before the import
+                // TODO: add an API to read the current filter setting
+                imageRow = this.dataHandler.ImageCache.CurrentRow;
+            }
+            this.SelectDataTableImagesAndShowImage(imageRow, imageFilter);
 
             // match UX availability to image availability
             this.EnableOrDisableMenusAndControls();
@@ -634,6 +643,8 @@ namespace Timelapse
             // filter menu
             this.MenuItemFilter.IsEnabled = imagesExist;
             // options menu
+            // always enable at top level when an image set exists so that image set advanced options are accessible
+            this.MenuItemOptions.IsEnabled = true;
             this.MenuItemControlsInSeparateWindow.IsEnabled = imagesExist;
             this.MenuItemAudioFeedback.IsEnabled = imagesExist;
             this.MenuItemMagnifyingGlass.IsEnabled = imagesExist;
@@ -677,25 +688,25 @@ namespace Timelapse
                 switch (filter)
                 {
                     case ImageFilter.All:
-                        status = "(all files selected).";
+                        status = "(all files selected)";
                         break;
                     case ImageFilter.Corrupted:
-                        status = "corrupted files.";
+                        status = "corrupted files";
                         break;
                     case ImageFilter.Custom:
-                        status = "files matching your custom filter.";
+                        status = "files matching your custom filter";
                         break;
                     case ImageFilter.Dark:
-                        status = "dark files.";
+                        status = "dark files";
                         break;
                     case ImageFilter.MarkedForDeletion:
-                        status = "files marked for deletion.";
+                        status = "files marked for deletion";
                         break;
                     case ImageFilter.Missing:
-                        status = "missing files.";
+                        status = "missing files";
                         break;
                     case ImageFilter.Ok:
-                        status = "light files.";
+                        status = "light files";
                         break;
                     default:
                         throw new NotSupportedException(String.Format("Unhandled image quality filter {0}.", filter));
@@ -800,30 +811,14 @@ namespace Timelapse
         {
             // Add data entry callbacks to all editable controls. When the user changes an image's attribute using a particular control,
             // the callback updates the matching field for that image in the database.
+            DataEntryNote date = null;
+            DataEntryDateTime dateTime = null;
+            DataEntryNote time = null;
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
             {
                 string controlType = this.dataHandler.ImageDatabase.ImageDataColumnsByDataLabel[pair.Key].ControlType;
                 switch (controlType)
                 {
-                    case Constants.Control.Note:
-                    case Constants.DatabaseColumn.Date:
-                    case Constants.DatabaseColumn.File:
-                    case Constants.DatabaseColumn.Folder:
-                    case Constants.DatabaseColumn.RelativePath:
-                    case Constants.DatabaseColumn.Time:
-                        DataEntryNote note = (DataEntryNote)pair.Value;
-                        note.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
-                        break;
-                    case Constants.DatabaseColumn.DeleteFlag:
-                    case Constants.Control.Flag:
-                        DataEntryFlag flag = (DataEntryFlag)pair.Value;
-                        flag.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
-                        break;
-                    case Constants.DatabaseColumn.ImageQuality:
-                    case Constants.Control.FixedChoice:
-                        DataEntryChoice choice = (DataEntryChoice)pair.Value;
-                        choice.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
-                        break;
                     case Constants.Control.Counter:
                         DataEntryCounter counter = (DataEntryCounter)pair.Value;
                         counter.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
@@ -832,9 +827,55 @@ namespace Timelapse
                         counter.Container.MouseLeave += this.CounterControl_MouseLeave;
                         counter.LabelControl.Click += this.CounterControl_Click;
                         break;
+                    case Constants.Control.Flag:
+                    case Constants.DatabaseColumn.DeleteFlag:
+                        DataEntryFlag flag = (DataEntryFlag)pair.Value;
+                        flag.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
+                        break;
+                    case Constants.Control.FixedChoice:
+                    case Constants.DatabaseColumn.ImageQuality:
+                        DataEntryChoice choice = (DataEntryChoice)pair.Value;
+                        choice.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
+                        break;
+                    case Constants.Control.Note:
+                    case Constants.DatabaseColumn.Date:
+                    case Constants.DatabaseColumn.File:
+                    case Constants.DatabaseColumn.Folder:
+                    case Constants.DatabaseColumn.RelativePath:
+                    case Constants.DatabaseColumn.Time:
+                        DataEntryNote note = (DataEntryNote)pair.Value;
+                        note.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
+                        if (controlType == Constants.DatabaseColumn.Date)
+                        {
+                            date = note;
+                        }
+                        if (controlType == Constants.DatabaseColumn.Time)
+                        {
+                            time = note;
+                        }
+                        break;
+                    case Constants.DatabaseColumn.DateTime:
+                        dateTime = (DataEntryDateTime)pair.Value;
+                        dateTime.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
+                        break;
+                    case Constants.DatabaseColumn.UtcOffset:
+                        DataEntryUtcOffset utcOffset = (DataEntryUtcOffset)pair.Value;
+                        utcOffset.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
+                        break;
                     default:
+                        Debug.Fail(String.Format("Unhandled control type '{0}'.", controlType));
                         break;
                 }
+            }
+
+            // if needed, link date and time controls to datetime control
+            if (dateTime != null && date != null)
+            {
+                dateTime.DateControl = date;
+            }
+            if (dateTime != null && time != null)
+            {
+                dateTime.TimeControl = time;
             }
         }
 
@@ -912,20 +953,20 @@ namespace Timelapse
             if (focusedElement != null)
             {
                 Type type = focusedElement.GetType();
-                if (typeof(CheckBox) == type ||
-                    typeof(ComboBox) == type ||
-                    typeof(ComboBoxItem) == type ||
-                    typeof(TextBox) == type)
+                if (Constants.Control.KeyboardInputTypes.Contains(type))
                 {
-                    DataEntryControl focusedControl = (DataEntryControl)((Control)focusedElement).Tag;
-                    int index = 0;
-                    foreach (DataEntryControl control in this.dataEntryControls.Controls)
+                    DataEntryControl focusedControl;
+                    if (DataEntryHandler.TryFindFocusedControl(focusedElement, out focusedControl))
                     {
-                        if (Object.ReferenceEquals(focusedControl, control))
+                        int index = 0;
+                        foreach (DataEntryControl control in this.dataEntryControls.Controls)
                         {
-                            currentControl = index;
+                            if (Object.ReferenceEquals(focusedControl, control))
+                            {
+                                currentControl = index;
+                            }
+                            ++index;
                         }
-                        ++index;
                     }
                 }
             }
@@ -948,7 +989,7 @@ namespace Timelapse
                 DataEntryControl control = this.dataEntryControls.Controls[currentControl];
                 if (control.ReadOnly == false)
                 {
-                    control.Focus();
+                    control.Focus(this);
                     return;
                 }
             }
@@ -1226,40 +1267,12 @@ namespace Timelapse
             // For each control, we get its type and then update its contents from the current data table row
             // this is always done as it's assumed either the image changed or that a control refresh is required due to database changes
             // the call to TryMoveToImage() above refreshes the data stored under this.dataHandler.ImageCache.Current
+            TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
             this.dataHandler.IsProgrammaticControlUpdate = true;
             foreach (KeyValuePair<string, DataEntryControl> control in this.dataEntryControls.ControlsByDataLabel)
             {
                 string controlType = this.dataHandler.ImageDatabase.ImageDataColumnsByDataLabel[control.Key].ControlType;
-                switch (controlType)
-                {
-                    case Constants.DatabaseColumn.File:
-                        control.Value.Content = this.dataHandler.ImageCache.Current.FileName;
-                        break;
-                    case Constants.DatabaseColumn.RelativePath:
-                        control.Value.Content = this.dataHandler.ImageCache.Current.RelativePath;
-                        break;
-                    case Constants.DatabaseColumn.Folder:
-                        control.Value.Content = this.dataHandler.ImageCache.Current.InitialRootFolderName;
-                        break;
-                    case Constants.DatabaseColumn.Time:
-                        control.Value.Content = this.dataHandler.ImageCache.Current.Time;
-                        break;
-                    case Constants.DatabaseColumn.Date:
-                        control.Value.Content = this.dataHandler.ImageCache.Current.Date;
-                        break;
-                    case Constants.DatabaseColumn.ImageQuality:
-                        control.Value.Content = this.dataHandler.ImageCache.Current.ImageQuality.ToString();
-                        break;
-                    case Constants.Control.Counter:
-                    case Constants.DatabaseColumn.DeleteFlag:
-                    case Constants.Control.FixedChoice:
-                    case Constants.Control.Flag:
-                    case Constants.Control.Note:
-                        control.Value.Content = this.dataHandler.ImageCache.Current[control.Value.DataLabel];
-                        break;
-                    default:
-                        break;
-                }
+                control.Value.Content = this.dataHandler.ImageCache.Current.GetValueDisplayString(control.Value.DataLabel, imageSetTimeZone);
             }
             this.dataHandler.IsProgrammaticControlUpdate = false;
 
@@ -1440,10 +1453,7 @@ namespace Timelapse
             // check if focus is on a control
             // NOTE: this list must be kept in sync with the System.Windows classes used by the classes in Timelapse\Util\DataEntry*.cs
             Type type = focusedElement.GetType();
-            if (typeof(CheckBox) == type ||
-                typeof(ComboBox) == type ||
-                typeof(ComboBoxItem) == type ||
-                typeof(TextBox) == type)
+            if (Constants.Control.KeyboardInputTypes.Contains(type))
             {
                 // send all keys to controls by default except
                 // - escape as that's a natural way to back out of a control (the user can also hit enter)
@@ -1873,14 +1883,17 @@ namespace Timelapse
                 messageBox.Message.What += "Otherwise your Timelapse data may become corrupted.";
                 messageBox.Message.Reason = "Timelapse requires the CSV file and its data to follow a specific format.";
                 messageBox.Message.Solution = "\u2022 Only modify and import a CSV file previously exported by Timelapse." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Do not change data in the File, Folder, Data or Time fields (those changes will be ignored)" + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Do not change the the column names" + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Do not add or delete rows (those changes will be ignored)";
-                messageBox.Message.Solution += "\u2022 Restrict modifications in the remaining columns as follows:" + Environment.NewLine;
-                messageBox.Message.Solution += "    \u2022 Counter data to positive integers" + Environment.NewLine;
-                messageBox.Message.Solution += "    \u2022 Flag data to either 'true' or 'false'" + Environment.NewLine;
-                messageBox.Message.Solution += "    \u2022 FixedChoice data to a string that exactly match one of the FixedChoice menu options, or empty." + Environment.NewLine;
-                messageBox.Message.Solution += "    \u2022 Note data to any string, or empty.";
+                messageBox.Message.Solution += "\u2022 Do not change Folder, RelativePath, or File as those fields uniquely identify a file" + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Do not change Date or Time as those columns are ignored (change DateTime instead)" + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Do not change column names" + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Do not add or delete rows (those changes will be ignored)" + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Restrict modifications as follows:" + Environment.NewLine;
+                messageBox.Message.Solution += String.Format("    \u2022 DateTime must be in '{0}' format{1}", Constants.Time.DateTimeDatabaseFormat, Environment.NewLine);
+                messageBox.Message.Solution += String.Format("    \u2022 UtcOffset must be a floating point number between {0} and {1}, inclusive{2}", DateTimeHandler.ToDatabaseUtcOffsetString(Constants.Time.MinimumUtcOffset), DateTimeHandler.ToDatabaseUtcOffsetString(Constants.Time.MinimumUtcOffset), Environment.NewLine);
+                messageBox.Message.Solution += "    \u2022 Counter data must be zero or a positive integer" + Environment.NewLine;
+                messageBox.Message.Solution += "    \u2022 Flag data must be 'true' or 'false'" + Environment.NewLine;
+                messageBox.Message.Solution += "    \u2022 FixedChoice data must be a string that exactly matches one of the FixedChoice menu options, or empty." + Environment.NewLine;
+                messageBox.Message.Solution += "    \u2022 Note data to any string, including empty.";
                 messageBox.Message.Result = "Timelapse will create a backup .ddb file in the Backups folder, and will then try its best.";
                 messageBox.Message.Hint = "\u2022 After you import, check your data. If it is not what you expect, restore your data by using that backup file." + Environment.NewLine;
                 messageBox.Message.Hint += "\u2022 If you check don't show this message this dialog can be turned back on via the Options menu.";
@@ -1957,7 +1970,7 @@ namespace Timelapse
                 messageBox.ShowDialog();
             }
             // Reload the data table
-            this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
+            this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageCache.CurrentRow, this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
             this.statusBar.SetMessage("CSV file imported.");
         }
 
@@ -2196,7 +2209,7 @@ namespace Timelapse
                     }
                     else
                     { 
-                         this.EnableOrDisableMenusAndControls();
+                        this.EnableOrDisableMenusAndControls();
                     }
                 }
             }
@@ -2223,18 +2236,26 @@ namespace Timelapse
                 return; // We are already on the first image, so there is nothing to copy
             }
 
+            TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
             {
                 DataEntryControl control = pair.Value;
                 if (this.dataHandler.ImageDatabase.IsControlCopyable(control.DataLabel))
                 {
-                    control.Content = this.dataHandler.ImageDatabase.ImageDataTable[previousRow][control.DataLabel];
+                    control.Content = this.dataHandler.ImageDatabase.ImageDataTable[previousRow].GetValueDisplayString(control.DataLabel, imageSetTimeZone);
                 }
             }
         }
         #endregion
 
         #region Options Menu Callbacks
+        /// <summary>Show advanced image set options</summary>
+        private void MenuItemAdvancedImageSetOptions_Click(object sender, RoutedEventArgs e)
+        {
+            AdvancedImageSetOptions advancedImageSetOptions = new AdvancedImageSetOptions(this.dataHandler.ImageDatabase, this);
+            advancedImageSetOptions.ShowDialog();
+        }
+
         /// <summary>Show advanced Timelapse options</summary>
         private void MenuItemAdvancedTimelapseOptions_Click(object sender, RoutedEventArgs e)
         {
@@ -2321,15 +2342,16 @@ namespace Timelapse
                 DateTimeFixedCorrection fixedDateCorrection = new DateTimeFixedCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current, this);
                 if (fixedDateCorrection.Abort)
                 {
+                    TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
                     MessageBox messageBox = new MessageBox("Can't add a fixed correction value to every date/time...", this);
                     messageBox.Message.Problem = "Can't add a fixed correction value to every date/time in this filtered view.";
                     messageBox.Message.Reason = "This operation requires using the current image's date and time fields. " + Environment.NewLine;
-                    messageBox.Message.Reason += "However, " + this.dataHandler.ImageCache.Current.Date + " " + this.dataHandler.ImageCache.Current.Time + " is not a recognizable date/time." + Environment.NewLine;
+                    messageBox.Message.Reason += "However, " + this.dataHandler.ImageCache.Current.GetDisplayDateTime(imageSetTimeZone) + " is not a recognizable date/time." + Environment.NewLine;
                     messageBox.Message.Reason += "\u2022 dates should look like dd-MMM-yyyy e.g., 16-Jan-2016" + Environment.NewLine;
                     messageBox.Message.Reason += "\u2022 times should look like HH:mm:ss using 24 hour time e.g., 01:05:30 or 13:30:00";
                     messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
                     messageBox.Message.Hint = "\u2022 Check the format of this image's date and time." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 Or, navigate to another image that has a properly formatted date and time.";
+                    messageBox.Message.Hint += "\u2022 Navigate to another image that has a properly formatted date and time.";
                     messageBox.Message.Icon = MessageBoxImage.Error;
                     messageBox.ShowDialog();
                     return;
@@ -2426,6 +2448,38 @@ namespace Timelapse
             }
         }
 
+        private void MenuItemSetTimeZone_Click(object sender, RoutedEventArgs e)
+        {
+            // Warn user that they are in a filtered view, and verify that they want to continue
+            if (this.MaybePromptToApplyOperationIfFilteredView(this.state.SuppressFilteredSetTimeZonePrompt,
+                                                               "'Set the time zone of every date/time...'",
+                                                               (bool optOut) =>
+                                                               {
+                                                                   this.state.SuppressFilteredSetTimeZonePrompt = optOut;
+                                                                   this.MenuItemEnableFilteredSetTimeZonePrompt.IsChecked = !optOut;
+                                                               }))
+            {
+                DateTimeSetTimeZone fixedDateCorrection = new DateTimeSetTimeZone(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current, this);
+                if (fixedDateCorrection.Abort)
+                {
+                    TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
+                    MessageBox messageBox = new MessageBox("Can't set the time zone for every file...", this);
+                    messageBox.Message.Problem = "Can't set the UTC offset of every file's date/time in this filtered view.";
+                    messageBox.Message.Reason = "This operation requires an image with valid date and time fields. " + Environment.NewLine;
+                    messageBox.Message.Reason += "However, " + this.dataHandler.ImageCache.Current.GetDisplayDateTime(imageSetTimeZone) + " is not a recognizable date/time." + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 dates should look like dd-MMM-yyyy e.g., 16-Jan-2016" + Environment.NewLine;
+                    messageBox.Message.Reason += "\u2022 times should look like HH:mm:ss using 24 hour time e.g., 01:05:30 or 13:30:00";
+                    messageBox.Message.Result = "Time zone assignment will be aborted and nothing will be changed.";
+                    messageBox.Message.Hint = "\u2022 Check the format of this image's date and time." + Environment.NewLine;
+                    messageBox.Message.Hint += "\u2022 Select images with properly formatted dates and times.";
+                    messageBox.Message.Icon = MessageBoxImage.Error;
+                    messageBox.ShowDialog();
+                    return;
+                }
+                this.ShowBulkImageEditDialog(fixedDateCorrection);
+            }
+        }
+
         private void MenuItemAmbiguousDatesDialog_Click(object sender, RoutedEventArgs e)
         {
             this.state.SuppressAmbiguousDatesDialog = !this.state.SuppressAmbiguousDatesDialog;
@@ -2496,6 +2550,12 @@ namespace Timelapse
         {
             this.state.SuppressFilteredRereadDatesFromFilesPrompt = !this.state.SuppressFilteredRereadDatesFromFilesPrompt;
             this.MenuItemEnableFilteredRereadDatesFromFilesPrompt.IsChecked = !this.state.SuppressFilteredRereadDatesFromFilesPrompt;
+        }
+
+        private void MenuItemEnableFilteredSetTimeZonePrompt_Click(object sender, RoutedEventArgs e)
+        {
+            this.state.SuppressFilteredSetTimeZonePrompt = !this.state.SuppressFilteredSetTimeZonePrompt;
+            this.MenuItemEnableFilteredSetTimeZonePrompt.IsChecked = !this.state.SuppressFilteredSetTimeZonePrompt;
         }
 
         private void MenuItemRereadDatesfromImages_Click(object sender, RoutedEventArgs e)
@@ -2689,8 +2749,12 @@ namespace Timelapse
 
         private void MenuItemFilterCustomFilter_Click(object sender, RoutedEventArgs e)
         {
-            DateTime defaultDate = DateTime.Now;
-            DateTimeHandler.TryFromStandardDateString(this.dataHandler.ImageCache.Current.Date, out defaultDate);
+            DateTimeOffset defaultDate;
+            TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
+            if (this.dataHandler.ImageCache.Current.TryGetDateTime(imageSetTimeZone, out defaultDate) == false)
+            {
+                defaultDate = DateTime.UtcNow;
+            }
             CustomViewFilter customFilter = new CustomViewFilter(this.dataHandler.ImageDatabase, defaultDate, this);
             customFilter.Owner = this;
             bool? changeToCustomFilter = customFilter.ShowDialog();

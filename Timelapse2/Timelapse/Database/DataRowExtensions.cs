@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Data;
+using System.Diagnostics;
+using Timelapse.Util;
 
 namespace Timelapse.Database
 {
@@ -13,6 +15,13 @@ namespace Timelapse.Database
                 return false;
             }
             return String.Equals(Boolean.TrueString, fieldAsString, StringComparison.OrdinalIgnoreCase) ? true : false;
+        }
+
+        public static DateTime GetDateTimeField(this DataRow row, string column)
+        {
+            DateTime dateTime = (DateTime)row[column];
+            Debug.Assert(dateTime.Kind == DateTimeKind.Utc, String.Format("Unexpected kind {0} for date time {1}.", dateTime.Kind, dateTime));
+            return dateTime;
         }
 
         public static TEnum GetEnumField<TEnum>(this DataRow row, string column) where TEnum : struct, IComparable, IFormattable, IConvertible
@@ -45,10 +54,10 @@ namespace Timelapse.Database
             return (long)row[column];
         }
 
-        public static string GetStringField(this DataRow row, string column)
+        public static string GetStringField(this DataRow row, string columnName)
         {
             // throws ArgumentException if column is not present in table
-            object field = row[column];
+            object field = row[columnName];
 
             // SQLite assigns both String.Empty and null to DBNull on input
             if (field is DBNull)
@@ -58,9 +67,25 @@ namespace Timelapse.Database
             return (string)field;
         }
 
+        public static TimeSpan GetUtcOffsetField(this DataRow row, string column)
+        {
+            TimeSpan utcOffset = TimeSpan.FromHours((double)row[column]);
+            Debug.Assert(utcOffset.Ticks % Constants.Time.UtcOffsetGranularity.Ticks == 0, "Unexpected rounding error: UTC offset is not an exact multiple of 15 minutes.");
+            return utcOffset;
+        }
+
         public static void SetField(this DataRow row, string column, bool value)
         {
             row[column] = value.ToString().ToLowerInvariant();
+        }
+
+        public static void SetField(this DataRow row, string column, DateTime value)
+        {
+            if (value.Kind != DateTimeKind.Utc)
+            {
+                throw new ArgumentOutOfRangeException("value");
+            }
+            row[column] = value;
         }
 
         public static void SetField(this DataRow row, string column, int value)
@@ -81,6 +106,12 @@ namespace Timelapse.Database
         public static void SetField<TEnum>(this DataRow row, string column, TEnum value) where TEnum : struct, IComparable, IFormattable, IConvertible
         {
             row.SetField(column, value.ToString());
+        }
+
+        public static void SetUtcOffsetField(this DataRow row, string column, TimeSpan value)
+        {
+            Debug.Assert(value.Ticks % Constants.Time.UtcOffsetGranularity.Ticks == 0, "Unexpected rounding error: UTC offset is not an exact multiple of 15 minutes.");
+            row[column] = value.TotalHours;
         }
     }
 }

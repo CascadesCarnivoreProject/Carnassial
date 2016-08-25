@@ -136,6 +136,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Controls\DataEntryDateTime.cs" />
+    <Compile Include="Controls\DataEntryUtcOffset.cs" />
+    <Compile Include="Controls\TimeZonePicker.cs" />
+    <Compile Include="Controls\UtcOffsetUpDown.cs" />
     <Compile Include="Database\ColumnDefinition.cs" />
     <Compile Include="Database\ControlRow.cs" />
     <Compile Include="Database\CustomFilterOperator.cs" />
@@ -144,21 +148,31 @@
     <Compile Include="Database\ImageDataColumn.cs" />
     <Compile Include="Database\DataRowExtensions.cs" />
     <Compile Include="Database\ImageDataCounterColumn.cs" />
+    <Compile Include="Database\ImageDataUtcOffsetColumn.cs" />
+    <Compile Include="Database\ImageDataDateTimeColumn.cs" />
     <Compile Include="Database\ImageDataFlagColumn.cs" />
     <Compile Include="Database\ImageDataNoteColumn.cs" />
     <Compile Include="Database\ImageDataTable.cs" />
     <Compile Include="Database\ImageSetRow.cs" />
     <Compile Include="Database\MarkerRow.cs" />
     <Compile Include="Database\VideoRow.cs" />
+    <Compile Include="Dialog\AdvancedImageSetOptions.xaml.cs">
+      <DependentUpon>AdvancedImageSetOptions.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Dialog\DateCorrectAmbiguous.xaml.cs">
       <DependentUpon>DateCorrectAmbiguous.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\DateChangesFeedbackControl.xaml.cs">
       <DependentUpon>DateChangesFeedbackControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Dialog\DateTimeSetTimeZone.xaml.cs">
+      <DependentUpon>DateTimeSetTimeZone.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Dialog\DateTimeLinearCorrection.xaml.cs">
       <DependentUpon>DateTimeLinearCorrection.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Util\DateTimeExtensions.cs" />
+    <Compile Include="Util\DateTimeOffsetExtensions.cs" />
     <Compile Include="Util\RegistryKeyExtensions.cs" />
     <Compile Include="Util\Throttles.cs" />
     <Compile Include="Dialog\WindowVideoPlayer.xaml.cs">
@@ -206,6 +220,10 @@
     <Compile Include="Dialog\DeleteImages.xaml.cs">
       <DependentUpon>DeleteImages.xaml</DependentUpon>
     </Compile>
+    <Page Include="Dialog\AdvancedImageSetOptions.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Dialog\DateCorrectAmbiguous.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -229,6 +247,10 @@
     <Page Include="Dialog\DataView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Dialog\DateTimeSetTimeZone.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Dialog\DateTimeLinearCorrection.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -436,7 +458,9 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <None Include="app.config" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

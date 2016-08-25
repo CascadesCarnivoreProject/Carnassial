@@ -8,7 +8,6 @@ bug fixes and StyleCop cleanup pass applied
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -19,8 +18,8 @@ namespace Timelapse.Images
 {
     public class ExifToolWrapper : IDisposable
     {
-        // -g for groups
-        private const string Arguments = "-fast -m -q -q -stay_open True -@ - -common_args -d \"%Y.%m.%d %H:%M:%S\" -c \"%d %d %.6f\" -t";
+        // must be kept in sync with Constants.Time.DateTimeExifToolFormat, -g for groups
+        private const string Arguments = "-fast -m -q -q -stay_open True -@ - -common_args -d \"%Y:%m:%d %H:%M:%S\" -c \"%d %d %.6f\" -t";
         private const string ExeName = "exiftool(-k).exe";
         private static readonly object LockObj = new object();
         private static readonly int[] OrientationPositions = { 1, 6, 3, 8 };
@@ -124,21 +123,6 @@ namespace Timelapse.Images
             }
 
             return res;
-        }
-
-        public DateTime? GetCreationTime(string path)
-        {
-            DateTime dt;
-            if (DateTime.TryParseExact(this.SendCommand("-DateTimeOriginal\n-s3\n{0}", path),
-                                       "yyyy.MM.dd HH:mm:ss",
-                                       CultureInfo.InvariantCulture,
-                                       DateTimeStyles.AllowWhiteSpaces,
-                                       out dt))
-            {
-                return dt;
-            }
-
-            return null;
         }
 
         public string SendCommand(string cmd, params object[] args)

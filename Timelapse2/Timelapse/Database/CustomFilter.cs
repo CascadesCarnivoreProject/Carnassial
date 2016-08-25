@@ -29,8 +29,11 @@ namespace Timelapse.Database
             foreach (ControlRow control in templateTable)
             {
                 string controlType = control.Type;
-                // If we want to disable any controls from appearing in the CustomFilter, add it here  // 
-                if (controlType == Constants.DatabaseColumn.Folder ||
+                // add a control here to prevent it from appearing in CustomFilter
+                // folder is usually the same for all files in the image set and not useful for filtering
+                // date, time, and UTC offset are redundant with DateTime
+                if (controlType == Constants.DatabaseColumn.Date ||
+                    controlType == Constants.DatabaseColumn.Folder ||
                     controlType == Constants.DatabaseColumn.Time) 
                 {
                     continue;
@@ -44,13 +47,10 @@ namespace Timelapse.Database
                     defaultValue = "0";
                     termOperator = Constants.SearchTermOperator.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
                 }
-                else if (controlType == Constants.DatabaseColumn.Date)
+                else if (controlType == Constants.DatabaseColumn.DateTime)
                 {
-                    // The Custom Filter dialog will try to replace this default with the date on the current image.
-                    // However, if that date is not a valid one, it will revert to this default, which is a month before the current date. 
-                    // The assumption behind that default is that the cameras have a roughly monthly servicing cadence, which in practice is the
-                    // case for only a few users. 
-                    defaultValue = DateTimeHandler.ToStandardDateString(DateTime.Now - TimeSpan.FromDays(30));
+                    // TimelapseWindow and CustomViewFilter typically replace this default with the date time of the current image.
+                    defaultValue = DateTimeHandler.ToDisplayDateString(DateTime.Now - TimeSpan.FromDays(30));
                     termOperator = Constants.SearchTermOperator.GreaterThanOrEqual;
                 }
                 else if (controlType == Constants.Control.Flag)
@@ -65,83 +65,31 @@ namespace Timelapse.Database
                 searchTerm.Label = control.Label;
                 searchTerm.DataLabel = control.DataLabel;
                 searchTerm.Operator = termOperator;
-                searchTerm.Value = defaultValue;
+                searchTerm.DatabaseValue = defaultValue;
                 searchTerm.List = control.List;
                 this.SearchTerms.Add(searchTerm);
             }
         }
 
-        // Dates require special treatment
-        public void FilterByDate(DataTable images)
-        {
-            SearchTerm dateTerm = this.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.Date);
-            Debug.Assert(dateTerm.UseForSearching, "Date search term is not selected.");
-
-            Func<DateTime, DateTime, bool> dateFilter;
-            switch (dateTerm.Operator)
-            {
-                case Constants.SearchTermOperator.GreaterThan:
-                    dateFilter = (DateTime imageDate, DateTime dateTermDate) => { return imageDate > dateTermDate; };
-                    break;
-                case Constants.SearchTermOperator.GreaterThanOrEqual:
-                    dateFilter = (DateTime imageDate, DateTime dateTermDate) => { return imageDate >= dateTermDate; };
-                    break;
-                case Constants.SearchTermOperator.LessThan:
-                    dateFilter = (DateTime imageDate, DateTime dateTermDate) => { return imageDate < dateTermDate; };
-                    break;
-                case Constants.SearchTermOperator.LessThanOrEqual:
-                    dateFilter = (DateTime imageDate, DateTime dateTermDate) => { return imageDate <= dateTermDate; };
-                    break;
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled search term operator '{0}'.", dateTerm.Operator));
-            }
-
-            DateTime dateTermValue = DateTimeHandler.FromStandardDateString(dateTerm.Value);
-            for (int row = 0; row < images.Rows.Count; ++row)
-            {
-                ImageRow image = new ImageRow(images.Rows[row]);
-                DateTime imageDatetime;
-                if (image.TryGetDateTime(out imageDatetime) == false)
-                {
-                    // ambiguous what to do if an image doesn't have a valid timestamp; leave such images in the set for now
-                    continue;
-                }
-
-                if (dateFilter(imageDatetime.Date, dateTermValue.Date) == false)
-                {
-                    images.Rows.RemoveAt(row);
-                    --row;
-                }
-            }
-        }
-
         // Create and return the query composed from the search term list
-        public string GetImagesWhere(out bool dateFilteringRequired)
+        public string GetImagesWhere()
         {
-            dateFilteringRequired = false;
             string where = String.Empty;
             // Construct and show the search term only if that search row is activated
             foreach (SearchTerm searchTerm in this.SearchTerms.Where(term => term.UseForSearching))
             {
                 string whereForTerm;
                 // Check to see if the search should match an empty value, in which case we also need to deal with NULLs 
-                if (String.IsNullOrEmpty(searchTerm.Value))
+                if (String.IsNullOrEmpty(searchTerm.DatabaseValue))
                 {
                     // The where expression constructed should look something like: (DataLabel IS NULL OR DataLabel = '')
                     whereForTerm = " (" + searchTerm.DataLabel + " IS NULL OR " + searchTerm.DataLabel + " = '') ";
                 }
-                else if (searchTerm.DataLabel == Constants.DatabaseColumn.Date &&
-                        ((searchTerm.Operator != Constants.SearchTermOperator.Equal) && (searchTerm.Operator != Constants.SearchTermOperator.NotEqual)))
-                {
-                    // Date column is not in a format supported by SQLite (#81) so operators other than equality must be done in code
-                    dateFilteringRequired = true;
-                    continue;
-                }
                 else
                 {
                     // The where expression constructed should look something like DataLabel > "5"
-                    Debug.Assert(searchTerm.Value.Contains("\"") == false, String.Format("Search term '{0}' contains quotation marks and could be used for SQL injection.", searchTerm.Value));
-                    whereForTerm = searchTerm.DataLabel + this.TermToSqlOperator(searchTerm.Operator) + "\"" + searchTerm.Value.Trim() + "\""; // Need to quote the value 
+                    Debug.Assert(searchTerm.DatabaseValue.Contains("\"") == false, String.Format("Search term '{0}' contains quotation marks and could be used for SQL injection.", searchTerm.DatabaseValue));
+                    whereForTerm = searchTerm.DataLabel + this.TermToSqlOperator(searchTerm.Operator) + "\"" + searchTerm.DatabaseValue.Trim() + "\""; // Need to quote the value 
                 }
 
                 // if there is already a term in the query add either and 'And' or an 'Or' to it 

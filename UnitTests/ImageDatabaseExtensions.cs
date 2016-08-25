@@ -6,11 +6,12 @@ namespace Timelapse.UnitTests
 {
     internal static class ImageDatabaseExtensions
     {
-        public static IEnumerable<DateTime> GetImageTimes(this ImageDatabase imageDatabase)
+        public static IEnumerable<DateTimeOffset> GetImageTimes(this ImageDatabase imageDatabase)
         {
+            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
             foreach (ImageRow image in imageDatabase.ImageDataTable)
             {
-                yield return image.GetDateTime();
+                yield return image.GetDateTime(imageSetTimeZone);
             }
         }
     }

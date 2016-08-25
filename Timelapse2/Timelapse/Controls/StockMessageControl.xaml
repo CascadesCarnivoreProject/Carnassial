@@ -28,8 +28,6 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-
-                <!--<StackPanel  Margin="10,10,0,0" Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">-->
                 <Canvas Width="60" Height="60" Grid.Column="0">
                     <Ellipse  Width="60" Height="60" Stroke="Black" Fill="#46FD0A0A" />
                     <Label  Name="lblIconType" Content="?" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
