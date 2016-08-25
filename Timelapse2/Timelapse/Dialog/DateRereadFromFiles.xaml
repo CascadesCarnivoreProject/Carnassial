@@ -4,7 +4,7 @@
         xmlns:controls="clr-namespace:Timelapse.Controls"
         xmlns:local="clr-namespace:Timelapse"
         Title="Reread dates and times from image and video files" MinHeight="600" MinWidth="768"
-		Height="600" Width="768"
+		Height="856" Width="768"
 		ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
@@ -22,8 +22,8 @@
         <DockPanel Name="DockPanelImage">
             <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"></Rectangle>
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Name="cancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">Cancel</Button>
-                <Button Name="startDoneButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="StartButton_Click" IsEnabled="True">Start</Button>
+                <Button Name="cancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+                <Button Name="startDoneButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="StartButton_Click" IsEnabled="True">_Start</Button>
             </StackPanel>
             <DataGrid Name="feedbackGrid" Margin="0,0,10,0" ColumnWidth="*" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                     AutoGenerateColumns="True" SelectionUnit="FullRow" SelectionMode="Single" 

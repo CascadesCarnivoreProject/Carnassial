@@ -15,7 +15,7 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void Cache()
         {
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName2104, TestConstant.File.CarnivoreNewImageDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
             this.PopulateCarnivoreDatabase(imageDatabase);
 
             ImageCache cache = new ImageCache(imageDatabase);
@@ -98,7 +98,7 @@ namespace Timelapse.UnitTests
             string imageFilePath = Path.Combine(this.WorkingDirectory, TestConstant.File.InfraredMartenImage);
 
             ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, Constants.File.DefaultImageDatabaseFileName);
-            using (PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(imageDatabase, imageFilePath))
+            using (PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(imageDatabase, imageFilePath, null))
             {
                 PrivateObject populateFieldAccessor = new PrivateObject(populateField);
                 populateFieldAccessor.Invoke("LoadExif");

@@ -24,11 +24,12 @@ namespace Timelapse.Dialog
         private bool disposed;
         private ImageTableEnumerator imageEnumerator;
         private bool isColor = false; // Whether the image is color or grey scale
-        private TimelapseState state;
+        private TimelapseUserRegistrySettings userSettings;
 
-        public DarkImagesThreshold(ImageDatabase database, int currentImageIndex, TimelapseState state)
+        public DarkImagesThreshold(ImageDatabase database, int currentImageIndex, TimelapseUserRegistrySettings state, Window owner)
         {
             this.InitializeComponent();
+            this.Owner = owner;
 
             this.database = database;
             this.imageEnumerator = new ImageTableEnumerator(database, currentImageIndex);
@@ -37,7 +38,7 @@ namespace Timelapse.Dialog
             this.darkPixelRatioFound = 0;
             this.disposed = false;
             this.isColor = false;
-            this.state = state;
+            this.userSettings = state;
         }
 
         // Display the image and associated details in the UI
@@ -47,7 +48,7 @@ namespace Timelapse.Dialog
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            this.sldrDarkThreshold.Value = this.state.DarkPixelThreshold;
+            this.sldrDarkThreshold.Value = this.userSettings.DarkPixelThreshold;
             this.sldrDarkThreshold.ValueChanged += this.DarkThresholdSlider_ValueChanged;
 
             this.sldrScrollImages.Minimum = 0;
@@ -193,8 +194,8 @@ namespace Timelapse.Dialog
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             // Update the Timelapse variables to the current settings
-            this.state.DarkPixelThreshold = this.darkPixelThreshold;
-            this.state.DarkPixelRatioThreshold = this.darkPixelRatio;
+            this.userSettings.DarkPixelThreshold = this.darkPixelThreshold;
+            this.userSettings.DarkPixelRatioThreshold = this.darkPixelRatio;
 
             this.UpdateImageQualityForAllSelectedImages();
             this.DisplayImageAndDetails(); // Goes back to the original image
@@ -220,11 +221,11 @@ namespace Timelapse.Dialog
         private void MenuItemResetCurrent_Click(object sender, RoutedEventArgs e)
         {
             // Move the thumb to correspond to the original value
-            this.darkPixelRatio = this.state.DarkPixelRatioThreshold;
+            this.darkPixelRatio = this.userSettings.DarkPixelRatioThreshold;
             Canvas.SetLeft(this.LineDarkPixelRatio, this.darkPixelRatio * (this.FeedbackCanvas.ActualWidth - this.LineDarkPixelRatio.ActualWidth));
 
             // Move the slider to its original position
-            this.sldrDarkThreshold.Value = this.state.DarkPixelRatioThreshold;
+            this.sldrDarkThreshold.Value = this.userSettings.DarkPixelRatioThreshold;
             this.RecalculateImageQualityForCurrentImage();
             this.Repaint();
         }
@@ -372,7 +373,7 @@ namespace Timelapse.Dialog
                     catch (Exception exception)
                     {
                         // Image isn't there
-                        Debug.Assert(false, "Exception while assessing image quality.", exception.ToString());
+                        Debug.Fail("Exception while assessing image quality.", exception.ToString());
                     }
                     backgroundWorker.ReportProgress(0, imageQuality);
                 }

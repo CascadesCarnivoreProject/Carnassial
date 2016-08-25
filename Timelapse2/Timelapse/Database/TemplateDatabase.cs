@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Controls;
+using Timelapse.Util;
 
 namespace Timelapse.Database
 {
@@ -143,10 +144,11 @@ namespace Timelapse.Database
             this.TemplateTable.BindDataGrid(this.editorDataGrid, this.onTemplateTableRowChanged);
         }
 
-        public List<string> GetDataLabelsExceptID()
+        public List<string> GetDataLabelsExceptIDInSpreadsheetOrder()
         {
             List<string> dataLabels = new List<string>();
-            foreach (ControlRow control in this.TemplateTable)
+            IEnumerable<ControlRow> controlsInSpreadsheetOrder = this.TemplateTable.OrderBy(control => control.SpreadsheetOrder);
+            foreach (ControlRow control in controlsInSpreadsheetOrder)
             {
                 string dataLabel = control.DataLabel;
                 if (dataLabel == String.Empty)
@@ -267,7 +269,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, exception.ToString());
+                Debug.Fail(exception.ToString());
                 database = null;
                 return false;
             }
@@ -369,19 +371,19 @@ namespace Timelapse.Database
         protected virtual void OnDatabaseCreated(TemplateDatabase other)
         {
             // create the template table
-            List<ColumnTuple> templateTableColumns = new List<ColumnTuple>();
-            templateTableColumns.Add(new ColumnTuple(Constants.DatabaseColumn.ID, "INTEGER primary key autoincrement"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.ControlOrder, "INTEGER"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, "INTEGER"));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.Type, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.Label, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.Visible, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnTuple(Constants.Control.List, Constants.Sql.Text));
+            List<ColumnDefinition> templateTableColumns = new List<ColumnDefinition>();
+            templateTableColumns.Add(new ColumnDefinition(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.ControlOrder, "INTEGER"));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.SpreadsheetOrder, "INTEGER"));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Type, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.DefaultValue, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Label, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.DataLabel, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Tooltip, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.TextBoxWidth, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Copyable, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Visible, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.List, Constants.Sql.Text));
             this.Database.CreateTable(Constants.Database.TemplateTable, templateTableColumns);
 
             // if an existing table was passed, clone its contents into this database
@@ -434,7 +436,7 @@ namespace Timelapse.Database
             date.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             date.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
             date.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Date));
-            date.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
+            date.Add(new ColumnTuple(Constants.Control.DefaultValue, DateTimeHandler.ToStandardDateString(Constants.ControlDefault.DateTimeValue)));
             date.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Date));
             date.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Date));
             date.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DateTooltip));
@@ -449,7 +451,7 @@ namespace Timelapse.Database
             time.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
             time.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
             time.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Time));
-            time.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
+            time.Add(new ColumnTuple(Constants.Control.DefaultValue, DateTimeHandler.ToStandardTimeString(Constants.ControlDefault.DateTimeValue)));
             time.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Time));
             time.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Time));
             time.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.TimeTooltip));
@@ -516,7 +518,7 @@ namespace Timelapse.Database
                 this.Database.Update(Constants.Database.TemplateTable, new ColumnTuplesWithWhere(deleteFlagControl, markForDeletion.ID));
                 this.GetControlsSortedByControlOrder();
             }
-            else if (this.GetControlIDFromTemplateTable(Constants.Control.DeleteFlag) < 0)
+            else if (this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.DeleteFlag) < 0)
             {
                 // insert a DeleteFlag control, where its ID will be created as the next highest ID
                 long order = this.GetOrderForNewControl();
@@ -687,7 +689,7 @@ namespace Timelapse.Database
             }
         }
 
-        // Defines a RelativePath column. The definition is used by its caller to insert a RelativePath column into the template for backwards compatability. 
+        // Defines a RelativePath control. The definition is used by its caller to insert a RelativePath control into the template for backwards compatability. 
         private List<ColumnTuple> GetRelativePathTuples(long controlOrder, long spreadsheetOrder, bool visible)
         {
             List<ColumnTuple> relativePath = new List<ColumnTuple>();
@@ -705,16 +707,16 @@ namespace Timelapse.Database
             return relativePath;
         }
 
-        // Defines a DeleteFlag column. The definition is used by its caller to insert a DeleteFlag column into the template for backwards compatability. 
+        // Defines a DeleteFlag control. The definition is used by its caller to insert a DeleteFlag control into the template for backwards compatability. 
         private List<ColumnTuple> GetDeleteFlagTuples(long controlOrder, long spreadsheetOrder, bool visible)
         {
             List<ColumnTuple> deleteFlag = new List<ColumnTuple>();
             deleteFlag.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder));
             deleteFlag.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, spreadsheetOrder));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Type, Constants.Control.DeleteFlag));
+            deleteFlag.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.DeleteFlag));
             deleteFlag.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.FlagValue));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Label, Constants.Control.DeleteFlagLabel));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.Control.DeleteFlag));
+            deleteFlag.Add(new ColumnTuple(Constants.Control.Label, Constants.ControlDefault.DeleteFlagLabel));
+            deleteFlag.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.DeleteFlag));
             deleteFlag.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DeleteFlagTooltip));
             deleteFlag.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FlagWidth));
             deleteFlag.Add(new ColumnTuple(Constants.Control.Copyable, Constants.Boolean.False));

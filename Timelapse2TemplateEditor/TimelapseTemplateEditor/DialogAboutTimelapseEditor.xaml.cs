@@ -7,11 +7,12 @@ namespace Timelapse.Editor
 {
     public partial class DialogAboutTimelapseEditor : Window
     {
-        public DialogAboutTimelapseEditor()
+        public DialogAboutTimelapseEditor(Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
 
+            this.Owner = owner;
             Version curVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
             this.Version.Text = curVersion.ToString();
         }

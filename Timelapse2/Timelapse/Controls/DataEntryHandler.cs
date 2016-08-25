@@ -33,11 +33,6 @@ namespace Timelapse.Controls
             this.IsProgrammaticControlUpdate = false;
         }
 
-        public bool CanBulkEditImages()
-        {
-            return this.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All; 
-        }
-
         /// <summary>Propagate the current value of this control forward from this point across the current set of filtered images.</summary>
         public void CopyForward(string dataLabel, bool checkForZero)
         {
@@ -204,12 +199,12 @@ namespace Timelapse.Controls
                 string controlType = this.ImageDatabase.ImageDataColumnsByDataLabel[pair.Key].ControlType;
                 switch (controlType)
                 {
-                    case Constants.DatabaseColumn.File:
-                    case Constants.DatabaseColumn.RelativePath:
-                    case Constants.DatabaseColumn.Folder:
-                    case Constants.DatabaseColumn.Time:
-                    case Constants.DatabaseColumn.Date:
                     case Constants.Control.Note:
+                    case Constants.DatabaseColumn.Date:
+                    case Constants.DatabaseColumn.File:
+                    case Constants.DatabaseColumn.Folder:
+                    case Constants.DatabaseColumn.RelativePath:
+                    case Constants.DatabaseColumn.Time:
                         DataEntryNote note = (DataEntryNote)pair.Value;
                         note.ContentControl.TextChanged += this.NoteControl_TextChanged;
                         bool createContextMenu = (controlType == Constants.Control.Note) ? true : false;
@@ -218,7 +213,7 @@ namespace Timelapse.Controls
                             this.SetContextMenuCallbacks(note);
                         }
                         break;
-                    case Constants.Control.DeleteFlag:
+                    case Constants.DatabaseColumn.DeleteFlag:
                     case Constants.Control.Flag:
                         DataEntryFlag flag = (DataEntryFlag)pair.Value;
                         flag.ContentControl.Checked += this.FlagControl_CheckedChanged;
@@ -486,6 +481,15 @@ namespace Timelapse.Controls
             {
                 DataEntryChoice choice = control as DataEntryChoice;
                 choice.ContentControl.ContextMenu = menu;
+            }
+            else if (control is DataEntryFlag)
+            {
+                // nothing to do
+                // TODOSAUL: why don't flags' checkboxes need a context menu?  Could a polymorphic set API be used rather than special casing by type?
+            }
+            else
+            {
+                throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.GetType().Name));
             }
         }
     }

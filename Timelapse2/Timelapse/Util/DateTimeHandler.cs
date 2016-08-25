@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Globalization;
-using System.Windows;
-using Timelapse.Database;
-using MessageBox = Timelapse.Dialog.MessageBox;
 
 namespace Timelapse.Util
 {
@@ -45,64 +41,10 @@ namespace Timelapse.Util
             return time.ToString(Constants.Time.TimeFormat);
         }
 
-        public static void ShowDateTimeParseFailureDialog(ImageRow image, Window owner)
-        {
-            Debug.Assert(false, String.Format("Parse of '{0} {1}' failed.", image.Date, image.Time));
-            MessageBox messageBox = new MessageBox("Timelapse could not read the date / time.", owner);
-            messageBox.Message.Problem = String.Format("Timelapse could not read the date and time '{0} {1}'", image.Date, image.Time);
-            messageBox.Message.Reason = "The date / time needs to be in a very specific format, for example, 01-Jan-2016 13:00:00.";
-            messageBox.Message.Solution = "Re-read in the dates from the images (see the Edit/Dates menu), and then try this again.";
-            messageBox.Message.Result = "Timelapse won't do anything for now.";
-            messageBox.Message.Icon = MessageBoxImage.Error;
-            messageBox.ShowDialog();
-        }
-
-        /// <summary>
-        /// TODO DISCRETIONARY: THIS IS NO LONGER USED EXCEPT IN THE UNIT TEST. 
-        /// REVISIT THIS AFTER ALL THE DATE ROUTINES HAVE BEEN UPDATED, AND DELETE IF NO LONGER NEEDED.
-        /// Check to see if we can swap the day and month in all date fields. It checks to see if this is possible.
-        /// If it isn't, it returns -1, else the index to the first image that is not swappable
-        /// Assumes that we are showing all images (i.e., it checks the current data table)
-        /// </summary>
-        public static int SwapDayMonthIsPossible(ImageDatabase database)
-        {
-            // First, do a pass to see if swapping the date/time order is even possible
-            for (int image = 0; image < database.CurrentlySelectedImageCount; image++)
-            {
-                ImageRow imageProperties = database.ImageDataTable[image];
-                // Skip over corrupted images for now, as we know those dates are likley wrong
-                if (imageProperties.ImageQuality == ImageFilter.Corrupted)
-                {
-                    continue;
-                }
-
-                // Now check to see if the reversed date is legit. If it throws an exception, we know it's a problem.
-                DateTime date;
-                if (imageProperties.TryGetDateTime(out date) == false)
-                {
-                    return image; // Not a valid date, so its not swappable either.
-                }
-                try
-                {
-                    if (date.Day > Constants.MonthsInYear)
-                    {
-                        return image;
-                    }
-                    DateTime reversedDate = new DateTime(date.Year, date.Day, date.Month); // swapped day and month
-                }
-                catch (Exception exception)
-                {
-                    Debug.Assert(false, String.Format("Reverse of date {0} failed.", date), exception.ToString());
-                    return image; // return the first image where we couldn't swap the date
-                }
-            }
-            return -1; // -1 means we can reverse the dates
-        }
-
         // Swap the day and month, if possible.
         // However, if the date isn't valid return the date provided
         // If the date is valid, 
-        public static bool TrySwapSingleDayMonth(string dateAsString, out string swappedDateAsString)
+        public static bool TrySwapDayMonth(string dateAsString, out string swappedDateAsString)
         {
             DateTime date;
             // Make sure that we have a valid date, and that the day/month is swappable

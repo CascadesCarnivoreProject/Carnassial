@@ -120,9 +120,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Include="CarnivoreTemplate 2.1.0.4.tdb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="packages.config" />
     <Content Include="CarnivoreTestImages\Reconyx-HC500-20150128-201.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

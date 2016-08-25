@@ -29,7 +29,6 @@ namespace Timelapse.Controls
             this.InitializeComponent();
         }
 
-        #region Public Methods
         /// <summary>Add the user control to this window</summary>
         public void AddControls(DataEntryControls myControls)
         {
@@ -51,9 +50,7 @@ namespace Timelapse.Controls
                 this.Height = this.state.ControlWindowSize.Y;
             }
         }
-        #endregion
 
-        #region Private Methods
         // Reset the timer so that a timeout isn't triggered until the size change is  complete (or if the user pauses resizing)
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
@@ -68,6 +65,5 @@ namespace Timelapse.Controls
             this.timer.Stop();
             this.state.ControlWindowSize = new Point(this.ActualWidth, this.ActualHeight);
         }
-        #endregion
     }
 }

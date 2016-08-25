@@ -38,8 +38,8 @@ namespace Timelapse.Dialog
                     this.CancelButton.Visibility = Visibility.Visible;
                     break;
                 case MessageBoxButton.YesNo:
-                    this.OkButton.Content = "Yes";
-                    this.CancelButton.Content = "No";
+                    this.OkButton.Content = "_Yes";
+                    this.CancelButton.Content = "_No";
                     this.CancelButton.Visibility = Visibility.Visible;
                     break;
                 case MessageBoxButton.YesNoCancel:

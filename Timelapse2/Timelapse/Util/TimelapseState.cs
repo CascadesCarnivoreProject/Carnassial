@@ -1,52 +1,28 @@
 ﻿using System;
-using System.Windows;
 using System.Windows.Input;
 
 namespace Timelapse.Util
 {
     // A class that tracks various states and flags.
-    public class TimelapseState
+    public class TimelapseState : TimelapseUserRegistrySettings
     {
         private int keyRepeatCount;
         private KeyEventArgs mostRecentKey;
 
-        public bool AudioFeedback { get; set; }
-        public Point ControlWindowSize { get; set; }
-        public int DarkPixelThreshold { get; set; }
-        public double DarkPixelRatioThreshold { get; set; }
+        public byte DifferenceThreshold { get; set; } // The threshold used for calculating combined differences
         public bool ImageNavigatorSliderDragging { get; set; }
         public bool IsMouseOverCounter { get; set; }
         public DateTime MostRecentDragEvent { get; set; }
-        public MostRecentlyUsedList<string> MostRecentImageSets { get; set; }
-
-        private Throttles throttle;
-        public int RepeatedKeyAcceptanceInterval
+        
+        public TimelapseState()
         {
-            get
-            {
-                return (int)(((double)SystemParameters.KeyboardSpeed + 0.5 * this.throttle.DesiredImageRendersPerSecond) / this.throttle.DesiredImageRendersPerSecond);
-            }
-        }
+            this.keyRepeatCount = 0;
+            this.mostRecentKey = null;
 
-        public bool ShowCsvDialog { get; set; }
-
-        public TimelapseState(Throttles throttle)
-        {
-            this.throttle = throttle;
-            this.AudioFeedback = false;
-
-            // thresholds used for determining image darkness
-            this.DarkPixelThreshold = Constants.Images.DarkPixelThresholdDefault;
-            this.DarkPixelRatioThreshold = Constants.Images.DarkPixelRatioThresholdDefault;
-
-            this.ControlWindowSize = new Point(0, 0);
+            this.DifferenceThreshold = Constants.Images.DifferenceThresholdDefault;
             this.ImageNavigatorSliderDragging = false;
             this.IsMouseOverCounter = false;
-            this.keyRepeatCount = 0;
-            this.MostRecentDragEvent = DateTime.UtcNow - throttle.DesiredIntervalBetweenRenders;
-            this.MostRecentImageSets = null;
-            this.mostRecentKey = null;
-            this.ShowCsvDialog = true;
+            this.MostRecentDragEvent = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;
         }
 
         public int GetKeyRepeatCount(KeyEventArgs key)

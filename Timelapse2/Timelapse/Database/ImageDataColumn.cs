@@ -21,18 +21,18 @@ namespace Timelapse.Database
         {
             switch (control.Type)
             {
+                case Constants.Control.Note:
+                case Constants.DatabaseColumn.Date:
+                case Constants.DatabaseColumn.File:
                 case Constants.DatabaseColumn.Folder:
                 case Constants.DatabaseColumn.RelativePath:
-                case Constants.DatabaseColumn.File:
-                case Constants.DatabaseColumn.Date:
                 case Constants.DatabaseColumn.Time:
-                case Constants.Control.Note:
                     return new ImageDataNoteColumn(control);
                 case Constants.DatabaseColumn.ImageQuality:
                     return new ImageDataChoiceColumn(control);
                 case Constants.Control.Counter:
                     return new ImageDataCounterColumn(control);
-                case Constants.Control.DeleteFlag:
+                case Constants.DatabaseColumn.DeleteFlag:
                 case Constants.Control.Flag:
                     return new ImageDataFlagColumn(control);
                 case Constants.Control.FixedChoice:

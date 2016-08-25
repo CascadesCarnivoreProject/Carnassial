@@ -129,8 +129,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="DialogInspectMetaData.xaml.cs">
-      <DependentUpon>DialogInspectMetaData.xaml</DependentUpon>
+    <Compile Include="DialogInspectMetadata.xaml.cs">
+      <DependentUpon>DialogInspectMetadata.xaml</DependentUpon>
     </Compile>
     <Compile Include="Util\CodeTemplateImporter.cs" />
     <Compile Include="EditorConstant.cs" />
@@ -145,7 +145,7 @@
     <Compile Include="Util\EditorControls.cs" />
     <Compile Include="EditorWindowExtensions.cs" />
     <Compile Include="ListBoxDBOutputConverter.cs" />
-    <Compile Include="Util\EditorRegistryUserSettings.cs" />
+    <Compile Include="Util\EditorUserRegistrySettings.cs" />
     <Compile Include="Util\MyTrace.cs" />
     <Page Include="DialogAboutTimelapseEditor.xaml">
       <SubType>Designer</SubType>
@@ -155,7 +155,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogInspectMetaData.xaml">
+    <Page Include="DialogInspectMetadata.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

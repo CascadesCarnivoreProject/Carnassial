@@ -92,7 +92,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.File) == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, image[Constants.DatabaseColumn.File]);
             Assert.IsTrue(image.GetID() == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, image.GetID());
             // this.IsColor isn't applicable
-            Assert.IsTrue(image.GetBooleanField(EditorConstant.Control.DeleteFlag) == this.DeleteFlag, "{0}: Expected DeleteFlag '{1}' but found '{2}'.", this.FileName, this.DeleteFlag, image.GetStringField(EditorConstant.Control.DeleteFlag));
+            Assert.IsTrue(image.GetBooleanField(Constants.DatabaseColumn.DeleteFlag) == this.DeleteFlag, "{0}: Expected DeleteFlag '{1}' but found '{2}'.", this.FileName, this.DeleteFlag, image.GetStringField(Constants.DatabaseColumn.DeleteFlag));
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.Folder) == this.InitialRootFolderName, "{0}: Expected InitialRootFolderName '{1}' but found '{2}'.", this.FileName, this.InitialRootFolderName, image.GetStringField(Constants.DatabaseColumn.Folder));
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.ImageQuality) == this.Quality.ToString(), "{0}: Expected ImageQuality '{1}' but found '{2}'.", this.FileName, this.Quality, image.GetStringField(Constants.DatabaseColumn.ImageQuality));
             Assert.IsTrue(image.GetStringField(Constants.DatabaseColumn.RelativePath) == this.RelativePath, "{0}: Expected RelativePath '{1}' but found '{2}'.", this.FileName, this.RelativePath, image.GetStringField(Constants.DatabaseColumn.RelativePath));

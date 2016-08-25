@@ -1,6 +1,4 @@
-﻿using System.Data;
-
-namespace Timelapse.Database
+﻿namespace Timelapse.Database
 {
     public class ImageDataNoteColumn : ImageDataColumn
     {

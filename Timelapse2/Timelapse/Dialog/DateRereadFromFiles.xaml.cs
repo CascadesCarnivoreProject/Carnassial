@@ -16,11 +16,12 @@ namespace Timelapse.Dialog
     {
         private ImageDatabase database;
 
-        public DateRereadFromFiles(ImageDatabase database)
+        public DateRereadFromFiles(ImageDatabase database, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
             this.database = database;
+            this.Owner = owner;
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
@@ -124,7 +125,7 @@ namespace Timelapse.Dialog
                     }
                     catch (Exception exception)
                     {
-                        Debug.Assert(false, String.Format("Unexpected exception processing '{0}'.", image.FileName), exception.ToString());
+                        Debug.Fail(String.Format("Unexpected exception processing '{0}'.", image.FileName), exception.ToString());
                         feedbackMessage += String.Format(" , skipping due to {0}: {1}.", exception.GetType().FullName, exception.Message);
                     }
 

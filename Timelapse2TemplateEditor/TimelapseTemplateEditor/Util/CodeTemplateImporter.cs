@@ -130,7 +130,7 @@ namespace Timelapse.Editor.Util
             {
                 if (controlType.Equals("Delete"))
                 {
-                    controlType = Constants.Control.DeleteFlagLabel; // Delete is a reserved word!
+                    controlType = Constants.ControlDefault.DeleteFlagLabel; // Delete is a reserved word!
                 }
                 control.DataLabel = controlType;
             }

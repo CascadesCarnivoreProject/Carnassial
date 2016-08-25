@@ -35,7 +35,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Backup of {0} failed.", sourceFile), exception.ToString());
+                Debug.Fail(String.Format("Backup of {0} failed.", sourceFile), exception.ToString());
                 return false; // One or more backups failed
             }
         }

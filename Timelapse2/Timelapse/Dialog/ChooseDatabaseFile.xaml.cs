@@ -13,10 +13,11 @@ namespace Timelapse.Dialog
         // This will contain the file selected by the user
         public string SelectedFile { get; set; }
 
-        public ChooseDatabaseFile(string[] fileNames)
+        public ChooseDatabaseFile(string[] fileNames, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
+            this.Owner = owner;
             this.SelectedFile = String.Empty;
 
             // file_names contains an array of .ddb files. We add each to the listbox.

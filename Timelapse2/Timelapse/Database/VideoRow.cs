@@ -22,7 +22,8 @@ namespace Timelapse.Database
             get { return true; }
         }
 
-        public override BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth, ImageExpectedUsage imageExpectedDisplayTime)
+        // displayIntent is ignored as it's specific to interaction with WCF's bitmap cache, which doesn't occur in rendering video preview frames (#77, to some exent)
+        public override BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth, ImageDisplayIntent displayIntent)
         {
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
@@ -98,7 +99,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Loading of {0} failed.", this.FileName), exception.ToString());
+                Debug.Fail(String.Format("Loading of {0} failed.", this.FileName), exception.ToString());
                 return Constants.Images.Corrupt;
             }
         }

@@ -10,11 +10,12 @@ namespace Timelapse.Dialog
         private string originalFileName;
         public string NewFilename { get; private set; }
 
-        public RenameImageDatabaseFile(string fileName)
+        public RenameImageDatabaseFile(string fileName, Window owner)
         {
             this.InitializeComponent();
 
             this.originalFileName = fileName;
+            this.Owner = owner;
             this.NewFilename = Path.GetFileNameWithoutExtension(fileName);
         }
 

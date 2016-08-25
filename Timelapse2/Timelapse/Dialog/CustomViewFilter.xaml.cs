@@ -34,11 +34,13 @@ namespace Timelapse.Dialog
         /// <summary>
         /// Constructor. Date should be the contents of the date data field of the current image
         /// </summary>
-        public CustomViewFilter(ImageDatabase database, DateTime defaultDate)
+        public CustomViewFilter(ImageDatabase database, DateTime defaultDate, Window owner)
         {
-            this.database = database;
-            this.defaultDate = defaultDate; 
             this.InitializeComponent();
+
+            this.database = database;
+            this.defaultDate = defaultDate;
+            this.Owner = owner;
         }
 
         // When the window is loaded, add all the controls to it dynamically
@@ -117,7 +119,7 @@ namespace Timelapse.Dialog
                         Constants.SearchTermOperator.GreaterThanOrEqual
                     };
                 }
-                else if (controlType == Constants.Control.DeleteFlag ||
+                else if (controlType == Constants.DatabaseColumn.DeleteFlag ||
                          controlType == Constants.Control.Flag)
                 {
                     // Only equals and not equals in Flags, as other options don't make sense for booleans
@@ -221,7 +223,7 @@ namespace Timelapse.Dialog
                     Grid.SetColumn(comboBoxValue, CustomViewFilter.ValueColumn);
                     this.grid.Children.Add(comboBoxValue);
                 }
-                else if (controlType == Constants.Control.DeleteFlag ||
+                else if (controlType == Constants.DatabaseColumn.DeleteFlag ||
                          controlType == Constants.Control.Flag)
                 {
                     // Flags present checkboxes

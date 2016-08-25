@@ -16,7 +16,6 @@ namespace Timelapse.Database
         // "Data Source=filepath" 
         private string connectionString;
 
-        #region Constructors
         /// <summary>
         /// Constructor: Create a database file if it does not exist, and then create a connection string to that file
         /// If the database file does not exist,iIt will be created
@@ -28,33 +27,16 @@ namespace Timelapse.Database
             {
                 SQLiteConnection.CreateFile(inputFile);
             }
-            this.connectionString = String.Format("{0}{1}", Constants.Sql.DataSource, inputFile);
+            SQLiteConnectionStringBuilder connectionStringBuilder = new SQLiteConnectionStringBuilder();
+            connectionStringBuilder.DataSource = inputFile;
+            this.connectionString = connectionStringBuilder.ConnectionString;
         }
 
-        /// <summary>
-        /// Constructor (Advanced): This version specifies advanced connection options.
-        /// The Dictionary parameter contains key, value pairs, which is used to construct the connection string looking like
-        /// key1=value1; key2=value2; ...
-        /// </summary>
-        /// <param name="connectionOptions">A dictionary containing all desired options and their values</param>
-        public SQLiteWrapper(Dictionary<string, string> connectionOptions)
-        {
-            string str = String.Empty;
-            foreach (KeyValuePair<string, string> row in connectionOptions)
-            {
-                str += String.Format("{0}={1}; ", row.Key, row.Value);
-            }
-            str = str.Trim().Substring(0, str.Length - 1);
-            this.connectionString = str;
-        }
-        #endregion
-
-        #region Table Creation 
         /// <summary>
         /// A simplified table creation routine. It expects the column definitions to be supplied
         /// as a column_name, data type key value pair. 
         /// </summary>
-        public void CreateTable(string tableName, List<ColumnTuple> columnDefinitions)
+        public void CreateTable(string tableName, List<ColumnDefinition> columnDefinitions)
         {
             // The table creation syntax supported is:
             // CREATE TABLE table_name (
@@ -63,17 +45,15 @@ namespace Timelapse.Database
             //     ...                                 ...
             //     columnNname datatype);              SALARY REAL);
             string query = Constants.Sql.CreateTable + tableName + Constants.Sql.OpenParenthesis + Environment.NewLine;               // CREATE TABLE <tablename> (
-            foreach (ColumnTuple column in columnDefinitions)
+            foreach (ColumnDefinition column in columnDefinitions)
             {
-                query += column.Name + " " + column.Value + Constants.Sql.Comma + Environment.NewLine;             // columnname TEXT default value,
+                query += column.ToString() + Constants.Sql.Comma + Environment.NewLine;             // "columnname TEXT DEFAULT 'value',\n" or similar
             }
             query = query.Remove(query.Length - Constants.Sql.Comma.Length - Environment.NewLine.Length);         // remove last comma / new line and replace with );
             query += Constants.Sql.CloseParenthesis + Constants.Sql.Semicolon;
             this.ExecuteNonQuery(query);
         }
-        #endregion
 
-        #region Insertion: Single Row
         public void Insert(string tableName, List<List<ColumnTuple>> insertionStatements)
         {
             // Construct each individual query in the form 
@@ -115,9 +95,7 @@ namespace Timelapse.Database
             // Now try to invoke the batch queries
             this.ExecuteNonQueryWrappedInBeginEnd(queries);
         }
-        #endregion
 
-        #region Select Invocations
         /// <summary>
         /// Run a generic select query against the database, with results returned as rows in a DataTable.
         /// </summary>
@@ -145,7 +123,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Failure executing query '{0}'.", query), exception.ToString());
+                Debug.Fail(String.Format("Failure executing query '{0}'.", query), exception.ToString());
                 return null;
             }
         }
@@ -172,13 +150,11 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Failure executing query '{0}'.", query), exception.ToString());
+                Debug.Fail(String.Format("Failure executing query '{0}'.", query), exception.ToString());
                 return null;
             }
         }
-        #endregion
 
-        #region Query Execution
         /// <summary>
         /// Allows the programmer to interact with the database for purposes other than a query.
         /// </summary>
@@ -199,7 +175,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Failure executing statement '{0}'.", statement), exception.ToString());
+                Debug.Fail(String.Format("Failure executing statement '{0}'.", statement), exception.ToString());
             }
         }
 
@@ -263,12 +239,10 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Failure near executing statement '{0}'.", mostRecentStatement), exception.ToString());
+                Debug.Fail(String.Format("Failure near executing statement '{0}'.", mostRecentStatement), exception.ToString());
             }
         }
-        #endregion
 
-        #region Updates
         // Trims all the white space from the data held in the list of column_names in table_name
         // Note: this is needed as earlier versions didn't trim the white space from the data. This allows us to trim it in the database after the fact.
         public void TrimWhitespace(string tableName, List<string> columnNames)
@@ -354,9 +328,7 @@ namespace Timelapse.Database
             query += Constants.Sql.Semicolon;
             return query;
         }
-        #endregion
 
-        #region Counts
         /// <summary>
         /// Retrieve a count of items from the DB. Select statement must be of the form "Select Count(*) FROM "
         /// </summary>
@@ -366,9 +338,7 @@ namespace Timelapse.Database
         {
             return Convert.ToInt32(this.GetObjectFromSelect(query));
         }
-        #endregion
 
-        #region Columns: Checking and Adding 
         // This method will check if a column exists in a table
         public bool IsColumnInTable(string tableName, string columnName)
         {
@@ -385,19 +355,11 @@ namespace Timelapse.Database
 
         // This method will create a column in a table of type TEXT, where it is added to its end
         // It assumes that the value, if not empty, should be treated as the default value for that column
-        public void AddColumnToEndOfTable(string tableName, ColumnTuple columnDefinition)
+        public void AddColumnToEndOfTable(string tableName, ColumnDefinition columnDefinition)
         {
-            string query = "ALTER TABLE " + tableName + " ADD COLUMN " + columnDefinition.Name + " TEXT ";
-            if (columnDefinition.Value.Trim() != String.Empty)
-            {
-                string quote = (columnDefinition.Value[0] == '\'') ? String.Empty : "'"; 
-                query += "DEFAULT " + Utilities.QuoteForSql(columnDefinition.Value); // Note that default values are quoted if they aren't already quoted
-            }
-            this.ExecuteNonQuery(query);
+            this.ExecuteNonQuery("ALTER TABLE " + tableName + " ADD COLUMN " + columnDefinition.ToString());
         }
-        #endregion
 
-        #region Deleting Rows 
         /// <summary>delete specific rows from the DB where...</summary>
         /// <param name="tableName">The table from which to delete.</param>
         /// <param name="where">The where clause for the delete.</param>
@@ -442,14 +404,12 @@ namespace Timelapse.Database
                 this.ExecuteNonQueryWrappedInBeginEnd(queries);
             }
         }
-        #endregion
 
-        #region Public methods for Add/Delete/Rename Columns
         /// <summary>
         /// Add a column to the table named sourceTable at position columnNumber using the provided columnDefinition
         /// The value in columnDefinition is assumed to be the desired default value
         /// </summary>
-        public bool AddColumnToTable(string sourceTable, int columnNumber, ColumnTuple columnDefinition)
+        public void AddColumnToTable(string tableName, int columnNumber, ColumnDefinition columnDefinition)
         {
             try
             {
@@ -458,19 +418,19 @@ namespace Timelapse.Database
                     connection.Open();
 
                     // Some basic error checking to make sure we can do the operation
-                    List<string> columnNames = this.GetColumnNamesAsList(connection, sourceTable);
+                    List<string> columnNames = this.GetColumnNamesAsList(connection, tableName);
 
                     // Check if a column named Name already exists in the source Table. If so, abort as we cannot add duplicate column names
                     if (columnNames.Contains(columnDefinition.Name))
                     {
-                        return false; // A column called columnName already exists in the source Table
+                        throw new ArgumentException(String.Format("Column '{0}' is already present in table '{1}'.", columnDefinition.Name, tableName), "columnDefinition");
                     }
 
                     // If columnNumber would result in the column being inserted at the end of the table, then use the more efficient method to do so.
                     if (columnNumber >= columnNames.Count)
                     {
-                        this.AddColumnToEndOfTable(sourceTable, columnDefinition);
-                        return true;
+                        this.AddColumnToEndOfTable(tableName, columnDefinition);
+                        return;
                     }
 
                     // We need to add a column elsewhere than the end. This requires us to 
@@ -479,29 +439,28 @@ namespace Timelapse.Database
 
                     // Get a schema definition identical to the schema in the existing table, 
                     // but with a new column definition of type TEXT added at the given position, where the value is assumed to be the default value
-                    string newSchema = this.CloneSchemaButWithAddedColumn(connection, sourceTable, columnNumber, columnDefinition.Name, columnDefinition.Value);
+                    string newSchema = this.InsertColumnInSchema(connection, tableName, columnNumber, columnDefinition);
 
                     // Create a new table 
-                    string destTable = sourceTable + "NEW";
+                    string destTable = tableName + "NEW";
                     string sql = "CREATE TABLE " + destTable + " (" + newSchema + ")";
                     SQLiteCommand command = new SQLiteCommand(sql, connection);
                     command.ExecuteNonQuery();
 
                     // Copy the old table's contents to the new table
-                    this.CopyAllValuesFromTable(connection, sourceTable, sourceTable, destTable);
+                    this.CopyAllValuesFromTable(connection, tableName, tableName, destTable);
 
                     // Now drop the source table and rename the destination table to that of the source table
-                    this.DropTable(connection, sourceTable);
+                    this.DropTable(connection, tableName);
 
                     // Rename the table
-                    this.RenameTable(connection, destTable, sourceTable);
-                    return true;
+                    this.RenameTable(connection, destTable, tableName);
                 }
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Failure in AddColumn."), exception.ToString());
-                return false;
+                Debug.Fail("Failure in AddColumn.", exception.ToString());
+                throw;
             }
         }
 
@@ -525,7 +484,7 @@ namespace Timelapse.Database
 
                     // Get a schema definition identical to the schema in the existing table, 
                     // but with the column named columnName deleted from it
-                    string newSchema = this.CloneSchemaButDeleteNamedColumn(connection, sourceTable, columnName);
+                    string newSchema = this.RemoveColumnFromSchema(connection, sourceTable, columnName);
 
                     // Create a new table 
                     string destTable = sourceTable + "NEW";
@@ -546,34 +505,36 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Failure in DeleteColumn."), exception.ToString());
-                return false;
+                Debug.Fail("Failure in DeleteColumn.", exception.ToString());
+                throw;
             }
         }
 
-        public bool RenameColumn(string sourceTable, string currentColumnName, string newColumnName)
+        public void RenameColumn(string sourceTable, string currentColumnName, string newColumnName)
         {
+            // Some basic error checking to make sure we can do the operation
+            if (String.IsNullOrWhiteSpace(currentColumnName))
+            {
+                throw new ArgumentOutOfRangeException("currentColumnName");
+            }
+            if (String.IsNullOrWhiteSpace(newColumnName))
+            {
+                throw new ArgumentOutOfRangeException("newColumnName");
+            }
+
             try
             {
                 using (SQLiteConnection connection = new SQLiteConnection(this.connectionString))
                 {
                     connection.Open();
-                    // Some basic error checking to make sure we can do the operation
-                    if (currentColumnName.Trim() == String.Empty || newColumnName.Trim() == String.Empty)
+                    List<string> currentColumnNames = this.GetColumnNamesAsList(connection, sourceTable);
+                    if (currentColumnNames.Contains(currentColumnName) == false)
                     {
-                        return false;  // One of the provided column names is an empty string
+                        throw new ArgumentException(String.Format("No column named '{0}' exists to rename.", currentColumnName), "currentColumnName");
                     }
-                    List<string> columnNames = this.GetColumnNamesAsList(connection, sourceTable);
-                    bool result1 = columnNames.Contains(currentColumnName);
-                    bool result2 = columnNames.Contains(newColumnName);
-
-                    if (columnNames.Contains(currentColumnName) == false)
+                    if (currentColumnNames.Contains(newColumnName) == true)
                     {
-                        return false; // There is no column called currentColumnName in the source Table
-                    }
-                    if (columnNames.Contains(newColumnName) == true)
-                    {
-                        return false; // There is already a column called newColumnName in the source Table
+                        throw new ArgumentException(String.Format("Column '{0}' is already in use.", newColumnName), "newColumnName");
                     }
 
                     string newSchema = this.CloneSchemaButRenameColumn(connection, sourceTable, currentColumnName, newColumnName);
@@ -592,18 +553,14 @@ namespace Timelapse.Database
 
                     // Rename the table
                     this.RenameTable(connection, destTable, sourceTable);
-                    return true;
                 }
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("Failure in RenameColumn."), exception.ToString());
-                return false;
+                Debug.Fail("Failure in RenameColumn.", exception.ToString());
+                throw;
             }
         }
-        #endregion
-
-        #region Private Methods supporting Adding/Deleting/Renaming Columns
 
         /// <summary>
         /// Add a column to the end of the database table 
@@ -655,7 +612,6 @@ namespace Timelapse.Database
             string sql = "INSERT INTO " + dataDestinationTable + " (" + commaSeparatedColumns + ") SELECT " + commaSeparatedColumns + " FROM " + dataSourceTable;
 
             SQLiteCommand command = new SQLiteCommand(sql, connection);
-            command = new SQLiteCommand(sql, connection);
             command.ExecuteNonQuery();
         }
 
@@ -669,7 +625,6 @@ namespace Timelapse.Database
             string sql = "INSERT INTO " + dataDestinationTable + " (" + commaSeparatedColumnsDestination + ") SELECT " + commaSeparatedColumnsSource + " FROM " + dataSourceTable;
 
             SQLiteCommand command = new SQLiteCommand(sql, connection);
-            command = new SQLiteCommand(sql, connection);
             command.ExecuteNonQuery();
         }
 
@@ -683,6 +638,52 @@ namespace Timelapse.Database
             string sql = "DROP TABLE " + tableName;
             SQLiteCommand command = new SQLiteCommand(sql, connection);
             command.ExecuteNonQuery();
+        }
+
+        private List<string> GetColumnDefinitions(SQLiteConnection connection, string tableName)
+        {
+            using (SQLiteDataReader reader = this.GetSchema(connection, tableName))
+            {
+                List<string> columnDefinitions = new List<string>();
+                while (reader.Read())
+                {
+                    string existingColumnDefinition = String.Empty;
+                    for (int field = 0; field < reader.FieldCount; field++)
+                    {
+                        switch (field)
+                        {
+                            case 0:  // cid (Column Index)
+                                break;
+                            case 1:  // name (Column Name)
+                            case 2:  // type (Column type)
+                                existingColumnDefinition += reader[field].ToString() + " ";
+                                break;
+                            case 3:  // notnull (Column has a NOT NULL constraint)
+                                if (reader[field].ToString() != "0")
+                                {
+                                    existingColumnDefinition += "NOT NULL ";
+                                }
+                                break;
+                            case 4:  // dflt_value (Column has a default value)
+                                if (reader[field].ToString() != String.Empty)
+                                {
+                                    existingColumnDefinition += "DEFAULT " + reader[field].ToString() + " ";
+                                }
+                                break;
+                            case 5:  // pk (Column is part of the primary key)
+                                if (reader[field].ToString() != "0")
+                                {
+                                    existingColumnDefinition += "PRIMARY KEY ";
+                                }
+                                break;
+                        }
+                    }
+
+                    existingColumnDefinition = existingColumnDefinition.TrimEnd(' ');
+                    columnDefinitions.Add(existingColumnDefinition);
+                }
+                return columnDefinitions;
+            }
         }
 
         /// <summary>
@@ -710,12 +711,7 @@ namespace Timelapse.Database
         /// <returns>a comma separated string of all the column names in the table</returns>
         private string GetColumnNamesAsString(SQLiteConnection connection, string tableName)
         {
-            string commaSeparatedColumns = String.Empty; // Construct a comma-separated string representation of the columns
-            foreach (string column in this.GetColumnNamesAsList(connection, tableName))
-            {
-                commaSeparatedColumns += column + ", ";
-            }
-            return commaSeparatedColumns.TrimEnd(',', ' ');
+            return String.Join(", ", this.GetColumnNamesAsList(connection, tableName));
         }
 
         /// <summary>
@@ -741,143 +737,42 @@ namespace Timelapse.Database
         {
             string sql = "PRAGMA TABLE_INFO (" + tableName + ")"; // Syntax is: PRAGMA TABLE_INFO (tableName)
             SQLiteCommand command = new SQLiteCommand(sql, connection);
-            command = new SQLiteCommand(sql, connection);
             return command.ExecuteReader();
         }
 
         /// <summary>
         /// Add a column definition into the provided schema at the given column location
         /// </summary>
-        private string CloneSchemaButWithAddedColumn(SQLiteConnection connection, string tableName, int columnNumber, string columnDefinition, string columnDefaultValue)
+        private string InsertColumnInSchema(SQLiteConnection connection, string tableName, int newColumnNumber, ColumnDefinition newColumn)
         {
-            string newSchema = String.Empty;
-            int currentColumn = 0;
-            bool columnAdded = false;
-            SQLiteDataReader reader = this.GetSchema(connection, tableName);
-            while (reader.Read())
-            {
-                string existingColumnDefinition = String.Empty;
-
-                // If we are at the spot where we should insert the new columm definition, do so.
-                if (currentColumn == columnNumber)
-                {
-                    if (columnDefaultValue.Trim() == String.Empty)
-                    {
-                        existingColumnDefinition += columnDefinition + ", ";
-                    }
-                    else
-                    {
-                        existingColumnDefinition += columnDefinition + " TEXT DEFAULT " + Utilities.QuoteForSql(columnDefaultValue);
-                    }
-                    columnAdded = true;
-                }
-
-                // Add the existing column definition
-                for (int i = 0; i < reader.FieldCount; i++)
-                {
-                    switch (i)
-                    {
-                        case 0:  // cid (Column Index)
-                            break;
-                        case 1:  // name (Column Name)
-                        case 2:  // type (Column type)
-                            existingColumnDefinition += reader[i].ToString() + " ";
-                            break;
-                        case 3:  // notnull (Column has a NOT NULL constraint)
-                            if (reader[i].ToString() != "0")
-                            {
-                                existingColumnDefinition += "NOT NULL ";
-                            }
-                            break;
-                        case 4:  // dflt_value (Column has a default value)
-                            if (reader[i].ToString() != String.Empty)
-                            {
-                                existingColumnDefinition += "DEFAULT " + Utilities.QuoteForSql(reader[i].ToString()) + " ";
-                            }
-                            break;
-                        case 5:  // pk (Column is part of the primary key)
-                            if (reader[i].ToString() != "0")
-                            {
-                                existingColumnDefinition += "PRIMARY KEY ";
-                            }
-                            break;
-                    }
-                }
-                existingColumnDefinition = existingColumnDefinition.TrimEnd(' ');
-                newSchema += existingColumnDefinition + ", ";
-                currentColumn++;
-            }
-            // If we haven't added the column yet, its because the columnNumber provided 
-            // is greater than the number of columns in the table.
-            // So add it to the end.
-            if (columnAdded == false)
-            {
-                if (columnDefaultValue.Trim() == String.Empty)
-                {
-                    newSchema += columnDefinition + ", ";
-                }
-                else
-                {
-                    newSchema += columnDefinition + " TEXT DEFAULT '" + Utilities.QuoteForSql(columnDefaultValue) + "',";
-                }
-            }
-            newSchema = newSchema.TrimEnd(',', ' '); // remove last comma
-            return newSchema;
+            List<string> columnDefinitions = this.GetColumnDefinitions(connection, tableName);
+            columnDefinitions.Insert(newColumnNumber, newColumn.ToString());
+            return String.Join(", ", columnDefinitions);
         }
 
         /// <summary>
         /// Create a schema cloned from tableName, except with the column definition for columnName deleted
         /// </summary>
-        private string CloneSchemaButDeleteNamedColumn(SQLiteConnection connection, string tableName, string columnName)
+        private string RemoveColumnFromSchema(SQLiteConnection connection, string tableName, string columnName)
         {
-            string newSchema = String.Empty;
-            int currentColumn = 0;
-            SQLiteDataReader reader = this.GetSchema(connection, tableName);
-            while (reader.Read())
-            {
-                string existingColumnDefinition = String.Empty;
-                if (reader[1].ToString() == columnName)
+            List<string> columnDefinitions = this.GetColumnDefinitions(connection, tableName);
+            int columnToRemove = -1;
+            for (int column = 0; column < columnDefinitions.Count; ++column)
                 {
-                    continue; // skip the column if is is named columnName, which will delete it from the schema
-                }
-
-                // Copy the existing column definition unless its the column named columnNam
-                for (int i = 0; i < reader.FieldCount; i++)
-                {
-                    switch (i)
+                string columnDefinition = columnDefinitions[column];
+                if (columnDefinition.StartsWith(columnName))
                     {
-                        case 0:  // cid (Column Index)
+                    columnToRemove = column;
                             break;
-                        case 1:  // name (Column Name)
-                        case 2:  // type (Column type)
-                            existingColumnDefinition += reader[i].ToString() + " ";
-                            break;
-                        case 3:  // notnull (Column has a NOT NULL constraint)
-                            if (reader[i].ToString() != "0")
-                            {
-                                existingColumnDefinition += "NOT NULL ";
                             }
-                            break;
-                        case 4:  // dflt_value (Column has a default value)
-                            if (reader[i].ToString() != String.Empty)
-                            {
-                                existingColumnDefinition += "DEFAULT " + Utilities.QuoteForSql(reader[i].ToString()) + " ";
                             }
-                            break;
-                        case 5:  // pk (Column is part of the primary key)
-                            if (reader[i].ToString() != "0")
+            if (columnToRemove == -1)
                             {
-                                existingColumnDefinition += "PRIMARY KEY ";
-                            }
-                            break;
+                throw new ArgumentOutOfRangeException(String.Format("Column '{0}' not found in table '{1}'.", columnName, tableName));
                     }
-                }
-                existingColumnDefinition = existingColumnDefinition.TrimEnd(' ');
-                newSchema += existingColumnDefinition + ", ";
-                currentColumn++;
-            }
-            newSchema = newSchema.TrimEnd(',', ' '); // remove last comma
-            return newSchema;
+
+            columnDefinitions.RemoveAt(columnToRemove);
+            return String.Join(", ", columnDefinitions);
         }
 
         /// <summary>
@@ -945,6 +840,5 @@ namespace Timelapse.Database
             SQLiteCommand command = new SQLiteCommand(sql, connection);
             command.ExecuteNonQuery();
         }
-        #endregion
     }
 }

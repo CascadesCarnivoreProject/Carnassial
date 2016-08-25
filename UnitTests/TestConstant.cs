@@ -30,7 +30,7 @@ namespace Timelapse.UnitTests
             Constants.DatabaseColumn.Date,
             Constants.DatabaseColumn.Time,
             Constants.DatabaseColumn.ImageQuality,
-            EditorConstant.Control.DeleteFlag,
+            Constants.DatabaseColumn.DeleteFlag,
             TestConstant.DefaultDatabaseColumn.Counter0,
             TestConstant.DefaultDatabaseColumn.Choice0,
             TestConstant.DefaultDatabaseColumn.Note0,
@@ -164,7 +164,6 @@ namespace Timelapse.UnitTests
             // version is the editor version used for creation
             public const string CarnivoreDirectoryName = "CarnivoreTestImages";
             public const string CarnivoreTemplateDatabaseFileName = "CarnivoreTemplate 2.0.1.5.tdb";
-            public const string CarnivoreTemplateDatabaseFileName2104 = "CarnivoreTemplate 2.1.0.4.tdb";
             public const string DefaultTemplateDatabaseFileName2015 = "TimelapseTemplate 2.0.1.5.tdb";
             public const string DefaultTemplateDatabaseFileName2104 = "TimelapseTemplate 2.1.0.4.tdb";
             public const string HybridVideoDirectoryName = "HybridVideo";

@@ -15,18 +15,19 @@ namespace Timelapse.Dialog
         private int currentImageRow;
         private ImageDatabase database;
 
-        public DateDaylightSavingsTimeCorrection(ImageDatabase database, ImageTableEnumerator image)
+        public DateDaylightSavingsTimeCorrection(ImageDatabase database, ImageTableEnumerator image, Window owner)
         {
             this.InitializeComponent();
-            this.database = database;
             this.currentImageRow = image.CurrentRow;
+            this.database = database;
+            this.Owner = owner;
 
             // Get the original date and display it
-            this.lblOriginalDate.Content = image.Current.Date + " " + image.Current.Time;
+            this.OriginalDate.Content = image.Current.Date + " " + image.Current.Time;
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
             this.imgDateImage.Source = image.Current.LoadBitmap(this.database.FolderPath);
-            this.lblImageName.Content = image.Current.FileName;
+            this.ImageName.Content = image.Current.FileName;
         }
 
         private void DlgDateCorrectionName_Loaded(object sender, RoutedEventArgs e)
@@ -62,7 +63,7 @@ namespace Timelapse.Dialog
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, "Adjustment of image times failed.", exception.ToString());
+                Debug.Fail("Adjustment of image times failed.", exception.ToString());
                 this.DialogResult = false;
             }
         }
@@ -78,7 +79,7 @@ namespace Timelapse.Dialog
             if ((bool)rbAddHour.IsChecked || (bool)rbSubtractHour.IsChecked) 
             {
                 DateTime dateTime;
-                bool succeeded = DateTime.TryParse(this.lblOriginalDate.Content.ToString(), out dateTime);
+                bool succeeded = DateTime.TryParse(this.OriginalDate.Content.ToString(), out dateTime);
                 if (!succeeded)
                 {
                     lblNewDate.Content = "Problem with this date...";

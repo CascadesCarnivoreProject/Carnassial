@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows.Controls;
 using Timelapse.Database;
-using Timelapse.Util;
 
 namespace Timelapse.Controls
 {
@@ -12,19 +11,24 @@ namespace Timelapse.Controls
     /// </summary>
     public partial class DataEntryControls : UserControl
     {
-        // Given a key, return its associated control
+        public List<DataEntryControl> Controls { get; private set; }
         public Dictionary<string, DataEntryControl> ControlsByDataLabel { get; private set; }
-        public List<DataEntryControl> Controls { get; private set; } // list of all our counter controls
 
         public DataEntryControls()
         {
             this.InitializeComponent();
-            this.ControlsByDataLabel = new Dictionary<string, DataEntryControl>();
             this.Controls = new List<DataEntryControl>();
+            this.ControlsByDataLabel = new Dictionary<string, DataEntryControl>();
         }
 
-        public void Generate(ImageDatabase database, DataEntryHandler dataEntryPropagator)
+        public void CreateControls(ImageDatabase database, DataEntryHandler dataEntryPropagator)
         {
+            // Depending on how the user interacts with the file import process image set loading can be aborted after controls are generated and then
+            // another image set loaded.  Any existing controls therefore need to be cleared.
+            this.ControlGrid.Inlines.Clear();
+            this.Controls.Clear();
+            this.ControlsByDataLabel.Clear();
+
             foreach (ControlRow control in database.TemplateTable)
             {
                 // no point in generating a control if it doesn't render in the UX
@@ -53,7 +57,7 @@ namespace Timelapse.Controls
                     }
                     controlToAdd = noteControl;
                 }
-                else if (control.Type == Constants.Control.Flag || control.Type == Constants.Control.DeleteFlag)
+                else if (control.Type == Constants.Control.Flag || control.Type == Constants.DatabaseColumn.DeleteFlag)
                 {
                     DataEntryFlag flagControl = new DataEntryFlag(control.DataLabel, this);
                     flagControl.Label = control.Label;
@@ -76,7 +80,7 @@ namespace Timelapse.Controls
                 }
                 else
                 {
-                    Debug.Assert(false, String.Format("Unhandled control type {0}.", control.Type));
+                    Debug.Fail(String.Format("Unhandled control type {0}.", control.Type));
                     continue;
                 }
 

@@ -9,13 +9,14 @@ namespace Timelapse.Editor
     {
         private UIElement positionReference;
 
-        public DialogEditChoiceList(UIElement positionReference, string choices)
+        public DialogEditChoiceList(UIElement positionReference, string choices, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
 
             this.ChoiceList.Text = choices;
             this.OkButton.IsEnabled = false;
+            this.Owner = owner;
             this.positionReference = positionReference;
         }
 

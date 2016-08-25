@@ -10,11 +10,12 @@ namespace Timelapse.Dialog
     /// </summary>
     public partial class TemplatesDontMatch : Window
     {
-        public TemplatesDontMatch(List<string> errors)
+        public TemplatesDontMatch(List<string> errors, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
 
+            this.Owner = owner;
             foreach (string error in errors)
             {
                 this.TextBlockDetails.Inlines.Add(new Run { Text = "     " + error });

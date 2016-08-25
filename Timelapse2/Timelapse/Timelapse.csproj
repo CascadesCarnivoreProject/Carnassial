@@ -136,6 +136,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Database\ColumnDefinition.cs" />
     <Compile Include="Database\ControlRow.cs" />
     <Compile Include="Database\CustomFilterOperator.cs" />
     <Compile Include="Database\DataTableBackedList.cs" />
@@ -158,6 +159,7 @@
     <Compile Include="Dialog\DateTimeLinearCorrection.xaml.cs">
       <DependentUpon>DateTimeLinearCorrection.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Util\RegistryKeyExtensions.cs" />
     <Compile Include="Util\Throttles.cs" />
     <Compile Include="Dialog\WindowVideoPlayer.xaml.cs">
       <DependentUpon>WindowVideoPlayer.xaml</DependentUpon>
@@ -170,7 +172,7 @@
     <Compile Include="Images\FeedbackTuple.cs" />
     <Compile Include="Database\DateTimeAdjustment.cs" />
     <Compile Include="Images\ImageDifference.cs" />
-    <Compile Include="Images\ImageExpectedUsage.cs" />
+    <Compile Include="Images\ImageDisplayIntent.cs" />
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
     <Compile Include="Images\MetaTagEventArgs.cs" />
@@ -308,7 +310,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Dialog\WindowOptions.xaml">
+    <Page Include="Dialog\AdvancedTimelapseOptions.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -389,22 +391,22 @@
     </Compile>
     <Compile Include="Images\MarkableImageCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
-    <Compile Include="Util\RegistryUserSettings.cs" />
+    <Compile Include="Util\UserRegistrySettings.cs" />
     <Compile Include="Controls\DataEntryControls.xaml.cs">
       <DependentUpon>DataEntryControls.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\WindowControl.xaml.cs">
       <DependentUpon>WindowControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\WindowOptions.xaml.cs">
-      <DependentUpon>WindowOptions.xaml</DependentUpon>
+    <Compile Include="Dialog\AdvancedTimelapseOptions.xaml.cs">
+      <DependentUpon>AdvancedTimelapseOptions.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Util\TimelapseRegistryUserSettings.cs" />
+    <Compile Include="Util\TimelapseUserRegistrySettings.cs" />
     <Compile Include="Controls\DataEntryHandler.cs">
       <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
     </Compile>
     <Compile Include="Database\SQLiteWrapper.cs" />
-    <Compile Include="Util\StatusBarUpdates.cs" />
+    <Compile Include="Util\StatusBarExtensions.cs" />
     <Compile Include="Database\TemplateDatabase.cs" />
     <Compile Include="Util\TimelapseState.cs" />
     <Compile Include="Util\Utilities.cs" />

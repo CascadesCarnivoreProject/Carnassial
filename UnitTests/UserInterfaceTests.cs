@@ -12,6 +12,7 @@ using Timelapse.Controls;
 using Timelapse.Database;
 using Timelapse.Dialog;
 using Timelapse.Editor;
+using Timelapse.Images;
 using Timelapse.Util;
 using MessageBox = Timelapse.Dialog.MessageBox;
 
@@ -36,6 +37,10 @@ namespace Timelapse.UnitTests
 
             // open, create template database, close
             string templateDatabaseFilePath = this.GetUniqueFilePathForTest(TestConstant.File.DefaultNewTemplateDatabaseFileName);
+            if (File.Exists(templateDatabaseFilePath))
+            {
+                File.Delete(templateDatabaseFilePath);
+            }
             editor = new EditorWindow();
             PrivateObject editorAccessor = new PrivateObject(editor);
             editor.Show();
@@ -53,8 +58,8 @@ namespace Timelapse.UnitTests
             editorAccessor.Invoke(TestConstant.InitializeDataGridMethodName, templateDatabaseFilePath);
             this.WaitForRenderingComplete();
 
-            this.ShowDialog(editor, new DialogAboutTimelapseEditor());
-            this.ShowDialog(editor, new DialogEditChoiceList(editor.HelpText, Utilities.ConvertBarsToLineBreaks("Choice0|Choice1|Choice2|Choice3")));
+            this.ShowDialog(new DialogAboutTimelapseEditor(editor));
+            this.ShowDialog(new DialogEditChoiceList(editor.HelpText, Utilities.ConvertBarsToLineBreaks("Choice0|Choice1|Choice2|Choice3"), editor));
 
             editor.Close();
         }
@@ -156,43 +161,46 @@ namespace Timelapse.UnitTests
                 Assert.IsTrue(dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0);
                 Assert.IsNotNull(dataHandler.ImageCache.Current);
 
-                this.ShowDialog(timelapse, new AboutTimelapse());
-                this.ShowDialog(timelapse, new ChooseDatabaseFile(new string[] { TestConstant.File.DefaultNewImageDatabaseFileName }));
+                this.ShowDialog(new AboutTimelapse(timelapse));
+                MarkableImageCanvas markableCanvas = (MarkableImageCanvas)timelapseAccessor.GetField("markableCanvas");
+                TimelapseState state = (TimelapseState)timelapseAccessor.GetField("state");
+                this.ShowDialog(new AdvancedTimelapseOptions(state, markableCanvas, timelapse));
+                this.ShowDialog(new ChooseDatabaseFile(new string[] { TestConstant.File.DefaultNewImageDatabaseFileName }, timelapse));
 
-                this.ShowDialog(timelapse, new CustomViewFilter(dataHandler.ImageDatabase, DateTime.Now));
-                this.ShowDialog(timelapse, new DateCorrectAmbiguous(dataHandler.ImageDatabase));
-                this.ShowDialog(timelapse, new DateDaylightSavingsTimeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache));
+                this.ShowDialog(new CustomViewFilter(dataHandler.ImageDatabase, DateTime.Now, timelapse));
+                this.ShowDialog(new DateCorrectAmbiguous(dataHandler.ImageDatabase, timelapse));
+                this.ShowDialog(new DateDaylightSavingsTimeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache, timelapse));
 
-                DateTimeFixedCorrection clockSetCorrection = new DateTimeFixedCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache.Current);
+                DateTimeFixedCorrection clockSetCorrection = new DateTimeFixedCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache.Current, timelapse);
                 Assert.IsFalse(clockSetCorrection.Abort);
-                this.ShowDialog(timelapse, clockSetCorrection);
+                this.ShowDialog(clockSetCorrection);
 
-                DateTimeLinearCorrection clockDriftCorrection = new DateTimeLinearCorrection(dataHandler.ImageDatabase);
+                DateTimeLinearCorrection clockDriftCorrection = new DateTimeLinearCorrection(dataHandler.ImageDatabase, timelapse);
                 Assert.IsTrue(clockDriftCorrection.Abort == (dataHandler.ImageCache.Current == null));
-                this.ShowDialog(timelapse, clockDriftCorrection);
+                this.ShowDialog(clockDriftCorrection);
 
-                this.ShowDialog(timelapse, new EditLog(dataHandler.ImageDatabase.ImageSet.Log));
+                this.ShowDialog(new EditLog(dataHandler.ImageDatabase.ImageSet.Log, timelapse));
+                this.ShowDialog(new ExportCsv("test.csv", timelapse));
 
-                Throttles throttle = new Throttles();
-                using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(dataHandler.ImageDatabase, dataHandler.ImageCache.CurrentRow, new TimelapseState(throttle)))
+                using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(dataHandler.ImageDatabase, dataHandler.ImageCache.CurrentRow, new TimelapseState(), timelapse))
                 {
-                    this.ShowDialog(timelapse, darkThreshold);
+                    this.ShowDialog(darkThreshold);
                 }
-                using (PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(dataHandler.ImageDatabase, dataHandler.ImageCache.Current.GetImagePath(dataHandler.ImageDatabase.FolderPath)))
+                using (PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(dataHandler.ImageDatabase, dataHandler.ImageCache.Current.GetImagePath(dataHandler.ImageDatabase.FolderPath), timelapse))
                 {
-                    this.ShowDialog(timelapse, populateField);
+                    this.ShowDialog(populateField);
                 }
-                this.ShowDialog(timelapse, new RenameImageDatabaseFile(dataHandler.ImageDatabase.FileName));
-                this.ShowDialog(timelapse, new DateRereadFromFiles(dataHandler.ImageDatabase));
-                this.ShowDialog(timelapse, new FileCountsByQuality(dataHandler.ImageDatabase.GetImageCountsByQuality()));
-                this.ShowDialog(timelapse, new TemplatesDontMatch(dataHandler.ImageDatabase.TemplateSynchronizationIssues));
+                this.ShowDialog(new RenameImageDatabaseFile(dataHandler.ImageDatabase.FileName, timelapse));
+                this.ShowDialog(new DateRereadFromFiles(dataHandler.ImageDatabase, timelapse));
+                this.ShowDialog(new FileCountsByQuality(dataHandler.ImageDatabase.GetImageCountsByQuality(), timelapse));
+                this.ShowDialog(new TemplatesDontMatch(dataHandler.ImageDatabase.TemplateSynchronizationIssues, timelapse));
 
                 MessageBox okMessageBox = this.CreateMessageBox(timelapse, MessageBoxButton.OK, MessageBoxImage.Error);
-                this.ShowDialog(timelapse, okMessageBox);
+                this.ShowDialog(okMessageBox);
                 MessageBox okCancelMessageBox = this.CreateMessageBox(timelapse, MessageBoxButton.OKCancel, MessageBoxImage.Information);
-                this.ShowDialog(timelapse, okCancelMessageBox);
+                this.ShowDialog(okCancelMessageBox);
                 MessageBox yesNoMessageBox = this.CreateMessageBox(timelapse, MessageBoxButton.YesNo, MessageBoxImage.Question);
-                this.ShowDialog(timelapse, yesNoMessageBox);
+                this.ShowDialog(yesNoMessageBox);
 
                 timelapse.Close();
             }
@@ -226,10 +234,9 @@ namespace Timelapse.UnitTests
             return (InvokePattern)okButton.GetCurrentPattern(InvokePattern.Pattern);
         }
 
-        private void ShowDialog(Window owner, Window dialog)
+        private void ShowDialog(Window dialog)
         {
             dialog.Loaded += (object sender, RoutedEventArgs eventArgs) => { dialog.Close(); };
-            dialog.Owner = owner;
             Dispatcher.CurrentDispatcher.InvokeAsync(() =>
             {
                 dialog.ShowDialog();

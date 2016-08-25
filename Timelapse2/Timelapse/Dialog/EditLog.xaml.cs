@@ -11,26 +11,21 @@ namespace Timelapse.Dialog
     public partial class EditLog : Window
     {
         /// <summary>
-        /// Gets or sets the modified text that can be accessed immediately after the dialog exits.
-        /// </summary>
-        public string LogContents { get; set; }
-
-        /// <summary>
         /// Raise a dialog that lets the user edit text given to it as a parameter  
         /// If the dialog returns true, the property LogContents will contain the modified text. 
         /// </summary>
-        public EditLog(string text)
+        public EditLog(string text, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
-            this.LogContents = text;
-            this.tbLog.Text = this.LogContents;
+            this.Owner = owner;
+
+            this.Log.Text = text;
             this.OkButton.IsEnabled = false;
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            this.LogContents = this.tbLog.Text;
             this.DialogResult = true;
         }
 

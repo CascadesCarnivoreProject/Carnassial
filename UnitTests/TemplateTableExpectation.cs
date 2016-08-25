@@ -61,12 +61,12 @@ namespace Timelapse.UnitTests
             this.ImageQuality.TextBoxWidth = Int32.Parse(Constants.ControlDefault.ImageQualityWidth);
             this.ImageQuality.Tooltip = Constants.ControlDefault.ImageQualityTooltip;
             this.ImageQuality.Type = Constants.DatabaseColumn.ImageQuality;
-            this.DeleteFlag = ControlExpectations.CreateFlag(EditorConstant.Control.DeleteFlag, id++);
+            this.DeleteFlag = ControlExpectations.CreateFlag(Constants.DatabaseColumn.DeleteFlag, id++);
             this.DeleteFlag.Copyable = false;
-            this.DeleteFlag.Label = EditorConstant.Control.DeleteFlagLabel;
+            this.DeleteFlag.Label = Constants.ControlDefault.DeleteFlagLabel;
             this.DeleteFlag.List = String.Empty;
             this.DeleteFlag.Tooltip = Constants.ControlDefault.DeleteFlagTooltip;
-            this.DeleteFlag.Type = Constants.Control.DeleteFlag;
+            this.DeleteFlag.Type = Constants.DatabaseColumn.DeleteFlag;
 
             if (version < TestConstant.Version2104)
             {

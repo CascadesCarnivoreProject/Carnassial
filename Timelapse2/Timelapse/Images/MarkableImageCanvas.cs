@@ -17,22 +17,6 @@ namespace Timelapse.Images
     /// </summary>
     public class MarkableImageCanvas : Canvas
     {
-        private const double MagnifierDefaultZoom = 60;
-        private const double MagnifierMaxZoom = 15;  // Max is a smaller number
-        private const double MagnifierMinZoom = 100; // Min is the larger number
-        private const double MagnifierZoomStep = 2;
-
-        private const int MarkDiameter = 10;
-        private const int MarkStrokeThickness = 2;
-        private const int MarkGlowDiameterIncrease = 15;
-        private const int MarkGlowStrokeThickness = 7;
-        private const double MarkGlowOpacity = 0.35;
-
-        private const double ZoomMaximum = 10;   // Maximum amount of zoom
-        private const double ZoomMaximumUpperBound = 50;   // Maximum amount of zoom
-        private const double ZoomMinimum = 1;   // Minimum amount of zoom
-        private const double ZoomStep = 1.2;   // Amount to scale on each increment
-
         private static readonly DependencyProperty IsMagnifyingGlassVisibleProperty = DependencyProperty.Register("IsMagnifyingGlassVisible", typeof(bool), typeof(MarkableImageCanvas));
         private static readonly DependencyProperty MagnifierZoomDeltaProperty = DependencyProperty.Register("MagnifierZoomDelta", typeof(double), typeof(MarkableImageCanvas));
         private static readonly DependencyProperty MagnifierZoomRangeProperty = DependencyProperty.Register("MagnifierZoomRange", typeof(Point), typeof(MarkableImageCanvas));
@@ -116,7 +100,7 @@ namespace Timelapse.Images
                 }
                 catch (Exception exception)
                 {
-                    Debug.Assert(false, "Zoom as image cannot be scaled.", exception.ToString());
+                    Debug.Fail("Zoom as image cannot be scaled.", exception.ToString());
                     this.SetValue(ZoomProperty, value);
                 }
             }
@@ -300,7 +284,7 @@ namespace Timelapse.Images
             this.Focusable = true;
             this.SizeChanged += new SizeChangedEventHandler(this.OnMarkableImageCanvas_SizeChanged);
             this.ResetMaxZoom();
-            this.MaxZoomUpperBound = ZoomMaximumUpperBound;
+            this.MaxZoomUpperBound = Constants.MarkableCanvas.ZoomMaximumUpperBound;
 
             // Set up some initial image properites for the image to magnify
             this.ImageToMagnify = new Image();
@@ -325,9 +309,9 @@ namespace Timelapse.Images
 
             // Set up the magnifying glass
             this.magnifyingGlass.MarkableCanvasParent = this; // A reference to this so we can access the markable Canvas state
-            this.MagnifierZoomRange = new Point(MagnifierMinZoom, MagnifierMaxZoom);
-            this.MagnifierZoomDelta = ZoomStep;
-            this.MagnifierZoom = MagnifierDefaultZoom;
+            this.MagnifierZoomRange = new Point(Constants.MarkableCanvas.MagnifierMinZoom, Constants.MarkableCanvas.MagnifierMaxZoom);
+            this.MagnifierZoomDelta = Constants.MarkableCanvas.ZoomStep;
+            this.MagnifierZoom = Constants.MarkableCanvas.MagnifierDefaultZoom;
 
             this.magnifyingGlass.Hide();
             Canvas.SetZIndex(this.magnifyingGlass, 1000); // Should always be in front
@@ -363,7 +347,7 @@ namespace Timelapse.Images
         /// </summary>
         public void ResetMaxZoom()
         {
-            this.MaxZoom = ZoomMaximum;
+            this.MaxZoom = Constants.MarkableCanvas.ZoomMaximum;
         }
 
         public void AddMetaTag(MetaTag mt)
@@ -681,7 +665,7 @@ namespace Timelapse.Images
             // Get out of here if we are already at our maximum or minimum scaling values 
             // while zooming in or out respectively 
             if ((zoomIn && this.scaleTransform.ScaleX >= this.MaxZoom) ||
-                (!zoomIn && this.scaleTransform.ScaleX <= ZoomMinimum))
+                (!zoomIn && this.scaleTransform.ScaleX <= Constants.MarkableCanvas.ZoomMinimum))
             {
                 return;
             }
@@ -695,8 +679,8 @@ namespace Timelapse.Images
             {
                 // We are zooming in
                 // Calculate the scaling factor
-                this.scaleTransform.ScaleX *= ZoomStep;   // Calculate the scaling factor
-                this.scaleTransform.ScaleY *= ZoomStep;
+                this.scaleTransform.ScaleX *= Constants.MarkableCanvas.ZoomStep;   // Calculate the scaling factor
+                this.scaleTransform.ScaleY *= Constants.MarkableCanvas.ZoomStep;
 
                 // Make sure we don't scale beyond the maximum scaling factor
                 this.scaleTransform.ScaleX = Math.Min(this.MaxZoom, this.scaleTransform.ScaleX);
@@ -706,12 +690,12 @@ namespace Timelapse.Images
             {
                 // We are zooming out. 
                 // Calculate the scaling factor
-                this.scaleTransform.ScaleX /= ZoomStep;
-                this.scaleTransform.ScaleY /= ZoomStep;
+                this.scaleTransform.ScaleX /= Constants.MarkableCanvas.ZoomStep;
+                this.scaleTransform.ScaleY /= Constants.MarkableCanvas.ZoomStep;
 
                 // Make sure we don't scale beyond the minimum scaling factor
-                this.scaleTransform.ScaleX = Math.Max(ZoomMinimum, this.scaleTransform.ScaleX);
-                this.scaleTransform.ScaleY = Math.Max(ZoomMinimum, this.scaleTransform.ScaleY);
+                this.scaleTransform.ScaleX = Math.Max(Constants.MarkableCanvas.ZoomMinimum, this.scaleTransform.ScaleX);
+                this.scaleTransform.ScaleY = Math.Max(Constants.MarkableCanvas.ZoomMinimum, this.scaleTransform.ScaleY);
 
                 // if there is no scaling, reset translations
                 if (this.scaleTransform.ScaleX == 1.0 && this.scaleTransform.ScaleY == 1.0)
@@ -772,7 +756,7 @@ namespace Timelapse.Images
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, "TransformChanged as image cannot be transformed", exception.ToString());
+                Debug.Fail("TransformChanged as image cannot be transformed", exception.ToString());
             }
         }
         #endregion
@@ -809,9 +793,9 @@ namespace Timelapse.Images
 
             // Create a marker, using properties as defined in the metatag as needed
             Ellipse ellipse = new Ellipse();
-            ellipse.Width = MarkDiameter;
-            ellipse.Height = MarkDiameter;
-            ellipse.StrokeThickness = MarkStrokeThickness;
+            ellipse.Width = Constants.MarkableCanvas.MarkDiameter;
+            ellipse.Height = Constants.MarkableCanvas.MarkDiameter;
+            ellipse.StrokeThickness = Constants.MarkableCanvas.MarkStrokeThickness;
             ellipse.Stroke = mtag.Brush;
             ellipse.Fill = this.markFillBrush;  // Should be a transparent fill so it can get hit events
 
@@ -819,8 +803,8 @@ namespace Timelapse.Images
             Ellipse ellipse1 = new Ellipse();
 
             ellipse1.Stroke = Brushes.Black;
-            ellipse1.Width = MarkDiameter + 1;
-            ellipse1.Height = MarkDiameter + 1;
+            ellipse1.Width = Constants.MarkableCanvas.MarkDiameter + 1;
+            ellipse1.Height = Constants.MarkableCanvas.MarkDiameter + 1;
             ellipse1.StrokeThickness = 1;
             max_diameter = ellipse1.Width;
 
@@ -828,8 +812,8 @@ namespace Timelapse.Images
             Ellipse outline2 = new Ellipse();
 
             outline2.Stroke = Brushes.Beige;
-            outline2.Width = MarkDiameter + 2;
-            outline2.Height = MarkDiameter + 2;
+            outline2.Width = Constants.MarkableCanvas.MarkDiameter + 2;
+            outline2.Height = Constants.MarkableCanvas.MarkDiameter + 2;
             outline2.StrokeThickness = 1;
             max_diameter = ellipse1.Width;
 
@@ -837,11 +821,11 @@ namespace Timelapse.Images
             if (mtag.Emphasise)
             {
                 glow = new Ellipse();
-                glow.Width = ellipse1.Width + MarkGlowDiameterIncrease;
-                glow.Height = ellipse1.Height + MarkGlowDiameterIncrease;
-                glow.StrokeThickness = MarkGlowStrokeThickness;
+                glow.Width = ellipse1.Width + Constants.MarkableCanvas.MarkGlowDiameterIncrease;
+                glow.Height = ellipse1.Height + Constants.MarkableCanvas.MarkGlowDiameterIncrease;
+                glow.StrokeThickness = Constants.MarkableCanvas.MarkGlowStrokeThickness;
                 glow.Stroke = ellipse.Stroke;
-                glow.Opacity = MarkGlowOpacity;
+                glow.Opacity = Constants.MarkableCanvas.MarkGlowOpacity;
                 max_diameter = glow.Width;
             }
 

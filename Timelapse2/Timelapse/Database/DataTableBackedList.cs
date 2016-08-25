@@ -63,9 +63,13 @@ namespace Timelapse.Database
 
         public IEnumerator<TRow> GetEnumerator()
         {
-            foreach (DataRow row in this.DataTable.Rows)
+            // use a row index rather than a foreach loop as, if the caller modifies the DataRow, the DataRowCollection enumerator under the foreach may lose its place
+            // Manipulation of data in a DataTable from within a foreach is common practice, suggesting whatever framework issue which invalidates the enumerator 
+            // manifests only infrequently, but MSDN is ambiguous as to the level of support.  Enumerators returning the same row multiple times has been observed,
+            // skipping of rows has not been.
+            for (int rowIndex = 0; rowIndex < this.DataTable.Rows.Count; ++rowIndex)
             {
-                yield return this.createRow(row);
+                yield return this.createRow(this.DataTable.Rows[rowIndex]);
             }
         }
 

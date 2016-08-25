@@ -27,32 +27,16 @@ namespace Timelapse.Editor.Util
             parent.Children.Clear();
             foreach (ControlRow control in templateTable)
             {
-                if (control.DefaultValue == String.Empty)
-                {
-                    if (control.Type == Constants.DatabaseColumn.Date)
-                    {
-                        // Default Date: should be "01-Jan-1900
-                        DateTime defaultDateTime = new DateTime(Constants.Time.DefaultYear, Constants.Time.DefaultMonth, Constants.Time.DefaultDay, Constants.Time.DefaultHours, Constants.Time.DefaultMinutes, Constants.Time.DefaultSeconds);
-                        control.DefaultValue = DateTimeHandler.ToStandardDateString(defaultDateTime);  
-                    }
-                    else if (control.Type == Constants.DatabaseColumn.Time)
-                    {
-                        // Default Time: should be "12:00:00"
-                        DateTime defaultDateTime = new DateTime(Constants.Time.DefaultYear, Constants.Time.DefaultMonth, Constants.Time.DefaultDay, Constants.Time.DefaultHours, Constants.Time.DefaultMinutes, Constants.Time.DefaultSeconds);
-                        control.DefaultValue = DateTimeHandler.ToStandardTimeString(defaultDateTime);
-                    }
-                }
-
                 // instantiate control UX objects
                 StackPanel stackPanel;
                 switch (control.Type)
                 {
-                    case Constants.DatabaseColumn.File:
-                    case Constants.DatabaseColumn.RelativePath:
-                    case Constants.DatabaseColumn.Folder:
-                    case Constants.DatabaseColumn.Date:
-                    case Constants.DatabaseColumn.Time:
                     case Constants.Control.Note:
+                    case Constants.DatabaseColumn.Date:
+                    case Constants.DatabaseColumn.File:
+                    case Constants.DatabaseColumn.Folder:
+                    case Constants.DatabaseColumn.RelativePath:
+                    case Constants.DatabaseColumn.Time:
                         Label noteLabel = CreateLabel(styleProvider, control.Label, control.Tooltip);
                         TextBox noteContent = CreateTextBox(styleProvider, control.DefaultValue, control.Tooltip, control.TextBoxWidth);
                         stackPanel = CreateStackPanel(styleProvider, noteLabel, noteContent);
@@ -63,7 +47,7 @@ namespace Timelapse.Editor.Util
                         stackPanel = CreateStackPanel(styleProvider, counterLabel, coutnerContent);
                         break;
                     case Constants.Control.Flag:
-                    case Constants.Control.DeleteFlag:
+                    case Constants.DatabaseColumn.DeleteFlag:
                         Label flagLabel = CreateLabel(styleProvider, control.Label, control.Tooltip);
                         CheckBox flagContent = CreateFlag(styleProvider, String.Empty, control.Tooltip);
                         flagContent.IsChecked = (control.DefaultValue == Constants.Boolean.True) ? true : false;

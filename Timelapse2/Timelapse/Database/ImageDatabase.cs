@@ -69,12 +69,11 @@ namespace Timelapse.Database
                 imageDatabase.OnExistingDatabaseOpened(templateDatabase);
             }
 
-            // load the single row of the image set table from the database
-            string imageSetQuery = "Select * From " + Constants.Database.ImageSetTable + " WHERE " + Constants.DatabaseColumn.ID + " = " + Constants.Database.ImageSetRowID.ToString();
-            DataTable imageSetTable = imageDatabase.Database.GetDataTableFromSelect(imageSetQuery);
-            imageDatabase.ImageSet = new ImageSetRow(imageSetTable.Rows[0]);
-
-            // load the marker table from the database
+            // ensure all tables have been loaded from the database
+            if (imageDatabase.ImageSet == null)
+            {
+                imageDatabase.GetImageSet();
+            }
             imageDatabase.GetMarkers();
 
             imageDatabase.CustomFilter = new CustomFilter(imageDatabase.TemplateTable, CustomFilterOperator.Or);
@@ -175,8 +174,8 @@ namespace Timelapse.Database
                                 dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality];
                                 imageRow.Add(new ColumnTuple(dataLabel, imageProperties.ImageQuality.ToString()));
                                 break;
-                            case Constants.Control.DeleteFlag: // Add the Delete flag
-                                dataLabel = this.DataLabelFromStandardControlType[Constants.Control.DeleteFlag];
+                            case Constants.DatabaseColumn.DeleteFlag: // Add the Delete flag
+                                dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.DeleteFlag];
                                 imageRow.Add(new ColumnTuple(dataLabel, this.GetControlDefaultValue(dataLabel))); // Default as specified in the template file, which should be "false"
                                 break;
                             case Constants.Control.Note:        // Find and then Add the Note or Fixed Choice
@@ -212,7 +211,7 @@ namespace Timelapse.Database
                                 break;
 
                             default:
-                                Debug.Assert(false, String.Format("Unhandled control type '{0}'.", controlType));
+                                Debug.Fail(String.Format("Unhandled control type '{0}'.", controlType));
                                 break;
                         }
                     }
@@ -262,8 +261,8 @@ namespace Timelapse.Database
 
             // Create the DataTable from the template
             // First, define the creation string based on the contents of the template. 
-            List<ColumnTuple> columnDefinitions = new List<ColumnTuple>();
-            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // It begins with the ID integer primary key
+            List<ColumnDefinition> columnDefinitions = new List<ColumnDefinition>();
+            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // It begins with the ID integer primary key
             foreach (ControlRow control in this.TemplateTable)
             {
                 columnDefinitions.Add(this.CreateImageDataColumnDefinition(control));
@@ -278,19 +277,19 @@ namespace Timelapse.Database
 
             // Create the ImageSetTable and initialize a single row in it
             columnDefinitions.Clear();
-            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // It begins with the ID integer primary key
-            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Log, "TEXT DEFAULT 'Add text here.'"));
-            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, " TEXT DEFAULT 'true'"));
-            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Row, "TEXT DEFAULT '0'"));
+            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // It begins with the ID integer primary key
+            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.Log, Constants.Sql.Text, Constants.Database.ImageSetDefaultLog));
+            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.Magnifier, Constants.Sql.Text, Constants.Boolean.True));
+            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.Row, Constants.Sql.Text, Constants.DefaultImageRowIndex));
             int allImages = (int)ImageFilter.All;
-            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, "TEXT DEFAULT '" + allImages.ToString() + "'"));
-            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.Text));
+            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.Filter, Constants.Sql.Text, allImages));
+            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.Text));
             this.Database.CreateTable(Constants.Database.ImageSetTable, columnDefinitions);
 
             List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>(); // Populate the data for the image set with defaults
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Log, Constants.Database.ImageSetDefaultLog));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, Constants.Boolean.True));
-            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Row, "0"));
+            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Row, Constants.DefaultImageRowIndex));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, allImages.ToString()));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True));
             List<List<ColumnTuple>> insertionStatements = new List<List<ColumnTuple>>();
@@ -299,13 +298,13 @@ namespace Timelapse.Database
 
             // Create the MarkersTable and initialize it from the template table
             columnDefinitions.Clear();
-            columnDefinitions.Add(new ColumnTuple(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // t begins with the ID integer primary key
+            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // t begins with the ID integer primary key
             string type = String.Empty;
             foreach (ControlRow control in this.TemplateTable)
             {
                 if (control.Type.Equals(Constants.Control.Counter))
                 {
-                    columnDefinitions.Add(new ColumnTuple(control.DataLabel, "TEXT Default ''"));
+                    columnDefinitions.Add(new ColumnDefinition(control.DataLabel, Constants.Sql.Text, String.Empty));
                 }
             }
             this.Database.CreateTable(Constants.Database.MarkersTable, columnDefinitions);
@@ -316,8 +315,8 @@ namespace Timelapse.Database
             // perform TemplateTable initializations and migrations, then check for synchronization issues
             base.OnExistingDatabaseOpened(templateDatabase);
 
-            List<string> templateDataLabels = templateDatabase.GetDataLabelsExceptID();
-            List<string> dataLabels = this.GetDataLabelsExceptID();
+            List<string> templateDataLabels = templateDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
+            List<string> dataLabels = this.GetDataLabelsExceptIDInSpreadsheetOrder();
             List<string> dataLabelsInTemplateButNotImageDatabase = templateDataLabels.Except(dataLabels).ToList();
             foreach (string dataLabel in dataLabelsInTemplateButNotImageDatabase)
             {
@@ -379,27 +378,47 @@ namespace Timelapse.Database
             // - DeleteFlag (if missing) needs to be added
             // add RelativePath column if it's not present in the image data table at postion '2'
             this.SelectDataTableImages(ImageFilter.All);
+            bool refreshImageDataTable = false;
             if (this.ImageDataTable.ColumnNames.Contains(Constants.DatabaseColumn.RelativePath) == false)
             {
-                long id = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
-                ControlRow control = this.TemplateTable.Find(id);
-                ColumnTuple columnDefinition = this.CreateImageDataColumnDefinition(control);
+                long relativePathID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
+                ControlRow relativePathControl = this.TemplateTable.Find(relativePathID);
+                ColumnDefinition columnDefinition = this.CreateImageDataColumnDefinition(relativePathControl);
                 this.Database.AddColumnToTable(Constants.Database.ImageDataTable, Constants.Database.RelativePathPosition, columnDefinition);
+                refreshImageDataTable = true;
             }
 
-            // For backwards compatability, check if there is a MarkForDeletion column. If there is, remove it as it has been renamed to DeleteFlag.
-            if (this.Database.IsColumnInTable(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion) == true)
+            // deprecate MarkForDeletion and converge to DeleteFlag
+            bool hasMarkForDeletion = this.Database.IsColumnInTable(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion);
+            bool hasDeleteFlag = this.Database.IsColumnInTable(Constants.Database.ImageDataTable, Constants.DatabaseColumn.DeleteFlag);
+            if (hasMarkForDeletion && (hasDeleteFlag == false))
             {
+                // migrate any existing MarkForDeletion column to DeleteFlag
+                // this is likely the most typical case
+                this.Database.RenameColumn(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion, Constants.DatabaseColumn.DeleteFlag);
+                refreshImageDataTable = true;
+            }
+            else if (hasMarkForDeletion && hasDeleteFlag)
+            {
+                // if both MarkForDeletion and DeleteFlag are present drop MarkForDeletion
+                // this is not expected to occur
                 this.Database.DeleteColumn(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion);
+                refreshImageDataTable = true;
+            }
+            else if (hasDeleteFlag == false)
+            {
+                // if there's neither a MarkForDeletion or DeleteFlag column add DeleteFlag
+                long id = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.DeleteFlag);
+                ControlRow control = this.TemplateTable.Find(id);
+                ColumnDefinition columnDefinition = this.CreateImageDataColumnDefinition(control);
+                this.Database.AddColumnToEndOfTable(Constants.Database.ImageDataTable, columnDefinition);
+                refreshImageDataTable = true;
             }
 
-            // For backwards compatability, check if there is a DeleteFlag Column. If not, add one.
-            if (this.Database.IsColumnInTable(Constants.Database.ImageDataTable, Constants.Control.DeleteFlag) == false)
+            if (refreshImageDataTable)
             {
-                long id = this.GetControlIDFromTemplateTable(Constants.Control.DeleteFlag);
-                ControlRow control = this.TemplateTable.Find(id);
-                ColumnTuple columnDefinition = this.CreateImageDataColumnDefinition(control);
-                this.Database.AddColumnToEndOfTable(Constants.Database.ImageDataTable, columnDefinition);
+                // update image data table to current schema
+                this.SelectDataTableImages(ImageFilter.All);
             }
 
             // perform ImageSetTable migrations
@@ -412,14 +431,15 @@ namespace Timelapse.Database
             if (!whiteSpaceColumnExists)
             {
                 // create the whitespace column
-                this.Database.AddColumnToEndOfTable(Constants.Database.ImageSetTable, new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.False));
+                this.Database.AddColumnToEndOfTable(Constants.Database.ImageSetTable, new ColumnDefinition(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.Text, Constants.Boolean.False));
 
-                // trim the white space from all the data
+                // trim whitespace from the data table
                 this.Database.TrimWhitespace(Constants.Database.ImageDataTable, dataLabels);
-                ColumnTuplesWithWhere columnToUpdate = new ColumnTuplesWithWhere();
-                columnToUpdate.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True)); // Populate the data 
-                columnToUpdate.SetWhere(Constants.Database.ImageSetRowID);
-                this.Database.Update(Constants.Database.ImageSetTable, columnToUpdate);
+
+                // mark image set as whitespace trimmed
+                this.GetImageSet();
+                this.ImageSet.WhitespaceTrimmed = true;
+                this.SyncImageSetToDatabase();
             }
         }
 
@@ -495,7 +515,7 @@ namespace Timelapse.Database
 
         public ImageDataTable GetImagesMarkedForDeletion()
         {
-            string where = this.DataLabelFromStandardControlType[Constants.Control.DeleteFlag] + "=\"true\""; // = value
+            string where = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.DeleteFlag] + "=\"true\""; // = value
             string query = "Select * FROM " + Constants.Database.ImageDataTable + " WHERE " + where;
             DataTable images = this.Database.GetDataTableFromSelect(query);
             return new ImageDataTable(images);
@@ -597,7 +617,7 @@ namespace Timelapse.Database
                 case ImageFilter.Ok:
                     return this.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality] + "=\"" + imageQuality + "\"";
                 case ImageFilter.MarkedForDeletion:
-                    return this.DataLabelFromStandardControlType[Constants.Control.DeleteFlag] + "=\"true\"";
+                    return this.DataLabelFromStandardControlType[Constants.DatabaseColumn.DeleteFlag] + "=\"true\"";
                 case ImageFilter.Custom:
                     return this.CustomFilter.GetImagesWhere(out dateFilteringRequired);
                 default:
@@ -645,8 +665,6 @@ namespace Timelapse.Database
         public void UpdateImages(string dataLabel, string value, int fromRow, int toRow)
         {
             List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
-            int fromIndex = fromRow + 1; // rows start at 0, while indexes start at 1
-            int toIndex = toRow + 1;
             for (int index = fromRow; index <= toRow; index++)
             {
                 // update data table
@@ -676,7 +694,7 @@ namespace Timelapse.Database
             this.AdjustImageTimes((DateTime imageTime) => { return adjustment; }, startRow, endRow);
         }
 
-        // Given a time difference in ticks, update all the date / time field in the database
+        // Given a time difference in ticks, update all the date/time field in the database
         // Note that it does NOT update the dataTable - this has to be done outside of this routine by regenerating the datatables with whatever filter is being used..
         public void AdjustImageTimes(Func<DateTime, TimeSpan> adjustment, int startRow, int endRow)
         {
@@ -707,7 +725,7 @@ namespace Timelapse.Database
                 DateTime imageDateTime;
                 if (image.TryGetDateTime(out imageDateTime))
                 {
-                    // adjust the date / time
+                    // adjust the date/time
                     mostRecentAdjustment = adjustment.Invoke(imageDateTime);
                     if (mostRecentAdjustment == TimeSpan.Zero)
                     {
@@ -795,7 +813,7 @@ namespace Timelapse.Database
                     }
                     catch (Exception exception)
                     {
-                        Debug.Assert(false, String.Format("Reverse of date '{0}' failed.", image.Date), exception.ToString());
+                        Debug.Fail(String.Format("Reverse of date '{0}' failed.", image.Date), exception.ToString());
                         continue;
                     }
                 }
@@ -905,6 +923,13 @@ namespace Timelapse.Database
             return control.DefaultValue;
         }
 
+        private void GetImageSet()
+        {
+            string imageSetQuery = "Select * From " + Constants.Database.ImageSetTable + " WHERE " + Constants.DatabaseColumn.ID + " = " + Constants.Database.ImageSetRowID.ToString();
+            DataTable imageSetTable = this.Database.GetDataTableFromSelect(imageSetQuery);
+            this.ImageSet = new ImageSetRow(imageSetTable.Rows[0]);
+        }
+
         /// <summary>
         /// Get the metatag counter list associated with all counters representing the current row
         /// It will have a MetaTagCounter for each control, even if there may be no metatags in it
@@ -942,7 +967,7 @@ namespace Timelapse.Database
                 }
                 catch (Exception exception)
                 {
-                    Debug.Assert(false, String.Format("Read of marker failed for dataLabel '{0}'.", dataLabel), exception.ToString());
+                    Debug.Fail(String.Format("Read of marker failed for dataLabel '{0}'.", dataLabel), exception.ToString());
                     value = String.Empty;
                 }
 
@@ -1027,16 +1052,15 @@ namespace Timelapse.Database
             this.disposed = true;
         }
 
-        private ColumnTuple CreateImageDataColumnDefinition(ControlRow control)
+        private ColumnDefinition CreateImageDataColumnDefinition(ControlRow control)
         {
-            if (control.DefaultValue.Trim() == String.Empty)
             { 
-                 return new ColumnTuple(control.DataLabel + " TEXT", String.Empty);
             }
-            else
+            if (String.IsNullOrWhiteSpace(control.DefaultValue))
             {
-                return new ColumnTuple(control.DataLabel + " TEXT DEFAULT ", Utilities.QuoteForSql(control.DefaultValue)); // We quote defaults
+                 return new ColumnDefinition(control.DataLabel, Constants.Sql.Text);
             }
+            return new ColumnDefinition(control.DataLabel, Constants.Sql.Text, control.DefaultValue);
         }
 
         private List<Point> ParseMarkerPoints(string value)

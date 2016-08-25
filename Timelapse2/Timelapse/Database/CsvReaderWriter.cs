@@ -25,7 +25,7 @@ namespace Timelapse.Database
                 // If the data label is an empty string, we use the label instead.
                 // The append sequence results in a trailing comma which is retained when writing the line.
                 StringBuilder header = new StringBuilder();
-                List<string> dataLabels = database.GetDataLabelsExceptID();
+                List<string> dataLabels = database.GetDataLabelsExceptIDInSpreadsheetOrder();
                 foreach (string dataLabel in dataLabels)
                 {
                     header.Append(this.AddColumnValue(dataLabel));
@@ -50,7 +50,7 @@ namespace Timelapse.Database
         {
             importErrors = new List<string>();
             
-            List<string> dataLabels = imageDatabase.GetDataLabelsExceptID();
+            List<string> dataLabels = imageDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
             using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 using (StreamReader csvReader = new StreamReader(stream))
@@ -86,7 +86,7 @@ namespace Timelapse.Database
                         }
                         else if (row.Count != dataLabels.Count)
                         {
-                            Debug.Assert(false, String.Format("Expected {0} fields in line {1} but found {2}.", dataLabels.Count, String.Join(",", row), row.Count));
+                            Debug.Fail(String.Format("Expected {0} fields in line {1} but found {2}.", dataLabels.Count, String.Join(",", row), row.Count));
                         }
 
                         // assemble set of column values to update

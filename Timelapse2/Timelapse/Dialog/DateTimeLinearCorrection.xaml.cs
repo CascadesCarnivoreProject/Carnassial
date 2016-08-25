@@ -22,13 +22,15 @@ namespace Timelapse.Dialog
         public bool Abort { get; private set; }
         
         // Create the interface
-        public DateTimeLinearCorrection(ImageDatabase imageDatabase)
+        public DateTimeLinearCorrection(ImageDatabase imageDatabase, Window owner)
         {
             this.InitializeComponent();
             this.Abort = false;
+            this.Owner = owner;
+
+            this.earliestImageDateTime = DateTime.MaxValue;
             this.imageDatabase = imageDatabase;
             this.latestImageDateTime = DateTime.MinValue;
-            this.earliestImageDateTime = DateTime.MaxValue;
 
             // Skip images with bad dates
             ImageRow latestImageRow = null;
@@ -98,18 +100,16 @@ namespace Timelapse.Dialog
             TimeSpan mostRecentAdjustment = TimeSpan.Zero;
             foreach (ImageRow row in this.imageDatabase.ImageDataTable)
             {
-                string oldDT = row.Date + " " + row.Time;
-                string newDT = String.Empty;
+                string currentDateTime = row.Date + " " + row.Time;
+                string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
-                string difference = string.Empty;
+                string difference = String.Empty;
 
                 DateTime imageDateTime;
-                TimeSpan oneSecond = TimeSpan.FromSeconds(1);
-
                 if (row.TryGetDateTime(out imageDateTime))
                 {
                     double imagePositionInInterval;
-                    // adjust the date / time
+                    // adjust the date/time
                     if (intervalFromOldestToNewestImage == TimeSpan.Zero)
                     {
                         imagePositionInInterval = 1;
@@ -122,7 +122,7 @@ namespace Timelapse.Dialog
                     TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * newestImageAdjustment.Ticks));
 
                     // Pretty print the adjustment time
-                    if (adjustment.Duration() >= oneSecond)
+                    if (adjustment.Duration() >= TimeSpan.FromSeconds(1))
                     {
                         string sign = (adjustment < TimeSpan.Zero) ? "-" : "+";
                         status = "Changed";
@@ -144,14 +144,15 @@ namespace Timelapse.Dialog
                         difference = string.Format(format, sign, adjustment.Duration().Hours, adjustment.Duration().Minutes, adjustment.Duration().Seconds, adjustment.Duration().Days);
 
                         // Get the new date/time
-                        newDT = DateTimeHandler.ToStandardDateTimeString(imageDateTime + adjustment);
+                        newDateTime = DateTimeHandler.ToStandardDateTimeString(imageDateTime + adjustment);
                     }
                     else
                     {
                         status = "Unchanged";
                     }
                 }
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, oldDT, newDT, difference);
+
+                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, currentDateTime, newDateTime, difference);
             }
         }
 

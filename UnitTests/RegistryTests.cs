@@ -18,10 +18,7 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void EditorProductionKeysRead()
         {
-            using (EditorRegistryUserSettings editorRegistry = new EditorRegistryUserSettings())
-            {
-                MostRecentlyUsedList<string> mostRecentTemplates = editorRegistry.ReadMostRecentTemplates();
-            }
+            EditorUserRegistrySettings editorRegistry = new EditorUserRegistrySettings();
         }
 
         [TestMethod]
@@ -36,29 +33,33 @@ namespace Timelapse.UnitTests
                 }
             }
 
-            using (EditorRegistryUserSettings editorRegistry = new EditorRegistryUserSettings(testRootKey))
-            {
-                // read
-                MostRecentlyUsedList<string> mostRecentTemplates = editorRegistry.ReadMostRecentTemplates();
-                Assert.IsTrue(mostRecentTemplates != null);
-                Assert.IsTrue(mostRecentTemplates.Count == 0);
+            EditorUserRegistrySettings editorRegistry = new EditorUserRegistrySettings(testRootKey);
+            Assert.IsNotNull(editorRegistry.MostRecentTemplates);
+            Assert.IsTrue(editorRegistry.MostRecentTemplates.Count == 0);
 
-                // write
-                string templatePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultTemplateDatabaseFileName);
-                mostRecentTemplates.SetMostRecent(templatePath);
-                editorRegistry.WriteMostRecentTemplates(mostRecentTemplates);
+            // write
+            editorRegistry.WriteToRegistry();
 
-                // loopback
-                mostRecentTemplates = editorRegistry.ReadMostRecentTemplates();
-                Assert.IsTrue(mostRecentTemplates != null);
-                Assert.IsTrue(mostRecentTemplates.Count == 1);
-                string mostRecentTemplatePath;
-                Assert.IsTrue(mostRecentTemplates.TryGetMostRecent(out mostRecentTemplatePath));
-                Assert.IsTrue(mostRecentTemplatePath == templatePath);
+            // loopback
+            editorRegistry.ReadFromRegistry();
+            Assert.IsNotNull(editorRegistry.MostRecentTemplates);
+            Assert.IsTrue(editorRegistry.MostRecentTemplates.Count == 0);
+            string mostRecentTemplatePath;
+            Assert.IsFalse(editorRegistry.MostRecentTemplates.TryGetMostRecent(out mostRecentTemplatePath));
 
-                // overwrite
-                editorRegistry.WriteMostRecentTemplates(mostRecentTemplates);
-            }
+            // overwrite
+            editorRegistry.WriteToRegistry();
+
+            // modify
+            string templatePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultTemplateDatabaseFileName);
+            editorRegistry.MostRecentTemplates.SetMostRecent(templatePath);
+            editorRegistry.WriteToRegistry();
+            editorRegistry.ReadFromRegistry();
+
+            Assert.IsNotNull(editorRegistry.MostRecentTemplates);
+            Assert.IsTrue(editorRegistry.MostRecentTemplates.Count == 1);
+            Assert.IsTrue(editorRegistry.MostRecentTemplates.TryGetMostRecent(out mostRecentTemplatePath));
+            Assert.IsTrue(mostRecentTemplatePath == templatePath);
 
             Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
         }
@@ -174,16 +175,8 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void TimelapseProductionKeysRead()
         {
-            using (TimelapseRegistryUserSettings timelapseRegistry = new TimelapseRegistryUserSettings())
-            {
-                bool audioFeedback = timelapseRegistry.ReadAudioFeedback();
-                bool controlInSeparateWindow = timelapseRegistry.ReadControlsInSeparateWindow();
-                Point controlWindowSize = timelapseRegistry.ReadControlWindowSize();
-                double darkPixelRatioThreshold = timelapseRegistry.ReadDarkPixelRatioThreshold();
-                int darkPixelThreshold = timelapseRegistry.ReadDarkPixelThreshold();
-                MostRecentlyUsedList<string> mostRecentImageSets = timelapseRegistry.ReadMostRecentImageSets();
-                bool showCsvDialog = timelapseRegistry.ReadShowCsvDialog();
-            }
+            TimelapseState state = new TimelapseState();
+            state.ReadFromRegistry();
         }
 
         [TestMethod]
@@ -198,68 +191,98 @@ namespace Timelapse.UnitTests
                 }
             }
 
-            using (TimelapseRegistryUserSettings timelapseRegistry = new TimelapseRegistryUserSettings(testRootKey))
-            {
-                // read
-                bool audioFeedback = timelapseRegistry.ReadAudioFeedback();
-                bool controlInSeparateWindow = timelapseRegistry.ReadControlsInSeparateWindow();
-                Point controlWindowSize = timelapseRegistry.ReadControlWindowSize();
-                double darkPixelRatioThreshold = timelapseRegistry.ReadDarkPixelRatioThreshold();
-                int darkPixelThreshold = timelapseRegistry.ReadDarkPixelThreshold();
-                MostRecentlyUsedList<string> mostRecentImageSets = timelapseRegistry.ReadMostRecentImageSets();
-                bool showCsvDialog = timelapseRegistry.ReadShowCsvDialog();
+            TimelapseUserRegistrySettings userSettings = new TimelapseUserRegistrySettings(testRootKey);
+            this.VerifyDefaultState(userSettings);
 
-                Assert.IsFalse(audioFeedback);
-                Assert.IsFalse(controlInSeparateWindow);
-                Assert.IsTrue(controlWindowSize.X == 0 && controlWindowSize.Y == 0);
-                Assert.IsTrue(darkPixelRatioThreshold == Constants.Images.DarkPixelRatioThresholdDefault);
-                Assert.IsTrue(darkPixelThreshold == Constants.Images.DarkPixelThresholdDefault);
-                Assert.IsTrue(mostRecentImageSets != null);
-                Assert.IsTrue(mostRecentImageSets.Count == 0);
+            // write
+            userSettings.WriteToRegistry();
 
-                // write
-                string databasePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultImageDatabaseFileName);
-                mostRecentImageSets.SetMostRecent(databasePath);
+            // loopback
+            userSettings.ReadFromRegistry();
+            this.VerifyDefaultState(userSettings);
 
-                timelapseRegistry.WriteAudioFeedback(audioFeedback);
-                timelapseRegistry.WriteControlsInSeparateWindow(controlInSeparateWindow);
-                timelapseRegistry.WriteControlWindowSize(controlWindowSize);
-                timelapseRegistry.WriteDarkPixelRatioThreshold(darkPixelRatioThreshold);
-                timelapseRegistry.WriteDarkPixelThreshold(darkPixelThreshold);
-                timelapseRegistry.WriteMostRecentImageSets(mostRecentImageSets);
-                timelapseRegistry.WriteShowCsvDialog(showCsvDialog);
+            // overwrite
+            userSettings.WriteToRegistry();
 
-                // loopback
-                audioFeedback = timelapseRegistry.ReadAudioFeedback();
-                controlInSeparateWindow = timelapseRegistry.ReadControlsInSeparateWindow();
-                controlWindowSize = timelapseRegistry.ReadControlWindowSize();
-                darkPixelRatioThreshold = timelapseRegistry.ReadDarkPixelRatioThreshold();
-                darkPixelThreshold = timelapseRegistry.ReadDarkPixelThreshold();
-                mostRecentImageSets = timelapseRegistry.ReadMostRecentImageSets();
-                showCsvDialog = timelapseRegistry.ReadShowCsvDialog();
+            // modify
+            userSettings.AudioFeedback = true;
+            userSettings.ControlsInSeparateWindow = true;
+            int controlWindowSizeInPixels = 200;
+            userSettings.ControlWindowSize = new Point(controlWindowSizeInPixels, controlWindowSizeInPixels);
+            double modifiedDarkPixelRatioThreshold = userSettings.DarkPixelRatioThreshold + 1.0;
+            userSettings.DarkPixelRatioThreshold = modifiedDarkPixelRatioThreshold;
+            int modifiedDarkPixelThreshold = userSettings.DarkPixelThreshold + 1;
+            userSettings.DarkPixelThreshold = modifiedDarkPixelThreshold;
+            string databasePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultImageDatabaseFileName);
+            userSettings.MostRecentImageSets.SetMostRecent(databasePath);
+            userSettings.SuppressAmbiguousDatesDialog = true;
+            userSettings.SuppressCsvExportDialog = true;
+            userSettings.SuppressCsvImportPrompt = true;
+            userSettings.SuppressFileCountOnImportDialog = true;
+            userSettings.SuppressFilteredAmbiguousDatesPrompt = true;
+            userSettings.SuppressFilteredCsvExportPrompt = true;
+            userSettings.SuppressFilteredDarkThresholdPrompt = true;
+            userSettings.SuppressFilteredDateTimeFixedCorrectionPrompt = true;
+            userSettings.SuppressFilteredDateTimeLinearCorrectionPrompt = true;
+            userSettings.SuppressFilteredDaylightSavingsCorrectionPrompt = true;
+            userSettings.SuppressFilteredPopulateFieldFromMetadataPrompt = true;
+            userSettings.SuppressFilteredRereadDatesFromFilesPrompt = true;
+            userSettings.Throttles.SetDesiredImageRendersPerSecond(Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
 
-                Assert.IsFalse(audioFeedback);
-                Assert.IsFalse(controlInSeparateWindow);
-                Assert.IsTrue(controlWindowSize.X == 0 && controlWindowSize.Y == 0);
-                Assert.IsTrue(darkPixelRatioThreshold == Constants.Images.DarkPixelRatioThresholdDefault);
-                Assert.IsTrue(darkPixelThreshold == Constants.Images.DarkPixelThresholdDefault);
-                Assert.IsTrue(mostRecentImageSets != null);
-                Assert.IsTrue(mostRecentImageSets.Count == 1);
-                string mostRecentDatabasePath;
-                Assert.IsTrue(mostRecentImageSets.TryGetMostRecent(out mostRecentDatabasePath));
-                Assert.IsTrue(mostRecentDatabasePath == databasePath);
+            userSettings.WriteToRegistry();
+            userSettings.ReadFromRegistry();
 
-                // overwrite
-                timelapseRegistry.WriteAudioFeedback(audioFeedback);
-                timelapseRegistry.WriteControlsInSeparateWindow(controlInSeparateWindow);
-                timelapseRegistry.WriteControlWindowSize(controlWindowSize);
-                timelapseRegistry.WriteDarkPixelRatioThreshold(darkPixelRatioThreshold);
-                timelapseRegistry.WriteDarkPixelThreshold(darkPixelThreshold);
-                timelapseRegistry.WriteMostRecentImageSets(mostRecentImageSets);
-                timelapseRegistry.WriteShowCsvDialog(showCsvDialog);
-            }
+            Assert.IsTrue(userSettings.AudioFeedback);
+            Assert.IsTrue(userSettings.ControlsInSeparateWindow);
+            Assert.IsTrue(userSettings.ControlWindowSize.X == controlWindowSizeInPixels && userSettings.ControlWindowSize.Y == controlWindowSizeInPixels);
+            Assert.IsTrue(userSettings.DarkPixelRatioThreshold == modifiedDarkPixelRatioThreshold);
+            Assert.IsTrue(userSettings.DarkPixelThreshold == modifiedDarkPixelThreshold);
+            Assert.IsNotNull(userSettings.MostRecentImageSets);
+            Assert.IsTrue(userSettings.MostRecentImageSets.Count == 1);
+            string mostRecentDatabasePath;
+            Assert.IsTrue(userSettings.MostRecentImageSets.TryGetMostRecent(out mostRecentDatabasePath));
+            Assert.IsTrue(mostRecentDatabasePath == databasePath);
+            Assert.IsTrue(userSettings.SuppressAmbiguousDatesDialog);
+            Assert.IsTrue(userSettings.SuppressCsvExportDialog);
+            Assert.IsTrue(userSettings.SuppressCsvImportPrompt);
+            Assert.IsTrue(userSettings.SuppressFileCountOnImportDialog);
+            Assert.IsTrue(userSettings.SuppressFilteredAmbiguousDatesPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredCsvExportPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredDarkThresholdPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredDateTimeFixedCorrectionPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredDateTimeLinearCorrectionPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredDaylightSavingsCorrectionPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredPopulateFieldFromMetadataPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredRereadDatesFromFilesPrompt);
+            Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
 
             Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
+        }
+
+        private void VerifyDefaultState(TimelapseUserRegistrySettings userSettings)
+        {
+            Assert.IsFalse(userSettings.AudioFeedback);
+            Assert.IsFalse(userSettings.ControlsInSeparateWindow);
+            Assert.IsTrue(userSettings.ControlWindowSize.X == 0 && userSettings.ControlWindowSize.Y == 0);
+            Assert.IsTrue(userSettings.DarkPixelRatioThreshold == Constants.Images.DarkPixelRatioThresholdDefault);
+            Assert.IsTrue(userSettings.DarkPixelThreshold == Constants.Images.DarkPixelThresholdDefault);
+            Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
+            Assert.IsNotNull(userSettings.MostRecentImageSets);
+            Assert.IsTrue(userSettings.MostRecentImageSets.Count == 0);
+            string mostRecentDatabasePath;
+            Assert.IsFalse(userSettings.MostRecentImageSets.TryGetMostRecent(out mostRecentDatabasePath));
+            Assert.IsNull(mostRecentDatabasePath);
+            Assert.IsFalse(userSettings.SuppressAmbiguousDatesDialog);
+            Assert.IsFalse(userSettings.SuppressCsvExportDialog);
+            Assert.IsFalse(userSettings.SuppressCsvImportPrompt);
+            Assert.IsFalse(userSettings.SuppressFileCountOnImportDialog);
+            Assert.IsFalse(userSettings.SuppressFilteredAmbiguousDatesPrompt);
+            Assert.IsFalse(userSettings.SuppressFilteredCsvExportPrompt);
+            Assert.IsFalse(userSettings.SuppressFilteredDarkThresholdPrompt);
+            Assert.IsFalse(userSettings.SuppressFilteredDateTimeFixedCorrectionPrompt);
+            Assert.IsFalse(userSettings.SuppressFilteredDateTimeLinearCorrectionPrompt);
+            Assert.IsFalse(userSettings.SuppressFilteredPopulateFieldFromMetadataPrompt);
+            Assert.IsFalse(userSettings.SuppressFilteredRereadDatesFromFilesPrompt);
         }
     }
 }

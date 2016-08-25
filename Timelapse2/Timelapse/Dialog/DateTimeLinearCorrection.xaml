@@ -4,9 +4,9 @@
         xmlns:local="clr-namespace:Timelapse"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-		Title="Date - Add a Varying Correction Value"
+		Title="Date/time - Add a varying correction value"
 		MinHeight="650" MinWidth="768"
-		Height="650" Width="768"
+		Height="856" Width="768"
 		ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="DlgDateCorrectionName_Loaded">
@@ -18,10 +18,9 @@
 &#10;&#x2022; Adjust the date/time for the latest file as needed
 &#10;&#x2022; Click Start (which becomes active after you enter an adjusted date/time) to preview the changes that will be made
 &#10;&#x2022; Click Apply Changes to apply those changes."
-                            Result="The date / time of each file in this filtered set will be examined. Using linear interpolation, each file date/ time is adjusted proportionaly to correct for clock drift."
-                            Hint="The date and time format should be DD-MMM-YYYY HH:MM:SS, for example, 08-Jul-2016 14:30:00."
+                            Result="The date/time of each file in this filtered set will be examined. Using linear interpolation, each file date/ time is adjusted proportionaly to correct for clock drift."
+                            Hint="The date and time format should be dd-MMM-yyyy HH:mm:ss, for example, 08-Jul-2016 14:30:00."
                             ShowExplanationVisibility="True"/>
-
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>
         </StackPanel>
@@ -29,12 +28,12 @@
         <DockPanel >
             <!-- Ok/Cancel buttons-->
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">Cancel</Button>
-                <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">Start</Button>
+                <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+                <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">_Start</Button>
             </StackPanel>
 
             <!-- Content area -->
-            <Grid Name="PrimaryPanel" DockPanel.Dock="Top" Margin="10,0,10,0" >
+            <Grid Name="PrimaryPanel" DockPanel.Dock="Top" Margin="10,0,10,10" >
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -54,12 +53,11 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Label Content="Earliest:"       HorizontalAlignment="Left" HorizontalContentAlignment="Right" FontWeight="Bold"   Grid.Row="0" Grid.Column="0"/>
-                    <Label Content="earliest.jpg"    HorizontalAlignment="Left" HorizontalContentAlignment="Left"  FontWeight="Normal" Grid.Row="0" Grid.Column="1" Name="earliestImageName"   />
-                    <Label Content="dd-MMM-yyyy HH:mm:ss"  HorizontalAlignment="Left"  HorizontalContentAlignment="Left"  FontWeight="Normal" Grid.Row="0" Grid.Column="2" Name="earliestImageDate"/>
+                    <Label Content="Earliest:" HorizontalAlignment="Left" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
+                    <Label Content="[ --- earliest file --- ]" HorizontalAlignment="Left" HorizontalContentAlignment="Left" FontWeight="Normal" Grid.Row="0" Grid.Column="1" Name="earliestImageName" />
+                    <Label Content="dd-MMM-yyyy HH:mm:ss" HorizontalAlignment="Left"  HorizontalContentAlignment="Left" FontWeight="Normal" Grid.Row="0" Grid.Column="2" Name="earliestImageDate"/>
                 </Grid>
                 <Image Name="imageEarliest" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both"  VerticalAlignment="Top" HorizontalAlignment="Stretch" Grid.Row="1" Grid.Column="0"/>
-
                 <!-- Content Right column-->
                 <Grid  Grid.Row="0" Grid.Column="1">
                     <Grid.ColumnDefinitions>
@@ -70,18 +68,16 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Label Content="Latest:"               HorizontalAlignment="Left"  HorizontalContentAlignment="Right" FontWeight="Bold"   Grid.Row="0" Grid.Column="0"/>
-                    <Label Content="latest.jpg"            HorizontalAlignment="Left"  HorizontalContentAlignment="Left"  FontWeight="Normal" Grid.Row="0" Grid.Column="1" Name="latestImageName"/>
-                    <xctk:DateTimePicker HorizontalAlignment="Right"  HorizontalContentAlignment="Left"  Grid.Row="0" Grid.Column="2" x:Name="dateTimePickerLatestDateTime" Margin="10,0,0,0"/>
-
-                    <!-- <Label Content="dd-MMM-yyyy HH:mm:ss"       HorizontalAlignment="Left"  HorizontalContentAlignment="Left"  FontWeight="Normal" Grid.Row="1" Grid.Column="1" Margin="0,-8,0,0" Name="imageLatestDate"    />-->
+                    <Label Content="Latest:" HorizontalAlignment="Left" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
+                    <Label Content="[ --- latest file --- ]" HorizontalAlignment="Left" HorizontalContentAlignment="Left" FontWeight="Normal" Grid.Row="0" Grid.Column="1" Name="latestImageName"/>
+                    <xctk:DateTimePicker HorizontalAlignment="Right" HorizontalContentAlignment="Left"  Grid.Row="0" Grid.Column="2" x:Name="dateTimePickerLatestDateTime" Margin="0,0,-113,0" Width="170"/>
                 </Grid>
-                <Image Name="imageLatest" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both"  VerticalAlignment="Top" HorizontalAlignment="Stretch" Grid.Row="1" Grid.Column="1"/>
+                <Image Name="imageLatest" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" VerticalAlignment="Top" HorizontalAlignment="Stretch" Grid.Row="1" Grid.Column="1"/>
             </Grid>
             <DockPanel Name="FeedbackPanel" Visibility="Collapsed" DockPanel.Dock="Top" Margin="10,0,10,0">
                 <DockPanel>
                     <Label FontSize="14" FontWeight="Bold" Content="The following changes to dates and times will occur if you select Apply Changes." DockPanel.Dock="Top"/>
-                    <controls:DateChangesFeedbackControl x:Name="DateUpdateFeedbackCtl"  DockPanel.Dock="Bottom" />
+                    <controls:DateChangesFeedbackControl x:Name="DateUpdateFeedbackCtl" DockPanel.Dock="Bottom" />
                 </DockPanel>
             </DockPanel>
         </DockPanel>

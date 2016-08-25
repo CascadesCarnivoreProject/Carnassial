@@ -51,7 +51,7 @@ namespace Timelapse.Images
         {
             this.Resurrect = true;
 
-            this.Exe = string.IsNullOrEmpty(path) ? Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), ExeName) : path;
+            this.Exe = String.IsNullOrEmpty(path) ? Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), ExeName) : path;
             if (!File.Exists(this.Exe))
             {
                 throw new ExifToolException(ExeName + " not found");
@@ -111,7 +111,7 @@ namespace Timelapse.Images
                     throw new FormatException(String.Format("Expected line returned from {0} to be of the form <key>\t<value> but encountered the line {1} instead.", this.Exe, line));
                 }
 
-                if (kv.Length != 2 || (!keepKeysWithEmptyValues && string.IsNullOrEmpty(kv[1])))
+                if (kv.Length != 2 || (!keepKeysWithEmptyValues && String.IsNullOrEmpty(kv[1])))
                 {
                     continue;
                 }
@@ -152,7 +152,7 @@ namespace Timelapse.Images
             lock (LockObj)
             {
                 this.waitHandle.Reset();
-                this.exifTool.StandardInput.WriteLine("{0}\n-execute{1}", args.Length == 0 ? cmd : string.Format(cmd, args), this.commandCount);
+                this.exifTool.StandardInput.WriteLine("{0}\n-execute{1}", args.Length == 0 ? cmd : String.Format(cmd, args), this.commandCount);
                 this.waitHandle.WaitOne();
 
                 this.commandCount++;
@@ -224,7 +224,7 @@ namespace Timelapse.Images
                         }
                         catch (Exception exception)
                         {
-                            Debug.Assert(false, "Shutdown of ExifTool failed.", exception.ToString());
+                            Debug.Fail("Shutdown of ExifTool failed.", exception.ToString());
                         }
 
                         this.exifTool = null;
@@ -254,7 +254,7 @@ namespace Timelapse.Images
 
         private void OnOutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            if (string.IsNullOrEmpty(e.Data))
+            if (String.IsNullOrEmpty(e.Data))
             {
                 return;
             }
@@ -266,7 +266,7 @@ namespace Timelapse.Images
             }
             else
             {
-                if (e.Data.ToLower() == string.Format("{{ready{0}}}", this.commandCount))
+                if (e.Data.ToLower() == String.Format("{{ready{0}}}", this.commandCount))
                 {
                         this.waitHandle.Set();
                     }

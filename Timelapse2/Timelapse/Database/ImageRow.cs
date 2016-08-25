@@ -29,7 +29,7 @@ namespace Timelapse.Database
         public string Date  
         {
             get { return this.Row.GetStringField(Constants.DatabaseColumn.Date); }
-            set { this.Row.SetField(Constants.DatabaseColumn.Date, value); }
+            private set { this.Row.SetField(Constants.DatabaseColumn.Date, value); }
         }
 
         public string FileName
@@ -64,7 +64,7 @@ namespace Timelapse.Database
         public string Time
         {
             get { return this.Row.GetStringField(Constants.DatabaseColumn.Time); }
-            set { this.Row.SetField(Constants.DatabaseColumn.Time, value); }
+            private set { this.Row.SetField(Constants.DatabaseColumn.Time, value); }
         }
 
         public override ColumnTuplesWithWhere GetColumnTuples()
@@ -83,7 +83,6 @@ namespace Timelapse.Database
         // If we can't, create a date/time of 01-Jan-0001 00:00:00 and return false
         public bool TryGetDateTime(out DateTime dateTime)
         {
-            DateTime emptydt = new DateTime(0);
             bool result = DateTime.TryParse(this.Date + " " + this.Time, out dateTime);
             if (result == false)
             {
@@ -119,20 +118,21 @@ namespace Timelapse.Database
         // Load defaults to full size image, and to Persistent (as its safer)
         public BitmapSource LoadBitmap(string imageFolderPath)
         {
-            return this.LoadBitmap(imageFolderPath, null, ImageExpectedUsage.Persistent);
+            return this.LoadBitmap(imageFolderPath, null, ImageDisplayIntent.Persistent);
         }
 
         // Load defaults to Persistent (as its safer)
         public virtual BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth)
         {
-            return this.LoadBitmap(imageFolderPath, desiredWidth, ImageExpectedUsage.Persistent);
+            return this.LoadBitmap(imageFolderPath, desiredWidth, ImageDisplayIntent.Persistent);
         }
 
         // Load defaults to thumbnail size if we are TransientNavigating, else full size
-        public virtual BitmapSource LoadBitmap(string imageFolderPath, ImageExpectedUsage imageExpectedUsage)
+        public virtual BitmapSource LoadBitmap(string imageFolderPath, ImageDisplayIntent imageExpectedUsage)
         {
-            if (imageExpectedUsage == ImageExpectedUsage.TransientNavigating)
+            if (imageExpectedUsage == ImageDisplayIntent.TransientNavigating)
             { 
+                // TODOSAUL: why load the image at icon size rather than, say, ThumbnailSmall?  Why is this value not in Constants?
                 return this.LoadBitmap(imageFolderPath, 32, imageExpectedUsage);
             }
             else
@@ -142,10 +142,11 @@ namespace Timelapse.Database
         }
 
         // Load full form
-        public virtual BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth, ImageExpectedUsage imageExpectedDisplayTime)
+        public virtual BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth, ImageDisplayIntent displayIntent)
         {
             // If its a transient image, BitmapCacheOption of None as its faster than OnLoad. 
-            BitmapCacheOption bitmapCacheOption = (imageExpectedDisplayTime == ImageExpectedUsage.TransientLoading) ? BitmapCacheOption.None : BitmapCacheOption.OnLoad;
+            // TODOSAUL: why isn't the other case, ImageDisplayIntent.TransientNavigating, also treated as transient?
+            BitmapCacheOption bitmapCacheOption = (displayIntent == ImageDisplayIntent.TransientLoading) ? BitmapCacheOption.None : BitmapCacheOption.OnLoad;
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
             {
@@ -178,7 +179,7 @@ namespace Timelapse.Database
             }
             catch (Exception exception)
             {
-                Debug.Assert(false, String.Format("LoadBitmap: Loading of {0} failed.", this.FileName), exception.ToString());
+                Debug.Fail(String.Format("LoadBitmap: Loading of {0} failed.", this.FileName), exception.ToString());
                 return Constants.Images.Corrupt;
             }
         }

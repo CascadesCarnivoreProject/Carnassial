@@ -1,54 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Windows;
 
 namespace Timelapse.Util
 {
     public class Throttles
     {
         // The current setting for images rendered per second. Default is set to the maximum.
-        private double desiredImageRendersPerSecond;
-        public double DesiredImageRendersPerSecond
-        {
-            get
-            {
-                return this.desiredImageRendersPerSecond;
-            }
-            set
-            {
-                // ensure the value remains within the lower and upper bounds
-                if (value < Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondLowerBound)
-                {
-                    this.desiredImageRendersPerSecond = Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondLowerBound;
-                }
-                else if (value > Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound)
-                {
-                    this.desiredImageRendersPerSecond = Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound;
-                }
-                else
-                {
-                    this.desiredImageRendersPerSecond = value;
-                }
-            }
-        }
-
-        public TimeSpan DesiredIntervalBetweenRenders
-        {
-            get
-            {
-                return TimeSpan.FromSeconds(1.0 / this.DesiredImageRendersPerSecond);
-            }
-        }
+        public double DesiredImageRendersPerSecond { get; private set; }
+        public TimeSpan DesiredIntervalBetweenRenders { get; private set; }
+        public int RepeatedKeyAcceptanceInterval { get; private set; }
 
         public Throttles()
         {
-            this.SetToSystemDefaults();
+            this.ResetToDefaults();
         }
 
-        public void SetToSystemDefaults()
+        public void ResetToDefaults()
         {
             this.DesiredImageRendersPerSecond = Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault;
+        }
+
+        public void SetDesiredImageRendersPerSecond(double rendersPerSecond)
+        {
+            if (rendersPerSecond < Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondLowerBound ||
+                rendersPerSecond > Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound)
+            {
+                throw new ArgumentOutOfRangeException("rendersPerSecond");
+            }
+
+            this.DesiredImageRendersPerSecond = rendersPerSecond;
+            this.DesiredIntervalBetweenRenders = TimeSpan.FromSeconds(1.0 / rendersPerSecond);
+            this.RepeatedKeyAcceptanceInterval = (int)(((double)SystemParameters.KeyboardSpeed + 0.5 * rendersPerSecond) / rendersPerSecond);
         }
     }
 }

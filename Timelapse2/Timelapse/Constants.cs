@@ -54,14 +54,10 @@ namespace Timelapse
             // default data labels
             public const string Choice = "Choice";            // Label for: a choice
 
-            // things which should be data labels but are used in the TemplateTable's Type column
-            public const string DeleteFlag = "DeleteFlag";    // a flag data type for marking deletion
-            public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
-
             public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
             {
                 Constants.DatabaseColumn.Date,
-                Constants.Control.DeleteFlag,
+                Constants.DatabaseColumn.DeleteFlag,
                 Constants.DatabaseColumn.File,
                 Constants.DatabaseColumn.Folder,
                 Constants.DatabaseColumn.ImageQuality,
@@ -109,16 +105,21 @@ namespace Timelapse
             public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
             public const string ImageQualityWidth = "85";
 
-            public const string DeleteFlagTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
             public const string TimeTooltip = "Time taken";
             public const string TimeWidth = "60";
+
+            public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
+            public const string DeleteFlagTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
+
+            public static readonly DateTime DateTimeValue = new DateTime(1900, 1, 1, 12, 0, 0, DateTimeKind.Local);
         }
 
-        // Controls that have been deprecated
         public static class ControlsDeprecated
         {
+            // MarkForDeletion data label was split between editor and Timelapse and normalized to DeleteFlag in 2.1.0.4
             public const string MarkForDeletion = "MarkForDeletion";
         }
+
         public static class Database
         {
             // database table names and related strings
@@ -183,17 +184,6 @@ namespace Timelapse
             public const string XmlDataFileName = "ImageData.xml";
         }
 
-        public static class SearchTermOperator
-        {
-            public const string Equal = "\u003D";
-            public const string Glob = " GLOB ";
-            public const string GreaterThan = "\u003E";
-            public const string GreaterThanOrEqual = "\u2265";
-            public const string LessThan = "\u003C";
-            public const string LessThanOrEqual = "\u2264";
-            public const string NotEqual = "\u2260";
-        }
-
         // shorthands for ImageFilter.<value>.ToString()
         public static class ImageQuality
         {
@@ -207,7 +197,6 @@ namespace Timelapse
 
         public static class Images
         {
-            public const int NoImagesInImageSet = -1;  // an indicator that there is no image to show
             public const int BitmapCacheSize = 9;
 
             // The default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
@@ -283,6 +272,25 @@ namespace Timelapse
             public const string NotePath = ImageXml.Codes + ImageXml.Slash + Constants.Control.Note;
         }
 
+        public static class MarkableCanvas
+        {
+            public const double MagnifierDefaultZoom = 60;
+            public const double MagnifierMaxZoom = 15;  // Max is a smaller number
+            public const double MagnifierMinZoom = 100; // Min is the larger number
+            public const double MagnifierZoomStep = 2;
+
+            public const int MarkDiameter = 10;
+            public const int MarkStrokeThickness = 2;
+            public const int MarkGlowDiameterIncrease = 15;
+            public const int MarkGlowStrokeThickness = 7;
+            public const double MarkGlowOpacity = 0.35;
+
+            public const double ZoomMaximum = 10;   // Maximum amount of zoom
+            public const double ZoomMaximumUpperBound = 50;   // Maximum amount of zoom
+            public const double ZoomMinimum = 1;   // Minimum amount of zoom
+            public const double ZoomStep = 1.2;   // Amount to scale on each increment
+        }
+
         public static class Registry
         {
             public static class TimelapseKey
@@ -299,15 +307,38 @@ namespace Timelapse
                 public const string DarkPixelThreshold = "DarkPixelThreshold";
                 // the DarkPixelRatio
                 public const string DarkPixelRatio = "DarkPixelRatio";
-                // key containing the list of most recently image sets opened by Timelapse
-                public const string MostRecentlyUsedImageSets = "MostRecentlyUsedImageSets";
-                // whether to show the CSV dialog window
-                public const string ShowCsvDialog = "ShowCsvDialog";
                 // the value for rendering
                 public const string DesiredImageRendersPerSecond = "DesiredImageRendersPerSecond";
+                // key containing the list of most recently image sets opened by Timelapse
+                public const string MostRecentlyUsedImageSets = "MostRecentlyUsedImageSets";
+
+                // dialog opt outs
+                public const string SuppressAmbiguousDatesDialog = "SuppressAmbiguousDatesDialog";
+                public const string SuppressCsvExportDialog = "SuppressCsvExportDialog";
+                public const string SuppressCsvImportPrompt = "SuppressCsvImportPrompt";
+                public const string SuppressFileCountOnImportDialog = "SuppressFileCountOnImportDialog";
+                public const string SuppressFilteredAmbiguousDatesPrompt = "SuppressFilteredAmbiguousDatesPrompt";
+                public const string SuppressFilteredCsvExportPrompt = "SuppressFilteredCsvExportPrompt";
+                public const string SuppressFilteredDarkThresholdPrompt = "SuppressFilteredDarkThresholdPrompt";
+                public const string SuppressFilteredDateTimeFixedCorrectionPrompt = "SuppressFilteredDateTimeFixedCorrectionPrompt";
+                public const string SuppressFilteredDateTimeLinearCorrectionPrompt = "SuppressFilteredDateTimeLinearCorrectionPrompt";
+                public const string SuppressFilteredDaylightSavingsCorrectionPrompt = "SuppressFilteredDaylightSavingsCorrectionPrompt";
+                public const string SuppressFilteredPopulateFieldFromMetadataPrompt = "SuppressFilteredPopulateFieldFromMetadataPrompt";
+                public const string SuppressFilteredRereadDatesFromFilesPrompt = "SuppressFilteredRereadDatesFromFilesPrompt";
             }
 
             public const string RootKey = @"Software\Greenberg Consulting\Timelapse\2.0";   // Defines the KEY path under HKEY_CURRENT_USER
+        }
+
+        public static class SearchTermOperator
+        {
+            public const string Equal = "\u003D";
+            public const string Glob = " GLOB ";
+            public const string GreaterThan = "\u003E";
+            public const string GreaterThanOrEqual = "\u2265";
+            public const string LessThan = "\u003C";
+            public const string LessThanOrEqual = "\u2264";
+            public const string NotEqual = "\u2260";
         }
 
         public static class Sql
@@ -364,12 +395,6 @@ namespace Timelapse
             public const string DateFormat = "dd-MMM-yyyy";
             public const string DateTimeFormat = "dd-MMM-yyyy HH:mm:ss";
             public const string TimeFormat = "HH:mm:ss";
-            public const int DefaultYear = 1900; // Default date/time  is January 1st, 1900 12:00:00
-            public const int DefaultMonth = 1;
-            public const int DefaultDay = 1;
-            public const int DefaultHours = 12;
-            public const int DefaultMinutes = 0;
-            public const int DefaultSeconds = 0;
         }
 
         public static class VersionXml

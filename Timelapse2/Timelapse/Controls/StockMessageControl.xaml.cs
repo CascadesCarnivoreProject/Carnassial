@@ -10,7 +10,6 @@ namespace Timelapse.Controls
     {
         private MessageBoxImage iconType = MessageBoxImage.Exclamation;
 
-        #region Properties
         public MessageBoxImage Icon
         {
             get
@@ -127,7 +126,6 @@ namespace Timelapse.Controls
                 this.SetFieldVisibility();
             }
         }
-        #endregion 
 
         public StockMessageControl()
         {

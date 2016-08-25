@@ -13,7 +13,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using Timelapse.Controls;
 using Timelapse.Database;
 using Timelapse.Editor.Util;
 using Timelapse.Util;
@@ -29,9 +28,9 @@ namespace Timelapse.Editor
 
         // state tracking
         private bool generateControlsAndSpreadsheet;
-        private MostRecentlyUsedList<string> mostRecentTemplates;
         private bool rowsActionsOn;
         private bool tabWasPressed; // to make tab trigger row update.
+        private EditorUserRegistrySettings userSettings;
 
         // These variables support the drag/drop of controls
         private bool isMouseDown;
@@ -65,10 +64,7 @@ namespace Timelapse.Editor
             this.ShowAllColumnsMenuItem_Click(this.ShowAllColumns, null);
 
             // Recall state from prior sessions
-            using (EditorRegistryUserSettings userSettings = new EditorRegistryUserSettings())
-            {
-                this.mostRecentTemplates = userSettings.ReadMostRecentTemplates();  // the last path opened by the user is stored in the registry
-            }
+            this.userSettings = new EditorUserRegistrySettings();
 
             // populate the most recent databases list
             this.MenuItemRecentTemplates_Refresh();
@@ -80,16 +76,12 @@ namespace Timelapse.Editor
             updater.TryGetAndParseVersion(false);
         }
 
-        // When the main window closes, apply any pending edits.
         private void Window_Closing(object sender, CancelEventArgs e)
         {
+            // apply any pending edits
             this.TemplateDataGrid.CommitEdit();
-
-            // Save the current filter set and the index of the current image being viewed in that set, and save it into the registry
-            using (EditorRegistryUserSettings userSettings = new EditorRegistryUserSettings())
-            {
-                userSettings.WriteMostRecentTemplates(this.mostRecentTemplates);
-            }
+            // persist state to registry
+            this.userSettings.WriteToRegistry();
         }
         #endregion
 
@@ -303,11 +295,13 @@ namespace Timelapse.Editor
         /// <summary>
         /// Show the dialog that allows a user to inspect image metadata
         /// </summary>
-        private void MenuItemInspectImageMetaData_Click(object sender, RoutedEventArgs e)
+        private void MenuItemInspectImageMetadata_Click(object sender, RoutedEventArgs e)
         {
-            DialogInspectMetaData dlg = new DialogInspectMetaData(this.templateDatabase.FilePath);
-            dlg.Owner = this;
-            dlg.Show();
+            using (DialogInspectMetadata inspectMetadata = new DialogInspectMetadata(this.templateDatabase.FilePath))
+            {
+                inspectMetadata.Owner = this;
+                inspectMetadata.Show();
+            }
         }
         #endregion
 
@@ -349,8 +343,7 @@ namespace Timelapse.Editor
 
         private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            DialogAboutTimelapseEditor about = new DialogAboutTimelapseEditor();
-            about.Owner = this;
+            DialogAboutTimelapseEditor about = new DialogAboutTimelapseEditor(this);
             about.ShowDialog();
         }
         #endregion
@@ -390,7 +383,7 @@ namespace Timelapse.Editor
             // update state
             // unlike Timelapse, editor processes are currently 1:1 with opened template files
             // so disable the recent templates list rather than call this.MenuItemRecentTemplates_Refresh
-            this.mostRecentTemplates.SetMostRecent(templateDatabaseFilePath);
+            this.userSettings.MostRecentTemplates.SetMostRecent(templateDatabaseFilePath);
             this.MenuItemRecentTemplates.IsEnabled = false;
         }
 
@@ -559,8 +552,7 @@ namespace Timelapse.Editor
             }
 
             choiceList = Utilities.ConvertBarsToLineBreaks(choiceList);
-            DialogEditChoiceList choiceListDialog = new DialogEditChoiceList(button, choiceList);
-            choiceListDialog.Owner = this;
+            DialogEditChoiceList choiceListDialog = new DialogEditChoiceList(button, choiceList, this);
             bool? result = choiceListDialog.ShowDialog();
             if (result == true)
             {
@@ -892,7 +884,7 @@ namespace Timelapse.Editor
                         String.Equals(sortMemberPath, Constants.Control.SpreadsheetOrder, StringComparison.OrdinalIgnoreCase) ||
                         String.Equals(sortMemberPath, Constants.Control.Type, StringComparison.OrdinalIgnoreCase) ||
                         (controlType == Constants.DatabaseColumn.Date) ||
-                        (controlType == Constants.Control.DeleteFlag) ||
+                        (controlType == Constants.DatabaseColumn.DeleteFlag) ||
                         (controlType == Constants.DatabaseColumn.File) ||
                         (controlType == Constants.DatabaseColumn.Folder) ||
                         ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.Copyable)) ||
@@ -983,11 +975,11 @@ namespace Timelapse.Editor
         /// </summary>
         private void MenuItemRecentTemplates_Refresh()
         {
-            this.MenuItemRecentTemplates.IsEnabled = this.mostRecentTemplates.Count > 0;
+            this.MenuItemRecentTemplates.IsEnabled = this.userSettings.MostRecentTemplates.Count > 0;
             this.MenuItemRecentTemplates.Items.Clear();
 
             int index = 1;
-            foreach (string recentTemplatePath in this.mostRecentTemplates)
+            foreach (string recentTemplatePath in this.userSettings.MostRecentTemplates)
             {
                 MenuItem recentImageSetItem = new MenuItem();
                 recentImageSetItem.Click += this.MenuItemRecentTemplate_Click;

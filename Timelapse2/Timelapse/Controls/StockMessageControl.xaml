@@ -35,7 +35,7 @@
                     <Label  Name="lblIconType" Content="?" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
                 </Canvas>
                 <TextBlock x:Name="TitleTextBox" Text="Title" Padding="10,5,0,0"  FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Grid.Column="1"/>
-                <CheckBox Name="HideText" Content="Hide explanation" Grid.Column="2" Visibility="Collapsed" Margin="10,10,5,0" VerticalAlignment="Center" Checked="HideTextButton_StateChange" Unchecked="HideTextButton_StateChange" IsThreeState="False" />
+                <CheckBox Name="HideText" Content="_Hide explanation" Grid.Column="2" Visibility="Collapsed" Margin="10,10,5,0" VerticalAlignment="Center" Checked="HideTextButton_StateChange" Unchecked="HideTextButton_StateChange" IsThreeState="False" />
             </Grid>
 
             <TextBlock Name="tbProblemLabel" Margin="10,8,10,0"  VerticalAlignment="Top" FontSize="14" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Text="Problem:" />

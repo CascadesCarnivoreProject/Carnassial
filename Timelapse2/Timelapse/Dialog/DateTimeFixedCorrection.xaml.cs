@@ -20,10 +20,11 @@ namespace Timelapse.Dialog
         public bool Abort { get; private set; }
         
         // Create the interface
-        public DateTimeFixedCorrection(ImageDatabase imageDatabase, ImageRow imageToCorrect)
+        public DateTimeFixedCorrection(ImageDatabase imageDatabase, ImageRow imageToCorrect, Window owner)
         {
             this.InitializeComponent();
             this.imageDatabase = imageDatabase;
+            this.Owner = owner;
 
             this.Abort = false;
 
@@ -67,10 +68,10 @@ namespace Timelapse.Dialog
             // Preview the changes
             foreach (ImageRow row in this.imageDatabase.ImageDataTable)
             {
-                string oldDT = row.Date + " " + row.Time;
-                string newDT = String.Empty;
+                string currentDateTime = row.Date + " " + row.Time;
+                string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
-                string difference = string.Empty;
+                string difference = String.Empty;
 
                 DateTime imageDateTime;
                 TimeSpan oneSecond = TimeSpan.FromSeconds(1);
@@ -102,14 +103,14 @@ namespace Timelapse.Dialog
                         difference = string.Format(format, sign, adjustment.Duration().Hours, adjustment.Duration().Minutes, adjustment.Duration().Seconds, adjustment.Duration().Days);
 
                         // Get the new date/time
-                        newDT = DateTimeHandler.ToStandardDateTimeString(imageDateTime + adjustment);
+                        newDateTime = DateTimeHandler.ToStandardDateTimeString(imageDateTime + adjustment);
                     }
                     else
                     {
                         status = "Unchanged";
                     }
                 }
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, oldDT, newDT, difference);
+                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, currentDateTime, newDateTime, difference);
             }
         }
 

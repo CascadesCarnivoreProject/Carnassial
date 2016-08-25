@@ -14,10 +14,11 @@ namespace Timelapse.Dialog
         /// <summary>
         /// Show the user some statistics about the images in a dialog box
         /// </summary>
-        public FileCountsByQuality(Dictionary<ImageFilter, int> counts)
+        public FileCountsByQuality(Dictionary<ImageFilter, int> counts, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
+            this.Owner = owner;
 
             // Fill in the counts
             int ok = counts[ImageFilter.Ok];

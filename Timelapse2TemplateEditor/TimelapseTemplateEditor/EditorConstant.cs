@@ -30,12 +30,6 @@ namespace Timelapse.Editor
         // a few control values not needed in Constants.Control
         public static class Control
         {
-            // columns
-            public const string DeleteFlag = "DeleteFlag";     // Data Label for: the Deletion
-
-            // labels for the few cases where the default label isn't the same as the data label
-            public const string DeleteFlagLabel = "Delete?";        // Label for: the Deletion
-
             // data grid column headers
             // these are human friendly forms of data labels
             // these constants are duplicated in MainWindow.xaml and must be kept in sync

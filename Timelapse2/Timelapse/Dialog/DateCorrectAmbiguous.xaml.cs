@@ -22,14 +22,15 @@ namespace Timelapse.Dialog
         private bool displayingPreview = false;
 
         #region Constructor and Loading
-        public DateCorrectAmbiguous(ImageDatabase database)
+        public DateCorrectAmbiguous(ImageDatabase database, Window owner)
         {
             this.InitializeComponent();
             this.database = database;
+            this.Owner = owner;
 
             // We add this in code behind as we don't want to invoke the radiobutton callbacks when the interface is created.
-            this.cboxOriginalDate.Checked += this.DateBox_Checked;
-            this.cboxSwappedDate.Checked += this.DateBox_Checked;
+            this.OriginalDate.Checked += this.DateBox_Checked;
+            this.SwappedDate.Checked += this.DateBox_Checked;
 
             // Find the ambiguous dates in the current filtered set
             if (this.FindAllAmbiguousDatesInFilteredImageSet() == true)
@@ -181,7 +182,7 @@ namespace Timelapse.Dialog
 
             // If we can't swap the date, we just return the original unaltered date. However, we expect that swapping would always work at this point.
             string swappedDate;
-            this.lblNewDate.Content = DateTimeHandler.TrySwapSingleDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
+            this.lblNewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
 
             this.lblNumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
@@ -209,7 +210,7 @@ namespace Timelapse.Dialog
 
                 // If we can't swap the date, we just return the original unaltered date. However, we expect that swapping would always work at this point.
                 string swappedDate;
-                this.lblNewDate.Content = DateTimeHandler.TrySwapSingleDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
+                this.lblNewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.Date, out swappedDate) ? swappedDate : imageProperties.Date;
 
                 this.lblNumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
@@ -219,10 +220,10 @@ namespace Timelapse.Dialog
 
                 // Set the next button and the radio button back to their defaults
                 // As we do this, unlink and then relink the callback as we don't want to invoke the data update
-                this.cboxOriginalDate.Checked -= this.DateBox_Checked;
-                this.cboxOriginalDate.IsChecked = !this.ambiguousDatesList[this.ambiguousDatesListIndex].Swapped;
-                this.cboxSwappedDate.IsChecked = this.ambiguousDatesList[this.ambiguousDatesListIndex].Swapped;
-                this.cboxOriginalDate.Checked += this.DateBox_Checked;
+                this.OriginalDate.Checked -= this.DateBox_Checked;
+                this.OriginalDate.IsChecked = !this.ambiguousDatesList[this.ambiguousDatesListIndex].Swapped;
+                this.SwappedDate.IsChecked = this.ambiguousDatesList[this.ambiguousDatesListIndex].Swapped;
+                this.OriginalDate.Checked += this.DateBox_Checked;
             }
             else
             {
@@ -230,8 +231,8 @@ namespace Timelapse.Dialog
                 this.lblOriginalDate.Visibility = Visibility.Hidden;
                 this.lblNewDate.Visibility = Visibility.Hidden;
 
-                this.cboxOriginalDate.Visibility = Visibility.Hidden;
-                this.cboxSwappedDate.Visibility = Visibility.Hidden;
+                this.OriginalDate.Visibility = Visibility.Hidden;
+                this.SwappedDate.Visibility = Visibility.Hidden;
 
                 this.lblImageName.Content = "--";
                 this.lblNumberOfImagesWithSameDate.Content = "No ambiguous dates left";
@@ -245,21 +246,19 @@ namespace Timelapse.Dialog
             this.DateUpdateFeedbackCtl.ShowDifferenceColumn = false;
             this.PrimaryPanel.Visibility = Visibility.Collapsed;
             this.FeedbackPanel.Visibility = Visibility.Visible;
-            foreach (AmbiguousDate ambDate in this.ambiguousDatesList)
+            foreach (AmbiguousDate ambiguousDate in this.ambiguousDatesList)
             {
                 ImageRow imageProperties;
-                imageProperties = this.database.ImageDataTable[ambDate.StartRange];
-                string filename = imageProperties.FileName;
-                string status = ambDate.Swapped ? "Swapped: " : "Unchanged: ";
-                status += ambDate.Count.ToString() + " images with same date";
-                string olddate = imageProperties.Date;
+                imageProperties = this.database.ImageDataTable[ambiguousDate.StartRange];
                 string newDate = String.Empty;
-
-                if (ambDate.Swapped)
+                if (ambiguousDate.Swapped)
                 {
-                    DateTimeHandler.TrySwapSingleDayMonth(imageProperties.Date, out newDate);
+                    DateTimeHandler.TrySwapDayMonth(imageProperties.Date, out newDate);
                 }
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(filename, status, olddate, newDate, "--");
+
+                string status = ambiguousDate.Swapped ? "Swapped: " : "Unchanged: ";
+                status += ambiguousDate.Count.ToString() + " images with same date";
+                this.DateUpdateFeedbackCtl.AddFeedbackRow(imageProperties.FileName, status, imageProperties.Date, newDate, "--");
             }
         }
 
@@ -285,7 +284,7 @@ namespace Timelapse.Dialog
         {
             // determine if we should swap the dates or not
             RadioButton selected = sender as RadioButton;
-            if (selected == this.cboxSwappedDate)
+            if (selected == this.SwappedDate)
             {
                 this.ambiguousDatesList[this.ambiguousDatesListIndex].Swapped = true;
             }

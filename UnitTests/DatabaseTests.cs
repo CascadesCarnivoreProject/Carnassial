@@ -18,7 +18,7 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void CreateReuseCarnivoreImageDatabase()
         {
-            this.CreateReuseImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName2104, TestConstant.File.CarnivoreNewImageDatabaseFileName, (ImageDatabase imageDatabase) =>
+            this.CreateReuseImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName, (ImageDatabase imageDatabase) =>
             {
                 return this.PopulateCarnivoreDatabase(imageDatabase);
             });
@@ -133,8 +133,6 @@ namespace Timelapse.UnitTests
             imageDatabase.SelectDataTableImages(ImageFilter.All);
             this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, imageDatabase.GetImageTimes().ToList(), startRow, endRow, adjustment);
 
-            int firstNonSwappableImage = DateTimeHandler.SwapDayMonthIsPossible(imageDatabase);
-            Assert.IsTrue(firstNonSwappableImage == 0 || firstNonSwappableImage == 1);
             imageDatabase.ExchangeDayAndMonthInImageDates();
             imageDatabase.ExchangeDayAndMonthInImageDates(0, imageDatabase.ImageDataTable.RowCount - 1);
 
@@ -150,7 +148,7 @@ namespace Timelapse.UnitTests
             SearchTerm file = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.File);
             SearchTerm imageQuality = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.ImageQuality);
             SearchTerm relativePath = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.RelativePath);
-            SearchTerm markedForDeletion = imageDatabase.CustomFilter.SearchTerms.Single(term => term.Type == Constants.Control.DeleteFlag);
+            SearchTerm markedForDeletion = imageDatabase.CustomFilter.SearchTerms.Single(term => term.Type == Constants.DatabaseColumn.DeleteFlag);
 
             date.UseForSearching = true;
             date.Value = DateTimeHandler.ToStandardDateString(new DateTime(2000, 1, 1));
@@ -387,7 +385,7 @@ namespace Timelapse.UnitTests
                 new DatabaseExpectations()
                 {
                     ImageDatabaseFileName = TestConstant.File.CarnivoreNewImageDatabaseFileName2104,
-                    TemplateDatabaseFileName = TestConstant.File.CarnivoreTemplateDatabaseFileName2104,
+                    TemplateDatabaseFileName = TestConstant.File.CarnivoreTemplateDatabaseFileName,
                     ExpectedControls = Constants.Control.StandardTypes.Count - 1 + 10
                 },
                 new DatabaseExpectations()
@@ -404,7 +402,7 @@ namespace Timelapse.UnitTests
                 DataEntryHandler dataHandler = new DataEntryHandler(imageDatabase);
 
                 DataEntryControls controls = new DataEntryControls();
-                controls.Generate(imageDatabase, dataHandler);
+                controls.CreateControls(imageDatabase, dataHandler);
                 Assert.IsTrue(controls.ControlsByDataLabel.Count == databaseExpectation.ExpectedControls, "Expected {0} controls to be generated but {1} were.", databaseExpectation.ExpectedControls, controls.ControlsByDataLabel.Count);
 
                 // check copies aren't possible when the image enumerator's not pointing to an image
@@ -473,7 +471,7 @@ namespace Timelapse.UnitTests
         [TestMethod]
         public void HybridVideo()
         {
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName2104, TestConstant.File.CarnivoreNewImageDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
             List<ImageRow> imagesToInsert = new List<ImageRow>();
             FileInfo[] imagesAndVideos = new DirectoryInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.HybridVideoDirectoryName)).GetFiles();
             foreach (FileInfo imageFile in imagesAndVideos)
@@ -650,7 +648,7 @@ namespace Timelapse.UnitTests
         public void RoundtripCsv()
         {
             // create database, push test images into the database, and load the image data table
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName2104, TestConstant.File.CarnivoreNewImageDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
             this.PopulateCarnivoreDatabase(imageDatabase);
 
             // roundtrip data through .csv
