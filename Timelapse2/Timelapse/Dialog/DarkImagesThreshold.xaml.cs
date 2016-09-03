@@ -81,7 +81,6 @@ namespace Timelapse.Dialog
             e.Handled = true;
         }
 
-        #region Image Loading and UI Repainting
         public void Repaint()
         {
             // Color the bar to show the current color given the dark color threshold
@@ -166,9 +165,6 @@ namespace Timelapse.Dialog
             this.RecalculateImageQualityForCurrentImage();
             this.Repaint();
         }
-        #endregion
-
-        #region Button and Button Menu Callbacks and related methods
 
         // Navigate to the previous image
         private void PreviousButton_Click(object sender, RoutedEventArgs e)
@@ -242,9 +238,7 @@ namespace Timelapse.Dialog
             this.RecalculateImageQualityForCurrentImage();
             this.Repaint();
         }
-        #endregion
 
-        #region Sliders and related Callbacks (including my Thumb slider)
         // Set a new value for the dark pixel threshold and update the UI
         private void DarkThresholdSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
@@ -294,7 +288,6 @@ namespace Timelapse.Dialog
             this.DisplayImageAndDetails();
             this.SetPreviousNextButtonStates();
         }
-        #endregion
 
         public void Dispose()
         {
@@ -320,7 +313,6 @@ namespace Timelapse.Dialog
             this.disposed = true;
         }
 
-        #region Work Utilities
         /// <summary>
         /// Redo image quality calculations with current thresholds and return the ratio of pixels at least as dark as the threshold for the current image.
         /// Does not update the database.
@@ -418,6 +410,5 @@ namespace Timelapse.Dialog
             };
             backgroundWorker.RunWorkerAsync();
         }
-        #endregion
     }
 }

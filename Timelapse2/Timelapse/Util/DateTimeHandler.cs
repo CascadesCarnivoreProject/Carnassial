@@ -5,6 +5,16 @@ namespace Timelapse.Util
 {
     public class DateTimeHandler
     {
+        public static DateTimeOffset CreateDateTimeOffset(DateTime dateTime, TimeZoneInfo imageSetTimeZone)
+        {
+            if (dateTime.Kind == DateTimeKind.Unspecified)
+            {
+                TimeSpan utcOffset = imageSetTimeZone.GetUtcOffset(dateTime);
+                return new DateTimeOffset(dateTime, utcOffset);
+            }
+            return new DateTimeOffset(dateTime);
+        }
+
         public static DateTimeOffset FromDatabaseDateTimeOffset(DateTime dateTime, TimeSpan utcOffset)
         {
             return new DateTimeOffset((dateTime + utcOffset).AsUnspecifed(), utcOffset);
@@ -175,16 +185,6 @@ namespace Timelapse.Util
             }
             swappedDate = new DateTimeOffset(imageDate.Year, imageDate.Day, imageDate.Month, imageDate.Hour, imageDate.Minute, imageDate.Second, imageDate.Millisecond, imageDate.Offset);
             return true;
-        }
-
-        private static DateTimeOffset CreateDateTimeOffset(DateTime dateTime, TimeZoneInfo imageSetTimeZone)
-        {
-            if (dateTime.Kind == DateTimeKind.Unspecified)
-            {
-                TimeSpan utcOffset = imageSetTimeZone.GetUtcOffset(dateTime);
-                return new DateTimeOffset(dateTime, utcOffset);
-            }
-            return new DateTimeOffset(dateTime);
         }
     }
 }

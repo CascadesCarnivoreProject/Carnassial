@@ -28,7 +28,7 @@
         <!-- Ok/Cancel buttons-->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
             <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
-            <Button Name="ChangesButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="ChangesButton_Click" IsEnabled="False">_Preview Changes</Button>
+            <Button Name="ChangesButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="ChangesButton_Click" IsEnabled="False">_Preview Changes</Button>
         </StackPanel>
 
         <DockPanel Name="PrimaryPanel" DockPanel.Dock="Top" >

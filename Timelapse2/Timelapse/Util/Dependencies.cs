@@ -11,6 +11,11 @@ namespace Timelapse.Util
     {
         private static readonly List<string> CommonRequiredBinaries = new List<string>()
         {
+            // MetadataExtractor
+            "ICSharpCode.SharpZipLib.dll",
+            "MetadataExtractor.dll",
+            "XmpCore.dll",
+            // SQLite
             "System.Data.SQLite.dll",
             "System.Data.SQLite.xml",
             "x64/SQLite.Interop.dll",
@@ -25,7 +30,6 @@ namespace Timelapse.Util
 
         private static readonly List<string> TimelapseRequiredBinaries = new List<string>()
         {
-            "exiftool(-k).exe",
             "Microsoft.WindowsAPICodePack.dll", // required by Microsoft.WindowsAPICodePack.Shell.dll
             "Microsoft.WindowsAPICodePack.Shell.dll", // just for TimelapseWindow's use of CommonOpenFileDialog
         };

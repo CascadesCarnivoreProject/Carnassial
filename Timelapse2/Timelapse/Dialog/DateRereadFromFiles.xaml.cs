@@ -76,8 +76,7 @@ namespace Timelapse.Dialog
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just to the catch.
-                        BitmapSource bitmapSource = image.LoadBitmap(this.database.FolderPath);
-                        DateTimeAdjustment imageTimeAdjustment = image.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata, imageSetTimeZone);
+                        DateTimeAdjustment imageTimeAdjustment = image.TryReadDateTimeOriginalFromMetadata(this.database.FolderPath, imageSetTimeZone);
                         switch (imageTimeAdjustment)
                         {
                             case DateTimeAdjustment.MetadataNotUsed:

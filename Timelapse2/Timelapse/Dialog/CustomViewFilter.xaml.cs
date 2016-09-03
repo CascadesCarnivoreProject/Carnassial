@@ -29,7 +29,6 @@ namespace Timelapse.Dialog
         // To hold the values of passed in arguments
         private ImageDatabase database;
 
-        #region Constructors and Loading
         /// <summary>
         /// Constructor. Date should be the contents of the date data field of the current image
         /// </summary>
@@ -272,9 +271,7 @@ namespace Timelapse.Dialog
             }
             this.UpdateSearchCriteriaFeedback();
         }
-        #endregion
 
-        #region Query formation callbacks
         // Radio buttons for determing if we use And or Or
         private void AndOrRadioButton_Checked(object sender, RoutedEventArgs args)
         {
@@ -392,9 +389,7 @@ namespace Timelapse.Dialog
                 this.UpdateSearchCriteriaFeedback();
             }
         }
-        #endregion
 
-        #region Search Criteria feedback for each row
         // Updates the search criteria shown across all rows to reflect the contents of the search list,
         // which also show or hides the search term feedback for that row.
         private void UpdateSearchCriteriaFeedback()
@@ -440,9 +435,7 @@ namespace Timelapse.Dialog
 
             this.btnShowAll.IsEnabled = lastExpression == false;
         }
-        #endregion
 
-        #region Ok/Cancel buttons
         // Apply the filter if the Ok button is clicked
         private void OkButton_Click(object sender, RoutedEventArgs args)
         {
@@ -455,9 +448,7 @@ namespace Timelapse.Dialog
         {
             this.DialogResult = false;
         }
-        #endregion
 
-        #region Helper functions
         // Get the corresponding grid element from a given a column, row, 
         private TElement GetGridElement<TElement>(int column, int row) where TElement : UIElement
         {
@@ -486,6 +477,5 @@ namespace Timelapse.Dialog
             Regex regex = new Regex("[^0-9.-]+"); // regex that matches allowed text
             return regex.IsMatch(text);
         }
-        #endregion
     }
 }

@@ -430,17 +430,20 @@ namespace Timelapse.UnitTests
             this.DateTimeHandling(new DateTimeOffset(utcNowUnspecified, maxUtcOffsetTimeZone.GetUtcOffset(utcNowUnspecified)), maxUtcOffsetTimeZone);
 
             DateTime nowWithoutMilliseconds = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second, DateTimeKind.Local);
-            string metadataDateAsString = now.ToString("yyyy:MM:dd HH:mm:ss");
-            DateTimeOffset metadataDateParsed;
-            Assert.IsTrue(DateTimeHandler.TryParseMetadataDateTaken(metadataDateAsString, TimeZoneInfo.Local, out metadataDateParsed));
-            Assert.IsTrue((metadataDateParsed.Date == nowWithoutMilliseconds.Date) &&
-                          (metadataDateParsed.TimeOfDay == nowWithoutMilliseconds.TimeOfDay) &&
-                          (metadataDateParsed.Offset == TimeZoneInfo.Local.GetUtcOffset(nowWithoutMilliseconds)));
+            foreach (string format in new List<string>() { "yyyy:MM:dd HH:mm:ss", "ddd MMM dd HH:mm:ss K yyyy" })
+            {
+                string metadataDateAsString = now.ToString(format);
+                DateTimeOffset metadataDateParsed;
+                Assert.IsTrue(DateTimeHandler.TryParseMetadataDateTaken(metadataDateAsString, TimeZoneInfo.Local, out metadataDateParsed));
+                Assert.IsTrue((metadataDateParsed.Date == nowWithoutMilliseconds.Date) &&
+                              (metadataDateParsed.TimeOfDay == nowWithoutMilliseconds.TimeOfDay) &&
+                              (metadataDateParsed.Offset == TimeZoneInfo.Local.GetUtcOffset(nowWithoutMilliseconds)));
+            }
 
-            DateTimeOffset swappable = new DateTimeOffset(new DateTime(now.Year, 1, 12, now.Day, now.Hour, now.Second, now.Millisecond), TimeZoneInfo.Local.BaseUtcOffset);
+            DateTimeOffset swappable = new DateTimeOffset(new DateTime(now.Year, 1, 12, now.Hour, now.Minute, now.Second, now.Millisecond), TimeZoneInfo.Local.BaseUtcOffset);
             DateTimeOffset swapped;
             Assert.IsTrue(DateTimeHandler.TrySwapDayMonth(swappable, out swapped));
-            DateTimeOffset notSwappable = new DateTimeOffset(new DateTime(now.Year, 1, 13, now.Day, now.Hour, now.Second, now.Millisecond), TimeZoneInfo.Local.BaseUtcOffset);
+            DateTimeOffset notSwappable = new DateTimeOffset(new DateTime(now.Year, 1, 13, now.Hour, now.Minute, now.Second, now.Millisecond), TimeZoneInfo.Local.BaseUtcOffset);
             Assert.IsFalse(DateTimeHandler.TrySwapDayMonth(notSwappable, out swapped));
 
             string timeSpanDisplayStringLessThanOneDay = DateTimeHandler.ToDisplayTimeSpanString(new TimeSpan(-1, -45, -15));
@@ -605,7 +608,7 @@ namespace Timelapse.UnitTests
 
                 // see if the date can be updated from the metadata
                 // currently supported for images but not for videos
-                DateTimeAdjustment imageTimeAdjustment = imageRow.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata, imageSetTimeZone);
+                DateTimeAdjustment imageTimeAdjustment = imageRow.TryReadDateTimeOriginalFromMetadata(imageDatabase.FolderPath, imageSetTimeZone);
                 if (imageRow.IsVideo)
                 {
                     Assert.IsTrue(imageTimeAdjustment == DateTimeAdjustment.MetadataNotUsed);

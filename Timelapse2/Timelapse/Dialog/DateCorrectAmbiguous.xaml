@@ -77,7 +77,7 @@
         </DockPanel>
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Height="80">
             <Button Name="CancelButton" IsDefault="True" HorizontalAlignment="Right" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click" IsEnabled="True">_Cancel</Button>
-            <Button Name="PreviewChangesButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" HorizontalAlignment="Right" Padding="10" Margin="10,10,10,10" Click="PreviewChangesButton_Click" IsEnabled="True">Preview _Changes</Button>
+            <Button Name="PreviewChangesButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" HorizontalAlignment="Right" Padding="10" Margin="10,10,10,10" Click="PreviewChangesButton_Click" IsEnabled="True">Preview _Changes</Button>
         </StackPanel>
     </Grid>
 </Window>

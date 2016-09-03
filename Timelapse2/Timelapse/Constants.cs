@@ -406,6 +406,7 @@ namespace Timelapse
 
             public static readonly string[] DateTimeMetadataFormats =
             {
+                // known formats supported by Metadata Extractor
                 "yyyy:MM:dd HH:mm:ss.fff",
                 "yyyy:MM:dd HH:mm:ss",
                 "yyyy:MM:dd HH:mm",
@@ -424,7 +425,10 @@ namespace Timelapse
                 "yyyy:MM:dd",
                 "yyyy-MM-dd",
                 "yyyy-MM",
-                "yyyy"
+                "yyyy",
+
+                // File.File Modified Date
+                "ddd MMM dd HH:mm:ss K yyyy"
             };
         }
 

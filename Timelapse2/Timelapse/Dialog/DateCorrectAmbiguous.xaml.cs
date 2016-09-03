@@ -21,7 +21,6 @@ namespace Timelapse.Dialog
         // Whether the operation is aborted, ie., because there are no ambiguous dates
         public bool Abort { get; set; }
 
-        #region Constructor and Loading
         public DateCorrectAmbiguous(ImageDatabase database, Window owner)
         {
             this.InitializeComponent();
@@ -56,9 +55,7 @@ namespace Timelapse.Dialog
             // If the caller invokes Show with Abort = true (i.e., count = 0), this will at least show an empty dialog.
             this.UpdateDisplay(this.ambiguousDatesList.Count > 0);
         }
-        #endregion
 
-        #region Create the ambiguous date list
         // Create a list of all initial images containing ambiguous dates.
         // This includes calculating the start and end rows of all images matching an ambiguous date
         private bool FindAllAmbiguousDatesInFilteredImageSet()
@@ -141,9 +138,7 @@ namespace Timelapse.Dialog
             }
             return lastMatchingDate; // if we got here, it means that we arrived at the end of the records
         }
-        #endregion
 
-        #region Navigate through ambiguous dates
         // return true if there is an amiguous date in the forward / backwards direction in the ambiguous date list
         private bool IsThereAnAmbiguousDate(bool directionForward)
         {
@@ -196,9 +191,7 @@ namespace Timelapse.Dialog
 
             return true;
         }
-        #endregion
 
-        #region Feedback of state
         // Update the display
         private void UpdateDisplay(bool isAmbiguousDate)
         {
@@ -243,7 +236,6 @@ namespace Timelapse.Dialog
                 this.Image.Source = null;
             }
         }
-        #endregion
 
         private void PreviewDateTimeChanges()
         {
@@ -283,7 +275,7 @@ namespace Timelapse.Dialog
                 }
             }
         }
-        #region UI Callbacks
+
         // This handler is triggered only when the radio button state is changed. This means
         // we should swap the dates regardless of which radio button was actually pressed.
         private void DateBox_Checked(object sender, RoutedEventArgs e)
@@ -336,9 +328,7 @@ namespace Timelapse.Dialog
             }
             this.UpdateDisplay(true);
         }
-        #endregion
 
-        #region Convenience classes
         // A class that stores various properties for each ambiguous date found
         internal class AmbiguousDate
         {
@@ -356,6 +346,5 @@ namespace Timelapse.Dialog
                 this.Count = count;
             }
         }
-        #endregion
     }
 }

@@ -9,7 +9,19 @@ namespace Timelapse.Dialog
 {
     public partial class WindowVideoPlayer : Window
     {
-        #region Public Properties
+        private ImageRow currentRow;
+        private string fileName;
+        private string folderPath;
+        private DispatcherTimer timer;
+
+        public WindowVideoPlayer()
+        {
+            this.currentRow = null;
+            this.fileName = String.Empty;
+            this.folderPath = String.Empty;
+            this.timer = new DispatcherTimer();
+        }
+
         // Set the video to display a file.
         // If its a video file, start it playing
         public ImageRow CurrentRow
@@ -45,17 +57,7 @@ namespace Timelapse.Dialog
                 this.VidPlayer.Source = value;
             }
         }
-        #endregion
 
-        #region Private Variables
-        private DispatcherTimer timer = new DispatcherTimer();
-        private string folderPath = String.Empty;
-        private string fileName = String.Empty;
-        private ImageRow currentRow;
-        private const double HALFSECOND = 0.5;
-        #endregion
-
-        #region Initializing, loading and unloading
         public WindowVideoPlayer(Window owner, string folderPath)
         {
             if (owner == null)
@@ -65,7 +67,7 @@ namespace Timelapse.Dialog
             this.InitializeComponent();
             this.Owner = owner;
             this.folderPath = folderPath;
-            this.timer.Interval = TimeSpan.FromSeconds(HALFSECOND);
+            this.timer.Interval = TimeSpan.FromSeconds(0.5);
             this.timer.Tick += this.Timer_Tick;
             this.VidPlayer.MediaEnded += this.VidPlayer_MediaEnded;
         }
@@ -88,9 +90,7 @@ namespace Timelapse.Dialog
         {
             this.timer.Stop();
         }
-        #endregion
 
-        #region Timer, Button and Slider callbacks
         private void Timer_Tick(object sender, EventArgs e)
         {
             if (this.VidPlayer.Source != null)
@@ -128,9 +128,7 @@ namespace Timelapse.Dialog
             VidPlayer.Position = timespan;
             this.ShowPosition();
         }
-        #endregion
 
-        #region Generating User Feedback
         // Show the current play position in the ScrollBar and TextBox, if possible.
         private void ShowPosition()
         {
@@ -175,9 +173,7 @@ namespace Timelapse.Dialog
             this.EmptyPlayer.Visibility = stateCanPlay ? Visibility.Hidden : Visibility.Visible;
             this.VideoPlayerControls.Visibility = stateCanPlay ? Visibility.Visible : Visibility.Hidden;
         }
-        #endregion
 
-        #region Play / Pause / Reset methods
         // Play the video, setting various UI states along the way
         private void Play()
         {
@@ -202,6 +198,5 @@ namespace Timelapse.Dialog
             this.sldrPosition.Value = 0;
             this.Pause();
         }
-        #endregion
     }
 }

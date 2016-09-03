@@ -109,26 +109,36 @@ namespace Timelapse.UnitTests
 
         public static class Exif
         {
-            public const string DateTimeOriginal = "Date/Time Original";
-            public const string ExposureTime = "Exposure Time";
-            public const string ShutterSpeed = "Shutter Speed";
-
-            public static class Bushnell
-            {
-                public const string CreateDate = "Create Date";
-                public const string ModifyDate = "Modify Date";
-                public const string Software = "Software";
-            }
+            public const string DateTime = "Exif IFD0.Date/Time";
+            public const string DateTimeDigitized = "Exif SubIFD.Date/Time Digitized";
+            public const string DateTimeOriginal = "Exif SubIFD.Date/Time Original";
+            public const string ExposureTime = "Exif SubIFD.Exposure Time";
+            public const string ShutterSpeed = "Exif SubIFD.Shutter Speed Value";
+            public const string Software = "Exif IFD0.Software";
 
             public static class Reconyx
             {
-                public const string AmbientTemperature = "Ambient Temperature";
-                public const string FirmwareVersion = "Firmware Version";
-                public const string InfraredIlluminator = "Infrared Illuminator";
-                public const string Sequence = "Sequence";
-                public const string SerialNumber = "Serial Number";
-                public const string TriggerMode = "Trigger Mode";
-                public const string UserLabel = "User Label";
+                public const string AmbientTemperature = "Reconyx Makernote.Ambient Temperature";
+                public const string AmbientTemperatureFarenheit = "Reconyx Makernote.Ambient Temperature Farenheit";
+                public const string BatteryVoltage = "Reconyx Makernote.Battery Voltage";
+                public const string Brightness = "Reconyx Makernote.Brightness";
+                public const string Contrast = "Reconyx Makernote.Contrast";
+                public const string DateTimeOriginal = "Reconyx Makernote.Date/Time Original";
+                public const string FirmwareVersion = "Reconyx Makernote.Firmware Version";
+                public const string InfraredIlluminator = "Reconyx Makernote.Infrared Illuminator";
+                public const string MoonPhase = "Reconyx Makernote.Moon Phase";
+                public const string MotionSensitivity = "Reconyx Makernote.Motion Sensitivity";
+                public const string Saturation = "Reconyx Makernote.Saturation";
+                public const string Sequence = "Reconyx Makernote.Sequence";
+                public const string SerialNumber = "Reconyx Makernote.Serial Number";
+                public const string Sharpness = "Reconyx Makernote.Sharpness";
+                public const string TriggerMode = "Reconyx Makernote.Trigger Mode";
+                public const string UserLabel = "Reconyx Makernote.UserLabel";
+
+                // pending more information from Reconyx
+                // public const string EventNumber = "Reconyx Makernote.Event Number";
+                // public const string FirmwareDate = "Reconyx Makernote.Firmware Date";
+                // public const string MakernoteVersion = "Reconyx Makernote.Makernote Version";
             }
         }
 
@@ -193,7 +203,6 @@ namespace Timelapse.UnitTests
                     IsColor = true,
                     Quality = ImageFilter.Ok,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName,
-                    SkipDateTimeVerification = true
                 };
 
                 ImageExpectation.InfraredMarten = new ImageExpectations(pacificTime)

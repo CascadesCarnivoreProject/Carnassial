@@ -231,9 +231,9 @@
                 
                 <!-- View Menu -->
                 <MenuItem Name="ViewMenu" Header="_View" IsEnabled="False">
-                    <MenuItem Name="ShowAllColumns"  IsCheckable="True" IsChecked="False" Header="_Show All Columns" Click="ShowAllColumnsMenuItem_Click" ToolTip="Show all the columns, which includes how sort orders are tracked">
+                    <MenuItem Name="ShowAllColumns"  IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="ShowAllColumnsMenuItem_Click" ToolTip="Show the ordering used when displaying controls and for CSV file columns">
                     </MenuItem>
-                    <MenuItem Name="MenuItemInspectImageMetadata" Header="_Inspect Image Metadata" ToolTip="Inspect what metadata is available in an image of your choosing" Click="MenuItemInspectImageMetadata_Click">
+                    <MenuItem Name="MenuItemInspectImageMetadata" Header="Inspect file _metadata..." ToolTip="See what metadata is available in an image or video of your choosing" Click="MenuItemInspectImageMetadata_Click">
                     </MenuItem>
                 </MenuItem>
                 

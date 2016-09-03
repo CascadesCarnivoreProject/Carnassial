@@ -1,11 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Windows.Media.Imaging;
 using Timelapse.Database;
 using Timelapse.Dialog;
+using Timelapse.Util;
 
 namespace Timelapse.UnitTests
 {
@@ -66,7 +65,7 @@ namespace Timelapse.UnitTests
             FileInfo imageFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, imageExpectation.RelativePath, imageExpectation.FileName));
             ImageRow image;
             Assert.IsFalse(imageDatabase.GetOrCreateImage(imageFileInfo, imageSetTimeZone, out image));
-            imageAdjustment = image.TryUseImageTaken((BitmapMetadata)image.LoadBitmap(imageDatabase.FolderPath).Metadata, imageSetTimeZone);
+            imageAdjustment = image.TryReadDateTimeOriginalFromMetadata(imageDatabase.FolderPath, imageSetTimeZone);
             return image;
         }
 
@@ -137,109 +136,100 @@ namespace Timelapse.UnitTests
             }
         }
 
-        protected Dictionary<string, string> LoadExif(ImageDatabase imageDatabase, ImageExpectations imageExpectation)
+        protected Dictionary<string, string> LoadMetadata(ImageDatabase imageDatabase, ImageExpectations imageExpectation)
         {
             string imageFilePath = Path.Combine(this.WorkingDirectory, imageExpectation.RelativePath, imageExpectation.FileName);
-            using (PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(imageDatabase, imageFilePath, null))
-            {
-                PrivateObject populateFieldAccessor = new PrivateObject(populateField);
-                populateFieldAccessor.Invoke("LoadExif");
-                Dictionary<string, string> exif = (Dictionary<string, string>)populateField.dg.ItemsSource;
-                Assert.IsTrue(exif.Count > 50, "Expected at least 50 EXIF fields to be retrieved from {0}", imageFilePath);
-                DateTime dateTimeOriginal;
-                Assert.IsTrue(DateTime.TryParseExact(exif[TestConstant.Exif.DateTimeOriginal], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOriginal));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.ExposureTime]));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.ShutterSpeed]));
-                // example information returned from ExifTool
-                // field name                   Bushnell                                    Reconyx
-                // --- fields of likely interest for image analysis ---
-                // Create Date                  2016.02.24 04:59:46                         [Bushnell only]
-                // Date/Time Original           2016.02.24 04:59:46                         2015.01.28 11:17:34 [but located in Makernote rather than the standard EXIF field!]
-                // Modify Date                  2016.02.24 04:59:46                         [Bushnell only]
-                // --- fields possibly of interest interest for image analysis ---
-                // Exposure Time                0                                           1/84
-                // Shutter Speed                0                                           1/84
-                // Software                     BS683BWYx05209                              [Bushnell only]
-                // Firmware Version             [Reconyx only]                              3.3.0
-                // Trigger Mode                 [Reconyx only]                              Motion Detection
-                // Sequence                     [Reconyx only]                              1 of 5
-                // Ambient Temperature          [Reconyx only]                              0 C
-                // Serial Number                [Reconyx only]                              H500DE01120343
-                // Infrared Illuminator         [Reconyx only]                              Off
-                // User Label                   [Reconyx only]                              CCPF DS02
-                // --- fields of little interest (Bushnell often uses placeholder values which don't change) ---
-                // ExifTool Version Number      10.14                                       10.14
-                // File Name                    BushnellTrophyHD-119677C-20160224-056.JPG   Reconyx-HC500-20150128-201.JPG
-                // Directory                    Timelapse/UnitTests/bin/Debug               Timelapse/UnitTests/bin/Debug/CarnivoreTestImages
-                // File Size                    731 kB                                      336 kB
-                // File Modification Date/Time  <file time from last build>                 <file time from last build>
-                // File Access Date/Time        <file time from last build>                 <file time from last build>
-                // File Creation Date/Time      <file time from last build>                 <file time from last build>
-                // File Permissions             rw-rw-rw-                                   rw-rw-rw-
-                // File Type                    JPEG                                        JPEG
-                // File Type Extension          jpg                                         jpg
-                // MIME Type                    image/jpeg                                  image/jpeg
-                // Exif Byte Order              Little-endian(Intel, II)                    Little-endian(Intel, II)
-                // Image Description            M2E6L0-0R350B362                            [Bushnell only]
-                // Make                         [blank]                                     [Bushnell only]
-                // Camera Model Name            [blank]                                     [Bushnell only]
-                // Orientation                  Horizontal(normal)                          [Bushnell only]
-                // X Resolution                 96                                          72
-                // Y Resolution                 96                                          72
-                // Resolution Unit              inches                                      inches
-                // Y Cb Cr Positioning          Co-sited                                    Co-sited
-                // Copyright                    Copyright 2002                              [Bushnell only]
-                // F Number                     2.8                                         [Bushnell only]
-                // Exposure Program             Aperture-priority AE                        [Bushnell only]
-                // ISO                          100                                         50
-                // Exif Version                 0210                                        0220
-                // Components Configuration     Y, Cb, Cr, -                                Y, Cb, Cr, -
-                // Compressed Bits Per Pixel    0.7419992711                                [Bushnell only]
-                // Shutter Speed Value          1                                           [Bushnell only]
-                // Aperture Value               2.6                                         [Bushnell only]
-                // Exposure Compensation        +2                                          [Bushnell only]
-                // Max Aperture Value           2.6                                         [Bushnell only]
-                // Metering Mode                Average                                     [Bushnell only]
-                // Light Source                 Daylight                                    [Bushnell only]
-                // Flash                        No Flash                                    [Bushnell only]
-                // Warning                      [minor]Unrecognized MakerNotes              [Bushnell only]
-                // Flashpix Version             0100                                        0100
-                // Color Space                  sRGB                                        sRGB
-                // Exif Image Width             3264                                        2048
-                // Exif Image Height            2448                                        1536
-                // Related Sound File           RelatedSound                                [Bushnell only]
-                // Interoperability Index       R98 - DCF basic file(sRGB)                  [Bushnell only]
-                // Interoperability Version     0100                                        [Bushnell only]
-                // Exposure Index               1                                           [Bushnell only]
-                // Sensing Method               One-chip color area                         [Bushnell only]
-                // File Source                  Digital Camera                              [Bushnell only]
-                // Scene Type                   Directly photographed                       [Bushnell only]
-                // Compression                  JPEG(old - style)                           [Bushnell only]
-                // Thumbnail Offset             1312                                        [Bushnell only]
-                // Thumbnail Length             5768                                        [Bushnell only]
-                // Image Width                  3264                                        2048
-                // Image Height                 2448                                        1536
-                // Encoding Process             Baseline DCT, Huffman coding                Baseline DCT, Huffman coding
-                // Bits Per Sample              8                                           8
-                // Color Components             3                                           3
-                // Y Cb Cr Sub Sampling         YCbCr4:2:2 (2 1)                            YCbCr4:2:2 (2 1)
-                // Aperture                     2.8                                         [Bushnell only]
-                // Image Size                   3264x2448                                   2048x1536
-                // Megapixels                   8.0                                         3.1
-                // Thumbnail Image              <binary data>                               [Bushnell only]
-                // Ambient Temperature Fahrenheit [Reconyx only]                            31 F
-                // Battery Voltage              [Reconyx only]                              8.65 V
-                // Contrast                     [Reconyx only]                              142
-                // Brightness                   [Reconyx only]                              238
-                // Event Number                 [Reconyx only]                              39
-                // Firmware Date                [Reconyx only]                              2011:01:10
-                // Maker Note Version           [Reconyx only]                              0xf101
-                // Moon Phase                   [Reconyx only]                              First Quarter
-                // Motion Sensitivity           [Reconyx only]                              100
-                // Sharpness                    [Reconyx only]                              64
-                // Saturation                   [Reconyx only]                              144
-                return exif;
-            }
+            Dictionary<string, string> metadata = Utilities.LoadMetadata(imageFilePath);
+            Assert.IsTrue(metadata.Count > 40, "Expected at least 40 metadata fields to be retrieved from {0}", imageFilePath);
+            // example information returned from ExifTool
+            // field name                   Bushnell                                    Reconyx
+            // --- fields of likely interest for image analysis ---
+            // Create Date                  2016.02.24 04:59:46                         [Bushnell only]
+            // Date/Time Original           2016.02.24 04:59:46                         2015.01.28 11:17:34 [but located in Makernote rather than the standard EXIF field!]
+            // Modify Date                  2016.02.24 04:59:46                         [Bushnell only]
+            // --- fields possibly of interest interest for image analysis ---
+            // Exposure Time                0                                           1/84
+            // Shutter Speed                0                                           1/84
+            // Software                     BS683BWYx05209                              [Bushnell only]
+            // Firmware Version             [Reconyx only]                              3.3.0
+            // Trigger Mode                 [Reconyx only]                              Motion Detection
+            // Sequence                     [Reconyx only]                              1 of 5
+            // Ambient Temperature          [Reconyx only]                              0 C
+            // Serial Number                [Reconyx only]                              H500DE01120343
+            // Infrared Illuminator         [Reconyx only]                              Off
+            // User Label                   [Reconyx only]                              CCPF DS02
+            // --- fields of little interest (Bushnell often uses placeholder values which don't change) ---
+            // ExifTool Version Number      10.14                                       10.14
+            // File Name                    BushnellTrophyHD-119677C-20160224-056.JPG   Reconyx-HC500-20150128-201.JPG
+            // Directory                    Timelapse/UnitTests/bin/Debug               Timelapse/UnitTests/bin/Debug/CarnivoreTestImages
+            // File Size                    731 kB                                      336 kB
+            // File Modification Date/Time  <file time from last build>                 <file time from last build>
+            // File Access Date/Time        <file time from last build>                 <file time from last build>
+            // File Creation Date/Time      <file time from last build>                 <file time from last build>
+            // File Permissions             rw-rw-rw-                                   rw-rw-rw-
+            // File Type                    JPEG                                        JPEG
+            // File Type Extension          jpg                                         jpg
+            // MIME Type                    image/jpeg                                  image/jpeg
+            // Exif Byte Order              Little-endian(Intel, II)                    Little-endian(Intel, II)
+            // Image Description            M2E6L0-0R350B362                            [Bushnell only]
+            // Make                         [blank]                                     [Bushnell only]
+            // Camera Model Name            [blank]                                     [Bushnell only]
+            // Orientation                  Horizontal(normal)                          [Bushnell only]
+            // X Resolution                 96                                          72
+            // Y Resolution                 96                                          72
+            // Resolution Unit              inches                                      inches
+            // Y Cb Cr Positioning          Co-sited                                    Co-sited
+            // Copyright                    Copyright 2002                              [Bushnell only]
+            // F Number                     2.8                                         [Bushnell only]
+            // Exposure Program             Aperture-priority AE                        [Bushnell only]
+            // ISO                          100                                         50
+            // Exif Version                 0210                                        0220
+            // Components Configuration     Y, Cb, Cr, -                                Y, Cb, Cr, -
+            // Compressed Bits Per Pixel    0.7419992711                                [Bushnell only]
+            // Shutter Speed Value          1                                           [Bushnell only]
+            // Aperture Value               2.6                                         [Bushnell only]
+            // Exposure Compensation        +2                                          [Bushnell only]
+            // Max Aperture Value           2.6                                         [Bushnell only]
+            // Metering Mode                Average                                     [Bushnell only]
+            // Light Source                 Daylight                                    [Bushnell only]
+            // Flash                        No Flash                                    [Bushnell only]
+            // Warning                      [minor]Unrecognized MakerNotes              [Bushnell only]
+            // Flashpix Version             0100                                        0100
+            // Color Space                  sRGB                                        sRGB
+            // Exif Image Width             3264                                        2048
+            // Exif Image Height            2448                                        1536
+            // Related Sound File           RelatedSound                                [Bushnell only]
+            // Interoperability Index       R98 - DCF basic file(sRGB)                  [Bushnell only]
+            // Interoperability Version     0100                                        [Bushnell only]
+            // Exposure Index               1                                           [Bushnell only]
+            // Sensing Method               One-chip color area                         [Bushnell only]
+            // File Source                  Digital Camera                              [Bushnell only]
+            // Scene Type                   Directly photographed                       [Bushnell only]
+            // Compression                  JPEG(old - style)                           [Bushnell only]
+            // Thumbnail Offset             1312                                        [Bushnell only]
+            // Thumbnail Length             5768                                        [Bushnell only]
+            // Image Width                  3264                                        2048
+            // Image Height                 2448                                        1536
+            // Encoding Process             Baseline DCT, Huffman coding                Baseline DCT, Huffman coding
+            // Bits Per Sample              8                                           8
+            // Color Components             3                                           3
+            // Y Cb Cr Sub Sampling         YCbCr4:2:2 (2 1)                            YCbCr4:2:2 (2 1)
+            // Aperture                     2.8                                         [Bushnell only]
+            // Image Size                   3264x2448                                   2048x1536
+            // Megapixels                   8.0                                         3.1
+            // Thumbnail Image              <binary data>                               [Bushnell only]
+            // Ambient Temperature Fahrenheit [Reconyx only]                            31 F
+            // Battery Voltage              [Reconyx only]                              8.65 V
+            // Contrast                     [Reconyx only]                              142
+            // Brightness                   [Reconyx only]                              238
+            // Event Number                 [Reconyx only]                              39
+            // Firmware Date                [Reconyx only]                              2011:01:10
+            // Maker Note Version           [Reconyx only]                              0xf101
+            // Moon Phase                   [Reconyx only]                              First Quarter
+            // Motion Sensitivity           [Reconyx only]                              100
+            // Sharpness                    [Reconyx only]                              64
+            // Saturation                   [Reconyx only]                              144
+            return metadata;
         }
 
         protected List<ImageExpectations> PopulateCarnivoreDatabase(ImageDatabase imageDatabase)
@@ -248,7 +238,7 @@ namespace Timelapse.UnitTests
 
             DateTimeAdjustment martenTimeAdjustment;
             ImageRow martenImage = this.CreateImage(imageDatabase, imageSetTimeZone, TestConstant.ImageExpectation.DaylightMartenPair, out martenTimeAdjustment);
-            Assert.IsTrue(martenTimeAdjustment == DateTimeAdjustment.MetadataNotUsed);
+            Assert.IsTrue(martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             DateTimeAdjustment coyoteTimeAdjustment;
             ImageRow coyoteImage = this.CreateImage(imageDatabase, imageSetTimeZone, TestConstant.ImageExpectation.DaylightCoyote, out coyoteTimeAdjustment);

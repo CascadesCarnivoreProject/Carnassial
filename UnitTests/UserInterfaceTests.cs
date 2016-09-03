@@ -12,6 +12,7 @@ using Timelapse.Controls;
 using Timelapse.Database;
 using Timelapse.Dialog;
 using Timelapse.Editor;
+using Timelapse.Editor.Dialog;
 using Timelapse.Images;
 using Timelapse.Util;
 using MessageBox = Timelapse.Dialog.MessageBox;
@@ -58,8 +59,8 @@ namespace Timelapse.UnitTests
             editorAccessor.Invoke(TestConstant.InitializeDataGridMethodName, templateDatabaseFilePath);
             this.WaitForRenderingComplete();
 
-            this.ShowDialog(new DialogAboutTimelapseEditor(editor));
-            this.ShowDialog(new DialogEditChoiceList(editor.HelpText, Utilities.ConvertBarsToLineBreaks("Choice0|Choice1|Choice2|Choice3"), editor));
+            this.ShowDialog(new AboutTimelapseEditor(editor));
+            this.ShowDialog(new EditChoiceList(editor.HelpText, Utilities.ConvertBarsToLineBreaks("Choice0|Choice1|Choice2|Choice3"), editor));
 
             editor.Close();
         }
@@ -186,10 +187,7 @@ namespace Timelapse.UnitTests
                 {
                     this.ShowDialog(darkThreshold);
                 }
-                using (PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(dataHandler.ImageDatabase, dataHandler.ImageCache.Current.GetImagePath(dataHandler.ImageDatabase.FolderPath), timelapse))
-                {
-                    this.ShowDialog(populateField);
-                }
+                this.ShowDialog(new PopulateFieldWithMetadata(dataHandler.ImageDatabase, dataHandler.ImageCache.Current.GetImagePath(dataHandler.ImageDatabase.FolderPath), timelapse));
                 this.ShowDialog(new RenameImageDatabaseFile(dataHandler.ImageDatabase.FileName, timelapse));
                 this.ShowDialog(new DateRereadFromFiles(dataHandler.ImageDatabase, timelapse));
                 this.ShowDialog(new FileCountsByQuality(dataHandler.ImageDatabase.GetImageCountsByQuality(), timelapse));

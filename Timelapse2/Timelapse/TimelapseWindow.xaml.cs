@@ -196,7 +196,6 @@ namespace Timelapse
             }
         }
 
-        #region Image Loading
         private bool TryGetTemplatePath(out string templateDatabasePath)
         {
             // prompt user to select a template
@@ -205,7 +204,7 @@ namespace Timelapse
             this.state.MostRecentImageSets.TryGetMostRecent(out defaultTemplateDatabasePath);
             if (Utilities.TryGetFileFromUser("Select a TimelapseTemplate.tdb file, which should be located in the root folder containing your images and videos",
                                              defaultTemplateDatabasePath,
-                                             String.Format("Template files ({0})|*{0}", Constants.File.TemplateDatabaseFileExtension),
+                                             String.Format("Template files (*{0})|*{0}", Constants.File.TemplateDatabaseFileExtension),
                                              out templateDatabasePath) == false)
             {
                 return false;
@@ -396,7 +395,7 @@ namespace Timelapse
                         }
 
                         // see if the date can be updated from the metadata
-                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryUseImageTaken((BitmapMetadata)bitmapSource.Metadata, imageSetTimeZone);
+                        DateTimeAdjustment imageTimeAdjustment = imageProperties.TryReadDateTimeOriginalFromMetadata(this.FolderPath, imageSetTimeZone);
                         if (imageTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed ||
                             imageTimeAdjustment == DateTimeAdjustment.MetadataDateUsed)
                         {
@@ -660,7 +659,6 @@ namespace Timelapse
 
             this.HelpDocument.Visibility = Visibility.Collapsed;
         }
-        #endregion
 
         private void SelectDataTableImagesAndShowImage(int imageRow, ImageFilter filter)
         {
@@ -788,7 +786,6 @@ namespace Timelapse
             this.dataHandler.ImageDatabase.ImageSet.ImageFilter = filter;    // Remember the current filter
         }
 
-        #region Control Callbacks
         /// <summary>
         /// Add user interface event handler callbacks for (possibly invisible) controls
         /// </summary>
@@ -1012,9 +1009,7 @@ namespace Timelapse
                 control.Container.ClearValue(Control.BackgroundProperty);
             }
         }
-        #endregion
 
-        #region Differencing
         // Cycle through the image enhancements in the order current, then previous and next differenced images.
         // Create the differenced image if needed
         // For display efficiency, cache the differenced image.
@@ -1116,9 +1111,6 @@ namespace Timelapse
             this.markableCanvas.ImageToDisplay.Source = this.dataHandler.ImageCache.GetCurrentImage();
             this.statusBar.SetMessage("Viewing differences compared to both the next and previous files");
         }
-        #endregion
-
-        #region Slider Event Handlers and related
 
         private void ImageNavigatorSlider_DragCompleted(object sender, DragCompletedEventArgs args)
         {
@@ -1164,7 +1156,6 @@ namespace Timelapse
             this.ShowImage((int)this.ImageNavigatorSlider.Value);
             this.timerImageNavigator.Stop(); 
         }
-        #endregion
 
         // Various dialogs perform a bulk edit, after which various states have to be refreshed
         // This method shows the dialog and (if a bulk edit is done) refreshes those states.
@@ -1202,7 +1193,6 @@ namespace Timelapse
             }
         }
 
-        #region Showing images
         private void ShowFirstDisplayableImage(int firstRowInSearch)
         {
             int firstImageDisplayable = this.dataHandler.ImageDatabase.FindFirstDisplayableImage(firstRowInSearch);
@@ -1288,9 +1278,7 @@ namespace Timelapse
             }
             this.SetVideoPlayerToCurrentRow(); 
         }
-        #endregion
 
-        #region Keyboard shortcuts
         // If its an arrow key and the textbox doesn't have the focus,
         // navigate left/right image or up/down to look at differenced image
         private void Window_PreviewKeyDown(object sender, KeyEventArgs currentKey)
@@ -1369,9 +1357,7 @@ namespace Timelapse
             }
             currentKey.Handled = true;
         }
-        #endregion
 
-        #region Setting Focus
         // Because of shortcut keys, we want to reset the focus when appropriate to the 
         // image control. This is done from various places.
 
@@ -1448,9 +1434,6 @@ namespace Timelapse
 
             return false;
         }
-        #endregion
-
-        #region Marking and Counting
 
         // Get all the counters' metatags (if any) from the current row in the database
         private void GetTheMarkableCanvasListOfMetaTags()
@@ -1690,9 +1673,7 @@ namespace Timelapse
         {
             this.counterCoordinates = null;
         }
-        #endregion
 
-        #region File Menu Callbacks and Support Functions
         private void File_SubmenuOpening(object sender, RoutedEventArgs e)
         {
             this.MenuItemRecentImageSets_Refresh();
@@ -1902,7 +1883,7 @@ namespace Timelapse
             string csvFilePath;
             if (Utilities.TryGetFileFromUser("Select a .csv file to merge into the current image set",
                                              Path.Combine(this.dataHandler.ImageDatabase.FolderPath, csvFileName),
-                                             String.Format("Comma separated value files ({0})|*{0}", Constants.File.CsvFileExtension),
+                                             String.Format("Comma separated value files (*{0})|*{0}", Constants.File.CsvFileExtension),
                                              out csvFilePath) == false)
             {
                 return;
@@ -2048,9 +2029,6 @@ namespace Timelapse
             folderPath = null;
             return false;
         }
-        #endregion
-
-        #region Edit Menu Callbacks
 
         // Populate a data field from metadata (example metadata displayed from the currently selected image)
         private void MenuItemPopulateFieldFromMetadata_Click(object sender, RoutedEventArgs e)
@@ -2080,10 +2058,8 @@ namespace Timelapse
                                                                    this.MenuItemEnableFilteredPopulateFieldFromMetadataPrompt.IsChecked = !optOut;
                                                                }))
             {
-                using (PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current.GetImagePath(this.FolderPath), this))
-                {
-                    this.ShowBulkImageEditDialog(populateField);
-                }
+                PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current.GetImagePath(this.FolderPath), this);
+                this.ShowBulkImageEditDialog(populateField);
             }
         }
 
@@ -2231,9 +2207,7 @@ namespace Timelapse
                 }
             }
         }
-        #endregion
 
-        #region Options Menu Callbacks
         /// <summary>Show advanced image set options</summary>
         private void MenuItemAdvancedImageSetOptions_Click(object sender, RoutedEventArgs e)
         {
@@ -2566,9 +2540,7 @@ namespace Timelapse
             this.state.AudioFeedback = !this.state.AudioFeedback;
             this.MenuItemAudioFeedback.IsChecked = this.state.AudioFeedback;
         }
-        #endregion
 
-        #region View Menu Callbacks
         private void Filter_SubmenuOpening(object sender, RoutedEventArgs e)
         {
             Dictionary<ImageFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCountsByQuality();
@@ -2667,9 +2639,7 @@ namespace Timelapse
             }
             this.dlgVideoPlayer.CurrentRow = this.dataHandler.ImageCache.Current;
         }
-        #endregion
 
-        #region Filter Menu
         /// <summary>Select the appropriate filter and update the view</summary>
         private void MenuItemFilter_Click(object sender, RoutedEventArgs e)
         {
@@ -2773,9 +2743,7 @@ namespace Timelapse
             this.dlgDataView.Owner = this;
             this.dlgDataView.Show();
         }
-        #endregion
 
-        #region Help Menu Callbacks
         /// <summary>Display a help window</summary> 
         private void MenuOverview_Click(object sender, RoutedEventArgs e)
         {
@@ -2851,9 +2819,7 @@ namespace Timelapse
             Uri tutorialUri = new Uri("mailto:timelapse-l@mailman.ucalgary.ca");
             Process.Start(new ProcessStartInfo(tutorialUri.AbsoluteUri));
         }
-        #endregion
 
-        #region Utilities
         // Returns the currently active counter control, otherwise null
         private DataEntryCounter FindSelectedCounter()
         {
@@ -2919,7 +2885,6 @@ namespace Timelapse
             }
             return proceedWithOperation;
         }
-        #endregion
 
         private bool TryShowImageWithoutSliderCallback(bool forward, ModifierKeys modifiers)
         {
@@ -2962,7 +2927,6 @@ namespace Timelapse
             return true;
         }
 
-        #region Bookmarking pan/zoom levels
         // Bookmark (Save) the current pan / zoom level of the image
         private void MenuItem_BookmarkSavePanZoom(object sender, RoutedEventArgs e)
         {
@@ -2980,9 +2944,7 @@ namespace Timelapse
         {
             this.markableCanvas.BookmarkZoomOutAllTheWay();
         }
-        #endregion
 
-        #region Control Window Management
         /// <summary>
         /// Show the Coding Controls in the main timelapse window
         /// </summary>
@@ -3029,9 +2991,7 @@ namespace Timelapse
             this.controlsTray.Children.Add(this.dataEntryControls);
             this.MenuItemControlsInSeparateWindow.IsChecked = false;
         }
-        #endregion
 
-        #region DataView Window Management
         private void RefreshDataViewDialogWindow()
         {
             if (this.dlgDataView != null)
@@ -3040,14 +3000,12 @@ namespace Timelapse
                 this.dlgDataView.RefreshDataTable();
             }
         }
-        #endregion
 
-        #region Convenience classes
         // A class that tracks our progress as we load the images
         internal class ProgressState
         {
-            public string Message { get; set; }
             public BitmapSource Bmap { get; set; }
+            public string Message { get; set; }
 
             public ProgressState()
             {
@@ -3055,7 +3013,6 @@ namespace Timelapse
                 this.Bmap = null;
             }
         }
-        #endregion
 
         private void HelpDocument_Drop(object sender, DragEventArgs dropEvent)
         {

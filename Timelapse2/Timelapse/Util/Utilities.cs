@@ -1,10 +1,12 @@
-﻿using System;
+﻿using MetadataExtractor;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Forms;
 using DataFormats = System.Windows.DataFormats;
+using Directory = MetadataExtractor.Directory;
 using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;
 using Rectangle = System.Drawing.Rectangle;
@@ -12,12 +14,25 @@ using Rectangle = System.Drawing.Rectangle;
 namespace Timelapse.Util
 {
     /// <summary>
-    /// Utilities collect a variety of miscellaneous utility functions
+    /// A variety of miscellaneous utility functions.
     /// </summary>
     public class Utilities
     {
         private static readonly char[] BarDelimiter = { '|' };
         private static readonly string[] NewLineDelimiters = { Environment.NewLine };
+
+        public static Dictionary<string, string> LoadMetadata(string filePath)
+        {
+            Dictionary<string, string> metadata = new Dictionary<string, string>();
+            foreach (Directory metadataDirectory in ImageMetadataReader.ReadMetadata(filePath))
+            {
+                foreach (Tag metadataTag in metadataDirectory.Tags)
+                {
+                    metadata.Add(metadataDirectory.Name + "." + metadataTag.Name, metadataTag.Description);
+                }
+            }
+            return metadata;
+        }
 
         public static bool IsSingleTemplateFileDrag(DragEventArgs dragEvent, out string templateDatabasePath)
         {

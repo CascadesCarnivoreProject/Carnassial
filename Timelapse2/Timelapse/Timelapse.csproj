@@ -95,6 +95,14 @@
     <TargetZone>Internet</TargetZone>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="MetadataExtractor, Version=1.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MetadataExtractor.1.5.1\lib\net35\MetadataExtractor.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\WindowsAPICodePack-Core.1.1.2\lib\Microsoft.WindowsAPICodePack.dll</HintPath>
       <Private>True</Private>
@@ -126,6 +134,10 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="Xceed.Wpf.Toolkit, Version=2.9.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Extended.Wpf.Toolkit.2.9\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="XmpCore, Version=5.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\XmpCore.1.2.2\lib\net35\XmpCore.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -171,6 +183,7 @@
     <Compile Include="Dialog\DateTimeLinearCorrection.xaml.cs">
       <DependentUpon>DateTimeLinearCorrection.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Util\DataGridExtensions.cs" />
     <Compile Include="Util\DateTimeExtensions.cs" />
     <Compile Include="Util\DateTimeOffsetExtensions.cs" />
     <Compile Include="Util\RegistryKeyExtensions.cs" />
@@ -370,8 +383,6 @@
     <Compile Include="Dialog\TemplatesDontMatch.xaml.cs">
       <DependentUpon>TemplatesDontMatch.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Images\ExifToolException.cs" />
-    <Compile Include="Images\ExifToolWrapper.cs" />
     <Compile Include="Controls\FeedbackControl.xaml.cs">
       <DependentUpon>FeedbackControl.xaml</DependentUpon>
     </Compile>
@@ -491,9 +502,6 @@
     <Resource Include="16x16.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\Dependencies\exiftool%28-k%29.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Resource Include="Resources\empty_imageset.jpg" />
     <Resource Include="Resources\corrupted_thumbnail.jpg" />
     <Resource Include="Resources\missing_thumbnail.jpg" />

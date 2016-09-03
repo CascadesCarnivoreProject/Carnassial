@@ -1,11 +1,16 @@
-﻿using System;
+﻿using MetadataExtractor;
+using MetadataExtractor.Formats.Exif;
+using MetadataExtractor.Formats.Exif.Makernotes;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows.Media.Imaging;
 using Timelapse.Images;
 using Timelapse.Util;
+using Directory = MetadataExtractor.Directory;
 
 namespace Timelapse.Database
 {
@@ -277,72 +282,66 @@ namespace Timelapse.Database
             }
         }
 
-        public DateTimeAdjustment TryUseImageTaken(BitmapMetadata metadata, TimeZoneInfo imageSetTimeZone)
+        public DateTimeAdjustment TryReadDateTimeOriginalFromMetadata(string folderPath, TimeZoneInfo imageSetTimeZone)
         {
-            if (metadata == null)
+            IList<Directory> metadataDirectories = ImageMetadataReader.ReadMetadata(this.GetImagePath(folderPath));
+            ExifSubIfdDirectory exifSubIfd = metadataDirectories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+            if (exifSubIfd == null)
             {
                 return DateTimeAdjustment.MetadataNotUsed;
             }
-
-            if (String.IsNullOrWhiteSpace(metadata.DateTaken) == false)
+            DateTime dateTimeOriginal;
+            if (exifSubIfd.TryGetDateTime(ExifSubIfdDirectory.TagDateTimeOriginal, out dateTimeOriginal) == false)
             {
-                // try to get the date from the metadata
-                // Per the EXIF standard this should be in yyyy:MM:dd HH:mm:ss format but, at least for Bushnell and some Primos images, yyyy-MM-dd HH:mm:ss is returned.
-                DateTimeOffset metadataDateTime;
-                if (DateTimeHandler.TryParseDateTaken(metadata.DateTaken, imageSetTimeZone, out metadataDateTime))
+                ReconyxMakernoteDirectory reconyxMakernote = metadataDirectories.OfType<ReconyxMakernoteDirectory>().FirstOrDefault();
+                if ((reconyxMakernote == null) || (reconyxMakernote.TryGetDateTime(ReconyxMakernoteDirectory.TagDateTimeOriginal, out dateTimeOriginal) == false))
                 {
-                    // get the current date time and measure the extent to which the image file time and image taken metadata are consistent
-                    DateTimeOffset currentDateTime;
-                    bool dateDiffers;
-                    bool timeDiffers;
-                    if (this.TryGetDateTime(imageSetTimeZone, out currentDateTime))
-                    {
-                        dateDiffers = currentDateTime.Date != metadataDateTime.Date;
-                        timeDiffers = (currentDateTime.TimeOfDay != metadataDateTime.TimeOfDay) || (currentDateTime.Offset != metadataDateTime.Offset);
-                    }
-                    else
-                    {
-                        dateDiffers = true;
-                        timeDiffers = true;
-                    }
-
-                    // change image's time to to date taken
-                    if (dateDiffers || timeDiffers)
-                    {
-                        this.SetDateAndTime(metadataDateTime);
-                    }
-
-                    // At least with several Bushnell Trophy HD and Aggressor models (119677C, 119775C, 119777C) file times are sometimes
-                    // indicated an hour before the image taken time during standard time.  This is not known to occur during daylight 
-                    // savings time and does not occur consistently during standard time.  It is problematic in the sense time becomes
-                    // scrambled, meaning there's no way to detect and correct cases where an image taken time is incorrect because a
-                    // daylight-standard transition occurred but the camera hadn't yet been serviced to put its clock on the new time,
-                    // and needs to be reported separately as the change of day in images taken just after midnight is not an indicator
-                    // of day-month ordering ambiguity in the image taken metadata.
-                    bool standardTimeAdjustment = metadataDateTime - currentDateTime == TimeSpan.FromHours(1);
-
-                    // snap to metadata time and return the extent of the time adjustment
-                    if (standardTimeAdjustment)
-                    {
-                        return DateTimeAdjustment.MetadataDateAndTimeOneHourLater;
-                    }
-                    if (dateDiffers && timeDiffers)
-                    {
-                        return DateTimeAdjustment.MetadataDateAndTimeUsed;
-                    }
-                    if (dateDiffers)
-                    {
-                        return DateTimeAdjustment.MetadataDateUsed;
-                    }
-                    if (timeDiffers)
-                    {
-                        return DateTimeAdjustment.MetadataTimeUsed;
-                    }
-                    return DateTimeAdjustment.SameFileAndMetadataTime;
+                    return DateTimeAdjustment.MetadataNotUsed;
                 }
             }
+            DateTimeOffset exifDateTime = DateTimeHandler.CreateDateTimeOffset(dateTimeOriginal, imageSetTimeZone);
 
-            return DateTimeAdjustment.MetadataNotUsed;
+            // get the current date time
+            DateTimeOffset currentDateTime;
+            bool result = this.TryGetDateTime(imageSetTimeZone, out currentDateTime);
+            // Note that if its not a vaild date, that currentDateTime will now be set to 01-Jan-0001 00:00:00
+            // This will mean the metadata date/time will be used instead of the currentDateTime
+
+            // measure the extent to which the image file time and image taken metadata are consistent
+            bool dateAdjusted = currentDateTime.Date != exifDateTime.Date;
+            bool timeAdjusted = currentDateTime.TimeOfDay != exifDateTime.TimeOfDay;
+            if (dateAdjusted || timeAdjusted)
+            {
+                this.SetDateAndTime(exifDateTime);
+            }
+
+            // At least with several Bushnell Trophy HD and Aggressor models (119677C, 119775C, 119777C) file times are sometimes
+            // indicated an hour before the image taken time during standard time.  This is not known to occur during daylight 
+            // savings time and does not occur consistently during standard time.  It is problematic in the sense time becomes
+            // scrambled, meaning there's no way to detect and correct cases where an image taken time is incorrect because a
+            // daylight-standard transition occurred but the camera hadn't yet been serviced to put its clock on the new time,
+            // and needs to be reported separately as the change of day in images taken just after midnight is not an indicator
+            // of day-month ordering ambiguity in the image taken metadata.
+            bool standardTimeAdjustment = exifDateTime - currentDateTime == TimeSpan.FromHours(1);
+
+            // snap to metadata time and return the extent of the time adjustment
+            if (standardTimeAdjustment)
+            {
+                return DateTimeAdjustment.MetadataDateAndTimeOneHourLater;
+            }
+            if (dateAdjusted && timeAdjusted)
+            {
+                return DateTimeAdjustment.MetadataDateAndTimeUsed;
+            }
+            if (dateAdjusted)
+            {
+                return DateTimeAdjustment.MetadataDateUsed;
+            }
+            if (timeAdjusted)
+            {
+                return DateTimeAdjustment.MetadataTimeUsed;
+            }
+            return DateTimeAdjustment.SameFileAndMetadataTime;
         }
     }
 }

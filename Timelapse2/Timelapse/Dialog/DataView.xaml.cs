@@ -36,7 +36,6 @@ namespace Timelapse.Dialog
             this.dataGrid.Items.Refresh();
         }
 
-        #region Callbacks
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             this.database.BindToTimelapseDataGrid(null, null);
@@ -86,6 +85,5 @@ namespace Timelapse.Dialog
             this.Close();
             return;
         }
-        #endregion
     }
 }

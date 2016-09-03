@@ -24,7 +24,7 @@
             </CheckBox>
 
             <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
-            <Button Name="OkButton" IsDefault="True" IsEnabled="False" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
+            <Button Name="OkButton" IsDefault="True" IsEnabled="False" AutomationProperties.AutomationId="ChangesButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
         </StackPanel>
         <ScrollViewer Name="scroller" HorizontalScrollBarVisibility="Auto"  VerticalScrollBarVisibility="Visible" CanContentScroll="True" PanningMode="Both" DockPanel.Dock="Top">
             <Grid Name="GridGallery" DockPanel.Dock="Top" Margin="10,10,10,10" ShowGridLines="False" >

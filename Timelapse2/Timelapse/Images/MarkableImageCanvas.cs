@@ -247,7 +247,6 @@ namespace Timelapse.Images
             }
         }
 
-        #region MetaTag Event Raising and Handling
         // The RaiseMetaTagEvent handler
         public event EventHandler<MetaTagEventArgs> RaiseMetaTagEvent;
 
@@ -267,7 +266,6 @@ namespace Timelapse.Images
                 handler(this, e);
             }
         }
-        #endregion
 
         /// <summary>
         /// a canvas that can be zoomed and panned, that contains a magnifying glass, and that can be use to add and delete marks
@@ -386,8 +384,6 @@ namespace Timelapse.Images
             this.MagnifierZoom += this.MagnifierZoomDelta;
         }
 
-        #region Public methods: Bookmarking the image's zoom/ pan level
-
         // A user may want to flip between completely zoomed out / normal pan settings
         // and a saved zoom / pan setting that focuses in on a particular region.
         // To do this, we  save / restore the zoom pan settings of a particular view,
@@ -434,9 +430,7 @@ namespace Timelapse.Images
 
             this.MarkersRefresh();
         }
-        #endregion 
 
-        #region Event Handlers: Resizing
         // Whenever the canvas size changes, resize the image
         private void OnMarkableImageCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
         {
@@ -450,10 +444,6 @@ namespace Timelapse.Images
         {
             this.MarkersRefresh();
         }
-
-        #endregion
-
-        #region Event Handlers: Mouse Input
 
         // On Mouse down, record the location, who sent it, and the time.
         // We will use this information on move and up events to discriminate between 
@@ -576,9 +566,6 @@ namespace Timelapse.Images
             this.magnifyingGlass.Hide();
         }
 
-        #endregion  
-
-        #region Event Handlers: Keyboard Shortcuts
         // If its < or > key zoom out or in around the mouse point.
         private void OnImage_PreviewKeyDown(object sender, KeyEventArgs e)
         {
@@ -611,10 +598,6 @@ namespace Timelapse.Images
             }
             e.Handled = true;
         }
-
-        #endregion
-
-        #region Scaling, Transforms and other calculations
 
         // Given the mouse location on the image, translate the image
         // This is normally called from a left mouse move event
@@ -759,9 +742,6 @@ namespace Timelapse.Images
                 Debug.Fail("TransformChanged as image cannot be transformed", exception.ToString());
             }
         }
-        #endregion
-
-        #region Drawing Markers
 
         // From the list of points, redraw all ellipses
         private void MarkersDraw(Canvas canvas, Size newSize, bool doTransform)
@@ -912,6 +892,5 @@ namespace Timelapse.Images
                 }
             }
         }
-        #endregion
     }
 }

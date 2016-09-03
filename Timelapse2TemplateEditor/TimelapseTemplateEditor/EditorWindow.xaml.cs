@@ -14,6 +14,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using Timelapse.Database;
+using Timelapse.Editor.Dialog;
 using Timelapse.Editor.Util;
 using Timelapse.Util;
 using MessageBox = Timelapse.Dialog.MessageBox;
@@ -39,7 +40,6 @@ namespace Timelapse.Editor
         private UIElement realMouseDragSource;
         private UIElement dummyMouseDragSource;
 
-        #region Initialization, Window Loading and Closing
         /// <summary>
         /// Starts the UI.
         /// </summary>
@@ -83,9 +83,7 @@ namespace Timelapse.Editor
             // persist state to registry
             this.userSettings.WriteToRegistry();
         }
-        #endregion
 
-        #region File Menu Callbacks
         /// <summary>
         /// Creates a new database file of a user chosen name in a user chosen location.
         /// </summary>
@@ -163,9 +161,7 @@ namespace Timelapse.Editor
             this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
             Application.Current.Shutdown();
         }
-        #endregion
 
-        #region View Menu Callbacks
         /// <summary>
         /// Depending on the menu's checkbox state, show all columns or hide selected columns
         /// </summary>
@@ -210,15 +206,10 @@ namespace Timelapse.Editor
         /// </summary>
         private void MenuItemInspectImageMetadata_Click(object sender, RoutedEventArgs e)
         {
-            using (DialogInspectMetadata inspectMetadata = new DialogInspectMetadata(this.templateDatabase.FilePath))
-            {
-                inspectMetadata.Owner = this;
-                inspectMetadata.Show();
-            }
+            InspectMetadata inspectMetadata = new InspectMetadata(this.templateDatabase.FilePath, this);
+            inspectMetadata.ShowDialog();
         }
-        #endregion
 
-        #region Help Menu Callbacks
         /// <summary>Display the Timelapse home page </summary> 
         private void MenuTimelapseWebPage_Click(object sender, RoutedEventArgs e)
         {
@@ -256,12 +247,10 @@ namespace Timelapse.Editor
 
         private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            DialogAboutTimelapseEditor about = new DialogAboutTimelapseEditor(this);
+            AboutTimelapseEditor about = new AboutTimelapseEditor(this);
             about.ShowDialog();
         }
-        #endregion
 
-        #region DataGrid and New Database Initialization
         /// <summary>
         /// Given a database file path,create a new DB file if one does not exist, or load a DB file if there is one.
         /// After a DB file is loaded, the table is extracted and loaded a DataTable for binding to the DataGrid.
@@ -336,9 +325,7 @@ namespace Timelapse.Editor
             this.GenerateSpreadsheet();
             this.InitializeUI();       
         }
-        #endregion DataGrid and New Database Initialization
 
-        #region Data Changed Listeners and Methods
         /// <summary>
         /// Updates a given control in the database with the current state of the DataGrid. 
         /// </summary>
@@ -366,9 +353,7 @@ namespace Timelapse.Editor
             }
             DataGridRow selectedRow = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.SelectedIndex);
         }
-        #endregion Data Changed Listeners and Methods=
 
-        #region Datagrid Row Modifiers listeners and methods
         /// <summary>
         /// Logic to enable/disable editing buttons depending on there being a row selection
         /// Also sets the text for the remove row button.
@@ -443,9 +428,7 @@ namespace Timelapse.Editor
 
             this.rowsActionsOn = false;
         }
-        #endregion Datagrid Row Modifyiers listeners and methods
 
-        #region Choice Edit Box Handlers
         // When the  choice list button is clicked, raise a dialog box that lets the user edit the list of choices
         private void ChoiceListButton_Click(object sender, RoutedEventArgs e)
         {
@@ -464,7 +447,7 @@ namespace Timelapse.Editor
             }
 
             choiceList = Utilities.ConvertBarsToLineBreaks(choiceList);
-            DialogEditChoiceList choiceListDialog = new DialogEditChoiceList(button, choiceList, this);
+            EditChoiceList choiceListDialog = new EditChoiceList(button, choiceList, this);
             bool? result = choiceListDialog.ShowDialog();
             if (result == true)
             {
@@ -481,9 +464,7 @@ namespace Timelapse.Editor
                 }
             }
         }
-        #endregion
 
-        #region Cell Editing / Coloring Listeners and Methods
         /// <summary>
         /// Informs application tab was used, which allows it to more quickly visualize the grid values in the preview.
         /// Tab does not normal raise the row edited listener, which we are using to do the update.
@@ -881,9 +862,7 @@ namespace Timelapse.Editor
             }
             return child;
         }
-        #endregion Cell Editing / Coloring Listeners and Methods
 
-        #region Other menu related items
         /// <summary>
         /// Update the list of recent databases displayed under File -> Recent Databases.
         /// </summary>
@@ -913,9 +892,7 @@ namespace Timelapse.Editor
             messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
             messageBox.ShowDialog();
         }
-        #endregion
 
-        #region SpreadsheetAppearance
         private void GenerateSpreadsheet()
         {
             List<ControlRow> controlsInSpreadsheetOrder = this.templateDatabase.TemplateTable.OrderBy(control => control.SpreadsheetOrder).ToList();
@@ -949,15 +926,10 @@ namespace Timelapse.Editor
 
             this.templateDatabase.UpdateDisplayOrder(Constants.Control.SpreadsheetOrder, spreadsheetOrderByDataLabel);
         }
-        #endregion
 
-        #region Dragging and Dropping of Controls to Reorder them
         private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.Source == this.controlsPanel)
-            {
-            }
-            else
+            if (e.Source != this.controlsPanel)
             {
                 this.isMouseDown = true;
                 this.startPoint = e.GetPosition(this.controlsPanel);
@@ -1089,9 +1061,7 @@ namespace Timelapse.Editor
             this.templateDatabase.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
             this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable); // A contorted to make sure the controls panel updates itself
         }
-        #endregion
 
-        #region Template Drag and Drop
         private void HelpDocument_Drop(object sender, DragEventArgs dropEvent)
         {
             string templateDatabaseFilePath;
@@ -1106,9 +1076,7 @@ namespace Timelapse.Editor
         {
             Utilities.OnHelpDocumentPreviewDrag(dragEvent);
         }
-        #endregion
 
-        #region Backups
         /// <summary>
         /// Helper method that creates a database backup. Used when performing file menu options.
         /// </summary>
@@ -1121,6 +1089,5 @@ namespace Timelapse.Editor
 
             return FileBackup.TryCreateBackups(Path.GetDirectoryName(this.templateDatabase.FilePath), Path.GetFileName(this.templateDatabase.FilePath));
         }
-        #endregion 
     }
 }

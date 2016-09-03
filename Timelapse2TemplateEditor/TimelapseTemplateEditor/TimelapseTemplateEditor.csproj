@@ -102,6 +102,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Accessibility" />
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="MetadataExtractor, Version=1.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MetadataExtractor.1.5.1\lib\net35\MetadataExtractor.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="PresentationUI, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="ReachFramework" />
     <Reference Include="System" />
@@ -147,21 +155,25 @@
       <HintPath>..\..\packages\Extended.Wpf.Toolkit.2.9\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="XmpCore, Version=5.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\XmpCore.1.2.2\lib\net35\XmpCore.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="DialogInspectMetadata.xaml.cs">
-      <DependentUpon>DialogInspectMetadata.xaml</DependentUpon>
+    <Compile Include="Dialog\InspectMetadata.xaml.cs">
+      <DependentUpon>InspectMetadata.xaml</DependentUpon>
     </Compile>
     <Compile Include="EditorConstant.cs" />
-    <Compile Include="DialogAboutTimelapseEditor.xaml.cs">
-      <DependentUpon>DialogAboutTimelapseEditor.xaml</DependentUpon>
+    <Compile Include="Dialog\AboutTimelapseEditor.xaml.cs">
+      <DependentUpon>AboutTimelapseEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DialogEditChoiceList.xaml.cs">
-      <DependentUpon>DialogEditChoiceList.xaml</DependentUpon>
+    <Compile Include="Dialog\EditChoiceList.xaml.cs">
+      <DependentUpon>EditChoiceList.xaml</DependentUpon>
     </Compile>
     <Compile Include="Util\CallerMemberNameAttribute.cs" />
     <Compile Include="CellTextBlockConverter.cs" />
@@ -170,15 +182,15 @@
     <Compile Include="ListBoxDBOutputConverter.cs" />
     <Compile Include="Util\EditorUserRegistrySettings.cs" />
     <Compile Include="Util\MyTrace.cs" />
-    <Page Include="DialogAboutTimelapseEditor.xaml">
+    <Page Include="Dialog\AboutTimelapseEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogEditChoiceList.xaml">
+    <Page Include="Dialog\EditChoiceList.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DialogInspectMetadata.xaml">
+    <Page Include="Dialog\InspectMetadata.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

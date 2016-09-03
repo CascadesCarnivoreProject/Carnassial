@@ -95,28 +95,41 @@ namespace Timelapse.UnitTests
         public void ExifBushnell()
         {
             ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, Constants.File.DefaultImageDatabaseFileName);
-            Dictionary<string, string> exif = this.LoadExif(imageDatabase, TestConstant.ImageExpectation.InfraredMarten);
+            Dictionary<string, string> metadata = this.LoadMetadata(imageDatabase, TestConstant.ImageExpectation.InfraredMarten);
 
-            DateTime createDate;
-            Assert.IsTrue(DateTime.TryParseExact(exif[TestConstant.Exif.Bushnell.CreateDate], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out createDate));
-            DateTime modifyDate;
-            Assert.IsTrue(DateTime.TryParseExact(exif[TestConstant.Exif.Bushnell.ModifyDate], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out modifyDate));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Bushnell.Software]));
+            DateTime dateTime;
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTime], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime));
+            DateTime dateTimeDigitized;
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTimeDigitized], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeDigitized));
+            DateTime dateTimeOriginal;
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTimeOriginal], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOriginal));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Software]));
         }
 
         [TestMethod]
         public void ExifReconyx()
         {
             ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, Constants.File.DefaultImageDatabaseFileName);
-            Dictionary<string, string> exif = this.LoadExif(imageDatabase, TestConstant.ImageExpectation.DaylightMartenPair);
+            Dictionary<string, string> metadata = this.LoadMetadata(imageDatabase, TestConstant.ImageExpectation.DaylightMartenPair);
 
-            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.AmbientTemperature]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.FirmwareVersion]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.InfraredIlluminator]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.Sequence]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.SerialNumber]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.TriggerMode]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(exif[TestConstant.Exif.Reconyx.UserLabel]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ExposureTime]));
+
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.AmbientTemperature]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.AmbientTemperatureFarenheit]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.BatteryVoltage]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Brightness]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Contrast]));
+            DateTime dateTimeOriginal;
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.Reconyx.DateTimeOriginal], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOriginal));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.FirmwareVersion]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.InfraredIlluminator]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.MoonPhase]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Saturation]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Sequence]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.SerialNumber]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Sharpness]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.TriggerMode]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.UserLabel]));
         }
 
         [TestMethod]
