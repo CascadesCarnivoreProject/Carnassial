@@ -107,9 +107,7 @@ namespace Timelapse.Database
             DateTime dateTime = this.DateTime;
             if (dateTime != Constants.ControlDefault.DateTimeValue)
             {
-                TimeSpan utcOffset = this.UtcOffset;
-                dateTime += utcOffset;
-                dateTimeOffset = new DateTimeOffset(dateTime.AsUnspecifed(), this.UtcOffset);
+                dateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, this.UtcOffset);
                 return true;
             }
             return DateTimeHandler.TryParseLegacyDateTime(this.Date, this.Time, imageSetTimeZone, out dateTimeOffset);

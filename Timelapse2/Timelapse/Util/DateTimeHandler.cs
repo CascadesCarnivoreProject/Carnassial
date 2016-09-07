@@ -5,6 +5,11 @@ namespace Timelapse.Util
 {
     public class DateTimeHandler
     {
+        public static DateTimeOffset FromDatabaseDateTimeOffset(DateTime dateTime, TimeSpan utcOffset)
+        {
+            return new DateTimeOffset((dateTime + utcOffset).AsUnspecifed(), utcOffset);
+        }
+
         public static DateTime ParseDatabaseDateTimeString(string dateTimeAsString)
         {
             return DateTime.ParseExact(dateTimeAsString, Constants.Time.DateTimeDatabaseFormat, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);

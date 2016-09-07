@@ -167,7 +167,7 @@ namespace Timelapse.UnitTests
                 this.ShowDialog(new AdvancedTimelapseOptions(state, markableCanvas, timelapse));
                 this.ShowDialog(new ChooseDatabaseFile(new string[] { TestConstant.File.DefaultNewImageDatabaseFileName }, timelapse));
 
-                this.ShowDialog(new CustomViewFilter(dataHandler.ImageDatabase, DateTime.Now, timelapse));
+                this.ShowDialog(new CustomViewFilter(dataHandler.ImageDatabase, timelapse));
                 this.ShowDialog(new DateCorrectAmbiguous(dataHandler.ImageDatabase, timelapse));
                 this.ShowDialog(new DateDaylightSavingsTimeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache, timelapse));
 

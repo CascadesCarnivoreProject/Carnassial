@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using Timelapse.Util;
 
@@ -31,7 +29,7 @@ namespace Timelapse.Database
                 string controlType = control.Type;
                 // add a control here to prevent it from appearing in CustomFilter
                 // folder is usually the same for all files in the image set and not useful for filtering
-                // date, time, and UTC offset are redundant with DateTime
+                // date and time are redundant with DateTime
                 if (controlType == Constants.DatabaseColumn.Date ||
                     controlType == Constants.DatabaseColumn.Folder ||
                     controlType == Constants.DatabaseColumn.Time) 
@@ -40,22 +38,28 @@ namespace Timelapse.Database
                 }
 
                 // Create a new search term for each row, where each row specifies a particular control and how it can be searched
-                string defaultValue = String.Empty;
+                string defaultDatabaseValue = String.Empty;
                 string termOperator = Constants.SearchTermOperator.Equal;
                 if (controlType == Constants.Control.Counter)
                 {
-                    defaultValue = "0";
+                    defaultDatabaseValue = "0";
                     termOperator = Constants.SearchTermOperator.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
                 }
                 else if (controlType == Constants.DatabaseColumn.DateTime)
                 {
-                    // TimelapseWindow and CustomViewFilter typically replace this default with the date time of the current image.
-                    defaultValue = DateTimeHandler.ToDisplayDateString(DateTime.Now - TimeSpan.FromDays(30));
+                    // the first time it's popped CustomViewFilter dialog changes this default to the date time of the current image
+                    defaultDatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(Constants.ControlDefault.DateTimeValue);
                     termOperator = Constants.SearchTermOperator.GreaterThanOrEqual;
                 }
                 else if (controlType == Constants.Control.Flag)
                 {
-                    defaultValue = Constants.Boolean.False;
+                    defaultDatabaseValue = Constants.Boolean.False;
+                }
+                else if (controlType == Constants.DatabaseColumn.UtcOffset)
+                {
+                    // the first time it's popped CustomViewFilter dialog changes this default to the date time of the current image
+                    defaultDatabaseValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constants.ControlDefault.DateTimeValue.Offset);
+                    termOperator = Constants.SearchTermOperator.GreaterThanOrEqual;
                 }
 
                 // Create a new search term and add it to the list
@@ -65,10 +69,17 @@ namespace Timelapse.Database
                 searchTerm.Label = control.Label;
                 searchTerm.DataLabel = control.DataLabel;
                 searchTerm.Operator = termOperator;
-                searchTerm.DatabaseValue = defaultValue;
+                searchTerm.DatabaseValue = defaultDatabaseValue;
                 searchTerm.List = control.List;
                 this.SearchTerms.Add(searchTerm);
             }
+        }
+
+        public DateTimeOffset GetDateTime()
+        {
+            DateTime dateTime = DateTimeHandler.ParseDatabaseDateTimeString(this.SearchTerms.First(term => term.DataLabel == Constants.DatabaseColumn.DateTime).DatabaseValue);
+            TimeSpan utcOffset = DateTimeHandler.ParseDatabaseUtcOffsetString(this.SearchTerms.First(term => term.DataLabel == Constants.DatabaseColumn.UtcOffset).DatabaseValue);
+            return DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, utcOffset);
         }
 
         // Create and return the query composed from the search term list
@@ -110,6 +121,12 @@ namespace Timelapse.Database
                 where += whereForTerm;
             }
             return where.Trim();
+        }
+
+        public void SetDateTime(DateTimeOffset dateTime)
+        {
+            this.SearchTerms.First(term => term.DataLabel == Constants.DatabaseColumn.DateTime).DatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(dateTime);
+            this.SearchTerms.First(term => term.DataLabel == Constants.DatabaseColumn.UtcOffset).DatabaseValue = DateTimeHandler.ToDatabaseUtcOffsetString(dateTime.Offset);
         }
 
         // return SQL expressions to database equivalents

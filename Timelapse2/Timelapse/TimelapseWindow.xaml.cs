@@ -2749,25 +2749,29 @@ namespace Timelapse
 
         private void MenuItemFilterCustomFilter_Click(object sender, RoutedEventArgs e)
         {
-            DateTimeOffset defaultDate;
-            TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
-            if (this.dataHandler.ImageCache.Current.TryGetDateTime(imageSetTimeZone, out defaultDate) == false)
+            // the first time the custom filter dialog is launched update the DateTime and UtcOffset search terms to the time of the current image
+            if (this.dataHandler.ImageDatabase.CustomFilter.GetDateTime() == Constants.ControlDefault.DateTimeValue)
             {
-                defaultDate = DateTime.UtcNow;
+                DateTimeOffset defaultDate;
+                TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
+                if (this.dataHandler.ImageCache.Current.TryGetDateTime(imageSetTimeZone, out defaultDate))
+                {
+                    this.dataHandler.ImageDatabase.CustomFilter.SetDateTime(defaultDate);
+                }
+                else
+                {
+                    this.dataHandler.ImageDatabase.CustomFilter.SetDateTime(DateTime.UtcNow);
+                }
             }
-            CustomViewFilter customFilter = new CustomViewFilter(this.dataHandler.ImageDatabase, defaultDate, this);
+
+            // show the dialog and process the resuls
+            CustomViewFilter customFilter = new CustomViewFilter(this.dataHandler.ImageDatabase, this);
             customFilter.Owner = this;
             bool? changeToCustomFilter = customFilter.ShowDialog();
             // Set the filter to show all images and a valid image
             if (changeToCustomFilter == true)
             {
                 this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.Custom);
-            }
-            else
-            {
-                // Resets the checked menu item filter to the currently active filter
-                // TODOSAUL: why is a reset necessary when the dialog was cancelled, meaning the active filter wasn't changed?
-                this.MenuItemFilterSetSelected(this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
             }
         }
 
