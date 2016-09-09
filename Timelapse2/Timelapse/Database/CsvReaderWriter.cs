@@ -169,8 +169,6 @@ namespace Timelapse.Database
             }
         }
 
-        // Check if there is any Quotation Mark '"', a Comma ',', a Line Feed \x0A,  or Carriage Return \x0D
-        // and escape it as needed
         private string AddColumnValue(string value)
         {
             if (value == null)
@@ -179,12 +177,12 @@ namespace Timelapse.Database
             }
             if (value.IndexOfAny("\",\x0A\x0D".ToCharArray()) > -1)
             {
+                // commas, double quotation marks, line feeds (\x0A), and carriage returns (\x0D) require leading and ending double quotation marks be added
+                // double quotation marks within the field also have to be escaped as double quotes
                 return "\"" + value.Replace("\"", "\"\"") + "\"" + ",";
             }
-            else
-            {
-                return value + ",";
-            }
+
+            return value + ",";
         }
 
         private List<string> ReadAndParseLine(StreamReader csvReader)
@@ -240,14 +238,27 @@ namespace Timelapse.Database
                     {
                         // escaped character encountered; check for end of escaped field
                         int nextIndex = index + 1;
-                        if (nextIndex < unparsedLine.Length && unparsedLine[nextIndex] == ',')
+                        if (nextIndex < unparsedLine.Length)
                         {
-                            // end of escaped field
-                            inField = false;
-                            isFieldEscaped = false;
-                            string field = unparsedLine.Substring(fieldStart, index - fieldStart);
-                            parsedLine.Add(field);
-                            ++index;
+                            if (unparsedLine[nextIndex] == ',')
+                            {
+                                // end of escaped field
+                                // note: Whilst this implementation supports escaping of carriage returns and line feeds on export it does not support them on
+                                // import.  This is common in .csv parsers and can be addressed if needed by appending the next line to unparsedLine and 
+                                // continuing parsing rather than terminating the field.
+                                inField = false;
+                                isFieldEscaped = false;
+                                string field = unparsedLine.Substring(fieldStart, index - fieldStart);
+                                field = field.Replace("\"\"", "\"");
+                                parsedLine.Add(field);
+                                ++index;
+                            }
+                            else if (unparsedLine[nextIndex] == '"')
+                            {
+                                // escaped double quotation mark
+                                // just move next to skip over the second quotation mark as replacement back to one quotation mark is done in field extraction
+                                ++index;
+                            }
                         }
                     }
                 }
@@ -257,7 +268,11 @@ namespace Timelapse.Database
             // final empty fields are ambiguous at this level and therefore handled by the caller
             if (inField)
             {
-                string field = unparsedLine.Substring(fieldStart, unparsedLine.Length - fieldStart); 
+                string field = unparsedLine.Substring(fieldStart, unparsedLine.Length - fieldStart);
+                if (isFieldEscaped)
+                {
+                    field = field.Replace("\"\"", "\"");
+                }
                 parsedLine.Add(field);
             }
 

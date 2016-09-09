@@ -271,7 +271,7 @@ namespace Timelapse.UnitTests
             coyoteImageUpdate.Columns.Add(new ColumnTuple("Age", "adult"));
             coyoteImageUpdate.Columns.Add(new ColumnTuple("Pelage", String.Empty));
             coyoteImageUpdate.Columns.Add(new ColumnTuple("Activity", "unknown"));
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("Comments", "escaped field due presence of '"));
+            coyoteImageUpdate.Columns.Add(new ColumnTuple("Comments", "escaped field, because a comma is present"));
             coyoteImageUpdate.Columns.Add(new ColumnTuple("Survey", "Timelapse carnivore database unit tests"));
             coyoteImageUpdate.SetWhere(imageEnumerator.Current.ID);
             imageDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { coyoteImageUpdate });
@@ -286,7 +286,7 @@ namespace Timelapse.UnitTests
             imageDatabase.UpdateImage(martenImageID, "Age", "adult");
             imageDatabase.UpdateImage(martenImageID, "Pelage", String.Empty);
             imageDatabase.UpdateImage(martenImageID, "Activity", "unknown");
-            imageDatabase.UpdateImage(martenImageID, "Comments", "escaped field due presence of ,");
+            imageDatabase.UpdateImage(martenImageID, "Comments", "escaped field due to presence of \",\"");
             imageDatabase.UpdateImage(martenImageID, "Survey", "Timelapse carnivore database unit tests");
 
             // pull the image data table again so the updates are visible to .csv export
