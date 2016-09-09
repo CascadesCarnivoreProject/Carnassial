@@ -24,6 +24,16 @@ namespace Timelapse.Controls
             this.Minimum = Constants.Time.MinimumUtcOffset;
         }
 
+        protected override void InitializeDateTimeInfoList()
+        {
+            base.InitializeDateTimeInfoList();
+
+            object dateTimeInfoList = UtcOffsetUpDown.DateTimeInfoListInfo.GetValue(this);
+            int dateTimeInfoListCount = (int)UtcOffsetUpDown.DateTimeInfoListCount.GetValue(dateTimeInfoList, null);
+            int desiredCount = dateTimeInfoListCount > 5 ? 4 : 3;
+            UtcOffsetUpDown.DateTimeInfoListRemoveRange.Invoke(dateTimeInfoList, new object[] { desiredCount, dateTimeInfoListCount - desiredCount });
+        }
+
         protected override void OnCurrentDateTimePartChanged(DateTimePart oldValue, DateTimePart newValue)
         {
             base.OnCurrentDateTimePartChanged(oldValue, newValue);
@@ -41,16 +51,6 @@ namespace Timelapse.Controls
                     this.Step = 0;
                     break;
             }
-        }
-
-        protected override void InitializeDateTimeInfoList()
-        {
-            base.InitializeDateTimeInfoList();
-
-            object dateTimeInfoList = UtcOffsetUpDown.DateTimeInfoListInfo.GetValue(this);
-            int dateTimeInfoListCount = (int)UtcOffsetUpDown.DateTimeInfoListCount.GetValue(dateTimeInfoList, null);
-            int desiredCount = dateTimeInfoListCount > 5 ? 4 : 3;
-            UtcOffsetUpDown.DateTimeInfoListRemoveRange.Invoke(dateTimeInfoList, new object[] { desiredCount, dateTimeInfoListCount - desiredCount });
         }
     }
 }

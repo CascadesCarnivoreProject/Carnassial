@@ -9,14 +9,14 @@
 		Height="856" Width="768"
 		ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="DlgDateCorrectionName_Loaded">
+		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Question"
                             Title="Correct the date/time of all files selected"
                             Problem="If your camera was not initialized to the correct date/time every file's time will be off by a fixed amount."
                             Solution="Your currently selected file is shown below.
 &#10;&#x2022; Adjust the date/time for this file the correct data and time.
-&#10;&#x2022; Click Start (which becomes active after you enter an adjusted date/time) to preview the changes that will be made.
+&#10;&#x2022; Click Preview Changes (which becomes active after you enter an adjusted date/time) to review the changes that will be made.
 &#10;&#x2022; Click Apply Changes to apply those changes."
                             Result="The difference between the original and correct date will be added to all dates for all images and videos selected by the current filter."
                             Hint="The date/time format you enter should look something like '12-Apr-2016 13:00:00.'&#10;For example, changing 12-Apr-2016 13:00:00 to 13-Apr-2016 14:00:00 would add 1 day and 1 hour to all dates/times"
@@ -29,7 +29,7 @@
         <!-- Ok/Cancel buttons-->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
             <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
-            <Button Name="StartButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="StartButton_Click" IsEnabled="False">_Start</Button>
+            <Button Name="ChangesButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="ChangesButton_Click" IsEnabled="False">_Preview Changes</Button>
         </StackPanel>
 
         <DockPanel Name="PrimaryPanel" DockPanel.Dock="Top" >

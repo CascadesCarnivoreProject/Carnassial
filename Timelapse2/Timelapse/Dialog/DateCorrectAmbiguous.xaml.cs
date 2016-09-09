@@ -13,19 +13,21 @@ namespace Timelapse.Dialog
     /// </summary>
     public partial class DateCorrectAmbiguous : Window
     {
-        // Whether the operation is aborted, ie., because there are no ambiguous dates
-        public bool Abort { get; set; }
-
-        private List<AmbiguousDate> ambiguousDatesList = new List<AmbiguousDate>(); // Will contain a list of all initial images containing ambiguous dates and their state
+        private List<AmbiguousDate> ambiguousDatesList; // Will contain a list of all initial images containing ambiguous dates and their state
         private int ambiguousDatesListIndex;
         private ImageDatabase database;
-        private bool displayingPreview = false;
+        private bool displayingPreview;
+
+        // Whether the operation is aborted, ie., because there are no ambiguous dates
+        public bool Abort { get; set; }
 
         #region Constructor and Loading
         public DateCorrectAmbiguous(ImageDatabase database, Window owner)
         {
             this.InitializeComponent();
+            this.ambiguousDatesList = new List<AmbiguousDate>();
             this.database = database;
+            this.displayingPreview = false;
             this.Owner = owner;
 
             // We add this in code behind as we don't want to invoke the radiobutton callbacks when the interface is created.

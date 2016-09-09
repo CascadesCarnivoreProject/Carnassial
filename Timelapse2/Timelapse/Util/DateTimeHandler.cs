@@ -63,6 +63,25 @@ namespace Timelapse.Util
             return dateTime.DateTime.ToString(Constants.Time.DateTimeDisplayFormat) + " " + DateTimeHandler.ToDisplayUtcOffsetString(dateTime.Offset);
         }
 
+        public static string ToDisplayTimeSpanString(TimeSpan timeSpan)
+        {
+            // Pretty print the adjustment time, depending upon how many day(s) were included 
+            string sign = (timeSpan < TimeSpan.Zero) ? "-" : null;
+            string timeSpanAsString = sign + timeSpan.ToString(Constants.Time.TimeSpanDisplayFormat);
+
+            TimeSpan duration = timeSpan.Duration();
+            if (duration.Days == 0)
+            {
+                return timeSpanAsString;
+            }
+            if (duration.Days == 1)
+            {
+                return sign + "1 day " + timeSpanAsString;
+            }
+
+            return sign + duration.Days.ToString("D") + " days " + timeSpanAsString;
+        }
+
         /// <summary>
         /// Given a time as a DateTimeOffset return it as a string in 24 hour forma with the offset.
         /// </summary>

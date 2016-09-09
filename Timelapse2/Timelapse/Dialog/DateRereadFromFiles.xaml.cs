@@ -34,17 +34,17 @@ namespace Timelapse.Dialog
             this.DialogResult = true;
         }
 
-        private void StartButton_Click(object sender, RoutedEventArgs e)
+        private void StartDoneButton_Click(object sender, RoutedEventArgs e)
         {
             // This list will hold key / value pairs that will be bound to the datagrid feedback, 
             // which is the way to make those pairs appear in the data grid during background worker progress updates
             ObservableCollection<FeedbackTuple> feedbackRows = new ObservableCollection<FeedbackTuple>();
             this.feedbackGrid.ItemsSource = feedbackRows;
             this.cancelButton.IsEnabled = false;
-            this.startDoneButton.Content = "Done";
-            this.startDoneButton.Click -= this.StartButton_Click;
-            this.startDoneButton.Click += this.DoneButton_Click;
-            this.startDoneButton.IsEnabled = false;
+            this.StartDoneButton.Content = "Done";
+            this.StartDoneButton.Click -= this.StartDoneButton_Click;
+            this.StartDoneButton.Click += this.DoneButton_Click;
+            this.StartDoneButton.IsEnabled = false;
 
             BackgroundWorker backgroundWorker = new BackgroundWorker()
             {
@@ -168,7 +168,7 @@ namespace Timelapse.Dialog
             };
             backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
-                this.startDoneButton.IsEnabled = true;
+                this.StartDoneButton.IsEnabled = true;
             };
             backgroundWorker.RunWorkerAsync();
         }

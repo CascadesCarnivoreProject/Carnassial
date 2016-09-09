@@ -442,6 +442,13 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(DateTimeHandler.TrySwapDayMonth(swappable, out swapped));
             DateTimeOffset notSwappable = new DateTimeOffset(new DateTime(now.Year, 1, 13, now.Day, now.Hour, now.Second, now.Millisecond), TimeZoneInfo.Local.BaseUtcOffset);
             Assert.IsFalse(DateTimeHandler.TrySwapDayMonth(notSwappable, out swapped));
+
+            string timeSpanDisplayStringLessThanOneDay = DateTimeHandler.ToDisplayTimeSpanString(new TimeSpan(-1, -45, -15));
+            string timeSpanDisplayStringOneDay = DateTimeHandler.ToDisplayTimeSpanString(new TimeSpan(1, 13, 00, 18));
+            string timeSpanDisplayStringMoreThanOneDay = DateTimeHandler.ToDisplayTimeSpanString(new TimeSpan(-2, -22, -22, -22, -222));
+            Assert.IsTrue(timeSpanDisplayStringLessThanOneDay == "-01:45:15");
+            Assert.IsTrue(timeSpanDisplayStringOneDay == "1 day 13:00:18");
+            Assert.IsTrue(timeSpanDisplayStringMoreThanOneDay == "-2 days -22:22:22");
         }
 
         private void DateTimeHandling(DateTimeOffset dateTimeOffset, TimeZoneInfo timeZone)

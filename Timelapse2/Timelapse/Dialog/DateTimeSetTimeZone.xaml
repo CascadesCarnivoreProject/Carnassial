@@ -9,14 +9,14 @@
 		Height="856" Width="768"
 		ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="DlgDateCorrectionName_Loaded">
+		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Question"
                             Title="Set the time zone of all files selected"
                             Problem="The UTC offset needs to be changed.  This could be because the camera is located in a different time zone from the image set's time zone, no metadata was available from the files (meaning local file times were used), or the wrong time zone was set when the files were added to the image set."
                             Solution="Your currently selected file is shown below.
 &#10;&#x2022; Choose the desired time zone for this image from the drop down.
-&#10;&#x2022; Click Start (which becomes active after you enter an adjusted date/time) to preview the changes that will be made.
+&#10;&#x2022; Click Preview Changes (which becomes active after you enter an adjusted date/time) to review the changes that will be made.
 &#10;&#x2022; Click Apply Changes to apply those changes."
                             Result="The UTC offset of all images and videos selected by the current filter will be set to the specified time zone.  The files' date and time of day will not change."
                             ShowExplanationVisibility="True"/>
@@ -28,7 +28,7 @@
         <!-- Ok/Cancel buttons-->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
             <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
-            <Button Name="StartButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="StartButton_Click" IsEnabled="False">_Start</Button>
+            <Button Name="ChangesButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="ChangesButton_Click" IsEnabled="False">_Preview Changes</Button>
         </StackPanel>
 
         <DockPanel Name="PrimaryPanel" DockPanel.Dock="Top" >

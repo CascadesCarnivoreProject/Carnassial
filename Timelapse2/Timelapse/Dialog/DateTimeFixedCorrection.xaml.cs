@@ -13,9 +13,9 @@ namespace Timelapse.Dialog
     /// </summary>
     public partial class DateTimeFixedCorrection : Window
     {
+        private bool displayingPreview;
         private ImageDatabase imageDatabase;
         private DateTimeOffset initialDate;
-        private bool displayingPreview = false;
 
         public bool Abort { get; private set; }
         
@@ -23,6 +23,7 @@ namespace Timelapse.Dialog
         public DateTimeFixedCorrection(ImageDatabase imageDatabase, ImageRow imageToCorrect, Window owner)
         {
             this.InitializeComponent();
+            this.displayingPreview = false;
             this.imageDatabase = imageDatabase;
             this.Owner = owner;
 
@@ -49,7 +50,7 @@ namespace Timelapse.Dialog
             }
         }
 
-        private void DlgDateCorrectionName_Loaded(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
@@ -75,26 +76,8 @@ namespace Timelapse.Dialog
                     // Pretty print the adjustment time
                     if (adjustment.Duration() >= Constants.Time.DateTimeDatabaseResolution)
                     {
-                        string sign = (adjustment < TimeSpan.Zero) ? "-" : "+";
+                        difference = DateTimeHandler.ToDisplayTimeSpanString(adjustment);
                         status = "Changed";
-
-                        // Pretty print the adjustment time, depending upon how many day(s) were included 
-                        string format;
-                        if (adjustment.Days == 0)
-                        {
-                            format = "{0:s}{1:D2}:{2:D2}:{3:D2}"; // Don't show the days field
-                        }
-                        else if (adjustment.Duration().Days == 1)
-                        {
-                            format = "{0:s}{1:D2}:{2:D2}:{3:D2} {0:s} {4:D} day";
-                        }
-                        else
-                        {
-                            format = "{0:s}{1:D2}:{2:D2}:{3:D2} {0:s} {4:D} days";
-                        }
-                        difference = String.Format(format, sign, adjustment.Duration().Hours, adjustment.Duration().Minutes, adjustment.Duration().Seconds, adjustment.Duration().Days);
-
-                        // Get the new date/time
                         newDateTime = DateTimeHandler.ToDisplayDateTimeString(imageDateTime + adjustment);
                     }
                     else
@@ -106,7 +89,7 @@ namespace Timelapse.Dialog
             }
         }
 
-        private void StartButton_Click(object sender, RoutedEventArgs e)
+        private void ChangesButton_Click(object sender, RoutedEventArgs e)
         {
             if (this.DateTimePicker.Value.HasValue == false)
             {
@@ -119,7 +102,7 @@ namespace Timelapse.Dialog
             {
                 this.PreviewDateTimeChanges();
                 this.displayingPreview = true;
-                this.StartButton.Content = "_Apply Changes";
+                this.ChangesButton.Content = "_Apply Changes";
                 return;
             }
 
@@ -147,7 +130,7 @@ namespace Timelapse.Dialog
         private void DateTimePicker_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             TimeSpan difference = this.DateTimePicker.Value.Value - this.initialDate;
-            this.StartButton.IsEnabled = (difference == TimeSpan.Zero) ? false : true;
+            this.ChangesButton.IsEnabled = (difference == TimeSpan.Zero) ? false : true;
         }
     }
 }

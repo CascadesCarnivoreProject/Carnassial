@@ -30,7 +30,7 @@ namespace Timelapse.Dialog
             this.ImageName.Content = image.Current.FileName;
         }
 
-        private void DlgDateCorrectionName_Loaded(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);

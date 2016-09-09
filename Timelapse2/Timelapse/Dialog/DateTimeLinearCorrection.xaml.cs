@@ -13,11 +13,11 @@ namespace Timelapse.Dialog
     /// </summary>
     public partial class DateTimeLinearCorrection : Window
     {
-        private DateTimeOffset latestImageDateTime;
-        private DateTimeOffset earliestImageDateTime;
-        private DateTime lastDateEnteredWithDateTimePicker; // Keeps track of the last valid date in the date picker so we can revert to it if needed.
+        private readonly DateTimeOffset earliestImageDateTimeUncorrected;
+        private readonly DateTimeOffset latestImageDateTimeUncorrected;
+
+        private bool displayingPreview;
         private ImageDatabase imageDatabase;
-        private bool displayingPreview = false;
 
         public bool Abort { get; private set; }
         
@@ -28,16 +28,17 @@ namespace Timelapse.Dialog
             this.Abort = false;
             this.Owner = owner;
 
-            this.earliestImageDateTime = DateTime.MaxValue.ToUniversalTime();
+            this.displayingPreview = false;
+            this.earliestImageDateTimeUncorrected = DateTime.MaxValue.ToUniversalTime();
+            this.latestImageDateTimeUncorrected = DateTime.MinValue.ToUniversalTime();
             this.imageDatabase = imageDatabase;
-            this.latestImageDateTime = DateTime.MinValue.ToUniversalTime();
 
             // Skip images with bad dates
             TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
-            ImageRow earliestImageRow = null;
+            ImageRow earliestImage = null;
             bool foundEarliest = false;
             bool foundLatest = false;
-            ImageRow latestImageRow = null;
+            ImageRow latestImage = null;
             foreach (ImageRow currentImageRow in imageDatabase.ImageDataTable)
             {
                 DateTimeOffset currentImageDateTime;
@@ -48,17 +49,17 @@ namespace Timelapse.Dialog
                 }
 
                 // If the current image's date is later, then its a candidate latest image  
-                if (currentImageDateTime >= this.latestImageDateTime)
+                if (currentImageDateTime >= this.latestImageDateTimeUncorrected)
                 {
-                    latestImageRow = currentImageRow;
-                    this.latestImageDateTime = currentImageDateTime;
+                    latestImage = currentImageRow;
+                    this.latestImageDateTimeUncorrected = currentImageDateTime;
                     foundLatest = true;
                 }
 
-                if (currentImageDateTime <= this.earliestImageDateTime)
+                if (currentImageDateTime <= this.earliestImageDateTimeUncorrected)
                 {
-                    earliestImageRow = currentImageRow;
-                    this.earliestImageDateTime = currentImageDateTime;
+                    earliestImage = currentImageRow;
+                    this.earliestImageDateTimeUncorrected = currentImageDateTime;
                     foundEarliest = true;
                 }
             }
@@ -71,79 +72,108 @@ namespace Timelapse.Dialog
                 return;
             }
 
-            // Configure feedback for earliest date and its image
-            this.earliestImageName.Content = earliestImageRow.FileName;
-            this.earliestImageDate.Content = DateTimeHandler.ToDisplayDateTimeString(this.earliestImageDateTime);
-            this.imageEarliest.Source = earliestImageRow.LoadBitmap(this.imageDatabase.FolderPath);
+            // configure earliest and latest images
+            this.EarliestImageFileName.Content = earliestImage.FileName;
+            this.EarliestImage.Source = earliestImage.LoadBitmap(this.imageDatabase.FolderPath);
 
-            // Configure feedback for latest date (in datetime picker) and its image
-            this.latestImageName.Content = latestImageRow.FileName;
-            DataEntryHandler.Configure(this.dateTimePickerLatestDateTime, this.latestImageDateTime.DateTime);
-            this.lastDateEnteredWithDateTimePicker = this.dateTimePickerLatestDateTime.Value.Value; 
-            this.dateTimePickerLatestDateTime.ValueChanged += this.DateTimePicker_ValueChanged;
-            this.imageLatest.Source = latestImageRow.LoadBitmap(this.imageDatabase.FolderPath);
+            this.LatestImageFileName.Content = latestImage.FileName;
+            this.LatestImage.Source = latestImage.LoadBitmap(this.imageDatabase.FolderPath);
+
+            // configure interval
+            DataEntryHandler.Configure(this.ClockLastCorrect, this.earliestImageDateTimeUncorrected.DateTime);
+            DataEntryHandler.Configure(this.ClockDriftMeasured, this.latestImageDateTimeUncorrected.DateTime);
+            this.ClockLastCorrect.Maximum = this.earliestImageDateTimeUncorrected.DateTime;
+            this.ClockDriftMeasured.Minimum = this.latestImageDateTimeUncorrected.DateTime;
+            this.ClockLastCorrect.ValueChanged += this.Interval_ValueChanged;
+            this.ClockDriftMeasured.ValueChanged += this.Interval_ValueChanged;
+
+            // configure adjustment
+            this.ClockDrift.DefaultValue = TimeSpan.Zero;
+            this.ClockDrift.DisplayDefaultValueOnEmptyText = true;
+            this.ClockDrift.Value = this.ClockDrift.Value;
+            this.ClockDrift.ValueChanged += this.ClockDrift_ValueChanged;
+
+            // show image times
+            this.RefreshImageTimes();
         }
 
-        private void DlgDateCorrectionName_Loaded(object sender, RoutedEventArgs e)
+        // Cancel - do nothing
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            this.DialogResult = false;
+        }
+
+        private void ClockDrift_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            this.RefreshImageTimes();
+
+            // the faster the camera's clock the more likely it is the latest image is in the future relative to when it should be
+            // relax the measurement time constraint accordingly
+            this.ClockDriftMeasured.Minimum = this.latestImageDateTimeUncorrected.DateTime;
+            if (this.ClockDrift.Value.Value < TimeSpan.Zero)
+            {
+                this.ClockDriftMeasured.Minimum += this.ClockDrift.Value.Value;
+            }
+
+            // Enable the start button when there's a correction to apply
+            if (this.ClockDrift.Value.HasValue == false)
+            {
+                this.ChangesButton.IsEnabled = false;
+            }
+            else
+            {
+                this.ChangesButton.IsEnabled = this.ClockDrift.Value.Value != TimeSpan.Zero;
+            }
+        }
+
+        private void Interval_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            this.RefreshImageTimes();
+        }
+
+        private TimeSpan GetAdjustment(TimeSpan intervalFromCorrectToMeasured, DateTimeOffset imageDateTime)
+        {
+            Debug.Assert(intervalFromCorrectToMeasured >= TimeSpan.Zero, "Interval cannot be negative.");
+            if (intervalFromCorrectToMeasured == TimeSpan.Zero)
+            {
+                return this.ClockDrift.Value.Value;
+            }
+
+            double imagePositionInInterval = (double)(imageDateTime.DateTime - this.ClockLastCorrect.Value.Value).Ticks / (double)intervalFromCorrectToMeasured.Ticks;
+            Debug.Assert((-0.0000001 < imagePositionInInterval) && (imagePositionInInterval < 1.0000001), String.Format("Interval position {0} is not between 0.0 and 1.0.", imagePositionInInterval));
+
+            TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * this.ClockDrift.Value.Value.Ticks + 0.5));
+            // check the duration of the adjustment as slow clocks have negative adjustments
+            Debug.Assert((TimeSpan.Zero <= adjustment.Duration()) && (adjustment.Duration() <= this.ClockDrift.Value.Value.Duration()), String.Format("Expected adjustment {0} to be within [{1} {2}].", adjustment, TimeSpan.Zero, this.ClockDrift.Value.Value));
+            return adjustment;
+        }
+
+        private TimeSpan GetInterval()
+        {
+            return this.ClockDriftMeasured.Value.Value - this.ClockLastCorrect.Value.Value;
         }
 
         private void PreviewDateTimeChanges()
         {
-            this.PrimaryPanel.Visibility = Visibility.Collapsed;
+            this.AdjustmentEntryPanel.Visibility = Visibility.Collapsed;
             this.FeedbackPanel.Visibility = Visibility.Visible;
 
             // Preview the changes
+            TimeSpan intervalFromCorrectToMeasured = this.GetInterval();
             TimeZoneInfo imageSetTimeZone = this.imageDatabase.ImageSet.GetTimeZone();
-            TimeSpan newestImageAdjustment = this.dateTimePickerLatestDateTime.Value.Value - this.latestImageDateTime.DateTime;
-            TimeSpan intervalFromOldestToNewestImage = this.latestImageDateTime - this.earliestImageDateTime;
             foreach (ImageRow row in this.imageDatabase.ImageDataTable)
             {
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
                 string difference = String.Empty;
-
                 DateTimeOffset imageDateTime;
                 if (row.TryGetDateTime(imageSetTimeZone, out imageDateTime))
                 {
-                    double imagePositionInInterval;
-                    // adjust the date/time
-                    if (intervalFromOldestToNewestImage == TimeSpan.Zero)
+                    TimeSpan adjustment = this.GetAdjustment(intervalFromCorrectToMeasured, imageDateTime);
+                    if (adjustment.Duration() >= Constants.Time.DateTimeDatabaseResolution)
                     {
-                        imagePositionInInterval = 1;
-                    }
-                    else
-                    {
-                        imagePositionInInterval = (double)(imageDateTime - this.earliestImageDateTime).Ticks / (double)intervalFromOldestToNewestImage.Ticks;
-                    }
-
-                    TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * newestImageAdjustment.Ticks));
-
-                    // Pretty print the adjustment time
-                    if (adjustment.Duration() >= TimeSpan.FromSeconds(1))
-                    {
-                        string sign = (adjustment < TimeSpan.Zero) ? "-" : "+";
+                        difference = DateTimeHandler.ToDisplayTimeSpanString(adjustment);
                         status = "Changed";
-
-                        // Pretty print the adjustment time, depending upon how many day(s) were included 
-                        string format;
-                        if (adjustment.Days == 0)
-                        {
-                            format = "{0:s}{1:D2}:{2:D2}:{3:D2}"; // Don't show the days field
-                        }
-                        else if (adjustment.Duration().Days == 1)
-                        {
-                            format = "{0:s}{1:D2}:{2:D2}:{3:D2} {0:s} {4:D} day";
-                        }
-                        else
-                        {
-                            format = "{0:s}{1:D2}:{2:D2}:{3:D2} {0:s} {4:D} days";
-                        }
-                        difference = String.Format(format, sign, adjustment.Duration().Hours, adjustment.Duration().Minutes, adjustment.Duration().Seconds, adjustment.Duration().Days);
-
-                        // Get the new date/time
                         newDateTime = DateTimeHandler.ToDisplayDateTimeString(imageDateTime + adjustment);
                     }
                     else
@@ -156,19 +186,24 @@ namespace Timelapse.Dialog
             }
         }
 
-        private void StartButton_Click(object sender, RoutedEventArgs e)
+        private void RefreshImageTimes()
+        {
+            TimeSpan intervalFromCorrectToMeasured = this.GetInterval();
+
+            DateTimeOffset earliestImageDateTime = this.earliestImageDateTimeUncorrected + this.GetAdjustment(intervalFromCorrectToMeasured, this.earliestImageDateTimeUncorrected);
+            this.EarliestImageDateTime.Content = DateTimeHandler.ToDisplayDateTimeString(earliestImageDateTime);
+
+            DateTimeOffset latestImageDateTime = this.latestImageDateTimeUncorrected + this.GetAdjustment(intervalFromCorrectToMeasured, this.latestImageDateTimeUncorrected);
+            this.LatestImageDateTime.Content = DateTimeHandler.ToDisplayDateTimeString(latestImageDateTime);
+
+            this.ClockDriftMeasured.Minimum = this.latestImageDateTimeUncorrected.DateTime;
+        }
+
+        private void ChangesButton_Click(object sender, RoutedEventArgs e)
         {
             // A few checks just to make sure we actually have something to do...
-            if (this.dateTimePickerLatestDateTime.Value.HasValue == false)
+            if (this.ClockDriftMeasured.Value.HasValue == false)
             {
-                this.DialogResult = false;
-                return;
-            }
-
-            TimeSpan newestImageAdjustment = this.dateTimePickerLatestDateTime.Value.Value - this.latestImageDateTime.DateTime;
-            if (newestImageAdjustment == TimeSpan.Zero)
-            {
-                // nothing to do
                 this.DialogResult = false;
                 return;
             }
@@ -178,7 +213,7 @@ namespace Timelapse.Dialog
             {
                 this.PreviewDateTimeChanges();
                 this.displayingPreview = true;
-                this.StartButton.Content = "_Apply Changes";
+                this.ChangesButton.Content = "_Apply Changes";
                 return;
             }
 
@@ -188,22 +223,17 @@ namespace Timelapse.Dialog
 
             // In the single image case the the oldest and newest times will be the same
             // since Timelapse has only whole seconds resolution it's also possible with small selections from fast cameras that multiple images have the same time
-            TimeSpan intervalFromOldestToNewestImage = this.latestImageDateTime - this.earliestImageDateTime;
-            if (intervalFromOldestToNewestImage == TimeSpan.Zero)
+            TimeSpan intervalFromCorrectToMeasured = this.GetInterval();
+            if (intervalFromCorrectToMeasured == TimeSpan.Zero)
             {
-                this.imageDatabase.AdjustImageTimes(newestImageAdjustment);
+                this.imageDatabase.AdjustImageTimes(this.ClockDrift.Value.Value);
             }
             else
             {
                 this.imageDatabase.AdjustImageTimes(
                     (DateTimeOffset imageDateTime) =>
                     {
-                        double imagePositionInInterval = (double)(imageDateTime - this.earliestImageDateTime).Ticks / (double)intervalFromOldestToNewestImage.Ticks;
-                        Debug.Assert((-0.0000001 < imagePositionInInterval) && (imagePositionInInterval < 1.0000001), String.Format("Interval position {0} is not between 0.0 and 1.0.", imagePositionInInterval));
-                        TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * newestImageAdjustment.Ticks + 0.5));
-                        // TimeSpan.Duration means we do these checks on the absolute value (positive) of the Timespan, as slow clocks will have negative adjustments.
-                        Debug.Assert((TimeSpan.Zero <= adjustment.Duration()) && (adjustment.Duration() <= newestImageAdjustment.Duration()), String.Format("Expected adjustment {0} to be within [{1} {2}].", adjustment, TimeSpan.Zero, newestImageAdjustment));
-                        return imageDateTime + adjustment;
+                        return imageDateTime + this.GetAdjustment(intervalFromCorrectToMeasured, imageDateTime);
                     },
                     0,
                     this.imageDatabase.CurrentlySelectedImageCount - 1);
@@ -211,35 +241,10 @@ namespace Timelapse.Dialog
             this.DialogResult = true;
         }
 
-        // Cancel - do nothing
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = false;
-        }
-
-        private void DateTimePicker_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
-        {
-            // Don't let the date picker go below the oldest time. If it does, don't change the date and play a beep.
-            if (this.dateTimePickerLatestDateTime.Value.Value <= this.earliestImageDateTime)
-            {
-                this.dateTimePickerLatestDateTime.Value = this.lastDateEnteredWithDateTimePicker;
-                MessageBox messageBox = new MessageBox("Your new time has to be later than the earliest time", this);
-                messageBox.Message.Icon = MessageBoxImage.Exclamation;
-                messageBox.Message.Problem = "Your new time has to be later than the earliest time   ";
-                messageBox.Message.Reason = "Even the slowest clock gains some time.";
-                messageBox.Message.Solution = "The date/time was unchanged from where you last left it.";
-                messageBox.Message.Hint = "The image on the left shows the earliest time recorded for images in this filtered view  shown over the left image";
-                messageBox.ShowDialog();
-            }
-            else
-            {
-                // Keep track of the last valid date in the date picker so we can revert to it if needed.
-                this.lastDateEnteredWithDateTimePicker = this.dateTimePickerLatestDateTime.Value.Value;
-            }
-
-            // Enable the start button only if the latest time has actually changed from its original version
-            TimeSpan newestImageAdjustment = this.dateTimePickerLatestDateTime.Value.Value - this.latestImageDateTime.DateTime;
-            this.StartButton.IsEnabled = (newestImageAdjustment == TimeSpan.Zero) ? false : true;
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
         }
     }
 }

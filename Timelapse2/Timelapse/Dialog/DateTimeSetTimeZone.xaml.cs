@@ -8,7 +8,7 @@ namespace Timelapse.Dialog
 {
     public partial class DateTimeSetTimeZone : Window
     {
-        private bool displayingPreview = false;
+        private bool displayingPreview;
         private ImageDatabase imageDatabase;
 
         public bool Abort { get; private set; }
@@ -18,6 +18,7 @@ namespace Timelapse.Dialog
         {
             this.InitializeComponent();
             this.Abort = false;
+            this.displayingPreview = false;
             this.imageDatabase = imageDatabase;
             this.Owner = owner;
 
@@ -42,7 +43,7 @@ namespace Timelapse.Dialog
             this.TimeZones.SelectionChanged += this.TimeZones_SelectionChanged;
         }
 
-        private void DlgDateCorrectionName_Loaded(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
@@ -85,7 +86,7 @@ namespace Timelapse.Dialog
             this.DialogResult = false;
         }
 
-        private void StartButton_Click(object sender, RoutedEventArgs e)
+        private void ChangesButton_Click(object sender, RoutedEventArgs e)
         {
             if (this.TimeZones.SelectedItem == null)
             {
@@ -98,7 +99,7 @@ namespace Timelapse.Dialog
             {
                 this.PreviewDateTimeChanges();
                 this.displayingPreview = true;
-                this.StartButton.Content = "_Apply Changes";
+                this.ChangesButton.Content = "_Apply Changes";
                 return;
             }
 
@@ -118,7 +119,7 @@ namespace Timelapse.Dialog
 
         private void TimeZones_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            this.StartButton.IsEnabled = true;
+            this.ChangesButton.IsEnabled = true;
         }
     }
 }

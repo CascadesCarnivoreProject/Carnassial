@@ -423,6 +423,7 @@ namespace Timelapse
             public const string DateTimeExifToolFormat = "yyyy:MM:dd HH:mm:ss";
             public const int MonthsInYear = 12;
             public const string TimeFormat = "HH:mm:ss";
+            public const string TimeSpanDisplayFormat = @"hh\:mm\:ss";
             public const string UtcOffsetDatabaseFormat = "0.00";
             public const string UtcOffsetDisplayFormat = @"hh\:mm";
 
