@@ -1,5 +1,6 @@
 ﻿using Carnassial.Util;
 using System;
+using System.Collections.Generic;
 
 namespace Carnassial.Database
 {
@@ -10,7 +11,7 @@ namespace Carnassial.Database
     {
         public string DataLabel { get; set; }
         public string Label { get; set; }
-        public string List { get; set; }
+        public List<string> List { get; set; }
         public string Operator { get; set; }
         public string Type { get; set; }
         public bool UseForSearching { get; set; }

@@ -269,7 +269,6 @@ namespace Carnassial
             if (imageDatabase.TemplateSynchronizationIssues.Count > 0)
             {
                 TemplatesDontMatch templateMismatchDialog = new TemplatesDontMatch(imageDatabase.TemplateSynchronizationIssues, this);
-                templateMismatchDialog.Owner = this;
                 bool? result = templateMismatchDialog.ShowDialog();
                 if (result == true)
                 {
@@ -404,17 +403,11 @@ namespace Carnassial
                         if (imageTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed ||
                             imageTimeAdjustment == DateTimeAdjustment.MetadataDateUsed)
                         {
-                            DateTimeOffset imageTaken;
-                            bool result = imageProperties.TryGetDateTime(imageSetTimeZone, out imageTaken);
-                            if (result == true)
+                            DateTimeOffset imageTaken = imageProperties.GetDateTime();
+                            if (imageTaken.Day <= Constants.Time.MonthsInYear)
                             {
-                                if (imageTaken.Day <= Constants.Time.MonthsInYear)
-                                {
-                                    unambiguousDayMonthOrder = false;
-                                }
+                                unambiguousDayMonthOrder = false;
                             }
-                            // No else - thus if the date can't be read, the day/month order is assumed to be unambiguous
-                            // Thus invalid dates must be handled elsewhere
                         }
                     }
                     catch (Exception exception)
@@ -798,9 +791,6 @@ namespace Carnassial
         {
             // Add data entry callbacks to all editable controls. When the user changes an image's attribute using a particular control,
             // the callback updates the matching field for that image in the database.
-            DataEntryNote date = null;
-            DataEntryDateTime dateTime = null;
-            DataEntryNote time = null;
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
             {
                 string controlType = this.dataHandler.ImageDatabase.ImageDataColumnsByDataLabel[pair.Key].ControlType;
@@ -825,24 +815,14 @@ namespace Carnassial
                         choice.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
                         break;
                     case Constants.Control.Note:
-                    case Constants.DatabaseColumn.Date:
                     case Constants.DatabaseColumn.File:
                     case Constants.DatabaseColumn.Folder:
                     case Constants.DatabaseColumn.RelativePath:
-                    case Constants.DatabaseColumn.Time:
                         DataEntryNote note = (DataEntryNote)pair.Value;
                         note.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
-                        if (controlType == Constants.DatabaseColumn.Date)
-                        {
-                            date = note;
-                        }
-                        if (controlType == Constants.DatabaseColumn.Time)
-                        {
-                            time = note;
-                        }
                         break;
                     case Constants.DatabaseColumn.DateTime:
-                        dateTime = (DataEntryDateTime)pair.Value;
+                        DataEntryDateTime dateTime = (DataEntryDateTime)pair.Value;
                         dateTime.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
                         break;
                     case Constants.DatabaseColumn.UtcOffset:
@@ -853,16 +833,6 @@ namespace Carnassial
                         Debug.Fail(String.Format("Unhandled control type '{0}'.", controlType));
                         break;
                 }
-            }
-
-            // if needed, link date and time controls to datetime control
-            if (dateTime != null && date != null)
-            {
-                dateTime.DateControl = date;
-            }
-            if (dateTime != null && time != null)
-            {
-                dateTime.TimeControl = time;
             }
         }
 
@@ -887,21 +857,8 @@ namespace Carnassial
         /// <param name="e">event information</param>
         private void CounterCtl_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            e.Handled = (this.IsAllValidNumericChars(e.Text) || String.IsNullOrWhiteSpace(e.Text)) ? false : true;
+            e.Handled = (Utilities.IsDigits(e.Text) || String.IsNullOrWhiteSpace(e.Text)) ? false : true;
             this.OnPreviewTextInput(e);
-        }
-
-        // Helper function for the above
-        private bool IsAllValidNumericChars(string str)
-        {
-            foreach (char c in str)
-            {
-                if (!Char.IsNumber(c))
-                {
-                    return false;
-                }
-            }
-            return true;
         }
 
         /// <summary>Click callback: When the user selects a counter, refresh the markers, which will also readjust the colors and emphasis</summary>
@@ -1247,12 +1204,11 @@ namespace Carnassial
             // For each control, we get its type and then update its contents from the current data table row
             // this is always done as it's assumed either the image changed or that a control refresh is required due to database changes
             // the call to TryMoveToImage() above refreshes the data stored under this.dataHandler.ImageCache.Current
-            TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
             this.dataHandler.IsProgrammaticControlUpdate = true;
             foreach (KeyValuePair<string, DataEntryControl> control in this.dataEntryControls.ControlsByDataLabel)
             {
                 string controlType = this.dataHandler.ImageDatabase.ImageDataColumnsByDataLabel[control.Key].ControlType;
-                control.Value.Content = this.dataHandler.ImageCache.Current.GetValueDisplayString(control.Value.DataLabel, imageSetTimeZone);
+                control.Value.Content = this.dataHandler.ImageCache.Current.GetValueDisplayString(control.Value.DataLabel);
             }
             this.dataHandler.IsProgrammaticControlUpdate = false;
 
@@ -2202,13 +2158,12 @@ namespace Carnassial
                 return; // We are already on the first image, so there is nothing to copy
             }
 
-            TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
             foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
             {
                 DataEntryControl control = pair.Value;
                 if (this.dataHandler.ImageDatabase.IsControlCopyable(control.DataLabel))
                 {
-                    control.Content = this.dataHandler.ImageDatabase.ImageDataTable[previousRow].GetValueDisplayString(control.DataLabel, imageSetTimeZone);
+                    control.Content = this.dataHandler.ImageDatabase.ImageDataTable[previousRow].GetValueDisplayString(control.DataLabel);
                 }
             }
         }
@@ -2304,22 +2259,6 @@ namespace Carnassial
                                                                }))
             {
                 DateTimeFixedCorrection fixedDateCorrection = new DateTimeFixedCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current, this);
-                if (fixedDateCorrection.Abort)
-                {
-                    TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
-                    MessageBox messageBox = new MessageBox("Can't add a fixed correction value to every date/time...", this);
-                    messageBox.Message.Problem = "Can't add a fixed correction value to every date/time in this filtered view.";
-                    messageBox.Message.Reason = "This operation requires using the current image's date and time fields. " + Environment.NewLine;
-                    messageBox.Message.Reason += "However, " + this.dataHandler.ImageCache.Current.GetDisplayDateTime(imageSetTimeZone) + " is not a recognizable date/time." + Environment.NewLine;
-                    messageBox.Message.Reason += "\u2022 dates should look like dd-MMM-yyyy e.g., 16-Jan-2016" + Environment.NewLine;
-                    messageBox.Message.Reason += "\u2022 times should look like HH:mm:ss using 24 hour time e.g., 01:05:30 or 13:30:00";
-                    messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
-                    messageBox.Message.Hint = "\u2022 Check the format of this image's date and time." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 Navigate to another image that has a properly formatted date and time.";
-                    messageBox.Message.Icon = MessageBoxImage.Error;
-                    messageBox.ShowDialog();
-                    return;
-                }
                 this.ShowBulkImageEditDialog(fixedDateCorrection);
             }
         }
@@ -2424,22 +2363,6 @@ namespace Carnassial
                                                                }))
             {
                 DateTimeSetTimeZone fixedDateCorrection = new DateTimeSetTimeZone(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current, this);
-                if (fixedDateCorrection.Abort)
-                {
-                    TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
-                    MessageBox messageBox = new MessageBox("Can't set the time zone for every file...", this);
-                    messageBox.Message.Problem = "Can't set the UTC offset of every file's date/time in this filtered view.";
-                    messageBox.Message.Reason = "This operation requires an image with valid date and time fields. " + Environment.NewLine;
-                    messageBox.Message.Reason += "However, " + this.dataHandler.ImageCache.Current.GetDisplayDateTime(imageSetTimeZone) + " is not a recognizable date/time." + Environment.NewLine;
-                    messageBox.Message.Reason += "\u2022 dates should look like dd-MMM-yyyy e.g., 16-Jan-2016" + Environment.NewLine;
-                    messageBox.Message.Reason += "\u2022 times should look like HH:mm:ss using 24 hour time e.g., 01:05:30 or 13:30:00";
-                    messageBox.Message.Result = "Time zone assignment will be aborted and nothing will be changed.";
-                    messageBox.Message.Hint = "\u2022 Check the format of this image's date and time." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 Select images with properly formatted dates and times.";
-                    messageBox.Message.Icon = MessageBoxImage.Error;
-                    messageBox.ShowDialog();
-                    return;
-                }
                 this.ShowBulkImageEditDialog(fixedDateCorrection);
             }
         }
@@ -2712,16 +2635,8 @@ namespace Carnassial
             // the first time the custom filter dialog is launched update the DateTime and UtcOffset search terms to the time of the current image
             if (this.dataHandler.ImageDatabase.CustomFilter.GetDateTime() == Constants.ControlDefault.DateTimeValue)
             {
-                DateTimeOffset defaultDate;
-                TimeZoneInfo imageSetTimeZone = this.dataHandler.ImageDatabase.ImageSet.GetTimeZone();
-                if (this.dataHandler.ImageCache.Current.TryGetDateTime(imageSetTimeZone, out defaultDate))
-                {
-                    this.dataHandler.ImageDatabase.CustomFilter.SetDateTime(defaultDate);
-                }
-                else
-                {
-                    this.dataHandler.ImageDatabase.CustomFilter.SetDateTime(DateTime.UtcNow);
-                }
+                DateTimeOffset defaultDate = this.dataHandler.ImageCache.Current.GetDateTime();
+                this.dataHandler.ImageDatabase.CustomFilter.SetDateTime(defaultDate);
             }
 
             // show the dialog and process the resuls

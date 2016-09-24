@@ -1,7 +1,5 @@
 ﻿using Carnassial.Database;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -21,7 +19,7 @@ namespace Carnassial.Controls
             set { this.ContentControl.SelectedValue = value; }
         }
 
-        public DataEntryChoice(ControlRow control, DataEntryControls styleProvider, string choicesAsString)
+        public DataEntryChoice(ControlRow control, DataEntryControls styleProvider)
             : base(control, styleProvider, null, ControlLabelStyle.LabelCodeBar)
         {
             // The look of the combobox
@@ -41,14 +39,26 @@ namespace Carnassial.Controls
             this.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
 
             // Add items to the combo box
-            List<string> choices = choicesAsString.Split(new char[] { '|' }).ToList();
-            foreach (string choice in choices)
+            bool emptyChoiceAllowed = false;
+            foreach (string choice in control.GetChoices())
             {
-                this.ContentControl.Items.Add(choice.Trim());
+                if (choice == String.Empty)
+                {
+                    emptyChoiceAllowed = true;
+                }
+                else
+                {
+                    this.ContentControl.Items.Add(choice);
+                }
             }
-            // Add a separator and an empty field to the list, so the user can return it to an empty state. Note that this means ImageQuality can also be empty.. not sure if this is a good thing
-            this.ContentControl.Items.Add(new Separator());
-            this.ContentControl.Items.Add(String.Empty);
+
+            if (emptyChoiceAllowed)
+            {
+                // put empty choices at the end below a separator for visual clarity
+                this.ContentControl.Items.Add(new Separator());
+                this.ContentControl.Items.Add(String.Empty);
+            }
+
             this.ContentControl.SelectedIndex = 0;
 
             // Now configure the various elements

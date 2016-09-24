@@ -116,17 +116,6 @@ namespace Carnassial.Database
                             {
                                 relativePath = value;
                             }
-                            else if (dataLabel == Constants.DatabaseColumn.Date ||
-                                     dataLabel == Constants.DatabaseColumn.Time)
-                            {
-                                // ignore date and time for now as they're redundant with the DateTime column
-                                // if neeeded these two fields can be combined, put to DateTime.ParseExact(), and conflict checking done with DateTime
-                                // Excel tends to change 
-                                // - dates from dd-MMM-yyyy to dd-MMM-yy 
-                                // - times from HH:mm:ss to H:mm:ss
-                                // when saving csv files
-                                continue;
-                            }
                             else if (dataLabel == Constants.DatabaseColumn.DateTime && DateTimeHandler.TryParseDatabaseDateTime(value, out dateTime))
                             {
                                 // pass DateTime to ColumnTuple rather than the string as ColumnTuple owns validation and formatting

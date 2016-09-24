@@ -23,7 +23,7 @@ namespace Carnassial.Dialog
             this.Owner = owner;
 
             // Get the original date and display it
-            this.OriginalDate.Content = image.Current.GetDisplayDateTime(database.ImageSet.GetTimeZone());
+            this.OriginalDate.Content = image.Current.GetDisplayDateTime();
 
             // Display the image. While we should be on a valid image (our assumption), we can still show a missing or corrupted image if needed
             this.Image.Source = image.Current.LoadBitmap(this.database.FolderPath);

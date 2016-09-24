@@ -10,10 +10,8 @@ namespace Carnassial.UnitTests
         public ControlExpectations File { get; private set; }
         public ControlExpectations RelativePath { get; private set; }
         public ControlExpectations Folder { get; private set; }
-        public ControlExpectations Date { get; private set; }
         public ControlExpectations DateTime { get; private set; }
         public ControlExpectations UtcOffset { get; private set; }
-        public ControlExpectations Time { get; private set; }
         public ControlExpectations ImageQuality { get; private set; }
         public ControlExpectations DeleteFlag { get; private set; }
 
@@ -57,22 +55,6 @@ namespace Carnassial.UnitTests
             this.UtcOffset.Tooltip = Constants.ControlDefault.UtcOffsetTooltip;
             this.UtcOffset.Type = Constants.DatabaseColumn.UtcOffset;
             this.UtcOffset.Visible = false;
-            this.Date = ControlExpectations.CreateNote(Constants.DatabaseColumn.Date, id++);
-            this.Date.Copyable = false;
-            this.Date.DefaultValue = Constants.ControlDefault.Value;
-            this.Date.List = Constants.ControlDefault.Value;
-            this.Date.TextBoxWidth = Int32.Parse(Constants.ControlDefault.DateWidth);
-            this.Date.Tooltip = Constants.ControlDefault.DateTooltip;
-            this.Date.Type = Constants.DatabaseColumn.Date;
-            this.Date.Visible = false;
-            this.Time = ControlExpectations.CreateNote(Constants.DatabaseColumn.Time, id++);
-            this.Time.Copyable = false;
-            this.Time.DefaultValue = Constants.ControlDefault.Value;
-            this.Time.List = Constants.ControlDefault.Value;
-            this.Time.TextBoxWidth = Int32.Parse(Constants.ControlDefault.TimeWidth);
-            this.Time.Tooltip = Constants.ControlDefault.TimeTooltip;
-            this.Time.Type = Constants.DatabaseColumn.Time;
-            this.Time.Visible = false;
             this.ImageQuality = ControlExpectations.CreateChoice(Constants.DatabaseColumn.ImageQuality, id++);
             this.ImageQuality.Copyable = false;
             this.ImageQuality.DefaultValue = Constants.ControlDefault.Value;
@@ -86,34 +68,6 @@ namespace Carnassial.UnitTests
             this.DeleteFlag.List = String.Empty;
             this.DeleteFlag.Tooltip = Constants.ControlDefault.DeleteFlagTooltip;
             this.DeleteFlag.Type = Constants.DatabaseColumn.DeleteFlag;
-
-            if (version < TestConstant.Version2104)
-            {
-                this.File.DefaultValue = " ";
-                this.File.List = " ";
-                this.File.Tooltip = "The image file name";
-
-                this.Date.DefaultValue = " ";
-                this.Date.List = " ";
-                this.Date.TextBoxWidth = 100;
-                this.Date.Tooltip = "Date the image was taken";
-
-                this.Folder.DefaultValue = " ";
-                this.Folder.List = " ";
-                this.Folder.Tooltip = "Name of the folder containing the images";
-
-                this.Time.DefaultValue = " ";
-                this.Time.List = " ";
-                this.Time.TextBoxWidth = 100;
-                this.Time.Tooltip = "Time the image was taken";
-
-                this.ImageQuality.DefaultValue = " ";
-                this.ImageQuality.List = "Ok| Dark| Corrupted | Missing";
-                this.ImageQuality.TextBoxWidth = 80;
-                this.ImageQuality.Tooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read";
-
-                this.DeleteFlag.Tooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
-            }
         }
 
         public virtual void Verify(TemplateDatabase templateDatabase)
@@ -126,8 +80,6 @@ namespace Carnassial.UnitTests
             this.Folder.Verify(templateDatabase.TemplateTable[rowIndex++]);
             this.DateTime.Verify(templateDatabase.TemplateTable[rowIndex++]);
             this.UtcOffset.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.Date.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.Time.Verify(templateDatabase.TemplateTable[rowIndex++]);
             this.ImageQuality.Verify(templateDatabase.TemplateTable[rowIndex++]);
             this.DeleteFlag.Verify(templateDatabase.TemplateTable[rowIndex++]);
         }

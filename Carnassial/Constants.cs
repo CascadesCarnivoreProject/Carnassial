@@ -69,14 +69,12 @@ namespace Carnassial
 
             public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
             {
-                Constants.DatabaseColumn.Date,
                 Constants.DatabaseColumn.DateTime,
                 Constants.DatabaseColumn.DeleteFlag,
                 Constants.DatabaseColumn.File,
                 Constants.DatabaseColumn.Folder,
                 Constants.DatabaseColumn.ImageQuality,
                 Constants.DatabaseColumn.RelativePath,
-                Constants.DatabaseColumn.Time,
                 Constants.DatabaseColumn.UtcOffset
             }.AsReadOnly();
         }
@@ -107,9 +105,6 @@ namespace Carnassial
             public const int NoteWidth = 100;
 
             // standard controls
-            public const string DateTooltip = "Date taken";
-            public const string DateWidth = "85";
-
             public const string DateTimeTooltip = "Date and time taken";
             public const string DateTimeWidth = "170";
 
@@ -123,9 +118,6 @@ namespace Carnassial
             public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
             public const string ImageQualityWidth = "85";
 
-            public const string TimeTooltip = "Time taken";
-            public const string TimeWidth = "60";
-
             public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
             public const string DeleteFlagTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
 
@@ -133,12 +125,6 @@ namespace Carnassial
             public const string UtcOffsetWidth = "60";
 
             public static readonly DateTimeOffset DateTimeValue = new DateTimeOffset(1900, 1, 1, 12, 0, 0, 0, TimeSpan.Zero);
-        }
-
-        public static class ControlsDeprecated
-        {
-            // MarkForDeletion data label was split between editor and Carnassial and normalized to DeleteFlag in 2.1.0.4
-            public const string MarkForDeletion = "MarkForDeletion";
         }
 
         public static class Database
@@ -169,7 +155,6 @@ namespace Carnassial
         public static class DatabaseColumn
         {
             public const string Data = "Data";                 // the data describing the attributes of that control
-            public const string Date = "Date";
             public const string DateTime = "DateTime";
             public const string File = "File";
             public const string Folder = "Folder";
@@ -179,7 +164,6 @@ namespace Carnassial
             public const string DeleteFlag = "DeleteFlag";
             public const string Point = "Point";               // a single point
             public const string RelativePath = "RelativePath";
-            public const string Time = "Time";
             public const string TimeZone = "TimeZone";
             public const string UtcOffset = "UtcOffset";
             public const string X = "X";                       // Every point has an X and Y
@@ -326,7 +310,7 @@ namespace Carnassial
                 public const string SuppressFilteredSetTimeZonePrompt = "SuppressFilteredSetTimeZonePrompt";
             }
 
-            public const string RootKey = @"Software\Greenberg Consulting\Carnassial\2.0";   // Defines the KEY path under HKEY_CURRENT_USER
+            public const string RootKey = @"Software\Cascades Carnivore Project\Carnassial\2.0";
         }
 
         public static class SearchTermOperator

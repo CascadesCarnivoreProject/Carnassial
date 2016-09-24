@@ -1,10 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 namespace Carnassial.Database
 {
     public class ControlRow : DataRowBackedObject
     {
+        private static readonly char[] BarDelimiter = { '|' };
+
         public ControlRow(DataRow row)
             : base(row)
         {
@@ -76,6 +80,11 @@ namespace Carnassial.Database
             set { this.Row.SetField(Constants.Control.Visible, value); }
         }
 
+        public List<string> GetChoices()
+        {
+            return this.List.Split(ControlRow.BarDelimiter).ToList();
+        }
+
         public override ColumnTuplesWithWhere GetColumnTuples()
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>();
@@ -91,6 +100,11 @@ namespace Carnassial.Database
             columnTuples.Add(new ColumnTuple(Constants.Control.Type, this.Type));
             columnTuples.Add(new ColumnTuple(Constants.Control.Visible, this.Visible));
             return new ColumnTuplesWithWhere(columnTuples, this.ID);
+        }
+
+        public void SetChoices(List<string> choices)
+        {
+            this.List = String.Join("|", choices);
         }
     }
 }

@@ -22,14 +22,14 @@ namespace Carnassial.Dialog
             }
         }
 
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.DialogResult = false;
-        }
-
-        private void UseOriginalTemplateButton_Click(object sender, RoutedEventArgs e)
+        private void ExitProgram_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = true;
+        }
+
+        private void UseOldTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = false;
         }
     }
 }

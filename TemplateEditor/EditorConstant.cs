@@ -26,18 +26,17 @@ namespace Carnassial.Editor
             "TRIGGER", "UNION", "UNIQUE", "UPDATE", "USING", "VACUUM", "VALUES", "VIEW", "VIRTUAL", "WHEN", "WHERE", "WITH", "WITHOUT"
         }.AsReadOnly();
 
-        // a few control values not needed in Constants.Control
-        public static class Control
+        public static class ColumnHeader
         {
             // data grid column headers
             // these are human friendly forms of data labels
-            // these constants are duplicated in MainWindow.xaml and must be kept in sync
-            public const string ControlOrder = "Control\norder";
+            // these constants are duplicated in EditorWindow.xaml and must be kept in sync
+            public const string ControlOrder = "Control\nOrder";
             public const string DataLabel = "Data Label";
             public const string DefaultValue = "Default Value";
             public const string ID = "ID";
             public const string Width = "Width";
-            public const string SpreadsheetOrder = "Spreadsheet\norder";
+            public const string SpreadsheetOrder = "Spreadsheet\nOrder";
         }
 
         public static class Registry

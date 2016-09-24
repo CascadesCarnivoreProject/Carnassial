@@ -4,7 +4,6 @@
         Title="Carnassial Controls" 
         Width="1000"
         SizeToContent="Height"
-        Topmost="True"
         SizeChanged="Window_SizeChanged"
         ShowInTaskbar="False"> 
     <Grid x:Name="TopLevelGrid">

@@ -17,17 +17,12 @@ namespace Carnassial.Dialog
         private ImageDatabase imageDatabase;
         private DateTimeOffset initialDate;
 
-        public bool Abort { get; private set; }
-        
-        // Create the interface
         public DateTimeFixedCorrection(ImageDatabase imageDatabase, ImageRow imageToCorrect, Window owner)
         {
             this.InitializeComponent();
             this.displayingPreview = false;
             this.imageDatabase = imageDatabase;
             this.Owner = owner;
-
-            this.Abort = false;
 
             // get the image filename and display it
             this.imageName.Content = imageToCorrect.FileName;
@@ -36,18 +31,10 @@ namespace Carnassial.Dialog
             this.image.Source = imageToCorrect.LoadBitmap(this.imageDatabase.FolderPath);
 
             // configure datetime picker
-            TimeZoneInfo imageSetTimeZone = this.imageDatabase.ImageSet.GetTimeZone();
-            if (imageToCorrect.TryGetDateTime(imageSetTimeZone, out this.initialDate))
-            {
-                this.originalDate.Content = DateTimeHandler.ToDisplayDateTimeString(this.initialDate);
-                DataEntryHandler.Configure(this.DateTimePicker, this.initialDate.DateTime);
-                this.DateTimePicker.ValueChanged += this.DateTimePicker_ValueChanged;
-            }
-            else
-            {
-                this.Abort = true;
-                return;
-            }
+            this.initialDate = imageToCorrect.GetDateTime();
+            this.originalDate.Content = DateTimeHandler.ToDisplayDateTimeString(this.initialDate);
+            DataEntryHandler.Configure(this.DateTimePicker, this.initialDate.DateTime);
+            this.DateTimePicker.ValueChanged += this.DateTimePicker_ValueChanged;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -64,28 +51,25 @@ namespace Carnassial.Dialog
             TimeSpan adjustment = this.DateTimePicker.Value.Value - this.initialDate.DateTime;
 
             // Preview the changes
-            TimeZoneInfo imageSetTimeZone = this.imageDatabase.ImageSet.GetTimeZone();
-            foreach (ImageRow row in this.imageDatabase.ImageDataTable)
+            foreach (ImageRow image in this.imageDatabase.ImageDataTable)
             {
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
                 string difference = String.Empty;
-                DateTimeOffset imageDateTime;
-                if (row.TryGetDateTime(imageSetTimeZone, out imageDateTime))
+                DateTimeOffset imageDateTime = image.GetDateTime();
+
+                // Pretty print the adjustment time
+                if (adjustment.Duration() >= Constants.Time.DateTimeDatabaseResolution)
                 {
-                    // Pretty print the adjustment time
-                    if (adjustment.Duration() >= Constants.Time.DateTimeDatabaseResolution)
-                    {
-                        difference = DateTimeHandler.ToDisplayTimeSpanString(adjustment);
-                        status = "Changed";
-                        newDateTime = DateTimeHandler.ToDisplayDateTimeString(imageDateTime + adjustment);
-                    }
-                    else
-                    {
-                        status = "Unchanged";
-                    }
+                    difference = DateTimeHandler.ToDisplayTimeSpanString(adjustment);
+                    status = "Changed";
+                    newDateTime = DateTimeHandler.ToDisplayDateTimeString(imageDateTime + adjustment);
                 }
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, row.GetDisplayDateTime(imageSetTimeZone), newDateTime, difference);
+                else
+                {
+                    status = "Unchanged";
+                }
+                this.DateUpdateFeedbackCtl.AddFeedbackRow(image.FileName, status, image.GetDisplayDateTime(), newDateTime, difference);
             }
         }
 

@@ -24,12 +24,6 @@ namespace Carnassial.Database
         {
         }
 
-        public string Date  
-        {
-            get { return this.Row.GetStringField(Constants.DatabaseColumn.Date); }
-            private set { this.Row.SetField(Constants.DatabaseColumn.Date, value); }
-        }
-
         public DateTime DateTime
         {
             get { return this.Row.GetDateTimeField(Constants.DatabaseColumn.DateTime); }
@@ -65,12 +59,6 @@ namespace Carnassial.Database
             set { this.Row.SetField(Constants.DatabaseColumn.RelativePath, value); }
         }
 
-        public string Time
-        {
-            get { return this.Row.GetStringField(Constants.DatabaseColumn.Time); }
-            private set { this.Row.SetField(Constants.DatabaseColumn.Time, value); }
-        }
-
         public TimeSpan UtcOffset
         {
             get { return this.Row.GetUtcOffsetField(Constants.DatabaseColumn.UtcOffset); }
@@ -90,32 +78,19 @@ namespace Carnassial.Database
         public ColumnTuplesWithWhere GetDateTimeColumnTuples()
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>(3);
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Date, this.Date));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.DateTime, this.DateTime));
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Time, this.Time));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.UtcOffset, this.UtcOffset));
             return new ColumnTuplesWithWhere(columnTuples, this.ID);
         }
 
-        public string GetDisplayDateTime(TimeZoneInfo imageSetTimeZone)
+        public DateTimeOffset GetDateTime()
         {
-            DateTimeOffset dateTime;
-            if (this.TryGetDateTime(imageSetTimeZone, out dateTime))
-            {
-                return DateTimeHandler.ToDisplayDateTimeString(dateTime);
-            }
-            return this.Date + " " + this.Time;
+            return DateTimeHandler.FromDatabaseDateTimeOffset(this.DateTime, this.UtcOffset);
         }
 
-        public bool TryGetDateTime(TimeZoneInfo imageSetTimeZone, out DateTimeOffset dateTimeOffset)
+        public string GetDisplayDateTime()
         {
-            DateTime dateTime = this.DateTime;
-            if (dateTime != Constants.ControlDefault.DateTimeValue)
-            {
-                dateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, this.UtcOffset);
-                return true;
-            }
-            return DateTimeHandler.TryParseLegacyDateTime(this.Date, this.Time, imageSetTimeZone, out dateTimeOffset);
+            return DateTimeHandler.ToDisplayDateTimeString(this.GetDateTime());
         }
 
         public FileInfo GetFileInfo(string rootFolderPath)
@@ -140,21 +115,16 @@ namespace Carnassial.Database
                 case Constants.DatabaseColumn.DateTime:
                     return DateTimeHandler.ToDatabaseDateTimeString(this.DateTime);
                 default:
-                    return this.GetValueDisplayString(dataLabel, null);
+                    return this.GetValueDisplayString(dataLabel);
             }
         }
 
-        public string GetValueDisplayString(string dataLabel, TimeZoneInfo imageSetTimeZone)
+        public string GetValueDisplayString(string dataLabel)
         {
             switch (dataLabel)
             {
                 case Constants.DatabaseColumn.DateTime:
-                    DateTimeOffset dateTime;
-                    if (this.TryGetDateTime(imageSetTimeZone, out dateTime))
-                    {
-                        return DateTimeHandler.ToDisplayDateTimeString(dateTime);
-                    }
-                    return null;
+                    return this.GetDisplayDateTime();
                 case Constants.DatabaseColumn.UtcOffset:
                     return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
                 case Constants.DatabaseColumn.ImageQuality:
@@ -244,10 +214,8 @@ namespace Carnassial.Database
 
         public void SetDateAndTime(DateTimeOffset dateTime)
         {
-            this.Date = DateTimeHandler.ToDisplayDateString(dateTime);
             this.DateTime = dateTime.UtcDateTime;
             this.UtcOffset = dateTime.Offset;
-            this.Time = DateTimeHandler.ToDisplayTimeString(dateTime);
         }
 
         public void SetDateAndTimeFromFileInfo(string folderPath, TimeZoneInfo imageSetTimeZone)
@@ -301,13 +269,8 @@ namespace Carnassial.Database
             }
             DateTimeOffset exifDateTime = DateTimeHandler.CreateDateTimeOffset(dateTimeOriginal, imageSetTimeZone);
 
-            // get the current date time
-            DateTimeOffset currentDateTime;
-            bool result = this.TryGetDateTime(imageSetTimeZone, out currentDateTime);
-            // Note that if its not a vaild date, that currentDateTime will now be set to 01-Jan-0001 00:00:00
-            // This will mean the metadata date/time will be used instead of the currentDateTime
-
             // measure the extent to which the image file time and image taken metadata are consistent
+            DateTimeOffset currentDateTime = this.GetDateTime();
             bool dateAdjusted = currentDateTime.Date != exifDateTime.Date;
             bool timeAdjusted = currentDateTime.TimeOfDay != exifDateTime.TimeOfDay;
             if (dateAdjusted || timeAdjusted)

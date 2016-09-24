@@ -175,17 +175,7 @@ namespace Carnassial.Database
 
         public void RemoveUserDefinedControl(ControlRow controlToRemove)
         {
-            string controlType;
-            // For backwards compatability: MarkForDeletion DataLabel is of the type DeleteFlag,
-            // which is a standard control. So we coerce it into thinking its a different type.
-            if (controlToRemove.DataLabel == Constants.ControlsDeprecated.MarkForDeletion)
-            {
-                controlType = Constants.ControlsDeprecated.MarkForDeletion;
-            }
-            else
-            { 
-                controlType = controlToRemove.Type;
-            }
+            string controlType = controlToRemove.Type;
             if (Constants.Control.StandardTypes.Contains(controlType))
             {
                 throw new NotSupportedException(String.Format("Standard control of type {0} cannot be removed.", controlType));
@@ -230,12 +220,13 @@ namespace Carnassial.Database
             this.GetControlsSortedByControlOrder();
         }
 
+        /// <summary>
+        /// Update the database row for the control to the current content of the template table.  The caller is responsible for ensuring the data row wrapped
+        /// by the ControlRow object is present in both the data table and database versions of the template table.
+        /// </summary>
         public void SyncControlToDatabase(ControlRow control)
         {
             this.Database.Update(Constants.Database.TemplateTable, control.GetColumnTuples());
-
-            // it's possible the passed data row isn't attached to TemplateTable, so refresh the table just in case
-            this.GetControlsSortedByControlOrder();
         }
 
         private void SyncTemplateTableToDatabase()
@@ -437,36 +428,6 @@ namespace Carnassial.Database
             // utcOffset
             standardControls.Add(this.GetUtcOffsetTuples(++controlOrder, ++spreadsheetOrder, false));
 
-            // date
-            List<ColumnTuple> date = new List<ColumnTuple>();
-            date.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
-            date.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            date.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Date));
-            date.Add(new ColumnTuple(Constants.Control.DefaultValue, DateTimeHandler.ToDisplayDateString(Constants.ControlDefault.DateTimeValue)));
-            date.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Date));
-            date.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Date));
-            date.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DateTooltip));
-            date.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.DateWidth));
-            date.Add(new ColumnTuple(Constants.Control.Copyable, false));
-            date.Add(new ColumnTuple(Constants.Control.Visible, false));
-            date.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
-            standardControls.Add(date);
-
-            // time
-            List<ColumnTuple> time = new List<ColumnTuple>();
-            time.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
-            time.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            time.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Time));
-            time.Add(new ColumnTuple(Constants.Control.DefaultValue, DateTimeHandler.ToDisplayDateString(Constants.ControlDefault.DateTimeValue)));
-            time.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Time));
-            time.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Time));
-            time.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.TimeTooltip));
-            time.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.TimeWidth));
-            time.Add(new ColumnTuple(Constants.Control.Copyable, false));
-            time.Add(new ColumnTuple(Constants.Control.Visible, false));
-            time.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
-            standardControls.Add(time);
-
             // image quality
             List<ColumnTuple> imageQuality = new List<ColumnTuple>();
             imageQuality.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
@@ -495,87 +456,6 @@ namespace Carnassial.Database
         protected virtual void OnExistingDatabaseOpened(TemplateDatabase other)
         {
             this.GetControlsSortedByControlOrder();
-            this.EnsureDataLabelsAndLabelsNotEmpty();
-            this.EnsureCurrentSchema();
-        }
-
-        // Do various checks and corrections to the Template DB to maintain backwards compatability. 
-        private void EnsureCurrentSchema()
-        {
-            // Add a RelativePath control to pre v2.1 databases if one hasn't already been inserted
-            long relativePathID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
-            if (relativePathID == -1)
-            {
-                // insert a relative path control, where its ID will be created as the next highest ID
-                long order = this.GetOrderForNewControl();
-                List<ColumnTuple> relativePathControl = this.GetRelativePathTuples(order, order, true);
-                this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { relativePathControl });
-
-                // move the relative path control to ID and order 2 for consistency with newly created templates
-                this.SetControlID(Constants.DatabaseColumn.RelativePath, Constants.Database.RelativePathPosition);
-                this.SetControlOrders(Constants.DatabaseColumn.RelativePath, Constants.Database.RelativePathPosition);
-            }
-
-            // add DateTime and UtcOffset controls to pre v2.1.0.5 databases if they haven't already been inserted
-            long dateTimeID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.DateTime);
-            if (dateTimeID == -1)
-            {
-                ControlRow date = this.GetControlFromTemplateTable(Constants.DatabaseColumn.Date);
-                ControlRow time = this.GetControlFromTemplateTable(Constants.DatabaseColumn.Time);
-
-                // insert a date time control, where its ID will be created as the next highest ID
-                // if either the date or time was visible make the date time visible
-                bool dateTimeVisible = date.Visible || time.Visible;
-                long order = this.GetOrderForNewControl();
-                List<ColumnTuple> dateTimeControl = this.GetDateTimeTuples(order, order, dateTimeVisible);
-                this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { dateTimeControl });
-
-                // make date and time controls invisible as they're replaced by the date time control
-                if (date.Visible)
-                {
-                    date.Visible = false;
-                    this.SyncControlToDatabase(date);
-                }
-                if (time.Visible)
-                {
-                    time.Visible = false;
-                    this.SyncControlToDatabase(time);
-                }
-
-                // move the date time control to ID and order 2 for consistency with newly created templates
-                this.SetControlID(Constants.DatabaseColumn.DateTime, Constants.Database.DateTimePosition);
-                this.SetControlOrders(Constants.DatabaseColumn.DateTime, Constants.Database.DateTimePosition);
-            }
-
-            long utcOffsetID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.UtcOffset);
-            if (utcOffsetID == -1)
-            {
-                // insert a relative path control, where its ID will be created as the next highest ID
-                long order = this.GetOrderForNewControl();
-                List<ColumnTuple> utcOffsetControl = this.GetUtcOffsetTuples(order, order, false);
-                this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { utcOffsetControl });
-
-                // move the relative path control to ID and order 2 for consistency with newly created templates
-                this.SetControlID(Constants.DatabaseColumn.UtcOffset, Constants.Database.UtcOffsetPosition);
-                this.SetControlOrders(Constants.DatabaseColumn.UtcOffset, Constants.Database.UtcOffsetPosition);
-            }
-
-            // Backwards compatability: ensure a DeleteFlag control exists, replacing the MarkForDeletion data label used in pre 2.1.0.4 templates if necessary
-            ControlRow markForDeletion = this.GetControlFromTemplateTable(Constants.ControlsDeprecated.MarkForDeletion);
-            if (markForDeletion != null)
-            {
-                List<ColumnTuple> deleteFlagControl = this.GetDeleteFlagTuples(markForDeletion.ControlOrder, markForDeletion.SpreadsheetOrder, markForDeletion.Visible);
-                this.Database.Update(Constants.Database.TemplateTable, new ColumnTuplesWithWhere(deleteFlagControl, markForDeletion.ID));
-                this.GetControlsSortedByControlOrder();
-            }
-            else if (this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.DeleteFlag) < 0)
-            {
-                // insert a DeleteFlag control, where its ID will be created as the next highest ID
-                long order = this.GetOrderForNewControl();
-                List<ColumnTuple> deleteFlagControl = this.GetDeleteFlagTuples(order, order, true);
-                this.Database.Insert(Constants.Database.TemplateTable, new List<List<ColumnTuple>>() { deleteFlagControl });
-                this.GetControlsSortedByControlOrder();
-            }
         }
 
         /// <summary>
@@ -697,46 +577,6 @@ namespace Carnassial.Database
         private long GetOrderForNewControl()
         {
             return this.TemplateTable.RowCount + 1;
-        }
-
-        /// <summary>
-        /// Supply default values for any empty labels or data labels are non-empty, updating both TemplateTable and the database as needed
-        /// </summary>
-        private void EnsureDataLabelsAndLabelsNotEmpty()
-        {
-            // All the code below goes through the template table to see if there are any non-empty labels / data labels,
-            // and if so, updates them to a reasonable value. If both are empty, it keeps track of its type and creates
-            // a label called (say) Counter3 for the third counter that has no label. If there is no DataLabel value, it
-            // makes it the same as the label. Ultimately, it guarantees that there will always be a (hopefully unique)
-            // data label and label name. 
-            // As well, the contents of the template table are loaded into memory.
-            foreach (ControlRow control in this.TemplateTable)
-            {
-                // Check if various values are empty, and if so update the row and fill the dataline with appropriate defaults
-                ColumnTuplesWithWhere columnsToUpdate = new ColumnTuplesWithWhere();    // holds columns which have changed for the current control
-                bool noDataLabel = String.IsNullOrWhiteSpace(control.DataLabel);
-                if (noDataLabel && String.IsNullOrWhiteSpace(control.Label))
-                {
-                    string dataLabel = this.GetNextUniqueDataLabel(control.Type);
-                    columnsToUpdate.Columns.Add(new ColumnTuple(Constants.Control.Label, dataLabel));
-                    columnsToUpdate.Columns.Add(new ColumnTuple(Constants.Control.DataLabel, dataLabel));
-                    control.Label = dataLabel;
-                    control.DataLabel = dataLabel;
-                }
-                else if (noDataLabel)
-                {
-                    // No data label but a label, so use the label's value as the data label
-                    columnsToUpdate.Columns.Add(new ColumnTuple(Constants.Control.DataLabel, control.Label));
-                    control.DataLabel = control.Label;
-                }
-
-                // Now add the new values to the database
-                if (columnsToUpdate.Columns.Count > 0)
-                {
-                    columnsToUpdate.SetWhere(control.ID);
-                    this.Database.Update(Constants.Database.TemplateTable, columnsToUpdate);
-                }
-            }
         }
 
         private List<ColumnTuple> GetDateTimeTuples(long controlOrder, long spreadsheetOrder, bool visible)

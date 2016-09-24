@@ -7,6 +7,7 @@ using Carnassial.Images;
 using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Threading;
@@ -60,7 +61,7 @@ namespace Carnassial.UnitTests
             this.WaitForRenderingComplete();
 
             this.ShowDialog(new AboutEditor(editor));
-            this.ShowDialog(new EditChoiceList(editor.HelpText, Utilities.ConvertBarsToLineBreaks("Choice0|Choice1|Choice2|Choice3"), editor));
+            this.ShowDialog(new EditChoiceList(editor.HelpText, new List<string>() { "Choice0", "Choice1", "Choice2", "Choice3" }, editor));
 
             editor.Close();
         }
@@ -86,7 +87,7 @@ namespace Carnassial.UnitTests
 
             // create template database and remove any image database from previous test executions
             string templateDatabaseFilePath;
-            using (TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015))
+            using (TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName))
             {
                 templateDatabaseFilePath = templateDatabase.FilePath;
             }
@@ -173,7 +174,6 @@ namespace Carnassial.UnitTests
                 this.ShowDialog(new DateDaylightSavingsTimeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache, carnassial));
 
                 DateTimeFixedCorrection clockSetCorrection = new DateTimeFixedCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache.Current, carnassial);
-                Assert.IsFalse(clockSetCorrection.Abort);
                 this.ShowDialog(clockSetCorrection);
 
                 DateTimeLinearCorrection clockDriftCorrection = new DateTimeLinearCorrection(dataHandler.ImageDatabase, carnassial);

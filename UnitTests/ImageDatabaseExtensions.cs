@@ -8,10 +8,9 @@ namespace Carnassial.UnitTests
     {
         public static IEnumerable<DateTimeOffset> GetImageTimes(this ImageDatabase imageDatabase)
         {
-            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
             foreach (ImageRow image in imageDatabase.ImageDataTable)
             {
-                yield return image.GetDateTime(imageSetTimeZone);
+                yield return image.GetDateTime();
             }
         }
     }

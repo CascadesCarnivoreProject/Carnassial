@@ -209,10 +209,7 @@ namespace Carnassial.Dialog
                     comboBoxValue.Margin = thickness;
 
                     // Create the dropdown menu 
-                    string list = searchTerm.List;
-                    list += " | "; // Add an empty field so it can be reset to empty by the user
-                    string[] choices = list.Split(new char[] { '|' });
-                    comboBoxValue.ItemsSource = choices;
+                    comboBoxValue.ItemsSource = searchTerm.List;
                     comboBoxValue.SelectedItem = searchTerm.DatabaseValue;
                     comboBoxValue.SelectionChanged += this.FixedChoice_SelectionChanged;
                     Grid.SetRow(comboBoxValue, gridRowIndex);

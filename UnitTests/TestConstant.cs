@@ -29,8 +29,6 @@ namespace Carnassial.UnitTests
             Constants.DatabaseColumn.Folder,
             Constants.DatabaseColumn.DateTime,
             Constants.DatabaseColumn.UtcOffset,
-            Constants.DatabaseColumn.Date,
-            Constants.DatabaseColumn.Time,
             Constants.DatabaseColumn.ImageQuality,
             Constants.DatabaseColumn.DeleteFlag,
             TestConstant.DefaultDatabaseColumn.Counter0,
@@ -143,23 +141,19 @@ namespace Carnassial.UnitTests
 
         public static class File
         {
+            public const string CarnivoreDirectoryName = "CarnivoreTestImages";
+            public const string HybridVideoDirectoryName = "HybridVideo";
+
             // template databases for backwards compatibility testing
             // version is the editor version used for creation
-            public const string CarnivoreDirectoryName = "CarnivoreTestImages";
-            public const string CarnivoreTemplateDatabaseFileName = "CarnivoreTemplate 2.0.1.5.tdb";
-            public const string DefaultTemplateDatabaseFileName2015 = "TimelapseTemplate 2.0.1.5.tdb";
-            public const string DefaultTemplateDatabaseFileName2104 = "TimelapseTemplate 2.1.0.4.tdb";
-            public const string HybridVideoDirectoryName = "HybridVideo";
+            public const string DefaultTemplateDatabaseFileName = "DefaultTemplate 2.2.0.0.tdb";
 
             // image databases for backwards compatibility testing
             // version is the Carnassial version used for creation
-            public const string DefaultImageDatabaseFileName2023 = "TimelapseData 2.0.2.3.ddb";
-            public const string DefaultImageDatabaseFileName2104 = "TimelapseData 2.1.0.4.ddb";
+            public const string DefaultImageDatabaseFileName = "DefaultData 2.2.0.0.ddb";
 
             // databases generated dynamically by tests
             // see also use of Constants.File.Default*DatabaseFileName
-            public const string CarnivoreNewImageDatabaseFileName = "CarnivoreDatabaseTest.ddb";
-            public const string CarnivoreNewImageDatabaseFileName2104 = "CarnivoreDatabaseTest2104.ddb";
             public const string DefaultNewImageDatabaseFileName = "DefaultUnitTest.ddb";
             public const string DefaultNewTemplateDatabaseFileName = "DefaultUnitTest.tdb";
         }

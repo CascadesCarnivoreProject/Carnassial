@@ -179,7 +179,6 @@
     <Compile Include="CellTextBlockConverter.cs" />
     <Compile Include="Util\EditorControls.cs" />
     <Compile Include="EditorWindowExtensions.cs" />
-    <Compile Include="ListBoxDBOutputConverter.cs" />
     <Compile Include="Util\EditorUserRegistrySettings.cs" />
     <Page Include="Dialog\AboutEditor.xaml">
       <SubType>Designer</SubType>

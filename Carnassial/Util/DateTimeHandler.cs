@@ -141,11 +141,6 @@ namespace Carnassial.Util
             return false;
         }
 
-        public static bool TryParseLegacyDateTime(string date, string time, TimeZoneInfo imageSetTimeZone, out DateTimeOffset dateTimeOffset)
-        {
-            return DateTimeHandler.TryParseDateTaken(date + " " + time, imageSetTimeZone, out dateTimeOffset);
-        }
-
         public static bool TryParseDateTaken(string dateTimeAsString, TimeZoneInfo imageSetTimeZone, out DateTimeOffset dateTimeOffset)
         {
             // use current culture as BitmapMetadata.DateTaken is not invariant

@@ -11,25 +11,15 @@ namespace Carnassial.Dialog
         private bool displayingPreview;
         private ImageDatabase imageDatabase;
 
-        public bool Abort { get; private set; }
-        
-        // Create the interface
         public DateTimeSetTimeZone(ImageDatabase imageDatabase, ImageRow imageToCorrect, Window owner)
         {
             this.InitializeComponent();
-            this.Abort = false;
             this.displayingPreview = false;
             this.imageDatabase = imageDatabase;
             this.Owner = owner;
 
             // get the image's current time
-            DateTimeOffset currentDateTime;
-            TimeZoneInfo imageSetTimeZone = this.imageDatabase.ImageSet.GetTimeZone();
-            if (imageToCorrect.TryGetDateTime(imageSetTimeZone, out currentDateTime) == false)
-            {
-                this.Abort = true;
-                return;
-            }
+            DateTimeOffset currentDateTime = imageToCorrect.GetDateTime();
             this.originalDate.Content = DateTimeHandler.ToDisplayDateTimeUtcOffsetString(currentDateTime);
 
             // get the image filename and display it
@@ -39,6 +29,7 @@ namespace Carnassial.Dialog
             this.image.Source = imageToCorrect.LoadBitmap(this.imageDatabase.FolderPath);
 
             // configure timezone picker
+            TimeZoneInfo imageSetTimeZone = this.imageDatabase.ImageSet.GetTimeZone();
             this.TimeZones.SelectedItem = imageSetTimeZone.DisplayName;
             this.TimeZones.SelectionChanged += this.TimeZones_SelectionChanged;
         }
@@ -55,29 +46,27 @@ namespace Carnassial.Dialog
             this.FeedbackPanel.Visibility = Visibility.Visible;
 
             // Preview the changes
-            TimeZoneInfo imageSetTimeZone = this.imageDatabase.ImageSet.GetTimeZone();
             TimeZoneInfo newTimeZone = this.TimeZones.TimeZonesByDisplayName[(string)this.TimeZones.SelectedItem];
-            foreach (ImageRow row in this.imageDatabase.ImageDataTable)
+            foreach (ImageRow image in this.imageDatabase.ImageDataTable)
             {
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
-                DateTimeOffset currentImageDateTime;
-                if (row.TryGetDateTime(imageSetTimeZone, out currentImageDateTime))
+                DateTimeOffset currentImageDateTime = image.GetDateTime();
+                TimeSpan utcOffset = newTimeZone.GetUtcOffset(currentImageDateTime);
+                DateTimeOffset previewImageDateTime = currentImageDateTime.SetOffset(utcOffset);
+
+                // Pretty print the adjustment time
+                if (currentImageDateTime != previewImageDateTime)
                 {
-                    TimeSpan utcOffset = newTimeZone.GetUtcOffset(currentImageDateTime);
-                    DateTimeOffset previewImageDateTime = currentImageDateTime.SetOffset(utcOffset);
-                    // Pretty print the adjustment time
-                    if (currentImageDateTime != previewImageDateTime)
-                    {
-                        status = "Changed";
-                        newDateTime = DateTimeHandler.ToDisplayDateTimeUtcOffsetString(previewImageDateTime);
-                    }
-                    else
-                    {
-                        status = "Unchanged";
-                    }
+                    status = "Changed";
+                    newDateTime = DateTimeHandler.ToDisplayDateTimeUtcOffsetString(previewImageDateTime);
                 }
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, DateTimeHandler.ToDisplayDateTimeUtcOffsetString(currentImageDateTime), newDateTime, String.Empty);
+                else
+                {
+                    status = "Unchanged";
+                }
+
+                this.DateUpdateFeedbackCtl.AddFeedbackRow(image.FileName, status, DateTimeHandler.ToDisplayDateTimeUtcOffsetString(currentImageDateTime), newDateTime, String.Empty);
             }
         }
 

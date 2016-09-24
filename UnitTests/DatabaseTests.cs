@@ -17,18 +17,9 @@ namespace Carnassial.UnitTests
     public class DatabaseTests : CarnassialTest
     {
         [TestMethod]
-        public void CreateReuseCarnivoreImageDatabase()
-        {
-            this.CreateReuseImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName, (ImageDatabase imageDatabase) =>
-            {
-                return this.PopulateCarnivoreDatabase(imageDatabase);
-            });
-        }
-
-        [TestMethod]
         public void CreateReuseDefaultImageDatabase()
         {
-            this.CreateReuseImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, TestConstant.File.DefaultImageDatabaseFileName2023, (ImageDatabase imageDatabase) =>
+            this.CreateReuseImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultImageDatabaseFileName, (ImageDatabase imageDatabase) =>
             {
                 return this.PopulateDefaultDatabase(imageDatabase);
             });
@@ -144,8 +135,8 @@ namespace Carnassial.UnitTests
             imageDatabase.ExchangeDayAndMonthInImageDates(0, imageDatabase.ImageDataTable.RowCount - 1);
 
             // custom filter coverage
-            // search terms should be created for all controls except Date, Folder, and Time
-            Assert.IsTrue((imageDatabase.TemplateTable.RowCount - 3) == imageDatabase.CustomFilter.SearchTerms.Count);
+            // search terms should be created for all controls except Folder
+            Assert.IsTrue((imageDatabase.TemplateTable.RowCount - 1) == imageDatabase.CustomFilter.SearchTerms.Count);
             Assert.IsTrue(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Custom) == -1);
 
@@ -154,7 +145,7 @@ namespace Carnassial.UnitTests
             dateTime.DatabaseValue = DateTimeHandler.ToDisplayDateString(new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero));
             Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             imageDatabase.SelectDataTableImages(ImageFilter.Custom);
-            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == imageExpectations.Count);
 
             dateTime.Operator = Constants.SearchTermOperator.Equal;
             Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
@@ -170,7 +161,7 @@ namespace Carnassial.UnitTests
             file.DatabaseValue = "*" + Constants.File.JpgFileExtension.ToUpperInvariant();
             Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             imageDatabase.SelectDataTableImages(ImageFilter.Custom);
-            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == imageExpectations.Count);
 
             SearchTerm imageQuality = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.ImageQuality);
             imageQuality.UseForSearching = true;
@@ -178,7 +169,7 @@ namespace Carnassial.UnitTests
             imageQuality.DatabaseValue = ImageFilter.Ok.ToString();
             Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
             imageDatabase.SelectDataTableImages(ImageFilter.Custom);
-            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
+            Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == imageExpectations.Count);
 
             SearchTerm relativePath = imageDatabase.CustomFilter.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.RelativePath);
             relativePath.UseForSearching = true;
@@ -198,13 +189,13 @@ namespace Carnassial.UnitTests
 
             imageQuality.DatabaseValue = ImageFilter.Dark.ToString();
             Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomFilter.GetImagesWhere()));
-            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.All) == 2);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.All) == imageExpectations.Count);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Corrupted) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Custom) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Dark) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.MarkedForDeletion) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Missing) == 0);
-            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Ok) == 2);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageFilter.Ok) == imageExpectations.Count);
         }
 
         [TestMethod]
@@ -478,11 +469,6 @@ namespace Carnassial.UnitTests
             dateTimeParse = DateTimeHandler.ParseDisplayDateTimeString(dateTimeAsDisplayString);
             Assert.IsTrue(DateTimeHandler.TryParseDisplayDateTime(dateTimeAsDisplayString, out dateTimeTryParse));
 
-            string dateAsDisplayString = DateTimeHandler.ToDisplayDateString(dateTimeOffset);
-            string timeAsDisplayString = DateTimeHandler.ToDisplayTimeString(dateTimeOffset);
-            DateTimeOffset dateTimeParseLegacy;
-            Assert.IsTrue(DateTimeHandler.TryParseLegacyDateTime(dateAsDisplayString, timeAsDisplayString, timeZone, out dateTimeParseLegacy));
-
             DateTimeOffset dateTimeOffsetWithoutMilliseconds = new DateTimeOffset(new DateTime(dateTimeOffset.Year, dateTimeOffset.Month, dateTimeOffset.Day, dateTimeOffset.Hour, dateTimeOffset.Minute, dateTimeOffset.Second), dateTimeOffset.Offset);
             Assert.IsTrue(dateTimeParse == dateTimeOffsetWithoutMilliseconds.DateTime);
             Assert.IsTrue(dateTimeTryParse == dateTimeOffsetWithoutMilliseconds.DateTime);
@@ -491,8 +477,6 @@ namespace Carnassial.UnitTests
             string dateTimeOffsetAsDisplayString = DateTimeHandler.ToDisplayDateTimeUtcOffsetString(dateTimeOffset);
             string utcOffsetAsDisplayString = DateTimeHandler.ToDisplayUtcOffsetString(dateTimeOffset.Offset);
 
-            Assert.IsTrue(dateAsDisplayString.Length == Constants.Time.DateFormat.Length);
-            Assert.IsTrue(timeAsDisplayString.Length == Constants.Time.TimeFormat.Length);
             Assert.IsTrue(dateTimeOffsetAsDisplayString.Length > Constants.Time.DateFormat.Length + Constants.Time.TimeFormat.Length);
             Assert.IsTrue(utcOffsetAsDisplayString.Length >= Constants.Time.UtcOffsetDisplayFormat.Length - 1);
         }
@@ -504,15 +488,9 @@ namespace Carnassial.UnitTests
             {
                 new DatabaseExpectations()
                 {
-                    ImageDatabaseFileName = TestConstant.File.CarnivoreNewImageDatabaseFileName2104,
-                    TemplateDatabaseFileName = TestConstant.File.CarnivoreTemplateDatabaseFileName,
-                    ExpectedControls = Constants.Control.StandardTypes.Count - 4 + 10
-                },
-                new DatabaseExpectations()
-                {
                     ImageDatabaseFileName = Constants.File.DefaultImageDatabaseFileName,
-                    TemplateDatabaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName2104,
-                    ExpectedControls = TestConstant.DefaultImageTableColumns.Count - 9
+                    TemplateDatabaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName,
+                    ExpectedControls = TestConstant.DefaultImageTableColumns.Count - 6
                 }
             };
 
@@ -526,39 +504,37 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(controls.ControlsByDataLabel.Count == databaseExpectation.ExpectedControls, "Expected {0} controls to be generated but {1} were.", databaseExpectation.ExpectedControls, controls.ControlsByDataLabel.Count);
 
                 // check copies aren't possible when the image enumerator's not pointing to an image
-                List<DataEntryControl> copyableControls = controls.Controls.Where(control => control.DataLabel != Constants.DatabaseColumn.Folder &&
-                                                                                  control.DataLabel != Constants.DatabaseColumn.RelativePath &&
-                                                                                  control.DataLabel != Constants.DatabaseColumn.File &&
-                                                                                  control.DataLabel != Constants.DatabaseColumn.Date &&
-                                                                                  control.DataLabel != Constants.DatabaseColumn.Time &&
-                                                                                  control.DataLabel != Constants.DatabaseColumn.ImageQuality &&
-                                                                                  control.DataLabel != Constants.DatabaseColumn.DeleteFlag).ToList();
-                foreach (DataEntryControl control in copyableControls)
+                foreach (DataEntryControl control in controls.Controls)
                 {
                     Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
                     Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
                 }
 
                 // check only copy forward is possible when enumerator's on first image
-                if (databaseExpectation.ImageDatabaseFileName == TestConstant.File.CarnivoreNewImageDatabaseFileName2104)
-                {
-                    this.PopulateCarnivoreDatabase(imageDatabase);
-                }
-                else
-                {
-                    this.PopulateDefaultDatabase(imageDatabase);
-                }
-
+                List<ImageExpectations> imageExpectations = this.PopulateDefaultDatabase(imageDatabase);
                 Assert.IsTrue(dataHandler.ImageCache.MoveNext());
+
+                List<DataEntryControl> copyableControls = controls.Controls.Where(control => control.Copyable).ToList();
                 foreach (DataEntryControl control in copyableControls)
                 {
                    Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
                    Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
                 }
 
+                List<DataEntryControl> notCopyableControls = controls.Controls.Where(control => control.Copyable == false).ToList();
+                foreach (DataEntryControl control in notCopyableControls)
+                {
+                    Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
+                    Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
+                }
+
                 // check only copy last is possible when enumerator's on last image
                 // check also copy last is not possible if no previous instance of the field has been filled out
-                Assert.IsTrue(dataHandler.ImageCache.MoveNext());
+                while (dataHandler.ImageCache.CurrentRow < imageExpectations.Count - 1)
+                {
+                    Assert.IsTrue(dataHandler.ImageCache.MoveNext());
+                }
+
                 foreach (DataEntryControl control in copyableControls)
                 {
                     Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
@@ -567,7 +543,6 @@ namespace Carnassial.UnitTests
                         control.DataLabel == TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel ||
                         control.DataLabel == TestConstant.DefaultDatabaseColumn.Choice3 ||
                         control.DataLabel == TestConstant.DefaultDatabaseColumn.Counter3 ||
-                        control.DataLabel == TestConstant.DefaultDatabaseColumn.Note0 ||
                         control.DataLabel == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel)
                     {
                         Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
@@ -591,7 +566,7 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void HybridVideo()
         {
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewImageDatabaseFileName);
             TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
             List<ImageRow> imagesToInsert = new List<ImageRow>();
             FileInfo[] imagesAndVideos = new DirectoryInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.HybridVideoDirectoryName)).GetFiles();
@@ -636,21 +611,18 @@ namespace Carnassial.UnitTests
             }
         }
 
-        /// <summary>
-        /// Backwards compatibility test against editor 2.0.1.5 template database and Carnassial 2.0.2.3 image database.
-        /// </summary>
         [TestMethod]
-        public void ImageDatabase2023()
+        public void ImageDatabaseVerfication()
         {
             // load database
-            string imageDatabaseBaseFileName = TestConstant.File.DefaultImageDatabaseFileName2023;
-            ImageDatabase imageDatabase = this.CloneImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2015, imageDatabaseBaseFileName);
+            string imageDatabaseBaseFileName = TestConstant.File.DefaultImageDatabaseFileName;
+            ImageDatabase imageDatabase = this.CloneImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, imageDatabaseBaseFileName);
             imageDatabase.SelectDataTableImages(ImageFilter.All);
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount > 0);
 
             // verify template portion
             this.VerifyTemplateDatabase(imageDatabase, imageDatabaseBaseFileName);
-            DefaultTemplateTableExpectation templateTableExpectation = new DefaultTemplateTableExpectation(new Version(2, 0, 1, 5));
+            DefaultTemplateTableExpectation templateTableExpectation = new DefaultTemplateTableExpectation(new Version(2, 2, 0, 0));
             templateTableExpectation.Verify(imageDatabase);
 
             // verify image set table
@@ -681,11 +653,10 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == imagesExpected);
 
             TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
-            string initialRootFolderName = "Timelapse 2.0.2.3";
+            string initialRootFolderName = "UnitTests";
             ImageExpectations martenExpectation = new ImageExpectations(TestConstant.ImageExpectation.InfraredMarten);
             martenExpectation.ID = 1;
             martenExpectation.InitialRootFolderName = initialRootFolderName;
-            martenExpectation.RelativePath = null;
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, "3");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice c");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "0");
@@ -707,7 +678,6 @@ namespace Carnassial.UnitTests
             ImageExpectations bobcatExpectation = new ImageExpectations(TestConstant.ImageExpectation.DaylightBobcat);
             bobcatExpectation.ID = 2;
             bobcatExpectation.InitialRootFolderName = initialRootFolderName;
-            bobcatExpectation.RelativePath = null;
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, templateTableExpectation.Counter0.DefaultValue);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice a");
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "1");
@@ -730,8 +700,8 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void ImageDatabaseNegative()
         {
-            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104);
-            ImageDatabase imageDatabase = this.CreateImageDatabase(templateDatabase, TestConstant.File.DefaultImageDatabaseFileName2104);
+            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(templateDatabase, TestConstant.File.DefaultImageDatabaseFileName);
             this.PopulateDefaultDatabase(imageDatabase);
 
             // ImageDatabase methods
@@ -764,15 +734,15 @@ namespace Carnassial.UnitTests
             templateDatabase.SyncControlToDatabase(noteControl);
 
             imageDatabase = ImageDatabase.CreateOrOpen(imageDatabase.FileName, templateDatabase);
-            Assert.IsTrue(imageDatabase.TemplateSynchronizationIssues.Count == 4);
+            Assert.IsTrue(imageDatabase.TemplateSynchronizationIssues.Count == 5);
         }
 
         [TestMethod]
         public void RoundtripCsv()
         {
             // create database, push test images into the database, and load the image data table
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
-            List<ImageExpectations> imageExpectations = this.PopulateCarnivoreDatabase(imageDatabase);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewImageDatabaseFileName);
+            List<ImageExpectations> imageExpectations = this.PopulateDefaultDatabase(imageDatabase);
 
             // roundtrip data through .csv
             CsvReaderWriter csvReaderWriter = new CsvReaderWriter();
@@ -807,7 +777,7 @@ namespace Carnassial.UnitTests
         public void TemplateDatabase2015()
         {
             // load database
-            string templateDatabaseBaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName2015;
+            string templateDatabaseBaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName;
             TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName);
 
             this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
@@ -842,7 +812,7 @@ namespace Carnassial.UnitTests
         {
             // create image database and populate images in initial time zone
             // TimeZoneInfo doesn't implement operator == so Equals() must be called
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, Constants.File.DefaultImageDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constants.File.DefaultImageDatabaseFileName);
             Assert.IsTrue(imageDatabase.ImageSet.TimeZone == TimeZoneInfo.Local.Id);
             Assert.IsTrue(TimeZoneInfo.Local.Equals(imageDatabase.ImageSet.GetTimeZone()));
 
@@ -853,7 +823,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(imageDatabase.ImageSet.TimeZone == initialTimeZoneID);
             Assert.IsTrue(initialImageSetTimeZone.Equals(imageDatabase.ImageSet.GetTimeZone()));
 
-            List<ImageExpectations> imageExpectations = this.PopulateDefaultDatabase(imageDatabase);
+            List<ImageExpectations> imageExpectations = this.PopulateDefaultDatabase(imageDatabase, true);
 
             // change to second time zone
             imageDatabase.ImageSet.TimeZone = secondTimeZoneID;

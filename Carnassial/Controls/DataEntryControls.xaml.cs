@@ -46,8 +46,6 @@ namespace Carnassial.Controls
                 else if (control.Type == Constants.DatabaseColumn.File ||
                          control.Type == Constants.DatabaseColumn.RelativePath ||
                          control.Type == Constants.DatabaseColumn.Folder ||
-                         control.Type == Constants.DatabaseColumn.Date ||
-                         control.Type == Constants.DatabaseColumn.Time ||
                          control.Type == Constants.Control.Note)
                 {
                     // standard controls rendering as notes aren't editable by the user 
@@ -67,7 +65,7 @@ namespace Carnassial.Controls
                 }
                 else if (control.Type == Constants.Control.FixedChoice || control.Type == Constants.DatabaseColumn.ImageQuality)
                 {
-                    DataEntryChoice choiceControl = new DataEntryChoice(control, this, control.List);
+                    DataEntryChoice choiceControl = new DataEntryChoice(control, this);
                     controlToAdd = choiceControl;
                 }
                 else if (control.Type == Constants.DatabaseColumn.UtcOffset)

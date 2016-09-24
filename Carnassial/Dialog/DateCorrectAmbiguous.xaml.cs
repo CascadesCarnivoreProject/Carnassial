@@ -75,15 +75,10 @@ namespace Carnassial.Dialog
         // If it can't find an ambiguous date, it will return -1.
         private int SearchForNextAmbiguousDateInFilteredImageSet(int startIndex)
         {
-            TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
             for (int index = startIndex; index < this.database.CurrentlySelectedImageCount; index++)
             {
-                ImageRow imageProperties = this.database.ImageDataTable[index];
-                DateTimeOffset imageDateTime;
-                if (imageProperties.TryGetDateTime(imageSetTimeZone, out imageDateTime) == false)
-                {
-                    continue; // if we can't get a valid DateTime, skip over this image i.e., don't consider it ambiguous as we can't alter it anyways.
-                }
+                ImageRow image = this.database.ImageDataTable[index];
+                DateTimeOffset imageDateTime = image.GetDateTime();
                 if (imageDateTime.Day <= Constants.Time.MonthsInYear)
                 {
                     return index; // If the date is ambiguous, return the row index. 
@@ -108,26 +103,15 @@ namespace Carnassial.Dialog
             }
 
             // Parse the provided starting date. Return -1 if it cannot.
-            ImageRow imageProperties = this.database.ImageDataTable[startIndex];
-            TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
-            DateTimeOffset desiredDateTime;
-            if (imageProperties.TryGetDateTime(imageSetTimeZone, out desiredDateTime) == false)
-            {
-                return -1;  // The starting date is not a valid date
-            }
+            ImageRow image = this.database.ImageDataTable[startIndex];
+            DateTimeOffset desiredDateTime = image.GetDateTime();
 
             lastMatchingDate = startIndex;
             for (int index = startIndex + 1; index < this.database.CurrentlySelectedImageCount; index++)
             {
                 // Parse the date for the given row.
-                imageProperties = this.database.ImageDataTable[index];
-                DateTimeOffset imageDateTime;
-                if (imageProperties.TryGetDateTime(imageSetTimeZone, out imageDateTime) == false)
-                {
-                    // skip over invalid dates
-                    continue; // if we get to an invalid date, return the prior index
-                }
-
+                image = this.database.ImageDataTable[index];
+                DateTimeOffset imageDateTime = image.GetDateTime();
                 if (desiredDateTime.Date == imageDateTime.Date)
                 {
                     lastMatchingDate = index;
@@ -177,11 +161,11 @@ namespace Carnassial.Dialog
 
             // We found an ambiguous date; provide appropriate feedback
             imageProperties = this.database.ImageDataTable[this.ambiguousDatesList[index].StartRange];
-            this.OriginalDateLabel.Content = imageProperties.Date;
+            this.OriginalDateLabel.Content = imageProperties.GetDateTime().Date;
 
             // If we can't swap the date, we just return the original unaltered date. However, we expect that swapping would always work at this point.
             DateTimeOffset swappedDate;
-            this.NewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : imageProperties.Date;
+            this.NewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.GetDateTime());
 
             this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
@@ -203,11 +187,11 @@ namespace Carnassial.Dialog
             {
                 ImageRow imageProperties;
                 imageProperties = this.database.ImageDataTable[this.ambiguousDatesList[this.ambiguousDatesListIndex].StartRange];
-                this.OriginalDateLabel.Content = imageProperties.Date;
+                this.OriginalDateLabel.Content = imageProperties.GetDateTime().Date;
 
                 // If we can't swap the date, we just return the original unaltered date. However, we expect that swapping would always work at this point.
                 DateTimeOffset swappedDate;
-                this.NewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : imageProperties.Date;
+                this.NewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.GetDateTime());
 
                 this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
@@ -256,7 +240,7 @@ namespace Carnassial.Dialog
 
                 string status = ambiguousDate.Swapped ? "Swapped: " : "Unchanged: ";
                 status += ambiguousDate.Count.ToString() + " images with same date";
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(imageProperties.FileName, status, imageProperties.Date, newDate, "--");
+                this.DateUpdateFeedbackCtl.AddFeedbackRow(imageProperties.FileName, status, DateTimeHandler.ToDisplayDateString(imageProperties.GetDateTime()), newDate, "--");
             }
         }
 

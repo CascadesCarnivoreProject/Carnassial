@@ -1,5 +1,7 @@
 ﻿using Carnassial.Util;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -7,32 +9,31 @@ namespace Carnassial.Editor.Dialog
 {
     public partial class EditChoiceList : Window
     {
+        private static readonly string[] NewLineDelimiter = { Environment.NewLine };
+
         private UIElement positionReference;
 
-        public EditChoiceList(UIElement positionReference, string choices, Window owner)
+        public List<string> Choices { get; private set; }
+
+        public EditChoiceList(UIElement positionReference, List<string> choices, Window owner)
         {
             this.InitializeComponent();
-            Utilities.TryFitWindowInWorkingArea(this);
 
-            this.ChoiceList.Text = choices;
+            this.ChoiceList.Text = String.Join(Environment.NewLine, choices);
+            this.Choices = choices;
             this.OkButton.IsEnabled = false;
             this.Owner = owner;
             this.positionReference = positionReference;
         }
 
-        /// <summary>
-        /// Gets the modified text that can be accessed immediately after the dialog exits
-        /// </summary>
-        public string Choices
-        {
-            get { return this.ChoiceList.Text; }
-        }
-
-        // Position the window so it appears as a popup with its bottom aligned to the top of its owner button
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Point topLeft = this.positionReference.PointToScreen(new Point(0, 0));
             this.Top = topLeft.Y - this.ActualHeight;
+            if (this.Top < 0)
+            {
+                this.Top = 0;
+            }
             this.Left = topLeft.X;
 
             // On some older window systems, the above positioning doesn't work, where it seems to put it the the right of the main window
@@ -46,6 +47,8 @@ namespace Carnassial.Editor.Dialog
                     this.Left = mainWindowRightSide - this.ActualWidth - 100;
                 }
             }
+
+            Utilities.TryFitWindowInWorkingArea(this);
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
@@ -53,10 +56,11 @@ namespace Carnassial.Editor.Dialog
             this.DialogResult = true;
         }
 
-        // Enable the Ok button for non-empty text
         private void ItemList_TextChanged(object sender, TextChangedEventArgs e)
         {
-            this.OkButton.IsEnabled = !this.ChoiceList.Text.Trim().Equals(String.Empty);
+            this.Choices = new List<string>(this.ChoiceList.Text.Split(EditChoiceList.NewLineDelimiter, StringSplitOptions.None));
+            List<string> uniqueChoices = this.Choices.Distinct().ToList();
+            this.OkButton.IsEnabled = this.Choices.Count > 0 && (this.Choices.Count == uniqueChoices.Count);
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

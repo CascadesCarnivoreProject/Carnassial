@@ -30,9 +30,7 @@ namespace Carnassial.Database
                 // add a control here to prevent it from appearing in CustomFilter
                 // folder is usually the same for all files in the image set and not useful for filtering
                 // date and time are redundant with DateTime
-                if (controlType == Constants.DatabaseColumn.Date ||
-                    controlType == Constants.DatabaseColumn.Folder ||
-                    controlType == Constants.DatabaseColumn.Time) 
+                if (controlType == Constants.DatabaseColumn.Folder) 
                 {
                     continue;
                 }
@@ -70,7 +68,7 @@ namespace Carnassial.Database
                 searchTerm.DataLabel = control.DataLabel;
                 searchTerm.Operator = termOperator;
                 searchTerm.DatabaseValue = defaultDatabaseValue;
-                searchTerm.List = control.List;
+                searchTerm.List = control.GetChoices();
                 this.SearchTerms.Add(searchTerm);
             }
         }

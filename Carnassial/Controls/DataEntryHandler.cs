@@ -60,8 +60,7 @@ namespace Carnassial.Controls
                 return;
             }
 
-            TimeZoneInfo imageSetTimeZone = this.ImageDatabase.ImageSet.GetTimeZone();
-            string valueToCopy = this.ImageCache.Current.GetValueDisplayString(dataLabel, imageSetTimeZone);
+            string valueToCopy = this.ImageCache.Current.GetValueDisplayString(dataLabel);
             if (this.ConfirmCopyForward(valueToCopy, imagesAffected, checkForZero) != true)
             {
                 return;
@@ -106,7 +105,6 @@ namespace Carnassial.Controls
                 }
             }
 
-            TimeZoneInfo imageSetTimeZone = this.ImageDatabase.ImageSet.GetTimeZone();
             if (indexToCopyFrom < 0)
             {
                 // Nothing to propagate. Note that we shouldn't see this, as the menu item should be deactivated if this is the case.
@@ -115,13 +113,13 @@ namespace Carnassial.Controls
                 messageBox.Message.Icon = MessageBoxImage.Exclamation;
                 messageBox.Message.Reason = "None of the earlier files have anything in this field, so there are no values to propagate.";
                 messageBox.ShowDialog();
-                return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow].GetValueDisplayString(control.DataLabel, imageSetTimeZone); // No change, so return the current value
+                return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow].GetValueDisplayString(control.DataLabel); // No change, so return the current value
             }
 
             int imagesAffected = this.ImageCache.CurrentRow - indexToCopyFrom;
             if (this.ConfirmPropagateFromLastValue(valueToCopy, imagesAffected) != true)
             {
-                return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow].GetValueDisplayString(control.DataLabel, imageSetTimeZone); // No change, so return the current value
+                return this.ImageDatabase.ImageDataTable[this.ImageCache.CurrentRow].GetValueDisplayString(control.DataLabel); // No change, so return the current value
             }
 
             // Update. Note that we start on the next row, as we are copying from the current row.
@@ -134,8 +132,7 @@ namespace Carnassial.Controls
         {
             bool checkForZero = control is DataEntryCounter;
             int imagesAffected = this.ImageDatabase.CurrentlySelectedImageCount;
-            TimeZoneInfo imageSetTimeZone = this.ImageDatabase.ImageSet.GetTimeZone();
-            string displayValueToCopy = this.ImageCache.Current.GetValueDisplayString(control.DataLabel, imageSetTimeZone);
+            string displayValueToCopy = this.ImageCache.Current.GetValueDisplayString(control.DataLabel);
             if (this.ConfirmCopyCurrentValueToAll(displayValueToCopy, imagesAffected, checkForZero) != true)
             {
                 return;
@@ -169,7 +166,7 @@ namespace Carnassial.Controls
 
         public bool IsCopyForwardPossible(DataEntryControl control)
         {
-            if (this.ImageCache.Current == null)
+            if (this.ImageCache.Current == null || control.Copyable == false)
             {
                 return false;
             }
@@ -217,11 +214,9 @@ namespace Carnassial.Controls
                 switch (controlType)
                 {
                     case Constants.Control.Note:
-                    case Constants.DatabaseColumn.Date:
                     case Constants.DatabaseColumn.File:
                     case Constants.DatabaseColumn.Folder:
                     case Constants.DatabaseColumn.RelativePath:
-                    case Constants.DatabaseColumn.Time:
                         DataEntryNote note = (DataEntryNote)pair.Value;
                         note.ContentControl.TextChanged += this.NoteControl_TextChanged;
                         if (controlType == Constants.Control.Note)
@@ -434,17 +429,6 @@ namespace Carnassial.Controls
             this.ImageCache.Current.SetDateAndTime(dateTimePicker.Value.Value);
             List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
             this.ImageDatabase.UpdateImages(imageToUpdate);
-
-            // update date and time controls if they're displayed
-            DataEntryDateTime control = (DataEntryDateTime)dateTimePicker.Tag;
-            if (control.DateControl != null)
-            {
-                control.DateControl.Content = this.ImageCache.Current.Date;
-            }
-            if (control.TimeControl != null)
-            {
-                control.TimeControl.Content = this.ImageCache.Current.Time;
-            }
         }
 
         // Whenever the checked state in a Flag  changes, update the particular choice field in the database
@@ -593,12 +577,7 @@ namespace Carnassial.Controls
             }
             DataEntryControl control = (DataEntryControl)utcOffsetPicker.Tag;
 
-            DateTimeOffset currentImageDateTime;
-            TimeZoneInfo imageSetDateTime = this.ImageDatabase.ImageSet.GetTimeZone();
-            if (this.ImageCache.Current.TryGetDateTime(imageSetDateTime, out currentImageDateTime) == false)
-            {
-                return;
-            }
+            DateTimeOffset currentImageDateTime = this.ImageCache.Current.GetDateTime();
             DateTimeOffset newImageDateTime = currentImageDateTime.SetOffset(utcOffsetPicker.Value.Value);
             this.ImageCache.Current.SetDateAndTime(newImageDateTime);
             List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };

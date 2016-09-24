@@ -28,9 +28,7 @@ namespace Carnassial.Editor
 
         // state tracking
         private EditorControls controls;
-        private bool generateControlsAndSpreadsheet;
-        private bool rowsActionsOn;
-        private bool tabWasPressed; // to make tab trigger row update.
+        private bool dataGridBeingUpdatedByCode;
         private EditorUserRegistrySettings userSettings;
 
         // These variables support the drag/drop of controls
@@ -57,9 +55,7 @@ namespace Carnassial.Editor
 
             this.controls = new EditorControls();
             this.dummyMouseDragSource = new UIElement();
-            this.generateControlsAndSpreadsheet = true;
-            this.rowsActionsOn = false;
-            this.tabWasPressed = false;
+            this.dataGridBeingUpdatedByCode = false;
 
             this.ShowAllColumnsMenuItem_Click(this.ShowAllColumns, null);
 
@@ -179,30 +175,15 @@ namespace Carnassial.Editor
                 return;
             }
 
+            Visibility visibility = mi.IsChecked ? Visibility.Visible : Visibility.Collapsed;
+
             foreach (DataGridColumn column in this.TemplateDataGrid.Columns)
             {
-                if (!mi.IsChecked &&
-                    (column.Header.Equals(EditorConstant.Control.ID) || column.Header.Equals(EditorConstant.Control.ControlOrder) || column.Header.Equals(EditorConstant.Control.SpreadsheetOrder)))
+                if (column.Header.Equals(EditorConstant.ColumnHeader.ID) || 
+                    column.Header.Equals(EditorConstant.ColumnHeader.ControlOrder) || 
+                    column.Header.Equals(EditorConstant.ColumnHeader.SpreadsheetOrder))
                 {
-                    column.MinWidth = 0;
-                    column.Width = new DataGridLength(0);
-                }
-                else
-                {
-                    column.MinWidth = 90;
-                    if (column.Header.Equals(Constants.Control.Visible) || column.Header.Equals(Constants.Control.Copyable) || column.Header.Equals(EditorConstant.Control.Width))
-                    {
-                        column.MinWidth = 65;
-                    }
-
-                    if (column.Header.Equals(Constants.Control.Tooltip))
-                    {
-                        column.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
-                    }
-                    else
-                    {
-                        column.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
-                    }
+                    column.Visibility = visibility;
                 }
             }
         }
@@ -230,14 +211,7 @@ namespace Carnassial.Editor
         /// <param name="templateDatabaseFilePath">The path of the DB file created or loaded</param>
         private void InitializeDataGrid(string templateDatabaseFilePath)
         {
-            // Create a new DB file if one does not exist, or load a DB file if there is one.
-            this.templateDatabase = TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
-
-            // Have the window title include the database file name
-            this.OnlyWindow.Title = EditorConstant.MainWindowBaseTitle + " | File: " + Path.GetFileName(this.templateDatabase.FilePath);
-
-            // Map the data tableto the data grid, and create a callback executed whenever the datatable row changes
-            this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateTable_RowChanged);
+            this.ReinitializeDataGrid(templateDatabaseFilePath);
 
             // Now that there is a data table, enable the buttons that allows rows to be added.
             this.AddCounterButton.IsEnabled = true;
@@ -245,15 +219,8 @@ namespace Carnassial.Editor
             this.AddNoteButton.IsEnabled = true;
             this.AddFlagButton.IsEnabled = true;
 
-            // Update the user interface specified by the contents of the table
-            // Change the help text message
-            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
-            this.GenerateSpreadsheet();
-            this.InitializeUI();
-
             // update state
-            // unlike Carnassial, editor processes are currently 1:1 with opened template files
-            // so disable the recent templates list rather than call this.MenuItemRecentTemplates_Refresh
+            // disable the recent templates list rather than call this.MenuItemRecentTemplates_Refresh
             this.userSettings.MostRecentTemplates.SetMostRecent(templateDatabaseFilePath);
             this.MenuItemRecentTemplates.IsEnabled = false;
         }
@@ -275,16 +242,16 @@ namespace Carnassial.Editor
 
         // Reload a database into the grid. We do this as part of the convert, where we create the database, but then have to reinitialize the datagrid if we want to see the results.
         // So this is actually a reduced form of INitializeDataGrid
-        private void ReInitializeDataGrid(string templateDatabaseFilePath)
+        private void ReinitializeDataGrid(string templateDatabaseFilePath)
         {
             // Create a new DB file if one does not exist, or load a DB file if there is one.
             this.templateDatabase = TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
 
             // Have the window title include the database file name
-            this.OnlyWindow.Title = EditorConstant.MainWindowBaseTitle + " | File: " + Path.GetFileName(this.templateDatabase.FilePath);
+            this.OnlyWindow.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
 
             // Map the data table to the data grid, and create a callback executed whenever the datatable row changes
-            this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateTable_RowChanged);
+            this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateDataTable_RowChanged);
 
             // Update the user interface specified by the contents of the table
             this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
@@ -297,29 +264,28 @@ namespace Carnassial.Editor
         /// </summary>
         private void SyncControlToDatabase(ControlRow control)
         {
+            this.dataGridBeingUpdatedByCode = true;
+
             this.templateDatabase.SyncControlToDatabase(control);
-            if (this.generateControlsAndSpreadsheet)
-            {
-                this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
-                this.GenerateSpreadsheet();
-            }
+            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.GenerateSpreadsheet();
+
+            this.dataGridBeingUpdatedByCode = false;
         }
 
         /// <summary>
         /// Whenever a row changes save the database, which also updates the grid colors.
         /// </summary>
-        private void TemplateTable_RowChanged(object sender, DataRowChangeEventArgs e)
+        private void TemplateDataTable_RowChanged(object sender, DataRowChangeEventArgs e)
         {
-            if (!this.rowsActionsOn)
+            if (!this.dataGridBeingUpdatedByCode)
             {
                 this.SyncControlToDatabase(new ControlRow(e.Row));
             }
-            DataGridRow selectedRow = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.SelectedIndex);
         }
 
         /// <summary>
-        /// Logic to enable/disable editing buttons depending on there being a row selection
-        /// Also sets the text for the remove row button.
+        /// enable or disable the remove control button as appropriate
         /// </summary>
         private void TemplateDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -327,21 +293,11 @@ namespace Carnassial.Editor
             if (selectedRowView == null)
             {
                 this.RemoveControlButton.IsEnabled = false;
-                this.RemoveControlButton.Content = "Remove";
                 return;
             }
 
             ControlRow control = new ControlRow(selectedRowView.Row);
-            if (Constants.Control.StandardTypes.Contains(control.Type))
-            {
-                this.RemoveControlButton.IsEnabled = false;
-                this.RemoveControlButton.Content = "Item cannot" + Environment.NewLine + "be removed";
-            }
-            else
-            {
-                this.RemoveControlButton.IsEnabled = true;
-                this.RemoveControlButton.Content = "Remove";
-            }
+            this.RemoveControlButton.IsEnabled = !Constants.Control.StandardTypes.Contains(control.Type);
         }
 
         /// <summary>
@@ -352,13 +308,18 @@ namespace Carnassial.Editor
         {
             Button button = sender as Button;
             string controlType = button.Tag.ToString();
-            this.templateDatabase.AddUserDefinedControl(controlType);
 
+            this.dataGridBeingUpdatedByCode = true;
+
+            this.templateDatabase.AddUserDefinedControl(controlType);
             this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
+
             this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
             this.OnControlOrderChanged();
+
+            this.dataGridBeingUpdatedByCode = false;
         }
 
         /// <summary>
@@ -381,14 +342,14 @@ namespace Carnassial.Editor
                 return;
             }
 
-            this.rowsActionsOn = true;
+            this.dataGridBeingUpdatedByCode = true;
             this.templateDatabase.RemoveUserDefinedControl(new ControlRow(selectedRowView.Row));
 
             // update the control panel so it reflects the current values in the database
             this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
 
-            this.rowsActionsOn = false;
+            this.dataGridBeingUpdatedByCode = false;
         }
 
         // When the  choice list button is clicked, raise a dialog box that lets the user edit the list of choices
@@ -400,47 +361,28 @@ namespace Carnassial.Editor
             // So we have to search through the rows to find the one with the correct control order
             // and retrieve / set the ItemList menu in that row.
             ControlRow choiceControl = this.templateDatabase.TemplateTable.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
+            Debug.Assert(choiceControl != null, String.Format("Control named {0} not found.", button.Tag));
 
-            // a control should be found but, just in case...
-            string choiceList = String.Empty;
-            if (choiceControl != null)
-            {
-                choiceList = choiceControl.List;
-            }
-
-            choiceList = Utilities.ConvertBarsToLineBreaks(choiceList);
-            EditChoiceList choiceListDialog = new EditChoiceList(button, choiceList, this);
+            EditChoiceList choiceListDialog = new EditChoiceList(button, choiceControl.GetChoices(), this);
             bool? result = choiceListDialog.ShowDialog();
             if (result == true)
             {
-                if (choiceControl != null)
+                // until such time as specifying a default choice is forced the default value column for a choice will typically be null
+                // Without explicit inclusion of DBNull/null/String.Empty in the choice list this causes .csv import errors if a choice hasn't been selected as the
+                // default is, correctly, not seen as a valid option for the choice.  As a workaround, ensure the choice list includes empty.
+                if ((choiceListDialog.Choices.Contains(String.Empty) == false) && (choiceListDialog.Choices.Contains(null) == false))
                 {
-                    choiceControl.List = Utilities.ConvertLineBreaksToBars(choiceListDialog.Choices);
-                    this.templateDatabase.SyncControlToDatabase(choiceControl);
+                    choiceListDialog.Choices.Add(String.Empty);
                 }
-                else
-                {
-                    // choiceControl should never be null, so shouldn't get here. But just in case this does happen, 
-                    // I am setting the itemList to be the one in the ControlOrder row. This was the original buggy version that didn't work, but what the heck.
-                    this.templateDatabase.TemplateTable[Convert.ToInt32(button.Tag) - 1].List = Utilities.ConvertLineBreaksToBars(choiceListDialog.Choices);
-                }
+
+                choiceControl.SetChoices(choiceListDialog.Choices);
+                this.SyncControlToDatabase(choiceControl);
             }
         }
 
-        /// <summary>
-        /// Informs application tab was used, which allows it to more quickly visualize the grid values in the preview.
-        /// Tab does not normal raise the row edited listener, which we are using to do the update.
-        /// Note that by setting the e.handled to true, we ignore the tab navigation (as this was introducing problems)
-        /// We also disallow spaces
-        /// </summary>
         private void TemplateDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Tab)
-            {
-                this.tabWasPressed = true;
-                e.Handled = true;
-            }
-            if (this.TemplateDataGrid.CurrentColumn.Header.Equals(EditorConstant.Control.DataLabel))
+            if (this.TemplateDataGrid.CurrentColumn.Header.Equals(EditorConstant.ColumnHeader.DataLabel))
             {
                 // No space allowed in a data label.
                 // The PreviewTextInput below will check for all other characters.
@@ -452,77 +394,68 @@ namespace Carnassial.Editor
             }
         }
 
-        // Accept only numbers in counters, and t/f in flags
-        // This could probably be done way simpler
         private void TemplateDataGrid_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            if (this.TemplateDataGrid.SelectedIndex != -1)
+            DataGridCell currentCell;
+            DataGridRow currentRow;
+            if ((this.TryGetCurrentCell(out currentCell, out currentRow) == false) || currentCell.Background.Equals(EditorConstant.NotEditableCellColor))
             {
-                // this is how you can get an actual cell.
-                DataGridRow selectedRow = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.SelectedIndex);
-                DataGridCellsPresenter presenter = GetVisualChild<DataGridCellsPresenter>(selectedRow);
-                if (this.TemplateDataGrid.CurrentColumn != null)
-                {
-                    DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.CurrentColumn.DisplayIndex);
+                e.Handled = true;
+                return;
+            }
 
-                    // We only do something if its an editable row and if we are in the Default Value column
-                    if (cell.Background.Equals(EditorConstant.NotEditableCellColor))
+            switch ((string)this.TemplateDataGrid.CurrentColumn.Header)
+            {
+                // EditorConstant.Control.ControlOrder is not editable
+                case EditorConstant.ColumnHeader.DataLabel:
+                    // Only allow alphanumeric and '_' in data labels
+                    if ((!this.IsAllValidAlphaNumericChars(e.Text)) && !e.Text.Equals("_"))
                     {
+                        this.ShowDataLabelRequirementsDialog();
                         e.Handled = true;
-                        return;
                     }
-                    if (!cell.Background.Equals(EditorConstant.NotEditableCellColor))
+                    break;
+                case EditorConstant.ColumnHeader.DefaultValue:
+                    ControlRow control = new ControlRow((currentRow.Item as DataRowView).Row);
+                    switch (control.Type)
                     {
-                        if (this.TemplateDataGrid.CurrentColumn.Header.Equals(EditorConstant.Control.DataLabel))
-                        {
-                            // Only allow alphanumeric and '_' in data labels
-                            if ((!this.IsAllValidAlphaNumericChars(e.Text)) && !e.Text.Equals("_"))
+                        case Constants.Control.Counter:
+                            e.Handled = !Utilities.IsDigits(e.Text);
+                            break;
+                        case Constants.Control.Flag:
+                            // Only allow t/f and translate to true/false
+                            if (e.Text == "t" || e.Text == "T")
                             {
-                                this.ShowDataLabelRequirementsDialog();
-                                e.Handled = true;
+                                control.DefaultValue = Constants.Boolean.True;
+                                this.SyncControlToDatabase(control);
                             }
-                        }
-                        else if (this.TemplateDataGrid.CurrentColumn.Header.Equals(EditorConstant.Control.DefaultValue))
-                        {
-                            ControlRow control = new ControlRow((selectedRow.Item as DataRowView).Row);
-                            if (control.Type == Constants.Control.Counter)
+                            else if (e.Text == "f" || e.Text == "F")
                             {
-                                // Its a counter. Only allow numbers
-                                e.Handled = !this.IsAllValidNumericChars(e.Text);
+                                control.DefaultValue = Constants.Boolean.False;
+                                this.SyncControlToDatabase(control);
                             }
-                            else if (control.Type == Constants.Control.Flag)
-                            {
-                                // Its a flag. Only allow t/f and translate that to true / false
-                                DataRowView dataRow = (DataRowView)this.TemplateDataGrid.SelectedItem;
-                                int index = this.TemplateDataGrid.CurrentCell.Column.DisplayIndex;
-                                if (e.Text == "t" || e.Text == "T")
-                                {
-                                    dataRow.Row[index] = Constants.Boolean.True;
-                                    this.SyncControlToDatabase(new ControlRow(dataRow.Row));
-                                }
-                                else if (e.Text == "f" || e.Text == "F")
-                                {
-                                    dataRow.Row[index] = Constants.Boolean.False;
-                                    this.SyncControlToDatabase(new ControlRow(dataRow.Row));
-                                }
-                                e.Handled = true;
-                            }
-                        }
+                            e.Handled = true;
+                            break;
+                        case Constants.Control.FixedChoice:
+                            // no restrictions for now
+                            // the default value should be limited to one of the choices defined, however
+                            break;
+                        default:
+                            // no restrictions on note controls
+                            break;
                     }
-                }
+                    break;
+                // EditorConstant.Control.ID is not editable
+                // EditorConstant.Control.SpreadsheetOrder is not editable
+                // Type is not editable
+                case EditorConstant.ColumnHeader.Width:
+                    // only allow digits in widths as they must be parseable as integers
+                    e.Handled = !Utilities.IsDigits(e.Text);
+                    break;
+                default:
+                    // no restrictions on copyable, label, tooltip, or visibile columns
+                    break;
             }
-        }
-
-        private bool IsAllValidNumericChars(string str)
-        {
-            foreach (char c in str)
-            {
-                if (!Char.IsNumber(c))
-                {
-                    return false;
-                }
-            }
-            return true;
         }
 
         private bool IsAllValidAlphaNumericChars(string str)
@@ -542,161 +475,58 @@ namespace Carnassial.Editor
         /// Another method re-enables the cell immediately afterwards.
         /// The reason for this implementation is because disabled cells cannot be single clicked, which is needed for row actions.
         /// </summary>
-        private void NewTemplateDataGrid_BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
+        private void TemplateDataGrid_BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
         {
-            if (this.TemplateDataGrid.SelectedIndex != -1)
-            {
-                // this is how you can get an actual cell.
-                DataGridRow row = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.SelectedIndex);
-                DataGridCellsPresenter presenter = GetVisualChild<DataGridCellsPresenter>(row);
-                if (this.TemplateDataGrid.CurrentColumn != null)
-                {
-                    DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.CurrentColumn.DisplayIndex);
-
-                    if (cell.Background.Equals(EditorConstant.NotEditableCellColor))
-                    {
-                        cell.IsEnabled = false;
-                        this.TemplateDataGrid.CancelEdit();
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// After cell editing ends (prematurely or no), the cell is enabled.
-        /// See TemplateDataGrid_BeginningEdit for full explanation.
-        /// </summary>
-        private void TemplateDataGrid_CurrentCellChanged(object sender, EventArgs e)
-        {
-            if (this.TemplateDataGrid.SelectedIndex != -1)
-            {
-                // this is how you can get an actual cell.
-                DataGridRow row = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.SelectedIndex);
-                DataGridCellsPresenter presenter = GetVisualChild<DataGridCellsPresenter>(row);
-                if (this.TemplateDataGrid.CurrentColumn != null)
-                {
-                    DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.CurrentColumn.DisplayIndex);
-                    cell.IsEnabled = true;
-                }
-            }
-            if (this.tabWasPressed)
-            {
-                this.tabWasPressed = false;
-                DataRowView selectedRowView = this.TemplateDataGrid.SelectedItem as DataRowView; // current cell
-                if (selectedRowView.Row != null)
-                { 
-                    this.SyncControlToDatabase(new ControlRow(selectedRowView.Row));
-                }
-            }
-        }
-
-        // Check to see if the data label entered is a reserved word or if its a non-unique label
-        private void NewTemplateDataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
-        {
-            // If the edited cell is not in the Data Label column, then just exit.
-            if (!e.Column.Header.Equals(EditorConstant.Control.DataLabel))
+            DataGridCell currentCell;
+            DataGridRow currentRow;
+            if (this.TryGetCurrentCell(out currentCell, out currentRow) == false)
             {
                 return;
             }
 
-            TextBox textBox = e.EditingElement as TextBox;
-            string dataLabel = textBox.Text;
-
-            // Check to see if the data label is empty. If it is, generate a unique data label and warn the user
-            if (String.IsNullOrWhiteSpace(dataLabel))
+            if (currentCell.Background.Equals(EditorConstant.NotEditableCellColor))
             {
-                MessageBox messageBox = new MessageBox("Data Labels cannot be empty", this);
-                messageBox.Message.Icon = MessageBoxImage.Warning;
-                messageBox.Message.Problem = "Data Labels cannot be empty. They must begin with a letter, followed only by letters, numbers, and '_'.";
-                messageBox.Message.Result = "We will automatically create a uniquely named Data Label for you.";
-                messageBox.Message.Hint = "You can create your own name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                messageBox.ShowDialog();
-                textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
-            }
-
-            // Check to see if the data label is unique. If not, generate a unique data label and warn the user
-            for (int row = 0; row < this.templateDatabase.TemplateTable.RowCount; row++)
-            {
-                ControlRow control = this.templateDatabase.TemplateTable[row];
-                if (dataLabel.Equals(control.DataLabel))
-                {
-                    if (this.TemplateDataGrid.SelectedIndex == row)
-                    {
-                        continue; // Its the same row, so its the same key, so skip it
-                    }
-
-                    MessageBox messageBox = new MessageBox("Data Labels must be unique", this);
-                    messageBox.Message.Icon = MessageBoxImage.Warning;
-                    messageBox.Message.Problem = "'" + textBox.Text + "' is not a valid Data Label, as you have already used it in another row.";
-                    messageBox.Message.Result = "We will automatically create a unique Data Label for you by adding a number to its end.";
-                    messageBox.Message.Hint = "You can create your own unique name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                    messageBox.ShowDialog();
-                    textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
-                    break;
-                }
-            }
-
-            // Check to see if the label (if its not empty, which it shouldn't be) has any illegal characters.
-            // Note that most of this is redundant, as we have already checked for illegal characters as they are typed. However,
-            // we have not checked to see if the first letter is alphabetic.
-            if (dataLabel.Length > 0)
-            {
-                Regex alphanumdash = new Regex("^[a-zA-Z0-9_]*$");
-                Regex alpha = new Regex("^[a-zA-Z]*$");
-
-                string firstCharacter = dataLabel[0].ToString();
-
-                if (!(alpha.IsMatch(firstCharacter) && alphanumdash.IsMatch(dataLabel)))
-                {
-                    string replacementDataLabel = dataLabel;
-
-                    if (!alpha.IsMatch(firstCharacter))
-                    {
-                        replacementDataLabel = "X" + replacementDataLabel.Substring(1);
-                    }
-                    replacementDataLabel = Regex.Replace(replacementDataLabel, @"[^A-Za-z0-9_]+", "X");
-
-                    MessageBox messageBox = new MessageBox("'" + textBox.Text + "' is not a valid data label.", this);
-                    messageBox.Message.Icon = MessageBoxImage.Warning;
-                    messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
-                    messageBox.Message.Result = "We replaced all dissallowed characters with an 'X': " + replacementDataLabel;
-                    messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                    messageBox.ShowDialog();
-
-                    textBox.Text = replacementDataLabel;
-                }
-            }
-
-            // Check to see if its a reserved word
-            foreach (string sqlKeyword in EditorConstant.ReservedSqlKeywords)
-            {
-                if (String.Equals(sqlKeyword, dataLabel, StringComparison.OrdinalIgnoreCase))
-                {
-                    MessageBox messageBox = new MessageBox("'" + textBox.Text + "' is not a valid data label.", this);
-                    messageBox.Message.Icon = MessageBoxImage.Warning;
-                    messageBox.Message.Problem = "Data labels cannot match the reserved words.";
-                    messageBox.Message.Result = "We will add an '_' suffix to this Data Label to make it differ from the reserved word";
-                    messageBox.Message.Hint = "Avoid the reserved words listed below. Start your label with a letter. Then use any combination of letters, numbers, and '_'." + Environment.NewLine;
-                    foreach (string keyword in EditorConstant.ReservedSqlKeywords)
-                    {
-                        messageBox.Message.Hint += keyword + " ";
-                    }
-                    messageBox.ShowDialog();
-
-                    textBox.Text += "_";
-                    break;
-                }
+                currentCell.IsEnabled = false;
+                this.TemplateDataGrid.CancelEdit();
             }
         }
 
         /// <summary>
-        /// Greys out cells as defined by logic. 
-        /// This is to visually show the user uneditable cells, and informs events about whether a cell can be edited.
-        /// This is called after row are added/moved/deleted to update the colors. 
-        /// This also disables checkboxes that cannot be edited. Disabling checkboxes does not effect row interactions.
+        /// After cell editing ends (prematurely or no), re-enable disabled cells.
+        /// See TemplateDataGrid_BeginningEdit for full explanation.
         /// </summary>
-        private void UpdateCellColors()
+        private void TemplateDataGrid_CurrentCellChanged(object sender, EventArgs e)
         {
+            DataGridCell currentCell;
+            DataGridRow currentRow;
+            if (this.TryGetCurrentCell(out currentCell, out currentRow) == false)
+            {
+                return;
+            }
+
+            if (currentCell.Background.Equals(EditorConstant.NotEditableCellColor))
+            {
+                currentCell.IsEnabled = true;
+            }
+        }
+
+        private void TemplateDataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+            if (e.Column.Header.Equals(EditorConstant.ColumnHeader.DataLabel))
+            {
+                this.ValidateDataLabel(e);
+            }
+        }
+
+        /// <summary>
+        /// Updates colors when the Layout changes.
+        /// </summary>
+        private void TemplateDataGrid_LayoutUpdated(object sender, EventArgs e)
+        {
+            // Greys out cells as defined by logic. 
+            // This is to show the user uneditable cells, and informs events about whether a cell can be edited.
+            // This is called after row are added/moved/deleted to update the colors. 
+            // This also disables checkboxes which cannot be edited. Disabling checkboxes does not affect row interactions.
             for (int rowIndex = 0; rowIndex < this.TemplateDataGrid.Items.Count; rowIndex++)
             {
                 // In order for ItemContainerGenerator to work, we need to set the TemplateGrid in the XAML to VirtualizingStackPanel.IsVirtualizing="False"
@@ -715,14 +545,20 @@ namespace Carnassial.Editor
                 for (int column = 0; column < this.TemplateDataGrid.Columns.Count; column++)
                 {
                     DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
+                    if (cell == null)
+                    {
+                        // cell will be null for columns with Visibility = Hidden
+                        continue;
+                    }
+
                     ControlRow control = new ControlRow(((DataRowView)this.TemplateDataGrid.Items[rowIndex]).Row);
                     string controlType = control.Type;
 
                     string columnHeader = (string)this.TemplateDataGrid.Columns[column].Header;
-                    if ((columnHeader == Constants.Control.Label) || 
+                    if ((columnHeader == Constants.Control.Label) ||
                         (columnHeader == Constants.Control.Tooltip) ||
                         (columnHeader == Constants.Control.Visible) ||
-                        (columnHeader == EditorConstant.Control.Width))
+                        (columnHeader == EditorConstant.ColumnHeader.Width))
                     {
                         continue;
                     }
@@ -730,21 +566,19 @@ namespace Carnassial.Editor
                     // The following attributes should NOT be editable.
                     ContentPresenter cellContent = cell.Content as ContentPresenter;
                     string sortMemberPath = this.TemplateDataGrid.Columns[column].SortMemberPath;
-                    if (String.Equals(sortMemberPath, Constants.DatabaseColumn.ID, StringComparison.OrdinalIgnoreCase)  ||
+                    if (String.Equals(sortMemberPath, Constants.DatabaseColumn.ID, StringComparison.OrdinalIgnoreCase) ||
                         String.Equals(sortMemberPath, Constants.Control.ControlOrder, StringComparison.OrdinalIgnoreCase) ||
                         String.Equals(sortMemberPath, Constants.Control.SpreadsheetOrder, StringComparison.OrdinalIgnoreCase) ||
                         String.Equals(sortMemberPath, Constants.Control.Type, StringComparison.OrdinalIgnoreCase) ||
-                        (controlType == Constants.DatabaseColumn.Date) ||
                         (controlType == Constants.DatabaseColumn.DateTime) ||
                         (controlType == Constants.DatabaseColumn.DeleteFlag) ||
                         (controlType == Constants.DatabaseColumn.File) ||
                         (controlType == Constants.DatabaseColumn.Folder) ||
                         ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.Copyable)) ||
-                        ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == EditorConstant.Control.DataLabel)) ||
+                        ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == EditorConstant.ColumnHeader.DataLabel)) ||
                         ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.List)) ||
                         ((controlType == Constants.DatabaseColumn.ImageQuality) && (sortMemberPath == Constants.Control.DefaultValue)) ||
                         (controlType == Constants.DatabaseColumn.RelativePath) ||
-                        (controlType == Constants.DatabaseColumn.Time) ||
                         (controlType == Constants.DatabaseColumn.UtcOffset) ||
                         ((controlType == Constants.Control.Counter) && (columnHeader == Constants.Control.List)) ||
                         ((controlType == Constants.Control.Flag) && (columnHeader == Constants.Control.List)) ||
@@ -783,14 +617,6 @@ namespace Carnassial.Editor
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Updates colors when the Layout changes.
-        /// </summary>
-        private void TemplateDataGrid_LayoutUpdated(object sender, EventArgs e)
-        {
-            this.UpdateCellColors();
         }
 
         /// <summary>
@@ -1032,6 +858,21 @@ namespace Carnassial.Editor
             Utilities.OnHelpDocumentPreviewDrag(dragEvent);
         }
 
+        private bool TryGetCurrentCell(out DataGridCell currentCell, out DataGridRow currentRow)
+        {
+            if ((this.TemplateDataGrid.SelectedIndex == -1) || (this.TemplateDataGrid.CurrentColumn == null))
+            {
+                currentCell = null;
+                currentRow = null;
+                return false;
+            }
+
+            currentRow = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.SelectedIndex);
+            DataGridCellsPresenter presenter = EditorWindow.GetVisualChild<DataGridCellsPresenter>(currentRow);
+            currentCell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.CurrentColumn.DisplayIndex);
+            return currentCell != null;
+        }
+
         /// <summary>
         /// Helper method that creates a database backup. Used when performing file menu options.
         /// </summary>
@@ -1043,6 +884,99 @@ namespace Carnassial.Editor
             }
 
             return FileBackup.TryCreateBackups(Path.GetDirectoryName(this.templateDatabase.FilePath), Path.GetFileName(this.templateDatabase.FilePath));
+        }
+
+        private void ValidateDataLabel(DataGridCellEditEndingEventArgs e)
+        {
+            // Check to see if the data label entered is a reserved word or if its a non-unique label
+            TextBox textBox = e.EditingElement as TextBox;
+            string dataLabel = textBox.Text;
+
+            // Check to see if the data label is empty. If it is, generate a unique data label and warn the user
+            if (String.IsNullOrWhiteSpace(dataLabel))
+            {
+                MessageBox messageBox = new MessageBox("Data Labels cannot be empty", this);
+                messageBox.Message.Icon = MessageBoxImage.Warning;
+                messageBox.Message.Problem = "Data Labels cannot be empty. They must begin with a letter, followed only by letters, numbers, and '_'.";
+                messageBox.Message.Result = "We will automatically create a uniquely named Data Label for you.";
+                messageBox.Message.Hint = "You can create your own name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
+                messageBox.ShowDialog();
+                textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
+            }
+
+            // Check to see if the data label is unique. If not, generate a unique data label and warn the user
+            for (int row = 0; row < this.templateDatabase.TemplateTable.RowCount; row++)
+            {
+                ControlRow control = this.templateDatabase.TemplateTable[row];
+                if (dataLabel.Equals(control.DataLabel))
+                {
+                    if (this.TemplateDataGrid.SelectedIndex == row)
+                    {
+                        continue; // Its the same row, so its the same key, so skip it
+                    }
+
+                    MessageBox messageBox = new MessageBox("Data Labels must be unique", this);
+                    messageBox.Message.Icon = MessageBoxImage.Warning;
+                    messageBox.Message.Problem = "'" + textBox.Text + "' is not a valid Data Label, as you have already used it in another row.";
+                    messageBox.Message.Result = "We will automatically create a unique Data Label for you by adding a number to its end.";
+                    messageBox.Message.Hint = "You can create your own unique name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
+                    messageBox.ShowDialog();
+                    textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
+                    break;
+                }
+            }
+
+            // Check to see if the label (if its not empty, which it shouldn't be) has any illegal characters.
+            // Note that most of this is redundant, as we have already checked for illegal characters as they are typed. However,
+            // we have not checked to see if the first letter is alphabetic.
+            if (dataLabel.Length > 0)
+            {
+                Regex alphanumdash = new Regex("^[a-zA-Z0-9_]*$");
+                Regex alpha = new Regex("^[a-zA-Z]*$");
+
+                string firstCharacter = dataLabel[0].ToString();
+
+                if (!(alpha.IsMatch(firstCharacter) && alphanumdash.IsMatch(dataLabel)))
+                {
+                    string replacementDataLabel = dataLabel;
+
+                    if (!alpha.IsMatch(firstCharacter))
+                    {
+                        replacementDataLabel = "X" + replacementDataLabel.Substring(1);
+                    }
+                    replacementDataLabel = Regex.Replace(replacementDataLabel, @"[^A-Za-z0-9_]+", "X");
+
+                    MessageBox messageBox = new MessageBox("'" + textBox.Text + "' is not a valid data label.", this);
+                    messageBox.Message.Icon = MessageBoxImage.Warning;
+                    messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
+                    messageBox.Message.Result = "We replaced all dissallowed characters with an 'X': " + replacementDataLabel;
+                    messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
+                    messageBox.ShowDialog();
+
+                    textBox.Text = replacementDataLabel;
+                }
+            }
+
+            // Check to see if its a reserved word
+            foreach (string sqlKeyword in EditorConstant.ReservedSqlKeywords)
+            {
+                if (String.Equals(sqlKeyword, dataLabel, StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox messageBox = new MessageBox("'" + textBox.Text + "' is not a valid data label.", this);
+                    messageBox.Message.Icon = MessageBoxImage.Warning;
+                    messageBox.Message.Problem = "Data labels cannot match the reserved words.";
+                    messageBox.Message.Result = "We will add an '_' suffix to this Data Label to make it differ from the reserved word";
+                    messageBox.Message.Hint = "Avoid the reserved words listed below. Start your label with a letter. Then use any combination of letters, numbers, and '_'." + Environment.NewLine;
+                    foreach (string keyword in EditorConstant.ReservedSqlKeywords)
+                    {
+                        messageBox.Message.Hint += keyword + " ";
+                    }
+                    messageBox.ShowDialog();
+
+                    textBox.Text += "_";
+                    break;
+                }
+            }
         }
     }
 }

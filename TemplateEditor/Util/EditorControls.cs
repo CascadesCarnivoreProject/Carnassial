@@ -32,11 +32,9 @@ namespace Carnassial.Editor.Util
                 switch (control.Type)
                 {
                     case Constants.Control.Note:
-                    case Constants.DatabaseColumn.Date:
                     case Constants.DatabaseColumn.File:
                     case Constants.DatabaseColumn.Folder:
                     case Constants.DatabaseColumn.RelativePath:
-                    case Constants.DatabaseColumn.Time:
                         Label noteLabel = this.CreateLabel(styleProvider, control);
                         TextBox noteContent = this.CreateTextBox(styleProvider, control);
                         stackPanel = this.CreateStackPanel(styleProvider, noteLabel, noteContent);
@@ -172,10 +170,9 @@ namespace Carnassial.Editor.Util
             ComboBox comboBox = new ComboBox();
             comboBox.ToolTip = control.Tooltip;
             comboBox.Width = control.TextBoxWidth;
-            List<string> result = control.List.Split(new char[] { '|' }).ToList();
-            foreach (string str in result)
+            foreach (string choice in control.GetChoices())
             {
-                comboBox.Items.Add(str.Trim());
+                comboBox.Items.Add(choice);
             }
             comboBox.SelectedIndex = 0;
 

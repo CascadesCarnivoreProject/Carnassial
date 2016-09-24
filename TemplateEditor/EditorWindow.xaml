@@ -179,8 +179,7 @@
             <ToolTip x:Key="ListFixedChoiceToolTip">
                 <TextBlock>A list of items displayed as a menu of choices. Type in new items; right click on an item to edit, move or delete it.</TextBlock>
             </ToolTip>
-            <local:ListBoxDBOutputConverter x:Key="listConverter" />
-            <local:CellTextBlockConverter x:Key="cellTBConverter" />
+            <local:CellTextBlockConverter x:Key="CellTextBlockConverter" />
             <Style  x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
                 <Setter Property="HorizontalAlignment" Value="Left"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -202,14 +201,14 @@
                 <Setter Property="Margin" Value="0,0,0,5" />
             </Style>
         </Grid.Resources>
-        
+
         <!-- Menus -->
         <DockPanel Name="mainUI">
             <Menu DockPanel.Dock="Top">
-                
+
                 <!-- File Menu -->
                 <MenuItem Name="FileMenu" Header="_File" >
-                    <MenuItem Name="NewFileMenuItem" Header="_New" Click="NewFileMenuItem_Click" ToolTip="Create a new data template file">
+                    <MenuItem Name="NewFileMenuItem" Header="_New..." Click="NewFileMenuItem_Click" ToolTip="Create a new data template file">
                         <MenuItem.Icon>
                             <Image Source="Images/NewFile_6276.png" />
                         </MenuItem.Icon>
@@ -228,21 +227,21 @@
                         </MenuItem.Icon>
                     </MenuItem>
                 </MenuItem>
-                
+
                 <!-- View Menu -->
                 <MenuItem Name="ViewMenu" Header="_View" IsEnabled="False">
-                    <MenuItem Name="ShowAllColumns"  IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="ShowAllColumnsMenuItem_Click" ToolTip="Show the ordering used when displaying controls and for CSV file columns">
+                    <MenuItem Name="ShowAllColumns" IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="ShowAllColumnsMenuItem_Click" ToolTip="Show the ordering used when displaying controls and for CSV file columns">
                     </MenuItem>
                     <MenuItem Name="MenuItemInspectImageMetadata" Header="Inspect file _metadata..." ToolTip="See what metadata is available in an image or video of your choosing" Click="MenuItemInspectImageMetadata_Click">
                     </MenuItem>
                 </MenuItem>
-                
+
                 <!-- Help Menu -->
                 <MenuItem Header="_Help" >
-                    <MenuItem Name="AboutMenuItem" Header="_About" Click="AboutMenuItem_Click" ToolTip="Displays version information about this program and how to contact its creator"/>
+                    <MenuItem Name="AboutMenuItem" Header="_About..." Click="AboutMenuItem_Click" ToolTip="Displays version information about this program and how to contact its creator"/>
                 </MenuItem>
             </Menu>
-            
+
             <TextBlock Name="HelpText" Visibility="Collapsed" Grid.Row="0" FontSize="16" Text="Use the File Menu to create or open a template, and to convert an old CodeTemplate.xml file to the new format." Margin =" 10" DockPanel.Dock="Top"/>
 
             <FlowDocumentScrollViewer Name="HelpDocument" AllowDrop="True" Drop="HelpDocument_Drop" PreviewDragEnter="HelpDocument_PreviewDrag" PreviewDragOver="HelpDocument_PreviewDrag">
@@ -375,29 +374,28 @@
                 <!-- If you change the visible rows or header names, please check UpdateCellColors() constants to ensure they match new conventions -->
                 <TextBlock Name="TextMessage1" Visibility=" Collapsed" Grid.Row="0" Text="Create a new template, read in an existing template, or convert and old XML template. Grey Boxes aren't editable"/>
 
-                <DataGrid MinHeight="250" VerticalAlignment="Top"  Name="TemplateDataGrid"  Visibility="Collapsed" PreviewKeyDown="TemplateDataGrid_PreviewKeyDown" PreviewTextInput="TemplateDataGrid_PreviewTextInput" Grid.Row="0" 
-                          BeginningEdit="NewTemplateDataGrid_BeginningEdit" RowHeight="25" LayoutUpdated="TemplateDataGrid_LayoutUpdated"  VirtualizingStackPanel.IsVirtualizing="False"
-                          SelectionChanged="TemplateDataGrid_SelectionChanged" SelectionMode="Single" CanUserReorderColumns="False" 
-                          CanUserAddRows="False" CanUserDeleteRows="False" AutoGenerateColumns="False" CurrentCellChanged="TemplateDataGrid_CurrentCellChanged" 
-                          ItemsSource="{Binding}" Margin="0,0,10,0" ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}" CellEditEnding="NewTemplateDataGrid_CellEditEnding" >
-                    <!-- DataContext="{Binding}" -->
-
+                <DataGrid Name="TemplateDataGrid" MinHeight="250" VerticalAlignment="Top" Grid.Row="0" RowHeight="25" Visibility="Collapsed" VirtualizingStackPanel.IsVirtualizing="False"
+                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" 
+                          BeginningEdit="TemplateDataGrid_BeginningEdit"
+                          CellEditEnding="TemplateDataGrid_CellEditEnding"
+                          CurrentCellChanged="TemplateDataGrid_CurrentCellChanged" 
+                          PreviewKeyDown="TemplateDataGrid_PreviewKeyDown" 
+                          PreviewTextInput="TemplateDataGrid_PreviewTextInput" 
+                          LayoutUpdated="TemplateDataGrid_LayoutUpdated"
+                          SelectionChanged="TemplateDataGrid_SelectionChanged" 
+                          ItemsSource="{Binding}" Margin="0,0,10,0" SelectionMode="Single"
+                          ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}">
                     <DataGrid.Resources>
                         <Style x:Key="VerticalGridHeaderStyle" TargetType="DataGridColumnHeader">
                             <Setter Property="VerticalContentAlignment" Value="Bottom"/>
                             <Setter Property="FontWeight" Value="Bold"/>
                         </Style>
-                        <Style x:Key="DataGridCheckBoxStyle" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                            <Setter Property="Margin" Value="8,0,3,0" />
-                        </Style>
-
                     </DataGrid.Resources>
-                    <DataGrid.Columns >
-                        <DataGridTextColumn Header="ID"   CanUserSort="False" IsReadOnly="True" Binding="{Binding Path=Id, Converter={StaticResource cellTBConverter}}" />
-                        <DataGridTextColumn Header="Control&#x0a;order" Binding="{Binding Path=ControlOrder, Converter={StaticResource cellTBConverter}}" CanUserSort="False" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Spreadsheet&#x0a;order" Binding="{Binding Path=SpreadsheetOrder, Converter={StaticResource cellTBConverter}}" CanUserSort="False" IsReadOnly="True"/>
-                        <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource cellTBConverter}}" CanUserSort="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" CanUserSort="False" IsReadOnly="True" Binding="{Binding Path=Id, Converter={StaticResource CellTextBlockConverter}}" Visibility="Collapsed" />
+                        <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                        <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                        <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Style.Triggers>
@@ -435,7 +433,7 @@
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn MinWidth="40"  Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource cellTBConverter}}" CanUserSort="False" >
+                        <DataGridTextColumn MinWidth="40"  Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Setter Property="ToolTip" Value="{StaticResource DefaultValueToolTip}"/>
@@ -447,64 +445,54 @@
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn MinWidth="40"  Header="Label" Binding="{Binding Path=Label, Converter={StaticResource cellTBConverter}}" CanUserSort="False" >
+                        <DataGridTextColumn MinWidth="40"  Header="Label" Binding="{Binding Path=Label, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Setter Property="ToolTip" Value="{StaticResource LabelToolTip}"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn MinWidth="40"   Header="Data Label"  Binding="{Binding Path=DataLabel,  Converter={StaticResource cellTBConverter}}" CanUserSort="False" >
+                        <DataGridTextColumn MinWidth="40"   Header="Data Label"  Binding="{Binding Path=DataLabel,  Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Setter Property="ToolTip" Value="{StaticResource DataLabelToolTip}"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn MinWidth="50"  Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource cellTBConverter}}" Width="*" CanUserSort="False" >
+                        <DataGridTextColumn MinWidth="50"  Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource CellTextBlockConverter}}" Width="*" CanUserSort="False">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Setter Property="ToolTip" Value="{StaticResource TooltipToolTip}"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn MinWidth="40"  Header="Width" Binding="{Binding Path=TXTBOXWIDTH, Converter={StaticResource cellTBConverter}}" CanUserSort="False" >
+                        <DataGridTextColumn MinWidth="40"  Header="Width" Binding="{Binding Path=TXTBOXWIDTH, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Setter Property="ToolTip" Value="{StaticResource WidthToolTip}"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTemplateColumn  MinWidth="25" Width="Auto" Header="Copyable" SortMemberPath="Include" CanUserSort="False" >
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <CheckBox Name="CheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding Path=Copyable, UpdateSourceTrigger=PropertyChanged}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                            <DataGridTemplateColumn.CellStyle>
+                        <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" SortMemberPath="Include" CanUserSort="False" Binding="{Binding Path=Copyable, UpdateSourceTrigger=PropertyChanged}">
+                            <DataGridCheckBoxColumn.CellStyle>
                                 <Style TargetType="{x:Type DataGridCell}">
                                     <Setter Property="ToolTip" Value="{StaticResource CopyableToolTip}"/>
                                 </Style>
-                            </DataGridTemplateColumn.CellStyle>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn MinWidth="25" Width="Auto" Header="Visible" SortMemberPath="Include" CanUserSort="False" >
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <CheckBox Name="CheckBox" HorizontalAlignment="Center" VerticalAlignment="Center"  IsChecked="{Binding Path=Visible, UpdateSourceTrigger=PropertyChanged}" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                            <DataGridTemplateColumn.CellStyle>
+                            </DataGridCheckBoxColumn.CellStyle>
+                        </DataGridCheckBoxColumn>
+                        <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" SortMemberPath="Include" CanUserSort="False" Binding="{Binding Path=Visible, UpdateSourceTrigger=PropertyChanged}">
+                            <DataGridCheckBoxColumn.CellStyle>
                                 <Style TargetType="{x:Type DataGridCell}">
                                     <Setter Property="ToolTip" Value="{StaticResource VisibleToolTip}"/>
                                 </Style>
-                            </DataGridTemplateColumn.CellStyle>
-                        </DataGridTemplateColumn>
+                            </DataGridCheckBoxColumn.CellStyle>
+                        </DataGridCheckBoxColumn>
 
                         <DataGridTemplateColumn MinWidth="40" Header="List" Width="80"  CanUserSort="False" >
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel>
-                                        <Button Name="btnButton" Tag="{Binding Path=ControlOrder}" Click="ChoiceListButton_Click"  local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay, Converter={StaticResource listConverter}}" Margin="1"  Content="Define List" >
+                                        <Button Name="btnButton" Tag="{Binding Path=ControlOrder}" Click="ChoiceListButton_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Margin="1"  Content="Define List" >
                                             <Button.Style>
                                                 <Style TargetType="{x:Type Button}">
                                                     <Style.Triggers>
@@ -569,7 +557,6 @@
                         </DockPanel>
                     </Border>
                     <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center"  DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveControlButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveControlButton_Click" Margin="0,30,0,0"/>
-
                 </DockPanel>
 
                 <GridSplitter Grid.Row="1" Grid.ColumnSpan="2"

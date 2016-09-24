@@ -21,7 +21,6 @@ namespace Carnassial.Dialog
 
         public bool Abort { get; private set; }
         
-        // Create the interface
         public DateTimeLinearCorrection(ImageDatabase imageDatabase, Window owner)
         {
             this.InitializeComponent();
@@ -34,19 +33,13 @@ namespace Carnassial.Dialog
             this.imageDatabase = imageDatabase;
 
             // Skip images with bad dates
-            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
             ImageRow earliestImage = null;
             bool foundEarliest = false;
             bool foundLatest = false;
             ImageRow latestImage = null;
             foreach (ImageRow currentImageRow in imageDatabase.ImageDataTable)
             {
-                DateTimeOffset currentImageDateTime;
-                // Skip images with bad dates
-                if (currentImageRow.TryGetDateTime(imageSetTimeZone, out currentImageDateTime) == false)
-                {
-                    continue;
-                }
+                DateTimeOffset currentImageDateTime = currentImageRow.GetDateTime();
 
                 // If the current image's date is later, then its a candidate latest image  
                 if (currentImageDateTime >= this.latestImageDateTimeUncorrected)
@@ -161,28 +154,26 @@ namespace Carnassial.Dialog
             // Preview the changes
             TimeSpan intervalFromCorrectToMeasured = this.GetInterval();
             TimeZoneInfo imageSetTimeZone = this.imageDatabase.ImageSet.GetTimeZone();
-            foreach (ImageRow row in this.imageDatabase.ImageDataTable)
+            foreach (ImageRow image in this.imageDatabase.ImageDataTable)
             {
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
                 string difference = String.Empty;
-                DateTimeOffset imageDateTime;
-                if (row.TryGetDateTime(imageSetTimeZone, out imageDateTime))
+                DateTimeOffset imageDateTime = image.GetDateTime();
+
+                TimeSpan adjustment = this.GetAdjustment(intervalFromCorrectToMeasured, imageDateTime);
+                if (adjustment.Duration() >= Constants.Time.DateTimeDatabaseResolution)
                 {
-                    TimeSpan adjustment = this.GetAdjustment(intervalFromCorrectToMeasured, imageDateTime);
-                    if (adjustment.Duration() >= Constants.Time.DateTimeDatabaseResolution)
-                    {
-                        difference = DateTimeHandler.ToDisplayTimeSpanString(adjustment);
-                        status = "Changed";
-                        newDateTime = DateTimeHandler.ToDisplayDateTimeString(imageDateTime + adjustment);
-                    }
-                    else
-                    {
-                        status = "Unchanged";
-                    }
+                    difference = DateTimeHandler.ToDisplayTimeSpanString(adjustment);
+                    status = "Changed";
+                    newDateTime = DateTimeHandler.ToDisplayDateTimeString(imageDateTime + adjustment);
+                }
+                else
+                {
+                    status = "Unchanged";
                 }
 
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(row.FileName, status, row.GetDisplayDateTime(imageSetTimeZone), newDateTime, difference);
+                this.DateUpdateFeedbackCtl.AddFeedbackRow(image.FileName, status, image.GetDisplayDateTime(), newDateTime, difference);
             }
         }
 

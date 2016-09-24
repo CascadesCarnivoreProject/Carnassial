@@ -14,8 +14,8 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void Cache()
         {
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.CarnivoreTemplateDatabaseFileName, TestConstant.File.CarnivoreNewImageDatabaseFileName);
-            this.PopulateCarnivoreDatabase(imageDatabase);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewImageDatabaseFileName);
+            List<ImageExpectations> imageExpectations = this.PopulateDefaultDatabase(imageDatabase);
 
             ImageCache cache = new ImageCache(imageDatabase);
             Assert.IsNull(cache.Current);
@@ -56,12 +56,12 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
             Assert.IsTrue(newImageToDisplay);
 
-            Assert.IsFalse(cache.TryMoveToImage(2, out newImageToDisplay));
-            Assert.IsFalse(cache.TryMoveToImage(2, out newImageToDisplay));
+            Assert.IsFalse(cache.TryMoveToImage(imageExpectations.Count, out newImageToDisplay));
+            Assert.IsFalse(cache.TryMoveToImage(imageExpectations.Count, out newImageToDisplay));
 
             Assert.IsTrue(cache.TryMoveToImage(0));
             Assert.IsTrue(cache.TryMoveToImage(1));
-            Assert.IsFalse(cache.TryMoveToImage(2));
+            Assert.IsFalse(cache.TryMoveToImage(imageExpectations.Count));
 
             for (int step = 0; step < 4; ++step)
             {
@@ -94,7 +94,7 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void ExifBushnell()
         {
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, Constants.File.DefaultImageDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constants.File.DefaultImageDatabaseFileName);
             Dictionary<string, string> metadata = this.LoadMetadata(imageDatabase, TestConstant.ImageExpectation.InfraredMarten);
 
             DateTime dateTime;
@@ -109,7 +109,7 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void ExifReconyx()
         {
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName2104, Constants.File.DefaultImageDatabaseFileName);
+            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constants.File.DefaultImageDatabaseFileName);
             Dictionary<string, string> metadata = this.LoadMetadata(imageDatabase, TestConstant.ImageExpectation.DaylightMartenPair);
 
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ExposureTime]));

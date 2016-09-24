@@ -160,11 +160,6 @@ namespace Carnassial.Database
                                 dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.Folder];
                                 imageRow.Add(new ColumnTuple(dataLabel, imageProperties.InitialRootFolderName));
                                 break;
-                            case Constants.DatabaseColumn.Date:
-                                // Add the date
-                                dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.Date];
-                                imageRow.Add(new ColumnTuple(dataLabel, imageProperties.Date));
-                                break;
                             case Constants.DatabaseColumn.DateTime:
                                 dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.DateTime];
                                 imageRow.Add(new ColumnTuple(dataLabel, imageProperties.DateTime));
@@ -172,11 +167,6 @@ namespace Carnassial.Database
                             case Constants.DatabaseColumn.UtcOffset:
                                 dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.UtcOffset];
                                 imageRow.Add(new ColumnTuple(dataLabel, imageProperties.UtcOffset));
-                                break;
-                            case Constants.DatabaseColumn.Time:
-                                // Add the time
-                                dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.Time];
-                                imageRow.Add(new ColumnTuple(dataLabel, imageProperties.Time));
                                 break;
                             case Constants.DatabaseColumn.ImageQuality: // Add the Image Quality
                                 dataLabel = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality];
@@ -350,9 +340,9 @@ namespace Carnassial.Database
                         this.TemplateSynchronizationIssues.Add(String.Format("- The field with DataLabel '{0}' is of type '{1}' in the image data file but of type '{2}' in the template.{3}", dataLabel, imageDatabaseControl.Type, templateControl.Type, Environment.NewLine));
                     }
 
-                    List<string> imageDatabaseList = Utilities.ConvertBarsToList(imageDatabaseControl.List);
-                    List<string> templateList = Utilities.ConvertBarsToList(templateControl.List);
-                    List<string> choiceValuesRemovedInTemplate = imageDatabaseList.Except(templateList).ToList();
+                    List<string> imageDatabaseChoices = imageDatabaseControl.GetChoices();
+                    List<string> templateChoices = templateControl.GetChoices();
+                    List<string> choiceValuesRemovedInTemplate = imageDatabaseChoices.Except(templateChoices).ToList();
                     foreach (string removedValue in choiceValuesRemovedInTemplate)
                     {
                         this.TemplateSynchronizationIssues.Add(String.Format("- The choice with DataLabel '{0}' allows the value of '{1}' in the image data file but not in the template.{2}", dataLabel, removedValue, Environment.NewLine));
@@ -379,120 +369,6 @@ namespace Carnassial.Database
                     imageDatabaseControl.Visible = templateControl.Visible;
                     this.SyncControlToDatabase(imageDatabaseControl);
                 }
-            }
-
-            // perform DataTable migrations
-            // Correct for backwards compatability as needed, where:
-            // - RelativePath (if missing) needs to be added 
-            // - MarkForDeletion (if present) needs to be removed 
-            // - DeleteFlag (if missing) needs to be added
-            // add RelativePath column if it's not present in the image data table at postion '2'
-            this.SelectDataTableImages(ImageFilter.All);
-            bool refreshImageDataTable = false;
-            if (this.ImageDataTable.ColumnNames.Contains(Constants.DatabaseColumn.RelativePath) == false)
-            {
-                long relativePathID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.RelativePath);
-                ControlRow relativePathControl = this.TemplateTable.Find(relativePathID);
-                ColumnDefinition columnDefinition = this.CreateImageDataColumnDefinition(relativePathControl);
-                this.Database.AddColumnToTable(Constants.Database.ImageDataTable, Constants.Database.RelativePathPosition, columnDefinition);
-                refreshImageDataTable = true;
-            }
-
-            if (this.ImageDataTable.ColumnNames.Contains(Constants.DatabaseColumn.DateTime) == false)
-            {
-                long dateTimeID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.DateTime);
-                ControlRow dateTimeControl = this.TemplateTable.Find(dateTimeID);
-                ColumnDefinition columnDefinition = this.CreateImageDataColumnDefinition(dateTimeControl);
-                this.Database.AddColumnToTable(Constants.Database.ImageDataTable, Constants.Database.DateTimePosition, columnDefinition);
-                refreshImageDataTable = true;
-            }
-
-            if (this.ImageDataTable.ColumnNames.Contains(Constants.DatabaseColumn.UtcOffset) == false)
-            {
-                long utcOffsetID = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.UtcOffset);
-                ControlRow utcOffsetControl = this.TemplateTable.Find(utcOffsetID);
-                ColumnDefinition columnDefinition = this.CreateImageDataColumnDefinition(utcOffsetControl);
-                this.Database.AddColumnToTable(Constants.Database.ImageDataTable, Constants.Database.UtcOffsetPosition, columnDefinition);
-                refreshImageDataTable = true;
-            }
-
-            // deprecate MarkForDeletion and converge to DeleteFlag
-            bool hasMarkForDeletion = this.Database.IsColumnInTable(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion);
-            bool hasDeleteFlag = this.Database.IsColumnInTable(Constants.Database.ImageDataTable, Constants.DatabaseColumn.DeleteFlag);
-            if (hasMarkForDeletion && (hasDeleteFlag == false))
-            {
-                // migrate any existing MarkForDeletion column to DeleteFlag
-                // this is likely the most typical case
-                this.Database.RenameColumn(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion, Constants.DatabaseColumn.DeleteFlag);
-                refreshImageDataTable = true;
-            }
-            else if (hasMarkForDeletion && hasDeleteFlag)
-            {
-                // if both MarkForDeletion and DeleteFlag are present drop MarkForDeletion
-                // this is not expected to occur
-                // TODOSAUL: unit test coverage for this
-                this.Database.DeleteColumn(Constants.Database.ImageDataTable, Constants.ControlsDeprecated.MarkForDeletion);
-                refreshImageDataTable = true;
-            }
-            else if (hasDeleteFlag == false)
-            {
-                // if there's neither a MarkForDeletion or DeleteFlag column add DeleteFlag
-                long id = this.GetControlIDFromTemplateTable(Constants.DatabaseColumn.DeleteFlag);
-                ControlRow control = this.TemplateTable.Find(id);
-                ColumnDefinition columnDefinition = this.CreateImageDataColumnDefinition(control);
-                this.Database.AddColumnToEndOfTable(Constants.Database.ImageDataTable, columnDefinition);
-                refreshImageDataTable = true;
-            }
-
-            if (refreshImageDataTable)
-            {
-                // update image data table to current schema
-                this.SelectDataTableImages(ImageFilter.All);
-            }
-
-            // perform ImageSetTable migrations
-            // Make sure that all the string data in the datatable has white space trimmed from its beginning and end
-            // This is needed as the custom filter doesn't work well in testing comparisons if there is leading or trailing white space in it
-            // Newer versions of Carnassial will trim the data as it is entered, but older versions did not, so this is to make it backwards-compatable.
-            // The WhiteSpaceExists column in the ImageSetTable did not exist before this version, so we add it to the table. If it exists, then 
-            // we know the data has been trimmed and we don't have to do it again as the newer versions take care of trimmingon the fly.
-            bool whiteSpaceColumnExists = this.Database.IsColumnInTable(Constants.Database.ImageSetTable, Constants.DatabaseColumn.WhiteSpaceTrimmed);
-            if (!whiteSpaceColumnExists)
-            {
-                // create the whitespace column
-                this.Database.AddColumnToEndOfTable(Constants.Database.ImageSetTable, new ColumnDefinition(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.Text, Constants.Boolean.False));
-
-                // trim whitespace from the data table
-                this.Database.TrimWhitespace(Constants.Database.ImageDataTable, dataLabels);
-
-                // mark image set as whitespace trimmed
-                this.GetImageSet();
-                this.ImageSet.WhitespaceTrimmed = true;
-                this.SyncImageSetToDatabase();
-            }
-
-            bool timeZoneColumnExists = this.Database.IsColumnInTable(Constants.Database.ImageSetTable, Constants.DatabaseColumn.TimeZone);
-            if (!timeZoneColumnExists)
-            {
-                // create default time zone entry
-                this.Database.AddColumnToEndOfTable(Constants.Database.ImageSetTable, new ColumnDefinition(Constants.DatabaseColumn.TimeZone, Constants.Sql.Text));
-                this.GetImageSet();
-                this.ImageSet.TimeZone = TimeZoneInfo.Local.Id;
-                this.SyncImageSetToDatabase();
-
-                // populate DateTime column
-                TimeZoneInfo imageSetTimeZone = this.ImageSet.GetTimeZone();
-                List<ColumnTuplesWithWhere> updateQuery = new List<ColumnTuplesWithWhere>();
-                foreach (ImageRow image in this.ImageDataTable)
-                {
-                    DateTimeOffset imageDateTime;
-                    if (image.TryGetDateTime(imageSetTimeZone, out imageDateTime))
-                    {
-                        image.SetDateAndTime(imageDateTime);
-                        updateQuery.Add(image.GetDateTimeColumnTuples());
-                    }
-                }
-                this.Database.Update(Constants.Database.ImageDataTable, updateQuery);
             }
         }
 
@@ -759,25 +635,21 @@ namespace Carnassial.Database
             // We now have an unfiltered temporary data table
             // Get the original value of each, and update each date by the corrected amount if possible
             List<ImageRow> imagesToAdjust = new List<ImageRow>();
-            TimeZoneInfo imageSetTimeZone = this.ImageSet.GetTimeZone();
             TimeSpan mostRecentAdjustment = TimeSpan.Zero;
             for (int row = startRow; row <= endRow; ++row)
             { 
                 ImageRow image = this.ImageDataTable[row];
-                DateTimeOffset currentImageDateTime;
-                if (image.TryGetDateTime(imageSetTimeZone, out currentImageDateTime))
+                DateTimeOffset currentImageDateTime = image.GetDateTime();
+
+                // adjust the date/time
+                DateTimeOffset newImageDateTime = adjustment.Invoke(currentImageDateTime);
+                if (newImageDateTime == currentImageDateTime)
                 {
-                    // adjust the date/time
-                    DateTimeOffset newImageDateTime = adjustment.Invoke(currentImageDateTime);
-                    if (newImageDateTime == currentImageDateTime)
-                    {
-                        continue;
-                    }
-                    mostRecentAdjustment = newImageDateTime - currentImageDateTime;
-                    image.SetDateAndTime(newImageDateTime);
-                    imagesToAdjust.Add(image);
+                    continue;
                 }
-                // Note that there is no else, which means we skip dates that can't be retrieved properly
+                mostRecentAdjustment = newImageDateTime - currentImageDateTime;
+                image.SetDateAndTime(newImageDateTime);
+                imagesToAdjust.Add(image);
             }
 
             // update the database with the new date/time values
@@ -832,22 +704,14 @@ namespace Carnassial.Database
             List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
             ImageRow firstImage = this.ImageDataTable[startRow];
             ImageRow lastImage = null;
-            TimeZoneInfo imageSetTimeZone = this.ImageSet.GetTimeZone();
             DateTimeOffset mostRecentOriginalDateTime = DateTime.MinValue;
             DateTimeOffset mostRecentReversedDateTime = DateTime.MinValue;
             for (int row = startRow; row <= endRow; row++)
             {
                 ImageRow image = this.ImageDataTable[row];
-                DateTimeOffset originalDateTime;
+                DateTimeOffset originalDateTime = image.GetDateTime();
                 DateTimeOffset reversedDateTime;
-                if (image.TryGetDateTime(imageSetTimeZone, out originalDateTime))
-                {
-                    if (DateTimeHandler.TrySwapDayMonth(originalDateTime, out reversedDateTime) == false)
-                    {
-                        continue;
-                    }
-                }
-                else
+                if (DateTimeHandler.TrySwapDayMonth(originalDateTime, out reversedDateTime) == false)
                 {
                     continue;
                 }

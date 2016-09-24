@@ -68,9 +68,8 @@ namespace Carnassial.Dialog
                 {
                     // We will store the various times here
                     ImageRow image = this.database.ImageDataTable[row];
-                    DateTimeOffset originalDateTime;
+                    DateTimeOffset originalDateTime = image.GetDateTime();
                     string feedbackMessage = String.Empty;
-                    bool result = image.TryGetDateTime(imageSetTimeZone, out originalDateTime); // If the result is false, we know that the originalDateTime will be reset to 01-Jan-0001 00:00:00
                     try
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
@@ -88,14 +87,7 @@ namespace Carnassial.Dialog
                                 break;
                         }
 
-                        DateTimeOffset rescannedDateTime;
-                        result = image.TryGetDateTime(imageSetTimeZone, out rescannedDateTime);
-                        if (result == false)
-                        {
-                            feedbackMessage += "invalid date and time, skipping.";
-                            continue;
-                        }
-
+                        DateTimeOffset rescannedDateTime = image.GetDateTime();
                         bool updateNeeded = false;
                         if (rescannedDateTime.Date == originalDateTime.Date)
                         {

@@ -1,7 +1,6 @@
 ﻿using MetadataExtractor;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -19,9 +18,6 @@ namespace Carnassial.Util
     /// </summary>
     public class Utilities
     {
-        private static readonly char[] BarDelimiter = { '|' };
-        private static readonly string[] NewLineDelimiters = { Environment.NewLine };
-
         public static Dictionary<string, string> LoadMetadata(string filePath)
         {
             Dictionary<string, string> metadata = new Dictionary<string, string>();
@@ -33,6 +29,18 @@ namespace Carnassial.Util
                 }
             }
             return metadata;
+        }
+
+        public static bool IsDigits(string value)
+        {
+            foreach (char character in value)
+            {
+                if (!Char.IsDigit(character))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public static bool IsSingleTemplateFileDrag(DragEventArgs dragEvent, out string templateDatabasePath)
@@ -161,55 +169,6 @@ namespace Carnassial.Util
 
             selectedFilePath = null;
             return false;
-        }
-
-        public static string ConvertBarsToLineBreaks(string barSeparatedChoices)
-        {
-            string[] choices = barSeparatedChoices.Split(Utilities.BarDelimiter);
-
-            string newlineSeparatedChoices = String.Empty;
-            foreach (string choice in choices)
-            {
-                string trimmedItem = choice.Trim();
-                if (String.IsNullOrEmpty(trimmedItem))
-                {
-                    continue; // ignore blank items
-                }
-                if (!String.IsNullOrEmpty(newlineSeparatedChoices))
-                {
-                    newlineSeparatedChoices += Environment.NewLine; // Add a newline if there is already a string in there
-                }
-                newlineSeparatedChoices += trimmedItem;
-            }
-            newlineSeparatedChoices = newlineSeparatedChoices.TrimEnd('\r', '\n'); // remove the last "newline" if items exists
-            return newlineSeparatedChoices;
-        }
-
-        public static List<string> ConvertBarsToList(string barSeparatedChoices)
-        {
-            return new List<string>(barSeparatedChoices.Split(Utilities.BarDelimiter));
-        }
-
-        public static string ConvertLineBreaksToBars(string newlineSeparatedChoices)
-        {
-            string[] choices = newlineSeparatedChoices.Split(Utilities.NewLineDelimiters, StringSplitOptions.RemoveEmptyEntries);
-
-            string barSeparatedChoices = String.Empty;
-            foreach (string choice in choices)
-            {
-                string trimmedItem = choice.Trim();
-                if (String.IsNullOrEmpty(trimmedItem))
-                {
-                    continue; // ignore blank items
-                }
-                if (!String.IsNullOrEmpty(barSeparatedChoices))
-                {
-                    barSeparatedChoices += "|"; // Add a '|' if there is already a string in there
-                }
-                barSeparatedChoices += trimmedItem;
-            }
-            barSeparatedChoices = barSeparatedChoices.TrimEnd(BarDelimiter); // remove the last "|" if items exists
-            return barSeparatedChoices;
         }
 
         // Calculate the point as a ratio of its position on the image, so we can locate it regardless of the actual image size

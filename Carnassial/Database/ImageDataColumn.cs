@@ -22,11 +22,9 @@ namespace Carnassial.Database
             switch (control.Type)
             {
                 case Constants.Control.Note:
-                case Constants.DatabaseColumn.Date:
                 case Constants.DatabaseColumn.File:
                 case Constants.DatabaseColumn.Folder:
                 case Constants.DatabaseColumn.RelativePath:
-                case Constants.DatabaseColumn.Time:
                     return new ImageDataNoteColumn(control);
                 case Constants.DatabaseColumn.ImageQuality:
                     return new ImageDataChoiceColumn(control);

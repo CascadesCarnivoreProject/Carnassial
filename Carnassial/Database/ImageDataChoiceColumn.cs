@@ -10,7 +10,7 @@ namespace Carnassial.Database
         public ImageDataChoiceColumn(ControlRow control)
             : base(control)
         {
-            this.choices = Utilities.ConvertBarsToList(control.List);
+            this.choices = control.GetChoices();
         }
 
         public override bool IsContentValid(string value)

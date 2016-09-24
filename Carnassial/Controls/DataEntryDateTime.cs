@@ -12,9 +12,6 @@ namespace Carnassial.Controls
             set { this.ContentControl.Text = value; }
         }
 
-        public DataEntryNote DateControl { get; set; }
-        public DataEntryNote TimeControl { get; set; }
-
         public DataEntryDateTime(ControlRow control, DataEntryControls styleProvider) : 
             base(control, styleProvider, null, ControlLabelStyle.LabelCodeBar)
         {

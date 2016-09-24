@@ -83,7 +83,6 @@
     <Compile Include="DependencyTests.cs" />
     <Compile Include="ImageDatabaseExtensions.cs" />
     <Compile Include="ImageExpectations.cs" />
-    <Compile Include="ImageRowExtensions.cs" />
     <Compile Include="ImageTests.cs" />
     <Compile Include="MarkerExpectation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -116,11 +115,14 @@
     <Content Include="CarnivoreTestImages\BushnellTrophyHDAggressor-119777C-20160421-112.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="CarnivoreTemplate 2.0.1.5.tdb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="DefaultTemplate 2.2.0.0.tdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="DefaultData 2.2.0.0.ddb">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="packages.config" />
     <Content Include="CarnivoreTestImages\Reconyx-HC500-20150128-201.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -155,18 +157,6 @@
     <Content Include="HybridVideo\BushnellTrophyHD-119777C-20160626-050-3MP.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="TimelapseTemplate 2.0.1.5.tdb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TimelapseData 2.0.2.3.ddb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <None Include="TimelapseData 2.1.0.4.ddb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="TimelapseTemplate 2.1.0.4.tdb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

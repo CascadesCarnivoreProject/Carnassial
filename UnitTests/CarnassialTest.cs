@@ -231,78 +231,16 @@ namespace Carnassial.UnitTests
             return metadata;
         }
 
-        protected List<ImageExpectations> PopulateCarnivoreDatabase(ImageDatabase imageDatabase)
-        {
-            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
-
-            DateTimeAdjustment martenTimeAdjustment;
-            ImageRow martenImage = this.CreateImage(imageDatabase, imageSetTimeZone, TestConstant.ImageExpectation.DaylightMartenPair, out martenTimeAdjustment);
-            Assert.IsTrue(martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
-
-            DateTimeAdjustment coyoteTimeAdjustment;
-            ImageRow coyoteImage = this.CreateImage(imageDatabase, imageSetTimeZone, TestConstant.ImageExpectation.DaylightCoyote, out coyoteTimeAdjustment);
-            Assert.IsTrue(coyoteTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
-
-            imageDatabase.AddImages(new List<ImageRow>() { martenImage, coyoteImage }, null);
-            imageDatabase.SelectDataTableImages(ImageFilter.All);
-
-            ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(imageDatabase);
-            Assert.IsTrue(imageEnumerator.TryMoveToImage(0));
-            Assert.IsTrue(imageEnumerator.MoveNext());
-
-            // cover CSV or image XML import path
-            ColumnTuplesWithWhere coyoteImageUpdate = new ColumnTuplesWithWhere();
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("Station", "DS02"));
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("TriggerSource", "critter"));
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("Identification", "coyote"));
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("Confidence", "high"));
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("GroupType", "single"));
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("Age", "adult"));
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("Pelage", String.Empty));
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("Activity", "unknown"));
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("Comments", "escaped field, because a comma is present"));
-            coyoteImageUpdate.Columns.Add(new ColumnTuple("Survey", "Carnassial carnivore database unit tests"));
-            coyoteImageUpdate.SetWhere(imageEnumerator.Current.ID);
-            imageDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { coyoteImageUpdate });
-
-            // simulate data entry
-            long martenImageID = imageDatabase.ImageDataTable[0].ID;
-            imageDatabase.UpdateImage(martenImageID, "Station", "DS02");
-            imageDatabase.UpdateImage(martenImageID, "TriggerSource", "critter");
-            imageDatabase.UpdateImage(martenImageID, "Identification", "American marten");
-            imageDatabase.UpdateImage(martenImageID, "Confidence", "high");
-            imageDatabase.UpdateImage(martenImageID, "GroupType", "pair");
-            imageDatabase.UpdateImage(martenImageID, "Age", "adult");
-            imageDatabase.UpdateImage(martenImageID, "Pelage", String.Empty);
-            imageDatabase.UpdateImage(martenImageID, "Activity", "unknown");
-            imageDatabase.UpdateImage(martenImageID, "Comments", "escaped field due to presence of \",\"");
-            imageDatabase.UpdateImage(martenImageID, "Survey", "Carnassial carnivore database unit tests");
-
-            // pull the image data table again so the updates are visible to .csv export
-            imageDatabase.SelectDataTableImages(ImageFilter.All);
-
-            // generate expectations
-            List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
-            {
-                new ImageExpectations(TestConstant.ImageExpectation.DaylightMartenPair),
-                new ImageExpectations(TestConstant.ImageExpectation.DaylightCoyote)
-            };
-
-            string initialRootFolderName = Path.GetFileName(imageDatabase.FolderPath);
-            for (int image = 0; image < imageDatabase.ImageDataTable.RowCount; ++image)
-            {
-                ImageExpectations imageExpectation = imageExpectations[image];
-                imageExpectation.ID = image + 1;
-                imageExpectation.InitialRootFolderName = initialRootFolderName;
-            }
-
-            return imageExpectations;
-        }
-
         protected List<ImageExpectations> PopulateDefaultDatabase(ImageDatabase imageDatabase)
         {
+            return this.PopulateDefaultDatabase(imageDatabase, false);
+        }
+
+        protected List<ImageExpectations> PopulateDefaultDatabase(ImageDatabase imageDatabase, bool excludeSubfolderImages)
+        {
             TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
 
+            // images in same folder as .tdb and .ddb
             DateTimeAdjustment martenTimeAdjustment;
             ImageRow martenImage = this.CreateImage(imageDatabase, imageSetTimeZone, TestConstant.ImageExpectation.InfraredMarten, out martenTimeAdjustment);
             Assert.IsTrue(martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeOneHourLater ||
@@ -319,7 +257,6 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(imageEnumerator.TryMoveToImage(0));
             Assert.IsTrue(imageEnumerator.MoveNext());
 
-            // cover CSV or image XML import path
             ColumnTuplesWithWhere bobcatUpdate = new ColumnTuplesWithWhere();
             bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Choice0, "choice b"));
             bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString()));
@@ -329,7 +266,6 @@ namespace Carnassial.UnitTests
             bobcatUpdate.SetWhere(imageEnumerator.Current.ID);
             imageDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { bobcatUpdate });
 
-            // simulate data entry
             long martenImageID = imageDatabase.ImageDataTable[0].ID;
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
@@ -337,16 +273,49 @@ namespace Carnassial.UnitTests
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");
             imageDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
 
-            // pull the image data table again so the updates are visible to .csv export
-            imageDatabase.SelectDataTableImages(ImageFilter.All);
-
             // generate expectations
             List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
             {
                 new ImageExpectations(TestConstant.ImageExpectation.InfraredMarten),
-                new ImageExpectations(TestConstant.ImageExpectation.DaylightBobcat)
+                new ImageExpectations(TestConstant.ImageExpectation.DaylightBobcat),
             };
 
+            // images in subfolder
+            if (excludeSubfolderImages == false)
+            {
+                DateTimeAdjustment martenPairTimeAdjustment;
+                ImageRow martenPairImage = this.CreateImage(imageDatabase, imageSetTimeZone, TestConstant.ImageExpectation.DaylightMartenPair, out martenPairTimeAdjustment);
+                Assert.IsTrue(martenPairTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
+
+                DateTimeAdjustment coyoteTimeAdjustment;
+                ImageRow coyoteImage = this.CreateImage(imageDatabase, imageSetTimeZone, TestConstant.ImageExpectation.DaylightCoyote, out coyoteTimeAdjustment);
+                Assert.IsTrue(coyoteTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
+
+                imageDatabase.AddImages(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
+                imageDatabase.SelectDataTableImages(ImageFilter.All);
+
+                ColumnTuplesWithWhere coyoteImageUpdate = new ColumnTuplesWithWhere();
+                coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "coyote"));
+                coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult"));
+                coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty));
+                coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note0, "escaped field, because a comma is present"));
+                coyoteImageUpdate.SetWhere(imageEnumerator.Current.ID);
+                imageDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { coyoteImageUpdate });
+
+                long martenPairImageID = imageDatabase.ImageDataTable[3].ID;
+                imageDatabase.UpdateImage(martenPairImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");
+                imageDatabase.UpdateImage(martenPairImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
+                imageDatabase.UpdateImage(martenPairImageID, TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
+                imageDatabase.UpdateImage(martenPairImageID, TestConstant.DefaultDatabaseColumn.Note0, "escaped field due to presence of \",\"");
+
+                imageExpectations.Add(new ImageExpectations(TestConstant.ImageExpectation.DaylightMartenPair));
+                imageExpectations.Add(new ImageExpectations(TestConstant.ImageExpectation.DaylightCoyote));
+            }
+
+            // pull the image data table again so the updates are visible to .csv export
+            imageDatabase.SelectDataTableImages(ImageFilter.All);
+
+            // complete setting expectations
             string initialRootFolderName = Path.GetFileName(imageDatabase.FolderPath);
             for (int image = 0; image < imageDatabase.ImageDataTable.RowCount; ++image)
             {
