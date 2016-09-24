@@ -6,8 +6,8 @@
     <ProjectGuid>{E6C59593-E0A2-49C0-B6BD-8CE037E79027}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Timelapse.UnitTests</RootNamespace>
-    <AssemblyName>Timelapse2.UnitTests</AssemblyName>
+    <RootNamespace>Carnassial.UnitTests</RootNamespace>
+    <AssemblyName>Carnassial.UnitTests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -90,18 +90,18 @@
     <Compile Include="RegistryTests.cs" />
     <Compile Include="TemplateTableExpectation.cs" />
     <Compile Include="TestConstant.cs" />
-    <Compile Include="TimelapseTest.cs" />
+    <Compile Include="CarnassialTest.cs" />
     <Compile Include="UserInterfaceTests.cs" />
     <Compile Include="VersionTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Timelapse2TemplateEditor\TimelapseTemplateEditor\TimelapseTemplateEditor.csproj">
+    <ProjectReference Include="..\TemplateEditor\TemplateEditor.csproj">
       <Project>{38a59036-3982-4dc8-a19a-ada1d8c1529a}</Project>
-      <Name>TimelapseTemplateEditor</Name>
+      <Name>TemplateEditor</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Timelapse2\Timelapse\Timelapse.csproj">
+    <ProjectReference Include="..\Carnassial\Carnassial.csproj">
       <Project>{f223a2f9-f2c2-47a8-80f3-472349176579}</Project>
-      <Name>Timelapse</Name>
+      <Name>Carnassial</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

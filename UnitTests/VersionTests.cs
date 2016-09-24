@@ -1,19 +1,19 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Timelapse.Editor;
-using Timelapse.Util;
+﻿using Carnassial.Editor;
+using Carnassial.Util;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     [TestClass]
     public class VersionTests
     {
-        [TestMethod]
+        // [TestMethod] disabled as there's not currently a version server for Carnassial
         public void CheckForUpdates()
         {
-            VersionClient timelapseUpdates = new VersionClient(Constants.ApplicationName, Constants.LatestVersionAddress);
-            Assert.IsTrue(timelapseUpdates.TryGetAndParseVersion(false));
+            VersionClient carnassialUpdates = new VersionClient(Constants.ApplicationName, CarnassialConfigurationSettings.GetLatestVersionAddress());
+            Assert.IsTrue(carnassialUpdates.TryGetAndParseVersion(false));
 
-            VersionClient editorUpdates = new VersionClient(EditorConstant.ApplicationName, EditorConstant.LatestVersionAddress);
+            VersionClient editorUpdates = new VersionClient(EditorConstant.ApplicationName, CarnassialConfigurationSettings.GetLatestVersionAddress());
             Assert.IsTrue(editorUpdates.TryGetAndParseVersion(false));
         }
     }

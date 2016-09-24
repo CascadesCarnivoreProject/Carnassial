@@ -1,33 +1,22 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Carnassial.Database;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using Timelapse.Database;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     internal class ControlExpectations
     {
         public long ControlOrder { get; set; }
-
         public bool Copyable { get; set; }
-
         public string DataLabel { get; set; }
-
         public string DefaultValue { get; set; }
-
         public long ID { get; set; }
-
         public string Label { get; set; }
-
         public string List { get; set; }
-
         public long SpreadsheetOrder { get; set; }
-
         public int TextBoxWidth { get; set; }
-
         public string Tooltip { get; set; }
-
         public string Type { get; set; }
-
         public bool Visible { get; set; }
 
         public static ControlExpectations CreateCounter(string dataLabel, long id)

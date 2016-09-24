@@ -1,17 +1,109 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Carnassial.Editor.Util;
+using Carnassial.Util;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Win32;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
-using Timelapse.Editor.Util;
-using Timelapse.Util;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     [TestClass]
-    public class RegistryTests : TimelapseTest
+    public class RegistryTests : CarnassialTest
     {
+        /// <summary>
+        /// Sanity test against whatever the current state of Carnassial' registry keys is.
+        /// </summary>
+        [TestMethod]
+        public void CarnassialProductionKeysRead()
+        {
+            CarnassialState state = new CarnassialState();
+            state.ReadFromRegistry();
+        }
+
+        [TestMethod]
+        public void CarnassialTestKeysCreateReuseUpdate()
+        {
+            string testRootKey = Constants.Registry.RootKey + "CarnassialUnitTest";
+            using (RegistryKey testKey = Registry.CurrentUser.OpenSubKey(testRootKey))
+            {
+                if (testKey != null)
+                {
+                    Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
+                }
+            }
+
+            CarnassialUserRegistrySettings userSettings = new CarnassialUserRegistrySettings(testRootKey);
+            this.VerifyDefaultState(userSettings);
+
+            // write
+            userSettings.WriteToRegistry();
+
+            // loopback
+            userSettings.ReadFromRegistry();
+            this.VerifyDefaultState(userSettings);
+
+            // overwrite
+            userSettings.WriteToRegistry();
+
+            // modify
+            userSettings.AudioFeedback = true;
+            userSettings.ControlsInSeparateWindow = true;
+            int controlWindowSizeInPixels = 200;
+            userSettings.ControlWindowSize = new Point(controlWindowSizeInPixels, controlWindowSizeInPixels);
+            double modifiedDarkPixelRatioThreshold = userSettings.DarkPixelRatioThreshold + 1.0;
+            userSettings.DarkPixelRatioThreshold = modifiedDarkPixelRatioThreshold;
+            int modifiedDarkPixelThreshold = userSettings.DarkPixelThreshold + 1;
+            userSettings.DarkPixelThreshold = modifiedDarkPixelThreshold;
+            string databasePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultImageDatabaseFileName);
+            userSettings.MostRecentImageSets.SetMostRecent(databasePath);
+            userSettings.SuppressAmbiguousDatesDialog = true;
+            userSettings.SuppressCsvExportDialog = true;
+            userSettings.SuppressCsvImportPrompt = true;
+            userSettings.SuppressFileCountOnImportDialog = true;
+            userSettings.SuppressFilteredAmbiguousDatesPrompt = true;
+            userSettings.SuppressFilteredCsvExportPrompt = true;
+            userSettings.SuppressFilteredDarkThresholdPrompt = true;
+            userSettings.SuppressFilteredDateTimeFixedCorrectionPrompt = true;
+            userSettings.SuppressFilteredDateTimeLinearCorrectionPrompt = true;
+            userSettings.SuppressFilteredDaylightSavingsCorrectionPrompt = true;
+            userSettings.SuppressFilteredPopulateFieldFromMetadataPrompt = true;
+            userSettings.SuppressFilteredRereadDatesFromFilesPrompt = true;
+            userSettings.SuppressFilteredSetTimeZonePrompt = true;
+            userSettings.Throttles.SetDesiredImageRendersPerSecond(Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
+
+            userSettings.WriteToRegistry();
+            userSettings.ReadFromRegistry();
+
+            Assert.IsTrue(userSettings.AudioFeedback);
+            Assert.IsTrue(userSettings.ControlsInSeparateWindow);
+            Assert.IsTrue(userSettings.ControlWindowSize.X == controlWindowSizeInPixels && userSettings.ControlWindowSize.Y == controlWindowSizeInPixels);
+            Assert.IsTrue(userSettings.DarkPixelRatioThreshold == modifiedDarkPixelRatioThreshold);
+            Assert.IsTrue(userSettings.DarkPixelThreshold == modifiedDarkPixelThreshold);
+            Assert.IsNotNull(userSettings.MostRecentImageSets);
+            Assert.IsTrue(userSettings.MostRecentImageSets.Count == 1);
+            string mostRecentDatabasePath;
+            Assert.IsTrue(userSettings.MostRecentImageSets.TryGetMostRecent(out mostRecentDatabasePath));
+            Assert.IsTrue(mostRecentDatabasePath == databasePath);
+            Assert.IsTrue(userSettings.SuppressAmbiguousDatesDialog);
+            Assert.IsTrue(userSettings.SuppressCsvExportDialog);
+            Assert.IsTrue(userSettings.SuppressCsvImportPrompt);
+            Assert.IsTrue(userSettings.SuppressFileCountOnImportDialog);
+            Assert.IsTrue(userSettings.SuppressFilteredAmbiguousDatesPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredCsvExportPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredDarkThresholdPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredDateTimeFixedCorrectionPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredDateTimeLinearCorrectionPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredDaylightSavingsCorrectionPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredPopulateFieldFromMetadataPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredRereadDatesFromFilesPrompt);
+            Assert.IsTrue(userSettings.SuppressFilteredSetTimeZonePrompt);
+            Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
+
+            Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
+        }
+
         /// <summary>
         /// Sanity test against whatever the current state of the editor's registry keys is.
         /// </summary>
@@ -169,99 +261,7 @@ namespace Timelapse.UnitTests
             Assert.IsTrue(leastRecent == 4);
         }
 
-        /// <summary>
-        /// Sanity test against whatever the current state of Timelapse' registry keys is.
-        /// </summary>
-        [TestMethod]
-        public void TimelapseProductionKeysRead()
-        {
-            TimelapseState state = new TimelapseState();
-            state.ReadFromRegistry();
-        }
-
-        [TestMethod]
-        public void TimelapseTestKeysCreateReuseUpdate()
-        {
-            string testRootKey = Constants.Registry.RootKey + "TimelapseUnitTest";
-            using (RegistryKey testKey = Registry.CurrentUser.OpenSubKey(testRootKey))
-            {
-                if (testKey != null)
-                {
-                    Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
-                }
-            }
-
-            TimelapseUserRegistrySettings userSettings = new TimelapseUserRegistrySettings(testRootKey);
-            this.VerifyDefaultState(userSettings);
-
-            // write
-            userSettings.WriteToRegistry();
-
-            // loopback
-            userSettings.ReadFromRegistry();
-            this.VerifyDefaultState(userSettings);
-
-            // overwrite
-            userSettings.WriteToRegistry();
-
-            // modify
-            userSettings.AudioFeedback = true;
-            userSettings.ControlsInSeparateWindow = true;
-            int controlWindowSizeInPixels = 200;
-            userSettings.ControlWindowSize = new Point(controlWindowSizeInPixels, controlWindowSizeInPixels);
-            double modifiedDarkPixelRatioThreshold = userSettings.DarkPixelRatioThreshold + 1.0;
-            userSettings.DarkPixelRatioThreshold = modifiedDarkPixelRatioThreshold;
-            int modifiedDarkPixelThreshold = userSettings.DarkPixelThreshold + 1;
-            userSettings.DarkPixelThreshold = modifiedDarkPixelThreshold;
-            string databasePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultImageDatabaseFileName);
-            userSettings.MostRecentImageSets.SetMostRecent(databasePath);
-            userSettings.SuppressAmbiguousDatesDialog = true;
-            userSettings.SuppressCsvExportDialog = true;
-            userSettings.SuppressCsvImportPrompt = true;
-            userSettings.SuppressFileCountOnImportDialog = true;
-            userSettings.SuppressFilteredAmbiguousDatesPrompt = true;
-            userSettings.SuppressFilteredCsvExportPrompt = true;
-            userSettings.SuppressFilteredDarkThresholdPrompt = true;
-            userSettings.SuppressFilteredDateTimeFixedCorrectionPrompt = true;
-            userSettings.SuppressFilteredDateTimeLinearCorrectionPrompt = true;
-            userSettings.SuppressFilteredDaylightSavingsCorrectionPrompt = true;
-            userSettings.SuppressFilteredPopulateFieldFromMetadataPrompt = true;
-            userSettings.SuppressFilteredRereadDatesFromFilesPrompt = true;
-            userSettings.SuppressFilteredSetTimeZonePrompt = true;
-            userSettings.Throttles.SetDesiredImageRendersPerSecond(Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
-
-            userSettings.WriteToRegistry();
-            userSettings.ReadFromRegistry();
-
-            Assert.IsTrue(userSettings.AudioFeedback);
-            Assert.IsTrue(userSettings.ControlsInSeparateWindow);
-            Assert.IsTrue(userSettings.ControlWindowSize.X == controlWindowSizeInPixels && userSettings.ControlWindowSize.Y == controlWindowSizeInPixels);
-            Assert.IsTrue(userSettings.DarkPixelRatioThreshold == modifiedDarkPixelRatioThreshold);
-            Assert.IsTrue(userSettings.DarkPixelThreshold == modifiedDarkPixelThreshold);
-            Assert.IsNotNull(userSettings.MostRecentImageSets);
-            Assert.IsTrue(userSettings.MostRecentImageSets.Count == 1);
-            string mostRecentDatabasePath;
-            Assert.IsTrue(userSettings.MostRecentImageSets.TryGetMostRecent(out mostRecentDatabasePath));
-            Assert.IsTrue(mostRecentDatabasePath == databasePath);
-            Assert.IsTrue(userSettings.SuppressAmbiguousDatesDialog);
-            Assert.IsTrue(userSettings.SuppressCsvExportDialog);
-            Assert.IsTrue(userSettings.SuppressCsvImportPrompt);
-            Assert.IsTrue(userSettings.SuppressFileCountOnImportDialog);
-            Assert.IsTrue(userSettings.SuppressFilteredAmbiguousDatesPrompt);
-            Assert.IsTrue(userSettings.SuppressFilteredCsvExportPrompt);
-            Assert.IsTrue(userSettings.SuppressFilteredDarkThresholdPrompt);
-            Assert.IsTrue(userSettings.SuppressFilteredDateTimeFixedCorrectionPrompt);
-            Assert.IsTrue(userSettings.SuppressFilteredDateTimeLinearCorrectionPrompt);
-            Assert.IsTrue(userSettings.SuppressFilteredDaylightSavingsCorrectionPrompt);
-            Assert.IsTrue(userSettings.SuppressFilteredPopulateFieldFromMetadataPrompt);
-            Assert.IsTrue(userSettings.SuppressFilteredRereadDatesFromFilesPrompt);
-            Assert.IsTrue(userSettings.SuppressFilteredSetTimeZonePrompt);
-            Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
-
-            Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
-        }
-
-        private void VerifyDefaultState(TimelapseUserRegistrySettings userSettings)
+        private void VerifyDefaultState(CarnassialUserRegistrySettings userSettings)
         {
             Assert.IsFalse(userSettings.AudioFeedback);
             Assert.IsFalse(userSettings.ControlsInSeparateWindow);

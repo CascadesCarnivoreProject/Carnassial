@@ -1,7 +1,7 @@
-﻿using System;
-using Timelapse.Database;
+﻿using Carnassial.Database;
+using System;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     internal class DefaultTemplateTableExpectation : TemplateTableExpectation
     {

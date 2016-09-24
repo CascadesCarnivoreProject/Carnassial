@@ -1,9 +1,9 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Carnassial.Database;
+using Carnassial.Util;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using Timelapse.Database;
-using Timelapse.Util;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     internal class TemplateTableExpectation
     {

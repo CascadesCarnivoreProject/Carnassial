@@ -1,8 +1,8 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Carnassial.Database;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Data;
-using Timelapse.Database;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     internal static class DataTableBackedListExtensions
     {

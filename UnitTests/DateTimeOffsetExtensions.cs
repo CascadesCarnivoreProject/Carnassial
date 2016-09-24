@@ -1,7 +1,7 @@
-﻿using System;
-using Timelapse.Util;
+﻿using Carnassial.Util;
+using System;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     internal static class DateTimeOffsetExtensions
     {

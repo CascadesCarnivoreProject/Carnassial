@@ -1,4 +1,4 @@
-﻿namespace Timelapse.UnitTests
+﻿namespace Carnassial.UnitTests
 {
     internal class DatabaseExpectations
     {

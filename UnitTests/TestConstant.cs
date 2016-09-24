@@ -1,21 +1,20 @@
-﻿using System;
+﻿using Carnassial.Database;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Timelapse.Database;
-using Timelapse.Util;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     internal static class TestConstant
     {
+        public const string CarnassialAutomationID = "Carnassial";
         public const double DarkPixelFractionTolerance = 0.00000001;
         public const string DataHandlerFieldName = "dataHandler";
         public const string DateTimeWithOffsetFormat = "yyyy-MM-ddTHH:mm:ss.fffK";
         public const string FileCountsAutomationID = "FileCountsByQuality";
         public const string InitializeDataGridMethodName = "InitializeDataGrid";
-        public const string MessageBoxAutomationID = "TimelapseMessageBox";
+        public const string MessageBoxAutomationID = "CarnassialMessageBox";
         public const string OkButtonAutomationID = "OkButton";
-        public const string TimelapseAutomationID = "Timelapse";
         public const string TrySaveDatabaseBackupFileMethodName = "TrySaveDatabaseBackupFile";
         public const string TryShowImageWithoutSliderCallbackMethodName = "TryShowImageWithoutSliderCallback";
 
@@ -153,7 +152,7 @@ namespace Timelapse.UnitTests
             public const string HybridVideoDirectoryName = "HybridVideo";
 
             // image databases for backwards compatibility testing
-            // version is the Timelapse version used for creation
+            // version is the Carnassial version used for creation
             public const string DefaultImageDatabaseFileName2023 = "TimelapseData 2.0.2.3.ddb";
             public const string DefaultImageDatabaseFileName2104 = "TimelapseData 2.1.0.4.ddb";
 

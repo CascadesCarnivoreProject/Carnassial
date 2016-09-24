@@ -1,8 +1,8 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Timelapse.Editor;
-using Timelapse.Util;
+﻿using Carnassial.Editor;
+using Carnassial.Util;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     [TestClass]
     public class DependencyTests

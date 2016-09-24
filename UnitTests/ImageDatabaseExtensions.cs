@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Carnassial.Database;
+using System;
 using System.Collections.Generic;
-using Timelapse.Database;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     internal static class ImageDatabaseExtensions
     {

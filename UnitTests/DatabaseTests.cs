@@ -1,4 +1,8 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Carnassial.Controls;
+using Carnassial.Database;
+using Carnassial.Images;
+using Carnassial.Util;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -6,15 +10,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Media.Imaging;
-using Timelapse.Controls;
-using Timelapse.Database;
-using Timelapse.Images;
-using Timelapse.Util;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     [TestClass]
-    public class DatabaseTests : TimelapseTest
+    public class DatabaseTests : CarnassialTest
     {
         [TestMethod]
         public void CreateReuseCarnivoreImageDatabase()
@@ -586,7 +586,7 @@ namespace Timelapse.UnitTests
         }
 
         /// <summary>
-        /// Coverage of first and second import passes in TimelapseWindow.TryBeginImageFolderLoadAsync() on a mix of image and video files.
+        /// Coverage of first and second import passes in CarnassialWindow.TryBeginImageFolderLoadAsync() on a mix of image and video files.
         /// </summary>
         [TestMethod]
         public void HybridVideo()
@@ -637,7 +637,7 @@ namespace Timelapse.UnitTests
         }
 
         /// <summary>
-        /// Backwards compatibility test against editor 2.0.1.5 template database and Timelapse 2.0.2.3 image database.
+        /// Backwards compatibility test against editor 2.0.1.5 template database and Carnassial 2.0.2.3 image database.
         /// </summary>
         [TestMethod]
         public void ImageDatabase2023()

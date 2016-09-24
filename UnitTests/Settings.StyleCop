@@ -1,7 +1,7 @@
 <StyleCopSettings Version="105">
   <GlobalSettings>
     <CollectionProperty Name="RecognizedWords">
-      <Value>Timelapse</Value>
+      <Value>Carnassial</Value>
     </CollectionProperty>
   </GlobalSettings>
   <Analyzers>

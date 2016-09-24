@@ -1,15 +1,15 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Carnassial.Database;
+using Carnassial.Images;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Windows.Media.Imaging;
-using Timelapse.Database;
-using Timelapse.Images;
 
-namespace Timelapse.UnitTests
+namespace Carnassial.UnitTests
 {
     [TestClass]
-    public class ImageTests : TimelapseTest
+    public class ImageTests : CarnassialTest
     {
         [TestMethod]
         public void Cache()
