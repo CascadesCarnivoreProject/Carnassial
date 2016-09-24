@@ -376,7 +376,6 @@
       <DependentUpon>FeedbackControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Database\FileBackup.cs" />
-    <Compile Include="Images\ImageDataXml.cs" />
     <Compile Include="Database\ImageRow.cs" />
     <Compile Include="Database\ImageFilter.cs" />
     <Compile Include="Images\MetaTagCounter.cs" />

@@ -268,34 +268,6 @@ namespace Timelapse
             }
         }
 
-        public static class ImageXml
-        {
-            // standard elements, always included but not always made visible
-            public const string Date = "_Date";
-            public const string File = "_File";
-            public const string Folder = "_Folder";
-            public const string Time = "_Time";
-
-            // paths to standard elements, always included but not always made visible
-            public const string DatePath = "Codes/_Date";
-            public const string FilePath = "Codes/_File";
-            public const string FolderPath = "Codes/_Folder";
-            public const string ImageQualityPath = "Codes/_ImageQuality";
-            public const string TimePath = "Codes/_Time";
-
-            // elements
-            public const string Codes = "Codes";
-            public const string Data = "Data";             // the data describing the attributes of that code
-            public const string Images = "Images";
-            public const string Item = "Item";             // and item in a list
-            public const string Slash = "/";
-
-            // paths to notes, counters, and fixed choices
-            public const string CounterPath = ImageXml.Codes + ImageXml.Slash + Constants.Control.Counter;
-            public const string FixedChoicePath = ImageXml.Codes + ImageXml.Slash + Constants.Control.FixedChoice;
-            public const string NotePath = ImageXml.Codes + ImageXml.Slash + Constants.Control.Note;
-        }
-
         public static class MarkableCanvas
         {
             public const double MagnifierDefaultZoom = 60;

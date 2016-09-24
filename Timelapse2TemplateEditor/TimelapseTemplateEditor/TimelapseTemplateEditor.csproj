@@ -156,7 +156,6 @@
     <Compile Include="DialogInspectMetadata.xaml.cs">
       <DependentUpon>DialogInspectMetadata.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Util\CodeTemplateImporter.cs" />
     <Compile Include="EditorConstant.cs" />
     <Compile Include="DialogAboutTimelapseEditor.xaml.cs">
       <DependentUpon>DialogAboutTimelapseEditor.xaml</DependentUpon>
@@ -249,9 +248,6 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\folder_Open_16xLG.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Images\ConvertFile.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="32x32.ico" />

@@ -494,21 +494,6 @@ namespace Timelapse
 
                 // Finally, tell the user how many images were loaded, etc.
                 this.ShowImageCountsDialog(true);
-
-                // If we want to import old data from the ImageData.xml file, we can do it here...
-                // Check to see if there is an ImageData.xml file in here. If there is, ask the user
-                // if we want to load the data from that...
-                if (File.Exists(Path.Combine(this.FolderPath, Constants.File.XmlDataFileName)))
-                {
-                    ImportImageSetXmlFile importLegacyXmlDialog = new ImportImageSetXmlFile();
-                    importLegacyXmlDialog.Owner = this;
-                    bool? dialogResult = importLegacyXmlDialog.ShowDialog();
-                    if (dialogResult == true)
-                    {
-                        ImageDataXml.Read(Path.Combine(this.FolderPath, Constants.File.XmlDataFileName), this.dataHandler.ImageDatabase);
-                        this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageFilter); // to regenerate the controls and markers for this image
-                    }
-                }
             };
 
             backgroundWorker.RunWorkerAsync();

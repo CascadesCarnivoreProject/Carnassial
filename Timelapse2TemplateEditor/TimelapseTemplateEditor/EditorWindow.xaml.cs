@@ -156,93 +156,6 @@ namespace Timelapse.Editor
         }
 
         /// <summary>
-        /// Convert an old style xml template to the new ddb style
-        /// </summary>
-        private void ConvertCodeTemplateFileMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            string codeTemplateFileName = String.Empty;  // The code template file name
-
-            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
-
-            // Get the name of the Code Template file to open
-            OpenFileDialog codeTemplateFile = new OpenFileDialog();
-            codeTemplateFile.FileName = Path.GetFileName(Constants.File.XmlDataFileName); // Default file name
-            string xmlDataFileExtension = Path.GetExtension(Constants.File.XmlDataFileName);
-            codeTemplateFile.DefaultExt = xmlDataFileExtension; // Default file extension
-            codeTemplateFile.Filter = "Code Template Files (" + xmlDataFileExtension + ")|*" + xmlDataFileExtension; // Filter files by extension 
-            codeTemplateFile.Title = "Select Code Template File to convert...";
-
-            Nullable<bool> result = codeTemplateFile.ShowDialog(); // Show the open file dialog box
-            if (result == true)
-            {
-                codeTemplateFileName = codeTemplateFile.FileName;  // Process open file dialog box results 
-            }
-            else
-            {
-                return;
-            }
-
-            // Get the name of the new database file to create (over-writes it if it exists)
-            SaveFileDialog templateDatabaseFile = new SaveFileDialog();
-            templateDatabaseFile.Title = "Select Location to Save the Converted Template File";
-            templateDatabaseFile.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name
-            templateDatabaseFile.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
-            templateDatabaseFile.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
-            result = templateDatabaseFile.ShowDialog(); // Show open file dialog box
-
-            // Process open file dialog box results 
-            if (result == true)
-            {
-                this.TrySaveDatabaseBackupFile();
-
-                // Overwrite the file if it exists
-                if (File.Exists(templateDatabaseFile.FileName))
-                {
-                    File.Delete(templateDatabaseFile.FileName);
-                }
-            }
-            else
-            {
-                return;
-            }
-
-            // Start with the default layout of the data template
-            this.InitializeDataGrid(templateDatabaseFile.FileName);
-
-            // Now convert the code template file into a Data Template, overwriting values and adding rows as required
-            Mouse.OverrideCursor = Cursors.Wait;
-
-            this.generateControlsAndSpreadsheet = false;
-            List<string> conversionErrors;
-            CodeTemplateImporter importer = new CodeTemplateImporter();
-            importer.Import(codeTemplateFileName, this.templateDatabase, out conversionErrors);
-            this.generateControlsAndSpreadsheet = true;
-
-            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
-            this.GenerateSpreadsheet();
-            this.ReInitializeDataGrid(this.templateDatabase.FilePath);
-            Mouse.OverrideCursor = null;
-            if (conversionErrors.Count > 0)
-            {
-                MessageBox messageBox = new MessageBox("One or more data labels were problematic", this);
-                messageBox.Message.Icon = MessageBoxImage.Warning;
-                messageBox.Message.Problem = conversionErrors.Count.ToString() + " of your Data Labels were problematic." + Environment.NewLine + Environment.NewLine +
-                              "Data Labels:" + Environment.NewLine +
-                              "\u2022 must be unique," + Environment.NewLine +
-                              "\u2022 can only contain alphanumeric characters and '_'," + Environment.NewLine +
-                              "\u2022 cannot match particular reserved words.";
-                messageBox.Message.Result = "We will automatically repair these Data Labels:";
-                foreach (string s in conversionErrors)
-                {
-                    messageBox.Message.Solution += Environment.NewLine + "\u2022 " + s;
-                }
-                messageBox.Message.Hint = "Check if these are the names you want. You can also rename these corrected Data Labels if you want";
-
-                messageBox.ShowDialog();
-            }
-        }
-
-        /// <summary>
         /// Exits the application.
         /// </summary>
         private void ExitFileMenuItem_Click(object sender, RoutedEventArgs e)
@@ -400,7 +313,6 @@ namespace Timelapse.Editor
             this.OtherGrids.Visibility = Visibility.Visible;
             this.NewFileMenuItem.IsEnabled = false;
             this.OpenFileMenuItem.IsEnabled = false;
-            this.ConvertFileMenuItem.IsEnabled = false;
             this.ViewMenu.IsEnabled = true;
         }
 

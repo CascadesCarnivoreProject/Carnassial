@@ -219,11 +219,6 @@
                             <Image Source="Images/folder_Open_16xLG.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Name="ConvertFileMenuItem" Header="_Convert..." Click="ConvertCodeTemplateFileMenuItem_Click" ToolTip="Convert an old code template file to a new data template file">
-                        <MenuItem.Icon>
-                            <Image Source="Images/ConvertFile.png" />
-                        </MenuItem.Icon>
-                    </MenuItem>
                     <Separator />
                     <MenuItem Name="MenuItemRecentTemplates" Header="_Recent templates" IsEnabled="false" ToolTip="Recently used templates"/>
                     <Separator />
