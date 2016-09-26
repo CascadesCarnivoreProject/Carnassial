@@ -41,10 +41,10 @@ namespace Carnassial
             public const string DefaultValue = "DefaultValue"; // a default value for that code
             public const string Label = "Label";           // a label used to describe that code
             public const string SpreadsheetOrder = "SpreadsheetOrder";
-            public const string TextBoxWidth = "TXTBOXWIDTH";  // the width of the textbox
             public const string Tooltip = "Tooltip";       // the tooltip text that describes the code
             public const string Type = "Type";             // the data type
             public const string Visible = "Visible";       // whether an item should be visible (used by standard items)
+            public const string Width = "Width";           // the width of the textbox
 
             // control types
             public const string Counter = "Counter";       // a counter
@@ -170,11 +170,10 @@ namespace Carnassial
             public const string Y = "Y";
 
             // columns in ImageSetTable
-            public const string Filter = "Filter";         // string holding the currently selected filter
-            public const string Log = "Log";                   // String holding a user-created text log
-            public const string Magnifier = "Magnifier";          // string holding the true/false state of the magnifying glass (on or off)
-            public const string Row = "Row";                    // string holding the currently selected row
-            public const string WhiteSpaceTrimmed = "WhiteSpaceTrimmed";          // string holding the true/false state of whether the white space has been trimmed from the data.
+            public const string Selection = "Selection";       // string holding the current selection
+            public const string Log = "Log";                   // string holding a user-created text log
+            public const string Magnifier = "Magnifier";       // string holding the true/false state of the magnifying glass (on or off)
+            public const string Row = "Row";                   // string holding the currently selected row
         }
 
         public static class File
@@ -194,7 +193,7 @@ namespace Carnassial
             public const string XmlDataFileName = "ImageData.xml";
         }
 
-        // shorthands for ImageFilter.<value>.ToString()
+        // shorthands for ImageSelection.<value>.ToString()
         public static class ImageQuality
         {
             public const string Corrupted = "Corrupted";
@@ -277,14 +276,13 @@ namespace Carnassial
         {
             public static class CarnassialKey
             {
-                // the image filter used on exit
                 public const string AudioFeedback = "AudioFeedback";
-                // whether the controls are in a separate window (true) or in the Carnassial Window (false)
-                public const string ControlsInSeparateWindow = "ControlWindowSeparate";
-                // the width of the controlWindow
-                public const string ControlWindowHeight = "ControlWindowHeight";
-                // the width of the controlWindow
-                public const string ControlWindowWidth = "ControlWindowWidth";
+
+                public const string CarnassialWindowLocation = "CarnassialWindowLocation";
+                public const string CarnassialWindowSize = "CarnassialWindowSize";
+
+                // most recently used operator for custom selections
+                public const string CustomSelectionTermCombiningOperator = "CustomSelectionTermCombiningOperator";
                 // the DarkPixelThreshold
                 public const string DarkPixelThreshold = "DarkPixelThreshold";
                 // the DarkPixelRatio
@@ -299,15 +297,15 @@ namespace Carnassial
                 public const string SuppressCsvExportDialog = "SuppressCsvExportDialog";
                 public const string SuppressCsvImportPrompt = "SuppressCsvImportPrompt";
                 public const string SuppressFileCountOnImportDialog = "SuppressFileCountOnImportDialog";
-                public const string SuppressFilteredAmbiguousDatesPrompt = "SuppressFilteredAmbiguousDatesPrompt";
-                public const string SuppressFilteredCsvExportPrompt = "SuppressFilteredCsvExportPrompt";
-                public const string SuppressFilteredDarkThresholdPrompt = "SuppressFilteredDarkThresholdPrompt";
-                public const string SuppressFilteredDateTimeFixedCorrectionPrompt = "SuppressFilteredDateTimeFixedCorrectionPrompt";
-                public const string SuppressFilteredDateTimeLinearCorrectionPrompt = "SuppressFilteredDateTimeLinearCorrectionPrompt";
-                public const string SuppressFilteredDaylightSavingsCorrectionPrompt = "SuppressFilteredDaylightSavingsCorrectionPrompt";
-                public const string SuppressFilteredPopulateFieldFromMetadataPrompt = "SuppressFilteredPopulateFieldFromMetadataPrompt";
-                public const string SuppressFilteredRereadDatesFromFilesPrompt = "SuppressFilteredRereadDatesFromFilesPrompt";
-                public const string SuppressFilteredSetTimeZonePrompt = "SuppressFilteredSetTimeZonePrompt";
+                public const string SuppressSelectedAmbiguousDatesPrompt = "SuppressSelectedAmbiguousDatesPrompt";
+                public const string SuppressSelectedCsvExportPrompt = "SuppressSelectedCsvExportPrompt";
+                public const string SuppressSelectedDarkThresholdPrompt = "SuppressSelectedDarkThresholdPrompt";
+                public const string SuppressSelectedDateTimeFixedCorrectionPrompt = "SuppressSelectedDateTimeFixedCorrectionPrompt";
+                public const string SuppressSelectedDateTimeLinearCorrectionPrompt = "SuppressSelectedDateTimeLinearCorrectionPrompt";
+                public const string SuppressSelectedDaylightSavingsCorrectionPrompt = "SuppressSelectedDaylightSavingsCorrectionPrompt";
+                public const string SuppressSelectedPopulateFieldFromMetadataPrompt = "SuppressSelectedPopulateFieldFromMetadataPrompt";
+                public const string SuppressSelectedRereadDatesFromFilesPrompt = "SuppressSelectedRereadDatesFromFilesPrompt";
+                public const string SuppressSelectedSetTimeZonePrompt = "SuppressSelectedSetTimeZonePrompt";
             }
 
             public const string RootKey = @"Software\Cascades Carnivore Project\Carnassial\2.0";
@@ -329,6 +327,7 @@ namespace Carnassial
             public const string DataSource = "Data Source=";
             public const string CreateTable = "CREATE TABLE ";
             public const string InsertInto = "INSERT INTO ";
+            public const string Integer = "INTEGER";
             public const string Values = " VALUES ";
             public const string Select = " SELECT ";
             public const string UnionAll = " UNION ALL";
@@ -361,9 +360,9 @@ namespace Carnassial
 
         public static class ThrottleValues
         {
-            public const double DesiredMaximumImageRendersPerSecondLowerBound = 4.0;     // Likely very safe render rate 
-            public const double DesiredMaximumImageRendersPerSecondDefault = 9.0;   // Default render rate - could exhibit stalls on poor machines
-            public const double DesiredMaximumImageRendersPerSecondUpperBound = 12.0;    // Riskier render rater that should still work on most machines
+            public const double DesiredMaximumImageRendersPerSecondLowerBound = 2.0;
+            public const double DesiredMaximumImageRendersPerSecondDefault = 6.0;
+            public const double DesiredMaximumImageRendersPerSecondUpperBound = 12.0;
             public const int MaximumRenderAttempts = 100;
             public const int SleepForImageRenderInterval = 100;
 

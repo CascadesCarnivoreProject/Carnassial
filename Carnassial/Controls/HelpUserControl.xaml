@@ -141,7 +141,7 @@
                     </ListItem>
                 </List>
 
-                <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">Viewing files: navigating, comparing, filtering, magnifying and zooming files</Paragraph>
+                <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">Viewing files: navigating, comparing, selecting, magnifying and zooming files</Paragraph>
                 <Paragraph>You can do several things while viewing files.</Paragraph>
                 <List>
                     <ListItem>
@@ -151,7 +151,7 @@
                     </ListItem>
                     <ListItem>
                         <Paragraph>
-                            <Bold>Filtering.</Bold> Using the view menu, you can filter to exclude (or to see only) dark nighttime files, corrupted files, other selections.
+                            <Bold>Selectiong.</Bold> Using the select menu, you can exclude or see only dark nighttime files, corrupted files, or other selections.
                         </Paragraph>
                     </ListItem>
                     <ListItem>

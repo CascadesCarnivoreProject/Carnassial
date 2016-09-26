@@ -2,8 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Carnassial.Editor"
-        Name="OnlyWindow"
-        Title="Carnassial Template Editor" Height="910.957" Width="1244.808" MinHeight="560" MinWidth="800" Icon="32x32.ico" Loaded="Window_Loaded" Closing="Window_Closing">
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
+        AutomationProperties.AutomationId="CarnassialTemplateEditor"
+        Title="Carnassial Template Editor" Height="900" Width="1300" MinHeight="560" MinWidth="800" Icon="32x32.ico" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <ResourceDictionary>
             <!-- Focus Style for checkbox https://ramontebar.wordpress.com/2010/02/26/wpf-custom-check-box-template/-->
@@ -180,7 +182,7 @@
                 <TextBlock>A list of items displayed as a menu of choices. Type in new items; right click on an item to edit, move or delete it.</TextBlock>
             </ToolTip>
             <local:CellTextBlockConverter x:Key="CellTextBlockConverter" />
-            <Style  x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
+            <Style x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
                 <Setter Property="HorizontalAlignment" Value="Left"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
                 <Setter Property="Padding" Value="5,4,5,5"/>
@@ -196,6 +198,13 @@
         </ResourceDictionary>
     </Window.Resources>
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <Grid.Resources>
             <Style TargetType="{x:Type Button}">
                 <Setter Property="Margin" Value="0,0,0,5" />
@@ -203,391 +212,419 @@
         </Grid.Resources>
 
         <!-- Menus -->
-        <DockPanel Name="mainUI">
-            <Menu DockPanel.Dock="Top">
-
-                <!-- File Menu -->
-                <MenuItem Name="FileMenu" Header="_File" >
-                    <MenuItem Name="NewFileMenuItem" Header="_New..." Click="NewFileMenuItem_Click" ToolTip="Create a new data template file">
-                        <MenuItem.Icon>
-                            <Image Source="Images/NewFile_6276.png" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Name="OpenFileMenuItem" Header="_Open..." Click="OpenFileMenuItem_Click" ToolTip="Open an existing data template file">
-                        <MenuItem.Icon>
-                            <Image Source="Images/folder_Open_16xLG.png" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <Separator />
-                    <MenuItem Name="MenuItemRecentTemplates" Header="_Recent templates" IsEnabled="false" ToolTip="Recently used templates"/>
-                    <Separator />
-                    <MenuItem Name="ExitFileMenuItem" Header="E_xit" Click="ExitFileMenuItem_Click">
-                        <MenuItem.Icon>
-                            <Image Source="Images/Close_16XLG.png" />
-                        </MenuItem.Icon>
-                    </MenuItem>
+        <Menu Grid.Row="0">
+            <!-- File Menu -->
+            <MenuItem Name="FileMenu" Header="_File" >
+                <MenuItem Name="NewFileMenuItem" Header="_New..." Click="NewFileMenuItem_Click" ToolTip="Create a new data template file">
+                    <MenuItem.Icon>
+                        <Image Source="Images/NewFile_6276.png" />
+                    </MenuItem.Icon>
                 </MenuItem>
-
-                <!-- View Menu -->
-                <MenuItem Name="ViewMenu" Header="_View" IsEnabled="False">
-                    <MenuItem Name="ShowAllColumns" IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="ShowAllColumnsMenuItem_Click" ToolTip="Show the ordering used when displaying controls and for CSV file columns">
-                    </MenuItem>
-                    <MenuItem Name="MenuItemInspectImageMetadata" Header="Inspect file _metadata..." ToolTip="See what metadata is available in an image or video of your choosing" Click="MenuItemInspectImageMetadata_Click">
-                    </MenuItem>
+                <MenuItem Name="OpenFileMenuItem" Header="_Open..." Click="OpenFileMenuItem_Click" ToolTip="Open an existing data template file">
+                    <MenuItem.Icon>
+                        <Image Source="Images/folder_Open_16xLG.png" />
+                    </MenuItem.Icon>
                 </MenuItem>
-
-                <!-- Help Menu -->
-                <MenuItem Header="_Help" >
-                    <MenuItem Name="AboutMenuItem" Header="_About..." Click="AboutMenuItem_Click" ToolTip="Displays version information about this program and how to contact its creator"/>
+                <Separator />
+                <MenuItem Name="MenuItemRecentTemplates" Header="_Recent templates" IsEnabled="false" ToolTip="Recently used templates"/>
+                <Separator />
+                <MenuItem Name="ExitFileMenuItem" Header="E_xit" Click="ExitFileMenuItem_Click">
+                    <MenuItem.Icon>
+                        <Image Source="Images/Close_16XLG.png" />
+                    </MenuItem.Icon>
                 </MenuItem>
-            </Menu>
+            </MenuItem>
 
-            <TextBlock Name="HelpText" Visibility="Collapsed" Grid.Row="0" FontSize="16" Text="Use the File Menu to create or open a template, and to convert an old CodeTemplate.xml file to the new format." Margin =" 10" DockPanel.Dock="Top"/>
+            <!-- View Menu -->
+            <MenuItem Name="ViewMenu" Header="_View" IsEnabled="False">
+                <MenuItem Name="ShowAllColumns" IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="ShowAllColumnsMenuItem_Click" ToolTip="Show the ordering used when displaying controls and for CSV file columns">
+                </MenuItem>
+                <MenuItem Name="MenuItemInspectImageMetadata" Header="Inspect file _metadata..." ToolTip="See what metadata is available in an image or video of your choosing" Click="MenuItemInspectImageMetadata_Click">
+                </MenuItem>
+            </MenuItem>
 
-            <FlowDocumentScrollViewer Name="HelpDocument" AllowDrop="True" Drop="HelpDocument_Drop" PreviewDragEnter="HelpDocument_PreviewDrag" PreviewDragOver="HelpDocument_PreviewDrag">
-                <FlowDocument  FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
-                    <Paragraph FontWeight="Bold" FontSize="20">
-                        <Run Text="What the Carnassial Template Editor does"/>
-                    </Paragraph>
-                    <Paragraph FontSize="12">
-                        <Run Text="The kinds of information that you and/or your organization want to record from each file will be specific to the kinds of files you want to analyze, your data needs and how you will process that data later. This information will differ between organizations, and possibly between different kinds of image sets. This is where the template comes in."/>
-                        <LineBreak/>
-                        <LineBreak/>
-                        <Run Text="The template specifies the custom data required by you and your organization. You define your data needs through this template editor, which saves it as a file usually named "/>
-                        <Bold>
-                            <Run Text="CarnassialTemplate.tdb"/>
-                        </Bold>
-                        <Run Text=". You would then include that template file in each image set folder. Carnassial will look for that file and use the template information to create the user interface and to manage the data you enter."/>
-                    </Paragraph>
-                    <Paragraph FontSize="12">
-                        <Run FontWeight="Bold" Text="Note"/>
-                        <Run FontWeight="Bold" Language="en-ca" Text=": "/>
-                        <Run Text="Templates are normally created by a knowledgeable person (e.g., the scientist in charge), where they invested time thinking about what data is required and how it will be analyzed."/>
-                    </Paragraph>
-                    <Paragraph FontWeight="Bold" FontSize="20">
-                        <Run Text="To Create a Template"/>
-                    </Paragraph>
-                    <Paragraph>
-                        <Run Text="Using the File menu options, You can create a template in three ways. After its created, you can modify its contents (e.g., adding, modifying and deleting data fields)"/>
-                    </Paragraph>
-                    <List>
-                        <ListItem>
-                            <Paragraph>
-                                <Run FontWeight="Bold" Text="New"/>
-                                <Run FontWeight="Bold" Language="en-ca" Text=": "/>
-                                <Run Text="Creates a new template with default fields and values."/>
-                            </Paragraph>
-                        </ListItem>
-                        <ListItem>
-                            <Paragraph>
-                                <Run FontWeight="Bold" Text="Open"/>
-                                <Run FontWeight="Bold" Language="en-ca" Text=": "/>
-                                <Run Text="Opens an existing template."/>
-                            </Paragraph>
-                        </ListItem>
-                        <ListItem>
-                            <Paragraph>
-                                <Run FontWeight="Bold" Text="Convert"/>
-                                <Run FontWeight="Bold" Language="en-ca" Text=": "/>
-                                <Run Text="An earlier version of Carnassial used templates called "/>
-                                <Run FontWeight="Bold" Text="CodeTemplate.xml"/>
-                                <Run Text=". This option converts these to the new-style template. Its a slow operation, so be patient"/>
-                            </Paragraph>
-                        </ListItem>
-                    </List>
-                    <Paragraph FontWeight="Bold" FontSize="20">
-                        <Run Text="To Edit a Template"/>
-                    </Paragraph>
-                    <Paragraph>
-                        <Run Text="Each template already includes several pre-defined data types: "/>
-                        <Bold>
-                            <Run Text="File"/>
-                        </Bold>
-                        <Run Text=" name, "/>
-                        <Bold>
-                            <Run Text="Folder,"/>
-                        </Bold>
-                        <Run Text=" name, "/>
-                        <Bold>
-                            <Run Text="Date,"/>
-                        </Bold>
-                        <Bold>
-                            <Run Text="Time,"/>
-                        </Bold>
-                        <Bold>
-                            <Run Text="ImageQuality"/>
-                        </Bold>
-                        <Run Text=", and "/>
-                        <Bold>
-                            <Run Text="DeleteFlag"/>
-                        </Bold>
-                        <Run Text=". Carnassial tries to fill these in automatically. The template editor gives you the option of making these (and other) fields invisible in the user interface."/>
-                    </Paragraph>
-                    <Paragraph>
-                        <Run Text="You can add new data fields specific to your project, where each is created as one of the following types. For each type, you can specify various attributes (e.g., its name, help text, etc.). You can also specify the order of these fields in the Carnassial user interface and in the spreadsheet."/>
-                    </Paragraph>
-                    <List>
-                        <ListItem>
-                            <Paragraph>
-                                <Run FontWeight="Bold" Text="Count"/>
-                                <Run FontWeight="Bold" Language="en-ca" Text=": "/>
-                                <Run Text="Numeric data (integers). Normally used to count specific entities seen in an image."/>
-                            </Paragraph>
-                        </ListItem>
-                        <ListItem>
-                            <Paragraph>
-                                <Run FontWeight="Bold" Text="Choice / Fixed Choice: "/>
-                                <Run Text="A list of pre-defined values. Normally used to select a value from a menu"/>
-                            </Paragraph>
-                        </ListItem>
-                        <ListItem>
-                            <Paragraph>
-                                <Run FontWeight="Bold" Text="Note:"/>
-                                <Run Text="Textual data that you can use for any purpose (e.g., comments)"/>
-                            </Paragraph>
-                        </ListItem>
-                        <ListItem>
-                            <Paragraph>
-                                <Run Text="Boolean data, i.e., true or false"/>
-                            </Paragraph>
-                        </ListItem>
-                    </List>
-                    <Paragraph FontWeight="Bold" FontSize="20">
-                        <Run Text="Go through the Tutorial Manual"/>
-                    </Paragraph>
-                    <Paragraph>
-                        <Run Text="The manual contains a tutorial that illustrates how you can create and modify templates. "/>
-                    </Paragraph>
-                </FlowDocument>
-            </FlowDocumentScrollViewer>
+            <!-- Help Menu -->
+            <MenuItem Header="_Help" >
+                <MenuItem Name="AboutMenuItem" Header="_About..." Click="AboutMenuItem_Click" ToolTip="Displays version information about this program and how to contact its creator"/>
+            </MenuItem>
+        </Menu>
 
-            <Grid DockPanel.Dock="Top" Margin="10,5,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Name="DisplayGrid" />
-                    <ColumnDefinition Name="EditButton" Width="100"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Name="EditScheme" Height="1.5*" MinHeight="225"/>
-                    <RowDefinition Name="MenuPreview" Height="1*"  MinHeight="250"/>
-                </Grid.RowDefinitions>
+        <xcad:DockingManager AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="1" Grid.Row="1">
+            <xcad:DockingManager.DocumentHeaderTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{Binding IconSource}" Margin="0,0,4,0"/>
+                        <TextBlock Text="{Binding Title}" />
+                    </StackPanel>
+                </DataTemplate>
+            </xcad:DockingManager.DocumentHeaderTemplate>
+            <xcad:LayoutRoot x:Name="LayoutRoot">
+                <xcad:LayoutPanel Orientation="Horizontal">
+                    <xcad:LayoutDocumentPaneGroup>
+                        <xcad:LayoutDocumentPane>
+                            <xcad:LayoutDocument x:Name="InstructionPane" Title="Instructions">
+                                <FlowDocumentScrollViewer Name="HelpDocument" AllowDrop="True" Drop="HelpDocument_Drop" PreviewDragEnter="HelpDocument_PreviewDrag" PreviewDragOver="HelpDocument_PreviewDrag">
+                                    <FlowDocument  FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
+                                        <Paragraph FontWeight="Bold" FontSize="20">
+                                            <Run Text="What the Carnassial Template Editor does"/>
+                                        </Paragraph>
+                                        <Paragraph FontSize="12">
+                                            <Run Text="The kinds of information that you and/or your organization want to record from each file will be specific to the kinds of files you want to analyze, your data needs and how you will process that data later. This information will differ between organizations, and possibly between different kinds of image sets. This is where the template comes in."/>
+                                            <LineBreak/>
+                                            <LineBreak/>
+                                            <Run Text="The template specifies the custom data required by you and your organization. You define your data needs through this template editor, which saves it as a file usually named "/>
+                                            <Bold>
+                                                <Run Text="CarnassialTemplate.tdb"/>
+                                            </Bold>
+                                            <Run Text=". You would then include that template file in each image set folder. Carnassial will look for that file and use the template information to create the user interface and to manage the data you enter."/>
+                                        </Paragraph>
+                                        <Paragraph FontSize="12">
+                                            <Run FontWeight="Bold" Text="Note"/>
+                                            <Run FontWeight="Bold" Language="en-ca" Text=": "/>
+                                            <Run Text="Templates are normally created by a knowledgeable person (e.g., the scientist in charge), where they invested time thinking about what data is required and how it will be analyzed."/>
+                                        </Paragraph>
+                                        <Paragraph FontWeight="Bold" FontSize="20">
+                                            <Run Text="To Create a Template"/>
+                                        </Paragraph>
+                                        <Paragraph>
+                                            <Run Text="Using the File menu options, You can create a template in three ways. After its created, you can modify its contents (e.g., adding, modifying and deleting data fields)"/>
+                                        </Paragraph>
+                                        <List>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Run FontWeight="Bold" Text="New"/>
+                                                    <Run FontWeight="Bold" Language="en-ca" Text=": "/>
+                                                    <Run Text="Creates a new template with default fields and values."/>
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Run FontWeight="Bold" Text="Open"/>
+                                                    <Run FontWeight="Bold" Language="en-ca" Text=": "/>
+                                                    <Run Text="Opens an existing template."/>
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Run FontWeight="Bold" Text="Convert"/>
+                                                    <Run FontWeight="Bold" Language="en-ca" Text=": "/>
+                                                    <Run Text="An earlier version of Carnassial used templates called "/>
+                                                    <Run FontWeight="Bold" Text="CodeTemplate.xml"/>
+                                                    <Run Text=". This option converts these to the new-style template. Its a slow operation, so be patient"/>
+                                                </Paragraph>
+                                            </ListItem>
+                                        </List>
+                                        <Paragraph FontWeight="Bold" FontSize="20">
+                                            <Run Text="To Edit a Template"/>
+                                        </Paragraph>
+                                        <Paragraph>
+                                            <Run Text="Each template already includes several pre-defined data types: "/>
+                                            <Bold>
+                                                <Run Text="File"/>
+                                            </Bold>
+                                            <Run Text=" name, "/>
+                                            <Bold>
+                                                <Run Text="Folder,"/>
+                                            </Bold>
+                                            <Run Text=" name, "/>
+                                            <Bold>
+                                                <Run Text="Date,"/>
+                                            </Bold>
+                                            <Bold>
+                                                <Run Text="Time,"/>
+                                            </Bold>
+                                            <Bold>
+                                                <Run Text="ImageQuality"/>
+                                            </Bold>
+                                            <Run Text=", and "/>
+                                            <Bold>
+                                                <Run Text="DeleteFlag"/>
+                                            </Bold>
+                                            <Run Text=". Carnassial tries to fill these in automatically. The template editor gives you the option of making these (and other) fields invisible in the user interface."/>
+                                        </Paragraph>
+                                        <Paragraph>
+                                            <Run Text="You can add new data fields specific to your project, where each is created as one of the following types. For each type, you can specify various attributes (e.g., its name, help text, etc.). You can also specify the order of these fields in the Carnassial user interface and in the spreadsheet."/>
+                                        </Paragraph>
+                                        <List>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Run FontWeight="Bold" Text="Count"/>
+                                                    <Run FontWeight="Bold" Language="en-ca" Text=": "/>
+                                                    <Run Text="Numeric data (integers). Normally used to count specific entities seen in an image."/>
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Run FontWeight="Bold" Text="Choice / Fixed Choice: "/>
+                                                    <Run Text="A list of pre-defined values. Normally used to select a value from a menu"/>
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Run FontWeight="Bold" Text="Note:"/>
+                                                    <Run Text="Textual data that you can use for any purpose (e.g., comments)"/>
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Run Text="Boolean data, i.e., true or false"/>
+                                                </Paragraph>
+                                            </ListItem>
+                                        </List>
+                                        <Paragraph FontWeight="Bold" FontSize="20">
+                                            <Run Text="Go through the Tutorial Manual"/>
+                                        </Paragraph>
+                                        <Paragraph>
+                                            <Run Text="The manual contains a tutorial that illustrates how you can create and modify templates. "/>
+                                        </Paragraph>
+                                    </FlowDocument>
+                                </FlowDocumentScrollViewer>
+                            </xcad:LayoutDocument>
+                            <!-- AvalonDock uses a fixed zero margin after uncloseable tab titles; fake a margin with some trailing spaces -->
+                            <xcad:LayoutDocument x:Name="TemplatePane" Title="Template  " CanClose="False" AutomationProperties.AutomationId="TemplatePane">
+                                <Grid Margin="10,5,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="100" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
 
-                <!-- If you change the visible rows or header names, please check UpdateCellColors() constants to ensure they match new conventions -->
-                <TextBlock Name="TextMessage1" Visibility=" Collapsed" Grid.Row="0" Text="Create a new template, read in an existing template, or convert and old XML template. Grey Boxes aren't editable"/>
+                                    <!-- If you change the visible rows or header names, please check UpdateCellColors() constants to ensure they match new conventions -->
+                                    <DataGrid Name="TemplateDataGrid" MinHeight="250" VerticalAlignment="Top" Grid.Row="0" RowHeight="25" VirtualizingStackPanel.IsVirtualizing="False"
+                                              AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" 
+                                              BeginningEdit="TemplateDataGrid_BeginningEdit"
+                                              CellEditEnding="TemplateDataGrid_CellEditEnding"
+                                              CurrentCellChanged="TemplateDataGrid_CurrentCellChanged" 
+                                              PreviewKeyDown="TemplateDataGrid_PreviewKeyDown" 
+                                              PreviewTextInput="TemplateDataGrid_PreviewTextInput" 
+                                              LayoutUpdated="TemplateDataGrid_LayoutUpdated"
+                                              SelectionChanged="TemplateDataGrid_SelectionChanged" 
+                                              ItemsSource="{Binding}" Margin="0,0,10,0" SelectionMode="Single"
+                                              ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}">
+                                        <DataGrid.Resources>
+                                            <Style x:Key="VerticalGridHeaderStyle" TargetType="DataGridColumnHeader">
+                                                <Setter Property="VerticalContentAlignment" Value="Bottom"/>
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                            </Style>
+                                        </DataGrid.Resources>
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="ID" CanUserSort="False" IsReadOnly="True" Binding="{Binding Path=Id, Converter={StaticResource CellTextBlockConverter}}" Visibility="Collapsed" />
+                                            <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                                            <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                                            <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False">
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="{x:Type TextBlock}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Note">
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeNoteToolTip}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Counter">
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeCounterToolTip}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeFixedChoiceToolTip}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Flag">
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeFlagToolTip}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="File">
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeFileToolTip}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Folder">
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeFolderToolTip}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Date">
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeDateToolTip}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Time">
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeTimeToolTip}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="ImageQuality">
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeImageQualityToolTip}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeDeletionFlagToolTip}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
+                                            <DataGridTextColumn MinWidth="40"  Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="{x:Type TextBlock}">
+                                                        <Setter Property="ToolTip" Value="{StaticResource DefaultValueToolTip}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Counter">
+                                                                <Setter Property="TextAlignment" Value="Right"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
+                                            <DataGridTextColumn MinWidth="40"  Header="Label" Binding="{Binding Path=Label, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="{x:Type TextBlock}">
+                                                        <Setter Property="ToolTip" Value="{StaticResource LabelToolTip}"/>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
+                                            <DataGridTextColumn MinWidth="40"   Header="Data Label"  Binding="{Binding Path=DataLabel,  Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="{x:Type TextBlock}">
+                                                        <Setter Property="ToolTip" Value="{StaticResource DataLabelToolTip}"/>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
+                                            <DataGridTextColumn MinWidth="50"  Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource CellTextBlockConverter}}" Width="*" CanUserSort="False">
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="{x:Type TextBlock}">
+                                                        <Setter Property="ToolTip" Value="{StaticResource TooltipToolTip}"/>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
+                                            <DataGridTextColumn MinWidth="40"  Header="Width" Binding="{Binding Path=Width, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False">
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="{x:Type TextBlock}">
+                                                        <Setter Property="ToolTip" Value="{StaticResource WidthToolTip}"/>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
+                                            <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" SortMemberPath="Include" CanUserSort="False" Binding="{Binding Path=Copyable, UpdateSourceTrigger=PropertyChanged}">
+                                                <DataGridCheckBoxColumn.CellStyle>
+                                                    <Style TargetType="{x:Type DataGridCell}">
+                                                        <Setter Property="ToolTip" Value="{StaticResource CopyableToolTip}"/>
+                                                    </Style>
+                                                </DataGridCheckBoxColumn.CellStyle>
+                                            </DataGridCheckBoxColumn>
+                                            <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" SortMemberPath="Include" CanUserSort="False" Binding="{Binding Path=Visible, UpdateSourceTrigger=PropertyChanged}">
+                                                <DataGridCheckBoxColumn.CellStyle>
+                                                    <Style TargetType="{x:Type DataGridCell}">
+                                                        <Setter Property="ToolTip" Value="{StaticResource VisibleToolTip}"/>
+                                                    </Style>
+                                                </DataGridCheckBoxColumn.CellStyle>
+                                            </DataGridCheckBoxColumn>
 
-                <DataGrid Name="TemplateDataGrid" MinHeight="250" VerticalAlignment="Top" Grid.Row="0" RowHeight="25" Visibility="Collapsed" VirtualizingStackPanel.IsVirtualizing="False"
-                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" 
-                          BeginningEdit="TemplateDataGrid_BeginningEdit"
-                          CellEditEnding="TemplateDataGrid_CellEditEnding"
-                          CurrentCellChanged="TemplateDataGrid_CurrentCellChanged" 
-                          PreviewKeyDown="TemplateDataGrid_PreviewKeyDown" 
-                          PreviewTextInput="TemplateDataGrid_PreviewTextInput" 
-                          LayoutUpdated="TemplateDataGrid_LayoutUpdated"
-                          SelectionChanged="TemplateDataGrid_SelectionChanged" 
-                          ItemsSource="{Binding}" Margin="0,0,10,0" SelectionMode="Single"
-                          ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}">
-                    <DataGrid.Resources>
-                        <Style x:Key="VerticalGridHeaderStyle" TargetType="DataGridColumnHeader">
-                            <Setter Property="VerticalContentAlignment" Value="Bottom"/>
-                            <Setter Property="FontWeight" Value="Bold"/>
-                        </Style>
-                    </DataGrid.Resources>
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="ID" CanUserSort="False" IsReadOnly="True" Binding="{Binding Path=Id, Converter={StaticResource CellTextBlockConverter}}" Visibility="Collapsed" />
-                        <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
-                        <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
-                        <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False">
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="{x:Type TextBlock}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Type}" Value="Note">
-                                            <Setter Property="ToolTip" Value="{StaticResource TypeNoteToolTip}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="Counter">
-                                            <Setter Property="ToolTip" Value="{StaticResource TypeCounterToolTip}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
-                                            <Setter Property="ToolTip" Value="{StaticResource TypeFixedChoiceToolTip}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="Flag">
-                                            <Setter Property="ToolTip" Value="{StaticResource TypeFlagToolTip}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="File">
-                                            <Setter Property="ToolTip" Value="{StaticResource TypeFileToolTip}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="Folder">
-                                            <Setter Property="ToolTip" Value="{StaticResource TypeFolderToolTip}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="Date">
-                                            <Setter Property="ToolTip" Value="{StaticResource TypeDateToolTip}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="Time">
-                                            <Setter Property="ToolTip" Value="{StaticResource TypeTimeToolTip}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="ImageQuality">
-                                            <Setter Property="ToolTip" Value="{StaticResource TypeImageQualityToolTip}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
-                                            <Setter Property="ToolTip" Value="{StaticResource TypeDeletionFlagToolTip}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn MinWidth="40"  Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="{x:Type TextBlock}">
-                                    <Setter Property="ToolTip" Value="{StaticResource DefaultValueToolTip}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Type}" Value="Counter">
-                                            <Setter Property="TextAlignment" Value="Right"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn MinWidth="40"  Header="Label" Binding="{Binding Path=Label, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="{x:Type TextBlock}">
-                                    <Setter Property="ToolTip" Value="{StaticResource LabelToolTip}"/>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn MinWidth="40"   Header="Data Label"  Binding="{Binding Path=DataLabel,  Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="{x:Type TextBlock}">
-                                    <Setter Property="ToolTip" Value="{StaticResource DataLabelToolTip}"/>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn MinWidth="50"  Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource CellTextBlockConverter}}" Width="*" CanUserSort="False">
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="{x:Type TextBlock}">
-                                    <Setter Property="ToolTip" Value="{StaticResource TooltipToolTip}"/>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn MinWidth="40"  Header="Width" Binding="{Binding Path=TXTBOXWIDTH, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False">
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="{x:Type TextBlock}">
-                                    <Setter Property="ToolTip" Value="{StaticResource WidthToolTip}"/>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
-                        <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" SortMemberPath="Include" CanUserSort="False" Binding="{Binding Path=Copyable, UpdateSourceTrigger=PropertyChanged}">
-                            <DataGridCheckBoxColumn.CellStyle>
-                                <Style TargetType="{x:Type DataGridCell}">
-                                    <Setter Property="ToolTip" Value="{StaticResource CopyableToolTip}"/>
-                                </Style>
-                            </DataGridCheckBoxColumn.CellStyle>
-                        </DataGridCheckBoxColumn>
-                        <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" SortMemberPath="Include" CanUserSort="False" Binding="{Binding Path=Visible, UpdateSourceTrigger=PropertyChanged}">
-                            <DataGridCheckBoxColumn.CellStyle>
-                                <Style TargetType="{x:Type DataGridCell}">
-                                    <Setter Property="ToolTip" Value="{StaticResource VisibleToolTip}"/>
-                                </Style>
-                            </DataGridCheckBoxColumn.CellStyle>
-                        </DataGridCheckBoxColumn>
+                                            <DataGridTemplateColumn MinWidth="40" Header="List" Width="80"  CanUserSort="False" >
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel>
+                                                            <Button Name="btnButton" Tag="{Binding Path=ControlOrder}" Click="ChoiceListButton_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Margin="1"  Content="Define List" >
+                                                                <Button.Style>
+                                                                    <Style TargetType="{x:Type Button}">
+                                                                        <Style.Triggers>
+                                                                            <!--Triggers for disabling lists for some types-->
+                                                                            <DataTrigger Binding="{Binding Type}" Value="File">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Type}" Value="RelativePath">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Type}" Value="Folder">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Type}" Value="DateTime">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Type}" Value="UtcOffset">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Type}" Value="Date">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Type}" Value="Time">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Type}" Value="Counter">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Type}" Value="Note">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Type}" Value="Flag">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
+                                                                                <Setter Property="ToolTip" Value="{StaticResource ListFixedChoiceToolTip}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
 
-                        <DataGridTemplateColumn MinWidth="40" Header="List" Width="80"  CanUserSort="False" >
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel>
-                                        <Button Name="btnButton" Tag="{Binding Path=ControlOrder}" Click="ChoiceListButton_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Margin="1"  Content="Define List" >
-                                            <Button.Style>
-                                                <Style TargetType="{x:Type Button}">
-                                                    <Style.Triggers>
-                                                        <!--Triggers for disabling lists for some types-->
-                                                        <DataTrigger Binding="{Binding Type}" Value="File">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="RelativePath">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="Folder">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="DateTime">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="UtcOffset">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="Date">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="Time">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="Counter">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="Note">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="Flag">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
-                                                            <Setter Property="ToolTip" Value="{StaticResource ListFixedChoiceToolTip}"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                        </Button>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+                                    <DockPanel Name="RowControls" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,0,10,0" >
+                                        <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="1" Margin="0">
+                                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,-1" >
+                                                <TextBlock Margin="0,0,0,5" DockPanel.Dock="Top" FontSize="14" HorizontalAlignment="Center"><Run Text="Add:"/></TextBlock>
+                                                <UniformGrid Margin="0,0,0,0" Rows="4" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
+                                                    <Button Content="Count"  Margin="0,0,0,2.5" Tag="Counter" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton"/>
+                                                    <Button Content="Choice" Margin="0,0,0,2.5" Tag="FixedChoice" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFixedChoiceButton"/>
+                                                    <Button Content="Note" Margin="0,0,0,2.5"  Tag="Note" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddNoteButton"/>
+                                                    <Button Content="Flag" Margin="0,0,0,0"  Tag="Flag" DockPanel.Dock="Bottom"  HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFlagButton"/>
+                                                </UniformGrid>
+                                            </DockPanel>
+                                        </Border>
+                                        <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center"  DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveControlButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveControlButton_Click" Margin="0,30,0,0"/>
+                                    </DockPanel>
 
-                <DockPanel Name="RowControls" Visibility="Collapsed" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,0,10,0" >
-                    <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="1" Margin="0" >
-                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,-1" >
-                            <TextBlock  Margin="0,0,0,5" DockPanel.Dock="Top" FontSize="14"  HorizontalAlignment="Center"><Run Text="Add:"/></TextBlock>
-                            <UniformGrid Margin="0,0,0,0" Rows="4" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
-                                <Button Content="Count"  Margin="0,0,0,2.5" Tag="Counter" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton"/>
-                                <Button Content="Choice" Margin="0,0,0,2.5" Tag="FixedChoice" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFixedChoiceButton"/>
-                                <Button Content="Note" Margin="0,0,0,2.5"  Tag="Note" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddNoteButton"/>
-                                <Button Content="Flag" Margin="0,0,0,0"  Tag="Flag" DockPanel.Dock="Bottom"  HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFlagButton"/>
-                            </UniformGrid>
-                        </DockPanel>
-                    </Border>
-                    <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center"  DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveControlButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveControlButton_Click" Margin="0,30,0,0"/>
-                </DockPanel>
+                                    <GridSplitter Grid.Row="1" Grid.ColumnSpan="2"
+                                                  Height="2" Background="DarkGray" Margin="-10,10,0,0"
+                                                  VerticalAlignment="Top" 
+                                                  HorizontalAlignment="Stretch" />
 
-                <GridSplitter Grid.Row="1" Grid.ColumnSpan="2"
-                 Height="2" Background="DarkGray" Margin="-10,10,0,0"
-                 VerticalAlignment="Top" 
-                 HorizontalAlignment="Stretch" />
+                                    <!-- spreadsheet order -->
+                                    <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,7,0,0">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Margin="0,5,10,0" Text="The spreadsheet column order.  Drag and drop columns to re-arrange their order to your preference"></TextBlock>
+                                        <Border Grid.Row="1" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10">
+                                            <ScrollViewer MinHeight="50" Height="50" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" VerticalAlignment="Top">
+                                                <DataGrid x:Name="dgSpreadsheet" Margin="0,10,0,0"  MinHeight="25" Height="25" ColumnReordered="OnSpreadsheetOrderChanged" VerticalAlignment="Top"/>
+                                            </ScrollViewer>
+                                        </Border>
+                                    </Grid>
+                                </Grid>
+                            </xcad:LayoutDocument>
+                        </xcad:LayoutDocumentPane>
+                    </xcad:LayoutDocumentPaneGroup>
+                    <xcad:LayoutAnchorablePaneGroup DockWidth="275">
+                        <xcad:LayoutAnchorablePane>
+                            <xcad:LayoutAnchorable Title="Control layout" CanClose="False">
+                                <Grid Name="ControlGrid">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
 
-                <Grid Name="OtherGrids" Visibility="Collapsed" Grid.Row="1" Grid.ColumnSpan="2" MinHeight="200" Margin="0,7,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition  Height="1*" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height=".5*"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Margin="0,10,10,0" FontWeight="Bold" Text="What the interface will (roughly) look like. Drag and drop these controls (by their labels) to re-arrange their order to your preference"></TextBlock>
-                    <Border Grid.Row="1" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
-                        <ScrollViewer VerticalAlignment="Top">
-                            <WrapPanel x:Name="controlsPanel" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="OnPreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="OnPreviewMouseLeftButtonUp" PreviewMouseMove="OnPreviewMouseMove"
-                                    DragEnter="OnDragEnter" Drop="OnDragDrop" />
-                        </ScrollViewer>
-                    </Border>
-                    <TextBlock Grid.Row="2" Margin="0,5,10,0" FontWeight="Bold" Text="The spreadsheet column order.  Drag and drop columns to re-arrange their order to your preference"></TextBlock>
-                    <Border Grid.Row="3" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
-                        <ScrollViewer MinHeight="50" Height="50" HorizontalScrollBarVisibility="Visible" VerticalAlignment="Top">
-                            <DataGrid x:Name="dgSpreadsheet" Margin="0,10,0,0"  MinHeight="25" Height="25" ColumnReordered="OnSpreadsheetOrderChanged" VerticalAlignment="Top"/>
-                        </ScrollViewer>
-                    </Border>
-                </Grid>
-            </Grid>
-        </DockPanel>
-
+                                    <Border Grid.Row="0" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
+                                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                            <WrapPanel x:Name="ControlsPanel" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="OnPreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="OnPreviewMouseLeftButtonUp" PreviewMouseMove="OnPreviewMouseMove"
+                                                       DragEnter="ControlsPanel_DragEnter" Drop="ControlsPanel_DragDrop" />
+                                        </ScrollViewer>
+                                    </Border>
+                                    <TextBlock Grid.Row="1" Text="Drag and drop these controls (by their labels) to re-arrange their order to your preference" TextWrapping="Wrap" />
+                                </Grid>
+                            </xcad:LayoutAnchorable>
+                        </xcad:LayoutAnchorablePane>
+                    </xcad:LayoutAnchorablePaneGroup>
+                </xcad:LayoutPanel>
+            </xcad:LayoutRoot>
+        </xcad:DockingManager>
     </Grid>
-
 </Window>

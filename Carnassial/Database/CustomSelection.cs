@@ -7,28 +7,24 @@ using System.Linq;
 namespace Carnassial.Database
 {
     /// <summary>
-    /// Class CustomFilter holds a list search term particles, each reflecting criteria for a given field
+    /// Holds a list search term particles, each reflecting criteria for a given field
     /// </summary>
-    public class CustomFilter
+    public class CustomSelection
     {
         public List<SearchTerm> SearchTerms { get; private set; }
-        public CustomFilterOperator TermCombiningOperator { get; set; }
+        public CustomSelectionOperator TermCombiningOperator { get; set; }
 
-        /// <summary>
-        /// Create a CustomFilter, where we build a list of potential search terms based on the controls found in the sorted template table
-        /// The search term will be used only if its 'UseForSearching' field is true
-        /// </summary>
-        public CustomFilter(DataTableBackedList<ControlRow> templateTable, CustomFilterOperator termCombiningOperator)
+        public CustomSelection(DataTableBackedList<ControlRow> templateTable, CustomSelectionOperator termCombiningOperator)
         {
             this.SearchTerms = new List<SearchTerm>();
             this.TermCombiningOperator = termCombiningOperator;
 
-            // Initialize the filter to reflect the desired controls in the template (in control order)
+            // fill the data grid with the controls in the template (in control order)
             foreach (ControlRow control in templateTable)
             {
                 string controlType = control.Type;
-                // add a control here to prevent it from appearing in CustomFilter
-                // folder is usually the same for all files in the image set and not useful for filtering
+                // add a control here to prevent it from appearing
+                // folder is usually the same for all files in the image set and not a useful selection criteria
                 // date and time are redundant with DateTime
                 if (controlType == Constants.DatabaseColumn.Folder) 
                 {
@@ -45,7 +41,7 @@ namespace Carnassial.Database
                 }
                 else if (controlType == Constants.DatabaseColumn.DateTime)
                 {
-                    // the first time it's popped CustomViewFilter dialog changes this default to the date time of the current image
+                    // the first time it's popped the CustomViewSelection dialog changes this default to the date time of the current image
                     defaultDatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(Constants.ControlDefault.DateTimeValue);
                     termOperator = Constants.SearchTermOperator.GreaterThanOrEqual;
                 }
@@ -55,7 +51,7 @@ namespace Carnassial.Database
                 }
                 else if (controlType == Constants.DatabaseColumn.UtcOffset)
                 {
-                    // the first time it's popped CustomViewFilter dialog changes this default to the date time of the current image
+                    // the first time it's popped CustomViewSelection dialog changes this default to the date time of the current image
                     defaultDatabaseValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constants.ControlDefault.DateTimeValue.Offset);
                     termOperator = Constants.SearchTermOperator.GreaterThanOrEqual;
                 }
@@ -106,10 +102,10 @@ namespace Carnassial.Database
                 {
                     switch (this.TermCombiningOperator)
                     {
-                        case CustomFilterOperator.And:
+                        case CustomSelectionOperator.And:
                             where += " And ";
                             break;
-                        case CustomFilterOperator.Or:
+                        case CustomSelectionOperator.Or:
                             where += " Or ";
                             break;
                         default:

@@ -3,7 +3,6 @@ using Carnassial.Database;
 using Carnassial.Dialog;
 using Carnassial.Editor;
 using Carnassial.Editor.Dialog;
-using Carnassial.Images;
 using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -53,6 +52,8 @@ namespace Carnassial.UnitTests
             editor.Close();
 
             // open, load existing database, pop dialogs, close
+            // InitializeDataGrid() sets the template pane active but without the explicit set in test code the event gets dropped, resulting the EditChoiceList
+            // show failing because the UIElement its position is referenced to is not visible.
             editor = new EditorWindow();
             editor.Show();
             this.WaitForRenderingComplete();
@@ -60,8 +61,11 @@ namespace Carnassial.UnitTests
             editorAccessor.Invoke(TestConstant.InitializeDataGridMethodName, templateDatabaseFilePath);
             this.WaitForRenderingComplete();
 
+            editor.TemplatePane.IsActive = true;
+            this.WaitForRenderingComplete();
+
             this.ShowDialog(new AboutEditor(editor));
-            this.ShowDialog(new EditChoiceList(editor.HelpText, new List<string>() { "Choice0", "Choice1", "Choice2", "Choice3" }, editor));
+            this.ShowDialog(new EditChoiceList(editor.TemplateDataGrid, new List<string>() { "Choice0", "Choice1", "Choice2", "Choice3" }, editor));
 
             editor.Close();
         }
@@ -164,12 +168,11 @@ namespace Carnassial.UnitTests
                 Assert.IsNotNull(dataHandler.ImageCache.Current);
 
                 this.ShowDialog(new About(carnassial));
-                MarkableImageCanvas markableCanvas = (MarkableImageCanvas)carnassialAccessor.GetField("markableCanvas");
                 CarnassialState state = (CarnassialState)carnassialAccessor.GetField("state");
-                this.ShowDialog(new AdvancedCarnassialOptions(state, markableCanvas, carnassial));
+                this.ShowDialog(new AdvancedCarnassialOptions(state, carnassial.MarkableCanvas, carnassial));
                 this.ShowDialog(new ChooseDatabaseFile(new string[] { TestConstant.File.DefaultNewImageDatabaseFileName }, carnassial));
 
-                this.ShowDialog(new CustomViewFilter(dataHandler.ImageDatabase, carnassial));
+                this.ShowDialog(new CustomViewSelection(dataHandler.ImageDatabase, carnassial));
                 this.ShowDialog(new DateCorrectAmbiguous(dataHandler.ImageDatabase, carnassial));
                 this.ShowDialog(new DateDaylightSavingsTimeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache, carnassial));
 

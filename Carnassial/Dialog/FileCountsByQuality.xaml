@@ -13,7 +13,7 @@
                             Icon="Information"
                             Title="Summary counts of your files"
                             What="Carnassial automatically categorizes the 'Image Quality' of your images and videos."
-                            Hint="Use the Filter menu to selectively view and work with files in the image set." />
+                            Hint="Use the Select menu to selectively view and work with files in the image set." />
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
                 <Run FontWeight="Bold" Text="Counts: " FontSize="14"/>

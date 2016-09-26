@@ -19,7 +19,7 @@ namespace Carnassial.Database
         private bool disposed;
         private DataRowChangeEventHandler onImageDataTableRowChanged;
 
-        public CustomFilter CustomFilter { get; private set; }
+        public CustomSelection CustomSelection { get; private set; }
 
         /// <summary>Gets the file name of the image database on disk.</summary>
         public string FileName { get; private set; }
@@ -52,7 +52,7 @@ namespace Carnassial.Database
             this.TemplateSynchronizationIssues = new List<string>();
         }
 
-        public static ImageDatabase CreateOrOpen(string filePath, TemplateDatabase templateDatabase)
+        public static ImageDatabase CreateOrOpen(string filePath, TemplateDatabase templateDatabase, CustomSelectionOperator customSelectionTermCombiningOperator)
         {
             // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
             bool populateDatabase = !File.Exists(filePath);
@@ -76,7 +76,7 @@ namespace Carnassial.Database
             }
             imageDatabase.GetMarkers();
 
-            imageDatabase.CustomFilter = new CustomFilter(imageDatabase.TemplateTable, CustomFilterOperator.Or);
+            imageDatabase.CustomSelection = new CustomSelection(imageDatabase.TemplateTable, customSelectionTermCombiningOperator);
             imageDatabase.PopulateDataLabelMaps();
             return imageDatabase;
         }
@@ -271,26 +271,24 @@ namespace Carnassial.Database
             // this is necessary as images can't be added unless ImageDataTable.Columns is available
             // can't use TryGetImagesAll() here as that function's contract is not to update ImageDataTable if the select against the underlying database table 
             // finds no rows, which is the case for a database being created
-            this.SelectDataTableImages(ImageFilter.All);
+            this.SelectDataTableImages(ImageSelection.All);
 
             // Create the ImageSetTable and initialize a single row in it
             columnDefinitions.Clear();
             columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));  // It begins with the ID integer primary key
             columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.Log, Constants.Sql.Text, Constants.Database.ImageSetDefaultLog));
-            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.Magnifier, Constants.Sql.Text, Constants.Boolean.True));
+            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.Magnifier, Constants.Sql.Text, Constants.Boolean.False));
             columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.Row, Constants.Sql.Text, Constants.DefaultImageRowIndex));
-            int allImages = (int)ImageFilter.All;
-            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.Filter, Constants.Sql.Text, allImages));
-            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Sql.Text));
+            int allImages = (int)ImageSelection.All;
+            columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.Selection, Constants.Sql.Text, allImages));
             columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.TimeZone, Constants.Sql.Text));
             this.Database.CreateTable(Constants.Database.ImageSetTable, columnDefinitions);
 
             List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>(); // Populate the data for the image set with defaults
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Log, Constants.Database.ImageSetDefaultLog));
-            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, Constants.Boolean.True));
+            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, Constants.Boolean.False));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Row, Constants.DefaultImageRowIndex));
-            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, allImages.ToString()));
-            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, Constants.Boolean.True));
+            columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.Selection, allImages.ToString()));
             columnsToUpdate.Add(new ColumnTuple(Constants.DatabaseColumn.TimeZone, TimeZoneInfo.Local.Id));
             List<List<ColumnTuple>> insertionStatements = new List<List<ColumnTuple>>();
             insertionStatements.Add(columnsToUpdate);
@@ -364,7 +362,7 @@ namespace Carnassial.Database
                     imageDatabaseControl.Label = templateControl.Label;
                     imageDatabaseControl.List = templateControl.List;
                     imageDatabaseControl.Tooltip = templateControl.Tooltip;
-                    imageDatabaseControl.TextBoxWidth = templateControl.TextBoxWidth;
+                    imageDatabaseControl.Width = templateControl.Width;
                     imageDatabaseControl.Copyable = templateControl.Copyable;
                     imageDatabaseControl.Visible = templateControl.Visible;
                     this.SyncControlToDatabase(imageDatabaseControl);
@@ -422,10 +420,10 @@ namespace Carnassial.Database
         /// Populate the image table so that it matches all the entries in its associated database table.
         /// Then set the currentID and currentRow to the the first record in the returned set
         /// </summary>
-        public void SelectDataTableImages(ImageFilter filter)
+        public void SelectDataTableImages(ImageSelection selection)
         {
             string query = "Select * FROM " + Constants.Database.ImageDataTable;
-            string where = this.GetImagesWhere(filter);
+            string where = this.GetImagesWhere(selection);
             if (String.IsNullOrEmpty(where) == false)
             {
                 query += Constants.Sql.Where + where;
@@ -476,25 +474,25 @@ namespace Carnassial.Database
             }
         }
 
-        public Dictionary<ImageFilter, int> GetImageCountsByQuality()
+        public Dictionary<ImageSelection, int> GetImageCountsByQuality()
         {
-            Dictionary<ImageFilter, int> counts = new Dictionary<ImageFilter, int>();
-            counts[ImageFilter.Dark] = this.GetImageCount(ImageFilter.Dark);
-            counts[ImageFilter.Corrupted] = this.GetImageCount(ImageFilter.Corrupted);
-            counts[ImageFilter.Missing] = this.GetImageCount(ImageFilter.Missing);
-            counts[ImageFilter.Ok] = this.GetImageCount(ImageFilter.Ok);
+            Dictionary<ImageSelection, int> counts = new Dictionary<ImageSelection, int>();
+            counts[ImageSelection.Dark] = this.GetImageCount(ImageSelection.Dark);
+            counts[ImageSelection.Corrupted] = this.GetImageCount(ImageSelection.Corrupted);
+            counts[ImageSelection.Missing] = this.GetImageCount(ImageSelection.Missing);
+            counts[ImageSelection.Ok] = this.GetImageCount(ImageSelection.Ok);
             return counts;
         }
 
-        public int GetImageCount(ImageFilter imageQuality)
+        public int GetImageCount(ImageSelection imageQuality)
         {
             string query = "Select Count(*) FROM " + Constants.Database.ImageDataTable;
             string where = this.GetImagesWhere(imageQuality);
             if (String.IsNullOrEmpty(where))
             {
-                if (imageQuality == ImageFilter.Custom)
+                if (imageQuality == ImageSelection.Custom)
                 {
-                    // if no custom filter search terms are selected the image count is undefined as no filter is in operation
+                    // if no search terms are actitve the image count is undefined as no filtering is in operation
                     return -1;
                 }
                 // otherwise, the query is for all images as no where clause is present
@@ -520,23 +518,23 @@ namespace Carnassial.Database
             this.Database.Insert(table, insertionStatements);
         }
 
-        private string GetImagesWhere(ImageFilter imageQuality)
+        private string GetImagesWhere(ImageSelection selection)
         {
-            switch (imageQuality)
+            switch (selection)
             {
-                case ImageFilter.All:
+                case ImageSelection.All:
                     return String.Empty;
-                case ImageFilter.Corrupted:
-                case ImageFilter.Dark:
-                case ImageFilter.Missing:
-                case ImageFilter.Ok:
-                    return this.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality] + "=\"" + imageQuality + "\"";
-                case ImageFilter.MarkedForDeletion:
+                case ImageSelection.Corrupted:
+                case ImageSelection.Dark:
+                case ImageSelection.Missing:
+                case ImageSelection.Ok:
+                    return this.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality] + "=\"" + selection + "\"";
+                case ImageSelection.MarkedForDeletion:
                     return this.DataLabelFromStandardControlType[Constants.DatabaseColumn.DeleteFlag] + "=\"true\"";
-                case ImageFilter.Custom:
-                    return this.CustomFilter.GetImagesWhere();
+                case ImageSelection.Custom:
+                    return this.CustomSelection.GetImagesWhere();
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled quality filter {0}.  For custom filters call CustomFilter.GetImagesWhere().", imageQuality));
+                    throw new NotSupportedException(String.Format("Unhandled selection {0}.", selection));
             }
         }
 
@@ -557,7 +555,7 @@ namespace Carnassial.Database
             this.Database.Update(Constants.Database.ImageDataTable, columnToUpdate);
         }
 
-        // Set one property on all rows in the filtered view to a given value
+        // Set one property on all rows in the selection to a given value
         public void UpdateImages(ImageRow valueSource, string dataLabel)
         {
             this.UpdateImages(valueSource, dataLabel, 0, this.CurrentlySelectedImageCount - 1);
@@ -612,7 +610,7 @@ namespace Carnassial.Database
         }
 
         // Given a time difference in ticks, update all the date/time field in the database
-        // Note that it does NOT update the dataTable - this has to be done outside of this routine by regenerating the datatables with whatever filter is being used..
+        // Note that it does NOT update the dataTable - this has to be done outside of this routine by regenerating the datatables with whatever selection is being used.
         public void AdjustImageTimes(Func<DateTimeOffset, DateTimeOffset> adjustment, int startRow, int endRow)
         {
             if (this.IsImageRowInRange(startRow) == false)
@@ -760,8 +758,8 @@ namespace Carnassial.Database
                 return false;
             }
 
-            ImageFilter imageQuality = this.ImageDataTable[rowIndex].ImageQuality;
-            if ((imageQuality == ImageFilter.Corrupted) || (imageQuality == ImageFilter.Missing))
+            ImageSelection imageQuality = this.ImageDataTable[rowIndex].ImageQuality;
+            if ((imageQuality == ImageSelection.Corrupted) || (imageQuality == ImageSelection.Missing))
             {
                 return false;
             }

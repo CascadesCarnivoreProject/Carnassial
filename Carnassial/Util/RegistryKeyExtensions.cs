@@ -1,5 +1,6 @@
-﻿using System;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
+using System;
+using System.Windows;
 
 namespace Carnassial.Util
 {
@@ -35,6 +36,17 @@ namespace Carnassial.Util
             return defaultValue;
         }
 
+        public static TEnum ReadEnum<TEnum>(this RegistryKey registryKey, string subKeyPath, TEnum defaultValue) where TEnum : struct, IComparable, IConvertible, IFormattable
+        {
+            string valueAsString = registryKey.ReadString(subKeyPath);
+            if (valueAsString != null)
+            {
+                return (TEnum)Enum.Parse(typeof(TEnum), valueAsString);
+            }
+
+            return defaultValue;
+        }
+
         public static int ReadInteger(this RegistryKey registryKey, string subKeyPath, int defaultValue)
         {
             object value = registryKey.GetValue(subKeyPath);
@@ -54,6 +66,26 @@ namespace Carnassial.Util
             }
 
             throw new NotSupportedException(String.Format("Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));
+        }
+
+        public static Point ReadPoint(this RegistryKey registryKey, string subKeyPath, Point defaultValue)
+        {
+            string pointAsString = registryKey.ReadString(subKeyPath);
+            if (pointAsString == null)
+            {
+                return defaultValue;
+            }
+            return Point.Parse(pointAsString);
+        }
+
+        public static Size ReadSize(this RegistryKey registryKey, string subKeyPath, Size defaultValue)
+        {
+            string sizeAsString = registryKey.ReadString(subKeyPath);
+            if (sizeAsString == null)
+            {
+                return defaultValue;
+            }
+            return Size.Parse(sizeAsString);
         }
 
         // read a REG_SZ key's value from the registry
@@ -124,6 +156,16 @@ namespace Carnassial.Util
         public static void Write(this RegistryKey registryKey, string subKeyPath, int value)
         {
             registryKey.SetValue(subKeyPath, value, RegistryValueKind.DWord);
+        }
+
+        public static void Write(this RegistryKey registryKey, string subKeyPath, Point value)
+        {
+            registryKey.Write(subKeyPath, value.ToString());
+        }
+
+        public static void Write(this RegistryKey registryKey, string subKeyPath, Size value)
+        {
+            registryKey.Write(subKeyPath, value.ToString());
         }
 
         public static void Write(this RegistryKey registryKey, string subKeyPath, string value)

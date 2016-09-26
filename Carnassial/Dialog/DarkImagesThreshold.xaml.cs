@@ -323,7 +323,7 @@ namespace Carnassial.Dialog
         }
 
         /// <summary>
-        /// Redo image quality calculations with current thresholds for all images selected by the current filter.  Updates the database.
+        /// Redo image quality calculations with current thresholds for all images selected.  Updates the database.
         /// </summary>
         private void UpdateImageQualityForAllSelectedImages()
         {
@@ -339,8 +339,8 @@ namespace Carnassial.Dialog
                     ImageQuality imageQuality = new ImageQuality(imageRow);
 
                     // If its not a valid image, say so and go onto the next one.
-                    if (!(imageQuality.OldImageQuality == ImageFilter.Ok) && 
-                        !(imageQuality.OldImageQuality == ImageFilter.Dark))
+                    if (!(imageQuality.OldImageQuality == ImageSelection.Ok) && 
+                        !(imageQuality.OldImageQuality == ImageSelection.Dark))
                     {
                         imageQuality.NewImageQuality = null;
                         backgroundWorker.ReportProgress(0, imageQuality);

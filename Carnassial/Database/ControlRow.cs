@@ -56,12 +56,6 @@ namespace Carnassial.Database
             set { this.Row.SetField(Constants.Control.SpreadsheetOrder, value); }
         }
 
-        public int TextBoxWidth
-        {
-            get { return this.Row.GetIntegerField(Constants.Control.TextBoxWidth); }
-            set { this.Row.SetField(Constants.Control.TextBoxWidth, value); }
-        }
-
         public string Tooltip
         {
             get { return this.Row.GetStringField(Constants.Control.Tooltip); }
@@ -80,6 +74,12 @@ namespace Carnassial.Database
             set { this.Row.SetField(Constants.Control.Visible, value); }
         }
 
+        public long Width
+        {
+            get { return this.Row.GetLongField(Constants.Control.Width); }
+            set { this.Row.SetField(Constants.Control.Width, value); }
+        }
+
         public List<string> GetChoices()
         {
             return this.List.Split(ControlRow.BarDelimiter).ToList();
@@ -95,7 +95,7 @@ namespace Carnassial.Database
             columnTuples.Add(new ColumnTuple(Constants.Control.Label, this.Label));
             columnTuples.Add(new ColumnTuple(Constants.Control.List, this.List));
             columnTuples.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, this.SpreadsheetOrder));
-            columnTuples.Add(new ColumnTuple(Constants.Control.TextBoxWidth, this.TextBoxWidth));
+            columnTuples.Add(new ColumnTuple(Constants.Control.Width, this.Width));
             columnTuples.Add(new ColumnTuple(Constants.Control.Tooltip, this.Tooltip));
             columnTuples.Add(new ColumnTuple(Constants.Control.Type, this.Type));
             columnTuples.Add(new ColumnTuple(Constants.Control.Visible, this.Visible));

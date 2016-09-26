@@ -29,90 +29,124 @@ namespace Carnassial
     public partial class CarnassialWindow : Window, IDisposable
     {
         // Handles to the controls window and to the controls
-        private WindowControl controlWindow;
         private List<MetaTagCounter> counterCoordinates = null;
 
-        private DataEntryControls dataEntryControls;
         private DataEntryHandler dataHandler;
         private bool disposed;
 
         private string mostRecentImageAddFolderPath;
-        private WindowHelp overviewWindow; // Create the help window. 
-        private MarkableImageCanvas markableCanvas;
+
+        // Speech feedback
+        private SpeechSynthesizer speechSynthesizer;
 
         // Status information concerning the state of the UI
         private CarnassialState state;
 
-        // Timer for periodically updating images as the ImageNavigator slider is being used
-        private DispatcherTimer timerImageNavigator = new DispatcherTimer();
-
-        // Speech feedback
-        private SpeechSynthesizer speechSynthesizer = new SpeechSynthesizer();
-
         // The database that holds the template
         private TemplateDatabase template;
 
+        // Timers for periodically updating images as the ImageNavigator slider is being used and for updating the data grid
+        private DispatcherTimer timerDataGrid;
+        private DispatcherTimer timerImageNavigator;
+
         // Non-modal dialogs
-        private DataView dlgDataView;         // The view of the current database contents
-        private WindowVideoPlayer dlgVideoPlayer;  // The video player 
+        private WindowVideoPlayer videoPlayer;  // The video player 
 
         public CarnassialWindow()
         {
             this.InitializeComponent();
-            Utilities.TryFitWindowInWorkingArea(this);
 
-            // Abort if some of the required dependencies are missing
-            if (Dependencies.AreRequiredBinariesPresent(Constants.ApplicationName, Assembly.GetExecutingAssembly()) == false)
-            {
-                Dependencies.ShowMissingBinariesDialog(Constants.ApplicationName);
-                Application.Current.Shutdown();
-            }
-
-            this.markableCanvas = new MarkableImageCanvas();
-            this.markableCanvas.HorizontalAlignment = HorizontalAlignment.Stretch;
-            this.markableCanvas.PreviewMouseDown += new MouseButtonEventHandler(this.MarkableCanvas_PreviewMouseDown);
-            this.markableCanvas.MouseEnter += new MouseEventHandler(this.MarkableCanvas_MouseEnter);
-            this.markableCanvas.RaiseMetaTagEvent += new EventHandler<MetaTagEventArgs>(this.MarkableCanvas_RaiseMetaTagEvent);
-            this.mainUI.Children.Add(this.markableCanvas);
+            this.MarkableCanvas.MouseEnter += new MouseEventHandler(this.MarkableCanvas_MouseEnter);
+            this.MarkableCanvas.PreviewMouseDown += new MouseButtonEventHandler(this.MarkableCanvas_PreviewMouseDown);
+            this.MarkableCanvas.RaiseMetaTagEvent += new EventHandler<MetaTagEventArgs>(this.MarkableCanvas_RaiseMetaTagEvent);
 
             // Callbacks so the controls will highlight if they are copyable when one enters the copy button
             this.buttonCopy.MouseEnter += this.ButtonCopy_MouseEnter;
             this.buttonCopy.MouseLeave += this.ButtonCopy_MouseLeave;
 
-            // Create data controls, including reparenting the copy button from the main window into the my control window.
-            this.dataEntryControls = new DataEntryControls();
-            this.ControlGrid.Children.Remove(this.buttonCopy);
-            this.dataEntryControls.AddButton(this.buttonCopy);
+            this.speechSynthesizer = new SpeechSynthesizer();
 
+            // Create data controls, including reparenting the copy button from the main window into the my control window.
             this.state = new CarnassialState();
 
             // Recall user's state from prior sessions
             this.state.ReadFromRegistry();
 
             this.MenuItemAudioFeedback.IsChecked = this.state.AudioFeedback;
-            this.MenuItemControlsInSeparateWindow.IsChecked = this.state.ControlsInSeparateWindow;
             this.MenuItemEnableCsvExportDialog.IsChecked = !this.state.SuppressCsvExportDialog;
             this.MenuItemEnableCsvImportPrompt.IsChecked = !this.state.SuppressCsvImportPrompt;
-            this.MenuItemEnableFilteredAmbiguousDatesPrompt.IsChecked = !this.state.SuppressFilteredAmbiguousDatesPrompt;
-            this.MenuItemEnableFilteredCsvExportPrompt.IsChecked = !this.state.SuppressFilteredCsvExportPrompt;
-            this.MenuItemEnableFilteredDarkThresholdPrompt.IsChecked = !this.state.SuppressFilteredDarkThresholdPrompt;
-            this.MenuItemEnableFilteredDateTimeFixedCorrectionPrompt.IsChecked = !this.state.SuppressFilteredDateTimeFixedCorrectionPrompt;
-            this.MenuItemEnableFilteredDateTimeLinearCorrectionPrompt.IsChecked = !this.state.SuppressFilteredDateTimeLinearCorrectionPrompt;
-            this.MenuItemEnableFilteredDaylightSavingsCorrectionPrompt.IsChecked = !this.state.SuppressFilteredDaylightSavingsCorrectionPrompt;
-            this.MenuItemEnableFilteredPopulateFieldFromMetadataPrompt.IsChecked = !this.state.SuppressFilteredPopulateFieldFromMetadataPrompt;
-            this.MenuItemEnableFilteredRereadDatesFromFilesPrompt.IsChecked = !this.state.SuppressFilteredRereadDatesFromFilesPrompt;
+            this.MenuItemEnableSelectedAmbiguousDatesPrompt.IsChecked = !this.state.SuppressSelectedAmbiguousDatesPrompt;
+            this.MenuItemEnableSelectedCsvExportPrompt.IsChecked = !this.state.SuppressSelectedCsvExportPrompt;
+            this.MenuItemEnableSelectedDarkThresholdPrompt.IsChecked = !this.state.SuppressSelectedDarkThresholdPrompt;
+            this.MenuItemEnableSelectedDateTimeFixedCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDateTimeFixedCorrectionPrompt;
+            this.MenuItemEnableSelectedDateTimeLinearCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDateTimeLinearCorrectionPrompt;
+            this.MenuItemEnableSelectedDaylightSavingsCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDaylightSavingsCorrectionPrompt;
+            this.MenuItemEnableSelectedPopulateFieldFromMetadataPrompt.IsChecked = !this.state.SuppressSelectedPopulateFieldFromMetadataPrompt;
+            this.MenuItemEnableSelectedRereadDatesFromFilesPrompt.IsChecked = !this.state.SuppressSelectedRereadDatesFromFilesPrompt;
+
+            // Timer callback to keep the data grid in sync with the current image index
+            this.timerDataGrid = new DispatcherTimer();
+            this.timerDataGrid.Interval = TimeSpan.FromSeconds(0.5);
+            this.timerDataGrid.Tick += this.DataGridTimer_Tick;
 
             // Timer callback so the image will update to the current slider position when the user pauses dragging the image slider 
+            this.timerImageNavigator = new DispatcherTimer();
             this.timerImageNavigator.Interval = this.state.Throttles.DesiredIntervalBetweenRenders;
             this.timerImageNavigator.Tick += this.TimerImageNavigator_Tick;
 
             // populate the most recent databases list
             this.MenuItemRecentImageSets_Refresh();
+
+            this.Top = this.state.CarnassialWindowLocation.Y;
+            this.Left = this.state.CarnassialWindowLocation.X;
+            this.Height = this.state.CarnassialWindowSize.Height;
+            this.Width = this.state.CarnassialWindowSize.Width;
+            Utilities.TryFitWindowInWorkingArea(this);
         }
 
         private string FolderPath
         {
             get { return this.dataHandler.ImageDatabase.FolderPath; }
+        }
+
+        private void DataGrid_IsActiveChanged(object sender, EventArgs e)
+        {
+            if (this.dataHandler == null || this.dataHandler.ImageDatabase == null)
+            {
+                return;
+            }
+
+            if (this.DataGridPane.IsActive)
+            {
+                this.dataHandler.ImageDatabase.BindToDataGrid(this.DataGrid, null);
+                this.timerDataGrid.Start();
+            }
+            else
+            {
+                this.dataHandler.ImageDatabase.BindToDataGrid(null, null);
+                this.timerDataGrid.Stop();
+            }
+        }
+
+        /// <summary>Ensure that the the highlighted row is the current row </summary>
+        private void DataGridTimer_Tick(object sender, EventArgs e)
+        {
+            // Set the selected index to the current row that represents the image being viewed
+            int lastIndex = this.DataGrid.SelectedIndex;
+            this.DataGrid.SelectedIndex = this.dataHandler.ImageCache.CurrentRow;
+
+            // A workaround to autoscroll the currently selected items, where the item always appears at the top of the window.
+            // We check the last index and only autoscroll if it hasn't changed since then.
+            // This workaround means that the user can manually scroll to a new spot, where it won't jump back unless the image number has changed.
+            if (lastIndex != this.DataGrid.SelectedIndex)
+            {
+                this.DataGrid.ScrollIntoView(this.DataGrid.Items[this.DataGrid.Items.Count - 1]);
+                this.DataGrid.UpdateLayout();
+                // Try to autoscroll so at least 5 rows are visible (if possible) before the selected row
+                int rowToShow = (this.DataGrid.SelectedIndex > 5) ? this.DataGrid.SelectedIndex - 5 : 0;
+                this.DataGrid.ScrollIntoView(this.DataGrid.Items[rowToShow]);
+                lastIndex = this.DataGrid.SelectedIndex;
+            }
         }
 
         public void Dispose()
@@ -146,6 +180,14 @@ namespace Carnassial
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // abort if required dependencies are missing
+            if (Dependencies.AreRequiredBinariesPresent(Constants.ApplicationName, Assembly.GetExecutingAssembly()) == false)
+            {
+                Dependencies.ShowMissingBinariesDialog(Constants.ApplicationName);
+                Application.Current.Shutdown();
+            }
+
+            // check for updates
             Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestVersionAddress();
             if (latestVersionAddress == null)
             {
@@ -164,10 +206,10 @@ namespace Carnassial
                 (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0))
             {
                 // save image set properties to the database
-                if (this.dataHandler.ImageDatabase.ImageSet.ImageFilter == ImageFilter.Custom)
+                if (this.dataHandler.ImageDatabase.ImageSet.ImageSelection == ImageSelection.Custom)
                 {
-                    // don't save custom filters, revert to All 
-                    this.dataHandler.ImageDatabase.ImageSet.ImageFilter = ImageFilter.All;
+                    // don't save custom selections, revert to All 
+                    this.dataHandler.ImageDatabase.ImageSet.ImageSelection = ImageSelection.All;
                 }
 
                 if (this.dataHandler.ImageCache != null)
@@ -175,29 +217,29 @@ namespace Carnassial
                     this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex = this.dataHandler.ImageCache.CurrentRow;
                 }
 
-                if (this.markableCanvas != null)
+                if (this.MarkableCanvas != null)
                 {
-                    this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled = this.markableCanvas.IsMagnifyingGlassVisible;
+                    this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled = this.MarkableCanvas.IsMagnifyingGlassVisible;
                 }
 
                 this.dataHandler.ImageDatabase.SyncImageSetToDatabase();
+
+                // ensure custom filter operator is synchronized in state for writing to user's registry
+                this.state.CustomSelectionTermCombiningOperator = this.dataHandler.ImageDatabase.CustomSelection.TermCombiningOperator;
             }
 
             // persist user specific state to the registry
+            if (this.Top > -10 && this.Left > -10)
+            {
+                this.state.CarnassialWindowLocation = new Point(this.Left, this.Top);
+            }
+            this.state.CarnassialWindowSize = new Size(this.Width, this.Height);
             this.state.WriteToRegistry();
 
             // Close the various non-modal windows if they are opened
-            if (this.controlWindow != null)
+            if (this.videoPlayer != null)
             {
-                this.controlWindow.Close();
-            }
-            if (this.dlgDataView != null)
-            {
-                this.dlgDataView.Close();
-            }
-            if (this.dlgVideoPlayer != null)
-            {
-                this.dlgVideoPlayer.Close();
+                this.videoPlayer.Close();
             }
         }
 
@@ -265,7 +307,7 @@ namespace Carnassial
             // We now have a template and an image database.
             // Before loading from an existing image database, ensure that the template in the template database matches the template stored in
             // the image database
-            ImageDatabase imageDatabase = ImageDatabase.CreateOrOpen(imageDatabaseFilePath, this.template);
+            ImageDatabase imageDatabase = ImageDatabase.CreateOrOpen(imageDatabaseFilePath, this.template, this.state.CustomSelectionTermCombiningOperator);
             if (imageDatabase.TemplateSynchronizationIssues.Count > 0)
             {
                 TemplatesDontMatch templateMismatchDialog = new TemplatesDontMatch(imageDatabase.TemplateSynchronizationIssues, this);
@@ -282,9 +324,8 @@ namespace Carnassial
             // At this point, we should have a valid template and image database loaded
             // Generate and render the data entry controls, regardless of whether there are actually any images in the image database.
             this.dataHandler = new DataEntryHandler(imageDatabase);
-            this.dataEntryControls.CreateControls(imageDatabase, this.dataHandler);
+            this.DataEntryControls.CreateControls(imageDatabase, this.dataHandler);
             this.SetUserInterfaceCallbacks();
-            this.MenuItemControlsInSeparateWindow_Click(this.MenuItemControlsInSeparateWindow, null);
 
             this.state.MostRecentImageSets.SetMostRecent(templateDatabasePath);
             this.MenuItemRecentImageSets_Refresh();
@@ -360,7 +401,7 @@ namespace Carnassial
                 this.Dispatcher.Invoke(new Action(() =>
                 {
                     // First, change the UI
-                    this.HelpDocument.Visibility = Visibility.Collapsed;
+                    this.ImageSetPane.IsActive = true;
                     this.Feedback(null, 0, "Examining images...");
                 }));
 
@@ -391,7 +432,7 @@ namespace Carnassial
                         // Set the ImageQuality to corrupt if the returned bitmap is the corrupt image, otherwise set it to its Ok/Dark setting
                         if (bitmapSource == Constants.Images.Corrupt)
                         {
-                            imageProperties.ImageQuality = ImageFilter.Corrupted;
+                            imageProperties.ImageQuality = ImageSelection.Corrupted;
                         }
                         else
                         { 
@@ -414,7 +455,7 @@ namespace Carnassial
                     {
                         Debug.Fail(String.Format("Load of {0} failed as it's likely corrupted.", imageProperties.FileName), exception.ToString());
                         bitmapSource = Constants.Images.Corrupt;
-                        imageProperties.ImageQuality = ImageFilter.Corrupted;
+                        imageProperties.ImageQuality = ImageSelection.Corrupted;
                     }
 
                     imagesToInsert.Add(imageProperties);
@@ -459,7 +500,7 @@ namespace Carnassial
                 this.FeedbackControl.Visibility = Visibility.Collapsed;
                 this.FeedbackControl.ShowImage = null;
 
-                this.markableCanvas.Visibility = Visibility.Visible;
+                this.MarkableCanvas.Visibility = Visibility.Visible;
 
                 // warn the user if there are any ambiguous dates in terms of day/month or month/day order
                 if (unambiguousDayMonthOrder == false && this.state.SuppressAmbiguousDatesDialog == false)
@@ -565,29 +606,24 @@ namespace Carnassial
         {
             // Set the magnifying glass status from the registry. 
             // Note that if it wasn't in the registry, the value returned will be true by default
-            this.markableCanvas.IsMagnifyingGlassVisible = this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled;
-
-            // Also adjust the visibility of the various other UI components.
-            this.buttonCopy.Visibility = Visibility.Visible;
-            this.controlsTray.Visibility = Visibility.Visible;
-            this.DockPanelNavigator.Visibility = Visibility.Visible;
-            this.HelpDocument.Visibility = Visibility.Collapsed;
+            this.MarkableCanvas.IsMagnifyingGlassVisible = this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled;
 
             // Show the image, hide the load button, and make the feedback panels visible
+            this.ImageSetPane.IsActive = true;
             this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-            this.markableCanvas.Focus(); // We start with this having the focus so it can interpret keyboard shortcuts if needed. 
+            this.MarkableCanvas.Focus(); // We start with this having the focus so it can interpret keyboard shortcuts if needed. 
 
-            // if this is completion of an existing .ddb open set the current filter and the image index to the ones from the previous session with the image set
+            // if this is completion of an existing .ddb open set the current selection and the image index to the ones from the previous session with the image set
             // also if this is completion of import to a new .ddb
             int imageRow = this.dataHandler.ImageDatabase.ImageSet.ImageRowIndex;
-            ImageFilter imageFilter = this.dataHandler.ImageDatabase.ImageSet.ImageFilter;
+            ImageSelection imageSelection = this.dataHandler.ImageDatabase.ImageSet.ImageSelection;
             if (imagesJustImported && this.dataHandler.ImageCache.CurrentRow != Constants.Database.InvalidRow)
             {
-                // if this is completion of an add to an existing image set stay on the image and, ideally, filter selected before the import
-                // TODO: add an API to read the current filter setting
+                // if this is completion of an add to an existing image set stay on the image, ideally, shown before the import
+                // TODO: add an API to read the current selection
                 imageRow = this.dataHandler.ImageCache.CurrentRow;
             }
-            this.SelectDataTableImagesAndShowImage(imageRow, imageFilter);
+            this.SelectDataTableImagesAndShowImage(imageRow, imageSelection);
 
             // match UX availability to image availability
             this.EnableOrDisableMenusAndControls();
@@ -622,30 +658,23 @@ namespace Carnassial
             this.MenuItemDeleteImage.IsEnabled = imagesExist;
             // view menu
             this.MenuItemView.IsEnabled = imagesExist;
-            // filter menu
-            this.MenuItemFilter.IsEnabled = imagesExist;
+            // select menu
+            this.MenuItemSelect.IsEnabled = imagesExist;
             // options menu
             // always enable at top level when an image set exists so that image set advanced options are accessible
             this.MenuItemOptions.IsEnabled = true;
-            this.MenuItemControlsInSeparateWindow.IsEnabled = imagesExist;
             this.MenuItemAudioFeedback.IsEnabled = imagesExist;
             this.MenuItemMagnifyingGlass.IsEnabled = imagesExist;
             this.MenuItemDisplayMagnifier.IsChecked = this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled;
             this.MenuItemImageCounts.IsEnabled = imagesExist;
-            this.MenuItemViewFilteredDatabaseContents.IsEnabled = imagesExist;
             this.MenuItemDialogsOnOrOff.IsEnabled = imagesExist;
             this.MenuItemAdvancedCarnassialOptions.IsEnabled = imagesExist;
-
+            
             // Also adjust the enablement of the various other UI components.
-            if (this.controlWindow != null)
-            {
-                this.controlWindow.IsEnabled = imagesExist;
-            }
-
-            this.controlsTray.IsEnabled = imagesExist;  // If images don't exist, the user shouldn't be allowed to interact with the control tray
+            this.ControlsPanel.IsEnabled = imagesExist;  // If images don't exist, the user shouldn't be allowed to interact with the control tray
             this.ImageNavigatorSlider.IsEnabled = imagesExist;
-            this.markableCanvas.IsEnabled = imagesExist;
-            this.markableCanvas.IsMagnifyingGlassVisible = imagesExist && this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled;
+            this.MarkableCanvas.IsEnabled = imagesExist;
+            this.MarkableCanvas.IsMagnifyingGlassVisible = imagesExist && this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled;
 
             if (imagesExist == false)
             {
@@ -654,99 +683,104 @@ namespace Carnassial
                 this.statusBar.SetCurrentImage(0);
                 this.statusBar.SetCount(0);
             }
-
-            this.HelpDocument.Visibility = Visibility.Collapsed;
         }
 
-        private void SelectDataTableImagesAndShowImage(int imageRow, ImageFilter filter)
+        private void SelectDataTableImagesAndShowImage(int imageRow, ImageSelection selection)
         {
-            this.dataHandler.ImageDatabase.SelectDataTableImages(filter);
-            if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0 || filter == ImageFilter.All)
+            this.dataHandler.ImageDatabase.SelectDataTableImages(selection);
+            if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0 || selection == ImageSelection.All)
             {
-                // Change the filter to reflect what the user selected. Update the menu state accordingly
-                // Set the checked status of the radio button menu items to the filter.
+                // update status and menu state to reflect what the user selected
                 string status;
-                switch (filter)
+                switch (selection)
                 {
-                    case ImageFilter.All:
+                    case ImageSelection.All:
                         status = "(all files selected)";
                         break;
-                    case ImageFilter.Corrupted:
+                    case ImageSelection.Corrupted:
                         status = "corrupted files";
                         break;
-                    case ImageFilter.Custom:
-                        status = "files matching your custom filter";
+                    case ImageSelection.Custom:
+                        status = "files matching your custom selection";
                         break;
-                    case ImageFilter.Dark:
+                    case ImageSelection.Dark:
                         status = "dark files";
                         break;
-                    case ImageFilter.MarkedForDeletion:
+                    case ImageSelection.MarkedForDeletion:
                         status = "files marked for deletion";
                         break;
-                    case ImageFilter.Missing:
+                    case ImageSelection.Missing:
                         status = "missing files";
                         break;
-                    case ImageFilter.Ok:
+                    case ImageSelection.Ok:
                         status = "light files";
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled image quality filter {0}.", filter));
+                        throw new NotSupportedException(String.Format("Unhandled image selection {0}.", selection));
                 }
 
                 this.statusBar.SetView(status);
-                this.MenuItemFilterSetSelected(filter);
-                this.RefreshDataViewDialogWindow();  // If its displayed, update the window that shows the filtered view data base
+
+                this.MenuItemSelectAllImages.IsChecked = (selection == ImageSelection.All) ? true : false;
+                this.MenuItemSelectCorruptedImages.IsChecked = (selection == ImageSelection.Corrupted) ? true : false;
+                this.MenuItemSelectDarkImages.IsChecked = (selection == ImageSelection.Dark) ? true : false;
+                this.MenuItemSelectLightImages.IsChecked = (selection == ImageSelection.Ok) ? true : false;
+                this.MenuItemSelectMissingImages.IsChecked = (selection == ImageSelection.Missing) ? true : false;
+                this.MenuItemSelectImagesMarkedForDeletion.IsChecked = (selection == ImageSelection.MarkedForDeletion) ? true : false;
+                this.MenuItemSelectCustom.IsChecked = (selection == ImageSelection.Custom) ? true : false;
+
+                // if it's displayed, update the window which shows the data table
+                this.RefreshDataGrid();
             }
             else
             {
-                // These cases are typically reached only when a user deletes all images that fit that filter.  
-                // corresponding images
+                // These cases are typically reached only when a user deletes all images which mach a selection.  
                 string status;
                 string title;
                 string problem;
                 string reason = null;
                 string hint;
-                status = "Resetting filter to All Files";
-                title = "Resetting filter to All Files (no files currently match the current filter)";
-                if (filter == ImageFilter.Corrupted)
+                status = "Resetting selection to All Files";
+                title = "Resetting selection to All Files (no files currently match the current selection)";
+                if (selection == ImageSelection.Corrupted)
                 {
-                    problem = "The 'Corrupted filter' was previously selected. Yet no files currently match that filter, so nothing can be shown.";
+                    problem = "Corrupted files were previously selected but no files are currently corrupted, so nothing can be shown.";
                     reason = "None of the files have their 'ImageQuality' field set to Corrupted.";
-                    hint = "If you have files you think should be marked as 'Corrupted', set their 'ImageQuality' field to 'Corrupted' and then reapply the filter to view only those corrupted files.";
+                    hint = "If you have files you think should be marked as 'Corrupted', set their 'ImageQuality' field to 'Corrupted' and then reselect corrupted files.";
                 }
-                else if (filter == ImageFilter.Custom)
+                else if (selection == ImageSelection.Custom)
                 {
-                    problem = "The 'Custom filter' was previously selected. Yet no files currently match that filter, so nothing can be shown.";
-                    reason = "None of the files match the criteria set in the current Custom Filter.";
-                    hint = "Try to create another custom filter and then reapply the filter to view only those files matching the filter.";
+                    problem = "No files currently match the custom selection so nothing can be shown.";
+                    reason = "None of the files match the criteria set in the current Custom Selection.";
+                    hint = "Create a different custom selection and apply it view the matching files.";
                 }
-                else if (filter == ImageFilter.Dark)
+                else if (selection == ImageSelection.Dark)
                 {
-                    problem = "The 'Dark filter' was previously selected. Yet no files currently match that filter, so nothing can be shown.";
+                    problem = "Dark files were previously selected but no files are currently dark so nothing can be shown.";
                     reason = "None of the files have their 'ImageQuality' field set to Dark.";
-                    hint = "If you have files you think should be marked as 'Dark', set their 'ImageQuality' field to 'Dark' and then reapply the filter to view only those dark files.";
+                    hint = "If you have files you think should be marked as 'Dark', set their 'ImageQuality' field to 'Dark' and then reselect dark files.";
                 }
-                else if (filter == ImageFilter.Missing)
+                else if (selection == ImageSelection.Missing)
                 {
-                    problem = "The 'Missing filter' was previously selected. Yet no files currently match that filter, so nothing can be shown.";
+                    problem = "Missing files were previously selected but no files are currently missing so nothing can be shown.";
                     reason = "None of the files have their 'ImageQuality' field set to Missing.";
-                    hint = "If you have files you think should be marked as 'Missing', set their 'ImageQuality' field to 'Missing' and then reapply the filter to view only those missing files.";
+                    hint = "If you have files you think should be marked as 'Missing', set their 'ImageQuality' field to 'Missing' and then reselect missing files.";
                 }
-                else if (filter == ImageFilter.MarkedForDeletion)
+                else if (selection == ImageSelection.MarkedForDeletion)
                 {
-                    problem = "The 'Marked for Deletion' filter was previously selected. Yet no files currently match that filter, so nothing can be shown.";
+                    problem = "Files marked for deletion were previously selected but no files are currently marked so nothing can be shown.";
                     reason = "None of the files have their 'Delete?' field checked.";
-                    hint = "If you have files you think should be marked for deletion, check their 'Delete?' field and then reapply the filter to view only those files marked for deletion.";
+                    hint = "If you have files you think should be marked for deletion, check their 'Delete?' field and then reselect files marked for deletion.";
                 }
-                else if (filter == ImageFilter.Ok)
+                else if (selection == ImageSelection.Ok)
                 {
-                    problem = "The 'Ok filter' was previously selected. Yet no files currently match that filter, so nothing can be shown.";
-                    reason = "None of the files have their 'ImageQuality' field set to OK.";
-                    hint = "If you have files you think should be marked as 'Ok', set their 'ImageQuality' field to 'Ok' and then reapply the filter to view only those Ok files.";
+                    problem = "Ok files were previously selected but no files are currently OK so nothing can be shown.";
+                    reason = "None of the files have their 'ImageQuality' field set to Ol.";
+                    hint = "If you have files you think should be marked as 'Ok', set their 'ImageQuality' field to 'Ok' and then reselect Ok files.";
                 }
                 else
                 {
-                    throw new NotSupportedException(String.Format("Unhandled filter {0}.", filter));
+                    throw new NotSupportedException(String.Format("Unhandled selection {0}.", selection));
                 }
 
                 this.statusBar.SetMessage(status);
@@ -759,29 +793,29 @@ namespace Carnassial
                     messageBox.Message.Reason = reason;
                 }
                 messageBox.Message.Hint = hint;
-                messageBox.Message.Result = "The 'All Images' filter will be applied, where all images in your image set will be displayed.";
+                messageBox.Message.Result = "The 'All Images' selection will be applied, where all images in your image set will be displayed.";
                 messageBox.ShowDialog();
 
-                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.All);
+                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageSelection.All);
                 return;
             }
 
-            // Display the first available image under the new filter
+            // Display the specified image under the new selection
             if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0)
             {
                 this.ShowImage(imageRow);
             }
 
-            // After a filter change, set the slider to represent the index and the count of the current filter
+            // After a selection change, set the slider to represent the index and the count of the selection
             this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
             this.ImageNavigatorSlider.Maximum = this.dataHandler.ImageDatabase.CurrentlySelectedImageCount - 1;  // Reset the slider to the size of images in this set
             this.ImageNavigatorSlider.Value = this.dataHandler.ImageCache.CurrentRow;
 
             // Update the status bar accordingly
-            this.statusBar.SetCurrentImage(this.dataHandler.ImageCache.CurrentRow + 1);  // We add 1 because its a 0-based list
+            this.statusBar.SetCurrentImage(this.dataHandler.ImageCache.CurrentRow + 1); // We add 1 because its a 0-based list
             this.statusBar.SetCount(this.dataHandler.ImageDatabase.CurrentlySelectedImageCount);
             this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
-            this.dataHandler.ImageDatabase.ImageSet.ImageFilter = filter;    // Remember the current filter
+            this.dataHandler.ImageDatabase.ImageSet.ImageSelection = selection; // persist the current selection
         }
 
         /// <summary>
@@ -791,7 +825,7 @@ namespace Carnassial
         {
             // Add data entry callbacks to all editable controls. When the user changes an image's attribute using a particular control,
             // the callback updates the matching field for that image in the database.
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
             {
                 string controlType = this.dataHandler.ImageDatabase.ImageDataColumnsByDataLabel[pair.Key].ControlType;
                 switch (controlType)
@@ -891,7 +925,7 @@ namespace Carnassial
         {
             // identify the currently selected control
             // if focus is currently set to the canvas this defaults to the first or last control, as appropriate
-            int currentControl = moveToPreviousControl ? this.dataEntryControls.Controls.Count : -1;
+            int currentControl = moveToPreviousControl ? this.DataEntryControls.Controls.Count : -1;
 
             IInputElement focusedElement = FocusManager.GetFocusedElement(this);
             if (focusedElement != null)
@@ -903,7 +937,7 @@ namespace Carnassial
                     if (DataEntryHandler.TryFindFocusedControl(focusedElement, out focusedControl))
                     {
                         int index = 0;
-                        foreach (DataEntryControl control in this.dataEntryControls.Controls)
+                        foreach (DataEntryControl control in this.DataEntryControls.Controls)
                         {
                             if (Object.ReferenceEquals(focusedControl, control))
                             {
@@ -927,10 +961,10 @@ namespace Carnassial
             }
 
             for (currentControl = incrementOrDecrement(currentControl);
-                 currentControl > -1 && currentControl < this.dataEntryControls.Controls.Count;
+                 currentControl > -1 && currentControl < this.DataEntryControls.Controls.Count;
                  currentControl = incrementOrDecrement(currentControl))
             {
-                DataEntryControl control = this.dataEntryControls.Controls[currentControl];
+                DataEntryControl control = this.DataEntryControls.Controls[currentControl];
                 if (control.ReadOnly == false)
                 {
                     control.Focus(this);
@@ -949,7 +983,7 @@ namespace Carnassial
         /// </summary>
         private void ButtonCopy_MouseEnter(object sender, MouseEventArgs e)
         {
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
             {
                 DataEntryControl control = (DataEntryControl)pair.Value;
                 if (control.Copyable)
@@ -965,7 +999,7 @@ namespace Carnassial
         /// </summary>
         private void ButtonCopy_MouseLeave(object sender, MouseEventArgs e)
         {
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
             {
                 DataEntryControl control = (DataEntryControl)pair.Value;
                 control.Container.ClearValue(Control.BackgroundProperty);
@@ -985,8 +1019,8 @@ namespace Carnassial
             // The unaltered image will always be cached at this point, so there is no need to check.
             if (this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Unaltered)
             {
-                this.markableCanvas.ImageToMagnify.Source = this.dataHandler.ImageCache.GetCurrentImage();
-                this.markableCanvas.ImageToDisplay.Source = this.markableCanvas.ImageToMagnify.Source;
+                this.MarkableCanvas.ImageToMagnify.Source = this.dataHandler.ImageCache.GetCurrentImage();
+                this.MarkableCanvas.ImageToDisplay.Source = this.MarkableCanvas.ImageToMagnify.Source;
 
                 // Check if its a corrupted image
                 if (!this.dataHandler.ImageCache.Current.IsDisplayable())
@@ -1027,7 +1061,7 @@ namespace Carnassial
             // display the differenced image
             // the magnifying glass always displays the original non-diferenced image so ImageToDisplay is updated and ImageToMagnify left unchnaged
             // this allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
-            this.markableCanvas.ImageToDisplay.Source = this.dataHandler.ImageCache.GetCurrentImage();
+            this.MarkableCanvas.ImageToDisplay.Source = this.dataHandler.ImageCache.GetCurrentImage();
             this.statusBar.SetMessage("Viewing differences compared to " + (this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next") + " file");
         }
 
@@ -1037,8 +1071,8 @@ namespace Carnassial
             this.dataHandler.ImageCache.MoveToNextStateInCombinedDifferenceCycle();
             if (this.dataHandler.ImageCache.CurrentDifferenceState != ImageDifference.Combined)
             {
-                this.markableCanvas.ImageToDisplay.Source = this.dataHandler.ImageCache.GetCurrentImage();
-                this.markableCanvas.ImageToMagnify.Source = this.markableCanvas.ImageToDisplay.Source;
+                this.MarkableCanvas.ImageToDisplay.Source = this.dataHandler.ImageCache.GetCurrentImage();
+                this.MarkableCanvas.ImageToMagnify.Source = this.MarkableCanvas.ImageToDisplay.Source;
                 this.statusBar.ClearMessage();
                 return;
             }
@@ -1070,7 +1104,7 @@ namespace Carnassial
 
             // display differenced image
             // see above remarks about not modifying ImageToMagnify
-            this.markableCanvas.ImageToDisplay.Source = this.dataHandler.ImageCache.GetCurrentImage();
+            this.MarkableCanvas.ImageToDisplay.Source = this.dataHandler.ImageCache.GetCurrentImage();
             this.statusBar.SetMessage("Viewing differences compared to both the next and previous files");
         }
 
@@ -1127,9 +1161,9 @@ namespace Carnassial
             bool? result = dialog.ShowDialog();
             if (result == true)
             {
-                this.dataHandler.ImageDatabase.SelectDataTableImages(this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
+                this.dataHandler.ImageDatabase.SelectDataTableImages(this.dataHandler.ImageDatabase.ImageSet.ImageSelection);
                 this.RefreshCurrentImageProperties();
-                this.RefreshDataViewDialogWindow();
+                this.RefreshDataGrid();
             }
         }
 
@@ -1140,7 +1174,7 @@ namespace Carnassial
                 return;
             }
 
-            Dictionary<ImageFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCountsByQuality();
+            Dictionary<ImageSelection, int> counts = this.dataHandler.ImageDatabase.GetImageCountsByQuality();
             FileCountsByQuality imageStats = new FileCountsByQuality(counts, this);
             if (onImageLoading)
             {
@@ -1183,8 +1217,8 @@ namespace Carnassial
             if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount < 1)
             {
                 BitmapSource unalteredImage = Constants.Images.EmptyImageSet;
-                this.markableCanvas.ImageToDisplay.Source = unalteredImage;
-                this.markableCanvas.ImageToMagnify.Source = unalteredImage; // Probably not needed
+                this.MarkableCanvas.ImageToDisplay.Source = unalteredImage;
+                this.MarkableCanvas.ImageToMagnify.Source = unalteredImage; // Probably not needed
 
                 // Delete any markers that may have been previously displayed 
                 this.ClearTheMarkableCanvasListOfMetaTags();
@@ -1205,15 +1239,15 @@ namespace Carnassial
             // this is always done as it's assumed either the image changed or that a control refresh is required due to database changes
             // the call to TryMoveToImage() above refreshes the data stored under this.dataHandler.ImageCache.Current
             this.dataHandler.IsProgrammaticControlUpdate = true;
-            foreach (KeyValuePair<string, DataEntryControl> control in this.dataEntryControls.ControlsByDataLabel)
+            foreach (KeyValuePair<string, DataEntryControl> control in this.DataEntryControls.ControlsByDataLabel)
             {
                 string controlType = this.dataHandler.ImageDatabase.ImageDataColumnsByDataLabel[control.Key].ControlType;
                 control.Value.Content = this.dataHandler.ImageCache.Current.GetValueDisplayString(control.Value.DataLabel);
             }
             this.dataHandler.IsProgrammaticControlUpdate = false;
 
-            // update the status bar to show which image we are on out of the total displayed under the current filter
-            // the total is always refreshed as it's not known if ShowImage() is being called due to a change in filtering
+            // update the status bar to show which image we are on out of the total displayed under the current selection
+            // the total is always refreshed as it's not known if ShowImage() is being called due to a seletion change
             this.statusBar.SetCurrentImage(this.dataHandler.ImageCache.CurrentRow + 1); // Add one because indexes are 0-based
             this.statusBar.SetCount(this.dataHandler.ImageDatabase.CurrentlySelectedImageCount);
             this.statusBar.ClearMessage();
@@ -1222,15 +1256,15 @@ namespace Carnassial
 
             // get and display the new image if the image changed
             // this avoids unnecessary image reloads and refreshes in cases where ShowImage() is just being called to refresh controls
-            // the image row can't be tested against as its meaning changes when filters are changed; use the image ID as that's both
+            // the image row can't be tested against as its meaning changes when the selection is changed; use the image ID as that's both
             // unique and immutable
             if (newImageToDisplay)
             {
                 BitmapSource unalteredImage = this.dataHandler.ImageCache.GetCurrentImage();
-                this.markableCanvas.ImageToDisplay.Source = unalteredImage;
+                this.MarkableCanvas.ImageToDisplay.Source = unalteredImage;
 
                 // Set the image to magnify so the unaltered image will appear on the magnifying glass
-                this.markableCanvas.ImageToMagnify.Source = unalteredImage;
+                this.MarkableCanvas.ImageToMagnify.Source = unalteredImage;
 
                 // Whenever we navigate to a new image, delete any markers that were displayed on the current image 
                 // and then draw the markers assoicated with the new image
@@ -1269,25 +1303,25 @@ namespace Carnassial
             switch (currentKey.Key)
             {
                 case Key.B:                 // Bookmark (Save) the current pan / zoom level of the image
-                    this.markableCanvas.BookmarkSaveZoomPan();
+                    this.MarkableCanvas.BookmarkSaveZoomPan();
                     break;
                 case Key.Escape:
                     this.SetTopLevelFocus(false, currentKey);
                     break;
                 case Key.OemPlus:           // Restore the zoom level / pan coordinates of the bookmark
-                    this.markableCanvas.BookmarkSetZoomPan();
+                    this.MarkableCanvas.BookmarkSetZoomPan();
                     break;
                 case Key.OemMinus:          // Restore the zoom level / pan coordinates of the bookmark
-                    this.markableCanvas.BookmarkZoomOutAllTheWay();
+                    this.MarkableCanvas.BookmarkZoomOutAllTheWay();
                     break;
                 case Key.M:                 // Toggle the magnifying glass on and off
                     this.MenuItemDisplayMagnifier_Click(this, null);
                     break;
                 case Key.U:                 // Increase the magnifing glass zoom level
-                    this.markableCanvas.MagnifierZoomIn();
+                    this.MarkableCanvas.MagnifierZoomIn();
                     break;
                 case Key.D:                 // Decrease the magnifing glass zoom level
-                    this.markableCanvas.MagnifierZoomOut();
+                    this.MarkableCanvas.MagnifierZoomOut();
                     break;
                 case Key.Right:             // next image
                     if (keyRepeatCount % this.state.Throttles.RepeatedKeyAcceptanceInterval == 0)
@@ -1355,7 +1389,7 @@ namespace Carnassial
 
             // Don't raise the window just because we set the keyboard focus to it
             Keyboard.DefaultRestoreFocusMode = RestoreFocusMode.None;
-            Keyboard.Focus(this.markableCanvas);
+            Keyboard.Focus(this.MarkableCanvas);
         }
 
         // Return true if the current focus is in a textbox or combobox data control
@@ -1366,10 +1400,10 @@ namespace Carnassial
             // NOTE: this must be kept in sync with 
             if (this.MenuItemExit.IsVisible || // file menu
                 this.MenuItemCopyPreviousValues.IsVisible || // edit menu
-                this.MenuItemControlsInSeparateWindow.IsVisible || // options menu
+                this.MenuItemMagnifyingGlass.IsVisible || // options menu
                 this.MenuItemViewNextImage.IsVisible || // view menu
-                this.MenuItemFilterAllImages.IsVisible || // filter menu, and then the help menu...
-                this.MenuItemOverview.IsVisible)
+                this.MenuItemSelectAllImages.IsVisible || // select menu, and then the help menu...
+                this.MenuItemAbout.IsVisible)
             {
                 return true;
             }
@@ -1426,7 +1460,7 @@ namespace Carnassial
             else
             {
                 // An existing marker has been deleted.
-                DataEntryCounter counter = (DataEntryCounter)this.dataEntryControls.ControlsByDataLabel[e.MetaTag.DataLabel];
+                DataEntryCounter counter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[e.MetaTag.DataLabel];
 
                 // Part 1. Decrement the count 
                 string oldCounterData = counter.Content;
@@ -1500,7 +1534,7 @@ namespace Carnassial
                 }
                 this.RefreshTheMarkableCanvasListOfMetaTags(); // Refresh the Markable Canvas, where it will also delete the metaTag at the same time
             }
-            this.markableCanvas.MarkersRefresh();
+            this.MarkableCanvas.MarkersRefresh();
         }
 
         /// <summary>
@@ -1588,7 +1622,7 @@ namespace Carnassial
                 {
                     MetaTagCounter mtagCounter = this.counterCoordinates[counter];
                     DataEntryControl control;
-                    if (this.dataEntryControls.ControlsByDataLabel.TryGetValue(mtagCounter.DataLabel, out control) == false)
+                    if (this.DataEntryControls.ControlsByDataLabel.TryGetValue(mtagCounter.DataLabel, out control) == false)
                     {
                         // If we can't find the counter, its likely because the control was made invisible in the template,
                         // which means that there is no control associated with the marker. So just don't create the 
@@ -1598,7 +1632,7 @@ namespace Carnassial
                     }
 
                     // Update the emphasise for each tag to reflect how the user is interacting with tags
-                    DataEntryCounter currentCounter = (DataEntryCounter)this.dataEntryControls.ControlsByDataLabel[mtagCounter.DataLabel];
+                    DataEntryCounter currentCounter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[mtagCounter.DataLabel];
                     foreach (MetaTag mtag in mtagCounter.MetaTags)
                     {
                         mtag.Emphasise = this.state.IsMouseOverCounter;
@@ -1626,7 +1660,7 @@ namespace Carnassial
                     }
                 }
             }
-            this.markableCanvas.MetaTags = metaTagList;
+            this.MarkableCanvas.MetaTags = metaTagList;
         }
 
         // Clear the counters' metatags (if any) from the current row in the database
@@ -1664,18 +1698,18 @@ namespace Carnassial
         /// <summary>Write the CSV file and preview it in excel.</summary>
         private void MenuItemExportCsv_Click(object sender, RoutedEventArgs e)
         {
-            if (this.state.SuppressFilteredCsvExportPrompt == false &&
-                this.dataHandler.ImageDatabase.ImageSet.ImageFilter != ImageFilter.All)
+            if (this.state.SuppressSelectedCsvExportPrompt == false &&
+                this.dataHandler.ImageDatabase.ImageSet.ImageSelection != ImageSelection.All)
             {
-                MessageBox messageBox = new MessageBox("Exporting to a CSV file on a filtered view...", this, MessageBoxButton.OKCancel);
+                MessageBox messageBox = new MessageBox("Exporting a partial selection to a CSV file", this, MessageBoxButton.OKCancel);
                 messageBox.Message.What = "Only a subset of your data will be exported to the CSV file.";
-                messageBox.Message.Reason = "As your filter (in the Filter menu) is not set to view 'All', ";
-                messageBox.Message.Reason += "only data for those files displayed by this filter will be exported. ";
+                messageBox.Message.Reason = "As your selection (in the Select menu) is not set to 'All', ";
+                messageBox.Message.Reason += "only data for those files selected will be exported. ";
                 messageBox.Message.Solution = "If you want to export just this subset, then " + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 click Okay" + Environment.NewLine + Environment.NewLine;
                 messageBox.Message.Solution += "If you want to export all your data for all your files, then " + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 click Cancel," + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 select 'All Files' in the Filter menu, " + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 select 'All Files' in the Select menu, " + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 retry exporting your data as a CSV file.";
                 messageBox.Message.Hint = "If you check don't show this message this dialog can be turned back on via the Options menu.";
                 messageBox.Message.Icon = MessageBoxImage.Warning;
@@ -1689,8 +1723,8 @@ namespace Carnassial
 
                 if (messageBox.DontShowAgain.IsChecked.HasValue)
                 {
-                    this.state.SuppressFilteredCsvExportPrompt = messageBox.DontShowAgain.IsChecked.Value;
-                    this.MenuItemEnableFilteredCsvExportPrompt.IsChecked = !this.state.SuppressFilteredCsvExportPrompt;
+                    this.state.SuppressSelectedCsvExportPrompt = messageBox.DontShowAgain.IsChecked.Value;
+                    this.MenuItemEnableSelectedCsvExportPrompt.IsChecked = !this.state.SuppressSelectedCsvExportPrompt;
                 }
             }
 
@@ -1897,7 +1931,7 @@ namespace Carnassial
                 messageBox.ShowDialog();
             }
             // Reload the data table
-            this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageCache.CurrentRow, this.dataHandler.ImageDatabase.ImageSet.ImageFilter);
+            this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageCache.CurrentRow, this.dataHandler.ImageDatabase.ImageSet.ImageSelection);
             this.statusBar.SetMessage("CSV file imported.");
         }
 
@@ -1994,29 +2028,27 @@ namespace Carnassial
         // Populate a data field from metadata (example metadata displayed from the currently selected image)
         private void MenuItemPopulateFieldFromMetadata_Click(object sender, RoutedEventArgs e)
         {
-            // If we are not in the filter all view, or if its a corrupt image or deleted image, tell the person. Selecting ok will shift the filter.
-            // We want to be on a valid image as otherwise the metadata of interest won't appear
             if (this.dataHandler.ImageCache.Current.IsDisplayable() == false)
             {
                 int firstImageDisplayable = this.dataHandler.ImageDatabase.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
                 if (firstImageDisplayable == -1)
                 {
                     // There are no displayable images, and thus no metadata to choose from, so abort
-                    MessageBox messageBox = new MessageBox("Populate a data field with image metadata of your choosing.", this);
-                    messageBox.Message.Problem = "We can't extract any metadata, as there are no valid displayable file." + Environment.NewLine;
-                    messageBox.Message.Reason += "Carnassial must have at least one valid file in order to get its metadata. All files are either missing or corrupted.";
+                    MessageBox messageBox = new MessageBox("Can't populate a data field with image metadata.", this);
+                    messageBox.Message.Problem = "Metadata is not available as no file in the image set can be read." + Environment.NewLine;
+                    messageBox.Message.Reason += "Carnassial must have at least one valid file in order to get its metadata.  All files are either missing or corrupted.";
                     messageBox.Message.Icon = MessageBoxImage.Error;
                     messageBox.ShowDialog();
                     return;
                 }
             }
 
-            if (this.MaybePromptToApplyOperationIfFilteredView(this.state.SuppressFilteredPopulateFieldFromMetadataPrompt, 
+            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedPopulateFieldFromMetadataPrompt, 
                                                                "'Populate a data field with image metadata of your choosing...'", 
                                                                (bool optOut) =>
                                                                {
-                                                                   this.state.SuppressFilteredPopulateFieldFromMetadataPrompt = optOut;
-                                                                   this.MenuItemEnableFilteredPopulateFieldFromMetadataPrompt.IsChecked = !optOut;
+                                                                   this.state.SuppressSelectedPopulateFieldFromMetadataPrompt = optOut;
+                                                                   this.MenuItemEnableSelectedPopulateFieldFromMetadataPrompt.IsChecked = !optOut;
                                                                }))
             {
                 PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current.GetImagePath(this.FolderPath), this);
@@ -2029,11 +2061,11 @@ namespace Carnassial
         {
             try
             {
-                int deletedImages = this.dataHandler.ImageDatabase.GetImageCount(ImageFilter.MarkedForDeletion);
+                int deletedImages = this.dataHandler.ImageDatabase.GetImageCount(ImageSelection.MarkedForDeletion);
                 this.MenuItemDeleteImages.IsEnabled = deletedImages > 0;
                 this.MenuItemDeleteImagesAndData.IsEnabled = deletedImages > 0;
                 this.MenuItemDeleteImageAndData.IsEnabled = true;
-                this.MenuItemDeleteImage.IsEnabled = this.dataHandler.ImageCache.Current.IsDisplayable() || this.dataHandler.ImageCache.Current.ImageQuality == ImageFilter.Corrupted;
+                this.MenuItemDeleteImage.IsEnabled = this.dataHandler.ImageCache.Current.IsDisplayable() || this.dataHandler.ImageCache.Current.ImageQuality == ImageSelection.Corrupted;
             }
             catch (Exception exception)
             {
@@ -2062,10 +2094,8 @@ namespace Carnassial
             // Thus we need to use two different methods to construct a table containing all the images marked for deletion
             if (mi.Name.Equals(this.MenuItemDeleteImages.Name) || mi.Name.Equals(this.MenuItemDeleteImagesAndData.Name))
             {
-                // Delete by deletion flags case. 
                 // Construct a table that contains the datarows of all images with their delete flag set, and set various flags
                 imagesToDelete = this.dataHandler.ImageDatabase.GetImagesMarkedForDeletion().ToList();
-                // Prune image rows that are not in the current filter 
                 for (int i = imagesToDelete.Count - 1; i >= 0;  i--)
                 {
                     if (this.dataHandler.ImageDatabase.ImageDataTable.Find(imagesToDelete[i].ID) == null)
@@ -2123,11 +2153,11 @@ namespace Carnassial
                 {
                     // Data has been deleted as well.
                     // Reload the datatable. Then find and show the image closest to the last one shown
-                    this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageFilter); // Reset the filter to retrieve the remaining images
+                    this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, this.dataHandler.ImageDatabase.ImageSet.ImageSelection);
                     int nextImage = this.dataHandler.ImageDatabase.FindClosestImage(currentID);
                     if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0)
                     {
-                        this.ShowImage(nextImage); // Reset the filter to retrieve the remaining images
+                        this.ShowImage(nextImage);
                     }
                     else
                     { 
@@ -2158,7 +2188,7 @@ namespace Carnassial
                 return; // We are already on the first image, so there is nothing to copy
             }
 
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.dataEntryControls.ControlsByDataLabel)
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
             {
                 DataEntryControl control = pair.Value;
                 if (this.dataHandler.ImageDatabase.IsControlCopyable(control.DataLabel))
@@ -2178,29 +2208,15 @@ namespace Carnassial
         /// <summary>Show advanced Carnassial options</summary>
         private void MenuItemAdvancedCarnassialOptions_Click(object sender, RoutedEventArgs e)
         {
-            AdvancedCarnassialOptions advancedCarnassialOptions = new AdvancedCarnassialOptions(this.state, this.markableCanvas, this);
+            AdvancedCarnassialOptions advancedCarnassialOptions = new AdvancedCarnassialOptions(this.state, this.MarkableCanvas, this);
             advancedCarnassialOptions.ShowDialog();
-        }
-
-        /// <summary>Toggle the showing of controls in a separate window</summary>
-        private void MenuItemControlsInSeparateWindow_Click(object sender, RoutedEventArgs e)
-        {
-            MenuItem mi = (MenuItem)sender;
-            if (mi.IsChecked)
-            {
-                this.ControlsInSeparateWindow();
-            }
-            else
-            {
-                this.ControlsInMainWindow();
-            }
         }
 
         /// <summary>Toggle the magnifier on and off</summary>
         private void MenuItemDisplayMagnifier_Click(object sender, RoutedEventArgs e)
         {
             this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled = !this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled;
-            this.markableCanvas.IsMagnifyingGlassVisible = this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled;
+            this.MarkableCanvas.IsMagnifyingGlassVisible = this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled;
             this.MenuItemDisplayMagnifier.IsChecked = this.dataHandler.ImageDatabase.ImageSet.MagnifierEnabled;
         }
 
@@ -2208,34 +2224,34 @@ namespace Carnassial
         /// the increase effect more visible through a menu option versus the keyboard equivalent</summary>
         private void MenuItemMagnifierIncrease_Click(object sender, RoutedEventArgs e)
         {
-            this.markableCanvas.MagnifierZoomIn();
-            this.markableCanvas.MagnifierZoomIn();
-            this.markableCanvas.MagnifierZoomIn();
-            this.markableCanvas.MagnifierZoomIn();
-            this.markableCanvas.MagnifierZoomIn();
-            this.markableCanvas.MagnifierZoomIn();
+            this.MarkableCanvas.MagnifierZoomIn();
+            this.MarkableCanvas.MagnifierZoomIn();
+            this.MarkableCanvas.MagnifierZoomIn();
+            this.MarkableCanvas.MagnifierZoomIn();
+            this.MarkableCanvas.MagnifierZoomIn();
+            this.MarkableCanvas.MagnifierZoomIn();
         }
 
         /// <summary> Decrease the magnification of the magnifying glass. We do this several times to make
         /// the increase effect more visible through a menu option versus the keyboard equivalent</summary>
         private void MenuItemMagnifierDecrease_Click(object sender, RoutedEventArgs e)
         {
-            this.markableCanvas.MagnifierZoomOut();
-            this.markableCanvas.MagnifierZoomOut();
-            this.markableCanvas.MagnifierZoomOut();
-            this.markableCanvas.MagnifierZoomOut();
-            this.markableCanvas.MagnifierZoomOut();
-            this.markableCanvas.MagnifierZoomOut();
+            this.MarkableCanvas.MagnifierZoomOut();
+            this.MarkableCanvas.MagnifierZoomOut();
+            this.MarkableCanvas.MagnifierZoomOut();
+            this.MarkableCanvas.MagnifierZoomOut();
+            this.MarkableCanvas.MagnifierZoomOut();
+            this.MarkableCanvas.MagnifierZoomOut();
         }
 
         private void MenuItemOptionsDarkImagesThreshold_Click(object sender, RoutedEventArgs e)
         {
-            if (this.MaybePromptToApplyOperationIfFilteredView(this.state.SuppressFilteredDarkThresholdPrompt,
+            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDarkThresholdPrompt,
                                                                "'Customize the threshold for determining dark files...'", 
                                                                (bool optOut) =>
                                                                {
-                                                                   this.state.SuppressFilteredDarkThresholdPrompt = optOut;
-                                                                   this.MenuItemEnableFilteredDarkThresholdPrompt.IsChecked = !optOut;
+                                                                   this.state.SuppressSelectedDarkThresholdPrompt = optOut;
+                                                                   this.MenuItemEnableSelectedDarkThresholdPrompt.IsChecked = !optOut;
                                                                }))
             {
                 using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.CurrentRow, this.state, this))
@@ -2246,16 +2262,15 @@ namespace Carnassial
             }
         }
 
-        /// <summary>Correct the date by specifying an offset</summary>
+        /// <summary>Correct the date by specifying an offset.</summary>
         private void MenuItemDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
         {
-             // Warn user that they are in a filtered view, and verify that they want to continue
-            if (this.MaybePromptToApplyOperationIfFilteredView(this.state.SuppressFilteredDateTimeFixedCorrectionPrompt, 
+            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDateTimeFixedCorrectionPrompt, 
                                                                "'Add a fixed correction value to every date/time...'", 
                                                                (bool optOut) =>
                                                                {
-                                                                   this.state.SuppressFilteredDateTimeFixedCorrectionPrompt = optOut;
-                                                                   this.MenuItemEnableFilteredDateTimeFixedCorrectionPrompt.IsChecked = !optOut;
+                                                                   this.state.SuppressSelectedDateTimeFixedCorrectionPrompt = optOut;
+                                                                   this.MenuItemEnableSelectedDateTimeFixedCorrectionPrompt.IsChecked = !optOut;
                                                                }))
             {
                 DateTimeFixedCorrection fixedDateCorrection = new DateTimeFixedCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current, this);
@@ -2263,16 +2278,15 @@ namespace Carnassial
             }
         }
 
-        /// <summary>Correct for drifting clock times. Correction applied only to images in the filtered view.</summary>
+        /// <summary>Correct for drifting clock times. Correction applied only to selected files.</summary>
         private void MenuItemDateTimeLinearCorrection_Click(object sender, RoutedEventArgs e)
         {
-            // Warn user that they are in a filtered view, and verify that they want to continue
-            if (this.MaybePromptToApplyOperationIfFilteredView(this.state.SuppressFilteredDateTimeLinearCorrectionPrompt,
+            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDateTimeLinearCorrectionPrompt,
                                                                "'Correct for camera clock drift'",
                                                                (bool optOut) =>
                                                                {
-                                                                   this.state.SuppressFilteredDateTimeLinearCorrectionPrompt = optOut;
-                                                                   this.MenuItemEnableFilteredDateTimeLinearCorrectionPrompt.IsChecked = !optOut;
+                                                                   this.state.SuppressSelectedDateTimeLinearCorrectionPrompt = optOut;
+                                                                   this.MenuItemEnableSelectedDateTimeLinearCorrectionPrompt.IsChecked = !optOut;
                                                                }))
             { 
                 DateTimeLinearCorrection linearDateCorrection = new DateTimeLinearCorrection(this.dataHandler.ImageDatabase, this);
@@ -2284,7 +2298,7 @@ namespace Carnassial
                     messageBox.Message.Reason += "\u2022 dates should look like dd-MMM-yyyy e.g., 16-Jan-2016" + Environment.NewLine;
                     messageBox.Message.Reason += "\u2022 times should look like HH:mm:ss using 24 hour time e.g., 01:05:30 or 13:30:00";
                     messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
-                    messageBox.Message.Hint = "Check the format of your dates and times. You may also want to change your filter (if you're not viewing All Images)";
+                    messageBox.Message.Hint = "Check the format of your dates and times. You may also want to change your selection if you're not viewing All files.";
                     messageBox.Message.Icon = MessageBoxImage.Error;
                     messageBox.ShowDialog();
                     return;
@@ -2296,7 +2310,6 @@ namespace Carnassial
         /// <summary>Correct for daylight savings time</summary>
         private void MenuItemDaylightSavingsTimeCorrection_Click(object sender, RoutedEventArgs e)
         {
-            // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
             if (this.dataHandler.ImageCache.Current.IsDisplayable() == false)
             {
                 // Just a corrupted image
@@ -2310,12 +2323,12 @@ namespace Carnassial
                 return;
             }
 
-            if (this.MaybePromptToApplyOperationIfFilteredView(this.state.SuppressFilteredDaylightSavingsCorrectionPrompt, 
+            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDaylightSavingsCorrectionPrompt, 
                                                                "'Correct for daylight savings time...'", 
                                                                (bool optOut) =>
                                                                {
-                                                                   this.state.SuppressFilteredDaylightSavingsCorrectionPrompt = optOut;
-                                                                   this.MenuItemEnableFilteredDaylightSavingsCorrectionPrompt.IsChecked = !optOut;
+                                                                   this.state.SuppressSelectedDaylightSavingsCorrectionPrompt = optOut;
+                                                                   this.MenuItemEnableSelectedDaylightSavingsCorrectionPrompt.IsChecked = !optOut;
                                                                }))
             {
                 DateDaylightSavingsTimeCorrection dateTimeChange = new DateDaylightSavingsTimeCorrection(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache, this);
@@ -2326,13 +2339,12 @@ namespace Carnassial
         // Correct ambiguous dates dialog (i.e. dates that could be read as either month/day or day/month
         private void MenuItemCorrectAmbiguousDates_Click(object sender, RoutedEventArgs e)
         {
-            // Warn user that they are in a filtered view, and verify that they want to continue
-            if (this.MaybePromptToApplyOperationIfFilteredView(this.state.SuppressFilteredAmbiguousDatesPrompt, 
+            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedAmbiguousDatesPrompt, 
                                                                "'Correct ambiguous dates...'",
                                                                (bool optOut) =>
                                                                {
-                                                                   this.state.SuppressFilteredAmbiguousDatesPrompt = optOut;
-                                                                   this.MenuItemEnableFilteredAmbiguousDatesPrompt.IsChecked = !optOut;
+                                                                   this.state.SuppressSelectedAmbiguousDatesPrompt = optOut;
+                                                                   this.MenuItemEnableSelectedAmbiguousDatesPrompt.IsChecked = !optOut;
                                                                }))
             {
                 DateCorrectAmbiguous dateCorrection = new DateCorrectAmbiguous(this.dataHandler.ImageDatabase, this);
@@ -2340,7 +2352,7 @@ namespace Carnassial
                 {
                     MessageBox messageBox = new MessageBox("No ambiguous dates found", this);
                     messageBox.Message.What = "No ambiguous dates found.";
-                    messageBox.Message.Reason = "All of the images in this filtered view have unambguous date fields." + Environment.NewLine;
+                    messageBox.Message.Reason = "All of the selected images have unambguous date fields." + Environment.NewLine;
                     messageBox.Message.Result = "No corrections needed, and no changes have been made." + Environment.NewLine;
                     messageBox.Message.Icon = MessageBoxImage.Information;
                     messageBox.ShowDialog();
@@ -2353,13 +2365,12 @@ namespace Carnassial
 
         private void MenuItemSetTimeZone_Click(object sender, RoutedEventArgs e)
         {
-            // Warn user that they are in a filtered view, and verify that they want to continue
-            if (this.MaybePromptToApplyOperationIfFilteredView(this.state.SuppressFilteredSetTimeZonePrompt,
+            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedSetTimeZonePrompt,
                                                                "'Set the time zone of every date/time...'",
                                                                (bool optOut) =>
                                                                {
-                                                                   this.state.SuppressFilteredSetTimeZonePrompt = optOut;
-                                                                   this.MenuItemEnableFilteredSetTimeZonePrompt.IsChecked = !optOut;
+                                                                   this.state.SuppressSelectedSetTimeZonePrompt = optOut;
+                                                                   this.MenuItemEnableSelectedSetTimeZonePrompt.IsChecked = !optOut;
                                                                }))
             {
                 DateTimeSetTimeZone fixedDateCorrection = new DateTimeSetTimeZone(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache.Current, this);
@@ -2391,69 +2402,68 @@ namespace Carnassial
             this.MenuItemEnableFileCountOnImportDialog.IsChecked = !this.state.SuppressFileCountOnImportDialog;
         }
 
-        private void MenuItemEnableFilteredAmbiguousDatesPrompt_Click(object sender, RoutedEventArgs e)
+        private void MenuItemEnableSelectedAmbiguousDatesPrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.state.SuppressFilteredAmbiguousDatesPrompt = !this.state.SuppressFilteredAmbiguousDatesPrompt;
-            this.MenuItemEnableFilteredAmbiguousDatesPrompt.IsChecked = !this.state.SuppressFilteredAmbiguousDatesPrompt;
+            this.state.SuppressSelectedAmbiguousDatesPrompt = !this.state.SuppressSelectedAmbiguousDatesPrompt;
+            this.MenuItemEnableSelectedAmbiguousDatesPrompt.IsChecked = !this.state.SuppressSelectedAmbiguousDatesPrompt;
         }
 
-        private void MenuItemEnableFilteredCsvExportPrompt_Click(object sender, RoutedEventArgs e)
+        private void MenuItemEnableSelectedCsvExportPrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.state.SuppressFilteredCsvExportPrompt = !this.state.SuppressFilteredCsvExportPrompt;
-            this.MenuItemEnableFilteredCsvExportPrompt.IsChecked = !this.state.SuppressFilteredCsvExportPrompt;
+            this.state.SuppressSelectedCsvExportPrompt = !this.state.SuppressSelectedCsvExportPrompt;
+            this.MenuItemEnableSelectedCsvExportPrompt.IsChecked = !this.state.SuppressSelectedCsvExportPrompt;
         }
 
-        private void MenuItemEnableFilteredDarkThresholdPrompt_Click(object sender, RoutedEventArgs e)
+        private void MenuItemEnableSelectedDarkThresholdPrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.state.SuppressFilteredDarkThresholdPrompt = !this.state.SuppressFilteredDarkThresholdPrompt;
-            this.MenuItemEnableFilteredDarkThresholdPrompt.IsChecked = !this.state.SuppressFilteredDarkThresholdPrompt;
+            this.state.SuppressSelectedDarkThresholdPrompt = !this.state.SuppressSelectedDarkThresholdPrompt;
+            this.MenuItemEnableSelectedDarkThresholdPrompt.IsChecked = !this.state.SuppressSelectedDarkThresholdPrompt;
         }
 
-        private void MenuItemEnableFilteredDateTimeFixedCorrectionPrompt_Click(object sender, RoutedEventArgs e)
+        private void MenuItemEnableSelectedDateTimeFixedCorrectionPrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.state.SuppressFilteredDateTimeFixedCorrectionPrompt = !this.state.SuppressFilteredDateTimeFixedCorrectionPrompt;
-            this.MenuItemEnableFilteredDateTimeFixedCorrectionPrompt.IsChecked = !this.state.SuppressFilteredDateTimeFixedCorrectionPrompt;
+            this.state.SuppressSelectedDateTimeFixedCorrectionPrompt = !this.state.SuppressSelectedDateTimeFixedCorrectionPrompt;
+            this.MenuItemEnableSelectedDateTimeFixedCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDateTimeFixedCorrectionPrompt;
         }
 
-        private void MenuItemEnableFilteredDateTimeLinearCorrectionPrompt_Click(object sender, RoutedEventArgs e)
+        private void MenuItemEnableSelectedDateTimeLinearCorrectionPrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.state.SuppressFilteredDateTimeLinearCorrectionPrompt = !this.state.SuppressFilteredDateTimeLinearCorrectionPrompt;
-            this.MenuItemEnableFilteredDateTimeLinearCorrectionPrompt.IsChecked = !this.state.SuppressFilteredDateTimeLinearCorrectionPrompt;
+            this.state.SuppressSelectedDateTimeLinearCorrectionPrompt = !this.state.SuppressSelectedDateTimeLinearCorrectionPrompt;
+            this.MenuItemEnableSelectedDateTimeLinearCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDateTimeLinearCorrectionPrompt;
         }
 
-        private void MenuItemEnableFilteredDaylightSavingsCorrectionPrompt_Click(object sender, RoutedEventArgs e)
+        private void MenuItemEnableSelectedDaylightSavingsCorrectionPrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.state.SuppressFilteredDaylightSavingsCorrectionPrompt = !this.state.SuppressFilteredDaylightSavingsCorrectionPrompt;
-            this.MenuItemEnableFilteredDaylightSavingsCorrectionPrompt.IsChecked = !this.state.SuppressFilteredDaylightSavingsCorrectionPrompt;
+            this.state.SuppressSelectedDaylightSavingsCorrectionPrompt = !this.state.SuppressSelectedDaylightSavingsCorrectionPrompt;
+            this.MenuItemEnableSelectedDaylightSavingsCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDaylightSavingsCorrectionPrompt;
         }
 
-        private void MenuItemEnableFilteredPopulateFieldFromMetadataPrompt_Click(object sender, RoutedEventArgs e)
+        private void MenuItemEnableSelectedPopulateFieldFromMetadataPrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.state.SuppressFilteredPopulateFieldFromMetadataPrompt = !this.state.SuppressFilteredPopulateFieldFromMetadataPrompt;
-            this.MenuItemEnableFilteredPopulateFieldFromMetadataPrompt.IsChecked = !this.state.SuppressFilteredPopulateFieldFromMetadataPrompt;
+            this.state.SuppressSelectedPopulateFieldFromMetadataPrompt = !this.state.SuppressSelectedPopulateFieldFromMetadataPrompt;
+            this.MenuItemEnableSelectedPopulateFieldFromMetadataPrompt.IsChecked = !this.state.SuppressSelectedPopulateFieldFromMetadataPrompt;
         }
 
-        private void MenuItemEnableFilteredRereadDatesFromFilesPrompt_Click(object sender, RoutedEventArgs e)
+        private void MenuItemEnableSelectedRereadDatesFromFilesPrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.state.SuppressFilteredRereadDatesFromFilesPrompt = !this.state.SuppressFilteredRereadDatesFromFilesPrompt;
-            this.MenuItemEnableFilteredRereadDatesFromFilesPrompt.IsChecked = !this.state.SuppressFilteredRereadDatesFromFilesPrompt;
+            this.state.SuppressSelectedRereadDatesFromFilesPrompt = !this.state.SuppressSelectedRereadDatesFromFilesPrompt;
+            this.MenuItemEnableSelectedRereadDatesFromFilesPrompt.IsChecked = !this.state.SuppressSelectedRereadDatesFromFilesPrompt;
         }
 
-        private void MenuItemEnableFilteredSetTimeZonePrompt_Click(object sender, RoutedEventArgs e)
+        private void MenuItemEnableSelectedSetTimeZonePrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.state.SuppressFilteredSetTimeZonePrompt = !this.state.SuppressFilteredSetTimeZonePrompt;
-            this.MenuItemEnableFilteredSetTimeZonePrompt.IsChecked = !this.state.SuppressFilteredSetTimeZonePrompt;
+            this.state.SuppressSelectedSetTimeZonePrompt = !this.state.SuppressSelectedSetTimeZonePrompt;
+            this.MenuItemEnableSelectedSetTimeZonePrompt.IsChecked = !this.state.SuppressSelectedSetTimeZonePrompt;
         }
 
         private void MenuItemRereadDatesfromImages_Click(object sender, RoutedEventArgs e)
         {
-            // If we are not in the filter all view, or if its a corrupt image, tell the person. Selecting ok will shift the views..
-            if (this.MaybePromptToApplyOperationIfFilteredView(this.state.SuppressFilteredRereadDatesFromFilesPrompt,
+            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedRereadDatesFromFilesPrompt,
                                                                "'Reread dates from files...'",
                                                                (bool optOut) =>
                                                                {
-                                                                   this.state.SuppressFilteredRereadDatesFromFilesPrompt = optOut;
-                                                                   this.MenuItemEnableFilteredRereadDatesFromFilesPrompt.IsChecked = !optOut;
+                                                                   this.state.SuppressSelectedRereadDatesFromFilesPrompt = optOut;
+                                                                   this.MenuItemEnableSelectedRereadDatesFromFilesPrompt.IsChecked = !optOut;
                                                                }))
             {
                 DateRereadFromFiles rereadDates = new DateRereadFromFiles(this.dataHandler.ImageDatabase, this);
@@ -2469,36 +2479,36 @@ namespace Carnassial
             this.MenuItemAudioFeedback.IsChecked = this.state.AudioFeedback;
         }
 
-        private void Filter_SubmenuOpening(object sender, RoutedEventArgs e)
+        private void MenuItemSelect_SubmenuOpening(object sender, RoutedEventArgs e)
         {
-            Dictionary<ImageFilter, int> counts = this.dataHandler.ImageDatabase.GetImageCountsByQuality();
+            Dictionary<ImageSelection, int> counts = this.dataHandler.ImageDatabase.GetImageCountsByQuality();
 
-            this.MenuItemFilterLightImages.IsEnabled = counts[ImageFilter.Ok] > 0;
-            this.MenuItemFilterDarkImages.IsEnabled = counts[ImageFilter.Dark] > 0;
-            this.MenuItemFilterCorruptedImages.IsEnabled = counts[ImageFilter.Corrupted] > 0;
-            this.MenuItemFilterMissingImages.IsEnabled = counts[ImageFilter.Missing] > 0;
-            this.MenuItemFilterImagesMarkedForDeletion.IsEnabled = this.dataHandler.ImageDatabase.GetImageCount(ImageFilter.MarkedForDeletion) > 0;
+            this.MenuItemSelectLightImages.IsEnabled = counts[ImageSelection.Ok] > 0;
+            this.MenuItemSelectDarkImages.IsEnabled = counts[ImageSelection.Dark] > 0;
+            this.MenuItemSelectCorruptedImages.IsEnabled = counts[ImageSelection.Corrupted] > 0;
+            this.MenuItemSelectMissingImages.IsEnabled = counts[ImageSelection.Missing] > 0;
+            this.MenuItemSelectImagesMarkedForDeletion.IsEnabled = this.dataHandler.ImageDatabase.GetImageCount(ImageSelection.MarkedForDeletion) > 0;
         }
 
         private void MenuItemZoomIn_Click(object sender, RoutedEventArgs e)
         {
-            lock (this.markableCanvas.ImageToDisplay)
+            lock (this.MarkableCanvas.ImageToDisplay)
             {
-                Point location = Mouse.GetPosition(this.markableCanvas.ImageToDisplay);
-                if (location.X > this.markableCanvas.ImageToDisplay.ActualWidth || location.Y > this.markableCanvas.ImageToDisplay.ActualHeight)
+                Point location = Mouse.GetPosition(this.MarkableCanvas.ImageToDisplay);
+                if (location.X > this.MarkableCanvas.ImageToDisplay.ActualWidth || location.Y > this.MarkableCanvas.ImageToDisplay.ActualHeight)
                 {
                     return; // Ignore points if mouse is off the image
                 }
-                this.markableCanvas.ScaleImage(location, true); // Zooming in if delta is positive, else zooming out
+                this.MarkableCanvas.ScaleImage(location, true); // Zooming in if delta is positive, else zooming out
             }
         }
 
         private void MenuItemZoomOut_Click(object sender, RoutedEventArgs e)
         {
-            lock (this.markableCanvas.ImageToDisplay)
+            lock (this.MarkableCanvas.ImageToDisplay)
             {
-                Point location = Mouse.GetPosition(this.markableCanvas.ImageToDisplay);
-                this.markableCanvas.ScaleImage(location, false); // Zooming in if delta is positive, else zooming out
+                Point location = Mouse.GetPosition(this.MarkableCanvas.ImageToDisplay);
+                this.MarkableCanvas.ScaleImage(location, false); // Zooming in if delta is positive, else zooming out
             }
         }
 
@@ -2538,167 +2548,94 @@ namespace Carnassial
             Uri uri = new System.Uri(Path.Combine(this.dataHandler.ImageDatabase.FolderPath, this.dataHandler.ImageCache.Current.FileName));
 
             // Check to see if we need to create the Video Player dialog window
-            if (this.dlgVideoPlayer == null || this.dlgVideoPlayer.IsLoaded != true)
+            if (this.videoPlayer == null || this.videoPlayer.IsLoaded != true)
             {
-                this.dlgVideoPlayer = new WindowVideoPlayer(this, this.FolderPath);
-                this.dlgVideoPlayer.Owner = this;
+                this.videoPlayer = new WindowVideoPlayer(this, this.FolderPath);
+                this.videoPlayer.Owner = this;
             }
 
             // Initialize the video player to display the file held by the current row
             this.SetVideoPlayerToCurrentRow();
 
             // If the video player is already loaded, ensure that it is not minimized
-            if (this.dlgVideoPlayer.IsLoaded)
+            if (this.videoPlayer.IsLoaded)
             {
-                this.dlgVideoPlayer.WindowState = WindowState.Normal;
+                this.videoPlayer.WindowState = WindowState.Normal;
             }
             else
             {
-                this.dlgVideoPlayer.Show();
+                this.videoPlayer.Show();
             }
         }
 
         // Set the video player to the current row, where it will try to display it (or provide appropriate feedback)
         private void SetVideoPlayerToCurrentRow()
         {
-            if (this.dlgVideoPlayer == null)
+            if (this.videoPlayer == null)
             {
                 return;
             }
-            this.dlgVideoPlayer.CurrentRow = this.dataHandler.ImageCache.Current;
+            this.videoPlayer.CurrentRow = this.dataHandler.ImageCache.Current;
         }
 
-        /// <summary>Select the appropriate filter and update the view</summary>
-        private void MenuItemFilter_Click(object sender, RoutedEventArgs e)
+        /// <summary>Get the selection and update the view</summary>
+        private void MenuItemSelect_Click(object sender, RoutedEventArgs e)
         {
+            // get selection 
             MenuItem item = (MenuItem)sender;
-            ImageFilter filter;
-            // find out which filter was selected
-            if (item == this.MenuItemFilterAllImages)
+            ImageSelection selection;
+            if (item == this.MenuItemSelectAllImages)
             {
-                filter = ImageFilter.All;
+                selection = ImageSelection.All;
             }
-            else if (item == this.MenuItemFilterLightImages)
+            else if (item == this.MenuItemSelectLightImages)
             {
-                filter = ImageFilter.Ok;
+                selection = ImageSelection.Ok;
             }
-            else if (item == this.MenuItemFilterCorruptedImages)
+            else if (item == this.MenuItemSelectCorruptedImages)
             {
-                filter = ImageFilter.Corrupted;
+                selection = ImageSelection.Corrupted;
             }
-            else if (item == this.MenuItemFilterDarkImages)
+            else if (item == this.MenuItemSelectDarkImages)
             {
-                filter = ImageFilter.Dark;
+                selection = ImageSelection.Dark;
             }
-            else if (item == this.MenuItemFilterMissingImages)
+            else if (item == this.MenuItemSelectMissingImages)
             {
-                filter = ImageFilter.Missing;
+                selection = ImageSelection.Missing;
             }
-            else if (item == this.MenuItemFilterImagesMarkedForDeletion)
+            else if (item == this.MenuItemSelectImagesMarkedForDeletion)
             {
-                filter = ImageFilter.MarkedForDeletion;
+                selection = ImageSelection.MarkedForDeletion;
             }
             else
             {
-                filter = ImageFilter.All;   // Just in case
+                selection = ImageSelection.All;   // Just in case
             }
 
             // Treat the checked status as a radio button i.e., toggle their states so only the clicked menu item is checked.
-            this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, filter);  // Go to the first result (i.e., index 0) in the given filter set
+            this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, selection);  // Go to the first result (i.e., index 0) in the selection
         }
 
-        // helper function to put a checkbox on the currently selected menu item i.e., to make it behave like a radiobutton menu
-        private void MenuItemFilterSetSelected(MenuItem checked_item)
+        private void MenuItemSelectCustomSelection_Click(object sender, RoutedEventArgs e)
         {
-            this.MenuItemFilterAllImages.IsChecked = (this.MenuItemFilterAllImages == checked_item) ? true : false;
-            this.MenuItemFilterCorruptedImages.IsChecked = (this.MenuItemFilterCorruptedImages == checked_item) ? true : false;
-            this.MenuItemFilterDarkImages.IsChecked = (this.MenuItemFilterDarkImages == checked_item) ? true : false;
-            this.MenuItemFilterLightImages.IsChecked = (this.MenuItemFilterLightImages == checked_item) ? true : false;
-            this.MenuItemFilterImagesMarkedForDeletion.IsChecked = (this.MenuItemFilterImagesMarkedForDeletion == checked_item) ? true : false;
-            this.MenuItemView.IsChecked = false;
-        }
-
-        // helper function to put a checkbox on the currently selected menu item i.e., to make it behave like a radiobutton menu
-        private void MenuItemFilterSetSelected(ImageFilter filter)
-        {
-            this.MenuItemFilterAllImages.IsChecked = (filter == ImageFilter.All) ? true : false;
-            this.MenuItemFilterCorruptedImages.IsChecked = (filter == ImageFilter.Corrupted) ? true : false;
-            this.MenuItemFilterDarkImages.IsChecked = (filter == ImageFilter.Dark) ? true : false;
-            this.MenuItemFilterLightImages.IsChecked = (filter == ImageFilter.Ok) ? true : false;
-            this.MenuItemFilterMissingImages.IsChecked = (filter == ImageFilter.Missing) ? true : false;
-            this.MenuItemFilterImagesMarkedForDeletion.IsChecked = (filter == ImageFilter.MarkedForDeletion) ? true : false;
-            this.MenuItemFilterCustomFilter.IsChecked = (filter == ImageFilter.Custom) ? true : false;
-        }
-
-        private void MenuItemFilterCustomFilter_Click(object sender, RoutedEventArgs e)
-        {
-            // the first time the custom filter dialog is launched update the DateTime and UtcOffset search terms to the time of the current image
-            if (this.dataHandler.ImageDatabase.CustomFilter.GetDateTime() == Constants.ControlDefault.DateTimeValue)
+            // the first time the custom selection dialog is launched update the DateTime and UtcOffset search terms to the time of the current image
+            if (this.dataHandler.ImageDatabase.CustomSelection.GetDateTime() == Constants.ControlDefault.DateTimeValue)
             {
                 DateTimeOffset defaultDate = this.dataHandler.ImageCache.Current.GetDateTime();
-                this.dataHandler.ImageDatabase.CustomFilter.SetDateTime(defaultDate);
+                this.dataHandler.ImageDatabase.CustomSelection.SetDateTime(defaultDate);
             }
 
             // show the dialog and process the resuls
-            CustomViewFilter customFilter = new CustomViewFilter(this.dataHandler.ImageDatabase, this);
-            customFilter.Owner = this;
-            bool? changeToCustomFilter = customFilter.ShowDialog();
-            // Set the filter to show all images and a valid image
-            if (changeToCustomFilter == true)
+            CustomViewSelection customSelection = new CustomViewSelection(this.dataHandler.ImageDatabase, this);
+            bool? changeToCustomSelection = customSelection.ShowDialog();
+            if (changeToCustomSelection == true)
             {
-                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageFilter.Custom);
+                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, ImageSelection.Custom);
             }
         }
 
-        /// <summary>Display the dialog showing the filtered view of the current database contents</summary>
-        private void MenuItemViewFilteredDatabaseContents_Click(object sender, RoutedEventArgs e)
-        {
-            if (this.dlgDataView != null && this.dlgDataView.IsLoaded)
-            {
-                this.RefreshDataViewDialogWindow(); // If its already displayed, just refresh it.
-                return;
-            }
-            // We need to create it
-            this.dlgDataView = new DataView(this.dataHandler.ImageDatabase, this.dataHandler.ImageCache);
-            this.dlgDataView.Owner = this;
-            this.dlgDataView.Show();
-        }
-
-        /// <summary>Display a help window</summary> 
-        private void MenuOverview_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                // Create and show the overview window if it doesn't exist
-                if (this.overviewWindow == null)
-                {
-                    this.overviewWindow = new WindowHelp();
-                    this.overviewWindow.Closed += new System.EventHandler(this.OverviewWindow_Closed);
-                    this.overviewWindow.Show();
-                }
-                else
-                {
-                    // Raise the overview window to the surface if it exists
-                    if (this.overviewWindow.WindowState == WindowState.Minimized)
-                    {
-                        this.overviewWindow.WindowState = WindowState.Normal;
-                    }
-                    this.overviewWindow.Activate();
-                }
-            }
-            catch (Exception exception)
-            {
-                Debug.Fail("Overview window failed to open.", exception.ToString());
-            }
-        }
-
-        // Whem we are done with the overview window, set it to null so we can start afresh
-        private void OverviewWindow_Closed(object sender, System.EventArgs e)
-        {
-            this.overviewWindow = null;
-        }
-
-        /// <summary> Display a message describing the version, etc.</summary> 
+        /// <summary>Display a message describing the version, etc.</summary> 
         private void MenuItemAbout_Click(object sender, RoutedEventArgs e)
         {
             About about = new About(this);
@@ -2708,7 +2645,7 @@ namespace Carnassial
         // Returns the currently active counter control, otherwise null
         private DataEntryCounter FindSelectedCounter()
         {
-            foreach (DataEntryControl control in this.dataEntryControls.Controls)
+            foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
                 if (control is DataEntryCounter)
                 {
@@ -2733,31 +2670,31 @@ namespace Carnassial
         }
 
         // If we are not showing all images, then warn the user and make sure they want to continue.
-        private bool MaybePromptToApplyOperationIfFilteredView(bool userOptedOutOfMessage, string operationDescription, Action<bool> persistOptOut)
+        private bool MaybePromptToApplyOperationIfPartialSelection(bool userOptedOutOfMessage, string operationDescription, Action<bool> persistOptOut)
         {
             // if showing all images then no need for showing the warning message
-            if (userOptedOutOfMessage || this.dataHandler.ImageDatabase.ImageSet.ImageFilter == ImageFilter.All)
+            if (userOptedOutOfMessage || this.dataHandler.ImageDatabase.ImageSet.ImageSelection == ImageSelection.All)
             {
                 return true;
             }
 
-            string title = "Apply " + operationDescription + " to this filtered view?";
+            string title = "Apply " + operationDescription + " to this selection?";
             MessageBox messageBox = new MessageBox(title, this, MessageBoxButton.OKCancel);
 
-            messageBox.Message.What = operationDescription + " will be applied only to the subset of images shown by the " + this.dataHandler.ImageDatabase.ImageSet.ImageFilter + " filter." + Environment.NewLine;
+            messageBox.Message.What = operationDescription + " will be applied only to the subset of images shown by the " + this.dataHandler.ImageDatabase.ImageSet.ImageSelection + " selection." + Environment.NewLine;
             messageBox.Message.What += "Is this what you want?";
 
-            messageBox.Message.Reason = "You have the following filter on: " + this.dataHandler.ImageDatabase.ImageSet.ImageFilter + " filter." + Environment.NewLine;
-            messageBox.Message.Reason += "Only data for those images available in this " + this.dataHandler.ImageDatabase.ImageSet.ImageFilter + " filter view will be affected" + Environment.NewLine;
-            messageBox.Message.Reason += "Data for images not shown in this " + this.dataHandler.ImageDatabase.ImageSet.ImageFilter + " filter view will be unaffected." + Environment.NewLine;
+            messageBox.Message.Reason = "You have the following selection on: " + this.dataHandler.ImageDatabase.ImageSet.ImageSelection + "." + Environment.NewLine;
+            messageBox.Message.Reason += "Only data for those images available in this " + this.dataHandler.ImageDatabase.ImageSet.ImageSelection + " selection will be affected" + Environment.NewLine;
+            messageBox.Message.Reason += "Data for images not shown in this " + this.dataHandler.ImageDatabase.ImageSet.ImageSelection + " selection will be unaffected." + Environment.NewLine;
 
             messageBox.Message.Solution = "Select " + Environment.NewLine;
             messageBox.Message.Solution += "\u2022 'Ok' for Carnassial to continue to " + operationDescription + Environment.NewLine;
             messageBox.Message.Solution += "\u2022 'Cancel' to abort";
 
             messageBox.Message.Hint = "This is not an error." + Environment.NewLine;
-            messageBox.Message.Hint += "\u2022 We are asking just in case you forgot you had the " + this.dataHandler.ImageDatabase.ImageSet.ImageFilter + " filter on. " + Environment.NewLine;
-            messageBox.Message.Hint += "\u2022 You can use the 'Filter' menu to change to other filters (including viewing All Images)" + Environment.NewLine;
+            messageBox.Message.Hint += "\u2022 We are asking just in case you forgot you had the " + this.dataHandler.ImageDatabase.ImageSet.ImageSelection + " on. " + Environment.NewLine;
+            messageBox.Message.Hint += "\u2022 You can use the 'Select' menu to change to other views (including viewing All files)" + Environment.NewLine;
             messageBox.Message.Hint += "If you check don't show this message this dialog can be turned back on via the Options menu.";
 
             messageBox.Message.Icon = MessageBoxImage.Question;
@@ -2815,74 +2752,26 @@ namespace Carnassial
         // Bookmark (Save) the current pan / zoom level of the image
         private void MenuItem_BookmarkSavePanZoom(object sender, RoutedEventArgs e)
         {
-            this.markableCanvas.BookmarkSaveZoomPan();
+            this.MarkableCanvas.BookmarkSaveZoomPan();
         }
 
         // Restore the zoom level / pan coordinates of the bookmark
         private void MenuItem_BookmarkSetPanZoom(object sender, RoutedEventArgs e)
         {
-            this.markableCanvas.BookmarkSetZoomPan();
+            this.MarkableCanvas.BookmarkSetZoomPan();
         }
 
         // Restore the zoomed out / pan coordinates 
         private void MenuItem_BookmarkDefaultPanZoom(object sender, RoutedEventArgs e)
         {
-            this.markableCanvas.BookmarkZoomOutAllTheWay();
+            this.MarkableCanvas.BookmarkZoomOutAllTheWay();
         }
 
-        /// <summary>
-        /// Show the Coding Controls in the main window
-        /// </summary>
-        private void ControlsInMainWindow()
+        private void RefreshDataGrid()
         {
-            if (this.controlWindow != null)
+            if (this.DataGridPane.IsActive)
             {
-                this.controlWindow.ChildRemove(this.dataEntryControls);
-                this.controlWindow.Close();
-                this.controlWindow = null;
-            }
-            else
-            {
-                this.controlsTray.Children.Remove(this.dataEntryControls);
-                this.controlsTray.Children.Add(this.dataEntryControls);
-                this.MenuItemControlsInSeparateWindow.IsChecked = false;
-            }
-        }
-
-        /// <summary>Show the Coding Controls in a separate window</summary>
-        private void ControlsInSeparateWindow()
-        {
-            // this.controlsTray.Children.Clear();
-            this.controlsTray.Children.Remove(this.dataEntryControls);
-
-            this.controlWindow = new WindowControl(this.state);    // Handles to the control window and to the controls
-            this.controlWindow.Owner = this;             // Keeps this window atop its parent no matter what
-            this.controlWindow.Closed += this.ControlWindow_Closing;
-            this.controlWindow.AddControls(this.dataEntryControls);
-            this.controlWindow.RestorePreviousSize();
-            this.controlWindow.Show();
-            this.MenuItemControlsInSeparateWindow.IsChecked = true;
-        }
-
-        /// <summary>
-        /// Callback  invoked when the Control Window is unloaded
-        /// If so, make sure the controls are in the main control window
-        /// </summary>
-        private void ControlWindow_Closing(object sender, EventArgs e)
-        {
-            this.controlWindow.ChildRemove(this.dataEntryControls);
-            this.controlsTray.Children.Remove(this.dataEntryControls);
-
-            this.controlsTray.Children.Add(this.dataEntryControls);
-            this.MenuItemControlsInSeparateWindow.IsChecked = false;
-        }
-
-        private void RefreshDataViewDialogWindow()
-        {
-            if (this.dlgDataView != null)
-            {
-                // If its displayed, update the window that shows the filtered view data base
-                this.dlgDataView.RefreshDataTable();
+                this.DataGrid.Items.Refresh();
             }
         }
 

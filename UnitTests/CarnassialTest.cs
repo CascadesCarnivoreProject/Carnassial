@@ -38,7 +38,7 @@ namespace Carnassial.UnitTests
             string imageDatabaseCloneFilePath = this.GetUniqueFilePathForTest(imageDatabaseFileName);
             File.Copy(imageDatabaseSourceFilePath, imageDatabaseCloneFilePath, true);
 
-            return ImageDatabase.CreateOrOpen(imageDatabaseCloneFilePath, templateDatabase);
+            return ImageDatabase.CreateOrOpen(imageDatabaseCloneFilePath, templateDatabase, CustomSelectionOperator.And);
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace Carnassial.UnitTests
                 File.Delete(imageDatabaseFilePath);
             }
 
-            return ImageDatabase.CreateOrOpen(imageDatabaseFilePath, templateDatabase);
+            return ImageDatabase.CreateOrOpen(imageDatabaseFilePath, templateDatabase, CustomSelectionOperator.And);
         }
 
         /// <summary>
@@ -251,7 +251,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(bobcatTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             imageDatabase.AddImages(new List<ImageRow>() { martenImage, bobcatImage }, null);
-            imageDatabase.SelectDataTableImages(ImageFilter.All);
+            imageDatabase.SelectDataTableImages(ImageSelection.All);
 
             ImageTableEnumerator imageEnumerator = new ImageTableEnumerator(imageDatabase);
             Assert.IsTrue(imageEnumerator.TryMoveToImage(0));
@@ -292,7 +292,7 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(coyoteTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
                 imageDatabase.AddImages(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
-                imageDatabase.SelectDataTableImages(ImageFilter.All);
+                imageDatabase.SelectDataTableImages(ImageSelection.All);
 
                 ColumnTuplesWithWhere coyoteImageUpdate = new ColumnTuplesWithWhere();
                 coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "coyote"));
@@ -313,7 +313,7 @@ namespace Carnassial.UnitTests
             }
 
             // pull the image data table again so the updates are visible to .csv export
-            imageDatabase.SelectDataTableImages(ImageFilter.All);
+            imageDatabase.SelectDataTableImages(ImageSelection.All);
 
             // complete setting expectations
             string initialRootFolderName = Path.GetFileName(imageDatabase.FolderPath);

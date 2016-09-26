@@ -14,7 +14,7 @@ namespace Carnassial.Database
     internal class CsvReaderWriter
     {
         /// <summary>
-        /// Export all the database data associated with the filtered view to the CSV file indicated in the file path so that spreadsheet applications (like Excel) can display it.
+        /// Export all the database data associated with the selection to the CSV file indicated in the file path so that spreadsheet applications (like Excel) can display it.
         /// </summary>
         public void ExportToCsv(ImageDatabase database, string filePath)
         {

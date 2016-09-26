@@ -7,7 +7,7 @@ namespace Carnassial.Editor
 {
     internal static class EditorConstant
     {
-        public const string ApplicationName = "Carnassial.Editor";
+        public const string ApplicationName = "CarnassialTemplateEditor";
         public const string MainWindowBaseTitle = "Carnassial Template Editor";  // The initial title shown in the window title bar
 
         public static readonly SolidColorBrush NotEditableCellColor = Brushes.LightGray; // Color of non-editable data grid items 

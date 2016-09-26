@@ -124,8 +124,8 @@
         <!-- Miscellaneous Brushes For Checkbox Style-->
         <SolidColorBrush x:Key="GlyphBrush" Color="#444" />
         <SolidColorBrush x:Key="LightColorBrush" Color="#DDD" />
-        
-        
+
+
         <Style  x:Key="RadioButtonCodeBar" TargetType="RadioButton" BasedOn="{ StaticResource {x:Type ToggleButton}}">
             <Setter Property="Template">
                 <Setter.Value>
@@ -167,11 +167,10 @@
             <Setter Property="Focusable" Value="True" />
             <Setter Property="IsReadOnly" Value="False" />
         </Style>
-        <!-- For some reason this was generating an exception, so we now do it through code behind
-        <Style  x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
+        <Style x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="5,4,5,5"/> 
+            <Setter Property="Padding" Value="5,4,5,5"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="LightBlue"/>
             <Setter Property="FontWeight" Value="Normal" />
@@ -181,8 +180,6 @@
             <Setter Property="IsReadOnly" Value="False" />
             <Setter Property="IsEditable" Value="False" />
         </Style>
-        -->
-
         <Style  x:Key="FlagCodeBar" TargetType="{x:Type CheckBox}">
             <Setter Property="SnapsToDevicePixels" Value="true"/>
             <Setter Property="OverridesDefaultStyle" Value="true"/>
@@ -245,7 +242,7 @@
 
             <Setter Property="Height" Value="20" />
         </Style>
-        
+
         <Style  x:Key="StackPanelCodeBar" TargetType="StackPanel">
             <Setter Property="Orientation" Value="Horizontal"/>
             <Setter Property="Margin" Value="0,0,10,0" />
@@ -253,15 +250,8 @@
         </Style>
     </Control.Resources>
     <RichTextBox IsEnabled="True" IsDocumentEnabled="True" IsReadOnly="True">
-
-    <FlowDocument>
-        <Paragraph  Name="ControlGrid" TextAlignment="Left">
-            <Floater  HorizontalAlignment="Right" Width="75" Margin="0" Padding="0">
-                <BlockUIContainer Name="ButtonLocation" Margin="0" Padding="0">
-                    <!-- The actual controls will be inserted dynamically through Code Behind -->
-                </BlockUIContainer>
-            </Floater>
-        </Paragraph>
-    </FlowDocument>
+        <FlowDocument>
+            <Paragraph Name="ControlGrid" TextAlignment="Left" />
+        </FlowDocument>
     </RichTextBox>
 </UserControl>

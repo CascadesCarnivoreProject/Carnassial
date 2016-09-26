@@ -45,7 +45,7 @@ namespace Carnassial.Controls
             dateTimePicker.Value = defaultValue;
         }
 
-        /// <summary>Propagate the current value of this control forward from this point across the current set of filtered images.</summary>
+        /// <summary>Propagate the current value of this control forward from this point across the current selection.</summary>
         public void CopyForward(string dataLabel, bool checkForZero)
         {
             int imagesAffected = this.ImageDatabase.CurrentlySelectedImageCount - this.ImageCache.CurrentRow - 1;
@@ -303,11 +303,11 @@ namespace Carnassial.Controls
             messageBox.Message.Result = "If you select yes, this operation will:" + Environment.NewLine;
             if (!checkForZero && text.Equals(String.Empty))
             {
-                messageBox.Message.Result += "\u2022 copy the (empty) value \u00AB" + text + "\u00BB in this field from here to the last file of your filtered files.";
+                messageBox.Message.Result += "\u2022 copy the (empty) value \u00AB" + text + "\u00BB in this field from here to the last of the selected files.";
             }
             else
             {
-                messageBox.Message.Result += "\u2022 copy the value \u00AB" + text + "\u00BB in this field from here to the last file of your filtered files.";
+                messageBox.Message.Result += "\u2022 copy the value \u00AB" + text + "\u00BB in this field from here to the last of the selected files.";
             }
             messageBox.Message.Result += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
             messageBox.Message.Result += Environment.NewLine + "\u2022 will affect " + imagesAffected.ToString() + " files.";
@@ -325,11 +325,11 @@ namespace Carnassial.Controls
             messageBox.Message.Result = "If you select yes, this operation will:" + Environment.NewLine;
             if (!checkForZero && text.Equals(String.Empty))
             {
-                messageBox.Message.Result += "\u2022 clear this field across all " + filesAffected.ToString() + " of your filtered files.";
+                messageBox.Message.Result += "\u2022 clear this field across all " + filesAffected.ToString() + " selected files.";
             }
             else
             {
-                messageBox.Message.Result += "\u2022 set this field to \u00AB" + text + "\u00BB across all " + filesAffected.ToString() + " of your filtered files.";
+                messageBox.Message.Result += "\u2022 set this field to \u00AB" + text + "\u00BB across all " + filesAffected.ToString() + " selected files.";
             }
             messageBox.Message.Result += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
             return messageBox.ShowDialog();
@@ -343,7 +343,7 @@ namespace Carnassial.Controls
             messageBox.Message.Icon = MessageBoxImage.Question;
             messageBox.Message.What = "The 'Propagate to Here' operation is not undoable, and can overwrite existing values.";
             messageBox.Message.Reason = "\u2022 The last non-empty value \u00AB" + text + "\u00BB was seen " + imagesAffected.ToString() + " files back." + Environment.NewLine;
-            messageBox.Message.Reason += "\u2022 That field's value will be copied across all files between that file and this one in this filtered image set";
+            messageBox.Message.Reason += "\u2022 That field's value will be copied across all files between that file and this one in the selection";
             messageBox.Message.Result = "If you select yes: " + Environment.NewLine;
             messageBox.Message.Result = "\u2022 " + imagesAffected.ToString() + " files will be affected.";
             return messageBox.ShowDialog();
@@ -461,7 +461,7 @@ namespace Carnassial.Controls
             this.CopyToAll(control);
         }
 
-        // Propagate the current value of this control forward from this point across the current set of filtered images
+        // Propagate the current value of this control forward from this point across the current selection
         protected virtual void MenuItemPropagateForward_Click(object sender, RoutedEventArgs e)
         {
             DataEntryControl control = (DataEntryControl)((MenuItem)sender).Tag;

@@ -19,7 +19,7 @@ namespace Carnassial.UnitTests
         public string InitialRootFolderName { get; set; }
         public bool IsColor { get; set; }
         public bool DeleteFlag { get; set; }
-        public ImageFilter Quality { get; set; }
+        public ImageSelection Quality { get; set; }
         public string RelativePath { get; set; }
         public bool SkipDateTimeVerification { get; set; }
         public Dictionary<string, string> UserDefinedColumnsByDataLabel { get; private set; }

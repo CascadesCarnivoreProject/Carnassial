@@ -12,7 +12,7 @@ namespace Carnassial.Util
         private static readonly List<string> CarnassialRequiredBinaries = new List<string>()
         {
             "Microsoft.WindowsAPICodePack.dll", // required by Microsoft.WindowsAPICodePack.Shell.dll
-            "Microsoft.WindowsAPICodePack.Shell.dll", // just for CarnassialWindow's use of CommonOpenFileDialog
+            "Microsoft.WindowsAPICodePack.Shell.dll" // just for CarnassialWindow's use of CommonOpenFileDialog
         };
 
         private static readonly List<string> CommonRequiredBinaries = new List<string>()
@@ -26,6 +26,7 @@ namespace Carnassial.Util
             "System.Data.SQLite.xml",
             "x64/SQLite.Interop.dll",
             "x86/SQLite.Interop.dll",
+            "Xceed.Wpf.AvalonDock.dll",
             "Xceed.Wpf.Toolkit.dll"
         };
 

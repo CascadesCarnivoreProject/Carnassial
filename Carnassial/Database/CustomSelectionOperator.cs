@@ -1,6 +1,6 @@
 ﻿namespace Carnassial.Database
 {
-    public enum CustomFilterOperator
+    public enum CustomSelectionOperator
     {
         And,
         Or

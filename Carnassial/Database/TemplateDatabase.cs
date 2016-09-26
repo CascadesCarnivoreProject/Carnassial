@@ -1,5 +1,4 @@
-﻿using Carnassial.Util;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -74,7 +73,7 @@ namespace Carnassial.Database
                     dataLabelPrefix = Constants.Control.Counter;
                     newControl.DefaultValue = Constants.ControlDefault.CounterValue;
                     newControl.Type = Constants.Control.Counter;
-                    newControl.TextBoxWidth = Constants.ControlDefault.CounterWidth;
+                    newControl.Width = Constants.ControlDefault.CounterWidth;
                     newControl.Copyable = false;
                     newControl.Visible = true;
                     newControl.Tooltip = Constants.ControlDefault.CounterTooltip;
@@ -85,7 +84,7 @@ namespace Carnassial.Database
                     dataLabelPrefix = Constants.Control.Note;
                     newControl.DefaultValue = Constants.ControlDefault.Value;
                     newControl.Type = Constants.Control.Note;
-                    newControl.TextBoxWidth = Constants.ControlDefault.NoteWidth;
+                    newControl.Width = Constants.ControlDefault.NoteWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constants.ControlDefault.NoteTooltip;
@@ -96,7 +95,7 @@ namespace Carnassial.Database
                     dataLabelPrefix = Constants.Control.Choice;
                     newControl.DefaultValue = Constants.ControlDefault.Value;
                     newControl.Type = Constants.Control.FixedChoice;
-                    newControl.TextBoxWidth = Constants.ControlDefault.FixedChoiceWidth;
+                    newControl.Width = Constants.ControlDefault.FixedChoiceWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constants.ControlDefault.FixedChoiceTooltip;
@@ -107,7 +106,7 @@ namespace Carnassial.Database
                     dataLabelPrefix = Constants.Control.Flag;
                     newControl.DefaultValue = Constants.ControlDefault.FlagValue;
                     newControl.Type = Constants.Control.Flag;
-                    newControl.TextBoxWidth = Constants.ControlDefault.FlagWidth;
+                    newControl.Width = Constants.ControlDefault.FlagWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constants.ControlDefault.FlagTooltip;
@@ -364,14 +363,14 @@ namespace Carnassial.Database
             // create the template table
             List<ColumnDefinition> templateTableColumns = new List<ColumnDefinition>();
             templateTableColumns.Add(new ColumnDefinition(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.ControlOrder, "INTEGER"));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.SpreadsheetOrder, "INTEGER"));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.ControlOrder, Constants.Sql.Integer));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.SpreadsheetOrder, Constants.Sql.Integer));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.Type, Constants.Sql.Text));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.DefaultValue, Constants.Sql.Text));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.Label, Constants.Sql.Text));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.DataLabel, Constants.Sql.Text));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.Tooltip, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.TextBoxWidth, Constants.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Width, Constants.Sql.Integer));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.Copyable, Constants.Sql.Text));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.Visible, Constants.Sql.Text));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.List, Constants.Sql.Text));
@@ -398,7 +397,7 @@ namespace Carnassial.Database
             file.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.File));
             file.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.File));
             file.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.FileTooltip));
-            file.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FileWidth));
+            file.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.FileWidth));
             file.Add(new ColumnTuple(Constants.Control.Copyable, false));
             file.Add(new ColumnTuple(Constants.Control.Visible, true));
             file.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
@@ -416,7 +415,7 @@ namespace Carnassial.Database
             folder.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Folder));
             folder.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Folder));
             folder.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.FolderTooltip));
-            folder.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FolderWidth));
+            folder.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.FolderWidth));
             folder.Add(new ColumnTuple(Constants.Control.Copyable, false));
             folder.Add(new ColumnTuple(Constants.Control.Visible, true));
             folder.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
@@ -437,7 +436,7 @@ namespace Carnassial.Database
             imageQuality.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.ImageQuality));
             imageQuality.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.ImageQuality));
             imageQuality.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.ImageQualityTooltip));
-            imageQuality.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.ImageQualityWidth));
+            imageQuality.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.ImageQualityWidth));
             imageQuality.Add(new ColumnTuple(Constants.Control.Copyable, false));
             imageQuality.Add(new ColumnTuple(Constants.Control.Visible, true));
             imageQuality.Add(new ColumnTuple(Constants.Control.List, Constants.ImageQuality.ListOfValues));
@@ -589,7 +588,7 @@ namespace Carnassial.Database
             dateTime.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.DateTime));
             dateTime.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.DateTime));
             dateTime.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DateTimeTooltip));
-            dateTime.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.DateTimeWidth));
+            dateTime.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.DateTimeWidth));
             dateTime.Add(new ColumnTuple(Constants.Control.Copyable, false));
             dateTime.Add(new ColumnTuple(Constants.Control.Visible, visible));
             dateTime.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
@@ -607,7 +606,7 @@ namespace Carnassial.Database
             relativePath.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.RelativePath));
             relativePath.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.RelativePath));
             relativePath.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.RelativePathTooltip));
-            relativePath.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.RelativePathWidth));
+            relativePath.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.RelativePathWidth));
             relativePath.Add(new ColumnTuple(Constants.Control.Copyable, false));
             relativePath.Add(new ColumnTuple(Constants.Control.Visible, visible));
             relativePath.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
@@ -625,7 +624,7 @@ namespace Carnassial.Database
             deleteFlag.Add(new ColumnTuple(Constants.Control.Label, Constants.ControlDefault.DeleteFlagLabel));
             deleteFlag.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.DeleteFlag));
             deleteFlag.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DeleteFlagTooltip));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.FlagWidth));
+            deleteFlag.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.FlagWidth));
             deleteFlag.Add(new ColumnTuple(Constants.Control.Copyable, false));
             deleteFlag.Add(new ColumnTuple(Constants.Control.Visible, visible));
             deleteFlag.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
@@ -642,7 +641,7 @@ namespace Carnassial.Database
             utcOffset.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.UtcOffset));
             utcOffset.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.UtcOffset));
             utcOffset.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.UtcOffsetTooltip));
-            utcOffset.Add(new ColumnTuple(Constants.Control.TextBoxWidth, Constants.ControlDefault.UtcOffsetWidth));
+            utcOffset.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.UtcOffsetWidth));
             utcOffset.Add(new ColumnTuple(Constants.Control.Copyable, false));
             utcOffset.Add(new ColumnTuple(Constants.Control.Visible, visible));
             utcOffset.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));

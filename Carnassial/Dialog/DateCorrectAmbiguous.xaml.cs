@@ -33,8 +33,8 @@ namespace Carnassial.Dialog
             this.OriginalDate.Checked += this.DateBox_Checked;
             this.SwappedDate.Checked += this.DateBox_Checked;
 
-            // Find the ambiguous dates in the current filtered set
-            if (this.FindAllAmbiguousDatesInFilteredImageSet() == true)
+            // Find the ambiguous dates in the current selection
+            if (this.FindAllAmbiguousDatesInSelectedImages() == true)
             {
                 this.Abort = false;
                 this.MoveToAmbiguousDate(null); // Go to first ambiguous date
@@ -58,22 +58,22 @@ namespace Carnassial.Dialog
 
         // Create a list of all initial images containing ambiguous dates.
         // This includes calculating the start and end rows of all images matching an ambiguous date
-        private bool FindAllAmbiguousDatesInFilteredImageSet()
+        private bool FindAllAmbiguousDatesInSelectedImages()
         {
-            int start = this.SearchForNextAmbiguousDateInFilteredImageSet(0);
+            int start = this.SearchForNextAmbiguousDateInSelectedImages(0);
             while (start != -1)
             {
                 int count;
                 int end = this.GetLastImageOnSameDay(start, out count);
                 this.ambiguousDatesList.Add(new AmbiguousDate(start, end, count, false));
-                start = this.SearchForNextAmbiguousDateInFilteredImageSet(end + 1);
+                start = this.SearchForNextAmbiguousDateInSelectedImages(end + 1);
             }
             return (this.ambiguousDatesList.Count > 0) ? true : false;
         }
 
         // Starting from the index, navigate successive image rows until an ambiguous date is found
         // If it can't find an ambiguous date, it will return -1.
-        private int SearchForNextAmbiguousDateInFilteredImageSet(int startIndex)
+        private int SearchForNextAmbiguousDateInSelectedImages(int startIndex)
         {
             for (int index = startIndex; index < this.database.CurrentlySelectedImageCount; index++)
             {

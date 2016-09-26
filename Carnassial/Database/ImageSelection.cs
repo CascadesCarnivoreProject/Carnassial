@@ -1,6 +1,6 @@
 ﻿namespace Carnassial.Database
 {
-    public enum ImageFilter : int
+    public enum ImageSelection : int
     {
         Ok = 0,
         Dark = 1,

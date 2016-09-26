@@ -2,6 +2,7 @@
 {
     public enum ControlContentStyle
     {
+        ComboBoxCodeBar,
         FlagCodeBar,
         TextBoxCodeBar
     }

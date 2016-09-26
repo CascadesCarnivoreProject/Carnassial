@@ -8,6 +8,7 @@ namespace Carnassial.UnitTests
     internal static class TestConstant
     {
         public const string CarnassialAutomationID = "Carnassial";
+        public const string CarnassialTemplateEditorAutomationID = "CarnassialTemplateEditor";
         public const double DarkPixelFractionTolerance = 0.00000001;
         public const string DataHandlerFieldName = "dataHandler";
         public const string DateTimeWithOffsetFormat = "yyyy-MM-ddTHH:mm:ss.fffK";
@@ -15,11 +16,11 @@ namespace Carnassial.UnitTests
         public const string InitializeDataGridMethodName = "InitializeDataGrid";
         public const string MessageBoxAutomationID = "CarnassialMessageBox";
         public const string OkButtonAutomationID = "OkButton";
+        public const string TemplatePaneAutomationID = "TemplatePane";
         public const string TrySaveDatabaseBackupFileMethodName = "TrySaveDatabaseBackupFile";
         public const string TryShowImageWithoutSliderCallbackMethodName = "TryShowImageWithoutSliderCallback";
 
         public static readonly TimeSpan UIElementSearchTimeout = TimeSpan.FromSeconds(15.0);
-        public static readonly Version Version2104 = new Version(2, 1, 0, 4);
 
         public static readonly ReadOnlyCollection<string> DefaultImageTableColumns = new List<string>()
         {
@@ -71,7 +72,7 @@ namespace Carnassial.UnitTests
                 Constants.Control.Label,
                 Constants.Control.DataLabel,
                 Constants.Control.Tooltip,
-                Constants.Control.TextBoxWidth,
+                Constants.Control.Width,
                 Constants.Control.Copyable,
                 Constants.Control.Visible,
                 Constants.Control.List,
@@ -175,7 +176,7 @@ namespace Carnassial.UnitTests
                     DateTime = ImageExpectations.ParseDateTimeOffsetString("2015-08-05T08:06:23.000-07:00"),
                     FileName = "BushnellTrophyHD-119677C-20160805-926.JPG",
                     IsColor = true,
-                    Quality = ImageFilter.Ok
+                    Quality = ImageSelection.Ok
                 };
 
                 ImageExpectation.DaylightCoyote = new ImageExpectations(pacificTime)
@@ -184,7 +185,7 @@ namespace Carnassial.UnitTests
                     DateTime = ImageExpectations.ParseDateTimeOffsetString("2016-04-21T06:31:13.000-07:00"),
                     FileName = "BushnellTrophyHDAggressor-119777C-20160421-112.JPG",
                     IsColor = true,
-                    Quality = ImageFilter.Ok,
+                    Quality = ImageSelection.Ok,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName
                 };
 
@@ -194,7 +195,7 @@ namespace Carnassial.UnitTests
                     DateTime = ImageExpectations.ParseDateTimeOffsetString("2015-01-28T11:17:34.000-08:00"),
                     FileName = "Reconyx-HC500-20150128-201.JPG",
                     IsColor = true,
-                    Quality = ImageFilter.Ok,
+                    Quality = ImageSelection.Ok,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName,
                 };
 
@@ -204,7 +205,7 @@ namespace Carnassial.UnitTests
                     DateTime = ImageExpectations.ParseDateTimeOffsetString("2016-02-24T04:59:46.000-08:00"),
                     FileName = "BushnellTrophyHD-119677C-20160224-056.JPG",
                     IsColor = false,
-                    Quality = ImageFilter.Ok
+                    Quality = ImageSelection.Ok
                 };
             }
         }

@@ -11,10 +11,10 @@ namespace Carnassial.Database
         {
         }
 
-        public ImageFilter ImageFilter
+        public ImageSelection ImageSelection
         {
-            get { return (ImageFilter)this.Row.GetIntegerField(Constants.DatabaseColumn.Filter); }
-            set { this.Row.SetField(Constants.DatabaseColumn.Filter, (int)value); }
+            get { return this.Row.GetEnumField<ImageSelection>(Constants.DatabaseColumn.Selection); }
+            set { this.Row.SetField(Constants.DatabaseColumn.Selection, value); }
         }
 
         public int ImageRowIndex
@@ -41,21 +41,14 @@ namespace Carnassial.Database
             set { this.Row.SetField(Constants.DatabaseColumn.TimeZone, value); }
         }
 
-        public bool WhitespaceTrimmed
-        {
-            get { return this.Row.GetBooleanField(Constants.DatabaseColumn.WhiteSpaceTrimmed); }
-            set { this.Row.SetField(Constants.DatabaseColumn.WhiteSpaceTrimmed, value); }
-        }
-
         public override ColumnTuplesWithWhere GetColumnTuples()
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>();
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Filter, (int)this.ImageFilter));
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Selection, (int)this.ImageSelection));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Log, this.Log));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, this.MagnifierEnabled));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Row, this.ImageRowIndex));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.TimeZone, this.TimeZone));
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.WhiteSpaceTrimmed, this.WhitespaceTrimmed));
             return new ColumnTuplesWithWhere(columnTuples, this.ID);
         }
 

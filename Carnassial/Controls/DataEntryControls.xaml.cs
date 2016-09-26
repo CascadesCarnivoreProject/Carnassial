@@ -86,10 +86,5 @@ namespace Carnassial.Controls
 
             dataEntryPropagator.SetDataEntryCallbacks(this.ControlsByDataLabel);
         }
-
-        public void AddButton(Control button)
-        {
-            this.ButtonLocation.Child = button;
-        }
     }
 }

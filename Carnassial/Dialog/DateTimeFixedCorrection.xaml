@@ -18,7 +18,7 @@
 &#10;&#x2022; Adjust the date/time for this file the correct data and time.
 &#10;&#x2022; Click Preview Changes (which becomes active after you enter an adjusted date/time) to review the changes that will be made.
 &#10;&#x2022; Click Apply Changes to apply those changes."
-                            Result="The difference between the original and correct date will be added to all dates for all images and videos selected by the current filter."
+                            Result="The difference between the original and correct date will be added to all dates for all images and videos selected."
                             Hint="The date/time format you enter should look something like '12-Apr-2016 13:00:00.'&#10;For example, changing 12-Apr-2016 13:00:00 to 13-Apr-2016 14:00:00 would add 1 day and 1 hour to all dates/times"
                             ShowExplanationVisibility="True"/>
 

@@ -116,8 +116,8 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Data.SQLite, Version=1.0.101.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Core.1.0.101.0\lib\net40\System.Data.SQLite.dll</HintPath>
+    <Reference Include="System.Data.SQLite, Version=1.0.103.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Data.SQLite.Core.1.0.103\lib\net40\System.Data.SQLite.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Deployment" />
@@ -133,6 +133,10 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="Xceed.Wpf.AvalonDock, Version=3.1.16356.12170, Culture=neutral, PublicKeyToken=ba83ff368b7563c6, processorArchitecture=MSIL">
+      <HintPath>..\packages\Xceed.Wpf.AvalonDock.3.1.16356.12170\lib\net40\Xceed.Wpf.AvalonDock.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Xceed.Wpf.Toolkit, Version=2.9.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
       <HintPath>..\packages\Extended.Wpf.Toolkit.2.9\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
       <Private>True</Private>
@@ -155,7 +159,7 @@
     <Compile Include="Controls\UtcOffsetUpDown.cs" />
     <Compile Include="Database\ColumnDefinition.cs" />
     <Compile Include="Database\ControlRow.cs" />
-    <Compile Include="Database\CustomFilterOperator.cs" />
+    <Compile Include="Database\CustomSelectionOperator.cs" />
     <Compile Include="Database\DataTableBackedList.cs" />
     <Compile Include="Database\ImageDataChoiceColumn.cs" />
     <Compile Include="Database\ImageDataColumn.cs" />
@@ -212,7 +216,7 @@
     <Compile Include="Util\Dependencies.cs" />
     <Compile Include="Util\VersionClient.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="Database\CustomFilter.cs" />
+    <Compile Include="Database\CustomSelection.cs" />
     <Compile Include="Database\ColumnTuple.cs" />
     <Compile Include="Database\ColumnTuplesWithWhere.cs" />
     <Compile Include="Database\ImageDatabase.cs" />
@@ -223,11 +227,8 @@
     <Compile Include="Dialog\ChooseDatabaseFile.xaml.cs">
       <DependentUpon>ChooseDatabaseFile.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\CustomViewFilter.xaml.cs">
-      <DependentUpon>CustomViewFilter.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Dialog\DataView.xaml.cs">
-      <DependentUpon>DataView.xaml</DependentUpon>
+    <Compile Include="Dialog\CustomViewSelection.xaml.cs">
+      <DependentUpon>CustomViewSelection.xaml</DependentUpon>
     </Compile>
     <Compile Include="Dialog\DateRereadFromFiles.xaml.cs">
       <DependentUpon>DateRereadFromFiles.xaml</DependentUpon>
@@ -255,11 +256,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Dialog\CustomViewFilter.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Dialog\DataView.xaml">
+    <Page Include="Dialog\CustomViewSelection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -335,15 +332,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Dialog\WindowHelp.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="Controls\DataEntryControls.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\WindowControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -390,7 +379,7 @@
     </Compile>
     <Compile Include="Database\FileBackup.cs" />
     <Compile Include="Database\ImageRow.cs" />
-    <Compile Include="Database\ImageFilter.cs" />
+    <Compile Include="Database\ImageSelection.cs" />
     <Compile Include="Images\MetaTagCounter.cs" />
     <Compile Include="Controls\ControlLabelStyle.cs" />
     <Compile Include="Controls\ControlContentStyle.cs" />
@@ -420,17 +409,11 @@
     <Compile Include="Controls\HelpUserControl.xaml.cs">
       <DependentUpon>HelpUserControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\WindowHelp.xaml.cs">
-      <DependentUpon>WindowHelp.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Images\MarkableImageCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
     <Compile Include="Util\UserRegistrySettings.cs" />
     <Compile Include="Controls\DataEntryControls.xaml.cs">
       <DependentUpon>DataEntryControls.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\WindowControl.xaml.cs">
-      <DependentUpon>WindowControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Dialog\AdvancedCarnassialOptions.xaml.cs">
       <DependentUpon>AdvancedCarnassialOptions.xaml</DependentUpon>
@@ -516,12 +499,12 @@
     <Resource Include="version.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets')" />
+  <Import Project="..\packages\System.Data.SQLite.Core.1.0.103\build\net40\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.103\build\net40\System.Data.SQLite.Core.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.101.0\build\net40\System.Data.SQLite.Core.targets'))" />
+    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.103\build\net40\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.103\build\net40\System.Data.SQLite.Core.targets'))" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

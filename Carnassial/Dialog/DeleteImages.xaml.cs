@@ -84,8 +84,8 @@ namespace Carnassial.Dialog
                 if (deleteData == false)
                 {
                     // Case 3: Delete the images that have the delete flag set, but not their data
-                    this.Message.Title = "Delete " + imagecount.ToString() + " images and videos marked for deletion in this filter";
-                    this.Message.What = "Deletes " + imagecount.ToString() + " image and video file(s) in this filter that are marked for deletion (shown below), but not the data entered for them.";
+                    this.Message.Title = "Delete " + imagecount.ToString() + " images and videos marked for deletion in this selection";
+                    this.Message.What = "Deletes " + imagecount.ToString() + " image and video file(s) marked for deletion (shown below) in this selection, but not the data entered for them.";
                     this.Message.Result = String.Empty;
                     if (imagecount > LargeNumberOfDeletedImages)
                     {
@@ -99,7 +99,7 @@ namespace Carnassial.Dialog
                 else
                 {
                     // Case 4: Delete the images that have the delete flag set, and their data
-                    this.Message.Title = "Delete " + imagecount.ToString() + " images and videos marked for deletion and their data in this filter";
+                    this.Message.Title = "Delete " + imagecount.ToString() + " images and videos marked for deletion";
                     this.Message.What = "Deletes the image and video files that are marked for deletion (shown below), along with the data entered for them.";
                     this.Message.Result = String.Empty;
                     if (imagecount > LargeNumberOfDeletedImages)
@@ -184,7 +184,7 @@ namespace Carnassial.Dialog
                 {
                     // as only the image file was deleted, change its image quality to missing in the database
                     string imageQualityDataLabel = this.imageDatabase.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality];
-                    this.imageDatabase.UpdateImage(imageProperties.ID, imageQualityDataLabel, ImageFilter.Missing.ToString());
+                    this.imageDatabase.UpdateImage(imageProperties.ID, imageQualityDataLabel, ImageSelection.Missing.ToString());
                     this.ImageFilesRemovedByID.Add(imageProperties.ID);
                 }
                 this.TryMoveImageToDeletedImagesFolder(this.imageDatabase.FolderPath, imageProperties);

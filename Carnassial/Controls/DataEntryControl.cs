@@ -78,9 +78,9 @@ namespace Carnassial.Controls
         }
 
         /// <summary>Gets or sets the width of the content control</summary>
-        public int Width
+        public long Width
         {
-            get { return (int)this.ContentControl.Width; }
+            get { return (long)this.ContentControl.Width; }
             set { this.ContentControl.Width = value; }
         }
 
@@ -98,7 +98,7 @@ namespace Carnassial.Controls
             }
             this.ReadOnly = false;
             this.Tooltip = control.Tooltip;
-            this.Width = control.TextBoxWidth;
+            this.Width = control.Width;
 
             // use the content's tag to point back to this so event handlers can access the DataEntryControl as well as just ContentControl
             // the data update callback for each control type in CarnassialWindow, such as NoteControl_TextChanged(), rely on this

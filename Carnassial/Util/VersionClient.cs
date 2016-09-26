@@ -80,7 +80,6 @@ namespace Carnassial.Util
                 messageBox.Message.Icon = MessageBoxImage.Exclamation;
                 bool? messageBoxResult = messageBox.ShowDialog();
 
-                // Set the filter to show all images and a valid image
                 if (messageBoxResult == true)
                 {
                     // navigate the default web browser to our app homepage (the url comes from the xml content)  

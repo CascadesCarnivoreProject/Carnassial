@@ -36,10 +36,10 @@ namespace Carnassial.Database
             set { this.Row.SetField(Constants.DatabaseColumn.File, value); }
         }
 
-        public ImageFilter ImageQuality
+        public ImageSelection ImageQuality
         {
-            get { return this.Row.GetEnumField<ImageFilter>(Constants.DatabaseColumn.ImageQuality); }
-            set { this.Row.SetField<ImageFilter>(Constants.DatabaseColumn.ImageQuality, value); }
+            get { return this.Row.GetEnumField<ImageSelection>(Constants.DatabaseColumn.ImageQuality); }
+            set { this.Row.SetField<ImageSelection>(Constants.DatabaseColumn.ImageQuality, value); }
         }
 
         public virtual bool IsVideo
@@ -136,7 +136,7 @@ namespace Carnassial.Database
 
         public bool IsDisplayable()
         {
-            if (this.ImageQuality == ImageFilter.Corrupted || this.ImageQuality == ImageFilter.Missing)
+            if (this.ImageQuality == ImageSelection.Corrupted || this.ImageQuality == ImageSelection.Missing)
             {
                 return false;
             }
@@ -242,7 +242,7 @@ namespace Carnassial.Database
                     this.UtcOffset = DateTimeHandler.ParseDatabaseUtcOffsetString(value);
                     break;
                 case Constants.DatabaseColumn.ImageQuality:
-                    this.ImageQuality = (ImageFilter)Enum.Parse(typeof(ImageFilter), value);
+                    this.ImageQuality = (ImageSelection)Enum.Parse(typeof(ImageSelection), value);
                     break;
                 default:
                     this.Row.SetField(dataLabel, value);

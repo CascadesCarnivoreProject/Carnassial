@@ -219,6 +219,8 @@ namespace Carnassial.Editor
             this.AddNoteButton.IsEnabled = true;
             this.AddFlagButton.IsEnabled = true;
 
+            this.TemplatePane.IsActive = true;
+
             // update state
             // disable the recent templates list rather than call this.MenuItemRecentTemplates_Refresh
             this.userSettings.MostRecentTemplates.SetMostRecent(templateDatabaseFilePath);
@@ -227,14 +229,6 @@ namespace Carnassial.Editor
 
         private void InitializeUI()
         {
-            this.HelpText.Text = "Click the white fields to edit their contents. Gray fields are not editable." + Environment.NewLine +
-                "List items: Click 'Define List' to create or edit menu items, one per line.";
-            this.HelpDocument.Visibility = Visibility.Collapsed;
-            this.HelpText.Visibility = Visibility.Visible;
-            this.TemplateDataGrid.Visibility = Visibility.Visible;
-            this.RowControls.Visibility = Visibility.Visible;
-            this.TextMessage1.Visibility = Visibility.Visible;
-            this.OtherGrids.Visibility = Visibility.Visible;
             this.NewFileMenuItem.IsEnabled = false;
             this.OpenFileMenuItem.IsEnabled = false;
             this.ViewMenu.IsEnabled = true;
@@ -248,13 +242,13 @@ namespace Carnassial.Editor
             this.templateDatabase = TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
 
             // Have the window title include the database file name
-            this.OnlyWindow.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
+            this.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
 
             // Map the data table to the data grid, and create a callback executed whenever the datatable row changes
             this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateDataTable_RowChanged);
 
             // Update the user interface specified by the contents of the table
-            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
             this.InitializeUI();       
         }
@@ -267,7 +261,7 @@ namespace Carnassial.Editor
             this.dataGridBeingUpdatedByCode = true;
 
             this.templateDatabase.SyncControlToDatabase(control);
-            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
 
             this.dataGridBeingUpdatedByCode = false;
@@ -315,7 +309,7 @@ namespace Carnassial.Editor
             this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
 
-            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
             this.OnControlOrderChanged();
 
@@ -346,7 +340,7 @@ namespace Carnassial.Editor
             this.templateDatabase.RemoveUserDefinedControl(new ControlRow(selectedRowView.Row));
 
             // update the control panel so it reflects the current values in the database
-            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
 
             this.dataGridBeingUpdatedByCode = false;
@@ -710,10 +704,10 @@ namespace Carnassial.Editor
 
         private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.Source != this.controlsPanel)
+            if (e.Source != this.ControlsPanel)
             {
                 this.isMouseDown = true;
-                this.startPoint = e.GetPosition(this.controlsPanel);
+                this.startPoint = e.GetPosition(this.ControlsPanel);
             }
         }
 
@@ -738,8 +732,8 @@ namespace Carnassial.Editor
             if (this.isMouseDown)
             {
                 if ((this.isMouseDragging == false) && 
-                    ((Math.Abs(e.GetPosition(this.controlsPanel).X - this.startPoint.X) > SystemParameters.MinimumHorizontalDragDistance) || 
-                     (Math.Abs(e.GetPosition(this.controlsPanel).Y - this.startPoint.Y) > SystemParameters.MinimumVerticalDragDistance)))
+                    ((Math.Abs(e.GetPosition(this.ControlsPanel).X - this.startPoint.X) > SystemParameters.MinimumHorizontalDragDistance) || 
+                     (Math.Abs(e.GetPosition(this.ControlsPanel).Y - this.startPoint.Y) > SystemParameters.MinimumVerticalDragDistance)))
                 {
                     this.isMouseDragging = true;
                     this.realMouseDragSource = e.Source as UIElement;
@@ -749,7 +743,7 @@ namespace Carnassial.Editor
             }
         }
 
-        private void OnDragEnter(object sender, DragEventArgs e)
+        private void ControlsPanel_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent("UIElement"))
             {
@@ -757,14 +751,14 @@ namespace Carnassial.Editor
             }
         }
 
-        private void OnDragDrop(object sender, DragEventArgs e)
+        private void ControlsPanel_DragDrop(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent("UIElement"))
             {
                 UIElement dropTarget = e.Source as UIElement;
                 int control = 0;
                 int dropTargetIndex = -1;
-                foreach (UIElement element in this.controlsPanel.Children)
+                foreach (UIElement element in this.ControlsPanel.Children)
                 {
                     if (element.Equals(dropTarget))
                     {
@@ -798,8 +792,8 @@ namespace Carnassial.Editor
                         StackPanel parent = FindVisualParent<StackPanel>(this.realMouseDragSource);
                         this.realMouseDragSource = parent;
                     }
-                    this.controlsPanel.Children.Remove(this.realMouseDragSource);
-                    this.controlsPanel.Children.Insert(dropTargetIndex, this.realMouseDragSource);
+                    this.ControlsPanel.Children.Remove(this.realMouseDragSource);
+                    this.ControlsPanel.Children.Insert(dropTargetIndex, this.realMouseDragSource);
                     this.OnControlOrderChanged();
                 }
 
@@ -828,7 +822,7 @@ namespace Carnassial.Editor
         {
             Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
             long controlOrder = 1;
-            foreach (UIElement element in this.controlsPanel.Children)
+            foreach (UIElement element in this.ControlsPanel.Children)
             {
                 StackPanel stackPanel = element as StackPanel;
                 if (stackPanel == null)
@@ -840,7 +834,7 @@ namespace Carnassial.Editor
             }
 
             this.templateDatabase.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
-            this.controls.Generate(this, this.controlsPanel, this.templateDatabase.TemplateTable); // A contorted to make sure the controls panel updates itself
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.TemplateTable); // A contorted to make sure the controls panel updates itself
         }
 
         private void HelpDocument_Drop(object sender, DragEventArgs dropEvent)

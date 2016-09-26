@@ -91,7 +91,7 @@ namespace Carnassial.Editor.Util
         {
             DateTimePicker dateTimePicker = new DateTimePicker();
             dateTimePicker.ToolTip = control.Tooltip;
-            dateTimePicker.Width = control.TextBoxWidth;
+            dateTimePicker.Width = control.Width;
             DataEntryHandler.Configure(dateTimePicker, Constants.ControlDefault.DateTimeValue.DateTime);
             return dateTimePicker;
         }
@@ -115,7 +115,7 @@ namespace Carnassial.Editor.Util
             UtcOffsetUpDown utcOffsetPicker = new UtcOffsetUpDown();
             utcOffsetPicker.ToolTip = control.Tooltip;
             utcOffsetPicker.Value = Constants.ControlDefault.DateTimeValue.Offset;
-            utcOffsetPicker.Width = control.TextBoxWidth;
+            utcOffsetPicker.Width = control.Width;
             return utcOffsetPicker;
         }
 
@@ -135,7 +135,7 @@ namespace Carnassial.Editor.Util
             TextBox textBox = new TextBox();
             textBox.Text = control.DefaultValue;
             textBox.ToolTip = control.Tooltip;
-            textBox.Width = control.TextBoxWidth;
+            textBox.Width = control.Width;
 
             Style style = styleProvider.FindResource(ControlContentStyle.TextBoxCodeBar.ToString()) as Style;
             textBox.Style = style;
@@ -169,7 +169,7 @@ namespace Carnassial.Editor.Util
         {
             ComboBox comboBox = new ComboBox();
             comboBox.ToolTip = control.Tooltip;
-            comboBox.Width = control.TextBoxWidth;
+            comboBox.Width = control.Width;
             foreach (string choice in control.GetChoices())
             {
                 comboBox.Items.Add(choice);

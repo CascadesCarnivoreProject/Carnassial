@@ -69,7 +69,7 @@ namespace Carnassial.Images
         // at or higher than the given darkPercent.
         // We also check to see if the image is predominantly color. We do this by checking to see if pixels are grey scale
         // (where r=g=b, with a bit of slop added) and then check that against a threshold.
-        public static ImageFilter GetImageQuality(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio)
+        public static ImageSelection GetImageQuality(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio)
         {
             double ignored1;
             bool ignored2;
@@ -81,7 +81,7 @@ namespace Carnassial.Images
         // at or higher than the given darkPercent.
         // We also check to see if the image is predominantly color. We do this by checking to see if pixels are grey scale
         // (where r=g=b, with a bit of slop added) and then check that against a threshold.
-        public static unsafe ImageFilter GetImageQuality(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio, out double darkPixelFraction, out bool isColor)
+        public static unsafe ImageSelection GetImageQuality(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio, out double darkPixelFraction, out bool isColor)
         {
             // The RGB offsets from the beginning of the pixel (i.e., 0, 1 or 2)
             int blueOffset;
@@ -140,7 +140,7 @@ namespace Carnassial.Images
             {
                 darkPixelFraction = 1 - uncoloredPixelFraction;
                 isColor = true;
-                return ImageFilter.Ok;
+                return ImageSelection.Ok;
             }
 
             // It is a grey scale image. If the fraction of dark pixels are higher than the threshold, it is dark.
@@ -148,9 +148,9 @@ namespace Carnassial.Images
             isColor = false;
             if (darkPixelFraction >= darkPixelRatio)
             {
-                return ImageFilter.Dark;
+                return ImageSelection.Dark;
             }
-            return ImageFilter.Ok;
+            return ImageSelection.Ok;
         }
 
         // checks whether the image is completely black
