@@ -12,7 +12,7 @@ namespace Carnassial.Images
 {
     /// <summary>
     /// MarkableImageCanvas - A canvas that:
-    /// - contains an image that can be scaled and translated by the user with the mouse, 
+    /// - contains an image that can be scaled and translated by the user with the mouse
     /// - can draw and track marks atop the image
     /// </summary>
     public class MarkableImageCanvas : Canvas
@@ -38,7 +38,7 @@ namespace Carnassial.Images
         private MagnifyingGlass magnifyingGlass = new MagnifyingGlass();
         private Brush markStrokeBrush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
         private SolidColorBrush markFillBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(2, 0, 0, 0));
-        private List<MetaTag> metaTags;
+        private List<Marker> markers;
 
         // Mouse and position states used to discriminate clicks from drags)
         private UIElement mouseDownSender;
@@ -62,17 +62,17 @@ namespace Carnassial.Images
         public Image ImageToMagnify { get; set; }
 
         /// <summary>
-        /// Gets or sets the list of MetaTags we are using to define the marks on the image
+        /// Gets or sets the markers on the image
         /// </summary>
-        public List<MetaTag> MetaTags
+        public List<Marker> Markers
         {
             get
             {
-                return this.metaTags;
+                return this.markers;
             }
             set
             {
-                this.metaTags = value;
+                this.markers = value;
                 this.MarkersRefresh();
             }
         }
@@ -247,40 +247,33 @@ namespace Carnassial.Images
             }
         }
 
-        // The RaiseMetaTagEvent handler
-        public event EventHandler<MetaTagEventArgs> RaiseMetaTagEvent;
+        public event EventHandler<MarkerEventArgs> RaiseMarkerEvent;
 
         // Wrap event invocations inside a protected virtual method
         // to allow derived classes to override the event invocation behavior
-        protected virtual void OnRaiseMetaTagEvent(MetaTagEventArgs e)
+        protected virtual void OnRaiseMarkerEvent(MarkerEventArgs e)
         {
             // Make a temporary copy of the event to avoid possibility of
             // a race condition if the last subscriber unsubscribes
             // immediately after the null check and before the event is raised.
-            EventHandler<MetaTagEventArgs> handler = this.RaiseMetaTagEvent;
+            EventHandler<MarkerEventArgs> handler = this.RaiseMarkerEvent;
 
             // Event will be null if there are no subscribers. Otherwise, raise the event
-            // Also, if we wanted to modify anything in the metatag, we would do it here, e.g.,  e.metaTag.Description = "foo"
             if (handler != null)
             {
                 handler(this, e);
             }
         }
 
-        /// <summary>
-        /// a canvas that can be zoomed and panned, that contains a magnifying glass, and that can be use to add and delete marks
-        /// where marks are described by MetaTags.
-        /// </summary>
         public MarkableImageCanvas()
         {
-            // Initialize the list of MetaTags
-            this.MetaTags = new List<MetaTag>();
-
             // Set up some initial canvas properties and event handlers
             this.Background = Brushes.Black;
             this.ClipToBounds = true;
             this.Focusable = true;
+            this.Markers = new List<Marker>();
             this.SizeChanged += new SizeChangedEventHandler(this.OnMarkableImageCanvas_SizeChanged);
+
             this.ResetMaxZoom();
             this.MaxZoomUpperBound = Constants.MarkableCanvas.ZoomMaximumUpperBound;
 
@@ -340,22 +333,19 @@ namespace Carnassial.Images
             this.MouseLeave += new MouseEventHandler(this.OnImage_MouseLeave);
         }
 
-        /// <summary>
-        /// Add a metatag to the MetaTags list. Also refresh the display to reflect the current contents of the list
-        /// </summary>
         public void ResetMaxZoom()
         {
             this.MaxZoom = Constants.MarkableCanvas.ZoomMaximum;
         }
 
-        public void AddMetaTag(MetaTag mt)
+        public void AddMarker(Marker marker)
         {
-            this.MetaTags.Add(mt);
+            this.Markers.Add(marker);
             this.MarkersRefresh();
         }
 
         /// <summary>
-        /// Remove and then redraw all the markers as defined by the MetaTag list 
+        /// Remove and then redraw all the markers
         /// </summary>
         public void MarkersRefresh()
         {
@@ -535,14 +525,14 @@ namespace Carnassial.Images
                     Point p = e.GetPosition(this.ImageToDisplay);
                     // Debug.Print(p.ToString());
                     p = Utilities.ConvertPointToRatio(p, this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight);
-                    MetaTag mt = new MetaTag();
+                    Marker mt = new Marker();
                     mt.Point = p;
 
-                    // We don't actually add this MetaTag to our MetaTags list now.
+                    // don't add this marker to the marker list now
                     // Rather, we raise an event informing the calling application about it.
                     // That application can choose to ignore it (in which case it doesn't get added),
-                    // or can adjust its values and then add it to the MetaTags list via a call to AddMetaTag 
-                    this.OnRaiseMetaTagEvent(new MetaTagEventArgs(mt, true));
+                    // or can adjust its values and then add it to the markers list via a call to AddMarker()
+                    this.OnRaiseMarkerEvent(new MarkerEventArgs(mt, true));
                 }
             }
             this.magnifyingGlass.ShowIfIsVisibilityDesired();
@@ -746,37 +736,37 @@ namespace Carnassial.Images
         // From the list of points, redraw all ellipses
         private void MarkersDraw(Canvas canvas, Size newSize, bool doTransform)
         {
-            foreach (MetaTag metaTag in this.MetaTags)
+            foreach (Marker marker in this.Markers)
             {
-                Canvas markerCanvas = this.MarkerDraw(metaTag, newSize, doTransform);
+                Canvas markerCanvas = this.MarkerDraw(marker, newSize, doTransform);
                 canvas.Children.Add(markerCanvas);
             }
         }
 
         // Create a marker of a given size and set its position
-        private Canvas MarkerDraw(MetaTag mtag, Size size, bool doTransform)
+        private Canvas MarkerDraw(Marker marker, Size size, bool doTransform)
         {
             double max_diameter = 0;
             Canvas markerCanvas = new Canvas();
             markerCanvas.MouseRightButtonUp += new MouseButtonEventHandler(this.Marker_MouseRightButtonUp);
             markerCanvas.MouseWheel += new MouseWheelEventHandler(this.OnImage_MouseWheel); // Make the mouse wheel work over marks as well as the image
 
-            if (mtag.Label.Trim() == String.Empty)
+            if (marker.Label.Trim() == String.Empty)
             {
                 markerCanvas.ToolTip = null;
             }
             else
             {
-                markerCanvas.ToolTip = mtag.Label;
+                markerCanvas.ToolTip = marker.Label;
             }
-            markerCanvas.Tag = mtag;
+            markerCanvas.Tag = marker;
 
-            // Create a marker, using properties as defined in the metatag as needed
+            // Create a marker
             Ellipse ellipse = new Ellipse();
             ellipse.Width = Constants.MarkableCanvas.MarkDiameter;
             ellipse.Height = Constants.MarkableCanvas.MarkDiameter;
             ellipse.StrokeThickness = Constants.MarkableCanvas.MarkStrokeThickness;
-            ellipse.Stroke = mtag.Brush;
+            ellipse.Stroke = marker.Brush;
             ellipse.Fill = this.markFillBrush;  // Should be a transparent fill so it can get hit events
 
             // Draw another Ellipse as a black outline around it
@@ -798,7 +788,7 @@ namespace Carnassial.Images
             max_diameter = ellipse1.Width;
 
             Ellipse glow = null;
-            if (mtag.Emphasise)
+            if (marker.Emphasise)
             {
                 glow = new Ellipse();
                 glow.Width = ellipse1.Width + Constants.MarkableCanvas.MarkGlowDiameterIncrease;
@@ -810,9 +800,9 @@ namespace Carnassial.Images
             }
 
             Label label = new Label();
-            if (mtag.Annotate)
+            if (marker.Annotate)
             {
-                label.Content = mtag.Label;
+                label.Content = marker.Label;
                 label.Opacity = .6;
                 label.Background = Brushes.White;
                 label.Padding = new Thickness(0, 0, 0, 0);
@@ -831,7 +821,7 @@ namespace Carnassial.Images
             markerCanvas.Children.Add(ellipse);
             markerCanvas.Children.Add(ellipse1);
             markerCanvas.Children.Add(outline2);
-            if (mtag.Annotate)
+            if (marker.Annotate)
             {
                 markerCanvas.Children.Add(label);
             }
@@ -849,15 +839,15 @@ namespace Carnassial.Images
             Canvas.SetLeft(outline2, position);
             Canvas.SetTop(outline2, position);
 
-            if (mtag.Annotate)
+            if (marker.Annotate)
             {
                 position = (markerCanvas.Width / 2) + (outline2.Width / 2);
                 Canvas.SetLeft(label, position);
                 Canvas.SetTop(label, markerCanvas.Height / 2);
             }
 
-            // Get the point from the metatag, and convert it so that the marker will be in the right place
-            Point pt = Utilities.ConvertRatioToPoint(mtag.Point, size.Width, size.Height);
+            // Get the point from the marker, and convert it so that the marker will be in the right place
+            Point pt = Utilities.ConvertRatioToPoint(marker.Point, size.Width, size.Height);
             if (doTransform)
             {
                 pt = this.transformGroup.Transform(pt);
@@ -874,10 +864,10 @@ namespace Carnassial.Images
         // Remove a marker on a right mouse button up event
         private void Marker_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
-            Canvas marker = (Canvas)sender;
-            MetaTag mtag = (MetaTag)marker.Tag;
-            this.MetaTags.Remove(mtag);
-            this.OnRaiseMetaTagEvent(new MetaTagEventArgs(mtag, false));
+            Canvas canvas = (Canvas)sender;
+            Marker marker = (Marker)canvas.Tag;
+            this.Markers.Remove(marker);
+            this.OnRaiseMarkerEvent(new MarkerEventArgs(marker, false));
             this.MarkersRefresh();
         }
 

@@ -1,4 +1,5 @@
 ﻿using Carnassial.Database;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace Carnassial.Controls
@@ -8,6 +9,8 @@ namespace Carnassial.Controls
     // - an editable textbox (containing the content) at the given width
     public class DataEntryCounter : DataEntryControl<TextBox, RadioButton>
     {
+        private bool previousLabelControlIsChecked;
+
         /// <summary>Gets or sets the content of the counter.</summary>
         public override string Content
         {
@@ -31,8 +34,20 @@ namespace Carnassial.Controls
             // Now configure the various elements
             this.Container.ToolTip = "Select the button, then click on the entity in the image to increment its count OR type in a number";
 
-            // Make this part of a group with all the other radio buttons of this type
-            this.LabelControl.GroupName = "A";
+            // Assign all counters to a single group so that selecting a new counter deselects any currently selected counter
+            this.LabelControl.GroupName = "DataEntryCounter";
+
+            this.LabelControl.Click += this.LabelControl_Click;
+            this.previousLabelControlIsChecked = false;
+        }
+
+        private void LabelControl_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.previousLabelControlIsChecked)
+            {
+                this.LabelControl.IsChecked = false;
+            }
+            this.previousLabelControlIsChecked = this.LabelControl.IsChecked.Value;
         }
     }
 }

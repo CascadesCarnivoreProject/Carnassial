@@ -136,7 +136,7 @@ namespace Carnassial.Dialog
                 {
                 }));
 
-                // For each row in the database, get the image filename and try to extract the chosen metatag value.
+                // For each row in the database, get the image filename and try to extract the chosen metadata value.
                 // If we can't decide if we want to leave the data field alone or to clear it depending on the state of the isClearIfNoMetadata (set via the checkbox)
                 // Report progress as needed.
                 // This tuple list will hold the id, key and value that we will want to update in the database

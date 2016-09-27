@@ -29,7 +29,7 @@ namespace Carnassial
     public partial class CarnassialWindow : Window, IDisposable
     {
         // Handles to the controls window and to the controls
-        private List<MetaTagCounter> counterCoordinates = null;
+        private List<MarkersForCounter> markersOnCurrentImage = null;
 
         private DataEntryHandler dataHandler;
         private bool disposed;
@@ -58,7 +58,7 @@ namespace Carnassial
 
             this.MarkableCanvas.MouseEnter += new MouseEventHandler(this.MarkableCanvas_MouseEnter);
             this.MarkableCanvas.PreviewMouseDown += new MouseButtonEventHandler(this.MarkableCanvas_PreviewMouseDown);
-            this.MarkableCanvas.RaiseMetaTagEvent += new EventHandler<MetaTagEventArgs>(this.MarkableCanvas_RaiseMetaTagEvent);
+            this.MarkableCanvas.RaiseMarkerEvent += new EventHandler<MarkerEventArgs>(this.MarkableCanvas_RaiseMarkerEvent);
 
             // Callbacks so the controls will highlight if they are copyable when one enters the copy button
             this.buttonCopy.MouseEnter += this.ButtonCopy_MouseEnter;
@@ -900,25 +900,22 @@ namespace Carnassial
         /// <param name="e">event information</param>
         private void CounterControl_Click(object sender, RoutedEventArgs e)
         {
-            this.RefreshTheMarkableCanvasListOfMetaTags();
+            this.MarkableCanvas_UpdateMarkers();
         }
 
-        /// <summary>When the user enters a counter, store the index of the counter and then refresh the markers, which will also readjust the colors and emphasis</summary>
-        /// <param name="sender">the event source</param>
-        /// <param name="e">event information</param>
+        /// <summary>Highlight the markers associated with a counter when the mouse enters it</summary>
         private void CounterControl_MouseEnter(object sender, MouseEventArgs e)
         {
             Panel panel = (Panel)sender;
-            this.state.IsMouseOverCounter = panel.Tag is DataEntryCounter;
-            this.RefreshTheMarkableCanvasListOfMetaTags();
+            this.state.MouseOverCounter = ((DataEntryCounter)panel.Tag).DataLabel;
+            this.MarkableCanvas_UpdateMarkers();
         }
 
-        // When the user enters a counter, clear the saved index of the counter and then refresh the markers, which will also readjust the colors and emphasis
+        /// <summary>Remove marker highlighting</summary>
         private void CounterControl_MouseLeave(object sender, MouseEventArgs e)
         {
-            // Recolor the marks
-            this.state.IsMouseOverCounter = false;
-            this.RefreshTheMarkableCanvasListOfMetaTags();
+            this.state.MouseOverCounter = null;
+            this.MarkableCanvas_UpdateMarkers();
         }
 
         private void MoveFocusToNextOrPreviousControlOrImageSlider(bool moveToPreviousControl)
@@ -1219,10 +1216,8 @@ namespace Carnassial
                 BitmapSource unalteredImage = Constants.Images.EmptyImageSet;
                 this.MarkableCanvas.ImageToDisplay.Source = unalteredImage;
                 this.MarkableCanvas.ImageToMagnify.Source = unalteredImage; // Probably not needed
-
-                // Delete any markers that may have been previously displayed 
-                this.ClearTheMarkableCanvasListOfMetaTags();
-                this.RefreshTheMarkableCanvasListOfMetaTags();
+                this.markersOnCurrentImage = null;
+                this.MarkableCanvas_UpdateMarkers();
 
                 // We could invalidate the cache here, but it will be reset anyways when images are loaded. 
                 return;
@@ -1268,8 +1263,8 @@ namespace Carnassial
 
                 // Whenever we navigate to a new image, delete any markers that were displayed on the current image 
                 // and then draw the markers assoicated with the new image
-                this.GetTheMarkableCanvasListOfMetaTags();
-                this.RefreshTheMarkableCanvasListOfMetaTags();
+                this.markersOnCurrentImage = this.dataHandler.ImageDatabase.GetMarkersOnImage(this.dataHandler.ImageCache.Current.ID);
+                this.MarkableCanvas_UpdateMarkers();
             }
             this.SetVideoPlayerToCurrentRow(); 
         }
@@ -1430,21 +1425,15 @@ namespace Carnassial
             return false;
         }
 
-        // Get all the counters' metatags (if any) from the current row in the database
-        private void GetTheMarkableCanvasListOfMetaTags()
-        {
-            this.counterCoordinates = this.dataHandler.ImageDatabase.GetMetaTagCounters(this.dataHandler.ImageCache.Current.ID);
-        }
-
-        // Event handler: A marker, as defined in e.MetaTag, has been either added (if e.IsNew is true) or deleted (if it is false)
+        // Event handler: A marker, as defined in e.Marker, has been either added (if e.IsNew is true) or deleted (if it is false)
         // Depending on which it is, add or delete the tag from the current counter control's list of tags 
         // If its deleted, remove the tag from the current counter control's list of tags
         // Every addition / deletion requires us to:
         // - update the contents of the counter control 
         // - update the data held by the image
-        // - update the list of MetaTags held by that counter
-        // - regenerate the list of metatags used by the markableCanvas
-        private void MarkableCanvas_RaiseMetaTagEvent(object sender, MetaTagEventArgs e)
+        // - update the list of markers held by that counter
+        // - regenerate the list of markers used by the markableCanvas
+        private void MarkableCanvas_RaiseMarkerEvent(object sender, MarkerEventArgs e)
         {
             DataEntryCounter currentCounter;
             if (e.IsNew)
@@ -1455,18 +1444,16 @@ namespace Carnassial
                 {
                     return;
                 }
-                this.Markers_NewMetaTag(currentCounter, e.MetaTag);
+                this.MarkableCanvas_AddMarker(currentCounter, e.Marker);
             }
             else
             {
                 // An existing marker has been deleted.
-                DataEntryCounter counter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[e.MetaTag.DataLabel];
-
-                // Part 1. Decrement the count 
-                string oldCounterData = counter.Content;
-                string newCounterData = String.Empty;
+                DataEntryCounter counter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[e.Marker.DataLabel];
 
                 // Decrement the counter only if there is a number in it
+                string oldCounterData = counter.Content;
+                string newCounterData = String.Empty;
                 if (oldCounterData != String.Empty) 
                 {
                     int count = Convert.ToInt32(oldCounterData);
@@ -1483,146 +1470,125 @@ namespace Carnassial
                     this.dataHandler.ImageDatabase.UpdateImage(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, newCounterData);
                 }
 
-                // Part 2. Each metacounter in the countercoords list reperesents a different control. 
-                // So just check the first metatag's  DataLabel in each metatagcounter to see if it matches the counter's datalabel.
-                MetaTagCounter metaTagCounter = null;
-                foreach (MetaTagCounter coordinates in this.counterCoordinates)
+                // Remove the marker in memory and from the database
+                MarkersForCounter markersForCounter = null;
+                foreach (MarkersForCounter markers in this.markersOnCurrentImage)
                 {
-                    // If there are no metatags, we don't have to do anything.
-                    if (coordinates.MetaTags.Count == 0)
+                    if (markers.Markers.Count == 0)
                     {
                         continue;
                     }
 
-                    // There are no metatags associated with this counter
-                    if (coordinates.MetaTags[0].DataLabel == coordinates.DataLabel)
+                    if (markers.Markers[0].DataLabel == markers.DataLabel)
                     {
-                        // We found the metatag counter associated with that control
-                        metaTagCounter = coordinates;
+                        markersForCounter = markers;
                         break;
                     }
                 }
 
-                // Part 3. Remove the found metatag from the metatagcounter and from the database
-                if (metaTagCounter != null)
+                if (markersForCounter != null)
                 {
-                    // Shouldn't really need this test, but if for some reason there wasn't a match...
                     string pointList = String.Empty;
-                    for (int i = 0; i < metaTagCounter.MetaTags.Count; i++)
+                    for (int index = 0; index < markersForCounter.Markers.Count; ++index)
                     {
-                        // Check if we are looking at the same metatag. 
-                        if (e.MetaTag.Guid == metaTagCounter.MetaTags[i].Guid)
+                        if (e.Marker.Guid == markersForCounter.Markers[index].Guid)
                         {
-                            // We found the metaTag. Remove that metatag from the metatags list 
-                            metaTagCounter.MetaTags.RemoveAt(i);
+                            markersForCounter.Markers.RemoveAt(index);
                             this.Speak(counter.Content); // Speak the current count
                         }
                         else
                         {
-                            // Because we are not deleting it, we can add it to the new the point list
+                            // add persisting marker to the new point list
                             // Reconstruct the point list in the string form x,y|x,y e.g.,  0.333,0.333|0.500, 0.600
                             // for writing to the markerTable. Note that it leaves out the deleted value
-                            Point point = metaTagCounter.MetaTags[i].Point;
+                            Point point = markersForCounter.Markers[index].Point;
                             if (!pointList.Equals(String.Empty))
                             {
-                                pointList += Constants.Database.MarkerBar;          // We don't put a marker bar at the beginning of the point list
+                                pointList += Constants.Database.MarkerBar;          // don't put a marker bar at the beginning of the point list
                             }
                             pointList += String.Format("{0:0.000},{1:0.000}", point.X, point.Y);   // Add a point in the form 
                         }
                     }
                     this.dataHandler.ImageDatabase.SetMarkerPoints(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, pointList);
                 }
-                this.RefreshTheMarkableCanvasListOfMetaTags(); // Refresh the Markable Canvas, where it will also delete the metaTag at the same time
+                this.MarkableCanvas_UpdateMarkers();
             }
             this.MarkableCanvas.MarkersRefresh();
         }
 
         /// <summary>
-        /// A new Marker associated with a counter control has been created;
-        /// Increment the counter controls value, and add the metatag to all data structures (including the database)
+        /// A new marker associated with a counter control has been created
+        /// Increment the counter and add the marker to all data structures (including the database)
         /// </summary>
-        private void Markers_NewMetaTag(DataEntryCounter counter, MetaTag metaTag)
+        private void MarkableCanvas_AddMarker(DataEntryCounter counter, Marker marker)
         {
             // Get the Counter Control's contents,  increment its value (as we have added a new marker) 
             // Then update the control's content as well as the database
-            string counterContent = counter.Content;
-
-            if (String.IsNullOrWhiteSpace(counterContent))
-            {
-                counterContent = "0";
-            }
-
             // If we can't convert it to an int, assume that someone set the default value to either a non-integer in the template, or that it's a space. In either case, revert it to zero.
             int count;
-            if (Int32.TryParse(counterContent, out count) == false)
+            if (Int32.TryParse(counter.Content, out count) == false)
             {
                 count = 0; 
             }
-  
-            count++;
-            counterContent = count.ToString();
+            ++count;
+
+            string counterContent = count.ToString();
             this.dataHandler.IsProgrammaticControlUpdate = true;
             this.dataHandler.ImageDatabase.UpdateImage(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, counterContent);
             counter.Content = counterContent;
             this.dataHandler.IsProgrammaticControlUpdate = false;
 
-            // Find the metatagCounter associated with this particular control so we can add a metatag to it
-            MetaTagCounter metatagCounter = null;
-            foreach (MetaTagCounter mtcounter in this.counterCoordinates)
+            // Find markers associated with this particular control
+            MarkersForCounter markersForCounter = null;
+            foreach (MarkersForCounter markers in this.markersOnCurrentImage)
             {
-                if (mtcounter.DataLabel == counter.DataLabel)
+                if (markers.DataLabel == counter.DataLabel)
                 {
-                    metatagCounter = mtcounter;
+                    markersForCounter = markers;
                     break;
                 }
             }
 
-            // Fill in the metatag information. Also create a TagFinder (which contains a reference to the counter index) and add it as the object's metatag
-            metaTag.Label = counter.Label;   // The tooltip will be the counter label plus its data label
-            metaTag.Label += "\n" + counter.DataLabel;
-            metaTag.Brush = Brushes.Red;               // Make it Red (for now)
-            metaTag.DataLabel = counter.DataLabel;
-            metaTag.Annotate = true; // Show the annotation as its created. We will clear it on the next refresh
-            metaTag.AnnotationAlreadyShown = false;
+            // fill in marker information
+            marker.Annotate = true; // Show the annotation as its created. We will clear it on the next refresh
+            marker.AnnotationPreviouslyShown = false;
+            marker.Brush = Brushes.Red;               // Make it Red (for now)
+            marker.DataLabel = counter.DataLabel;
+            marker.Label = counter.Label;   // The tooltip will be the counter label plus its data label
+            marker.Label += "\n" + counter.DataLabel;
+            markersForCounter.AddMarker(marker);
 
-            // Add the meta tag to the metatag counter
-            metatagCounter.AddMetaTag(metaTag);
-
-            // Update this counter's list of points in the marker database
-            String pointList = String.Empty;
-            foreach (MetaTag mt in metatagCounter.MetaTags)
+            // update this counter's list of points in the database
+            string pointList = String.Empty;
+            foreach (Marker existingMarker in markersForCounter.Markers)
             {
                 if (!pointList.Equals(String.Empty))
                 {
                     pointList += Constants.Database.MarkerBar; // We don't put a marker bar at the beginning of the point list
                 }
-                pointList += String.Format("{0:0.000},{1:0.000}", mt.Point.X, mt.Point.Y); // Add a point in the form x,y e.g., 0.5, 0.7
+                pointList += String.Format("{0:0.000},{1:0.000}", existingMarker.Point.X, existingMarker.Point.Y); // Add a point in the form x,y e.g., 0.5, 0.7
             }
             this.dataHandler.ImageDatabase.SetMarkerPoints(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, pointList);
-            this.RefreshTheMarkableCanvasListOfMetaTags(true);
+            this.MarkableCanvas_UpdateMarkers(true);
             this.Speak(counter.Content + " " + counter.Label); // Speak the current count
         }
 
-        // Create a list of metaTags from those stored in each image's metatag counters, 
-        // and then set the markableCanvas's list of metaTags to that list. We also reset the emphasis for those tags as needed.
-        private void RefreshTheMarkableCanvasListOfMetaTags()
+        private void MarkableCanvas_UpdateMarkers()
         {
-            this.RefreshTheMarkableCanvasListOfMetaTags(false); // By default, we don't show the annotation
+            this.MarkableCanvas_UpdateMarkers(false); // By default, we don't show the annotation
         }
 
-        private void RefreshTheMarkableCanvasListOfMetaTags(bool showAnnotation)
+        private void MarkableCanvas_UpdateMarkers(bool showAnnotation)
         {
-            // The markable canvas uses a simple list of metatags to decide what to do.
-            // So we just create that list here, where we also reset the emphasis of some of the metatags
-            List<MetaTag> metaTagList = new List<MetaTag>();
-            if (this.counterCoordinates != null)
+            List<Marker> markers = new List<Marker>();
+            if (this.markersOnCurrentImage != null)
             {
                 DataEntryCounter selectedCounter = this.FindSelectedCounter();
-                for (int counter = 0; counter < this.counterCoordinates.Count; counter++)
+                for (int counter = 0; counter < this.markersOnCurrentImage.Count; ++counter)
                 {
-                    MetaTagCounter mtagCounter = this.counterCoordinates[counter];
+                    MarkersForCounter markersForCounter = this.markersOnCurrentImage[counter];
                     DataEntryControl control;
-                    if (this.DataEntryControls.ControlsByDataLabel.TryGetValue(mtagCounter.DataLabel, out control) == false)
+                    if (this.DataEntryControls.ControlsByDataLabel.TryGetValue(markersForCounter.DataLabel, out control) == false)
                     {
                         // If we can't find the counter, its likely because the control was made invisible in the template,
                         // which means that there is no control associated with the marker. So just don't create the 
@@ -1632,41 +1598,37 @@ namespace Carnassial
                     }
 
                     // Update the emphasise for each tag to reflect how the user is interacting with tags
-                    DataEntryCounter currentCounter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[mtagCounter.DataLabel];
-                    foreach (MetaTag mtag in mtagCounter.MetaTags)
+                    DataEntryCounter currentCounter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[markersForCounter.DataLabel];
+                    bool emphasize = markersForCounter.DataLabel == this.state.MouseOverCounter;
+                    foreach (Marker marker in markersForCounter.Markers)
                     {
-                        mtag.Emphasise = this.state.IsMouseOverCounter;
-                        if (selectedCounter != null && currentCounter.DataLabel == selectedCounter.DataLabel)
+                        // the first time through, show an annotation. Otherwise we clear the flags to hide the annotation.
+                        if (marker.Annotate && !marker.AnnotationPreviouslyShown)
                         {
-                            mtag.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.SelectionColour);
+                            marker.Annotate = true;
+                            marker.AnnotationPreviouslyShown = true;
                         }
                         else
                         {
-                            mtag.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
+                            marker.Annotate = false;
                         }
 
-                        // the first time through, show an annotation. Otherwise we clear the flags to hide the annotation.
-                        if (mtag.Annotate && !mtag.AnnotationAlreadyShown)
+                        if (selectedCounter != null && currentCounter.DataLabel == selectedCounter.DataLabel)
                         {
-                            mtag.Annotate = true;
-                            mtag.AnnotationAlreadyShown = true;
+                            marker.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.SelectionColour);
                         }
                         else
                         {
-                            mtag.Annotate = false;
+                            marker.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
                         }
-                        mtag.Label = currentCounter.Label;
-                        metaTagList.Add(mtag); // Add the MetaTag in the list 
+
+                        marker.Emphasise = emphasize;
+                        marker.Label = currentCounter.Label;
+                        markers.Add(marker); 
                     }
                 }
             }
-            this.MarkableCanvas.MetaTags = metaTagList;
-        }
-
-        // Clear the counters' metatags (if any) from the current row in the database
-        private void ClearTheMarkableCanvasListOfMetaTags()
-        {
-            this.counterCoordinates = null;
+            this.MarkableCanvas.Markers = markers;
         }
 
         private void File_SubmenuOpening(object sender, RoutedEventArgs e)

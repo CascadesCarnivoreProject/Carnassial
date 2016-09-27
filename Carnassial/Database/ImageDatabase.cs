@@ -822,39 +822,34 @@ namespace Carnassial.Database
         }
 
         /// <summary>
-        /// Get the metatag counter list associated with all counters representing the current row
-        /// It will have a MetaTagCounter for each control, even if there may be no metatags in it
+        /// Get all markers for the specified image.
         /// </summary>
-        /// <returns>list of counters</returns>
-        public List<MetaTagCounter> GetMetaTagCounters(long imageID)
+        /// <returns>list of counters having an entry for each counter even if there are no markers </returns>
+        public List<MarkersForCounter> GetMarkersOnImage(long imageID)
         {
-            List<MetaTagCounter> metaTagCounters = new List<MetaTagCounter>();
+            List<MarkersForCounter> markersForAllCounters = new List<MarkersForCounter>();
 
             // Test to see if we actually have a valid result
             if (this.MarkersTable.RowCount == 0)
             {
-                return metaTagCounters;    // This should not really happen, but just in case
+                return markersForAllCounters;    // This should not really happen, but just in case
             }
 
             // Get the current row number of the id in the marker table
-            MarkerRow marker = this.MarkersTable.Find(imageID);
-            if (marker == null)
+            MarkerRow markersForImage = this.MarkersTable.Find(imageID);
+            if (markersForImage == null)
             {
-                return metaTagCounters;
+                return markersForAllCounters;
             }
 
-            // Iterate through the columns, where we create a new MetaTagCounter for each control and add it to the MetaTagCounter list
-            foreach (string dataLabel in marker.DataLabels)
+            foreach (string dataLabel in markersForImage.DataLabels)
             {
-                // Create a new MetaTagCounter representing this control's meta tag,
-                MetaTagCounter metaTagCounter = new MetaTagCounter();
-                metaTagCounter.DataLabel = dataLabel;
-
-                // Now create a new Metatag for each point and add it to the counter
+                // create a marker for each point and add it to the counter's markers
+                MarkersForCounter markersForCounter = new MarkersForCounter(dataLabel);
                 string value;
                 try
                 {
-                    value = marker[dataLabel];
+                    value = markersForImage[dataLabel];
                 }
                 catch (Exception exception)
                 {
@@ -865,12 +860,12 @@ namespace Carnassial.Database
                 List<Point> points = this.ParseMarkerPoints(value); // parse the contents into a set of points
                 foreach (Point point in points)
                 {
-                    metaTagCounter.CreateMetaTag(point, dataLabel);  // add the metatage to the list
+                    markersForCounter.AddMarker(dataLabel, point);  // add the marker to the list
                 }
-                metaTagCounters.Add(metaTagCounter);   // and add that metaTag counter to our lists of metaTag counters
+                markersForAllCounters.Add(markersForCounter);
             }
 
-            return metaTagCounters;
+            return markersForAllCounters;
         }
 
         private void GetMarkers()

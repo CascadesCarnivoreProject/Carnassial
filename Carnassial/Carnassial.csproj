@@ -208,7 +208,7 @@
     <Compile Include="Images\ImageDisplayIntent.cs" />
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
-    <Compile Include="Images\MetaTagEventArgs.cs" />
+    <Compile Include="Images\MarkerEventArgs.cs" />
     <Compile Include="Controls\StockMessageControl.xaml.cs">
       <DependentUpon>StockMessageControl.xaml</DependentUpon>
     </Compile>
@@ -354,7 +354,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Images\MetaTag.cs" />
+    <Compile Include="Images\Marker.cs" />
     <Compile Include="Images\WriteableBitmapExtensions.cs" />
     <Compile Include="Dialog\ImportImageSetXmlFile.xaml.cs">
       <DependentUpon>ImportImageSetXmlFile.xaml</DependentUpon>
@@ -380,7 +380,7 @@
     <Compile Include="Database\FileBackup.cs" />
     <Compile Include="Database\ImageRow.cs" />
     <Compile Include="Database\ImageSelection.cs" />
-    <Compile Include="Images\MetaTagCounter.cs" />
+    <Compile Include="Images\MarkersForCounter.cs" />
     <Compile Include="Controls\ControlLabelStyle.cs" />
     <Compile Include="Controls\ControlContentStyle.cs" />
     <Compile Include="Util\MostRecentlyUsedList.cs" />

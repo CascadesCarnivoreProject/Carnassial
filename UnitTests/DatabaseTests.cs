@@ -66,8 +66,8 @@ namespace Carnassial.UnitTests
                     ImageExpectations imageExpectation = imageExpectations[imageIndex];
                     imageExpectation.Verify(image, imageSetTimeZone);
 
-                    List<MetaTagCounter> metaTagCounters = imageDatabase.GetMetaTagCounters(image.ID);
-                    Assert.IsTrue(metaTagCounters.Count >= 0);
+                    List<MarkersForCounter> markersOnImage = imageDatabase.GetMarkersOnImage(image.ID);
+                    Assert.IsTrue(markersOnImage.Count >= 0);
 
                     // retrieval by path
                     FileInfo imageFile = image.GetFileInfo(imageDatabase.FolderPath);

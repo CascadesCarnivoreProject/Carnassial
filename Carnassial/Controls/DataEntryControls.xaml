@@ -125,29 +125,12 @@
         <SolidColorBrush x:Key="GlyphBrush" Color="#444" />
         <SolidColorBrush x:Key="LightColorBrush" Color="#DDD" />
 
-
-        <Style  x:Key="RadioButtonCodeBar" TargetType="RadioButton" BasedOn="{ StaticResource {x:Type ToggleButton}}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ToggleButton}">
-                        <Border HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="border" Padding="5,5,5,5" CornerRadius="5,5,5,5" Background="Beige" BorderBrush="LightBlue" BorderThickness="1,1,1,4" SnapsToDevicePixels="True">
-                            <ContentPresenter x:Name="contentPresenter"/>
-                        </Border>
-
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="true">
-                                <Setter Property="Background" TargetName="border" Value="LightBlue"/>
-                                <Setter Property="BorderBrush" TargetName="border" Value="Gray"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <Style x:Key="RadioButtonCodeBar" TargetType="RadioButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
             <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Margin" Value="0,0,2,0" />
+            <Setter Property="Margin" Value="2,0,2,0" />
         </Style>
 
-        <Style  x:Key="LabelCodeBar" TargetType="Label">
+        <Style x:Key="LabelCodeBar" TargetType="Label">
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Padding" Value="5,4,5,0"/>
@@ -155,7 +138,7 @@
             <Setter Property="Height" Value="25" />
         </Style>
 
-        <Style  x:Key="TextBoxCodeBar" TargetType="TextBox" >
+        <Style x:Key="TextBoxCodeBar" TargetType="TextBox" >
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Padding" Value="5,0,5,0"/>
@@ -180,7 +163,7 @@
             <Setter Property="IsReadOnly" Value="False" />
             <Setter Property="IsEditable" Value="False" />
         </Style>
-        <Style  x:Key="FlagCodeBar" TargetType="{x:Type CheckBox}">
+        <Style x:Key="FlagCodeBar" TargetType="{x:Type CheckBox}">
             <Setter Property="SnapsToDevicePixels" Value="true"/>
             <Setter Property="OverridesDefaultStyle" Value="true"/>
             <Setter Property="FocusVisualStyle" Value="{DynamicResource CheckBoxFocusVisualStyle}" />
@@ -243,7 +226,7 @@
             <Setter Property="Height" Value="20" />
         </Style>
 
-        <Style  x:Key="StackPanelCodeBar" TargetType="StackPanel">
+        <Style x:Key="StackPanelCodeBar" TargetType="StackPanel">
             <Setter Property="Orientation" Value="Horizontal"/>
             <Setter Property="Margin" Value="0,0,10,0" />
             <Setter Property="Height" Value="35"/>
