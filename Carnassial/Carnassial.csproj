@@ -487,11 +487,9 @@
     <Resource Include="16x16.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\empty_imageset.jpg" />
-    <Resource Include="Resources\corrupted_thumbnail.jpg" />
-    <Resource Include="Resources\missing_thumbnail.jpg" />
-    <Resource Include="Resources\corrupted.jpg" />
-    <Resource Include="Resources\missing.jpg" />
+    <Resource Include="Resources\NoFileAvailable.jpg" />
+    <Resource Include="Resources\Corrupted.jpg" />
+    <Resource Include="Resources\Missing.jpg" />
     <Resource Include="Resources\play_icon.png" />
     <Resource Include="Resources\pause_icon.png" />
   </ItemGroup>

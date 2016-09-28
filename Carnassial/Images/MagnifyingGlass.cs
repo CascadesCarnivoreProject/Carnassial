@@ -297,7 +297,6 @@ namespace Carnassial.Images
             return result;
         }
 
-        // Hiding the magnifying glass does not affect its visibility state
         public void Hide()
         {
             this.Visibility = Visibility.Collapsed;

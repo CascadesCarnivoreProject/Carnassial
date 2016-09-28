@@ -122,7 +122,7 @@ namespace Carnassial.Dialog
 
             foreach (ImageRow imageProperties in deletedImageTable)
             {
-                ImageSource bitmap = imageProperties.LoadBitmap(database.FolderPath, Constants.Images.ThumbnailSmall);
+                ImageSource bitmap = imageProperties.LoadBitmap(database.FolderPath, Constants.Images.ThumbnailWidth);
                 
                 if (column == 0)
                 {

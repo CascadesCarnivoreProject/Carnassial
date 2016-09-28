@@ -176,7 +176,6 @@ namespace Carnassial.Editor
             }
 
             Visibility visibility = mi.IsChecked ? Visibility.Visible : Visibility.Collapsed;
-
             foreach (DataGridColumn column in this.TemplateDataGrid.Columns)
             {
                 if (column.Header.Equals(EditorConstant.ColumnHeader.ID) || 

@@ -226,30 +226,21 @@ namespace Carnassial
             public const int GreyScalePixelThreshold = 40;
 
             // Various thumbnail sizes
-            public const int ThumbnailSmall = 300;
-            public const int ThumbnailMedium = 512;
-            public const int ThumbnailLarge = 1024;
-            public const int ThumbnailNone = 0;
+            public const int ThumbnailWidth = 300;
 
             public static readonly BitmapFrame Corrupt;
-            public static readonly BitmapFrame CorruptThumbnail;  
             public static readonly BitmapFrame Missing;
-            public static readonly BitmapFrame MissingThumbnail;
-            public static readonly BitmapFrame EmptyImageSet;
+            public static readonly BitmapFrame NoFileAvailable;
 
             static Images()
             {
                 // Create a variety of images.
-                Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/Corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Corrupt.Freeze();
-                Images.Missing = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.Missing = BitmapFrame.Create(new Uri("pack://application:,,/Resources/Missing.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Missing.Freeze();
-                Images.EmptyImageSet = BitmapFrame.Create(new Uri("pack://application:,,/Resources/empty_imageset.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
-                Images.Missing.Freeze();
-                Images.CorruptThumbnail = BitmapFrame.Create(new Uri("pack://application:,,/Resources/corrupted_thumbnail.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
-                Images.CorruptThumbnail.Freeze();
-                Images.MissingThumbnail = BitmapFrame.Create(new Uri("pack://application:,,/Resources/missing_thumbnail.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
-                Images.MissingThumbnail.Freeze();
+                Images.NoFileAvailable = BitmapFrame.Create(new Uri("pack://application:,,/Resources/NoFileAvailable.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.NoFileAvailable.Freeze();
             }
         }
 

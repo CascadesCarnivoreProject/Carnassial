@@ -1213,7 +1213,7 @@ namespace Carnassial
             // If there is no image to show, then show an image indicating the empty image set.
             if (this.dataHandler.ImageDatabase.CurrentlySelectedImageCount < 1)
             {
-                BitmapSource unalteredImage = Constants.Images.EmptyImageSet;
+                BitmapSource unalteredImage = Constants.Images.NoFileAvailable;
                 this.MarkableCanvas.ImageToDisplay.Source = unalteredImage;
                 this.MarkableCanvas.ImageToMagnify.Source = unalteredImage; // Probably not needed
                 this.markersOnCurrentImage = null;
