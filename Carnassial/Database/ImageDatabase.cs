@@ -828,17 +828,10 @@ namespace Carnassial.Database
         public List<MarkersForCounter> GetMarkersOnImage(long imageID)
         {
             List<MarkersForCounter> markersForAllCounters = new List<MarkersForCounter>();
-
-            // Test to see if we actually have a valid result
-            if (this.MarkersTable.RowCount == 0)
-            {
-                return markersForAllCounters;    // This should not really happen, but just in case
-            }
-
-            // Get the current row number of the id in the marker table
             MarkerRow markersForImage = this.MarkersTable.Find(imageID);
             if (markersForImage == null)
             {
+                // if no counter controls are defined no rows are added to the marker table
                 return markersForAllCounters;
             }
 
@@ -846,22 +839,18 @@ namespace Carnassial.Database
             {
                 // create a marker for each point and add it to the counter's markers
                 MarkersForCounter markersForCounter = new MarkersForCounter(dataLabel);
-                string value;
+                string pointList;
                 try
                 {
-                    value = markersForImage[dataLabel];
+                    pointList = markersForImage[dataLabel];
                 }
                 catch (Exception exception)
                 {
                     Debug.Fail(String.Format("Read of marker failed for dataLabel '{0}'.", dataLabel), exception.ToString());
-                    value = String.Empty;
+                    pointList = String.Empty;
                 }
 
-                List<Point> points = this.ParseMarkerPoints(value); // parse the contents into a set of points
-                foreach (Point point in points)
-                {
-                    markersForCounter.AddMarker(dataLabel, point);  // add the marker to the list
-                }
+                markersForCounter.Parse(pointList);
                 markersForAllCounters.Add(markersForCounter);
             }
 
@@ -877,20 +866,18 @@ namespace Carnassial.Database
         /// <summary>
         /// Set the list of marker points on the current row in the marker table. 
         /// </summary>
-        /// <param name="imageID">the identifier of the row to update</param>
-        /// <param name="dataLabel">data label</param>
-        /// <param name="pointList">A list of points in the form x,y|x,y|x,y</param>
-        public void SetMarkerPoints(long imageID, string dataLabel, string pointList)
+        public void SetMarkerPositions(long imageID, MarkersForCounter markersForCounter)
         {
             // Find the current row number
             MarkerRow marker = this.MarkersTable.Find(imageID);
             if (marker == null)
             {
+                Debug.Fail(String.Format("Image ID {0} missing in markers table.", imageID));
                 return;
             }
 
             // Update the database and datatable
-            marker[dataLabel] = pointList;
+            marker[markersForCounter.DataLabel] = markersForCounter.GetPointList();
             this.SyncMarkerToDatabase(marker);
         }
 
@@ -965,25 +952,6 @@ namespace Carnassial.Database
                  return new ColumnDefinition(control.DataLabel, Constants.Sql.Text);
             }
             return new ColumnDefinition(control.DataLabel, Constants.Sql.Text, control.DefaultValue);
-        }
-
-        private List<Point> ParseMarkerPoints(string value)
-        {
-            List<Point> points = new List<Point>();
-            if (value.Equals(String.Empty))
-            {
-                return points;
-            }
-
-            char[] delimiterBar = { Constants.Database.MarkerBar };
-            string[] pointsAsStrings = value.Split(delimiterBar);
-
-            foreach (string pointAsString in pointsAsStrings)
-            {
-                Point point = Point.Parse(pointAsString);
-                points.Add(point);
-            }
-            return points;
         }
     }
 }

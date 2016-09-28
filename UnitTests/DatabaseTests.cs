@@ -9,6 +9,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Windows;
 using System.Windows.Media.Imaging;
 
 namespace Carnassial.UnitTests
@@ -49,6 +50,7 @@ namespace Carnassial.UnitTests
 
             // check images after initial add and again after reopen and application of selection
             // checks are not performed after last selection in list is applied
+            int counterControls = 4;
             string currentDirectoryName = Path.GetFileName(imageDatabase.FolderPath);
             imageDatabase.SelectDataTableImages(ImageSelection.All);
             TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
@@ -62,12 +64,19 @@ namespace Carnassial.UnitTests
 
                 for (int imageIndex = 0; imageIndex < imageExpectations.Count; ++imageIndex)
                 {
+                    // verify image
                     ImageRow image = imageDatabase.ImageDataTable[imageIndex];
                     ImageExpectations imageExpectation = imageExpectations[imageIndex];
                     imageExpectation.Verify(image, imageSetTimeZone);
 
+                    // verify no markers associated with image
                     List<MarkersForCounter> markersOnImage = imageDatabase.GetMarkersOnImage(image.ID);
-                    Assert.IsTrue(markersOnImage.Count >= 0);
+                    Assert.IsTrue(markersOnImage.Count == counterControls);
+                    foreach (MarkersForCounter markerForCounter in markersOnImage)
+                    {
+                        Assert.IsFalse(String.IsNullOrWhiteSpace(markerForCounter.DataLabel));
+                        Assert.IsTrue(markerForCounter.Markers.Count == 0);
+                    }
 
                     // retrieval by path
                     FileInfo imageFile = image.GetFileInfo(imageDatabase.FolderPath);
@@ -125,7 +134,7 @@ namespace Carnassial.UnitTests
             imageTimesBeforeAdjustment = imageDatabase.GetImageTimes().ToList();
             adjustment = new TimeSpan(-1, -2, -3, -4, 0);
             int startRow = 1;
-            int endRow = imageDatabase.CurrentlySelectedImageCount - 1; 
+            int endRow = imageDatabase.CurrentlySelectedImageCount - 1;
             imageDatabase.AdjustImageTimes(adjustment, startRow, endRow);
             this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, imageDatabase.GetImageTimes().ToList(), startRow, endRow, adjustment);
             imageDatabase.SelectDataTableImages(ImageSelection.All);
@@ -196,6 +205,76 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.MarkedForDeletion) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.Missing) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.Ok) == imageExpectations.Count);
+
+            // markers
+            // reread
+            imageDatabase.SelectDataTableImages(ImageSelection.All);
+
+            int martenImageID = 1;
+            List<MarkersForCounter> markersForMartenImage = imageDatabase.GetMarkersOnImage(martenImageID);
+            Assert.IsTrue(markersForMartenImage.Count == counterControls);
+            foreach (MarkersForCounter markerForCounter in markersForMartenImage)
+            {
+                Assert.IsFalse(String.IsNullOrWhiteSpace(markerForCounter.DataLabel));
+                Assert.IsTrue(markerForCounter.Markers.Count == 0);
+            }
+
+            // no op - write empty
+            foreach (MarkersForCounter markersForCounter in markersForMartenImage)
+            {
+                imageDatabase.SetMarkerPositions(martenImageID, markersForCounter);
+            }
+
+            // add
+            markersForMartenImage = imageDatabase.GetMarkersOnImage(martenImageID);
+            Assert.IsTrue(markersForMartenImage.Count == counterControls);
+            foreach (MarkersForCounter markerForCounter in markersForMartenImage)
+            {
+                Assert.IsFalse(String.IsNullOrWhiteSpace(markerForCounter.DataLabel));
+                Assert.IsTrue(markerForCounter.Markers.Count == 0);
+            }
+
+            List<List<Point>> expectedMarkerPositions = new List<List<Point>>();
+            for (int counterIndex = 0; counterIndex < markersForMartenImage.Count; ++counterIndex)
+            {
+                MarkersForCounter markersForCounter = markersForMartenImage[counterIndex];
+                List<Point> expectedPositions = new List<Point>();
+                for (int markerIndex = 0; markerIndex < counterIndex; ++markerIndex)
+                {
+                    Point markerPosition = new Point((0.1 * counterIndex) + (0.1 * markerIndex), (0.05 * counterIndex) + (0.1 * markerIndex));
+                    markersForCounter.AddMarker(markerPosition);
+
+                    Point expectedPosition = new Point(Math.Round(markerPosition.X, 3), Math.Round(markerPosition.Y, 3));
+                    expectedPositions.Add(expectedPosition);
+                }
+
+                imageDatabase.SetMarkerPositions(martenImageID, markersForCounter);
+                expectedMarkerPositions.Add(expectedPositions);
+            }
+
+            // roundtrip
+            markersForMartenImage = imageDatabase.GetMarkersOnImage(martenImageID);
+            this.VerifyMarkers(markersForMartenImage, expectedMarkerPositions);
+
+            // remove
+            for (int counterIndex = 0; counterIndex < markersForMartenImage.Count; ++counterIndex)
+            {
+                MarkersForCounter markersForCounter = markersForMartenImage[counterIndex];
+                List<Point> expectedPositions = expectedMarkerPositions[counterIndex];
+
+                Assert.IsTrue(markersForCounter.Markers.Count == expectedPositions.Count);
+                if (expectedPositions.Count > 0)
+                {
+                    markersForCounter.RemoveMarker(markersForCounter.Markers[expectedPositions.Count - 1]);
+                    imageDatabase.SetMarkerPositions(martenImageID, markersForCounter);
+
+                    expectedPositions.RemoveAt(expectedPositions.Count - 1);
+                }
+            }
+
+            // roundtrip
+            markersForMartenImage = imageDatabase.GetMarkersOnImage(martenImageID);
+            this.VerifyMarkers(markersForMartenImage, expectedMarkerPositions);
         }
 
         [TestMethod]
@@ -634,7 +713,7 @@ namespace Carnassial.UnitTests
 
             MarkerExpectation martenMarkerExpectation = new MarkerExpectation();
             martenMarkerExpectation.ID = 1;
-            martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, String.Empty);
+            martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, "0.498,0.575|0.550,0.566|0.584,0.555");
             martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, String.Empty);
             martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, String.Empty);
             martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, String.Empty);
@@ -921,6 +1000,30 @@ namespace Carnassial.UnitTests
             {
                 TimeSpan actualAdjustment = imageTimesAfterAdjustment[row] - imageTimesBeforeAdjustment[row];
                 Assert.IsTrue(actualAdjustment == TimeSpan.Zero, "Expected image time not to change but it shifted by {0}.", actualAdjustment);
+            }
+        }
+
+        private void VerifyMarkers(List<MarkersForCounter> markersOnImage, List<List<Point>> expectedMarkerPositions)
+        {
+            Assert.IsTrue(markersOnImage.Count == expectedMarkerPositions.Count);
+            for (int counterIndex = 0; counterIndex < markersOnImage.Count; ++counterIndex)
+            {
+                MarkersForCounter markersForCounter = markersOnImage[counterIndex];
+                List<Point> expectedPositions = expectedMarkerPositions[counterIndex];
+                Assert.IsTrue(markersForCounter.Markers.Count == expectedPositions.Count);
+                for (int markerIndex = 0; markerIndex < expectedPositions.Count; ++markerIndex)
+                {
+                    Marker marker = markersForCounter.Markers[markerIndex];
+                    // only Point is persisted to the database so other Marker fields should have default values on read
+                    Assert.IsFalse(marker.Annotate);
+                    Assert.IsTrue(marker.AnnotationPreviouslyShown);
+                    Assert.IsNotNull(marker.Brush);
+                    Assert.IsTrue(marker.DataLabel == markersForCounter.DataLabel);
+                    Assert.IsFalse(marker.Emphasise);
+                    Assert.IsNotNull(marker.Guid);
+                    Assert.IsTrue(marker.Position == expectedPositions[markerIndex]);
+                    Assert.IsNull(marker.Tooltip);
+                }
             }
         }
 

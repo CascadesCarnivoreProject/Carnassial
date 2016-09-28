@@ -1,5 +1,4 @@
-﻿using Carnassial.Util;
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -136,21 +135,21 @@ namespace Carnassial.Images
 
             // Given a mouse position over the displayed image, we need to know where the equivalent position is over the magnified image (which is a different size)
             // We do this by calculating the ratio of the point over the displayed image, and then using that to calculate the position over the cached image
-            Point ratioImageControlPoint = Utilities.ConvertPointToRatio(imageControlPoint, actualWidth, actualHeight);
-            Point imageUnalteredPoint = Utilities.ConvertRatioToPoint(ratioImageControlPoint, canvasToMagnify.Width, canvasToMagnify.Height);
+            Point ratioImageControlPoint = Marker.ConvertPointToRatio(imageControlPoint, actualWidth, actualHeight);
+            Point imageUnalteredPoint = Marker.ConvertRatioToPoint(ratioImageControlPoint, canvasToMagnify.Width, canvasToMagnify.Height);
 
             // Create an Visual brush from the unaltered image in the magnification canvas magCanvas, set its properties, and use it to fill the magnifying glass.
-            VisualBrush vbrush = new VisualBrush(canvasToMagnify);
-            vbrush.ViewboxUnits = BrushMappingMode.Absolute;
-            vbrush.ViewportUnits = BrushMappingMode.RelativeToBoundingBox;
-            vbrush.Viewport = new Rect(0, 0, 1, 1);
+            VisualBrush brush = new VisualBrush(canvasToMagnify);
+            brush.ViewboxUnits = BrushMappingMode.Absolute;
+            brush.ViewportUnits = BrushMappingMode.RelativeToBoundingBox;
+            brush.Viewport = new Rect(0, 0, 1, 1);
 
             // And now calculate the position and zoom of the viewbox within that brush
             double size = this.magnifierEllipse.Width;
             double xsize = size + 200;  // approximate bounding box, kinda hacky
             double ysize = size + 200;
 
-            Rect viewBox = vbrush.Viewbox;
+            Rect viewBox = brush.Viewbox;
             viewBox.Width = this.ZoomValue;
             viewBox.Height = this.ZoomValue;
 
@@ -158,10 +157,10 @@ namespace Carnassial.Images
             double yoffset = viewBox.Height / 2.0;
             viewBox.X = imageUnalteredPoint.X - xoffset;
             viewBox.Y = imageUnalteredPoint.Y - yoffset;
-            vbrush.Viewbox = viewBox;
+            brush.Viewbox = viewBox;
 
             // Finally, fill the magnifying glass with this brush
-            this.magnifierEllipse.Fill = vbrush;
+            this.magnifierEllipse.Fill = brush;
 
             // Now, we need to calculate where to put the magnifying glass, and whether we should rotate it 
             // The idea is that we will start rotating when the magnifying glass is near the top and the left of the display

@@ -1435,85 +1435,64 @@ namespace Carnassial
         // - regenerate the list of markers used by the markableCanvas
         private void MarkableCanvas_RaiseMarkerEvent(object sender, MarkerEventArgs e)
         {
-            DataEntryCounter currentCounter;
+            // A marker has been added
             if (e.IsNew)
             {
-                // A marker has been added
-                currentCounter = this.FindSelectedCounter(); // No counters are selected, so don't mark anything
+                DataEntryCounter currentCounter = this.FindSelectedCounter(); // No counters are selected, so don't mark anything
                 if (currentCounter == null)
                 {
                     return;
                 }
                 this.MarkableCanvas_AddMarker(currentCounter, e.Marker);
+                return;
             }
-            else
+
+            // An existing marker has been deleted.
+            DataEntryCounter counter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[e.Marker.DataLabel];
+
+            // Decrement the counter only if there is a number in it
+            string oldCounterData = counter.Content;
+            string newCounterData = String.Empty;
+            if (oldCounterData != String.Empty) 
             {
-                // An existing marker has been deleted.
-                DataEntryCounter counter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[e.Marker.DataLabel];
-
-                // Decrement the counter only if there is a number in it
-                string oldCounterData = counter.Content;
-                string newCounterData = String.Empty;
-                if (oldCounterData != String.Empty) 
-                {
-                    int count = Convert.ToInt32(oldCounterData);
-                    count = (count == 0) ? 0 : count - 1;           // Make sure its never negative, which could happen if a person manually enters the count 
-                    newCounterData = count.ToString();
-                }
-                if (!newCounterData.Equals(oldCounterData))
-                {
-                    // Don't bother updating if the value hasn't changed (i.e., already at a 0 count)
-                    // Update the datatable and database with the new counter values
-                    this.dataHandler.IsProgrammaticControlUpdate = true;
-                    counter.Content = newCounterData;
-                    this.dataHandler.IsProgrammaticControlUpdate = false;
-                    this.dataHandler.ImageDatabase.UpdateImage(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, newCounterData);
-                }
-
-                // Remove the marker in memory and from the database
-                MarkersForCounter markersForCounter = null;
-                foreach (MarkersForCounter markers in this.markersOnCurrentImage)
-                {
-                    if (markers.Markers.Count == 0)
-                    {
-                        continue;
-                    }
-
-                    if (markers.Markers[0].DataLabel == markers.DataLabel)
-                    {
-                        markersForCounter = markers;
-                        break;
-                    }
-                }
-
-                if (markersForCounter != null)
-                {
-                    string pointList = String.Empty;
-                    for (int index = 0; index < markersForCounter.Markers.Count; ++index)
-                    {
-                        if (e.Marker.Guid == markersForCounter.Markers[index].Guid)
-                        {
-                            markersForCounter.Markers.RemoveAt(index);
-                            this.Speak(counter.Content); // Speak the current count
-                        }
-                        else
-                        {
-                            // add persisting marker to the new point list
-                            // Reconstruct the point list in the string form x,y|x,y e.g.,  0.333,0.333|0.500, 0.600
-                            // for writing to the markerTable. Note that it leaves out the deleted value
-                            Point point = markersForCounter.Markers[index].Point;
-                            if (!pointList.Equals(String.Empty))
-                            {
-                                pointList += Constants.Database.MarkerBar;          // don't put a marker bar at the beginning of the point list
-                            }
-                            pointList += String.Format("{0:0.000},{1:0.000}", point.X, point.Y);   // Add a point in the form 
-                        }
-                    }
-                    this.dataHandler.ImageDatabase.SetMarkerPoints(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, pointList);
-                }
-                this.MarkableCanvas_UpdateMarkers();
+                int count = Convert.ToInt32(oldCounterData);
+                count = (count == 0) ? 0 : count - 1;           // Make sure its never negative, which could happen if a person manually enters the count 
+                newCounterData = count.ToString();
             }
-            this.MarkableCanvas.MarkersRefresh();
+            if (!newCounterData.Equals(oldCounterData))
+            {
+                // Don't bother updating if the value hasn't changed (i.e., already at a 0 count)
+                // Update the datatable and database with the new counter values
+                this.dataHandler.IsProgrammaticControlUpdate = true;
+                counter.Content = newCounterData;
+                this.dataHandler.IsProgrammaticControlUpdate = false;
+                this.dataHandler.ImageDatabase.UpdateImage(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, newCounterData);
+            }
+
+            // Remove the marker in memory and from the database
+            MarkersForCounter markersForCounter = null;
+            foreach (MarkersForCounter markers in this.markersOnCurrentImage)
+            {
+                if (markers.Markers.Count == 0)
+                {
+                    continue;
+                }
+
+                if (markers.Markers[0].DataLabel == markers.DataLabel)
+                {
+                    markersForCounter = markers;
+                    break;
+                }
+            }
+
+            if (markersForCounter != null)
+            {
+                markersForCounter.RemoveMarker(e.Marker);
+                this.Speak(counter.Content); // Speak the current count
+                this.dataHandler.ImageDatabase.SetMarkerPositions(this.dataHandler.ImageCache.Current.ID, markersForCounter);
+            }
+
+            this.MarkableCanvas_UpdateMarkers();
         }
 
         /// <summary>
@@ -1554,21 +1533,13 @@ namespace Carnassial
             marker.AnnotationPreviouslyShown = false;
             marker.Brush = Brushes.Red;               // Make it Red (for now)
             marker.DataLabel = counter.DataLabel;
-            marker.Label = counter.Label;   // The tooltip will be the counter label plus its data label
-            marker.Label += "\n" + counter.DataLabel;
+            marker.Tooltip = counter.Label;   // The tooltip will be the counter label plus its data label
+            marker.Tooltip += "\n" + counter.DataLabel;
             markersForCounter.AddMarker(marker);
 
             // update this counter's list of points in the database
-            string pointList = String.Empty;
-            foreach (Marker existingMarker in markersForCounter.Markers)
-            {
-                if (!pointList.Equals(String.Empty))
-                {
-                    pointList += Constants.Database.MarkerBar; // We don't put a marker bar at the beginning of the point list
-                }
-                pointList += String.Format("{0:0.000},{1:0.000}", existingMarker.Point.X, existingMarker.Point.Y); // Add a point in the form x,y e.g., 0.5, 0.7
-            }
-            this.dataHandler.ImageDatabase.SetMarkerPoints(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, pointList);
+            this.dataHandler.ImageDatabase.SetMarkerPositions(this.dataHandler.ImageCache.Current.ID, markersForCounter);
+
             this.MarkableCanvas_UpdateMarkers(true);
             this.Speak(counter.Content + " " + counter.Label); // Speak the current count
         }
@@ -1623,7 +1594,7 @@ namespace Carnassial
                         }
 
                         marker.Emphasise = emphasize;
-                        marker.Label = currentCounter.Label;
+                        marker.Tooltip = currentCounter.Label;
                         markers.Add(marker); 
                     }
                 }

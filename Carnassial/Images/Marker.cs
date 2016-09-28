@@ -37,23 +37,39 @@ namespace Carnassial.Images
         public Guid Guid { get; set; }
 
         /// <summary>
-        /// Gets or sets the marker's tooltip text
+        /// Gets or sets the marker's normalized location in the canvas, as a coordinate point on [0, 1], [0, 1].
         /// </summary>
-        public string Label { get; set; } // The label (not datalabel) associated with this marker. To be put in the tooltip and for highlighting
+        public Point Position { get; set; }
 
         /// <summary>
-        /// Gets or sets the marker's location in the canvas, as a coordinate point
+        /// Gets or sets the marker's tooltip text
         /// </summary>
-        public Point Point { get; set; }
+        public string Tooltip { get; set; } // The label (not datalabel) associated with this marker. To be put in the tooltip and for highlighting.
 
-        public Marker()
+        public Marker(string dataLabel, Point point)
         {
             this.Annotate = false;
             this.AnnotationPreviouslyShown = true;
             this.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
+            this.DataLabel = dataLabel;
             this.Emphasise = false;
             this.Guid = Guid.NewGuid();
-            this.Label = String.Empty;
+            this.Position = point;
+            this.Tooltip = null;
+        }
+
+        // Calculate the point as a ratio of its position on the image, so we can locate it regardless of the actual image size
+        public static Point ConvertPointToRatio(Point p, double width, double height)
+        {
+            Point ratioPt = new Point((double)p.X / (double)width, (double)p.Y / (double)height);
+            return ratioPt;
+        }
+
+        // The inverse of the above operation
+        public static Point ConvertRatioToPoint(Point p, double width, double height)
+        {
+            Point imagePt = new Point(p.X * width, p.Y * height);
+            return imagePt;
         }
     }
 }

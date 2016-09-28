@@ -171,20 +171,6 @@ namespace Carnassial.Util
             return false;
         }
 
-        // Calculate the point as a ratio of its position on the image, so we can locate it regardless of the actual image size
-        public static Point ConvertPointToRatio(Point p, double width, double height)
-        {
-            Point ratioPt = new Point((double)p.X / (double)width, (double)p.Y / (double)height);
-            return ratioPt;
-        }
-
-        // The inverse of the above operation
-        public static Point ConvertRatioToPoint(Point p, double width, double height)
-        {
-            Point imagePt = new Point(p.X * width, p.Y * height);
-            return imagePt;
-        }
-
         /// <summary>
         /// Format the passed value for use as string value in a SQL statement or query.
         /// </summary>

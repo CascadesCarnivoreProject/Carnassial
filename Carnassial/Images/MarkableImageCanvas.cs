@@ -353,8 +353,8 @@ namespace Carnassial.Images
             this.MarkersRemove(this.canvasToMagnify);
             if (this.ImageToDisplay != null)
             {
-                this.MarkersDraw(this, this.ImageToDisplay.RenderSize, true);
-                this.MarkersDraw(this.canvasToMagnify, this.canvasToMagnify.RenderSize, false);
+                this.DrawMarkers(this, this.ImageToDisplay.RenderSize, true);
+                this.DrawMarkers(this.canvasToMagnify, this.canvasToMagnify.RenderSize, false);
             }
         }
 
@@ -522,17 +522,13 @@ namespace Carnassial.Images
                 if (timeSinceDown.TotalMilliseconds < 200)
                 {
                     // Get the current point, and create a marker on it.
-                    Point p = e.GetPosition(this.ImageToDisplay);
-                    // Debug.Print(p.ToString());
-                    p = Utilities.ConvertPointToRatio(p, this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight);
-                    Marker mt = new Marker();
-                    mt.Point = p;
+                    Point position = e.GetPosition(this.ImageToDisplay);
+                    position = Marker.ConvertPointToRatio(position, this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight);
+                    Marker marker = new Marker(null, position);
 
-                    // don't add this marker to the marker list now
-                    // Rather, we raise an event informing the calling application about it.
-                    // That application can choose to ignore it (in which case it doesn't get added),
-                    // or can adjust its values and then add it to the markers list via a call to AddMarker()
-                    this.OnRaiseMarkerEvent(new MarkerEventArgs(mt, true));
+                    // don't add marker to the marker list
+                    // Main window is responsible for filling in remaining properties and adding it.
+                    this.OnRaiseMarkerEvent(new MarkerEventArgs(marker, true));
                 }
             }
             this.magnifyingGlass.ShowIfIsVisibilityDesired();
@@ -733,127 +729,118 @@ namespace Carnassial.Images
             }
         }
 
-        // From the list of points, redraw all ellipses
-        private void MarkersDraw(Canvas canvas, Size newSize, bool doTransform)
+        private void DrawMarkers(Canvas canvas, Size canvasRenderSize, bool doTransform)
         {
             foreach (Marker marker in this.Markers)
             {
-                Canvas markerCanvas = this.MarkerDraw(marker, newSize, doTransform);
+                Canvas markerCanvas = this.DrawMarker(marker, canvasRenderSize, doTransform);
                 canvas.Children.Add(markerCanvas);
             }
         }
 
-        // Create a marker of a given size and set its position
-        private Canvas MarkerDraw(Marker marker, Size size, bool doTransform)
+        private Canvas DrawMarker(Marker marker, Size canvasRenderSize, bool doTransform)
         {
-            double max_diameter = 0;
             Canvas markerCanvas = new Canvas();
             markerCanvas.MouseRightButtonUp += new MouseButtonEventHandler(this.Marker_MouseRightButtonUp);
             markerCanvas.MouseWheel += new MouseWheelEventHandler(this.OnImage_MouseWheel); // Make the mouse wheel work over marks as well as the image
 
-            if (marker.Label.Trim() == String.Empty)
+            if (marker.Tooltip.Trim() == String.Empty)
             {
                 markerCanvas.ToolTip = null;
             }
             else
             {
-                markerCanvas.ToolTip = marker.Label;
+                markerCanvas.ToolTip = marker.Tooltip;
             }
             markerCanvas.Tag = marker;
 
             // Create a marker
-            Ellipse ellipse = new Ellipse();
-            ellipse.Width = Constants.MarkableCanvas.MarkDiameter;
-            ellipse.Height = Constants.MarkableCanvas.MarkDiameter;
-            ellipse.StrokeThickness = Constants.MarkableCanvas.MarkStrokeThickness;
-            ellipse.Stroke = marker.Brush;
-            ellipse.Fill = this.markFillBrush;  // Should be a transparent fill so it can get hit events
+            Ellipse mark = new Ellipse();
+            mark.Width = Constants.MarkableCanvas.MarkDiameter;
+            mark.Height = Constants.MarkableCanvas.MarkDiameter;
+            mark.StrokeThickness = Constants.MarkableCanvas.MarkStrokeThickness;
+            mark.Stroke = marker.Brush;
+            mark.Fill = this.markFillBrush;  // Should be a transparent fill so it can get hit events
+            markerCanvas.Children.Add(mark);
 
             // Draw another Ellipse as a black outline around it
-            Ellipse ellipse1 = new Ellipse();
-
-            ellipse1.Stroke = Brushes.Black;
-            ellipse1.Width = Constants.MarkableCanvas.MarkDiameter + 1;
-            ellipse1.Height = Constants.MarkableCanvas.MarkDiameter + 1;
-            ellipse1.StrokeThickness = 1;
-            max_diameter = ellipse1.Width;
+            Ellipse blackOutline = new Ellipse();
+            blackOutline.Stroke = Brushes.Black;
+            blackOutline.Width = mark.Width + 1;
+            blackOutline.Height = mark.Height + 1;
+            blackOutline.StrokeThickness = 1;
+            markerCanvas.Children.Add(blackOutline);
 
             // And another Ellipse as a white outline around it
-            Ellipse outline2 = new Ellipse();
+            Ellipse whiteOutline = new Ellipse();
+            whiteOutline.Stroke = Brushes.White;
+            whiteOutline.Width = blackOutline.Width + 1;
+            whiteOutline.Height = blackOutline.Height + 1;
+            whiteOutline.StrokeThickness = 1;
+            markerCanvas.Children.Add(whiteOutline);
 
-            outline2.Stroke = Brushes.Beige;
-            outline2.Width = Constants.MarkableCanvas.MarkDiameter + 2;
-            outline2.Height = Constants.MarkableCanvas.MarkDiameter + 2;
-            outline2.StrokeThickness = 1;
-            max_diameter = ellipse1.Width;
-
+            // maybe add emphasis
+            double outerDiameter = whiteOutline.Width;
             Ellipse glow = null;
             if (marker.Emphasise)
             {
                 glow = new Ellipse();
-                glow.Width = ellipse1.Width + Constants.MarkableCanvas.MarkGlowDiameterIncrease;
-                glow.Height = ellipse1.Height + Constants.MarkableCanvas.MarkGlowDiameterIncrease;
+                glow.Width = whiteOutline.Width + Constants.MarkableCanvas.MarkGlowDiameterIncrease;
+                glow.Height = whiteOutline.Height + Constants.MarkableCanvas.MarkGlowDiameterIncrease;
                 glow.StrokeThickness = Constants.MarkableCanvas.MarkGlowStrokeThickness;
-                glow.Stroke = ellipse.Stroke;
+                glow.Stroke = mark.Stroke;
                 glow.Opacity = Constants.MarkableCanvas.MarkGlowOpacity;
-                max_diameter = glow.Width;
+                markerCanvas.Children.Add(glow);
+
+                outerDiameter = glow.Width;
             }
 
-            Label label = new Label();
+            markerCanvas.Width = outerDiameter;
+            markerCanvas.Height = outerDiameter;
+
+            double position = (markerCanvas.Width - mark.Width) / 2.0;
+            Canvas.SetLeft(mark, position);
+            Canvas.SetTop(mark, position);
+
+            position = (markerCanvas.Width - blackOutline.Width) / 2.0;
+            Canvas.SetLeft(blackOutline, position);
+            Canvas.SetTop(blackOutline, position);
+
+            position = (markerCanvas.Width - whiteOutline.Width) / 2.0;
+            Canvas.SetLeft(whiteOutline, position);
+            Canvas.SetTop(whiteOutline, position);
+
+            if (marker.Emphasise)
+            {
+                position = (markerCanvas.Width - glow.Width) / 2.0;
+                Canvas.SetLeft(glow, position);
+                Canvas.SetTop(glow, position);
+            }
+
             if (marker.Annotate)
             {
-                label.Content = marker.Label;
-                label.Opacity = .6;
+                Label label = new Label();
+                label.Content = marker.Tooltip;
+                label.Opacity = 0.6;
                 label.Background = Brushes.White;
                 label.Padding = new Thickness(0, 0, 0, 0);
                 label.Margin = new Thickness(0, 0, 0, 0);
-            }
-
-            if (glow != null)
-            {
-                Canvas.SetLeft(glow, 0);
-                Canvas.SetTop(glow, 0);
-                markerCanvas.Children.Add(glow);
-            }
-
-            markerCanvas.Width = max_diameter;
-            markerCanvas.Height = max_diameter;
-            markerCanvas.Children.Add(ellipse);
-            markerCanvas.Children.Add(ellipse1);
-            markerCanvas.Children.Add(outline2);
-            if (marker.Annotate)
-            {
                 markerCanvas.Children.Add(label);
-            }
 
-            double position;
-            position = (markerCanvas.Width - ellipse.Width) / 2;
-            Canvas.SetLeft(ellipse, position);
-            Canvas.SetTop(ellipse, position);
-
-            position = (markerCanvas.Width - ellipse1.Width) / 2;
-            Canvas.SetLeft(ellipse1, position);
-            Canvas.SetTop(ellipse1, position);
-
-            position = (markerCanvas.Width - outline2.Width) / 2;
-            Canvas.SetLeft(outline2, position);
-            Canvas.SetTop(outline2, position);
-
-            if (marker.Annotate)
-            {
-                position = (markerCanvas.Width / 2) + (outline2.Width / 2);
+                position = (markerCanvas.Width / 2.0) + (whiteOutline.Width / 2.0);
                 Canvas.SetLeft(label, position);
                 Canvas.SetTop(label, markerCanvas.Height / 2);
             }
 
             // Get the point from the marker, and convert it so that the marker will be in the right place
-            Point pt = Utilities.ConvertRatioToPoint(marker.Point, size.Width, size.Height);
+            Point screenPosition = Marker.ConvertRatioToPoint(marker.Position, canvasRenderSize.Width, canvasRenderSize.Height);
             if (doTransform)
             {
-                pt = this.transformGroup.Transform(pt);
+                screenPosition = this.transformGroup.Transform(screenPosition);
             }
-            Canvas.SetLeft(markerCanvas, pt.X - markerCanvas.Width / 2);
-            Canvas.SetTop(markerCanvas, pt.Y - markerCanvas.Height / 2);
+
+            Canvas.SetLeft(markerCanvas, screenPosition.X - markerCanvas.Width / 2.0);
+            Canvas.SetTop(markerCanvas, screenPosition.Y - markerCanvas.Height / 2.0);
             Canvas.SetZIndex(markerCanvas, 0);
             markerCanvas.MouseDown += new MouseButtonEventHandler(this.OnImage_MouseDown);
             markerCanvas.MouseMove += new MouseEventHandler(this.OnImage_MouseMove);

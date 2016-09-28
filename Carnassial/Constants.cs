@@ -253,7 +253,7 @@ namespace Carnassial
 
             public const int MarkDiameter = 10;
             public const int MarkStrokeThickness = 2;
-            public const int MarkGlowDiameterIncrease = 15;
+            public const int MarkGlowDiameterIncrease = 14;
             public const int MarkGlowStrokeThickness = 7;
             public const double MarkGlowOpacity = 0.35;
 
