@@ -210,38 +210,8 @@ namespace Carnassial.Editor
         /// <param name="templateDatabaseFilePath">The path of the DB file created or loaded</param>
         private void InitializeDataGrid(string templateDatabaseFilePath)
         {
-            this.ReinitializeDataGrid(templateDatabaseFilePath);
-
-            // Now that there is a data table, enable the buttons that allows rows to be added.
-            this.AddCounterButton.IsEnabled = true;
-            this.AddFixedChoiceButton.IsEnabled = true;
-            this.AddNoteButton.IsEnabled = true;
-            this.AddFlagButton.IsEnabled = true;
-
-            this.TemplatePane.IsActive = true;
-
-            // update state
-            // disable the recent templates list rather than call this.MenuItemRecentTemplates_Refresh
-            this.userSettings.MostRecentTemplates.SetMostRecent(templateDatabaseFilePath);
-            this.MenuItemRecentTemplates.IsEnabled = false;
-        }
-
-        private void InitializeUI()
-        {
-            this.NewFileMenuItem.IsEnabled = false;
-            this.OpenFileMenuItem.IsEnabled = false;
-            this.ViewMenu.IsEnabled = true;
-        }
-
-        // Reload a database into the grid. We do this as part of the convert, where we create the database, but then have to reinitialize the datagrid if we want to see the results.
-        // So this is actually a reduced form of INitializeDataGrid
-        private void ReinitializeDataGrid(string templateDatabaseFilePath)
-        {
             // Create a new DB file if one does not exist, or load a DB file if there is one.
             this.templateDatabase = TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
-
-            // Have the window title include the database file name
-            this.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
 
             // Map the data table to the data grid, and create a callback executed whenever the datatable row changes
             this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateDataTable_RowChanged);
@@ -249,7 +219,24 @@ namespace Carnassial.Editor
             // Update the user interface specified by the contents of the table
             this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.TemplateTable);
             this.GenerateSpreadsheet();
-            this.InitializeUI();       
+
+            // update UI for having a .tdb loaded
+            this.AddCounterButton.IsEnabled = true;
+            this.AddFixedChoiceButton.IsEnabled = true;
+            this.AddNoteButton.IsEnabled = true;
+            this.AddFlagButton.IsEnabled = true;
+
+            this.NewFileMenuItem.IsEnabled = false;
+            this.OpenFileMenuItem.IsEnabled = false;
+            this.ViewMenu.IsEnabled = true;
+
+            this.TemplatePane.IsActive = true;
+            this.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
+
+            // update state
+            // disable the recent templates list rather than call this.MenuItemRecentTemplates_Refresh
+            this.userSettings.MostRecentTemplates.SetMostRecent(templateDatabaseFilePath);
+            this.MenuItemRecentTemplates.IsEnabled = false;
         }
 
         /// <summary>
@@ -373,20 +360,6 @@ namespace Carnassial.Editor
             }
         }
 
-        private void TemplateDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (this.TemplateDataGrid.CurrentColumn.Header.Equals(EditorConstant.ColumnHeader.DataLabel))
-            {
-                // No space allowed in a data label.
-                // The PreviewTextInput below will check for all other characters.
-                if (e.Key == Key.Space)
-                {
-                    this.ShowDataLabelRequirementsDialog();
-                    e.Handled = true;
-                }
-            }
-        }
-
         private void TemplateDataGrid_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             DataGridCell currentCell;
@@ -401,11 +374,15 @@ namespace Carnassial.Editor
             {
                 // EditorConstant.Control.ControlOrder is not editable
                 case EditorConstant.ColumnHeader.DataLabel:
-                    // Only allow alphanumeric and '_' in data labels
-                    if ((!this.IsAllValidAlphaNumericChars(e.Text)) && !e.Text.Equals("_"))
+                    if (String.IsNullOrEmpty(e.Text) == false)
                     {
-                        this.ShowDataLabelRequirementsDialog();
-                        e.Handled = true;
+                        // one key is provided by the event at a time during typing, multiple keys can be pasted in a single event
+                        // it's not known where in the data label the input occurs, so full validation is postponed to ValidateDataLabel()
+                        if (this.IsValidDataLabelCharacters(e.Text) == false)
+                        {
+                            this.ShowDataLabelRequirementsDialog();
+                            e.Handled = true;
+                        }
                     }
                     break;
                 case EditorConstant.ColumnHeader.DefaultValue:
@@ -451,11 +428,34 @@ namespace Carnassial.Editor
             }
         }
 
-        private bool IsAllValidAlphaNumericChars(string str)
+        private bool IsValidDataLabel(string dataLabel)
         {
-            foreach (char c in str)
+            if ((dataLabel == null) || (dataLabel.Length < 1))
             {
-                if (!Char.IsLetterOrDigit(c))
+                return false;
+            }
+            if (Char.IsLetter(dataLabel[0]) == false)
+            {
+                return false;
+            }
+
+            if (dataLabel.Length > 1)
+            {
+                return this.IsValidDataLabelCharacters(dataLabel.Substring(1));
+            }
+            return true;
+        }
+
+        private bool IsValidDataLabelCharacters(string dataLabelFragment)
+        {
+            if (String.IsNullOrEmpty(dataLabelFragment))
+            {
+                return false;
+            }
+
+            foreach (char character in dataLabelFragment)
+            {
+                if ((Char.IsLetterOrDigit(character) == false) && (character != '_'))
                 {
                     return false;
                 }
@@ -886,13 +886,13 @@ namespace Carnassial.Editor
             string dataLabel = textBox.Text;
 
             // Check to see if the data label is empty. If it is, generate a unique data label and warn the user
-            if (String.IsNullOrWhiteSpace(dataLabel))
+            if (this.IsValidDataLabel(dataLabel) == false)
             {
-                MessageBox messageBox = new MessageBox("Data Labels cannot be empty", this);
+                MessageBox messageBox = new MessageBox("Data label isn't valid.", this);
                 messageBox.Message.Icon = MessageBoxImage.Warning;
-                messageBox.Message.Problem = "Data Labels cannot be empty. They must begin with a letter, followed only by letters, numbers, and '_'.";
-                messageBox.Message.Result = "We will automatically create a uniquely named Data Label for you.";
-                messageBox.Message.Hint = "You can create your own name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
+                messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.  They cannot be empty.";
+                messageBox.Message.Result = "We will automatically create a uniquely named data label for you.";
+                messageBox.Message.Hint = "You can create your own name for this data label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
                 messageBox.ShowDialog();
                 textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
             }

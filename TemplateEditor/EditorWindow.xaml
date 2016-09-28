@@ -398,7 +398,6 @@
                                               BeginningEdit="TemplateDataGrid_BeginningEdit"
                                               CellEditEnding="TemplateDataGrid_CellEditEnding"
                                               CurrentCellChanged="TemplateDataGrid_CurrentCellChanged" 
-                                              PreviewKeyDown="TemplateDataGrid_PreviewKeyDown" 
                                               PreviewTextInput="TemplateDataGrid_PreviewTextInput" 
                                               LayoutUpdated="TemplateDataGrid_LayoutUpdated"
                                               SelectionChanged="TemplateDataGrid_SelectionChanged" 
