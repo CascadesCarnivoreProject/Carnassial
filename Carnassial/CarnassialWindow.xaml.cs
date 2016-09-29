@@ -2544,10 +2544,11 @@ namespace Carnassial
         private void MenuItemSelectCustomSelection_Click(object sender, RoutedEventArgs e)
         {
             // the first time the custom selection dialog is launched update the DateTime and UtcOffset search terms to the time of the current image
-            if (this.dataHandler.ImageDatabase.CustomSelection.GetDateTime() == Constants.ControlDefault.DateTimeValue)
+            SearchTerm firstDateTimeSearchTerm = this.dataHandler.ImageDatabase.CustomSelection.SearchTerms.First(searchTerm => searchTerm.DataLabel == Constants.DatabaseColumn.DateTime);
+            if (firstDateTimeSearchTerm.GetDateTime() == Constants.ControlDefault.DateTimeValue.DateTime)
             {
                 DateTimeOffset defaultDate = this.dataHandler.ImageCache.Current.GetDateTime();
-                this.dataHandler.ImageDatabase.CustomSelection.SetDateTime(defaultDate);
+                this.dataHandler.ImageDatabase.CustomSelection.SetDateTimesAndOffset(defaultDate);
             }
 
             // show the dialog and process the resuls

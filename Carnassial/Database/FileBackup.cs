@@ -55,7 +55,7 @@ namespace Carnassial.Database
             }
 
             // create backup folder if needed
-            DirectoryInfo backupFolder = FileBackup.GetOrCreateBackupFolder(sourceFileName);
+            DirectoryInfo backupFolder = FileBackup.GetOrCreateBackupFolder(sourceFilePath);
 
             // create a timestamped copy of the file
             // file names can't contain colons so use non-standard format for timestamp with dashes for hour-minute-second separation and an underscore in 
@@ -64,7 +64,7 @@ namespace Carnassial.Database
             string sourceFileExtension = Path.GetExtension(sourceFileName);
             string destinationFileName = String.Concat(sourceFileNameWithoutExtension, ".", DateTime.Now.ToString("yyyy-MM-ddTHH-mm-ss.fffK"), sourceFileExtension);
             destinationFileName = destinationFileName.Replace(':', '_');
-            string destinationFilePath = Path.Combine(backupFolder.Name, destinationFileName);
+            string destinationFilePath = Path.Combine(backupFolder.FullName, destinationFileName);
             File.Copy(sourceFilePath, destinationFilePath, true);
 
             // age out older backup files

@@ -144,12 +144,12 @@ namespace Carnassial.UnitTests
             imageDatabase.ExchangeDayAndMonthInImageDates(0, imageDatabase.ImageDataTable.RowCount - 1);
 
             // custom selection coverage
-            // search terms should be created for all controls except Folder
-            Assert.IsTrue((imageDatabase.TemplateTable.RowCount - 1) == imageDatabase.CustomSelection.SearchTerms.Count);
+            // search terms should be created for all visible controls except Folder, but DateTime gets two
+            Assert.IsTrue((imageDatabase.TemplateTable.RowCount - 5) == imageDatabase.CustomSelection.SearchTerms.Count);
             Assert.IsTrue(String.IsNullOrEmpty(imageDatabase.CustomSelection.GetImagesWhere()));
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.Custom) == -1);
 
-            SearchTerm dateTime = imageDatabase.CustomSelection.SearchTerms.Single(term => term.DataLabel == Constants.DatabaseColumn.DateTime);
+            SearchTerm dateTime = imageDatabase.CustomSelection.SearchTerms.First(term => term.DataLabel == Constants.DatabaseColumn.DateTime);
             dateTime.UseForSearching = true;
             dateTime.DatabaseValue = DateTimeHandler.ToDisplayDateString(new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero));
             Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomSelection.GetImagesWhere()));
@@ -188,7 +188,7 @@ namespace Carnassial.UnitTests
             imageDatabase.SelectDataTableImages(ImageSelection.Custom);
             Assert.IsTrue(imageDatabase.ImageDataTable.RowCount == 2);
 
-            SearchTerm markedForDeletion = imageDatabase.CustomSelection.SearchTerms.Single(term => term.Type == Constants.DatabaseColumn.DeleteFlag);
+            SearchTerm markedForDeletion = imageDatabase.CustomSelection.SearchTerms.Single(term => term.ControlType == Constants.DatabaseColumn.DeleteFlag);
             markedForDeletion.UseForSearching = true;
             markedForDeletion.Operator = Constants.SearchTermOperator.Equal;
             markedForDeletion.DatabaseValue = Constants.Boolean.False;

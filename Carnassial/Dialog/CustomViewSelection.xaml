@@ -28,11 +28,11 @@
                 <TextBlock Margin="10" FontWeight="Bold" VerticalAlignment="Center" Text="Combine searches using: "/>
                 <StackPanel Orientation="Vertical">
                     <StackPanel Orientation="Horizontal">
-                        <RadioButton VerticalAlignment="Center" Name="rbAnd" Margin="3,3,0,3 " FontWeight="Bold" Content="_And" GroupName="LogicalOperators" IsChecked="True"/>
+                        <RadioButton VerticalAlignment="Center" Name="TermCombiningAnd" Margin="3,3,0,3 " FontWeight="Bold" Content="_And" GroupName="LogicalOperators" IsChecked="True"/>
                         <TextBlock VerticalAlignment="Center" Margin="3,3,0,3" Text="to select images and videos matching all search terms"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <RadioButton Name="rbOr" VerticalAlignment="Center" Margin="3,1,0,3" FontWeight="Bold" Content="O_r" GroupName="LogicalOperators"  />
+                        <RadioButton Name="TermCombiningOr" VerticalAlignment="Center" Margin="3,1,0,3" FontWeight="Bold" Content="O_r" GroupName="LogicalOperators"  />
                         <TextBlock VerticalAlignment="Center" Margin="3,0,0,3" Text="   to select images and videos matching any one of the search terms"/>
                     </StackPanel>
                 </StackPanel>

@@ -12,7 +12,7 @@ using Xceed.Wpf.Toolkit;
 namespace Carnassial.Dialog
 {
     /// <summary>
-    /// Present a dialog that allows a user to create a custom selection by selecting conditions on various data fields.
+    /// A dialog allowing a user to create a custom selection by setting conditions on data fields.
     /// </summary>
     public partial class CustomViewSelection : Window
     {
@@ -24,41 +24,38 @@ namespace Carnassial.Dialog
         private const int ValueColumn = 2;
         private const int SearchCriteriaColumn = 3;
 
-        // To hold the values of passed in arguments
         private ImageDatabase database;
+        private TimeZoneInfo imageSetTimeZone;
 
-        /// <summary>
-        /// Constructor. Date should be the contents of the date data field of the current image
-        /// </summary>
         public CustomViewSelection(ImageDatabase database, Window owner)
         {
             this.InitializeComponent();
 
             this.database = database;
+            this.imageSetTimeZone = this.database.ImageSet.GetTimeZone();
             this.Owner = owner;
         }
 
-        // When the window is loaded, add all the controls to it dynamically
+        // When the window is loaded, add SearchTerm controls to it
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Adjust this dialog window position 
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            // And now the real work. Restore the custom selection from its last (or default) state
             // And vs Or conditional
             if (this.database.CustomSelection.TermCombiningOperator == CustomSelectionOperator.And)
             {
-                rbAnd.IsChecked = true;
-                rbOr.IsChecked = false;
+                this.TermCombiningAnd.IsChecked = true;
+                this.TermCombiningOr.IsChecked = false;
             }
             else
             {
-                rbAnd.IsChecked = false;
-                rbOr.IsChecked = true;
+                this.TermCombiningAnd.IsChecked = false;
+                this.TermCombiningOr.IsChecked = true;
             }
-            rbAnd.Checked += this.AndOrRadioButton_Checked;
-            rbOr.Checked += this.AndOrRadioButton_Checked;
+            this.TermCombiningAnd.Checked += this.AndOrRadioButton_Checked;
+            this.TermCombiningOr.Checked += this.AndOrRadioButton_Checked;
 
             // Create a new row for each search term. 
             // Each row specifies a particular control and how it can be searched
@@ -86,7 +83,7 @@ namespace Carnassial.Dialog
                 grid.Children.Add(controlLabel);
 
                 // The operators allowed for each search term type
-                string controlType = searchTerm.Type;
+                string controlType = searchTerm.ControlType;
                 string[] termOperators;
                 if (controlType == Constants.Control.Counter ||
                     controlType == Constants.DatabaseColumn.DateTime ||
@@ -132,12 +129,12 @@ namespace Carnassial.Dialog
 
                 // term operator combo box
                 ComboBox operatorsComboBox = new ComboBox();
-                operatorsComboBox.SelectedValue = searchTerm.Operator; // Default: equals sign
-                operatorsComboBox.Width = 60;
-                operatorsComboBox.Margin = thickness;
                 operatorsComboBox.IsEnabled = searchTerm.UseForSearching;
                 operatorsComboBox.ItemsSource = termOperators;
+                operatorsComboBox.Margin = thickness;
+                operatorsComboBox.SelectedValue = searchTerm.Operator;
                 operatorsComboBox.SelectionChanged += this.Operator_SelectionChanged; // Create the callback that is invoked whenever the user changes the expresison
+                operatorsComboBox.Width = 60;
 
                 Grid.SetRow(operatorsComboBox, gridRowIndex);
                 Grid.SetColumn(operatorsComboBox, CustomViewSelection.OperatorColumn);
@@ -148,7 +145,7 @@ namespace Carnassial.Dialog
                 // However, counter textboxes are modified to only allow integer input (both direct typing or pasting are checked)
                 if (controlType == Constants.DatabaseColumn.DateTime)
                 {
-                    DateTimeOffset dateTime = this.database.CustomSelection.GetDateTime();
+                    DateTimeOffset dateTime = this.database.CustomSelection.GetDateTime(gridRowIndex - 1, this.imageSetTimeZone);
 
                     DateTimePicker dateValue = new DateTimePicker();
                     dateValue.Format = DateTimeFormat.Custom;
@@ -227,12 +224,10 @@ namespace Carnassial.Dialog
                 }
                 else if (controlType == Constants.DatabaseColumn.UtcOffset)
                 {
-                    DateTimeOffset dateTime = this.database.CustomSelection.GetDateTime();
-
                     UtcOffsetUpDown utcOffsetValue = new UtcOffsetUpDown();
                     utcOffsetValue.IsEnabled = searchTerm.UseForSearching;
                     utcOffsetValue.IsTabStop = true;
-                    utcOffsetValue.Value = dateTime.Offset;
+                    utcOffsetValue.Value = searchTerm.GetUtcOffset();
                     utcOffsetValue.ValueChanged += this.UtcOffset_SelectedDateChanged;
                     utcOffsetValue.Width = CustomViewSelection.DefaultControlWidth;
 
@@ -263,7 +258,7 @@ namespace Carnassial.Dialog
         private void AndOrRadioButton_Checked(object sender, RoutedEventArgs args)
         {
             RadioButton radioButton = sender as RadioButton;
-            this.database.CustomSelection.TermCombiningOperator = (radioButton == this.rbAnd) ? CustomSelectionOperator.And : CustomSelectionOperator.Or;
+            this.database.CustomSelection.TermCombiningOperator = (radioButton == this.TermCombiningAnd) ? CustomSelectionOperator.And : CustomSelectionOperator.Or;
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -297,7 +292,7 @@ namespace Carnassial.Dialog
         private void Operator_SelectionChanged(object sender, SelectionChangedEventArgs args)
         {
             ComboBox comboBox = sender as ComboBox;
-            int row = Grid.GetRow(comboBox);  // Get the row number...
+            int row = Grid.GetRow(comboBox);
             this.database.CustomSelection.SearchTerms[row - 1].Operator = comboBox.SelectedValue.ToString(); // Set the corresponding expression to the current selection
             this.UpdateSearchCriteriaFeedback();
         }
@@ -308,7 +303,7 @@ namespace Carnassial.Dialog
         private void NoteOrCounter_TextChanged(object sender, TextChangedEventArgs args)
         {
             TextBox textBox = sender as TextBox;
-            int row = Grid.GetRow(textBox);  // Get the row number...
+            int row = Grid.GetRow(textBox);
             this.database.CustomSelection.SearchTerms[row - 1].DatabaseValue = textBox.Text;
             this.UpdateSearchCriteriaFeedback();
         }
@@ -325,9 +320,8 @@ namespace Carnassial.Dialog
             DateTimePicker datePicker = sender as DateTimePicker;
             if (datePicker.Value.HasValue)
             {
-                DateTimeOffset dateTime = this.database.CustomSelection.GetDateTime();
-                dateTime = new DateTimeOffset(datePicker.Value.Value, dateTime.Offset);
-                this.database.CustomSelection.SetDateTime(dateTime);
+                int row = Grid.GetRow(datePicker);
+                this.database.CustomSelection.SetDateTime(row - 1, datePicker.Value.Value, this.imageSetTimeZone);
                 this.UpdateSearchCriteriaFeedback();
             }
         }
@@ -338,7 +332,7 @@ namespace Carnassial.Dialog
         private void FixedChoice_SelectionChanged(object sender, SelectionChangedEventArgs args)
         {
             ComboBox comboBox = sender as ComboBox;
-            int row = Grid.GetRow(comboBox);  // Get the row number...
+            int row = Grid.GetRow(comboBox);
             this.database.CustomSelection.SearchTerms[row - 1].DatabaseValue = comboBox.SelectedValue.ToString(); // Set the corresponding value to the current selection
             this.UpdateSearchCriteriaFeedback();
         }
@@ -349,7 +343,7 @@ namespace Carnassial.Dialog
         private void Flag_CheckedOrUnchecked(object sender, RoutedEventArgs e)
         {
             CheckBox checkBox = sender as CheckBox;
-            int row = Grid.GetRow(checkBox);  // Get the row number...
+            int row = Grid.GetRow(checkBox);
             this.database.CustomSelection.SearchTerms[row - 1].DatabaseValue = checkBox.IsChecked.ToString().ToLower(); // Set the corresponding value to the current selection
             this.UpdateSearchCriteriaFeedback();
         }
@@ -364,15 +358,13 @@ namespace Carnassial.Dialog
             }
         }
 
-        // Value (UtcOffset): we need to construct a string TimeSpan from it
         private void UtcOffset_SelectedDateChanged(object sender, RoutedPropertyChangedEventArgs<object> args)
         {
             UtcOffsetUpDown utcOffsetPicker = sender as UtcOffsetUpDown;
             if (utcOffsetPicker.Value.HasValue)
             {
-                DateTimeOffset dateTime = this.database.CustomSelection.GetDateTime();
-                dateTime = dateTime.SetOffset(utcOffsetPicker.Value.Value);
-                this.database.CustomSelection.SetDateTime(dateTime);
+                int row = Grid.GetRow(utcOffsetPicker);
+                this.database.CustomSelection.SearchTerms[row - 1].SetDatabaseValue(utcOffsetPicker.Value.Value);
                 this.UpdateSearchCriteriaFeedback();
             }
         }

@@ -481,13 +481,11 @@ namespace Carnassial.Controls
                 return;
             }
 
-            TextBox textBox = (TextBox)sender;
-
             // Don't allow leading whitespace in the note
             // Updating the text box moves the caret to the start position, which results in poor user experience when the text box initially contains only
             // whitespace and the user happens to move focus to the control in such a way that the first non-whitespace character entered follows some of the
-            // whitespace---the result's the first character of the word ends up at the end rather than at the beginning.  Whitespace only fields are common
-            // as the Template Editor defaults note fields to a single space.
+            // whitespace---the result's the first character of the word ends up at the end rather than at the beginning.
+            TextBox textBox = (TextBox)sender;
             int cursorPosition = textBox.CaretIndex;
             string trimmedNote = textBox.Text.TrimStart();
             if (trimmedNote != textBox.Text)
@@ -501,12 +499,11 @@ namespace Carnassial.Controls
                 textBox.Text = trimmedNote;
                 textBox.CaretIndex = cursorPosition;
             }
+            textBox.ToolTip = textBox.Text;
 
             // Get the key identifying the control, and then add its value to the database
-            // any trailing whitespace is also removed
             DataEntryControl control = (DataEntryControl)textBox.Tag;
-            control.SetContentAndTooltip(textBox.Text.Trim());
-            this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, control.Content);
+            this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, textBox.Text);
         }
 
         private void SetContextMenuCallbacks(DataEntryControl control)

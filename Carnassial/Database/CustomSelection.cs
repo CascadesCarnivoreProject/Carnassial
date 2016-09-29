@@ -19,61 +19,70 @@ namespace Carnassial.Database
             this.SearchTerms = new List<SearchTerm>();
             this.TermCombiningOperator = termCombiningOperator;
 
-            // fill the data grid with the controls in the template (in control order)
+            // generate search terms for all relevant controls in the template (in control order)
             foreach (ControlRow control in templateTable)
             {
-                string controlType = control.Type;
+                // skip hidden controls as they're not normally a part of the user experience
+                // this is potentially problematic in corner cases; an option to show terms for all controls can be added if needed
+                if (control.Visible == false)
+                {
+                    continue;
+                }
+
                 // add a control here to prevent it from appearing
-                // folder is usually the same for all files in the image set and not a useful selection criteria
-                // date and time are redundant with DateTime
+                // Folder is usually the same for all files in the image set and not a useful selection criteria
+                string controlType = control.Type;
                 if (controlType == Constants.DatabaseColumn.Folder) 
                 {
                     continue;
                 }
 
-                // Create a new search term for each row, where each row specifies a particular control and how it can be searched
-                string defaultDatabaseValue = String.Empty;
-                string termOperator = Constants.SearchTermOperator.Equal;
+                // create search term for the control
+                SearchTerm searchTerm = new SearchTerm();
+                searchTerm.ControlType = controlType;
+                searchTerm.DataLabel = control.DataLabel;
+                searchTerm.DatabaseValue = String.Empty;
+                searchTerm.Operator = Constants.SearchTermOperator.Equal;
+                searchTerm.Label = control.Label;
+                searchTerm.List = control.GetChoices();
+                searchTerm.UseForSearching = false;
+                this.SearchTerms.Add(searchTerm);
+
                 if (controlType == Constants.Control.Counter)
                 {
-                    defaultDatabaseValue = "0";
-                    termOperator = Constants.SearchTermOperator.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
+                    searchTerm.DatabaseValue = "0";
+                    searchTerm.Operator = Constants.SearchTermOperator.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
                 }
                 else if (controlType == Constants.DatabaseColumn.DateTime)
                 {
-                    // the first time it's popped the CustomViewSelection dialog changes this default to the date time of the current image
-                    defaultDatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(Constants.ControlDefault.DateTimeValue);
-                    termOperator = Constants.SearchTermOperator.GreaterThanOrEqual;
+                    // the first time the CustomViewSelection dialog is popped CarnassialWindow calls SetDateTime() to changes the default date time to the date time 
+                    // of the current image
+                    searchTerm.DatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(Constants.ControlDefault.DateTimeValue);
+                    searchTerm.Operator = Constants.SearchTermOperator.GreaterThanOrEqual;
+
+                    // support querying on a range of datetimes by giving the user two search terms, one configured for the start of the interval and one
+                    // for the end
+                    SearchTerm dateTimeLessThanOrEqual = new SearchTerm(searchTerm);
+                    dateTimeLessThanOrEqual.Operator = Constants.SearchTermOperator.LessThanOrEqual;
+                    this.SearchTerms.Add(dateTimeLessThanOrEqual);
                 }
                 else if (controlType == Constants.Control.Flag)
                 {
-                    defaultDatabaseValue = Constants.Boolean.False;
+                    searchTerm.DatabaseValue = Constants.Boolean.False;
                 }
                 else if (controlType == Constants.DatabaseColumn.UtcOffset)
                 {
                     // the first time it's popped CustomViewSelection dialog changes this default to the date time of the current image
-                    defaultDatabaseValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constants.ControlDefault.DateTimeValue.Offset);
-                    termOperator = Constants.SearchTermOperator.GreaterThanOrEqual;
+                    searchTerm.SetDatabaseValue(Constants.ControlDefault.DateTimeValue.Offset);
                 }
-
-                // Create a new search term and add it to the list
-                SearchTerm searchTerm = new SearchTerm();
-                searchTerm.UseForSearching = false;
-                searchTerm.Type = controlType;
-                searchTerm.Label = control.Label;
-                searchTerm.DataLabel = control.DataLabel;
-                searchTerm.Operator = termOperator;
-                searchTerm.DatabaseValue = defaultDatabaseValue;
-                searchTerm.List = control.GetChoices();
-                this.SearchTerms.Add(searchTerm);
+                // else use default values above
             }
         }
 
-        public DateTimeOffset GetDateTime()
+        public DateTimeOffset GetDateTime(int dateTimeSearchTermIndex, TimeZoneInfo imageSetTimeZone)
         {
-            DateTime dateTime = DateTimeHandler.ParseDatabaseDateTimeString(this.SearchTerms.First(term => term.DataLabel == Constants.DatabaseColumn.DateTime).DatabaseValue);
-            TimeSpan utcOffset = DateTimeHandler.ParseDatabaseUtcOffsetString(this.SearchTerms.First(term => term.DataLabel == Constants.DatabaseColumn.UtcOffset).DatabaseValue);
-            return DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, utcOffset);
+            DateTime dateTime = this.SearchTerms[dateTimeSearchTermIndex].GetDateTime();
+            return DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, imageSetTimeZone.GetUtcOffset(dateTime));
         }
 
         // Create and return the query composed from the search term list
@@ -117,10 +126,24 @@ namespace Carnassial.Database
             return where.Trim();
         }
 
-        public void SetDateTime(DateTimeOffset dateTime)
+        public void SetDateTime(int dateTimeSearchTermIndex, DateTimeOffset newDateTime, TimeZoneInfo imageSetTimeZone)
         {
-            this.SearchTerms.First(term => term.DataLabel == Constants.DatabaseColumn.DateTime).DatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(dateTime);
-            this.SearchTerms.First(term => term.DataLabel == Constants.DatabaseColumn.UtcOffset).DatabaseValue = DateTimeHandler.ToDatabaseUtcOffsetString(dateTime.Offset);
+            DateTimeOffset dateTime = this.GetDateTime(dateTimeSearchTermIndex, imageSetTimeZone);
+            this.SearchTerms[dateTimeSearchTermIndex].SetDatabaseValue(new DateTimeOffset(newDateTime.DateTime, dateTime.Offset));
+        }
+
+        public void SetDateTimesAndOffset(DateTimeOffset dateTime)
+        {
+            foreach (SearchTerm dateTimeTerm in this.SearchTerms.Where(term => term.DataLabel == Constants.DatabaseColumn.DateTime))
+            {
+                dateTimeTerm.SetDatabaseValue(dateTime);
+            }
+
+            SearchTerm utcOffsetTerm = this.SearchTerms.FirstOrDefault(term => term.DataLabel == Constants.DatabaseColumn.UtcOffset);
+            if (utcOffsetTerm != null)
+            {
+                utcOffsetTerm.SetDatabaseValue(dateTime.Offset);
+            }
         }
 
         // return SQL expressions to database equivalents
