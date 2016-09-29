@@ -191,6 +191,8 @@ namespace Carnassial
             public const string TemplateDatabaseFileExtension = ".tdb";
             public const string XmlTemplateFileName = "CodeTemplate.xml";
             public const string XmlDataFileName = "ImageData.xml";
+
+            public static readonly TimeSpan BackupInterval = TimeSpan.FromMinutes(10);
         }
 
         // shorthands for ImageSelection.<value>.ToString()
@@ -367,8 +369,6 @@ namespace Carnassial
             public const string DateFormat = "dd-MMM-yyyy";
             public const string DateTimeDatabaseFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
             public const string DateTimeDisplayFormat = "dd-MMM-yyyy HH:mm:ss";
-            // must be kept in sync with ExifToolWrapper.Arguments 
-            public const string DateTimeExifToolFormat = "yyyy:MM:dd HH:mm:ss";
             public const int MonthsInYear = 12;
             public const string TimeFormat = "HH:mm:ss";
             public const string TimeSpanDisplayFormat = @"hh\:mm\:ss";

@@ -17,7 +17,6 @@ namespace Carnassial.UnitTests
         public const string MessageBoxAutomationID = "CarnassialMessageBox";
         public const string OkButtonAutomationID = "OkButton";
         public const string TemplatePaneAutomationID = "TemplatePane";
-        public const string TrySaveDatabaseBackupFileMethodName = "TrySaveDatabaseBackupFile";
         public const string TryShowImageWithoutSliderCallbackMethodName = "TryShowImageWithoutSliderCallback";
 
         public static readonly TimeSpan UIElementSearchTimeout = TimeSpan.FromSeconds(15.0);
@@ -109,6 +108,7 @@ namespace Carnassial.UnitTests
         {
             public const string DateTime = "Exif IFD0.Date/Time";
             public const string DateTimeDigitized = "Exif SubIFD.Date/Time Digitized";
+            public const string DateTimeFormat = "yyyy:MM:dd HH:mm:ss";
             public const string DateTimeOriginal = "Exif SubIFD.Date/Time Original";
             public const string ExposureTime = "Exif SubIFD.Exposure Time";
             public const string ShutterSpeed = "Exif SubIFD.Shutter Speed Value";

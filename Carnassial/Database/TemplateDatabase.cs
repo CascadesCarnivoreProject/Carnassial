@@ -15,11 +15,13 @@ namespace Carnassial.Database
     {
         private bool disposed;
         private DataGrid editorDataGrid;
+        private DateTime mostRecentBackup;
         private DataRowChangeEventHandler onTemplateTableRowChanged;
 
         protected TemplateDatabase(string filePath)
         {
             this.disposed = false;
+            this.mostRecentBackup = FileBackup.GetMostRecentBackup(filePath);
 
             // open or create database
             this.Database = new SQLiteWrapper(filePath);
@@ -43,6 +45,18 @@ namespace Carnassial.Database
             this.GetControlsSortedByControlOrder();
         }
 
+        protected void CreateBackupIfNeeded()
+        {
+            if (DateTime.UtcNow - this.mostRecentBackup < Constants.File.BackupInterval)
+            {
+                // not due for a new backup yet
+                return;
+            }
+
+            FileBackup.TryCreateBackup(this.FilePath);
+            this.mostRecentBackup = DateTime.UtcNow;
+        }
+
         public static TemplateDatabase CreateOrOpen(string filePath)
         {
             // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
@@ -64,6 +78,8 @@ namespace Carnassial.Database
 
         public ControlRow AddUserDefinedControl(string controlType)
         {
+            this.CreateBackupIfNeeded();
+
             // create the row for the new control in the data table
             ControlRow newControl = this.TemplateTable.NewRow();
             string dataLabelPrefix;
@@ -174,6 +190,8 @@ namespace Carnassial.Database
 
         public void RemoveUserDefinedControl(ControlRow controlToRemove)
         {
+            this.CreateBackupIfNeeded();
+
             string controlType = controlToRemove.Type;
             if (Constants.Control.StandardTypes.Contains(controlType))
             {
@@ -225,6 +243,7 @@ namespace Carnassial.Database
         /// </summary>
         public void SyncControlToDatabase(ControlRow control)
         {
+            this.CreateBackupIfNeeded();
             this.Database.Update(Constants.Database.TemplateTable, control.GetColumnTuples());
         }
 
@@ -235,6 +254,8 @@ namespace Carnassial.Database
 
         private void SyncTemplateTableToDatabase(DataTableBackedList<ControlRow> newTable)
         {
+            this.CreateBackupIfNeeded();
+
             // clear the existing table in the database and add the new values
             this.Database.DeleteRows(Constants.Database.TemplateTable, null);
 
@@ -542,6 +563,7 @@ namespace Carnassial.Database
             }
 
             // 3rd update: change the target ID to the desired ID
+            this.CreateBackupIfNeeded();
             string setControlID = "Update " + Constants.Database.TemplateTable;
             setControlID += " SET " + Constants.DatabaseColumn.ID + " = " + newID;
             setControlID += " WHERE " + Constants.Control.DataLabel + " = '" + dataLabel + "'";

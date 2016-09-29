@@ -98,11 +98,11 @@ namespace Carnassial.UnitTests
             Dictionary<string, string> metadata = this.LoadMetadata(imageDatabase, TestConstant.ImageExpectation.InfraredMarten);
 
             DateTime dateTime;
-            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTime], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime));
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTime], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime));
             DateTime dateTimeDigitized;
-            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTimeDigitized], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeDigitized));
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTimeDigitized], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeDigitized));
             DateTime dateTimeOriginal;
-            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTimeOriginal], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOriginal));
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTimeOriginal], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOriginal));
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Software]));
         }
 
@@ -120,7 +120,7 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Brightness]));
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Contrast]));
             DateTime dateTimeOriginal;
-            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.Reconyx.DateTimeOriginal], Constants.Time.DateTimeExifToolFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOriginal));
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.Reconyx.DateTimeOriginal], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOriginal));
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.FirmwareVersion]));
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.InfraredIlluminator]));
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.MoonPhase]));

@@ -8,7 +8,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Windows;
 using System.Windows.Controls;
 
 namespace Carnassial.Database
@@ -220,6 +219,7 @@ namespace Carnassial.Database
                     }
                 }
 
+                this.CreateBackupIfNeeded();
                 this.InsertRows(Constants.Database.ImageDataTable, imageTableRows);
                 this.InsertRows(Constants.Database.MarkersTable, markerTableRows);
 
@@ -355,17 +355,10 @@ namespace Carnassial.Database
                 {
                     ControlRow imageDatabaseControl = this.GetControlFromTemplateTable(dataLabel);
                     ControlRow templateControl = templateDatabase.GetControlFromTemplateTable(dataLabel);
-
-                    imageDatabaseControl.SpreadsheetOrder = templateControl.SpreadsheetOrder;
-                    imageDatabaseControl.ControlOrder = templateControl.ControlOrder;
-                    imageDatabaseControl.DefaultValue = templateControl.DefaultValue;
-                    imageDatabaseControl.Label = templateControl.Label;
-                    imageDatabaseControl.List = templateControl.List;
-                    imageDatabaseControl.Tooltip = templateControl.Tooltip;
-                    imageDatabaseControl.Width = templateControl.Width;
-                    imageDatabaseControl.Copyable = templateControl.Copyable;
-                    imageDatabaseControl.Visible = templateControl.Visible;
-                    this.SyncControlToDatabase(imageDatabaseControl);
+                    if (imageDatabaseControl.Synchronize(templateControl))
+                    {
+                        this.SyncControlToDatabase(imageDatabaseControl);
+                    }
                 }
             }
         }
@@ -515,6 +508,7 @@ namespace Carnassial.Database
         // Insert one or more rows into a table
         private void InsertRows(string table, List<List<ColumnTuple>> insertionStatements)
         {
+            this.CreateBackupIfNeeded();
             this.Database.Insert(table, insertionStatements);
         }
 
@@ -544,11 +538,13 @@ namespace Carnassial.Database
         /// </summary>
         public void UpdateImage(long id, string dataLabel, string value)
         {
-            // update the table
+            // update the data table
             ImageRow image = this.ImageDataTable.Find(id);
             image.SetValueFromDatabaseString(dataLabel, value);
 
             // update the row in the database
+            this.CreateBackupIfNeeded();
+
             ColumnTuplesWithWhere columnToUpdate = new ColumnTuplesWithWhere();
             columnToUpdate.Columns.Add(new ColumnTuple(dataLabel, value)); // Populate the data 
             columnToUpdate.SetWhere(id);
@@ -564,6 +560,7 @@ namespace Carnassial.Database
         // Given a list of column/value pairs (the string,object) and the FILE name indicating a row, update it
         public void UpdateImages(List<ColumnTuplesWithWhere> imagesToUpdate)
         {
+            this.CreateBackupIfNeeded();
             this.Database.Update(Constants.Database.ImageDataTable, imagesToUpdate);
         }
 
@@ -592,6 +589,7 @@ namespace Carnassial.Database
                 imagesToUpdate.Add(imageUpdate);
             }
 
+            this.CreateBackupIfNeeded();
             this.Database.Update(Constants.Database.ImageDataTable, imagesToUpdate);
         }
 
@@ -659,6 +657,7 @@ namespace Carnassial.Database
 
             if (imagesToUpdate.Count > 0)
             {
+                this.CreateBackupIfNeeded();
                 this.Database.Update(Constants.Database.ImageDataTable, imagesToUpdate);
 
                 // Add an entry into the log detailing what we just did
@@ -724,6 +723,7 @@ namespace Carnassial.Database
 
             if (imagesToUpdate.Count > 0)
             {
+                this.CreateBackupIfNeeded();
                 this.Database.Update(Constants.Database.ImageDataTable, imagesToUpdate);
 
                 StringBuilder log = new StringBuilder(Environment.NewLine);
@@ -745,6 +745,7 @@ namespace Carnassial.Database
             if (idClauses.Count > 0)
             {
                 // Delete the data and markers associated with that image
+                this.CreateBackupIfNeeded();
                 this.Database.Delete(Constants.Database.ImageDataTable, idClauses);
                 this.Database.Delete(Constants.Database.MarkersTable, idClauses);
             }
@@ -758,12 +759,7 @@ namespace Carnassial.Database
                 return false;
             }
 
-            ImageSelection imageQuality = this.ImageDataTable[rowIndex].ImageQuality;
-            if ((imageQuality == ImageSelection.Corrupted) || (imageQuality == ImageSelection.Missing))
-            {
-                return false;
-            }
-            return true;
+            return this.ImageDataTable[rowIndex].IsDisplayable();
         }
 
         public bool IsImageRowInRange(int imageRowIndex)
@@ -883,11 +879,14 @@ namespace Carnassial.Database
 
         public void SyncImageSetToDatabase()
         {
+            // don't trigger backups on image set updates as none of the properties in the image set table is particularly important
+            // For example, this avoids creating a backup when a custom selection is reverted to all when Carnassial exits.
             this.Database.Update(Constants.Database.ImageSetTable, this.ImageSet.GetColumnTuples());
         }
 
         public void SyncMarkerToDatabase(MarkerRow marker)
         {
+            this.CreateBackupIfNeeded();
             this.Database.Update(Constants.Database.MarkersTable, marker.GetColumnTuples());
         }
 
@@ -896,6 +895,7 @@ namespace Carnassial.Database
         public void UpdateMarkers(List<ColumnTuplesWithWhere> markersToUpdate)
         {
             // update markers in database
+            this.CreateBackupIfNeeded();
             this.Database.Update(Constants.Database.MarkersTable, markersToUpdate);
 
             // update markers in marker data table

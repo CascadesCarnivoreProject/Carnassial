@@ -106,5 +106,57 @@ namespace Carnassial.Database
         {
             this.List = String.Join("|", choices);
         }
+
+        public bool Synchronize(ControlRow other)
+        {
+            bool synchronizationMadeChanges = false;
+            if (this.Copyable != other.Copyable)
+            {
+                this.Copyable = other.Copyable;
+                synchronizationMadeChanges = true;
+            }
+            if (this.ControlOrder != other.ControlOrder)
+            {
+                this.ControlOrder = other.ControlOrder;
+                synchronizationMadeChanges = true;
+            }
+            if (this.DefaultValue != other.DefaultValue)
+            {
+                this.DefaultValue = other.DefaultValue;
+                synchronizationMadeChanges = true;
+            }
+            if (this.Label != other.Label)
+            {
+                this.Label = other.Label;
+                synchronizationMadeChanges = true;
+            }
+            if (this.List != other.List)
+            {
+                this.List = other.List;
+                synchronizationMadeChanges = true;
+            }
+            if (this.SpreadsheetOrder != other.SpreadsheetOrder)
+            {
+                this.SpreadsheetOrder = other.SpreadsheetOrder;
+                synchronizationMadeChanges = true;
+            }
+            if (this.Tooltip != other.Tooltip)
+            {
+                this.Tooltip = other.Tooltip;
+                synchronizationMadeChanges = true;
+            }
+            if (this.Visible != other.Visible)
+            {
+                this.Visible = other.Visible;
+                synchronizationMadeChanges = true;
+            }
+            if (this.Width != other.Width)
+            {
+                this.Width = other.Width;
+                synchronizationMadeChanges = true;
+            }
+
+            return synchronizationMadeChanges;
+        }
     }
 }

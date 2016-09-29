@@ -34,7 +34,7 @@ namespace Carnassial.Editor
         // These variables support the drag/drop of controls
         private bool isMouseDown;
         private bool isMouseDragging;
-        private Point startPoint;
+        private Point mouseDownStartPosition;
         private UIElement realMouseDragSource;
         private UIElement dummyMouseDragSource;
 
@@ -94,28 +94,27 @@ namespace Carnassial.Editor
             this.TemplateDataGrid.CommitEdit(); // to apply edits that the enter key was not pressed
 
             // Configure save file dialog box
-            SaveFileDialog dlg = new SaveFileDialog();
-            dlg.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            dlg.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
-            dlg.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
-            dlg.Title = "Select Location to Save New Template File";
+            SaveFileDialog newTemplateFilePathDialog = new SaveFileDialog();
+            newTemplateFilePathDialog.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
+            newTemplateFilePathDialog.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
+            newTemplateFilePathDialog.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            newTemplateFilePathDialog.Title = "Select Location to Save New Template File";
 
             // Show save file dialog box
-            Nullable<bool> result = dlg.ShowDialog();
+            Nullable<bool> result = newTemplateFilePathDialog.ShowDialog();
 
             // Process save file dialog box results 
             if (result == true)
             {
-                this.TrySaveDatabaseBackupFile();
-
                 // Overwrite the file if it exists
-                if (File.Exists(dlg.FileName))
+                if (File.Exists(newTemplateFilePathDialog.FileName))
                 {
-                    File.Delete(dlg.FileName);
+                    FileBackup.TryCreateBackup(newTemplateFilePathDialog.FileName);
+                    File.Delete(newTemplateFilePathDialog.FileName);
                 }
 
                 // Open document 
-                this.InitializeDataGrid(dlg.FileName);
+                this.InitializeDataGrid(newTemplateFilePathDialog.FileName);
             }
         }
 
@@ -126,32 +125,27 @@ namespace Carnassial.Editor
         {
             this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
 
-            OpenFileDialog dlg = new OpenFileDialog();
-            dlg.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            dlg.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
-            dlg.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
-            dlg.Title = "Select an Existing Template File to Open";
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
+            openFileDialog.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
+            openFileDialog.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            openFileDialog.Title = "Select an Existing Template File to Open";
 
             // Show open file dialog box
-            Nullable<bool> result = dlg.ShowDialog();
+            Nullable<bool> result = openFileDialog.ShowDialog();
 
             // Process open file dialog box results 
             if (result == true)
             {
-                this.TrySaveDatabaseBackupFile();
-
                 // Open document 
-                this.InitializeDataGrid(dlg.FileName);
+                this.InitializeDataGrid(openFileDialog.FileName);
             }
         }
 
-        // Opern a rencently used template
+        // Opern a recently used template
         private void MenuItemRecentTemplate_Click(object sender, RoutedEventArgs e)
         {
             string recentTemplatePath = (string)((MenuItem)sender).ToolTip;
-
-            // Open document 
-            this.TrySaveDatabaseBackupFile();
             this.InitializeDataGrid(recentTemplatePath);
         }
 
@@ -706,7 +700,7 @@ namespace Carnassial.Editor
             if (e.Source != this.ControlsPanel)
             {
                 this.isMouseDown = true;
-                this.startPoint = e.GetPosition(this.ControlsPanel);
+                this.mouseDownStartPosition = e.GetPosition(this.ControlsPanel);
             }
         }
 
@@ -730,9 +724,10 @@ namespace Carnassial.Editor
         {
             if (this.isMouseDown)
             {
+                Point currentMousePosition = e.GetPosition(this.ControlsPanel);
                 if ((this.isMouseDragging == false) && 
-                    ((Math.Abs(e.GetPosition(this.ControlsPanel).X - this.startPoint.X) > SystemParameters.MinimumHorizontalDragDistance) || 
-                     (Math.Abs(e.GetPosition(this.ControlsPanel).Y - this.startPoint.Y) > SystemParameters.MinimumVerticalDragDistance)))
+                    ((Math.Abs(currentMousePosition.X - this.mouseDownStartPosition.X) > SystemParameters.MinimumHorizontalDragDistance) || 
+                     (Math.Abs(currentMousePosition.Y - this.mouseDownStartPosition.Y) > SystemParameters.MinimumVerticalDragDistance)))
                 {
                     this.isMouseDragging = true;
                     this.realMouseDragSource = e.Source as UIElement;
@@ -841,7 +836,6 @@ namespace Carnassial.Editor
             string templateDatabaseFilePath;
             if (Utilities.IsSingleTemplateFileDrag(dropEvent, out templateDatabaseFilePath))
             {
-                this.TrySaveDatabaseBackupFile();
                 this.InitializeDataGrid(templateDatabaseFilePath);
             }
         }
@@ -864,19 +858,6 @@ namespace Carnassial.Editor
             DataGridCellsPresenter presenter = EditorWindow.GetVisualChild<DataGridCellsPresenter>(currentRow);
             currentCell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.CurrentColumn.DisplayIndex);
             return currentCell != null;
-        }
-
-        /// <summary>
-        /// Helper method that creates a database backup. Used when performing file menu options.
-        /// </summary>
-        private bool TrySaveDatabaseBackupFile()
-        {
-            if (this.templateDatabase == null)
-            {
-                return false;
-            }
-
-            return FileBackup.TryCreateBackups(Path.GetDirectoryName(this.templateDatabase.FilePath), Path.GetFileName(this.templateDatabase.FilePath));
         }
 
         private void ValidateDataLabel(DataGridCellEditEndingEventArgs e)

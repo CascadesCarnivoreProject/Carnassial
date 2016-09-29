@@ -627,15 +627,6 @@ namespace Carnassial
 
             // match UX availability to image availability
             this.EnableOrDisableMenusAndControls();
-
-            if (FileBackup.TryCreateBackups(this.FolderPath, this.dataHandler.ImageDatabase.FileName))
-            {
-                this.statusBar.SetMessage("Backup of data file made.");
-            }
-            else
-            {
-                this.statusBar.SetMessage("No file backups were made.");
-            }
         }
 
         private void EnableOrDisableMenusAndControls()
@@ -1666,7 +1657,7 @@ namespace Carnassial
             string csvFilePath = Path.Combine(this.FolderPath, csvFileName);
 
             // Backup the csv file if it exists, as the export will overwrite it. 
-            if (FileBackup.TryCreateBackups(this.FolderPath, csvFileName))
+            if (FileBackup.TryCreateBackup(this.FolderPath, csvFileName))
             {
                 this.statusBar.SetMessage("Backup of csv file made.");
             }
@@ -1818,7 +1809,7 @@ namespace Carnassial
             }
 
             // Create a backup database file
-            if (FileBackup.TryCreateBackups(this.FolderPath, this.dataHandler.ImageDatabase.FileName))
+            if (FileBackup.TryCreateBackup(this.dataHandler.ImageDatabase.FilePath))
             {
                 this.statusBar.SetMessage("Backup of data file made.");
             }

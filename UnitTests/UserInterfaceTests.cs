@@ -46,7 +46,6 @@ namespace Carnassial.UnitTests
             PrivateObject editorAccessor = new PrivateObject(editor);
             editor.Show();
             this.WaitForRenderingComplete();
-            Assert.IsFalse((bool)editorAccessor.Invoke(TestConstant.TrySaveDatabaseBackupFileMethodName));
             editorAccessor.Invoke(TestConstant.InitializeDataGridMethodName, templateDatabaseFilePath);
             this.WaitForRenderingComplete();
             editor.Close();
@@ -57,7 +56,6 @@ namespace Carnassial.UnitTests
             editor = new EditorWindow();
             editor.Show();
             this.WaitForRenderingComplete();
-            Assert.IsTrue((bool)editorAccessor.Invoke(TestConstant.TrySaveDatabaseBackupFileMethodName));
             editorAccessor.Invoke(TestConstant.InitializeDataGridMethodName, templateDatabaseFilePath);
             this.WaitForRenderingComplete();
 
