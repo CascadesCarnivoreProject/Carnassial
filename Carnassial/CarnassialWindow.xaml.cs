@@ -962,7 +962,7 @@ namespace Carnassial
                  currentControl = incrementOrDecrement(currentControl))
             {
                 DataEntryControl control = this.DataEntryControls.Controls[currentControl];
-                if (control.ReadOnly == false)
+                if (control.ContentReadOnly == false)
                 {
                     control.Focus(this);
                     return;
@@ -1237,7 +1237,7 @@ namespace Carnassial
             foreach (KeyValuePair<string, DataEntryControl> control in this.DataEntryControls.ControlsByDataLabel)
             {
                 string controlType = this.dataHandler.ImageDatabase.ImageDataColumnsByDataLabel[control.Key].ControlType;
-                control.Value.Content = this.dataHandler.ImageCache.Current.GetValueDisplayString(control.Value.DataLabel);
+                control.Value.SetContentAndTooltip(this.dataHandler.ImageCache.Current.GetValueDisplayString(control.Value.DataLabel));
             }
             this.dataHandler.IsProgrammaticControlUpdate = false;
 
@@ -1464,7 +1464,7 @@ namespace Carnassial
                 // Don't bother updating if the value hasn't changed (i.e., already at a 0 count)
                 // Update the datatable and database with the new counter values
                 this.dataHandler.IsProgrammaticControlUpdate = true;
-                counter.Content = newCounterData;
+                counter.SetContentAndTooltip(newCounterData);
                 this.dataHandler.IsProgrammaticControlUpdate = false;
                 this.dataHandler.ImageDatabase.UpdateImage(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, newCounterData);
             }
@@ -1514,7 +1514,7 @@ namespace Carnassial
             string counterContent = count.ToString();
             this.dataHandler.IsProgrammaticControlUpdate = true;
             this.dataHandler.ImageDatabase.UpdateImage(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, counterContent);
-            counter.Content = counterContent;
+            counter.SetContentAndTooltip(counterContent);
             this.dataHandler.IsProgrammaticControlUpdate = false;
 
             // Find markers associated with this particular control
@@ -2126,7 +2126,7 @@ namespace Carnassial
                 DataEntryControl control = pair.Value;
                 if (this.dataHandler.ImageDatabase.IsControlCopyable(control.DataLabel))
                 {
-                    control.Content = this.dataHandler.ImageDatabase.ImageDataTable[previousRow].GetValueDisplayString(control.DataLabel);
+                    control.SetContentAndTooltip(this.dataHandler.ImageDatabase.ImageDataTable[previousRow].GetValueDisplayString(control.DataLabel));
                 }
             }
         }

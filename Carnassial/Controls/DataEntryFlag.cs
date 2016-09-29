@@ -8,24 +8,29 @@ namespace Carnassial.Controls
     // - checkbobox (the content) at the given width
     public class DataEntryFlag : DataEntryControl<CheckBox, Label>
     {
-        /// <summary>Gets or sets the Content of the Note</summary>
+        /// <summary>Gets the current state of the flag</summary>
+        /// <remarks>true if the flag is checked, false otherwise</remarks>
         public override string Content
         {
-            get
-            {
-                return ((bool)this.ContentControl.IsChecked) ? Constants.Boolean.True : Constants.Boolean.False;
-            }
-            set
-            {
-                value = value.ToLower();
-                this.ContentControl.IsChecked = (value == Constants.Boolean.True) ? true : false;
-            }
+            get { return ((bool)this.ContentControl.IsChecked) ? Constants.Boolean.True : Constants.Boolean.False; }
+        }
+
+        public override bool ContentReadOnly
+        {
+            get { return !this.ContentControl.IsEnabled; }
+            set { this.ContentControl.IsEnabled = !value; }
         }
 
         public DataEntryFlag(ControlRow control, DataEntryControls styleProvider)
             : base(control, styleProvider, ControlContentStyle.FlagCodeBar, ControlLabelStyle.LabelCodeBar)
         {
-            this.Container.ToolTip = "Toggle between true (checked) and false (unchecked)";
+        }
+
+        public override void SetContentAndTooltip(string value)
+        {
+            value = value.ToLower();
+            this.ContentControl.IsChecked = (value == Constants.Boolean.True) ? true : false;
+            this.ContentControl.ToolTip = value;
         }
     }
 }

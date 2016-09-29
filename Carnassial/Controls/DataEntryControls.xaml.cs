@@ -50,7 +50,7 @@ namespace Carnassial.Controls
                 {
                     // standard controls rendering as notes aren't editable by the user 
                     DataEntryNote noteControl = new DataEntryNote(control, this);
-                    noteControl.ReadOnly = control.Type != Constants.Control.Note;
+                    noteControl.ContentReadOnly = control.Type != Constants.Control.Note;
                     controlToAdd = noteControl;
                 }
                 else if (control.Type == Constants.Control.Flag || control.Type == Constants.DatabaseColumn.DeleteFlag)

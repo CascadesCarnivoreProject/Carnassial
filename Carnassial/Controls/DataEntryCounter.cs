@@ -15,7 +15,12 @@ namespace Carnassial.Controls
         public override string Content
         {
             get { return this.ContentControl.Text; }
-            set { this.ContentControl.Text = value; }
+        }
+
+        public override bool ContentReadOnly
+        {
+            get { return this.ContentControl.IsReadOnly; }
+            set { this.ContentControl.IsReadOnly = value; }
         }
 
         public bool IsSelected
@@ -31,9 +36,6 @@ namespace Carnassial.Controls
             //             and if the context menu is nulled out after creation why is it possible to pass createContextMenu = true?
             this.ContentControl.ContextMenu = null;
 
-            // Now configure the various elements
-            this.Container.ToolTip = "Select the button, then click on the entity in the image to increment its count OR type in a number";
-
             // Assign all counters to a single group so that selecting a new counter deselects any currently selected counter
             this.LabelControl.GroupName = "DataEntryCounter";
 
@@ -48,6 +50,12 @@ namespace Carnassial.Controls
                 this.LabelControl.IsChecked = false;
             }
             this.previousLabelControlIsChecked = this.LabelControl.IsChecked.Value;
+        }
+
+        public override void SetContentAndTooltip(string value)
+        {
+            this.ContentControl.Text = value;
+            this.ContentControl.ToolTip = value;
         }
     }
 }

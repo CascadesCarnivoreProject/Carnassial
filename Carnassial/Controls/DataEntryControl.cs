@@ -9,10 +9,13 @@ namespace Carnassial.Controls
 {
     public abstract class DataEntryControl
     {
-        /// <summary>Gets or sets the content of the note</summary>
-        public abstract string Content { get; set; }
+        /// <summary>Gets the value of the control</summary>
+        public abstract string Content { get; }
 
-        /// <summary>Gets or sets a value indicating whether the note contents are copyable.</summary>
+        /// <summary>Gets or sets a value indicating whether the control's content is user editable</summary>
+        public abstract bool ContentReadOnly { get; set; }
+
+        /// <summary>Gets or sets a value indicating whether the control's content is copyable.</summary>
         public bool Copyable { get; set; }
 
         /// <summary>Gets the container that holds the control.</summary>
@@ -20,16 +23,6 @@ namespace Carnassial.Controls
 
         /// <summary>Gets the data label which corresponds to this control.</summary>
         public string DataLabel { get; private set; }
-
-        /// <summary>Gets or sets a value indicating whether the control's content is user-editable</summary>
-        public abstract bool ReadOnly { get; set; }
-
-        /// <summary>Gets or sets the tooltip attached to the Note</summary>
-        public string Tooltip
-        {
-            get { return (string)this.Container.ToolTip; }
-            set { this.Container.ToolTip = value; }
-        }
 
         public abstract void Focus(DependencyObject focusScope);
 
@@ -49,6 +42,8 @@ namespace Carnassial.Controls
             // this is needed by callbacks such as DataEntryHandler.Container_PreviewMouseRightButtonDown() and CarnassialWindow.CounterControl_MouseLeave()
             this.Container.Tag = this;
         }
+
+        public abstract void SetContentAndTooltip(string value);
     }
 
     // A generic control comprises a stack panel containing 
@@ -61,21 +56,13 @@ namespace Carnassial.Controls
     {
         public TContent ContentControl { get; private set; }
 
-        /// <summary>Gets or sets the control label's value</summary>
+        /// <summary>Gets the control label's value</summary>
         public string Label
         {
             get { return (string)this.LabelControl.Content; }
-            set { this.LabelControl.Content = value; }
         }
 
         public TLabel LabelControl { get; private set; }
-
-        /// <summary>Gets or sets a value indicating whether the control's content is user-editable</summary>
-        public override bool ReadOnly
-        {
-            get { return !this.ContentControl.IsEnabled; }
-            set { this.ContentControl.IsEnabled = !value; }
-        }
 
         /// <summary>Gets or sets the width of the content control</summary>
         public long Width
@@ -90,24 +77,24 @@ namespace Carnassial.Controls
             this.ContentControl = new TContent();
 
             // configure the content
-            this.Content = control.DefaultValue;
             this.ContentControl.IsTabStop = true;
             if (contentStyleName.HasValue)
             {
                 this.ContentControl.Style = (Style)styleProvider.FindResource(contentStyleName.Value.ToString());
             }
-            this.ReadOnly = false;
-            this.Tooltip = control.Tooltip;
+            this.ContentReadOnly = false;
+            this.SetContentAndTooltip(control.DefaultValue);
             this.Width = control.Width;
 
             // use the content's tag to point back to this so event handlers can access the DataEntryControl as well as just ContentControl
-            // the data update callback for each control type in CarnassialWindow, such as NoteControl_TextChanged(), rely on this
+            // the data update callback for each control type in CarnassialWindow, such as NoteControl_TextChanged(), relies on this
             this.ContentControl.Tag = this;
 
             // Create the label (which is an actual label)
             this.LabelControl = new TLabel();
-            this.Label = control.Label;
+            this.LabelControl.Content = control.Label;
             this.LabelControl.Style = (Style)styleProvider.FindResource(labelStyleName.ToString());
+            this.LabelControl.ToolTip = control.Tooltip;
 
             // add the label and content to the stack panel
             this.Container.Children.Add(this.LabelControl);

@@ -9,7 +9,12 @@ namespace Carnassial.Controls
         public override string Content
         {
             get { return this.ContentControl.Text; }
-            set { this.ContentControl.Text = value; }
+        }
+
+        public override bool ContentReadOnly
+        {
+            get { return this.ContentControl.IsReadOnly; }
+            set { this.ContentControl.IsReadOnly = value; }
         }
 
         public DataEntryDateTime(ControlRow control, DataEntryControls styleProvider) : 
@@ -19,6 +24,12 @@ namespace Carnassial.Controls
             this.Container.ToolTip = "Enter a date/time";
 
             DataEntryHandler.Configure(this.ContentControl, null);
+        }
+
+        public override void SetContentAndTooltip(string value)
+        {
+            this.ContentControl.Text = value;
+            this.ContentControl.ToolTip = value;
         }
     }
 }

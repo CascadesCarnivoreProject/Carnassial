@@ -205,7 +205,7 @@ namespace Carnassial.Controls
             // the callback updates the matching field for that image in the database.
             foreach (KeyValuePair<string, DataEntryControl> pair in controlsByDataLabel)
             {
-                if (pair.Value.ReadOnly)
+                if (pair.Value.ContentReadOnly)
                 {
                     continue;
                 }
@@ -388,7 +388,8 @@ namespace Carnassial.Controls
 
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)textBox.Tag;
-            this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, textBox.Text.Trim());
+            control.SetContentAndTooltip(textBox.Text.Trim());
+            this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, control.Content);
             return;
         }
 
@@ -409,7 +410,8 @@ namespace Carnassial.Controls
 
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)comboBox.Tag;
-            this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, comboBox.SelectedItem.ToString().Trim());
+            control.SetContentAndTooltip(comboBox.SelectedItem.ToString());
+            this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, control.Content);
         }
 
         private void DateTimeControl_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
@@ -427,6 +429,8 @@ namespace Carnassial.Controls
 
             // umdate image data table and write the new DateTime, Date, and Time to the database
             this.ImageCache.Current.SetDateAndTime(dateTimePicker.Value.Value);
+            dateTimePicker.ToolTip = DateTimeHandler.ToDisplayDateTimeString(dateTimePicker.Value.Value);
+
             List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
             this.ImageDatabase.UpdateImages(imageToUpdate);
         }
@@ -441,9 +445,10 @@ namespace Carnassial.Controls
 
             CheckBox checkBox = (CheckBox)sender;
             // Get the key identifying the control, and then add its value to the database
-            DataEntryControl control = (DataEntryControl)checkBox.Tag;
             string value = ((bool)checkBox.IsChecked) ? Constants.Boolean.True : Constants.Boolean.False;
-            this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, value);
+            DataEntryControl control = (DataEntryControl)checkBox.Tag;
+            control.SetContentAndTooltip(value);
+            this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, control.Content);
             return;
         }
 
@@ -451,7 +456,7 @@ namespace Carnassial.Controls
         protected virtual void MenuItemPropagateFromLastValue_Click(object sender, RoutedEventArgs e)
         {
             DataEntryControl control = (DataEntryControl)((MenuItem)sender).Tag;
-            control.Content = this.CopyFromLastNonEmptyValue(control);
+            control.SetContentAndTooltip(this.CopyFromLastNonEmptyValue(control));
         }
 
         // Copy the current value of this control to all images
@@ -500,7 +505,8 @@ namespace Carnassial.Controls
             // Get the key identifying the control, and then add its value to the database
             // any trailing whitespace is also removed
             DataEntryControl control = (DataEntryControl)textBox.Tag;
-            this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, textBox.Text.Trim());
+            control.SetContentAndTooltip(textBox.Text.Trim());
+            this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, control.Content);
         }
 
         private void SetContextMenuCallbacks(DataEntryControl control)
@@ -575,11 +581,12 @@ namespace Carnassial.Controls
             {
                 return;
             }
-            DataEntryControl control = (DataEntryControl)utcOffsetPicker.Tag;
 
             DateTimeOffset currentImageDateTime = this.ImageCache.Current.GetDateTime();
             DateTimeOffset newImageDateTime = currentImageDateTime.SetOffset(utcOffsetPicker.Value.Value);
             this.ImageCache.Current.SetDateAndTime(newImageDateTime);
+            utcOffsetPicker.ToolTip = DateTimeHandler.ToDisplayUtcOffsetString(utcOffsetPicker.Value.Value);
+
             List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
             this.ImageDatabase.UpdateImages(imageToUpdate);  // write the new UtcOffset to the database
         }

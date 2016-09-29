@@ -7,16 +7,21 @@ using System.Windows.Media;
 
 namespace Carnassial.Controls
 {
-    // A FixedChoice comprises a stack panel containing
+    // A choice comprises a stack panel containing
     // - a label containing the descriptive label) 
     // - a combobox (containing the content) at the given width
     public class DataEntryChoice : DataEntryControl<ComboBox, Label>
     {
-        /// <summary>Gets or sets the content of the choice.</summary>
+        /// <summary>Gets the current choice.</summary>
         public override string Content
         {
             get { return this.ContentControl.Text; }
-            set { this.ContentControl.SelectedValue = value; }
+        }
+
+        public override bool ContentReadOnly
+        {
+            get { return this.ContentControl.IsReadOnly; }
+            set { this.ContentControl.IsReadOnly = value; }
         }
 
         public DataEntryChoice(ControlRow control, DataEntryControls styleProvider)
@@ -60,9 +65,6 @@ namespace Carnassial.Controls
             }
 
             this.ContentControl.SelectedIndex = 0;
-
-            // Now configure the various elements
-            this.Container.ToolTip = "Type in text";
         }
 
         // Users may want to use the text search facility on the combobox, where they type the first letter and then enter
@@ -83,6 +85,12 @@ namespace Carnassial.Controls
                     }
                 }
             }
+        }
+
+        public override void SetContentAndTooltip(string value)
+        {
+            this.ContentControl.SelectedValue = value;
+            this.ContentControl.ToolTip = value;
         }
     }
 }
