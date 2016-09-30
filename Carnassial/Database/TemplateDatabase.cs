@@ -154,7 +154,7 @@ namespace Carnassial.Database
 
         private void GetControlsSortedByControlOrder()
         {
-            DataTable templateTable = this.Database.GetDataTableFromSelect(Constants.Sql.SelectStarFrom + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Control.ControlOrder);
+            DataTable templateTable = this.Database.GetDataTableFromSelect("SELECT * FROM " + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Control.ControlOrder);
             this.TemplateTable = new DataTableBackedList<ControlRow>(templateTable, (DataRow row) => { return new ControlRow(row); });
             this.TemplateTable.BindDataGrid(this.editorDataGrid, this.onTemplateTableRowChanged);
         }

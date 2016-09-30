@@ -1221,14 +1221,26 @@ namespace Carnassial
                 throw new ArgumentOutOfRangeException("newImageRow", String.Format("{0} is not a valid row index in the image table.", imageRow));
             }
 
-            // For each control, we get its type and then update its contents from the current data table row
-            // this is always done as it's assumed either the image changed or that a control refresh is required due to database changes
-            // the call to TryMoveToImage() above refreshes the data stored under this.dataHandler.ImageCache.Current
+            // update each control with the data for the now current image
+            // This is always done as it's assumed either the image changed or that a control refresh is required due to database changes
+            // the call to TryMoveToImage() above refreshes the data stored under this.dataHandler.ImageCache.Current.
             this.dataHandler.IsProgrammaticControlUpdate = true;
             foreach (KeyValuePair<string, DataEntryControl> control in this.DataEntryControls.ControlsByDataLabel)
             {
+                // update value
                 string controlType = this.dataHandler.ImageDatabase.ImageDataColumnsByDataLabel[control.Key].ControlType;
                 control.Value.SetContentAndTooltip(this.dataHandler.ImageCache.Current.GetValueDisplayString(control.Value.DataLabel));
+
+                // for note controls, update the autocomplete list if an edit occurred
+                if (controlType == Constants.Control.Note)
+                {
+                    DataEntryNote noteControl = (DataEntryNote)control.Value;
+                    if (noteControl.ContentChanged)
+                    {
+                        noteControl.Autocompletions = this.dataHandler.ImageDatabase.GetDistinctValuesInImageColumn(control.Value.DataLabel);
+                        noteControl.ContentChanged = false;
+                    }
+                }
             }
             this.dataHandler.IsProgrammaticControlUpdate = false;
 

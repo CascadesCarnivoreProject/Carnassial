@@ -138,7 +138,7 @@
             <Setter Property="Height" Value="25" />
         </Style>
 
-        <Style x:Key="TextBoxCodeBar" TargetType="TextBox" >
+        <Style x:Key="TextBoxCodeBar" TargetType="TextBox">
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Padding" Value="5,0,5,0"/>
@@ -163,6 +163,7 @@
             <Setter Property="IsReadOnly" Value="False" />
             <Setter Property="IsEditable" Value="False" />
         </Style>
+        
         <Style x:Key="FlagCodeBar" TargetType="{x:Type CheckBox}">
             <Setter Property="SnapsToDevicePixels" Value="true"/>
             <Setter Property="OverridesDefaultStyle" Value="true"/>
@@ -222,7 +223,6 @@
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Margin" Value="0,5,0,0"/>
             <Setter Property="FontWeight" Value="Bold" />
-
             <Setter Property="Height" Value="20" />
         </Style>
 

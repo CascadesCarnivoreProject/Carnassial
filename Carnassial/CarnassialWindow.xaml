@@ -16,18 +16,6 @@
     WindowState="Normal" Icon="32x32.ico">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-        <Style x:Key="TextBoxCodeBar" TargetType="TextBox">
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="0,4,5,5"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="LightBlue"/>
-            <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Height" Value="30" />
-            <Setter Property="Focusable" Value="True" />
-            <Setter Property="IsReadOnly" Value="False" />
-        </Style>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>

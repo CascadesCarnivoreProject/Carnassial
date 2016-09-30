@@ -49,8 +49,14 @@ namespace Carnassial.Controls
                          control.Type == Constants.Control.Note)
                 {
                     // standard controls rendering as notes aren't editable by the user 
-                    DataEntryNote noteControl = new DataEntryNote(control, this);
-                    noteControl.ContentReadOnly = control.Type != Constants.Control.Note;
+                    List<string> autocompletions = null;
+                    bool readOnly = control.Type != Constants.Control.Note;
+                    if (readOnly == false)
+                    {
+                        autocompletions = new List<string>(database.GetDistinctValuesInImageColumn(control.DataLabel));
+                    }
+                    DataEntryNote noteControl = new DataEntryNote(control, autocompletions, this);
+                    noteControl.ContentReadOnly = readOnly;
                     controlToAdd = noteControl;
                 }
                 else if (control.Type == Constants.Control.Flag || control.Type == Constants.DatabaseColumn.DeleteFlag)

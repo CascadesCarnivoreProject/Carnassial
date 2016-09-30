@@ -3,6 +3,7 @@ using Carnassial.Images;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -94,9 +95,9 @@ namespace Carnassial.Controls
                 valueToCopy = valueToCopy.Trim();
                 if (valueToCopy.Length > 0)
                 {
-                    if ((checkForZero && !valueToCopy.Equals("0"))             // Skip over non-zero values for counters
-                        || (isFlag && !valueToCopy.Equals(Constants.Boolean.False, StringComparison.OrdinalIgnoreCase)) // Skip over false values for flags
-                        || (!checkForZero && !isFlag))
+                    if ((checkForZero && !valueToCopy.Equals("0")) ||             // Skip over non-zero values for counters
+                        (isFlag && !valueToCopy.Equals(Constants.Boolean.False, StringComparison.OrdinalIgnoreCase)) || // Skip over false values for flags
+                        (!checkForZero && !isFlag))
                     {
                         indexToCopyFrom = previousIndex;    // We found a non-empty value
                         valueSource = image;
@@ -388,7 +389,7 @@ namespace Carnassial.Controls
 
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)textBox.Tag;
-            control.SetContentAndTooltip(textBox.Text.Trim());
+            control.SetContentAndTooltip(textBox.Text);
             this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, control.Content);
             return;
         }
@@ -502,8 +503,36 @@ namespace Carnassial.Controls
             textBox.ToolTip = textBox.Text;
 
             // Get the key identifying the control, and then add its value to the database
-            DataEntryControl control = (DataEntryControl)textBox.Tag;
+            DataEntryNote control = (DataEntryNote)textBox.Tag;
+            control.ContentChanged = true;
             this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, textBox.Text);
+
+            // check if autocompletion is possible
+            if (String.IsNullOrEmpty(textBox.Text))
+            {
+                // nothing to match against
+                return;
+            }
+
+            // don't perform autocompletion on backspace/delete or copy+paste
+            if (e.Changes.Any(change => change.RemovedLength > 0) && (e.Changes.Any(change => change.AddedLength > 0) == false))
+            {
+                return;
+            }
+
+            // provide an autocompletion if available
+            int textLength = textBox.Text.Length;
+            string autocompletion = control.Autocompletions.FirstOrDefault(value => value.Length >= textLength && value.Substring(0, textLength).Equals(textBox.Text, StringComparison.Ordinal));
+            if (String.IsNullOrEmpty(autocompletion))
+            {
+                // no autocompletion available
+                return;
+            }
+
+            textBox.Text = autocompletion;
+            textBox.CaretIndex = textLength;
+            textBox.SelectionStart = textLength;
+            textBox.SelectionLength = autocompletion.Length - textLength;
         }
 
         private void SetContextMenuCallbacks(DataEntryControl control)

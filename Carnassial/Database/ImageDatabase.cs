@@ -485,7 +485,7 @@ namespace Carnassial.Database
             {
                 if (imageQuality == ImageSelection.Custom)
                 {
-                    // if no search terms are actitve the image count is undefined as no filtering is in operation
+                    // if no search terms are active the image count is undefined as no filtering is in operation
                     return -1;
                 }
                 // otherwise, the query is for all images as no where clause is present
@@ -495,14 +495,7 @@ namespace Carnassial.Database
                 query += Constants.Sql.Where + where;
             }
 
-            query = "Select * FROM " + Constants.Database.ImageDataTable;
-            if (String.IsNullOrEmpty(where) == false)
-            {
-                query += Constants.Sql.Where + where;
-            }
-
-            DataTable images = this.Database.GetDataTableFromSelect(query);
-            return images.Rows.Count;
+            return this.Database.GetCountFromSelect(query);
         }
 
         // Insert one or more rows into a table
@@ -808,6 +801,16 @@ namespace Carnassial.Database
             long id = this.GetControlIDFromTemplateTable(dataLabel);
             ControlRow control = this.TemplateTable.Find(id);
             return control.DefaultValue;
+        }
+
+        public List<string> GetDistinctValuesInImageColumn(string dataLabel)
+        {
+            List<string> distinctValues = new List<string>();
+            foreach (object value in this.Database.GetDistinctValuesInColumn(Constants.Database.ImageDataTable, dataLabel))
+            {
+                distinctValues.Add((string)value);
+            }
+            return distinctValues;
         }
 
         private void GetImageSet()

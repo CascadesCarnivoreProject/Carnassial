@@ -180,7 +180,7 @@ namespace Carnassial
         {
             public const string AviFileExtension = ".avi";
             public const string BackupFolder = "Backups"; // Sub-folder that will contain database and csv file backups  
-            public const int NumberOfBackupFilesToKeep = 8; // Maximum number of backup files to keep
+            public const int NumberOfBackupFilesToKeep = 9; // Maximum number of backup files to keep
             public const string DeletedImagesFolder = "DeletedImages"; // Sub-folder that will contain backups of deleted images 
             public const string CsvFileExtension = ".csv";
             public const string DefaultImageDatabaseFileName = "CarnassialData.ddb";
@@ -189,8 +189,6 @@ namespace Carnassial
             public const string JpgFileExtension = ".jpg";
             public const string Mp4FileExtension = ".mp4";
             public const string TemplateDatabaseFileExtension = ".tdb";
-            public const string XmlTemplateFileName = "CodeTemplate.xml";
-            public const string XmlDataFileName = "ImageData.xml";
 
             public static readonly TimeSpan BackupInterval = TimeSpan.FromMinutes(10);
         }
@@ -317,38 +315,13 @@ namespace Carnassial
 
         public static class Sql
         {
-            public const string DataSource = "Data Source=";
-            public const string CreateTable = "CREATE TABLE ";
-            public const string InsertInto = "INSERT INTO ";
             public const string Integer = "INTEGER";
-            public const string Values = " VALUES ";
-            public const string Select = " SELECT ";
-            public const string UnionAll = " UNION ALL";
-            public const string As = " AS ";
-            public const string DeleteFrom = " DELETE FROM ";
+            public const string DeleteFrom = "DELETE FROM ";
             public const string Where = " WHERE ";
-            public const string NameFromSqliteMaster = " NAME FROM SQLITE_MASTER ";
-            public const string TypeEqualsTable = " TYPE='table' ";
-            public const string OrderBy = " ORDER BY ";
-            public const string Name = " NAME ";
-            public const string Update = " UPDATE ";
-            public const string Set = " SET ";
-            public const string When = " WHEN ";
-            public const string Then = " THEN ";
-            public const string Begin = " BEGIN ";
-            public const string End = " END ";
-            public const string EqualsCaseID = " = CASE Id";
-            public const string SelectStarFrom = "SELECT * FROM ";
+            public const string End = "END";
             public const string Text = "TEXT";
-            public const string WhereIDIn = Where + "Id IN ";
-
-            public const string Null = "NULL";
-            public const string NullAs = Null + " " + As;
 
             public const string Comma = ", ";
-            public const string OpenParenthesis = " ( ";
-            public const string CloseParenthesis = " ) ";
-            public const string Semicolon = " ; ";
         }
 
         public static class ThrottleValues
@@ -360,7 +333,7 @@ namespace Carnassial
             public const int SleepForImageRenderInterval = 100;
 
             public static readonly TimeSpan PollIntervalForVideoLoad = TimeSpan.FromMilliseconds(1.0);
-            public static readonly TimeSpan RenderingBackoffTime = TimeSpan.FromMilliseconds(25);
+            public static readonly TimeSpan RenderingBackoffTime = TimeSpan.FromMilliseconds(25.0);
         }
 
         public static class Time
