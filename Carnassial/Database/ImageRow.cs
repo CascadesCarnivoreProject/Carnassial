@@ -1,5 +1,4 @@
-﻿using Carnassial.Images;
-using Carnassial.Util;
+﻿using Carnassial.Util;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Exif.Makernotes;
@@ -10,7 +9,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Media.Imaging;
-using Directory = MetadataExtractor.Directory;
+using Directory = System.IO.Directory;
+using MetadataDirectory = MetadataExtractor.Directory;
 
 namespace Carnassial.Database
 {
@@ -30,6 +30,12 @@ namespace Carnassial.Database
             private set { this.Row.SetField(Constants.DatabaseColumn.DateTime, value); }
         }
 
+        public bool DeleteFlag
+        {
+            get { return this.Row.GetBooleanField(Constants.DatabaseColumn.DeleteFlag); }
+            set { this.Row.SetField(Constants.DatabaseColumn.DeleteFlag, value); }
+        }
+
         public string FileName
         {
             get { return this.Row.GetStringField(Constants.DatabaseColumn.File); }
@@ -38,8 +44,24 @@ namespace Carnassial.Database
 
         public ImageSelection ImageQuality
         {
-            get { return this.Row.GetEnumField<ImageSelection>(Constants.DatabaseColumn.ImageQuality); }
-            set { this.Row.SetField<ImageSelection>(Constants.DatabaseColumn.ImageQuality, value); }
+            get
+            {
+                return this.Row.GetEnumField<ImageSelection>(Constants.DatabaseColumn.ImageQuality);
+            }
+            set
+            {
+                switch (value)
+                {
+                    case ImageSelection.CorruptFile:
+                    case ImageSelection.Dark:
+                    case ImageSelection.FileNoLongerAvailable:
+                    case ImageSelection.Ok:
+                        this.Row.SetField<ImageSelection>(Constants.DatabaseColumn.ImageQuality, value);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("value", String.Format("{0} is not an ImageQuality.  ImageQuality must be one of CorruptFile, Dark, FileNoLongerAvailable, or Ok.", value));
+                }
+            }
         }
 
         public virtual bool IsVideo
@@ -136,79 +158,56 @@ namespace Carnassial.Database
 
         public bool IsDisplayable()
         {
-            if (this.ImageQuality == ImageSelection.Corrupted || this.ImageQuality == ImageSelection.FileNoLongerAvailable)
+            if (this.ImageQuality == ImageSelection.CorruptFile || this.ImageQuality == ImageSelection.FileNoLongerAvailable)
             {
                 return false;
             }
             return true;
         }
 
-        // Load defaults to full size image, and to Persistent (as its safer)
         public BitmapSource LoadBitmap(string imageFolderPath)
         {
-            return this.LoadBitmap(imageFolderPath, null, ImageDisplayIntent.Persistent);
+            return this.LoadBitmap(imageFolderPath, null);
         }
 
-        // Load defaults to Persistent (as its safer)
         public virtual BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth)
         {
-            return this.LoadBitmap(imageFolderPath, desiredWidth, ImageDisplayIntent.Persistent);
-        }
-
-        // Load defaults to thumbnail size if we are TransientNavigating, else full size
-        public virtual BitmapSource LoadBitmap(string imageFolderPath, ImageDisplayIntent imageExpectedUsage)
-        {
-            if (imageExpectedUsage == ImageDisplayIntent.TransientNavigating)
-            { 
-                // TODOSAUL: why load the image at icon size rather than, say, ThumbnailSmall?  Why is this value not in Constants?
-                return this.LoadBitmap(imageFolderPath, 32, imageExpectedUsage);
-            }
-            else
-            {
-                return this.LoadBitmap(imageFolderPath, null, imageExpectedUsage);
-            }
-        }
-
-        // Load full form
-        public virtual BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth, ImageDisplayIntent displayIntent)
-        {
-            // If its a transient image, BitmapCacheOption of None as its faster than OnLoad. 
-            // TODOSAUL: why isn't the other case, ImageDisplayIntent.TransientNavigating, also treated as transient?
-            BitmapCacheOption bitmapCacheOption = (displayIntent == ImageDisplayIntent.TransientLoading) ? BitmapCacheOption.None : BitmapCacheOption.OnLoad;
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
             {
                 return Constants.Images.FileNoLongerAvailable;
             }
+
             try
             {
-                // TODO DISCRETIONARY: Look at CA1001 https://msdn.microsoft.com/en-us/library/ms182172.aspx as a different strategy
-                // Scanning through images with BitmapCacheOption.None results in less than 6% CPU in BitmapFrame.Create() and
-                // 90% in System.Windows.Application.Run(), suggesting little scope for optimization within Carnassial proper
-                // this is significantly faster than BitmapCacheOption.Default
-                // However, using BitmapCacheOption.None locks the file as it is being accessed (rather than a memory copy being created when using a cache)
-                // This means we cannot do any file operations on it as it will produce an access violation.
-                // For now, we use the (slower) form of BitmapCacheOption.OnLoad.
-                if (desiredWidth.HasValue == false)
+                using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1024 * 1024, FileOptions.SequentialScan))
                 {
-                    BitmapFrame frame = BitmapFrame.Create(new Uri(path), BitmapCreateOptions.None, bitmapCacheOption);
-                    frame.Freeze();
-                    return frame;
-                }
+                    // All of WPF's image loading assumes, problematically, the file loaded will never need to be deleted or moved on disk until such time as
+                    // as all WPF references to it have been garbage collected.  This is not the case for many applications including, in Carnassial, when the
+                    // user soft deletes the current image or all images marked for deletion.  Disposing a BitmapImage's StreamSource in principle avoids the 
+                    // problem but either WPF or the semi-asynchronous nature of the filesystem prevents success in practice.  The simplest workaround's to give
+                    // WPF only a MemoryStream and dispose the FileStream promptly so WPF never gets a file handle to hold on to and the risk of file system 
+                    // races is mitigated.
+                    byte[] fileContent = new byte[fileStream.Length];
+                    fileStream.Read(fileContent, 0, fileContent.Length);
 
-                BitmapImage bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.DecodePixelWidth = desiredWidth.Value;
-                bitmap.CacheOption = bitmapCacheOption;
-                bitmap.UriSource = new Uri(path);
-                bitmap.EndInit();
-                bitmap.Freeze();
-                return bitmap;
+                    BitmapImage bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.CacheOption = BitmapCacheOption.None;
+                    if (desiredWidth.HasValue)
+                    {
+                        bitmap.DecodePixelWidth = desiredWidth.Value;
+                    }
+                    bitmap.StreamSource = new MemoryStream(fileContent);
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+                    return bitmap;
+                }
             }
             catch (Exception exception)
             {
                 Debug.Fail(String.Format("LoadBitmap: Loading of {0} failed.", this.FileName), exception.ToString());
-                return Constants.Images.Corrupt;
+                return Constants.Images.CorruptFile;
             }
         }
 
@@ -250,9 +249,56 @@ namespace Carnassial.Database
             }
         }
 
+        /// <summary>
+        /// Move the file to the deleted images folder.
+        /// </summary>
+        public bool TryMoveFileToDeletedImagesFolder(string folderPath)
+        {
+            string sourceFilePath = this.GetImagePath(folderPath);
+            if (!File.Exists(sourceFilePath))
+            {
+                return false;  // If there is no source file, its a missing file so we can't back it up
+            }
+
+            // Create a new target folder, if necessary.
+            string deletedImagesFolderPath = Path.Combine(folderPath, Constants.File.DeletedFilesFolder);
+            if (!Directory.Exists(deletedImagesFolderPath))
+            {
+                Directory.CreateDirectory(deletedImagesFolderPath);
+            }
+
+            // Move the image file to the backup location.           
+            string destinationFilePath = Path.Combine(deletedImagesFolderPath, this.FileName);
+            if (File.Exists(destinationFilePath))
+            {
+                try
+                {
+                    // Becaue move doesn't allow overwriting, delete the destination file if it already exists.
+                    File.Delete(sourceFilePath);
+                    return true;
+                }
+                catch (IOException exception)
+                {
+                    Debug.Fail(exception.ToString());
+                    return false;
+                }
+            }
+
+            try
+            {
+                File.Move(sourceFilePath, destinationFilePath);
+                return true;
+            }
+            catch (IOException exception)
+            {
+                Debug.Fail(exception.ToString());
+                return false;
+            }
+        }
+
         public DateTimeAdjustment TryReadDateTimeOriginalFromMetadata(string folderPath, TimeZoneInfo imageSetTimeZone)
         {
-            IList<Directory> metadataDirectories = ImageMetadataReader.ReadMetadata(this.GetImagePath(folderPath));
+            IList<MetadataDirectory> metadataDirectories = ImageMetadataReader.ReadMetadata(this.GetImagePath(folderPath));
             ExifSubIfdDirectory exifSubIfd = metadataDirectories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
             if (exifSubIfd == null)
             {

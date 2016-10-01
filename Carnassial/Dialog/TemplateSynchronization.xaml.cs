@@ -5,12 +5,9 @@ using System.Windows.Documents;
 
 namespace Carnassial.Dialog
 {
-    /// <summary>
-    /// Interaction logic for the mismatched templates dialog.
-    /// </summary>
-    public partial class TemplatesDontMatch : Window
+    public partial class TemplateSynchronization : Window
     {
-        public TemplatesDontMatch(List<string> errors, Window owner)
+        public TemplateSynchronization(List<string> errors, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);

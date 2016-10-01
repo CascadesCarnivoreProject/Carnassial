@@ -40,7 +40,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.MarkedForDeletion) == 0);
             Dictionary<ImageSelection, int> imageCounts = imageDatabase.GetImageCountsByQuality();
             Assert.IsTrue(imageCounts.Count == 4);
-            Assert.IsTrue(imageCounts[ImageSelection.Corrupted] == 0);
+            Assert.IsTrue(imageCounts[ImageSelection.CorruptFile] == 0);
             Assert.IsTrue(imageCounts[ImageSelection.Dark] == 0);
             Assert.IsTrue(imageCounts[ImageSelection.FileNoLongerAvailable] == 0);
             Assert.IsTrue(imageCounts[ImageSelection.Ok] == imageExpectations.Count);
@@ -97,6 +97,55 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(imageDatabase.ImageDataTable.RowCount > 0);
             }
 
+            foreach (string dataLabel in imageDatabase.ImageDataColumnsByDataLabel.Keys)
+            {
+                List<string> distinctValues = imageDatabase.GetDistinctValuesInImageColumn(dataLabel);
+                int expectedValues;
+                switch (dataLabel)
+                {
+                    case Constants.DatabaseColumn.DateTime:
+                    case Constants.DatabaseColumn.File:
+                    case Constants.DatabaseColumn.ID:
+                        expectedValues = imageExpectations.Count;
+                        break;
+                    case Constants.DatabaseColumn.RelativePath:
+                        expectedValues = imageExpectations.Select(expectation => expectation.RelativePath).Distinct().Count();
+                        break;
+                    case Constants.DatabaseColumn.UtcOffset:
+                        expectedValues = imageExpectations.Select(expectation => expectation.DateTime.Offset).Distinct().Count();
+                        break;
+                    case Constants.DatabaseColumn.DeleteFlag:
+                    case Constants.DatabaseColumn.Folder:
+                    case Constants.DatabaseColumn.ImageQuality:
+                    case TestConstant.DefaultDatabaseColumn.Choice3:
+                    case TestConstant.DefaultDatabaseColumn.ChoiceNotVisible:
+                    case TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel:
+                    case TestConstant.DefaultDatabaseColumn.Counter3:
+                    case TestConstant.DefaultDatabaseColumn.CounterNotVisible:
+                    case TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel:
+                    case TestConstant.DefaultDatabaseColumn.Flag0:
+                    case TestConstant.DefaultDatabaseColumn.Flag3:
+                    case TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel:
+                    case TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel:
+                        expectedValues = 1;
+                        break;
+                    case TestConstant.DefaultDatabaseColumn.Choice0:
+                    case TestConstant.DefaultDatabaseColumn.Counter0:
+                    case TestConstant.DefaultDatabaseColumn.FlagNotVisible:
+                    case TestConstant.DefaultDatabaseColumn.NoteNotVisible:
+                        expectedValues = 2;
+                        break;
+                    case TestConstant.DefaultDatabaseColumn.Note0:
+                    case TestConstant.DefaultDatabaseColumn.Note3:
+                        expectedValues = 3;
+                        break;
+                    default:
+                        throw new NotSupportedException(String.Format("Unhandled data label '{0}'.", dataLabel));
+                }
+                Assert.IsTrue(distinctValues != null && distinctValues.Count == expectedValues);
+                Assert.IsTrue(distinctValues.Count == distinctValues.Distinct().Count());
+            }
+
             // sanity coverage of image set table methods
             string originalTimeZoneID = imageDatabase.ImageSet.TimeZone;
 
@@ -115,11 +164,6 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(imageDatabase.ImageSet.TimeZone == "Test Time Zone");
 
             imageDatabase.ImageSet.TimeZone = originalTimeZoneID;
-
-            // sanity coverage of marker table methods
-            this.VerifyDefaultMarkerTableContent(imageDatabase, imageExpectations.Count);
-            // imageDatabase.SetMarkerPoints();
-            // imageDatabase.UpdateMarkers();
 
             // date manipulation
             imageDatabase.SelectDataTableImages(ImageSelection.All);
@@ -199,7 +243,7 @@ namespace Carnassial.UnitTests
             imageQuality.DatabaseValue = ImageSelection.Dark.ToString();
             Assert.IsFalse(String.IsNullOrEmpty(imageDatabase.CustomSelection.GetImagesWhere()));
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.All) == imageExpectations.Count);
-            Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.Corrupted) == 0);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.CorruptFile) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.Custom) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.Dark) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.MarkedForDeletion) == 0);
@@ -207,6 +251,8 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.Ok) == imageExpectations.Count);
 
             // markers
+            this.VerifyDefaultMarkerTableContent(imageDatabase, imageExpectations.Count);
+
             // reread
             imageDatabase.SelectDataTableImages(ImageSelection.All);
 
@@ -451,9 +497,9 @@ namespace Carnassial.UnitTests
             DateTime utcNow = DateTime.UtcNow;
             DateTime utcNowUnspecified = utcNow.AsUnspecifed();
             Assert.IsTrue(utcNow.Date == utcNowUnspecified.Date);
-            Assert.IsTrue((utcNow.Hour == utcNowUnspecified.Hour) && 
-                          (utcNow.Minute == utcNowUnspecified.Minute) && 
-                          (utcNow.Second == utcNowUnspecified.Second) && 
+            Assert.IsTrue((utcNow.Hour == utcNowUnspecified.Hour) &&
+                          (utcNow.Minute == utcNowUnspecified.Minute) &&
+                          (utcNow.Second == utcNowUnspecified.Second) &&
                           (utcNow.Millisecond == utcNowUnspecified.Millisecond));
             Assert.IsTrue(utcNowUnspecified.Kind == DateTimeKind.Unspecified);
 
@@ -596,8 +642,8 @@ namespace Carnassial.UnitTests
                 List<DataEntryControl> copyableControls = controls.Controls.Where(control => control.Copyable).ToList();
                 foreach (DataEntryControl control in copyableControls)
                 {
-                   Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
-                   Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
+                    Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
+                    Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
                 }
 
                 List<DataEntryControl> notCopyableControls = controls.Controls.Where(control => control.Copyable == false).ToList();
@@ -787,9 +833,9 @@ namespace Carnassial.UnitTests
             int firstDisplayableImage = imageDatabase.FindFirstDisplayableImage(imageDatabase.CurrentlySelectedImageCount);
             Assert.IsTrue(firstDisplayableImage == imageDatabase.CurrentlySelectedImageCount - 1);
 
-            int closestDisplayableImage = imageDatabase.FindClosestImage(Int64.MinValue);
+            int closestDisplayableImage = imageDatabase.FindClosestImageRow(Int64.MinValue);
             Assert.IsTrue(closestDisplayableImage == 0);
-            closestDisplayableImage = imageDatabase.FindClosestImage(Int64.MaxValue);
+            closestDisplayableImage = imageDatabase.FindClosestImageRow(Int64.MaxValue);
             Assert.IsTrue(closestDisplayableImage == imageDatabase.CurrentlySelectedImageCount - 1);
 
             Assert.IsFalse(imageDatabase.IsImageDisplayable(-1));

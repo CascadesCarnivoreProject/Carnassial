@@ -341,14 +341,6 @@ namespace Carnassial.Editor
             bool? result = choiceListDialog.ShowDialog();
             if (result == true)
             {
-                // until such time as specifying a default choice is forced the default value column for a choice will typically be null
-                // Without explicit inclusion of DBNull/null/String.Empty in the choice list this causes .csv import errors if a choice hasn't been selected as the
-                // default is, correctly, not seen as a valid option for the choice.  As a workaround, ensure the choice list includes empty.
-                if ((choiceListDialog.Choices.Contains(String.Empty) == false) && (choiceListDialog.Choices.Contains(null) == false))
-                {
-                    choiceListDialog.Choices.Add(String.Empty);
-                }
-
                 choiceControl.SetChoices(choiceListDialog.Choices);
                 this.SyncControlToDatabase(choiceControl);
             }

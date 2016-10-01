@@ -25,25 +25,22 @@
             </StackPanel>
             <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
                 <Run FontWeight="Bold" Text="Author: " FontSize="14"/> 
-                <Run Text="Saul Greenberg" FontSize="14"/>
-                <LineBreak/>
-                <Run Text="               Greenberg Consulting Inc. / University of Calgary " FontSize="14"/>
-                <LineBreak/>
-                <Run Text="               saul@ucalgary.ca" FontSize="14"/>
-                <LineBreak/>
+                <Run Text="Todd West"/>
+                <LineBreak />
+                <Run Text="                  Cascades Carnivore Project"/>
+                <LineBreak />
             </TextBlock>
 
             <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="14" >
                 <Run FontWeight="Bold" Text="Terms of use: " FontSize="14"/>
             </TextBlock>
             <TextBlock HorizontalAlignment="Left" Margin="70,0,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap"  FontSize="14">
-                <Run Text="Carnassial software is supplied 'as is' as part of a volunteer project. "/>
-                <LineBreak/>
-                <LineBreak/>  
-                <Run Text="However, we are quite interested in making it better for you. "/>
-                <LineBreak/>              
-                <Run Text="Email Saul with any comments, problems and suggestions for improvements."/>
-                <LineBreak/>
+                <Run Text="Carnassial is supplied 'as is' as a volunteer spinoff from our regular work." />
+                <Run Text="However, we are quite interested in making it better for you." />
+                <LineBreak />              
+                <LineBreak />  
+                <Run Text="Please submit any comments, problems, or suggestions for improvement at https://github.com/CascadesCarnivoreProject/Carnassial/issues.  Or, even better, fork the repo, address your needs, and submit a pull request!" />
+                <LineBreak />
             </TextBlock>
         </StackPanel>
         <DockPanel Name="DockPanelImage">

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Xceed.Wpf.Toolkit;
 
@@ -40,6 +41,7 @@ namespace Carnassial
             public const string DataLabel = "DataLabel";   // if not empty, its used instead of the label as the header for the column when writing the spreadsheet
             public const string DefaultValue = "DefaultValue"; // a default value for that code
             public const string Label = "Label";           // a label used to describe that code
+            public const string List = "List";             // a fixed list of choices
             public const string SpreadsheetOrder = "SpreadsheetOrder";
             public const string Tooltip = "Tooltip";       // the tooltip text that describes the code
             public const string Type = "Type";             // the data type
@@ -50,11 +52,13 @@ namespace Carnassial
             public const string Counter = "Counter";       // a counter
             public const string FixedChoice = "FixedChoice";  // a fixed choice
             public const string Flag = "Flag";             // A boolean
-            public const string List = "List";             // indicates a list of items
             public const string Note = "Note";             // A note
 
             // default data labels
-            public const string Choice = "Choice";         // Label for: a choice
+            public const string Choice = "Choice";         // Label for a fixed choice
+
+            // a minty green
+            public static readonly SolidColorBrush CopyableFieldHighlightBrush = new SolidColorBrush(Color.FromArgb(255, 200, 251, 200));
 
             public static readonly ReadOnlyCollection<Type> KeyboardInputTypes = new List<Type>()
             {
@@ -106,23 +110,23 @@ namespace Carnassial
 
             // standard controls
             public const string DateTimeTooltip = "Date and time taken";
-            public const string DateTimeWidth = "170";
+            public const string DateTimeWidth = "188";
 
             public const string FileTooltip = "The file name";
-            public const string FileWidth = "100";
+            public const string FileWidth = "221";
             public const string RelativePathTooltip = "Path from the folder containing the template and image data files to the file";
-            public const string RelativePathWidth = "100";
+            public const string RelativePathWidth = "172";
             public const string FolderTooltip = "Name of the folder originally containing the template and image data files";
-            public const string FolderWidth = "100";
+            public const string FolderWidth = "206";
 
             public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
-            public const string ImageQualityWidth = "85";
+            public const string ImageQualityWidth = "166";
 
             public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
             public const string DeleteFlagTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
 
             public const string UtcOffsetTooltip = "Universal Time offset of the time zone for date and time taken";
-            public const string UtcOffsetWidth = "60";
+            public const string UtcOffsetWidth = "188";
 
             public static readonly DateTimeOffset DateTimeValue = new DateTimeOffset(1900, 1, 1, 12, 0, 0, 0, TimeSpan.Zero);
         }
@@ -154,26 +158,22 @@ namespace Carnassial
         // Names of standard database columns, always included but not always made visible in the user controls
         public static class DatabaseColumn
         {
-            public const string Data = "Data";                 // the data describing the attributes of that control
+            // columns in ImageDataTable
             public const string DateTime = "DateTime";
             public const string File = "File";
             public const string Folder = "Folder";
             public const string ID = "Id";
-            public const string Image = "Image";               // A single image and its associated data
             public const string ImageQuality = "ImageQuality";
             public const string DeleteFlag = "DeleteFlag";
-            public const string Point = "Point";               // a single point
             public const string RelativePath = "RelativePath";
-            public const string TimeZone = "TimeZone";
             public const string UtcOffset = "UtcOffset";
-            public const string X = "X";                       // Every point has an X and Y
-            public const string Y = "Y";
 
             // columns in ImageSetTable
-            public const string Selection = "Selection";       // string holding the current selection
             public const string Log = "Log";                   // string holding a user-created text log
             public const string Magnifier = "Magnifier";       // string holding the true/false state of the magnifying glass (on or off)
             public const string Row = "Row";                   // string holding the currently selected row
+            public const string Selection = "Selection";       // string holding the current selection
+            public const string TimeZone = "TimeZone";
         }
 
         public static class File
@@ -181,10 +181,10 @@ namespace Carnassial
             public const string AviFileExtension = ".avi";
             public const string BackupFolder = "Backups"; // Sub-folder that will contain database and csv file backups  
             public const int NumberOfBackupFilesToKeep = 9; // Maximum number of backup files to keep
-            public const string DeletedImagesFolder = "DeletedImages"; // Sub-folder that will contain backups of deleted images 
             public const string CsvFileExtension = ".csv";
             public const string DefaultImageDatabaseFileName = "CarnassialData.ddb";
             public const string DefaultTemplateDatabaseFileName = "CarnassialTemplate.tdb";
+            public const string DeletedFilesFolder = "DeletedFiles"; // Sub-folder that will contain backups of deleted files
             public const string ImageDatabaseFileExtension = ".ddb";
             public const string JpgFileExtension = ".jpg";
             public const string Mp4FileExtension = ".mp4";
@@ -199,7 +199,7 @@ namespace Carnassial
             public const string Dark = "Dark";
             public const string Ok = "Ok";
 
-            public const string ListOfValues = "Ok|Dark|Corrupted|FileNoLongerAvailable";
+            public const string ListOfValues = "Ok|Dark|CorruptFile|FileNoLongerAvailable";
         }
 
         public static class Images
@@ -219,26 +219,40 @@ namespace Carnassial
 
             // A greyscale image (given the above slop) will typically have about 90% of its pixels as grey scale
             public const double GreyScaleImageThreshold = 0.9;
-            // Check only every few pixels as otherwise dark frame detection is expensive operation
-            // A grey scale pixel has r = g = b. But we will allow some slop in here just in case a bit of color creeps in
+            // A greyscale pixel has r = g = b. But we will allow some slop in here just in case a bit of color creeps in
             public const int GreyScalePixelThreshold = 40;
 
-            // Various thumbnail sizes
+            public const int LargeNumberOfDeletedImages = 30;
+
+            public const int DefaultPreviewWidth = 800;
             public const int ThumbnailWidth = 300;
 
-            public static readonly BitmapFrame Corrupt;
-            public static readonly BitmapFrame FileNoLongerAvailable;
-            public static readonly BitmapFrame NoFileAvailable;
+            public static readonly BitmapImage CorruptFile;
+            public static readonly BitmapImage FileNoLongerAvailable;
+            public static readonly BitmapImage NoSelectableFile;
 
             static Images()
             {
-                // Create a variety of images.
-                Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/Corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
-                Images.Corrupt.Freeze();
-                Images.FileNoLongerAvailable = BitmapFrame.Create(new Uri("pack://application:,,/Resources/FileNoLongerAvailable.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.CorruptFile = new BitmapImage();
+                Images.CorruptFile.BeginInit();
+                Images.CorruptFile.CacheOption = BitmapCacheOption.None;
+                Images.CorruptFile.UriSource = new Uri("pack://application:,,/Resources/CorruptFile.jpg");
+                Images.CorruptFile.EndInit();
+                Images.CorruptFile.Freeze();
+
+                Images.FileNoLongerAvailable = new BitmapImage();
+                Images.FileNoLongerAvailable.BeginInit();
+                Images.FileNoLongerAvailable.CacheOption = BitmapCacheOption.None;
+                Images.FileNoLongerAvailable.UriSource = new Uri("pack://application:,,/Resources/FileNoLongerAvailable.jpg");
+                Images.FileNoLongerAvailable.EndInit();
                 Images.FileNoLongerAvailable.Freeze();
-                Images.NoFileAvailable = BitmapFrame.Create(new Uri("pack://application:,,/Resources/NoFileAvailable.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
-                Images.NoFileAvailable.Freeze();
+
+                Images.NoSelectableFile = new BitmapImage();
+                Images.NoSelectableFile.BeginInit();
+                Images.NoSelectableFile.CacheOption = BitmapCacheOption.None;
+                Images.NoSelectableFile.UriSource = new Uri("pack://application:,,/Resources/NoSelectableFile.jpg");
+                Images.NoSelectableFile.EndInit();
+                Images.NoSelectableFile.Freeze();
             }
         }
 

@@ -12,7 +12,7 @@
     AutomationProperties.AutomationId="Carnassial"
     Title="Carnassial: Helping You Analyze Images and Videos Captured from Field Cameras"  
     Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown" 
-    Height="900" Width="1300"
+    Height="900" Width="1350"
     WindowState="Normal" Icon="32x32.ico">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -45,14 +45,14 @@
 
             <!-- Edit Menu -->
             <MenuItem Name="MenuItemEdit" Header="_Edit" IsEnabled="false" IsTabStop="false">
-                <MenuItem Name="MenuItemCopyPreviousValues" Header="_Copy previous values" Click="ButtonCopy_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous file. Applies only to data marked 'Copyable' in the code template."/>
+                <MenuItem Name="MenuItemCopyPreviousValues" Header="_Copy previous values" Click="CopyPreviousValues_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous file. Applies only to data marked 'Copyable' in the code template."/>
                 <MenuItem Name="MenuItemPopulateFieldFromMetadata" Header="Populate a field with _metadata..." ToolTip="Match a data field with a metadata type. Then populate that field across all files with the corresponding metadata value." Click="MenuItemPopulateFieldFromMetadata_Click"/>
                 <MenuItem Header="D_elete"  SubmenuOpened="Delete_SubmenuOpening"  >
-                    <MenuItem Name="MenuItemDeleteImage" Header="The current current image or video _file..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the file but not the data entered for it"/>
-                    <MenuItem Name="MenuItemDeleteImageAndData" Header="The current image or video file and its _data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the file and the data entered for it"/>
+                    <MenuItem Name="MenuItemDeleteCurrentFile" Header="The current current image or video _file..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the file but not the data entered for it"/>
+                    <MenuItem Name="MenuItemDeleteCurrentFileAndData" Header="The current image or video file and its _data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the file and the data entered for it"/>
                     <Separator/>
-                    <MenuItem Name="MenuItemDeleteImages" Header="_All image or video files in the current selection marked for deletion ..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes images and videos marked for deletion in the current selection, but leaves entered data intact"/>
-                    <MenuItem Name="MenuItemDeleteImagesAndData" Header="All image or video files in the _current selection marked for deletion and their data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files"/>
+                    <MenuItem Name="MenuItemDeleteFiles" Header="_All image or video files in the current selection marked for deletion ..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes images and videos marked for deletion in the current selection, but leaves entered data intact"/>
+                    <MenuItem Name="MenuItemDeleteFilesAndData" Header="All image or video files in the _current selection marked for deletion and their data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files"/>
                 </MenuItem>
                 <MenuItem Header="_Date correction" >
                     <MenuItem Name="MenuItemRereadDatesfromImages" Header="_Re-read dates from files..." Click="MenuItemRereadDatesfromImages_Click"  ToolTip="Re-read the dates from all the files" IsEnabled="True" />
@@ -171,7 +171,7 @@
                             </xcad:LayoutDocument>
                         </xcad:LayoutDocumentPane>
                     </xcad:LayoutDocumentPaneGroup>
-                    <xcad:LayoutAnchorablePaneGroup DockWidth="275">
+                    <xcad:LayoutAnchorablePaneGroup DockWidth="300">
                         <xcad:LayoutAnchorablePane>
                             <xcad:LayoutAnchorable Title="Data Entry" CanClose="False">
                                 <Grid Name="ControlGrid">
@@ -189,31 +189,10 @@
                                             <controls:DataEntryControls x:Name="DataEntryControls" />
                                         </StackPanel>
                                     </ScrollViewer>
-
-                                    <!-- Copy Previous Button -->
-                                    <Button Name="buttonCopy" Background="#C8FBC8" Click="ButtonCopy_Click" Margin="10,10,10,10" Padding="10,10,10,10" Grid.Column="0" Grid.Row="1" 
-                                        HorizontalAlignment="Left" Content="Copy previous values"
-                                        ToolTip="Copy selected data as recorded on the previous image. Applies only to data marked 'Copyable' in the code template.">
-                                        <Button.Style>
-                                            <Style TargetType="{x:Type Button}">
-                                                <Setter Property="Background" Value="#C8FBC8"/>
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate TargetType="{x:Type Button}">
-                                                            <Border Background="{TemplateBinding Background}" BorderBrush="DarkGray" BorderThickness="1" >
-                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"  Margin="5,5,5,5" />
-                                                            </Border>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#C8FBC8"/>
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
+                                    <Button Name="CopyPreviousValues" Click="CopyPreviousValues_Click" Margin="10,10,10,10" Padding="5,5,5,5" Grid.Column="0" Grid.Row="1" 
+                                        HorizontalAlignment="Left" Content="_Copy previous values" IsEnabled="False"
+                                        MouseEnter="CopyPreviousValues_MouseEnter" MouseLeave="CopyPreviousValues_MouseLeave"
+                                        ToolTip="Copy the highlighted data (fields marked 'Copyable' in the template) from the previous file." />
                                 </Grid>
                             </xcad:LayoutAnchorable>
                         </xcad:LayoutAnchorablePane>

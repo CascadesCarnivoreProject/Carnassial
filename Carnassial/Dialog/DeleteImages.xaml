@@ -15,12 +15,8 @@
                             ShowExplanationVisibility="True" />
         <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-            <CheckBox Name="chkboxConfirm" IsChecked="False" FontSize="14" Margin="0,0,20,0" Height="20" 
-                Checked="ConfirmBox_Checked" Unchecked="ConfirmBox_Checked">
-                <TextBlock>
-                       <Run FontWeight="Bold" Text="Confirm deletion of images, videos, and data " FontSize="14"/>
-                        <Run>(deleted data is not recoverable)</Run>
-                </TextBlock>
+            <CheckBox Name="chkboxConfirm" IsChecked="False" Margin="0,0,20,0" Height="20" 
+                Checked="ConfirmBox_Checked" FontWeight="Bold" Content="_Confirm deletion of images, videos, and data (you must check this before the Okay button can be clicked; deleted data is not recoverable)" Unchecked="ConfirmBox_Checked">
             </CheckBox>
 
             <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>

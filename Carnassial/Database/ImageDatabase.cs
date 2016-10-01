@@ -87,7 +87,7 @@ namespace Carnassial.Database
         }
 
         [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", Justification = "StyleCop bug.")]
-        public void AddImages(List<ImageRow> imagePropertiesList, Action<ImageRow, int> onImageAdded)
+        public void AddImages(List<ImageRow> images, Action<ImageRow, int> onImageAdded)
         {
             // We need to get a list of which columns are counters vs notes or fixed coices, 
             // as we will shortly have to initialize them to some defaults
@@ -119,32 +119,24 @@ namespace Carnassial.Database
 
             // Create a dataline from each of the image properties, add it to a list of data lines,
             // then do a multiple insert of the list of datalines to the database 
-            for (int image = 0; image < imagePropertiesList.Count; image += Constants.Database.RowsPerInsert)
+            for (int image = 0; image < images.Count; image += Constants.Database.RowsPerInsert)
             {
-                // Create a dataline from the image properties, add it to a list of data lines,
-                // then do a multiple insert of the list of datalines to the database 
                 List<List<ColumnTuple>> imageTableRows = new List<List<ColumnTuple>>();
                 List<List<ColumnTuple>> markerTableRows = new List<List<ColumnTuple>>();
-                for (int insertIndex = image; (insertIndex < (image + Constants.Database.RowsPerInsert)) && (insertIndex < imagePropertiesList.Count); insertIndex++)
+                for (int insertIndex = image; (insertIndex < (image + Constants.Database.RowsPerInsert)) && (insertIndex < images.Count); insertIndex++)
                 {
-                    // THE PROBLEM IS THAT WE ARE NOT ADDING THESE VALUES IN THE SAME ORDER AS THE TABLE
-                    // THEY MUST BE IN THE SAME ORDER IE, AS IN THE COLUMNS. This case statement just fills up 
-                    // the dataline in the same order as the template table.
-                    // It assumes that the key is always the first column
                     List<ColumnTuple> imageRow = new List<ColumnTuple>();
                     List<ColumnTuple> markerRow = new List<ColumnTuple>();
-
                     foreach (string columnName in this.ImageDataTable.ColumnNames)
                     {
-                        // Fill up each column in order
                         if (columnName == Constants.DatabaseColumn.ID)
                         {
-                            // don't specify an ID in the insert statement as it's an autoincrement primary key
+                            // don't specify ID in the insert statement as it's an autoincrement primary key
                             continue;
                         }
-                        string controlType = this.ImageDataColumnsByDataLabel[columnName].ControlType;
 
-                        ImageRow imageProperties = imagePropertiesList[insertIndex];
+                        string controlType = this.ImageDataColumnsByDataLabel[columnName].ControlType;
+                        ImageRow imageProperties = images[insertIndex];
                         switch (controlType)
                         {
                             case Constants.DatabaseColumn.File: // Add The File name
@@ -225,8 +217,8 @@ namespace Carnassial.Database
 
                 if (onImageAdded != null)
                 {
-                    int lastImageInserted = Math.Min(imagePropertiesList.Count - 1, image + Constants.Database.RowsPerInsert);
-                    onImageAdded.Invoke(imagePropertiesList[lastImageInserted], lastImageInserted);
+                    int lastImageInserted = Math.Min(images.Count - 1, image + Constants.Database.RowsPerInsert);
+                    onImageAdded.Invoke(images[lastImageInserted], lastImageInserted);
                 }
             }
 
@@ -471,7 +463,7 @@ namespace Carnassial.Database
         {
             Dictionary<ImageSelection, int> counts = new Dictionary<ImageSelection, int>();
             counts[ImageSelection.Dark] = this.GetImageCount(ImageSelection.Dark);
-            counts[ImageSelection.Corrupted] = this.GetImageCount(ImageSelection.Corrupted);
+            counts[ImageSelection.CorruptFile] = this.GetImageCount(ImageSelection.CorruptFile);
             counts[ImageSelection.FileNoLongerAvailable] = this.GetImageCount(ImageSelection.FileNoLongerAvailable);
             counts[ImageSelection.Ok] = this.GetImageCount(ImageSelection.Ok);
             return counts;
@@ -511,7 +503,7 @@ namespace Carnassial.Database
             {
                 case ImageSelection.All:
                     return String.Empty;
-                case ImageSelection.Corrupted:
+                case ImageSelection.CorruptFile:
                 case ImageSelection.Dark:
                 case ImageSelection.FileNoLongerAvailable:
                 case ImageSelection.Ok:
@@ -550,7 +542,6 @@ namespace Carnassial.Database
             this.UpdateImages(valueSource, dataLabel, 0, this.CurrentlySelectedImageCount - 1);
         }
 
-        // Given a list of column/value pairs (the string,object) and the FILE name indicating a row, update it
         public void UpdateImages(List<ColumnTuplesWithWhere> imagesToUpdate)
         {
             this.CreateBackupIfNeeded();
@@ -730,18 +721,22 @@ namespace Carnassial.Database
         // Delete the data (including markers associated with the images identified by the list of IDs.
         public void DeleteImages(List<long> idList)
         {
+            if (idList.Count < 1)
+            {
+                // nothing to do
+                return;
+            }
+
             List<string> idClauses = new List<string>();
             foreach (long id in idList)
             {
                 idClauses.Add(Constants.DatabaseColumn.ID + " = " + id.ToString());
-            }           
-            if (idClauses.Count > 0)
-            {
-                // Delete the data and markers associated with that image
-                this.CreateBackupIfNeeded();
-                this.Database.Delete(Constants.Database.ImageDataTable, idClauses);
-                this.Database.Delete(Constants.Database.MarkersTable, idClauses);
             }
+
+            // Delete the data and markers associated with that image
+            this.CreateBackupIfNeeded();
+            this.Database.Delete(Constants.Database.ImageDataTable, idClauses);
+            this.Database.Delete(Constants.Database.MarkersTable, idClauses);
         }
 
         /// <summary>A convenience routine for checking to see if the image in the given row is displayable (i.e., not corrupted or missing)</summary>
@@ -784,13 +779,13 @@ namespace Carnassial.Database
         // Find the image whose ID is closest to the provided ID  in the current image set
         // If the ID does not exist, then return the image row whose ID is just greater than the provided one. 
         // However, if there is no greater ID (i.e., we are at the end) return the last row. 
-        public int FindClosestImage(long id)
+        public int FindClosestImageRow(long id)
         {
-            for (int row = 0; row < this.CurrentlySelectedImageCount; ++row)
+            for (int rowIndex = 0; rowIndex < this.CurrentlySelectedImageCount; ++rowIndex)
             {
-                if (this.ImageDataTable[row].ID >= id)
+                if (this.ImageDataTable[rowIndex].ID >= id)
                 {
-                    return row;
+                    return rowIndex;
                 }
             }
             return this.CurrentlySelectedImageCount - 1;
@@ -808,7 +803,7 @@ namespace Carnassial.Database
             List<string> distinctValues = new List<string>();
             foreach (object value in this.Database.GetDistinctValuesInColumn(Constants.Database.ImageDataTable, dataLabel))
             {
-                distinctValues.Add((string)value);
+                distinctValues.Add(value.ToString());
             }
             return distinctValues;
         }

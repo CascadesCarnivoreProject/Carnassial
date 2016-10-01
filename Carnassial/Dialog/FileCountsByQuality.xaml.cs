@@ -27,7 +27,7 @@ namespace Carnassial.Dialog
             this.FileNoLongerAvailable.Text = String.Format("{0,5}", fileNoLongerAvailable) + this.FileNoLongerAvailable.Text;
             int dark = counts[ImageSelection.Dark];
             this.Dark.Text = String.Format("{0,5}", dark) + this.Dark.Text;
-            int corrupted = counts[ImageSelection.Corrupted];
+            int corrupted = counts[ImageSelection.CorruptFile];
             this.Corrupted.Text = String.Format("{0,5}", corrupted) + this.Corrupted.Text;
 
             int total = ok + dark + corrupted + fileNoLongerAvailable;

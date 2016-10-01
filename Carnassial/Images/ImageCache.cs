@@ -190,8 +190,8 @@ namespace Carnassial.Images
                 this.Reset();
             }
 
-            BitmapSource unused;
-            this.unalteredBitmapsByID.TryRemove(id, out unused);
+            BitmapSource bitmapForID;
+            this.unalteredBitmapsByID.TryRemove(id, out bitmapForID);
             lock (this.mostRecentlyUsedIDs)
             {
                 return this.mostRecentlyUsedIDs.TryRemove(id);

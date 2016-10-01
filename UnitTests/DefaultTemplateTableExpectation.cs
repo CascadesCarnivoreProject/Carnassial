@@ -72,7 +72,7 @@ namespace Carnassial.UnitTests
             this.ChoiceNotVisible = ControlExpectations.CreateChoice(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, id++);
             this.ChoiceNotVisible.DefaultValue = Constants.ControlDefault.Value;
             this.ChoiceNotVisible.Label = "InvisibleChoice";
-            this.ChoiceNotVisible.List = "you can't see me|";
+            this.ChoiceNotVisible.List = "you can't see me";
             this.ChoiceNotVisible.TextBoxWidth = 150;
             this.ChoiceNotVisible.Tooltip = "Choice which can't be seen.";
             this.ChoiceNotVisible.Visible = false;

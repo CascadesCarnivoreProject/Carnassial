@@ -41,7 +41,7 @@ namespace Carnassial.Database
                 SearchTerm searchTerm = new SearchTerm();
                 searchTerm.ControlType = controlType;
                 searchTerm.DataLabel = control.DataLabel;
-                searchTerm.DatabaseValue = String.Empty;
+                searchTerm.DatabaseValue = control.DefaultValue;
                 searchTerm.Operator = Constants.SearchTermOperator.Equal;
                 searchTerm.Label = control.Label;
                 searchTerm.List = control.GetChoices();

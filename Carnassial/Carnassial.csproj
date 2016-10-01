@@ -192,6 +192,7 @@
     <Compile Include="Util\DataGridExtensions.cs" />
     <Compile Include="Util\DateTimeExtensions.cs" />
     <Compile Include="Util\DateTimeOffsetExtensions.cs" />
+    <Compile Include="Util\SequentialPartitioner.cs" />
     <Compile Include="Util\RegistryKeyExtensions.cs" />
     <Compile Include="Util\Throttles.cs" />
     <Compile Include="Dialog\WindowVideoPlayer.xaml.cs">
@@ -205,7 +206,6 @@
     <Compile Include="Images\FeedbackTuple.cs" />
     <Compile Include="Database\DateTimeAdjustment.cs" />
     <Compile Include="Images\ImageDifference.cs" />
-    <Compile Include="Images\ImageDisplayIntent.cs" />
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
     <Compile Include="Images\MarkerEventArgs.cs" />
@@ -312,7 +312,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Dialog\TemplatesDontMatch.xaml">
+    <Page Include="Dialog\TemplateSynchronization.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -371,8 +371,8 @@
     <Compile Include="Dialog\RenameImageDatabaseFile.xaml.cs">
       <DependentUpon>RenameImageDatabaseFile.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\TemplatesDontMatch.xaml.cs">
-      <DependentUpon>TemplatesDontMatch.xaml</DependentUpon>
+    <Compile Include="Dialog\TemplateSynchronization.xaml.cs">
+      <DependentUpon>TemplateSynchronization.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\FeedbackControl.xaml.cs">
       <DependentUpon>FeedbackControl.xaml</DependentUpon>
@@ -487,8 +487,8 @@
     <Resource Include="16x16.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\NoFileAvailable.jpg" />
-    <Resource Include="Resources\Corrupted.jpg" />
+    <Resource Include="Resources\NoSelectableFile.jpg" />
+    <Resource Include="Resources\CorruptFile.jpg" />
     <Resource Include="Resources\FileNoLongerAvailable.jpg" />
     <Resource Include="Resources\play_icon.png" />
     <Resource Include="Resources\pause_icon.png" />

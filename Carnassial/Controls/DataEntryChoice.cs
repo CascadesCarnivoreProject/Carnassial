@@ -15,7 +15,7 @@ namespace Carnassial.Controls
         /// <summary>Gets the current choice.</summary>
         public override string Content
         {
-            get { return this.ContentControl.Text; }
+            get { return (string)this.ContentControl.SelectedItem; }
         }
 
         public override bool ContentReadOnly

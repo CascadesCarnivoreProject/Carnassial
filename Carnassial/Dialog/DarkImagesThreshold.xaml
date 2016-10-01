@@ -32,7 +32,7 @@
                 </Grid.ColumnDefinitions>
 
 
-                <Slider Name="sldrDarkThreshold" DockPanel.Dock="Left" Width="Auto" Margin="0,3,0,0" Padding="0,-8,0,0"  Maximum="255" Minimum="1" SmallChange="1" TickFrequency="5" Value="60" VerticalContentAlignment="Bottom"/>
+                <Slider Name="DarkThreshold" DockPanel.Dock="Left" Width="Auto" Margin="0,3,0,0" Padding="0,-8,0,0"  Maximum="255" Minimum="1" SmallChange="1" TickFrequency="5" Value="60" VerticalContentAlignment="Bottom"/>
                 <Label  Content ="Grey color threshold" FontWeight="Bold" Grid.Column="0" Padding="0,4,0,0" Margin="0,13,3,0"/>
 
                 <Canvas Name="FeedbackCanvas" Background="Beige" Width="Auto" Height="30" Grid.Column="1">
@@ -58,7 +58,7 @@
                     </Label.Background>
                 </Label>
 
-                <Label  Name="lblDarkPixelRatio" IsHitTestVisible = "False" Content ="--" Grid.Column="1" HorizontalAlignment="Center" Margin="0,5,0,0"  Padding="0,-8,0,0" Height="15"  FontSize="12">
+                <Label  Name="DarkPixelRatio" IsHitTestVisible = "False" Content ="--" Grid.Column="1" HorizontalAlignment="Center" Margin="0,5,0,0"  Padding="0,-8,0,0" Height="15"  FontSize="12">
                     <Label.Background>
                         <SolidColorBrush Color="Beige" Opacity="0.7" />
                     </Label.Background>
@@ -89,18 +89,18 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" Grid.Column="0" HorizontalAlignment="Left" >
                     <Label Content="File:"  HorizontalContentAlignment="Left" FontSize="12" FontWeight="Bold" />
-                    <Label Name="lblImageName" Content="[ --- file name --- ]" HorizontalContentAlignment="Left" FontSize="12" FontWeight="Normal" />
+                    <Label Name="ImageName" Content="[ --- file name --- ]" HorizontalContentAlignment="Left" FontSize="12" FontWeight="Normal" />
                 </StackPanel>
                 <Label Content="Original/New classification:" Padding="0,5,0,0" Margin="0,0,0,0" FontSize="12" FontWeight="Bold" Grid.Column="1"  HorizontalAlignment="Right"/>
                 <StackPanel Orientation="Horizontal" Grid.Column="2" Width="Auto" HorizontalAlignment="left">
-                    <Label Name="lblOriginalClassification" Padding="0,5,0,0" MinWidth="60" Margin="0,0,0,0" Content="---------" FontWeight="Normal" FontSize="12" HorizontalContentAlignment="Right"/>
+                    <Label Name="OriginalClassification" Padding="0,5,0,0" MinWidth="60" Margin="0,0,0,0" Content="---------" FontWeight="Normal" FontSize="12" HorizontalContentAlignment="Right"/>
                     <Label Padding="0,5,0,0" Margin="0,0,0,0" Content="/"  DockPanel.Dock="Left" FontSize="12" FontWeight="Bold"  />
-                    <Label Name="lblNewClassification" Padding="0,5,0,0" Margin="0,0,0,0"  Content="----" FontWeight="Normal" FontSize="12"  HorizontalContentAlignment="Left" HorizontalAlignment="Left"/>
+                    <Label Name="NewClassification" Padding="0,5,0,0" Margin="0,0,0,0"  Content="----" FontWeight="Normal" FontSize="12"  HorizontalContentAlignment="Left" HorizontalAlignment="Left"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Grid.Column="3" Width="Auto" HorizontalAlignment="Right" >
-                    <Label Name="lblRatioFound" Content="--"   Margin="0,0,0,0"  Padding="0,5,0,0" FontSize="12" FontWeight="Normal" Width="Auto" HorizontalContentAlignment="Right"/>
-                    <TextBlock Name="txtPercent" Text="% " Margin="0,0,0,0"  Padding="0,5,0,0" FontSize="12" />
-                    <TextBlock Name="lblThresholdMessage" Text="of the image pixels are darker than the threshold" Margin="0,0,5,0"  Padding="0,5,0,0" FontSize="12" FontWeight="Bold" />
+                    <Label Name="RatioFound" Content="--"   Margin="0,0,0,0"  Padding="0,5,0,0" FontSize="12" FontWeight="Normal" Width="Auto" HorizontalContentAlignment="Right"/>
+                    <TextBlock Name="Percent" Text="% " Margin="0,0,0,0"  Padding="0,5,0,0" FontSize="12" />
+                    <TextBlock Name="ThresholdMessage" Text="of the image pixels are darker than the threshold" Margin="0,0,5,0"  Padding="0,5,0,0" FontSize="12" FontWeight="Bold" />
                 </StackPanel>
             </Grid>
         </StackPanel>
@@ -115,7 +115,7 @@
             </Grid.ColumnDefinitions>
 
             <Button Name="PrevButton" Width="Auto" Grid.Column="0" IsDefault="False" VerticalAlignment="Center" Padding="8" Margin="10,10,0,10" HorizontalAlignment="Left" FontFamily="Marlett" FontSize="20" Click="PreviousButton_Click">3</Button>
-            <Slider Name="sldrScrollImages" Grid.Column="1"  VerticalAlignment="Center" HorizontalAlignment="Stretch" Padding="0" Margin="0,0,0,0" AutoToolTipPlacement="BottomRight"/>
+            <Slider Name="ScrollImages" Grid.Column="1"  VerticalAlignment="Center" HorizontalAlignment="Stretch" Padding="0" Margin="0,0,0,0" AutoToolTipPlacement="BottomRight"/>
             <Button Name="NextButton" Width="Auto" Grid.Column="2" IsDefault="False" VerticalAlignment="Bottom"  Padding="8" Margin="0,10,50,10" HorizontalAlignment="Right" FontFamily="Marlett" FontSize="20" Click="NextButton_Click">4</Button>
             <Button Name="CancelButton" Grid.Column="3" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
             <Button Name="OkButton" Grid.Column="4" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Apply to All Images</Button>

@@ -1,13 +1,16 @@
 ﻿namespace Carnassial.Database
 {
-    public enum ImageSelection : int
+    public enum ImageSelection
     {
-        Ok = 0,
-        Dark = 1,
-        FileNoLongerAvailable = 2,
-        Corrupted = 3,
-        All = 4,
-        MarkedForDeletion = 5,
-        Custom = 6
+        // image selections also used as image qualities
+        Ok,
+        CorruptFile,
+        Dark,
+        FileNoLongerAvailable,
+
+        // image selections only
+        All,
+        MarkedForDeletion,
+        Custom
     }
 }

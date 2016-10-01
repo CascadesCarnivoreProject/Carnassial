@@ -238,7 +238,10 @@ namespace Carnassial.Controls
                         DataEntryFlag flag = (DataEntryFlag)pair.Value;
                         flag.ContentControl.Checked += this.FlagControl_CheckedChanged;
                         flag.ContentControl.Unchecked += this.FlagControl_CheckedChanged;
-                        this.SetContextMenuCallbacks(flag);
+                        if (controlType == Constants.Control.Flag)
+                        {
+                            this.SetContextMenuCallbacks(flag);
+                        }
                         break;
                     case Constants.DatabaseColumn.ImageQuality:
                     case Constants.Control.FixedChoice:
@@ -497,66 +500,62 @@ namespace Carnassial.Controls
                     cursorPosition = 0;
                 }
 
+                this.IsProgrammaticControlUpdate = true;
                 textBox.Text = trimmedNote;
                 textBox.CaretIndex = cursorPosition;
+                this.IsProgrammaticControlUpdate = false;
             }
-            textBox.ToolTip = textBox.Text;
 
-            // Get the key identifying the control, and then add its value to the database
+            // check if autocompletion is possible when text is added
+            // Don't attempt autocompletion on pure removals, such as backspace or delete, but do try when both add and remove changes are present as this
+            // usually indicates the user's typing over the autocomplete suggestion.
             DataEntryNote control = (DataEntryNote)textBox.Tag;
+            if ((String.IsNullOrEmpty(textBox.Text) == false) &&
+                e.Changes.Any(change => change.AddedLength > 0))
+            {
+                int textLength = textBox.Text.Length;
+                string autocompletion = control.Autocompletions.FirstOrDefault(value => value.Length >= textLength && value.Substring(0, textLength).Equals(textBox.Text, StringComparison.Ordinal));
+                if (String.IsNullOrEmpty(autocompletion) == false)
+                {
+                    this.IsProgrammaticControlUpdate = true;
+                    textBox.Text = autocompletion;
+                    textBox.CaretIndex = textLength;
+                    textBox.SelectionStart = textLength;
+                    textBox.SelectionLength = autocompletion.Length - textLength;
+                    this.IsProgrammaticControlUpdate = false;
+                }
+            }
+
+            // update control state write current value to the database
+            textBox.ToolTip = textBox.Text;
             control.ContentChanged = true;
+
             this.ImageDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, textBox.Text);
-
-            // check if autocompletion is possible
-            if (String.IsNullOrEmpty(textBox.Text))
-            {
-                // nothing to match against
-                return;
-            }
-
-            // don't perform autocompletion on backspace/delete or copy+paste
-            if (e.Changes.Any(change => change.RemovedLength > 0) && (e.Changes.Any(change => change.AddedLength > 0) == false))
-            {
-                return;
-            }
-
-            // provide an autocompletion if available
-            int textLength = textBox.Text.Length;
-            string autocompletion = control.Autocompletions.FirstOrDefault(value => value.Length >= textLength && value.Substring(0, textLength).Equals(textBox.Text, StringComparison.Ordinal));
-            if (String.IsNullOrEmpty(autocompletion))
-            {
-                // no autocompletion available
-                return;
-            }
-
-            textBox.Text = autocompletion;
-            textBox.CaretIndex = textLength;
-            textBox.SelectionStart = textLength;
-            textBox.SelectionLength = autocompletion.Length - textLength;
+            this.IsProgrammaticControlUpdate = false;
         }
 
         private void SetContextMenuCallbacks(DataEntryControl control)
         {
             MenuItem menuItemPropagateFromLastValue = new MenuItem();
             menuItemPropagateFromLastValue.IsCheckable = false;
-            menuItemPropagateFromLastValue.Header = "Propagate from the last non-empty value to here";
+            menuItemPropagateFromLastValue.Header = "Propagate from the _last non-empty value to here";
             if (control is DataEntryCounter)
             {
-                menuItemPropagateFromLastValue.Header = "Propagate from the last non-zero value to here";
+                menuItemPropagateFromLastValue.Header = "Propagate from the _last non-zero value to here";
             }
             menuItemPropagateFromLastValue.Click += this.MenuItemPropagateFromLastValue_Click;
             menuItemPropagateFromLastValue.Tag = control;
 
             MenuItem menuItemCopyForward = new MenuItem();
             menuItemCopyForward.IsCheckable = false;
-            menuItemCopyForward.Header = "Copy forward to end";
+            menuItemCopyForward.Header = "Copy forward to _end";
             menuItemCopyForward.ToolTip = "The value of this field will be copied forward from this image to the last image in this set";
             menuItemCopyForward.Click += this.MenuItemPropagateForward_Click;
             menuItemCopyForward.Tag = control;
 
             MenuItem menuItemCopyCurrentValue = new MenuItem();
             menuItemCopyCurrentValue.IsCheckable = false;
-            menuItemCopyCurrentValue.Header = "Copy to all";
+            menuItemCopyCurrentValue.Header = "Copy to _all";
             menuItemCopyCurrentValue.Click += this.MenuItemCopyCurrentValue_Click;
             menuItemCopyCurrentValue.Tag = control;
 
@@ -571,23 +570,23 @@ namespace Carnassial.Controls
 
             if (control is DataEntryCounter)
             {
-                DataEntryCounter counter = control as DataEntryCounter;
+                DataEntryCounter counter = (DataEntryCounter)control;
                 counter.ContentControl.ContextMenu = menu;
             }
             else if (control is DataEntryNote)
             {
-                DataEntryNote note = control as DataEntryNote;
+                DataEntryNote note = (DataEntryNote)control;
                 note.ContentControl.ContextMenu = menu;
             }
             else if (control is DataEntryChoice)
             {
-                DataEntryChoice choice = control as DataEntryChoice;
+                DataEntryChoice choice = (DataEntryChoice)control;
                 choice.ContentControl.ContextMenu = menu;
             }
             else if (control is DataEntryFlag)
             {
-                // nothing to do
-                // TODOSAUL: why don't flags' checkboxes need a context menu?  Could a polymorphic set API be used rather than special casing by type?
+                DataEntryFlag flag = (DataEntryFlag)control;
+                flag.ContentControl.ContextMenu = menu;
             }
             else
             {

@@ -44,7 +44,7 @@ namespace Carnassial.Database
         public override ColumnTuplesWithWhere GetColumnTuples()
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>();
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Selection, (int)this.ImageSelection));
+            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Selection, this.ImageSelection.ToString()));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Log, this.Log));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, this.MagnifierEnabled));
             columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Row, this.ImageRowIndex));

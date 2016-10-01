@@ -71,8 +71,8 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void Carnassial()
         {
-            // Constants.Images needs to load resources from Carnassial.exe and BitmapFrame.Create() relies on Application.ResourceAssembly to do this
-            // for unit tests (or the editor) ResourceAssembly does not get set as Carnassial.exe is the entry point
+            // Constants.Images needs to load resources from Carnassial.exe and relies on Application.ResourceAssembly to do this
+            // for unit tests (or the editor) ResourceAssembly does not get set as Carnassial.exe is not the entry point
             if (Application.ResourceAssembly == null)
             {
                 Application.ResourceAssembly = typeof(Constants.Images).Assembly;
@@ -192,7 +192,7 @@ namespace Carnassial.UnitTests
                 this.ShowDialog(new RenameImageDatabaseFile(dataHandler.ImageDatabase.FileName, carnassial));
                 this.ShowDialog(new DateRereadFromFiles(dataHandler.ImageDatabase, carnassial));
                 this.ShowDialog(new FileCountsByQuality(dataHandler.ImageDatabase.GetImageCountsByQuality(), carnassial));
-                this.ShowDialog(new TemplatesDontMatch(dataHandler.ImageDatabase.TemplateSynchronizationIssues, carnassial));
+                this.ShowDialog(new TemplateSynchronization(dataHandler.ImageDatabase.TemplateSynchronizationIssues, carnassial));
 
                 MessageBox okMessageBox = this.CreateMessageBox(carnassial, MessageBoxButton.OK, MessageBoxImage.Error);
                 this.ShowDialog(okMessageBox);

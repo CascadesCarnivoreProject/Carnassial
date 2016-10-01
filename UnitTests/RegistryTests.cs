@@ -268,7 +268,7 @@ namespace Carnassial.UnitTests
         {
             Assert.IsFalse(userSettings.AudioFeedback);
             Assert.IsTrue(userSettings.CarnassialWindowLocation.X == 0 && userSettings.CarnassialWindowLocation.Y == 0);
-            Assert.IsTrue(userSettings.CarnassialWindowSize.Width == 1300 && userSettings.CarnassialWindowSize.Height == 900);
+            Assert.IsTrue(userSettings.CarnassialWindowSize.Width == 1350 && userSettings.CarnassialWindowSize.Height == 900);
             Assert.IsTrue(userSettings.DarkPixelRatioThreshold == Constants.Images.DarkPixelRatioThresholdDefault);
             Assert.IsTrue(userSettings.DarkPixelThreshold == Constants.Images.DarkPixelThresholdDefault);
             Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);

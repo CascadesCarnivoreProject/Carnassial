@@ -48,16 +48,16 @@ namespace Carnassial.Dialog
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            this.sldrDarkThreshold.Value = this.userSettings.DarkPixelThreshold;
-            this.sldrDarkThreshold.ValueChanged += this.DarkThresholdSlider_ValueChanged;
+            this.DarkThreshold.Value = this.userSettings.DarkPixelThreshold;
+            this.DarkThreshold.ValueChanged += this.DarkThresholdSlider_ValueChanged;
 
-            this.sldrScrollImages.Minimum = 0;
-            this.sldrScrollImages.Maximum = this.database.CurrentlySelectedImageCount - 1;
-            this.sldrScrollImages.Value = this.imageEnumerator.CurrentRow;
+            this.ScrollImages.Minimum = 0;
+            this.ScrollImages.Maximum = this.database.CurrentlySelectedImageCount - 1;
+            this.ScrollImages.Value = this.imageEnumerator.CurrentRow;
 
             this.SetPreviousNextButtonStates();
-            this.SldrScrollImages_ValueChanged(null, null);
-            this.sldrScrollImages.ValueChanged += this.SldrScrollImages_ValueChanged;
+            this.ScrollImages_ValueChanged(null, null);
+            this.ScrollImages.ValueChanged += this.ScrollImages_ValueChanged;
             this.Focus();               // necessary for the left/right arrow keys to work.
         }
 
@@ -69,10 +69,10 @@ namespace Carnassial.Dialog
             // Depending on the key, take the appropriate action
             switch (e.Key)
             {
-                case Key.Right:             // next image
+                case Key.Right:             // next file
                     this.NextButton_Click(null, null);
                     break;
-                case Key.Left:              // previous imageimageEnumerator.CurrentRow
+                case Key.Left:              // previous file
                     this.PreviousButton_Click(null, null);
                     break;
                 default:
@@ -116,41 +116,41 @@ namespace Carnassial.Dialog
         // Update all the labels to show the current values
         private void UpdateLabels()
         {
-            this.lblDarkPixelRatio.Content = String.Format("{0,3:##0}%", 100 * this.darkPixelRatio);
-            this.lblRatioFound.Content = String.Format("{0,3:##0}", 100 * this.darkPixelRatioFound);
+            this.DarkPixelRatio.Content = String.Format("{0,3:##0}%", 100 * this.darkPixelRatio);
+            this.RatioFound.Content = String.Format("{0,3:##0}", 100 * this.darkPixelRatioFound);
 
             //// We don't want to update labels if the image is not valid 
-            if (this.lblOriginalClassification.Content.ToString() == Constants.ImageQuality.Ok || this.lblOriginalClassification.Content.ToString() == Constants.ImageQuality.Dark)
+            if (this.OriginalClassification.Content.ToString() == Constants.ImageQuality.Ok || this.OriginalClassification.Content.ToString() == Constants.ImageQuality.Dark)
             {
                 if (this.isColor)
                 {
                     // color image 
-                    this.lblThresholdMessage.Text = "Color - therefore not dark";
-                    this.txtPercent.Visibility = Visibility.Hidden;
-                    this.lblRatioFound.Content = String.Empty;
+                    this.ThresholdMessage.Text = "Color - therefore not dark";
+                    this.Percent.Visibility = Visibility.Hidden;
+                    this.RatioFound.Content = String.Empty;
                 }
                 else
                 {
-                    this.lblThresholdMessage.Text = "of the pixels are darker than the threshold";
-                    this.txtPercent.Visibility = Visibility.Visible;
+                    this.ThresholdMessage.Text = "of the pixels are darker than the threshold";
+                    this.Percent.Visibility = Visibility.Visible;
                 }
 
                 if (this.isColor)
                 {
-                    this.lblNewClassification.Content = Constants.ImageQuality.Ok;       // Color image
+                    this.NewClassification.Content = Constants.ImageQuality.Ok;       // Color image
                 }
                 else if (this.darkPixelRatio <= this.darkPixelRatioFound)
                 {
-                    this.lblNewClassification.Content = Constants.ImageQuality.Dark;  // Dark grey scale image
+                    this.NewClassification.Content = Constants.ImageQuality.Dark;  // Dark grey scale image
                 }
                 else
                 {
-                    this.lblNewClassification.Content = Constants.ImageQuality.Ok;   // Light grey scale image
+                    this.NewClassification.Content = Constants.ImageQuality.Ok;   // Light grey scale image
                 }
             }
             else
             {
-                this.lblNewClassification.Content = "----";
+                this.NewClassification.Content = "----";
             }
         }
 
@@ -159,8 +159,8 @@ namespace Carnassial.Dialog
         {
             this.bitmap = this.imageEnumerator.Current.LoadBitmap(this.database.FolderPath).AsWriteable();
             this.img.Source = this.bitmap;
-            this.lblImageName.Content = this.imageEnumerator.Current.FileName;
-            this.lblOriginalClassification.Content = this.imageEnumerator.Current.ImageQuality.ToString(); // The original image classification
+            this.ImageName.Content = this.imageEnumerator.Current.FileName;
+            this.OriginalClassification.Content = this.imageEnumerator.Current.ImageQuality.ToString(); // The original image classification
 
             this.RecalculateImageQualityForCurrentImage();
             this.Repaint();
@@ -170,14 +170,14 @@ namespace Carnassial.Dialog
         private void PreviousButton_Click(object sender, RoutedEventArgs e)
         {
             this.imageEnumerator.MovePrevious();
-            this.sldrScrollImages.Value = this.imageEnumerator.CurrentRow;
+            this.ScrollImages.Value = this.imageEnumerator.CurrentRow;
         }
 
         // Navigate to the next image
         private void NextButton_Click(object sender, RoutedEventArgs e)
         {
             this.imageEnumerator.MoveNext();
-            this.sldrScrollImages.Value = this.imageEnumerator.CurrentRow;
+            this.ScrollImages.Value = this.imageEnumerator.CurrentRow;
         }
 
         private void SetPreviousNextButtonStates()
@@ -207,10 +207,11 @@ namespace Carnassial.Dialog
         // A drop-down menu providing the user with two ways to reset thresholds
         private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
-            (sender as Button).ContextMenu.IsEnabled = true;
-            (sender as Button).ContextMenu.PlacementTarget = sender as Button;
-            (sender as Button).ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
-            (sender as Button).ContextMenu.IsOpen = true;
+            Button resetButton = (Button)sender;
+            resetButton.ContextMenu.IsEnabled = true;
+            resetButton.ContextMenu.PlacementTarget = sender as Button;
+            resetButton.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            resetButton.ContextMenu.IsOpen = true;
         }
 
         // Reset the thresholds to their initial settings
@@ -221,7 +222,7 @@ namespace Carnassial.Dialog
             Canvas.SetLeft(this.LineDarkPixelRatio, this.darkPixelRatio * (this.FeedbackCanvas.ActualWidth - this.LineDarkPixelRatio.ActualWidth));
 
             // Move the slider to its original position
-            this.sldrDarkThreshold.Value = this.userSettings.DarkPixelRatioThreshold;
+            this.DarkThreshold.Value = this.userSettings.DarkPixelRatioThreshold;
             this.RecalculateImageQualityForCurrentImage();
             this.Repaint();
         }
@@ -234,7 +235,7 @@ namespace Carnassial.Dialog
             Canvas.SetLeft(this.LineDarkPixelRatio, this.darkPixelRatio * (this.FeedbackCanvas.ActualWidth - this.LineDarkPixelRatio.ActualWidth));
 
             // Move the slider to its original position
-            this.sldrDarkThreshold.Value = Constants.Images.DarkPixelThresholdDefault;
+            this.DarkThreshold.Value = Constants.Images.DarkPixelThresholdDefault;
             this.RecalculateImageQualityForCurrentImage();
             this.Repaint();
         }
@@ -242,7 +243,7 @@ namespace Carnassial.Dialog
         // Set a new value for the dark pixel threshold and update the UI
         private void DarkThresholdSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (this.lblDarkPixelRatio == null)
+            if (this.DarkPixelRatio == null)
             {
                 return;
             }
@@ -272,7 +273,7 @@ namespace Carnassial.Dialog
                 Canvas.SetLeft(thumb, Canvas.GetLeft(thumb) + e.HorizontalChange);
                 this.darkPixelRatio = (Canvas.GetLeft(thumb) + e.HorizontalChange) / this.FeedbackCanvas.ActualWidth;
             }
-            if (this.lblDarkPixelRatio == null)
+            if (this.DarkPixelRatio == null)
             {
                 return;
             }
@@ -282,9 +283,9 @@ namespace Carnassial.Dialog
             this.UpdateLabels();
         }
 
-        private void SldrScrollImages_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void ScrollImages_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            this.imageEnumerator.TryMoveToImage(Convert.ToInt32(this.sldrScrollImages.Value));
+            this.imageEnumerator.TryMoveToImage(Convert.ToInt32(this.ScrollImages.Value));
             this.DisplayImageAndDetails();
             this.SetPreviousNextButtonStates();
         }
@@ -334,13 +335,13 @@ namespace Carnassial.Dialog
             backgroundWorker.DoWork += (ow, ea) =>
             {   
                 int images = database.CurrentlySelectedImageCount;
-                foreach (ImageRow imageRow in database.ImageDataTable)
+                // TODO: make parallel
+                foreach (ImageRow image in database.ImageDataTable)
                 {
-                    ImageQuality imageQuality = new ImageQuality(imageRow);
+                    ImageQuality imageQuality = new ImageQuality(image);
 
                     // If its not a valid image, say so and go onto the next one.
-                    if (!(imageQuality.OldImageQuality == ImageSelection.Ok) && 
-                        !(imageQuality.OldImageQuality == ImageSelection.Dark))
+                    if ((imageQuality.OldImageQuality != ImageSelection.Ok) && (imageQuality.OldImageQuality != ImageSelection.Dark))
                     {
                         imageQuality.NewImageQuality = null;
                         backgroundWorker.ReportProgress(0, imageQuality);
@@ -352,14 +353,14 @@ namespace Carnassial.Dialog
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just go to the catch.
-                        imageQuality.Bitmap = imageRow.LoadBitmap(this.database.FolderPath).AsWriteable();
+                        imageQuality.Bitmap = image.LoadBitmap(this.database.FolderPath).AsWriteable();
                         imageQuality.NewImageQuality = imageQuality.Bitmap.GetImageQuality(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
                         imageQuality.IsColor = this.isColor;
                         imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
                         if (imageQuality.OldImageQuality != imageQuality.NewImageQuality.Value)
                         {
-                            // TODO DISCRETIONARY (SAULS SUGGESTION): MAKE DB UPDATE EFFICIENT
-                            database.UpdateImage(imageRow.ID, Constants.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality.Value.ToString());
+                            // TODO: change to UpdateImages() for efficiency
+                            database.UpdateImage(image.ID, Constants.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality.Value.ToString());
                         }
                     }
                     catch (Exception exception)
@@ -376,22 +377,22 @@ namespace Carnassial.Dialog
                 ImageQuality imageQuality = (ImageQuality)ea.UserState;
                 this.img.Source = imageQuality.Bitmap;
 
-                this.lblImageName.Content = imageQuality.FileName;
-                this.lblOriginalClassification.Content = imageQuality.OldImageQuality;
-                this.lblNewClassification.Content = imageQuality.NewImageQuality;
-                this.lblDarkPixelRatio.Content = String.Format("{0,3:##0}%", 100 * this.darkPixelRatio);
-                this.lblRatioFound.Content = String.Format("{0,3:##0}", 100 * imageQuality.DarkPixelRatioFound);
+                this.ImageName.Content = imageQuality.FileName;
+                this.OriginalClassification.Content = imageQuality.OldImageQuality;
+                this.NewClassification.Content = imageQuality.NewImageQuality;
+                this.DarkPixelRatio.Content = String.Format("{0,3:##0}%", 100 * this.darkPixelRatio);
+                this.RatioFound.Content = String.Format("{0,3:##0}", 100 * imageQuality.DarkPixelRatioFound);
 
                 if (imageQuality.IsColor) // color image 
                 {
-                    this.lblThresholdMessage.Text = "Color - therefore not dark";
-                    this.txtPercent.Visibility = Visibility.Hidden;
-                    this.lblRatioFound.Content = String.Empty;
+                    this.ThresholdMessage.Text = "Color - therefore not dark";
+                    this.Percent.Visibility = Visibility.Hidden;
+                    this.RatioFound.Content = String.Empty;
                 }
                 else
                 {
-                    this.lblThresholdMessage.Text = "of the pixels are darker than the threshold";
-                    this.txtPercent.Visibility = Visibility.Visible;
+                    this.ThresholdMessage.Text = "of the pixels are darker than the threshold";
+                    this.Percent.Visibility = Visibility.Visible;
                 }
 
                 // Size the bar to show how many pixels in the current image are at least as dark as that color
