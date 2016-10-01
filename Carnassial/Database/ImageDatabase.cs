@@ -472,7 +472,7 @@ namespace Carnassial.Database
             Dictionary<ImageSelection, int> counts = new Dictionary<ImageSelection, int>();
             counts[ImageSelection.Dark] = this.GetImageCount(ImageSelection.Dark);
             counts[ImageSelection.Corrupted] = this.GetImageCount(ImageSelection.Corrupted);
-            counts[ImageSelection.Missing] = this.GetImageCount(ImageSelection.Missing);
+            counts[ImageSelection.FileNoLongerAvailable] = this.GetImageCount(ImageSelection.FileNoLongerAvailable);
             counts[ImageSelection.Ok] = this.GetImageCount(ImageSelection.Ok);
             return counts;
         }
@@ -513,7 +513,7 @@ namespace Carnassial.Database
                     return String.Empty;
                 case ImageSelection.Corrupted:
                 case ImageSelection.Dark:
-                case ImageSelection.Missing:
+                case ImageSelection.FileNoLongerAvailable:
                 case ImageSelection.Ok:
                     return this.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality] + "=\"" + selection + "\"";
                 case ImageSelection.MarkedForDeletion:

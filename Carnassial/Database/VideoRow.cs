@@ -28,7 +28,7 @@ namespace Carnassial.Database
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
             {
-                return Constants.Images.Missing;
+                return Constants.Images.FileNoLongerAvailable;
             }
 
             MediaPlayer mediaPlayer = new MediaPlayer();

@@ -23,14 +23,14 @@ namespace Carnassial.Dialog
             // Fill in the counts
             int ok = counts[ImageSelection.Ok];
             this.Ok.Text = String.Format("{0,5}", ok) + this.Ok.Text;
-            int missing = counts[ImageSelection.Missing];
-            this.Missing.Text = String.Format("{0,5}", missing) + this.Missing.Text;
+            int fileNoLongerAvailable = counts[ImageSelection.FileNoLongerAvailable];
+            this.FileNoLongerAvailable.Text = String.Format("{0,5}", fileNoLongerAvailable) + this.FileNoLongerAvailable.Text;
             int dark = counts[ImageSelection.Dark];
             this.Dark.Text = String.Format("{0,5}", dark) + this.Dark.Text;
             int corrupted = counts[ImageSelection.Corrupted];
             this.Corrupted.Text = String.Format("{0,5}", corrupted) + this.Corrupted.Text;
 
-            int total = ok + dark + corrupted + missing;
+            int total = ok + dark + corrupted + fileNoLongerAvailable;
             this.Total.Text = String.Format("{0,5}", total) + this.Total.Text;
         }
 

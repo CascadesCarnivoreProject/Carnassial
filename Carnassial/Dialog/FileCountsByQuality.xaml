@@ -26,10 +26,10 @@
                 <Run Text="images and videos that can be displayed, but are likely nighttime shots" />
                  <LineBreak/>
                 <Run x:Name="Corrupted"   FontWeight="Bold" Text=" corrupted " />
-                <Run  Text="images and videos that cannot be displayed" />
+                <Run Text="images and videos that cannot be displayed" />
                 <LineBreak/>
-                 <Run x:Name="Missing" FontWeight="Bold" Text=" missing " />
-                <Run  Text="images and videos that were likely deleted previously" />
+                 <Run x:Name="FileNoLongerAvailable" FontWeight="Bold" Text=" file no longer available " />
+                <Run Text="images and videos that were likely deleted previously" />
                 <LineBreak/>
                 <Line Stroke="Black" X1="0" Y1="0" X2="25" Y2="0" />
                 <LineBreak/>

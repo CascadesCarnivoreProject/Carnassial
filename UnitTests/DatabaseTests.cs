@@ -42,7 +42,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(imageCounts.Count == 4);
             Assert.IsTrue(imageCounts[ImageSelection.Corrupted] == 0);
             Assert.IsTrue(imageCounts[ImageSelection.Dark] == 0);
-            Assert.IsTrue(imageCounts[ImageSelection.Missing] == 0);
+            Assert.IsTrue(imageCounts[ImageSelection.FileNoLongerAvailable] == 0);
             Assert.IsTrue(imageCounts[ImageSelection.Ok] == imageExpectations.Count);
 
             ImageDataTable imagesToDelete = imageDatabase.GetImagesMarkedForDeletion();
@@ -203,7 +203,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.Custom) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.Dark) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.MarkedForDeletion) == 0);
-            Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.Missing) == 0);
+            Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.FileNoLongerAvailable) == 0);
             Assert.IsTrue(imageDatabase.GetImageCount(ImageSelection.Ok) == imageExpectations.Count);
 
             // markers

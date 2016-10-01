@@ -155,7 +155,7 @@ namespace Carnassial.Dialog
             else if (this.CurrentRow.IsVideo && (this.Source == null || this.currentRow.IsDisplayable() == false)) 
             {
                 // The video is not displayable (i.e., its missing or corrupt)
-                this.txtblockNoVideo.Text = this.fileName + Environment.NewLine + "cannot be played as it is" + Environment.NewLine + "marked as missing or corrupt.";
+                this.txtblockNoVideo.Text = this.fileName + Environment.NewLine + "cannot be played as the file" + Environment.NewLine + "is no longer available or corrupt.";
                 this.Title = "Video Player: " + this.fileName + " cannot be played";
             }
             else if (stateCanPlay == true)     

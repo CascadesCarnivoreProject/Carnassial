@@ -120,12 +120,12 @@
             <!-- Select menu -->
             <MenuItem x:Name="MenuItemSelect" Header="_Select" IsEnabled="false" IsTabStop="false" SubmenuOpened="MenuItemSelect_SubmenuOpening" ToolTip="Select a subset of the files">
                 <MenuItem x:Name="MenuItemSelectAllImages" IsCheckable="True" IsChecked="True" Header="_All files" Click="MenuItemSelect_Click" ToolTip="Shows all files, including corrupted and dark ones"/>
-                <MenuItem x:Name="MenuItemSelectLightImages"   IsCheckable="True" IsChecked="False" Header="_Light files" Click="MenuItemSelect_Click" ToolTip="Exlcudes dark, corrupted, or missing files"/>
+                <MenuItem x:Name="MenuItemSelectLightImages" IsCheckable="True" IsChecked="False" Header="_Light files" Click="MenuItemSelect_Click" ToolTip="Exlcudes dark, corrupted, or missing files"/>
                 <MenuItem x:Name="MenuItemSelectDarkImages" IsCheckable="True" IsChecked="False" Header="_Dark files" Click="MenuItemSelect_Click" ToolTip="Show only dark images"/>
                 <MenuItem x:Name="MenuItemSelectCorruptedImages" IsCheckable="True" IsChecked="False" Header="_Corrupted files" Click="MenuItemSelect_Click" ToolTip="Show only corrupted images"/>
-                <MenuItem x:Name="MenuItemSelectMissingImages"   IsCheckable="True" IsChecked="False" Header="_Missing files" Click="MenuItemSelect_Click" ToolTip="Show only missing images"/>
-                <MenuItem x:Name="MenuItemSelectImagesMarkedForDeletion"  IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion" Click="MenuItemSelect_Click" ToolTip="Show only those marked for deletion"/>
-                <MenuItem x:Name="MenuItemSelectCustom"  IsCheckable="True" IsChecked="False" Header="_Custom selection..."  ToolTip="Create a custom selection" Click="MenuItemSelectCustomSelection_Click"/>
+                <MenuItem x:Name="MenuItemSelectFilesNoLongerAvailable" IsCheckable="True" IsChecked="False" Header="_Missing files" Click="MenuItemSelect_Click" ToolTip="Show records for files no longer available"/>
+                <MenuItem x:Name="MenuItemSelectImagesMarkedForDeletion" IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion" Click="MenuItemSelect_Click" ToolTip="Show only those marked for deletion"/>
+                <MenuItem x:Name="MenuItemSelectCustom" IsCheckable="True" IsChecked="False" Header="_Custom selection..."  ToolTip="Create a custom selection" Click="MenuItemSelectCustomSelection_Click"/>
             </MenuItem>
 
             <!-- Help Menu -->

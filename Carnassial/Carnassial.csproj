@@ -489,7 +489,7 @@
   <ItemGroup>
     <Resource Include="Resources\NoFileAvailable.jpg" />
     <Resource Include="Resources\Corrupted.jpg" />
-    <Resource Include="Resources\Missing.jpg" />
+    <Resource Include="Resources\FileNoLongerAvailable.jpg" />
     <Resource Include="Resources\play_icon.png" />
     <Resource Include="Resources\pause_icon.png" />
   </ItemGroup>

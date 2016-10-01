@@ -700,8 +700,8 @@ namespace Carnassial
                     case ImageSelection.MarkedForDeletion:
                         status = "files marked for deletion";
                         break;
-                    case ImageSelection.Missing:
-                        status = "missing files";
+                    case ImageSelection.FileNoLongerAvailable:
+                        status = "files no longer available";
                         break;
                     case ImageSelection.Ok:
                         status = "light files";
@@ -716,7 +716,7 @@ namespace Carnassial
                 this.MenuItemSelectCorruptedImages.IsChecked = (selection == ImageSelection.Corrupted) ? true : false;
                 this.MenuItemSelectDarkImages.IsChecked = (selection == ImageSelection.Dark) ? true : false;
                 this.MenuItemSelectLightImages.IsChecked = (selection == ImageSelection.Ok) ? true : false;
-                this.MenuItemSelectMissingImages.IsChecked = (selection == ImageSelection.Missing) ? true : false;
+                this.MenuItemSelectFilesNoLongerAvailable.IsChecked = (selection == ImageSelection.FileNoLongerAvailable) ? true : false;
                 this.MenuItemSelectImagesMarkedForDeletion.IsChecked = (selection == ImageSelection.MarkedForDeletion) ? true : false;
                 this.MenuItemSelectCustom.IsChecked = (selection == ImageSelection.Custom) ? true : false;
 
@@ -751,11 +751,11 @@ namespace Carnassial
                     reason = "None of the files have their 'ImageQuality' field set to Dark.";
                     hint = "If you have files you think should be marked as 'Dark', set their 'ImageQuality' field to 'Dark' and then reselect dark files.";
                 }
-                else if (selection == ImageSelection.Missing)
+                else if (selection == ImageSelection.FileNoLongerAvailable)
                 {
-                    problem = "Missing files were previously selected but no files are currently missing so nothing can be shown.";
-                    reason = "None of the files have their 'ImageQuality' field set to Missing.";
-                    hint = "If you have files you think should be marked as 'Missing', set their 'ImageQuality' field to 'Missing' and then reselect missing files.";
+                    problem = "Files no londer available were previously selected but all files are availale so nothing can be shown.";
+                    reason = "None of the files have their 'ImageQuality' field set to FilesNoLongerAvailable.";
+                    hint = "If you have removed files set their 'ImageQuality' field to 'FilesNoLongerAvailable' and then reselect files no longer available.";
                 }
                 else if (selection == ImageSelection.MarkedForDeletion)
                 {
@@ -1972,7 +1972,7 @@ namespace Carnassial
                     // There are no displayable images, and thus no metadata to choose from, so abort
                     MessageBox messageBox = new MessageBox("Can't populate a data field with image metadata.", this);
                     messageBox.Message.Problem = "Metadata is not available as no file in the image set can be read." + Environment.NewLine;
-                    messageBox.Message.Reason += "Carnassial must have at least one valid file in order to get its metadata.  All files are either missing or corrupted.";
+                    messageBox.Message.Reason += "Carnassial must have at least one valid file in order to get its metadata.  All files are either corrupted or removed.";
                     messageBox.Message.Icon = MessageBoxImage.Error;
                     messageBox.ShowDialog();
                     return;
@@ -2077,8 +2077,8 @@ namespace Carnassial
                 int currentRow;
                 if (mi.Name.Equals(this.MenuItemDeleteImage.Name) || mi.Name.Equals(this.MenuItemDeleteImages.Name))
                 {
-                    // We only deleted the image, not the data. We invoke ShowImage with the saved current row to show the missing image placeholder
-                    currentRow = this.dataHandler.ImageCache.CurrentRow;  // TryInvalidate may reset the current row to -1, so we need to save it.
+                    // deleted the file, not the data
+                    currentRow = this.dataHandler.ImageCache.CurrentRow;  // TryInvalidate may set the current row to -1, so we need to save it.
                     foreach (long id in deleteImagesDialog.ImageFilesRemovedByID)
                     {
                         this.dataHandler.ImageCache.TryInvalidate(id);
@@ -2422,7 +2422,7 @@ namespace Carnassial
             this.MenuItemSelectLightImages.IsEnabled = counts[ImageSelection.Ok] > 0;
             this.MenuItemSelectDarkImages.IsEnabled = counts[ImageSelection.Dark] > 0;
             this.MenuItemSelectCorruptedImages.IsEnabled = counts[ImageSelection.Corrupted] > 0;
-            this.MenuItemSelectMissingImages.IsEnabled = counts[ImageSelection.Missing] > 0;
+            this.MenuItemSelectFilesNoLongerAvailable.IsEnabled = counts[ImageSelection.FileNoLongerAvailable] > 0;
             this.MenuItemSelectImagesMarkedForDeletion.IsEnabled = this.dataHandler.ImageDatabase.GetImageCount(ImageSelection.MarkedForDeletion) > 0;
         }
 
@@ -2536,9 +2536,9 @@ namespace Carnassial
             {
                 selection = ImageSelection.Dark;
             }
-            else if (item == this.MenuItemSelectMissingImages)
+            else if (item == this.MenuItemSelectFilesNoLongerAvailable)
             {
-                selection = ImageSelection.Missing;
+                selection = ImageSelection.FileNoLongerAvailable;
             }
             else if (item == this.MenuItemSelectImagesMarkedForDeletion)
             {

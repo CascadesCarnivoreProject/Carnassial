@@ -182,9 +182,9 @@ namespace Carnassial.Dialog
                 }
                 else
                 {
-                    // as only the image file was deleted, change its image quality to missing in the database
+                    // as only the image file was deleted, change its image quality to FileNoLongerAvailable in the database
                     string imageQualityDataLabel = this.imageDatabase.DataLabelFromStandardControlType[Constants.DatabaseColumn.ImageQuality];
-                    this.imageDatabase.UpdateImage(imageProperties.ID, imageQualityDataLabel, ImageSelection.Missing.ToString());
+                    this.imageDatabase.UpdateImage(imageProperties.ID, imageQualityDataLabel, ImageSelection.FileNoLongerAvailable.ToString());
                     this.ImageFilesRemovedByID.Add(imageProperties.ID);
                 }
                 this.TryMoveImageToDeletedImagesFolder(this.imageDatabase.FolderPath, imageProperties);

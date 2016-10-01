@@ -4,7 +4,7 @@
     {
         Ok = 0,
         Dark = 1,
-        Missing = 2,
+        FileNoLongerAvailable = 2,
         Corrupted = 3,
         All = 4,
         MarkedForDeletion = 5,

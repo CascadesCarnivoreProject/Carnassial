@@ -196,12 +196,10 @@ namespace Carnassial
         // shorthands for ImageSelection.<value>.ToString()
         public static class ImageQuality
         {
-            public const string Corrupted = "Corrupted";
             public const string Dark = "Dark";
-            public const string Missing = "Missing";
             public const string Ok = "Ok";
 
-            public const string ListOfValues = "Ok|Dark|Corrupted|Missing";
+            public const string ListOfValues = "Ok|Dark|Corrupted|FileNoLongerAvailable";
         }
 
         public static class Images
@@ -229,7 +227,7 @@ namespace Carnassial
             public const int ThumbnailWidth = 300;
 
             public static readonly BitmapFrame Corrupt;
-            public static readonly BitmapFrame Missing;
+            public static readonly BitmapFrame FileNoLongerAvailable;
             public static readonly BitmapFrame NoFileAvailable;
 
             static Images()
@@ -237,8 +235,8 @@ namespace Carnassial
                 // Create a variety of images.
                 Images.Corrupt = BitmapFrame.Create(new Uri("pack://application:,,/Resources/Corrupted.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.Corrupt.Freeze();
-                Images.Missing = BitmapFrame.Create(new Uri("pack://application:,,/Resources/Missing.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
-                Images.Missing.Freeze();
+                Images.FileNoLongerAvailable = BitmapFrame.Create(new Uri("pack://application:,,/Resources/FileNoLongerAvailable.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
+                Images.FileNoLongerAvailable.Freeze();
                 Images.NoFileAvailable = BitmapFrame.Create(new Uri("pack://application:,,/Resources/NoFileAvailable.jpg"), BitmapCreateOptions.None, BitmapCacheOption.OnDemand);
                 Images.NoFileAvailable.Freeze();
             }

@@ -169,7 +169,6 @@ namespace Carnassial.Dialog
 
             this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
-            // Display the image. While we expect it to be on a valid image (our assumption), we can still show a missing or corrupted file if needed
             this.Image.Source = imageProperties.LoadBitmap(this.database.FolderPath);
             this.ImageName.Content = imageProperties.FileName;
 
@@ -195,7 +194,6 @@ namespace Carnassial.Dialog
 
                 this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
-                // Display the image. While we expect it to be on a valid image (our assumption), we can still show a missing or corrupted file if needed
                 this.Image.Source = imageProperties.LoadBitmap(this.database.FolderPath);
                 this.ImageName.Content = imageProperties.FileName;
 

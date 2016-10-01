@@ -136,7 +136,7 @@ namespace Carnassial.Database
 
         public bool IsDisplayable()
         {
-            if (this.ImageQuality == ImageSelection.Corrupted || this.ImageQuality == ImageSelection.Missing)
+            if (this.ImageQuality == ImageSelection.Corrupted || this.ImageQuality == ImageSelection.FileNoLongerAvailable)
             {
                 return false;
             }
@@ -178,7 +178,7 @@ namespace Carnassial.Database
             string path = this.GetImagePath(imageFolderPath);
             if (!File.Exists(path))
             {
-                return Constants.Images.Missing;
+                return Constants.Images.FileNoLongerAvailable;
             }
             try
             {
