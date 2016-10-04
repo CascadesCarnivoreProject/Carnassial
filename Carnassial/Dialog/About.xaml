@@ -13,29 +13,31 @@
                             Icon="Information" 
                             Title="About Carnassial" />
         <StackPanel Name="StackPanelCorrect" Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <StackPanel Orientation="Horizontal" Width="Auto" >
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-                <Run FontWeight="Bold" Text="Version: " FontSize="14"/> 
-                <Run x:Name="Version" FontSize="14"/>
-            </TextBlock>
-                <DockPanel HorizontalAlignment="Right" >
-                    <Button Name="CheckForUpdate" DockPanel.Dock="Left" Content="Check for Newer Versions" Margin="50,0,0,0" Padding="5,0,5,0" Click="CheckForUpdate_Click" />
-                    <Button Name="VersionChanges" DockPanel.Dock="Right" Content="See Version History" Margin="10,0,0,0" Padding="5,0,5,0" Click="VersionChanges_Click" />
-                </DockPanel>
-            </StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0" DataContext="{Binding}" Grid.Column="0">
+                  <Run FontWeight="Bold" Text="Version: " />
+                  <Run Text=" "/><Run x:Name="Version" />
+                </TextBlock>
+                <Button x:Name="CheckForNewerRelease" Content="_Check for newer release" Margin="10,0,10,0" Padding="5,0,5,0" Click="CheckForUpdate_Click" Grid.Column="1" />
+                <Button x:Name="ViewReleases" Content="_View releases" Margin="10,0,15,0" Padding="5,0,5,0" Click="VersionChanges_Click" Grid.Column="2" />
+            </Grid>
             <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-                <Run FontWeight="Bold" Text="Author: " FontSize="14"/> 
-                <Run FontWeight="Bold" Text="Author: " FontSize="14"/> 
+                <Run FontWeight="Bold" Text="Author: " /> 
                 <Run Text="Todd West"/>
                 <LineBreak />
-                <Run Text="                  Cascades Carnivore Project"/>
+                <Run Text="               Cascades Carnivore Project"/>
                 <LineBreak />
             </TextBlock>
 
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="14" >
-                <Run FontWeight="Bold" Text="Terms of use: " FontSize="14"/>
+            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap">
+                <Run FontWeight="Bold" Text="Terms of use: " />
             </TextBlock>
-            <TextBlock HorizontalAlignment="Left" Margin="70,0,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap"  FontSize="14">
+            <TextBlock HorizontalAlignment="Left" Margin="60,0,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap">
                 <Run Text="Carnassial is supplied 'as is' as a volunteer spinoff from our regular work." />
                 <Run Text="However, we are quite interested in making it better for you. "/>
                 <LineBreak />              

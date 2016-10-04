@@ -14,6 +14,8 @@ namespace Carnassial.Util
         public int DarkPixelThreshold { get; set; }
         public double DarkPixelRatioThreshold { get; set; }
         public MostRecentlyUsedList<string> MostRecentImageSets { get; private set; }
+        public bool OrderFilesByDateTime { get; set; }
+        public bool SkipDarkImagesCheck { get; set; }
         public bool SuppressAmbiguousDatesDialog { get; set; }
         public bool SuppressCsvExportDialog { get; set; }
         public bool SuppressCsvImportPrompt { get; set; }
@@ -53,6 +55,8 @@ namespace Carnassial.Util
                 this.DarkPixelRatioThreshold = registryKey.ReadDouble(Constants.Registry.CarnassialKey.DarkPixelRatio, Constants.Images.DarkPixelRatioThresholdDefault);
                 this.DarkPixelThreshold = registryKey.ReadInteger(Constants.Registry.CarnassialKey.DarkPixelThreshold, Constants.Images.DarkPixelThresholdDefault);
                 this.MostRecentImageSets = registryKey.ReadMostRecentlyUsedList(Constants.Registry.CarnassialKey.MostRecentlyUsedImageSets);
+                this.OrderFilesByDateTime = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.OrderFilesByDateTime, false);
+                this.SkipDarkImagesCheck = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SkipDarkImagesCheck, false);
                 this.SuppressAmbiguousDatesDialog = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, false);
                 this.SuppressCsvExportDialog = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressCsvExportDialog, false);
                 this.SuppressCsvImportPrompt = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressCsvImportPrompt, false);
@@ -82,6 +86,8 @@ namespace Carnassial.Util
                 registryKey.Write(Constants.Registry.CarnassialKey.DarkPixelThreshold, this.DarkPixelThreshold);
                 registryKey.Write(Constants.Registry.CarnassialKey.DesiredImageRendersPerSecond, this.Throttles.DesiredImageRendersPerSecond);
                 registryKey.Write(Constants.Registry.CarnassialKey.MostRecentlyUsedImageSets, this.MostRecentImageSets);
+                registryKey.Write(Constants.Registry.CarnassialKey.OrderFilesByDateTime, this.OrderFilesByDateTime);
+                registryKey.Write(Constants.Registry.CarnassialKey.SkipDarkImagesCheck, this.SkipDarkImagesCheck);
                 registryKey.Write(Constants.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, this.SuppressAmbiguousDatesDialog);
                 registryKey.Write(Constants.Registry.CarnassialKey.SuppressCsvExportDialog, this.SuppressCsvExportDialog);
                 registryKey.Write(Constants.Registry.CarnassialKey.SuppressCsvImportPrompt, this.SuppressCsvImportPrompt);

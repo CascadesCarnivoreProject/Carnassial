@@ -4,11 +4,11 @@ using System.Collections.Generic;
 
 namespace Carnassial.UnitTests
 {
-    internal static class ImageDatabaseExtensions
+    internal static class FileDatabaseExtensions
     {
-        public static IEnumerable<DateTimeOffset> GetImageTimes(this ImageDatabase imageDatabase)
+        public static IEnumerable<DateTimeOffset> GetImageTimes(this FileDatabase fileDatabase)
         {
-            foreach (ImageRow image in imageDatabase.ImageDataTable)
+            foreach (ImageRow image in fileDatabase.Files)
             {
                 yield return image.GetDateTime();
             }

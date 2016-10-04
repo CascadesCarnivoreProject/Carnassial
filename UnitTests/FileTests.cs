@@ -9,15 +9,15 @@ using System.Windows.Media.Imaging;
 namespace Carnassial.UnitTests
 {
     [TestClass]
-    public class ImageTests : CarnassialTest
+    public class FileTests : CarnassialTest
     {
         [TestMethod]
         public void Cache()
         {
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewImageDatabaseFileName);
-            List<ImageExpectations> imageExpectations = this.PopulateDefaultDatabase(imageDatabase);
+            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
+            List<FileExpectations> imageExpectations = this.PopulateDefaultDatabase(fileDatabase);
 
-            ImageCache cache = new ImageCache(imageDatabase);
+            ImageCache cache = new ImageCache(fileDatabase);
             Assert.IsNull(cache.Current);
             Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
             Assert.IsTrue(cache.CurrentRow == -1);
@@ -70,7 +70,7 @@ namespace Carnassial.UnitTests
                               (cache.CurrentDifferenceState == ImageDifference.Unaltered));
 
                 ImageDifferenceResult combinedDifferenceResult = cache.TryCalculateCombinedDifference(Constants.Images.DifferenceThresholdDefault - 2);
-                this.CheckDifferenceResult(combinedDifferenceResult, cache, imageDatabase);
+                this.CheckDifferenceResult(combinedDifferenceResult, cache, fileDatabase);
             }
 
             Assert.IsTrue(cache.TryMoveToImage(0));
@@ -82,7 +82,7 @@ namespace Carnassial.UnitTests
                               (cache.CurrentDifferenceState == ImageDifference.Unaltered));
 
                 ImageDifferenceResult differenceResult = cache.TryCalculateDifference();
-                this.CheckDifferenceResult(differenceResult, cache, imageDatabase);
+                this.CheckDifferenceResult(differenceResult, cache, fileDatabase);
             }
 
             cache.Reset();
@@ -94,8 +94,8 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void ExifBushnell()
         {
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constants.File.DefaultImageDatabaseFileName);
-            Dictionary<string, string> metadata = this.LoadMetadata(imageDatabase, TestConstant.ImageExpectation.InfraredMarten);
+            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constants.File.DefaultFileDatabaseFileName);
+            Dictionary<string, string> metadata = this.LoadMetadata(fileDatabase, TestConstant.ImageExpectation.InfraredMarten);
 
             DateTime dateTime;
             Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTime], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime));
@@ -109,8 +109,8 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void ExifReconyx()
         {
-            ImageDatabase imageDatabase = this.CreateImageDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constants.File.DefaultImageDatabaseFileName);
-            Dictionary<string, string> metadata = this.LoadMetadata(imageDatabase, TestConstant.ImageExpectation.DaylightMartenPair);
+            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constants.File.DefaultFileDatabaseFileName);
+            Dictionary<string, string> metadata = this.LoadMetadata(fileDatabase, TestConstant.ImageExpectation.DaylightMartenPair);
 
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ExposureTime]));
 
@@ -135,32 +135,32 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void ImageQuality()
         {
-            List<ImageExpectations> imageExpectations = new List<ImageExpectations>()
+            List<FileExpectations> imageExpectations = new List<FileExpectations>()
             {
-                new ImageExpectations(TestConstant.ImageExpectation.DaylightBobcat),
-                new ImageExpectations(TestConstant.ImageExpectation.DaylightCoyote),
-                new ImageExpectations(TestConstant.ImageExpectation.DaylightMartenPair),
-                new ImageExpectations(TestConstant.ImageExpectation.InfraredMarten)
+                new FileExpectations(TestConstant.ImageExpectation.DaylightBobcat),
+                new FileExpectations(TestConstant.ImageExpectation.DaylightCoyote),
+                new FileExpectations(TestConstant.ImageExpectation.DaylightMartenPair),
+                new FileExpectations(TestConstant.ImageExpectation.InfraredMarten)
             };
 
             TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName);
-            ImageDatabase imageDatabase = this.CreateImageDatabase(templateDatabase, TestConstant.File.DefaultNewImageDatabaseFileName);
-            foreach (ImageExpectations imageExpectation in imageExpectations)
+            FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName);
+            foreach (FileExpectations imageExpectation in imageExpectations)
             {
                 // Load the image
-                ImageRow imageProperties = imageExpectation.GetImageProperties(imageDatabase);
+                ImageRow imageProperties = imageExpectation.GetImageProperties(fileDatabase);
                 BitmapSource bitmap = imageProperties.LoadBitmap(this.WorkingDirectory);
 
                 double darkPixelFraction;
                 bool isColor;
-                ImageSelection imageQuality = bitmap.AsWriteable().GetImageQuality(Constants.Images.DarkPixelThresholdDefault, Constants.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor);
+                FileSelection imageQuality = bitmap.AsWriteable().IsDark(Constants.Images.DarkPixelThresholdDefault, Constants.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor);
                 Assert.IsTrue(Math.Abs(darkPixelFraction - imageExpectation.DarkPixelFraction) < TestConstant.DarkPixelFractionTolerance, "{0}: Expected dark pixel fraction to be {1}, but was {2}.", imageExpectation.FileName, imageExpectation.DarkPixelFraction, darkPixelFraction);
                 Assert.IsTrue(isColor == imageExpectation.IsColor, "{0}: Expected isColor to be {1}, but it was {2}", imageExpectation.FileName, imageExpectation.IsColor, isColor);
                 Assert.IsTrue(imageQuality == imageExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}", imageExpectation.FileName, imageExpectation.Quality, imageQuality);
             }
         }
 
-        private void CheckDifferenceResult(ImageDifferenceResult result, ImageCache cache, ImageDatabase imageDatabase)
+        private void CheckDifferenceResult(ImageDifferenceResult result, ImageCache cache, FileDatabase fileDatabase)
         {
             BitmapSource currentBitmap = cache.GetCurrentImage();
             switch (result)
@@ -185,12 +185,12 @@ namespace Carnassial.UnitTests
                     {
                         // as a default assume images are matched and expect differences to be calculable if the necessary images are available
                         case ImageDifference.Combined:
-                            expectNullBitmap = (cache.CurrentRow == 0) || (cache.CurrentRow == imageDatabase.CurrentlySelectedImageCount - 1);
+                            expectNullBitmap = (cache.CurrentRow == 0) || (cache.CurrentRow == fileDatabase.CurrentlySelectedImageCount - 1);
                             previousNextImageRow = cache.CurrentRow - 1;
                             otherImageRowForCombined = cache.CurrentRow + 1;
                             break;
                         case ImageDifference.Next:
-                            expectNullBitmap = cache.CurrentRow == imageDatabase.CurrentlySelectedImageCount - 1;
+                            expectNullBitmap = cache.CurrentRow == fileDatabase.CurrentlySelectedImageCount - 1;
                             previousNextImageRow = cache.CurrentRow + 1;
                             break;
                         case ImageDifference.Previous:
@@ -204,17 +204,17 @@ namespace Carnassial.UnitTests
                     }
 
                     // check if the image to diff against is matched
-                    if (imageDatabase.IsImageRowInRange(previousNextImageRow))
+                    if (fileDatabase.IsImageRowInRange(previousNextImageRow))
                     {
-                        WriteableBitmap unalteredBitmap = cache.Current.LoadBitmap(imageDatabase.FolderPath).AsWriteable();
-                        ImageRow previousNextImage = imageDatabase.ImageDataTable[previousNextImageRow];
-                        WriteableBitmap previousNextBitmap = previousNextImage.LoadBitmap(imageDatabase.FolderPath).AsWriteable();
+                        WriteableBitmap unalteredBitmap = cache.Current.LoadBitmap(fileDatabase.FolderPath).AsWriteable();
+                        ImageRow previousNextImage = fileDatabase.Files[previousNextImageRow];
+                        WriteableBitmap previousNextBitmap = previousNextImage.LoadBitmap(fileDatabase.FolderPath).AsWriteable();
                         bool mismatched = WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, previousNextBitmap);
 
-                        if (imageDatabase.IsImageRowInRange(otherImageRowForCombined))
+                        if (fileDatabase.IsImageRowInRange(otherImageRowForCombined))
                         {
-                            ImageRow otherImageForCombined = imageDatabase.ImageDataTable[otherImageRowForCombined];
-                            WriteableBitmap otherBitmapForCombined = otherImageForCombined.LoadBitmap(imageDatabase.FolderPath).AsWriteable();
+                            ImageRow otherImageForCombined = fileDatabase.Files[otherImageRowForCombined];
+                            WriteableBitmap otherBitmapForCombined = otherImageForCombined.LoadBitmap(fileDatabase.FolderPath).AsWriteable();
                             mismatched |= WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, otherBitmapForCombined);
                         }
 

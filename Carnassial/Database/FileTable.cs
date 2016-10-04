@@ -4,10 +4,10 @@ using System.IO;
 
 namespace Carnassial.Database
 {
-    public class ImageDataTable : DataTableBackedList<ImageRow>
+    public class FileTable : DataTableBackedList<ImageRow>
     {
-        public ImageDataTable(DataTable imageDataTable)
-            : base(imageDataTable, ImageDataTable.CreateRow)
+        public FileTable(DataTable imageDataTable)
+            : base(imageDataTable, FileTable.CreateRow)
         {
         }
 
@@ -31,7 +31,7 @@ namespace Carnassial.Database
         {
             DataRow row = this.DataTable.NewRow();
             row[Constants.DatabaseColumn.File] = file.Name;
-            return ImageDataTable.CreateRow(row);
+            return FileTable.CreateRow(row);
         }
     }
 }

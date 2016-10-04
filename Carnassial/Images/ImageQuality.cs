@@ -10,8 +10,8 @@ namespace Carnassial.Images
         public double DarkPixelRatioFound { get; set; }
         public string FileName { get; set; }
         public bool IsColor { get; set; }
-        public Nullable<ImageSelection> NewImageQuality { get; set; }
-        public ImageSelection OldImageQuality { get; set; }
+        public Nullable<FileSelection> NewImageQuality { get; set; }
+        public FileSelection OldImageQuality { get; set; }
 
         public ImageQuality(ImageRow image)
         {

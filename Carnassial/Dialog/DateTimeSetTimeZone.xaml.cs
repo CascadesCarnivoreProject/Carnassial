@@ -9,13 +9,13 @@ namespace Carnassial.Dialog
     public partial class DateTimeSetTimeZone : Window
     {
         private bool displayingPreview;
-        private ImageDatabase imageDatabase;
+        private FileDatabase fileDatabase;
 
-        public DateTimeSetTimeZone(ImageDatabase imageDatabase, ImageRow imageToCorrect, Window owner)
+        public DateTimeSetTimeZone(FileDatabase fileDatabase, ImageRow imageToCorrect, Window owner)
         {
             this.InitializeComponent();
             this.displayingPreview = false;
-            this.imageDatabase = imageDatabase;
+            this.fileDatabase = fileDatabase;
             this.Owner = owner;
 
             // get the image's current time
@@ -26,10 +26,10 @@ namespace Carnassial.Dialog
             this.imageName.Content = imageToCorrect.FileName;
 
             // display the image
-            this.image.Source = imageToCorrect.LoadBitmap(this.imageDatabase.FolderPath);
+            this.image.Source = imageToCorrect.LoadBitmap(this.fileDatabase.FolderPath);
 
             // configure timezone picker
-            TimeZoneInfo imageSetTimeZone = this.imageDatabase.ImageSet.GetTimeZone();
+            TimeZoneInfo imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZone();
             this.TimeZones.SelectedItem = imageSetTimeZone.DisplayName;
             this.TimeZones.SelectionChanged += this.TimeZones_SelectionChanged;
         }
@@ -47,7 +47,7 @@ namespace Carnassial.Dialog
 
             // Preview the changes
             TimeZoneInfo newTimeZone = this.TimeZones.TimeZonesByDisplayName[(string)this.TimeZones.SelectedItem];
-            foreach (ImageRow image in this.imageDatabase.ImageDataTable)
+            foreach (ImageRow image in this.fileDatabase.Files)
             {
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
@@ -95,14 +95,14 @@ namespace Carnassial.Dialog
             // 2nd click
             // Update the database
             TimeZoneInfo newTimeZone = this.TimeZones.TimeZonesByDisplayName[(string)this.TimeZones.SelectedItem];
-            this.imageDatabase.AdjustImageTimes(
+            this.fileDatabase.AdjustImageTimes(
                 (DateTimeOffset imageDateTime) =>
                 {
                     TimeSpan utcOffset = newTimeZone.GetUtcOffset(imageDateTime);
                     return imageDateTime.SetOffset(utcOffset);
                 },
                 0,
-                this.imageDatabase.CurrentlySelectedImageCount - 1);
+                this.fileDatabase.CurrentlySelectedImageCount - 1);
             this.DialogResult = true;
         }
 

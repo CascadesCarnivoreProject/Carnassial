@@ -17,6 +17,7 @@ namespace Carnassial.Util
 
         private static readonly List<string> CommonRequiredBinaries = new List<string>()
         {
+            "Newtonsoft.Json.dll",
             // MetadataExtractor
             "ICSharpCode.SharpZipLib.dll",
             "MetadataExtractor.dll",

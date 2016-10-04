@@ -2,9 +2,9 @@
 
 namespace Carnassial.Database
 {
-    public class ImageDataCounterColumn : ImageDataColumn
+    public class FileTableCounterColumn : FileTableColumn
     {
-        public ImageDataCounterColumn(ControlRow control)
+        public FileTableCounterColumn(ControlRow control)
             : base(control)
         {
         }

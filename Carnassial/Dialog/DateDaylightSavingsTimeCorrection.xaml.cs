@@ -13,9 +13,9 @@ namespace Carnassial.Dialog
     public partial class DateDaylightSavingsTimeCorrection : Window
     {
         private int currentImageRow;
-        private ImageDatabase database;
+        private FileDatabase database;
 
-        public DateDaylightSavingsTimeCorrection(ImageDatabase database, ImageTableEnumerator image, Window owner)
+        public DateDaylightSavingsTimeCorrection(FileDatabase database, FileTableEnumerator image, Window owner)
         {
             this.InitializeComponent();
             this.currentImageRow = image.CurrentRow;

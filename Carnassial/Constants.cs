@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Carnassial.Controls;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
@@ -22,8 +23,7 @@ namespace Carnassial
 
         public static class ApplicationSettings
         {
-            public const string LatestVersionAddress = "latestVersionAddress";
-            public const string VersionChangesAddress = "versionChangesAddress";
+            public const string ReleasesAddress = "releasesAddress";
         }
 
         // Boolean.TrueString and FalseString are "True" and "False" and are preferred, but 
@@ -62,13 +62,14 @@ namespace Carnassial
 
             public static readonly ReadOnlyCollection<Type> KeyboardInputTypes = new List<Type>()
             {
-                typeof(Calendar),          // date time control
-                typeof(CalendarDayButton), // date time control
-                typeof(CheckBox),          // flag controls
-                typeof(ComboBox),          // choice controls
-                typeof(ComboBoxItem),      // choice controls
-                typeof(TextBox),           // note and counter controls
-                typeof(WatermarkTextBox)   // date time control
+                typeof(AutocompleteTextBox), // note controls
+                typeof(Calendar),            // date time control
+                typeof(CalendarDayButton),   // date time control
+                typeof(CheckBox),            // flag controls
+                typeof(ComboBox),            // choice controls
+                typeof(ComboBoxItem),        // choice controls
+                typeof(TextBox),             // counter controls
+                typeof(WatermarkTextBox)     // date time control
             }.AsReadOnly();
 
             public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
@@ -133,23 +134,11 @@ namespace Carnassial
 
         public static class Database
         {
-            // database table names and related strings
-            public const string CreationStringInteger = "Id integer primary key";
-            public const string CreationStringPrimaryKey = "INTEGER PRIMARY KEY AUTOINCREMENT";
-            public const string ImageDataTable = "DataTable";         // the table containing the image data
-            public const string ImageSetTable = "ImageSetTable"; // the table containing information common to the entire image set
-            public const string MarkersTable = "MarkersTable";         // the table containing the marker data
-            public const string TemplateTable = "TemplateTable"; // the table containing the template data
-
             // default values
-            public const int DateTimePosition = 4;
             public const string ImageSetDefaultLog = "Add text here";
             public const long ImageSetRowID = 1;
-            public const long InvalidID = -1;
             public const int InvalidRow = -1;
-            public const int RelativePathPosition = 2;
             public const int RowsPerInsert = 100;
-            public const int UtcOffsetPosition = 5;
 
             // Special characters
             public const char MarkerBar = '|';              // Separator used to separate marker points in the database i.e. "2.3,5.6 | 7.1, 3.3"
@@ -158,7 +147,7 @@ namespace Carnassial
         // Names of standard database columns, always included but not always made visible in the user controls
         public static class DatabaseColumn
         {
-            // columns in ImageDataTable
+            // columns in FileData
             public const string DateTime = "DateTime";
             public const string File = "File";
             public const string Folder = "Folder";
@@ -168,12 +157,20 @@ namespace Carnassial
             public const string RelativePath = "RelativePath";
             public const string UtcOffset = "UtcOffset";
 
-            // columns in ImageSetTable
+            // columns in ImageSet
             public const string Log = "Log";                   // string holding a user-created text log
             public const string Magnifier = "Magnifier";       // string holding the true/false state of the magnifying glass (on or off)
             public const string Row = "Row";                   // string holding the currently selected row
             public const string Selection = "Selection";       // string holding the current selection
             public const string TimeZone = "TimeZone";
+        }
+
+        public static class DatabaseTable
+        {
+            public const string Controls = "Controls"; // table containing controls
+            public const string FileData = "FileData";     // table containing image and video data
+            public const string ImageSet = "ImageSet"; // table containing information common to the entire image set
+            public const string Markers = "Markers";   // table containing counter markers
         }
 
         public static class File
@@ -182,10 +179,10 @@ namespace Carnassial
             public const string BackupFolder = "Backups"; // Sub-folder that will contain database and csv file backups  
             public const int NumberOfBackupFilesToKeep = 9; // Maximum number of backup files to keep
             public const string CsvFileExtension = ".csv";
-            public const string DefaultImageDatabaseFileName = "CarnassialData.ddb";
+            public const string DefaultFileDatabaseFileName = "CarnassialData.ddb";
             public const string DefaultTemplateDatabaseFileName = "CarnassialTemplate.tdb";
             public const string DeletedFilesFolder = "DeletedFiles"; // Sub-folder that will contain backups of deleted files
-            public const string ImageDatabaseFileExtension = ".ddb";
+            public const string FileDatabaseFileExtension = ".ddb";
             public const string JpgFileExtension = ".jpg";
             public const string Mp4FileExtension = ".mp4";
             public const string TemplateDatabaseFileExtension = ".tdb";
@@ -295,6 +292,9 @@ namespace Carnassial
                 // key containing the list of most recently image sets opened by Carnassial
                 public const string MostRecentlyUsedImageSets = "MostRecentlyUsedImageSets";
 
+                public const string OrderFilesByDateTime = "OrderFilesByDateTime";
+                public const string SkipDarkImagesCheck = "SkipDarkImagesCheck";
+
                 // dialog opt outs
                 public const string SuppressAmbiguousDatesDialog = "SuppressAmbiguousDatesDialog";
                 public const string SuppressCsvExportDialog = "SuppressCsvExportDialog";
@@ -327,6 +327,7 @@ namespace Carnassial
 
         public static class Sql
         {
+            public const string CreationStringPrimaryKey = "INTEGER PRIMARY KEY AUTOINCREMENT";
             public const string Integer = "INTEGER";
             public const string DeleteFrom = "DELETE FROM ";
             public const string Where = " WHERE ";
@@ -391,14 +392,6 @@ namespace Carnassial
                 // File.File Modified Date
                 "ddd MMM dd HH:mm:ss K yyyy"
             };
-        }
-
-        public static class VersionXml
-        {
-            public const string Changes = "changes";
-            public const string Carnassial = "carnassial";
-            public const string Url = "url";
-            public const string Version = "version";
         }
     }
 }

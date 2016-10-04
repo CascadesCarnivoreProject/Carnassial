@@ -21,7 +21,7 @@ namespace Carnassial.Controls
             this.ControlsByDataLabel = new Dictionary<string, DataEntryControl>();
         }
 
-        public void CreateControls(ImageDatabase database, DataEntryHandler dataEntryPropagator)
+        public void CreateControls(FileDatabase database, DataEntryHandler dataEntryPropagator)
         {
             // Depending on how the user interacts with the file import process image set loading can be aborted after controls are generated and then
             // another image set loaded.  Any existing controls therefore need to be cleared.
@@ -29,7 +29,7 @@ namespace Carnassial.Controls
             this.Controls.Clear();
             this.ControlsByDataLabel.Clear();
 
-            foreach (ControlRow control in database.TemplateTable)
+            foreach (ControlRow control in database.Controls)
             {
                 // no point in generating a control if it doesn't render in the UX
                 if (control.Visible == false)

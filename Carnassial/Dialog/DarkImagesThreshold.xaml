@@ -6,7 +6,7 @@
         xmlns:controls="clr-namespace:Carnassial.Controls"
         xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
-        Title="Customize the threshold for determining dark images and videos"
+        Title="(Re)classify dark files"
         Loaded="Window_Loaded"
         MinHeight="500" MinWidth="700"
 		Height="856" Width="768"
@@ -16,13 +16,12 @@
     <DockPanel PreviewKeyDown="Window_PreviewKeyDown">
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Question"
-                            Title="Set Thresholds Used to Determine Dark Images and Videos"
-                            What="If Carnassial misclassifies images and videos as 'dark' or 'ok', you can tune how classification is done."
+                            Title="Classify Dark Images and Videos"
+                            What="If dark image checking is skipped you can perform it now.  If Carnassial misclassified images and videos as 'dark' or 'ok', you can tune how classification is done."
                             Hint="It helps to understand how Carnassial determines darkness through the following steps.&#10;1. If it appears to be in color, then classify it as Ok (i.e., not dark).&#10;2. Otherwise, count the number of pixels darker than a 'grey color threshold'.&#10;3. If the percentage of dark pixels is greater than  the dark percentage threshold, then classify it as dark."
                             Solution="Go to an image or video that you think is a typical 'borderline' dark versus ok case.The color of the horizontal bar below reflects the current 'grey color threshold', while its length shows how many pixels are below that value. The red line shows the 'dark percentage threshold' needed. &#10;1. Drag the red line and the slider to adjust both thresholds, until satisfied with the classification.&#10;2. Check other borderline images or videos to see if it improves classification. If not, repeat the above steps.&#10;3. If it looks good, Apply those settings to all images and videos. Review and repeat if needed.&#10;4. At any time, you can reset thresholds to their initial values or to the Carnassial defaults, and Apply them."
                             ShowExplanationVisibility="True" />
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch" >
-
             <Rectangle Fill="#FF868686" Height="2"/>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -33,11 +32,11 @@
 
 
                 <Slider Name="DarkThreshold" DockPanel.Dock="Left" Width="Auto" Margin="0,3,0,0" Padding="0,-8,0,0"  Maximum="255" Minimum="1" SmallChange="1" TickFrequency="5" Value="60" VerticalContentAlignment="Bottom"/>
-                <Label  Content ="Grey color threshold" FontWeight="Bold" Grid.Column="0" Padding="0,4,0,0" Margin="0,13,3,0"/>
+                <Label Content="Dark pixel threshold" FontWeight="Bold" Grid.Column="0" Padding="0,4,0,0" Margin="0,13,3,0"/>
 
                 <Canvas Name="FeedbackCanvas" Background="Beige" Width="Auto" Height="30" Grid.Column="1">
                     <Rectangle Name="RectDarkPixelRatioFound" Stroke="Black" StrokeThickness="2" Fill="DarkGray" Canvas.Left="0" Canvas.Top="0"></Rectangle>
-                    <Thumb Name="LineDarkPixelRatio" Canvas.Left="50" Canvas.Top="0" Canvas.ZIndex="99" DragDelta="Thumb_DragDelta" Cursor="Hand">
+                    <Thumb Name="DarkPixelRatioThumb" Canvas.Left="50" Canvas.Top="0" Canvas.ZIndex="99" DragDelta="Thumb_DragDelta" Cursor="Hand">
                         <Thumb.Template>
                             <ControlTemplate>
                                 <Grid>
@@ -64,11 +63,7 @@
                     </Label.Background>
                 </Label>
 
-                <Button Content="_Reset..." 
-                    Margin="5"
-                    Click="ResetButton_Click"
-                    ContextMenuService.IsEnabled="False"
-                    Grid.Column="2">
+                <Button Name="ResetButton" Content="_Reset..." Click="ResetButton_Click" ContextMenuService.IsEnabled="False" Grid.Column="2" Margin="5">
                     <Button.ContextMenu>
                         <ContextMenu >
                             <MenuItem Header="Initial threshold settings" ToolTip="Reset the thresholds to those at the start of this dialog" Click="MenuItemResetCurrent_Click"/>
@@ -114,12 +109,12 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Button Name="PrevButton" Width="Auto" Grid.Column="0" IsDefault="False" VerticalAlignment="Center" Padding="8" Margin="10,10,0,10" HorizontalAlignment="Left" FontFamily="Marlett" FontSize="20" Click="PreviousButton_Click">3</Button>
+            <Button Name="PreviousFile" Width="Auto" Grid.Column="0" VerticalAlignment="Center" Padding="4,0,4,0" Margin="10,10,0,10" HorizontalAlignment="Left" FontFamily="Marlett" FontSize="20" Click="PreviousButton_Click">3</Button>
             <Slider Name="ScrollImages" Grid.Column="1"  VerticalAlignment="Center" HorizontalAlignment="Stretch" Padding="0" Margin="0,0,0,0" AutoToolTipPlacement="BottomRight"/>
-            <Button Name="NextButton" Width="Auto" Grid.Column="2" IsDefault="False" VerticalAlignment="Bottom"  Padding="8" Margin="0,10,50,10" HorizontalAlignment="Right" FontFamily="Marlett" FontSize="20" Click="NextButton_Click">4</Button>
+            <Button Name="NextFile" Width="Auto" Grid.Column="2" VerticalAlignment="Center"  Padding="4,0,4,0" Margin="0,10,40,10" HorizontalAlignment="Right" FontFamily="Marlett" FontSize="20" Click="NextButton_Click">4</Button>
             <Button Name="CancelButton" Grid.Column="3" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
-            <Button Name="OkButton" Grid.Column="4" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Apply to All Images</Button>
+            <Button Name="ApplyButton" Grid.Column="4" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="ApplyButton_Click">_Apply to selected files</Button>
         </Grid>
-        <Image Name="img" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" DockPanel.Dock="Top" HorizontalAlignment="Stretch" />
+        <Image Name="Image" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" DockPanel.Dock="Top" HorizontalAlignment="Stretch" />
     </DockPanel>
 </Window>

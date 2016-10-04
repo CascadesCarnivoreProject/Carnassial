@@ -42,21 +42,21 @@ namespace Carnassial.Database
             set { this.Row.SetField(Constants.DatabaseColumn.File, value); }
         }
 
-        public ImageSelection ImageQuality
+        public FileSelection ImageQuality
         {
             get
             {
-                return this.Row.GetEnumField<ImageSelection>(Constants.DatabaseColumn.ImageQuality);
+                return this.Row.GetEnumField<FileSelection>(Constants.DatabaseColumn.ImageQuality);
             }
             set
             {
                 switch (value)
                 {
-                    case ImageSelection.CorruptFile:
-                    case ImageSelection.Dark:
-                    case ImageSelection.FileNoLongerAvailable:
-                    case ImageSelection.Ok:
-                        this.Row.SetField<ImageSelection>(Constants.DatabaseColumn.ImageQuality, value);
+                    case FileSelection.CorruptFile:
+                    case FileSelection.Dark:
+                    case FileSelection.FileNoLongerAvailable:
+                    case FileSelection.Ok:
+                        this.Row.SetField<FileSelection>(Constants.DatabaseColumn.ImageQuality, value);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException("value", String.Format("{0} is not an ImageQuality.  ImageQuality must be one of CorruptFile, Dark, FileNoLongerAvailable, or Ok.", value));
@@ -158,7 +158,7 @@ namespace Carnassial.Database
 
         public bool IsDisplayable()
         {
-            if (this.ImageQuality == ImageSelection.CorruptFile || this.ImageQuality == ImageSelection.FileNoLongerAvailable)
+            if (this.ImageQuality == FileSelection.CorruptFile || this.ImageQuality == FileSelection.FileNoLongerAvailable)
             {
                 return false;
             }
@@ -211,13 +211,13 @@ namespace Carnassial.Database
             }
         }
 
-        public void SetDateAndTime(DateTimeOffset dateTime)
+        public void SetDateTimeOffset(DateTimeOffset dateTime)
         {
             this.DateTime = dateTime.UtcDateTime;
             this.UtcOffset = dateTime.Offset;
         }
 
-        public void SetDateAndTimeFromFileInfo(string folderPath, TimeZoneInfo imageSetTimeZone)
+        public void SetDateTimeOffsetFromFileInfo(string folderPath, TimeZoneInfo imageSetTimeZone)
         {
             // populate new image's default date and time
             // Typically the creation time is the time a file was created in the local file system and the last write time when it was
@@ -227,7 +227,7 @@ namespace Carnassial.Database
             // from the image's EXIF metadata.
             FileInfo imageFile = this.GetFileInfo(folderPath);
             DateTime earliestTimeLocal = imageFile.CreationTime < imageFile.LastWriteTime ? imageFile.CreationTime : imageFile.LastWriteTime;
-            this.SetDateAndTime(new DateTimeOffset(earliestTimeLocal));
+            this.SetDateTimeOffset(new DateTimeOffset(earliestTimeLocal));
         }
 
         public void SetValueFromDatabaseString(string dataLabel, string value)
@@ -241,7 +241,7 @@ namespace Carnassial.Database
                     this.UtcOffset = DateTimeHandler.ParseDatabaseUtcOffsetString(value);
                     break;
                 case Constants.DatabaseColumn.ImageQuality:
-                    this.ImageQuality = (ImageSelection)Enum.Parse(typeof(ImageSelection), value);
+                    this.ImageQuality = (FileSelection)Enum.Parse(typeof(FileSelection), value);
                     break;
                 default:
                     this.Row.SetField(dataLabel, value);
@@ -321,7 +321,7 @@ namespace Carnassial.Database
             bool timeAdjusted = currentDateTime.TimeOfDay != exifDateTime.TimeOfDay;
             if (dateAdjusted || timeAdjusted)
             {
-                this.SetDateAndTime(exifDateTime);
+                this.SetDateTimeOffset(exifDateTime);
             }
 
             // At least with several Bushnell Trophy HD and Aggressor models (119677C, 119775C, 119777C) file times are sometimes

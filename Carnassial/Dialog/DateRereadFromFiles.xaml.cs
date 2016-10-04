@@ -13,9 +13,9 @@ namespace Carnassial.Dialog
 {
     public partial class DateRereadFromFiles : Window
     {
-        private ImageDatabase database;
+        private FileDatabase database;
 
-        public DateRereadFromFiles(ImageDatabase database, Window owner)
+        public DateRereadFromFiles(FileDatabase database, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
@@ -67,7 +67,7 @@ namespace Carnassial.Dialog
                 for (int row = 0; row < count; ++row)
                 {
                     // We will store the various times here
-                    ImageRow image = this.database.ImageDataTable[row];
+                    ImageRow image = this.database.Files[row];
                     DateTimeOffset originalDateTime = image.GetDateTime();
                     string feedbackMessage = String.Empty;
                     try
@@ -78,7 +78,7 @@ namespace Carnassial.Dialog
                         switch (imageTimeAdjustment)
                         {
                             case DateTimeAdjustment.MetadataNotUsed:
-                                image.SetDateAndTimeFromFileInfo(this.database.FolderPath, imageSetTimeZone);  // We couldn't read the metadata, so get a candidate date/time from the file
+                                image.SetDateTimeOffsetFromFileInfo(this.database.FolderPath, imageSetTimeZone);  // We couldn't read the metadata, so get a candidate date/time from the file
                                 feedbackMessage = "Using file timestamp: ";
                                 break;
                             // includes DateTimeAdjustment.SameFileAndMetadataTime

@@ -3,9 +3,9 @@ using System;
 
 namespace Carnassial.Database
 {
-    public class ImageDataDateTimeColumn : ImageDataColumn
+    public class FileTableDateTimeColumn : FileTableColumn
     {
-        public ImageDataDateTimeColumn(ControlRow control)
+        public FileTableDateTimeColumn(ControlRow control)
             : base(control)
         {
         }

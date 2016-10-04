@@ -2,8 +2,6 @@
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,15 +9,14 @@ using System.Windows.Input;
 namespace Carnassial.Dialog
 {
     /// <summary>
-    /// This dialog box asks the user if he/she wants to delete the images (and possibly the data) of images rows as specified in the deletedImageTable
-    /// What actually happens is that the image is replaced by a 'dummy' placeholder image,
-    /// and the original image is copied into a subfolder called Deleted.
+    /// This dialog box asks the user if he/she wants to delete the files (and possibly the data) of file data rows.  Files are soft deleted and the no
+    /// longer available placeholder used.  Data is hard deleted.
     /// </summary>
     public partial class DeleteImages : Window
     {
         // these variables will hold the values of the passed in parameters
         private bool deleteImageAndData;
-        private ImageDatabase imageDatabase;
+        private FileDatabase fileDatabase;
         private List<ImageRow> imagesToDelete;
 
         /// <summary>
@@ -28,11 +25,11 @@ namespace Carnassial.Dialog
         /// -deleteData is true when the data associated with that image should be deleted.
         /// -useDeleteFlags is true when the user is trying to delete images with the deletion flag set, otherwise its the current image being deleted
         /// </summary>
-        public DeleteImages(ImageDatabase database, List<ImageRow> imagesToDelete, bool deleteImageAndData, bool deleteCurrentImageOnly, Window owner)
+        public DeleteImages(FileDatabase database, List<ImageRow> imagesToDelete, bool deleteImageAndData, bool deleteCurrentImageOnly, Window owner)
         {
             this.InitializeComponent();
             this.deleteImageAndData = deleteImageAndData;
-            this.imageDatabase = database;
+            this.fileDatabase = database;
             this.imagesToDelete = imagesToDelete;
             this.Owner = owner;
 

@@ -1,6 +1,6 @@
 ﻿namespace Carnassial.Database
 {
-    public enum ImageSelection
+    public enum FileSelection
     {
         // image selections also used as image qualities
         Ok,

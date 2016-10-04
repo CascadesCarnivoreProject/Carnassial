@@ -1,4 +1,5 @@
-﻿using Carnassial.Util;
+﻿using Carnassial.Github;
+using Carnassial.Util;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -7,27 +8,27 @@ namespace Carnassial.Dialog
 {
     public partial class About : Window
     {
-        private Uri latestVersionAddress;
-        private Uri versionChangesAddress;
+        private Uri latestReleaseAddress;
+        private Uri releasesAddress;
 
         public About(Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
 
-            this.latestVersionAddress = CarnassialConfigurationSettings.GetLatestVersionAddress();
+            this.latestReleaseAddress = CarnassialConfigurationSettings.GetLatestReleaseAddress();
             this.Owner = owner;
+            this.releasesAddress = CarnassialConfigurationSettings.GetReleasesAddress();
             this.Version.Text = typeof(About).Assembly.GetName().Version.ToString();
-            this.versionChangesAddress = CarnassialConfigurationSettings.GetVersionChangesAddress();
 
-            this.CheckForUpdate.IsEnabled = this.latestVersionAddress != null;
-            this.VersionChanges.IsEnabled = this.versionChangesAddress != null;
+            this.CheckForNewerRelease.IsEnabled = this.latestReleaseAddress != null;
+            this.ViewReleases.IsEnabled = this.releasesAddress != null;
         }
 
         private void CheckForUpdate_Click(object sender, RoutedEventArgs e)
         {
-            VersionClient updater = new VersionClient(Constants.ApplicationName, this.latestVersionAddress);
-            updater.TryGetAndParseVersion(true);
+            GithubReleaseClient updater = new GithubReleaseClient(Constants.ApplicationName, this.latestReleaseAddress);
+            updater.TryGetAndParseRelease(true);
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
@@ -37,7 +38,7 @@ namespace Carnassial.Dialog
 
         private void VersionChanges_Click(object sender, RoutedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo(this.versionChangesAddress.AbsoluteUri));
+            Process.Start(new ProcessStartInfo(this.releasesAddress.AbsoluteUri));
         }
     }
 }

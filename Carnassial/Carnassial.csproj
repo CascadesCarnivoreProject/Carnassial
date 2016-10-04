@@ -99,8 +99,8 @@
       <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="MetadataExtractor, Version=1.4.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MetadataExtractor.1.5.1\lib\net35\MetadataExtractor.dll</HintPath>
+    <Reference Include="MetadataExtractor, Version=1.5.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MetadataExtractor.1.5.3\lib\net35\MetadataExtractor.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.2.0, Culture=neutral, processorArchitecture=MSIL">
@@ -109,6 +109,10 @@
     </Reference>
     <Reference Include="Microsoft.WindowsAPICodePack.Shell, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\WindowsAPICodePack-Shell.1.1.1\lib\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -153,6 +157,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Controls\AutocompleteTextBox.cs" />
     <Compile Include="Controls\DataEntryDateTime.cs" />
     <Compile Include="Controls\DataEntryUtcOffset.cs" />
     <Compile Include="Controls\TimeZonePicker.cs" />
@@ -161,15 +166,15 @@
     <Compile Include="Database\ControlRow.cs" />
     <Compile Include="Database\CustomSelectionOperator.cs" />
     <Compile Include="Database\DataTableBackedList.cs" />
-    <Compile Include="Database\ImageDataChoiceColumn.cs" />
-    <Compile Include="Database\ImageDataColumn.cs" />
+    <Compile Include="Database\FileTableChoiceColumn.cs" />
+    <Compile Include="Database\FileTableColumn.cs" />
     <Compile Include="Database\DataRowExtensions.cs" />
-    <Compile Include="Database\ImageDataCounterColumn.cs" />
-    <Compile Include="Database\ImageDataUtcOffsetColumn.cs" />
-    <Compile Include="Database\ImageDataDateTimeColumn.cs" />
-    <Compile Include="Database\ImageDataFlagColumn.cs" />
-    <Compile Include="Database\ImageDataNoteColumn.cs" />
-    <Compile Include="Database\ImageDataTable.cs" />
+    <Compile Include="Database\FileTableCounterColumn.cs" />
+    <Compile Include="Database\FileTableUtcOffsetColumn.cs" />
+    <Compile Include="Database\FileTableDateTimeColumn.cs" />
+    <Compile Include="Database\FileTableFlagColumn.cs" />
+    <Compile Include="Database\FileTableNoteColumn.cs" />
+    <Compile Include="Database\FileTable.cs" />
     <Compile Include="Database\ImageSetRow.cs" />
     <Compile Include="Database\MarkerRow.cs" />
     <Compile Include="Database\VideoRow.cs" />
@@ -188,10 +193,13 @@
     <Compile Include="Dialog\DateTimeLinearCorrection.xaml.cs">
       <DependentUpon>DateTimeLinearCorrection.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Github\GithubAsset.cs" />
     <Compile Include="Util\CarnassialConfigurationSettings.cs" />
     <Compile Include="Util\DataGridExtensions.cs" />
     <Compile Include="Util\DateTimeExtensions.cs" />
     <Compile Include="Util\DateTimeOffsetExtensions.cs" />
+    <Compile Include="Github\GithubAuthor.cs" />
+    <Compile Include="Github\GithubRelease.cs" />
     <Compile Include="Util\SequentialPartitioner.cs" />
     <Compile Include="Util\RegistryKeyExtensions.cs" />
     <Compile Include="Util\Throttles.cs" />
@@ -202,7 +210,7 @@
     <Compile Include="Images\BitmapSourceExtensions.cs" />
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
-    <Compile Include="Database\ImageTableEnumerator.cs" />
+    <Compile Include="Database\FileTableEnumerator.cs" />
     <Compile Include="Images\FeedbackTuple.cs" />
     <Compile Include="Database\DateTimeAdjustment.cs" />
     <Compile Include="Images\ImageDifference.cs" />
@@ -214,12 +222,12 @@
     </Compile>
     <Compile Include="Database\DataRowBackedObject.cs" />
     <Compile Include="Util\Dependencies.cs" />
-    <Compile Include="Util\VersionClient.cs" />
+    <Compile Include="Github\GithubReleaseClient.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Database\CustomSelection.cs" />
     <Compile Include="Database\ColumnTuple.cs" />
     <Compile Include="Database\ColumnTuplesWithWhere.cs" />
-    <Compile Include="Database\ImageDatabase.cs" />
+    <Compile Include="Database\FileDatabase.cs" />
     <Compile Include="Database\SearchTerm.cs" />
     <Compile Include="Dialog\About.xaml.cs">
       <DependentUpon>About.xaml</DependentUpon>
@@ -304,7 +312,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Dialog\RenameImageDatabaseFile.xaml">
+    <Page Include="Dialog\RenameFileDatabaseFile.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -368,8 +376,8 @@
     <Compile Include="Dialog\PopulateFieldWithMetadata.xaml.cs">
       <DependentUpon>PopulateFieldWithMetadata.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\RenameImageDatabaseFile.xaml.cs">
-      <DependentUpon>RenameImageDatabaseFile.xaml</DependentUpon>
+    <Compile Include="Dialog\RenameFileDatabaseFile.xaml.cs">
+      <DependentUpon>RenameFileDatabaseFile.xaml</DependentUpon>
     </Compile>
     <Compile Include="Dialog\TemplateSynchronization.xaml.cs">
       <DependentUpon>TemplateSynchronization.xaml</DependentUpon>
@@ -379,7 +387,7 @@
     </Compile>
     <Compile Include="Database\FileBackup.cs" />
     <Compile Include="Database\ImageRow.cs" />
-    <Compile Include="Database\ImageSelection.cs" />
+    <Compile Include="Database\FileSelection.cs" />
     <Compile Include="Images\MarkersForCounter.cs" />
     <Compile Include="Controls\ControlLabelStyle.cs" />
     <Compile Include="Controls\ControlContentStyle.cs" />

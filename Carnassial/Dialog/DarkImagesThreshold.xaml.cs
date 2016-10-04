@@ -2,8 +2,12 @@
 using Carnassial.Images;
 using Carnassial.Util;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -14,30 +18,34 @@ namespace Carnassial.Dialog
 {
     public partial class DarkImagesThreshold : Window, IDisposable
     {
-        private const int MinimumWidth = 12;
+        private const int MinimumRectangleWidth = 12;
 
         private WriteableBitmap bitmap;
         private int darkPixelThreshold;
         private double darkPixelRatio; 
         private double darkPixelRatioFound;
-        private ImageDatabase database;
+        private FileDatabase database;
         private bool disposed;
-        private ImageTableEnumerator imageEnumerator;
-        private bool isColor = false; // Whether the image is color or grey scale
+        private FileTableEnumerator imageEnumerator;
+        private bool isColor;
+        private bool updateImageQualityForAllSelectedImagesStarted;
+        private bool stop;
         private CarnassialUserRegistrySettings userSettings;
 
-        public DarkImagesThreshold(ImageDatabase database, int currentImageIndex, CarnassialUserRegistrySettings state, Window owner)
+        public DarkImagesThreshold(FileDatabase database, int currentImageIndex, CarnassialUserRegistrySettings state, Window owner)
         {
             this.InitializeComponent();
             this.Owner = owner;
 
             this.database = database;
-            this.imageEnumerator = new ImageTableEnumerator(database, currentImageIndex);
+            this.imageEnumerator = new FileTableEnumerator(database, currentImageIndex);
             this.darkPixelThreshold = state.DarkPixelThreshold;
             this.darkPixelRatio = state.DarkPixelRatioThreshold;
             this.darkPixelRatioFound = 0;
             this.disposed = false;
             this.isColor = false;
+            this.updateImageQualityForAllSelectedImagesStarted = false;
+            this.stop = false;
             this.userSettings = state;
         }
 
@@ -93,22 +101,22 @@ namespace Carnassial.Dialog
             if (this.isColor)
             {
                 // color image
-                this.RectDarkPixelRatioFound.Width = MinimumWidth;
+                this.RectDarkPixelRatioFound.Width = MinimumRectangleWidth;
             }
             else
             {
                 this.RectDarkPixelRatioFound.Width = this.FeedbackCanvas.ActualWidth * this.darkPixelRatioFound;
-                if (this.RectDarkPixelRatioFound.Width < MinimumWidth)
+                if (this.RectDarkPixelRatioFound.Width < MinimumRectangleWidth)
                 {
-                    this.RectDarkPixelRatioFound.Width = MinimumWidth; // Just so something is always visible
+                    this.RectDarkPixelRatioFound.Width = MinimumRectangleWidth; // Just so something is always visible
                 }
             }
             this.RectDarkPixelRatioFound.Height = this.FeedbackCanvas.ActualHeight;
 
             // Show the location of the %age threshold bar
-            this.LineDarkPixelRatio.Height = this.FeedbackCanvas.ActualHeight;
-            this.LineDarkPixelRatio.Width = MinimumWidth;
-            Canvas.SetLeft(this.LineDarkPixelRatio, (this.FeedbackCanvas.ActualWidth - this.LineDarkPixelRatio.ActualWidth) * this.darkPixelRatio);
+            this.DarkPixelRatioThumb.Height = this.FeedbackCanvas.ActualHeight;
+            this.DarkPixelRatioThumb.Width = MinimumRectangleWidth;
+            Canvas.SetLeft(this.DarkPixelRatioThumb, (this.FeedbackCanvas.ActualWidth - this.DarkPixelRatioThumb.ActualWidth) * this.darkPixelRatio);
 
             this.UpdateLabels();
         }
@@ -158,7 +166,7 @@ namespace Carnassial.Dialog
         private void DisplayImageAndDetails()
         {
             this.bitmap = this.imageEnumerator.Current.LoadBitmap(this.database.FolderPath).AsWriteable();
-            this.img.Source = this.bitmap;
+            this.Image.Source = this.bitmap;
             this.ImageName.Content = this.imageEnumerator.Current.FileName;
             this.OriginalClassification.Content = this.imageEnumerator.Current.ImageQuality.ToString(); // The original image classification
 
@@ -182,23 +190,33 @@ namespace Carnassial.Dialog
 
         private void SetPreviousNextButtonStates()
         {
-            this.PrevButton.IsEnabled = (this.imageEnumerator.CurrentRow == 0) ? false : true;
-            this.NextButton.IsEnabled = (this.imageEnumerator.CurrentRow < this.database.CurrentlySelectedImageCount - 1) ? true : false;
+            this.PreviousFile.IsEnabled = (this.imageEnumerator.CurrentRow == 0) ? false : true;
+            this.NextFile.IsEnabled = (this.imageEnumerator.CurrentRow < this.database.CurrentlySelectedImageCount - 1) ? true : false;
         }
 
         // Update the database if the OK button is clicked
-        private void OkButton_Click(object sender, RoutedEventArgs e)
+        private void ApplyButton_Click(object sender, RoutedEventArgs e)
         {
+            // second click - exit
+            if (this.updateImageQualityForAllSelectedImagesStarted)
+            {
+                this.DialogResult = true;
+                return;
+            }
+
+            // first click - do update
             // Update the Carnassial variables to the current settings
             this.userSettings.DarkPixelThreshold = this.darkPixelThreshold;
             this.userSettings.DarkPixelRatioThreshold = this.darkPixelRatio;
 
-            this.UpdateImageQualityForAllSelectedImages();
+            this.CancelButton.Content = "_Stop";
+
+            this.updateImageQualityForAllSelectedImagesStarted = true;
+            this.BeginUpdateImageQualityForAllSelectedImagesAsync();
             this.DisplayImageAndDetails(); // Goes back to the original image
-            this.CancelButton.Content = "Done";
         }
 
-        // Cancel  or Done - exists the dialog.
+        // Cancel or Stop - exit the dialog
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
@@ -219,7 +237,7 @@ namespace Carnassial.Dialog
         {
             // Move the thumb to correspond to the original value
             this.darkPixelRatio = this.userSettings.DarkPixelRatioThreshold;
-            Canvas.SetLeft(this.LineDarkPixelRatio, this.darkPixelRatio * (this.FeedbackCanvas.ActualWidth - this.LineDarkPixelRatio.ActualWidth));
+            Canvas.SetLeft(this.DarkPixelRatioThumb, this.darkPixelRatio * (this.FeedbackCanvas.ActualWidth - this.DarkPixelRatioThumb.ActualWidth));
 
             // Move the slider to its original position
             this.DarkThreshold.Value = this.userSettings.DarkPixelRatioThreshold;
@@ -232,7 +250,7 @@ namespace Carnassial.Dialog
         {
             // Move the thumb to correspond to the original value
             this.darkPixelRatio = Constants.Images.DarkPixelRatioThresholdDefault;
-            Canvas.SetLeft(this.LineDarkPixelRatio, this.darkPixelRatio * (this.FeedbackCanvas.ActualWidth - this.LineDarkPixelRatio.ActualWidth));
+            Canvas.SetLeft(this.DarkPixelRatioThumb, this.darkPixelRatio * (this.FeedbackCanvas.ActualWidth - this.DarkPixelRatioThumb.ActualWidth));
 
             // Move the slider to its original position
             this.DarkThreshold.Value = Constants.Images.DarkPixelThresholdDefault;
@@ -258,9 +276,9 @@ namespace Carnassial.Dialog
         {
             UIElement thumb = e.Source as UIElement;
 
-            if ((Canvas.GetLeft(thumb) + e.HorizontalChange) >= (this.FeedbackCanvas.ActualWidth - this.LineDarkPixelRatio.ActualWidth))
+            if ((Canvas.GetLeft(thumb) + e.HorizontalChange) >= (this.FeedbackCanvas.ActualWidth - this.DarkPixelRatioThumb.ActualWidth))
             {
-                Canvas.SetLeft(thumb, this.FeedbackCanvas.ActualWidth - this.LineDarkPixelRatio.ActualWidth);
+                Canvas.SetLeft(thumb, this.FeedbackCanvas.ActualWidth - this.DarkPixelRatioThumb.ActualWidth);
                 this.darkPixelRatio = 1;
             }
             else if ((Canvas.GetLeft(thumb) + e.HorizontalChange) <= 0)
@@ -285,6 +303,11 @@ namespace Carnassial.Dialog
 
         private void ScrollImages_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
+            if (this.updateImageQualityForAllSelectedImagesStarted)
+            {
+                return;
+            }
+
             this.imageEnumerator.TryMoveToImage(Convert.ToInt32(this.ScrollImages.Value));
             this.DisplayImageAndDetails();
             this.SetPreviousNextButtonStates();
@@ -320,62 +343,92 @@ namespace Carnassial.Dialog
         /// </summary>
         private void RecalculateImageQualityForCurrentImage()
         {
-            this.bitmap.GetImageQuality(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
+            this.bitmap.IsDark(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
         }
 
         /// <summary>
         /// Redo image quality calculations with current thresholds for all images selected.  Updates the database.
         /// </summary>
-        private void UpdateImageQualityForAllSelectedImages()
+        private void BeginUpdateImageQualityForAllSelectedImagesAsync()
         {
+            List<ImageRow> selectedFiles = this.database.Files.ToList();
+            this.ApplyButton.Content = "_Done";
+            this.ApplyButton.IsEnabled = false;
+            this.DarkPixelRatioThumb.IsEnabled = false;
+            this.DarkThreshold.IsEnabled = false;
+            this.PreviousFile.IsEnabled = false;
+            this.NextFile.IsEnabled = false;
+            this.ScrollImages.IsEnabled = false;
+            this.ResetButton.IsEnabled = false;
+
             BackgroundWorker backgroundWorker = new BackgroundWorker()
             {
                 WorkerReportsProgress = true
             };
             backgroundWorker.DoWork += (ow, ea) =>
-            {   
-                int images = database.CurrentlySelectedImageCount;
-                // TODO: make parallel
-                foreach (ImageRow image in database.ImageDataTable)
+            {
+                TimeSpan desiredRenderInterval = TimeSpan.FromSeconds(1.0 / Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
+                DateTime previousImageRender = DateTime.UtcNow - desiredRenderInterval;
+                object renderLock = new object();
+
+                int fileIndex = 0;
+                List<ColumnTuplesWithWhere> filesToUpdate = new List<ColumnTuplesWithWhere>();
+                Parallel.ForEach(new SequentialPartitioner<ImageRow>(selectedFiles), Utilities.GetParallelOptions(3), (ImageRow file, ParallelLoopState loopState) =>
                 {
-                    ImageQuality imageQuality = new ImageQuality(image);
+                    if (this.stop)
+                    {
+                        loopState.Break();
+                    }
 
                     // If its not a valid image, say so and go onto the next one.
-                    if ((imageQuality.OldImageQuality != ImageSelection.Ok) && (imageQuality.OldImageQuality != ImageSelection.Dark))
+                    ImageQuality imageQuality = new ImageQuality(file);
+                    if ((imageQuality.OldImageQuality != FileSelection.Ok) && (imageQuality.OldImageQuality != FileSelection.Dark))
                     {
                         imageQuality.NewImageQuality = null;
                         backgroundWorker.ReportProgress(0, imageQuality);
-                        continue;
+                        return;
                     }
 
-                    // Ok, we only have valid images at this point
                     try
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just go to the catch.
-                        imageQuality.Bitmap = image.LoadBitmap(this.database.FolderPath).AsWriteable();
-                        imageQuality.NewImageQuality = imageQuality.Bitmap.GetImageQuality(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
+                        imageQuality.Bitmap = file.LoadBitmap(this.database.FolderPath).AsWriteable();
+                        imageQuality.NewImageQuality = imageQuality.Bitmap.IsDark(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
                         imageQuality.IsColor = this.isColor;
                         imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
                         if (imageQuality.OldImageQuality != imageQuality.NewImageQuality.Value)
                         {
-                            // TODO: change to UpdateImages() for efficiency
-                            database.UpdateImage(image.ID, Constants.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality.Value.ToString());
+                            filesToUpdate.Add(new ColumnTuplesWithWhere(new List<ColumnTuple> { new ColumnTuple(Constants.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality.Value.ToString()) }, file.ID));
                         }
                     }
                     catch (Exception exception)
                     {
-                        // Image isn't there
+                        // file isn't there?
                         Debug.Fail("Exception while assessing image quality.", exception.ToString());
                     }
-                    backgroundWorker.ReportProgress(0, imageQuality);
-                }
+
+                    int currentFileIndex = Interlocked.Increment(ref fileIndex);
+                    DateTime utcNow = DateTime.UtcNow;
+                    if (utcNow - previousImageRender > desiredRenderInterval)
+                    {
+                        lock (renderLock)
+                        {
+                            if (utcNow - previousImageRender > desiredRenderInterval)
+                            {
+                                backgroundWorker.ReportProgress((int)(100.0 * (double)currentFileIndex / (double)selectedFiles.Count), imageQuality);
+                            }
+                        }
+                    }
+                });
+
+                this.database.UpdateImages(filesToUpdate);
             };
             backgroundWorker.ProgressChanged += (o, ea) =>
             {
                 // this gets called on the UI thread
                 ImageQuality imageQuality = (ImageQuality)ea.UserState;
-                this.img.Source = imageQuality.Bitmap;
+                this.Image.Source = imageQuality.Bitmap;
 
                 this.ImageName.Content = imageQuality.FileName;
                 this.OriginalClassification.Content = imageQuality.OldImageQuality;
@@ -396,19 +449,23 @@ namespace Carnassial.Dialog
                 }
 
                 // Size the bar to show how many pixels in the current image are at least as dark as that color
-                this.RectDarkPixelRatioFound.Width = FeedbackCanvas.ActualWidth * imageQuality.DarkPixelRatioFound;
+                this.RectDarkPixelRatioFound.Width = this.FeedbackCanvas.ActualWidth * imageQuality.DarkPixelRatioFound;
                 if (this.RectDarkPixelRatioFound.Width < 6)
                 {
                     this.RectDarkPixelRatioFound.Width = 6; // Just so something is always visible
                 }
-                this.RectDarkPixelRatioFound.Height = FeedbackCanvas.ActualHeight;
+                this.RectDarkPixelRatioFound.Height = this.FeedbackCanvas.ActualHeight;
+
+                // update image scroll bar position
+                this.ScrollImages.Value = Math.Min((double)ea.ProgressPercentage / 100.0 * selectedFiles.Count, selectedFiles.Count - 1);
             };
             backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
-                DisplayImageAndDetails();
-                CarnassialWindow owner = this.Owner as CarnassialWindow;
-                owner.MenuItemImageCounts_Click(null, null);
+                this.DisplayImageAndDetails();
+                this.ApplyButton.IsEnabled = true;
+                this.CancelButton.IsEnabled = false;
             };
+
             backgroundWorker.RunWorkerAsync();
         }
     }

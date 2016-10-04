@@ -4,25 +4,25 @@ using System.Collections.Generic;
 
 namespace Carnassial.Database
 {
-    public class ImageTableEnumerator : IEnumerator<ImageRow>
+    public class FileTableEnumerator : IEnumerator<ImageRow>
     {
-        protected ImageDatabase Database { get; private set; }
+        protected FileDatabase Database { get; private set; }
 
         // the current image, null if its no been set or if the database is empty
         public ImageRow Current { get; private set; }
         public int CurrentRow { get; private set; }
 
-        public ImageTableEnumerator(ImageDatabase imageDatabase) :
-            this(imageDatabase, Constants.Database.InvalidRow)
+        public FileTableEnumerator(FileDatabase fileDatabase) :
+            this(fileDatabase, Constants.Database.InvalidRow)
         {
         }
 
-        public ImageTableEnumerator(ImageDatabase imageDatabase, int startingPosition)
+        public FileTableEnumerator(FileDatabase fileDatabase, int startingPosition)
         {
             this.CurrentRow = startingPosition;
-            this.Database = imageDatabase;
+            this.Database = fileDatabase;
 
-            // OK if this fails as ImageTableEnumerator..ctor(ImageDatabase) passes -1 to match default enumerator behaviour
+            // OK if this fails as FileTableEnumerator..ctor(FileDatabase) passes -1 to match default enumerator behaviour
             this.TryMoveToImage(startingPosition);
         }
 
@@ -69,7 +69,7 @@ namespace Carnassial.Database
             {
                 this.CurrentRow = imageRowIndex;
                 // rebuild ImageProperties regardless of whether the row changed or not as this seek may be a refresh after a database change
-                this.Current = this.Database.ImageDataTable[imageRowIndex];
+                this.Current = this.Database.Files[imageRowIndex];
                 return true;
             }
 

@@ -1,6 +1,7 @@
 <StyleCopSettings Version="105">
   <GlobalSettings>
     <CollectionProperty Name="RecognizedWords">
+      <Value>autocompletion</Value>
       <Value>autoincrement</Value>
       <Value>Carnassial</Value>
       <Value>copyable</Value>

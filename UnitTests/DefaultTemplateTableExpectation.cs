@@ -119,22 +119,22 @@ namespace Carnassial.UnitTests
             base.Verify(templateDatabase);
 
             int rowIndex = Constants.Control.StandardTypes.Count;
-            this.Counter0.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.Choice0.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.Note0.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.Flag0.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.CounterWithCustomDataLabel.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.ChoiceWithCustomDataLabel.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.NoteWithCustomDataLabel.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.FlagWithCustomDataLabel.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.CounterNotVisible.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.ChoiceNotVisible.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.NoteNotVisible.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.FlagNotVisible.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.Counter3.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.Choice3.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.Note3.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.Flag3.Verify(templateDatabase.TemplateTable[rowIndex++]);
+            this.Counter0.Verify(templateDatabase.Controls[rowIndex++]);
+            this.Choice0.Verify(templateDatabase.Controls[rowIndex++]);
+            this.Note0.Verify(templateDatabase.Controls[rowIndex++]);
+            this.Flag0.Verify(templateDatabase.Controls[rowIndex++]);
+            this.CounterWithCustomDataLabel.Verify(templateDatabase.Controls[rowIndex++]);
+            this.ChoiceWithCustomDataLabel.Verify(templateDatabase.Controls[rowIndex++]);
+            this.NoteWithCustomDataLabel.Verify(templateDatabase.Controls[rowIndex++]);
+            this.FlagWithCustomDataLabel.Verify(templateDatabase.Controls[rowIndex++]);
+            this.CounterNotVisible.Verify(templateDatabase.Controls[rowIndex++]);
+            this.ChoiceNotVisible.Verify(templateDatabase.Controls[rowIndex++]);
+            this.NoteNotVisible.Verify(templateDatabase.Controls[rowIndex++]);
+            this.FlagNotVisible.Verify(templateDatabase.Controls[rowIndex++]);
+            this.Counter3.Verify(templateDatabase.Controls[rowIndex++]);
+            this.Choice3.Verify(templateDatabase.Controls[rowIndex++]);
+            this.Note3.Verify(templateDatabase.Controls[rowIndex++]);
+            this.Flag3.Verify(templateDatabase.Controls[rowIndex++]);
         }
     }
 }

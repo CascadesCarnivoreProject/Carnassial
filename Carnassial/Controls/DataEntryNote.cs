@@ -7,10 +7,8 @@ namespace Carnassial.Controls
     // A note lays out as a stack panel containing
     // - a label containing the descriptive label) 
     // - an editable textbox (containing the content) at the given width
-    public class DataEntryNote : DataEntryControl<TextBox, Label>
+    public class DataEntryNote : DataEntryControl<AutocompleteTextBox, Label>
     {
-        public List<string> Autocompletions { get; set; }
-
         /// <summary>Gets the content of the note</summary>
         public override string Content
         {
@@ -28,7 +26,7 @@ namespace Carnassial.Controls
         public DataEntryNote(ControlRow control, List<string> autocompletions, DataEntryControls styleProvider) : 
             base(control, styleProvider, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.LabelCodeBar)
         {
-            this.Autocompletions = autocompletions;
+            this.ContentControl.Autocompletions = autocompletions;
             this.ContentChanged = false;
         }
 

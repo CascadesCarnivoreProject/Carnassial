@@ -7,9 +7,9 @@ namespace Carnassial.Dialog
     public partial class AdvancedImageSetOptions : Window
     {
         private TimeZoneInfo currentImageSetTimeZone;
-        private ImageDatabase database;
+        private FileDatabase database;
 
-        public AdvancedImageSetOptions(ImageDatabase database, Window owner)
+        public AdvancedImageSetOptions(FileDatabase database, Window owner)
         {
             this.InitializeComponent();
             this.Owner = owner;

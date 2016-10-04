@@ -38,7 +38,7 @@
                 <Separator />
                 <MenuItem Name="MenuItemExportThisImage" Header="Export the current image or video _file..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) the displayed image or video file into a location of your choosing"/>
                 <Separator />
-                <MenuItem Name="MenuItemRenameImageDatabaseFile" Header="Rename the _data file..." Click="MenuItemRenameImageDatabaseFile_Click" IsEnabled="false" ToolTip="Renames the image data file to a name of your choosing"/>
+                <MenuItem Name="MenuItemRenameFileDatabaseFile" Header="Rename the _data file..." Click="MenuItemRenameFileDatabaseFile_Click" IsEnabled="false" ToolTip="Renames the image data file to a name of your choosing"/>
                 <Separator />
                 <MenuItem Name="MenuItemExit" Header="E_xit" Click="MenuItemExit_Click" ToolTip="Quits the program"/>
             </MenuItem>
@@ -62,75 +62,78 @@
                     <MenuItem Name="MenuItemModifyAmbiguousDates" Header="Correct for _ambiguous dates..." Click="MenuItemCorrectAmbiguousDates_Click"  ToolTip="Check and optionally correct ambiguous dates (day-month vs month-day)" IsEnabled="True" />
                     <MenuItem Name="MenuItemSetTimeZone" Header="Set time _zone..." Click="MenuItemSetTimeZone_Click" ToolTip="Reassign a group of images to a particular time zone " IsEnabled="True" />
                 </MenuItem>
-                <MenuItem Name="MenuItemOptionsDarkImagesThreshold" Header="Edit the _threshold for determining dark files..." Click="MenuItemOptionsDarkImagesThreshold_Click"  ToolTip="Edit how Carnassial determines which files are dark and light and reclassify your files" IsEnabled="True" />
-                <MenuItem Name="MenuItemLog" Header="Edit _notes for this image set..." Click="MenuItemLog_Click"  ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this Image Set" IsEnabled="True" />
+                <MenuItem Name="MenuItemOptionsDarkImagesThreshold" Header="Identify or reclassify dar_k files..." Click="MenuItemOptionsDarkImages_Click" ToolTip="Determine which files are dark and light or reclassify your files." IsEnabled="True" />
+                <MenuItem Name="MenuItemLog" Header="Edit _notes for this image set..." Click="MenuItemLog_Click"  ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this image set" IsEnabled="True" />
             </MenuItem>
 
             <!-- Options Menu -->
             <MenuItem Name="MenuItemOptions" Header="_Options" IsEnabled="False" IsTabStop="false">
-                <MenuItem Name="MenuItemAudioFeedback" IsCheckable="True" IsChecked="False" IsEnabled="False" Header="_Audio feedback" Click="MenuItemAudioFeedback_Click" ToolTip="Toggles the audio that speaks the count whenever you add a counting mark to the image"/>
-                <MenuItem Name="MenuItemImageCounts" Header="Show _file counts..." Click="MenuItemImageCounts_Click" IsEnabled="False" ToolTip="Displays statistics on the number of files and their types"/>
+                <MenuItem Name="MenuItemSkipDarkFileCheck" IsCheckable="True" IsChecked="False" Header="_Skip dark check when adding files" Click="MenuItemSkipDarkFileCheck_Click" ToolTip="Make adding files to an image set faster by not checking if they're dark.  They can be checked for dark later through the Edit menu." />
+                <MenuItem Name="MenuItemOrderFilesByDateTime" IsCheckable="True" IsChecked="False" Header="_Order files by date/time" Click="MenuItemOrderFilesByDateTime_Click" ToolTip="Sort files by their date/time rather than the order in which they were added to the image set." />
+                <MenuItem Name="MenuItemAudioFeedback" IsCheckable="True" IsChecked="False" IsEnabled="False" Header="_Audio feedback" Click="MenuItemAudioFeedback_Click" ToolTip="Toggles the audio that speaks the count whenever you add a counting mark to the image." />
                 <Separator/>
                 <MenuItem Name="MenuItemMagnifyingGlass" Header="_Magnifying Glass" IsEnabled="False">
-                    <MenuItem Name="MenuItemDisplayMagnifier" IsCheckable="True" IsChecked="False" InputGestureText="M" Header="Display _magnifier" Click="MenuItemDisplayMagnifier_Click" ToolTip="Toggles the presence of the magnifying glass"/>
-                    <MenuItem Name="MenuItemMagnifierIncrease" InputGestureText="U" Header="_Increase magnification" Click="MenuItemMagnifierIncrease_Click" ToolTip="Increase the magnification of the magnifying glass"/>
-                    <MenuItem Name="MenuItemMagnifierDecrease" InputGestureText="D" Header="_Decrease magnification" Click="MenuItemMagnifierDecrease_Click" ToolTip="Decrease the magnification of the magnifying glass"/>
+                    <MenuItem Name="MenuItemDisplayMagnifier" IsCheckable="True" IsChecked="False" InputGestureText="M" Header="Display _magnifier" Click="MenuItemDisplayMagnifier_Click" ToolTip="Toggles the presence of the magnifying glass." />
+                    <MenuItem Name="MenuItemMagnifierIncrease" InputGestureText="U" Header="_Increase magnification" Click="MenuItemMagnifierIncrease_Click" ToolTip="Increase the magnification of the magnifying glass." />
+                    <MenuItem Name="MenuItemMagnifierDecrease" InputGestureText="D" Header="_Decrease magnification" Click="MenuItemMagnifierDecrease_Click" ToolTip="Decrease the magnification of the magnifying glass." />
                 </MenuItem>
                 <Separator/>
                 <MenuItem Name="MenuItemDialogsOnOrOff" Header="Turn _dialogs on or off" IsEnabled="False">
-                    <MenuItem Name="MenuItemEnableAmbiguousDatesDialog" IsCheckable="True" Header="Display _ambiguous dates imported dialog" Click="MenuItemAmbiguousDatesDialog_Click" ToolTip="Turn on or off the informational dialog displayed when files with ambiguous dates are added to an image set" />
-                    <MenuItem Name="MenuItemEnableSelectedAmbiguousDatesPrompt" IsCheckable="True" Header="Display _ambiguous dates subset prompt" Click="MenuItemEnableSelectedAmbiguousDatesPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when ambiguous date clarification is performed when only some of the image set is selected" />
-                    <MenuItem Name="MenuItemEnableFileCountOnImportDialog" IsCheckable="True" Header="Display _counts when files are added" Click="MenuItemEnableFileCountOnImportDialog_Click" ToolTip="Turn on or off the informational dialog displaying image counts when files are loaded into an image set" />
-                    <MenuItem Name="MenuItemEnableSelectedDateTimeLinearCorrectionPrompt" IsCheckable="True" Header="Display _clock drift subset prompt" Click="MenuItemEnableSelectedDateTimeLinearCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when clock drift correction is performed when only some of the image set is selected" />
-                    <MenuItem Name="MenuItemEnableCsvExportDialog" IsCheckable="True" Header="Display _CSV export dialog" Click="MenuItemEnableCsvExportDialog_Click" ToolTip="Turn on or off the informational dialog displayed when CSV files are exported" />
-                    <MenuItem Name="MenuItemEnableSelectedCsvExportPrompt" IsCheckable="True" Header="Display _CSV export subset prompt" Click="MenuItemEnableSelectedCsvExportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when CSV export is performed when only some of the image set is selected" />
-                    <MenuItem Name="MenuItemEnableCsvImportPrompt" IsCheckable="True" Header="Display _CSV import prompt" Click="MenuItemEnableCsvImportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when a CSV file is imported" />
-                    <MenuItem Name="MenuItemEnableSelectedDarkThresholdPrompt" IsCheckable="True" Header="Display dark _threshold subset prompt" Click="MenuItemEnableSelectedDarkThresholdPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when adjusting the dark threshold when only some of the image set is selected" />
-                    <MenuItem Name="MenuItemEnableSelectedDaylightSavingsCorrectionPrompt" IsCheckable="True" Header="Display _daylight savings correction subset prompt" Click="MenuItemEnableSelectedDaylightSavingsCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when corrections for daylight savings time is performed when only some of the image set is selected" />
-                    <MenuItem Name="MenuItemEnableSelectedDateTimeFixedCorrectionPrompt" IsCheckable="True" Header="Display _fixed date/time correction subset prompt" Click="MenuItemEnableSelectedDateTimeFixedCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when fixed date/time correction is performed when only some of the image set is selected" />
-                    <MenuItem Name="MenuItemEnableSelectedPopulateFieldFromMetadataPrompt" IsCheckable="True" Header="Display _metadata subset prompt" Click="MenuItemEnableSelectedPopulateFieldFromMetadataPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when metadata is read from when only some of the image set is selected" />
-                    <MenuItem Name="MenuItemEnableSelectedRereadDatesFromFilesPrompt" IsCheckable="True" Header="Display _reread dates subset prompt" Click="MenuItemEnableSelectedRereadDatesFromFilesPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when dates are reloaded from files when only some of the image set is selected" />
-                    <MenuItem Name="MenuItemEnableSelectedSetTimeZonePrompt" IsCheckable="True" Header="Display set time _zone subset prompt" Click="MenuItemEnableSelectedSetTimeZonePrompt_Click" ToolTip="Turn on or off the informational dialog displayed when time zones are assigned when only some of the image set is selected" />
+                    <MenuItem Name="MenuItemEnableAmbiguousDatesDialog" IsCheckable="True" Header="Display _ambiguous dates imported dialog" Click="MenuItemAmbiguousDatesDialog_Click" ToolTip="Turn on or off the informational dialog displayed when files with ambiguous dates are added to an image set." />
+                    <MenuItem Name="MenuItemEnableSelectedAmbiguousDatesPrompt" IsCheckable="True" Header="Display _ambiguous dates subset prompt" Click="MenuItemEnableSelectedAmbiguousDatesPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when ambiguous date clarification is performed when only some of the image set is selected." />
+                    <MenuItem Name="MenuItemEnableFileCountOnImportDialog" IsCheckable="True" Header="Display _counts when files are added" Click="MenuItemEnableFileCountOnImportDialog_Click" ToolTip="Turn on or off the informational dialog displaying image counts when files are loaded into an image set." />
+                    <MenuItem Name="MenuItemEnableSelectedDateTimeLinearCorrectionPrompt" IsCheckable="True" Header="Display _clock drift subset prompt" Click="MenuItemEnableSelectedDateTimeLinearCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when clock drift correction is performed when only some of the image set is selected." />
+                    <MenuItem Name="MenuItemEnableCsvExportDialog" IsCheckable="True" Header="Display _CSV export dialog" Click="MenuItemEnableCsvExportDialog_Click" ToolTip="Turn on or off the informational dialog displayed when CSV files are exported." />
+                    <MenuItem Name="MenuItemEnableSelectedCsvExportPrompt" IsCheckable="True" Header="Display _CSV export subset prompt" Click="MenuItemEnableSelectedCsvExportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when CSV export is performed when only some of the image set is selected." />
+                    <MenuItem Name="MenuItemEnableCsvImportPrompt" IsCheckable="True" Header="Display _CSV import prompt" Click="MenuItemEnableCsvImportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when a CSV file is imported." />
+                    <MenuItem Name="MenuItemEnableSelectedDarkThresholdPrompt" IsCheckable="True" Header="Display dark _threshold subset prompt" Click="MenuItemEnableSelectedDarkThresholdPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when adjusting the dark threshold when only some of the image set is selected." />
+                    <MenuItem Name="MenuItemEnableSelectedDaylightSavingsCorrectionPrompt" IsCheckable="True" Header="Display _daylight savings correction subset prompt" Click="MenuItemEnableSelectedDaylightSavingsCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when corrections for daylight savings time is performed when only some of the image set is selected." />
+                    <MenuItem Name="MenuItemEnableSelectedDateTimeFixedCorrectionPrompt" IsCheckable="True" Header="Display _fixed date/time correction subset prompt" Click="MenuItemEnableSelectedDateTimeFixedCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when fixed date/time correction is performed when only some of the image set is selected." />
+                    <MenuItem Name="MenuItemEnableSelectedPopulateFieldFromMetadataPrompt" IsCheckable="True" Header="Display _metadata subset prompt" Click="MenuItemEnableSelectedPopulateFieldFromMetadataPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when metadata is read from when only some of the image set is selected." />
+                    <MenuItem Name="MenuItemEnableSelectedRereadDatesFromFilesPrompt" IsCheckable="True" Header="Display _reread dates subset prompt" Click="MenuItemEnableSelectedRereadDatesFromFilesPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when dates are reloaded from files when only some of the image set is selected." />
+                    <MenuItem Name="MenuItemEnableSelectedSetTimeZonePrompt" IsCheckable="True" Header="Display set time _zone subset prompt" Click="MenuItemEnableSelectedSetTimeZonePrompt_Click" ToolTip="Turn on or off the informational dialog displayed when time zones are assigned when only some of the image set is selected." />
                 </MenuItem>
                 <Separator/>
                 <MenuItem Header="Ad_vanced">
-                    <MenuItem Name="MenuItemOptionsBox" Header="_Image set options..." Click="MenuItemAdvancedImageSetOptions_Click" ToolTip="Image set configuration options that should only be used by advanced users"/>
-                    <MenuItem Name="MenuItemAdvancedCarnassialOptions" Header="_Carnassial options..." Click="MenuItemAdvancedCarnassialOptions_Click" IsEnabled="False" ToolTip="Carnassial configuration options that should only be used by advanced users"/>
+                    <MenuItem Name="MenuItemOptionsBox" Header="_Image set options..." Click="MenuItemAdvancedImageSetOptions_Click" ToolTip="Image set configuration options that should only be used by advanced users."/>
+                    <MenuItem Name="MenuItemAdvancedCarnassialOptions" Header="_Carnassial options..." Click="MenuItemAdvancedCarnassialOptions_Click" IsEnabled="False" ToolTip="Carnassial configuration options that should only be used by advanced users."/>
                 </MenuItem>
             </MenuItem>
 
             <!-- View Menu -->
-            <MenuItem x:Name="MenuItemView" Header="_View" IsEnabled="false" IsTabStop="false"  ToolTip="Zooming, navigating, and image differencing">
-                <MenuItem Name="MenuItemViewNextImage" Header="View _next file" Click="MenuItemViewNextImage_Click" InputGestureText="&#x2192;" ToolTip="View the next file in the image set"/>
-                <MenuItem Name="MenuItemViewPreviousImage" Header="View _previous file" Click="MenuItemViewPreviousImage_Click" InputGestureText="&#x2190;" ToolTip="View the previous file in the image set"/>
+            <MenuItem Name="MenuItemView" Header="_View" IsEnabled="false" IsTabStop="false"  ToolTip="Zooming, navigating, and image differencing.">
+                <MenuItem Name="MenuItemViewNextImage" Header="View _next file" Click="MenuItemViewNextImage_Click" InputGestureText="&#x2192;" ToolTip="View the next file in the image set." />
+                <MenuItem Name="MenuItemViewPreviousImage" Header="View _previous file" Click="MenuItemViewPreviousImage_Click" InputGestureText="&#x2190;" ToolTip="View the previous file in the image set." />
                 <Separator/>
-                <MenuItem Name="MenuItemZoomIn" Header="Zoom _in" Click="MenuItemZoomIn_Click" InputGestureText="&#x2039;" ToolTip="Zoom into this file"/>
-                <MenuItem Name="MenuItemZoomOut" Header="Zoom _out" Click="MenuItemZoomOut_Click" InputGestureText="&#x203A;" ToolTip="Zoom out in this file"/>
-                <Separator/>
-                <MenuItem x:Name="MenuItemBookmarkSavePanZoom" Header="_Bookmark current zoom region" InputGestureText="B" ToolTip="Save the current zoom region setting as a bookmark" Click="MenuItem_BookmarkSavePanZoom"/>
-                <MenuItem x:Name="MenuItemBookmarkSetPanZoom"  Header="Zoom to bookmarked _region" InputGestureText="+" ToolTip="Zoom to the region saved in the bookmark" Click="MenuItem_BookmarkSetPanZoom"/>
-                <MenuItem x:Name="MenuItemBookmarkDefaultPanZoom" Header="Zoom out all the _way" InputGestureText="-" ToolTip="Zoom out to see the entire image" Click="MenuItem_BookmarkDefaultPanZoom"/>
-                <Separator/>
-                <MenuItem Name="MenuItemViewDifferencesCycleThrough" Header="_Cycle through image differences" Click="MenuItemViewDifferencesCycleThrough_Click" InputGestureText="&#x2191;" ToolTip="View an enhancement that cycles through the differences between the current and the next file, and then the previous file"/>
-                <MenuItem Name="MenuItemViewDifferencesCombined" Header="_View combined image differences" Click="MenuItemViewDifferencesCombined_Click" InputGestureText="&#x2193;" ToolTip="View an enhancement that shows, as a single image, the differences between the current image and the surrounding two files"/>
-                <Separator/>
-                <MenuItem Name="MenuItemVideoViewer" Header="_Show video player"  ToolTip="The video player lets you  play video files" Click="MenuItemVideoViewer_Click"/>
+                <MenuItem Name="MenuItemZoomIn" Header="Zoom _in" Click="MenuItemZoomIn_Click" InputGestureText="&#x2039;" ToolTip="Zoom into this file." />
+                <MenuItem Name="MenuItemZoomOut" Header="Zoom _out" Click="MenuItemZoomOut_Click" InputGestureText="&#x203A;" ToolTip="Zoom out in this file." />
+                <Separator />
+                <MenuItem Name="MenuItemBookmarkSavePanZoom" Header="_Bookmark current zoom region" InputGestureText="B" Click="MenuItemBookmarkSavePanZoom_Click" ToolTip="Save the current zoom region setting as a bookmark." />
+                <MenuItem Name="MenuItemBookmarkSetPanZoom"  Header="Zoom to bookmarked _region" InputGestureText="+" Click="MenuItemBookmarkSetPanZoom_Click" ToolTip="Zoom to the region saved in the bookmark." />
+                <MenuItem Name="MenuItemBookmarkDefaultPanZoom" Header="Zoom out all the _way" Click="MenuItemBookmarkDefaultPanZoom_Click" InputGestureText="-" ToolTip="Zoom out to see the entire image." />
+                <Separator />
+                <MenuItem Name="MenuItemViewDifferencesCycleThrough" Header="_Cycle through image differences" Click="MenuItemViewDifferencesCycleThrough_Click" InputGestureText="&#x2191;" ToolTip="Show difference between the current and the next file, and then the current and the previous file." />
+                <MenuItem Name="MenuItemViewDifferencesCombined" Header="_View combined image differences" Click="MenuItemViewDifferencesCombined_Click" InputGestureText="&#x2193;" ToolTip="Show the difference between the current image and the next and previous files simultaneously." />
+                <Separator />
+                <MenuItem Name="MenuItemVideoViewer" Header="_Show video player"  ToolTip="The video player lets you  play video files." Click="MenuItemVideoViewer_Click"/>
             </MenuItem>
 
             <!-- Select menu -->
-            <MenuItem x:Name="MenuItemSelect" Header="_Select" IsEnabled="false" IsTabStop="false" SubmenuOpened="MenuItemSelect_SubmenuOpening" ToolTip="Select a subset of the files">
-                <MenuItem x:Name="MenuItemSelectAllImages" IsCheckable="True" IsChecked="True" Header="_All files" Click="MenuItemSelect_Click" ToolTip="Shows all files, including corrupted and dark ones"/>
-                <MenuItem x:Name="MenuItemSelectLightImages" IsCheckable="True" IsChecked="False" Header="_Light files" Click="MenuItemSelect_Click" ToolTip="Exlcudes dark, corrupted, or missing files"/>
-                <MenuItem x:Name="MenuItemSelectDarkImages" IsCheckable="True" IsChecked="False" Header="_Dark files" Click="MenuItemSelect_Click" ToolTip="Show only dark images"/>
-                <MenuItem x:Name="MenuItemSelectCorruptedImages" IsCheckable="True" IsChecked="False" Header="_Corrupted files" Click="MenuItemSelect_Click" ToolTip="Show only corrupted images"/>
-                <MenuItem x:Name="MenuItemSelectFilesNoLongerAvailable" IsCheckable="True" IsChecked="False" Header="_Missing files" Click="MenuItemSelect_Click" ToolTip="Show records for files no longer available"/>
-                <MenuItem x:Name="MenuItemSelectImagesMarkedForDeletion" IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion" Click="MenuItemSelect_Click" ToolTip="Show only those marked for deletion"/>
-                <MenuItem x:Name="MenuItemSelectCustom" IsCheckable="True" IsChecked="False" Header="_Custom selection..."  ToolTip="Create a custom selection" Click="MenuItemSelectCustomSelection_Click"/>
+            <MenuItem Name="MenuItemSelect" Header="_Select" IsEnabled="false" IsTabStop="false" SubmenuOpened="MenuItemSelect_SubmenuOpening" ToolTip="Select a subset of the files.">
+                <MenuItem Name="MenuItemSelectAllImages" IsCheckable="True" IsChecked="True" Header="_All files" Click="MenuItemSelect_Click" ToolTip="Shows all files, including corrupted and dark ones." />
+                <MenuItem Name="MenuItemSelectLightImages" IsCheckable="True" IsChecked="False" Header="_Light files" Click="MenuItemSelect_Click" ToolTip="Exlcudes dark, corrupted, or missing files." />
+                <MenuItem Name="MenuItemSelectDarkImages" IsCheckable="True" IsChecked="False" Header="_Dark files" Click="MenuItemSelect_Click" ToolTip="Show only dark images." />
+                <MenuItem Name="MenuItemSelectCorruptedImages" IsCheckable="True" IsChecked="False" Header="_Corrupted files" Click="MenuItemSelect_Click" ToolTip="Show only corrupted images." />
+                <MenuItem Name="MenuItemSelectFilesNoLongerAvailable" IsCheckable="True" IsChecked="False" Header="_Missing files" Click="MenuItemSelect_Click" ToolTip="Show records for files no longer available." />
+                <MenuItem Name="MenuItemSelectImagesMarkedForDeletion" IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion" Click="MenuItemSelect_Click" ToolTip="Show only those marked for deletion." />
+                <MenuItem Name="MenuItemSelectCustom" IsCheckable="True" IsChecked="False" Header="_Custom selection..." Click="MenuItemSelectCustomSelection_Click" ToolTip="Create a custom selection." />
+                <Separator />
+                <MenuItem Name="MenuItemImageCounts" Header="Show _file counts..." Click="MenuItemImageCounts_Click" ToolTip="Displays statistics on the number of files and their types." />
             </MenuItem>
 
             <!-- Help Menu -->
             <MenuItem Name="MenuItemHelp" Header="_Help" IsEnabled="true" IsTabStop="false">
-                <MenuItem Name="MenuItemAbout" Header="_About..." Click="MenuItemAbout_Click" ToolTip="Displays version information about this program and how to contact its creator"/>
+                <MenuItem Name="MenuItemAbout" Header="_About..." Click="MenuItemAbout_Click" ToolTip="Displays version information about this program and how to contact the development team." />
             </MenuItem>
         </Menu>
 

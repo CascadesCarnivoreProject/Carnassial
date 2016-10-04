@@ -2,9 +2,9 @@
 
 namespace Carnassial.Database
 {
-    public abstract class ImageDataColumn
+    public abstract class FileTableColumn
     {
-        protected ImageDataColumn(ControlRow control)
+        protected FileTableColumn(ControlRow control)
         {
             this.ControlType = control.Type;
             this.DataLabel = control.DataLabel;
@@ -16,7 +16,7 @@ namespace Carnassial.Database
 
         public abstract bool IsContentValid(string content);
 
-        public static ImageDataColumn Create(ControlRow control)
+        public static FileTableColumn Create(ControlRow control)
         {
             switch (control.Type)
             {
@@ -24,20 +24,20 @@ namespace Carnassial.Database
                 case Constants.DatabaseColumn.File:
                 case Constants.DatabaseColumn.Folder:
                 case Constants.DatabaseColumn.RelativePath:
-                    return new ImageDataNoteColumn(control);
+                    return new FileTableNoteColumn(control);
                 case Constants.DatabaseColumn.ImageQuality:
-                    return new ImageDataChoiceColumn(control);
+                    return new FileTableChoiceColumn(control);
                 case Constants.Control.Counter:
-                    return new ImageDataCounterColumn(control);
+                    return new FileTableCounterColumn(control);
                 case Constants.DatabaseColumn.DateTime:
-                    return new ImageDataDateTimeColumn(control);
+                    return new FileTableDateTimeColumn(control);
                 case Constants.DatabaseColumn.DeleteFlag:
                 case Constants.Control.Flag:
-                    return new ImageDataFlagColumn(control);
+                    return new FileTableFlagColumn(control);
                 case Constants.Control.FixedChoice:
-                    return new ImageDataChoiceColumn(control);
+                    return new FileTableChoiceColumn(control);
                 case Constants.DatabaseColumn.UtcOffset:
-                    return new ImageDataUtcOffsetColumn(control);
+                    return new FileTableUtcOffsetColumn(control);
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
             }

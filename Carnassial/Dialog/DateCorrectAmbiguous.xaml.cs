@@ -15,13 +15,13 @@ namespace Carnassial.Dialog
     {
         private List<AmbiguousDate> ambiguousDatesList; // Will contain a list of all initial images containing ambiguous dates and their state
         private int ambiguousDatesListIndex;
-        private ImageDatabase database;
+        private FileDatabase database;
         private bool displayingPreview;
 
         // Whether the operation is aborted, ie., because there are no ambiguous dates
         public bool Abort { get; set; }
 
-        public DateCorrectAmbiguous(ImageDatabase database, Window owner)
+        public DateCorrectAmbiguous(FileDatabase database, Window owner)
         {
             this.InitializeComponent();
             this.ambiguousDatesList = new List<AmbiguousDate>();
@@ -77,7 +77,7 @@ namespace Carnassial.Dialog
         {
             for (int index = startIndex; index < this.database.CurrentlySelectedImageCount; index++)
             {
-                ImageRow image = this.database.ImageDataTable[index];
+                ImageRow image = this.database.Files[index];
                 DateTimeOffset imageDateTime = image.GetDateTime();
                 if (imageDateTime.Day <= Constants.Time.MonthsInYear)
                 {
@@ -103,14 +103,14 @@ namespace Carnassial.Dialog
             }
 
             // Parse the provided starting date. Return -1 if it cannot.
-            ImageRow image = this.database.ImageDataTable[startIndex];
+            ImageRow image = this.database.Files[startIndex];
             DateTimeOffset desiredDateTime = image.GetDateTime();
 
             lastMatchingDate = startIndex;
             for (int index = startIndex + 1; index < this.database.CurrentlySelectedImageCount; index++)
             {
                 // Parse the date for the given row.
-                image = this.database.ImageDataTable[index];
+                image = this.database.Files[index];
                 DateTimeOffset imageDateTime = image.GetDateTime();
                 if (desiredDateTime.Date == imageDateTime.Date)
                 {
@@ -160,7 +160,7 @@ namespace Carnassial.Dialog
             this.ambiguousDatesListIndex = index;
 
             // We found an ambiguous date; provide appropriate feedback
-            imageProperties = this.database.ImageDataTable[this.ambiguousDatesList[index].StartRange];
+            imageProperties = this.database.Files[this.ambiguousDatesList[index].StartRange];
             this.OriginalDateLabel.Content = imageProperties.GetDateTime().Date;
 
             // If we can't swap the date, we just return the original unaltered date. However, we expect that swapping would always work at this point.
@@ -185,7 +185,7 @@ namespace Carnassial.Dialog
             if (isAmbiguousDate)
             {
                 ImageRow imageProperties;
-                imageProperties = this.database.ImageDataTable[this.ambiguousDatesList[this.ambiguousDatesListIndex].StartRange];
+                imageProperties = this.database.Files[this.ambiguousDatesList[this.ambiguousDatesListIndex].StartRange];
                 this.OriginalDateLabel.Content = imageProperties.GetDateTime().Date;
 
                 // If we can't swap the date, we just return the original unaltered date. However, we expect that swapping would always work at this point.
@@ -227,7 +227,7 @@ namespace Carnassial.Dialog
             foreach (AmbiguousDate ambiguousDate in this.ambiguousDatesList)
             {
                 ImageRow imageProperties;
-                imageProperties = this.database.ImageDataTable[ambiguousDate.StartRange];
+                imageProperties = this.database.Files[ambiguousDate.StartRange];
                 string newDate = String.Empty;
                 if (ambiguousDate.Swapped)
                 {
@@ -248,7 +248,7 @@ namespace Carnassial.Dialog
             foreach (AmbiguousDate ambDate in this.ambiguousDatesList)
             {
                 ImageRow imageProperties;
-                imageProperties = this.database.ImageDataTable[ambDate.StartRange];
+                imageProperties = this.database.Files[ambDate.StartRange];
                 string newDate = String.Empty;
 
                 if (ambDate.Swapped)

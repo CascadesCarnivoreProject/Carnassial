@@ -17,11 +17,11 @@ namespace Carnassial.Dialog
         private readonly DateTimeOffset latestImageDateTimeUncorrected;
 
         private bool displayingPreview;
-        private ImageDatabase imageDatabase;
+        private FileDatabase fileDatabase;
 
         public bool Abort { get; private set; }
         
-        public DateTimeLinearCorrection(ImageDatabase imageDatabase, Window owner)
+        public DateTimeLinearCorrection(FileDatabase fileDatabase, Window owner)
         {
             this.InitializeComponent();
             this.Abort = false;
@@ -30,14 +30,14 @@ namespace Carnassial.Dialog
             this.displayingPreview = false;
             this.earliestImageDateTimeUncorrected = DateTime.MaxValue.ToUniversalTime();
             this.latestImageDateTimeUncorrected = DateTime.MinValue.ToUniversalTime();
-            this.imageDatabase = imageDatabase;
+            this.fileDatabase = fileDatabase;
 
             // Skip images with bad dates
             ImageRow earliestImage = null;
             bool foundEarliest = false;
             bool foundLatest = false;
             ImageRow latestImage = null;
-            foreach (ImageRow currentImageRow in imageDatabase.ImageDataTable)
+            foreach (ImageRow currentImageRow in fileDatabase.Files)
             {
                 DateTimeOffset currentImageDateTime = currentImageRow.GetDateTime();
 
@@ -67,10 +67,10 @@ namespace Carnassial.Dialog
 
             // configure earliest and latest images
             this.EarliestImageFileName.Content = earliestImage.FileName;
-            this.EarliestImage.Source = earliestImage.LoadBitmap(this.imageDatabase.FolderPath);
+            this.EarliestImage.Source = earliestImage.LoadBitmap(this.fileDatabase.FolderPath);
 
             this.LatestImageFileName.Content = latestImage.FileName;
-            this.LatestImage.Source = latestImage.LoadBitmap(this.imageDatabase.FolderPath);
+            this.LatestImage.Source = latestImage.LoadBitmap(this.fileDatabase.FolderPath);
 
             // configure interval
             DataEntryHandler.Configure(this.ClockLastCorrect, this.earliestImageDateTimeUncorrected.DateTime);
@@ -153,8 +153,8 @@ namespace Carnassial.Dialog
 
             // Preview the changes
             TimeSpan intervalFromCorrectToMeasured = this.GetInterval();
-            TimeZoneInfo imageSetTimeZone = this.imageDatabase.ImageSet.GetTimeZone();
-            foreach (ImageRow image in this.imageDatabase.ImageDataTable)
+            TimeZoneInfo imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZone();
+            foreach (ImageRow image in this.fileDatabase.Files)
             {
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
@@ -217,17 +217,17 @@ namespace Carnassial.Dialog
             TimeSpan intervalFromCorrectToMeasured = this.GetInterval();
             if (intervalFromCorrectToMeasured == TimeSpan.Zero)
             {
-                this.imageDatabase.AdjustImageTimes(this.ClockDrift.Value.Value);
+                this.fileDatabase.AdjustImageTimes(this.ClockDrift.Value.Value);
             }
             else
             {
-                this.imageDatabase.AdjustImageTimes(
+                this.fileDatabase.AdjustImageTimes(
                     (DateTimeOffset imageDateTime) =>
                     {
                         return imageDateTime + this.GetAdjustment(intervalFromCorrectToMeasured, imageDateTime);
                     },
                     0,
-                    this.imageDatabase.CurrentlySelectedImageCount - 1);
+                    this.fileDatabase.CurrentlySelectedImageCount - 1);
             }
             this.DialogResult = true;
         }

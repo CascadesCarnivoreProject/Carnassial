@@ -16,7 +16,7 @@ namespace Carnassial.Database
         /// <summary>
         /// Export all the database data associated with the selection to the CSV file indicated in the file path so that spreadsheet applications (like Excel) can display it.
         /// </summary>
-        public void ExportToCsv(ImageDatabase database, string filePath)
+        public void ExportToCsv(FileDatabase database, string filePath)
         {
             using (TextWriter fileWriter = new StreamWriter(filePath, false))
             {
@@ -36,7 +36,7 @@ namespace Carnassial.Database
                 for (int row = 0; row < database.CurrentlySelectedImageCount; row++)
                 {
                     StringBuilder csvRow = new StringBuilder();
-                    ImageRow image = database.ImageDataTable[row];
+                    ImageRow image = database.Files[row];
                     foreach (string dataLabel in dataLabels)
                     {
                         csvRow.Append(this.AddColumnValue(image.GetValueDatabaseString(dataLabel)));
@@ -46,24 +46,24 @@ namespace Carnassial.Database
             }
         }
 
-        public bool TryImportFromCsv(string filePath, ImageDatabase imageDatabase, out List<string> importErrors)
+        public bool TryImportFromCsv(string filePath, FileDatabase fileDatabase, out List<string> importErrors)
         {
             importErrors = new List<string>();
             
-            List<string> dataLabels = imageDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
+            List<string> dataLabels = fileDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
             using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 using (StreamReader csvReader = new StreamReader(stream))
                 {
                     // validate CSV file headers against the database
                     List<string> dataLabelsFromHeader = this.ReadAndParseLine(csvReader);
-                    List<string> dataLabelsInImageDatabaseButNotInHeader = dataLabels.Except(dataLabelsFromHeader).ToList();
-                    foreach (string dataLabel in dataLabelsInImageDatabaseButNotInHeader)
+                    List<string> dataLabelsInFileDatabaseButNotInHeader = dataLabels.Except(dataLabelsFromHeader).ToList();
+                    foreach (string dataLabel in dataLabelsInFileDatabaseButNotInHeader)
                     {
                         importErrors.Add("- A column with the DataLabel '" + dataLabel + "' is present in the database but nothing matches that in the CSV file." + Environment.NewLine);
                     }
-                    List<string> dataLabelsInHeaderButNotImageDatabase = dataLabelsFromHeader.Except(dataLabels).ToList();
-                    foreach (string dataLabel in dataLabelsInHeaderButNotImageDatabase)
+                    List<string> dataLabelsInHeaderButNotFileDatabase = dataLabelsFromHeader.Except(dataLabels).ToList();
+                    foreach (string dataLabel in dataLabelsInHeaderButNotFileDatabase)
                     {
                         importErrors.Add("- A column with the DataLabel '" + dataLabel + "' is present in the CSV file but nothing matches that in the database." + Environment.NewLine);
                     }
@@ -126,7 +126,7 @@ namespace Carnassial.Database
                                 // as with DateTime, pass parsed UTC offset to ColumnTuple rather than the string as ColumnTuple owns validation and formatting
                                 imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, utcOffset));
                             }
-                            else if (imageDatabase.ImageDataColumnsByDataLabel[dataLabel].IsContentValid(value))
+                            else if (fileDatabase.FileTableColumnsByDataLabel[dataLabel].IsContentValid(value))
                             {
                                 // include column in update query if value is valid
                                 imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, value));
@@ -146,13 +146,13 @@ namespace Carnassial.Database
                         // write current batch of updates to database
                         if (imagesToUpdate.Count >= 100)
                         {
-                            imageDatabase.UpdateImages(imagesToUpdate);
+                            fileDatabase.UpdateImages(imagesToUpdate);
                             imagesToUpdate.Clear();
                         }
                     }
 
                     // perform any remaining updates
-                    imageDatabase.UpdateImages(imagesToUpdate);
+                    fileDatabase.UpdateImages(imagesToUpdate);
                     return true;
                 }
             }

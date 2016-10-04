@@ -5,12 +5,12 @@ using System.Windows.Controls;
 
 namespace Carnassial.Dialog
 {
-    public partial class RenameImageDatabaseFile : Window
+    public partial class RenameFileDatabaseFile : Window
     {
         private string originalFileName;
         public string NewFilename { get; private set; }
 
-        public RenameImageDatabaseFile(string fileName, Window owner)
+        public RenameFileDatabaseFile(string fileName, Window owner)
         {
             this.InitializeComponent();
 

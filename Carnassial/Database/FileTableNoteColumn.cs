@@ -1,8 +1,8 @@
 ﻿namespace Carnassial.Database
 {
-    public class ImageDataNoteColumn : ImageDataColumn
+    public class FileTableNoteColumn : FileTableColumn
     {
-        public ImageDataNoteColumn(ControlRow control)
+        public FileTableNoteColumn(ControlRow control)
             : base(control)
         {
         }

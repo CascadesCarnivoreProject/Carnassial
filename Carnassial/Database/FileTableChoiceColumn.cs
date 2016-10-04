@@ -2,12 +2,12 @@
 
 namespace Carnassial.Database
 {
-    public class ImageDataChoiceColumn : ImageDataColumn
+    public class FileTableChoiceColumn : FileTableColumn
     {
         private List<string> choices;
         private string defaultValue;
 
-        public ImageDataChoiceColumn(ControlRow control)
+        public FileTableChoiceColumn(ControlRow control)
             : base(control)
         {
             this.choices = control.GetChoices();

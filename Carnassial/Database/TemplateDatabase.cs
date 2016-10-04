@@ -18,6 +18,13 @@ namespace Carnassial.Database
         private DateTime mostRecentBackup;
         private DataRowChangeEventHandler onTemplateTableRowChanged;
 
+        public DataTableBackedList<ControlRow> Controls { get; private set; }
+
+        protected SQLiteWrapper Database { get; set; }
+
+        /// <summary>Gets the path of the database on disk.</summary>
+        public string FilePath { get; private set; }
+
         protected TemplateDatabase(string filePath)
         {
             this.disposed = false;
@@ -27,16 +34,6 @@ namespace Carnassial.Database
             this.Database = new SQLiteWrapper(filePath);
             this.FilePath = filePath;
         }
-
-        protected SQLiteWrapper Database { get; set; }
-
-        /// <summary>Gets the file name of the image database on disk.</summary>
-        public string FilePath { get; private set; }
-
-        /// <summary>
-        /// Gets the template table
-        /// </summary>
-        public DataTableBackedList<ControlRow> TemplateTable { get; private set; }
 
         public void BindToEditorDataGrid(DataGrid dataGrid, DataRowChangeEventHandler onRowChanged)
         {
@@ -81,7 +78,7 @@ namespace Carnassial.Database
             this.CreateBackupIfNeeded();
 
             // create the row for the new control in the data table
-            ControlRow newControl = this.TemplateTable.NewRow();
+            ControlRow newControl = this.Controls.NewRow();
             string dataLabelPrefix;
             switch (controlType)
             {
@@ -138,12 +135,12 @@ namespace Carnassial.Database
 
             // add the new control to the database
             List<List<ColumnTuple>> controlInsertWrapper = new List<List<ColumnTuple>>() { newControl.GetColumnTuples().Columns };
-            this.Database.Insert(Constants.Database.TemplateTable, controlInsertWrapper);
+            this.Database.Insert(Constants.DatabaseTable.Controls, controlInsertWrapper);
 
             // update the in memory table to reflect current database content
             // could just add the new row to the table but this is done in case a bug results in the insert lacking perfect fidelity
             this.GetControlsSortedByControlOrder();
-            return this.TemplateTable[this.TemplateTable.RowCount - 1];
+            return this.Controls[this.Controls.RowCount - 1];
         }
 
         public void Dispose()
@@ -154,15 +151,15 @@ namespace Carnassial.Database
 
         private void GetControlsSortedByControlOrder()
         {
-            DataTable templateTable = this.Database.GetDataTableFromSelect("SELECT * FROM " + Constants.Database.TemplateTable + " ORDER BY  " + Constants.Control.ControlOrder);
-            this.TemplateTable = new DataTableBackedList<ControlRow>(templateTable, (DataRow row) => { return new ControlRow(row); });
-            this.TemplateTable.BindDataGrid(this.editorDataGrid, this.onTemplateTableRowChanged);
+            DataTable templateTable = this.Database.GetDataTableFromSelect("SELECT * FROM " + Constants.DatabaseTable.Controls + " ORDER BY  " + Constants.Control.ControlOrder);
+            this.Controls = new DataTableBackedList<ControlRow>(templateTable, (DataRow row) => { return new ControlRow(row); });
+            this.Controls.BindDataGrid(this.editorDataGrid, this.onTemplateTableRowChanged);
         }
 
         public List<string> GetDataLabelsExceptIDInSpreadsheetOrder()
         {
             List<string> dataLabels = new List<string>();
-            IEnumerable<ControlRow> controlsInSpreadsheetOrder = this.TemplateTable.OrderBy(control => control.SpreadsheetOrder);
+            IEnumerable<ControlRow> controlsInSpreadsheetOrder = this.Controls.OrderBy(control => control.SpreadsheetOrder);
             foreach (ControlRow control in controlsInSpreadsheetOrder)
             {
                 string dataLabel = control.DataLabel;
@@ -184,7 +181,7 @@ namespace Carnassial.Database
         public bool IsControlCopyable(string dataLabel)
         {
             long id = this.GetControlIDFromTemplateTable(dataLabel);
-            ControlRow control = this.TemplateTable.Find(id);
+            ControlRow control = this.Controls.Find(id);
             return control.Copyable;
         }
 
@@ -204,12 +201,12 @@ namespace Carnassial.Database
 
             // drop the control from the database and data table
             string where = Constants.DatabaseColumn.ID + " = " + controlToRemove.ID;
-            this.Database.DeleteRows(Constants.Database.TemplateTable, where);
+            this.Database.DeleteRows(Constants.DatabaseTable.Controls, where);
             this.GetControlsSortedByControlOrder();
 
             // regenerate counter and spreadsheet orders; if they're greater than the one removed, decrement
             List<ColumnTuplesWithWhere> controlUpdates = new List<ColumnTuplesWithWhere>();
-            foreach (ControlRow control in this.TemplateTable)
+            foreach (ControlRow control in this.Controls)
             {
                 long controlOrder = control.ControlOrder;
                 long spreadsheetOrder = control.SpreadsheetOrder;
@@ -230,7 +227,7 @@ namespace Carnassial.Database
                     controlUpdates.Add(new ColumnTuplesWithWhere(controlUpdate, control.ID));
                 }
             }
-            this.Database.Update(Constants.Database.TemplateTable, controlUpdates);
+            this.Database.Update(Constants.DatabaseTable.Controls, controlUpdates);
 
             // update the in memory table to reflect current database content
             // should not be necessary but this is done to mitigate divergence in case a bug results in the delete lacking perfect fidelity
@@ -244,12 +241,12 @@ namespace Carnassial.Database
         public void SyncControlToDatabase(ControlRow control)
         {
             this.CreateBackupIfNeeded();
-            this.Database.Update(Constants.Database.TemplateTable, control.GetColumnTuples());
+            this.Database.Update(Constants.DatabaseTable.Controls, control.GetColumnTuples());
         }
 
         private void SyncTemplateTableToDatabase()
         {
-            this.SyncTemplateTableToDatabase(this.TemplateTable);
+            this.SyncTemplateTableToDatabase(this.Controls);
         }
 
         private void SyncTemplateTableToDatabase(DataTableBackedList<ControlRow> newTable)
@@ -257,14 +254,14 @@ namespace Carnassial.Database
             this.CreateBackupIfNeeded();
 
             // clear the existing table in the database and add the new values
-            this.Database.DeleteRows(Constants.Database.TemplateTable, null);
+            this.Database.DeleteRows(Constants.DatabaseTable.Controls, null);
 
             List<List<ColumnTuple>> newTableTuples = new List<List<ColumnTuple>>();
             foreach (ControlRow control in newTable)
             {
                 newTableTuples.Add(control.GetColumnTuples().Columns);
             }
-            this.Database.Insert(Constants.Database.TemplateTable, newTableTuples);
+            this.Database.Insert(Constants.DatabaseTable.Controls, newTableTuples);
 
             // update the in memory table to reflect current database content
             // could just use the new table but this is done in case a bug results in the insert lacking perfect fidelity
@@ -294,9 +291,9 @@ namespace Carnassial.Database
                 throw new ArgumentOutOfRangeException("column", String.Format("'{0}' is not a control order column.  Only '{1}' and '{2}' are order columns.", orderColumnName, Constants.Control.ControlOrder, Constants.Control.SpreadsheetOrder));
             }
 
-            if (newOrderByDataLabel.Count != this.TemplateTable.RowCount)
+            if (newOrderByDataLabel.Count != this.Controls.RowCount)
             {
-                throw new NotSupportedException(String.Format("Partial order updates are not supported.  New ordering for {0} controls was passed but {1} controls are present for '{2}'.", newOrderByDataLabel.Count, this.TemplateTable.RowCount, orderColumnName));
+                throw new NotSupportedException(String.Format("Partial order updates are not supported.  New ordering for {0} controls was passed but {1} controls are present for '{2}'.", newOrderByDataLabel.Count, this.Controls.RowCount, orderColumnName));
             }
 
             List<long> uniqueOrderValues = newOrderByDataLabel.Values.Distinct().ToList();
@@ -316,7 +313,7 @@ namespace Carnassial.Database
             }
 
             // update in memory table with new order
-            foreach (ControlRow control in this.TemplateTable)
+            foreach (ControlRow control in this.Controls)
             {
                 string dataLabel = control.DataLabel;
                 long newOrder = newOrderByDataLabel[dataLabel];
@@ -346,9 +343,9 @@ namespace Carnassial.Database
 
             if (disposing)
             {
-                if (this.TemplateTable != null)
+                if (this.Controls != null)
                 {
-                    this.TemplateTable.Dispose();
+                    this.Controls.Dispose();
                 }
             }
 
@@ -358,7 +355,7 @@ namespace Carnassial.Database
         /// <summary>Given a data label, get the corresponding data entry control</summary>
         public ControlRow GetControlFromTemplateTable(string dataLabel)
         {
-            foreach (ControlRow control in this.TemplateTable)
+            foreach (ControlRow control in this.Controls)
             {
                 if (dataLabel.Equals(control.DataLabel))
                 {
@@ -383,7 +380,7 @@ namespace Carnassial.Database
         {
             // create the template table
             List<ColumnDefinition> templateTableColumns = new List<ColumnDefinition>();
-            templateTableColumns.Add(new ColumnDefinition(Constants.DatabaseColumn.ID, Constants.Database.CreationStringPrimaryKey));
+            templateTableColumns.Add(new ColumnDefinition(Constants.DatabaseColumn.ID, Constants.Sql.CreationStringPrimaryKey));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.ControlOrder, Constants.Sql.Integer));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.SpreadsheetOrder, Constants.Sql.Integer));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.Type, Constants.Sql.Text));
@@ -395,12 +392,12 @@ namespace Carnassial.Database
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.Copyable, Constants.Sql.Text));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.Visible, Constants.Sql.Text));
             templateTableColumns.Add(new ColumnDefinition(Constants.Control.List, Constants.Sql.Text));
-            this.Database.CreateTable(Constants.Database.TemplateTable, templateTableColumns);
+            this.Database.CreateTable(Constants.DatabaseTable.Controls, templateTableColumns);
 
             // if an existing table was passed, clone its contents into this database
             if (other != null)
             {
-                this.SyncTemplateTableToDatabase(other.TemplateTable);
+                this.SyncTemplateTableToDatabase(other.Controls);
                 return;
             }
 
@@ -467,7 +464,7 @@ namespace Carnassial.Database
             standardControls.Add(this.GetDeleteFlagTuples(++controlOrder, ++spreadsheetOrder, true));
 
             // insert standard controls into the template table
-            this.Database.Insert(Constants.Database.TemplateTable, standardControls);
+            this.Database.Insert(Constants.DatabaseTable.Controls, standardControls);
 
             // populate the in memory version of the template table
             this.GetControlsSortedByControlOrder();
@@ -483,14 +480,14 @@ namespace Carnassial.Database
         /// </summary>
         private void SetControlOrders(string dataLabel, int order)
         {
-            if ((order < 1) || (order > this.TemplateTable.RowCount))
+            if ((order < 1) || (order > this.Controls.RowCount))
             {
                 throw new ArgumentOutOfRangeException("order", "Control and spreadsheet orders must be contiguous ones based values.");
             }
 
             Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
             Dictionary<string, long> newSpreadsheetOrderByDataLabel = new Dictionary<string, long>();
-            foreach (ControlRow control in this.TemplateTable)
+            foreach (ControlRow control in this.Controls)
             {
                 if (control.DataLabel == dataLabel)
                 {
@@ -533,13 +530,13 @@ namespace Carnassial.Database
             }
 
             // move other controls out of the way if the requested ID is in use
-            ControlRow conflictingControl = this.TemplateTable.Find(newID);
+            ControlRow conflictingControl = this.Controls.Find(newID);
             List<string> queries = new List<string>();
             if (conflictingControl != null)
             {
                 // First update: because any changed IDs have to be unique, first move them beyond the current ID range
                 long maximumID = 0;
-                foreach (ControlRow control in this.TemplateTable)
+                foreach (ControlRow control in this.Controls)
                 {
                     if (maximumID < control.ID)
                     {
@@ -549,14 +546,14 @@ namespace Carnassial.Database
                 Debug.Assert((maximumID > 0) && (maximumID <= Int64.MaxValue), String.Format("Maximum ID found is {0}, which is out of range.", maximumID));
                 string jumpAmount = maximumID.ToString();
 
-                string increaseIDs = "Update " + Constants.Database.TemplateTable;
+                string increaseIDs = "Update " + Constants.DatabaseTable.Controls;
                 increaseIDs += " SET " + Constants.DatabaseColumn.ID + " = " + Constants.DatabaseColumn.ID + " + 1 + " + jumpAmount;
                 increaseIDs += " WHERE " + Constants.DatabaseColumn.ID + " >= " + newID;
                 queries.Add(increaseIDs);
 
                 // Second update: decrease IDs above newID to be one more than their original value
                 // This leaves everything in sequence except for an open spot at newID.
-                string reduceIDs = "Update " + Constants.Database.TemplateTable;
+                string reduceIDs = "Update " + Constants.DatabaseTable.Controls;
                 reduceIDs += " SET " + Constants.DatabaseColumn.ID + " = " + Constants.DatabaseColumn.ID + " - " + jumpAmount;
                 reduceIDs += " WHERE " + Constants.DatabaseColumn.ID + " >= " + newID;
                 queries.Add(reduceIDs);
@@ -564,7 +561,7 @@ namespace Carnassial.Database
 
             // 3rd update: change the target ID to the desired ID
             this.CreateBackupIfNeeded();
-            string setControlID = "Update " + Constants.Database.TemplateTable;
+            string setControlID = "Update " + Constants.DatabaseTable.Controls;
             setControlID += " SET " + Constants.DatabaseColumn.ID + " = " + newID;
             setControlID += " WHERE " + Constants.Control.DataLabel + " = '" + dataLabel + "'";
             queries.Add(setControlID);
@@ -577,7 +574,7 @@ namespace Carnassial.Database
         {
             // get all existing data labels, as we have to ensure that a new data label doesn't have the same name as an existing one
             List<string> dataLabels = new List<string>();
-            foreach (ControlRow control in this.TemplateTable)
+            foreach (ControlRow control in this.Controls)
             {
                 dataLabels.Add(control.DataLabel);
             }
@@ -597,7 +594,7 @@ namespace Carnassial.Database
 
         private long GetOrderForNewControl()
         {
-            return this.TemplateTable.RowCount + 1;
+            return this.Controls.RowCount + 1;
         }
 
         private List<ColumnTuple> GetDateTimeTuples(long controlOrder, long spreadsheetOrder, bool visible)

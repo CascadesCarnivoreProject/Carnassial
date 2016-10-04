@@ -19,7 +19,7 @@ namespace Carnassial.Dialog
     public partial class PopulateFieldWithMetadata : Window
     {
         private bool clearIfNoMetadata;
-        private ImageDatabase database;
+        private FileDatabase database;
         private string dataFieldLabel;
         private bool dataFieldSelected;
         private Dictionary<string, string> dataLabelByLabel;
@@ -27,7 +27,7 @@ namespace Carnassial.Dialog
         private string metadataFieldName;
         private bool metadataFieldSelected;
 
-        public PopulateFieldWithMetadata(ImageDatabase database, string filePath, Window owner)
+        public PopulateFieldWithMetadata(FileDatabase database, string filePath, Window owner)
         {
             this.InitializeComponent();
             this.Owner = owner;
@@ -53,7 +53,7 @@ namespace Carnassial.Dialog
             this.lblImageName.Content = Path.GetFileName(this.filePath);
             this.dataGrid.ItemsSource = Utilities.LoadMetadata(this.filePath);
 
-            foreach (ControlRow control in this.database.TemplateTable)
+            foreach (ControlRow control in this.database.Controls)
             {
                 if (control.Type == Constants.DatabaseColumn.DateTime ||
                     control.Type == Constants.Control.Note)
@@ -145,7 +145,7 @@ namespace Carnassial.Dialog
                 TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
                 for (int imageIndex = 0; imageIndex < database.CurrentlySelectedImageCount; ++imageIndex)
                 {
-                    ImageRow image = database.ImageDataTable[imageIndex];
+                    ImageRow image = database.Files[imageIndex];
                     Dictionary<string, string> metadata = Utilities.LoadMetadata(image.GetImagePath(database.FolderPath));
                     if (metadata.ContainsKey(this.metadataFieldName) == false)
                     {
@@ -154,7 +154,7 @@ namespace Carnassial.Dialog
                             // Clear the data field if there is no metadata...
                             if (dataLabelToUpdate == Constants.DatabaseColumn.DateTime)
                             {
-                                image.SetDateAndTimeFromFileInfo(this.database.FolderPath, imageSetTimeZone);
+                                image.SetDateTimeOffsetFromFileInfo(this.database.FolderPath, imageSetTimeZone);
                                 imagesToUpdate.Add(image.GetDateTimeColumnTuples());
                                 backgroundWorker.ReportProgress(0, new FeedbackMessage(image.FileName, "No metadata found - date/time reread from file"));
                             }
@@ -179,7 +179,7 @@ namespace Carnassial.Dialog
                         DateTimeOffset metadataDateTime;
                         if (DateTimeHandler.TryParseMetadataDateTaken(metadataValue, imageSetTimeZone, out metadataDateTime))
                         {
-                            image.SetDateAndTime(metadataDateTime);
+                            image.SetDateTimeOffset(metadataDateTime);
                             imageUpdate = image.GetDateTimeColumnTuples();
                             backgroundWorker.ReportProgress(0, new FeedbackMessage(image.FileName, metadataValue));
                         }

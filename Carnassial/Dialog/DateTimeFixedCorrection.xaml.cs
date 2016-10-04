@@ -14,21 +14,21 @@ namespace Carnassial.Dialog
     public partial class DateTimeFixedCorrection : Window
     {
         private bool displayingPreview;
-        private ImageDatabase imageDatabase;
+        private FileDatabase fileDatabase;
         private DateTimeOffset initialDate;
 
-        public DateTimeFixedCorrection(ImageDatabase imageDatabase, ImageRow imageToCorrect, Window owner)
+        public DateTimeFixedCorrection(FileDatabase fileDatabase, ImageRow imageToCorrect, Window owner)
         {
             this.InitializeComponent();
             this.displayingPreview = false;
-            this.imageDatabase = imageDatabase;
+            this.fileDatabase = fileDatabase;
             this.Owner = owner;
 
             // get the image filename and display it
             this.imageName.Content = imageToCorrect.FileName;
 
             // display the image
-            this.image.Source = imageToCorrect.LoadBitmap(this.imageDatabase.FolderPath);
+            this.image.Source = imageToCorrect.LoadBitmap(this.fileDatabase.FolderPath);
 
             // configure datetime picker
             this.initialDate = imageToCorrect.GetDateTime();
@@ -51,7 +51,7 @@ namespace Carnassial.Dialog
             TimeSpan adjustment = this.DateTimePicker.Value.Value - this.initialDate.DateTime;
 
             // Preview the changes
-            foreach (ImageRow image in this.imageDatabase.ImageDataTable)
+            foreach (ImageRow image in this.fileDatabase.Files)
             {
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
@@ -101,7 +101,7 @@ namespace Carnassial.Dialog
             }
 
             // Update the database
-            this.imageDatabase.AdjustImageTimes(adjustment);
+            this.fileDatabase.AdjustImageTimes(adjustment);
             this.DialogResult = true;
         }
 

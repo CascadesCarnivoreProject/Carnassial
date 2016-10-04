@@ -14,20 +14,20 @@ namespace Carnassial.Dialog
         /// <summary>
         /// Show the user some statistics about the images in a dialog box
         /// </summary>
-        public FileCountsByQuality(Dictionary<ImageSelection, int> counts, Window owner)
+        public FileCountsByQuality(Dictionary<FileSelection, int> counts, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
             this.Owner = owner;
 
             // Fill in the counts
-            int ok = counts[ImageSelection.Ok];
+            int ok = counts[FileSelection.Ok];
             this.Ok.Text = String.Format("{0,5}", ok) + this.Ok.Text;
-            int fileNoLongerAvailable = counts[ImageSelection.FileNoLongerAvailable];
+            int fileNoLongerAvailable = counts[FileSelection.FileNoLongerAvailable];
             this.FileNoLongerAvailable.Text = String.Format("{0,5}", fileNoLongerAvailable) + this.FileNoLongerAvailable.Text;
-            int dark = counts[ImageSelection.Dark];
+            int dark = counts[FileSelection.Dark];
             this.Dark.Text = String.Format("{0,5}", dark) + this.Dark.Text;
-            int corrupted = counts[ImageSelection.CorruptFile];
+            int corrupted = counts[FileSelection.CorruptFile];
             this.Corrupted.Text = String.Format("{0,5}", corrupted) + this.Corrupted.Text;
 
             int total = ok + dark + corrupted + fileNoLongerAvailable;

@@ -24,10 +24,10 @@ namespace Carnassial.Dialog
         private const int ValueColumn = 2;
         private const int SearchCriteriaColumn = 3;
 
-        private ImageDatabase database;
+        private FileDatabase database;
         private TimeZoneInfo imageSetTimeZone;
 
-        public CustomViewSelection(ImageDatabase database, Window owner)
+        public CustomViewSelection(FileDatabase database, Window owner)
         {
             this.InitializeComponent();
 
@@ -164,7 +164,8 @@ namespace Carnassial.Dialog
                          controlType == Constants.Control.Note ||
                          controlType == Constants.DatabaseColumn.RelativePath)
                 {
-                    TextBox textBoxValue = new TextBox();
+                    AutocompleteTextBox textBoxValue = new AutocompleteTextBox();
+                    textBoxValue.Autocompletions = this.database.GetDistinctValuesInImageColumn(searchTerm.DataLabel);
                     textBoxValue.IsEnabled = searchTerm.UseForSearching;
                     textBoxValue.Text = searchTerm.DatabaseValue;
                     textBoxValue.Margin = thickness;
@@ -408,7 +409,7 @@ namespace Carnassial.Dialog
                 lastExpression = false;
             }
 
-            int count = this.database.GetImageCount(ImageSelection.Custom);
+            int count = this.database.GetImageCount(FileSelection.Custom);
             this.OkButton.IsEnabled = count > 0 ? true : false;
             this.textBlockQueryMatches.Text = count > 0 ? count.ToString() : "0";
 
@@ -418,7 +419,7 @@ namespace Carnassial.Dialog
         // Apply the selection if the Ok button is clicked
         private void OkButton_Click(object sender, RoutedEventArgs args)
         {
-            this.database.SelectDataTableImages(ImageSelection.Custom);
+            this.database.SelectFiles(FileSelection.Custom);
             this.DialogResult = true;
         }
 

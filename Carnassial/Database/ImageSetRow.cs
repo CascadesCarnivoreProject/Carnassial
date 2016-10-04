@@ -11,9 +11,9 @@ namespace Carnassial.Database
         {
         }
 
-        public ImageSelection ImageSelection
+        public FileSelection ImageSelection
         {
-            get { return this.Row.GetEnumField<ImageSelection>(Constants.DatabaseColumn.Selection); }
+            get { return this.Row.GetEnumField<FileSelection>(Constants.DatabaseColumn.Selection); }
             set { this.Row.SetField(Constants.DatabaseColumn.Selection, value); }
         }
 

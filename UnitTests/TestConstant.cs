@@ -21,7 +21,23 @@ namespace Carnassial.UnitTests
 
         public static readonly TimeSpan UIElementSearchTimeout = TimeSpan.FromSeconds(15.0);
 
-        public static readonly ReadOnlyCollection<string> DefaultImageTableColumns = new List<string>()
+        public static readonly ReadOnlyCollection<string> ControlsColumns = new List<string>()
+            {
+                Constants.Control.ControlOrder,
+                Constants.Control.SpreadsheetOrder,
+                Constants.Control.DefaultValue,
+                Constants.Control.Label,
+                Constants.Control.DataLabel,
+                Constants.Control.Tooltip,
+                Constants.Control.Width,
+                Constants.Control.Copyable,
+                Constants.Control.Visible,
+                Constants.Control.List,
+                Constants.DatabaseColumn.ID,
+                Constants.Control.Type
+            }.AsReadOnly();
+
+        public static readonly ReadOnlyCollection<string> DefaultFileDataColumns = new List<string>()
         {
             Constants.DatabaseColumn.ID,
             Constants.DatabaseColumn.File,
@@ -49,7 +65,7 @@ namespace Carnassial.UnitTests
             TestConstant.DefaultDatabaseColumn.Flag3
         }.AsReadOnly();
 
-        public static readonly ReadOnlyCollection<string> DefaultMarkerTableColumns = new List<string>()
+        public static readonly ReadOnlyCollection<string> DefaultMarkerColumns = new List<string>()
         {
             Constants.DatabaseColumn.ID,
             TestConstant.DefaultDatabaseColumn.Counter0,
@@ -58,26 +74,10 @@ namespace Carnassial.UnitTests
             TestConstant.DefaultDatabaseColumn.Counter3
         }.AsReadOnly();
 
-        public static readonly ReadOnlyCollection<string> ImageSetTableColumns = new List<string>()
+        public static readonly ReadOnlyCollection<string> ImageSetColumns = new List<string>()
         {
             Constants.DatabaseColumn.ID,
         }.AsReadOnly();
-
-        public static readonly ReadOnlyCollection<string> TemplateTableColumns = new List<string>()
-            {
-                Constants.Control.ControlOrder,
-                Constants.Control.SpreadsheetOrder,
-                Constants.Control.DefaultValue,
-                Constants.Control.Label,
-                Constants.Control.DataLabel,
-                Constants.Control.Tooltip,
-                Constants.Control.Width,
-                Constants.Control.Copyable,
-                Constants.Control.Visible,
-                Constants.Control.List,
-                Constants.DatabaseColumn.ID,
-                Constants.Control.Type
-            }.AsReadOnly();
 
         public static class CarnivoreDatabaseColumn
         {
@@ -145,67 +145,67 @@ namespace Carnassial.UnitTests
             public const string CarnivoreDirectoryName = "CarnivoreTestImages";
             public const string HybridVideoDirectoryName = "HybridVideo";
 
+            // file databases for backwards compatibility testing
+            // version is the Carnassial version used for creation
+            public const string DefaultFileDatabaseFileName = "DefaultData 2.2.0.0.ddb";
+
             // template databases for backwards compatibility testing
             // version is the editor version used for creation
             public const string DefaultTemplateDatabaseFileName = "DefaultTemplate 2.2.0.0.tdb";
 
-            // image databases for backwards compatibility testing
-            // version is the Carnassial version used for creation
-            public const string DefaultImageDatabaseFileName = "DefaultData 2.2.0.0.ddb";
-
             // databases generated dynamically by tests
             // see also use of Constants.File.Default*DatabaseFileName
-            public const string DefaultNewImageDatabaseFileName = "DefaultUnitTest.ddb";
+            public const string DefaultNewFileDatabaseFileName = "DefaultUnitTest.ddb";
             public const string DefaultNewTemplateDatabaseFileName = "DefaultUnitTest.tdb";
         }
 
         public static class ImageExpectation
         {
-            public static readonly ImageExpectations DaylightBobcat;
-            public static readonly ImageExpectations DaylightCoyote;
-            public static readonly ImageExpectations DaylightMartenPair;
-            public static readonly ImageExpectations InfraredMarten;
+            public static readonly FileExpectations DaylightBobcat;
+            public static readonly FileExpectations DaylightCoyote;
+            public static readonly FileExpectations DaylightMartenPair;
+            public static readonly FileExpectations InfraredMarten;
 
             static ImageExpectation()
             {
                 TimeZoneInfo pacificTime = TimeZoneInfo.FindSystemTimeZoneById(TestConstant.TimeZone.Pacific);
 
-                ImageExpectation.DaylightBobcat = new ImageExpectations(pacificTime)
+                ImageExpectation.DaylightBobcat = new FileExpectations(pacificTime)
                 {
                     DarkPixelFraction = 0.242364344315876,
-                    DateTime = ImageExpectations.ParseDateTimeOffsetString("2015-08-05T08:06:23.000-07:00"),
+                    DateTime = FileExpectations.ParseDateTimeOffsetString("2015-08-05T08:06:23.000-07:00"),
                     FileName = "BushnellTrophyHD-119677C-20160805-926.JPG",
                     IsColor = true,
-                    Quality = ImageSelection.Ok
+                    Quality = FileSelection.Ok
                 };
 
-                ImageExpectation.DaylightCoyote = new ImageExpectations(pacificTime)
+                ImageExpectation.DaylightCoyote = new FileExpectations(pacificTime)
                 {
                     DarkPixelFraction = 0.610071236552411,
-                    DateTime = ImageExpectations.ParseDateTimeOffsetString("2016-04-21T06:31:13.000-07:00"),
+                    DateTime = FileExpectations.ParseDateTimeOffsetString("2016-04-21T06:31:13.000-07:00"),
                     FileName = "BushnellTrophyHDAggressor-119777C-20160421-112.JPG",
                     IsColor = true,
-                    Quality = ImageSelection.Ok,
+                    Quality = FileSelection.Ok,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName
                 };
 
-                ImageExpectation.DaylightMartenPair = new ImageExpectations(pacificTime)
+                ImageExpectation.DaylightMartenPair = new FileExpectations(pacificTime)
                 {
                     DarkPixelFraction = 0.705627292783256,
-                    DateTime = ImageExpectations.ParseDateTimeOffsetString("2015-01-28T11:17:34.000-08:00"),
+                    DateTime = FileExpectations.ParseDateTimeOffsetString("2015-01-28T11:17:34.000-08:00"),
                     FileName = "Reconyx-HC500-20150128-201.JPG",
                     IsColor = true,
-                    Quality = ImageSelection.Ok,
+                    Quality = FileSelection.Ok,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName,
                 };
 
-                ImageExpectation.InfraredMarten = new ImageExpectations(pacificTime)
+                ImageExpectation.InfraredMarten = new FileExpectations(pacificTime)
                 {
                     DarkPixelFraction = 0.077128711384332,
-                    DateTime = ImageExpectations.ParseDateTimeOffsetString("2016-02-24T04:59:46.000-08:00"),
+                    DateTime = FileExpectations.ParseDateTimeOffsetString("2016-02-24T04:59:46.000-08:00"),
                     FileName = "BushnellTrophyHD-119677C-20160224-056.JPG",
                     IsColor = false,
-                    Quality = ImageSelection.Ok
+                    Quality = FileSelection.Ok
                 };
             }
         }

@@ -8,7 +8,7 @@ using System.IO;
 
 namespace Carnassial.UnitTests
 {
-    public class ImageExpectations
+    public class FileExpectations
     {
         private TimeZoneInfo timeZoneForDateTime;
 
@@ -19,19 +19,19 @@ namespace Carnassial.UnitTests
         public long ID { get; set; }
         public string InitialRootFolderName { get; set; }
         public bool IsColor { get; set; }
-        public ImageSelection Quality { get; set; }
+        public FileSelection Quality { get; set; }
         public string RelativePath { get; set; }
         public bool SkipDateTimeVerification { get; set; }
         public Dictionary<string, string> UserDefinedColumnsByDataLabel { get; private set; }
 
-        public ImageExpectations(TimeZoneInfo timeZone)
+        public FileExpectations(TimeZoneInfo timeZone)
         {
             this.RelativePath = String.Empty;
             this.UserDefinedColumnsByDataLabel = new Dictionary<string, string>();
             this.timeZoneForDateTime = timeZone;
         }
 
-        public ImageExpectations(ImageExpectations other)
+        public FileExpectations(FileExpectations other)
             : this(other.timeZoneForDateTime)
         {
             this.DateTime = other.DateTime;
@@ -71,21 +71,21 @@ namespace Carnassial.UnitTests
             return expectedDateTime;
         }
 
-        public ImageRow GetImageProperties(ImageDatabase imageDatabase)
+        public ImageRow GetImageProperties(FileDatabase fileDatabase)
         {
             string imageFilePath;
             if (String.IsNullOrEmpty(this.RelativePath))
             {
-                imageFilePath = Path.Combine(imageDatabase.FolderPath, this.FileName);
+                imageFilePath = Path.Combine(fileDatabase.FolderPath, this.FileName);
             }
             else
             {
-                imageFilePath = Path.Combine(imageDatabase.FolderPath, this.RelativePath, this.FileName);
+                imageFilePath = Path.Combine(fileDatabase.FolderPath, this.RelativePath, this.FileName);
             }
 
-            TimeZoneInfo imageSetTimeZone = imageDatabase.ImageSet.GetTimeZone();
+            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
             ImageRow imageProperties;
-            imageDatabase.GetOrCreateImage(new FileInfo(imageFilePath), imageSetTimeZone, out imageProperties);
+            fileDatabase.GetOrCreateImage(new FileInfo(imageFilePath), imageSetTimeZone, out imageProperties);
             // imageProperties.Date is defaulted by constructor
             // imageProperties.DateTime is defaulted by constructor
             // imageProperties.FileName is set by constructor

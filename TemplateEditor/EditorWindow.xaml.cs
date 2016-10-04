@@ -1,6 +1,7 @@
 ﻿using Carnassial.Database;
 using Carnassial.Editor.Dialog;
 using Carnassial.Editor.Util;
+using Carnassial.Github;
 using Carnassial.Util;
 using Microsoft.Win32;
 using System;
@@ -68,14 +69,15 @@ namespace Carnassial.Editor
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestVersionAddress();
+            Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseAddress();
             if (latestVersionAddress == null)
             {
                 return;
             }
 
-            VersionClient updater = new VersionClient(Constants.ApplicationName, latestVersionAddress);
-            updater.TryGetAndParseVersion(false);
+            GithubReleaseClient updater = new GithubReleaseClient(Constants.ApplicationName, latestVersionAddress);
+            // TODO: remove temporary disable
+            // updater.TryGetAndParseRelease(false);
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -211,7 +213,7 @@ namespace Carnassial.Editor
             this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateDataTable_RowChanged);
 
             // Update the user interface specified by the contents of the table
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
             this.GenerateSpreadsheet();
 
             // update UI for having a .tdb loaded
@@ -241,7 +243,7 @@ namespace Carnassial.Editor
             this.dataGridBeingUpdatedByCode = true;
 
             this.templateDatabase.SyncControlToDatabase(control);
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
             this.GenerateSpreadsheet();
 
             this.dataGridBeingUpdatedByCode = false;
@@ -286,10 +288,10 @@ namespace Carnassial.Editor
             this.dataGridBeingUpdatedByCode = true;
 
             this.templateDatabase.AddUserDefinedControl(controlType);
-            this.TemplateDataGrid.DataContext = this.templateDatabase.TemplateTable;
+            this.TemplateDataGrid.DataContext = this.templateDatabase.Controls;
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
 
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
             this.GenerateSpreadsheet();
             this.OnControlOrderChanged();
 
@@ -320,7 +322,7 @@ namespace Carnassial.Editor
             this.templateDatabase.RemoveUserDefinedControl(new ControlRow(selectedRowView.Row));
 
             // update the control panel so it reflects the current values in the database
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.TemplateTable);
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
             this.GenerateSpreadsheet();
 
             this.dataGridBeingUpdatedByCode = false;
@@ -334,7 +336,7 @@ namespace Carnassial.Editor
             // The button tag holds the Control Order of the row the button is in, not the ID.
             // So we have to search through the rows to find the one with the correct control order
             // and retrieve / set the ItemList menu in that row.
-            ControlRow choiceControl = this.templateDatabase.TemplateTable.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
+            ControlRow choiceControl = this.templateDatabase.Controls.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
             Debug.Assert(choiceControl != null, String.Format("Control named {0} not found.", button.Tag));
 
             EditChoiceList choiceListDialog = new EditChoiceList(button, choiceControl.GetChoices(), this);
@@ -655,7 +657,7 @@ namespace Carnassial.Editor
 
         private void GenerateSpreadsheet()
         {
-            List<ControlRow> controlsInSpreadsheetOrder = this.templateDatabase.TemplateTable.OrderBy(control => control.SpreadsheetOrder).ToList();
+            List<ControlRow> controlsInSpreadsheetOrder = this.templateDatabase.Controls.OrderBy(control => control.SpreadsheetOrder).ToList();
             this.dgSpreadsheet.Columns.Clear();
             foreach (ControlRow control in controlsInSpreadsheetOrder)
             {
@@ -820,7 +822,7 @@ namespace Carnassial.Editor
             }
 
             this.templateDatabase.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.TemplateTable); // A contorted to make sure the controls panel updates itself
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls); // A contorted to make sure the controls panel updates itself
         }
 
         private void HelpDocument_Drop(object sender, DragEventArgs dropEvent)
@@ -871,9 +873,9 @@ namespace Carnassial.Editor
             }
 
             // Check to see if the data label is unique. If not, generate a unique data label and warn the user
-            for (int row = 0; row < this.templateDatabase.TemplateTable.RowCount; row++)
+            for (int row = 0; row < this.templateDatabase.Controls.RowCount; row++)
             {
-                ControlRow control = this.templateDatabase.TemplateTable[row];
+                ControlRow control = this.templateDatabase.Controls[row];
                 if (dataLabel.Equals(control.DataLabel))
                 {
                     if (this.TemplateDataGrid.SelectedIndex == row)

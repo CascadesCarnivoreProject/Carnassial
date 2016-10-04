@@ -58,8 +58,10 @@ namespace Carnassial.UnitTests
             userSettings.DarkPixelRatioThreshold = modifiedDarkPixelRatioThreshold;
             int modifiedDarkPixelThreshold = userSettings.DarkPixelThreshold + 1;
             userSettings.DarkPixelThreshold = modifiedDarkPixelThreshold;
-            string databasePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultImageDatabaseFileName);
+            string databasePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultFileDatabaseFileName);
             userSettings.MostRecentImageSets.SetMostRecent(databasePath);
+            userSettings.OrderFilesByDateTime = true;
+            userSettings.SkipDarkImagesCheck = true;
             userSettings.SuppressAmbiguousDatesDialog = true;
             userSettings.SuppressCsvExportDialog = true;
             userSettings.SuppressCsvImportPrompt = true;
@@ -89,6 +91,8 @@ namespace Carnassial.UnitTests
             string mostRecentDatabasePath;
             Assert.IsTrue(userSettings.MostRecentImageSets.TryGetMostRecent(out mostRecentDatabasePath));
             Assert.IsTrue(mostRecentDatabasePath == databasePath);
+            Assert.IsTrue(userSettings.OrderFilesByDateTime);
+            Assert.IsTrue(userSettings.SkipDarkImagesCheck);
             Assert.IsTrue(userSettings.SuppressAmbiguousDatesDialog);
             Assert.IsTrue(userSettings.SuppressCsvExportDialog);
             Assert.IsTrue(userSettings.SuppressCsvImportPrompt);
@@ -277,6 +281,8 @@ namespace Carnassial.UnitTests
             string mostRecentDatabasePath;
             Assert.IsFalse(userSettings.MostRecentImageSets.TryGetMostRecent(out mostRecentDatabasePath));
             Assert.IsNull(mostRecentDatabasePath);
+            Assert.IsFalse(userSettings.OrderFilesByDateTime);
+            Assert.IsFalse(userSettings.SkipDarkImagesCheck);
             Assert.IsFalse(userSettings.SuppressAmbiguousDatesDialog);
             Assert.IsFalse(userSettings.SuppressCsvExportDialog);
             Assert.IsFalse(userSettings.SuppressCsvImportPrompt);

@@ -1,8 +1,8 @@
 ﻿namespace Carnassial.Database
 {
-    public class ImageDataUtcOffsetColumn : ImageDataColumn
+    public class FileTableUtcOffsetColumn : FileTableColumn
     {
-        public ImageDataUtcOffsetColumn(ControlRow control)
+        public FileTableUtcOffsetColumn(ControlRow control)
             : base(control)
         {
         }

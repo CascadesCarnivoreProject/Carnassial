@@ -72,16 +72,16 @@ namespace Carnassial.UnitTests
 
         public virtual void Verify(TemplateDatabase templateDatabase)
         {
-            Assert.IsTrue(templateDatabase.TemplateTable.RowCount == TestConstant.DefaultImageTableColumns.Count - 1);
+            Assert.IsTrue(templateDatabase.Controls.RowCount == TestConstant.DefaultFileDataColumns.Count - 1);
 
             int rowIndex = 0;
-            this.File.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.RelativePath.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.Folder.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.DateTime.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.UtcOffset.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.ImageQuality.Verify(templateDatabase.TemplateTable[rowIndex++]);
-            this.DeleteFlag.Verify(templateDatabase.TemplateTable[rowIndex++]);
+            this.File.Verify(templateDatabase.Controls[rowIndex++]);
+            this.RelativePath.Verify(templateDatabase.Controls[rowIndex++]);
+            this.Folder.Verify(templateDatabase.Controls[rowIndex++]);
+            this.DateTime.Verify(templateDatabase.Controls[rowIndex++]);
+            this.UtcOffset.Verify(templateDatabase.Controls[rowIndex++]);
+            this.ImageQuality.Verify(templateDatabase.Controls[rowIndex++]);
+            this.DeleteFlag.Verify(templateDatabase.Controls[rowIndex++]);
         }
     }
 }

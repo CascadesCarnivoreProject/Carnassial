@@ -7,7 +7,7 @@ using System.Windows.Media.Imaging;
 
 namespace Carnassial.Images
 {
-    public class ImageCache : ImageTableEnumerator
+    public class ImageCache : FileTableEnumerator
     {
         private Dictionary<ImageDifference, BitmapSource> differenceBitmapCache;
         private MostRecentlyUsedList<long> mostRecentlyUsedIDs;
@@ -16,8 +16,8 @@ namespace Carnassial.Images
 
         public ImageDifference CurrentDifferenceState { get; private set; }
 
-        public ImageCache(ImageDatabase imageDatabase) :
-            base(imageDatabase)
+        public ImageCache(FileDatabase fileDatabase) :
+            base(fileDatabase)
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
             this.differenceBitmapCache = new Dictionary<ImageDifference, BitmapSource>();
@@ -347,7 +347,7 @@ namespace Carnassial.Images
                 return false;
             }
 
-            image = this.Database.ImageDataTable[imageRow];
+            image = this.Database.Files[imageRow];
             return image.IsDisplayable();
         }
 
@@ -368,7 +368,7 @@ namespace Carnassial.Images
                 return false;
             }
 
-            ImageRow nextImage = this.Database.ImageDataTable[rowIndex];
+            ImageRow nextImage = this.Database.Files[rowIndex];
             if (this.unalteredBitmapsByID.ContainsKey(nextImage.ID) || this.prefetechesByID.ContainsKey(nextImage.ID))
             {
                 return false;

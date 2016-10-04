@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using DataFormats = System.Windows.DataFormats;
@@ -18,6 +19,13 @@ namespace Carnassial.Util
     /// </summary>
     public class Utilities
     {
+        public static ParallelOptions GetParallelOptions(int maximumDegreeOfParallelism)
+        {
+            ParallelOptions parallelOptions = new ParallelOptions();
+            parallelOptions.MaxDegreeOfParallelism = Environment.ProcessorCount > 1 ? Math.Min(Environment.ProcessorCount - 1, maximumDegreeOfParallelism) : 1;
+            return parallelOptions;
+        }
+
         public static Dictionary<string, string> LoadMetadata(string filePath)
         {
             Dictionary<string, string> metadata = new Dictionary<string, string>();

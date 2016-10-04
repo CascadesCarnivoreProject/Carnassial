@@ -94,10 +94,10 @@ namespace Carnassial.UnitTests
                 templateDatabaseFilePath = templateDatabase.FilePath;
             }
 
-            string imageDatabaseFilePath = Path.Combine(Path.GetDirectoryName(templateDatabaseFilePath), Path.GetFileNameWithoutExtension(templateDatabaseFilePath) + Constants.File.ImageDatabaseFileExtension);
-            if (File.Exists(imageDatabaseFilePath))
+            string fileDatabaseFilePath = Path.Combine(Path.GetDirectoryName(templateDatabaseFilePath), Path.GetFileNameWithoutExtension(templateDatabaseFilePath) + Constants.File.FileDatabaseFileExtension);
+            if (File.Exists(fileDatabaseFilePath))
             {
-                File.Delete(imageDatabaseFilePath);
+                File.Delete(fileDatabaseFilePath);
             }
 
             // open, load database by scanning folder, move through images, close
@@ -134,7 +134,7 @@ namespace Carnassial.UnitTests
                 // verify import succeeded
                 PrivateObject carnassialAccessor = new PrivateObject(carnassial);
                 DataEntryHandler dataHandler = (DataEntryHandler)carnassialAccessor.GetField(TestConstant.DataHandlerFieldName);
-                Assert.IsTrue(dataHandler.ImageDatabase.CurrentlySelectedImageCount == 2);
+                Assert.IsTrue(dataHandler.FileDatabase.CurrentlySelectedImageCount == 2);
                 Assert.IsNotNull(dataHandler.ImageCache.Current);
 
                 // verify forward and backward moves of the displayed image
@@ -162,37 +162,37 @@ namespace Carnassial.UnitTests
 
                 PrivateObject carnassialAccessor = new PrivateObject(carnassial);
                 DataEntryHandler dataHandler = (DataEntryHandler)carnassialAccessor.GetField(TestConstant.DataHandlerFieldName);
-                Assert.IsTrue(dataHandler.ImageDatabase.CurrentlySelectedImageCount > 0);
+                Assert.IsTrue(dataHandler.FileDatabase.CurrentlySelectedImageCount > 0);
                 Assert.IsNotNull(dataHandler.ImageCache.Current);
 
                 this.ShowDialog(new About(carnassial));
                 CarnassialState state = (CarnassialState)carnassialAccessor.GetField("state");
                 this.ShowDialog(new AdvancedCarnassialOptions(state, carnassial.MarkableCanvas, carnassial));
-                this.ShowDialog(new ChooseDatabaseFile(new string[] { TestConstant.File.DefaultNewImageDatabaseFileName }, carnassial));
+                this.ShowDialog(new ChooseDatabaseFile(new string[] { TestConstant.File.DefaultNewFileDatabaseFileName }, carnassial));
 
-                this.ShowDialog(new CustomViewSelection(dataHandler.ImageDatabase, carnassial));
-                this.ShowDialog(new DateCorrectAmbiguous(dataHandler.ImageDatabase, carnassial));
-                this.ShowDialog(new DateDaylightSavingsTimeCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache, carnassial));
+                this.ShowDialog(new CustomViewSelection(dataHandler.FileDatabase, carnassial));
+                this.ShowDialog(new DateCorrectAmbiguous(dataHandler.FileDatabase, carnassial));
+                this.ShowDialog(new DateDaylightSavingsTimeCorrection(dataHandler.FileDatabase, dataHandler.ImageCache, carnassial));
 
-                DateTimeFixedCorrection clockSetCorrection = new DateTimeFixedCorrection(dataHandler.ImageDatabase, dataHandler.ImageCache.Current, carnassial);
+                DateTimeFixedCorrection clockSetCorrection = new DateTimeFixedCorrection(dataHandler.FileDatabase, dataHandler.ImageCache.Current, carnassial);
                 this.ShowDialog(clockSetCorrection);
 
-                DateTimeLinearCorrection clockDriftCorrection = new DateTimeLinearCorrection(dataHandler.ImageDatabase, carnassial);
+                DateTimeLinearCorrection clockDriftCorrection = new DateTimeLinearCorrection(dataHandler.FileDatabase, carnassial);
                 Assert.IsTrue(clockDriftCorrection.Abort == (dataHandler.ImageCache.Current == null));
                 this.ShowDialog(clockDriftCorrection);
 
-                this.ShowDialog(new EditLog(dataHandler.ImageDatabase.ImageSet.Log, carnassial));
+                this.ShowDialog(new EditLog(dataHandler.FileDatabase.ImageSet.Log, carnassial));
                 this.ShowDialog(new ExportCsv("test.csv", carnassial));
 
-                using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(dataHandler.ImageDatabase, dataHandler.ImageCache.CurrentRow, new CarnassialState(), carnassial))
+                using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(dataHandler.FileDatabase, dataHandler.ImageCache.CurrentRow, new CarnassialState(), carnassial))
                 {
                     this.ShowDialog(darkThreshold);
                 }
-                this.ShowDialog(new PopulateFieldWithMetadata(dataHandler.ImageDatabase, dataHandler.ImageCache.Current.GetImagePath(dataHandler.ImageDatabase.FolderPath), carnassial));
-                this.ShowDialog(new RenameImageDatabaseFile(dataHandler.ImageDatabase.FileName, carnassial));
-                this.ShowDialog(new DateRereadFromFiles(dataHandler.ImageDatabase, carnassial));
-                this.ShowDialog(new FileCountsByQuality(dataHandler.ImageDatabase.GetImageCountsByQuality(), carnassial));
-                this.ShowDialog(new TemplateSynchronization(dataHandler.ImageDatabase.TemplateSynchronizationIssues, carnassial));
+                this.ShowDialog(new PopulateFieldWithMetadata(dataHandler.FileDatabase, dataHandler.ImageCache.Current.GetImagePath(dataHandler.FileDatabase.FolderPath), carnassial));
+                this.ShowDialog(new RenameFileDatabaseFile(dataHandler.FileDatabase.FileName, carnassial));
+                this.ShowDialog(new DateRereadFromFiles(dataHandler.FileDatabase, carnassial));
+                this.ShowDialog(new FileCountsByQuality(dataHandler.FileDatabase.GetImageCountsByQuality(), carnassial));
+                this.ShowDialog(new TemplateSynchronization(dataHandler.FileDatabase.TemplateSynchronizationIssues, carnassial));
 
                 MessageBox okMessageBox = this.CreateMessageBox(carnassial, MessageBoxButton.OK, MessageBoxImage.Error);
                 this.ShowDialog(okMessageBox);
