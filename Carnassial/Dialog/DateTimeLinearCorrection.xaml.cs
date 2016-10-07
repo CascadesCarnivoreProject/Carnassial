@@ -173,7 +173,7 @@ namespace Carnassial.Dialog
                     status = "Unchanged";
                 }
 
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(image.FileName, status, image.GetDisplayDateTime(), newDateTime, difference);
+                this.DateTimeChangeFeedback.AddFeedbackRow(image.FileName, status, image.GetDisplayDateTime(), newDateTime, difference);
             }
         }
 
@@ -217,17 +217,17 @@ namespace Carnassial.Dialog
             TimeSpan intervalFromCorrectToMeasured = this.GetInterval();
             if (intervalFromCorrectToMeasured == TimeSpan.Zero)
             {
-                this.fileDatabase.AdjustImageTimes(this.ClockDrift.Value.Value);
+                this.fileDatabase.AdjustFileTimes(this.ClockDrift.Value.Value);
             }
             else
             {
-                this.fileDatabase.AdjustImageTimes(
+                this.fileDatabase.AdjustFileTimes(
                     (DateTimeOffset imageDateTime) =>
                     {
                         return imageDateTime + this.GetAdjustment(intervalFromCorrectToMeasured, imageDateTime);
                     },
                     0,
-                    this.fileDatabase.CurrentlySelectedImageCount - 1);
+                    this.fileDatabase.CurrentlySelectedFileCount - 1);
             }
             this.DialogResult = true;
         }

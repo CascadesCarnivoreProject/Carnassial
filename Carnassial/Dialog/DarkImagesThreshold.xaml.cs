@@ -60,7 +60,7 @@ namespace Carnassial.Dialog
             this.DarkThreshold.ValueChanged += this.DarkThresholdSlider_ValueChanged;
 
             this.ScrollImages.Minimum = 0;
-            this.ScrollImages.Maximum = this.database.CurrentlySelectedImageCount - 1;
+            this.ScrollImages.Maximum = this.database.CurrentlySelectedFileCount - 1;
             this.ScrollImages.Value = this.imageEnumerator.CurrentRow;
 
             this.SetPreviousNextButtonStates();
@@ -134,13 +134,11 @@ namespace Carnassial.Dialog
                 {
                     // color image 
                     this.ThresholdMessage.Text = "Color - therefore not dark";
-                    this.Percent.Visibility = Visibility.Hidden;
                     this.RatioFound.Content = String.Empty;
                 }
                 else
                 {
-                    this.ThresholdMessage.Text = "of the pixels are darker than the threshold";
-                    this.Percent.Visibility = Visibility.Visible;
+                    this.ThresholdMessage.Text = "% of pixels are darker than the threshold";
                 }
 
                 if (this.isColor)
@@ -167,7 +165,7 @@ namespace Carnassial.Dialog
         {
             this.bitmap = this.imageEnumerator.Current.LoadBitmap(this.database.FolderPath).AsWriteable();
             this.Image.Source = this.bitmap;
-            this.ImageName.Content = this.imageEnumerator.Current.FileName;
+            this.FileName.Content = this.imageEnumerator.Current.FileName;
             this.OriginalClassification.Content = this.imageEnumerator.Current.ImageQuality.ToString(); // The original image classification
 
             this.RecalculateImageQualityForCurrentImage();
@@ -191,7 +189,7 @@ namespace Carnassial.Dialog
         private void SetPreviousNextButtonStates()
         {
             this.PreviousFile.IsEnabled = (this.imageEnumerator.CurrentRow == 0) ? false : true;
-            this.NextFile.IsEnabled = (this.imageEnumerator.CurrentRow < this.database.CurrentlySelectedImageCount - 1) ? true : false;
+            this.NextFile.IsEnabled = (this.imageEnumerator.CurrentRow < this.database.CurrentlySelectedFileCount - 1) ? true : false;
         }
 
         // Update the database if the OK button is clicked
@@ -422,7 +420,7 @@ namespace Carnassial.Dialog
                     }
                 });
 
-                this.database.UpdateImages(filesToUpdate);
+                this.database.UpdateFiles(filesToUpdate);
             };
             backgroundWorker.ProgressChanged += (o, ea) =>
             {
@@ -430,7 +428,7 @@ namespace Carnassial.Dialog
                 ImageQuality imageQuality = (ImageQuality)ea.UserState;
                 this.Image.Source = imageQuality.Bitmap;
 
-                this.ImageName.Content = imageQuality.FileName;
+                this.FileName.Content = imageQuality.FileName;
                 this.OriginalClassification.Content = imageQuality.OldImageQuality;
                 this.NewClassification.Content = imageQuality.NewImageQuality;
                 this.DarkPixelRatio.Content = String.Format("{0,3:##0}%", 100 * this.darkPixelRatio);
@@ -439,13 +437,11 @@ namespace Carnassial.Dialog
                 if (imageQuality.IsColor) // color image 
                 {
                     this.ThresholdMessage.Text = "Color - therefore not dark";
-                    this.Percent.Visibility = Visibility.Hidden;
                     this.RatioFound.Content = String.Empty;
                 }
                 else
                 {
-                    this.ThresholdMessage.Text = "of the pixels are darker than the threshold";
-                    this.Percent.Visibility = Visibility.Visible;
+                    this.ThresholdMessage.Text = "% of pixels are darker than the threshold";
                 }
 
                 // Size the bar to show how many pixels in the current image are at least as dark as that color

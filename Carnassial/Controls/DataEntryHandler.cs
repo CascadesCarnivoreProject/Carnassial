@@ -49,7 +49,7 @@ namespace Carnassial.Controls
         /// <summary>Propagate the current value of this control forward from this point across the current selection.</summary>
         public void CopyForward(string dataLabel, bool checkForZero)
         {
-            int imagesAffected = this.FileDatabase.CurrentlySelectedImageCount - this.ImageCache.CurrentRow - 1;
+            int imagesAffected = this.FileDatabase.CurrentlySelectedFileCount - this.ImageCache.CurrentRow - 1;
             if (imagesAffected == 0)
             {
                 // Nothing to propagate. Note that we shouldn't really see this, as the menu shouldn't be highlit if we are on the last image
@@ -68,7 +68,7 @@ namespace Carnassial.Controls
             }
 
             // Update. Note that we start on the next row, as we are copying from the current row.
-            this.FileDatabase.UpdateImages(this.ImageCache.Current, dataLabel, this.ImageCache.CurrentRow + 1, this.FileDatabase.CurrentlySelectedImageCount - 1);
+            this.FileDatabase.UpdateFiles(this.ImageCache.Current, dataLabel, this.ImageCache.CurrentRow + 1, this.FileDatabase.CurrentlySelectedFileCount - 1);
         }
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace Carnassial.Controls
             }
 
             // Update. Note that we start on the next row, as we are copying from the current row.
-            this.FileDatabase.UpdateImages(valueSource, control.DataLabel, indexToCopyFrom + 1, this.ImageCache.CurrentRow);
+            this.FileDatabase.UpdateFiles(valueSource, control.DataLabel, indexToCopyFrom + 1, this.ImageCache.CurrentRow);
             return valueToCopy;
         }
 
@@ -132,13 +132,13 @@ namespace Carnassial.Controls
         public void CopyToAll(DataEntryControl control)
         {
             bool checkForZero = control is DataEntryCounter;
-            int imagesAffected = this.FileDatabase.CurrentlySelectedImageCount;
+            int imagesAffected = this.FileDatabase.CurrentlySelectedFileCount;
             string displayValueToCopy = this.ImageCache.Current.GetValueDisplayString(control.DataLabel);
             if (this.ConfirmCopyCurrentValueToAll(displayValueToCopy, imagesAffected, checkForZero) != true)
             {
                 return;
             }
-            this.FileDatabase.UpdateImages(this.ImageCache.Current, control.DataLabel);
+            this.FileDatabase.UpdateFiles(this.ImageCache.Current, control.DataLabel);
         }
 
         public void Dispose()
@@ -172,7 +172,7 @@ namespace Carnassial.Controls
                 return false;
             }
 
-            int imagesAffected = this.FileDatabase.CurrentlySelectedImageCount - this.ImageCache.CurrentRow - 1;
+            int imagesAffected = this.FileDatabase.CurrentlySelectedFileCount - this.ImageCache.CurrentRow - 1;
             return (imagesAffected > 0) ? true : false;
         }
 
@@ -393,7 +393,7 @@ namespace Carnassial.Controls
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)textBox.Tag;
             control.SetContentAndTooltip(textBox.Text);
-            this.FileDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, control.Content);
+            this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
             return;
         }
 
@@ -415,7 +415,7 @@ namespace Carnassial.Controls
             // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)comboBox.Tag;
             control.SetContentAndTooltip(comboBox.SelectedItem.ToString());
-            this.FileDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, control.Content);
+            this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
         }
 
         private void DateTimeControl_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
@@ -436,7 +436,7 @@ namespace Carnassial.Controls
             dateTimePicker.ToolTip = DateTimeHandler.ToDisplayDateTimeString(dateTimePicker.Value.Value);
 
             List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
-            this.FileDatabase.UpdateImages(imageToUpdate);
+            this.FileDatabase.UpdateFiles(imageToUpdate);
         }
 
         // Whenever the checked state in a Flag  changes, update the particular choice field in the database
@@ -452,7 +452,7 @@ namespace Carnassial.Controls
             string value = ((bool)checkBox.IsChecked) ? Constants.Boolean.True : Constants.Boolean.False;
             DataEntryControl control = (DataEntryControl)checkBox.Tag;
             control.SetContentAndTooltip(value);
-            this.FileDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, control.Content);
+            this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
             return;
         }
 
@@ -489,7 +489,7 @@ namespace Carnassial.Controls
             DataEntryNote control = (DataEntryNote)((TextBox)sender).Tag;
             control.ContentChanged = true;
 
-            this.FileDatabase.UpdateImage(this.ImageCache.Current.ID, control.DataLabel, control.Content);
+            this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
             this.IsProgrammaticControlUpdate = false;
         }
 
@@ -572,7 +572,7 @@ namespace Carnassial.Controls
             utcOffsetPicker.ToolTip = DateTimeHandler.ToDisplayUtcOffsetString(utcOffsetPicker.Value.Value);
 
             List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
-            this.FileDatabase.UpdateImages(imageToUpdate);  // write the new UtcOffset to the database
+            this.FileDatabase.UpdateFiles(imageToUpdate);  // write the new UtcOffset to the database
         }
     }
 }

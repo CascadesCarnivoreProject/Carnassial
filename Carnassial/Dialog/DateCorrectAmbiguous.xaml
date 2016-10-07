@@ -38,13 +38,13 @@
         <Rectangle Grid.Row="1" Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
         <DockPanel Name="PrimaryPanel" Grid.Row="2">
             <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-                <Grid Name="gridImageArea">
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
@@ -52,30 +52,28 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <Label Content="Sample file:" Margin="10,0,0,0" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="12" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
-                    <Label Name="ImageName" Content="[ --- file name --- ]" VerticalAlignment="Bottom" HorizontalContentAlignment="Left" HorizontalAlignment="Left"  FontSize="12" FontWeight="Normal" Grid.Row="0" Grid.Column="1"/>
-                    <Label Content="# files with this date:" VerticalAlignment="Top" Margin="10,0,0,0" FontSize="12" FontWeight="Bold" HorizontalAlignment="Right" Grid.Row="1" Grid.Column="0"/>
-                    <Label Name="NumberOfImagesWithSameDate" VerticalAlignment="Top" Content="count" Margin="5,0,0,0" FontSize="12" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Grid.Row="1" Grid.Column="1"/>
-                    <RadioButton Name="OriginalDate" GroupName="DateOptions"  Content="Original date:" FontWeight="Bold" VerticalAlignment="Center" IsChecked="True" Grid.Row="0" Grid.Column="2"  Margin="30,2,0,0"/>
-                    <Label Name="OriginalDateLabel" MinWidth="88" Content="dd-mmm-yyyy"  VerticalAlignment="Bottom" FontWeight="Normal" FontSize="12" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="3" ToolTip="The original date recorded for all images taken this date" />
-
-                    <RadioButton Name="SwappedDate"  GroupName="DateOptions" Content="Swapped date:" FontWeight="Bold"  IsChecked="False"  Grid.Row="1" Grid.Column="2" VerticalAlignment="Top" Margin="30,6,0,0"/>
-                    <Label  Name="NewDate" MinWidth="88" FontWeight="Normal" FontSize="12"  VerticalAlignment="Top" Content="dd-mmm-yyyy" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Left" ToolTip="The corrected (swapped) date for all images taken this date"/>
-                    <Button Name="btnPrevious" Content="_Previous" Width="75" HorizontalAlignment="Right" Grid.Row="0" Grid.Column="4" Grid.RowSpan="2" Padding="5" Margin="5" IsEnabled="False" Click="NextPreviousButton_Click" />
-                    <Button Name="btnNext" Content="_Next" Width="75" HorizontalAlignment="Right" Grid.Row="0" Grid.Column="5" Grid.RowSpan="2" Padding="5" Margin="5" Click="NextPreviousButton_Click" />
-                    <Button Name="btnSwapAll" Content="_Swap all" Width="75" HorizontalAlignment="Right" Grid.Row="0" Grid.Column="6" Grid.RowSpan="2" Padding="5" Margin="20,5,5,5" Click="SwapAllButton_Click" />
+                    <Label Content="Sample file:" Margin="10,0,0,0" HorizontalAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
+                    <Label Name="FileName" Content="[ --- file name --- ]" HorizontalContentAlignment="Left" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+                    <Label Content="Files with same date:" VerticalAlignment="Top" FontWeight="Bold" HorizontalAlignment="Right" Grid.Row="1" Grid.Column="0"/>
+                    <Label Name="NumberOfImagesWithSameDate" VerticalAlignment="Top" Content="count" Grid.Row="1" Grid.Column="1"/>
+                    <RadioButton Name="OriginalDate" GroupName="DateOptions" Content="Original date:" FontWeight="Bold" IsChecked="True" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    <Label Name="OriginalDateLabel" Content="dd-mmm-yyyy" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="3" ToolTip="The original date recorded for all files with this date." Margin="0,0,5,0" />
+                    <RadioButton Name="SwappedDate"  GroupName="DateOptions" Content="Swapped date:" FontWeight="Bold" IsChecked="False" Grid.Row="1" Grid.Column="2" Margin="7,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    <Label Name="SwappedDateLabel" Content="dd-mmm-yyyy" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Left" ToolTip="The corrected (swapped) date for all files with this date." Margin="0,0,5,0" />
+                    <Button Name="PreviousDate" Content="_Previous" Grid.Row="0" Grid.Column="4" Grid.RowSpan="2" Padding="6,5,6,5" Margin="6,5,6,5" IsEnabled="False" Click="NextPreviousButton_Click" />
+                    <Button Name="NextDate" Content="_Next" Grid.Row="0" Grid.Column="5" Grid.RowSpan="2" Padding="6,5,6,5" Margin="6,5,6,5" Click="NextPreviousButton_Click" />
+                    <Button Name="SwapAll" Content="_Swap all" HorizontalAlignment="Right" Grid.Row="0" Grid.Column="6" Grid.RowSpan="2" Padding="6,5,6,5" Margin="6,5,6,5" Click="SwapAllButton_Click" />
                 </Grid>
             </StackPanel>
-            <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
             <DockPanel Name="DockPanelImage" DockPanel.Dock="Top">
                 <Image Name="Image" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
             </DockPanel>
         </DockPanel>
         <DockPanel Name="FeedbackPanel" Visibility="Collapsed" Grid.Row="2" >
             <Label FontSize="14" FontWeight="Bold" Content="The following changes to dates and times will occur if you select Apply Changes." DockPanel.Dock="Top"/>
-            <controls:DateChangesFeedbackControl x:Name="DateUpdateFeedbackCtl"  DockPanel.Dock="Bottom" ShowDifferenceColumn="False" />
+            <controls:DateChangesFeedbackControl x:Name="DateChangeFeedback"  DockPanel.Dock="Bottom" ShowDifferenceColumn="False" />
         </DockPanel>
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Height="80">
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Name="CancelButton" IsDefault="True" HorizontalAlignment="Right" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click" IsEnabled="True">_Cancel</Button>
             <Button Name="PreviewChangesButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" HorizontalAlignment="Right" Padding="10" Margin="10,10,10,10" Click="PreviewChangesButton_Click" IsEnabled="True">Preview _Changes</Button>
         </StackPanel>

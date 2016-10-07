@@ -75,7 +75,7 @@ namespace Carnassial.Dialog
         // If it can't find an ambiguous date, it will return -1.
         private int SearchForNextAmbiguousDateInSelectedImages(int startIndex)
         {
-            for (int index = startIndex; index < this.database.CurrentlySelectedImageCount; index++)
+            for (int index = startIndex; index < this.database.CurrentlySelectedFileCount; index++)
             {
                 ImageRow image = this.database.Files[index];
                 DateTimeOffset imageDateTime = image.GetDateTime();
@@ -97,7 +97,7 @@ namespace Carnassial.Dialog
             int lastMatchingDate = -1;
 
             // Check if index is in range
-            if (startIndex >= this.database.CurrentlySelectedImageCount || startIndex < 0)
+            if (startIndex >= this.database.CurrentlySelectedFileCount || startIndex < 0)
             {
                 return -1;   // The index is out of range.
             }
@@ -107,7 +107,7 @@ namespace Carnassial.Dialog
             DateTimeOffset desiredDateTime = image.GetDateTime();
 
             lastMatchingDate = startIndex;
-            for (int index = startIndex + 1; index < this.database.CurrentlySelectedImageCount; index++)
+            for (int index = startIndex + 1; index < this.database.CurrentlySelectedFileCount; index++)
             {
                 // Parse the date for the given row.
                 image = this.database.Files[index];
@@ -165,12 +165,12 @@ namespace Carnassial.Dialog
 
             // If we can't swap the date, we just return the original unaltered date. However, we expect that swapping would always work at this point.
             DateTimeOffset swappedDate;
-            this.NewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.GetDateTime());
+            this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.GetDateTime());
 
             this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
             this.Image.Source = imageProperties.LoadBitmap(this.database.FolderPath);
-            this.ImageName.Content = imageProperties.FileName;
+            this.FileName.Content = imageProperties.FileName;
 
             return true;
         }
@@ -179,8 +179,8 @@ namespace Carnassial.Dialog
         private void UpdateDisplay(bool isAmbiguousDate)
         {
             // Enable / Disable the Next / Previous buttons as needed
-            this.btnNext.IsEnabled = this.IsThereAnAmbiguousDate(true);
-            this.btnPrevious.IsEnabled = this.IsThereAnAmbiguousDate(false);
+            this.NextDate.IsEnabled = this.IsThereAnAmbiguousDate(true);
+            this.PreviousDate.IsEnabled = this.IsThereAnAmbiguousDate(false);
 
             if (isAmbiguousDate)
             {
@@ -190,12 +190,12 @@ namespace Carnassial.Dialog
 
                 // If we can't swap the date, we just return the original unaltered date. However, we expect that swapping would always work at this point.
                 DateTimeOffset swappedDate;
-                this.NewDate.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.GetDateTime());
+                this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.GetDateTime());
 
                 this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
                 this.Image.Source = imageProperties.LoadBitmap(this.database.FolderPath);
-                this.ImageName.Content = imageProperties.FileName;
+                this.FileName.Content = imageProperties.FileName;
 
                 // Set the next button and the radio button back to their defaults
                 // As we do this, unlink and then relink the callback as we don't want to invoke the data update
@@ -208,12 +208,12 @@ namespace Carnassial.Dialog
             {
                 // Hide date-specific items so they are no longer visible on the screen
                 this.OriginalDateLabel.Visibility = Visibility.Hidden;
-                this.NewDate.Visibility = Visibility.Hidden;
+                this.SwappedDateLabel.Visibility = Visibility.Hidden;
 
                 this.OriginalDate.Visibility = Visibility.Hidden;
                 this.SwappedDate.Visibility = Visibility.Hidden;
 
-                this.ImageName.Content = "--";
+                this.FileName.Content = "--";
                 this.NumberOfImagesWithSameDate.Content = "No ambiguous dates left";
                 this.Image.Source = null;
             }
@@ -221,7 +221,7 @@ namespace Carnassial.Dialog
 
         private void PreviewDateTimeChanges()
         {
-            this.DateUpdateFeedbackCtl.ShowDifferenceColumn = false;
+            this.DateChangeFeedback.ShowDifferenceColumn = false;
             this.PrimaryPanel.Visibility = Visibility.Collapsed;
             this.FeedbackPanel.Visibility = Visibility.Visible;
             foreach (AmbiguousDate ambiguousDate in this.ambiguousDatesList)
@@ -238,7 +238,7 @@ namespace Carnassial.Dialog
 
                 string status = ambiguousDate.Swapped ? "Swapped: " : "Unchanged: ";
                 status += ambiguousDate.Count.ToString() + " images with same date";
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(imageProperties.FileName, status, DateTimeHandler.ToDisplayDateString(imageProperties.GetDateTime()), newDate, "--");
+                this.DateChangeFeedback.AddFeedbackRow(imageProperties.FileName, status, DateTimeHandler.ToDisplayDateString(imageProperties.GetDateTime()), newDate, "--");
             }
         }
 
@@ -253,7 +253,7 @@ namespace Carnassial.Dialog
 
                 if (ambDate.Swapped)
                 {
-                    this.database.ExchangeDayAndMonthInImageDates(ambDate.StartRange, ambDate.EndRange);
+                    this.database.ExchangeDayAndMonthInFileDates(ambDate.StartRange, ambDate.EndRange);
                 }
             }
         }
@@ -297,8 +297,8 @@ namespace Carnassial.Dialog
         // If the user clicks the next button, try to show the next ambiguous date.
         private void NextPreviousButton_Click(object sender, RoutedEventArgs e)
         {
-            Button btnDirection = sender as Button;
-            bool result = this.MoveToAmbiguousDate(btnDirection == btnNext);
+            Button direction = sender as Button;
+            bool result = this.MoveToAmbiguousDate(direction == NextDate);
             this.UpdateDisplay(result);
         }
 

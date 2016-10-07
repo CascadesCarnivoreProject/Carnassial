@@ -165,7 +165,7 @@ namespace Carnassial.Dialog
                          controlType == Constants.DatabaseColumn.RelativePath)
                 {
                     AutocompleteTextBox textBoxValue = new AutocompleteTextBox();
-                    textBoxValue.Autocompletions = this.database.GetDistinctValuesInImageColumn(searchTerm.DataLabel);
+                    textBoxValue.Autocompletions = this.database.GetDistinctValuesInFileColumn(searchTerm.DataLabel);
                     textBoxValue.IsEnabled = searchTerm.UseForSearching;
                     textBoxValue.Text = searchTerm.DatabaseValue;
                     textBoxValue.Margin = thickness;
@@ -409,7 +409,7 @@ namespace Carnassial.Dialog
                 lastExpression = false;
             }
 
-            int count = this.database.GetImageCount(FileSelection.Custom);
+            int count = this.database.GetFileCount(FileSelection.Custom);
             this.OkButton.IsEnabled = count > 0 ? true : false;
             this.textBlockQueryMatches.Text = count > 0 ? count.ToString() : "0";
 

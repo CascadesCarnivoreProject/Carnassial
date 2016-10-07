@@ -53,7 +53,7 @@ namespace Carnassial.Controls
                     bool readOnly = control.Type != Constants.Control.Note;
                     if (readOnly == false)
                     {
-                        autocompletions = new List<string>(database.GetDistinctValuesInImageColumn(control.DataLabel));
+                        autocompletions = new List<string>(database.GetDistinctValuesInFileColumn(control.DataLabel));
                     }
                     DataEntryNote noteControl = new DataEntryNote(control, autocompletions, this);
                     noteControl.ContentReadOnly = readOnly;

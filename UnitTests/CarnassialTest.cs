@@ -39,7 +39,7 @@ namespace Carnassial.UnitTests
             string fileDatabaseCloneFilePath = this.GetUniqueFilePathForTest(fileDatabaseFileName);
             File.Copy(fileDatabaseSourceFilePath, fileDatabaseCloneFilePath, true);
 
-            return FileDatabase.CreateOrOpen(fileDatabaseCloneFilePath, templateDatabase, CustomSelectionOperator.And);
+            return FileDatabase.CreateOrOpen(fileDatabaseCloneFilePath, templateDatabase, false, CustomSelectionOperator.And);
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace Carnassial.UnitTests
         {
             FileInfo imageFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, imageExpectation.RelativePath, imageExpectation.FileName));
             ImageRow image;
-            Assert.IsFalse(fileDatabase.GetOrCreateImage(imageFileInfo, imageSetTimeZone, out image));
+            Assert.IsFalse(fileDatabase.GetOrCreateFile(imageFileInfo, imageSetTimeZone, out image));
             imageAdjustment = image.TryReadDateTimeOriginalFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
             return image;
         }
@@ -89,7 +89,7 @@ namespace Carnassial.UnitTests
                 File.Delete(fileDatabaseFilePath);
             }
 
-            return FileDatabase.CreateOrOpen(fileDatabaseFilePath, templateDatabase, CustomSelectionOperator.And);
+            return FileDatabase.CreateOrOpen(fileDatabaseFilePath, templateDatabase, false, CustomSelectionOperator.And);
         }
 
         /// <summary>
@@ -251,7 +251,7 @@ namespace Carnassial.UnitTests
             ImageRow bobcatImage = this.CreateImage(fileDatabase, imageSetTimeZone, TestConstant.ImageExpectation.DaylightBobcat, out bobcatTimeAdjustment);
             Assert.IsTrue(bobcatTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
-            fileDatabase.AddImages(new List<ImageRow>() { martenImage, bobcatImage }, null);
+            fileDatabase.AddFiles(new List<ImageRow>() { martenImage, bobcatImage }, null);
             fileDatabase.SelectFiles(FileSelection.All);
 
             FileTableEnumerator imageEnumerator = new FileTableEnumerator(fileDatabase);
@@ -265,14 +265,14 @@ namespace Carnassial.UnitTests
             bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "bobcat"));
             bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult"));
             bobcatUpdate.SetWhere(imageEnumerator.Current.ID);
-            fileDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { bobcatUpdate });
+            fileDatabase.UpdateFiles(new List<ColumnTuplesWithWhere>() { bobcatUpdate });
 
             long martenImageID = fileDatabase.Files[0].ID;
-            fileDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
-            fileDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
-            fileDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constants.Boolean.True);
-            fileDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");
-            fileDatabase.UpdateImage(martenImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
+            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
+            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
+            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constants.Boolean.True);
+            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");
+            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
 
             // generate expectations
             List<FileExpectations> imageExpectations = new List<FileExpectations>()
@@ -292,7 +292,7 @@ namespace Carnassial.UnitTests
                 ImageRow coyoteImage = this.CreateImage(fileDatabase, imageSetTimeZone, TestConstant.ImageExpectation.DaylightCoyote, out coyoteTimeAdjustment);
                 Assert.IsTrue(coyoteTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
-                fileDatabase.AddImages(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
+                fileDatabase.AddFiles(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
                 fileDatabase.SelectFiles(FileSelection.All);
 
                 ColumnTuplesWithWhere coyoteImageUpdate = new ColumnTuplesWithWhere();
@@ -301,13 +301,13 @@ namespace Carnassial.UnitTests
                 coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty));
                 coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note0, "escaped field, because a comma is present"));
                 coyoteImageUpdate.SetWhere(imageEnumerator.Current.ID);
-                fileDatabase.UpdateImages(new List<ColumnTuplesWithWhere>() { coyoteImageUpdate });
+                fileDatabase.UpdateFiles(new List<ColumnTuplesWithWhere>() { coyoteImageUpdate });
 
                 long martenPairImageID = fileDatabase.Files[3].ID;
-                fileDatabase.UpdateImage(martenPairImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");
-                fileDatabase.UpdateImage(martenPairImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
-                fileDatabase.UpdateImage(martenPairImageID, TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
-                fileDatabase.UpdateImage(martenPairImageID, TestConstant.DefaultDatabaseColumn.Note0, "escaped field due to presence of \",\"");
+                fileDatabase.UpdateFile(martenPairImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");
+                fileDatabase.UpdateFile(martenPairImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
+                fileDatabase.UpdateFile(martenPairImageID, TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
+                fileDatabase.UpdateFile(martenPairImageID, TestConstant.DefaultDatabaseColumn.Note0, "escaped field due to presence of \",\"");
 
                 imageExpectations.Add(new FileExpectations(TestConstant.ImageExpectation.DaylightMartenPair));
                 imageExpectations.Add(new FileExpectations(TestConstant.ImageExpectation.DaylightCoyote));

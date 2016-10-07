@@ -33,19 +33,19 @@ namespace Carnassial.UnitTests
             List<FileExpectations> imageExpectations = addImages(fileDatabase);
 
             // sanity coverage of image data table methods
-            int deletedImages = fileDatabase.GetImageCount(FileSelection.MarkedForDeletion);
+            int deletedImages = fileDatabase.GetFileCount(FileSelection.MarkedForDeletion);
             Assert.IsTrue(deletedImages == 0);
 
-            Assert.IsTrue(fileDatabase.GetImageCount(FileSelection.All) == imageExpectations.Count);
-            Assert.IsTrue(fileDatabase.GetImageCount(FileSelection.MarkedForDeletion) == 0);
-            Dictionary<FileSelection, int> imageCounts = fileDatabase.GetImageCountsByQuality();
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.All) == imageExpectations.Count);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.MarkedForDeletion) == 0);
+            Dictionary<FileSelection, int> imageCounts = fileDatabase.GetFileCountsBySelection();
             Assert.IsTrue(imageCounts.Count == 4);
             Assert.IsTrue(imageCounts[FileSelection.CorruptFile] == 0);
             Assert.IsTrue(imageCounts[FileSelection.Dark] == 0);
             Assert.IsTrue(imageCounts[FileSelection.FileNoLongerAvailable] == 0);
             Assert.IsTrue(imageCounts[FileSelection.Ok] == imageExpectations.Count);
 
-            FileTable imagesToDelete = fileDatabase.GetImagesMarkedForDeletion();
+            FileTable imagesToDelete = fileDatabase.GetFilesMarkedForDeletion();
             Assert.IsTrue(imagesToDelete.RowCount == 0);
 
             // check images after initial add and again after reopen and application of selection
@@ -56,7 +56,7 @@ namespace Carnassial.UnitTests
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
             foreach (FileSelection nextSelection in new List<FileSelection>() { FileSelection.All, FileSelection.Ok, FileSelection.Ok })
             {
-                Assert.IsTrue(fileDatabase.CurrentlySelectedImageCount == imageExpectations.Count);
+                Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount == imageExpectations.Count);
                 fileDatabase.SelectFiles(FileSelection.All);
                 Assert.IsTrue(fileDatabase.Files.RowCount == imageExpectations.Count);
                 int firstDisplayableImage = fileDatabase.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
@@ -70,7 +70,7 @@ namespace Carnassial.UnitTests
                     imageExpectation.Verify(image, imageSetTimeZone);
 
                     // verify no markers associated with image
-                    List<MarkersForCounter> markersOnImage = fileDatabase.GetMarkersOnImage(image.ID);
+                    List<MarkersForCounter> markersOnImage = fileDatabase.GetMarkersOnFile(image.ID);
                     Assert.IsTrue(markersOnImage.Count == counterControls);
                     foreach (MarkersForCounter markerForCounter in markersOnImage)
                     {
@@ -80,26 +80,26 @@ namespace Carnassial.UnitTests
 
                     // retrieval by path
                     FileInfo imageFile = image.GetFileInfo(fileDatabase.FolderPath);
-                    Assert.IsTrue(fileDatabase.GetOrCreateImage(imageFile, imageSetTimeZone, out image));
+                    Assert.IsTrue(fileDatabase.GetOrCreateFile(imageFile, imageSetTimeZone, out image));
 
                     // retrieval by specific method
                     // fileDatabase.GetImageValue();
-                    Assert.IsTrue(fileDatabase.IsImageDisplayable(imageIndex));
-                    Assert.IsTrue(fileDatabase.IsImageRowInRange(imageIndex));
+                    Assert.IsTrue(fileDatabase.IsFileDisplayable(imageIndex));
+                    Assert.IsTrue(fileDatabase.IsFileRowInRange(imageIndex));
 
                     // retrieval by table
                     imageExpectation.Verify(fileDatabase.Files[imageIndex], imageSetTimeZone);
                 }
 
                 // reopen database for test and refresh images so next iteration of the loop checks state after reload
-                fileDatabase = FileDatabase.CreateOrOpen(fileDatabase.FilePath, fileDatabase, CustomSelectionOperator.And);
+                fileDatabase = FileDatabase.CreateOrOpen(fileDatabase.FilePath, fileDatabase, false, CustomSelectionOperator.And);
                 fileDatabase.SelectFiles(nextSelection);
                 Assert.IsTrue(fileDatabase.Files.RowCount > 0);
             }
 
             foreach (string dataLabel in fileDatabase.FileTableColumnsByDataLabel.Keys)
             {
-                List<string> distinctValues = fileDatabase.GetDistinctValuesInImageColumn(dataLabel);
+                List<string> distinctValues = fileDatabase.GetDistinctValuesInFileColumn(dataLabel);
                 int expectedValues;
                 switch (dataLabel)
                 {
@@ -170,7 +170,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileDatabase.Files.RowCount > 0);
             List<DateTimeOffset> imageTimesBeforeAdjustment = fileDatabase.GetImageTimes().ToList();
             TimeSpan adjustment = new TimeSpan(0, 1, 2, 3, 0);
-            fileDatabase.AdjustImageTimes(adjustment);
+            fileDatabase.AdjustFileTimes(adjustment);
             this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, fileDatabase.GetImageTimes().ToList(), adjustment);
             fileDatabase.SelectFiles(FileSelection.All);
             this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, fileDatabase.GetImageTimes().ToList(), adjustment);
@@ -178,20 +178,20 @@ namespace Carnassial.UnitTests
             imageTimesBeforeAdjustment = fileDatabase.GetImageTimes().ToList();
             adjustment = new TimeSpan(-1, -2, -3, -4, 0);
             int startRow = 1;
-            int endRow = fileDatabase.CurrentlySelectedImageCount - 1;
-            fileDatabase.AdjustImageTimes(adjustment, startRow, endRow);
+            int endRow = fileDatabase.CurrentlySelectedFileCount - 1;
+            fileDatabase.AdjustFileDateTimes(adjustment, startRow, endRow);
             this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, fileDatabase.GetImageTimes().ToList(), startRow, endRow, adjustment);
             fileDatabase.SelectFiles(FileSelection.All);
             this.VerifyImageTimeAdjustment(imageTimesBeforeAdjustment, fileDatabase.GetImageTimes().ToList(), startRow, endRow, adjustment);
 
-            fileDatabase.ExchangeDayAndMonthInImageDates();
-            fileDatabase.ExchangeDayAndMonthInImageDates(0, fileDatabase.Files.RowCount - 1);
+            fileDatabase.ExchangeDayAndMonthInFileDates();
+            fileDatabase.ExchangeDayAndMonthInFileDates(0, fileDatabase.Files.RowCount - 1);
 
             // custom selection coverage
             // search terms should be created for all visible controls except Folder, but DateTime gets two
             Assert.IsTrue((fileDatabase.Controls.RowCount - 5) == fileDatabase.CustomSelection.SearchTerms.Count);
             Assert.IsTrue(String.IsNullOrEmpty(fileDatabase.CustomSelection.GetImagesWhere()));
-            Assert.IsTrue(fileDatabase.GetImageCount(FileSelection.Custom) == -1);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Custom) == -1);
 
             SearchTerm dateTime = fileDatabase.CustomSelection.SearchTerms.First(term => term.DataLabel == Constants.DatabaseColumn.DateTime);
             dateTime.UseForSearching = true;
@@ -242,13 +242,13 @@ namespace Carnassial.UnitTests
 
             imageQuality.DatabaseValue = FileSelection.Dark.ToString();
             Assert.IsFalse(String.IsNullOrEmpty(fileDatabase.CustomSelection.GetImagesWhere()));
-            Assert.IsTrue(fileDatabase.GetImageCount(FileSelection.All) == imageExpectations.Count);
-            Assert.IsTrue(fileDatabase.GetImageCount(FileSelection.CorruptFile) == 0);
-            Assert.IsTrue(fileDatabase.GetImageCount(FileSelection.Custom) == 0);
-            Assert.IsTrue(fileDatabase.GetImageCount(FileSelection.Dark) == 0);
-            Assert.IsTrue(fileDatabase.GetImageCount(FileSelection.MarkedForDeletion) == 0);
-            Assert.IsTrue(fileDatabase.GetImageCount(FileSelection.FileNoLongerAvailable) == 0);
-            Assert.IsTrue(fileDatabase.GetImageCount(FileSelection.Ok) == imageExpectations.Count);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.All) == imageExpectations.Count);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.CorruptFile) == 0);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Custom) == 0);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Dark) == 0);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.MarkedForDeletion) == 0);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.FileNoLongerAvailable) == 0);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Ok) == imageExpectations.Count);
 
             // markers
             this.VerifyDefaultMarkerTableContent(fileDatabase, imageExpectations.Count);
@@ -257,7 +257,7 @@ namespace Carnassial.UnitTests
             fileDatabase.SelectFiles(FileSelection.All);
 
             int martenImageID = 1;
-            List<MarkersForCounter> markersForMartenImage = fileDatabase.GetMarkersOnImage(martenImageID);
+            List<MarkersForCounter> markersForMartenImage = fileDatabase.GetMarkersOnFile(martenImageID);
             Assert.IsTrue(markersForMartenImage.Count == counterControls);
             foreach (MarkersForCounter markerForCounter in markersForMartenImage)
             {
@@ -272,7 +272,7 @@ namespace Carnassial.UnitTests
             }
 
             // add
-            markersForMartenImage = fileDatabase.GetMarkersOnImage(martenImageID);
+            markersForMartenImage = fileDatabase.GetMarkersOnFile(martenImageID);
             Assert.IsTrue(markersForMartenImage.Count == counterControls);
             foreach (MarkersForCounter markerForCounter in markersForMartenImage)
             {
@@ -299,7 +299,7 @@ namespace Carnassial.UnitTests
             }
 
             // roundtrip
-            markersForMartenImage = fileDatabase.GetMarkersOnImage(martenImageID);
+            markersForMartenImage = fileDatabase.GetMarkersOnFile(martenImageID);
             this.VerifyMarkers(markersForMartenImage, expectedMarkerPositions);
 
             // remove
@@ -319,7 +319,7 @@ namespace Carnassial.UnitTests
             }
 
             // roundtrip
-            markersForMartenImage = fileDatabase.GetMarkersOnImage(martenImageID);
+            markersForMartenImage = fileDatabase.GetMarkersOnFile(martenImageID);
             this.VerifyMarkers(markersForMartenImage, expectedMarkerPositions);
         }
 
@@ -474,7 +474,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(templateDatabase.Controls[widthIndex].Width == modifiedWidth);
 
             // reopen the image database to synchronize its template table with the modified table in the current template
-            fileDatabase = FileDatabase.CreateOrOpen(fileDatabase.FilePath, templateDatabase, CustomSelectionOperator.And);
+            fileDatabase = FileDatabase.CreateOrOpen(fileDatabase.FilePath, templateDatabase, false, CustomSelectionOperator.And);
             Assert.IsTrue(fileDatabase.TemplateSynchronizationIssues.Count == 0);
             this.VerifyTemplateDatabase(fileDatabase, fileDatabase.FilePath);
             Assert.IsTrue(fileDatabase.Controls.RowCount == numberOfStandardControls + (4 * iterations) - 2);
@@ -698,7 +698,7 @@ namespace Carnassial.UnitTests
             foreach (FileInfo imageFile in imagesAndVideos)
             {
                 ImageRow imageRow;
-                Assert.IsFalse(fileDatabase.GetOrCreateImage(imageFile, imageSetTimeZone, out imageRow));
+                Assert.IsFalse(fileDatabase.GetOrCreateFile(imageFile, imageSetTimeZone, out imageRow));
 
                 BitmapSource bitmapSource = imageRow.LoadBitmap(fileDatabase.FolderPath);
                 WriteableBitmap writeableBitmap = bitmapSource.AsWriteable();
@@ -723,7 +723,7 @@ namespace Carnassial.UnitTests
                 imagesToInsert.Add(imageRow);
             }
 
-            fileDatabase.AddImages(imagesToInsert, (ImageRow imageProperties, int imageIndex) => { });
+            fileDatabase.AddFiles(imagesToInsert, (ImageRow imageProperties, int imageIndex) => { });
             fileDatabase.SelectFiles(FileSelection.All);
 
             Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
@@ -830,24 +830,24 @@ namespace Carnassial.UnitTests
             this.PopulateDefaultDatabase(fileDatabase);
 
             // FileDatabase methods
-            int firstDisplayableImage = fileDatabase.FindFirstDisplayableImage(fileDatabase.CurrentlySelectedImageCount);
-            Assert.IsTrue(firstDisplayableImage == fileDatabase.CurrentlySelectedImageCount - 1);
+            int firstDisplayableImage = fileDatabase.FindFirstDisplayableImage(fileDatabase.CurrentlySelectedFileCount);
+            Assert.IsTrue(firstDisplayableImage == fileDatabase.CurrentlySelectedFileCount - 1);
 
             int closestDisplayableImage = fileDatabase.FindClosestImageRow(Int64.MinValue);
             Assert.IsTrue(closestDisplayableImage == 0);
             closestDisplayableImage = fileDatabase.FindClosestImageRow(Int64.MaxValue);
-            Assert.IsTrue(closestDisplayableImage == fileDatabase.CurrentlySelectedImageCount - 1);
+            Assert.IsTrue(closestDisplayableImage == fileDatabase.CurrentlySelectedFileCount - 1);
 
-            Assert.IsFalse(fileDatabase.IsImageDisplayable(-1));
-            Assert.IsFalse(fileDatabase.IsImageDisplayable(fileDatabase.CurrentlySelectedImageCount));
+            Assert.IsFalse(fileDatabase.IsFileDisplayable(-1));
+            Assert.IsFalse(fileDatabase.IsFileDisplayable(fileDatabase.CurrentlySelectedFileCount));
 
-            Assert.IsFalse(fileDatabase.IsImageRowInRange(-1));
-            Assert.IsFalse(fileDatabase.IsImageRowInRange(fileDatabase.CurrentlySelectedImageCount));
+            Assert.IsFalse(fileDatabase.IsFileRowInRange(-1));
+            Assert.IsFalse(fileDatabase.IsFileRowInRange(fileDatabase.CurrentlySelectedFileCount));
 
             ImageRow imageProperties = fileDatabase.Files[0];
             FileInfo imageFile = imageProperties.GetFileInfo(fileDatabase.FolderPath);
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
-            Assert.IsTrue(fileDatabase.GetOrCreateImage(imageFile, imageSetTimeZone, out imageProperties));
+            Assert.IsTrue(fileDatabase.GetOrCreateFile(imageFile, imageSetTimeZone, out imageProperties));
 
             // template table synchronization
             // remove choices and change a note to a choice to produce a type failure
@@ -858,7 +858,7 @@ namespace Carnassial.UnitTests
             noteControl.Type = Constants.Control.FixedChoice;
             templateDatabase.SyncControlToDatabase(noteControl);
 
-            fileDatabase = FileDatabase.CreateOrOpen(fileDatabase.FileName, templateDatabase, CustomSelectionOperator.And);
+            fileDatabase = FileDatabase.CreateOrOpen(fileDatabase.FileName, templateDatabase, false, CustomSelectionOperator.And);
             Assert.IsTrue(fileDatabase.TemplateSynchronizationIssues.Count == 5);
         }
 
@@ -967,7 +967,7 @@ namespace Carnassial.UnitTests
             ImageRow martenPairImage = this.CreateImage(fileDatabase, secondImageSetTimeZone, TestConstant.ImageExpectation.DaylightMartenPair, out timeAdjustment);
             ImageRow coyoteImage = this.CreateImage(fileDatabase, secondImageSetTimeZone, TestConstant.ImageExpectation.DaylightCoyote, out timeAdjustment);
 
-            fileDatabase.AddImages(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
+            fileDatabase.AddFiles(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
             fileDatabase.SelectFiles(FileSelection.All);
 
             // generate expectations for new images

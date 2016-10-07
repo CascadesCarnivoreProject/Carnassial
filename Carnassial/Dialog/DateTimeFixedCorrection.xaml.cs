@@ -15,7 +15,7 @@ namespace Carnassial.Dialog
     {
         private bool displayingPreview;
         private FileDatabase fileDatabase;
-        private DateTimeOffset initialDate;
+        private DateTimeOffset InitialDate;
 
         public DateTimeFixedCorrection(FileDatabase fileDatabase, ImageRow imageToCorrect, Window owner)
         {
@@ -25,15 +25,15 @@ namespace Carnassial.Dialog
             this.Owner = owner;
 
             // get the image filename and display it
-            this.imageName.Content = imageToCorrect.FileName;
+            this.FileName.Content = imageToCorrect.FileName;
 
             // display the image
-            this.image.Source = imageToCorrect.LoadBitmap(this.fileDatabase.FolderPath);
+            this.Image.Source = imageToCorrect.LoadBitmap(this.fileDatabase.FolderPath);
 
             // configure datetime picker
-            this.initialDate = imageToCorrect.GetDateTime();
-            this.originalDate.Content = DateTimeHandler.ToDisplayDateTimeString(this.initialDate);
-            DataEntryHandler.Configure(this.DateTimePicker, this.initialDate.DateTime);
+            this.InitialDate = imageToCorrect.GetDateTime();
+            this.OriginalDate.Content = DateTimeHandler.ToDisplayDateTimeString(this.InitialDate);
+            DataEntryHandler.Configure(this.DateTimePicker, this.InitialDate.DateTime);
             this.DateTimePicker.ValueChanged += this.DateTimePicker_ValueChanged;
         }
 
@@ -48,7 +48,7 @@ namespace Carnassial.Dialog
             this.PrimaryPanel.Visibility = Visibility.Collapsed;
             this.FeedbackPanel.Visibility = Visibility.Visible;
 
-            TimeSpan adjustment = this.DateTimePicker.Value.Value - this.initialDate.DateTime;
+            TimeSpan adjustment = this.DateTimePicker.Value.Value - this.InitialDate.DateTime;
 
             // Preview the changes
             foreach (ImageRow image in this.fileDatabase.Files)
@@ -69,7 +69,7 @@ namespace Carnassial.Dialog
                 {
                     status = "Unchanged";
                 }
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(image.FileName, status, image.GetDisplayDateTime(), newDateTime, difference);
+                this.DateTimeChangeFeedback.AddFeedbackRow(image.FileName, status, image.GetDisplayDateTime(), newDateTime, difference);
             }
         }
 
@@ -92,7 +92,7 @@ namespace Carnassial.Dialog
 
             // 2nd click
             // Calculate and apply the date/time difference
-            DateTime originalDateTime = DateTimeHandler.ParseDisplayDateTimeString((string)this.originalDate.Content);
+            DateTime originalDateTime = DateTimeHandler.ParseDisplayDateTimeString((string)this.OriginalDate.Content);
             TimeSpan adjustment = this.DateTimePicker.Value.Value - originalDateTime;
             if (adjustment == TimeSpan.Zero)
             {
@@ -101,7 +101,7 @@ namespace Carnassial.Dialog
             }
 
             // Update the database
-            this.fileDatabase.AdjustImageTimes(adjustment);
+            this.fileDatabase.AdjustFileTimes(adjustment);
             this.DialogResult = true;
         }
 
@@ -113,7 +113,7 @@ namespace Carnassial.Dialog
 
         private void DateTimePicker_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            TimeSpan difference = this.DateTimePicker.Value.Value - this.initialDate;
+            TimeSpan difference = this.DateTimePicker.Value.Value - this.InitialDate;
             this.ChangesButton.IsEnabled = (difference == TimeSpan.Zero) ? false : true;
         }
     }

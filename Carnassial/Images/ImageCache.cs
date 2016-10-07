@@ -82,17 +82,17 @@ namespace Carnassial.Images
                 // Already at the beginning
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
             }
-            else if (this.CurrentDifferenceState == ImageDifference.Next && this.CurrentRow == this.Database.CurrentlySelectedImageCount - 1)
+            else if (this.CurrentDifferenceState == ImageDifference.Next && this.CurrentRow == this.Database.CurrentlySelectedFileCount - 1)
             {
                 // Already at the end
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
             }
-            else if (this.CurrentDifferenceState == ImageDifference.Next && !this.Database.IsImageDisplayable(this.CurrentRow + 1))
+            else if (this.CurrentDifferenceState == ImageDifference.Next && !this.Database.IsFileDisplayable(this.CurrentRow + 1))
             {
                 // Can't use the next image as its corrupted
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
             }
-            else if (this.CurrentDifferenceState == ImageDifference.Previous && !this.Database.IsImageDisplayable(this.CurrentRow - 1))
+            else if (this.CurrentDifferenceState == ImageDifference.Previous && !this.Database.IsFileDisplayable(this.CurrentRow - 1))
             {
                 // Can't use the previous image as its corrupted
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
@@ -341,7 +341,7 @@ namespace Carnassial.Images
                 return true;
             }
 
-            if (this.Database.IsImageRowInRange(imageRow) == false)
+            if (this.Database.IsFileRowInRange(imageRow) == false)
             {
                 image = null;
                 return false;
@@ -363,7 +363,7 @@ namespace Carnassial.Images
 
         private bool TryInitiateBitmapPrefetch(int rowIndex)
         {
-            if (this.Database.IsImageRowInRange(rowIndex) == false)
+            if (this.Database.IsFileRowInRange(rowIndex) == false)
             {
                 return false;
             }

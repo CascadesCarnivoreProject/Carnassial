@@ -62,7 +62,7 @@ namespace Carnassial.Dialog
 
                 // Pass 1. Check to see what dates/times need updating.
                 List<ImageRow> imagesToAdjust = new List<ImageRow>();
-                int count = this.database.CurrentlySelectedImageCount;
+                int count = this.database.CurrentlySelectedFileCount;
                 TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
                 for (int row = 0; row < count; ++row)
                 {
@@ -148,7 +148,7 @@ namespace Carnassial.Dialog
                 {
                     imagesToUpdate.Add(image.GetDateTimeColumnTuples());
                 }
-                database.UpdateImages(imagesToUpdate);  // Write the updates to the database
+                database.UpdateFiles(imagesToUpdate);  // Write the updates to the database
                 backgroundWorker.ReportProgress(0, new FeedbackTuple(null, "Done."));
             };
             backgroundWorker.ProgressChanged += (o, ea) =>

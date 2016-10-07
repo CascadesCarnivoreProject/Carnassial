@@ -143,7 +143,7 @@ namespace Carnassial.Dialog
                 string dataLabelToUpdate = this.dataLabelByLabel[this.dataFieldLabel];
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
                 TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
-                for (int imageIndex = 0; imageIndex < database.CurrentlySelectedImageCount; ++imageIndex)
+                for (int imageIndex = 0; imageIndex < database.CurrentlySelectedFileCount; ++imageIndex)
                 {
                     ImageRow image = database.Files[imageIndex];
                     Dictionary<string, string> metadata = Utilities.LoadMetadata(image.GetImagePath(database.FolderPath));
@@ -203,7 +203,7 @@ namespace Carnassial.Dialog
                 }
 
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Writing the data...", "Please wait..."));
-                database.UpdateImages(imagesToUpdate);
+                database.UpdateFiles(imagesToUpdate);
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Done", "Done"));
             };
             backgroundWorker.ProgressChanged += (o, ea) =>

@@ -192,7 +192,7 @@ namespace Carnassial
         {
             if ((this.dataHandler != null) &&
                 (this.dataHandler.FileDatabase != null) &&
-                (this.dataHandler.FileDatabase.CurrentlySelectedImageCount > 0))
+                (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0))
             {
                 // save image set properties to the database
                 if (this.dataHandler.FileDatabase.ImageSet.ImageSelection == FileSelection.Custom)
@@ -414,7 +414,7 @@ namespace Carnassial
                 Parallel.ForEach(new SequentialPartitioner<FileInfo>(filesToAdd), Utilities.GetParallelOptions(2), (FileInfo fileInfo) =>
                 {
                     ImageRow file;
-                    if (this.dataHandler.FileDatabase.GetOrCreateImage(fileInfo, imageSetTimeZone, out file))
+                    if (this.dataHandler.FileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file))
                     {
                         // the database already has an entry for this image so skip it
                         // if needed, a separate list of images to update could be generated
@@ -506,7 +506,7 @@ namespace Carnassial
                 // Parallel execution above produces out of order results.  Put them back in order so the user sees images in file name order when
                 // reviewing the image set.
                 imagesToInsert = imagesToInsert.OrderBy(image => Path.Combine(image.RelativePath, image.FileName)).ToList();
-                this.dataHandler.FileDatabase.AddImages(imagesToInsert, (ImageRow imageProperties, int imageIndex) =>
+                this.dataHandler.FileDatabase.AddFiles(imagesToInsert, (ImageRow imageProperties, int imageIndex) =>
                 {
                     // skip reloading images to display as the user's already seen them import
                     progressState.BitmapSource = null;
@@ -667,7 +667,7 @@ namespace Carnassial
 
         private void EnableOrDisableMenusAndControls()
         {
-            bool filesSelected = this.dataHandler.FileDatabase.CurrentlySelectedImageCount > 0;
+            bool filesSelected = this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0;
 
             // Depending upon whether images exist in the data set,
             // enable / disable menus and menu items as needed
@@ -715,7 +715,7 @@ namespace Carnassial
         private void SelectDataTableImagesAndShowImage(int imageRow, FileSelection selection)
         {
             this.dataHandler.FileDatabase.SelectFiles(selection);
-            if (this.dataHandler.FileDatabase.CurrentlySelectedImageCount > 0 || selection == FileSelection.All)
+            if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0 || selection == FileSelection.All)
             {
                 // update status and menu state to reflect what the user selected
                 string status;
@@ -828,19 +828,19 @@ namespace Carnassial
             }
 
             // Display the specified image under the new selection
-            if (this.dataHandler.FileDatabase.CurrentlySelectedImageCount > 0)
+            if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0)
             {
                 this.ShowImage(imageRow);
             }
 
             // After a selection change, set the slider to represent the index and the count of the selection
             this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-            this.ImageNavigatorSlider.Maximum = this.dataHandler.FileDatabase.CurrentlySelectedImageCount - 1;  // Reset the slider to the size of images in this set
+            this.ImageNavigatorSlider.Maximum = this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1;  // Reset the slider to the size of images in this set
             this.ImageNavigatorSlider.Value = this.dataHandler.ImageCache.CurrentRow;
 
             // Update the status bar accordingly
             this.statusBar.SetCurrentImage(this.dataHandler.ImageCache.CurrentRow + 1); // We add 1 because its a 0-based list
-            this.statusBar.SetCount(this.dataHandler.FileDatabase.CurrentlySelectedImageCount);
+            this.statusBar.SetCount(this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
             this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
             this.dataHandler.FileDatabase.ImageSet.ImageSelection = selection; // persist the current selection
         }
@@ -1199,7 +1199,7 @@ namespace Carnassial
                 return;
             }
 
-            Dictionary<FileSelection, int> counts = this.dataHandler.FileDatabase.GetImageCountsByQuality();
+            Dictionary<FileSelection, int> counts = this.dataHandler.FileDatabase.GetFileCountsBySelection();
             FileCountsByQuality imageStats = new FileCountsByQuality(counts, this);
             if (onImageLoading)
             {
@@ -1239,7 +1239,7 @@ namespace Carnassial
         private void ShowImage(int imageRow)
         {
             // If there is no image to show, then show an image indicating the empty image set.
-            if (this.dataHandler.FileDatabase.CurrentlySelectedImageCount < 1)
+            if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount < 1)
             {
                 BitmapSource unalteredImage = Constants.Images.NoSelectableFile;
                 this.MarkableCanvas.ImageToDisplay.Source = unalteredImage;
@@ -1274,7 +1274,7 @@ namespace Carnassial
                     DataEntryNote noteControl = (DataEntryNote)control.Value;
                     if (noteControl.ContentChanged)
                     {
-                        noteControl.ContentControl.Autocompletions = this.dataHandler.FileDatabase.GetDistinctValuesInImageColumn(control.Value.DataLabel);
+                        noteControl.ContentControl.Autocompletions = this.dataHandler.FileDatabase.GetDistinctValuesInFileColumn(control.Value.DataLabel);
                         noteControl.ContentChanged = false;
                     }
                 }
@@ -1284,7 +1284,7 @@ namespace Carnassial
             // update the status bar to show which image we are on out of the total displayed under the current selection
             // the total is always refreshed as it's not known if ShowImage() is being called due to a seletion change
             this.statusBar.SetCurrentImage(this.dataHandler.ImageCache.CurrentRow + 1); // Add one because indexes are 0-based
-            this.statusBar.SetCount(this.dataHandler.FileDatabase.CurrentlySelectedImageCount);
+            this.statusBar.SetCount(this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
             this.statusBar.ClearMessage();
 
             this.ImageNavigatorSlider.Value = this.dataHandler.ImageCache.CurrentRow;
@@ -1303,7 +1303,7 @@ namespace Carnassial
 
                 // Whenever we navigate to a new image, delete any markers that were displayed on the current image 
                 // and then draw the markers assoicated with the new image
-                this.markersOnCurrentImage = this.dataHandler.FileDatabase.GetMarkersOnImage(this.dataHandler.ImageCache.Current.ID);
+                this.markersOnCurrentImage = this.dataHandler.FileDatabase.GetMarkersOnFile(this.dataHandler.ImageCache.Current.ID);
                 this.MarkableCanvas_UpdateMarkers();
             }
             this.SetVideoPlayerToCurrentRow(); 
@@ -1315,7 +1315,7 @@ namespace Carnassial
         {
             if (this.dataHandler == null ||
                 this.dataHandler.FileDatabase == null ||
-                this.dataHandler.FileDatabase.CurrentlySelectedImageCount == 0)
+                this.dataHandler.FileDatabase.CurrentlySelectedFileCount == 0)
             {
                 return; // No images are loaded, so don't try to interpret any keys
             }
@@ -1506,7 +1506,7 @@ namespace Carnassial
                 this.dataHandler.IsProgrammaticControlUpdate = true;
                 counter.SetContentAndTooltip(newCounterData);
                 this.dataHandler.IsProgrammaticControlUpdate = false;
-                this.dataHandler.FileDatabase.UpdateImage(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, newCounterData);
+                this.dataHandler.FileDatabase.UpdateFile(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, newCounterData);
             }
 
             // Remove the marker in memory and from the database
@@ -1553,7 +1553,7 @@ namespace Carnassial
 
             string counterContent = count.ToString();
             this.dataHandler.IsProgrammaticControlUpdate = true;
-            this.dataHandler.FileDatabase.UpdateImage(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, counterContent);
+            this.dataHandler.FileDatabase.UpdateFile(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, counterContent);
             counter.SetContentAndTooltip(counterContent);
             this.dataHandler.IsProgrammaticControlUpdate = false;
 
@@ -2030,7 +2030,7 @@ namespace Carnassial
         /// <summary>Delete the current image by replacing it with a placeholder image, while still making a backup of it</summary>
         private void Delete_SubmenuOpening(object sender, RoutedEventArgs e)
         {
-            int deletedImages = this.dataHandler.FileDatabase.GetImageCount(FileSelection.MarkedForDeletion);
+            int deletedImages = this.dataHandler.FileDatabase.GetFileCount(FileSelection.MarkedForDeletion);
             this.MenuItemDeleteCurrentFile.IsEnabled = this.dataHandler.ImageCache.Current.IsDisplayable() || this.dataHandler.ImageCache.Current.ImageQuality == FileSelection.CorruptFile;
             this.MenuItemDeleteCurrentFileAndData.IsEnabled = true;
             this.MenuItemDeleteFiles.IsEnabled = deletedImages > 0;
@@ -2053,7 +2053,7 @@ namespace Carnassial
                 deleteCurrentImageOnly = false;
                 deleteFilesAndData = menuItem.Name.Equals(this.MenuItemDeleteFilesAndData.Name);
                 // get list of all images marked for deletion in the current seletion
-                imagesToDelete = this.dataHandler.FileDatabase.GetImagesMarkedForDeletion().ToList();
+                imagesToDelete = this.dataHandler.FileDatabase.GetFilesMarkedForDeletion().ToList();
                 for (int index = imagesToDelete.Count - 1; index >= 0;  index--)
                 {
                     if (this.dataHandler.FileDatabase.Files.Find(imagesToDelete[index].ID) == null)
@@ -2130,11 +2130,11 @@ namespace Carnassial
                 if (deleteFilesAndData)
                 {
                     // drop images
-                    this.dataHandler.FileDatabase.DeleteImages(imageIDsToDropFromDatabase);
+                    this.dataHandler.FileDatabase.DeleteFilesAndMarkers(imageIDsToDropFromDatabase);
 
                     // Reload the datatable. Then find and show the image closest to the last one shown
                     this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, this.dataHandler.FileDatabase.ImageSet.ImageSelection);
-                    if (this.dataHandler.FileDatabase.CurrentlySelectedImageCount > 0)
+                    if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0)
                     {
                         int nextImageRow = this.dataHandler.FileDatabase.FindClosestImageRow(previousImageID);
                         this.ShowImage(nextImageRow);
@@ -2147,7 +2147,7 @@ namespace Carnassial
                 else
                 {
                     // update image properties
-                    this.dataHandler.FileDatabase.UpdateImages(imagesToUpdate);
+                    this.dataHandler.FileDatabase.UpdateFiles(imagesToUpdate);
 
                     // display the updated properties on the current image
                     int nextImageRow = this.dataHandler.FileDatabase.FindClosestImageRow(previousImageID);
@@ -2479,13 +2479,13 @@ namespace Carnassial
 
         private void MenuItemSelect_SubmenuOpening(object sender, RoutedEventArgs e)
         {
-            Dictionary<FileSelection, int> counts = this.dataHandler.FileDatabase.GetImageCountsByQuality();
+            Dictionary<FileSelection, int> counts = this.dataHandler.FileDatabase.GetFileCountsBySelection();
 
             this.MenuItemSelectLightImages.IsEnabled = counts[FileSelection.Ok] > 0;
             this.MenuItemSelectDarkImages.IsEnabled = counts[FileSelection.Dark] > 0;
             this.MenuItemSelectCorruptedImages.IsEnabled = counts[FileSelection.CorruptFile] > 0;
             this.MenuItemSelectFilesNoLongerAvailable.IsEnabled = counts[FileSelection.FileNoLongerAvailable] > 0;
-            this.MenuItemSelectImagesMarkedForDeletion.IsEnabled = this.dataHandler.FileDatabase.GetImageCount(FileSelection.MarkedForDeletion) > 0;
+            this.MenuItemSelectImagesMarkedForDeletion.IsEnabled = this.dataHandler.FileDatabase.GetFileCount(FileSelection.MarkedForDeletion) > 0;
         }
 
         private void MenuItemSkipDarkFileCheck_Click(object sender, RoutedEventArgs e)
@@ -2715,7 +2715,7 @@ namespace Carnassial
         private bool TryShowImageWithoutSliderCallback(bool forward, ModifierKeys modifiers)
         {
             // Check to see if there are any images to show, 
-            if (this.dataHandler.FileDatabase.CurrentlySelectedImageCount <= 0)
+            if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount <= 0)
             {
                 return false;
             }
@@ -2733,9 +2733,9 @@ namespace Carnassial
             int desiredRow = this.dataHandler.ImageCache.CurrentRow + increment;
 
             // Set the desiredRow to either the maximum or minimum row if it exceeds the bounds,
-            if (desiredRow >= this.dataHandler.FileDatabase.CurrentlySelectedImageCount)
+            if (desiredRow >= this.dataHandler.FileDatabase.CurrentlySelectedFileCount)
             {
-                desiredRow = this.dataHandler.FileDatabase.CurrentlySelectedImageCount - 1;
+                desiredRow = this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1;
             }
             else if (desiredRow < 0)
             {

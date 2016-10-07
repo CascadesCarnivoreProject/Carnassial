@@ -65,7 +65,7 @@ namespace Carnassial.Database
         /// </summary>
         public virtual bool TryMoveToImage(int imageRowIndex)
         {
-            if (this.Database.IsImageRowInRange(imageRowIndex))
+            if (this.Database.IsFileRowInRange(imageRowIndex))
             {
                 this.CurrentRow = imageRowIndex;
                 // rebuild ImageProperties regardless of whether the row changed or not as this seek may be a refresh after a database change

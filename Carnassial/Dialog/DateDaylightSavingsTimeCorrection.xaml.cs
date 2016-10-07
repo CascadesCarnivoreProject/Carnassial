@@ -12,21 +12,21 @@ namespace Carnassial.Dialog
     /// </summary>
     public partial class DateDaylightSavingsTimeCorrection : Window
     {
-        private int currentImageRow;
+        private int currentFileIndex;
         private FileDatabase database;
 
-        public DateDaylightSavingsTimeCorrection(FileDatabase database, FileTableEnumerator image, Window owner)
+        public DateDaylightSavingsTimeCorrection(FileDatabase database, FileTableEnumerator fileEnumerator, Window owner)
         {
             this.InitializeComponent();
-            this.currentImageRow = image.CurrentRow;
+            this.currentFileIndex = fileEnumerator.CurrentRow;
             this.database = database;
             this.Owner = owner;
 
             // Get the original date and display it
-            this.OriginalDate.Content = image.Current.GetDisplayDateTime();
+            this.OriginalDate.Content = fileEnumerator.Current.GetDisplayDateTime();
 
-            this.Image.Source = image.Current.LoadBitmap(this.database.FolderPath);
-            this.ImageName.Content = image.Current.FileName;
+            this.Image.Source = fileEnumerator.Current.LoadBitmap(this.database.FolderPath);
+            this.FileName.Content = fileEnumerator.Current.FileName;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -40,24 +40,21 @@ namespace Carnassial.Dialog
         {
             try
             {
-                bool forward = (bool)rbForward.IsChecked;
-                int startRow;
-                int endRow;
-                if (forward)
+                int startRow = this.currentFileIndex;
+                int endRow = this.currentFileIndex;
+                if ((bool)this.PropagateForward.IsChecked)
                 {
-                    startRow = this.currentImageRow;
-                    endRow = this.database.CurrentlySelectedImageCount - 1;
+                    endRow = this.database.CurrentlySelectedFileCount - 1;
                 }
                 else
                 {
                     startRow = 0;
-                    endRow = this.currentImageRow;
                 }
 
                 // Update the database
-                int hours = (bool)rbAddHour.IsChecked ? 1 : -1;
+                int hours = (bool)this.AddHour.IsChecked ? 1 : -1;
                 TimeSpan daylightSavingsAdjustment = new TimeSpan(hours, 0, 0);
-                this.database.AdjustImageTimes(daylightSavingsAdjustment, startRow, endRow); // For all rows...
+                this.database.AdjustFileDateTimes(daylightSavingsAdjustment, startRow, endRow); // For all rows...
                 this.DialogResult = true;
             }
             catch (Exception exception)
@@ -75,7 +72,7 @@ namespace Carnassial.Dialog
         // Examine the checkboxes to see what state our selection is in, and provide feedback as appropriate
         private void RadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            if ((bool)rbAddHour.IsChecked || (bool)rbSubtractHour.IsChecked) 
+            if ((bool)this.AddHour.IsChecked || (bool)this.SubtractHour.IsChecked) 
             {
                 DateTime dateTime;
                 if (DateTimeHandler.TryParseDisplayDateTime((string)this.OriginalDate.Content, out dateTime) == false)
@@ -84,12 +81,12 @@ namespace Carnassial.Dialog
                     this.OkButton.IsEnabled = false;
                     return;
                 }
-                int hours = ((bool)rbAddHour.IsChecked) ? 1 : -1;
+                int hours = ((bool)this.AddHour.IsChecked) ? 1 : -1;
                 TimeSpan daylightSavingsAdjustment = new TimeSpan(hours, 0, 0);
                 dateTime = dateTime.Add(daylightSavingsAdjustment);
                 this.NewDate.Content = DateTimeHandler.ToDisplayDateTimeString(dateTime);
             }
-            if (((bool)rbAddHour.IsChecked || (bool)rbSubtractHour.IsChecked) && ((bool)rbBackwards.IsChecked || (bool)rbForward.IsChecked))
+            if (((bool)this.AddHour.IsChecked || (bool)this.SubtractHour.IsChecked) && ((bool)this.PropagateBackwards.IsChecked || (bool)this.PropagateForward.IsChecked))
             {
                 this.OkButton.IsEnabled = true;
             }

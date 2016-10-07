@@ -26,7 +26,7 @@
                             Result="For each file, the chosen data field will be filled in with the chosen metadata from that image."
                             ShowExplanationVisibility="True" />
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <Rectangle Fill="#FF868686" Height="2"></Rectangle>
+            <Rectangle Fill="#FF868686" Height="1" />
             <Grid Name="PanelHeader">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />

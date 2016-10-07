@@ -33,7 +33,7 @@ namespace Carnassial.Database
 
                 // For each row in the data table, write out the columns in the same order as the 
                 // data labels in the template file
-                for (int row = 0; row < database.CurrentlySelectedImageCount; row++)
+                for (int row = 0; row < database.CurrentlySelectedFileCount; row++)
                 {
                     StringBuilder csvRow = new StringBuilder();
                     ImageRow image = database.Files[row];
@@ -146,13 +146,13 @@ namespace Carnassial.Database
                         // write current batch of updates to database
                         if (imagesToUpdate.Count >= 100)
                         {
-                            fileDatabase.UpdateImages(imagesToUpdate);
+                            fileDatabase.UpdateFiles(imagesToUpdate);
                             imagesToUpdate.Clear();
                         }
                     }
 
                     // perform any remaining updates
-                    fileDatabase.UpdateImages(imagesToUpdate);
+                    fileDatabase.UpdateFiles(imagesToUpdate);
                     return true;
                 }
             }

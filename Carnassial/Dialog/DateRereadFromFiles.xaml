@@ -17,7 +17,7 @@
                             Result="Carnassial will replace the current date/time with the original date/time (if they differ).&#10;A list showing what was done will be displayed below"
                             ShowExplanationVisibility="True"/>
         <StackPanel>
-            <Rectangle Fill="#FF868686" Height="2"></Rectangle>
+            <Rectangle Fill="#FF868686" Height="1" />
         </StackPanel>
         <DockPanel Name="DockPanelImage">
             <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"></Rectangle>

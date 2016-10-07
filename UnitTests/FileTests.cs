@@ -185,12 +185,12 @@ namespace Carnassial.UnitTests
                     {
                         // as a default assume images are matched and expect differences to be calculable if the necessary images are available
                         case ImageDifference.Combined:
-                            expectNullBitmap = (cache.CurrentRow == 0) || (cache.CurrentRow == fileDatabase.CurrentlySelectedImageCount - 1);
+                            expectNullBitmap = (cache.CurrentRow == 0) || (cache.CurrentRow == fileDatabase.CurrentlySelectedFileCount - 1);
                             previousNextImageRow = cache.CurrentRow - 1;
                             otherImageRowForCombined = cache.CurrentRow + 1;
                             break;
                         case ImageDifference.Next:
-                            expectNullBitmap = cache.CurrentRow == fileDatabase.CurrentlySelectedImageCount - 1;
+                            expectNullBitmap = cache.CurrentRow == fileDatabase.CurrentlySelectedFileCount - 1;
                             previousNextImageRow = cache.CurrentRow + 1;
                             break;
                         case ImageDifference.Previous:
@@ -204,14 +204,14 @@ namespace Carnassial.UnitTests
                     }
 
                     // check if the image to diff against is matched
-                    if (fileDatabase.IsImageRowInRange(previousNextImageRow))
+                    if (fileDatabase.IsFileRowInRange(previousNextImageRow))
                     {
                         WriteableBitmap unalteredBitmap = cache.Current.LoadBitmap(fileDatabase.FolderPath).AsWriteable();
                         ImageRow previousNextImage = fileDatabase.Files[previousNextImageRow];
                         WriteableBitmap previousNextBitmap = previousNextImage.LoadBitmap(fileDatabase.FolderPath).AsWriteable();
                         bool mismatched = WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, previousNextBitmap);
 
-                        if (fileDatabase.IsImageRowInRange(otherImageRowForCombined))
+                        if (fileDatabase.IsFileRowInRange(otherImageRowForCombined))
                         {
                             ImageRow otherImageForCombined = fileDatabase.Files[otherImageRowForCombined];
                             WriteableBitmap otherBitmapForCombined = otherImageForCombined.LoadBitmap(fileDatabase.FolderPath).AsWriteable();

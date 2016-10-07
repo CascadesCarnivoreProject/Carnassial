@@ -85,7 +85,7 @@ namespace Carnassial.UnitTests
 
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
             ImageRow imageProperties;
-            fileDatabase.GetOrCreateImage(new FileInfo(imageFilePath), imageSetTimeZone, out imageProperties);
+            fileDatabase.GetOrCreateFile(new FileInfo(imageFilePath), imageSetTimeZone, out imageProperties);
             // imageProperties.Date is defaulted by constructor
             // imageProperties.DateTime is defaulted by constructor
             // imageProperties.FileName is set by constructor

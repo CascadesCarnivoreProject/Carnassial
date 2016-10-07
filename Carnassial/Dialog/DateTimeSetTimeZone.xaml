@@ -22,7 +22,7 @@
                             ShowExplanationVisibility="True"/>
 
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <Rectangle Fill="#FF868686" Height="2"></Rectangle>
+            <Rectangle Fill="#FF868686" Height="1" />
         </StackPanel>
 
         <!-- Ok/Cancel buttons-->
@@ -33,7 +33,7 @@
 
         <DockPanel Name="PrimaryPanel" DockPanel.Dock="Top" >
             <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-                <Rectangle Fill="#FF868686" Height="2"></Rectangle>
+                <Rectangle Fill="#FF868686" Height="1" />
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -56,7 +56,7 @@
 
         <DockPanel Name="FeedbackPanel" Visibility="Collapsed" DockPanel.Dock="Top" >
             <Label FontSize="14" FontWeight="Bold" Content="The following changes to dates and times will occur if you select Apply Changes." DockPanel.Dock="Top"/>
-            <controls:DateChangesFeedbackControl x:Name="DateUpdateFeedbackCtl"  DockPanel.Dock="Bottom" />
+            <controls:DateChangesFeedbackControl x:Name="TimeZoneUpdateFeedback"  DockPanel.Dock="Bottom" />
         </DockPanel>
     </DockPanel>
 </Window>

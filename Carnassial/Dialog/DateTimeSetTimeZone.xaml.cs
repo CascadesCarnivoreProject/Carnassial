@@ -66,7 +66,7 @@ namespace Carnassial.Dialog
                     status = "Unchanged";
                 }
 
-                this.DateUpdateFeedbackCtl.AddFeedbackRow(image.FileName, status, DateTimeHandler.ToDisplayDateTimeUtcOffsetString(currentImageDateTime), newDateTime, String.Empty);
+                this.TimeZoneUpdateFeedback.AddFeedbackRow(image.FileName, status, DateTimeHandler.ToDisplayDateTimeUtcOffsetString(currentImageDateTime), newDateTime, String.Empty);
             }
         }
 
@@ -95,14 +95,14 @@ namespace Carnassial.Dialog
             // 2nd click
             // Update the database
             TimeZoneInfo newTimeZone = this.TimeZones.TimeZonesByDisplayName[(string)this.TimeZones.SelectedItem];
-            this.fileDatabase.AdjustImageTimes(
+            this.fileDatabase.AdjustFileTimes(
                 (DateTimeOffset imageDateTime) =>
                 {
                     TimeSpan utcOffset = newTimeZone.GetUtcOffset(imageDateTime);
                     return imageDateTime.SetOffset(utcOffset);
                 },
                 0,
-                this.fileDatabase.CurrentlySelectedImageCount - 1);
+                this.fileDatabase.CurrentlySelectedFileCount - 1);
             this.DialogResult = true;
         }
 

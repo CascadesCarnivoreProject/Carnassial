@@ -29,38 +29,38 @@
             <!-- File Menu -->
             <MenuItem Header="_File" IsTabStop="false" SubmenuOpened="File_SubmenuOpening">
                 <MenuItem Name="MenuItemLoadImages" Header="_Load template, images, and video files..." Click="MenuItemLoadImages_Click" ToolTip="Asks for the template location, and then opens an existing database, or creates a new database after asking for the image/video locations"/>
-                <MenuItem Name="MenuItemRecentImageSets" Header="Load a _recently used image set" IsEnabled="false" ToolTip="Load a recently used image set into Carnassial"/>
-                <MenuItem Name="MenuItemAddImagesToImageSet" Header="_Add image and video files to image set..." Click="MenuItemAddImagesToImageSet_Click" IsEnabled="false" ToolTip="Add more images or videos to the currently opened image set"/>
+                <MenuItem Name="MenuItemRecentImageSets" Header="Load a _recently used image set" IsEnabled="false" ToolTip="Load a recently used image set into Carnassial." />
+                <MenuItem Name="MenuItemAddImagesToImageSet" Header="_Add image and video files to image set..." Click="MenuItemAddImagesToImageSet_Click" IsEnabled="false" ToolTip="Add more images or videos to the currently opened image set." />
                 <Separator />
-                <MenuItem Name="MenuItemExportAsCsv" Header="Export data for this image set as a _CSV file..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the selected images into a CSV (comma separated value) file"/>
-                <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="Export data for this image set as a CSV file and preview in _Excel..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the selected files in the image set into a CSV (comma separated value) file and previews it in Excel"/>
-                <MenuItem Name="MenuItemImportFromCsv" Header="I_mport data from a CSV file..." IsEnabled="false" Click="MenuItemImportFromCsv_Click" ToolTip="Exports data for the selected files in the image set into a CSV (comma separated value) file"/>
+                <MenuItem Name="MenuItemExportAsCsv" Header="Export data for this image set as a _CSV file..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the selected images into a CSV (comma separated value) file." />
+                <MenuItem Name="MenuItemExportAsCsvAndPreview" Header="Export data for this image set as a CSV file and preview in _Excel..." IsEnabled="false" Click="MenuItemExportCsv_Click" ToolTip="Exports data for the selected files in the image set into a CSV (comma separated value) file and previews it in Excel." />
+                <MenuItem Name="MenuItemImportFromCsv" Header="I_mport data from a CSV file..." IsEnabled="false" Click="MenuItemImportFromCsv_Click" ToolTip="Exports data for the selected files in the image set into a CSV (comma separated value) file." />
                 <Separator />
-                <MenuItem Name="MenuItemExportThisImage" Header="Export the current image or video _file..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) the displayed image or video file into a location of your choosing"/>
+                <MenuItem Name="MenuItemExportThisImage" Header="Export the current image or video _file..." Click="MenuItemExportThisImage_Click" IsEnabled="false" ToolTip="Exports (copies) the displayed image or video file into a location of your choosing." />
                 <Separator />
-                <MenuItem Name="MenuItemRenameFileDatabaseFile" Header="Rename the _data file..." Click="MenuItemRenameFileDatabaseFile_Click" IsEnabled="false" ToolTip="Renames the image data file to a name of your choosing"/>
+                <MenuItem Name="MenuItemRenameFileDatabaseFile" Header="Rename the _data file..." Click="MenuItemRenameFileDatabaseFile_Click" IsEnabled="false" ToolTip="Renames the data file to a name of your choosing." />
                 <Separator />
                 <MenuItem Name="MenuItemExit" Header="E_xit" Click="MenuItemExit_Click" ToolTip="Quits the program"/>
             </MenuItem>
 
             <!-- Edit Menu -->
             <MenuItem Name="MenuItemEdit" Header="_Edit" IsEnabled="false" IsTabStop="false">
-                <MenuItem Name="MenuItemCopyPreviousValues" Header="_Copy previous values" Click="CopyPreviousValues_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous file. Applies only to data marked 'Copyable' in the code template."/>
-                <MenuItem Name="MenuItemPopulateFieldFromMetadata" Header="Populate a field with _metadata..." ToolTip="Match a data field with a metadata type. Then populate that field across all files with the corresponding metadata value." Click="MenuItemPopulateFieldFromMetadata_Click"/>
-                <MenuItem Header="D_elete"  SubmenuOpened="Delete_SubmenuOpening"  >
-                    <MenuItem Name="MenuItemDeleteCurrentFile" Header="The current current image or video _file..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the file but not the data entered for it"/>
-                    <MenuItem Name="MenuItemDeleteCurrentFileAndData" Header="The current image or video file and its _data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the file and the data entered for it"/>
+                <MenuItem Name="MenuItemCopyPreviousValues" Header="_Copy previous values" Click="CopyPreviousValues_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous file. Applies only to data marked 'Copyable' in the template." />
+                <MenuItem Name="MenuItemPopulateFieldFromMetadata" Header="Populate a field with _metadata..." ToolTip="Match a data field with a metadata type. Then populate that field across all files with the corresponding metadata value." Click="MenuItemPopulateFieldFromMetadata_Click" />
+                <MenuItem Header="D_elete"  SubmenuOpened="Delete_SubmenuOpening">
+                    <MenuItem Name="MenuItemDeleteCurrentFile" Header="The current current image or video _file..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the file but not the data entered for it." />
+                    <MenuItem Name="MenuItemDeleteCurrentFileAndData" Header="The current image or video file and its _data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes the file and the data entered for it." />
                     <Separator/>
-                    <MenuItem Name="MenuItemDeleteFiles" Header="_All image or video files in the current selection marked for deletion ..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes images and videos marked for deletion in the current selection, but leaves entered data intact"/>
-                    <MenuItem Name="MenuItemDeleteFilesAndData" Header="All image or video files in the _current selection marked for deletion and their data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files"/>
+                    <MenuItem Name="MenuItemDeleteFiles" Header="_All image or video files in the current selection marked for deletion ..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes images and videos marked for deletion in the current selection, but leaves entered data intact." />
+                    <MenuItem Name="MenuItemDeleteFilesAndData" Header="All image or video files in the _current selection marked for deletion and their data..." Click="MenuItemDeleteImages_Click"  ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files." />
                 </MenuItem>
-                <MenuItem Header="_Date correction" >
-                    <MenuItem Name="MenuItemRereadDatesfromImages" Header="_Re-read dates from files..." Click="MenuItemRereadDatesfromImages_Click"  ToolTip="Re-read the dates from all the files" IsEnabled="True" />
-                    <MenuItem Name="MenuItemDaylightSavingsTimeCorrection" Header="Correct for _daylight savings time..." Click="MenuItemDaylightSavingsTimeCorrection_Click"  ToolTip="Correct daylight saving time issues" IsEnabled="True" />
+                <MenuItem Header="_Dates and times" >
+                    <MenuItem Name="MenuItemRereadDatesfromImages" Header="_Re-read dates from files..." Click="MenuItemRereadDatesfromImages_Click"  ToolTip="Re-read dates and times from all the files." IsEnabled="True" />
+                    <MenuItem Name="MenuItemDaylightSavingsTimeCorrection" Header="Adjust for _daylight savings time..." Click="MenuItemDaylightSavingsTimeCorrection_Click"  ToolTip="Correct daylight saving time issues" IsEnabled="True" />
                     <MenuItem Name="MenuItemDateTimeFixedCorrection" Header="Add a _fixed correction value to every date/time..." Click="MenuItemDateTimeFixedCorrection_Click"  ToolTip="Correct for dates or times which are all off by a fixed amount, which happens if your camera was not set to the correct date/time." IsEnabled="True" />
-                    <MenuItem Name="MenuItemDateTimeLinearCorrection" Header="Correct for camera cloc_k drift..." Click="MenuItemDateTimeLinearCorrection_Click"  ToolTip="Correct for a camera's clock running fast or slow" IsEnabled="True" />
-                    <MenuItem Name="MenuItemModifyAmbiguousDates" Header="Correct for _ambiguous dates..." Click="MenuItemCorrectAmbiguousDates_Click"  ToolTip="Check and optionally correct ambiguous dates (day-month vs month-day)" IsEnabled="True" />
-                    <MenuItem Name="MenuItemSetTimeZone" Header="Set time _zone..." Click="MenuItemSetTimeZone_Click" ToolTip="Reassign a group of images to a particular time zone " IsEnabled="True" />
+                    <MenuItem Name="MenuItemDateTimeLinearCorrection" Header="Correct for camera cloc_k drift..." Click="MenuItemDateTimeLinearCorrection_Click"  ToolTip="Correct for a camera's clock running fast or slow." IsEnabled="True" />
+                    <MenuItem Name="MenuItemModifyAmbiguousDates" Header="Correct for _ambiguous dates..." Click="MenuItemCorrectAmbiguousDates_Click"  ToolTip="Check and optionally correct ambiguous dates (day-month vs month-day)." IsEnabled="True" />
+                    <MenuItem Name="MenuItemSetTimeZone" Header="Set time _zone..." Click="MenuItemSetTimeZone_Click" ToolTip="Reassign the selected files to a particular time zone." IsEnabled="True" />
                 </MenuItem>
                 <MenuItem Name="MenuItemOptionsDarkImagesThreshold" Header="Identify or reclassify dar_k files..." Click="MenuItemOptionsDarkImages_Click" ToolTip="Determine which files are dark and light or reclassify your files." IsEnabled="True" />
                 <MenuItem Name="MenuItemLog" Header="Edit _notes for this image set..." Click="MenuItemLog_Click"  ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this image set" IsEnabled="True" />

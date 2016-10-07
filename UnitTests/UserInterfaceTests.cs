@@ -134,7 +134,7 @@ namespace Carnassial.UnitTests
                 // verify import succeeded
                 PrivateObject carnassialAccessor = new PrivateObject(carnassial);
                 DataEntryHandler dataHandler = (DataEntryHandler)carnassialAccessor.GetField(TestConstant.DataHandlerFieldName);
-                Assert.IsTrue(dataHandler.FileDatabase.CurrentlySelectedImageCount == 2);
+                Assert.IsTrue(dataHandler.FileDatabase.CurrentlySelectedFileCount == 2);
                 Assert.IsNotNull(dataHandler.ImageCache.Current);
 
                 // verify forward and backward moves of the displayed image
@@ -162,7 +162,7 @@ namespace Carnassial.UnitTests
 
                 PrivateObject carnassialAccessor = new PrivateObject(carnassial);
                 DataEntryHandler dataHandler = (DataEntryHandler)carnassialAccessor.GetField(TestConstant.DataHandlerFieldName);
-                Assert.IsTrue(dataHandler.FileDatabase.CurrentlySelectedImageCount > 0);
+                Assert.IsTrue(dataHandler.FileDatabase.CurrentlySelectedFileCount > 0);
                 Assert.IsNotNull(dataHandler.ImageCache.Current);
 
                 this.ShowDialog(new About(carnassial));
@@ -191,7 +191,7 @@ namespace Carnassial.UnitTests
                 this.ShowDialog(new PopulateFieldWithMetadata(dataHandler.FileDatabase, dataHandler.ImageCache.Current.GetImagePath(dataHandler.FileDatabase.FolderPath), carnassial));
                 this.ShowDialog(new RenameFileDatabaseFile(dataHandler.FileDatabase.FileName, carnassial));
                 this.ShowDialog(new DateRereadFromFiles(dataHandler.FileDatabase, carnassial));
-                this.ShowDialog(new FileCountsByQuality(dataHandler.FileDatabase.GetImageCountsByQuality(), carnassial));
+                this.ShowDialog(new FileCountsByQuality(dataHandler.FileDatabase.GetFileCountsBySelection(), carnassial));
                 this.ShowDialog(new TemplateSynchronization(dataHandler.FileDatabase.TemplateSynchronizationIssues, carnassial));
 
                 MessageBox okMessageBox = this.CreateMessageBox(carnassial, MessageBoxButton.OK, MessageBoxImage.Error);

@@ -25,20 +25,18 @@
 &#10;&#x2022; Among the files whose date/times will be adjusted the ones with the earliest and latest timestamps are shown below.
 &#10;&#x2022; The date and time format should be dd-MMM-yyyy HH:mm:ss, for example, 08-Jul-2016 14:30:00.
 &#10;&#x2022; The clock drift format should be [+-]HH:mm:ss, for example, -00:46:18."
-                            ShowExplanationVisibility="True"/>
+                            ShowExplanationVisibility="True" />
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <Rectangle Fill="#FF868686" Height="2"></Rectangle>
+            <Rectangle Fill="#FF868686" Height="1" />
         </StackPanel>
-
         <DockPanel>
             <!-- Ok/Cancel buttons-->
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
                 <Button Name="ChangesButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="ChangesButton_Click" IsEnabled="False">_Preview Changes</Button>
             </StackPanel>
-
             <!-- Content area -->
-            <Grid Name="AdjustmentEntryPanel" DockPanel.Dock="Top" Margin="10,0,10,10" >
+            <Grid Name="AdjustmentEntryPanel" DockPanel.Dock="Top" Margin="5,0,5,10" >
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -53,7 +51,7 @@
                 <Grid Grid.Row="0" Grid.Column="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -66,7 +64,7 @@
                 <Grid Grid.Row="0" Grid.Column="1">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
@@ -81,7 +79,7 @@
                 <Grid Grid.Row="1" Grid.Column="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
@@ -96,7 +94,7 @@
                 <Grid Grid.Row="1" Grid.Column="1">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
@@ -114,7 +112,7 @@
             <DockPanel Name="FeedbackPanel" Visibility="Collapsed" DockPanel.Dock="Top" Margin="10,0,10,0">
                 <DockPanel>
                     <Label FontSize="14" FontWeight="Bold" Content="The following changes to dates and times will occur if you select Apply Changes." DockPanel.Dock="Top"/>
-                    <controls:DateChangesFeedbackControl x:Name="DateUpdateFeedbackCtl" DockPanel.Dock="Bottom" />
+                    <controls:DateChangesFeedbackControl x:Name="DateTimeChangeFeedback" DockPanel.Dock="Bottom" />
                 </DockPanel>
             </DockPanel>
         </DockPanel>

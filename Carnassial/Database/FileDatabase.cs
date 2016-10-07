@@ -16,7 +16,7 @@ namespace Carnassial.Database
     {
         private DataGrid boundDataGrid;
         private bool disposed;
-        private DataRowChangeEventHandler onImageDataTableRowChanged;
+        private DataRowChangeEventHandler onFileDataTableRowChanged;
 
         public CustomSelection CustomSelection { get; private set; }
 
@@ -84,14 +84,14 @@ namespace Carnassial.Database
             return fileDatabase;
         }
 
-        /// <summary>Gets the number of images currently in the image table.</summary>
-        public int CurrentlySelectedImageCount
+        /// <summary>Gets the number of files currently in the files table.</summary>
+        public int CurrentlySelectedFileCount
         {
             get { return this.Files.RowCount; }
         }
 
         [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", Justification = "StyleCop bug.")]
-        public void AddImages(List<ImageRow> images, Action<ImageRow, int> onImageAdded)
+        public void AddFiles(List<ImageRow> files, Action<ImageRow, int> onFileAdded)
         {
             // We need to get a list of which columns are counters vs notes or fixed coices, 
             // as we will shortly have to initialize them to some defaults
@@ -123,11 +123,11 @@ namespace Carnassial.Database
 
             // Create a dataline from each of the image properties, add it to a list of data lines,
             // then do a multiple insert of the list of datalines to the database 
-            for (int image = 0; image < images.Count; image += Constants.Database.RowsPerInsert)
+            for (int image = 0; image < files.Count; image += Constants.Database.RowsPerInsert)
             {
                 List<List<ColumnTuple>> fileDataRows = new List<List<ColumnTuple>>();
                 List<List<ColumnTuple>> markerRows = new List<List<ColumnTuple>>();
-                for (int insertIndex = image; (insertIndex < (image + Constants.Database.RowsPerInsert)) && (insertIndex < images.Count); insertIndex++)
+                for (int insertIndex = image; (insertIndex < (image + Constants.Database.RowsPerInsert)) && (insertIndex < files.Count); insertIndex++)
                 {
                     List<ColumnTuple> imageRow = new List<ColumnTuple>();
                     List<ColumnTuple> markerRow = new List<ColumnTuple>();
@@ -140,7 +140,7 @@ namespace Carnassial.Database
                         }
 
                         string controlType = this.FileTableColumnsByDataLabel[columnName].ControlType;
-                        ImageRow imageProperties = images[insertIndex];
+                        ImageRow imageProperties = files[insertIndex];
                         switch (controlType)
                         {
                             case Constants.DatabaseColumn.File: // Add The File name
@@ -219,10 +219,10 @@ namespace Carnassial.Database
                 this.InsertRows(Constants.DatabaseTable.FileData, fileDataRows);
                 this.InsertRows(Constants.DatabaseTable.Markers, markerRows);
 
-                if (onImageAdded != null)
+                if (onFileAdded != null)
                 {
-                    int lastImageInserted = Math.Min(images.Count - 1, image + Constants.Database.RowsPerInsert);
-                    onImageAdded.Invoke(images[lastImageInserted], lastImageInserted);
+                    int lastImageInserted = Math.Min(files.Count - 1, image + Constants.Database.RowsPerInsert);
+                    onFileAdded.Invoke(files[lastImageInserted], lastImageInserted);
                 }
             }
 
@@ -239,7 +239,7 @@ namespace Carnassial.Database
         public void BindToDataGrid(DataGrid dataGrid, DataRowChangeEventHandler onRowChanged)
         {
             this.boundDataGrid = dataGrid;
-            this.onImageDataTableRowChanged = onRowChanged;
+            this.onFileDataTableRowChanged = onRowChanged;
             this.Files.BindDataGrid(dataGrid, onRowChanged);
         }
 
@@ -259,7 +259,7 @@ namespace Carnassial.Database
             columnDefinitions.Add(new ColumnDefinition(Constants.DatabaseColumn.ID, Constants.Sql.CreationStringPrimaryKey));  // It begins with the ID integer primary key
             foreach (ControlRow control in this.Controls)
             {
-                columnDefinitions.Add(this.CreateImageDataColumnDefinition(control));
+                columnDefinitions.Add(this.CreateFileDataColumnDefinition(control));
             }
             this.Database.CreateTable(Constants.DatabaseTable.FileData, columnDefinitions);
 
@@ -388,7 +388,7 @@ namespace Carnassial.Database
             }
         }
 
-        private ImageRow GetImage(string where)
+        private ImageRow GetFile(string where)
         {
             if (String.IsNullOrWhiteSpace(where))
             {
@@ -412,7 +412,7 @@ namespace Carnassial.Database
         public void SelectFiles(FileSelection selection)
         {
             string query = "SELECT * FROM " + Constants.DatabaseTable.FileData;
-            string where = this.GetImagesWhere(selection);
+            string where = this.GetFilesWhere(selection);
             if (String.IsNullOrEmpty(where) == false)
             {
                 query += Constants.Sql.Where + where;
@@ -424,10 +424,10 @@ namespace Carnassial.Database
 
             DataTable images = this.Database.GetDataTableFromSelect(query);
             this.Files = new FileTable(images);
-            this.Files.BindDataGrid(this.boundDataGrid, this.onImageDataTableRowChanged);
+            this.Files.BindDataGrid(this.boundDataGrid, this.onFileDataTableRowChanged);
         }
 
-        public FileTable GetImagesMarkedForDeletion()
+        public FileTable GetFilesMarkedForDeletion()
         {
             string where = this.DataLabelFromStandardControlType[Constants.DatabaseColumn.DeleteFlag] + "=\"true\""; // = value
             string query = "Select * FROM " + Constants.DatabaseTable.FileData + " WHERE " + where;
@@ -439,51 +439,51 @@ namespace Carnassial.Database
         /// Get the row matching the specified image or create a new image.  The caller is responsible to add newly created images the database and data table.
         /// </summary>
         /// <returns>true if the image is already in the database</returns>
-        public bool GetOrCreateImage(FileInfo imageFile, TimeZoneInfo imageSetTimeZone, out ImageRow imageProperties)
+        public bool GetOrCreateFile(FileInfo fileInfo, TimeZoneInfo imageSetTimeZone, out ImageRow file)
         {
             string initialRootFolderName = Path.GetFileName(this.FolderPath);
             // GetRelativePath() includes the image's file name; remove that from the relative path as it's stored separately
             // GetDirectoryName() returns String.Empty if there's no relative path; the SQL layer treats this inconsistently, resulting in 
             // DataRows returning with RelativePath = String.Empty even if null is passed despite setting String.Empty as a column default
             // resulting in RelativePath = null.  As a result, String.IsNullOrEmpty() is the appropriate test for lack of a RelativePath.
-            string relativePath = NativeMethods.GetRelativePath(this.FolderPath, imageFile.FullName);
+            string relativePath = NativeMethods.GetRelativePath(this.FolderPath, fileInfo.FullName);
             relativePath = Path.GetDirectoryName(relativePath);
 
             ColumnTuplesWithWhere imageQuery = new ColumnTuplesWithWhere();
-            imageQuery.SetWhere(initialRootFolderName, relativePath, imageFile.Name);
-            imageProperties = this.GetImage(imageQuery.Where);
+            imageQuery.SetWhere(initialRootFolderName, relativePath, fileInfo.Name);
+            file = this.GetFile(imageQuery.Where);
 
-            if (imageProperties != null)
+            if (file != null)
             {
                 return true;
             }
             else
             {
-                imageProperties = this.Files.NewRow(imageFile);
-                imageProperties.InitialRootFolderName = initialRootFolderName;
-                imageProperties.RelativePath = relativePath;
-                imageProperties.SetDateTimeOffsetFromFileInfo(this.FolderPath, imageSetTimeZone);
+                file = this.Files.NewRow(fileInfo);
+                file.InitialRootFolderName = initialRootFolderName;
+                file.RelativePath = relativePath;
+                file.SetDateTimeOffsetFromFileInfo(this.FolderPath, imageSetTimeZone);
                 return false;
             }
         }
 
-        public Dictionary<FileSelection, int> GetImageCountsByQuality()
+        public Dictionary<FileSelection, int> GetFileCountsBySelection()
         {
-            Dictionary<FileSelection, int> counts = new Dictionary<FileSelection, int>();
-            counts[FileSelection.Dark] = this.GetImageCount(FileSelection.Dark);
-            counts[FileSelection.CorruptFile] = this.GetImageCount(FileSelection.CorruptFile);
-            counts[FileSelection.FileNoLongerAvailable] = this.GetImageCount(FileSelection.FileNoLongerAvailable);
-            counts[FileSelection.Ok] = this.GetImageCount(FileSelection.Ok);
+            Dictionary<FileSelection, int> counts = new Dictionary<FileSelection, int>(4);
+            counts[FileSelection.Dark] = this.GetFileCount(FileSelection.Dark);
+            counts[FileSelection.CorruptFile] = this.GetFileCount(FileSelection.CorruptFile);
+            counts[FileSelection.FileNoLongerAvailable] = this.GetFileCount(FileSelection.FileNoLongerAvailable);
+            counts[FileSelection.Ok] = this.GetFileCount(FileSelection.Ok);
             return counts;
         }
 
-        public int GetImageCount(FileSelection imageQuality)
+        public int GetFileCount(FileSelection fileSelection)
         {
             string query = "Select Count(*) FROM " + Constants.DatabaseTable.FileData;
-            string where = this.GetImagesWhere(imageQuality);
+            string where = this.GetFilesWhere(fileSelection);
             if (String.IsNullOrEmpty(where))
             {
-                if (imageQuality == FileSelection.Custom)
+                if (fileSelection == FileSelection.Custom)
                 {
                     // if no search terms are active the image count is undefined as no filtering is in operation
                     return -1;
@@ -505,7 +505,7 @@ namespace Carnassial.Database
             this.Database.Insert(table, insertionStatements);
         }
 
-        private string GetImagesWhere(FileSelection selection)
+        private string GetFilesWhere(FileSelection selection)
         {
             switch (selection)
             {
@@ -529,10 +529,10 @@ namespace Carnassial.Database
         /// Update a column value (identified by its key) in an existing row (identified by its ID) 
         /// By default, if the table parameter is not included, we use the TABLEDATA table
         /// </summary>
-        public void UpdateImage(long id, string dataLabel, string value)
+        public void UpdateFile(long fileID, string dataLabel, string value)
         {
             // update the data table
-            ImageRow image = this.Files.Find(id);
+            ImageRow image = this.Files.Find(fileID);
             image.SetValueFromDatabaseString(dataLabel, value);
 
             // update the row in the database
@@ -540,29 +540,29 @@ namespace Carnassial.Database
 
             ColumnTuplesWithWhere columnToUpdate = new ColumnTuplesWithWhere();
             columnToUpdate.Columns.Add(new ColumnTuple(dataLabel, value)); // Populate the data 
-            columnToUpdate.SetWhere(id);
+            columnToUpdate.SetWhere(fileID);
             this.Database.Update(Constants.DatabaseTable.FileData, columnToUpdate);
         }
 
         // Set one property on all rows in the selection to a given value
-        public void UpdateImages(ImageRow valueSource, string dataLabel)
+        public void UpdateFiles(ImageRow valueSource, string dataLabel)
         {
-            this.UpdateImages(valueSource, dataLabel, 0, this.CurrentlySelectedImageCount - 1);
+            this.UpdateFiles(valueSource, dataLabel, 0, this.CurrentlySelectedFileCount - 1);
         }
 
-        public void UpdateImages(List<ColumnTuplesWithWhere> imagesToUpdate)
+        public void UpdateFiles(List<ColumnTuplesWithWhere> imagesToUpdate)
         {
             this.CreateBackupIfNeeded();
             this.Database.Update(Constants.DatabaseTable.FileData, imagesToUpdate);
         }
 
-        public void UpdateImages(ImageRow valueSource, string dataLabel, int fromIndex, int toIndex)
+        public void UpdateFiles(ImageRow valueSource, string dataLabel, int fromIndex, int toIndex)
         {
             if (fromIndex < 0)
             {
                 throw new ArgumentOutOfRangeException("fromIndex");
             }
-            if (toIndex < fromIndex || toIndex > this.CurrentlySelectedImageCount - 1)
+            if (toIndex < fromIndex || toIndex > this.CurrentlySelectedFileCount - 1)
             {
                 throw new ArgumentOutOfRangeException("toIndex");
             }
@@ -585,29 +585,29 @@ namespace Carnassial.Database
             this.Database.Update(Constants.DatabaseTable.FileData, imagesToUpdate);
         }
 
-        public void AdjustImageTimes(TimeSpan adjustment)
+        public void AdjustFileTimes(TimeSpan adjustment)
         {
-            this.AdjustImageTimes(adjustment, 0, this.CurrentlySelectedImageCount - 1);
+            this.AdjustFileDateTimes(adjustment, 0, this.CurrentlySelectedFileCount - 1);
         }
 
-        public void AdjustImageTimes(TimeSpan adjustment, int startRow, int endRow)
+        public void AdjustFileDateTimes(TimeSpan adjustment, int startRow, int endRow)
         {
             if (adjustment.Milliseconds != 0)
             {
                 throw new ArgumentOutOfRangeException("adjustment", "The current format of the time column does not support milliseconds.");
             }
-            this.AdjustImageTimes((DateTimeOffset imageTime) => { return imageTime + adjustment; }, startRow, endRow);
+            this.AdjustFileTimes((DateTimeOffset imageTime) => { return imageTime + adjustment; }, startRow, endRow);
         }
 
         // Given a time difference in ticks, update all the date/time field in the database
         // Note that it does NOT update the dataTable - this has to be done outside of this routine by regenerating the datatables with whatever selection is being used.
-        public void AdjustImageTimes(Func<DateTimeOffset, DateTimeOffset> adjustment, int startRow, int endRow)
+        public void AdjustFileTimes(Func<DateTimeOffset, DateTimeOffset> adjustment, int startRow, int endRow)
         {
-            if (this.IsImageRowInRange(startRow) == false)
+            if (this.IsFileRowInRange(startRow) == false)
             {
                 throw new ArgumentOutOfRangeException("startRow");
             }
-            if (this.IsImageRowInRange(endRow) == false)
+            if (this.IsFileRowInRange(endRow) == false)
             {
                 throw new ArgumentOutOfRangeException("endRow");
             }
@@ -615,7 +615,7 @@ namespace Carnassial.Database
             {
                 throw new ArgumentOutOfRangeException("endRow", "endRow must be greater than or equal to startRow.");
             }
-            if (this.CurrentlySelectedImageCount == 0)
+            if (this.CurrentlySelectedFileCount == 0)
             {
                 return;
             }
@@ -664,19 +664,19 @@ namespace Carnassial.Database
         // This should ONLY be called if such swapping across all dates (excepting corrupt ones) is possible
         // as otherwise it will only swap those dates it can
         // It also assumes that the data table is showing All images
-        public void ExchangeDayAndMonthInImageDates()
+        public void ExchangeDayAndMonthInFileDates()
         {
-            this.ExchangeDayAndMonthInImageDates(0, this.CurrentlySelectedImageCount - 1);
+            this.ExchangeDayAndMonthInFileDates(0, this.CurrentlySelectedFileCount - 1);
         }
 
         // Update all the date fields between the start and end index by swapping the days and months.
-        public void ExchangeDayAndMonthInImageDates(int startRow, int endRow)
+        public void ExchangeDayAndMonthInFileDates(int startRow, int endRow)
         {
-            if (this.IsImageRowInRange(startRow) == false)
+            if (this.IsFileRowInRange(startRow) == false)
             {
                 throw new ArgumentOutOfRangeException("startRow");
             }
-            if (this.IsImageRowInRange(endRow) == false)
+            if (this.IsFileRowInRange(endRow) == false)
             {
                 throw new ArgumentOutOfRangeException("endRow");
             }
@@ -684,7 +684,7 @@ namespace Carnassial.Database
             {
                 throw new ArgumentOutOfRangeException("endRow", "endRow must be greater than or equal to startRow.");
             }
-            if (this.CurrentlySelectedImageCount == 0)
+            if (this.CurrentlySelectedFileCount == 0)
             {
                 return;
             }
@@ -726,19 +726,19 @@ namespace Carnassial.Database
             }
         }
 
-        // Delete the data (including markers associated with the images identified by the list of IDs.
-        public void DeleteImages(List<long> idList)
+        // Delete the data (including markers) associated with the files identified by the list of IDs.
+        public void DeleteFilesAndMarkers(List<long> fileIDs)
         {
-            if (idList.Count < 1)
+            if (fileIDs.Count < 1)
             {
                 // nothing to do
                 return;
             }
 
             List<string> idClauses = new List<string>();
-            foreach (long id in idList)
+            foreach (long fileID in fileIDs)
             {
-                idClauses.Add(Constants.DatabaseColumn.ID + " = " + id.ToString());
+                idClauses.Add(Constants.DatabaseColumn.ID + " = " + fileID.ToString());
             }
 
             // Delete the data and markers associated with that image
@@ -748,9 +748,9 @@ namespace Carnassial.Database
         }
 
         /// <summary>A convenience routine for checking to see if the image in the given row is displayable (i.e., not corrupted or missing)</summary>
-        public bool IsImageDisplayable(int rowIndex)
+        public bool IsFileDisplayable(int rowIndex)
         {
-            if (this.IsImageRowInRange(rowIndex) == false)
+            if (this.IsFileRowInRange(rowIndex) == false)
             {
                 return false;
             }
@@ -758,25 +758,25 @@ namespace Carnassial.Database
             return this.Files[rowIndex].IsDisplayable();
         }
 
-        public bool IsImageRowInRange(int imageRowIndex)
+        public bool IsFileRowInRange(int imageRowIndex)
         {
-            return (imageRowIndex >= 0) && (imageRowIndex < this.CurrentlySelectedImageCount) ? true : false;
+            return (imageRowIndex >= 0) && (imageRowIndex < this.CurrentlySelectedFileCount) ? true : false;
         }
 
         // Find the next displayable image after the provided row in the current image set
         // If there is no next displayable image, then find the first previous image before the provided row that is dispay
         public int FindFirstDisplayableImage(int firstRowInSearch)
         {
-            for (int row = firstRowInSearch; row < this.CurrentlySelectedImageCount; row++)
+            for (int row = firstRowInSearch; row < this.CurrentlySelectedFileCount; row++)
             {
-                if (this.IsImageDisplayable(row))
+                if (this.IsFileDisplayable(row))
                 {
                     return row;
                 }
             }
             for (int row = firstRowInSearch - 1; row >= 0; row--)
             {
-                if (this.IsImageDisplayable(row))
+                if (this.IsFileDisplayable(row))
                 {
                     return row;
                 }
@@ -784,19 +784,19 @@ namespace Carnassial.Database
             return -1;
         }
 
-        // Find the image whose ID is closest to the provided ID  in the current image set
-        // If the ID does not exist, then return the image row whose ID is just greater than the provided one. 
+        // Find the file whose ID is closest to the provided ID  in the current image set
+        // If the ID does not exist, then return the file whose ID is just greater than the provided one. 
         // However, if there is no greater ID (i.e., we are at the end) return the last row. 
-        public int FindClosestImageRow(long id)
+        public int FindClosestImageRow(long fileID)
         {
-            for (int rowIndex = 0; rowIndex < this.CurrentlySelectedImageCount; ++rowIndex)
+            for (int rowIndex = 0; rowIndex < this.CurrentlySelectedFileCount; ++rowIndex)
             {
-                if (this.Files[rowIndex].ID >= id)
+                if (this.Files[rowIndex].ID >= fileID)
                 {
                     return rowIndex;
                 }
             }
-            return this.CurrentlySelectedImageCount - 1;
+            return this.CurrentlySelectedFileCount - 1;
         }
 
         public string GetControlDefaultValue(string dataLabel)
@@ -806,7 +806,7 @@ namespace Carnassial.Database
             return control.DefaultValue;
         }
 
-        public List<string> GetDistinctValuesInImageColumn(string dataLabel)
+        public List<string> GetDistinctValuesInFileColumn(string dataLabel)
         {
             List<string> distinctValues = new List<string>();
             foreach (object value in this.Database.GetDistinctValuesInColumn(Constants.DatabaseTable.FileData, dataLabel))
@@ -824,13 +824,13 @@ namespace Carnassial.Database
         }
 
         /// <summary>
-        /// Get all markers for the specified image.
+        /// Get all markers for the specified file.
         /// </summary>
         /// <returns>list of counters having an entry for each counter even if there are no markers </returns>
-        public List<MarkersForCounter> GetMarkersOnImage(long imageID)
+        public List<MarkersForCounter> GetMarkersOnFile(long fileID)
         {
             List<MarkersForCounter> markersForAllCounters = new List<MarkersForCounter>();
-            MarkerRow markersForImage = this.Markers.Find(imageID);
+            MarkerRow markersForImage = this.Markers.Find(fileID);
             if (markersForImage == null)
             {
                 // if no counter controls are defined no rows are added to the marker table
@@ -931,7 +931,7 @@ namespace Carnassial.Database
             this.disposed = true;
         }
 
-        private ColumnDefinition CreateImageDataColumnDefinition(ControlRow control)
+        private ColumnDefinition CreateFileDataColumnDefinition(ControlRow control)
         {
             if (control.DataLabel == Constants.DatabaseColumn.DateTime)
             {
