@@ -15,7 +15,7 @@ using MetadataDirectory = MetadataExtractor.Directory;
 namespace Carnassial.Database
 {
     /// <summary>
-    /// A row in the image database representing a single image.
+    /// A row in the file database representing a single image.
     /// </summary>
     public class ImageRow : DataRowBackedObject
     {
@@ -26,27 +26,27 @@ namespace Carnassial.Database
 
         public DateTime DateTime
         {
-            get { return this.Row.GetDateTimeField(Constants.DatabaseColumn.DateTime); }
-            private set { this.Row.SetField(Constants.DatabaseColumn.DateTime, value); }
+            get { return this.Row.GetDateTimeField(Constant.DatabaseColumn.DateTime); }
+            private set { this.Row.SetField(Constant.DatabaseColumn.DateTime, value); }
         }
 
         public bool DeleteFlag
         {
-            get { return this.Row.GetBooleanField(Constants.DatabaseColumn.DeleteFlag); }
-            set { this.Row.SetField(Constants.DatabaseColumn.DeleteFlag, value); }
+            get { return this.Row.GetBooleanField(Constant.DatabaseColumn.DeleteFlag); }
+            set { this.Row.SetField(Constant.DatabaseColumn.DeleteFlag, value); }
         }
 
         public string FileName
         {
-            get { return this.Row.GetStringField(Constants.DatabaseColumn.File); }
-            set { this.Row.SetField(Constants.DatabaseColumn.File, value); }
+            get { return this.Row.GetStringField(Constant.DatabaseColumn.File); }
+            set { this.Row.SetField(Constant.DatabaseColumn.File, value); }
         }
 
         public FileSelection ImageQuality
         {
             get
             {
-                return this.Row.GetEnumField<FileSelection>(Constants.DatabaseColumn.ImageQuality);
+                return this.Row.GetEnumField<FileSelection>(Constant.DatabaseColumn.ImageQuality);
             }
             set
             {
@@ -56,7 +56,7 @@ namespace Carnassial.Database
                     case FileSelection.Dark:
                     case FileSelection.FileNoLongerAvailable:
                     case FileSelection.Ok:
-                        this.Row.SetField<FileSelection>(Constants.DatabaseColumn.ImageQuality, value);
+                        this.Row.SetField<FileSelection>(Constant.DatabaseColumn.ImageQuality, value);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException("value", String.Format("{0} is not an ImageQuality.  ImageQuality must be one of CorruptFile, Dark, FileNoLongerAvailable, or Ok.", value));
@@ -69,39 +69,33 @@ namespace Carnassial.Database
             get { return false; }
         }
 
-        public string InitialRootFolderName
-        {
-            get { return this.Row.GetStringField(Constants.DatabaseColumn.Folder); }
-            set { this.Row.SetField(Constants.DatabaseColumn.Folder, value); }
-        }
-
         public string RelativePath
         {
-            get { return this.Row.GetStringField(Constants.DatabaseColumn.RelativePath); }
-            set { this.Row.SetField(Constants.DatabaseColumn.RelativePath, value); }
+            get { return this.Row.GetStringField(Constant.DatabaseColumn.RelativePath); }
+            set { this.Row.SetField(Constant.DatabaseColumn.RelativePath, value); }
         }
 
         public TimeSpan UtcOffset
         {
-            get { return this.Row.GetUtcOffsetField(Constants.DatabaseColumn.UtcOffset); }
-            private set { this.Row.SetUtcOffsetField(Constants.DatabaseColumn.UtcOffset, value); }
+            get { return this.Row.GetUtcOffsetField(Constant.DatabaseColumn.UtcOffset); }
+            private set { this.Row.SetUtcOffsetField(Constant.DatabaseColumn.UtcOffset, value); }
         }
 
         public override ColumnTuplesWithWhere GetColumnTuples()
         {
             ColumnTuplesWithWhere columnTuples = this.GetDateTimeColumnTuples();
-            columnTuples.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.File, this.FileName));
-            columnTuples.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.ImageQuality, this.ImageQuality.ToString()));
-            columnTuples.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.Folder, this.InitialRootFolderName));
-            columnTuples.Columns.Add(new ColumnTuple(Constants.DatabaseColumn.RelativePath, this.RelativePath));
+            columnTuples.Columns.Add(new ColumnTuple(Constant.DatabaseColumn.File, this.FileName));
+            columnTuples.Columns.Add(new ColumnTuple(Constant.DatabaseColumn.ImageQuality, this.ImageQuality.ToString()));
+            columnTuples.Columns.Add(new ColumnTuple(Constant.DatabaseColumn.RelativePath, this.RelativePath));
+            columnTuples.Columns.Add(new ColumnTuple(Constant.DatabaseColumn.DeleteFlag, this.DeleteFlag));
             return columnTuples;
         }
 
         public ColumnTuplesWithWhere GetDateTimeColumnTuples()
         {
-            List<ColumnTuple> columnTuples = new List<ColumnTuple>(3);
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.DateTime, this.DateTime));
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.UtcOffset, this.UtcOffset));
+            List<ColumnTuple> columnTuples = new List<ColumnTuple>(2);
+            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.DateTime, this.DateTime));
+            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.UtcOffset, this.UtcOffset));
             return new ColumnTuplesWithWhere(columnTuples, this.ID);
         }
 
@@ -117,10 +111,10 @@ namespace Carnassial.Database
 
         public FileInfo GetFileInfo(string rootFolderPath)
         {
-            return new FileInfo(this.GetImagePath(rootFolderPath));
+            return new FileInfo(this.GetFilePath(rootFolderPath));
         }
 
-        public string GetImagePath(string rootFolderPath)
+        public string GetFilePath(string rootFolderPath)
         {
             // see RelativePath remarks in constructor
             if (String.IsNullOrEmpty(this.RelativePath))
@@ -134,7 +128,7 @@ namespace Carnassial.Database
         {
             switch (dataLabel)
             {
-                case Constants.DatabaseColumn.DateTime:
+                case Constant.DatabaseColumn.DateTime:
                     return DateTimeHandler.ToDatabaseDateTimeString(this.DateTime);
                 default:
                     return this.GetValueDisplayString(dataLabel);
@@ -145,11 +139,11 @@ namespace Carnassial.Database
         {
             switch (dataLabel)
             {
-                case Constants.DatabaseColumn.DateTime:
+                case Constant.DatabaseColumn.DateTime:
                     return this.GetDisplayDateTime();
-                case Constants.DatabaseColumn.UtcOffset:
+                case Constant.DatabaseColumn.UtcOffset:
                     return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
-                case Constants.DatabaseColumn.ImageQuality:
+                case Constant.DatabaseColumn.ImageQuality:
                     return this.ImageQuality.ToString();
                 default:
                     return this.Row.GetStringField(dataLabel);
@@ -165,17 +159,17 @@ namespace Carnassial.Database
             return true;
         }
 
-        public BitmapSource LoadBitmap(string imageFolderPath)
+        public BitmapSource LoadBitmap(string baseFolderPath)
         {
-            return this.LoadBitmap(imageFolderPath, null);
+            return this.LoadBitmap(baseFolderPath, null);
         }
 
-        public virtual BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth)
+        public virtual BitmapSource LoadBitmap(string baseFolderPath, Nullable<int> desiredWidth)
         {
-            string path = this.GetImagePath(imageFolderPath);
+            string path = this.GetFilePath(baseFolderPath);
             if (!File.Exists(path))
             {
-                return Constants.Images.FileNoLongerAvailable;
+                return Constant.Images.FileNoLongerAvailable;
             }
 
             try
@@ -184,7 +178,7 @@ namespace Carnassial.Database
                 {
                     // All of WPF's image loading assumes, problematically, the file loaded will never need to be deleted or moved on disk until such time as
                     // as all WPF references to it have been garbage collected.  This is not the case for many applications including, in Carnassial, when the
-                    // user soft deletes the current image or all images marked for deletion.  Disposing a BitmapImage's StreamSource in principle avoids the 
+                    // user soft deletes the current file or all files marked for deletion.  Disposing a BitmapImage's StreamSource in principle avoids the 
                     // problem but either WPF or the semi-asynchronous nature of the filesystem prevents success in practice.  The simplest workaround's to give
                     // WPF only a MemoryStream and dispose the FileStream promptly so WPF never gets a file handle to hold on to and the risk of file system 
                     // races is mitigated.
@@ -207,7 +201,7 @@ namespace Carnassial.Database
             catch (Exception exception)
             {
                 Debug.Fail(String.Format("LoadBitmap: Loading of {0} failed.", this.FileName), exception.ToString());
-                return Constants.Images.CorruptFile;
+                return Constant.Images.CorruptFile;
             }
         }
 
@@ -225,8 +219,8 @@ namespace Carnassial.Database
             // in the image file on the computer having a write time which is before its creation time.  Check both and take the lesser 
             // of the two to provide a best effort default.  In most cases it's desirable to see if a more accurate time can be obtained
             // from the image's EXIF metadata.
-            FileInfo imageFile = this.GetFileInfo(folderPath);
-            DateTime earliestTimeLocal = imageFile.CreationTime < imageFile.LastWriteTime ? imageFile.CreationTime : imageFile.LastWriteTime;
+            FileInfo fileInfo = this.GetFileInfo(folderPath);
+            DateTime earliestTimeLocal = fileInfo.CreationTime < fileInfo.LastWriteTime ? fileInfo.CreationTime : fileInfo.LastWriteTime;
             this.SetDateTimeOffset(new DateTimeOffset(earliestTimeLocal));
         }
 
@@ -234,13 +228,13 @@ namespace Carnassial.Database
         {
             switch (dataLabel)
             {
-                case Constants.DatabaseColumn.DateTime:
+                case Constant.DatabaseColumn.DateTime:
                     this.DateTime = DateTimeHandler.ParseDatabaseDateTimeString(value);
                     break;
-                case Constants.DatabaseColumn.UtcOffset:
+                case Constant.DatabaseColumn.UtcOffset:
                     this.UtcOffset = DateTimeHandler.ParseDatabaseUtcOffsetString(value);
                     break;
-                case Constants.DatabaseColumn.ImageQuality:
+                case Constant.DatabaseColumn.ImageQuality:
                     this.ImageQuality = (FileSelection)Enum.Parse(typeof(FileSelection), value);
                     break;
                 default:
@@ -250,25 +244,25 @@ namespace Carnassial.Database
         }
 
         /// <summary>
-        /// Move the file to the deleted images folder.
+        /// Move corresponding file to the deleted files folder.
         /// </summary>
-        public bool TryMoveFileToDeletedImagesFolder(string folderPath)
+        public bool TryMoveFileToDeletedFilesFolder(string folderPath)
         {
-            string sourceFilePath = this.GetImagePath(folderPath);
+            string sourceFilePath = this.GetFilePath(folderPath);
             if (!File.Exists(sourceFilePath))
             {
                 return false;  // If there is no source file, its a missing file so we can't back it up
             }
 
             // Create a new target folder, if necessary.
-            string deletedImagesFolderPath = Path.Combine(folderPath, Constants.File.DeletedFilesFolder);
-            if (!Directory.Exists(deletedImagesFolderPath))
+            string deletedFilesFolderPath = Path.Combine(folderPath, Constant.File.DeletedFilesFolder);
+            if (!Directory.Exists(deletedFilesFolderPath))
             {
-                Directory.CreateDirectory(deletedImagesFolderPath);
+                Directory.CreateDirectory(deletedFilesFolderPath);
             }
 
-            // Move the image file to the backup location.           
-            string destinationFilePath = Path.Combine(deletedImagesFolderPath, this.FileName);
+            // Move the file to the backup location.           
+            string destinationFilePath = Path.Combine(deletedFilesFolderPath, this.FileName);
             if (File.Exists(destinationFilePath))
             {
                 try
@@ -298,7 +292,7 @@ namespace Carnassial.Database
 
         public DateTimeAdjustment TryReadDateTimeOriginalFromMetadata(string folderPath, TimeZoneInfo imageSetTimeZone)
         {
-            IList<MetadataDirectory> metadataDirectories = ImageMetadataReader.ReadMetadata(this.GetImagePath(folderPath));
+            IList<MetadataDirectory> metadataDirectories = ImageMetadataReader.ReadMetadata(this.GetFilePath(folderPath));
             ExifSubIfdDirectory exifSubIfd = metadataDirectories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
             if (exifSubIfd == null)
             {
@@ -315,7 +309,7 @@ namespace Carnassial.Database
             }
             DateTimeOffset exifDateTime = DateTimeHandler.CreateDateTimeOffset(dateTimeOriginal, imageSetTimeZone);
 
-            // measure the extent to which the image file time and image taken metadata are consistent
+            // measure the extent to which the file time and image taken metadata are consistent
             DateTimeOffset currentDateTime = this.GetDateTime();
             bool dateAdjusted = currentDateTime.Date != exifDateTime.Date;
             bool timeAdjusted = currentDateTime.TimeOfDay != exifDateTime.TimeOfDay;

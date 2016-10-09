@@ -10,7 +10,7 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void RequiredBinaries()
         {
-            Assert.IsTrue(Dependencies.AreRequiredBinariesPresent(Constants.ApplicationName, this.GetType().Assembly));
+            Assert.IsTrue(Dependencies.AreRequiredBinariesPresent(Constant.ApplicationName, this.GetType().Assembly));
             Assert.IsTrue(Dependencies.AreRequiredBinariesPresent(EditorConstant.ApplicationName, this.GetType().Assembly));
         }
     }

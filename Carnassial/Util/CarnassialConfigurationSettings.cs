@@ -20,7 +20,7 @@ namespace Carnassial.Util
 
         public static Uri GetReleasesAddress()
         {
-            return CarnassialConfigurationSettings.GetUriSetting(Constants.ApplicationSettings.ReleasesAddress);
+            return CarnassialConfigurationSettings.GetUriSetting(Constant.ApplicationSettings.ReleasesAddress);
         }
 
         private static Uri GetUriSetting(string key)

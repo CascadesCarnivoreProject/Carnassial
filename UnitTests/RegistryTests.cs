@@ -25,7 +25,7 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void CarnassialTestKeysCreateReuseUpdate()
         {
-            string testRootKey = Constants.Registry.RootKey + "CarnassialUnitTest";
+            string testRootKey = Constant.Registry.RootKey + "CarnassialUnitTest";
             using (RegistryKey testKey = Registry.CurrentUser.OpenSubKey(testRootKey))
             {
                 if (testKey != null)
@@ -51,14 +51,13 @@ namespace Carnassial.UnitTests
             userSettings.AudioFeedback = true;
             int windowLocation = 100; 
             int windowSize = 1000;
-            userSettings.CarnassialWindowLocation = new Point(windowLocation, windowLocation);
-            userSettings.CarnassialWindowSize = new Size(windowSize, windowSize);
+            userSettings.CarnassialWindowPosition = new Rect(windowLocation, windowLocation, windowSize, windowSize);
             userSettings.CustomSelectionTermCombiningOperator = Database.CustomSelectionOperator.Or;
             double modifiedDarkPixelRatioThreshold = userSettings.DarkPixelRatioThreshold + 1.0;
             userSettings.DarkPixelRatioThreshold = modifiedDarkPixelRatioThreshold;
             int modifiedDarkPixelThreshold = userSettings.DarkPixelThreshold + 1;
             userSettings.DarkPixelThreshold = modifiedDarkPixelThreshold;
-            string databasePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultFileDatabaseFileName);
+            string databasePath = Path.Combine(this.WorkingDirectory, Constant.File.DefaultFileDatabaseFileName);
             userSettings.MostRecentImageSets.SetMostRecent(databasePath);
             userSettings.OrderFilesByDateTime = true;
             userSettings.SkipDarkImagesCheck = true;
@@ -75,14 +74,14 @@ namespace Carnassial.UnitTests
             userSettings.SuppressSelectedPopulateFieldFromMetadataPrompt = true;
             userSettings.SuppressSelectedRereadDatesFromFilesPrompt = true;
             userSettings.SuppressSelectedSetTimeZonePrompt = true;
-            userSettings.Throttles.SetDesiredImageRendersPerSecond(Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
+            userSettings.Throttles.SetDesiredImageRendersPerSecond(Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
 
             userSettings.WriteToRegistry();
             userSettings.ReadFromRegistry();
 
             Assert.IsTrue(userSettings.AudioFeedback);
-            Assert.IsTrue(userSettings.CarnassialWindowLocation.X == windowLocation && userSettings.CarnassialWindowLocation.Y == windowLocation);
-            Assert.IsTrue(userSettings.CarnassialWindowSize.Width == windowSize && userSettings.CarnassialWindowSize.Height == windowSize);
+            Assert.IsTrue(userSettings.CarnassialWindowPosition.X == windowLocation && userSettings.CarnassialWindowPosition.Y == windowLocation);
+            Assert.IsTrue(userSettings.CarnassialWindowPosition.Width == windowSize && userSettings.CarnassialWindowPosition.Height == windowSize);
             Assert.IsTrue(userSettings.CustomSelectionTermCombiningOperator == Database.CustomSelectionOperator.Or);
             Assert.IsTrue(userSettings.DarkPixelRatioThreshold == modifiedDarkPixelRatioThreshold);
             Assert.IsTrue(userSettings.DarkPixelThreshold == modifiedDarkPixelThreshold);
@@ -106,7 +105,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.SuppressSelectedPopulateFieldFromMetadataPrompt);
             Assert.IsTrue(userSettings.SuppressSelectedRereadDatesFromFilesPrompt);
             Assert.IsTrue(userSettings.SuppressSelectedSetTimeZonePrompt);
-            Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
+            Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
 
             Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
         }
@@ -123,7 +122,7 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void EditorTestKeysCreateReuseUpdate()
         {
-            string testRootKey = Constants.Registry.RootKey + "EditorUnitTest";
+            string testRootKey = Constant.Registry.RootKey + "EditorUnitTest";
             using (RegistryKey testKey = Registry.CurrentUser.OpenSubKey(testRootKey))
             {
                 if (testKey != null)
@@ -150,7 +149,7 @@ namespace Carnassial.UnitTests
             editorRegistry.WriteToRegistry();
 
             // modify
-            string templatePath = Path.Combine(this.WorkingDirectory, Constants.File.DefaultTemplateDatabaseFileName);
+            string templatePath = Path.Combine(this.WorkingDirectory, Constant.File.DefaultTemplateDatabaseFileName);
             editorRegistry.MostRecentTemplates.SetMostRecent(templatePath);
             editorRegistry.WriteToRegistry();
             editorRegistry.ReadFromRegistry();
@@ -271,11 +270,11 @@ namespace Carnassial.UnitTests
         private void VerifyDefaultState(CarnassialUserRegistrySettings userSettings)
         {
             Assert.IsFalse(userSettings.AudioFeedback);
-            Assert.IsTrue(userSettings.CarnassialWindowLocation.X == 0 && userSettings.CarnassialWindowLocation.Y == 0);
-            Assert.IsTrue(userSettings.CarnassialWindowSize.Width == 1350 && userSettings.CarnassialWindowSize.Height == 900);
-            Assert.IsTrue(userSettings.DarkPixelRatioThreshold == Constants.Images.DarkPixelRatioThresholdDefault);
-            Assert.IsTrue(userSettings.DarkPixelThreshold == Constants.Images.DarkPixelThresholdDefault);
-            Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
+            Assert.IsTrue(userSettings.CarnassialWindowPosition.X == 0 && userSettings.CarnassialWindowPosition.Y == 0);
+            Assert.IsTrue(userSettings.CarnassialWindowPosition.Width == 1350 && userSettings.CarnassialWindowPosition.Height == 900);
+            Assert.IsTrue(userSettings.DarkPixelRatioThreshold == Constant.Images.DarkPixelRatioThresholdDefault);
+            Assert.IsTrue(userSettings.DarkPixelThreshold == Constant.Images.DarkPixelThresholdDefault);
+            Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
             Assert.IsNotNull(userSettings.MostRecentImageSets);
             Assert.IsTrue(userSettings.MostRecentImageSets.Count == 0);
             string mostRecentDatabasePath;

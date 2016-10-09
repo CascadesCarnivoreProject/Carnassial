@@ -10,7 +10,6 @@
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
     AutomationProperties.AutomationId="Carnassial"
-    Title="Carnassial: Helping You Analyze Images and Videos Captured from Field Cameras"  
     Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown" 
     Height="900" Width="1350"
     WindowState="Normal" Icon="32x32.ico">
@@ -120,12 +119,12 @@
 
             <!-- Select menu -->
             <MenuItem Name="MenuItemSelect" Header="_Select" IsEnabled="false" IsTabStop="false" SubmenuOpened="MenuItemSelect_SubmenuOpening" ToolTip="Select a subset of the files.">
-                <MenuItem Name="MenuItemSelectAllImages" IsCheckable="True" IsChecked="True" Header="_All files" Click="MenuItemSelect_Click" ToolTip="Shows all files, including corrupted and dark ones." />
-                <MenuItem Name="MenuItemSelectLightImages" IsCheckable="True" IsChecked="False" Header="_Light files" Click="MenuItemSelect_Click" ToolTip="Exlcudes dark, corrupted, or missing files." />
-                <MenuItem Name="MenuItemSelectDarkImages" IsCheckable="True" IsChecked="False" Header="_Dark files" Click="MenuItemSelect_Click" ToolTip="Show only dark images." />
-                <MenuItem Name="MenuItemSelectCorruptedImages" IsCheckable="True" IsChecked="False" Header="_Corrupted files" Click="MenuItemSelect_Click" ToolTip="Show only corrupted images." />
-                <MenuItem Name="MenuItemSelectFilesNoLongerAvailable" IsCheckable="True" IsChecked="False" Header="_Missing files" Click="MenuItemSelect_Click" ToolTip="Show records for files no longer available." />
-                <MenuItem Name="MenuItemSelectImagesMarkedForDeletion" IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion" Click="MenuItemSelect_Click" ToolTip="Show only those marked for deletion." />
+                <MenuItem Name="MenuItemSelectAllFiles" IsCheckable="True" IsChecked="True" Header="_All files" Click="MenuItemSelectFiles_Click" ToolTip="Shows all files, including corrupted and dark ones." />
+                <MenuItem Name="MenuItemSelectOkFiles" IsCheckable="True" IsChecked="False" Header="_Light files" Click="MenuItemSelectFiles_Click" ToolTip="Exlcudes dark, corrupted, or missing files." />
+                <MenuItem Name="MenuItemSelectDarkFiles" IsCheckable="True" IsChecked="False" Header="_Dark files" Click="MenuItemSelectFiles_Click" ToolTip="Show only dark images." />
+                <MenuItem Name="MenuItemSelectCorruptedFiles" IsCheckable="True" IsChecked="False" Header="_Corrupted files" Click="MenuItemSelectFiles_Click" ToolTip="Show only corrupted images." />
+                <MenuItem Name="MenuItemSelectFilesNoLongerAvailable" IsCheckable="True" IsChecked="False" Header="_Missing files" Click="MenuItemSelectFiles_Click" ToolTip="Show records for files no longer available." />
+                <MenuItem Name="MenuItemSelectFilesMarkedForDeletion" IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion" Click="MenuItemSelectFiles_Click" ToolTip="Show only those marked for deletion." />
                 <MenuItem Name="MenuItemSelectCustom" IsCheckable="True" IsChecked="False" Header="_Custom selection..." Click="MenuItemSelectCustomSelection_Click" ToolTip="Create a custom selection." />
                 <Separator />
                 <MenuItem Name="MenuItemImageCounts" Header="Show _file counts..." Click="MenuItemImageCounts_Click" ToolTip="Displays statistics on the number of files and their types." />
@@ -162,7 +161,7 @@
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
                                     <controls:FeedbackControl x:Name="FeedbackControl" Grid.Row="0" Visibility="Collapsed" />
-                                    <Slider Name="ImageNavigatorSlider" Grid.Row="1" Minimum="0" Maximum="0" IsSnapToTickEnabled="True" TickFrequency="1" LargeChange="1" ToolTip="Scroll through all files" Margin="5,0,5,0"
+                                    <Slider Name="FileNavigatorSlider" Grid.Row="1" Minimum="0" Maximum="0" IsSnapToTickEnabled="True" TickFrequency="1" LargeChange="1" ToolTip="Scroll through all files" Margin="5,0,5,0"
                                             Thumb.DragStarted="ImageNavigatorSlider_DragStarted" 
                                             Thumb.DragCompleted="ImageNavigatorSlider_DragCompleted"
                                             ValueChanged="ImageNavigatorSlider_ValueChanged" />

@@ -55,8 +55,8 @@ namespace Carnassial.Dialog
 
             foreach (ControlRow control in this.database.Controls)
             {
-                if (control.Type == Constants.DatabaseColumn.DateTime ||
-                    control.Type == Constants.Control.Note)
+                if (control.Type == Constant.DatabaseColumn.DateTime ||
+                    control.Type == Constant.Control.Note)
                 {
                     this.dataLabelByLabel.Add(control.Label, control.DataLabel);
                     this.DataFields.Items.Add(control.Label);
@@ -146,13 +146,13 @@ namespace Carnassial.Dialog
                 for (int imageIndex = 0; imageIndex < database.CurrentlySelectedFileCount; ++imageIndex)
                 {
                     ImageRow image = database.Files[imageIndex];
-                    Dictionary<string, string> metadata = Utilities.LoadMetadata(image.GetImagePath(database.FolderPath));
+                    Dictionary<string, string> metadata = Utilities.LoadMetadata(image.GetFilePath(database.FolderPath));
                     if (metadata.ContainsKey(this.metadataFieldName) == false)
                     {
                         if (this.clearIfNoMetadata)
                         {
                             // Clear the data field if there is no metadata...
-                            if (dataLabelToUpdate == Constants.DatabaseColumn.DateTime)
+                            if (dataLabelToUpdate == Constant.DatabaseColumn.DateTime)
                             {
                                 image.SetDateTimeOffsetFromFileInfo(this.database.FolderPath, imageSetTimeZone);
                                 imagesToUpdate.Add(image.GetDateTimeColumnTuples());
@@ -174,7 +174,7 @@ namespace Carnassial.Dialog
 
                     string metadataValue = metadata[this.metadataFieldName];
                     ColumnTuplesWithWhere imageUpdate;
-                    if (dataLabelToUpdate == Constants.DatabaseColumn.DateTime)
+                    if (dataLabelToUpdate == Constant.DatabaseColumn.DateTime)
                     {
                         DateTimeOffset metadataDateTime;
                         if (DateTimeHandler.TryParseMetadataDateTaken(metadataValue, imageSetTimeZone, out metadataDateTime))
@@ -196,9 +196,9 @@ namespace Carnassial.Dialog
                     }
                     imagesToUpdate.Add(imageUpdate);
 
-                    if (imageIndex % Constants.ThrottleValues.SleepForImageRenderInterval == 0)
+                    if (imageIndex % Constant.ThrottleValues.SleepForImageRenderInterval == 0)
                     {
-                        Thread.Sleep(Constants.ThrottleValues.RenderingBackoffTime); // Put in a short delay every now and then, as otherwise the UI may not update.
+                        Thread.Sleep(Constant.ThrottleValues.RenderingBackoffTime); // Put in a short delay every now and then, as otherwise the UI may not update.
                     }
                 }
 

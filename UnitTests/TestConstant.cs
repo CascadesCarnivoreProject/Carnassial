@@ -16,37 +16,36 @@ namespace Carnassial.UnitTests
         public const string InitializeDataGridMethodName = "InitializeDataGrid";
         public const string MessageBoxAutomationID = "CarnassialMessageBox";
         public const string OkButtonAutomationID = "OkButton";
+        public const string ShowFileWithoutSliderCallbackMethodName = "ShowFileWithoutSliderCallback";
         public const string TemplatePaneAutomationID = "TemplatePane";
-        public const string TryShowImageWithoutSliderCallbackMethodName = "TryShowImageWithoutSliderCallback";
 
         public static readonly TimeSpan UIElementSearchTimeout = TimeSpan.FromSeconds(15.0);
 
         public static readonly ReadOnlyCollection<string> ControlsColumns = new List<string>()
             {
-                Constants.Control.ControlOrder,
-                Constants.Control.SpreadsheetOrder,
-                Constants.Control.DefaultValue,
-                Constants.Control.Label,
-                Constants.Control.DataLabel,
-                Constants.Control.Tooltip,
-                Constants.Control.Width,
-                Constants.Control.Copyable,
-                Constants.Control.Visible,
-                Constants.Control.List,
-                Constants.DatabaseColumn.ID,
-                Constants.Control.Type
+                Constant.Control.ControlOrder,
+                Constant.Control.SpreadsheetOrder,
+                Constant.Control.DefaultValue,
+                Constant.Control.Label,
+                Constant.Control.DataLabel,
+                Constant.Control.Tooltip,
+                Constant.Control.Width,
+                Constant.Control.Copyable,
+                Constant.Control.Visible,
+                Constant.Control.List,
+                Constant.DatabaseColumn.ID,
+                Constant.Control.Type
             }.AsReadOnly();
 
         public static readonly ReadOnlyCollection<string> DefaultFileDataColumns = new List<string>()
         {
-            Constants.DatabaseColumn.ID,
-            Constants.DatabaseColumn.File,
-            Constants.DatabaseColumn.RelativePath,
-            Constants.DatabaseColumn.Folder,
-            Constants.DatabaseColumn.DateTime,
-            Constants.DatabaseColumn.UtcOffset,
-            Constants.DatabaseColumn.ImageQuality,
-            Constants.DatabaseColumn.DeleteFlag,
+            Constant.DatabaseColumn.ID,
+            Constant.DatabaseColumn.File,
+            Constant.DatabaseColumn.RelativePath,
+            Constant.DatabaseColumn.DateTime,
+            Constant.DatabaseColumn.UtcOffset,
+            Constant.DatabaseColumn.ImageQuality,
+            Constant.DatabaseColumn.DeleteFlag,
             TestConstant.DefaultDatabaseColumn.Counter0,
             TestConstant.DefaultDatabaseColumn.Choice0,
             TestConstant.DefaultDatabaseColumn.Note0,
@@ -67,7 +66,7 @@ namespace Carnassial.UnitTests
 
         public static readonly ReadOnlyCollection<string> DefaultMarkerColumns = new List<string>()
         {
-            Constants.DatabaseColumn.ID,
+            Constant.DatabaseColumn.ID,
             TestConstant.DefaultDatabaseColumn.Counter0,
             TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel,
             TestConstant.DefaultDatabaseColumn.CounterNotVisible,
@@ -76,7 +75,7 @@ namespace Carnassial.UnitTests
 
         public static readonly ReadOnlyCollection<string> ImageSetColumns = new List<string>()
         {
-            Constants.DatabaseColumn.ID,
+            Constant.DatabaseColumn.ID,
         }.AsReadOnly();
 
         public static class CarnivoreDatabaseColumn
@@ -159,18 +158,18 @@ namespace Carnassial.UnitTests
             public const string DefaultNewTemplateDatabaseFileName = "DefaultUnitTest.tdb";
         }
 
-        public static class ImageExpectation
+        public static class FileExpectation
         {
             public static readonly FileExpectations DaylightBobcat;
             public static readonly FileExpectations DaylightCoyote;
             public static readonly FileExpectations DaylightMartenPair;
             public static readonly FileExpectations InfraredMarten;
 
-            static ImageExpectation()
+            static FileExpectation()
             {
                 TimeZoneInfo pacificTime = TimeZoneInfo.FindSystemTimeZoneById(TestConstant.TimeZone.Pacific);
 
-                ImageExpectation.DaylightBobcat = new FileExpectations(pacificTime)
+                FileExpectation.DaylightBobcat = new FileExpectations(pacificTime)
                 {
                     DarkPixelFraction = 0.242364344315876,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-08-05T08:06:23.000-07:00"),
@@ -179,7 +178,7 @@ namespace Carnassial.UnitTests
                     Quality = FileSelection.Ok
                 };
 
-                ImageExpectation.DaylightCoyote = new FileExpectations(pacificTime)
+                FileExpectation.DaylightCoyote = new FileExpectations(pacificTime)
                 {
                     DarkPixelFraction = 0.610071236552411,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-04-21T06:31:13.000-07:00"),
@@ -189,7 +188,7 @@ namespace Carnassial.UnitTests
                     RelativePath = TestConstant.File.CarnivoreDirectoryName
                 };
 
-                ImageExpectation.DaylightMartenPair = new FileExpectations(pacificTime)
+                FileExpectation.DaylightMartenPair = new FileExpectations(pacificTime)
                 {
                     DarkPixelFraction = 0.705627292783256,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-01-28T11:17:34.000-08:00"),
@@ -199,7 +198,7 @@ namespace Carnassial.UnitTests
                     RelativePath = TestConstant.File.CarnivoreDirectoryName,
                 };
 
-                ImageExpectation.InfraredMarten = new FileExpectations(pacificTime)
+                FileExpectation.InfraredMarten = new FileExpectations(pacificTime)
                 {
                     DarkPixelFraction = 0.077128711384332,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-02-24T04:59:46.000-08:00"),

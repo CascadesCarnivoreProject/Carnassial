@@ -25,7 +25,7 @@
 &#10;&#x2022; Among the files whose date/times will be adjusted the ones with the earliest and latest timestamps are shown below.
 &#10;&#x2022; The date and time format should be dd-MMM-yyyy HH:mm:ss, for example, 08-Jul-2016 14:30:00.
 &#10;&#x2022; The clock drift format should be [+-]HH:mm:ss, for example, -00:46:18."
-                            ShowExplanationVisibility="True" />
+                            HideExplanationCheckboxIsVisible="True" />
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="1" />
         </StackPanel>

@@ -19,7 +19,7 @@ namespace Carnassial.Util
             this.keyRepeatCount = 0;
             this.mostRecentKey = null;
 
-            this.DifferenceThreshold = Constants.Images.DifferenceThresholdDefault;
+            this.DifferenceThreshold = Constant.Images.DifferenceThresholdDefault;
             this.ImageNavigatorSliderDragging = false;
             this.MouseOverCounter = null;
             this.MostRecentDragEvent = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;

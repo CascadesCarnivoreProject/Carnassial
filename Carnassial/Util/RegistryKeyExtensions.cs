@@ -68,24 +68,14 @@ namespace Carnassial.Util
             throw new NotSupportedException(String.Format("Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));
         }
 
-        public static Point ReadPoint(this RegistryKey registryKey, string subKeyPath, Point defaultValue)
+        public static Rect ReadRect(this RegistryKey registryKey, string subKeyPath, Rect defaultValue)
         {
-            string pointAsString = registryKey.ReadString(subKeyPath);
-            if (pointAsString == null)
+            string rectAsString = registryKey.ReadString(subKeyPath);
+            if (rectAsString == null)
             {
                 return defaultValue;
             }
-            return Point.Parse(pointAsString);
-        }
-
-        public static Size ReadSize(this RegistryKey registryKey, string subKeyPath, Size defaultValue)
-        {
-            string sizeAsString = registryKey.ReadString(subKeyPath);
-            if (sizeAsString == null)
-            {
-                return defaultValue;
-            }
-            return Size.Parse(sizeAsString);
+            return Rect.Parse(rectAsString);
         }
 
         // read a REG_SZ key's value from the registry
@@ -98,7 +88,7 @@ namespace Carnassial.Util
         public static MostRecentlyUsedList<string> ReadMostRecentlyUsedList(this RegistryKey registryKey, string subKeyPath)
         {
             RegistryKey subKey = registryKey.OpenSubKey(subKeyPath);
-            MostRecentlyUsedList<string> values = new MostRecentlyUsedList<string>(Constants.NumberOfMostRecentDatabasesToTrack);
+            MostRecentlyUsedList<string> values = new MostRecentlyUsedList<string>(Constant.NumberOfMostRecentDatabasesToTrack);
 
             if (subKey != null)
             {
@@ -158,12 +148,7 @@ namespace Carnassial.Util
             registryKey.SetValue(subKeyPath, value, RegistryValueKind.DWord);
         }
 
-        public static void Write(this RegistryKey registryKey, string subKeyPath, Point value)
-        {
-            registryKey.Write(subKeyPath, value.ToString());
-        }
-
-        public static void Write(this RegistryKey registryKey, string subKeyPath, Size value)
+        public static void Write(this RegistryKey registryKey, string subKeyPath, Rect value)
         {
             registryKey.Write(subKeyPath, value.ToString());
         }

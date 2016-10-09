@@ -15,7 +15,7 @@ namespace Carnassial.UnitTests
         public void Cache()
         {
             FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
-            List<FileExpectations> imageExpectations = this.PopulateDefaultDatabase(fileDatabase);
+            List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
 
             ImageCache cache = new ImageCache(fileDatabase);
             Assert.IsNull(cache.Current);
@@ -33,35 +33,35 @@ namespace Carnassial.UnitTests
             Assert.IsNotNull(currentBitmap);
 
             bool newImageToDisplay;
-            Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsTrue(cache.TryMoveToFile(0, out newImageToDisplay));
             Assert.IsFalse(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsTrue(cache.TryMoveToFile(0, out newImageToDisplay));
             Assert.IsFalse(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsTrue(cache.TryMoveToFile(1, out newImageToDisplay));
             Assert.IsTrue(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsTrue(cache.TryMoveToFile(1, out newImageToDisplay));
             Assert.IsFalse(newImageToDisplay);
 
             Assert.IsTrue(cache.TryInvalidate(1));
-            Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsTrue(cache.TryMoveToFile(0, out newImageToDisplay));
             Assert.IsTrue(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsTrue(cache.TryMoveToFile(1, out newImageToDisplay));
             Assert.IsTrue(newImageToDisplay);
 
             Assert.IsTrue(cache.TryInvalidate(2));
-            Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsTrue(cache.TryMoveToFile(1, out newImageToDisplay));
             Assert.IsTrue(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToImage(1, out newImageToDisplay));
+            Assert.IsTrue(cache.TryMoveToFile(1, out newImageToDisplay));
             Assert.IsFalse(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToImage(0, out newImageToDisplay));
+            Assert.IsTrue(cache.TryMoveToFile(0, out newImageToDisplay));
             Assert.IsTrue(newImageToDisplay);
 
-            Assert.IsFalse(cache.TryMoveToImage(imageExpectations.Count, out newImageToDisplay));
-            Assert.IsFalse(cache.TryMoveToImage(imageExpectations.Count, out newImageToDisplay));
+            Assert.IsFalse(cache.TryMoveToFile(fileExpectations.Count, out newImageToDisplay));
+            Assert.IsFalse(cache.TryMoveToFile(fileExpectations.Count, out newImageToDisplay));
 
-            Assert.IsTrue(cache.TryMoveToImage(0));
-            Assert.IsTrue(cache.TryMoveToImage(1));
-            Assert.IsFalse(cache.TryMoveToImage(imageExpectations.Count));
+            Assert.IsTrue(cache.TryMoveToFile(0));
+            Assert.IsTrue(cache.TryMoveToFile(1));
+            Assert.IsFalse(cache.TryMoveToFile(fileExpectations.Count));
 
             for (int step = 0; step < 4; ++step)
             {
@@ -69,11 +69,11 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue((cache.CurrentDifferenceState == ImageDifference.Combined) ||
                               (cache.CurrentDifferenceState == ImageDifference.Unaltered));
 
-                ImageDifferenceResult combinedDifferenceResult = cache.TryCalculateCombinedDifference(Constants.Images.DifferenceThresholdDefault - 2);
+                ImageDifferenceResult combinedDifferenceResult = cache.TryCalculateCombinedDifference(Constant.Images.DifferenceThresholdDefault - 2);
                 this.CheckDifferenceResult(combinedDifferenceResult, cache, fileDatabase);
             }
 
-            Assert.IsTrue(cache.TryMoveToImage(0));
+            Assert.IsTrue(cache.TryMoveToFile(0));
             for (int step = 0; step < 7; ++step)
             {
                 cache.MoveToNextStateInPreviousNextDifferenceCycle();
@@ -88,14 +88,14 @@ namespace Carnassial.UnitTests
             cache.Reset();
             Assert.IsNull(cache.Current);
             Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
-            Assert.IsTrue(cache.CurrentRow == Constants.Database.InvalidRow);
+            Assert.IsTrue(cache.CurrentRow == Constant.Database.InvalidRow);
         }
 
         [TestMethod]
         public void ExifBushnell()
         {
-            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constants.File.DefaultFileDatabaseFileName);
-            Dictionary<string, string> metadata = this.LoadMetadata(fileDatabase, TestConstant.ImageExpectation.InfraredMarten);
+            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName);
+            Dictionary<string, string> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.InfraredMarten);
 
             DateTime dateTime;
             Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTime], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime));
@@ -109,8 +109,8 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void ExifReconyx()
         {
-            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constants.File.DefaultFileDatabaseFileName);
-            Dictionary<string, string> metadata = this.LoadMetadata(fileDatabase, TestConstant.ImageExpectation.DaylightMartenPair);
+            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName);
+            Dictionary<string, string> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.DaylightMartenPair);
 
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ExposureTime]));
 
@@ -135,28 +135,28 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void ImageQuality()
         {
-            List<FileExpectations> imageExpectations = new List<FileExpectations>()
+            List<FileExpectations> fileExpectations = new List<FileExpectations>()
             {
-                new FileExpectations(TestConstant.ImageExpectation.DaylightBobcat),
-                new FileExpectations(TestConstant.ImageExpectation.DaylightCoyote),
-                new FileExpectations(TestConstant.ImageExpectation.DaylightMartenPair),
-                new FileExpectations(TestConstant.ImageExpectation.InfraredMarten)
+                new FileExpectations(TestConstant.FileExpectation.DaylightBobcat),
+                new FileExpectations(TestConstant.FileExpectation.DaylightCoyote),
+                new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair),
+                new FileExpectations(TestConstant.FileExpectation.InfraredMarten)
             };
 
             TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName);
             FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName);
-            foreach (FileExpectations imageExpectation in imageExpectations)
+            foreach (FileExpectations fileExpectation in fileExpectations)
             {
                 // Load the image
-                ImageRow imageProperties = imageExpectation.GetImageProperties(fileDatabase);
-                BitmapSource bitmap = imageProperties.LoadBitmap(this.WorkingDirectory);
+                ImageRow file = fileExpectation.GetFileData(fileDatabase);
+                BitmapSource bitmap = file.LoadBitmap(this.WorkingDirectory);
 
                 double darkPixelFraction;
                 bool isColor;
-                FileSelection imageQuality = bitmap.AsWriteable().IsDark(Constants.Images.DarkPixelThresholdDefault, Constants.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor);
-                Assert.IsTrue(Math.Abs(darkPixelFraction - imageExpectation.DarkPixelFraction) < TestConstant.DarkPixelFractionTolerance, "{0}: Expected dark pixel fraction to be {1}, but was {2}.", imageExpectation.FileName, imageExpectation.DarkPixelFraction, darkPixelFraction);
-                Assert.IsTrue(isColor == imageExpectation.IsColor, "{0}: Expected isColor to be {1}, but it was {2}", imageExpectation.FileName, imageExpectation.IsColor, isColor);
-                Assert.IsTrue(imageQuality == imageExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}", imageExpectation.FileName, imageExpectation.Quality, imageQuality);
+                FileSelection imageQuality = bitmap.AsWriteable().IsDark(Constant.Images.DarkPixelThresholdDefault, Constant.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor);
+                Assert.IsTrue(Math.Abs(darkPixelFraction - fileExpectation.DarkPixelFraction) < TestConstant.DarkPixelFractionTolerance, "{0}: Expected dark pixel fraction to be {1}, but was {2}.", fileExpectation.FileName, fileExpectation.DarkPixelFraction, darkPixelFraction);
+                Assert.IsTrue(isColor == fileExpectation.IsColor, "{0}: Expected isColor to be {1}, but it was {2}", fileExpectation.FileName, fileExpectation.IsColor, isColor);
+                Assert.IsTrue(imageQuality == fileExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}", fileExpectation.FileName, fileExpectation.Quality, imageQuality);
             }
         }
 

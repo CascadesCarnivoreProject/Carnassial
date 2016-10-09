@@ -50,7 +50,7 @@ namespace Carnassial.Images
         {
             this.Annotate = false;
             this.AnnotationPreviouslyShown = true;
-            this.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
+            this.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constant.StandardColour);
             this.DataLabel = dataLabel;
             this.Emphasise = false;
             this.Guid = Guid.NewGuid();

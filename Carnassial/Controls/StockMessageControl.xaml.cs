@@ -8,7 +8,7 @@ namespace Carnassial.Controls
 {
     public partial class StockMessageControl : UserControl
     {
-        private MessageBoxImage iconType = MessageBoxImage.Exclamation;
+        private MessageBoxImage iconType;
 
         public MessageBoxImage Icon
         {
@@ -19,7 +19,32 @@ namespace Carnassial.Controls
             set
             {
                 this.iconType = value;
-                this.SetIconType();
+                // the MessageBoxImage enum contains duplicate values:
+                // Hand = Stop = Error
+                // Exclamation = Warning
+                // Asterisk = Information
+                switch (value)
+                {
+                    case MessageBoxImage.Question:
+                        this.IconLabel.Content = "?";
+                        break;
+                    case MessageBoxImage.Warning:
+                        this.IconLabel.Content = "!";
+                        break;
+                    case MessageBoxImage.None:
+                    case MessageBoxImage.Information:
+                        this.IconLabel.Content = "i";
+                        break;
+                    case MessageBoxImage.Error:
+                        Run run = new Run(); // Create a symbol of a stopped hand
+                        run.FontFamily = new FontFamily("Wingdings 2");
+                        run.Text = "\u004e";
+                        this.IconLabel.Content = run;
+                        break;
+                    default:
+                        throw new NotSupportedException(String.Format("Unhandled icon type {0}.", this.Icon));
+                }
+                this.iconType = value;
             }
         }
 
@@ -27,12 +52,12 @@ namespace Carnassial.Controls
         {
             get
             {
-                return this.TitleTextBox.Text;
+                return this.TitleText.Text;
             }
             set
             {
-                this.TitleTextBox.Text = value;
-                this.SetFieldVisibility();
+                this.TitleText.Text = value;
+                this.SetExplanationVisibility();
             }
         }
 
@@ -40,12 +65,12 @@ namespace Carnassial.Controls
         {
             get
             {
-                return this.WhatTextBox.Text;
+                return this.WhatText.Text;
             }
             set
             {
-                this.WhatTextBox.Text = value;
-                this.SetFieldVisibility();
+                this.WhatText.Text = value;
+                this.SetExplanationVisibility();
             }
         }
 
@@ -53,12 +78,12 @@ namespace Carnassial.Controls
         {
             get
             {
-                return this.ProblemTextBox.Text;
+                return this.ProblemText.Text;
             }
             set
             {
-                this.ProblemTextBox.Text = value;
-                this.SetFieldVisibility();
+                this.ProblemText.Text = value;
+                this.SetExplanationVisibility();
             }
         }
 
@@ -66,12 +91,12 @@ namespace Carnassial.Controls
         {
             get
             {
-                return this.ReasonTextBox.Text;
+                return this.ReasonText.Text;
             }
             set
             {
-                this.ReasonTextBox.Text = value;
-                this.SetFieldVisibility();
+                this.ReasonText.Text = value;
+                this.SetExplanationVisibility();
             }
         }
 
@@ -79,12 +104,12 @@ namespace Carnassial.Controls
         {
             get
             {
-                return this.SolutionTextBox.Text;
+                return this.SolutionText.Text;
             }
             set
             {
-                this.SolutionTextBox.Text = value;
-                this.SetFieldVisibility();
+                this.SolutionText.Text = value;
+                this.SetExplanationVisibility();
             }
         }
 
@@ -92,12 +117,12 @@ namespace Carnassial.Controls
         {
             get
             {
-                return this.ResultTextBox.Text;
+                return this.ResultText.Text;
             }
             set
             {
-                this.ResultTextBox.Text = value;
-                this.SetFieldVisibility();
+                this.ResultText.Text = value;
+                this.SetExplanationVisibility();
             }
         }
 
@@ -105,77 +130,63 @@ namespace Carnassial.Controls
         {
             get
             {
-                return this.HintTextBox.Text;
+                return this.HintText.Text;
             }
             set
             {
-                this.HintTextBox.Text = value;
-                this.SetFieldVisibility();
+                this.HintText.Text = value;
+                this.SetExplanationVisibility();
             }
         }
 
-        public bool ShowExplanationVisibility
+        public bool HideExplanationCheckboxIsVisible
         {
             get
             {
-                return this.HideText.Visibility == Visibility.Visible;
+                return this.HideExplanation.Visibility == Visibility.Visible;
             }
             set
             {
-                this.HideText.Visibility = (value == true) ? Visibility.Visible : Visibility.Collapsed;
-                this.SetFieldVisibility();
+                this.HideExplanation.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+                this.SetExplanationVisibility();
             }
         }
 
         public StockMessageControl()
         {
             this.InitializeComponent();
-            this.SetFieldVisibility();
+            this.iconType = MessageBoxImage.Exclamation;
+
+            this.SetExplanationVisibility();
         }
 
-        private void SetFieldVisibility()
+        private void SetExplanationVisibility()
         {
-            this.myGrid.RowDefinitions[1].Height = (String.IsNullOrEmpty(this.Problem) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[2].Height = (String.IsNullOrEmpty(this.What) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[3].Height = (String.IsNullOrEmpty(this.Reason) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[4].Height = (String.IsNullOrEmpty(this.Solution) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[5].Height = (String.IsNullOrEmpty(this.Result) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
-            this.myGrid.RowDefinitions[6].Height = (String.IsNullOrEmpty(this.Hint) || this.HideText.IsChecked == true) ? new GridLength(0) : new GridLength(1, GridUnitType.Auto);
+            GridLength zeroHeight = new GridLength(0.0);
+            if (this.HideExplanation.IsChecked == true)
+            {
+                this.MessageGrid.RowDefinitions[1].Height = zeroHeight;
+                this.MessageGrid.RowDefinitions[2].Height = zeroHeight;
+                this.MessageGrid.RowDefinitions[3].Height = zeroHeight;
+                this.MessageGrid.RowDefinitions[4].Height = zeroHeight;
+                this.MessageGrid.RowDefinitions[5].Height = zeroHeight;
+                this.MessageGrid.RowDefinitions[6].Height = zeroHeight;
+                return;
+            }
+
+            GridLength autoHeight = new GridLength(1.0, GridUnitType.Auto);
+            this.MessageGrid.RowDefinitions[1].Height = String.IsNullOrEmpty(this.Problem) ? zeroHeight : autoHeight;
+            this.MessageGrid.RowDefinitions[2].Height = String.IsNullOrEmpty(this.What) ? zeroHeight : autoHeight;
+            this.MessageGrid.RowDefinitions[3].Height = String.IsNullOrEmpty(this.Reason) ? zeroHeight : autoHeight;
+            this.MessageGrid.RowDefinitions[4].Height = String.IsNullOrEmpty(this.Solution) ? zeroHeight : autoHeight;
+            this.MessageGrid.RowDefinitions[5].Height = String.IsNullOrEmpty(this.Result) ? zeroHeight : autoHeight;
+            this.MessageGrid.RowDefinitions[6].Height = String.IsNullOrEmpty(this.Hint) ? zeroHeight : autoHeight;
         }
 
         // This will toggle the visibility of the explanation panel
         private void HideTextButton_StateChange(object sender, RoutedEventArgs e)
         {
-            this.SetFieldVisibility();
-        }
-
-        private void SetIconType()
-        {
-            // the MessageBoxImage enum contains duplicate values:
-            // Hand = Stop = Error
-            // Exclamation = Warning
-            // Asterisk = Information
-            switch (this.Icon)
-            {
-                case MessageBoxImage.Question:
-                    this.lblIconType.Content = "?";
-                    break;
-                case MessageBoxImage.Warning:
-                    this.lblIconType.Content = "!";
-                    break;
-                case MessageBoxImage.None:
-                case MessageBoxImage.Information:
-                    this.lblIconType.Content = "i";
-                    break;
-                case MessageBoxImage.Error:
-                    Run run = new Run(); // Create a symbol of a stopped hand
-                    run.FontFamily = new FontFamily("Wingdings 2");
-                    run.Text = "\u004e";
-                    this.lblIconType.Content = run;
-                    break;
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled icon type {0}.", this.Icon));
-            }
+            this.SetExplanationVisibility();
         }
     }
 }

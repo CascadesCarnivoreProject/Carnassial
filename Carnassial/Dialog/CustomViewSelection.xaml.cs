@@ -85,45 +85,45 @@ namespace Carnassial.Dialog
                 // The operators allowed for each search term type
                 string controlType = searchTerm.ControlType;
                 string[] termOperators;
-                if (controlType == Constants.Control.Counter ||
-                    controlType == Constants.DatabaseColumn.DateTime ||
-                    controlType == Constants.DatabaseColumn.ImageQuality ||
-                    controlType == Constants.Control.FixedChoice)
+                if (controlType == Constant.Control.Counter ||
+                    controlType == Constant.DatabaseColumn.DateTime ||
+                    controlType == Constant.DatabaseColumn.ImageQuality ||
+                    controlType == Constant.Control.FixedChoice)
                 {
                     // No globs in Counters as that text field only allows numbers, we can't enter the special characters Glob required
                     // No globs in Dates the date entries are constrained by the date picker
                     // No globs in Fixed Choices as choice entries are constrained by menu selection
                     termOperators = new string[]
                     {
-                        Constants.SearchTermOperator.Equal,
-                        Constants.SearchTermOperator.NotEqual,
-                        Constants.SearchTermOperator.LessThan,
-                        Constants.SearchTermOperator.GreaterThan,
-                        Constants.SearchTermOperator.LessThanOrEqual,
-                        Constants.SearchTermOperator.GreaterThanOrEqual
+                        Constant.SearchTermOperator.Equal,
+                        Constant.SearchTermOperator.NotEqual,
+                        Constant.SearchTermOperator.LessThan,
+                        Constant.SearchTermOperator.GreaterThan,
+                        Constant.SearchTermOperator.LessThanOrEqual,
+                        Constant.SearchTermOperator.GreaterThanOrEqual
                     };
                 }
-                else if (controlType == Constants.DatabaseColumn.DeleteFlag ||
-                         controlType == Constants.Control.Flag)
+                else if (controlType == Constant.DatabaseColumn.DeleteFlag ||
+                         controlType == Constant.Control.Flag)
                 {
                     // Only equals and not equals in Flags, as other options don't make sense for booleans
                     termOperators = new string[]
                     {
-                        Constants.SearchTermOperator.Equal,
-                        Constants.SearchTermOperator.NotEqual
+                        Constant.SearchTermOperator.Equal,
+                        Constant.SearchTermOperator.NotEqual
                     };
                 }
                 else
                 {
                     termOperators = new string[]
                     {
-                        Constants.SearchTermOperator.Equal,
-                        Constants.SearchTermOperator.NotEqual,
-                        Constants.SearchTermOperator.LessThan,
-                        Constants.SearchTermOperator.GreaterThan,
-                        Constants.SearchTermOperator.LessThanOrEqual,
-                        Constants.SearchTermOperator.GreaterThanOrEqual,
-                        Constants.SearchTermOperator.Glob
+                        Constant.SearchTermOperator.Equal,
+                        Constant.SearchTermOperator.NotEqual,
+                        Constant.SearchTermOperator.LessThan,
+                        Constant.SearchTermOperator.GreaterThan,
+                        Constant.SearchTermOperator.LessThanOrEqual,
+                        Constant.SearchTermOperator.GreaterThanOrEqual,
+                        Constant.SearchTermOperator.Glob
                     };
                 }
 
@@ -143,13 +143,13 @@ namespace Carnassial.Dialog
                 // Value column: The value used for comparison in the search
                 // Notes and Counters both uses a text field, so they can be constructed as a textbox
                 // However, counter textboxes are modified to only allow integer input (both direct typing or pasting are checked)
-                if (controlType == Constants.DatabaseColumn.DateTime)
+                if (controlType == Constant.DatabaseColumn.DateTime)
                 {
                     DateTimeOffset dateTime = this.database.CustomSelection.GetDateTime(gridRowIndex - 1, this.imageSetTimeZone);
 
                     DateTimePicker dateValue = new DateTimePicker();
                     dateValue.Format = DateTimeFormat.Custom;
-                    dateValue.FormatString = Constants.Time.DateTimeDisplayFormat;
+                    dateValue.FormatString = Constant.Time.DateTimeDisplayFormat;
                     dateValue.IsEnabled = searchTerm.UseForSearching;
                     dateValue.Value = dateTime.DateTime;
                     dateValue.ValueChanged += this.DateTime_SelectedDateChanged;
@@ -159,13 +159,13 @@ namespace Carnassial.Dialog
                     Grid.SetColumn(dateValue, CustomViewSelection.ValueColumn);
                     this.grid.Children.Add(dateValue);
                 }
-                else if (controlType == Constants.DatabaseColumn.File ||
-                         controlType == Constants.Control.Counter ||
-                         controlType == Constants.Control.Note ||
-                         controlType == Constants.DatabaseColumn.RelativePath)
+                else if (controlType == Constant.DatabaseColumn.File ||
+                         controlType == Constant.Control.Counter ||
+                         controlType == Constant.Control.Note ||
+                         controlType == Constant.DatabaseColumn.RelativePath)
                 {
                     AutocompleteTextBox textBoxValue = new AutocompleteTextBox();
-                    textBoxValue.Autocompletions = this.database.GetDistinctValuesInFileColumn(searchTerm.DataLabel);
+                    textBoxValue.Autocompletions = this.database.GetDistinctValuesInFileDataColumn(searchTerm.DataLabel);
                     textBoxValue.IsEnabled = searchTerm.UseForSearching;
                     textBoxValue.Text = searchTerm.DatabaseValue;
                     textBoxValue.Margin = thickness;
@@ -176,7 +176,7 @@ namespace Carnassial.Dialog
                     textBoxValue.VerticalContentAlignment = VerticalAlignment.Center;
 
                     // The following is specific only to Counters
-                    if (controlType == Constants.Control.Counter)
+                    if (controlType == Constant.Control.Counter)
                     {
                         textBoxValue.PreviewTextInput += this.Counter_PreviewTextInput;
                         DataObject.AddPastingHandler(textBoxValue, this.Counter_Paste);
@@ -187,8 +187,8 @@ namespace Carnassial.Dialog
                     Grid.SetColumn(textBoxValue, CustomViewSelection.ValueColumn);
                     this.grid.Children.Add(textBoxValue);
                 }
-                else if (controlType == Constants.Control.FixedChoice ||
-                         controlType == Constants.DatabaseColumn.ImageQuality)
+                else if (controlType == Constant.Control.FixedChoice ||
+                         controlType == Constant.DatabaseColumn.ImageQuality)
                 {
                     // FixedChoice and ImageQuality both present combo boxes, so they can be constructed the same way
                     ComboBox comboBoxValue = new ComboBox();
@@ -204,26 +204,26 @@ namespace Carnassial.Dialog
                     Grid.SetColumn(comboBoxValue, CustomViewSelection.ValueColumn);
                     this.grid.Children.Add(comboBoxValue);
                 }
-                else if (controlType == Constants.DatabaseColumn.DeleteFlag ||
-                         controlType == Constants.Control.Flag)
+                else if (controlType == Constant.DatabaseColumn.DeleteFlag ||
+                         controlType == Constant.Control.Flag)
                 {
                     // Flags present checkboxes
                     CheckBox flagCheckBox = new CheckBox();
                     flagCheckBox.Margin = thickness;
                     flagCheckBox.VerticalAlignment = VerticalAlignment.Center;
                     flagCheckBox.HorizontalAlignment = HorizontalAlignment.Left;
-                    flagCheckBox.IsChecked = (searchTerm.DatabaseValue.ToLower() == Constants.Boolean.False) ? false : true;
+                    flagCheckBox.IsChecked = (searchTerm.DatabaseValue.ToLower() == Constant.Boolean.False) ? false : true;
                     flagCheckBox.IsEnabled = searchTerm.UseForSearching;
                     flagCheckBox.Checked += this.Flag_CheckedOrUnchecked;
                     flagCheckBox.Unchecked += this.Flag_CheckedOrUnchecked;
 
-                    searchTerm.DatabaseValue = flagCheckBox.IsChecked.Value ? Constants.Boolean.True : Constants.Boolean.False;
+                    searchTerm.DatabaseValue = flagCheckBox.IsChecked.Value ? Constant.Boolean.True : Constant.Boolean.False;
 
                     Grid.SetRow(flagCheckBox, gridRowIndex);
                     Grid.SetColumn(flagCheckBox, CustomViewSelection.ValueColumn);
                     this.grid.Children.Add(flagCheckBox);
                 }
-                else if (controlType == Constants.DatabaseColumn.UtcOffset)
+                else if (controlType == Constant.DatabaseColumn.UtcOffset)
                 {
                     UtcOffsetUpDown utcOffsetValue = new UtcOffsetUpDown();
                     utcOffsetValue.IsEnabled = searchTerm.UseForSearching;

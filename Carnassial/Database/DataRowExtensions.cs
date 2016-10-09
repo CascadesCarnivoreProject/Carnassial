@@ -35,7 +35,7 @@ namespace Carnassial.Database
 
         public static long GetID(this DataRow row)
         {
-            return row.GetLongField(Constants.DatabaseColumn.ID);
+            return row.GetLongField(Constant.DatabaseColumn.ID);
         }
 
         public static int GetIntegerField(this DataRow row, string column)
@@ -69,7 +69,7 @@ namespace Carnassial.Database
         public static TimeSpan GetUtcOffsetField(this DataRow row, string column)
         {
             TimeSpan utcOffset = TimeSpan.FromHours((double)row[column]);
-            Debug.Assert(utcOffset.Ticks % Constants.Time.UtcOffsetGranularity.Ticks == 0, "Unexpected rounding error: UTC offset is not an exact multiple of 15 minutes.");
+            Debug.Assert(utcOffset.Ticks % Constant.Time.UtcOffsetGranularity.Ticks == 0, "Unexpected rounding error: UTC offset is not an exact multiple of 15 minutes.");
             return utcOffset;
         }
 
@@ -109,7 +109,7 @@ namespace Carnassial.Database
 
         public static void SetUtcOffsetField(this DataRow row, string column, TimeSpan value)
         {
-            Debug.Assert(value.Ticks % Constants.Time.UtcOffsetGranularity.Ticks == 0, "Unexpected rounding error: UTC offset is not an exact multiple of 15 minutes.");
+            Debug.Assert(value.Ticks % Constant.Time.UtcOffsetGranularity.Ticks == 0, "Unexpected rounding error: UTC offset is not an exact multiple of 15 minutes.");
             row[column] = value.TotalHours;
         }
     }

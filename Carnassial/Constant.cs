@@ -12,11 +12,10 @@ namespace Carnassial
 {
     // Keep all constants in one place. 
     // This helps ensure we are not setting values differently across multiple files, etc.
-    public static class Constants
+    public static class Constant
     {
-        // Default Settings
         public const string ApplicationName = "Carnassial";
-        public const int DefaultImageRowIndex = 0;
+        public const string MainWindowBaseTitle = "Carnassial: Simplifying Remote Camera Data";
         public const int NumberOfMostRecentDatabasesToTrack = 9;
         public const string StandardColour = "Gold";
         public const string SelectionColour = "MediumBlue";
@@ -74,13 +73,12 @@ namespace Carnassial
 
             public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
             {
-                Constants.DatabaseColumn.DateTime,
-                Constants.DatabaseColumn.DeleteFlag,
-                Constants.DatabaseColumn.File,
-                Constants.DatabaseColumn.Folder,
-                Constants.DatabaseColumn.ImageQuality,
-                Constants.DatabaseColumn.RelativePath,
-                Constants.DatabaseColumn.UtcOffset
+                Constant.DatabaseColumn.DateTime,
+                Constant.DatabaseColumn.DeleteFlag,
+                Constant.DatabaseColumn.File,
+                Constant.DatabaseColumn.ImageQuality,
+                Constant.DatabaseColumn.RelativePath,
+                Constant.DatabaseColumn.UtcOffset
             }.AsReadOnly();
         }
 
@@ -104,7 +102,7 @@ namespace Carnassial
             public const int FixedChoiceWidth = 100;
 
             public const string FlagTooltip = "Toggle between true and false";
-            public const string FlagValue = Constants.Boolean.False;             // Default for: flags
+            public const string FlagValue = Constant.Boolean.False;             // Default for: flags
             public const int FlagWidth = 20;
             public const string NoteTooltip = "Write a textual note";
             public const int NoteWidth = 100;
@@ -135,6 +133,7 @@ namespace Carnassial
         public static class Database
         {
             // default values
+            public const long DefaultFileID = 1;
             public const string ImageSetDefaultLog = "Add text here";
             public const long ImageSetRowID = 1;
             public const int InvalidRow = -1;
@@ -147,21 +146,22 @@ namespace Carnassial
         // Names of standard database columns, always included but not always made visible in the user controls
         public static class DatabaseColumn
         {
+            public const string ID = "Id";
+
             // columns in FileData
             public const string DateTime = "DateTime";
             public const string File = "File";
-            public const string Folder = "Folder";
-            public const string ID = "Id";
             public const string ImageQuality = "ImageQuality";
             public const string DeleteFlag = "DeleteFlag";
             public const string RelativePath = "RelativePath";
             public const string UtcOffset = "UtcOffset";
 
             // columns in ImageSet
-            public const string Log = "Log";                   // string holding a user-created text log
-            public const string Magnifier = "Magnifier";       // string holding the true/false state of the magnifying glass (on or off)
-            public const string Row = "Row";                   // string holding the currently selected row
-            public const string Selection = "Selection";       // string holding the current selection
+            public const string FileSelection = "FileSelection";
+            public const string InitialFolderName = "InitialFolderName";
+            public const string Log = "Log";
+            public const string Magnifier = "Magnifier";
+            public const string MostRecentFileID = "MostRecentFileID";
             public const string TimeZone = "TimeZone";
         }
 
@@ -221,7 +221,6 @@ namespace Carnassial
 
             public const int LargeNumberOfDeletedImages = 30;
 
-            public const int DefaultPreviewWidth = 800;
             public const int ThumbnailWidth = 300;
 
             public static readonly BitmapImage CorruptFile;
@@ -278,8 +277,7 @@ namespace Carnassial
             {
                 public const string AudioFeedback = "AudioFeedback";
 
-                public const string CarnassialWindowLocation = "CarnassialWindowLocation";
-                public const string CarnassialWindowSize = "CarnassialWindowSize";
+                public const string CarnassialWindowPosition = "CarnassialWindowPosition";
 
                 // most recently used operator for custom selections
                 public const string CustomSelectionTermCombiningOperator = "CustomSelectionTermCombiningOperator";

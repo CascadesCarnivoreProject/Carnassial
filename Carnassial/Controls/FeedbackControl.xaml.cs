@@ -19,7 +19,7 @@ namespace Carnassial.Controls
             set { this.messageLbl.Content = value; }
         }
 
-        public ImageSource ShowImage
+        public ImageSource Image
         {
             set { this.imageImg.Source = value; }
         }
@@ -28,7 +28,7 @@ namespace Carnassial.Controls
         {
             this.InitializeComponent();
             this.ShowMessage = String.Empty;
-            this.ShowImage = null;
+            this.Image = null;
             this.ShowProgress = 0;
         }
     }

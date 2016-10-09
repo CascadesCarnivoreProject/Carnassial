@@ -17,5 +17,10 @@ namespace Carnassial.Database
         }
 
         public abstract ColumnTuplesWithWhere GetColumnTuples();
+
+        public int GetIndex(DataTable dataTable)
+        {
+            return dataTable.Rows.IndexOf(this.Row);
+        }
     }
 }

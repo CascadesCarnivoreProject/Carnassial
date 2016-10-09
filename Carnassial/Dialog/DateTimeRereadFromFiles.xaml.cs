@@ -11,11 +11,11 @@ using System.Windows;
 
 namespace Carnassial.Dialog
 {
-    public partial class DateRereadFromFiles : Window
+    public partial class DateTimeRereadFromFiles : Window
     {
         private FileDatabase database;
 
-        public DateRereadFromFiles(FileDatabase database, Window owner)
+        public DateTimeRereadFromFiles(FileDatabase database, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
@@ -61,24 +61,24 @@ namespace Carnassial.Dialog
                 }));
 
                 // Pass 1. Check to see what dates/times need updating.
-                List<ImageRow> imagesToAdjust = new List<ImageRow>();
+                List<ImageRow> filesToAdjust = new List<ImageRow>();
                 int count = this.database.CurrentlySelectedFileCount;
                 TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
-                for (int row = 0; row < count; ++row)
+                for (int fileIndex = 0; fileIndex < count; ++fileIndex)
                 {
                     // We will store the various times here
-                    ImageRow image = this.database.Files[row];
-                    DateTimeOffset originalDateTime = image.GetDateTime();
+                    ImageRow file = this.database.Files[fileIndex];
+                    DateTimeOffset originalDateTime = file.GetDateTime();
                     string feedbackMessage = String.Empty;
                     try
                     {
                         // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
                         // Note that if the image can't be created, we will just to the catch.
-                        DateTimeAdjustment imageTimeAdjustment = image.TryReadDateTimeOriginalFromMetadata(this.database.FolderPath, imageSetTimeZone);
-                        switch (imageTimeAdjustment)
+                        DateTimeAdjustment fileTimeAdjustment = file.TryReadDateTimeOriginalFromMetadata(this.database.FolderPath, imageSetTimeZone);
+                        switch (fileTimeAdjustment)
                         {
                             case DateTimeAdjustment.MetadataNotUsed:
-                                image.SetDateTimeOffsetFromFileInfo(this.database.FolderPath, imageSetTimeZone);  // We couldn't read the metadata, so get a candidate date/time from the file
+                                file.SetDateTimeOffsetFromFileInfo(this.database.FolderPath, imageSetTimeZone);  // We couldn't read the metadata, so get a candidate date/time from the file
                                 feedbackMessage = "Using file timestamp: ";
                                 break;
                             // includes DateTimeAdjustment.SameFileAndMetadataTime
@@ -87,7 +87,7 @@ namespace Carnassial.Dialog
                                 break;
                         }
 
-                        DateTimeOffset rescannedDateTime = image.GetDateTime();
+                        DateTimeOffset rescannedDateTime = file.GetDateTime();
                         bool updateNeeded = false;
                         if (rescannedDateTime.Date == originalDateTime.Date)
                         {
@@ -121,30 +121,30 @@ namespace Carnassial.Dialog
 
                         if (updateNeeded)
                         {
-                            imagesToAdjust.Add(image);
+                            filesToAdjust.Add(file);
                         }
                     }
                     catch (Exception exception)
                     {
-                        Debug.Fail(String.Format("Unexpected exception processing '{0}'.", image.FileName), exception.ToString());
+                        Debug.Fail(String.Format("Unexpected exception processing '{0}'.", file.FileName), exception.ToString());
                         feedbackMessage += String.Format(" , skipping due to {0}: {1}.", exception.GetType().FullName, exception.Message);
                     }
 
-                    backgroundWorker.ReportProgress(0, new FeedbackTuple(image.FileName, feedbackMessage));
-                    if (row % Constants.ThrottleValues.SleepForImageRenderInterval == 0)
+                    backgroundWorker.ReportProgress(0, new FeedbackTuple(file.FileName, feedbackMessage));
+                    if (fileIndex % Constant.ThrottleValues.SleepForImageRenderInterval == 0)
                     {
-                        Thread.Sleep(Constants.ThrottleValues.RenderingBackoffTime); // Put in a delay every now and then, as otherwise the UI won't update.
+                        Thread.Sleep(Constant.ThrottleValues.RenderingBackoffTime); // Put in a delay every now and then, as otherwise the UI won't update.
                     }
                 }
 
                 // Pass 2. Update each date as needed 
                 string message = String.Empty;
                 backgroundWorker.ReportProgress(0, new FeedbackTuple(String.Empty, String.Empty)); // A blank separator
-                backgroundWorker.ReportProgress(0, new FeedbackTuple("Pass 2: Updating dates and times", String.Format("Updating {0} images and videos...", imagesToAdjust.Count)));
+                backgroundWorker.ReportProgress(0, new FeedbackTuple("Pass 2: Updating dates and times", String.Format("Updating {0} images and videos...", filesToAdjust.Count)));
                 Thread.Yield(); // Allow the UI to update.
 
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
-                foreach (ImageRow image in imagesToAdjust)
+                foreach (ImageRow image in filesToAdjust)
                 {
                     imagesToUpdate.Add(image.GetDateTimeColumnTuples());
                 }

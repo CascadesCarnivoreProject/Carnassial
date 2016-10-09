@@ -19,7 +19,7 @@
 &#10;&#x2022; Click Preview Changes (which becomes active after you enter an adjusted date/time) to review the changes that will be made.
 &#10;&#x2022; Click Apply Changes to apply those changes."
                             Result="The UTC offset of all images and videos selected will be set to the specified time zone.  The files' date and time of day will not change."
-                            ShowExplanationVisibility="True"/>
+                            HideExplanationCheckboxIsVisible="True"/>
 
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="1" />

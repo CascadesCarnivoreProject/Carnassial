@@ -32,7 +32,7 @@ namespace Carnassial.Database
         public static DirectoryInfo GetOrCreateBackupFolder(string sourceFilePath)
         {
             string sourceFolderPath = Path.GetDirectoryName(sourceFilePath);
-            DirectoryInfo backupFolder = new DirectoryInfo(Path.Combine(sourceFolderPath, Constants.File.BackupFolder));   // The Backup Folder 
+            DirectoryInfo backupFolder = new DirectoryInfo(Path.Combine(sourceFolderPath, Constant.File.BackupFolder));   // The Backup Folder 
             if (backupFolder.Exists == false)
             {
                 backupFolder.Create();
@@ -69,7 +69,7 @@ namespace Carnassial.Database
 
             // age out older backup files
             IEnumerable<FileInfo> backupFiles = FileBackup.GetBackupFiles(backupFolder, sourceFilePath).OrderByDescending(file => file.LastWriteTimeUtc);
-            foreach (FileInfo file in backupFiles.Skip(Constants.File.NumberOfBackupFilesToKeep))
+            foreach (FileInfo file in backupFiles.Skip(Constant.File.NumberOfBackupFilesToKeep))
             {
                 File.Delete(file.FullName);
             }

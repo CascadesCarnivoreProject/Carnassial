@@ -12,7 +12,7 @@
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             Icon="Question"
-                            ShowExplanationVisibility="True" />
+                            HideExplanationCheckboxIsVisible="True" />
         <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
             <CheckBox Name="chkboxConfirm" IsChecked="False" Margin="0,0,20,0" Height="20" 

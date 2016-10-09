@@ -10,7 +10,7 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void CheckForUpdates()
         {
-            GithubReleaseClient carnassialUpdates = new GithubReleaseClient(Constants.ApplicationName, CarnassialConfigurationSettings.GetLatestReleaseAddress());
+            GithubReleaseClient carnassialUpdates = new GithubReleaseClient(Constant.ApplicationName, CarnassialConfigurationSettings.GetLatestReleaseAddress());
             // TODO: change to IsTrue and add additional checking once a prerelease has been generated to test against
             Assert.IsFalse(carnassialUpdates.TryGetAndParseRelease(false));
         }

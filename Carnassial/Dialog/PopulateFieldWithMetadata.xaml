@@ -24,7 +24,7 @@
 &#10;4. Click the Populate button to apply the above selections to your files. 
 &#10;5. Be patient: if you have a large number of files as it does take time to do this!"
                             Result="For each file, the chosen data field will be filled in with the chosen metadata from that image."
-                            ShowExplanationVisibility="True" />
+                            HideExplanationCheckboxIsVisible="True" />
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="1" />
             <Grid Name="PanelHeader">

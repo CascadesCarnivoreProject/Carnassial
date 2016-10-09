@@ -37,7 +37,7 @@ namespace Carnassial.Images
             {
                 if (pointList.Length > 0)
                 {
-                    pointList.Append(Constants.Database.MarkerBar); // don't put a separator at the beginning of the point list
+                    pointList.Append(Constant.Database.MarkerBar); // don't put a separator at the beginning of the point list
                 }
                 pointList.AppendFormat("{0:0.000},{1:0.000}", markerForCounter.Position.X, markerForCounter.Position.Y); // Add a point in the form x,y e.g., 0.500, 0.700
             }
@@ -51,7 +51,7 @@ namespace Carnassial.Images
                 return;
             }
 
-            char[] delimiterBar = { Constants.Database.MarkerBar };
+            char[] delimiterBar = { Constant.Database.MarkerBar };
             string[] pointsAsStrings = pointList.Split(delimiterBar);
             List<Point> points = new List<Point>();
             foreach (string pointAsString in pointsAsStrings)

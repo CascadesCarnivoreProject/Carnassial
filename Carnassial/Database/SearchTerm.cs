@@ -48,7 +48,7 @@ namespace Carnassial.Database
 
         public DateTime GetDateTime()
         {
-            if (this.DataLabel != Constants.DatabaseColumn.DateTime)
+            if (this.DataLabel != Constant.DatabaseColumn.DateTime)
             {
                 throw new NotSupportedException(String.Format("Attempt to retrieve date/time from a SearchTerm with data label {0}.", this.DataLabel));
             }
@@ -57,7 +57,7 @@ namespace Carnassial.Database
 
         public TimeSpan GetUtcOffset()
         {
-            if (this.DataLabel != Constants.DatabaseColumn.UtcOffset)
+            if (this.DataLabel != Constant.DatabaseColumn.UtcOffset)
             {
                 throw new NotSupportedException(String.Format("Attempt to retrieve UTC offset from a SearchTerm with data label {0}.", this.DataLabel));
             }
@@ -66,7 +66,7 @@ namespace Carnassial.Database
 
         public void SetDatabaseValue(DateTimeOffset dateTime)
         {
-            if (this.DataLabel != Constants.DatabaseColumn.DateTime)
+            if (this.DataLabel != Constant.DatabaseColumn.DateTime)
             {
                 throw new NotSupportedException(String.Format("Attempt to retrieve date/time from a SearchTerm with data label {0}.", this.DataLabel));
             }

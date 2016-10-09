@@ -88,6 +88,11 @@ namespace Carnassial.Database
             return this.createRow(row);
         }
 
+        public int IndexOf(DataRowBackedObject row)
+        {
+            return row.GetIndex(this.DataTable);
+        }
+
         public TRow NewRow()
         {
             DataRow row = this.DataTable.NewRow();

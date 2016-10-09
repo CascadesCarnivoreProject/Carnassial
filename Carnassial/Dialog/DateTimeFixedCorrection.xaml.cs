@@ -26,6 +26,7 @@ namespace Carnassial.Dialog
 
             // get the image filename and display it
             this.FileName.Content = imageToCorrect.FileName;
+            this.FileName.ToolTip = this.FileName.Content;
 
             // display the image
             this.Image.Source = imageToCorrect.LoadBitmap(this.fileDatabase.FolderPath);
@@ -59,7 +60,7 @@ namespace Carnassial.Dialog
                 DateTimeOffset imageDateTime = image.GetDateTime();
 
                 // Pretty print the adjustment time
-                if (adjustment.Duration() >= Constants.Time.DateTimeDatabaseResolution)
+                if (adjustment.Duration() >= Constant.Time.DateTimeDatabaseResolution)
                 {
                     difference = DateTimeHandler.ToDisplayTimeSpanString(adjustment);
                     status = "Changed";

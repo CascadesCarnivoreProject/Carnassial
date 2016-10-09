@@ -59,7 +59,7 @@ namespace Carnassial.Util
                 if (droppedFiles != null && droppedFiles.Length == 1)
                 {
                     templateDatabasePath = droppedFiles[0];
-                    if (Path.GetExtension(templateDatabasePath) == Constants.File.TemplateDatabaseFileExtension)
+                    if (Path.GetExtension(templateDatabasePath) == Constant.File.TemplateDatabaseFileExtension)
                     {
                         return true;
                     }
@@ -128,7 +128,7 @@ namespace Carnassial.Util
             if (windowPosition.Right > workingArea.Right)
             {
                 int pixelsToMoveLeft = windowPosition.Right - workingArea.Right;
-                if (pixelsToMoveLeft > windowPosition.Top)
+                if (pixelsToMoveLeft > windowPosition.Left)
                 {
                     // window is too wide and has to narrow to fit screen
                     window.Left = 0;
@@ -166,7 +166,7 @@ namespace Carnassial.Util
             openFileDialog.AutoUpgradeEnabled = true;
 
             // Set filter for file extension and default file extension 
-            openFileDialog.DefaultExt = Constants.File.TemplateDatabaseFileExtension;
+            openFileDialog.DefaultExt = Constant.File.TemplateDatabaseFileExtension;
             openFileDialog.Filter = filter;
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)

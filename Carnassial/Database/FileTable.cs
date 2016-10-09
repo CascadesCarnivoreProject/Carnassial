@@ -13,14 +13,14 @@ namespace Carnassial.Database
 
         private static ImageRow CreateRow(DataRow row)
         {
-            string fileName = row.GetStringField(Constants.DatabaseColumn.File);
+            string fileName = row.GetStringField(Constant.DatabaseColumn.File);
             string fileExtension = Path.GetExtension(fileName);
-            if (String.Equals(fileExtension, Constants.File.AviFileExtension, StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(fileExtension, Constants.File.Mp4FileExtension, StringComparison.OrdinalIgnoreCase))
+            if (String.Equals(fileExtension, Constant.File.AviFileExtension, StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(fileExtension, Constant.File.Mp4FileExtension, StringComparison.OrdinalIgnoreCase))
             {
                 return new VideoRow(row);
             }
-            if (String.Equals(fileExtension, Constants.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase))
+            if (String.Equals(fileExtension, Constant.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase))
             {
                 return new ImageRow(row);
             }
@@ -30,7 +30,7 @@ namespace Carnassial.Database
         public ImageRow NewRow(FileInfo file)
         {
             DataRow row = this.DataTable.NewRow();
-            row[Constants.DatabaseColumn.File] = file.Name;
+            row[Constant.DatabaseColumn.File] = file.Name;
             return FileTable.CreateRow(row);
         }
     }

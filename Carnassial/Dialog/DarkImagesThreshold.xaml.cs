@@ -128,7 +128,7 @@ namespace Carnassial.Dialog
             this.RatioFound.Content = String.Format("{0,3:##0}", 100 * this.darkPixelRatioFound);
 
             //// We don't want to update labels if the image is not valid 
-            if (this.OriginalClassification.Content.ToString() == Constants.ImageQuality.Ok || this.OriginalClassification.Content.ToString() == Constants.ImageQuality.Dark)
+            if (this.OriginalClassification.Content.ToString() == Constant.ImageQuality.Ok || this.OriginalClassification.Content.ToString() == Constant.ImageQuality.Dark)
             {
                 if (this.isColor)
                 {
@@ -143,15 +143,15 @@ namespace Carnassial.Dialog
 
                 if (this.isColor)
                 {
-                    this.NewClassification.Content = Constants.ImageQuality.Ok;       // Color image
+                    this.NewClassification.Content = Constant.ImageQuality.Ok;       // Color image
                 }
                 else if (this.darkPixelRatio <= this.darkPixelRatioFound)
                 {
-                    this.NewClassification.Content = Constants.ImageQuality.Dark;  // Dark grey scale image
+                    this.NewClassification.Content = Constant.ImageQuality.Dark;  // Dark grey scale image
                 }
                 else
                 {
-                    this.NewClassification.Content = Constants.ImageQuality.Ok;   // Light grey scale image
+                    this.NewClassification.Content = Constant.ImageQuality.Ok;   // Light grey scale image
                 }
             }
             else
@@ -166,6 +166,7 @@ namespace Carnassial.Dialog
             this.bitmap = this.imageEnumerator.Current.LoadBitmap(this.database.FolderPath).AsWriteable();
             this.Image.Source = this.bitmap;
             this.FileName.Content = this.imageEnumerator.Current.FileName;
+            this.FileName.ToolTip = this.FileName.Content;
             this.OriginalClassification.Content = this.imageEnumerator.Current.ImageQuality.ToString(); // The original image classification
 
             this.RecalculateImageQualityForCurrentImage();
@@ -247,11 +248,11 @@ namespace Carnassial.Dialog
         private void MenuItemResetDefault_Click(object sender, RoutedEventArgs e)
         {
             // Move the thumb to correspond to the original value
-            this.darkPixelRatio = Constants.Images.DarkPixelRatioThresholdDefault;
+            this.darkPixelRatio = Constant.Images.DarkPixelRatioThresholdDefault;
             Canvas.SetLeft(this.DarkPixelRatioThumb, this.darkPixelRatio * (this.FeedbackCanvas.ActualWidth - this.DarkPixelRatioThumb.ActualWidth));
 
             // Move the slider to its original position
-            this.DarkThreshold.Value = Constants.Images.DarkPixelThresholdDefault;
+            this.DarkThreshold.Value = Constant.Images.DarkPixelThresholdDefault;
             this.RecalculateImageQualityForCurrentImage();
             this.Repaint();
         }
@@ -306,7 +307,7 @@ namespace Carnassial.Dialog
                 return;
             }
 
-            this.imageEnumerator.TryMoveToImage(Convert.ToInt32(this.ScrollImages.Value));
+            this.imageEnumerator.TryMoveToFile(Convert.ToInt32(this.ScrollImages.Value));
             this.DisplayImageAndDetails();
             this.SetPreviousNextButtonStates();
         }
@@ -365,7 +366,7 @@ namespace Carnassial.Dialog
             };
             backgroundWorker.DoWork += (ow, ea) =>
             {
-                TimeSpan desiredRenderInterval = TimeSpan.FromSeconds(1.0 / Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
+                TimeSpan desiredRenderInterval = TimeSpan.FromSeconds(1.0 / Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
                 DateTime previousImageRender = DateTime.UtcNow - desiredRenderInterval;
                 object renderLock = new object();
 
@@ -397,7 +398,7 @@ namespace Carnassial.Dialog
                         imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
                         if (imageQuality.OldImageQuality != imageQuality.NewImageQuality.Value)
                         {
-                            filesToUpdate.Add(new ColumnTuplesWithWhere(new List<ColumnTuple> { new ColumnTuple(Constants.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality.Value.ToString()) }, file.ID));
+                            filesToUpdate.Add(new ColumnTuplesWithWhere(new List<ColumnTuple> { new ColumnTuple(Constant.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality.Value.ToString()) }, file.ID));
                         }
                     }
                     catch (Exception exception)
@@ -427,8 +428,9 @@ namespace Carnassial.Dialog
                 // this gets called on the UI thread
                 ImageQuality imageQuality = (ImageQuality)ea.UserState;
                 this.Image.Source = imageQuality.Bitmap;
-
                 this.FileName.Content = imageQuality.FileName;
+                this.FileName.ToolTip = this.FileName.Content;
+
                 this.OriginalClassification.Content = imageQuality.OldImageQuality;
                 this.NewClassification.Content = imageQuality.NewImageQuality;
                 this.DarkPixelRatio.Content = String.Format("{0,3:##0}%", 100 * this.darkPixelRatio);

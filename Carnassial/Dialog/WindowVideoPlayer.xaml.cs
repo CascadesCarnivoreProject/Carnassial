@@ -33,7 +33,7 @@ namespace Carnassial.Dialog
             set
             {
                 this.currentRow = value;
-                this.VidPlayer.Source = new System.Uri(this.currentRow.GetImagePath(this.folderPath));
+                this.VidPlayer.Source = new System.Uri(this.currentRow.GetFilePath(this.folderPath));
                 this.fileName = this.currentRow.FileName;
                 this.timer.Stop();
                 this.SetControlVisibilityAndFeedback();

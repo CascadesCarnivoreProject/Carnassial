@@ -49,9 +49,9 @@ namespace Carnassial.Database
             string query = "CREATE TABLE " + tableName + " (" + Environment.NewLine;               // CREATE TABLE <tablename> (
             foreach (ColumnDefinition column in columnDefinitions)
             {
-                query += column.ToString() + Constants.Sql.Comma + Environment.NewLine;             // "columnname TEXT DEFAULT 'value',\n" or similar
+                query += column.ToString() + Constant.Sql.Comma + Environment.NewLine;             // "columnname TEXT DEFAULT 'value',\n" or similar
             }
-            query = query.Remove(query.Length - Constants.Sql.Comma.Length - Environment.NewLine.Length);         // remove last comma / new line and replace with );
+            query = query.Remove(query.Length - Constant.Sql.Comma.Length - Environment.NewLine.Length);         // remove last comma / new line and replace with );
             query += ");";
             this.ExecuteNonQuery(query);
         }
@@ -83,16 +83,16 @@ namespace Carnassial.Database
                 string values = String.Empty;
                 foreach (ColumnTuple column in columnsToUpdate)
                 {
-                    columns += String.Format(" {0}" + Constants.Sql.Comma, column.Name);      // transform dictionary entries into a string "col1, col2, ... coln"
-                    values += String.Format(" {0}" + Constants.Sql.Comma, Utilities.QuoteForSql(column.Value));         // transform dictionary entries into a string "'value1', 'value2', ... 'valueN'"
+                    columns += String.Format(" {0}" + Constant.Sql.Comma, column.Name);      // transform dictionary entries into a string "col1, col2, ... coln"
+                    values += String.Format(" {0}" + Constant.Sql.Comma, Utilities.QuoteForSql(column.Value));         // transform dictionary entries into a string "'value1', 'value2', ... 'valueN'"
                 }
                 if (columns.Length > 0)
                 {
-                    columns = columns.Substring(0, columns.Length - Constants.Sql.Comma.Length);     // Remove last comma in the sequence to produce (col1, col2, ... coln)  
+                    columns = columns.Substring(0, columns.Length - Constant.Sql.Comma.Length);     // Remove last comma in the sequence to produce (col1, col2, ... coln)  
                 }
                 if (values.Length > 0)
                 {
-                    values = values.Substring(0, values.Length - Constants.Sql.Comma.Length);        // Remove last comma in the sequence 
+                    values = values.Substring(0, values.Length - Constant.Sql.Comma.Length);        // Remove last comma in the sequence 
                 }
 
                 // Construct the query. The newlines are to format it for pretty printing
@@ -232,7 +232,7 @@ namespace Carnassial.Database
                         // END
                         if (statementsInQuery >= MaxStatementCount)
                         {
-                            command.CommandText = Constants.Sql.End;
+                            command.CommandText = Constant.Sql.End;
                             rowsUpdated += command.ExecuteNonQuery();
                             statementsInQuery = 0;
                         }
@@ -240,7 +240,7 @@ namespace Carnassial.Database
                     // END
                     if (statementsInQuery != 0)
                     {
-                        command.CommandText = Constants.Sql.End;
+                        command.CommandText = Constant.Sql.End;
                         rowsUpdated += command.ExecuteNonQuery();
                     }
                 }
@@ -315,18 +315,18 @@ namespace Carnassial.Database
                 // we have to cater to different formats for integers, NULLS and strings...
                 if (column.Value == null)
                 {
-                    query += String.Format(" {0} = {1}{2}", column.Name.ToString(), "NULL", Constants.Sql.Comma);
+                    query += String.Format(" {0} = {1}{2}", column.Name.ToString(), "NULL", Constant.Sql.Comma);
                 }
                 else
                 {
-                    query += String.Format(" {0} = {1}{2}", column.Name, Utilities.QuoteForSql(column.Value), Constants.Sql.Comma);
+                    query += String.Format(" {0} = {1}{2}", column.Name, Utilities.QuoteForSql(column.Value), Constant.Sql.Comma);
                 }
             }
-            query = query.Substring(0, query.Length - Constants.Sql.Comma.Length); // Remove the last comma
+            query = query.Substring(0, query.Length - Constant.Sql.Comma.Length); // Remove the last comma
 
             if (String.IsNullOrWhiteSpace(columnsToUpdate.Where) == false)
             {
-                query += Constants.Sql.Where + columnsToUpdate.Where;
+                query += Constant.Sql.Where + columnsToUpdate.Where;
             }
             query += ";";
             return query;
@@ -369,11 +369,11 @@ namespace Carnassial.Database
         public void DeleteRows(string tableName, string where)
         {
             // DELETE FROM table_name WHERE where
-            string query = Constants.Sql.DeleteFrom + tableName;        // DELETE FROM tableName
+            string query = Constant.Sql.DeleteFrom + tableName;        // DELETE FROM tableName
             if (String.IsNullOrWhiteSpace(where) == false)
             {
                 // Add the WHERE clause only when where is not empty
-                query += Constants.Sql.Where + where;
+                query += Constant.Sql.Where + where;
             }
             this.ExecuteNonQuery(query);
         }
@@ -394,7 +394,7 @@ namespace Carnassial.Database
                 // delete only when where is not empty
                 if (String.IsNullOrWhiteSpace(whereClause) == false)
                 {                                                            // Construct each query statement
-                    string query = Constants.Sql.DeleteFrom + tableName + Constants.Sql.Where + whereClause + ";";
+                    string query = Constant.Sql.DeleteFrom + tableName + Constant.Sql.Where + whereClause + ";";
                     queries.Add(query);
                 }
             }

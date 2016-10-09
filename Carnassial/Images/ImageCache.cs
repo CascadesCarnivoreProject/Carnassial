@@ -21,7 +21,7 @@ namespace Carnassial.Images
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
             this.differenceBitmapCache = new Dictionary<ImageDifference, BitmapSource>();
-            this.mostRecentlyUsedIDs = new MostRecentlyUsedList<long>(Constants.Images.BitmapCacheSize);
+            this.mostRecentlyUsedIDs = new MostRecentlyUsedList<long>(Constant.Images.BitmapCacheSize);
             this.prefetechesByID = new ConcurrentDictionary<long, Task>();
             this.unalteredBitmapsByID = new ConcurrentDictionary<long, BitmapSource>();
         }
@@ -198,13 +198,13 @@ namespace Carnassial.Images
             }
         }
 
-        public override bool TryMoveToImage(int imageRowIndex)
+        public override bool TryMoveToFile(int imageRowIndex)
         {
             bool ignored;
-            return this.TryMoveToImage(imageRowIndex, out ignored);
+            return this.TryMoveToFile(imageRowIndex, out ignored);
         }
 
-        public bool TryMoveToImage(int imageRowIndex, out bool newImageToDisplay)
+        public bool TryMoveToFile(int imageRowIndex, out bool newImageToDisplay)
         {
             long oldImageID = -1;
             if (this.Current != null)
@@ -212,7 +212,7 @@ namespace Carnassial.Images
                 oldImageID = this.Current.ID;
             }
 
-            if (base.TryMoveToImage(imageRowIndex) == false)
+            if (base.TryMoveToFile(imageRowIndex) == false)
             {
                 newImageToDisplay = false;
                 return false;

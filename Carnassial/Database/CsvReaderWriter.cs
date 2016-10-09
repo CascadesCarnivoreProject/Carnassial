@@ -91,7 +91,6 @@ namespace Carnassial.Database
 
                         // assemble set of column values to update
                         string imageFileName = null;
-                        string folder = null;
                         string relativePath = null;
                         ColumnTuplesWithWhere imageToUpdate = new ColumnTuplesWithWhere();
                         for (int field = 0; field < row.Count; ++field)
@@ -100,28 +99,24 @@ namespace Carnassial.Database
                             string value = row[field];
 
                             // capture components of image's unique identifier for constructing where clause
-                            // at least for now, it's assumed all renames or moves are done through Carnassial and hence file name + folder + relative path form 
+                            // at least for now, it's assumed all renames or moves are done through Carnassial and hence relative path + file name form 
                             // an immutable (and unique) ID
                             DateTime dateTime;
                             TimeSpan utcOffset;
-                            if (dataLabel == Constants.DatabaseColumn.File)
+                            if (dataLabel == Constant.DatabaseColumn.File)
                             {
                                 imageFileName = value;
                             }
-                            else if (dataLabel == Constants.DatabaseColumn.Folder)
-                            {
-                                folder = value;
-                            }
-                            else if (dataLabel == Constants.DatabaseColumn.RelativePath)
+                            else if (dataLabel == Constant.DatabaseColumn.RelativePath)
                             {
                                 relativePath = value;
                             }
-                            else if (dataLabel == Constants.DatabaseColumn.DateTime && DateTimeHandler.TryParseDatabaseDateTime(value, out dateTime))
+                            else if (dataLabel == Constant.DatabaseColumn.DateTime && DateTimeHandler.TryParseDatabaseDateTime(value, out dateTime))
                             {
                                 // pass DateTime to ColumnTuple rather than the string as ColumnTuple owns validation and formatting
                                 imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, dateTime));
                             }
-                            else if (dataLabel == Constants.DatabaseColumn.UtcOffset && DateTimeHandler.TryParseDatabaseUtcOffsetString(value, out utcOffset))
+                            else if (dataLabel == Constant.DatabaseColumn.UtcOffset && DateTimeHandler.TryParseDatabaseUtcOffsetString(value, out utcOffset))
                             {
                                 // as with DateTime, pass parsed UTC offset to ColumnTuple rather than the string as ColumnTuple owns validation and formatting
                                 imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, utcOffset));
@@ -140,7 +135,7 @@ namespace Carnassial.Database
 
                         // accumulate image
                         Debug.Assert(String.IsNullOrWhiteSpace(imageFileName) == false, "File name was not loaded.");
-                        imageToUpdate.SetWhere(folder, relativePath, imageFileName);
+                        imageToUpdate.SetWhere(relativePath, imageFileName);
                         imagesToUpdate.Add(imageToUpdate);
 
                         // write current batch of updates to database

@@ -29,38 +29,37 @@ namespace Carnassial.Editor.Util
                 StackPanel stackPanel;
                 switch (control.Type)
                 {
-                    case Constants.Control.Note:
-                    case Constants.DatabaseColumn.File:
-                    case Constants.DatabaseColumn.Folder:
-                    case Constants.DatabaseColumn.RelativePath:
+                    case Constant.Control.Note:
+                    case Constant.DatabaseColumn.File:
+                    case Constant.DatabaseColumn.RelativePath:
                         Label noteLabel = this.CreateLabel(styleProvider, control);
                         TextBox noteContent = this.CreateTextBox(styleProvider, control);
                         stackPanel = this.CreateStackPanel(styleProvider, noteLabel, noteContent);
                         break;
-                    case Constants.Control.Counter:
+                    case Constant.Control.Counter:
                         RadioButton counterLabel = this.CreateRadioButton(styleProvider, control);
                         TextBox coutnerContent = this.CreateTextBox(styleProvider, control);
                         stackPanel = this.CreateStackPanel(styleProvider, counterLabel, coutnerContent);
                         break;
-                    case Constants.Control.Flag:
-                    case Constants.DatabaseColumn.DeleteFlag:
+                    case Constant.Control.Flag:
+                    case Constant.DatabaseColumn.DeleteFlag:
                         Label flagLabel = this.CreateLabel(styleProvider, control);
                         CheckBox flagContent = this.CreateFlag(styleProvider, control);
-                        flagContent.IsChecked = (control.DefaultValue == Constants.Boolean.True) ? true : false;
+                        flagContent.IsChecked = (control.DefaultValue == Constant.Boolean.True) ? true : false;
                         stackPanel = this.CreateStackPanel(styleProvider, flagLabel, flagContent);
                         break;
-                    case Constants.Control.FixedChoice:
-                    case Constants.DatabaseColumn.ImageQuality:
+                    case Constant.Control.FixedChoice:
+                    case Constant.DatabaseColumn.ImageQuality:
                         Label choiceLabel = this.CreateLabel(styleProvider, control);
                         ComboBox choiceContent = this.CreateComboBox(mainWindow, control);
                         stackPanel = this.CreateStackPanel(styleProvider, choiceLabel, choiceContent);
                         break;
-                    case Constants.DatabaseColumn.DateTime:
+                    case Constant.DatabaseColumn.DateTime:
                         Label dateTimeLabel = this.CreateLabel(styleProvider, control);
                         DateTimePicker dateTimeContent = this.CreateDateTimePicker(control);
                         stackPanel = this.CreateStackPanel(styleProvider, dateTimeLabel, dateTimeContent);
                         break;
-                    case Constants.DatabaseColumn.UtcOffset:
+                    case Constant.DatabaseColumn.UtcOffset:
                         Label utcOffsetLabel = this.CreateLabel(styleProvider, control);
                         UtcOffsetUpDown utcOffsetContent = this.CreateUtcOffsetPicker(control);
                         stackPanel = this.CreateStackPanel(styleProvider, utcOffsetLabel, utcOffsetContent);
@@ -82,7 +81,7 @@ namespace Carnassial.Editor.Util
 
         public static bool IsStandardControlType(string controlType)
         {
-            return Constants.Control.StandardTypes.Contains(controlType);
+            return Constant.Control.StandardTypes.Contains(controlType);
         }
 
         private DateTimePicker CreateDateTimePicker(ControlRow control)
@@ -90,7 +89,7 @@ namespace Carnassial.Editor.Util
             DateTimePicker dateTimePicker = new DateTimePicker();
             dateTimePicker.ToolTip = control.Tooltip;
             dateTimePicker.Width = control.Width;
-            DataEntryHandler.Configure(dateTimePicker, Constants.ControlDefault.DateTimeValue.DateTime);
+            DataEntryHandler.Configure(dateTimePicker, Constant.ControlDefault.DateTimeValue.DateTime);
             return dateTimePicker;
         }
 
@@ -103,7 +102,7 @@ namespace Carnassial.Editor.Util
             stackPanel.Children.Add(label);
             stackPanel.Children.Add(content);
 
-            Style style = styleProvider.FindResource(Constants.ControlStyle.StackPanelCodeBar) as Style;
+            Style style = styleProvider.FindResource(Constant.ControlStyle.StackPanelCodeBar) as Style;
             stackPanel.Style = style;
             return stackPanel;
         }
@@ -112,7 +111,7 @@ namespace Carnassial.Editor.Util
         {
             UtcOffsetUpDown utcOffsetPicker = new UtcOffsetUpDown();
             utcOffsetPicker.ToolTip = control.Tooltip;
-            utcOffsetPicker.Value = Constants.ControlDefault.DateTimeValue.Offset;
+            utcOffsetPicker.Value = Constant.ControlDefault.DateTimeValue.Offset;
             utcOffsetPicker.Width = control.Width;
             return utcOffsetPicker;
         }
@@ -174,7 +173,7 @@ namespace Carnassial.Editor.Util
             }
             comboBox.SelectedIndex = 0;
 
-            Style style = styleProvider.FindResource(Constants.ControlStyle.ComboBoxCodeBar) as Style;
+            Style style = styleProvider.FindResource(Constant.ControlStyle.ComboBoxCodeBar) as Style;
             comboBox.Style = style;
             return comboBox;
         }

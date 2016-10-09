@@ -50,7 +50,7 @@ namespace Carnassial.Util
                 }
             }
 
-            if (applicationName == Constants.ApplicationName)
+            if (applicationName == Constant.ApplicationName)
             {
                 foreach (string binaryName in Dependencies.CarnassialRequiredBinaries)
                 {

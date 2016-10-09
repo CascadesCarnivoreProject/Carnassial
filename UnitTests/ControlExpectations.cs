@@ -31,14 +31,14 @@ namespace Carnassial.UnitTests
                 ControlOrder = controlOrder,
                 Copyable = false,
                 DataLabel = dataLabel,
-                DefaultValue = Constants.ControlDefault.CounterValue,
+                DefaultValue = Constant.ControlDefault.CounterValue,
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
                 SpreadsheetOrder = spreadsheetOrder,
-                TextBoxWidth = Constants.ControlDefault.CounterWidth,
-                Tooltip = Constants.ControlDefault.CounterTooltip,
-                Type = Constants.Control.Counter,
+                TextBoxWidth = Constant.ControlDefault.CounterWidth,
+                Tooltip = Constant.ControlDefault.CounterTooltip,
+                Type = Constant.Control.Counter,
                 Visible = true
             };
         }
@@ -55,14 +55,14 @@ namespace Carnassial.UnitTests
                 ControlOrder = controlOrder,
                 Copyable = true,
                 DataLabel = dataLabel,
-                DefaultValue = Constants.ControlDefault.Value,
+                DefaultValue = Constant.ControlDefault.Value,
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
                 SpreadsheetOrder = spreadsheetOrder,
-                TextBoxWidth = Constants.ControlDefault.FixedChoiceWidth,
-                Tooltip = Constants.ControlDefault.FixedChoiceTooltip,
-                Type = Constants.Control.FixedChoice,
+                TextBoxWidth = Constant.ControlDefault.FixedChoiceWidth,
+                Tooltip = Constant.ControlDefault.FixedChoiceTooltip,
+                Type = Constant.Control.FixedChoice,
                 Visible = true
             };
         }
@@ -79,14 +79,14 @@ namespace Carnassial.UnitTests
                 ControlOrder = controlOrder,
                 Copyable = true,
                 DataLabel = dataLabel,
-                DefaultValue = Constants.ControlDefault.FlagValue,
+                DefaultValue = Constant.ControlDefault.FlagValue,
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
                 SpreadsheetOrder = spreadsheetOrder,
-                TextBoxWidth = Constants.ControlDefault.FlagWidth,
-                Tooltip = Constants.ControlDefault.FlagTooltip,
-                Type = Constants.Control.Flag,
+                TextBoxWidth = Constant.ControlDefault.FlagWidth,
+                Tooltip = Constant.ControlDefault.FlagTooltip,
+                Type = Constant.Control.Flag,
                 Visible = true
             };
         }
@@ -103,14 +103,14 @@ namespace Carnassial.UnitTests
                 ControlOrder = controlOrder,
                 Copyable = true,
                 DataLabel = dataLabel,
-                DefaultValue = Constants.ControlDefault.Value,
+                DefaultValue = Constant.ControlDefault.Value,
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
                 SpreadsheetOrder = spreadsheetOrder,
-                TextBoxWidth = Constants.ControlDefault.NoteWidth,
-                Tooltip = Constants.ControlDefault.NoteTooltip,
-                Type = Constants.Control.Note,
+                TextBoxWidth = Constant.ControlDefault.NoteWidth,
+                Tooltip = Constant.ControlDefault.NoteTooltip,
+                Type = Constant.Control.Note,
                 Visible = true
             };
         }

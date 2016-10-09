@@ -20,7 +20,7 @@
 &#10;&#x2022; Click Apply Changes to apply those changes."
                             Result="The difference between the original and correct date will be added to all dates for all images and videos selected."
                             Hint="The date/time format you enter should look something like '12-Apr-2016 13:00:00.'&#10;For example, changing 12-Apr-2016 13:00:00 to 13-Apr-2016 14:00:00 would add 1 day and 1 hour to all dates/times"
-                            ShowExplanationVisibility="True"/>
+                            HideExplanationCheckboxIsVisible="True"/>
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="1" />
         </StackPanel>

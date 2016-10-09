@@ -44,7 +44,7 @@ namespace Carnassial.Database
 
         protected void CreateBackupIfNeeded()
         {
-            if (DateTime.UtcNow - this.mostRecentBackup < Constants.File.BackupInterval)
+            if (DateTime.UtcNow - this.mostRecentBackup < Constant.File.BackupInterval)
             {
                 // not due for a new backup yet
                 return;
@@ -82,47 +82,47 @@ namespace Carnassial.Database
             string dataLabelPrefix;
             switch (controlType)
             {
-                case Constants.Control.Counter:
-                    dataLabelPrefix = Constants.Control.Counter;
-                    newControl.DefaultValue = Constants.ControlDefault.CounterValue;
-                    newControl.Type = Constants.Control.Counter;
-                    newControl.Width = Constants.ControlDefault.CounterWidth;
+                case Constant.Control.Counter:
+                    dataLabelPrefix = Constant.Control.Counter;
+                    newControl.DefaultValue = Constant.ControlDefault.CounterValue;
+                    newControl.Type = Constant.Control.Counter;
+                    newControl.Width = Constant.ControlDefault.CounterWidth;
                     newControl.Copyable = false;
                     newControl.Visible = true;
-                    newControl.Tooltip = Constants.ControlDefault.CounterTooltip;
+                    newControl.Tooltip = Constant.ControlDefault.CounterTooltip;
                     newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
                     newControl.Label = newControl.DataLabel;
                     break;
-                case Constants.Control.Note:
-                    dataLabelPrefix = Constants.Control.Note;
-                    newControl.DefaultValue = Constants.ControlDefault.Value;
-                    newControl.Type = Constants.Control.Note;
-                    newControl.Width = Constants.ControlDefault.NoteWidth;
+                case Constant.Control.Note:
+                    dataLabelPrefix = Constant.Control.Note;
+                    newControl.DefaultValue = Constant.ControlDefault.Value;
+                    newControl.Type = Constant.Control.Note;
+                    newControl.Width = Constant.ControlDefault.NoteWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
-                    newControl.Tooltip = Constants.ControlDefault.NoteTooltip;
+                    newControl.Tooltip = Constant.ControlDefault.NoteTooltip;
                     newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
                     newControl.Label = newControl.DataLabel;
                     break;
-                case Constants.Control.FixedChoice:
-                    dataLabelPrefix = Constants.Control.Choice;
-                    newControl.DefaultValue = Constants.ControlDefault.Value;
-                    newControl.Type = Constants.Control.FixedChoice;
-                    newControl.Width = Constants.ControlDefault.FixedChoiceWidth;
+                case Constant.Control.FixedChoice:
+                    dataLabelPrefix = Constant.Control.Choice;
+                    newControl.DefaultValue = Constant.ControlDefault.Value;
+                    newControl.Type = Constant.Control.FixedChoice;
+                    newControl.Width = Constant.ControlDefault.FixedChoiceWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
-                    newControl.Tooltip = Constants.ControlDefault.FixedChoiceTooltip;
+                    newControl.Tooltip = Constant.ControlDefault.FixedChoiceTooltip;
                     newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
                     newControl.Label = newControl.DataLabel;
                     break;
-                case Constants.Control.Flag:
-                    dataLabelPrefix = Constants.Control.Flag;
-                    newControl.DefaultValue = Constants.ControlDefault.FlagValue;
-                    newControl.Type = Constants.Control.Flag;
-                    newControl.Width = Constants.ControlDefault.FlagWidth;
+                case Constant.Control.Flag:
+                    dataLabelPrefix = Constant.Control.Flag;
+                    newControl.DefaultValue = Constant.ControlDefault.FlagValue;
+                    newControl.Type = Constant.Control.Flag;
+                    newControl.Width = Constant.ControlDefault.FlagWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
-                    newControl.Tooltip = Constants.ControlDefault.FlagTooltip;
+                    newControl.Tooltip = Constant.ControlDefault.FlagTooltip;
                     newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
                     newControl.Label = newControl.DataLabel;
                     break;
@@ -130,12 +130,12 @@ namespace Carnassial.Database
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", controlType));
             }
             newControl.ControlOrder = this.GetOrderForNewControl();
-            newControl.List = Constants.ControlDefault.Value;
+            newControl.List = Constant.ControlDefault.Value;
             newControl.SpreadsheetOrder = newControl.ControlOrder;
 
             // add the new control to the database
             List<List<ColumnTuple>> controlInsertWrapper = new List<List<ColumnTuple>>() { newControl.GetColumnTuples().Columns };
-            this.Database.Insert(Constants.DatabaseTable.Controls, controlInsertWrapper);
+            this.Database.Insert(Constant.DatabaseTable.Controls, controlInsertWrapper);
 
             // update the in memory table to reflect current database content
             // could just add the new row to the table but this is done in case a bug results in the insert lacking perfect fidelity
@@ -151,7 +151,7 @@ namespace Carnassial.Database
 
         private void GetControlsSortedByControlOrder()
         {
-            DataTable templateTable = this.Database.GetDataTableFromSelect("SELECT * FROM " + Constants.DatabaseTable.Controls + " ORDER BY  " + Constants.Control.ControlOrder);
+            DataTable templateTable = this.Database.GetDataTableFromSelect("SELECT * FROM " + Constant.DatabaseTable.Controls + " ORDER BY  " + Constant.Control.ControlOrder);
             this.Controls = new DataTableBackedList<ControlRow>(templateTable, (DataRow row) => { return new ControlRow(row); });
             this.Controls.BindDataGrid(this.editorDataGrid, this.onTemplateTableRowChanged);
         }
@@ -170,7 +170,7 @@ namespace Carnassial.Database
                 Debug.Assert(String.IsNullOrWhiteSpace(dataLabel) == false, String.Format("Encountered empty data label and label at ID {0} in template table.", control.ID));
 
                 // get a list of datalabels so we can add columns in the order that matches the current template table order
-                if (Constants.DatabaseColumn.ID != dataLabel)
+                if (Constant.DatabaseColumn.ID != dataLabel)
                 {
                     dataLabels.Add(dataLabel);
                 }
@@ -180,7 +180,7 @@ namespace Carnassial.Database
 
         public bool IsControlCopyable(string dataLabel)
         {
-            long id = this.GetControlIDFromTemplateTable(dataLabel);
+            long id = this.GetControlID(dataLabel);
             ControlRow control = this.Controls.Find(id);
             return control.Copyable;
         }
@@ -190,7 +190,7 @@ namespace Carnassial.Database
             this.CreateBackupIfNeeded();
 
             string controlType = controlToRemove.Type;
-            if (Constants.Control.StandardTypes.Contains(controlType))
+            if (Constant.Control.StandardTypes.Contains(controlType))
             {
                 throw new NotSupportedException(String.Format("Standard control of type {0} cannot be removed.", controlType));
             }
@@ -200,8 +200,8 @@ namespace Carnassial.Database
             long removedSpreadsheetOrder = controlToRemove.SpreadsheetOrder;
 
             // drop the control from the database and data table
-            string where = Constants.DatabaseColumn.ID + " = " + controlToRemove.ID;
-            this.Database.DeleteRows(Constants.DatabaseTable.Controls, where);
+            string where = Constant.DatabaseColumn.ID + " = " + controlToRemove.ID;
+            this.Database.DeleteRows(Constant.DatabaseTable.Controls, where);
             this.GetControlsSortedByControlOrder();
 
             // regenerate counter and spreadsheet orders; if they're greater than the one removed, decrement
@@ -214,7 +214,7 @@ namespace Carnassial.Database
                 if (controlOrder > removedControlOrder)
                 {
                     List<ColumnTuple> controlUpdate = new List<ColumnTuple>();
-                    controlUpdate.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder - 1));
+                    controlUpdate.Add(new ColumnTuple(Constant.Control.ControlOrder, controlOrder - 1));
                     control.ControlOrder = controlOrder - 1;
                     controlUpdates.Add(new ColumnTuplesWithWhere(controlUpdate, control.ID));
                 }
@@ -222,12 +222,12 @@ namespace Carnassial.Database
                 if (spreadsheetOrder > removedSpreadsheetOrder)
                 {
                     List<ColumnTuple> controlUpdate = new List<ColumnTuple>();
-                    controlUpdate.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, spreadsheetOrder - 1));
+                    controlUpdate.Add(new ColumnTuple(Constant.Control.SpreadsheetOrder, spreadsheetOrder - 1));
                     control.SpreadsheetOrder = spreadsheetOrder - 1;
                     controlUpdates.Add(new ColumnTuplesWithWhere(controlUpdate, control.ID));
                 }
             }
-            this.Database.Update(Constants.DatabaseTable.Controls, controlUpdates);
+            this.Database.Update(Constant.DatabaseTable.Controls, controlUpdates);
 
             // update the in memory table to reflect current database content
             // should not be necessary but this is done to mitigate divergence in case a bug results in the delete lacking perfect fidelity
@@ -241,7 +241,7 @@ namespace Carnassial.Database
         public void SyncControlToDatabase(ControlRow control)
         {
             this.CreateBackupIfNeeded();
-            this.Database.Update(Constants.DatabaseTable.Controls, control.GetColumnTuples());
+            this.Database.Update(Constant.DatabaseTable.Controls, control.GetColumnTuples());
         }
 
         private void SyncTemplateTableToDatabase()
@@ -254,14 +254,14 @@ namespace Carnassial.Database
             this.CreateBackupIfNeeded();
 
             // clear the existing table in the database and add the new values
-            this.Database.DeleteRows(Constants.DatabaseTable.Controls, null);
+            this.Database.DeleteRows(Constant.DatabaseTable.Controls, null);
 
             List<List<ColumnTuple>> newTableTuples = new List<List<ColumnTuple>>();
             foreach (ControlRow control in newTable)
             {
                 newTableTuples.Add(control.GetColumnTuples().Columns);
             }
-            this.Database.Insert(Constants.DatabaseTable.Controls, newTableTuples);
+            this.Database.Insert(Constant.DatabaseTable.Controls, newTableTuples);
 
             // update the in memory table to reflect current database content
             // could just use the new table but this is done in case a bug results in the insert lacking perfect fidelity
@@ -286,9 +286,9 @@ namespace Carnassial.Database
         public void UpdateDisplayOrder(string orderColumnName, Dictionary<string, long> newOrderByDataLabel)
         {
             // argument validation
-            if (orderColumnName != Constants.Control.ControlOrder && orderColumnName != Constants.Control.SpreadsheetOrder)
+            if (orderColumnName != Constant.Control.ControlOrder && orderColumnName != Constant.Control.SpreadsheetOrder)
             {
-                throw new ArgumentOutOfRangeException("column", String.Format("'{0}' is not a control order column.  Only '{1}' and '{2}' are order columns.", orderColumnName, Constants.Control.ControlOrder, Constants.Control.SpreadsheetOrder));
+                throw new ArgumentOutOfRangeException("column", String.Format("'{0}' is not a control order column.  Only '{1}' and '{2}' are order columns.", orderColumnName, Constant.Control.ControlOrder, Constant.Control.SpreadsheetOrder));
             }
 
             if (newOrderByDataLabel.Count != this.Controls.RowCount)
@@ -319,10 +319,10 @@ namespace Carnassial.Database
                 long newOrder = newOrderByDataLabel[dataLabel];
                 switch (orderColumnName)
                 {
-                    case Constants.Control.ControlOrder:
+                    case Constant.Control.ControlOrder:
                         control.ControlOrder = newOrder;
                         break;
-                    case Constants.Control.SpreadsheetOrder:
+                    case Constant.Control.SpreadsheetOrder:
                         control.SpreadsheetOrder = newOrder;
                         break;
                     default:
@@ -353,7 +353,7 @@ namespace Carnassial.Database
         }
 
         /// <summary>Given a data label, get the corresponding data entry control</summary>
-        public ControlRow GetControlFromTemplateTable(string dataLabel)
+        public ControlRow FindControl(string dataLabel)
         {
             foreach (ControlRow control in this.Controls)
             {
@@ -362,13 +362,15 @@ namespace Carnassial.Database
                     return control;
                 }
             }
+
+            Debug.Fail(String.Format("Control for data label '{0}' not found.", dataLabel));
             return null;
         }
 
         /// <summary>Given a data label, get the id of the corresponding data entry control</summary>
-        protected long GetControlIDFromTemplateTable(string dataLabel)
+        protected long GetControlID(string dataLabel)
         {
-            ControlRow control = this.GetControlFromTemplateTable(dataLabel);
+            ControlRow control = this.FindControl(dataLabel);
             if (control == null)
             {
                 return -1;
@@ -380,19 +382,19 @@ namespace Carnassial.Database
         {
             // create the template table
             List<ColumnDefinition> templateTableColumns = new List<ColumnDefinition>();
-            templateTableColumns.Add(new ColumnDefinition(Constants.DatabaseColumn.ID, Constants.Sql.CreationStringPrimaryKey));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.ControlOrder, Constants.Sql.Integer));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.SpreadsheetOrder, Constants.Sql.Integer));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Type, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.DefaultValue, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Label, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.DataLabel, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Tooltip, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Width, Constants.Sql.Integer));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Copyable, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.Visible, Constants.Sql.Text));
-            templateTableColumns.Add(new ColumnDefinition(Constants.Control.List, Constants.Sql.Text));
-            this.Database.CreateTable(Constants.DatabaseTable.Controls, templateTableColumns);
+            templateTableColumns.Add(new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.Sql.CreationStringPrimaryKey));
+            templateTableColumns.Add(new ColumnDefinition(Constant.Control.ControlOrder, Constant.Sql.Integer));
+            templateTableColumns.Add(new ColumnDefinition(Constant.Control.SpreadsheetOrder, Constant.Sql.Integer));
+            templateTableColumns.Add(new ColumnDefinition(Constant.Control.Type, Constant.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constant.Control.DefaultValue, Constant.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constant.Control.Label, Constant.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constant.Control.DataLabel, Constant.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constant.Control.Tooltip, Constant.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constant.Control.Width, Constant.Sql.Integer));
+            templateTableColumns.Add(new ColumnDefinition(Constant.Control.Copyable, Constant.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constant.Control.Visible, Constant.Sql.Text));
+            templateTableColumns.Add(new ColumnDefinition(Constant.Control.List, Constant.Sql.Text));
+            this.Database.CreateTable(Constant.DatabaseTable.Controls, templateTableColumns);
 
             // if an existing table was passed, clone its contents into this database
             if (other != null)
@@ -408,36 +410,21 @@ namespace Carnassial.Database
 
             // file
             List<ColumnTuple> file = new List<ColumnTuple>();
-            file.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
-            file.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            file.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.File));
-            file.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
-            file.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.File));
-            file.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.File));
-            file.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.FileTooltip));
-            file.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.FileWidth));
-            file.Add(new ColumnTuple(Constants.Control.Copyable, false));
-            file.Add(new ColumnTuple(Constants.Control.Visible, true));
-            file.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
+            file.Add(new ColumnTuple(Constant.Control.ControlOrder, ++controlOrder));
+            file.Add(new ColumnTuple(Constant.Control.SpreadsheetOrder, ++spreadsheetOrder));
+            file.Add(new ColumnTuple(Constant.Control.Type, Constant.DatabaseColumn.File));
+            file.Add(new ColumnTuple(Constant.Control.DefaultValue, Constant.ControlDefault.Value));
+            file.Add(new ColumnTuple(Constant.Control.Label, Constant.DatabaseColumn.File));
+            file.Add(new ColumnTuple(Constant.Control.DataLabel, Constant.DatabaseColumn.File));
+            file.Add(new ColumnTuple(Constant.Control.Tooltip, Constant.ControlDefault.FileTooltip));
+            file.Add(new ColumnTuple(Constant.Control.Width, Constant.ControlDefault.FileWidth));
+            file.Add(new ColumnTuple(Constant.Control.Copyable, false));
+            file.Add(new ColumnTuple(Constant.Control.Visible, true));
+            file.Add(new ColumnTuple(Constant.Control.List, Constant.ControlDefault.Value));
             standardControls.Add(file);
 
             // relative path
             standardControls.Add(this.GetRelativePathTuples(++controlOrder, ++spreadsheetOrder, true));
-
-            // folder
-            List<ColumnTuple> folder = new List<ColumnTuple>();
-            folder.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
-            folder.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            folder.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.Folder));
-            folder.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
-            folder.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.Folder));
-            folder.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.Folder));
-            folder.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.FolderTooltip));
-            folder.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.FolderWidth));
-            folder.Add(new ColumnTuple(Constants.Control.Copyable, false));
-            folder.Add(new ColumnTuple(Constants.Control.Visible, true));
-            folder.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
-            standardControls.Add(folder);
 
             // datetime
             standardControls.Add(this.GetDateTimeTuples(++controlOrder, ++spreadsheetOrder, true));
@@ -447,24 +434,24 @@ namespace Carnassial.Database
 
             // image quality
             List<ColumnTuple> imageQuality = new List<ColumnTuple>();
-            imageQuality.Add(new ColumnTuple(Constants.Control.ControlOrder, ++controlOrder));
-            imageQuality.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, ++spreadsheetOrder));
-            imageQuality.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.ImageQuality));
-            imageQuality.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
-            imageQuality.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.ImageQuality));
-            imageQuality.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.ImageQuality));
-            imageQuality.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.ImageQualityTooltip));
-            imageQuality.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.ImageQualityWidth));
-            imageQuality.Add(new ColumnTuple(Constants.Control.Copyable, false));
-            imageQuality.Add(new ColumnTuple(Constants.Control.Visible, true));
-            imageQuality.Add(new ColumnTuple(Constants.Control.List, Constants.ImageQuality.ListOfValues));
+            imageQuality.Add(new ColumnTuple(Constant.Control.ControlOrder, ++controlOrder));
+            imageQuality.Add(new ColumnTuple(Constant.Control.SpreadsheetOrder, ++spreadsheetOrder));
+            imageQuality.Add(new ColumnTuple(Constant.Control.Type, Constant.DatabaseColumn.ImageQuality));
+            imageQuality.Add(new ColumnTuple(Constant.Control.DefaultValue, Constant.ControlDefault.Value));
+            imageQuality.Add(new ColumnTuple(Constant.Control.Label, Constant.DatabaseColumn.ImageQuality));
+            imageQuality.Add(new ColumnTuple(Constant.Control.DataLabel, Constant.DatabaseColumn.ImageQuality));
+            imageQuality.Add(new ColumnTuple(Constant.Control.Tooltip, Constant.ControlDefault.ImageQualityTooltip));
+            imageQuality.Add(new ColumnTuple(Constant.Control.Width, Constant.ControlDefault.ImageQualityWidth));
+            imageQuality.Add(new ColumnTuple(Constant.Control.Copyable, false));
+            imageQuality.Add(new ColumnTuple(Constant.Control.Visible, true));
+            imageQuality.Add(new ColumnTuple(Constant.Control.List, Constant.ImageQuality.ListOfValues));
             standardControls.Add(imageQuality);
 
             // delete flag
             standardControls.Add(this.GetDeleteFlagTuples(++controlOrder, ++spreadsheetOrder, true));
 
             // insert standard controls into the template table
-            this.Database.Insert(Constants.DatabaseTable.Controls, standardControls);
+            this.Database.Insert(Constant.DatabaseTable.Controls, standardControls);
 
             // populate the in memory version of the template table
             this.GetControlsSortedByControlOrder();
@@ -512,8 +499,8 @@ namespace Carnassial.Database
                 }
             }
 
-            this.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
-            this.UpdateDisplayOrder(Constants.Control.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
+            this.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
+            this.UpdateDisplayOrder(Constant.Control.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
             this.GetControlsSortedByControlOrder();
         }
 
@@ -523,7 +510,7 @@ namespace Carnassial.Database
         private void SetControlID(string dataLabel, int newID)
         {
             // nothing to do
-            long currentID = this.GetControlIDFromTemplateTable(dataLabel);
+            long currentID = this.GetControlID(dataLabel);
             if (currentID == newID)
             {
                 return;
@@ -546,24 +533,24 @@ namespace Carnassial.Database
                 Debug.Assert((maximumID > 0) && (maximumID <= Int64.MaxValue), String.Format("Maximum ID found is {0}, which is out of range.", maximumID));
                 string jumpAmount = maximumID.ToString();
 
-                string increaseIDs = "Update " + Constants.DatabaseTable.Controls;
-                increaseIDs += " SET " + Constants.DatabaseColumn.ID + " = " + Constants.DatabaseColumn.ID + " + 1 + " + jumpAmount;
-                increaseIDs += " WHERE " + Constants.DatabaseColumn.ID + " >= " + newID;
+                string increaseIDs = "Update " + Constant.DatabaseTable.Controls;
+                increaseIDs += " SET " + Constant.DatabaseColumn.ID + " = " + Constant.DatabaseColumn.ID + " + 1 + " + jumpAmount;
+                increaseIDs += " WHERE " + Constant.DatabaseColumn.ID + " >= " + newID;
                 queries.Add(increaseIDs);
 
                 // Second update: decrease IDs above newID to be one more than their original value
                 // This leaves everything in sequence except for an open spot at newID.
-                string reduceIDs = "Update " + Constants.DatabaseTable.Controls;
-                reduceIDs += " SET " + Constants.DatabaseColumn.ID + " = " + Constants.DatabaseColumn.ID + " - " + jumpAmount;
-                reduceIDs += " WHERE " + Constants.DatabaseColumn.ID + " >= " + newID;
+                string reduceIDs = "Update " + Constant.DatabaseTable.Controls;
+                reduceIDs += " SET " + Constant.DatabaseColumn.ID + " = " + Constant.DatabaseColumn.ID + " - " + jumpAmount;
+                reduceIDs += " WHERE " + Constant.DatabaseColumn.ID + " >= " + newID;
                 queries.Add(reduceIDs);
             }
 
             // 3rd update: change the target ID to the desired ID
             this.CreateBackupIfNeeded();
-            string setControlID = "Update " + Constants.DatabaseTable.Controls;
-            setControlID += " SET " + Constants.DatabaseColumn.ID + " = " + newID;
-            setControlID += " WHERE " + Constants.Control.DataLabel + " = '" + dataLabel + "'";
+            string setControlID = "Update " + Constant.DatabaseTable.Controls;
+            setControlID += " SET " + Constant.DatabaseColumn.ID + " = " + newID;
+            setControlID += " WHERE " + Constant.Control.DataLabel + " = '" + dataLabel + "'";
             queries.Add(setControlID);
             this.Database.ExecuteNonQueryWrappedInBeginEnd(queries);
 
@@ -600,17 +587,17 @@ namespace Carnassial.Database
         private List<ColumnTuple> GetDateTimeTuples(long controlOrder, long spreadsheetOrder, bool visible)
         {
             List<ColumnTuple> dateTime = new List<ColumnTuple>();
-            dateTime.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder));
-            dateTime.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, spreadsheetOrder));
-            dateTime.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.DateTime));
-            dateTime.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.DateTimeValue.UtcDateTime));
-            dateTime.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.DateTime));
-            dateTime.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.DateTime));
-            dateTime.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DateTimeTooltip));
-            dateTime.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.DateTimeWidth));
-            dateTime.Add(new ColumnTuple(Constants.Control.Copyable, false));
-            dateTime.Add(new ColumnTuple(Constants.Control.Visible, visible));
-            dateTime.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
+            dateTime.Add(new ColumnTuple(Constant.Control.ControlOrder, controlOrder));
+            dateTime.Add(new ColumnTuple(Constant.Control.SpreadsheetOrder, spreadsheetOrder));
+            dateTime.Add(new ColumnTuple(Constant.Control.Type, Constant.DatabaseColumn.DateTime));
+            dateTime.Add(new ColumnTuple(Constant.Control.DefaultValue, Constant.ControlDefault.DateTimeValue.UtcDateTime));
+            dateTime.Add(new ColumnTuple(Constant.Control.Label, Constant.DatabaseColumn.DateTime));
+            dateTime.Add(new ColumnTuple(Constant.Control.DataLabel, Constant.DatabaseColumn.DateTime));
+            dateTime.Add(new ColumnTuple(Constant.Control.Tooltip, Constant.ControlDefault.DateTimeTooltip));
+            dateTime.Add(new ColumnTuple(Constant.Control.Width, Constant.ControlDefault.DateTimeWidth));
+            dateTime.Add(new ColumnTuple(Constant.Control.Copyable, false));
+            dateTime.Add(new ColumnTuple(Constant.Control.Visible, visible));
+            dateTime.Add(new ColumnTuple(Constant.Control.List, Constant.ControlDefault.Value));
             return dateTime;
         }
 
@@ -618,17 +605,17 @@ namespace Carnassial.Database
         private List<ColumnTuple> GetRelativePathTuples(long controlOrder, long spreadsheetOrder, bool visible)
         {
             List<ColumnTuple> relativePath = new List<ColumnTuple>();
-            relativePath.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder));
-            relativePath.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, spreadsheetOrder));
-            relativePath.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.RelativePath));
-            relativePath.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.Value));
-            relativePath.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.RelativePath));
-            relativePath.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.RelativePath));
-            relativePath.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.RelativePathTooltip));
-            relativePath.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.RelativePathWidth));
-            relativePath.Add(new ColumnTuple(Constants.Control.Copyable, false));
-            relativePath.Add(new ColumnTuple(Constants.Control.Visible, visible));
-            relativePath.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
+            relativePath.Add(new ColumnTuple(Constant.Control.ControlOrder, controlOrder));
+            relativePath.Add(new ColumnTuple(Constant.Control.SpreadsheetOrder, spreadsheetOrder));
+            relativePath.Add(new ColumnTuple(Constant.Control.Type, Constant.DatabaseColumn.RelativePath));
+            relativePath.Add(new ColumnTuple(Constant.Control.DefaultValue, Constant.ControlDefault.Value));
+            relativePath.Add(new ColumnTuple(Constant.Control.Label, Constant.DatabaseColumn.RelativePath));
+            relativePath.Add(new ColumnTuple(Constant.Control.DataLabel, Constant.DatabaseColumn.RelativePath));
+            relativePath.Add(new ColumnTuple(Constant.Control.Tooltip, Constant.ControlDefault.RelativePathTooltip));
+            relativePath.Add(new ColumnTuple(Constant.Control.Width, Constant.ControlDefault.RelativePathWidth));
+            relativePath.Add(new ColumnTuple(Constant.Control.Copyable, false));
+            relativePath.Add(new ColumnTuple(Constant.Control.Visible, visible));
+            relativePath.Add(new ColumnTuple(Constant.Control.List, Constant.ControlDefault.Value));
             return relativePath;
         }
 
@@ -636,34 +623,34 @@ namespace Carnassial.Database
         private List<ColumnTuple> GetDeleteFlagTuples(long controlOrder, long spreadsheetOrder, bool visible)
         {
             List<ColumnTuple> deleteFlag = new List<ColumnTuple>();
-            deleteFlag.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, spreadsheetOrder));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.DeleteFlag));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.FlagValue));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Label, Constants.ControlDefault.DeleteFlagLabel));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.DeleteFlag));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.DeleteFlagTooltip));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.FlagWidth));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Copyable, false));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.Visible, visible));
-            deleteFlag.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
+            deleteFlag.Add(new ColumnTuple(Constant.Control.ControlOrder, controlOrder));
+            deleteFlag.Add(new ColumnTuple(Constant.Control.SpreadsheetOrder, spreadsheetOrder));
+            deleteFlag.Add(new ColumnTuple(Constant.Control.Type, Constant.DatabaseColumn.DeleteFlag));
+            deleteFlag.Add(new ColumnTuple(Constant.Control.DefaultValue, Constant.ControlDefault.FlagValue));
+            deleteFlag.Add(new ColumnTuple(Constant.Control.Label, Constant.ControlDefault.DeleteFlagLabel));
+            deleteFlag.Add(new ColumnTuple(Constant.Control.DataLabel, Constant.DatabaseColumn.DeleteFlag));
+            deleteFlag.Add(new ColumnTuple(Constant.Control.Tooltip, Constant.ControlDefault.DeleteFlagTooltip));
+            deleteFlag.Add(new ColumnTuple(Constant.Control.Width, Constant.ControlDefault.FlagWidth));
+            deleteFlag.Add(new ColumnTuple(Constant.Control.Copyable, false));
+            deleteFlag.Add(new ColumnTuple(Constant.Control.Visible, visible));
+            deleteFlag.Add(new ColumnTuple(Constant.Control.List, Constant.ControlDefault.Value));
             return deleteFlag;
         }
 
         private List<ColumnTuple> GetUtcOffsetTuples(long controlOrder, long spreadsheetOrder, bool visible)
         {
             List<ColumnTuple> utcOffset = new List<ColumnTuple>();
-            utcOffset.Add(new ColumnTuple(Constants.Control.ControlOrder, controlOrder));
-            utcOffset.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, spreadsheetOrder));
-            utcOffset.Add(new ColumnTuple(Constants.Control.Type, Constants.DatabaseColumn.UtcOffset));
-            utcOffset.Add(new ColumnTuple(Constants.Control.DefaultValue, Constants.ControlDefault.DateTimeValue.Offset));
-            utcOffset.Add(new ColumnTuple(Constants.Control.Label, Constants.DatabaseColumn.UtcOffset));
-            utcOffset.Add(new ColumnTuple(Constants.Control.DataLabel, Constants.DatabaseColumn.UtcOffset));
-            utcOffset.Add(new ColumnTuple(Constants.Control.Tooltip, Constants.ControlDefault.UtcOffsetTooltip));
-            utcOffset.Add(new ColumnTuple(Constants.Control.Width, Constants.ControlDefault.UtcOffsetWidth));
-            utcOffset.Add(new ColumnTuple(Constants.Control.Copyable, false));
-            utcOffset.Add(new ColumnTuple(Constants.Control.Visible, visible));
-            utcOffset.Add(new ColumnTuple(Constants.Control.List, Constants.ControlDefault.Value));
+            utcOffset.Add(new ColumnTuple(Constant.Control.ControlOrder, controlOrder));
+            utcOffset.Add(new ColumnTuple(Constant.Control.SpreadsheetOrder, spreadsheetOrder));
+            utcOffset.Add(new ColumnTuple(Constant.Control.Type, Constant.DatabaseColumn.UtcOffset));
+            utcOffset.Add(new ColumnTuple(Constant.Control.DefaultValue, Constant.ControlDefault.DateTimeValue.Offset));
+            utcOffset.Add(new ColumnTuple(Constant.Control.Label, Constant.DatabaseColumn.UtcOffset));
+            utcOffset.Add(new ColumnTuple(Constant.Control.DataLabel, Constant.DatabaseColumn.UtcOffset));
+            utcOffset.Add(new ColumnTuple(Constant.Control.Tooltip, Constant.ControlDefault.UtcOffsetTooltip));
+            utcOffset.Add(new ColumnTuple(Constant.Control.Width, Constant.ControlDefault.UtcOffsetWidth));
+            utcOffset.Add(new ColumnTuple(Constant.Control.Copyable, false));
+            utcOffset.Add(new ColumnTuple(Constant.Control.Visible, visible));
+            utcOffset.Add(new ColumnTuple(Constant.Control.List, Constant.ControlDefault.Value));
             return utcOffset;
         }
     }

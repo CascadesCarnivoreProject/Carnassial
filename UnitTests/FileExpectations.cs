@@ -17,7 +17,6 @@ namespace Carnassial.UnitTests
         public bool DeleteFlag { get; set; }
         public string FileName { get; set; }
         public long ID { get; set; }
-        public string InitialRootFolderName { get; set; }
         public bool IsColor { get; set; }
         public FileSelection Quality { get; set; }
         public string RelativePath { get; set; }
@@ -39,7 +38,6 @@ namespace Carnassial.UnitTests
             this.DeleteFlag = other.DeleteFlag;
             this.FileName = other.FileName;
             this.ID = other.ID;
-            this.InitialRootFolderName = other.InitialRootFolderName;
             this.IsColor = other.IsColor;
             this.Quality = other.Quality;
             this.RelativePath = other.RelativePath;
@@ -71,7 +69,7 @@ namespace Carnassial.UnitTests
             return expectedDateTime;
         }
 
-        public ImageRow GetImageProperties(FileDatabase fileDatabase)
+        public ImageRow GetFileData(FileDatabase fileDatabase)
         {
             string imageFilePath;
             if (String.IsNullOrEmpty(this.RelativePath))
@@ -111,7 +109,6 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(image.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, image.FileName);
             Assert.IsTrue(image.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, image.ID);
             Assert.IsTrue(image.ImageQuality == this.Quality, "{0}: Expected ImageQuality '{1}' but found '{2}'.", this.FileName, this.Quality, image.ImageQuality);
-            Assert.IsTrue(image.InitialRootFolderName == this.InitialRootFolderName, "{0}: Expected InitialRootFolderName '{1}' but found '{2}'.", this.FileName, this.InitialRootFolderName, image.InitialRootFolderName);
             // this.IsColor isn't applicable
             Assert.IsTrue(image.RelativePath == this.RelativePath, "{0}: Expected RelativePath '{1}' but found '{2}'.", this.FileName, this.RelativePath, image.RelativePath);
             // this.UserDefinedColumnsByDataLabel isn't current applicable

@@ -79,7 +79,7 @@ namespace Carnassial.Dialog
             {
                 ImageRow image = this.database.Files[index];
                 DateTimeOffset imageDateTime = image.GetDateTime();
-                if (imageDateTime.Day <= Constants.Time.MonthsInYear)
+                if (imageDateTime.Day <= Constant.Time.MonthsInYear)
                 {
                     return index; // If the date is ambiguous, return the row index. 
                 }
@@ -171,6 +171,7 @@ namespace Carnassial.Dialog
 
             this.Image.Source = imageProperties.LoadBitmap(this.database.FolderPath);
             this.FileName.Content = imageProperties.FileName;
+            this.FileName.ToolTip = this.FileName.Content;
 
             return true;
         }
@@ -196,6 +197,7 @@ namespace Carnassial.Dialog
 
                 this.Image.Source = imageProperties.LoadBitmap(this.database.FolderPath);
                 this.FileName.Content = imageProperties.FileName;
+                this.FileName.ToolTip = this.FileName.Content;
 
                 // Set the next button and the radio button back to their defaults
                 // As we do this, unlink and then relink the callback as we don't want to invoke the data update
@@ -213,9 +215,11 @@ namespace Carnassial.Dialog
                 this.OriginalDate.Visibility = Visibility.Hidden;
                 this.SwappedDate.Visibility = Visibility.Hidden;
 
-                this.FileName.Content = "--";
-                this.NumberOfImagesWithSameDate.Content = "No ambiguous dates left";
                 this.Image.Source = null;
+                this.FileName.Content = String.Empty;
+                this.FileName.ToolTip = this.FileName.Content;
+
+                this.NumberOfImagesWithSameDate.Content = "No ambiguous dates left";
             }
         }
 

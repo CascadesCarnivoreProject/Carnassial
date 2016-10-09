@@ -28,19 +28,15 @@ namespace Carnassial.Database
 
         public void SetWhere(long id)
         {
-            this.Where = Constants.DatabaseColumn.ID + " = " + id.ToString();
+            this.Where = Constant.DatabaseColumn.ID + " = " + id.ToString();
         }
 
-        public void SetWhere(string folder, string relativePath, string file)
+        public void SetWhere(string relativePath, string file)
         {
-            this.Where = String.Format("{0} = {1}", Constants.DatabaseColumn.File, Utilities.QuoteForSql(file));
+            this.Where = String.Format("{0} = {1}", Constant.DatabaseColumn.File, Utilities.QuoteForSql(file));
             if (String.IsNullOrEmpty(relativePath) == false)
             {
-                this.Where += String.Format(" AND {0} = {1}", Constants.DatabaseColumn.RelativePath, Utilities.QuoteForSql(relativePath));
-            }
-            if (String.IsNullOrEmpty(folder) == false)
-            {
-                this.Where += String.Format(" AND {0} = {1}", Constants.DatabaseColumn.Folder, Utilities.QuoteForSql(folder));
+                this.Where += String.Format(" AND {0} = {1}", Constant.DatabaseColumn.RelativePath, Utilities.QuoteForSql(relativePath));
             }
         }
     }

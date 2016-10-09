@@ -24,10 +24,10 @@ namespace Carnassial.Database
 
         public override BitmapSource LoadBitmap(string imageFolderPath, Nullable<int> desiredWidth)
         {
-            string path = this.GetImagePath(imageFolderPath);
+            string path = this.GetFilePath(imageFolderPath);
             if (!File.Exists(path))
             {
-                return Constants.Images.FileNoLongerAvailable;
+                return Constant.Images.FileNoLongerAvailable;
             }
 
             MediaPlayer mediaPlayer = new MediaPlayer();
@@ -44,11 +44,11 @@ namespace Carnassial.Database
                 {
                     // back off briefly to let MediaPlayer do its loading, which typically takes perhaps 75ms
                     // a brief Sleep() is used rather than Yield() to reduce overhead as 500k to 1M+ yields typically occur
-                    Thread.Sleep(Constants.ThrottleValues.PollIntervalForVideoLoad);
+                    Thread.Sleep(Constant.ThrottleValues.PollIntervalForVideoLoad);
                 }
 
                 // sleep one more time as MediaPlayer has a tendency to still return black frames a moment after the width and height have populated
-                Thread.Sleep(Constants.ThrottleValues.PollIntervalForVideoLoad);
+                Thread.Sleep(Constant.ThrottleValues.PollIntervalForVideoLoad);
 
                 int pixelWidth = mediaPlayer.NaturalVideoWidth;
                 int pixelHeight = mediaPlayer.NaturalVideoHeight;
@@ -71,7 +71,7 @@ namespace Carnassial.Database
 
                 // render and check for black frame
                 // it's assumed the camera doesn't yield all black frames
-                for (int renderAttempt = 1; renderAttempt <= Constants.ThrottleValues.MaximumRenderAttempts; ++renderAttempt)
+                for (int renderAttempt = 1; renderAttempt <= Constant.ThrottleValues.MaximumRenderAttempts; ++renderAttempt)
                 {
                     // try render
                     RenderTargetBitmap renderBitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, 96, 96, PixelFormats.Default);
@@ -91,15 +91,15 @@ namespace Carnassial.Database
                     }
 
                     // black frame was rendered; apply linear backoff and try again
-                    Thread.Sleep(TimeSpan.FromMilliseconds(Constants.ThrottleValues.RenderingBackoffTime.TotalMilliseconds * renderAttempt));
+                    Thread.Sleep(TimeSpan.FromMilliseconds(Constant.ThrottleValues.RenderingBackoffTime.TotalMilliseconds * renderAttempt));
                 }
 
-                throw new ApplicationException(String.Format("Limit of {0} render attempts was reached.", Constants.ThrottleValues.MaximumRenderAttempts));
+                throw new ApplicationException(String.Format("Limit of {0} render attempts was reached.", Constant.ThrottleValues.MaximumRenderAttempts));
             }
             catch (Exception exception)
             {
                 Debug.Fail(String.Format("Loading of {0} failed.", this.FileName), exception.ToString());
-                return Constants.Images.CorruptFile;
+                return Constant.Images.CorruptFile;
             }
         }
     }

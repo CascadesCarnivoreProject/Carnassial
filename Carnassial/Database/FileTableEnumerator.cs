@@ -13,7 +13,7 @@ namespace Carnassial.Database
         public int CurrentRow { get; private set; }
 
         public FileTableEnumerator(FileDatabase fileDatabase) :
-            this(fileDatabase, Constants.Database.InvalidRow)
+            this(fileDatabase, Constant.Database.InvalidRow)
         {
         }
 
@@ -23,7 +23,7 @@ namespace Carnassial.Database
             this.Database = fileDatabase;
 
             // OK if this fails as FileTableEnumerator..ctor(FileDatabase) passes -1 to match default enumerator behaviour
-            this.TryMoveToImage(startingPosition);
+            this.TryMoveToFile(startingPosition);
         }
 
         public void Dispose()
@@ -42,13 +42,13 @@ namespace Carnassial.Database
         /// </summary>
         public bool MoveNext()
         {
-            return this.TryMoveToImage(this.CurrentRow + 1);
+            return this.TryMoveToFile(this.CurrentRow + 1);
         }
 
         public virtual void Reset()
         {
             this.Current = null;
-            this.CurrentRow = Constants.Database.InvalidRow;
+            this.CurrentRow = Constant.Database.InvalidRow;
         }
 
         /// <summary>
@@ -56,14 +56,14 @@ namespace Carnassial.Database
         /// </summary>
         public bool MovePrevious()
         {
-            return this.TryMoveToImage(this.CurrentRow - 1);
+            return this.TryMoveToFile(this.CurrentRow - 1);
         }
 
         /// <summary>
         /// Attempt to go to a particular image, returning true if we can otherwise false (e.g., if the index is out of range)
         /// Remember, that we are zero based, so (for example) and index of 5 will go to the sixth image
         /// </summary>
-        public virtual bool TryMoveToImage(int imageRowIndex)
+        public virtual bool TryMoveToFile(int imageRowIndex)
         {
             if (this.Database.IsFileRowInRange(imageRowIndex))
             {

@@ -1,6 +1,5 @@
 ﻿using Carnassial.Database;
 using Microsoft.Win32;
-using System;
 using System.Windows;
 
 namespace Carnassial.Util
@@ -8,8 +7,7 @@ namespace Carnassial.Util
     public class CarnassialUserRegistrySettings : UserRegistrySettings
     {
         public bool AudioFeedback { get; set; }
-        public Point CarnassialWindowLocation { get; set; }
-        public Size CarnassialWindowSize { get; set; }
+        public Rect CarnassialWindowPosition { get; set; }
         public CustomSelectionOperator CustomSelectionTermCombiningOperator { get; set; }
         public int DarkPixelThreshold { get; set; }
         public double DarkPixelRatioThreshold { get; set; }
@@ -32,7 +30,7 @@ namespace Carnassial.Util
         public Throttles Throttles { get; private set; }
 
         public CarnassialUserRegistrySettings() :
-            this(Constants.Registry.RootKey)
+            this(Constant.Registry.RootKey)
         {
         }
 
@@ -48,29 +46,28 @@ namespace Carnassial.Util
         {
             using (RegistryKey registryKey = this.OpenRegistryKey())
             {
-                this.AudioFeedback = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.AudioFeedback, false);
-                this.CarnassialWindowLocation = registryKey.ReadPoint(Constants.Registry.CarnassialKey.CarnassialWindowLocation, new Point(0, 0));
-                this.CarnassialWindowSize = registryKey.ReadSize(Constants.Registry.CarnassialKey.CarnassialWindowSize, new Size(1350, 900));
-                this.CustomSelectionTermCombiningOperator = registryKey.ReadEnum<CustomSelectionOperator>(Constants.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, CustomSelectionOperator.And);
-                this.DarkPixelRatioThreshold = registryKey.ReadDouble(Constants.Registry.CarnassialKey.DarkPixelRatio, Constants.Images.DarkPixelRatioThresholdDefault);
-                this.DarkPixelThreshold = registryKey.ReadInteger(Constants.Registry.CarnassialKey.DarkPixelThreshold, Constants.Images.DarkPixelThresholdDefault);
-                this.MostRecentImageSets = registryKey.ReadMostRecentlyUsedList(Constants.Registry.CarnassialKey.MostRecentlyUsedImageSets);
-                this.OrderFilesByDateTime = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.OrderFilesByDateTime, false);
-                this.SkipDarkImagesCheck = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SkipDarkImagesCheck, false);
-                this.SuppressAmbiguousDatesDialog = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, false);
-                this.SuppressCsvExportDialog = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressCsvExportDialog, false);
-                this.SuppressCsvImportPrompt = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressCsvImportPrompt, false);
-                this.SuppressFileCountOnImportDialog = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressFileCountOnImportDialog, false);
-                this.SuppressSelectedAmbiguousDatesPrompt = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressSelectedAmbiguousDatesPrompt, false);
-                this.SuppressSelectedCsvExportPrompt = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressSelectedCsvExportPrompt, false);
-                this.SuppressSelectedDarkThresholdPrompt = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressSelectedDarkThresholdPrompt, false);
-                this.SuppressSelectedDateTimeFixedCorrectionPrompt = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressSelectedDateTimeFixedCorrectionPrompt, false);
-                this.SuppressSelectedDateTimeLinearCorrectionPrompt = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressSelectedDateTimeLinearCorrectionPrompt, false);
-                this.SuppressSelectedDaylightSavingsCorrectionPrompt = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressSelectedDaylightSavingsCorrectionPrompt, false);
-                this.SuppressSelectedPopulateFieldFromMetadataPrompt = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressSelectedPopulateFieldFromMetadataPrompt, false);
-                this.SuppressSelectedRereadDatesFromFilesPrompt = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressSelectedRereadDatesFromFilesPrompt, false);
-                this.SuppressSelectedSetTimeZonePrompt = registryKey.ReadBoolean(Constants.Registry.CarnassialKey.SuppressSelectedSetTimeZonePrompt, false);
-                this.Throttles.SetDesiredImageRendersPerSecond(registryKey.ReadDouble(Constants.Registry.CarnassialKey.DesiredImageRendersPerSecond, Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault));
+                this.AudioFeedback = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.AudioFeedback, false);
+                this.CarnassialWindowPosition = registryKey.ReadRect(Constant.Registry.CarnassialKey.CarnassialWindowPosition, new Rect(0.0, 0.0, 1350.0, 900.0));
+                this.CustomSelectionTermCombiningOperator = registryKey.ReadEnum<CustomSelectionOperator>(Constant.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, CustomSelectionOperator.And);
+                this.DarkPixelRatioThreshold = registryKey.ReadDouble(Constant.Registry.CarnassialKey.DarkPixelRatio, Constant.Images.DarkPixelRatioThresholdDefault);
+                this.DarkPixelThreshold = registryKey.ReadInteger(Constant.Registry.CarnassialKey.DarkPixelThreshold, Constant.Images.DarkPixelThresholdDefault);
+                this.MostRecentImageSets = registryKey.ReadMostRecentlyUsedList(Constant.Registry.CarnassialKey.MostRecentlyUsedImageSets);
+                this.OrderFilesByDateTime = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.OrderFilesByDateTime, false);
+                this.SkipDarkImagesCheck = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SkipDarkImagesCheck, false);
+                this.SuppressAmbiguousDatesDialog = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, false);
+                this.SuppressCsvExportDialog = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressCsvExportDialog, false);
+                this.SuppressCsvImportPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressCsvImportPrompt, false);
+                this.SuppressFileCountOnImportDialog = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressFileCountOnImportDialog, false);
+                this.SuppressSelectedAmbiguousDatesPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSelectedAmbiguousDatesPrompt, false);
+                this.SuppressSelectedCsvExportPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSelectedCsvExportPrompt, false);
+                this.SuppressSelectedDarkThresholdPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSelectedDarkThresholdPrompt, false);
+                this.SuppressSelectedDateTimeFixedCorrectionPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSelectedDateTimeFixedCorrectionPrompt, false);
+                this.SuppressSelectedDateTimeLinearCorrectionPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSelectedDateTimeLinearCorrectionPrompt, false);
+                this.SuppressSelectedDaylightSavingsCorrectionPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSelectedDaylightSavingsCorrectionPrompt, false);
+                this.SuppressSelectedPopulateFieldFromMetadataPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSelectedPopulateFieldFromMetadataPrompt, false);
+                this.SuppressSelectedRereadDatesFromFilesPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSelectedRereadDatesFromFilesPrompt, false);
+                this.SuppressSelectedSetTimeZonePrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSelectedSetTimeZonePrompt, false);
+                this.Throttles.SetDesiredImageRendersPerSecond(registryKey.ReadDouble(Constant.Registry.CarnassialKey.DesiredImageRendersPerSecond, Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault));
             }
         }
 
@@ -78,29 +75,28 @@ namespace Carnassial.Util
         {
             using (RegistryKey registryKey = this.OpenRegistryKey())
             {
-                registryKey.Write(Constants.Registry.CarnassialKey.AudioFeedback, this.AudioFeedback);
-                registryKey.Write(Constants.Registry.CarnassialKey.CarnassialWindowLocation, this.CarnassialWindowLocation);
-                registryKey.Write(Constants.Registry.CarnassialKey.CarnassialWindowSize, this.CarnassialWindowSize);
-                registryKey.Write(Constants.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, this.CustomSelectionTermCombiningOperator.ToString());
-                registryKey.Write(Constants.Registry.CarnassialKey.DarkPixelRatio, this.DarkPixelRatioThreshold);
-                registryKey.Write(Constants.Registry.CarnassialKey.DarkPixelThreshold, this.DarkPixelThreshold);
-                registryKey.Write(Constants.Registry.CarnassialKey.DesiredImageRendersPerSecond, this.Throttles.DesiredImageRendersPerSecond);
-                registryKey.Write(Constants.Registry.CarnassialKey.MostRecentlyUsedImageSets, this.MostRecentImageSets);
-                registryKey.Write(Constants.Registry.CarnassialKey.OrderFilesByDateTime, this.OrderFilesByDateTime);
-                registryKey.Write(Constants.Registry.CarnassialKey.SkipDarkImagesCheck, this.SkipDarkImagesCheck);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, this.SuppressAmbiguousDatesDialog);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressCsvExportDialog, this.SuppressCsvExportDialog);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressCsvImportPrompt, this.SuppressCsvImportPrompt);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressFileCountOnImportDialog, this.SuppressFileCountOnImportDialog);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressSelectedAmbiguousDatesPrompt, this.SuppressSelectedAmbiguousDatesPrompt);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressSelectedCsvExportPrompt, this.SuppressSelectedCsvExportPrompt);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressSelectedDarkThresholdPrompt, this.SuppressSelectedDarkThresholdPrompt);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressSelectedDateTimeFixedCorrectionPrompt, this.SuppressSelectedDateTimeFixedCorrectionPrompt);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressSelectedDateTimeLinearCorrectionPrompt, this.SuppressSelectedDateTimeLinearCorrectionPrompt);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressSelectedDaylightSavingsCorrectionPrompt, this.SuppressSelectedDaylightSavingsCorrectionPrompt);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressSelectedPopulateFieldFromMetadataPrompt, this.SuppressSelectedPopulateFieldFromMetadataPrompt);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressSelectedSetTimeZonePrompt, this.SuppressSelectedSetTimeZonePrompt);
-                registryKey.Write(Constants.Registry.CarnassialKey.SuppressSelectedRereadDatesFromFilesPrompt, this.SuppressSelectedRereadDatesFromFilesPrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.AudioFeedback, this.AudioFeedback);
+                registryKey.Write(Constant.Registry.CarnassialKey.CarnassialWindowPosition, this.CarnassialWindowPosition);
+                registryKey.Write(Constant.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, this.CustomSelectionTermCombiningOperator.ToString());
+                registryKey.Write(Constant.Registry.CarnassialKey.DarkPixelRatio, this.DarkPixelRatioThreshold);
+                registryKey.Write(Constant.Registry.CarnassialKey.DarkPixelThreshold, this.DarkPixelThreshold);
+                registryKey.Write(Constant.Registry.CarnassialKey.DesiredImageRendersPerSecond, this.Throttles.DesiredImageRendersPerSecond);
+                registryKey.Write(Constant.Registry.CarnassialKey.MostRecentlyUsedImageSets, this.MostRecentImageSets);
+                registryKey.Write(Constant.Registry.CarnassialKey.OrderFilesByDateTime, this.OrderFilesByDateTime);
+                registryKey.Write(Constant.Registry.CarnassialKey.SkipDarkImagesCheck, this.SkipDarkImagesCheck);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, this.SuppressAmbiguousDatesDialog);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressCsvExportDialog, this.SuppressCsvExportDialog);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressCsvImportPrompt, this.SuppressCsvImportPrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressFileCountOnImportDialog, this.SuppressFileCountOnImportDialog);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressSelectedAmbiguousDatesPrompt, this.SuppressSelectedAmbiguousDatesPrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressSelectedCsvExportPrompt, this.SuppressSelectedCsvExportPrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressSelectedDarkThresholdPrompt, this.SuppressSelectedDarkThresholdPrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressSelectedDateTimeFixedCorrectionPrompt, this.SuppressSelectedDateTimeFixedCorrectionPrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressSelectedDateTimeLinearCorrectionPrompt, this.SuppressSelectedDateTimeLinearCorrectionPrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressSelectedDaylightSavingsCorrectionPrompt, this.SuppressSelectedDaylightSavingsCorrectionPrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressSelectedPopulateFieldFromMetadataPrompt, this.SuppressSelectedPopulateFieldFromMetadataPrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressSelectedSetTimeZonePrompt, this.SuppressSelectedSetTimeZonePrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressSelectedRereadDatesFromFilesPrompt, this.SuppressSelectedRereadDatesFromFilesPrompt);
             }
         }
     }

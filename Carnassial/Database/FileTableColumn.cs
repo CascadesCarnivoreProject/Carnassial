@@ -20,23 +20,22 @@ namespace Carnassial.Database
         {
             switch (control.Type)
             {
-                case Constants.Control.Note:
-                case Constants.DatabaseColumn.File:
-                case Constants.DatabaseColumn.Folder:
-                case Constants.DatabaseColumn.RelativePath:
+                case Constant.Control.Note:
+                case Constant.DatabaseColumn.File:
+                case Constant.DatabaseColumn.RelativePath:
                     return new FileTableNoteColumn(control);
-                case Constants.DatabaseColumn.ImageQuality:
+                case Constant.DatabaseColumn.ImageQuality:
                     return new FileTableChoiceColumn(control);
-                case Constants.Control.Counter:
+                case Constant.Control.Counter:
                     return new FileTableCounterColumn(control);
-                case Constants.DatabaseColumn.DateTime:
+                case Constant.DatabaseColumn.DateTime:
                     return new FileTableDateTimeColumn(control);
-                case Constants.DatabaseColumn.DeleteFlag:
-                case Constants.Control.Flag:
+                case Constant.DatabaseColumn.DeleteFlag:
+                case Constant.Control.Flag:
                     return new FileTableFlagColumn(control);
-                case Constants.Control.FixedChoice:
+                case Constant.Control.FixedChoice:
                     return new FileTableChoiceColumn(control);
-                case Constants.DatabaseColumn.UtcOffset:
+                case Constant.DatabaseColumn.UtcOffset:
                     return new FileTableUtcOffsetColumn(control);
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));

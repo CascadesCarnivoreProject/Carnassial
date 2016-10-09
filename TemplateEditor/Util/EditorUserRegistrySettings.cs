@@ -8,7 +8,7 @@ namespace Carnassial.Editor.Util
         public MostRecentlyUsedList<string> MostRecentTemplates { get; private set; }
 
         public EditorUserRegistrySettings()
-            : this(Constants.Registry.RootKey)
+            : this(Constant.Registry.RootKey)
         {
         }
 

@@ -22,7 +22,7 @@ namespace Carnassial.Database
             {
                 foreach (DataColumn column in this.Row.Table.Columns)
                 {
-                    if (column.ColumnName != Constants.DatabaseColumn.ID)
+                    if (column.ColumnName != Constant.DatabaseColumn.ID)
                     {
                         yield return column.ColumnName;
                     }

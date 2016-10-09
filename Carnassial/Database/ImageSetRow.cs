@@ -11,44 +11,51 @@ namespace Carnassial.Database
         {
         }
 
-        public FileSelection ImageSelection
+        public FileSelection FileSelection
         {
-            get { return this.Row.GetEnumField<FileSelection>(Constants.DatabaseColumn.Selection); }
-            set { this.Row.SetField(Constants.DatabaseColumn.Selection, value); }
+            get { return this.Row.GetEnumField<FileSelection>(Constant.DatabaseColumn.FileSelection); }
+            set { this.Row.SetField(Constant.DatabaseColumn.FileSelection, value); }
         }
 
-        public int ImageRowIndex
+        public string InitialFolderName
         {
-            get { return this.Row.GetIntegerField(Constants.DatabaseColumn.Row); }
-            set { this.Row.SetField(Constants.DatabaseColumn.Row, value); }
+            get { return this.Row.GetStringField(Constant.DatabaseColumn.InitialFolderName); }
+            set { this.Row.SetField(Constant.DatabaseColumn.InitialFolderName, value); }
+        }
+
+        public long MostRecentFileID
+        {
+            get { return this.Row.GetLongField(Constant.DatabaseColumn.MostRecentFileID); }
+            set { this.Row.SetField(Constant.DatabaseColumn.MostRecentFileID, value); }
         }
 
         public string Log
         {
-            get { return this.Row.GetStringField(Constants.DatabaseColumn.Log); }
-            set { this.Row.SetField(Constants.DatabaseColumn.Log, value); }
+            get { return this.Row.GetStringField(Constant.DatabaseColumn.Log); }
+            set { this.Row.SetField(Constant.DatabaseColumn.Log, value); }
         }
 
         public bool MagnifierEnabled
         {
-            get { return this.Row.GetBooleanField(Constants.DatabaseColumn.Magnifier); }
-            set { this.Row.SetField(Constants.DatabaseColumn.Magnifier, value); }
+            get { return this.Row.GetBooleanField(Constant.DatabaseColumn.Magnifier); }
+            set { this.Row.SetField(Constant.DatabaseColumn.Magnifier, value); }
         }
 
         public string TimeZone
         {
-            get { return this.Row.GetStringField(Constants.DatabaseColumn.TimeZone); }
-            set { this.Row.SetField(Constants.DatabaseColumn.TimeZone, value); }
+            get { return this.Row.GetStringField(Constant.DatabaseColumn.TimeZone); }
+            set { this.Row.SetField(Constant.DatabaseColumn.TimeZone, value); }
         }
 
         public override ColumnTuplesWithWhere GetColumnTuples()
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>();
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Selection, this.ImageSelection.ToString()));
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Log, this.Log));
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Magnifier, this.MagnifierEnabled));
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.Row, this.ImageRowIndex));
-            columnTuples.Add(new ColumnTuple(Constants.DatabaseColumn.TimeZone, this.TimeZone));
+            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.FileSelection, this.FileSelection.ToString()));
+            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.InitialFolderName, this.InitialFolderName));
+            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.Log, this.Log));
+            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.Magnifier, this.MagnifierEnabled));
+            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.MostRecentFileID, this.MostRecentFileID));
+            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.TimeZone, this.TimeZone));
             return new ColumnTuplesWithWhere(columnTuples, this.ID);
         }
 

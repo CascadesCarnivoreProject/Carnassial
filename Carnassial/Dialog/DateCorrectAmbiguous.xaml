@@ -34,7 +34,7 @@
 &#10;   e.g., from dd/MM/yyyy to yyyy-MM-dd
 &#10;&#x2022; Reload your image set from scratch, or Select 'Edit/DateCorrection/Reread Dates from files...'. Check the result."
                             Result="Date corrections will be applied to all images and videos taken on those days."
-                            ShowExplanationVisibility="True"/>
+                            HideExplanationCheckboxIsVisible="True"/>
         <Rectangle Grid.Row="1" Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
         <DockPanel Name="PrimaryPanel" Grid.Row="2">
             <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">

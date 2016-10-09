@@ -67,9 +67,11 @@ namespace Carnassial.Dialog
 
             // configure earliest and latest images
             this.EarliestImageFileName.Content = earliestImage.FileName;
+            this.EarliestImageFileName.ToolTip = this.EarliestImageFileName.Content;
             this.EarliestImage.Source = earliestImage.LoadBitmap(this.fileDatabase.FolderPath);
 
             this.LatestImageFileName.Content = latestImage.FileName;
+            this.LatestImageFileName.ToolTip = this.LatestImageFileName.Content;
             this.LatestImage.Source = latestImage.LoadBitmap(this.fileDatabase.FolderPath);
 
             // configure interval
@@ -162,7 +164,7 @@ namespace Carnassial.Dialog
                 DateTimeOffset imageDateTime = image.GetDateTime();
 
                 TimeSpan adjustment = this.GetAdjustment(intervalFromCorrectToMeasured, imageDateTime);
-                if (adjustment.Duration() >= Constants.Time.DateTimeDatabaseResolution)
+                if (adjustment.Duration() >= Constant.Time.DateTimeDatabaseResolution)
                 {
                     difference = DateTimeHandler.ToDisplayTimeSpanString(adjustment);
                     status = "Changed";

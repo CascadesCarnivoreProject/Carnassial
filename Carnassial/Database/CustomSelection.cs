@@ -29,53 +29,46 @@ namespace Carnassial.Database
                     continue;
                 }
 
-                // add a control here to prevent it from appearing
-                // Folder is usually the same for all files in the image set and not a useful selection criteria
-                string controlType = control.Type;
-                if (controlType == Constants.DatabaseColumn.Folder) 
-                {
-                    continue;
-                }
-
                 // create search term for the control
                 SearchTerm searchTerm = new SearchTerm();
-                searchTerm.ControlType = controlType;
+                searchTerm.ControlType = control.Type;
                 searchTerm.DataLabel = control.DataLabel;
                 searchTerm.DatabaseValue = control.DefaultValue;
-                searchTerm.Operator = Constants.SearchTermOperator.Equal;
+                searchTerm.Operator = Constant.SearchTermOperator.Equal;
                 searchTerm.Label = control.Label;
                 searchTerm.List = control.GetChoices();
                 searchTerm.UseForSearching = false;
                 this.SearchTerms.Add(searchTerm);
 
-                if (controlType == Constants.Control.Counter)
+                switch (searchTerm.ControlType)
                 {
-                    searchTerm.DatabaseValue = "0";
-                    searchTerm.Operator = Constants.SearchTermOperator.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
-                }
-                else if (controlType == Constants.DatabaseColumn.DateTime)
-                {
-                    // the first time the CustomViewSelection dialog is popped CarnassialWindow calls SetDateTime() to changes the default date time to the date time 
-                    // of the current image
-                    searchTerm.DatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(Constants.ControlDefault.DateTimeValue);
-                    searchTerm.Operator = Constants.SearchTermOperator.GreaterThanOrEqual;
+                    case Constant.Control.Counter:
+                        searchTerm.DatabaseValue = "0";
+                        searchTerm.Operator = Constant.SearchTermOperator.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
+                        break;
+                    case Constant.DatabaseColumn.DateTime:
+                        // the first time the CustomViewSelection dialog is popped CarnassialWindow calls SetDateTime() to changes the default date time to the date time 
+                        // of the current image
+                        searchTerm.DatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(Constant.ControlDefault.DateTimeValue);
+                        searchTerm.Operator = Constant.SearchTermOperator.GreaterThanOrEqual;
 
-                    // support querying on a range of datetimes by giving the user two search terms, one configured for the start of the interval and one
-                    // for the end
-                    SearchTerm dateTimeLessThanOrEqual = new SearchTerm(searchTerm);
-                    dateTimeLessThanOrEqual.Operator = Constants.SearchTermOperator.LessThanOrEqual;
-                    this.SearchTerms.Add(dateTimeLessThanOrEqual);
+                        // support querying on a range of datetimes by giving the user two search terms, one configured for the start of the interval and one
+                        // for the end
+                        SearchTerm dateTimeLessThanOrEqual = new SearchTerm(searchTerm);
+                        dateTimeLessThanOrEqual.Operator = Constant.SearchTermOperator.LessThanOrEqual;
+                        this.SearchTerms.Add(dateTimeLessThanOrEqual);
+                        break;
+                    case Constant.Control.Flag:
+                        searchTerm.DatabaseValue = Constant.Boolean.False;
+                        break;
+                    case Constant.DatabaseColumn.UtcOffset:
+                        // the first time it's popped CustomViewSelection dialog changes this default to the date time of the current image
+                        searchTerm.SetDatabaseValue(Constant.ControlDefault.DateTimeValue.Offset);
+                        break;
+                    default:
+                        // default values above
+                        break;
                 }
-                else if (controlType == Constants.Control.Flag)
-                {
-                    searchTerm.DatabaseValue = Constants.Boolean.False;
-                }
-                else if (controlType == Constants.DatabaseColumn.UtcOffset)
-                {
-                    // the first time it's popped CustomViewSelection dialog changes this default to the date time of the current image
-                    searchTerm.SetDatabaseValue(Constants.ControlDefault.DateTimeValue.Offset);
-                }
-                // else use default values above
             }
         }
 
@@ -86,7 +79,7 @@ namespace Carnassial.Database
         }
 
         // Create and return the query composed from the search term list
-        public string GetImagesWhere()
+        public string GetFilesWhere()
         {
             string where = String.Empty;
             // Construct and show the search term only if that search row is activated
@@ -134,12 +127,12 @@ namespace Carnassial.Database
 
         public void SetDateTimesAndOffset(DateTimeOffset dateTime)
         {
-            foreach (SearchTerm dateTimeTerm in this.SearchTerms.Where(term => term.DataLabel == Constants.DatabaseColumn.DateTime))
+            foreach (SearchTerm dateTimeTerm in this.SearchTerms.Where(term => term.DataLabel == Constant.DatabaseColumn.DateTime))
             {
                 dateTimeTerm.SetDatabaseValue(dateTime);
             }
 
-            SearchTerm utcOffsetTerm = this.SearchTerms.FirstOrDefault(term => term.DataLabel == Constants.DatabaseColumn.UtcOffset);
+            SearchTerm utcOffsetTerm = this.SearchTerms.FirstOrDefault(term => term.DataLabel == Constant.DatabaseColumn.UtcOffset);
             if (utcOffsetTerm != null)
             {
                 utcOffsetTerm.SetDatabaseValue(dateTime.Offset);
@@ -153,20 +146,20 @@ namespace Carnassial.Database
         {
             switch (expression)
             {
-                case Constants.SearchTermOperator.Equal:
+                case Constant.SearchTermOperator.Equal:
                     return "=";
-                case Constants.SearchTermOperator.NotEqual:
+                case Constant.SearchTermOperator.NotEqual:
                     return "<>";
-                case Constants.SearchTermOperator.LessThan:
+                case Constant.SearchTermOperator.LessThan:
                     return "<";
-                case Constants.SearchTermOperator.GreaterThan:
+                case Constant.SearchTermOperator.GreaterThan:
                     return ">";
-                case Constants.SearchTermOperator.LessThanOrEqual:
+                case Constant.SearchTermOperator.LessThanOrEqual:
                     return "<=";
-                case Constants.SearchTermOperator.GreaterThanOrEqual:
+                case Constant.SearchTermOperator.GreaterThanOrEqual:
                     return ">=";
-                case Constants.SearchTermOperator.Glob:
-                    return Constants.SearchTermOperator.Glob;
+                case Constant.SearchTermOperator.Glob:
+                    return Constant.SearchTermOperator.Glob;
                 default:
                     return String.Empty;
             }

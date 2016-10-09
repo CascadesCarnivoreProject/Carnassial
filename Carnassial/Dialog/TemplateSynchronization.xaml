@@ -16,7 +16,7 @@
                             Problem="The fields in the Carnassial template file do not match those originally used to create this data. &#10;This is likely because Carnassial template is different from the original one used for this image set."
                             Solution="We will be changing Carnassial to let you resolve inconsistencies.&#10;However, you can still open the data for this image set, which will use its own copy of the original template."
                             Result="Depending on your choice, the image set will be opened with the original template or the program will exit."
-                            ShowExplanationVisibility="True"/>
+                            HideExplanationCheckboxIsVisible="True"/>
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="2"/>
             <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Height="150">

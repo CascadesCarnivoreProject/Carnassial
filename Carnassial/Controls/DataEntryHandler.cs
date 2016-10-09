@@ -40,9 +40,9 @@ namespace Carnassial.Controls
         {
             dateTimePicker.AutoCloseCalendar = true;
             dateTimePicker.Format = DateTimeFormat.Custom;
-            dateTimePicker.FormatString = Constants.Time.DateTimeDisplayFormat;
+            dateTimePicker.FormatString = Constant.Time.DateTimeDisplayFormat;
             dateTimePicker.TimeFormat = DateTimeFormat.Custom;
-            dateTimePicker.TimeFormatString = Constants.Time.TimeFormat;
+            dateTimePicker.TimeFormatString = Constant.Time.TimeFormat;
             dateTimePicker.Value = defaultValue;
         }
 
@@ -96,7 +96,7 @@ namespace Carnassial.Controls
                 if (valueToCopy.Length > 0)
                 {
                     if ((checkForZero && !valueToCopy.Equals("0")) ||             // Skip over non-zero values for counters
-                        (isFlag && !valueToCopy.Equals(Constants.Boolean.False, StringComparison.OrdinalIgnoreCase)) || // Skip over false values for flags
+                        (isFlag && !valueToCopy.Equals(Constant.Boolean.False, StringComparison.OrdinalIgnoreCase)) || // Skip over false values for flags
                         (!checkForZero && !isFlag))
                     {
                         indexToCopyFrom = previousIndex;    // We found a non-empty value
@@ -214,45 +214,44 @@ namespace Carnassial.Controls
                 string controlType = this.FileDatabase.FileTableColumnsByDataLabel[pair.Key].ControlType;
                 switch (controlType)
                 {
-                    case Constants.Control.Note:
-                    case Constants.DatabaseColumn.File:
-                    case Constants.DatabaseColumn.Folder:
-                    case Constants.DatabaseColumn.RelativePath:
+                    case Constant.Control.Note:
+                    case Constant.DatabaseColumn.File:
+                    case Constant.DatabaseColumn.RelativePath:
                         DataEntryNote note = (DataEntryNote)pair.Value;
                         note.ContentControl.TextAutocompleted += this.NoteControl_TextAutocompleted;
-                        if (controlType == Constants.Control.Note)
+                        if (controlType == Constant.Control.Note)
                         {
                             this.SetContextMenuCallbacks(note);
                         }
                         break;
-                    case Constants.DatabaseColumn.DateTime:
+                    case Constant.DatabaseColumn.DateTime:
                         DataEntryDateTime dateTime = (DataEntryDateTime)pair.Value;
                         dateTime.ContentControl.ValueChanged += this.DateTimeControl_ValueChanged;
                         break;
-                    case Constants.DatabaseColumn.UtcOffset:
+                    case Constant.DatabaseColumn.UtcOffset:
                         DataEntryUtcOffset utcOffset = (DataEntryUtcOffset)pair.Value;
                         utcOffset.ContentControl.ValueChanged += this.UtcOffsetControl_ValueChanged;
                         break;
-                    case Constants.DatabaseColumn.DeleteFlag:
-                    case Constants.Control.Flag:
+                    case Constant.DatabaseColumn.DeleteFlag:
+                    case Constant.Control.Flag:
                         DataEntryFlag flag = (DataEntryFlag)pair.Value;
                         flag.ContentControl.Checked += this.FlagControl_CheckedChanged;
                         flag.ContentControl.Unchecked += this.FlagControl_CheckedChanged;
-                        if (controlType == Constants.Control.Flag)
+                        if (controlType == Constant.Control.Flag)
                         {
                             this.SetContextMenuCallbacks(flag);
                         }
                         break;
-                    case Constants.DatabaseColumn.ImageQuality:
-                    case Constants.Control.FixedChoice:
+                    case Constant.DatabaseColumn.ImageQuality:
+                    case Constant.Control.FixedChoice:
                         DataEntryChoice choice = (DataEntryChoice)pair.Value;
                         choice.ContentControl.SelectionChanged += this.ChoiceControl_SelectionChanged;
-                        if (controlType == Constants.Control.FixedChoice)
+                        if (controlType == Constant.Control.FixedChoice)
                         {
                             this.SetContextMenuCallbacks(choice);
                         }
                         break;
-                    case Constants.Control.Counter:
+                    case Constant.Control.Counter:
                         DataEntryCounter counter = (DataEntryCounter)pair.Value;
                         counter.ContentControl.TextChanged += this.CounterControl_TextChanged;
                         this.SetContextMenuCallbacks(counter);
@@ -449,7 +448,7 @@ namespace Carnassial.Controls
 
             CheckBox checkBox = (CheckBox)sender;
             // Get the key identifying the control, and then add its value to the database
-            string value = ((bool)checkBox.IsChecked) ? Constants.Boolean.True : Constants.Boolean.False;
+            string value = ((bool)checkBox.IsChecked) ? Constant.Boolean.True : Constant.Boolean.False;
             DataEntryControl control = (DataEntryControl)checkBox.Tag;
             control.SetContentAndTooltip(value);
             this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);

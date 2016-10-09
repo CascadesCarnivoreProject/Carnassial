@@ -36,7 +36,7 @@ namespace Carnassial.Images
         private Canvas canvasToMagnify = new Canvas();
 
         private MagnifyingGlass magnifyingGlass = new MagnifyingGlass();
-        private Brush markStrokeBrush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
+        private Brush markStrokeBrush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constant.StandardColour);
         private SolidColorBrush markFillBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(2, 0, 0, 0));
         private List<Marker> markers;
 
@@ -275,7 +275,7 @@ namespace Carnassial.Images
             this.SizeChanged += new SizeChangedEventHandler(this.OnMarkableImageCanvas_SizeChanged);
 
             this.ResetMaxZoom();
-            this.MaxZoomUpperBound = Constants.MarkableCanvas.ZoomMaximumUpperBound;
+            this.MaxZoomUpperBound = Constant.MarkableCanvas.ZoomMaximumUpperBound;
 
             // Set up some initial image properites for the image to magnify
             this.ImageToMagnify = new Image();
@@ -300,9 +300,9 @@ namespace Carnassial.Images
 
             // Set up the magnifying glass
             this.magnifyingGlass.MarkableCanvasParent = this; // A reference to this so we can access the markable Canvas state
-            this.MagnifierZoomRange = new Point(Constants.MarkableCanvas.MagnifierMinZoom, Constants.MarkableCanvas.MagnifierMaxZoom);
-            this.MagnifierZoomDelta = Constants.MarkableCanvas.ZoomStep;
-            this.MagnifierZoom = Constants.MarkableCanvas.MagnifierDefaultZoom;
+            this.MagnifierZoomRange = new Point(Constant.MarkableCanvas.MagnifierMinZoom, Constant.MarkableCanvas.MagnifierMaxZoom);
+            this.MagnifierZoomDelta = Constant.MarkableCanvas.ZoomStep;
+            this.MagnifierZoom = Constant.MarkableCanvas.MagnifierDefaultZoom;
 
             this.magnifyingGlass.Hide();
             Canvas.SetZIndex(this.magnifyingGlass, 1000); // Should always be in front
@@ -335,7 +335,7 @@ namespace Carnassial.Images
 
         public void ResetMaxZoom()
         {
-            this.MaxZoom = Constants.MarkableCanvas.ZoomMaximum;
+            this.MaxZoom = Constant.MarkableCanvas.ZoomMaximum;
         }
 
         public void AddMarker(Marker marker)
@@ -634,7 +634,7 @@ namespace Carnassial.Images
             // Get out of here if we are already at our maximum or minimum scaling values 
             // while zooming in or out respectively 
             if ((zoomIn && this.scaleTransform.ScaleX >= this.MaxZoom) ||
-                (!zoomIn && this.scaleTransform.ScaleX <= Constants.MarkableCanvas.ZoomMinimum))
+                (!zoomIn && this.scaleTransform.ScaleX <= Constant.MarkableCanvas.ZoomMinimum))
             {
                 return;
             }
@@ -648,8 +648,8 @@ namespace Carnassial.Images
             {
                 // We are zooming in
                 // Calculate the scaling factor
-                this.scaleTransform.ScaleX *= Constants.MarkableCanvas.ZoomStep;   // Calculate the scaling factor
-                this.scaleTransform.ScaleY *= Constants.MarkableCanvas.ZoomStep;
+                this.scaleTransform.ScaleX *= Constant.MarkableCanvas.ZoomStep;   // Calculate the scaling factor
+                this.scaleTransform.ScaleY *= Constant.MarkableCanvas.ZoomStep;
 
                 // Make sure we don't scale beyond the maximum scaling factor
                 this.scaleTransform.ScaleX = Math.Min(this.MaxZoom, this.scaleTransform.ScaleX);
@@ -659,12 +659,12 @@ namespace Carnassial.Images
             {
                 // We are zooming out. 
                 // Calculate the scaling factor
-                this.scaleTransform.ScaleX /= Constants.MarkableCanvas.ZoomStep;
-                this.scaleTransform.ScaleY /= Constants.MarkableCanvas.ZoomStep;
+                this.scaleTransform.ScaleX /= Constant.MarkableCanvas.ZoomStep;
+                this.scaleTransform.ScaleY /= Constant.MarkableCanvas.ZoomStep;
 
                 // Make sure we don't scale beyond the minimum scaling factor
-                this.scaleTransform.ScaleX = Math.Max(Constants.MarkableCanvas.ZoomMinimum, this.scaleTransform.ScaleX);
-                this.scaleTransform.ScaleY = Math.Max(Constants.MarkableCanvas.ZoomMinimum, this.scaleTransform.ScaleY);
+                this.scaleTransform.ScaleX = Math.Max(Constant.MarkableCanvas.ZoomMinimum, this.scaleTransform.ScaleX);
+                this.scaleTransform.ScaleY = Math.Max(Constant.MarkableCanvas.ZoomMinimum, this.scaleTransform.ScaleY);
 
                 // if there is no scaling, reset translations
                 if (this.scaleTransform.ScaleX == 1.0 && this.scaleTransform.ScaleY == 1.0)
@@ -756,9 +756,9 @@ namespace Carnassial.Images
 
             // Create a marker
             Ellipse mark = new Ellipse();
-            mark.Width = Constants.MarkableCanvas.MarkDiameter;
-            mark.Height = Constants.MarkableCanvas.MarkDiameter;
-            mark.StrokeThickness = Constants.MarkableCanvas.MarkStrokeThickness;
+            mark.Width = Constant.MarkableCanvas.MarkDiameter;
+            mark.Height = Constant.MarkableCanvas.MarkDiameter;
+            mark.StrokeThickness = Constant.MarkableCanvas.MarkStrokeThickness;
             mark.Stroke = marker.Brush;
             mark.Fill = this.markFillBrush;  // Should be a transparent fill so it can get hit events
             markerCanvas.Children.Add(mark);
@@ -785,11 +785,11 @@ namespace Carnassial.Images
             if (marker.Emphasise)
             {
                 glow = new Ellipse();
-                glow.Width = whiteOutline.Width + Constants.MarkableCanvas.MarkGlowDiameterIncrease;
-                glow.Height = whiteOutline.Height + Constants.MarkableCanvas.MarkGlowDiameterIncrease;
-                glow.StrokeThickness = Constants.MarkableCanvas.MarkGlowStrokeThickness;
+                glow.Width = whiteOutline.Width + Constant.MarkableCanvas.MarkGlowDiameterIncrease;
+                glow.Height = whiteOutline.Height + Constant.MarkableCanvas.MarkGlowDiameterIncrease;
+                glow.StrokeThickness = Constant.MarkableCanvas.MarkGlowStrokeThickness;
                 glow.Stroke = mark.Stroke;
-                glow.Opacity = Constants.MarkableCanvas.MarkGlowOpacity;
+                glow.Opacity = Constant.MarkableCanvas.MarkGlowOpacity;
                 markerCanvas.Children.Add(glow);
 
                 outerDiameter = glow.Width;

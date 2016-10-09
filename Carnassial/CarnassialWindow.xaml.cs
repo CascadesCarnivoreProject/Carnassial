@@ -43,7 +43,7 @@ namespace Carnassial
 
         // Timers for periodically updating the data grid and current file during ImageNavigator slider drag
         private DispatcherTimer timerDataGrid;
-        private DispatcherTimer timerImageNavigator;
+        private DispatcherTimer timerFileNavigatorSlider;
 
         // Non-modal dialogs
         private WindowVideoPlayer videoPlayer;
@@ -51,6 +51,7 @@ namespace Carnassial
         public CarnassialWindow()
         {
             this.InitializeComponent();
+            AppDomain.CurrentDomain.UnhandledException += this.OnUnhandledException;
 
             this.MarkableCanvas.MouseEnter += new MouseEventHandler(this.MarkableCanvas_MouseEnter);
             this.MarkableCanvas.PreviewMouseDown += new MouseButtonEventHandler(this.MarkableCanvas_PreviewMouseDown);
@@ -58,6 +59,7 @@ namespace Carnassial
 
             this.speechSynthesizer = new SpeechSynthesizer();
             this.state = new CarnassialState();
+            this.Title = Constant.MainWindowBaseTitle;
 
             // Recall user's state from prior sessions
             this.state.ReadFromRegistry();
@@ -82,17 +84,17 @@ namespace Carnassial
             this.timerDataGrid.Tick += this.DataGridTimer_Tick;
 
             // Timer callback so the image will update to the current slider position when the user pauses whilst dragging the slider 
-            this.timerImageNavigator = new DispatcherTimer();
-            this.timerImageNavigator.Interval = this.state.Throttles.DesiredIntervalBetweenRenders;
-            this.timerImageNavigator.Tick += this.TimerImageNavigator_Tick;
+            this.timerFileNavigatorSlider = new DispatcherTimer();
+            this.timerFileNavigatorSlider.Interval = this.state.Throttles.DesiredIntervalBetweenRenders;
+            this.timerFileNavigatorSlider.Tick += this.FileNavigatorSlider_TimerTick;
 
             // populate the most recent image set list
             this.MenuItemRecentImageSets_Refresh();
 
-            this.Top = this.state.CarnassialWindowLocation.Y;
-            this.Left = this.state.CarnassialWindowLocation.X;
-            this.Height = this.state.CarnassialWindowSize.Height;
-            this.Width = this.state.CarnassialWindowSize.Width;
+            this.Top = this.state.CarnassialWindowPosition.Y;
+            this.Left = this.state.CarnassialWindowPosition.X;
+            this.Height = this.state.CarnassialWindowPosition.Height;
+            this.Width = this.state.CarnassialWindowPosition.Width;
             Utilities.TryFitWindowInWorkingArea(this);
         }
 
@@ -169,9 +171,9 @@ namespace Carnassial
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // abort if required dependencies are missing
-            if (Dependencies.AreRequiredBinariesPresent(Constants.ApplicationName, Assembly.GetExecutingAssembly()) == false)
+            if (Dependencies.AreRequiredBinariesPresent(Constant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
             {
-                Dependencies.ShowMissingBinariesDialog(Constants.ApplicationName);
+                Dependencies.ShowMissingBinariesDialog(Constant.ApplicationName);
                 Application.Current.Shutdown();
             }
 
@@ -182,7 +184,7 @@ namespace Carnassial
                 return;
             }
 
-            GithubReleaseClient updater = new GithubReleaseClient(Constants.ApplicationName, latestVersionAddress);
+            GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, latestVersionAddress);
             // TODO: remove temporary disable
             // updater.TryGetAndParseRelease(false);
         }
@@ -194,23 +196,24 @@ namespace Carnassial
                 (this.dataHandler.FileDatabase != null) &&
                 (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0))
             {
-                // save image set properties to the database
-                if (this.dataHandler.FileDatabase.ImageSet.ImageSelection == FileSelection.Custom)
+                // revert to custom selections to All 
+                if (this.dataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.Custom)
                 {
-                    // don't save custom selections, revert to All 
-                    this.dataHandler.FileDatabase.ImageSet.ImageSelection = FileSelection.All;
+                    this.dataHandler.FileDatabase.ImageSet.FileSelection = FileSelection.All;
                 }
 
-                if (this.dataHandler.ImageCache != null)
-                {
-                    this.dataHandler.FileDatabase.ImageSet.ImageRowIndex = this.dataHandler.ImageCache.CurrentRow;
-                }
-
+                // sync image set properties
                 if (this.MarkableCanvas != null)
                 {
                     this.dataHandler.FileDatabase.ImageSet.MagnifierEnabled = this.MarkableCanvas.IsMagnifyingGlassVisible;
                 }
 
+                if (this.dataHandler.ImageCache != null && this.dataHandler.ImageCache.Current != null)
+                {
+                    this.dataHandler.FileDatabase.ImageSet.MostRecentFileID = this.dataHandler.ImageCache.Current.ID;
+                }
+
+                // save image set properties to the database
                 this.dataHandler.FileDatabase.SyncImageSetToDatabase();
 
                 // ensure custom filter operator is synchronized in state for writing to user's registry
@@ -220,9 +223,8 @@ namespace Carnassial
             // persist user specific state to the registry
             if (this.Top > -10 && this.Left > -10)
             {
-                this.state.CarnassialWindowLocation = new Point(this.Left, this.Top);
+                this.state.CarnassialWindowPosition = new Rect(new Point(this.Left, this.Top), new Size(this.Width, this.Height));
             }
-            this.state.CarnassialWindowSize = new Size(this.Width, this.Height);
             this.state.WriteToRegistry();
 
             // Close the various non-modal windows if they are opened
@@ -240,7 +242,7 @@ namespace Carnassial
             this.state.MostRecentImageSets.TryGetMostRecent(out defaultTemplateDatabasePath);
             if (Utilities.TryGetFileFromUser("Select a CarnassialTemplate.tdb file, which should be located in the root folder containing your images and videos",
                                              defaultTemplateDatabasePath,
-                                             String.Format("Template files (*{0})|*{0}", Constants.File.TemplateDatabaseFileExtension),
+                                             String.Format("Template files (*{0})|*{0}", Constant.File.TemplateDatabaseFileExtension),
                                              out templateDatabasePath) == false)
             {
                 return false;
@@ -295,8 +297,8 @@ namespace Carnassial
                 return false;
             }
 
-            // Before running from an existing image database, check the template table in the template database was compatible with the template table
-            // of the image database.
+            // Before running from an existing file database, check the controls in the template database are compatible with those
+            // of the file database.
             FileDatabase fileDatabase = FileDatabase.CreateOrOpen(fileDatabaseFilePath, templateDatabase, this.state.OrderFilesByDateTime, this.state.CustomSelectionTermCombiningOperator);
             templateDatabase.Dispose();
 
@@ -313,12 +315,13 @@ namespace Carnassial
                 // user indicated to run with the stale copy of the template found in the image database
             }
 
-            // At this point, we should have a valid template and image database loaded
-            // Generate and render the data entry controls, regardless of whether there are actually any images in the image database.
+            // valid template and file database loaded
+            // generate and render the data entry controls regardless of whether there are actually any files in the file database.
             this.dataHandler = new DataEntryHandler(fileDatabase);
             this.DataEntryControls.CreateControls(fileDatabase, this.dataHandler);
             this.SetUserInterfaceCallbacks();
 
+            this.Title = Path.GetFileName(fileDatabase.FilePath) + " - " + Constant.MainWindowBaseTitle;
             this.state.MostRecentImageSets.SetMostRecent(templateDatabasePath);
             this.MenuItemRecentImageSets_Refresh();
 
@@ -329,7 +332,7 @@ namespace Carnassial
             }
             else
             { 
-                this.OnImageLoadingComplete(false);
+                this.OnFileLoadingComplete(false);
             }
 
             return true;
@@ -342,7 +345,7 @@ namespace Carnassial
             foreach (string imageFolderPath in imageFolderPaths)
             {
                 DirectoryInfo imageFolder = new DirectoryInfo(imageFolderPath);
-                foreach (string extension in new List<string>() { Constants.File.AviFileExtension, Constants.File.Mp4FileExtension, Constants.File.JpgFileExtension })
+                foreach (string extension in new List<string>() { Constant.File.AviFileExtension, Constant.File.Mp4FileExtension, Constant.File.JpgFileExtension })
                 {
                     filesToAdd.AddRange(imageFolder.GetFiles("*" + extension));
                 }
@@ -379,20 +382,18 @@ namespace Carnassial
                 return false;
             }
 
-            // Load all the jpg images found in the folder
-            // We want to show previews of the frames to the user as they are individually loaded
-            // Because WPF uses a scene graph, we have to do this by a background worker, as this forces the update
+            // Load all files found
+            // Show previews to the user as loading proceeds.
             BackgroundWorker backgroundWorker = new BackgroundWorker()
             {
                 WorkerReportsProgress = true
             };
 
             ProgressState progressState = new ProgressState();
-            bool unambiguousDayMonthOrder = true;
-            int renderWidthBestEstimate = Constants.Images.DefaultPreviewWidth;
+            int renderWidthBestEstimate = this.MarkableCanvas.Width > 0 ? (int)this.MarkableCanvas.Width : (int)this.Width;
             backgroundWorker.DoWork += (ow, ea) =>
             {
-                // First pass: Examine images to extract their basic properties and build a list of images not already in the database
+                // First pass: Examine files to extract their basic properties and build a list of files not already in the database
                 // Profiling of a 1000 image load on quad core, single 80+MB/s capable SSD shows the following:
                 // - one thread:   100% normalized execution time, 35% CPU, 16MB/s disk (100% normalized time = 1 minute 58 seconds)
                 // - two threads:   55% normalized execution time, 50% CPU, 17MB/s disk (6.3% normalized time with dark checking skipped)
@@ -407,7 +408,7 @@ namespace Carnassial
                 // A sequential partitioner is used as this keeps the preview images displayed to the user in pretty much the same order as they're named,
                 // which is less confusing than TPL's default partitioning where the displayed image jumps back and forth through the image set.  Pulling files
                 // nearly sequentially may also offer some minor disk performance benefit.
-                List<ImageRow> imagesToInsert = new List<ImageRow>();
+                List<ImageRow> filesToInsert = new List<ImageRow>();
                 TimeZoneInfo imageSetTimeZone = this.dataHandler.FileDatabase.ImageSet.GetTimeZone();
                 DateTime previousImageRender = DateTime.UtcNow - this.state.Throttles.DesiredIntervalBetweenRenders;
 
@@ -416,8 +417,8 @@ namespace Carnassial
                     ImageRow file;
                     if (this.dataHandler.FileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file))
                     {
-                        // the database already has an entry for this image so skip it
-                        // if needed, a separate list of images to update could be generated
+                        // the database already has an entry for this file so skip it
+                        // if needed, a separate list of files to update could be generated
                         return;
                     }
 
@@ -430,16 +431,16 @@ namespace Carnassial
                         }
                         else
                         {
-                            // Create the bitmap and determine its ImageQuality
+                            // Create the bitmap and determine its quality
                             // For good display quality the render size is ideally the markable canvas width.  However, its width isn't known until layout of the
                             // ImageSetPane completes, which occurs asynchronously on the UI thread from background worker thread execution.  Therefore, start with
                             // a naive guess of the width and refine it as layout information becomes available.  Profiling shows no difference in import speed
-                            // for renders up to at least 1000 pixels wide or so, suggesting there's little reason to degrade the quality of preview/progress image
-                            // the user sees.
+                            // for renders up to at least 1000 pixels wide or so, suggesting there's little reason to degrade the quality of the preview/progress 
+                            // image the user sees.
                             bitmapSource = file.LoadBitmap(this.FolderPath, renderWidthBestEstimate);
 
                             // Set the ImageQuality to corrupt if the returned bitmap is the corrupt image, otherwise set it to its Ok/Dark setting
-                            if (bitmapSource == Constants.Images.CorruptFile)
+                            if (bitmapSource == Constant.Images.CorruptFile)
                             {
                                 file.ImageQuality = FileSelection.CorruptFile;
                             }
@@ -450,29 +451,20 @@ namespace Carnassial
                         }
 
                         // see if the datetime can be updated from the metadata
-                        DateTimeAdjustment imageTimeAdjustment = file.TryReadDateTimeOriginalFromMetadata(this.FolderPath, imageSetTimeZone);
-                        if (imageTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed ||
-                            imageTimeAdjustment == DateTimeAdjustment.MetadataDateUsed)
-                        {
-                            DateTimeOffset imageTaken = file.GetDateTime();
-                            if (imageTaken.Day <= Constants.Time.MonthsInYear)
-                            {
-                                unambiguousDayMonthOrder = false;
-                            }
-                        }
+                        file.TryReadDateTimeOriginalFromMetadata(this.FolderPath, imageSetTimeZone);
                     }
                     catch (Exception exception)
                     {
                         Debug.Fail(String.Format("Load of {0} failed as it's likely corrupted.", file.FileName), exception.ToString());
-                        bitmapSource = Constants.Images.CorruptFile;
+                        bitmapSource = Constant.Images.CorruptFile;
                         file.ImageQuality = FileSelection.CorruptFile;
                     }
 
-                    int imagesPendingInsert;
-                    lock (imagesToInsert)
+                    int filesPendingInsert;
+                    lock (filesToInsert)
                     {
-                        imagesToInsert.Add(file);
-                        imagesPendingInsert = imagesToInsert.Count;
+                        filesToInsert.Add(file);
+                        filesPendingInsert = filesToInsert.Count;
                     }
 
                     DateTime utcNow = DateTime.UtcNow;
@@ -492,9 +484,9 @@ namespace Carnassial
                                 {
                                     progressState.BitmapSource = file.LoadBitmap(this.FolderPath, renderWidthBestEstimate);
                                 }
-                                progressState.Message = String.Format("{0}/{1}: Examining {2}", imagesPendingInsert, filesToAdd.Count, file.FileName);
+                                progressState.Message = String.Format("{0}/{1}: Examining {2}", filesPendingInsert, filesToAdd.Count, file.FileName);
 
-                                int percentProgress = (int)(100.0 * imagesToInsert.Count / (double)filesToAdd.Count);
+                                int percentProgress = (int)(100.0 * filesToInsert.Count / (double)filesToAdd.Count);
                                 backgroundWorker.ReportProgress(percentProgress, progressState);
                                 previousImageRender = utcNow;
                             }
@@ -505,13 +497,13 @@ namespace Carnassial
                 // Second pass: Update database
                 // Parallel execution above produces out of order results.  Put them back in order so the user sees images in file name order when
                 // reviewing the image set.
-                imagesToInsert = imagesToInsert.OrderBy(image => Path.Combine(image.RelativePath, image.FileName)).ToList();
-                this.dataHandler.FileDatabase.AddFiles(imagesToInsert, (ImageRow imageProperties, int imageIndex) =>
+                filesToInsert = filesToInsert.OrderBy(file => Path.Combine(file.RelativePath, file.FileName)).ToList();
+                this.dataHandler.FileDatabase.AddFiles(filesToInsert, (ImageRow file, int fileIndex) =>
                 {
                     // skip reloading images to display as the user's already seen them import
                     progressState.BitmapSource = null;
-                    progressState.Message = String.Format("{0}/{1}: Adding {2}", imageIndex, filesToAdd.Count, imageProperties.FileName);
-                    int percentProgress = (int)(100.0 * imageIndex / (double)imagesToInsert.Count);
+                    progressState.Message = String.Format("{0}/{1}: Adding {2}", fileIndex, filesToAdd.Count, file.FileName);
+                    int percentProgress = (int)(100.0 * fileIndex / (double)filesToInsert.Count);
                     backgroundWorker.ReportProgress(percentProgress, progressState);
                 });
             };
@@ -519,53 +511,29 @@ namespace Carnassial
             {
                 // this gets called on the UI thread
                 this.Feedback(progressState.BitmapSource, ea.ProgressPercentage, progressState.Message);
-                renderWidthBestEstimate = this.MarkableCanvas.Width > 0 ? (int)this.MarkableCanvas.Width : Constants.Images.DefaultPreviewWidth;
+                if (this.MarkableCanvas.Width > 0)
+                {
+                    renderWidthBestEstimate = (int)this.MarkableCanvas.Width;
+                }
             };
             backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
-                // this.dbData.GetImagesAll(); // Now load up the data table
-                // Get rid of the feedback panel, and show the main interface
+                // hide the feedback panel, show the main interface
                 this.FeedbackControl.Visibility = Visibility.Collapsed;
-                this.FeedbackControl.ShowImage = null;
+                this.FeedbackControl.Image = null;
 
-                this.ImageNavigatorSlider.Visibility = Visibility.Visible;
+                this.FileNavigatorSlider.Visibility = Visibility.Visible;
                 this.MarkableCanvas.Visibility = Visibility.Visible;
 
-                // warn the user if there are any ambiguous dates in terms of day/month or month/day order
-                if (unambiguousDayMonthOrder == false && this.state.SuppressAmbiguousDatesDialog == false)
-                {
-                    MessageBox messageBox = new MessageBox("Carnassial was unsure about the month / day order of your file(s) dates.", this);
-                    messageBox.Message.Problem = "Carnassial is extracting the dates from your files. However, File date formats can be ambiguous: is 2016/03/05 March 5 or May 3?";
-                    messageBox.Message.Problem += "Carnassial tries its best by using the date format specified in the Windows Control Panel";
-                    messageBox.Message.Solution = "If the month/day order is wrong, you can correct the dates by choosing" + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 Edit -> Date correction -> Correct ambiguous dates.";
-                    messageBox.Message.Solution += "Alternately, go to your Windows Control Panel" + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 go to your Windows Control Panel" + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 change the short date format in the Windows Control Panel to match the correct date shown in the image e.g., to yyyy-MM-dd.";
-                    messageBox.Message.Solution += "\u2022 then select 'Edit/Date correction/Reread dates from files...' and see if it fixed the problem.";
-                    messageBox.Message.Hint = "If you are unsure about the correct date, try the following." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 If your camera prints the date on the image or video, check that." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 Look at the image / video to see what season it is (e.g., winter vs. summer)." + Environment.NewLine;
-                    messageBox.Message.Hint += "\u2022 Check your own records." + Environment.NewLine;
-                    messageBox.Message.Hint += "If you check don't show this message again this dialog can be turned back on via the Options menu.";
-                    messageBox.Message.Icon = MessageBoxImage.Information;
-                    messageBox.DontShowAgain.Visibility = Visibility.Visible;
-                    Nullable<bool> result = messageBox.ShowDialog();
-                    if (result.HasValue && result.Value && messageBox.DontShowAgain.IsChecked.HasValue)
-                    {
-                        this.state.SuppressAmbiguousDatesDialog = messageBox.DontShowAgain.IsChecked.Value;
-                        this.MenuItemEnableAmbiguousDatesDialog.IsChecked = !this.state.SuppressAmbiguousDatesDialog;
-                    }
-                }
-                this.OnImageLoadingComplete(true);
+                this.OnFileLoadingComplete(true);
 
                 // Finally, tell the user how many images were loaded, etc.
-                this.ShowImageCountsDialog(true);
+                this.MaybeShowFileCountsDialog(true);
             };
 
             // update UI for import
             this.FeedbackControl.Visibility = Visibility.Visible;
-            this.ImageNavigatorSlider.Visibility = Visibility.Collapsed;
+            this.FileNavigatorSlider.Visibility = Visibility.Collapsed;
             this.MarkableCanvas.Visibility = Visibility.Collapsed;
             this.ImageSetPane.IsActive = true;
             this.Feedback(null, 0, "Examining images...");
@@ -610,13 +578,13 @@ namespace Carnassial
             {
                 // There are no existing .ddb files
                 string templateDatabaseFileName = Path.GetFileName(templateDatabasePath);
-                if (String.Equals(templateDatabaseFileName, Constants.File.DefaultTemplateDatabaseFileName, StringComparison.OrdinalIgnoreCase))
+                if (String.Equals(templateDatabaseFileName, Constant.File.DefaultTemplateDatabaseFileName, StringComparison.OrdinalIgnoreCase))
                 {
-                    databaseFileName = Constants.File.DefaultFileDatabaseFileName;
+                    databaseFileName = Constant.File.DefaultFileDatabaseFileName;
                 }
                 else
                 {
-                    databaseFileName = Path.GetFileNameWithoutExtension(templateDatabasePath) + Constants.File.FileDatabaseFileExtension;
+                    databaseFileName = Path.GetFileNameWithoutExtension(templateDatabasePath) + Constant.File.FileDatabaseFileExtension;
                 }
                 importImages = true;
             }
@@ -631,14 +599,14 @@ namespace Carnassial
             this.FeedbackControl.ShowProgress = percent;
             if (bmap != null)
             {
-                this.FeedbackControl.ShowImage = bmap;
+                this.FeedbackControl.Image = bmap;
             }
         }
 
         /// <summary>
-        /// When image loading has completed add callbacks, prepare the UI, set up the image set, and show the image.
+        /// When file loading has completed add callbacks, prepare the UI, set up the image set, and show the image.
         /// </summary>
-        private void OnImageLoadingComplete(bool imagesJustImported)
+        private void OnFileLoadingComplete(bool filesJustAdded)
         {
             // Set the magnifying glass status from the registry. 
             // Note that if it wasn't in the registry, the value returned will be true by default
@@ -646,23 +614,41 @@ namespace Carnassial
 
             // Show the image, hide the load button, and make the feedback panels visible
             this.ImageSetPane.IsActive = true;
-            this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
+            this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
             this.MarkableCanvas.Focus(); // We start with this having the focus so it can interpret keyboard shortcuts if needed. 
 
             // if this is completion of an existing .ddb open set the current selection and the image index to the ones from the previous session with the image set
             // also if this is completion of import to a new .ddb
-            int imageRow = this.dataHandler.FileDatabase.ImageSet.ImageRowIndex;
-            FileSelection imageSelection = this.dataHandler.FileDatabase.ImageSet.ImageSelection;
-            if (imagesJustImported && this.dataHandler.ImageCache.CurrentRow != Constants.Database.InvalidRow)
+            long mostRecentFileID = this.dataHandler.FileDatabase.ImageSet.MostRecentFileID;
+            FileSelection fileSelection = this.dataHandler.FileDatabase.ImageSet.FileSelection;
+            if (filesJustAdded && this.dataHandler.ImageCache.Current != null)
             {
-                // if this is completion of an add to an existing image set stay on the image, ideally, shown before the import
-                // TODO: add an API to read the current selection
-                imageRow = this.dataHandler.ImageCache.CurrentRow;
+                // if this is completion of an add to an existing image set stay on the file, ideally, shown before the import
+                mostRecentFileID = this.dataHandler.ImageCache.Current.ID;
             }
-            this.SelectDataTableImagesAndShowImage(imageRow, imageSelection);
+            this.SelectFilesAndShowFile(mostRecentFileID, fileSelection);
 
             // match UX availability to image availability
             this.EnableOrDisableMenusAndControls();
+        }
+
+        private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            // once .NET 4.5+ is used it's meaningful to also report the .NET release version
+            // See https://msdn.microsoft.com/en-us/library/hh925568.aspx.
+            MessageBox exitNotification = new MessageBox("Uh-oh.  We're so sorry.", this);
+            exitNotification.Message.Icon = MessageBoxImage.Error;
+            exitNotification.Message.Title = "Carnassial needs to close.";
+            exitNotification.Message.Problem = "This is a bug.  Please copy/paste the entire content of the What section below into an email or a new issue at https://github.com/CascadesCarnivoreProject/Carnassial/issues/.  Please also include a clear and specific description of what you were doing at the time.  The quickest way to copy/paste is to click on the What details, hit ctrl+a to select all of it, and ctrl+c to copy.";
+            exitNotification.Message.What = String.Format("{0}, {1}, .NET runtime {2}{3}", typeof(CarnassialWindow).Assembly.GetName(), Environment.OSVersion, Environment.Version, Environment.NewLine);
+            if (e.ExceptionObject != null)
+            {
+                exitNotification.Message.What += e.ExceptionObject.ToString();
+            }
+            exitNotification.Message.Reason = "It's not you, it's us.  If you let us know we'll get it fixed.  If you don't tell us probably we don't know there's a problem and things won't get any better.";
+            exitNotification.Message.Result = String.Format("The data file is likely OK.  If it's not you can restore from the {0} folder.", Constant.File.BackupFolder);
+            exitNotification.Message.Hint = "If you do the same thing this'll probably happen again.  If so, that's helpful to know as well.";
+            exitNotification.ShowDialog();
         }
 
         private void EnableOrDisableMenusAndControls()
@@ -699,76 +685,33 @@ namespace Carnassial
             // other UI components
             this.ControlsPanel.IsEnabled = filesSelected;  // If images don't exist, the user shouldn't be allowed to interact with the control tray
             this.CopyPreviousValues.IsEnabled = filesSelected;
-            this.ImageNavigatorSlider.IsEnabled = filesSelected;
+            this.FileNavigatorSlider.IsEnabled = filesSelected;
             this.MarkableCanvas.IsEnabled = filesSelected;
             this.MarkableCanvas.IsMagnifyingGlassVisible = filesSelected && this.dataHandler.FileDatabase.ImageSet.MagnifierEnabled;
 
             if (filesSelected == false)
             {
-                this.ShowImage(Constants.DefaultImageRowIndex);
+                this.ShowFile(Constant.Database.InvalidRow);
                 this.statusBar.SetMessage("Image set is empty.");
                 this.statusBar.SetCurrentImage(0);
                 this.statusBar.SetCount(0);
             }
         }
 
-        private void SelectDataTableImagesAndShowImage(int imageRow, FileSelection selection)
+        private void SelectFilesAndShowFile(long imageID, FileSelection selection)
         {
+            Debug.Assert(this.dataHandler != null, "SelectFilesAndShowFile() should not be reachable with a null data handler.  Is a menu item wrongly enabled?");
+            Debug.Assert(this.dataHandler.FileDatabase != null, "SelectFilesAndShowFile() should not be reachable with a null database.  Is a menu item wrongly enabled?");
             this.dataHandler.FileDatabase.SelectFiles(selection);
-            if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0 || selection == FileSelection.All)
+
+            if ((this.dataHandler.FileDatabase.CurrentlySelectedFileCount == 0) && (selection != FileSelection.All))
             {
-                // update status and menu state to reflect what the user selected
-                string status;
-                switch (selection)
-                {
-                    case FileSelection.All:
-                        status = "(all files selected)";
-                        break;
-                    case FileSelection.CorruptFile:
-                        status = "corrupted files";
-                        break;
-                    case FileSelection.Custom:
-                        status = "files matching your custom selection";
-                        break;
-                    case FileSelection.Dark:
-                        status = "dark files";
-                        break;
-                    case FileSelection.MarkedForDeletion:
-                        status = "files marked for deletion";
-                        break;
-                    case FileSelection.FileNoLongerAvailable:
-                        status = "files no longer available";
-                        break;
-                    case FileSelection.Ok:
-                        status = "light files";
-                        break;
-                    default:
-                        throw new NotSupportedException(String.Format("Unhandled image selection {0}.", selection));
-                }
-
-                this.statusBar.SetView(status);
-
-                this.MenuItemSelectAllImages.IsChecked = (selection == FileSelection.All) ? true : false;
-                this.MenuItemSelectCorruptedImages.IsChecked = (selection == FileSelection.CorruptFile) ? true : false;
-                this.MenuItemSelectDarkImages.IsChecked = (selection == FileSelection.Dark) ? true : false;
-                this.MenuItemSelectLightImages.IsChecked = (selection == FileSelection.Ok) ? true : false;
-                this.MenuItemSelectFilesNoLongerAvailable.IsChecked = (selection == FileSelection.FileNoLongerAvailable) ? true : false;
-                this.MenuItemSelectImagesMarkedForDeletion.IsChecked = (selection == FileSelection.MarkedForDeletion) ? true : false;
-                this.MenuItemSelectCustom.IsChecked = (selection == FileSelection.Custom) ? true : false;
-
-                // if it's displayed, update the window which shows the data table
-                this.RefreshDataGrid();
-            }
-            else
-            {
-                // These cases are typically reached only when a user deletes all images which mach a selection.  
-                string status;
-                string title;
+                // These cases are reached when 
+                // 1) datetime modifications result in no files matching a custom selection
+                // 2) all files which match the selection got deleted
                 string problem;
-                string reason = null;
+                string reason;
                 string hint;
-                status = "Resetting selection to All Files";
-                title = "Resetting selection to All Files (no files currently match the current selection)";
                 if (selection == FileSelection.CorruptFile)
                 {
                     problem = "Corrupted files were previously selected but no files are currently corrupted, so nothing can be shown.";
@@ -778,7 +721,7 @@ namespace Carnassial
                 else if (selection == FileSelection.Custom)
                 {
                     problem = "No files currently match the custom selection so nothing can be shown.";
-                    reason = "None of the files match the criteria set in the current Custom Selection.";
+                    reason = "None of the files match the criteria set in the current Custom selection.";
                     hint = "Create a different custom selection and apply it view the matching files.";
                 }
                 else if (selection == FileSelection.Dark)
@@ -810,39 +753,76 @@ namespace Carnassial
                     throw new NotSupportedException(String.Format("Unhandled selection {0}.", selection));
                 }
 
-                this.statusBar.SetMessage(status);
+                this.statusBar.SetMessage("Resetting selection to All files.");
 
-                MessageBox messageBox = new MessageBox(title, this);
+                MessageBox messageBox = new MessageBox("Resetting selection to All files (no files currently match the current selection)", this);
                 messageBox.Message.Icon = MessageBoxImage.Information;
                 messageBox.Message.Problem = problem;
-                if (reason != null)
-                {
-                    messageBox.Message.Reason = reason;
-                }
+                messageBox.Message.Reason = reason;
                 messageBox.Message.Hint = hint;
-                messageBox.Message.Result = "The 'All Images' selection will be applied, where all images in your image set will be displayed.";
+                messageBox.Message.Result = "The 'All files' selection will be applied, where all files in your image set are displayed.";
                 messageBox.ShowDialog();
 
-                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, FileSelection.All);
-                return;
+                selection = FileSelection.All;
+                this.dataHandler.FileDatabase.SelectFiles(selection);
             }
 
-            // Display the specified image under the new selection
-            if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0)
+            // update status and menu state to reflect what the user selected
+            string status;
+            switch (selection)
             {
-                this.ShowImage(imageRow);
+                case FileSelection.All:
+                    status = "(all files selected)";
+                    break;
+                case FileSelection.CorruptFile:
+                    status = "corrupted files";
+                    break;
+                case FileSelection.Custom:
+                    status = "files matching your custom selection";
+                    break;
+                case FileSelection.Dark:
+                    status = "dark files";
+                    break;
+                case FileSelection.MarkedForDeletion:
+                    status = "files marked for deletion";
+                    break;
+                case FileSelection.FileNoLongerAvailable:
+                    status = "files no longer available";
+                    break;
+                case FileSelection.Ok:
+                    status = "light files";
+                    break;
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled file selection {0}.", selection));
             }
+
+            this.statusBar.SetView(status);
+
+            this.MenuItemSelectAllFiles.IsChecked = (selection == FileSelection.All) ? true : false;
+            this.MenuItemSelectCorruptedFiles.IsChecked = (selection == FileSelection.CorruptFile) ? true : false;
+            this.MenuItemSelectDarkFiles.IsChecked = (selection == FileSelection.Dark) ? true : false;
+            this.MenuItemSelectOkFiles.IsChecked = (selection == FileSelection.Ok) ? true : false;
+            this.MenuItemSelectFilesNoLongerAvailable.IsChecked = (selection == FileSelection.FileNoLongerAvailable) ? true : false;
+            this.MenuItemSelectFilesMarkedForDeletion.IsChecked = (selection == FileSelection.MarkedForDeletion) ? true : false;
+            this.MenuItemSelectCustom.IsChecked = (selection == FileSelection.Custom) ? true : false;
+
+            // if it's displayed, update the window which shows the data table
+            this.RefreshDataGrid();
+
+            // Display the specified file or, if it's no longer selected, the next closest one
+            // Showfile() handles empty image sets, so those don't need to be checked for here.
+            this.ShowFile(this.dataHandler.FileDatabase.GetFileOrNextFileIndex(imageID));
 
             // After a selection change, set the slider to represent the index and the count of the selection
-            this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-            this.ImageNavigatorSlider.Maximum = this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1;  // Reset the slider to the size of images in this set
-            this.ImageNavigatorSlider.Value = this.dataHandler.ImageCache.CurrentRow;
+            this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
+            this.FileNavigatorSlider.Maximum = this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1;  // Reset the slider to the size of images in this set
+            this.FileNavigatorSlider.Value = this.dataHandler.ImageCache.CurrentRow;
 
             // Update the status bar accordingly
             this.statusBar.SetCurrentImage(this.dataHandler.ImageCache.CurrentRow + 1); // We add 1 because its a 0-based list
             this.statusBar.SetCount(this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
-            this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
-            this.dataHandler.FileDatabase.ImageSet.ImageSelection = selection; // persist the current selection
+            this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
+            this.dataHandler.FileDatabase.ImageSet.FileSelection = selection; // persist the current selection
         }
 
         /// <summary>
@@ -857,7 +837,7 @@ namespace Carnassial
                 string controlType = this.dataHandler.FileDatabase.FileTableColumnsByDataLabel[pair.Key].ControlType;
                 switch (controlType)
                 {
-                    case Constants.Control.Counter:
+                    case Constant.Control.Counter:
                         DataEntryCounter counter = (DataEntryCounter)pair.Value;
                         counter.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
                         counter.ContentControl.PreviewTextInput += this.CounterCtl_PreviewTextInput;
@@ -865,28 +845,27 @@ namespace Carnassial
                         counter.Container.MouseLeave += this.CounterControl_MouseLeave;
                         counter.LabelControl.Click += this.CounterControl_Click;
                         break;
-                    case Constants.Control.Flag:
-                    case Constants.DatabaseColumn.DeleteFlag:
+                    case Constant.Control.Flag:
+                    case Constant.DatabaseColumn.DeleteFlag:
                         DataEntryFlag flag = (DataEntryFlag)pair.Value;
                         flag.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
                         break;
-                    case Constants.Control.FixedChoice:
-                    case Constants.DatabaseColumn.ImageQuality:
+                    case Constant.Control.FixedChoice:
+                    case Constant.DatabaseColumn.ImageQuality:
                         DataEntryChoice choice = (DataEntryChoice)pair.Value;
                         choice.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
                         break;
-                    case Constants.Control.Note:
-                    case Constants.DatabaseColumn.File:
-                    case Constants.DatabaseColumn.Folder:
-                    case Constants.DatabaseColumn.RelativePath:
+                    case Constant.Control.Note:
+                    case Constant.DatabaseColumn.File:
+                    case Constant.DatabaseColumn.RelativePath:
                         DataEntryNote note = (DataEntryNote)pair.Value;
                         note.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
                         break;
-                    case Constants.DatabaseColumn.DateTime:
+                    case Constant.DatabaseColumn.DateTime:
                         DataEntryDateTime dateTime = (DataEntryDateTime)pair.Value;
                         dateTime.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
                         break;
-                    case Constants.DatabaseColumn.UtcOffset:
+                    case Constant.DatabaseColumn.UtcOffset:
                         DataEntryUtcOffset utcOffset = (DataEntryUtcOffset)pair.Value;
                         utcOffset.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
                         break;
@@ -955,7 +934,7 @@ namespace Carnassial
             if (focusedElement != null)
             {
                 Type type = focusedElement.GetType();
-                if (Constants.Control.KeyboardInputTypes.Contains(type))
+                if (Constant.Control.KeyboardInputTypes.Contains(type))
                 {
                     DataEntryControl focusedControl;
                     if (DataEntryHandler.TryFindFocusedControl(focusedElement, out focusedControl))
@@ -999,7 +978,7 @@ namespace Carnassial
             // no control was found so set focus to the slider
             // this has also the desirable side effect of binding the controls into both next and previous loops so that keys can be used to cycle
             // continuously through them
-            this.ImageNavigatorSlider.Focus();
+            this.FileNavigatorSlider.Focus();
         }
 
         /// <summary>
@@ -1007,14 +986,14 @@ namespace Carnassial
         /// </summary>
         private void CopyPreviousValues_MouseEnter(object sender, MouseEventArgs e)
         {
-            this.CopyPreviousValues.Background = Constants.Control.CopyableFieldHighlightBrush;
+            this.CopyPreviousValues.Background = Constant.Control.CopyableFieldHighlightBrush;
 
             foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
             {
                 DataEntryControl control = (DataEntryControl)pair.Value;
                 if (control.Copyable)
                 {
-                    control.Container.Background = Constants.Control.CopyableFieldHighlightBrush;
+                    control.Container.Background = Constant.Control.CopyableFieldHighlightBrush;
                 }
             }
         }
@@ -1137,111 +1116,104 @@ namespace Carnassial
         private void ImageNavigatorSlider_DragCompleted(object sender, DragCompletedEventArgs args)
         {
             this.state.ImageNavigatorSliderDragging = false;
-            this.ShowImage((int)this.ImageNavigatorSlider.Value);
-            this.timerImageNavigator.Stop(); 
+            this.ShowFile((int)this.FileNavigatorSlider.Value);
+            this.timerFileNavigatorSlider.Stop(); 
         }
 
         private void ImageNavigatorSlider_DragStarted(object sender, DragStartedEventArgs args)
         {
-            this.timerImageNavigator.Start(); // The timer forces an image display update to the current slider position if the user pauses longer than the timer's interval. 
+            this.timerFileNavigatorSlider.Start(); // The timer forces an image display update to the current slider position if the user pauses longer than the timer's interval. 
             this.state.ImageNavigatorSliderDragging = true;
         }
 
         private void ImageNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> args)
         {
-            this.timerImageNavigator.Stop(); // Restart the timer 
-            this.timerImageNavigator.Interval = this.state.Throttles.DesiredIntervalBetweenRenders; // Throttle values may have changed, so we reset it just in case.
-            this.timerImageNavigator.Start();
+            this.timerFileNavigatorSlider.Stop(); // Restart the timer 
+            this.timerFileNavigatorSlider.Interval = this.state.Throttles.DesiredIntervalBetweenRenders; // Throttle values may have changed, so we reset it just in case.
+            this.timerFileNavigatorSlider.Start();
             DateTime utcNow = DateTime.UtcNow;
-            if ((this.state.ImageNavigatorSliderDragging == false) || (utcNow - this.state.MostRecentDragEvent > this.timerImageNavigator.Interval))
+            if ((this.state.ImageNavigatorSliderDragging == false) || (utcNow - this.state.MostRecentDragEvent > this.timerFileNavigatorSlider.Interval))
             {
-                this.ShowImage((int)this.ImageNavigatorSlider.Value);
+                this.ShowFile((int)this.FileNavigatorSlider.Value);
                 this.state.MostRecentDragEvent = utcNow;
             }
         }
 
-        private void ImageNavigatorSlider_EnableOrDisableValueChangedCallback(bool enableCallback)
+        private void FileNavigatorSlider_EnableOrDisableValueChangedCallback(bool enableCallback)
         {
             if (enableCallback)
             {
-                this.ImageNavigatorSlider.ValueChanged += new RoutedPropertyChangedEventHandler<double>(this.ImageNavigatorSlider_ValueChanged);
+                this.FileNavigatorSlider.ValueChanged += new RoutedPropertyChangedEventHandler<double>(this.ImageNavigatorSlider_ValueChanged);
             }
             else
             {
-                this.ImageNavigatorSlider.ValueChanged -= new RoutedPropertyChangedEventHandler<double>(this.ImageNavigatorSlider_ValueChanged);
+                this.FileNavigatorSlider.ValueChanged -= new RoutedPropertyChangedEventHandler<double>(this.ImageNavigatorSlider_ValueChanged);
             }
         }
 
         // Timer callback that forces image update to the current slider position. Invoked as the user pauses dragging the image slider 
-        private void TimerImageNavigator_Tick(object sender, EventArgs e)
+        private void FileNavigatorSlider_TimerTick(object sender, EventArgs e)
         {
-            this.ShowImage((int)this.ImageNavigatorSlider.Value);
-            this.timerImageNavigator.Stop(); 
+            this.ShowFile((int)this.FileNavigatorSlider.Value);
+            this.timerFileNavigatorSlider.Stop(); 
         }
 
-        // Various dialogs perform a bulk edit, after which various states have to be refreshed
-        // This method shows the dialog and (if a bulk edit is done) refreshes those states.
-        private void ShowBulkImageEditDialog(Window dialog)
+        // Various dialogs perform a bulk edit, after which the current file's data needs to be refreshed.
+        private void ShowBulkFileEditDialog(Window dialog)
         {
+            Debug.Assert((dialog.GetType() == typeof(PopulateFieldWithMetadata)) ||
+                         (dialog.GetType() == typeof(DateTimeFixedCorrection)) ||
+                         (dialog.GetType() == typeof(DateTimeLinearCorrection)) ||
+                         (dialog.GetType() == typeof(DateDaylightSavingsTimeCorrection)) ||
+                         (dialog.GetType() == typeof(DateCorrectAmbiguous)) ||
+                         (dialog.GetType() == typeof(DateTimeSetTimeZone)) ||
+                         (dialog.GetType() == typeof(DateTimeRereadFromFiles)),
+                         String.Format("Unexpected dialog {0}.", dialog.GetType()));
+
             bool? result = dialog.ShowDialog();
             if (result == true)
             {
-                this.dataHandler.FileDatabase.SelectFiles(this.dataHandler.FileDatabase.ImageSet.ImageSelection);
-                this.RefreshCurrentImageProperties();
+                // load the changes made through the current dialog
+                long currentFileID = this.dataHandler.ImageCache.Current.ID;
+                this.dataHandler.FileDatabase.SelectFiles(this.dataHandler.FileDatabase.ImageSet.FileSelection);
+
+                // show updated data for file
+                // Delete isn't considered a bulk edit so none of the bulk edit dialogs can result in a change in the image which needs to be displayed.
+                // Hence the image cache doesn't need to be invalidated.  However, SelectFiles() may mean the currently displayed file is no longer selected.
+                this.ShowFile(this.dataHandler.FileDatabase.GetFileOrNextFileIndex(currentFileID));
                 this.RefreshDataGrid();
             }
         }
 
-        private void ShowImageCountsDialog(bool onImageLoading)
+        private void MaybeShowFileCountsDialog(bool onFileLoading)
         {
-            if (onImageLoading && this.state.SuppressFileCountOnImportDialog)
+            if (onFileLoading && this.state.SuppressFileCountOnImportDialog)
             {
                 return;
             }
 
             Dictionary<FileSelection, int> counts = this.dataHandler.FileDatabase.GetFileCountsBySelection();
             FileCountsByQuality imageStats = new FileCountsByQuality(counts, this);
-            if (onImageLoading)
+            if (onFileLoading)
             {
                 imageStats.Message.Hint = "\u2022 " + imageStats.Message.Hint + Environment.NewLine + "\u2022 If you check don't show this message again this dialog can be turned back on via the Options menu.";
                 imageStats.DontShowAgain.Visibility = Visibility.Visible;
             }
             Nullable<bool> result = imageStats.ShowDialog();
-            if (onImageLoading && result.HasValue && result.Value && imageStats.DontShowAgain.IsChecked.HasValue)
+            if (onFileLoading && result.HasValue && result.Value && imageStats.DontShowAgain.IsChecked.HasValue)
             {
                 this.state.SuppressFileCountOnImportDialog = imageStats.DontShowAgain.IsChecked.Value;
                 this.MenuItemEnableFileCountOnImportDialog.IsChecked = !this.state.SuppressFileCountOnImportDialog;
             }
         }
 
-        private void ShowFirstDisplayableImage(int firstRowInSearch)
-        {
-            int firstImageDisplayable = this.dataHandler.FileDatabase.FindFirstDisplayableImage(firstRowInSearch);
-            if (firstImageDisplayable != -1)
-            {
-                this.ShowImage(firstImageDisplayable);
-            }
-        }
-
-        /// <summary>
-        /// Reloads the current image's properties and redisplays them.  Doesn't invalidate the image's cached bitmap.
-        /// </summary>
-        private void RefreshCurrentImageProperties()
-        {
-            // caller is indicating image data has been updated, so move the image enumerator off current to force a refresh of the cached properties
-            int currentRow = this.dataHandler.ImageCache.CurrentRow;
-            this.dataHandler.ImageCache.Reset();
-            // load the new property values
-            this.ShowImage(currentRow);
-        }
-
-        // Show the image in the specified row
-        private void ShowImage(int imageRow)
+        // Show the image for the specified file
+        private void ShowFile(int fileIndex)
         {
             // If there is no image to show, then show an image indicating the empty image set.
             if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount < 1)
             {
-                BitmapSource unalteredImage = Constants.Images.NoSelectableFile;
+                BitmapSource unalteredImage = Constant.Images.NoSelectableFile;
                 this.MarkableCanvas.ImageToDisplay.Source = unalteredImage;
                 this.MarkableCanvas.ImageToMagnify.Source = unalteredImage; // Probably not needed
                 this.markersOnCurrentImage = null;
@@ -1251,16 +1223,16 @@ namespace Carnassial
                 return;
             }
 
-            // for the bitmap caching logic below to work this should be the only place where code in CarnassialWindow moves the image enumerator
+            // for the bitmap caching logic below to work this should be the only place where code in CarnassialWindow moves the file enumerator
             bool newImageToDisplay;
-            if (this.dataHandler.ImageCache.TryMoveToImage(imageRow, out newImageToDisplay) == false)
+            if (this.dataHandler.ImageCache.TryMoveToFile(fileIndex, out newImageToDisplay) == false)
             {
-                throw new ArgumentOutOfRangeException("newImageRow", String.Format("{0} is not a valid row index in the image table.", imageRow));
+                throw new ArgumentOutOfRangeException("fileIndex", String.Format("{0} is not a valid index in the file table.", fileIndex));
             }
 
-            // update each control with the data for the now current image
-            // This is always done as it's assumed either the image changed or that a control refresh is required due to database changes
-            // the call to TryMoveToImage() above refreshes the data stored under this.dataHandler.ImageCache.Current.
+            // update each control with the data for the now current file
+            // This is always done as it's assumed either the file being displayed changed or that a control refresh is required due to database changes
+            // the call to TryMoveToFile() above refreshes the data stored under this.dataHandler.ImageCache.Current.
             this.dataHandler.IsProgrammaticControlUpdate = true;
             foreach (KeyValuePair<string, DataEntryControl> control in this.DataEntryControls.ControlsByDataLabel)
             {
@@ -1269,12 +1241,12 @@ namespace Carnassial
                 control.Value.SetContentAndTooltip(this.dataHandler.ImageCache.Current.GetValueDisplayString(control.Value.DataLabel));
 
                 // for note controls, update the autocomplete list if an edit occurred
-                if (controlType == Constants.Control.Note)
+                if (controlType == Constant.Control.Note)
                 {
                     DataEntryNote noteControl = (DataEntryNote)control.Value;
                     if (noteControl.ContentChanged)
                     {
-                        noteControl.ContentControl.Autocompletions = this.dataHandler.FileDatabase.GetDistinctValuesInFileColumn(control.Value.DataLabel);
+                        noteControl.ContentControl.Autocompletions = this.dataHandler.FileDatabase.GetDistinctValuesInFileDataColumn(control.Value.DataLabel);
                         noteControl.ContentChanged = false;
                     }
                 }
@@ -1287,7 +1259,7 @@ namespace Carnassial
             this.statusBar.SetCount(this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
             this.statusBar.ClearMessage();
 
-            this.ImageNavigatorSlider.Value = this.dataHandler.ImageCache.CurrentRow;
+            this.FileNavigatorSlider.Value = this.dataHandler.ImageCache.CurrentRow;
 
             // get and display the new image if the image changed
             // this avoids unnecessary image reloads and refreshes in cases where ShowImage() is just being called to refresh controls
@@ -1361,13 +1333,13 @@ namespace Carnassial
                 case Key.Right:             // next image
                     if (keyRepeatCount % this.state.Throttles.RepeatedKeyAcceptanceInterval == 0)
                     {
-                        this.TryShowImageWithoutSliderCallback(true, Keyboard.Modifiers);
+                        this.ShowFileWithoutSliderCallback(true, Keyboard.Modifiers);
                     }
                     break;
                 case Key.Left:              // previous image
                     if (keyRepeatCount % this.state.Throttles.RepeatedKeyAcceptanceInterval == 0)
                     {
-                        this.TryShowImageWithoutSliderCallback(false, Keyboard.Modifiers);
+                        this.ShowFileWithoutSliderCallback(false, Keyboard.Modifiers);
                     }
                     break;
                 case Key.Up:                // show visual difference to next image
@@ -1437,7 +1409,7 @@ namespace Carnassial
                 this.MenuItemCopyPreviousValues.IsVisible || // edit menu
                 this.MenuItemMagnifyingGlass.IsVisible || // options menu
                 this.MenuItemViewNextImage.IsVisible || // view menu
-                this.MenuItemSelectAllImages.IsVisible || // select menu, and then the help menu...
+                this.MenuItemSelectAllFiles.IsVisible || // select menu, and then the help menu...
                 this.MenuItemAbout.IsVisible)
             {
                 return true;
@@ -1454,7 +1426,7 @@ namespace Carnassial
             // check if focus is on a control
             // NOTE: this list must be kept in sync with the System.Windows classes used by the classes in Carnassial\Util\DataEntry*.cs
             Type type = focusedElement.GetType();
-            if (Constants.Control.KeyboardInputTypes.Contains(type))
+            if (Constant.Control.KeyboardInputTypes.Contains(type))
             {
                 // send all keys to controls by default except
                 // - escape as that's a natural way to back out of a control (the user can also hit enter)
@@ -1626,11 +1598,11 @@ namespace Carnassial
 
                         if (selectedCounter != null && currentCounter.DataLabel == selectedCounter.DataLabel)
                         {
-                            marker.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.SelectionColour);
+                            marker.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constant.SelectionColour);
                         }
                         else
                         {
-                            marker.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constants.StandardColour);
+                            marker.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constant.StandardColour);
                         }
 
                         marker.Emphasise = emphasize;
@@ -1672,7 +1644,7 @@ namespace Carnassial
         private void MenuItemExportCsv_Click(object sender, RoutedEventArgs e)
         {
             if (this.state.SuppressSelectedCsvExportPrompt == false &&
-                this.dataHandler.FileDatabase.ImageSet.ImageSelection != FileSelection.All)
+                this.dataHandler.FileDatabase.ImageSet.FileSelection != FileSelection.All)
             {
                 MessageBox messageBox = new MessageBox("Exporting a partial selection to a CSV file", this, MessageBoxButton.OKCancel);
                 messageBox.Message.What = "Only a subset of your data will be exported to the CSV file.";
@@ -1820,8 +1792,8 @@ namespace Carnassial
                 messageBox.Message.Solution += "\u2022 Do not change column names" + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 Do not add or delete rows (those changes will be ignored)" + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 Restrict modifications as follows:" + Environment.NewLine;
-                messageBox.Message.Solution += String.Format("    \u2022 DateTime must be in '{0}' format{1}", Constants.Time.DateTimeDatabaseFormat, Environment.NewLine);
-                messageBox.Message.Solution += String.Format("    \u2022 UtcOffset must be a floating point number between {0} and {1}, inclusive{2}", DateTimeHandler.ToDatabaseUtcOffsetString(Constants.Time.MinimumUtcOffset), DateTimeHandler.ToDatabaseUtcOffsetString(Constants.Time.MinimumUtcOffset), Environment.NewLine);
+                messageBox.Message.Solution += String.Format("    \u2022 DateTime must be in '{0}' format{1}", Constant.Time.DateTimeDatabaseFormat, Environment.NewLine);
+                messageBox.Message.Solution += String.Format("    \u2022 UtcOffset must be a floating point number between {0} and {1}, inclusive{2}", DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), Environment.NewLine);
                 messageBox.Message.Solution += "    \u2022 Counter data must be zero or a positive integer" + Environment.NewLine;
                 messageBox.Message.Solution += "    \u2022 Flag data must be 'true' or 'false'" + Environment.NewLine;
                 messageBox.Message.Solution += "    \u2022 FixedChoice data must be a string that exactly matches one of the FixedChoice menu options or the default value." + Environment.NewLine;
@@ -1845,11 +1817,11 @@ namespace Carnassial
                 }
             }
 
-            string csvFileName = Path.GetFileNameWithoutExtension(this.dataHandler.FileDatabase.FileName) + Constants.File.CsvFileExtension;
+            string csvFileName = Path.GetFileNameWithoutExtension(this.dataHandler.FileDatabase.FileName) + Constant.File.CsvFileExtension;
             string csvFilePath;
             if (Utilities.TryGetFileFromUser("Select a .csv file to merge into the current image set",
                                              Path.Combine(this.dataHandler.FileDatabase.FolderPath, csvFileName),
-                                             String.Format("Comma separated value files (*{0})|*{0}", Constants.File.CsvFileExtension),
+                                             String.Format("Comma separated value files (*{0})|*{0}", Constant.File.CsvFileExtension),
                                              out csvFilePath) == false)
             {
                 return;
@@ -1901,8 +1873,9 @@ namespace Carnassial
                 messageBox.Message.Hint = "Is the file open in Excel?";
                 messageBox.ShowDialog();
             }
+
             // Reload the data table
-            this.SelectDataTableImagesAndShowImage(this.dataHandler.ImageCache.CurrentRow, this.dataHandler.FileDatabase.ImageSet.ImageSelection);
+            this.SelectFilesAndShowFile(this.dataHandler.ImageCache.Current.ID, this.dataHandler.FileDatabase.ImageSet.FileSelection);
             this.statusBar.SetMessage("CSV file imported.");
         }
 
@@ -2001,10 +1974,10 @@ namespace Carnassial
         {
             if (this.dataHandler.ImageCache.Current.IsDisplayable() == false)
             {
-                int firstImageDisplayable = this.dataHandler.FileDatabase.FindFirstDisplayableImage(Constants.DefaultImageRowIndex);
-                if (firstImageDisplayable == -1)
+                int firstFileDisplayable = this.dataHandler.FileDatabase.GetCurrentOrNextDisplayableFile(this.dataHandler.ImageCache.CurrentRow);
+                if (firstFileDisplayable == -1)
                 {
-                    // There are no displayable images, and thus no metadata to choose from, so abort
+                    // There are no displayable files and thus no metadata to choose from, so abort
                     MessageBox messageBox = new MessageBox("Can't populate a data field with image metadata.", this);
                     messageBox.Message.Problem = "Metadata is not available as no file in the image set can be read." + Environment.NewLine;
                     messageBox.Message.Reason += "Carnassial must have at least one valid file in order to get its metadata.  All files are either corrupted or removed.";
@@ -2015,15 +1988,15 @@ namespace Carnassial
             }
 
             if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedPopulateFieldFromMetadataPrompt, 
-                                                               "'Populate a data field with image metadata of your choosing...'", 
-                                                               (bool optOut) =>
-                                                               {
-                                                                   this.state.SuppressSelectedPopulateFieldFromMetadataPrompt = optOut;
-                                                                   this.MenuItemEnableSelectedPopulateFieldFromMetadataPrompt.IsChecked = !optOut;
-                                                               }))
+                                                                   "'Populate a data field with image metadata of your choosing...'", 
+                                                                   (bool optOut) =>
+                                                                   {
+                                                                       this.state.SuppressSelectedPopulateFieldFromMetadataPrompt = optOut;
+                                                                       this.MenuItemEnableSelectedPopulateFieldFromMetadataPrompt.IsChecked = !optOut;
+                                                                   }))
             {
-                PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current.GetImagePath(this.FolderPath), this);
-                this.ShowBulkImageEditDialog(populateField);
+                PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current.GetFilePath(this.FolderPath), this);
+                this.ShowBulkFileEditDialog(populateField);
             }
         }
 
@@ -2092,7 +2065,7 @@ namespace Carnassial
             if (result == true)
             {
                 // cache the current ID as the current image may be invalidated
-                long previousImageID = this.dataHandler.ImageCache.Current.ID;
+                long currentFileID = this.dataHandler.ImageCache.Current.ID;
 
                 Mouse.OverrideCursor = Cursors.Wait;
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
@@ -2102,7 +2075,7 @@ namespace Carnassial
                     // invalidate cache so FileNoLongerAvailable placeholder will be displayed
                     // release any handle open on the file so it can be moved
                     this.dataHandler.ImageCache.TryInvalidate(image.ID);
-                    if (image.TryMoveFileToDeletedImagesFolder(this.dataHandler.FileDatabase.FolderPath) == false)
+                    if (image.TryMoveFileToDeletedFilesFolder(this.dataHandler.FileDatabase.FolderPath) == false)
                     {
                         // attempt to soft delete file failed so leave the image as marked for deletion
                         continue;
@@ -2120,8 +2093,8 @@ namespace Carnassial
                         image.ImageQuality = FileSelection.FileNoLongerAvailable;
                         List<ColumnTuple> columnTuples = new List<ColumnTuple>()
                         {
-                            new ColumnTuple(Constants.DatabaseColumn.DeleteFlag, Constants.Boolean.False),
-                            new ColumnTuple(Constants.DatabaseColumn.ImageQuality, FileSelection.FileNoLongerAvailable.ToString())
+                            new ColumnTuple(Constant.DatabaseColumn.DeleteFlag, Constant.Boolean.False),
+                            new ColumnTuple(Constant.DatabaseColumn.ImageQuality, FileSelection.FileNoLongerAvailable.ToString())
                         };
                         imagesToUpdate.Add(new ColumnTuplesWithWhere(columnTuples, image.ID));
                     }
@@ -2132,12 +2105,10 @@ namespace Carnassial
                     // drop images
                     this.dataHandler.FileDatabase.DeleteFilesAndMarkers(imageIDsToDropFromDatabase);
 
-                    // Reload the datatable. Then find and show the image closest to the last one shown
-                    this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, this.dataHandler.FileDatabase.ImageSet.ImageSelection);
+                    // Reload the datatable. Then find and show the file closest to the last one shown
                     if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0)
                     {
-                        int nextImageRow = this.dataHandler.FileDatabase.FindClosestImageRow(previousImageID);
-                        this.ShowImage(nextImageRow);
+                        this.SelectFilesAndShowFile(currentFileID, this.dataHandler.FileDatabase.ImageSet.FileSelection);
                     }
                     else
                     {
@@ -2149,9 +2120,8 @@ namespace Carnassial
                     // update image properties
                     this.dataHandler.FileDatabase.UpdateFiles(imagesToUpdate);
 
-                    // display the updated properties on the current image
-                    int nextImageRow = this.dataHandler.FileDatabase.FindClosestImageRow(previousImageID);
-                    this.ShowImage(nextImageRow);
+                    // display the updated properties on the current file or, if data for the current file was dropped, the next one
+                    this.ShowFile(this.dataHandler.FileDatabase.GetFileOrNextFileIndex(currentFileID));
                 }
                 Mouse.OverrideCursor = null;
             }
@@ -2236,12 +2206,12 @@ namespace Carnassial
         private void MenuItemOptionsDarkImages_Click(object sender, RoutedEventArgs e)
         {
             if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDarkThresholdPrompt,
-                                                               "'Classify dark files...'", 
-                                                               (bool optOut) =>
-                                                               {
-                                                                   this.state.SuppressSelectedDarkThresholdPrompt = optOut;
-                                                                   this.MenuItemEnableSelectedDarkThresholdPrompt.IsChecked = !optOut;
-                                                               }))
+                                                                   "'Classify dark files...'", 
+                                                                   (bool optOut) =>
+                                                                   {
+                                                                       this.state.SuppressSelectedDarkThresholdPrompt = optOut;
+                                                                       this.MenuItemEnableSelectedDarkThresholdPrompt.IsChecked = !optOut;
+                                                                   }))
             {
                 using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.CurrentRow, this.state, this))
                 {
@@ -2254,15 +2224,15 @@ namespace Carnassial
         private void MenuItemDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
         {
             if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDateTimeFixedCorrectionPrompt, 
-                                                               "'Add a fixed correction value to every date/time...'", 
-                                                               (bool optOut) =>
-                                                               {
-                                                                   this.state.SuppressSelectedDateTimeFixedCorrectionPrompt = optOut;
-                                                                   this.MenuItemEnableSelectedDateTimeFixedCorrectionPrompt.IsChecked = !optOut;
-                                                               }))
+                                                                   "'Add a fixed correction value to every date/time...'", 
+                                                                   (bool optOut) =>
+                                                                   {
+                                                                       this.state.SuppressSelectedDateTimeFixedCorrectionPrompt = optOut;
+                                                                       this.MenuItemEnableSelectedDateTimeFixedCorrectionPrompt.IsChecked = !optOut;
+                                                                   }))
             {
                 DateTimeFixedCorrection fixedDateCorrection = new DateTimeFixedCorrection(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current, this);
-                this.ShowBulkImageEditDialog(fixedDateCorrection);
+                this.ShowBulkFileEditDialog(fixedDateCorrection);
             }
         }
 
@@ -2270,12 +2240,12 @@ namespace Carnassial
         private void MenuItemDateTimeLinearCorrection_Click(object sender, RoutedEventArgs e)
         {
             if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDateTimeLinearCorrectionPrompt,
-                                                               "'Correct for camera clock drift'",
-                                                               (bool optOut) =>
-                                                               {
-                                                                   this.state.SuppressSelectedDateTimeLinearCorrectionPrompt = optOut;
-                                                                   this.MenuItemEnableSelectedDateTimeLinearCorrectionPrompt.IsChecked = !optOut;
-                                                               }))
+                                                                   "'Correct for camera clock drift'",
+                                                                   (bool optOut) =>
+                                                                   {
+                                                                       this.state.SuppressSelectedDateTimeLinearCorrectionPrompt = optOut;
+                                                                       this.MenuItemEnableSelectedDateTimeLinearCorrectionPrompt.IsChecked = !optOut;
+                                                                   }))
             { 
                 DateTimeLinearCorrection linearDateCorrection = new DateTimeLinearCorrection(this.dataHandler.FileDatabase, this);
                 if (linearDateCorrection.Abort)
@@ -2291,7 +2261,7 @@ namespace Carnassial
                     messageBox.ShowDialog();
                     return;
                 }
-                this.ShowBulkImageEditDialog(linearDateCorrection);
+                this.ShowBulkFileEditDialog(linearDateCorrection);
             }
         }
 
@@ -2312,15 +2282,15 @@ namespace Carnassial
             }
 
             if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDaylightSavingsCorrectionPrompt, 
-                                                               "'Correct for daylight savings time...'", 
-                                                               (bool optOut) =>
-                                                               {
-                                                                   this.state.SuppressSelectedDaylightSavingsCorrectionPrompt = optOut;
-                                                                   this.MenuItemEnableSelectedDaylightSavingsCorrectionPrompt.IsChecked = !optOut;
-                                                               }))
+                                                                   "'Correct for daylight savings time...'", 
+                                                                   (bool optOut) =>
+                                                                   {
+                                                                       this.state.SuppressSelectedDaylightSavingsCorrectionPrompt = optOut;
+                                                                       this.MenuItemEnableSelectedDaylightSavingsCorrectionPrompt.IsChecked = !optOut;
+                                                                   }))
             {
-                DateDaylightSavingsTimeCorrection dateTimeChange = new DateDaylightSavingsTimeCorrection(this.dataHandler.FileDatabase, this.dataHandler.ImageCache, this);
-                this.ShowBulkImageEditDialog(dateTimeChange);
+                DateDaylightSavingsTimeCorrection daylightSavingsCorrection = new DateDaylightSavingsTimeCorrection(this.dataHandler.FileDatabase, this.dataHandler.ImageCache, this);
+                this.ShowBulkFileEditDialog(daylightSavingsCorrection);
             }
         }
 
@@ -2328,15 +2298,15 @@ namespace Carnassial
         private void MenuItemCorrectAmbiguousDates_Click(object sender, RoutedEventArgs e)
         {
             if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedAmbiguousDatesPrompt, 
-                                                               "'Correct ambiguous dates...'",
-                                                               (bool optOut) =>
-                                                               {
-                                                                   this.state.SuppressSelectedAmbiguousDatesPrompt = optOut;
-                                                                   this.MenuItemEnableSelectedAmbiguousDatesPrompt.IsChecked = !optOut;
-                                                               }))
+                                                                   "'Correct ambiguous dates...'",
+                                                                   (bool optOut) =>
+                                                                   {
+                                                                       this.state.SuppressSelectedAmbiguousDatesPrompt = optOut;
+                                                                       this.MenuItemEnableSelectedAmbiguousDatesPrompt.IsChecked = !optOut;
+                                                                   }))
             {
-                DateCorrectAmbiguous dateCorrection = new DateCorrectAmbiguous(this.dataHandler.FileDatabase, this);
-                if (dateCorrection.Abort)
+                DateCorrectAmbiguous ambiguousDateCorrection = new DateCorrectAmbiguous(this.dataHandler.FileDatabase, this);
+                if (ambiguousDateCorrection.Abort)
                 {
                     MessageBox messageBox = new MessageBox("No ambiguous dates found", this);
                     messageBox.Message.What = "No ambiguous dates found.";
@@ -2347,22 +2317,22 @@ namespace Carnassial
                     messageBox.Close();
                     return;
                  }
-                 this.ShowBulkImageEditDialog(dateCorrection);
+                 this.ShowBulkFileEditDialog(ambiguousDateCorrection);
             }
         }
 
         private void MenuItemSetTimeZone_Click(object sender, RoutedEventArgs e)
         {
             if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedSetTimeZonePrompt,
-                                                               "'Set the time zone of every date/time...'",
-                                                               (bool optOut) =>
-                                                               {
-                                                                   this.state.SuppressSelectedSetTimeZonePrompt = optOut;
-                                                                   this.MenuItemEnableSelectedSetTimeZonePrompt.IsChecked = !optOut;
-                                                               }))
+                                                                   "'Set the time zone of every date/time...'",
+                                                                   (bool optOut) =>
+                                                                   {
+                                                                       this.state.SuppressSelectedSetTimeZonePrompt = optOut;
+                                                                       this.MenuItemEnableSelectedSetTimeZonePrompt.IsChecked = !optOut;
+                                                                   }))
             {
-                DateTimeSetTimeZone fixedDateCorrection = new DateTimeSetTimeZone(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current, this);
-                this.ShowBulkImageEditDialog(fixedDateCorrection);
+                DateTimeSetTimeZone setTimeZone = new DateTimeSetTimeZone(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current, this);
+                this.ShowBulkFileEditDialog(setTimeZone);
             }
         }
 
@@ -2465,15 +2435,15 @@ namespace Carnassial
         private void MenuItemRereadDatesfromImages_Click(object sender, RoutedEventArgs e)
         {
             if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedRereadDatesFromFilesPrompt,
-                                                               "'Reread dates from files...'",
-                                                               (bool optOut) =>
-                                                               {
-                                                                   this.state.SuppressSelectedRereadDatesFromFilesPrompt = optOut;
-                                                                   this.MenuItemEnableSelectedRereadDatesFromFilesPrompt.IsChecked = !optOut;
-                                                               }))
+                                                                   "'Reread dates from files...'",
+                                                                   (bool optOut) =>
+                                                                   {
+                                                                       this.state.SuppressSelectedRereadDatesFromFilesPrompt = optOut;
+                                                                       this.MenuItemEnableSelectedRereadDatesFromFilesPrompt.IsChecked = !optOut;
+                                                                   }))
             {
-                DateRereadFromFiles rereadDates = new DateRereadFromFiles(this.dataHandler.FileDatabase, this);
-                this.ShowBulkImageEditDialog(rereadDates);
+                DateTimeRereadFromFiles rereadDates = new DateTimeRereadFromFiles(this.dataHandler.FileDatabase, this);
+                this.ShowBulkFileEditDialog(rereadDates);
             }
         }
 
@@ -2481,11 +2451,11 @@ namespace Carnassial
         {
             Dictionary<FileSelection, int> counts = this.dataHandler.FileDatabase.GetFileCountsBySelection();
 
-            this.MenuItemSelectLightImages.IsEnabled = counts[FileSelection.Ok] > 0;
-            this.MenuItemSelectDarkImages.IsEnabled = counts[FileSelection.Dark] > 0;
-            this.MenuItemSelectCorruptedImages.IsEnabled = counts[FileSelection.CorruptFile] > 0;
+            this.MenuItemSelectOkFiles.IsEnabled = counts[FileSelection.Ok] > 0;
+            this.MenuItemSelectDarkFiles.IsEnabled = counts[FileSelection.Dark] > 0;
+            this.MenuItemSelectCorruptedFiles.IsEnabled = counts[FileSelection.CorruptFile] > 0;
             this.MenuItemSelectFilesNoLongerAvailable.IsEnabled = counts[FileSelection.FileNoLongerAvailable] > 0;
-            this.MenuItemSelectImagesMarkedForDeletion.IsEnabled = this.dataHandler.FileDatabase.GetFileCount(FileSelection.MarkedForDeletion) > 0;
+            this.MenuItemSelectFilesMarkedForDeletion.IsEnabled = this.dataHandler.FileDatabase.GetFileCount(FileSelection.MarkedForDeletion) > 0;
         }
 
         private void MenuItemSkipDarkFileCheck_Click(object sender, RoutedEventArgs e)
@@ -2519,13 +2489,13 @@ namespace Carnassial
         /// <summary>Navigate to the next image in this image set</summary>
         private void MenuItemViewNextImage_Click(object sender, RoutedEventArgs e)
         {
-            this.TryShowImageWithoutSliderCallback(true, ModifierKeys.None);
+            this.ShowFileWithoutSliderCallback(true, ModifierKeys.None);
         }
 
         /// <summary>Navigate to the previous image in this image set</summary>
         private void MenuItemViewPreviousImage_Click(object sender, RoutedEventArgs e)
         {
-            this.TryShowImageWithoutSliderCallback(false, ModifierKeys.None);
+            this.ShowFileWithoutSliderCallback(false, ModifierKeys.None);
         }
 
         /// <summary>Cycle through the image differences</summary>
@@ -2543,7 +2513,7 @@ namespace Carnassial
         /// <summary>Show a dialog box telling the user how many images were loaded, etc.</summary>
         public void MenuItemImageCounts_Click(object sender, RoutedEventArgs e)
         {
-            this.ShowImageCountsDialog(false);
+            this.MaybeShowFileCountsDialog(false);
         }
 
         // Display the Video Player Window
@@ -2581,50 +2551,49 @@ namespace Carnassial
             this.videoPlayer.CurrentRow = this.dataHandler.ImageCache.Current;
         }
 
-        /// <summary>Get the selection and update the view</summary>
-        private void MenuItemSelect_Click(object sender, RoutedEventArgs e)
+        /// <summary>Get the non-custom selection and update the view.</summary>
+        private void MenuItemSelectFiles_Click(object sender, RoutedEventArgs e)
         {
             // get selection 
-            MenuItem item = (MenuItem)sender;
             FileSelection selection;
-            if (item == this.MenuItemSelectAllImages)
+            if (sender == this.MenuItemSelectAllFiles)
             {
                 selection = FileSelection.All;
             }
-            else if (item == this.MenuItemSelectLightImages)
+            else if (sender == this.MenuItemSelectOkFiles)
             {
                 selection = FileSelection.Ok;
             }
-            else if (item == this.MenuItemSelectCorruptedImages)
+            else if (sender == this.MenuItemSelectCorruptedFiles)
             {
                 selection = FileSelection.CorruptFile;
             }
-            else if (item == this.MenuItemSelectDarkImages)
+            else if (sender == this.MenuItemSelectDarkFiles)
             {
                 selection = FileSelection.Dark;
             }
-            else if (item == this.MenuItemSelectFilesNoLongerAvailable)
+            else if (sender == this.MenuItemSelectFilesNoLongerAvailable)
             {
                 selection = FileSelection.FileNoLongerAvailable;
             }
-            else if (item == this.MenuItemSelectImagesMarkedForDeletion)
+            else if (sender == this.MenuItemSelectFilesMarkedForDeletion)
             {
                 selection = FileSelection.MarkedForDeletion;
             }
             else
             {
-                selection = FileSelection.All;   // Just in case
+                throw new ArgumentOutOfRangeException("sender", String.Format("Unknown sender {0}.", sender));
             }
 
-            // Treat the checked status as a radio button i.e., toggle their states so only the clicked menu item is checked.
-            this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, selection);  // Go to the first result (i.e., index 0) in the selection
+            // Go to the first result (i.e., index 0) in the selection
+            this.SelectFilesAndShowFile(this.dataHandler.ImageCache.Current.ID, selection);
         }
 
         private void MenuItemSelectCustomSelection_Click(object sender, RoutedEventArgs e)
         {
             // the first time the custom selection dialog is launched update the DateTime and UtcOffset search terms to the time of the current image
-            SearchTerm firstDateTimeSearchTerm = this.dataHandler.FileDatabase.CustomSelection.SearchTerms.First(searchTerm => searchTerm.DataLabel == Constants.DatabaseColumn.DateTime);
-            if (firstDateTimeSearchTerm.GetDateTime() == Constants.ControlDefault.DateTimeValue.DateTime)
+            SearchTerm firstDateTimeSearchTerm = this.dataHandler.FileDatabase.CustomSelection.SearchTerms.First(searchTerm => searchTerm.DataLabel == Constant.DatabaseColumn.DateTime);
+            if (firstDateTimeSearchTerm.GetDateTime() == Constant.ControlDefault.DateTimeValue.DateTime)
             {
                 DateTimeOffset defaultDate = this.dataHandler.ImageCache.Current.GetDateTime();
                 this.dataHandler.FileDatabase.CustomSelection.SetDateTimesAndOffset(defaultDate);
@@ -2635,7 +2604,7 @@ namespace Carnassial
             bool? changeToCustomSelection = customSelection.ShowDialog();
             if (changeToCustomSelection == true)
             {
-                this.SelectDataTableImagesAndShowImage(Constants.DefaultImageRowIndex, FileSelection.Custom);
+                this.SelectFilesAndShowFile(this.dataHandler.ImageCache.Current.ID, FileSelection.Custom);
             }
         }
 
@@ -2677,7 +2646,7 @@ namespace Carnassial
         private bool MaybePromptToApplyOperationIfPartialSelection(bool userOptedOutOfMessage, string operationDescription, Action<bool> persistOptOut)
         {
             // if showing all images then no need for showing the warning message
-            if (userOptedOutOfMessage || this.dataHandler.FileDatabase.ImageSet.ImageSelection == FileSelection.All)
+            if (userOptedOutOfMessage || this.dataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.All)
             {
                 return true;
             }
@@ -2685,19 +2654,19 @@ namespace Carnassial
             string title = "Apply " + operationDescription + " to this selection?";
             MessageBox messageBox = new MessageBox(title, this, MessageBoxButton.OKCancel);
 
-            messageBox.Message.What = operationDescription + " will be applied only to the subset of images shown by the " + this.dataHandler.FileDatabase.ImageSet.ImageSelection + " selection." + Environment.NewLine;
+            messageBox.Message.What = operationDescription + " will be applied only to the subset of images shown by the " + this.dataHandler.FileDatabase.ImageSet.FileSelection + " selection." + Environment.NewLine;
             messageBox.Message.What += "Is this what you want?";
 
-            messageBox.Message.Reason = "You have the following selection on: " + this.dataHandler.FileDatabase.ImageSet.ImageSelection + "." + Environment.NewLine;
-            messageBox.Message.Reason += "Only data for those images available in this " + this.dataHandler.FileDatabase.ImageSet.ImageSelection + " selection will be affected" + Environment.NewLine;
-            messageBox.Message.Reason += "Data for images not shown in this " + this.dataHandler.FileDatabase.ImageSet.ImageSelection + " selection will be unaffected." + Environment.NewLine;
+            messageBox.Message.Reason = "You have the following selection on: " + this.dataHandler.FileDatabase.ImageSet.FileSelection + "." + Environment.NewLine;
+            messageBox.Message.Reason += "Only data for those images available in this " + this.dataHandler.FileDatabase.ImageSet.FileSelection + " selection will be affected" + Environment.NewLine;
+            messageBox.Message.Reason += "Data for images not shown in this " + this.dataHandler.FileDatabase.ImageSet.FileSelection + " selection will be unaffected." + Environment.NewLine;
 
             messageBox.Message.Solution = "Select " + Environment.NewLine;
             messageBox.Message.Solution += "\u2022 'Ok' for Carnassial to continue to " + operationDescription + Environment.NewLine;
             messageBox.Message.Solution += "\u2022 'Cancel' to abort";
 
             messageBox.Message.Hint = "This is not an error." + Environment.NewLine;
-            messageBox.Message.Hint += "\u2022 We are asking just in case you forgot you had the " + this.dataHandler.FileDatabase.ImageSet.ImageSelection + " on. " + Environment.NewLine;
+            messageBox.Message.Hint += "\u2022 We are asking just in case you forgot you had the " + this.dataHandler.FileDatabase.ImageSet.FileSelection + " on. " + Environment.NewLine;
             messageBox.Message.Hint += "\u2022 You can use the 'Select' menu to change to other views (including viewing All files)" + Environment.NewLine;
             messageBox.Message.Hint += "If you check don't show this message this dialog can be turned back on via the Options menu.";
 
@@ -2712,13 +2681,8 @@ namespace Carnassial
             return proceedWithOperation;
         }
 
-        private bool TryShowImageWithoutSliderCallback(bool forward, ModifierKeys modifiers)
+        private void ShowFileWithoutSliderCallback(bool forward, ModifierKeys modifiers)
         {
-            // Check to see if there are any images to show, 
-            if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount <= 0)
-            {
-                return false;
-            }
             // determine how far to move and in which direction
             int increment = forward ? 1 : -1;
             if ((modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
@@ -2730,27 +2694,29 @@ namespace Carnassial
                 increment *= 10;
             }
 
-            int desiredRow = this.dataHandler.ImageCache.CurrentRow + increment;
+            // clamp to the maximum or minimum row available
+            int newFileRow = this.dataHandler.ImageCache.CurrentRow + increment;
+            if (newFileRow >= this.dataHandler.FileDatabase.CurrentlySelectedFileCount)
+            {
+                newFileRow = this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1;
+            }
+            else if (newFileRow < 0)
+            {
+                newFileRow = 0;
+            }
 
-            // Set the desiredRow to either the maximum or minimum row if it exceeds the bounds,
-            if (desiredRow >= this.dataHandler.FileDatabase.CurrentlySelectedFileCount)
+            // if no change the file is already being displayed
+            // For example, the end of the image set has been reached but key repeat means right arrow events are still coming in as the user hasn't
+            // reacted yet.
+            if (newFileRow == this.dataHandler.ImageCache.CurrentRow)
             {
-                desiredRow = this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1;
-            }
-            else if (desiredRow < 0)
-            {
-                desiredRow = 0;
+                return;
             }
 
-            // If the desired row is the same as the current row, the image us already being displayed
-            if (desiredRow != this.dataHandler.ImageCache.CurrentRow)
-            {
-                // Move to the desired row
-                this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-                this.ShowImage(desiredRow);
-                this.ImageNavigatorSlider_EnableOrDisableValueChangedCallback(true);
-            }
-            return true;
+            // show the new file
+            this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
+            this.ShowFile(newFileRow);
+            this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
         }
 
         // Bookmark (Save) the current pan / zoom level of the image

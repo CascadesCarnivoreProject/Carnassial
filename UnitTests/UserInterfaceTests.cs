@@ -75,7 +75,7 @@ namespace Carnassial.UnitTests
             // for unit tests (or the editor) ResourceAssembly does not get set as Carnassial.exe is not the entry point
             if (Application.ResourceAssembly == null)
             {
-                Application.ResourceAssembly = typeof(Constants.Images).Assembly;
+                Application.ResourceAssembly = typeof(Constant.Images).Assembly;
             }
 
             // open, do nothing, close
@@ -94,7 +94,7 @@ namespace Carnassial.UnitTests
                 templateDatabaseFilePath = templateDatabase.FilePath;
             }
 
-            string fileDatabaseFilePath = Path.Combine(Path.GetDirectoryName(templateDatabaseFilePath), Path.GetFileNameWithoutExtension(templateDatabaseFilePath) + Constants.File.FileDatabaseFileExtension);
+            string fileDatabaseFilePath = Path.Combine(Path.GetDirectoryName(templateDatabaseFilePath), Path.GetFileNameWithoutExtension(templateDatabaseFilePath) + Constant.File.FileDatabaseFileExtension);
             if (File.Exists(fileDatabaseFilePath))
             {
                 File.Delete(fileDatabaseFilePath);
@@ -138,9 +138,11 @@ namespace Carnassial.UnitTests
                 Assert.IsNotNull(dataHandler.ImageCache.Current);
 
                 // verify forward and backward moves of the displayed image
-                Assert.IsTrue((bool)carnassialAccessor.Invoke(TestConstant.TryShowImageWithoutSliderCallbackMethodName, true, ModifierKeys.None));
+                carnassialAccessor.Invoke(TestConstant.ShowFileWithoutSliderCallbackMethodName, true, ModifierKeys.None);
+                carnassialAccessor.Invoke(TestConstant.ShowFileWithoutSliderCallbackMethodName, true, ModifierKeys.None);
                 this.WaitForRenderingComplete();
-                Assert.IsTrue((bool)carnassialAccessor.Invoke(TestConstant.TryShowImageWithoutSliderCallbackMethodName, false, ModifierKeys.None));
+                carnassialAccessor.Invoke(TestConstant.ShowFileWithoutSliderCallbackMethodName, false, ModifierKeys.None);
+                carnassialAccessor.Invoke(TestConstant.ShowFileWithoutSliderCallbackMethodName, false, ModifierKeys.None);
                 this.WaitForRenderingComplete();
 
                 carnassial.Close();
@@ -188,9 +190,9 @@ namespace Carnassial.UnitTests
                 {
                     this.ShowDialog(darkThreshold);
                 }
-                this.ShowDialog(new PopulateFieldWithMetadata(dataHandler.FileDatabase, dataHandler.ImageCache.Current.GetImagePath(dataHandler.FileDatabase.FolderPath), carnassial));
+                this.ShowDialog(new PopulateFieldWithMetadata(dataHandler.FileDatabase, dataHandler.ImageCache.Current.GetFilePath(dataHandler.FileDatabase.FolderPath), carnassial));
                 this.ShowDialog(new RenameFileDatabaseFile(dataHandler.FileDatabase.FileName, carnassial));
-                this.ShowDialog(new DateRereadFromFiles(dataHandler.FileDatabase, carnassial));
+                this.ShowDialog(new DateTimeRereadFromFiles(dataHandler.FileDatabase, carnassial));
                 this.ShowDialog(new FileCountsByQuality(dataHandler.FileDatabase.GetFileCountsBySelection(), carnassial));
                 this.ShowDialog(new TemplateSynchronization(dataHandler.FileDatabase.TemplateSynchronizationIssues, carnassial));
 

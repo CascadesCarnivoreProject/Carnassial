@@ -20,8 +20,8 @@ namespace Carnassial.Controls
 
         public UtcOffsetUpDown()
         {
-            this.Maximum = Constants.Time.MaximumUtcOffset;
-            this.Minimum = Constants.Time.MinimumUtcOffset;
+            this.Maximum = Constant.Time.MaximumUtcOffset;
+            this.Minimum = Constant.Time.MinimumUtcOffset;
         }
 
         protected override void InitializeDateTimeInfoList()
@@ -45,7 +45,7 @@ namespace Carnassial.Controls
                     this.Step = 1;
                     break;
                 case DateTimePart.Minute:
-                    this.Step = Constants.Time.UtcOffsetGranularity.Minutes;
+                    this.Step = Constant.Time.UtcOffsetGranularity.Minutes;
                     break;
                 default:
                     this.Step = 0;

@@ -45,6 +45,7 @@ namespace Carnassial.Editor
         public EditorWindow()
         {
             this.InitializeComponent();
+            this.Title = EditorConstant.MainWindowBaseTitle;
             Utilities.TryFitWindowInWorkingArea(this);
 
             // Abort if some of the required dependencies are missing
@@ -75,7 +76,7 @@ namespace Carnassial.Editor
                 return;
             }
 
-            GithubReleaseClient updater = new GithubReleaseClient(Constants.ApplicationName, latestVersionAddress);
+            GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, latestVersionAddress);
             // TODO: remove temporary disable
             // updater.TryGetAndParseRelease(false);
         }
@@ -97,9 +98,9 @@ namespace Carnassial.Editor
 
             // Configure save file dialog box
             SaveFileDialog newTemplateFilePathDialog = new SaveFileDialog();
-            newTemplateFilePathDialog.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            newTemplateFilePathDialog.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
-            newTemplateFilePathDialog.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            newTemplateFilePathDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
+            newTemplateFilePathDialog.DefaultExt = Constant.File.TemplateDatabaseFileExtension; // Default file extension
+            newTemplateFilePathDialog.Filter = "Database Files (" + Constant.File.TemplateDatabaseFileExtension + ")|*" + Constant.File.TemplateDatabaseFileExtension; // Filter files by extension 
             newTemplateFilePathDialog.Title = "Select Location to Save New Template File";
 
             // Show save file dialog box
@@ -128,9 +129,9 @@ namespace Carnassial.Editor
             this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
 
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.FileName = Path.GetFileNameWithoutExtension(Constants.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            openFileDialog.DefaultExt = Constants.File.TemplateDatabaseFileExtension; // Default file extension
-            openFileDialog.Filter = "Database Files (" + Constants.File.TemplateDatabaseFileExtension + ")|*" + Constants.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            openFileDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
+            openFileDialog.DefaultExt = Constant.File.TemplateDatabaseFileExtension; // Default file extension
+            openFileDialog.Filter = "Database Files (" + Constant.File.TemplateDatabaseFileExtension + ")|*" + Constant.File.TemplateDatabaseFileExtension; // Filter files by extension 
             openFileDialog.Title = "Select an Existing Template File to Open";
 
             // Show open file dialog box
@@ -273,7 +274,7 @@ namespace Carnassial.Editor
             }
 
             ControlRow control = new ControlRow(selectedRowView.Row);
-            this.RemoveControlButton.IsEnabled = !Constants.Control.StandardTypes.Contains(control.Type);
+            this.RemoveControlButton.IsEnabled = !Constant.Control.StandardTypes.Contains(control.Type);
         }
 
         /// <summary>
@@ -377,24 +378,24 @@ namespace Carnassial.Editor
                     ControlRow control = new ControlRow((currentRow.Item as DataRowView).Row);
                     switch (control.Type)
                     {
-                        case Constants.Control.Counter:
+                        case Constant.Control.Counter:
                             e.Handled = !Utilities.IsDigits(e.Text);
                             break;
-                        case Constants.Control.Flag:
+                        case Constant.Control.Flag:
                             // Only allow t/f and translate to true/false
                             if (e.Text == "t" || e.Text == "T")
                             {
-                                control.DefaultValue = Constants.Boolean.True;
+                                control.DefaultValue = Constant.Boolean.True;
                                 this.SyncControlToDatabase(control);
                             }
                             else if (e.Text == "f" || e.Text == "F")
                             {
-                                control.DefaultValue = Constants.Boolean.False;
+                                control.DefaultValue = Constant.Boolean.False;
                                 this.SyncControlToDatabase(control);
                             }
                             e.Handled = true;
                             break;
-                        case Constants.Control.FixedChoice:
+                        case Constant.Control.FixedChoice:
                             // no restrictions for now
                             // the default value should be limited to one of the choices defined, however
                             break;
@@ -536,9 +537,9 @@ namespace Carnassial.Editor
                     string controlType = control.Type;
 
                     string columnHeader = (string)this.TemplateDataGrid.Columns[column].Header;
-                    if ((columnHeader == Constants.Control.Label) ||
-                        (columnHeader == Constants.Control.Tooltip) ||
-                        (columnHeader == Constants.Control.Visible) ||
+                    if ((columnHeader == Constant.Control.Label) ||
+                        (columnHeader == Constant.Control.Tooltip) ||
+                        (columnHeader == Constant.Control.Visible) ||
                         (columnHeader == EditorConstant.ColumnHeader.Width))
                     {
                         continue;
@@ -547,23 +548,22 @@ namespace Carnassial.Editor
                     // The following attributes should NOT be editable.
                     ContentPresenter cellContent = cell.Content as ContentPresenter;
                     string sortMemberPath = this.TemplateDataGrid.Columns[column].SortMemberPath;
-                    if (String.Equals(sortMemberPath, Constants.DatabaseColumn.ID, StringComparison.OrdinalIgnoreCase) ||
-                        String.Equals(sortMemberPath, Constants.Control.ControlOrder, StringComparison.OrdinalIgnoreCase) ||
-                        String.Equals(sortMemberPath, Constants.Control.SpreadsheetOrder, StringComparison.OrdinalIgnoreCase) ||
-                        String.Equals(sortMemberPath, Constants.Control.Type, StringComparison.OrdinalIgnoreCase) ||
-                        (controlType == Constants.DatabaseColumn.DateTime) ||
-                        (controlType == Constants.DatabaseColumn.DeleteFlag) ||
-                        (controlType == Constants.DatabaseColumn.File) ||
-                        (controlType == Constants.DatabaseColumn.Folder) ||
-                        ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.Copyable)) ||
-                        ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == EditorConstant.ColumnHeader.DataLabel)) ||
-                        ((controlType == Constants.DatabaseColumn.ImageQuality) && (columnHeader == Constants.Control.List)) ||
-                        ((controlType == Constants.DatabaseColumn.ImageQuality) && (sortMemberPath == Constants.Control.DefaultValue)) ||
-                        (controlType == Constants.DatabaseColumn.RelativePath) ||
-                        (controlType == Constants.DatabaseColumn.UtcOffset) ||
-                        ((controlType == Constants.Control.Counter) && (columnHeader == Constants.Control.List)) ||
-                        ((controlType == Constants.Control.Flag) && (columnHeader == Constants.Control.List)) ||
-                        ((controlType == Constants.Control.Note) && (columnHeader == Constants.Control.List)))
+                    if (String.Equals(sortMemberPath, Constant.DatabaseColumn.ID, StringComparison.OrdinalIgnoreCase) ||
+                        String.Equals(sortMemberPath, Constant.Control.ControlOrder, StringComparison.OrdinalIgnoreCase) ||
+                        String.Equals(sortMemberPath, Constant.Control.SpreadsheetOrder, StringComparison.OrdinalIgnoreCase) ||
+                        String.Equals(sortMemberPath, Constant.Control.Type, StringComparison.OrdinalIgnoreCase) ||
+                        (controlType == Constant.DatabaseColumn.DateTime) ||
+                        (controlType == Constant.DatabaseColumn.DeleteFlag) ||
+                        (controlType == Constant.DatabaseColumn.File) ||
+                        ((controlType == Constant.DatabaseColumn.ImageQuality) && (columnHeader == Constant.Control.Copyable)) ||
+                        ((controlType == Constant.DatabaseColumn.ImageQuality) && (columnHeader == EditorConstant.ColumnHeader.DataLabel)) ||
+                        ((controlType == Constant.DatabaseColumn.ImageQuality) && (columnHeader == Constant.Control.List)) ||
+                        ((controlType == Constant.DatabaseColumn.ImageQuality) && (sortMemberPath == Constant.Control.DefaultValue)) ||
+                        (controlType == Constant.DatabaseColumn.RelativePath) ||
+                        (controlType == Constant.DatabaseColumn.UtcOffset) ||
+                        ((controlType == Constant.Control.Counter) && (columnHeader == Constant.Control.List)) ||
+                        ((controlType == Constant.Control.Flag) && (columnHeader == Constant.Control.List)) ||
+                        ((controlType == Constant.Control.Note) && (columnHeader == Constant.Control.List)))
                     {
                         cell.Background = EditorConstant.NotEditableCellColor;
                         cell.Foreground = Brushes.Gray;
@@ -576,7 +576,7 @@ namespace Carnassial.Editor
                             {
                                 checkbox.IsEnabled = false;
                             }
-                            else if ((controlType == Constants.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[column].Header.Equals("List"))
+                            else if ((controlType == Constant.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[column].Header.Equals("List"))
                             {
                                 cell.IsEnabled = false; // Don't let users edit the ImageQuality menu
                             }
@@ -686,7 +686,7 @@ namespace Carnassial.Editor
                 spreadsheetOrderByDataLabel.Add(dataLabelFromColumnHeader, newSpreadsheetOrder);
             }
 
-            this.templateDatabase.UpdateDisplayOrder(Constants.Control.SpreadsheetOrder, spreadsheetOrderByDataLabel);
+            this.templateDatabase.UpdateDisplayOrder(Constant.Control.SpreadsheetOrder, spreadsheetOrderByDataLabel);
         }
 
         private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -821,7 +821,7 @@ namespace Carnassial.Editor
                 controlOrder++;
             }
 
-            this.templateDatabase.UpdateDisplayOrder(Constants.Control.ControlOrder, newControlOrderByDataLabel);
+            this.templateDatabase.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
             this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls); // A contorted to make sure the controls panel updates itself
         }
 

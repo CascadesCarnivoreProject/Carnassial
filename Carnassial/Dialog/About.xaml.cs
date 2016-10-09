@@ -27,7 +27,7 @@ namespace Carnassial.Dialog
 
         private void CheckForUpdate_Click(object sender, RoutedEventArgs e)
         {
-            GithubReleaseClient updater = new GithubReleaseClient(Constants.ApplicationName, this.latestReleaseAddress);
+            GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, this.latestReleaseAddress);
             updater.TryGetAndParseRelease(true);
         }
 

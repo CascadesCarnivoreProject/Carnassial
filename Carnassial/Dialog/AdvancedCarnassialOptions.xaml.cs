@@ -17,8 +17,8 @@ namespace Carnassial.Dialog
             this.markableCanvas = markableCanvas;
 
             // Throttles
-            this.ImageRendersPerSecond.Minimum = Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondLowerBound;
-            this.ImageRendersPerSecond.Maximum = Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound;
+            this.ImageRendersPerSecond.Minimum = Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondLowerBound;
+            this.ImageRendersPerSecond.Maximum = Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound;
             this.ImageRendersPerSecond.Value = this.carnassialState.Throttles.DesiredImageRendersPerSecond;
             this.ImageRendersPerSecond.ValueChanged += this.ImageRendersPerSecond_ValueChanged;
             this.ImageRendersPerSecond.ToolTip = this.carnassialState.Throttles.DesiredImageRendersPerSecond;
@@ -32,8 +32,8 @@ namespace Carnassial.Dialog
             // Image Differencing Thresholds
             this.DifferenceThreshold.Value = this.carnassialState.DifferenceThreshold;
             this.DifferenceThreshold.ToolTip = this.carnassialState.DifferenceThreshold;
-            this.DifferenceThreshold.Maximum = Constants.Images.DifferenceThresholdMax;
-            this.DifferenceThreshold.Minimum = Constants.Images.DifferenceThresholdMin;
+            this.DifferenceThreshold.Maximum = Constant.Images.DifferenceThresholdMax;
+            this.DifferenceThreshold.Minimum = Constant.Images.DifferenceThresholdMin;
         }
 
         private void ImageRendersPerSecond_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -66,7 +66,7 @@ namespace Carnassial.Dialog
 
         private void ResetImageDifferencingButton_Click(object sender, RoutedEventArgs e)
         {
-            this.carnassialState.DifferenceThreshold = Constants.Images.DifferenceThresholdDefault;
+            this.carnassialState.DifferenceThreshold = Constant.Images.DifferenceThresholdDefault;
             this.DifferenceThreshold.Value = this.carnassialState.DifferenceThreshold;
             this.DifferenceThreshold.ToolTip = this.carnassialState.DifferenceThreshold;
         }

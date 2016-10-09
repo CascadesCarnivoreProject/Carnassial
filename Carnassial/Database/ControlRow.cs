@@ -16,68 +16,68 @@ namespace Carnassial.Database
 
         public long ControlOrder
         {
-            get { return this.Row.GetLongField(Constants.Control.ControlOrder); }
-            set { this.Row.SetField(Constants.Control.ControlOrder, value); }
+            get { return this.Row.GetLongField(Constant.Control.ControlOrder); }
+            set { this.Row.SetField(Constant.Control.ControlOrder, value); }
         }
 
         public bool Copyable
         {
-            get { return this.Row.GetBooleanField(Constants.Control.Copyable); }
-            set { this.Row.SetField(Constants.Control.Copyable, value); }
+            get { return this.Row.GetBooleanField(Constant.Control.Copyable); }
+            set { this.Row.SetField(Constant.Control.Copyable, value); }
         }
 
         public string DataLabel
         {
-            get { return this.Row.GetStringField(Constants.Control.DataLabel); }
-            set { this.Row.SetField(Constants.Control.DataLabel, value); }
+            get { return this.Row.GetStringField(Constant.Control.DataLabel); }
+            set { this.Row.SetField(Constant.Control.DataLabel, value); }
         }
 
         public string DefaultValue
         {
-            get { return this.Row.GetStringField(Constants.Control.DefaultValue); }
-            set { this.Row.SetField(Constants.Control.DefaultValue, value); }
+            get { return this.Row.GetStringField(Constant.Control.DefaultValue); }
+            set { this.Row.SetField(Constant.Control.DefaultValue, value); }
         }
 
         public string Label
         {
-            get { return this.Row.GetStringField(Constants.Control.Label); }
-            set { this.Row.SetField(Constants.Control.Label, value); }
+            get { return this.Row.GetStringField(Constant.Control.Label); }
+            set { this.Row.SetField(Constant.Control.Label, value); }
         }
 
         public string List
         {
-            get { return this.Row.GetStringField(Constants.Control.List); }
-            set { this.Row.SetField(Constants.Control.List, value); }
+            get { return this.Row.GetStringField(Constant.Control.List); }
+            set { this.Row.SetField(Constant.Control.List, value); }
         }
 
         public long SpreadsheetOrder
         {
-            get { return this.Row.GetLongField(Constants.Control.SpreadsheetOrder); }
-            set { this.Row.SetField(Constants.Control.SpreadsheetOrder, value); }
+            get { return this.Row.GetLongField(Constant.Control.SpreadsheetOrder); }
+            set { this.Row.SetField(Constant.Control.SpreadsheetOrder, value); }
         }
 
         public string Tooltip
         {
-            get { return this.Row.GetStringField(Constants.Control.Tooltip); }
-            set { this.Row.SetField(Constants.Control.Tooltip, value); }
+            get { return this.Row.GetStringField(Constant.Control.Tooltip); }
+            set { this.Row.SetField(Constant.Control.Tooltip, value); }
         }
 
         public string Type
         {
-            get { return this.Row.GetStringField(Constants.Control.Type); }
-            set { this.Row.SetField(Constants.Control.Type, value); }
+            get { return this.Row.GetStringField(Constant.Control.Type); }
+            set { this.Row.SetField(Constant.Control.Type, value); }
         }
 
         public bool Visible
         {
-            get { return this.Row.GetBooleanField(Constants.Control.Visible); }
-            set { this.Row.SetField(Constants.Control.Visible, value); }
+            get { return this.Row.GetBooleanField(Constant.Control.Visible); }
+            set { this.Row.SetField(Constant.Control.Visible, value); }
         }
 
         public long Width
         {
-            get { return this.Row.GetLongField(Constants.Control.Width); }
-            set { this.Row.SetField(Constants.Control.Width, value); }
+            get { return this.Row.GetLongField(Constant.Control.Width); }
+            set { this.Row.SetField(Constant.Control.Width, value); }
         }
 
         public List<string> GetChoices()
@@ -88,17 +88,17 @@ namespace Carnassial.Database
         public override ColumnTuplesWithWhere GetColumnTuples()
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>();
-            columnTuples.Add(new ColumnTuple(Constants.Control.ControlOrder, this.ControlOrder));
-            columnTuples.Add(new ColumnTuple(Constants.Control.Copyable, this.Copyable));
-            columnTuples.Add(new ColumnTuple(Constants.Control.DataLabel, this.DataLabel));
-            columnTuples.Add(new ColumnTuple(Constants.Control.DefaultValue, this.DefaultValue));
-            columnTuples.Add(new ColumnTuple(Constants.Control.Label, this.Label));
-            columnTuples.Add(new ColumnTuple(Constants.Control.List, this.List));
-            columnTuples.Add(new ColumnTuple(Constants.Control.SpreadsheetOrder, this.SpreadsheetOrder));
-            columnTuples.Add(new ColumnTuple(Constants.Control.Width, this.Width));
-            columnTuples.Add(new ColumnTuple(Constants.Control.Tooltip, this.Tooltip));
-            columnTuples.Add(new ColumnTuple(Constants.Control.Type, this.Type));
-            columnTuples.Add(new ColumnTuple(Constants.Control.Visible, this.Visible));
+            columnTuples.Add(new ColumnTuple(Constant.Control.ControlOrder, this.ControlOrder));
+            columnTuples.Add(new ColumnTuple(Constant.Control.Copyable, this.Copyable));
+            columnTuples.Add(new ColumnTuple(Constant.Control.DataLabel, this.DataLabel));
+            columnTuples.Add(new ColumnTuple(Constant.Control.DefaultValue, this.DefaultValue));
+            columnTuples.Add(new ColumnTuple(Constant.Control.Label, this.Label));
+            columnTuples.Add(new ColumnTuple(Constant.Control.List, this.List));
+            columnTuples.Add(new ColumnTuple(Constant.Control.SpreadsheetOrder, this.SpreadsheetOrder));
+            columnTuples.Add(new ColumnTuple(Constant.Control.Width, this.Width));
+            columnTuples.Add(new ColumnTuple(Constant.Control.Tooltip, this.Tooltip));
+            columnTuples.Add(new ColumnTuple(Constant.Control.Type, this.Type));
+            columnTuples.Add(new ColumnTuple(Constant.Control.Visible, this.Visible));
             return new ColumnTuplesWithWhere(columnTuples, this.ID);
         }
 

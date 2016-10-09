@@ -6,11 +6,11 @@ namespace Carnassial.UnitTests
 {
     internal static class FileDatabaseExtensions
     {
-        public static IEnumerable<DateTimeOffset> GetImageTimes(this FileDatabase fileDatabase)
+        public static IEnumerable<DateTimeOffset> GetFileTimes(this FileDatabase fileDatabase)
         {
-            foreach (ImageRow image in fileDatabase.Files)
+            foreach (ImageRow file in fileDatabase.Files)
             {
-                yield return image.GetDateTime();
+                yield return file.GetDateTime();
             }
         }
     }

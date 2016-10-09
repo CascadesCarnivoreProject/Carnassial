@@ -17,13 +17,13 @@ namespace Carnassial.Util
 
         public void ResetToDefaults()
         {
-            this.DesiredImageRendersPerSecond = Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault;
+            this.DesiredImageRendersPerSecond = Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault;
         }
 
         public void SetDesiredImageRendersPerSecond(double rendersPerSecond)
         {
-            if (rendersPerSecond < Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondLowerBound ||
-                rendersPerSecond > Constants.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound)
+            if (rendersPerSecond < Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondLowerBound ||
+                rendersPerSecond > Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound)
             {
                 throw new ArgumentOutOfRangeException("rendersPerSecond");
             }

@@ -223,7 +223,7 @@
     <Compile Include="Database\DataRowBackedObject.cs" />
     <Compile Include="Util\Dependencies.cs" />
     <Compile Include="Github\GithubReleaseClient.cs" />
-    <Compile Include="Constants.cs" />
+    <Compile Include="Constant.cs" />
     <Compile Include="Database\CustomSelection.cs" />
     <Compile Include="Database\ColumnTuple.cs" />
     <Compile Include="Database\ColumnTuplesWithWhere.cs" />
@@ -238,8 +238,8 @@
     <Compile Include="Dialog\CustomViewSelection.xaml.cs">
       <DependentUpon>CustomViewSelection.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\DateRereadFromFiles.xaml.cs">
-      <DependentUpon>DateRereadFromFiles.xaml</DependentUpon>
+    <Compile Include="Dialog\DateTimeRereadFromFiles.xaml.cs">
+      <DependentUpon>DateTimeRereadFromFiles.xaml</DependentUpon>
     </Compile>
     <Compile Include="Dialog\DeleteImages.xaml.cs">
       <DependentUpon>DeleteImages.xaml</DependentUpon>
@@ -280,7 +280,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Dialog\DateRereadFromFiles.xaml">
+    <Page Include="Dialog\DateTimeRereadFromFiles.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

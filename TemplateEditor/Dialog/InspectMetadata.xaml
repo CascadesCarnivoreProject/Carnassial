@@ -24,7 +24,7 @@
 &#10;3. If so, create a meaningfully labelled Note for each metadata field you want. 
 &#10;4. Later, use Carnassial to populate that field across your image set by selecting 'Populate a field with metadata...' from the Carnassial 'Edit' menu."
                             Hint="As metadata can be camera specific, inspect files produced by each camera model you have and compare their metadata."
-                            ShowExplanationVisibility="True"/>
+                            HideExplanationCheckboxIsVisible="True" />
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="2"></Rectangle>
             <Grid Name="PanelHeader">

@@ -1,5 +1,4 @@
 ﻿using Carnassial.Database;
-using Carnassial.Editor;
 using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -58,19 +57,19 @@ namespace Carnassial.UnitTests
         }
 
         /// <summary>
-        /// Creates an ImageRow from the specified ImageExpectation.  Verifies the image isn't already in the database and does not add it to the database.
+        /// Creates a data row from the specified FileExpectation.  Verifies the file isn't already in the database and does not add it to the database.
         /// </summary>
-        protected ImageRow CreateImage(FileDatabase fileDatabase, TimeZoneInfo imageSetTimeZone, FileExpectations imageExpectation, out DateTimeAdjustment imageAdjustment)
+        protected ImageRow CreateFile(FileDatabase fileDatabase, TimeZoneInfo imageSetTimeZone, FileExpectations fileExpectation, out DateTimeAdjustment dateTimeAdjustment)
         {
-            FileInfo imageFileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, imageExpectation.RelativePath, imageExpectation.FileName));
-            ImageRow image;
-            Assert.IsFalse(fileDatabase.GetOrCreateFile(imageFileInfo, imageSetTimeZone, out image));
-            imageAdjustment = image.TryReadDateTimeOriginalFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
-            return image;
+            FileInfo fileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, fileExpectation.RelativePath, fileExpectation.FileName));
+            ImageRow file;
+            Assert.IsFalse(fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file));
+            dateTimeAdjustment = file.TryReadDateTimeOriginalFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
+            return file;
         }
 
         /// <summary>
-        /// Clones the specified template database and creates an image database unique to the calling test.
+        /// Clones the specified template database and creates a file database unique to the calling test.
         /// </summary>
         protected FileDatabase CreateFileDatabase(string templateDatabaseBaseFileName, string fileDatabaseBaseFileName)
         {
@@ -79,7 +78,7 @@ namespace Carnassial.UnitTests
         }
 
         /// <summary>
-        /// Creates an image database unique to the calling test.
+        /// Creates a file database unique to the calling test.
         /// </summary>
         protected FileDatabase CreateFileDatabase(TemplateDatabase templateDatabase, string fileDatabaseBaseFileName)
         {
@@ -118,29 +117,29 @@ namespace Carnassial.UnitTests
                 Directory.CreateDirectory(subdirectoryPath);
             }
 
-            // ensure subdirectory contains default images
-            List<string> defaultImages = new List<string>()
+            // ensure subdirectory contains default files
+            List<string> defaultFiles = new List<string>()
             {
-                TestConstant.ImageExpectation.DaylightBobcat.FileName,
-                TestConstant.ImageExpectation.InfraredMarten.FileName
+                TestConstant.FileExpectation.DaylightBobcat.FileName,
+                TestConstant.FileExpectation.InfraredMarten.FileName
             };
-            foreach (string imageFileName in defaultImages)
+            foreach (string fileName in defaultFiles)
             {
-                FileInfo sourceImageFile = new FileInfo(Path.Combine(this.WorkingDirectory, imageFileName));
-                FileInfo destinationImageFile = new FileInfo(Path.Combine(this.WorkingDirectory, this.TestClassSubdirectory, imageFileName));
-                if (destinationImageFile.Exists == false ||
-                    destinationImageFile.LastWriteTimeUtc < sourceImageFile.LastWriteTimeUtc)
+                FileInfo sourceFile = new FileInfo(Path.Combine(this.WorkingDirectory, fileName));
+                FileInfo destinationFile = new FileInfo(Path.Combine(this.WorkingDirectory, this.TestClassSubdirectory, fileName));
+                if (destinationFile.Exists == false ||
+                    destinationFile.LastWriteTimeUtc < sourceFile.LastWriteTimeUtc)
                 {
-                    sourceImageFile.CopyTo(destinationImageFile.FullName, true);
+                    sourceFile.CopyTo(destinationFile.FullName, true);
                 }
             }
         }
 
-        protected Dictionary<string, string> LoadMetadata(FileDatabase fileDatabase, FileExpectations imageExpectation)
+        protected Dictionary<string, string> LoadMetadata(FileDatabase fileDatabase, FileExpectations fileExpectation)
         {
-            string imageFilePath = Path.Combine(this.WorkingDirectory, imageExpectation.RelativePath, imageExpectation.FileName);
-            Dictionary<string, string> metadata = Utilities.LoadMetadata(imageFilePath);
-            Assert.IsTrue(metadata.Count > 40, "Expected at least 40 metadata fields to be retrieved from {0}", imageFilePath);
+            string filePath = Path.Combine(this.WorkingDirectory, fileExpectation.RelativePath, fileExpectation.FileName);
+            Dictionary<string, string> metadata = Utilities.LoadMetadata(filePath);
+            Assert.IsTrue(metadata.Count > 40, "Expected at least 40 metadata fields to be retrieved from {0}", filePath);
             // example information returned from ExifTool
             // field name                   Bushnell                                    Reconyx
             // --- fields of likely interest for image analysis ---
@@ -237,26 +236,26 @@ namespace Carnassial.UnitTests
             return this.PopulateDefaultDatabase(fileDatabase, false);
         }
 
-        protected List<FileExpectations> PopulateDefaultDatabase(FileDatabase fileDatabase, bool excludeSubfolderImages)
+        protected List<FileExpectations> PopulateDefaultDatabase(FileDatabase fileDatabase, bool excludeSubfolderFiles)
         {
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
 
-            // images in same folder as .tdb and .ddb
+            // files in same folder as .tdb and .ddb
             DateTimeAdjustment martenTimeAdjustment;
-            ImageRow martenImage = this.CreateImage(fileDatabase, imageSetTimeZone, TestConstant.ImageExpectation.InfraredMarten, out martenTimeAdjustment);
+            ImageRow martenImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.InfraredMarten, out martenTimeAdjustment);
             Assert.IsTrue(martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeOneHourLater ||
                           martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             DateTimeAdjustment bobcatTimeAdjustment;
-            ImageRow bobcatImage = this.CreateImage(fileDatabase, imageSetTimeZone, TestConstant.ImageExpectation.DaylightBobcat, out bobcatTimeAdjustment);
+            ImageRow bobcatImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightBobcat, out bobcatTimeAdjustment);
             Assert.IsTrue(bobcatTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
             fileDatabase.AddFiles(new List<ImageRow>() { martenImage, bobcatImage }, null);
             fileDatabase.SelectFiles(FileSelection.All);
 
-            FileTableEnumerator imageEnumerator = new FileTableEnumerator(fileDatabase);
-            Assert.IsTrue(imageEnumerator.TryMoveToImage(0));
-            Assert.IsTrue(imageEnumerator.MoveNext());
+            FileTableEnumerator fileEnumerator = new FileTableEnumerator(fileDatabase);
+            Assert.IsTrue(fileEnumerator.TryMoveToFile(0));
+            Assert.IsTrue(fileEnumerator.MoveNext());
 
             ColumnTuplesWithWhere bobcatUpdate = new ColumnTuplesWithWhere();
             bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Choice0, "choice b"));
@@ -264,32 +263,32 @@ namespace Carnassial.UnitTests
             bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true));
             bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "bobcat"));
             bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult"));
-            bobcatUpdate.SetWhere(imageEnumerator.Current.ID);
+            bobcatUpdate.SetWhere(fileEnumerator.Current.ID);
             fileDatabase.UpdateFiles(new List<ColumnTuplesWithWhere>() { bobcatUpdate });
 
             long martenImageID = fileDatabase.Files[0].ID;
             fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
             fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
-            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constants.Boolean.True);
+            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constant.Boolean.True);
             fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");
             fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
 
             // generate expectations
-            List<FileExpectations> imageExpectations = new List<FileExpectations>()
+            List<FileExpectations> fileExpectations = new List<FileExpectations>()
             {
-                new FileExpectations(TestConstant.ImageExpectation.InfraredMarten),
-                new FileExpectations(TestConstant.ImageExpectation.DaylightBobcat),
+                new FileExpectations(TestConstant.FileExpectation.InfraredMarten),
+                new FileExpectations(TestConstant.FileExpectation.DaylightBobcat),
             };
 
-            // images in subfolder
-            if (excludeSubfolderImages == false)
+            // files in subfolder
+            if (excludeSubfolderFiles == false)
             {
                 DateTimeAdjustment martenPairTimeAdjustment;
-                ImageRow martenPairImage = this.CreateImage(fileDatabase, imageSetTimeZone, TestConstant.ImageExpectation.DaylightMartenPair, out martenPairTimeAdjustment);
+                ImageRow martenPairImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out martenPairTimeAdjustment);
                 Assert.IsTrue(martenPairTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
                 DateTimeAdjustment coyoteTimeAdjustment;
-                ImageRow coyoteImage = this.CreateImage(fileDatabase, imageSetTimeZone, TestConstant.ImageExpectation.DaylightCoyote, out coyoteTimeAdjustment);
+                ImageRow coyoteImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out coyoteTimeAdjustment);
                 Assert.IsTrue(coyoteTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
 
                 fileDatabase.AddFiles(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
@@ -300,7 +299,7 @@ namespace Carnassial.UnitTests
                 coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult"));
                 coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty));
                 coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note0, "escaped field, because a comma is present"));
-                coyoteImageUpdate.SetWhere(imageEnumerator.Current.ID);
+                coyoteImageUpdate.SetWhere(fileEnumerator.Current.ID);
                 fileDatabase.UpdateFiles(new List<ColumnTuplesWithWhere>() { coyoteImageUpdate });
 
                 long martenPairImageID = fileDatabase.Files[3].ID;
@@ -309,22 +308,20 @@ namespace Carnassial.UnitTests
                 fileDatabase.UpdateFile(martenPairImageID, TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
                 fileDatabase.UpdateFile(martenPairImageID, TestConstant.DefaultDatabaseColumn.Note0, "escaped field due to presence of \",\"");
 
-                imageExpectations.Add(new FileExpectations(TestConstant.ImageExpectation.DaylightMartenPair));
-                imageExpectations.Add(new FileExpectations(TestConstant.ImageExpectation.DaylightCoyote));
+                fileExpectations.Add(new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair));
+                fileExpectations.Add(new FileExpectations(TestConstant.FileExpectation.DaylightCoyote));
             }
 
-            // pull the image data table again so the updates are visible to .csv export
+            // pull the file data table again so the updates are visible to .csv export
             fileDatabase.SelectFiles(FileSelection.All);
 
             // complete setting expectations
-            string initialRootFolderName = Path.GetFileName(fileDatabase.FolderPath);
-            for (int image = 0; image < fileDatabase.Files.RowCount; ++image)
+            for (int fileIndex = 0; fileIndex < fileDatabase.Files.RowCount; ++fileIndex)
             {
-                FileExpectations imageExpectation = imageExpectations[image];
-                imageExpectation.ID = image + 1;
-                imageExpectation.InitialRootFolderName = initialRootFolderName;
+                FileExpectations fileExpectation = fileExpectations[fileIndex];
+                fileExpectation.ID = fileIndex + 1;
             }
-            return imageExpectations;
+            return fileExpectations;
         }
 
         protected string GetUniqueFilePathForTest(string baseFileName)

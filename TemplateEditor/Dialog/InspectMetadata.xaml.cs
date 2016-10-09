@@ -50,7 +50,7 @@ namespace Carnassial.Editor.Dialog
 
         private void OpenFile_Click(object sender, RoutedEventArgs e)
         {
-            string filter = String.Format("Image and video files (*{0};*{1};*{2})|*{0};*{1};*{2}", Constants.File.JpgFileExtension, Constants.File.AviFileExtension, Constants.File.Mp4FileExtension);
+            string filter = String.Format("Image and video files (*{0};*{1};*{2})|*{0};*{1};*{2}", Constant.File.JpgFileExtension, Constant.File.AviFileExtension, Constant.File.Mp4FileExtension);
             if (Utilities.TryGetFileFromUser("Select a typical file to inspect", ".", filter, out this.imageFilePath))
             {
                 this.ImageName.Content = Path.GetFileName(this.imageFilePath);

@@ -38,43 +38,42 @@ namespace Carnassial.Controls
                 }
 
                 DataEntryControl controlToAdd;
-                if (control.Type == Constants.DatabaseColumn.DateTime)
+                if (control.Type == Constant.DatabaseColumn.DateTime)
                 {
                     DataEntryDateTime dateTimeControl = new DataEntryDateTime(control, this);
                     controlToAdd = dateTimeControl;
                 }
-                else if (control.Type == Constants.DatabaseColumn.File ||
-                         control.Type == Constants.DatabaseColumn.RelativePath ||
-                         control.Type == Constants.DatabaseColumn.Folder ||
-                         control.Type == Constants.Control.Note)
+                else if (control.Type == Constant.DatabaseColumn.File ||
+                         control.Type == Constant.DatabaseColumn.RelativePath ||
+                         control.Type == Constant.Control.Note)
                 {
                     // standard controls rendering as notes aren't editable by the user 
                     List<string> autocompletions = null;
-                    bool readOnly = control.Type != Constants.Control.Note;
+                    bool readOnly = control.Type != Constant.Control.Note;
                     if (readOnly == false)
                     {
-                        autocompletions = new List<string>(database.GetDistinctValuesInFileColumn(control.DataLabel));
+                        autocompletions = new List<string>(database.GetDistinctValuesInFileDataColumn(control.DataLabel));
                     }
                     DataEntryNote noteControl = new DataEntryNote(control, autocompletions, this);
                     noteControl.ContentReadOnly = readOnly;
                     controlToAdd = noteControl;
                 }
-                else if (control.Type == Constants.Control.Flag || control.Type == Constants.DatabaseColumn.DeleteFlag)
+                else if (control.Type == Constant.Control.Flag || control.Type == Constant.DatabaseColumn.DeleteFlag)
                 {
                     DataEntryFlag flagControl = new DataEntryFlag(control, this);
                     controlToAdd = flagControl;
                 }
-                else if (control.Type == Constants.Control.Counter)
+                else if (control.Type == Constant.Control.Counter)
                 {
                     DataEntryCounter counterControl = new DataEntryCounter(control, this);
                     controlToAdd = counterControl;
                 }
-                else if (control.Type == Constants.Control.FixedChoice || control.Type == Constants.DatabaseColumn.ImageQuality)
+                else if (control.Type == Constant.Control.FixedChoice || control.Type == Constant.DatabaseColumn.ImageQuality)
                 {
                     DataEntryChoice choiceControl = new DataEntryChoice(control, this);
                     controlToAdd = choiceControl;
                 }
-                else if (control.Type == Constants.DatabaseColumn.UtcOffset)
+                else if (control.Type == Constant.DatabaseColumn.UtcOffset)
                 {
                     DataEntryUtcOffset utcOffsetControl = new DataEntryUtcOffset(control, this);
                     controlToAdd = utcOffsetControl;
