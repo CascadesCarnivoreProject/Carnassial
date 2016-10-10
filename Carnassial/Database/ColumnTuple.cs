@@ -12,7 +12,7 @@ namespace Carnassial.Database
         public string Value { get; private set; }
 
         public ColumnTuple(string column, bool value)
-            : this(column, value ? Constant.Boolean.True : Constant.Boolean.False)
+            : this(column, value ? Boolean.TrueString : Boolean.FalseString)
         {
         }
 

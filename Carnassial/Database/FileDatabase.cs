@@ -226,7 +226,7 @@ namespace Carnassial.Database
             List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>();
             columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.InitialFolderName, Path.GetFileName(this.FolderPath)));
             columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.Log, Constant.Database.ImageSetDefaultLog));
-            columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.Magnifier, Constant.Boolean.False));
+            columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.Magnifier, Boolean.FalseString));
             columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.MostRecentFileID, Constant.Database.DefaultFileID));
             columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.FileSelection, FileSelection.All.ToString()));
             columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.TimeZone, TimeZoneInfo.Local.Id));
@@ -413,8 +413,8 @@ namespace Carnassial.Database
         {
             Dictionary<FileSelection, int> counts = new Dictionary<FileSelection, int>(4);
             counts[FileSelection.Dark] = this.GetFileCount(FileSelection.Dark);
-            counts[FileSelection.CorruptFile] = this.GetFileCount(FileSelection.CorruptFile);
-            counts[FileSelection.FileNoLongerAvailable] = this.GetFileCount(FileSelection.FileNoLongerAvailable);
+            counts[FileSelection.Corrupt] = this.GetFileCount(FileSelection.Corrupt);
+            counts[FileSelection.NoLongerAvailable] = this.GetFileCount(FileSelection.NoLongerAvailable);
             counts[FileSelection.Ok] = this.GetFileCount(FileSelection.Ok);
             return counts;
         }
@@ -446,9 +446,9 @@ namespace Carnassial.Database
             {
                 case FileSelection.All:
                     return String.Empty;
-                case FileSelection.CorruptFile:
+                case FileSelection.Corrupt:
                 case FileSelection.Dark:
-                case FileSelection.FileNoLongerAvailable:
+                case FileSelection.NoLongerAvailable:
                 case FileSelection.Ok:
                     return this.DataLabelFromStandardControlType[Constant.DatabaseColumn.ImageQuality] + "=\"" + selection + "\"";
                 case FileSelection.MarkedForDeletion:

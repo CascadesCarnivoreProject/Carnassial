@@ -269,7 +269,7 @@ namespace Carnassial.UnitTests
             long martenImageID = fileDatabase.Files[0].ID;
             fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
             fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
-            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constant.Boolean.True);
+            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.FlagNotVisible, Boolean.TrueString);
             fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");
             fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
 

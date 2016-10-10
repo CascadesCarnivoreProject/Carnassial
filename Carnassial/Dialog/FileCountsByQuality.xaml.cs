@@ -23,11 +23,11 @@ namespace Carnassial.Dialog
             // Fill in the counts
             int ok = counts[FileSelection.Ok];
             this.Ok.Text = String.Format("{0,5}", ok) + this.Ok.Text;
-            int fileNoLongerAvailable = counts[FileSelection.FileNoLongerAvailable];
+            int fileNoLongerAvailable = counts[FileSelection.NoLongerAvailable];
             this.FileNoLongerAvailable.Text = String.Format("{0,5}", fileNoLongerAvailable) + this.FileNoLongerAvailable.Text;
             int dark = counts[FileSelection.Dark];
             this.Dark.Text = String.Format("{0,5}", dark) + this.Dark.Text;
-            int corrupted = counts[FileSelection.CorruptFile];
+            int corrupted = counts[FileSelection.Corrupt];
             this.Corrupted.Text = String.Format("{0,5}", corrupted) + this.Corrupted.Text;
 
             int total = ok + dark + corrupted + fileNoLongerAvailable;

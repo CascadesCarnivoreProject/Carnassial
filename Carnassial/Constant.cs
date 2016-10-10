@@ -10,8 +10,6 @@ using Xceed.Wpf.Toolkit;
 
 namespace Carnassial
 {
-    // Keep all constants in one place. 
-    // This helps ensure we are not setting values differently across multiple files, etc.
     public static class Constant
     {
         public const string ApplicationName = "Carnassial";
@@ -20,16 +18,11 @@ namespace Carnassial
         public const string StandardColour = "Gold";
         public const string SelectionColour = "MediumBlue";
 
+        public static readonly TimeSpan CheckForUpdateInterval = TimeSpan.FromDays(1.25);
+
         public static class ApplicationSettings
         {
-            public const string ReleasesAddress = "releasesAddress";
-        }
-
-        // Boolean.TrueString and FalseString are "True" and "False" and are preferred, but 
-        public static class Boolean
-        {
-            public const string True = "true";
-            public const string False = "false";
+            public const string GithubOrganizationAndRepo = "githubOrganizationAndRepo";
         }
 
         public static class Control
@@ -102,7 +95,7 @@ namespace Carnassial
             public const int FixedChoiceWidth = 100;
 
             public const string FlagTooltip = "Toggle between true and false";
-            public const string FlagValue = Constant.Boolean.False;             // Default for: flags
+            public const string FlagValue = "False"; // can't use Boolean.FalseString as it's not const
             public const int FlagWidth = 20;
             public const string NoteTooltip = "Write a textual note";
             public const int NoteWidth = 100;
@@ -190,13 +183,19 @@ namespace Carnassial
             public static readonly TimeSpan BackupInterval = TimeSpan.FromMinutes(10);
         }
 
-        // shorthands for ImageSelection.<value>.ToString()
+        public static class GitHub
+        {
+            public static readonly Uri ApiBaseAddress = new Uri("https://api.github.com/repos/");
+            public static readonly Uri BaseAddress = new Uri("https://github.com/");
+        }
+
+        // shorthands for FileSelection.<value>.ToString()
         public static class ImageQuality
         {
             public const string Dark = "Dark";
             public const string Ok = "Ok";
 
-            public const string ListOfValues = "Ok|Dark|CorruptFile|FileNoLongerAvailable";
+            public const string ListOfValues = "Ok|Dark|Corrupt|NoLongerAvailable";
         }
 
         public static class Images
@@ -254,21 +253,24 @@ namespace Carnassial
 
         public static class MarkableCanvas
         {
-            public const double MagnifierDefaultZoom = 60;
-            public const double MagnifierMaxZoom = 15;  // Max is a smaller number
-            public const double MagnifierMinZoom = 100; // Min is the larger number
-            public const double MagnifierZoomStep = 2;
+            public const double MagnifyingGlassDefaultZoom = 60;
+            public const double MagnifyingGlassMaximumZoom = 100;
+            public const double MagnifyingGlassMinimumZoom = 15;
+            public const double MagnifyingGlassZoomIncrement = 1.2;
 
-            public const int MarkDiameter = 10;
-            public const int MarkStrokeThickness = 2;
-            public const int MarkGlowDiameterIncrease = 14;
-            public const int MarkGlowStrokeThickness = 7;
-            public const double MarkGlowOpacity = 0.35;
+            public const int MagnifyingGlassDiameter = 250;
+            public const int MagnifyingGlassHandleStart = 200;
+            public const int MagnifyingGlassHandleEnd = 250;
 
-            public const double ZoomMaximum = 10;   // Maximum amount of zoom
-            public const double ZoomMaximumUpperBound = 50;   // Maximum amount of zoom
-            public const double ZoomMinimum = 1;   // Minimum amount of zoom
-            public const double ZoomStep = 1.2;   // Amount to scale on each increment
+            public const int MarkerDiameter = 10;
+            public const int MarkerGlowDiameterIncrease = 14;
+            public const int MarkerStrokeThickness = 2;
+            public const double MarkerGlowOpacity = 0.35;
+            public const int MarkerGlowStrokeThickness = 7;
+
+            public const double ZoomAbsoluteMaximum = 50; // the highest zoom a user can configure for a display image
+            public const double ZoomMaximum = 10;         // user configurable maximum amount of zoom in a display image
+            public const double ZoomMinimum = 1;          // minimum amount of zoom
         }
 
         public static class Registry
@@ -276,7 +278,6 @@ namespace Carnassial
             public static class CarnassialKey
             {
                 public const string AudioFeedback = "AudioFeedback";
-
                 public const string CarnassialWindowPosition = "CarnassialWindowPosition";
 
                 // most recently used operator for custom selections
@@ -287,6 +288,7 @@ namespace Carnassial
                 public const string DarkPixelRatio = "DarkPixelRatio";
                 // the value for rendering
                 public const string DesiredImageRendersPerSecond = "DesiredImageRendersPerSecond";
+                public const string MostRecentCheckForUpdates = "MostRecentCheckForUpdates";
                 // key containing the list of most recently image sets opened by Carnassial
                 public const string MostRecentlyUsedImageSets = "MostRecentlyUsedImageSets";
 

@@ -7,9 +7,9 @@ namespace Carnassial.Dialog
     public partial class AdvancedCarnassialOptions : Window
     {
         private CarnassialState carnassialState;
-        private MarkableImageCanvas markableCanvas;
+        private MarkableCanvas markableCanvas;
 
-        public AdvancedCarnassialOptions(CarnassialState state, MarkableImageCanvas markableCanvas, Window owner)
+        public AdvancedCarnassialOptions(CarnassialState state, MarkableCanvas markableCanvas, Window owner)
         {
             this.InitializeComponent();
             this.Owner = owner;
@@ -24,9 +24,9 @@ namespace Carnassial.Dialog
             this.ImageRendersPerSecond.ToolTip = this.carnassialState.Throttles.DesiredImageRendersPerSecond;
 
             // The Max Zoom Value
-            this.MaxZoom.Value = this.markableCanvas.MaxZoom;
-            this.MaxZoom.ToolTip = this.markableCanvas.MaxZoom;
-            this.MaxZoom.Maximum = this.markableCanvas.MaxZoomUpperBound;
+            this.MaxZoom.Value = this.markableCanvas.ZoomMaximum;
+            this.MaxZoom.ToolTip = this.markableCanvas.ZoomMaximum;
+            this.MaxZoom.Maximum = Constant.MarkableCanvas.ZoomAbsoluteMaximum;
             this.MaxZoom.Minimum = 2;
 
             // Image Differencing Thresholds
@@ -52,16 +52,16 @@ namespace Carnassial.Dialog
         // Reset the maximum zoom to the amount specified in Max Zoom;
         private void ResetMaxZoom_Click(object sender, RoutedEventArgs e)
         {
-            this.markableCanvas.ResetMaxZoom();
-            this.MaxZoom.Value = this.markableCanvas.MaxZoom;
-            this.MaxZoom.ToolTip = this.markableCanvas.MaxZoom;
+            this.markableCanvas.ResetMaximumZoom();
+            this.MaxZoom.Value = this.markableCanvas.ZoomMaximum;
+            this.MaxZoom.ToolTip = this.markableCanvas.ZoomMaximum;
         }
 
         // Callback: The user has changed the maximum zoom value
         private void MaxZoom_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            this.markableCanvas.MaxZoom = (int)this.MaxZoom.Value;
-            this.MaxZoom.ToolTip = this.markableCanvas.MaxZoom;
+            this.markableCanvas.ZoomMaximum = (int)this.MaxZoom.Value;
+            this.MaxZoom.ToolTip = this.markableCanvas.ZoomMaximum;
         }
 
         private void ResetImageDifferencingButton_Click(object sender, RoutedEventArgs e)

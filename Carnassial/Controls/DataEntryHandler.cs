@@ -96,7 +96,7 @@ namespace Carnassial.Controls
                 if (valueToCopy.Length > 0)
                 {
                     if ((checkForZero && !valueToCopy.Equals("0")) ||             // Skip over non-zero values for counters
-                        (isFlag && !valueToCopy.Equals(Constant.Boolean.False, StringComparison.OrdinalIgnoreCase)) || // Skip over false values for flags
+                        (isFlag && !valueToCopy.Equals(Boolean.FalseString, StringComparison.OrdinalIgnoreCase)) || // Skip over false values for flags
                         (!checkForZero && !isFlag))
                     {
                         indexToCopyFrom = previousIndex;    // We found a non-empty value
@@ -448,7 +448,7 @@ namespace Carnassial.Controls
 
             CheckBox checkBox = (CheckBox)sender;
             // Get the key identifying the control, and then add its value to the database
-            string value = ((bool)checkBox.IsChecked) ? Constant.Boolean.True : Constant.Boolean.False;
+            string value = ((bool)checkBox.IsChecked) ? Boolean.TrueString : Boolean.FalseString;
             DataEntryControl control = (DataEntryControl)checkBox.Tag;
             control.SetContentAndTooltip(value);
             this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);

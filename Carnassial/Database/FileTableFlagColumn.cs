@@ -11,8 +11,8 @@ namespace Carnassial.Database
 
         public override bool IsContentValid(string value)
         {
-            return String.Equals(value, Constant.Boolean.False, StringComparison.OrdinalIgnoreCase) ||
-                   String.Equals(value, Constant.Boolean.True, StringComparison.OrdinalIgnoreCase);
+            return String.Equals(value, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ||
+                   String.Equals(value, Boolean.TrueString, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

@@ -113,8 +113,6 @@
                 <Separator />
                 <MenuItem Name="MenuItemViewDifferencesCycleThrough" Header="_Cycle through image differences" Click="MenuItemViewDifferencesCycleThrough_Click" InputGestureText="&#x2191;" ToolTip="Show difference between the current and the next file, and then the current and the previous file." />
                 <MenuItem Name="MenuItemViewDifferencesCombined" Header="_View combined image differences" Click="MenuItemViewDifferencesCombined_Click" InputGestureText="&#x2193;" ToolTip="Show the difference between the current image and the next and previous files simultaneously." />
-                <Separator />
-                <MenuItem Name="MenuItemVideoViewer" Header="_Show video player"  ToolTip="The video player lets you  play video files." Click="MenuItemVideoViewer_Click"/>
             </MenuItem>
 
             <!-- Select menu -->
@@ -165,10 +163,10 @@
                                             Thumb.DragStarted="ImageNavigatorSlider_DragStarted" 
                                             Thumb.DragCompleted="ImageNavigatorSlider_DragCompleted"
                                             ValueChanged="ImageNavigatorSlider_ValueChanged" />
-                                    <images:MarkableImageCanvas x:Name="MarkableCanvas" Grid.Row="2" />
+                                    <images:MarkableCanvas x:Name="MarkableCanvas" Grid.Row="2" />
                                 </Grid>
                             </xcad:LayoutDocument>
-                            <xcad:LayoutDocument x:Name="DataGridPane" Title="Data grid  " CanClose="False" IsActiveChanged="DataGrid_IsActiveChanged">
+                            <xcad:LayoutDocument x:Name="DataGridPane" Title="Data grid  " CanClose="False" IsActiveChanged="DataGridPane_IsActiveChanged">
                                 <DataGrid Name="DataGrid" MinHeight="100" MinWidth="100"  DockPanel.Dock="Top" HorizontalAlignment="Stretch" FontSize="12" VerticalScrollBarVisibility="Auto"/>
                             </xcad:LayoutDocument>
                         </xcad:LayoutDocumentPane>

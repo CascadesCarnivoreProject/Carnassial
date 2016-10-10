@@ -40,9 +40,9 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.MarkedForDeletion) == 0);
             Dictionary<FileSelection, int> fileCounts = fileDatabase.GetFileCountsBySelection();
             Assert.IsTrue(fileCounts.Count == 4);
-            Assert.IsTrue(fileCounts[FileSelection.CorruptFile] == 0);
+            Assert.IsTrue(fileCounts[FileSelection.Corrupt] == 0);
             Assert.IsTrue(fileCounts[FileSelection.Dark] == 0);
-            Assert.IsTrue(fileCounts[FileSelection.FileNoLongerAvailable] == 0);
+            Assert.IsTrue(fileCounts[FileSelection.NoLongerAvailable] == 0);
             Assert.IsTrue(fileCounts[FileSelection.Ok] == fileExpectations.Count);
 
             FileTable filesToDelete = fileDatabase.GetFilesMarkedForDeletion();
@@ -152,14 +152,14 @@ namespace Carnassial.UnitTests
             fileDatabase.ImageSet.FileSelection = FileSelection.Custom;
             fileDatabase.ImageSet.MostRecentFileID = -1;
             fileDatabase.AppendToImageSetLog(new StringBuilder("Test log entry."));
-            fileDatabase.ImageSet.MagnifierEnabled = true;
+            fileDatabase.ImageSet.MagnifyingGlassEnabled = true;
             fileDatabase.ImageSet.TimeZone = "Test Time Zone";
             fileDatabase.SyncImageSetToDatabase();
             Assert.IsTrue(fileDatabase.ImageSet.ID == 1);
             Assert.IsTrue(fileDatabase.ImageSet.FileSelection == FileSelection.Custom);
             Assert.IsTrue(fileDatabase.ImageSet.MostRecentFileID == -1);
             Assert.IsTrue(fileDatabase.ImageSet.Log == Constant.Database.ImageSetDefaultLog + "Test log entry.");
-            Assert.IsTrue(fileDatabase.ImageSet.MagnifierEnabled);
+            Assert.IsTrue(fileDatabase.ImageSet.MagnifyingGlassEnabled);
             Assert.IsTrue(fileDatabase.ImageSet.TimeZone == "Test Time Zone");
 
             fileDatabase.ImageSet.TimeZone = originalTimeZoneID;
@@ -234,7 +234,7 @@ namespace Carnassial.UnitTests
             SearchTerm markedForDeletion = fileDatabase.CustomSelection.SearchTerms.Single(term => term.ControlType == Constant.DatabaseColumn.DeleteFlag);
             markedForDeletion.UseForSearching = true;
             markedForDeletion.Operator = Constant.SearchTermOperator.Equal;
-            markedForDeletion.DatabaseValue = Constant.Boolean.False;
+            markedForDeletion.DatabaseValue = Boolean.FalseString;
             Assert.IsFalse(String.IsNullOrEmpty(fileDatabase.CustomSelection.GetFilesWhere()));
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == 2);
@@ -242,11 +242,11 @@ namespace Carnassial.UnitTests
             fileQuality.DatabaseValue = FileSelection.Dark.ToString();
             Assert.IsFalse(String.IsNullOrEmpty(fileDatabase.CustomSelection.GetFilesWhere()));
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.All) == fileExpectations.Count);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.CorruptFile) == 0);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Corrupt) == 0);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Custom) == 0);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Dark) == 0);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.MarkedForDeletion) == 0);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.FileNoLongerAvailable) == 0);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.NoLongerAvailable) == 0);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Ok) == fileExpectations.Count);
 
             // markers
@@ -782,11 +782,11 @@ namespace Carnassial.UnitTests
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, "3");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice c");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "0");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, Constant.Boolean.True);
+            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, Boolean.TrueString);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, "100");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, "Genus species");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, "custom label");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, Constant.Boolean.False);
+            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, Boolean.FalseString);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, templateTableExpectation.CounterNotVisible.DefaultValue);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, Constant.ControlDefault.Value);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, Constant.ControlDefault.Value);
@@ -794,7 +794,7 @@ namespace Carnassial.UnitTests
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, "1");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, Constant.ControlDefault.Value);
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "note");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Constant.Boolean.True);
+            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Boolean.TrueString);
             martenExpectation.Verify(fileDatabase.Files[0], imageSetTimeZone);
 
             FileExpectations bobcatExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightBobcat);
@@ -802,11 +802,11 @@ namespace Carnassial.UnitTests
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, templateTableExpectation.Counter0.DefaultValue);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice a");
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "1");
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, Constant.Boolean.True);
+            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, Boolean.TrueString);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, "3");
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, "with , comma");
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, Constant.ControlDefault.Value);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, Constant.Boolean.True);
+            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, Boolean.TrueString);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, templateTableExpectation.CounterNotVisible.DefaultValue);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, Constant.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, Constant.ControlDefault.Value);
@@ -814,7 +814,7 @@ namespace Carnassial.UnitTests
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, templateTableExpectation.Counter3.DefaultValue);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, Constant.ControlDefault.Value);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, Constant.ControlDefault.Value);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Constant.Boolean.True);
+            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Boolean.TrueString);
             bobcatExpectation.Verify(fileDatabase.Files[1], imageSetTimeZone);
         }
 
@@ -1107,7 +1107,7 @@ namespace Carnassial.UnitTests
                           (fileDatabase.ImageSet.InitialFolderName == "UnitTests"));
             Assert.IsTrue(fileDatabase.ImageSet.MostRecentFileID == Constant.Database.DefaultFileID);
             Assert.IsTrue(fileDatabase.ImageSet.Log == Constant.Database.ImageSetDefaultLog);
-            Assert.IsFalse(fileDatabase.ImageSet.MagnifierEnabled);
+            Assert.IsFalse(fileDatabase.ImageSet.MagnifyingGlassEnabled);
             Assert.IsTrue(fileDatabase.ImageSet.TimeZone == TimeZoneInfo.Local.Id);
         }
 

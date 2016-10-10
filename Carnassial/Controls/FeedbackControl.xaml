@@ -13,12 +13,12 @@
                     <ColumnDefinition Width="1*" />
                 </Grid.ColumnDefinitions>
                 <Grid  VerticalAlignment="Top" Height="25" Grid.Row="0" Grid.Column="0">
-                    <ProgressBar x:Name="progressPB" Minimum="0" Maximum="100"  />
-                    <TextBlock Text="{Binding ElementName=progressPB, Path=Value, StringFormat={}{0:0}%}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100"  />
+                    <TextBlock Text="{Binding ElementName=ProgressBar, Path=Value, StringFormat={}{0:0}%}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Grid>
-                <Label x:Name="messageLbl" Content="" VerticalAlignment="Top" Grid.Row="0" Grid.Column="1"/>
+                <Label x:Name="Message" Content="" VerticalAlignment="Top" Grid.Row="0" Grid.Column="1"/>
             </Grid>
-            <Image x:Name="imageImg" />
+            <Image x:Name="Image" />
         </StackPanel>
     </Grid>
 </UserControl>

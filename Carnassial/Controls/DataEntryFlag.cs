@@ -1,4 +1,5 @@
 ﻿using Carnassial.Database;
+using System;
 using System.Windows.Controls;
 
 namespace Carnassial.Controls
@@ -12,7 +13,7 @@ namespace Carnassial.Controls
         /// <remarks>true if the flag is checked, false otherwise</remarks>
         public override string Content
         {
-            get { return ((bool)this.ContentControl.IsChecked) ? Constant.Boolean.True : Constant.Boolean.False; }
+            get { return (bool)this.ContentControl.IsChecked ? Boolean.TrueString : Boolean.FalseString; }
         }
 
         public override bool ContentReadOnly
@@ -28,8 +29,7 @@ namespace Carnassial.Controls
 
         public override void SetContentAndTooltip(string value)
         {
-            value = value.ToLower();
-            this.ContentControl.IsChecked = (value == Constant.Boolean.True) ? true : false;
+            this.ContentControl.IsChecked = Boolean.Parse(value);
             this.ContentControl.ToolTip = value;
         }
     }

@@ -6,7 +6,7 @@ namespace Carnassial.Util
     /// <summary>
     /// The Status Bar convenience class that collects methods to update different parts of the status bar
     /// </summary>
-    internal static class StatusBarUpdate
+    internal static class StatusBarExtensions
     {
         // Clear the message portion of the status bar
         public static void ClearMessage(this StatusBar statusBar)
@@ -22,7 +22,7 @@ namespace Carnassial.Util
         }
 
         // Set the total counts in the total coutns portion of the status bar
-        public static void SetCurrentImage(this StatusBar statusBar, int currentImage)
+        public static void SetCurrentFile(this StatusBar statusBar, int currentImage)
         {
             StatusBarItem item = (StatusBarItem)statusBar.Items[1];
             item.Content = currentImage.ToString();

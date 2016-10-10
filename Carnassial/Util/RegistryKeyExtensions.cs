@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Globalization;
 using System.Windows;
 
 namespace Carnassial.Util
@@ -19,6 +20,17 @@ namespace Carnassial.Util
             }
 
             return defaultValue;
+        }
+
+        public static DateTime ReadDateTime(this RegistryKey registryKey, string subKeyPath, DateTime defaultValue)
+        {
+            string value = registryKey.ReadString(subKeyPath);
+            if (value == null)
+            {
+                return defaultValue;
+            }
+
+            return DateTime.ParseExact(value, Constant.Time.DateTimeDatabaseFormat, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
         }
 
         public static double ReadDouble(this RegistryKey registryKey, string subKeyPath, double defaultValue)
@@ -107,7 +119,12 @@ namespace Carnassial.Util
 
         public static void Write(this RegistryKey registryKey, string subKeyPath, bool value)
         {
-            registryKey.Write(subKeyPath, value.ToString().ToLowerInvariant());
+            registryKey.Write(subKeyPath, value.ToString());
+        }
+
+        public static void Write(this RegistryKey registryKey, string subKeyPath, DateTime value)
+        {
+            registryKey.Write(subKeyPath, value.ToString(Constant.Time.DateTimeDatabaseFormat));
         }
 
         public static void Write(this RegistryKey registryKey, string subKeyPath, double value)

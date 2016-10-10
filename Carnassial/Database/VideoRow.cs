@@ -47,7 +47,7 @@ namespace Carnassial.Database
                     Thread.Sleep(Constant.ThrottleValues.PollIntervalForVideoLoad);
                 }
 
-                // sleep one more time as MediaPlayer has a tendency to still return black frames a moment after the width and height have populated
+                // sleep one more time as MediaPlayer has a tendency to still return black frames for a moment after the width and height have populated
                 Thread.Sleep(Constant.ThrottleValues.PollIntervalForVideoLoad);
 
                 int pixelWidth = mediaPlayer.NaturalVideoWidth;
@@ -61,7 +61,7 @@ namespace Carnassial.Database
 
                 // set up to render frame from the video
                 mediaPlayer.Pause();
-                mediaPlayer.Position = TimeSpan.Zero;
+                mediaPlayer.Position = TimeSpan.FromMilliseconds(1.0);
 
                 DrawingVisual drawingVisual = new DrawingVisual();
                 using (DrawingContext drawingContext = drawingVisual.RenderOpen())
@@ -80,7 +80,7 @@ namespace Carnassial.Database
 
                     // check if render succeeded
                     // hopefully it did and most of the overhead here is WriteableBitmap conversion though, at 2-3ms for a 1280x720 frame, this 
-                    // is not an especially expensive operation relative to O(175ms) cost of this function
+                    // is not an especially expensive operation relative to the O(175ms) cost of this function
                     WriteableBitmap writeableBitmap = renderBitmap.AsWriteable();
                     if (writeableBitmap.IsBlack() == false)
                     {

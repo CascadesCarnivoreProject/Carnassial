@@ -212,12 +212,12 @@ namespace Carnassial.Dialog
                     flagCheckBox.Margin = thickness;
                     flagCheckBox.VerticalAlignment = VerticalAlignment.Center;
                     flagCheckBox.HorizontalAlignment = HorizontalAlignment.Left;
-                    flagCheckBox.IsChecked = (searchTerm.DatabaseValue.ToLower() == Constant.Boolean.False) ? false : true;
+                    flagCheckBox.IsChecked = String.Equals(searchTerm.DatabaseValue, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ? false : true;
                     flagCheckBox.IsEnabled = searchTerm.UseForSearching;
                     flagCheckBox.Checked += this.Flag_CheckedOrUnchecked;
                     flagCheckBox.Unchecked += this.Flag_CheckedOrUnchecked;
 
-                    searchTerm.DatabaseValue = flagCheckBox.IsChecked.Value ? Constant.Boolean.True : Constant.Boolean.False;
+                    searchTerm.DatabaseValue = flagCheckBox.IsChecked.Value ? Boolean.TrueString : Boolean.FalseString;
 
                     Grid.SetRow(flagCheckBox, gridRowIndex);
                     Grid.SetColumn(flagCheckBox, CustomViewSelection.ValueColumn);

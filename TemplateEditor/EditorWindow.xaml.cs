@@ -70,15 +70,19 @@ namespace Carnassial.Editor
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseAddress();
-            if (latestVersionAddress == null)
+            // check for updates
+            if (DateTime.UtcNow - this.userSettings.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
             {
-                return;
-            }
+                Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseAddress();
+                if (latestVersionAddress == null)
+                {
+                    return;
+                }
 
-            GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, latestVersionAddress);
-            // TODO: remove temporary disable
-            // updater.TryGetAndParseRelease(false);
+                GithubReleaseClient updater = new GithubReleaseClient(EditorConstant.ApplicationName, latestVersionAddress);
+                updater.TryGetAndParseRelease(false);
+                this.userSettings.MostRecentCheckForUpdates = DateTime.UtcNow;
+            }
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -196,7 +200,10 @@ namespace Carnassial.Editor
         private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
         {
             AboutEditor about = new AboutEditor(this);
-            about.ShowDialog();
+            if ((about.ShowDialog() == true) && about.MostRecentCheckForUpdate.HasValue)
+            {
+                this.userSettings.MostRecentCheckForUpdates = about.MostRecentCheckForUpdate.Value;
+            }
         }
 
         /// <summary>
@@ -385,12 +392,12 @@ namespace Carnassial.Editor
                             // Only allow t/f and translate to true/false
                             if (e.Text == "t" || e.Text == "T")
                             {
-                                control.DefaultValue = Constant.Boolean.True;
+                                control.DefaultValue = Boolean.TrueString;
                                 this.SyncControlToDatabase(control);
                             }
                             else if (e.Text == "f" || e.Text == "F")
                             {
-                                control.DefaultValue = Constant.Boolean.False;
+                                control.DefaultValue = Boolean.FalseString;
                                 this.SyncControlToDatabase(control);
                             }
                             e.Handled = true;

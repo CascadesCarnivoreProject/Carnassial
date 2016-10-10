@@ -59,7 +59,7 @@ namespace Carnassial.Database
                         this.SearchTerms.Add(dateTimeLessThanOrEqual);
                         break;
                     case Constant.Control.Flag:
-                        searchTerm.DatabaseValue = Constant.Boolean.False;
+                        searchTerm.DatabaseValue = Boolean.FalseString;
                         break;
                     case Constant.DatabaseColumn.UtcOffset:
                         // the first time it's popped CustomViewSelection dialog changes this default to the date time of the current image

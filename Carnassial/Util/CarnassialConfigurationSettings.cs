@@ -20,17 +20,18 @@ namespace Carnassial.Util
 
         public static Uri GetReleasesAddress()
         {
-            return CarnassialConfigurationSettings.GetUriSetting(Constant.ApplicationSettings.ReleasesAddress);
+            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.ApiBaseAddress, Constant.ApplicationSettings.GithubOrganizationAndRepo, "releases");
         }
 
-        private static Uri GetUriSetting(string key)
+        private static Uri GetUriSetting(Uri baseAddress, string key, params string[] additionalPath)
         {
-            string value = ConfigurationManager.AppSettings[key];
-            if (String.IsNullOrEmpty(value) == false)
+            UriBuilder uriBuilder = new UriBuilder(baseAddress);
+            uriBuilder.Path += "/" + ConfigurationManager.AppSettings[key];
+            foreach (string token in additionalPath)
             {
-                return new Uri(value);
+                uriBuilder.Path += "/" + token;
             }
-            return null;
+            return uriBuilder.Uri;
         }
     }
 }

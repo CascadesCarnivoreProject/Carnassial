@@ -52,9 +52,9 @@ namespace Carnassial.Database
             {
                 switch (value)
                 {
-                    case FileSelection.CorruptFile:
+                    case FileSelection.Corrupt:
                     case FileSelection.Dark:
-                    case FileSelection.FileNoLongerAvailable:
+                    case FileSelection.NoLongerAvailable:
                     case FileSelection.Ok:
                         this.Row.SetField<FileSelection>(Constant.DatabaseColumn.ImageQuality, value);
                         break;
@@ -152,7 +152,7 @@ namespace Carnassial.Database
 
         public bool IsDisplayable()
         {
-            if (this.ImageQuality == FileSelection.CorruptFile || this.ImageQuality == FileSelection.FileNoLongerAvailable)
+            if (this.ImageQuality == FileSelection.Corrupt || this.ImageQuality == FileSelection.NoLongerAvailable)
             {
                 return false;
             }

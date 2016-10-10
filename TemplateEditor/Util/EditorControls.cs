@@ -45,7 +45,7 @@ namespace Carnassial.Editor.Util
                     case Constant.DatabaseColumn.DeleteFlag:
                         Label flagLabel = this.CreateLabel(styleProvider, control);
                         CheckBox flagContent = this.CreateFlag(styleProvider, control);
-                        flagContent.IsChecked = (control.DefaultValue == Constant.Boolean.True) ? true : false;
+                        flagContent.IsChecked = String.Equals(control.DefaultValue, Boolean.TrueString, StringComparison.OrdinalIgnoreCase) ? true : false;
                         stackPanel = this.CreateStackPanel(styleProvider, flagLabel, flagContent);
                         break;
                     case Constant.Control.FixedChoice:

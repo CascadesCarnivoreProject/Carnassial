@@ -204,30 +204,34 @@ namespace Carnassial.Images
             return this.TryMoveToFile(imageRowIndex, out ignored);
         }
 
-        public bool TryMoveToFile(int imageRowIndex, out bool newImageToDisplay)
+        public bool TryMoveToFile(int fileIndex, out bool newFileToDisplay)
         {
-            long oldImageID = -1;
+            long oldFileID = -1;
             if (this.Current != null)
             {
-                oldImageID = this.Current.ID;
+                oldFileID = this.Current.ID;
             }
 
-            if (base.TryMoveToFile(imageRowIndex) == false)
+            newFileToDisplay = false;
+            if (base.TryMoveToFile(fileIndex) == false)
             {
-                newImageToDisplay = false;
                 return false;
             }
 
-            newImageToDisplay = this.Current.ID != oldImageID;
-            if (newImageToDisplay)
+            if (this.Current.ID != oldFileID)
             {
-                // get the image data from cache or disk
-                BitmapSource unalteredImage;
-                this.TryGetBitmap(this.Current, out unalteredImage);
+                // if this is an image load it from cache or disk
+                BitmapSource unalteredImage = null;
+                if (this.Current.IsVideo == false)
+                {
+                    this.TryGetBitmap(this.Current, out unalteredImage);
+                }
 
                 // all moves are to display of unaltered images and invalidate any cached differences
                 // it is assumed images on disk are not altered while Carnassial is running and hence unaltered bitmaps can safely be cached by their IDs
                 this.ResetDifferenceState(unalteredImage);
+
+                newFileToDisplay = true;
             }
 
             return true;

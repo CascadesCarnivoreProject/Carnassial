@@ -75,7 +75,7 @@ namespace Carnassial.Database
 
         public static void SetField(this DataRow row, string column, bool value)
         {
-            row[column] = value.ToString().ToLowerInvariant();
+            row[column] = value.ToString();
         }
 
         public static void SetField(this DataRow row, string column, DateTime value)

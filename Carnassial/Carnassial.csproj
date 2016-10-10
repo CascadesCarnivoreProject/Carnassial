@@ -203,8 +203,8 @@
     <Compile Include="Util\SequentialPartitioner.cs" />
     <Compile Include="Util\RegistryKeyExtensions.cs" />
     <Compile Include="Util\Throttles.cs" />
-    <Compile Include="Dialog\WindowVideoPlayer.xaml.cs">
-      <DependentUpon>WindowVideoPlayer.xaml</DependentUpon>
+    <Compile Include="Controls\VideoPlayer.xaml.cs">
+      <DependentUpon>VideoPlayer.xaml</DependentUpon>
     </Compile>
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Images\BitmapSourceExtensions.cs" />
@@ -328,7 +328,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Dialog\WindowVideoPlayer.xaml">
+    <Page Include="Controls\VideoPlayer.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -417,7 +417,7 @@
     <Compile Include="Controls\HelpUserControl.xaml.cs">
       <DependentUpon>HelpUserControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Images\MarkableImageCanvas.cs" />
+    <Compile Include="Images\MarkableCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
     <Compile Include="Util\UserRegistrySettings.cs" />
     <Compile Include="Controls\DataEntryControls.xaml.cs">
@@ -498,8 +498,8 @@
     <Resource Include="Resources\NoSelectableFile.jpg" />
     <Resource Include="Resources\CorruptFile.jpg" />
     <Resource Include="Resources\FileNoLongerAvailable.jpg" />
-    <Resource Include="Resources\play_icon.png" />
-    <Resource Include="Resources\pause_icon.png" />
+    <Resource Include="Resources\VideoPlayIcon.png" />
+    <Resource Include="Resources\VideoPauseIcon.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="version.xml" />

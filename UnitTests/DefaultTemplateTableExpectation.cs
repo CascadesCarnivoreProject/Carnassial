@@ -56,7 +56,7 @@ namespace Carnassial.UnitTests
             this.NoteWithCustomDataLabel.TextBoxWidth = 200;
             this.NoteWithCustomDataLabel.Tooltip = "Note with custom label.";
             this.FlagWithCustomDataLabel = ControlExpectations.CreateFlag(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, id++);
-            this.FlagWithCustomDataLabel.DefaultValue = Constant.Boolean.True;
+            this.FlagWithCustomDataLabel.DefaultValue = Boolean.TrueString;
             this.FlagWithCustomDataLabel.Label = "FlagWithCustomLabel";
             this.FlagWithCustomDataLabel.List = Constant.ControlDefault.Value;
             this.FlagWithCustomDataLabel.TextBoxWidth = 30;

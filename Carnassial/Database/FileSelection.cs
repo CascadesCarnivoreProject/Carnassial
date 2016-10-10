@@ -2,13 +2,13 @@
 {
     public enum FileSelection
     {
-        // image selections also used as image qualities
+        // file selections also used as image qualities
         Ok,
-        CorruptFile,
+        Corrupt,
         Dark,
-        FileNoLongerAvailable,
+        NoLongerAvailable,
 
-        // image selections only
+        // file selections only
         All,
         MarkedForDeletion,
         Custom
