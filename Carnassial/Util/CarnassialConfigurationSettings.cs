@@ -5,22 +5,14 @@ namespace Carnassial.Util
 {
     public class CarnassialConfigurationSettings
     {
-        public static Uri GetLatestReleaseAddress()
+        public static Uri GetLatestReleaseApiAddress()
         {
-            Uri releases = CarnassialConfigurationSettings.GetReleasesAddress();
-            if (releases == null)
-            {
-                return null;
-            }
-
-            UriBuilder latestRelease = new UriBuilder(releases);
-            latestRelease.Path += "/latest";
-            return latestRelease.Uri;
+            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.ApiBaseAddress, Constant.ApplicationSettings.GithubOrganizationAndRepo, "releases", "latest");
         }
 
-        public static Uri GetReleasesAddress()
+        public static Uri GetReleasesBrowserAddress()
         {
-            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.ApiBaseAddress, Constant.ApplicationSettings.GithubOrganizationAndRepo, "releases");
+            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.BaseAddress, Constant.ApplicationSettings.GithubOrganizationAndRepo, "releases");
         }
 
         private static Uri GetUriSetting(Uri baseAddress, string key, params string[] additionalPath)

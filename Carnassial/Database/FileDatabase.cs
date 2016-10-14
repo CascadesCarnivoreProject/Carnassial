@@ -40,18 +40,18 @@ namespace Carnassial.Database
 
         public bool OrderFilesByDateTime { get; set; }
 
-        public List<string> TemplateSynchronizationIssues { get; private set; }
+        public List<string> ControlSynchronizationIssues { get; private set; }
 
         private FileDatabase(string filePath)
             : base(filePath)
         {
+            this.ControlSynchronizationIssues = new List<string>();
             this.DataLabelFromStandardControlType = new Dictionary<string, string>();
             this.disposed = false;
             this.FolderPath = Path.GetDirectoryName(filePath);
             this.FileName = Path.GetFileName(filePath);
             this.FileTableColumnsByDataLabel = new Dictionary<string, FileTableColumn>();
             this.OrderFilesByDateTime = false;
-            this.TemplateSynchronizationIssues = new List<string>();
         }
 
         public static FileDatabase CreateOrOpen(string filePath, TemplateDatabase templateDatabase, bool orderFilesByDate, CustomSelectionOperator customSelectionTermCombiningOperator)
@@ -258,15 +258,15 @@ namespace Carnassial.Database
             List<string> dataLabelsInTemplateButNotFileDatabase = templateDataLabels.Except(dataLabels).ToList();
             foreach (string dataLabel in dataLabelsInTemplateButNotFileDatabase)
             {
-                this.TemplateSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the template, but nothing matches that in the file database." + Environment.NewLine);
+                this.ControlSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the template, but nothing matches that in the file database." + Environment.NewLine);
             }
             List<string> dataLabelsInIFileButNotTemplateDatabase = dataLabels.Except(templateDataLabels).ToList();
             foreach (string dataLabel in dataLabelsInIFileButNotTemplateDatabase)
             {
-                this.TemplateSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the file database, but nothing matches that in the template." + Environment.NewLine);
+                this.ControlSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the file database, but nothing matches that in the template." + Environment.NewLine);
             }
 
-            if (this.TemplateSynchronizationIssues.Count == 0)
+            if (this.ControlSynchronizationIssues.Count == 0)
             {
                 foreach (string dataLabel in dataLabels)
                 {
@@ -275,7 +275,7 @@ namespace Carnassial.Database
 
                     if (fileDatabaseControl.Type != templateControl.Type)
                     {
-                        this.TemplateSynchronizationIssues.Add(String.Format("- The field with DataLabel '{0}' is of type '{1}' in the image data file but of type '{2}' in the template.{3}", dataLabel, fileDatabaseControl.Type, templateControl.Type, Environment.NewLine));
+                        this.ControlSynchronizationIssues.Add(String.Format("- The field with DataLabel '{0}' is of type '{1}' in the image data file but of type '{2}' in the template.{3}", dataLabel, fileDatabaseControl.Type, templateControl.Type, Environment.NewLine));
                     }
 
                     List<string> fileDatabaseChoices = fileDatabaseControl.GetChoices();
@@ -283,13 +283,13 @@ namespace Carnassial.Database
                     List<string> choiceValuesRemovedInTemplate = fileDatabaseChoices.Except(templateChoices).ToList();
                     foreach (string removedValue in choiceValuesRemovedInTemplate)
                     {
-                        this.TemplateSynchronizationIssues.Add(String.Format("- The choice with DataLabel '{0}' allows the value of '{1}' in the image data file but not in the template.{2}", dataLabel, removedValue, Environment.NewLine));
+                        this.ControlSynchronizationIssues.Add(String.Format("- The choice with DataLabel '{0}' allows the value of '{1}' in the image data file but not in the template.{2}", dataLabel, removedValue, Environment.NewLine));
                     }
                 }
             }
 
             // if there are no synchronization difficulties synchronize the image database's TemplateTable with the template's TemplateTable          
-            if (this.TemplateSynchronizationIssues.Count == 0)
+            if (this.ControlSynchronizationIssues.Count == 0)
             {
                 foreach (string dataLabel in dataLabels)
                 {

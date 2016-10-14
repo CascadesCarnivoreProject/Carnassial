@@ -18,7 +18,7 @@ namespace Carnassial.Controls
         }
 
         public DataEntryDateTime(ControlRow control, DataEntryControls styleProvider) : 
-            base(control, styleProvider, null, ControlLabelStyle.LabelCodeBar)
+            base(control, styleProvider, null, ControlLabelStyle.DefaultLabel)
         {
             // configure the various elements
             this.Container.ToolTip = "Enter a date/time";

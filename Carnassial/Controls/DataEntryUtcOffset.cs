@@ -18,7 +18,7 @@ namespace Carnassial.Controls
         }
 
         public DataEntryUtcOffset(ControlRow control, DataEntryControls styleProvider) :
-            base(control, styleProvider, null, ControlLabelStyle.LabelCodeBar)
+            base(control, styleProvider, null, ControlLabelStyle.DefaultLabel)
         {
         }
 

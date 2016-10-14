@@ -8,8 +8,11 @@
       <Value>csv</Value>
       <Value>dd-MMM-yyyy</Value>
       <Value>Markable</Value>
+      <Value>Mddnnnn</Value>
       <Value>metatag</Value>
       <Value>metatags</Value>
+      <Value>MMddnnnn</Value>
+      <Value>nnnn</Value>
       <Value>rgb</Value>
       <Value>xaml</Value>
     </CollectionProperty>

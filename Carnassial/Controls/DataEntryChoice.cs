@@ -25,7 +25,7 @@ namespace Carnassial.Controls
         }
 
         public DataEntryChoice(ControlRow control, DataEntryControls styleProvider)
-            : base(control, styleProvider, ControlContentStyle.ComboBoxCodeBar, ControlLabelStyle.LabelCodeBar)
+            : base(control, styleProvider, ControlContentStyle.ChoiceComboBox, ControlLabelStyle.DefaultLabel)
         {
             // The look of the combobox
             this.ContentControl.Height = 25;

@@ -118,15 +118,6 @@
                     </GradientStopCollection>
                 </GradientBrush.GradientStops>
             </LinearGradientBrush>
-
-            <SolidColorBrush x:Key="DisabledBorderBrush" Color="#AAA" />
-            <SolidColorBrush x:Key="SolidBorderBrush" Color="#888" />
-            <SolidColorBrush x:Key="LightBorderBrush" Color="#AAA" />
-
-            <!-- Miscellaneous Brushes For Checkbox Style-->
-            <SolidColorBrush x:Key="GlyphBrush" Color="#444" />
-            <SolidColorBrush x:Key="LightColorBrush" Color="#DDD" />
-
             <ToolTip x:Key="DefaultValueToolTip">
                 <TextBlock>An optional default data value that will be displayed to the analyst</TextBlock>
             </ToolTip>
@@ -182,19 +173,6 @@
                 <TextBlock>A list of items displayed as a menu of choices. Type in new items; right click on an item to edit, move or delete it.</TextBlock>
             </ToolTip>
             <local:CellTextBlockConverter x:Key="CellTextBlockConverter" />
-            <Style x:Key="ComboBoxCodeBar" TargetType="ComboBox" >
-                <Setter Property="HorizontalAlignment" Value="Left"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Padding" Value="5,4,5,5"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="BorderBrush" Value="LightBlue"/>
-                <Setter Property="FontWeight" Value="Normal" />
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="Height" Value="25" />
-                <Setter Property="Focusable" Value="True" />
-                <Setter Property="IsReadOnly" Value="False" />
-                <Setter Property="IsEditable" Value="False" />
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
     <Grid>

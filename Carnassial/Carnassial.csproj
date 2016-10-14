@@ -194,6 +194,7 @@
       <DependentUpon>DateTimeLinearCorrection.xaml</DependentUpon>
     </Compile>
     <Compile Include="Github\GithubAsset.cs" />
+    <Compile Include="Images\FrameworkElementExtensions.cs" />
     <Compile Include="Util\CarnassialConfigurationSettings.cs" />
     <Compile Include="Util\DataGridExtensions.cs" />
     <Compile Include="Util\DateTimeExtensions.cs" />
@@ -211,7 +212,7 @@
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
     <Compile Include="Database\FileTableEnumerator.cs" />
-    <Compile Include="Images\FeedbackTuple.cs" />
+    <Compile Include="Dialog\DateTimeRereadFeedbackTuple.cs" />
     <Compile Include="Database\DateTimeAdjustment.cs" />
     <Compile Include="Images\ImageDifference.cs" />
     <Compile Include="Images\ImageQuality.cs" />
@@ -232,8 +233,8 @@
     <Compile Include="Dialog\About.xaml.cs">
       <DependentUpon>About.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\ChooseDatabaseFile.xaml.cs">
-      <DependentUpon>ChooseDatabaseFile.xaml</DependentUpon>
+    <Compile Include="Dialog\ChooseFileDatabase.xaml.cs">
+      <DependentUpon>ChooseFileDatabase.xaml</DependentUpon>
     </Compile>
     <Compile Include="Dialog\CustomViewSelection.xaml.cs">
       <DependentUpon>CustomViewSelection.xaml</DependentUpon>
@@ -260,7 +261,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Dialog\ChooseDatabaseFile.xaml">
+    <Page Include="Dialog\ChooseFileDatabase.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

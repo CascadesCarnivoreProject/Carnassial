@@ -78,8 +78,7 @@ namespace Carnassial
         // see also ControlLabelStyle and ControlContentStyle
         public static class ControlStyle
         {
-            public const string ComboBoxCodeBar = "ComboBoxCodeBar";
-            public const string StackPanelCodeBar = "StackPanelCodeBar";
+            public const string ContainerStyle = "ContainerStyle";
         }
 
         public static class ControlDefault
@@ -129,6 +128,7 @@ namespace Carnassial
             public const long DefaultFileID = 1;
             public const string ImageSetDefaultLog = "Add text here";
             public const long ImageSetRowID = 1;
+            public const long InvalidID = -1;
             public const int InvalidRow = -1;
             public const int RowsPerInsert = 100;
 
@@ -273,6 +273,12 @@ namespace Carnassial
             public const double ZoomMinimum = 1;          // minimum amount of zoom
         }
 
+        public static class Manufacturer
+        {
+            public const string Bushnell = "Bushnell";
+            public static readonly TimeSpan BushnellHybridVideoLag = TimeSpan.FromSeconds(2.0);
+        }
+
         public static class Registry
         {
             public static class CarnassialKey
@@ -342,7 +348,8 @@ namespace Carnassial
             public const double DesiredMaximumImageRendersPerSecondLowerBound = 2.0;
             public const double DesiredMaximumImageRendersPerSecondDefault = 6.0;
             public const double DesiredMaximumImageRendersPerSecondUpperBound = 12.0;
-            public const int MaximumRenderAttempts = 100;
+            public const int MaximumBlackFrameAttempts = 5;
+            public const int MaximumRenderAttempts = 10;
             public const int SleepForImageRenderInterval = 100;
 
             public static readonly TimeSpan PollIntervalForVideoLoad = TimeSpan.FromMilliseconds(1.0);

@@ -1,11 +1,11 @@
-﻿namespace Carnassial.Images
+﻿namespace Carnassial.Dialog
 {
-    public class FeedbackTuple
+    public class DateTimeRereadFeedbackTuple
     {
         public string FileName { get; set; }
         public string Message { get; set; }
 
-        public FeedbackTuple(string fileName, string message)
+        public DateTimeRereadFeedbackTuple(string fileName, string message)
         {
             this.FileName = fileName;
             this.Message = message;

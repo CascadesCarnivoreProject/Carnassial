@@ -33,11 +33,6 @@ namespace Carnassial.Database
             return (TEnum)Enum.Parse(typeof(TEnum), fieldAsString);
         }
 
-        public static long GetID(this DataRow row)
-        {
-            return row.GetLongField(Constant.DatabaseColumn.ID);
-        }
-
         public static int GetIntegerField(this DataRow row, string column)
         {
             string fieldAsString = row.GetStringField(column);

@@ -24,7 +24,7 @@ namespace Carnassial.Controls
         }
 
         public DataEntryNote(ControlRow control, List<string> autocompletions, DataEntryControls styleProvider) : 
-            base(control, styleProvider, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.LabelCodeBar)
+            base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.DefaultLabel)
         {
             this.ContentControl.Autocompletions = autocompletions;
             this.ContentChanged = false;

@@ -35,7 +35,7 @@ namespace Carnassial.Controls
 
             // Create the stack panel
             this.Container = new StackPanel();
-            Style style = styleProvider.FindResource(Constant.ControlStyle.StackPanelCodeBar) as Style;
+            Style style = styleProvider.FindResource(Constant.ControlStyle.ContainerStyle) as Style;
             this.Container.Style = style;
 
             // use the containers's tag to point back to this so event handlers can access the DataEntryControl

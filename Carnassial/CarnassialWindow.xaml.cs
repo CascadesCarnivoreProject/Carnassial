@@ -32,7 +32,7 @@ namespace Carnassial
     {
         private DataEntryHandler dataHandler;
         private bool disposed;
-        private List<MarkersForCounter> markersOnCurrentImage;
+        private List<MarkersForCounter> markersOnCurrentFile;
         private string mostRecentImageAddFolderPath;
 
         // speech feedback
@@ -155,7 +155,7 @@ namespace Carnassial
             // check for updates
             if (DateTime.UtcNow - this.state.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
             {
-                Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseAddress();
+                Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
                 if (latestVersionAddress == null)
                 {
                     return;
@@ -274,9 +274,9 @@ namespace Carnassial
             FileDatabase fileDatabase = FileDatabase.CreateOrOpen(fileDatabaseFilePath, templateDatabase, this.state.OrderFilesByDateTime, this.state.CustomSelectionTermCombiningOperator);
             templateDatabase.Dispose();
 
-            if (fileDatabase.TemplateSynchronizationIssues.Count > 0)
+            if (fileDatabase.ControlSynchronizationIssues.Count > 0)
             {
-                TemplateSynchronization templatesNotCompatibleDialog = new TemplateSynchronization(fileDatabase.TemplateSynchronizationIssues, this);
+                TemplateSynchronization templatesNotCompatibleDialog = new TemplateSynchronization(fileDatabase.ControlSynchronizationIssues, this);
                 bool? result = templatesNotCompatibleDialog.ShowDialog();
                 if (result == true)
                 {
@@ -490,12 +490,9 @@ namespace Carnassial
             };
             backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
-                // hide the feedback panel, show the main interface
+                // hide the feedback bar, show the file slider
                 this.FeedbackControl.Visibility = Visibility.Collapsed;
-                this.FeedbackControl.Image.Source = null;
-
                 this.FileNavigatorSlider.Visibility = Visibility.Visible;
-                this.MarkableCanvas.Visibility = Visibility.Visible;
 
                 this.OnFileLoadingComplete(true);
 
@@ -503,12 +500,11 @@ namespace Carnassial
                 this.MaybeShowFileCountsDialog(true);
             };
 
-            // update UI for import
+            // update UI for import (visibility is inverse of RunWorkerCompleted)
             this.FeedbackControl.Visibility = Visibility.Visible;
             this.FileNavigatorSlider.Visibility = Visibility.Collapsed;
-            this.MarkableCanvas.Visibility = Visibility.Collapsed;
+            this.Feedback(null, 0, "Examining files...");
             this.ImageSetPane.IsActive = true;
-            this.Feedback(null, 0, "Examining images...");
 
             // start import and return
             backgroundWorker.RunWorkerAsync();
@@ -526,14 +522,14 @@ namespace Carnassial
 
             string databaseFileName;
             string directoryPath = Path.GetDirectoryName(templateDatabasePath);
-            string[] files = Directory.GetFiles(directoryPath, "*.ddb");
-            if (files.Length == 1)
+            string[] fileDatabasePaths = Directory.GetFiles(directoryPath, "*.ddb");
+            if (fileDatabasePaths.Length == 1)
             {
-                databaseFileName = Path.GetFileName(files[0]); // Get the file name, excluding the path
+                databaseFileName = Path.GetFileName(fileDatabasePaths[0]); // Get the file name, excluding the path
             }
-            else if (files.Length > 1)
+            else if (fileDatabasePaths.Length > 1)
             {
-                ChooseDatabaseFile chooseDatabaseFile = new ChooseDatabaseFile(files, this);
+                ChooseFileDatabase chooseDatabaseFile = new ChooseFileDatabase(fileDatabasePaths, templateDatabasePath, this);
                 bool? result = chooseDatabaseFile.ShowDialog();
                 if (result == true)
                 {
@@ -569,7 +565,7 @@ namespace Carnassial
         {
             if (bitmap != null)
             {
-                this.FeedbackControl.Image.Source = bitmap;
+                this.MarkableCanvas.SetNewImage(bitmap, null);
             }
             this.FeedbackControl.Message.Content = message;
             this.FeedbackControl.ProgressBar.Value = percent;
@@ -645,7 +641,6 @@ namespace Carnassial
             // always enable at top level when an image set exists so that image set advanced options are accessible
             this.MenuItemOptions.IsEnabled = true;
             this.MenuItemAudioFeedback.IsEnabled = filesSelected;
-            this.MenuItemMagnifyingGlass.IsEnabled = filesSelected;
             this.MenuItemDisplayMagnifier.IsChecked = this.dataHandler.FileDatabase.ImageSet.MagnifyingGlassEnabled;
             this.MenuItemDialogsOnOrOff.IsEnabled = filesSelected;
             this.MenuItemAdvancedCarnassialOptions.IsEnabled = filesSelected;
@@ -967,51 +962,47 @@ namespace Carnassial
             }
         }
 
-        // Cycle through the image enhancements in the order current, then previous and next differenced images.
-        // Create the differenced image if needed
-        // For display efficiency, cache the differenced image.
-        private void ViewPreviousOrNextDifference()
+        // Cycle through difference images in the order current, then previous and next differenced images.
+        // Create and cache the differenced images.
+        private void TryViewPreviousOrNextDifference()
         {
-            // Note:  No matter what image we are viewing, the source image will have already been cached before entering this function
-            // Go to the next image in the cycle we want to show.
-            this.dataHandler.ImageCache.MoveToNextStateInPreviousNextDifferenceCycle();
-
-            // If we are supposed to display the unaltered image, do it and get out of here.
-            // The unaltered image will always be cached at this point, so there is no need to check.
-            if (this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Unaltered)
+            if (this.dataHandler == null || 
+                this.dataHandler.ImageCache == null || 
+                this.dataHandler.ImageCache.Current == null ||
+                this.dataHandler.ImageCache.Current.IsVideo)
             {
-                this.MarkableCanvas.SetDisplayImage(this.dataHandler.ImageCache.GetCurrentImage());
-
-                // Check if its a corrupted image
-                if (!this.dataHandler.ImageCache.Current.IsDisplayable())
-                {
-                    // TODO AS WE MAY HAVE TO GET THE INDEX OF THE NEXT IN CYCLE IMAGE???
-                    this.statusBar.SetMessage(String.Format("Image is {0}.", this.dataHandler.ImageCache.Current.ImageQuality));
-                }
-                else
-                {
-                    this.statusBar.ClearMessage();
-                }
                 return;
             }
 
-            // If we don't have the cached difference image, generate and cache it.
+            this.dataHandler.ImageCache.MoveToNextStateInPreviousNextDifferenceCycle();
+            if (this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Unaltered)
+            {
+                // unaltered image should be cached
+                BitmapSource unalteredImage = this.dataHandler.ImageCache.GetCurrentImage();
+                Debug.Assert(unalteredImage != null, "Unaltered image not available from image cache.");
+                this.MarkableCanvas.SetDisplayImage(unalteredImage);
+                this.statusBar.ClearMessage();
+                return;
+            }
+
+            // generate and cache difference image if needed
             if (this.dataHandler.ImageCache.GetCurrentImage() == null)
             {
                 ImageDifferenceResult result = this.dataHandler.ImageCache.TryCalculateDifference();
                 switch (result)
                 {
                     case ImageDifferenceResult.CurrentImageNotAvailable:
-                        this.statusBar.SetMessage("Differences can't be shown unless the current file be loaded");
+                        this.statusBar.SetMessage("Difference can't be shown as the current file is not a displayable image (typically it's a video, missing, or corrupt).");
                         return;
                     case ImageDifferenceResult.NextImageNotAvailable:
                     case ImageDifferenceResult.PreviousImageNotAvailable:
-                        this.statusBar.SetMessage(String.Format("View of differences compared to {0} file not available", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next"));
+                        this.statusBar.SetMessage(String.Format("View of difference from {0} file unavailable as it is not a displayable image (typically it's a video, missing, or corrupt).", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next"));
                         return;
                     case ImageDifferenceResult.NotCalculable:
-                        this.statusBar.SetMessage(String.Format("{0} file is not compatible with {1}", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.dataHandler.ImageCache.Current.FileName));
+                        this.statusBar.SetMessage(String.Format("{0} file is not compatible with {1}, most likely because it's a different size.", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.dataHandler.ImageCache.Current.FileName));
                         return;
                     case ImageDifferenceResult.Success:
+                        this.statusBar.SetMessage(String.Format("Viewing difference from {0} file.", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next"));
                         break;
                     default:
                         throw new NotSupportedException(String.Format("Unhandled difference result {0}.", result));
@@ -1022,39 +1013,49 @@ namespace Carnassial
             // the magnifying glass always displays the original non-diferenced image so ImageToDisplay is updated and ImageToMagnify left unchnaged
             // this allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
             this.MarkableCanvas.SetDisplayImage(this.dataHandler.ImageCache.GetCurrentImage());
-            this.statusBar.SetMessage("Viewing differences compared to " + (this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next") + " file");
         }
 
-        private void ViewCombinedDifference()
+        private void TryViewCombinedDifference()
         {
-            // If we are in any state other than the unaltered state, go to the unaltered state, otherwise the combined diff state
-            this.dataHandler.ImageCache.MoveToNextStateInCombinedDifferenceCycle();
-            if (this.dataHandler.ImageCache.CurrentDifferenceState != ImageDifference.Combined)
+            if (this.dataHandler == null ||
+                this.dataHandler.ImageCache == null ||
+                this.dataHandler.ImageCache.Current == null ||
+                this.dataHandler.ImageCache.Current.IsVideo)
             {
-                this.MarkableCanvas.SetDisplayImage(this.dataHandler.ImageCache.GetCurrentImage());
+                return;
+            }
+
+            this.dataHandler.ImageCache.MoveToNextStateInCombinedDifferenceCycle();
+            if (this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Unaltered)
+            {
+                // unaltered image should be cached
+                BitmapSource unalteredImage = this.dataHandler.ImageCache.GetCurrentImage();
+                Debug.Assert(unalteredImage != null, "Unaltered image not available from image cache.");
+                this.MarkableCanvas.SetDisplayImage(unalteredImage);
                 this.statusBar.ClearMessage();
                 return;
             }
 
-            // Generate the differenced image if it's not cached
+            // generate and cache difference image if needed
             if (this.dataHandler.ImageCache.GetCurrentImage() == null)
             {
                 ImageDifferenceResult result = this.dataHandler.ImageCache.TryCalculateCombinedDifference(this.state.DifferenceThreshold);
                 switch (result)
                 {
                     case ImageDifferenceResult.CurrentImageNotAvailable:
-                        this.statusBar.SetMessage("Combined differences can't be shown unless the current file be loaded");
+                        this.statusBar.SetMessage("Combined differences can't be shown since the current file is not a loadable image (typically it's a video, missing, or corrupt).");
                         return;
                     case ImageDifferenceResult.NextImageNotAvailable:
-                        this.statusBar.SetMessage("Combined differences can't be shown unless the next file can be loaded");
+                        this.statusBar.SetMessage("Combined differences can't be shown since the next file is not a loadable image (typically it's a video, missing, or corrupt).");
                         return;
                     case ImageDifferenceResult.NotCalculable:
-                        this.statusBar.SetMessage(String.Format("Previous or next file is not compatible with {0}", this.dataHandler.ImageCache.Current.FileName));
+                        this.statusBar.SetMessage(String.Format("Previous or next file is not compatible with {0}, most likely because it's a different size.", this.dataHandler.ImageCache.Current.FileName));
                         return;
                     case ImageDifferenceResult.PreviousImageNotAvailable:
-                        this.statusBar.SetMessage("Combined differences can't be shown unless the previous file can be loaded");
+                        this.statusBar.SetMessage("Combined differences can't be shown since the previous file is not a loadable image (typically it's a video, missing, or corrupt).");
                         return;
                     case ImageDifferenceResult.Success:
+                        this.statusBar.SetMessage("Viewing differences from both next and previous files.");
                         break;
                     default:
                         throw new NotSupportedException(String.Format("Unhandled combined difference result {0}.", result));
@@ -1064,7 +1065,6 @@ namespace Carnassial
             // display differenced image
             // see above remarks about not modifying ImageToMagnify
             this.MarkableCanvas.SetDisplayImage(this.dataHandler.ImageCache.GetCurrentImage());
-            this.statusBar.SetMessage("Viewing differences compared to both the next and previous files");
         }
 
         private void ImageNavigatorSlider_DragCompleted(object sender, DragCompletedEventArgs args)
@@ -1166,8 +1166,8 @@ namespace Carnassial
             // If there is no image to show, then show an image indicating the empty image set.
             if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount < 1)
             {
-                this.MarkableCanvas.SetNewImage(Constant.Images.NoSelectableFile);
-                this.markersOnCurrentImage = null;
+                this.MarkableCanvas.SetNewImage(Constant.Images.NoSelectableFile, null);
+                this.markersOnCurrentFile = null;
                 this.MarkableCanvas_UpdateMarkers();
 
                 // We could invalidate the cache here, but it will be reset anyways when images are loaded. 
@@ -1212,24 +1212,45 @@ namespace Carnassial
 
             this.FileNavigatorSlider.Value = fileIndex;
 
-            // get and display the new image if the image changed
-            // this avoids unnecessary image reloads and refreshes in cases where ShowImage() is just being called to refresh controls
-            // the image row can't be tested against as its meaning changes when the selection is changed; use the image ID as that's both
-            // unique and immutable
+            // display new file if the file changed
+            // This avoids unnecessary image reloads and refreshes in cases where ShowFile() is just being called to refresh controls.
             if (newFileToDisplay)
             {
+                this.markersOnCurrentFile = this.dataHandler.FileDatabase.GetMarkersOnFile(this.dataHandler.ImageCache.Current.ID);
+                List<Marker> displayMarkers = this.GetDisplayMarkers(false);
+
                 if (this.dataHandler.ImageCache.Current.IsVideo)
                 {
-                    this.MarkableCanvas.SetNewVideo(this.dataHandler.ImageCache.Current.GetFileInfo(this.dataHandler.FileDatabase.FolderPath));
+                    this.MarkableCanvas.SetNewVideo(this.dataHandler.ImageCache.Current.GetFileInfo(this.dataHandler.FileDatabase.FolderPath), displayMarkers);
+
+                    this.MenuItemZoomIn.IsEnabled = false;
+                    this.MenuItemZoomOut.IsEnabled = false;
+                    this.MenuItemViewDifferencesCycleThrough.IsEnabled = false;
+                    this.MenuItemViewDifferencesCombined.IsEnabled = false;
+                    this.MenuItemDisplayMagnifier.IsEnabled = false;
+                    this.MenuItemMagnifierIncrease.IsEnabled = false;
+                    this.MenuItemMagnifierDecrease.IsEnabled = false;
+                    this.MenuItemBookmarkSavePanZoom.IsEnabled = false;
+                    this.MenuItemBookmarkSetPanZoom.IsEnabled = false;
+                    this.MenuItemBookmarkDefaultPanZoom.IsEnabled = false;
                 }
                 else
                 {
-                    this.MarkableCanvas.SetNewImage(this.dataHandler.ImageCache.GetCurrentImage());
+                    this.MarkableCanvas.SetNewImage(this.dataHandler.ImageCache.GetCurrentImage(), displayMarkers);
+
+                    this.MenuItemZoomIn.IsEnabled = true;
+                    this.MenuItemZoomOut.IsEnabled = true;
+                    this.MenuItemViewDifferencesCycleThrough.IsEnabled = true;
+                    this.MenuItemViewDifferencesCombined.IsEnabled = true;
+                    this.MenuItemDisplayMagnifier.IsEnabled = true;
+                    this.MenuItemMagnifierIncrease.IsEnabled = true;
+                    this.MenuItemMagnifierDecrease.IsEnabled = true;
+                    this.MenuItemBookmarkSavePanZoom.IsEnabled = true;
+                    this.MenuItemBookmarkSetPanZoom.IsEnabled = true;
+                    this.MenuItemBookmarkDefaultPanZoom.IsEnabled = true;
                 }
 
-                // Whenever we navigate to a new image, delete any markers that were displayed on the current image 
-                // and then draw the markers assoicated with the new image
-                this.markersOnCurrentImage = this.dataHandler.FileDatabase.GetMarkersOnFile(this.dataHandler.ImageCache.Current.ID);
+                // draw markers for this file
                 this.MarkableCanvas_UpdateMarkers();
             }
 
@@ -1304,10 +1325,10 @@ namespace Carnassial
                     }
                     break;
                 case Key.Up:                // show visual difference to next image
-                    this.ViewPreviousOrNextDifference();
+                    this.TryViewPreviousOrNextDifference();
                     break;
                 case Key.Down:              // show visual difference to previous image
-                    this.ViewCombinedDifference();
+                    this.TryViewCombinedDifference();
                     break;
                 case Key.C:
                     this.CopyPreviousValues_Click(null, null);
@@ -1360,23 +1381,22 @@ namespace Carnassial
             Keyboard.Focus(this.MarkableCanvas);
         }
 
-        // Return true if the current focus is in a textbox or combobox data control
         private bool SendKeyToDataEntryControlOrMenu(KeyEventArgs eventData)
         {
             // check if a menu is open
             // it is sufficient to check one always visible item from each top level menu (file, edit, etc.)
-            // NOTE: this must be kept in sync with 
+            // NOTE: this must be kept in sync with the menu definitions in XAML
             if (this.MenuItemExit.IsVisible || // file menu
                 this.MenuItemCopyPreviousValues.IsVisible || // edit menu
-                this.MenuItemMagnifyingGlass.IsVisible || // options menu
-                this.MenuItemViewNextImage.IsVisible || // view menu
+                this.MenuItemSkipDarkFileCheck.IsVisible || // options menu
+                this.MenuItemShowNextFile.IsVisible || // view menu
                 this.MenuItemSelectAllFiles.IsVisible || // select menu, and then the help menu...
                 this.MenuItemAbout.IsVisible)
             {
                 return true;
             }
 
-            // by default focus will be on the MarkableImageCanvas
+            // by default focus will be on the MarkableCanvas
             // opening a menu doesn't change the focus
             IInputElement focusedElement = FocusManager.GetFocusedElement(this);
             if (focusedElement == null)
@@ -1444,7 +1464,7 @@ namespace Carnassial
 
             // Remove the marker in memory and from the database
             MarkersForCounter markersForCounter = null;
-            foreach (MarkersForCounter markers in this.markersOnCurrentImage)
+            foreach (MarkersForCounter markers in this.markersOnCurrentFile)
             {
                 if (markers.Markers.Count == 0)
                 {
@@ -1492,7 +1512,7 @@ namespace Carnassial
 
             // Find markers associated with this particular control
             MarkersForCounter markersForCounter = null;
-            foreach (MarkersForCounter markers in this.markersOnCurrentImage)
+            foreach (MarkersForCounter markers in this.markersOnCurrentFile)
             {
                 if (markers.DataLabel == counter.DataLabel)
                 {
@@ -1513,66 +1533,68 @@ namespace Carnassial
             // update this counter's list of points in the database
             this.dataHandler.FileDatabase.SetMarkerPositions(this.dataHandler.ImageCache.Current.ID, markersForCounter);
 
-            this.MarkableCanvas_UpdateMarkers(true);
+            this.MarkableCanvas.Markers = this.GetDisplayMarkers(true);
             this.Speak(counter.Content + " " + counter.Label); // Speak the current count
         }
 
         private void MarkableCanvas_UpdateMarkers()
         {
-            this.MarkableCanvas_UpdateMarkers(false); // By default, we don't show the annotation
+            this.MarkableCanvas.Markers = this.GetDisplayMarkers(false); // By default, we don't show the annotation
         }
 
-        private void MarkableCanvas_UpdateMarkers(bool showAnnotation)
+        private List<Marker> GetDisplayMarkers(bool showAnnotations)
         {
-            List<Marker> markers = new List<Marker>();
-            if (this.markersOnCurrentImage != null)
+            if (this.markersOnCurrentFile == null)
             {
-                DataEntryCounter selectedCounter = this.FindSelectedCounter();
-                for (int counter = 0; counter < this.markersOnCurrentImage.Count; ++counter)
+                return null;
+            }
+
+            List<Marker> markers = new List<Marker>();
+            DataEntryCounter selectedCounter = this.FindSelectedCounter();
+            for (int counter = 0; counter < this.markersOnCurrentFile.Count; ++counter)
+            {
+                MarkersForCounter markersForCounter = this.markersOnCurrentFile[counter];
+                DataEntryControl control;
+                if (this.DataEntryControls.ControlsByDataLabel.TryGetValue(markersForCounter.DataLabel, out control) == false)
                 {
-                    MarkersForCounter markersForCounter = this.markersOnCurrentImage[counter];
-                    DataEntryControl control;
-                    if (this.DataEntryControls.ControlsByDataLabel.TryGetValue(markersForCounter.DataLabel, out control) == false)
+                    // If we can't find the counter, its likely because the control was made invisible in the template,
+                    // which means that there is no control associated with the marker. So just don't create the 
+                    // markers associated with this control. Note that if the control is later made visible in the template,
+                    // the markers will then be shown. 
+                    continue;
+                }
+
+                // Update the emphasise for each tag to reflect how the user is interacting with tags
+                DataEntryCounter currentCounter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[markersForCounter.DataLabel];
+                bool emphasize = markersForCounter.DataLabel == this.state.MouseOverCounter;
+                foreach (Marker marker in markersForCounter.Markers)
+                {
+                    // the first time through, show an annotation. Otherwise we clear the flags to hide the annotation.
+                    if (marker.Annotate && !marker.AnnotationPreviouslyShown)
                     {
-                        // If we can't find the counter, its likely because the control was made invisible in the template,
-                        // which means that there is no control associated with the marker. So just don't create the 
-                        // markers associated with this control. Note that if the control is later made visible in the template,
-                        // the markers will then be shown. 
-                        continue;
+                        marker.Annotate = true;
+                        marker.AnnotationPreviouslyShown = true;
+                    }
+                    else
+                    {
+                        marker.Annotate = false;
                     }
 
-                    // Update the emphasise for each tag to reflect how the user is interacting with tags
-                    DataEntryCounter currentCounter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[markersForCounter.DataLabel];
-                    bool emphasize = markersForCounter.DataLabel == this.state.MouseOverCounter;
-                    foreach (Marker marker in markersForCounter.Markers)
+                    if (selectedCounter != null && currentCounter.DataLabel == selectedCounter.DataLabel)
                     {
-                        // the first time through, show an annotation. Otherwise we clear the flags to hide the annotation.
-                        if (marker.Annotate && !marker.AnnotationPreviouslyShown)
-                        {
-                            marker.Annotate = true;
-                            marker.AnnotationPreviouslyShown = true;
-                        }
-                        else
-                        {
-                            marker.Annotate = false;
-                        }
-
-                        if (selectedCounter != null && currentCounter.DataLabel == selectedCounter.DataLabel)
-                        {
-                            marker.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constant.SelectionColour);
-                        }
-                        else
-                        {
-                            marker.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constant.StandardColour);
-                        }
-
-                        marker.Emphasise = emphasize;
-                        marker.Tooltip = currentCounter.Label;
-                        markers.Add(marker); 
+                        marker.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constant.SelectionColour);
                     }
+                    else
+                    {
+                        marker.Brush = (SolidColorBrush)new BrushConverter().ConvertFromString(Constant.StandardColour);
+                    }
+
+                    marker.Emphasise = emphasize;
+                    marker.Tooltip = currentCounter.Label;
+                    markers.Add(marker); 
                 }
             }
-            this.MarkableCanvas.Markers = markers;
+            return markers;
         }
 
         private void File_SubmenuOpening(object sender, RoutedEventArgs e)
@@ -2391,9 +2413,10 @@ namespace Carnassial
                 this.dataHandler.FileDatabase.OrderFilesByDateTime = this.state.OrderFilesByDateTime;
             }
             this.MenuItemOrderFilesByDateTime.IsChecked = this.state.OrderFilesByDateTime;
+            this.SelectFilesAndShowFile(this.dataHandler.ImageCache.Current.ID, this.dataHandler.FileDatabase.ImageSet.FileSelection);
         }
 
-        private void MenuItemRereadDatesfromImages_Click(object sender, RoutedEventArgs e)
+        private void MenuItemRereadDateTimesFromFiles_Click(object sender, RoutedEventArgs e)
         {
             if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedRereadDatesFromFilesPrompt,
                                                                    "'Reread dates from files...'",
@@ -2437,14 +2460,14 @@ namespace Carnassial
             this.MarkableCanvas.ScaleImage(mousePosition, false);
         }
 
-        /// <summary>Navigate to the next image in this image set</summary>
-        private void MenuItemViewNextImage_Click(object sender, RoutedEventArgs e)
+        /// <summary>Navigate to the next file in this image set</summary>
+        private void MenuItemShowNextFile_Click(object sender, RoutedEventArgs e)
         {
             this.ShowFileWithoutSliderCallback(true, ModifierKeys.None);
         }
 
-        /// <summary>Navigate to the previous image in this image set</summary>
-        private void MenuItemViewPreviousImage_Click(object sender, RoutedEventArgs e)
+        /// <summary>Navigate to the previous file in this image set</summary>
+        private void MenuItemShowPreviousFile_Click(object sender, RoutedEventArgs e)
         {
             this.ShowFileWithoutSliderCallback(false, ModifierKeys.None);
         }
@@ -2452,13 +2475,13 @@ namespace Carnassial
         /// <summary>Cycle through the image differences</summary>
         private void MenuItemViewDifferencesCycleThrough_Click(object sender, RoutedEventArgs e)
         {
-            this.ViewPreviousOrNextDifference();
+            this.TryViewPreviousOrNextDifference();
         }
 
         /// <summary>View the combined image differences</summary>
         private void MenuItemViewDifferencesCombined_Click(object sender, RoutedEventArgs e)
         {
-            this.ViewCombinedDifference();
+            this.TryViewCombinedDifference();
         }
 
         /// <summary>Show a dialog box telling the user how many images were loaded, etc.</summary>

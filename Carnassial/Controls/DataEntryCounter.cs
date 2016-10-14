@@ -29,7 +29,7 @@ namespace Carnassial.Controls
         }
 
         public DataEntryCounter(ControlRow control, DataEntryControls styleProvider) : 
-            base(control, styleProvider, ControlContentStyle.TextBoxCodeBar, ControlLabelStyle.RadioButtonCodeBar)
+            base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.CounterButton)
         {
             // Modify the context menu so it can have a propage submenu
             // TODO DISCRETIONARY: the context menu's attached to the container rather than the content?

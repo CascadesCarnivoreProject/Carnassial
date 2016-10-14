@@ -170,7 +170,7 @@ namespace Carnassial.UnitTests
                 this.ShowDialog(new About(carnassial));
                 CarnassialState state = (CarnassialState)carnassialAccessor.GetField("state");
                 this.ShowDialog(new AdvancedCarnassialOptions(state, carnassial.MarkableCanvas, carnassial));
-                this.ShowDialog(new ChooseDatabaseFile(new string[] { TestConstant.File.DefaultNewFileDatabaseFileName }, carnassial));
+                this.ShowDialog(new ChooseFileDatabase(new string[] { TestConstant.File.DefaultNewFileDatabaseFileName }, TestConstant.File.DefaultTemplateDatabaseFileName, carnassial));
 
                 this.ShowDialog(new CustomViewSelection(dataHandler.FileDatabase, carnassial));
                 this.ShowDialog(new DateCorrectAmbiguous(dataHandler.FileDatabase, carnassial));
@@ -194,7 +194,7 @@ namespace Carnassial.UnitTests
                 this.ShowDialog(new RenameFileDatabaseFile(dataHandler.FileDatabase.FileName, carnassial));
                 this.ShowDialog(new DateTimeRereadFromFiles(dataHandler.FileDatabase, carnassial));
                 this.ShowDialog(new FileCountsByQuality(dataHandler.FileDatabase.GetFileCountsBySelection(), carnassial));
-                this.ShowDialog(new TemplateSynchronization(dataHandler.FileDatabase.TemplateSynchronizationIssues, carnassial));
+                this.ShowDialog(new TemplateSynchronization(dataHandler.FileDatabase.ControlSynchronizationIssues, carnassial));
 
                 MessageBox okMessageBox = this.CreateMessageBox(carnassial, MessageBoxButton.OK, MessageBoxImage.Error);
                 this.ShowDialog(okMessageBox);

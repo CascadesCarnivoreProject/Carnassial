@@ -474,7 +474,7 @@ namespace Carnassial.UnitTests
 
             // reopen the file database to synchronize its template table with the modified table in the current template
             fileDatabase = FileDatabase.CreateOrOpen(fileDatabase.FilePath, templateDatabase, false, CustomSelectionOperator.And);
-            Assert.IsTrue(fileDatabase.TemplateSynchronizationIssues.Count == 0);
+            Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 0);
             this.VerifyTemplateDatabase(fileDatabase, fileDatabase.FilePath);
             Assert.IsTrue(fileDatabase.Controls.RowCount == numberOfStandardControls + (4 * iterations) - 2);
             DataTable templateTable = fileDatabase.Controls.ExtractDataTable();
@@ -705,18 +705,25 @@ namespace Carnassial.UnitTests
                 file.ImageQuality = writeableBitmap.IsDark(Constant.Images.DarkPixelThresholdDefault, Constant.Images.DarkPixelRatioThresholdDefault);
                 Assert.IsTrue(file.ImageQuality == FileSelection.Ok);
 
-                // see if the date can be updated from the metadata
-                // currently supported for images but not for videos
+                // for images, verify the date can be found in metadata
+                // for videos, verify the date is found in the previous image's metadata or not found if there's no previous image
                 DateTimeAdjustment dateTimeAdjustment = file.TryReadDateTimeOriginalFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
-                if (file.IsVideo)
+                if (Path.GetFileNameWithoutExtension(file.FileName) == "06260048")
                 {
-                    Assert.IsTrue(dateTimeAdjustment == DateTimeAdjustment.MetadataNotUsed);
+                    Assert.IsTrue(dateTimeAdjustment == DateTimeAdjustment.None);
+                }
+                else if (String.Equals(Path.GetExtension(file.FileName), Constant.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    Assert.IsTrue(dateTimeAdjustment == DateTimeAdjustment.None ||
+                                  dateTimeAdjustment == (DateTimeAdjustment.MetadataDate | DateTimeAdjustment.MetadataTime));
+                    DateTimeOffset fileDateTime = file.GetDateTime();
+                    Assert.IsTrue(fileDateTime.Date == TestConstant.FileExpectation.HybridVideoFileDate);
                 }
                 else
                 {
-                    Assert.IsTrue(dateTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed ||
-                                  dateTimeAdjustment == DateTimeAdjustment.MetadataTimeUsed ||
-                                  dateTimeAdjustment == DateTimeAdjustment.SameFileAndMetadataTime);
+                    Assert.IsTrue(dateTimeAdjustment == (DateTimeAdjustment.MetadataDate | DateTimeAdjustment.MetadataTime | DateTimeAdjustment.PreviousMetadata));
+                    DateTimeOffset fileDateTime = file.GetDateTime();
+                    Assert.IsTrue(fileDateTime.Date == TestConstant.FileExpectation.HybridVideoFileDate);
                 }
 
                 filesToInsert.Add(file);
@@ -741,6 +748,8 @@ namespace Carnassial.UnitTests
             // load database
             string fileDatabaseBaseFileName = TestConstant.File.DefaultFileDatabaseFileName;
             FileDatabase fileDatabase = this.CloneFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, fileDatabaseBaseFileName);
+            Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 0);
+
             fileDatabase.SelectFiles(FileSelection.All);
             Assert.IsTrue(fileDatabase.Files.RowCount > 0);
 
@@ -855,7 +864,7 @@ namespace Carnassial.UnitTests
             templateDatabase.SyncControlToDatabase(noteControl);
 
             fileDatabase = FileDatabase.CreateOrOpen(fileDatabase.FileName, templateDatabase, false, CustomSelectionOperator.And);
-            Assert.IsTrue(fileDatabase.TemplateSynchronizationIssues.Count == 5);
+            Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 5);
         }
 
         [TestMethod]

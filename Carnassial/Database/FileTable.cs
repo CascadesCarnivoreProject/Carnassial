@@ -30,6 +30,7 @@ namespace Carnassial.Database
         public ImageRow NewRow(FileInfo file)
         {
             DataRow row = this.DataTable.NewRow();
+            row[Constant.DatabaseColumn.ID] = Constant.Database.InvalidID;
             row[Constant.DatabaseColumn.File] = file.Name;
             return FileTable.CreateRow(row);
         }

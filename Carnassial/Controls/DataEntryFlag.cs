@@ -23,7 +23,7 @@ namespace Carnassial.Controls
         }
 
         public DataEntryFlag(ControlRow control, DataEntryControls styleProvider)
-            : base(control, styleProvider, ControlContentStyle.FlagCodeBar, ControlLabelStyle.LabelCodeBar)
+            : base(control, styleProvider, ControlContentStyle.FlagCheckBox, ControlLabelStyle.DefaultLabel)
         {
         }
 

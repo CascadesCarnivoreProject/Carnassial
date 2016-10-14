@@ -241,14 +241,15 @@ namespace Carnassial.UnitTests
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
 
             // files in same folder as .tdb and .ddb
-            DateTimeAdjustment martenTimeAdjustment;
-            ImageRow martenImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.InfraredMarten, out martenTimeAdjustment);
-            Assert.IsTrue(martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeOneHourLater ||
-                          martenTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
+            DateTimeAdjustment martenDateTimeAdjustment;
+            ImageRow martenImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.InfraredMarten, out martenDateTimeAdjustment);
+            Assert.IsTrue((martenDateTimeAdjustment & DateTimeAdjustment.MetadataDate) == DateTimeAdjustment.MetadataDate &&
+                          (martenDateTimeAdjustment & DateTimeAdjustment.MetadataTime) == DateTimeAdjustment.MetadataTime);
 
-            DateTimeAdjustment bobcatTimeAdjustment;
-            ImageRow bobcatImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightBobcat, out bobcatTimeAdjustment);
-            Assert.IsTrue(bobcatTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
+            DateTimeAdjustment bobcatDatetimeAdjustment;
+            ImageRow bobcatImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightBobcat, out bobcatDatetimeAdjustment);
+            Assert.IsTrue((bobcatDatetimeAdjustment & DateTimeAdjustment.MetadataDate) == DateTimeAdjustment.MetadataDate &&
+                          (bobcatDatetimeAdjustment & DateTimeAdjustment.MetadataTime) == DateTimeAdjustment.MetadataTime);
 
             fileDatabase.AddFiles(new List<ImageRow>() { martenImage, bobcatImage }, null);
             fileDatabase.SelectFiles(FileSelection.All);
@@ -283,13 +284,15 @@ namespace Carnassial.UnitTests
             // files in subfolder
             if (excludeSubfolderFiles == false)
             {
-                DateTimeAdjustment martenPairTimeAdjustment;
-                ImageRow martenPairImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out martenPairTimeAdjustment);
-                Assert.IsTrue(martenPairTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
+                DateTimeAdjustment martenPairDateTimeAdjustment;
+                ImageRow martenPairImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out martenPairDateTimeAdjustment);
+                Assert.IsTrue((martenPairDateTimeAdjustment & DateTimeAdjustment.MetadataDate) == DateTimeAdjustment.MetadataDate &&
+                              (martenPairDateTimeAdjustment & DateTimeAdjustment.MetadataTime) == DateTimeAdjustment.MetadataTime);
 
-                DateTimeAdjustment coyoteTimeAdjustment;
-                ImageRow coyoteImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out coyoteTimeAdjustment);
-                Assert.IsTrue(coyoteTimeAdjustment == DateTimeAdjustment.MetadataDateAndTimeUsed);
+                DateTimeAdjustment coyoteDatetimeAdjustment;
+                ImageRow coyoteImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out coyoteDatetimeAdjustment);
+                Assert.IsTrue((coyoteDatetimeAdjustment & DateTimeAdjustment.MetadataDate) == DateTimeAdjustment.MetadataDate &&
+                              (coyoteDatetimeAdjustment & DateTimeAdjustment.MetadataTime) == DateTimeAdjustment.MetadataTime);
 
                 fileDatabase.AddFiles(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
                 fileDatabase.SelectFiles(FileSelection.All);

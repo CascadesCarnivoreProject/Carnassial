@@ -37,7 +37,7 @@ namespace Carnassial.Editor.Util
                         stackPanel = this.CreateStackPanel(styleProvider, noteLabel, noteContent);
                         break;
                     case Constant.Control.Counter:
-                        RadioButton counterLabel = this.CreateRadioButton(styleProvider, control);
+                        RadioButton counterLabel = this.CreateCounterLabelButton(styleProvider, control);
                         TextBox coutnerContent = this.CreateTextBox(styleProvider, control);
                         stackPanel = this.CreateStackPanel(styleProvider, counterLabel, coutnerContent);
                         break;
@@ -51,7 +51,7 @@ namespace Carnassial.Editor.Util
                     case Constant.Control.FixedChoice:
                     case Constant.DatabaseColumn.ImageQuality:
                         Label choiceLabel = this.CreateLabel(styleProvider, control);
-                        ComboBox choiceContent = this.CreateComboBox(mainWindow, control);
+                        ComboBox choiceContent = this.CreateComboBox(styleProvider, control);
                         stackPanel = this.CreateStackPanel(styleProvider, choiceLabel, choiceContent);
                         break;
                     case Constant.DatabaseColumn.DateTime:
@@ -102,7 +102,7 @@ namespace Carnassial.Editor.Util
             stackPanel.Children.Add(label);
             stackPanel.Children.Add(content);
 
-            Style style = styleProvider.FindResource(Constant.ControlStyle.StackPanelCodeBar) as Style;
+            Style style = styleProvider.FindResource(Constant.ControlStyle.ContainerStyle) as Style;
             stackPanel.Style = style;
             return stackPanel;
         }
@@ -122,7 +122,7 @@ namespace Carnassial.Editor.Util
             label.Content = control.Label;
             label.ToolTip = control.Tooltip;
 
-            Style style = styleProvider.FindResource(ControlLabelStyle.LabelCodeBar.ToString()) as Style;
+            Style style = styleProvider.FindResource(ControlLabelStyle.DefaultLabel.ToString()) as Style;
             label.Style = style;
             return label;
         }
@@ -134,19 +134,19 @@ namespace Carnassial.Editor.Util
             textBox.ToolTip = control.Tooltip;
             textBox.Width = control.Width;
 
-            Style style = styleProvider.FindResource(ControlContentStyle.TextBoxCodeBar.ToString()) as Style;
+            Style style = styleProvider.FindResource(ControlContentStyle.NoteCounterTextBox.ToString()) as Style;
             textBox.Style = style;
             return textBox;
         }
 
-        private RadioButton CreateRadioButton(DataEntryControls styleProvider, ControlRow control)
+        private RadioButton CreateCounterLabelButton(DataEntryControls styleProvider, ControlRow control)
         {
             RadioButton radioButton = new RadioButton();
-            radioButton.GroupName = "A";
+            radioButton.GroupName = "DataEntryCounter";
             radioButton.Content = control.Label;
             radioButton.ToolTip = control.Tooltip;
 
-            Style style = styleProvider.FindResource(ControlLabelStyle.RadioButtonCodeBar.ToString()) as Style;
+            Style style = styleProvider.FindResource(ControlLabelStyle.CounterButton.ToString()) as Style;
             radioButton.Style = style;
             return radioButton;
         }
@@ -157,12 +157,12 @@ namespace Carnassial.Editor.Util
             checkBox.Visibility = Visibility.Visible;
             checkBox.ToolTip = control.Tooltip;
 
-            Style style = styleProvider.FindResource(ControlContentStyle.FlagCodeBar.ToString()) as Style;
+            Style style = styleProvider.FindResource(ControlContentStyle.FlagCheckBox.ToString()) as Style;
             checkBox.Style = style;
             return checkBox;
         }
 
-        private ComboBox CreateComboBox(EditorWindow styleProvider, ControlRow control)
+        private ComboBox CreateComboBox(DataEntryControls styleProvider, ControlRow control)
         {
             ComboBox comboBox = new ComboBox();
             comboBox.ToolTip = control.Tooltip;
@@ -173,7 +173,7 @@ namespace Carnassial.Editor.Util
             }
             comboBox.SelectedIndex = 0;
 
-            Style style = styleProvider.FindResource(Constant.ControlStyle.ComboBoxCodeBar) as Style;
+            Style style = styleProvider.FindResource(ControlContentStyle.ChoiceComboBox.ToString()) as Style;
             comboBox.Style = style;
             return comboBox;
         }

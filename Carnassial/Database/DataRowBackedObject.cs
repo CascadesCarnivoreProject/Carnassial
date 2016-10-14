@@ -13,7 +13,7 @@ namespace Carnassial.Database
 
         public long ID
         {
-            get { return this.Row.GetID(); }
+            get { return this.Row.GetLongField(Constant.DatabaseColumn.ID); }
         }
 
         public abstract ColumnTuplesWithWhere GetColumnTuples();

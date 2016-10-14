@@ -2,6 +2,7 @@
 using Carnassial.Util;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
@@ -33,6 +34,8 @@ namespace Carnassial.Images
 
         public void MoveToNextStateInCombinedDifferenceCycle()
         {
+            Debug.Assert((this.Current != null) && (this.Current.IsVideo == false), "No current file or current file is an image.");
+
             // if this method and MoveToNextStateInPreviousNextDifferenceCycle() returned bool they'd be consistent MoveNext() and MovePrevious()
             // however, there's no way for them to fail and there's not value in always returning true
             if (this.CurrentDifferenceState == ImageDifference.Next ||
@@ -49,6 +52,8 @@ namespace Carnassial.Images
 
         public void MoveToNextStateInPreviousNextDifferenceCycle()
         {
+            Debug.Assert((this.Current != null) && (this.Current.IsVideo == false), "No current file or current file is an image.");
+
             // If we are looking at the combined differenced image, then always go to the unaltered image.
             if (this.CurrentDifferenceState == ImageDifference.Combined)
             {
@@ -108,7 +113,7 @@ namespace Carnassial.Images
 
         public ImageDifferenceResult TryCalculateDifference()
         {
-            if (this.Current == null || this.Current.IsDisplayable() == false)
+            if (this.Current == null || this.Current.IsVideo || this.Current.IsDisplayable() == false)
             {
                 this.CurrentDifferenceState = ImageDifference.Unaltered;
                 return ImageDifferenceResult.CurrentImageNotAvailable;
@@ -151,7 +156,7 @@ namespace Carnassial.Images
             }
 
             // We need three valid images: the current one, the previous one, and the next one.
-            if (this.Current == null || this.Current.IsDisplayable() == false)
+            if (this.Current == null || this.Current.IsVideo || this.Current.IsDisplayable() == false)
             {
                 this.CurrentDifferenceState = ImageDifference.Unaltered;
                 return ImageDifferenceResult.CurrentImageNotAvailable;
@@ -198,10 +203,10 @@ namespace Carnassial.Images
             }
         }
 
-        public override bool TryMoveToFile(int imageRowIndex)
+        public override bool TryMoveToFile(int fileIndex)
         {
             bool ignored;
-            return this.TryMoveToFile(imageRowIndex, out ignored);
+            return this.TryMoveToFile(fileIndex, out ignored);
         }
 
         public bool TryMoveToFile(int fileIndex, out bool newFileToDisplay)
@@ -248,11 +253,11 @@ namespace Carnassial.Images
                         // if the bitmap cache is full make room for the incoming bitmap
                         if (this.mostRecentlyUsedIDs.IsFull())
                         {
-                            long imageIDToRemove;
-                            if (this.mostRecentlyUsedIDs.TryGetLeastRecent(out imageIDToRemove))
+                            long fileIDToRemove;
+                            if (this.mostRecentlyUsedIDs.TryGetLeastRecent(out fileIDToRemove))
                             {
                                 BitmapSource ignored;
-                                this.unalteredBitmapsByID.TryRemove(imageIDToRemove, out ignored);
+                                this.unalteredBitmapsByID.TryRemove(fileIDToRemove, out ignored);
                             }
                         }
 
@@ -277,23 +282,23 @@ namespace Carnassial.Images
             this.differenceBitmapCache[ImageDifference.Combined] = null;
         }
 
-        private bool TryGetBitmap(ImageRow image, out BitmapSource bitmap)
+        private bool TryGetBitmap(ImageRow file, out BitmapSource bitmap)
         {
             // locate the requested bitmap
-            if (this.unalteredBitmapsByID.TryGetValue(image.ID, out bitmap) == false)
+            if (this.unalteredBitmapsByID.TryGetValue(file.ID, out bitmap) == false)
             {
                 Task prefetch;
-                if (this.prefetechesByID.TryGetValue(image.ID, out prefetch))
+                if (this.prefetechesByID.TryGetValue(file.ID, out prefetch))
                 {
                     // bitmap retrieval's already in progress, so wait for it to complete
                     prefetch.Wait();
-                    bitmap = this.unalteredBitmapsByID[image.ID];
+                    bitmap = this.unalteredBitmapsByID[file.ID];
                 }
                 else
                 {
                     // synchronously load the requested bitmap from disk as it isn't cached, doesn't have a prefetch running, and is needed right now by the caller
-                    bitmap = image.LoadBitmap(this.Database.FolderPath);
-                    this.CacheBitmap(image.ID, bitmap);
+                    bitmap = file.LoadBitmap(this.Database.FolderPath);
+                    this.CacheBitmap(file.ID, bitmap);
                 }
             }
 
@@ -302,57 +307,57 @@ namespace Carnassial.Images
             return true;
         }
 
-        private bool TryGetBitmap(int imageRow, out BitmapSource bitmap)
+        private bool TryGetBitmap(int fileRow, out BitmapSource bitmap)
         {
             // get properties for the image to retrieve
-            ImageRow image;
-            if (this.TryGetImage(imageRow, out image) == false)
+            ImageRow file;
+            if (this.TryGetFile(fileRow, out file) == false)
             {
                 bitmap = null;
                 return false;
             }
 
             // get the associated bitmap
-            return this.TryGetBitmap(image, out bitmap);
+            return this.TryGetBitmap(file, out bitmap);
         }
 
-        private bool TryGetBitmapAsWriteable(int imageRow, out WriteableBitmap bitmap)
+        private bool TryGetBitmapAsWriteable(int fileRow, out WriteableBitmap bitmap)
         {
-            ImageRow image;
-            if (this.TryGetImage(imageRow, out image) == false)
+            ImageRow file;
+            if (this.TryGetFile(fileRow, out file) == false || file.IsVideo)
             {
                 bitmap = null;
                 return false;
             }
 
             BitmapSource bitmapSource;
-            if (this.TryGetBitmap(image, out bitmapSource) == false)
+            if (this.TryGetBitmap(file, out bitmapSource) == false)
             {
                 bitmap = null;
                 return false;
             }
 
             bitmap = bitmapSource.AsWriteable();
-            this.CacheBitmap(image.ID, bitmap);
+            this.CacheBitmap(file.ID, bitmap);
             return true;
         }
 
-        private bool TryGetImage(int imageRow, out ImageRow image)
+        private bool TryGetFile(int fileRow, out ImageRow file)
         {
-            if (imageRow == this.CurrentRow)
+            if (fileRow == this.CurrentRow)
             {
-                image = this.Current;
+                file = this.Current;
                 return true;
             }
 
-            if (this.Database.IsFileRowInRange(imageRow) == false)
+            if (this.Database.IsFileRowInRange(fileRow) == false)
             {
-                image = null;
+                file = null;
                 return false;
             }
 
-            image = this.Database.Files[imageRow];
-            return image.IsDisplayable();
+            file = this.Database.Files[fileRow];
+            return file.IsDisplayable();
         }
 
         private bool TryGetNextBitmapAsWriteable(out WriteableBitmap nextBitmap)
@@ -365,27 +370,27 @@ namespace Carnassial.Images
             return this.TryGetBitmapAsWriteable(this.CurrentRow - 1, out previousBitmap);
         }
 
-        private bool TryInitiateBitmapPrefetch(int rowIndex)
+        private bool TryInitiateBitmapPrefetch(int fileIndex)
         {
-            if (this.Database.IsFileRowInRange(rowIndex) == false)
+            if (this.Database.IsFileRowInRange(fileIndex) == false)
             {
                 return false;
             }
 
-            ImageRow nextImage = this.Database.Files[rowIndex];
-            if (this.unalteredBitmapsByID.ContainsKey(nextImage.ID) || this.prefetechesByID.ContainsKey(nextImage.ID))
+            ImageRow nextFile = this.Database.Files[fileIndex];
+            if (nextFile.IsVideo || this.unalteredBitmapsByID.ContainsKey(nextFile.ID) || this.prefetechesByID.ContainsKey(nextFile.ID))
             {
                 return false;
             }
 
             Task prefetch = Task.Factory.StartNew(() =>
             {
-                BitmapSource nextBitmap = nextImage.LoadBitmap(this.Database.FolderPath);
-                this.CacheBitmap(nextImage.ID, nextBitmap);
+                BitmapSource nextBitmap = nextFile.LoadBitmap(this.Database.FolderPath);
+                this.CacheBitmap(nextFile.ID, nextBitmap);
                 Task ignored;
-                this.prefetechesByID.TryRemove(nextImage.ID, out ignored);
+                this.prefetechesByID.TryRemove(nextFile.ID, out ignored);
             });
-            this.prefetechesByID.AddOrUpdate(nextImage.ID, prefetch, (long id, Task newPrefetch) => { return newPrefetch; });
+            this.prefetechesByID.AddOrUpdate(nextFile.ID, prefetch, (long id, Task newPrefetch) => { return newPrefetch; });
             return true;
         }
     }

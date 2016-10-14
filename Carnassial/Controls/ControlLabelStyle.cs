@@ -2,7 +2,7 @@
 {
     public enum ControlLabelStyle
     {
-        LabelCodeBar,
-        RadioButtonCodeBar
+        CounterButton,
+        DefaultLabel,
     }
 }

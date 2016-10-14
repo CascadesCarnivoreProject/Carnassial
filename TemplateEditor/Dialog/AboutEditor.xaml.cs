@@ -18,10 +18,10 @@ namespace Carnassial.Editor.Dialog
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
 
-            this.latestReleaseAddress = CarnassialConfigurationSettings.GetLatestReleaseAddress();
+            this.latestReleaseAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
             this.MostRecentCheckForUpdate = null;
             this.Owner = owner;
-            this.releasesAddress = CarnassialConfigurationSettings.GetReleasesAddress();
+            this.releasesAddress = CarnassialConfigurationSettings.GetReleasesBrowserAddress();
             this.Version.Text = typeof(AboutEditor).Assembly.GetName().Version.ToString();
 
             this.CheckForNewerRelease.IsEnabled = this.latestReleaseAddress != null;

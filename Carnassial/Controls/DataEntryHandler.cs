@@ -3,8 +3,6 @@ using Carnassial.Images;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -72,7 +70,7 @@ namespace Carnassial.Controls
         }
 
         /// <summary>
-        /// Copy the last non-empty value in this control preceding this image up to the current image
+        /// Copy the last non-empty value in this control preceding this file up to the current file
         /// </summary>
         public string CopyFromLastNonEmptyValue(DataEntryControl control)
         {
@@ -85,8 +83,8 @@ namespace Carnassial.Controls
             for (int previousIndex = this.ImageCache.CurrentRow - 1; previousIndex >= 0; previousIndex--)
             {
                 // Search for the row with some value in it, starting from the previous row
-                ImageRow image = this.FileDatabase.Files[previousIndex];
-                valueToCopy = image.GetValueDatabaseString(control.DataLabel);
+                ImageRow file = this.FileDatabase.Files[previousIndex];
+                valueToCopy = file.GetValueDatabaseString(control.DataLabel);
                 if (valueToCopy == null)
                 {
                     continue;
@@ -100,7 +98,7 @@ namespace Carnassial.Controls
                         (!checkForZero && !isFlag))
                     {
                         indexToCopyFrom = previousIndex;    // We found a non-empty value
-                        valueSource = image;
+                        valueSource = file;
                         break;
                     }
                 }
@@ -181,15 +179,15 @@ namespace Carnassial.Controls
         {
             bool checkForZero = control is DataEntryCounter;
             int nearestRowWithCopyableValue = -1;
-            for (int image = this.ImageCache.CurrentRow - 1; image >= 0; image--)
+            for (int fileIndex = this.ImageCache.CurrentRow - 1; fileIndex >= 0; --fileIndex)
             {
                 // Search for the row with some value in it, starting from the previous row
-                string valueToCopy = this.FileDatabase.Files[image].GetValueDatabaseString(control.DataLabel);
+                string valueToCopy = this.FileDatabase.Files[fileIndex].GetValueDatabaseString(control.DataLabel);
                 if (String.IsNullOrWhiteSpace(valueToCopy) == false)
                 {
                     if ((checkForZero && !valueToCopy.Equals("0")) || !checkForZero)
                     {
-                        nearestRowWithCopyableValue = image;    // We found a non-empty value
+                        nearestRowWithCopyableValue = fileIndex;    // We found a non-empty value
                         break;
                     }
                 }
@@ -202,8 +200,8 @@ namespace Carnassial.Controls
         /// </summary>
         public void SetDataEntryCallbacks(Dictionary<string, DataEntryControl> controlsByDataLabel)
         {
-            // Add data entry callbacks to all editable controls. When the user changes an image's attribute using a particular control,
-            // the callback updates the matching field for that image in the database.
+            // Add data entry callbacks to all editable controls. When the user changes a file's attribute using a particular control,
+            // the callback updates the matching field for that file in the database.
             foreach (KeyValuePair<string, DataEntryControl> pair in controlsByDataLabel)
             {
                 if (pair.Value.ContentReadOnly)
@@ -295,7 +293,7 @@ namespace Carnassial.Controls
             return false;
         }
 
-        // Ask the user to confirm value propagation from the last value
+        // ask the user to confirm value propagation from the last value
         private bool? ConfirmCopyForward(string text, int imagesAffected, bool checkForZero)
         {
             text = text.Trim();
@@ -317,7 +315,7 @@ namespace Carnassial.Controls
             return messageBox.ShowDialog();
         }
 
-        // Ask the user to confirm value propagation
+        // ask the user to confirm propagation to all selected files
         private bool? ConfirmCopyCurrentValueToAll(String text, int filesAffected, bool checkForZero)
         {
             text = text.Trim();
@@ -338,7 +336,7 @@ namespace Carnassial.Controls
             return messageBox.ShowDialog();
         }
 
-        // Ask the user to confirm value propagation from the last value
+        // ask the user to confirm value propagation from the last value
         private bool? ConfirmPropagateFromLastValue(String text, int imagesAffected)
         {
             text = text.Trim();
@@ -352,7 +350,7 @@ namespace Carnassial.Controls
             return messageBox.ShowDialog();
         }
 
-        // A callback allowing us to enable or disable particular context menu items
+        // enable or disable context menu items
         protected virtual void Container_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
             StackPanel stackPanel = (StackPanel)sender;
@@ -364,7 +362,7 @@ namespace Carnassial.Controls
             menuItemPropagateFromLastValue.IsEnabled = this.IsCopyFromLastNonEmptyValuePossible(control);
         }
 
-        // Whenever the text in a particular counter box changes, update the particular counter field in the database
+        // when the number in a counter changes, update the counter's field in the database
         private void CounterControl_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (this.IsProgrammaticControlUpdate)
@@ -373,30 +371,13 @@ namespace Carnassial.Controls
             }
 
             TextBox textBox = (TextBox)sender;
-            // Remove any characters that are not numbers
-            Regex rgx = new Regex("[^0-9]");
-            textBox.Text = rgx.Replace(textBox.Text, String.Empty);
-
-            // In this version of Carnassial, we allow the field tp be either a number or empty. We do allow the field to be empty (i.e., blank).
-            // If we change our minds about this, uncomment the code below and replace the regexp expression above with the Trim. 
-            // However, users have asked for empty counters, as they treat it differently from a 0.
-            // If the field is now empty, make the text a 0.  But, as this can make editing awkward, we select the 0 so that further editing will overwrite it.
-            // textBox.Text = textBox.Text.Trim();  // Don't allow leading or trailing spaces in the counter
-            // if (textBox.Text == String.Empty)
-            // {
-            // textBox.Text = "0";
-            // textBox.Text = String.Empty;
-            // textBox.SelectAll();
-            // }
-
-            // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)textBox.Tag;
             control.SetContentAndTooltip(textBox.Text);
             this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
             return;
         }
 
-        // Whenever the text in a particular fixedChoice box changes, update the particular choice field in the database
+        // when a choice changes, update the choice's field in the database
         private void ChoiceControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (this.IsProgrammaticControlUpdate)
@@ -405,13 +386,12 @@ namespace Carnassial.Controls
             }
 
             ComboBox comboBox = (ComboBox)sender;
-            // Make sure an item was actually selected (it could have been cancelled)
             if (comboBox.SelectedItem == null)
             {
+                // no item selected (probably the user cancelled)
                 return;
             }
 
-            // Get the key identifying the control, and then add its value to the database
             DataEntryControl control = (DataEntryControl)comboBox.Tag;
             control.SetContentAndTooltip(comboBox.SelectedItem.ToString());
             this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
@@ -430,7 +410,7 @@ namespace Carnassial.Controls
                 return;
             }
 
-            // update image data table and write the new DateTime to the database
+            // update file data table and write the new DateTime to the database
             this.ImageCache.Current.SetDateTimeOffset(new DateTimeOffset(dateTimePicker.Value.Value, this.ImageCache.Current.UtcOffset));
             dateTimePicker.ToolTip = DateTimeHandler.ToDisplayDateTimeString(dateTimePicker.Value.Value);
 
@@ -438,7 +418,7 @@ namespace Carnassial.Controls
             this.FileDatabase.UpdateFiles(imageToUpdate);
         }
 
-        // Whenever the checked state in a Flag  changes, update the particular choice field in the database
+        // when a flag changes checked state, update the flag's field in the database
         private void FlagControl_CheckedChanged(object sender, RoutedEventArgs e)
         {
             if (this.IsProgrammaticControlUpdate)
@@ -447,7 +427,6 @@ namespace Carnassial.Controls
             }
 
             CheckBox checkBox = (CheckBox)sender;
-            // Get the key identifying the control, and then add its value to the database
             string value = ((bool)checkBox.IsChecked) ? Boolean.TrueString : Boolean.FalseString;
             DataEntryControl control = (DataEntryControl)checkBox.Tag;
             control.SetContentAndTooltip(value);
@@ -507,7 +486,7 @@ namespace Carnassial.Controls
             MenuItem menuItemCopyForward = new MenuItem();
             menuItemCopyForward.IsCheckable = false;
             menuItemCopyForward.Header = "Copy forward to _end";
-            menuItemCopyForward.ToolTip = "The value of this field will be copied forward from this image to the last image in this set";
+            menuItemCopyForward.ToolTip = "The value of this field will be copied forward from this file to the last file in this set";
             menuItemCopyForward.Click += this.MenuItemPropagateForward_Click;
             menuItemCopyForward.Tag = control;
 

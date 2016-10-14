@@ -73,7 +73,7 @@ namespace Carnassial.Editor
             // check for updates
             if (DateTime.UtcNow - this.userSettings.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
             {
-                Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseAddress();
+                Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
                 if (latestVersionAddress == null)
                 {
                     return;

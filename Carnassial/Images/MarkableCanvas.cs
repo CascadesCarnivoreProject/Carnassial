@@ -31,6 +31,10 @@ namespace Carnassial.Images
         // the canvas to magnify contains both an image and markers so the magnifying glass view matches the display image
         private Canvas canvasToMagnify;
 
+        // render transforms
+        private ScaleTransform imageToDisplayScale;
+        private TranslateTransform imageToDisplayTranslation;
+
         private MagnifyingGlass magnifyingGlass;
         // increment for increasing or decreasing magnifying glass zoom
         private double magnifyingGlassZoomStep;
@@ -42,11 +46,6 @@ namespace Carnassial.Images
         private DateTime mouseDownTime;
         private Point mouseDownLocation;
         private Point previousMousePosition;
-
-        // render transforms
-        private ScaleTransform scaleTransform;
-        private TransformGroup transformGroup;
-        private TranslateTransform translateTransform;
 
         /// <summary>
         /// Gets the image displayed across the MarkableCanvas for image files
@@ -74,8 +73,12 @@ namespace Carnassial.Images
             }
             set
             {
+                // update markers
                 this.markers = value;
+                // render new markers and update display image
                 this.RedrawMarkers();
+                // update magnifying glass content
+                this.RedrawMagnifyingGlassIfVisible();
             }
         }
 
@@ -126,9 +129,12 @@ namespace Carnassial.Images
             set
             {
                 this.magnifyingGlass.IsEnabled = value;
-                if (value)
+                if (value && this.VideoToDisplay.Visibility != Visibility.Visible)
                 {
-                    this.magnifyingGlass.Visibility = Visibility.Visible;
+                    // draw the magnifying glass if it was just enabled and an image is being displayed
+                    // Note: the magnifying glass may immediately be hidden again if the mouse isn't over the display image.
+                    this.magnifyingGlass.Show();
+                    this.RedrawMagnifyingGlassIfVisible();
                 }
                 else
                 {
@@ -165,12 +171,12 @@ namespace Carnassial.Images
             this.bookmarkTranslation = new Point();
             this.ResetBookmark();
 
-            this.scaleTransform = new ScaleTransform(1.0, 1.0);
-            this.translateTransform = new TranslateTransform(0.0, 0.0);
+            this.imageToDisplayScale = new ScaleTransform(1.0, 1.0);
+            this.imageToDisplayTranslation = new TranslateTransform(0.0, 0.0);
 
-            this.transformGroup = new TransformGroup();
-            this.transformGroup.Children.Add(this.scaleTransform);
-            this.transformGroup.Children.Add(this.translateTransform);
+            TransformGroup transformGroup = new TransformGroup();
+            transformGroup.Children.Add(this.imageToDisplayScale);
+            transformGroup.Children.Add(this.imageToDisplayTranslation);
 
             // set up display image
             this.ImageToDisplay = new Image();
@@ -178,7 +184,7 @@ namespace Carnassial.Images
             this.ImageToDisplay.MouseDown += this.ImageOrCanvas_MouseDown;
             this.ImageToDisplay.MouseUp += this.ImageOrCanvas_MouseUp;
             this.ImageToDisplay.MouseWheel += this.ImageOrCanvas_MouseWheel;
-            this.ImageToDisplay.RenderTransform = this.transformGroup;
+            this.ImageToDisplay.RenderTransform = transformGroup;
             this.ImageToDisplay.SizeChanged += this.ImageToDisplay_SizeChanged;
             this.ImageToDisplay.VerticalAlignment = VerticalAlignment.Top;
             Canvas.SetLeft(this.ImageToDisplay, 0);
@@ -197,11 +203,13 @@ namespace Carnassial.Images
             // set up image to magnify
             this.ImageToMagnify = new Image();
             this.ImageToMagnify.HorizontalAlignment = HorizontalAlignment.Left;
+            this.ImageToMagnify.SizeChanged += this.ImageToMagnify_SizeChanged;
             this.ImageToMagnify.VerticalAlignment = VerticalAlignment.Top;
             Canvas.SetLeft(this.ImageToMagnify, 0);
             Canvas.SetTop(this.ImageToMagnify, 0);
 
             this.canvasToMagnify = new Canvas();
+            this.canvasToMagnify.SizeChanged += this.CanvasToMagnify_SizeChanged;
             this.canvasToMagnify.Children.Add(this.ImageToMagnify);
 
             // set up the magnifying glass
@@ -212,6 +220,9 @@ namespace Carnassial.Images
             this.Children.Add(this.magnifyingGlass);
 
             // event handlers for image interaction: keys, mouse handling for markers
+            // this.mouseDownLocation not initialized as it's set from the display image's mouse down handler
+            // this.mouseDownSender left as null as it's set from the display image's mouse down handler
+            // this.mouseDownTime not initialized as it's not consumed until after being set from the display image's mouse down handler
             this.MouseLeave += this.ImageOrCanvas_MouseLeave;
             this.MouseMove += this.MarkableCanvas_MouseMove;
             this.PreviewKeyDown += this.MarkableCanvas_PreviewKeyDown;
@@ -220,19 +231,25 @@ namespace Carnassial.Images
         // Return to the zoom / pan levels saved as a bookmark
         public void ApplyBookmark()
         {
-            this.scaleTransform.ScaleX = this.bookmarkScale.X;
-            this.scaleTransform.ScaleY = this.bookmarkScale.Y;
-            this.translateTransform.X = this.bookmarkTranslation.X;
-            this.translateTransform.Y = this.bookmarkTranslation.Y;
+            this.imageToDisplayScale.ScaleX = this.bookmarkScale.X;
+            this.imageToDisplayScale.ScaleY = this.bookmarkScale.Y;
+            this.imageToDisplayTranslation.X = this.bookmarkTranslation.X;
+            this.imageToDisplayTranslation.Y = this.bookmarkTranslation.Y;
             this.RedrawMarkers();
         }
 
-        private Canvas DrawMarker(Marker marker, Size canvasRenderSize, bool doTransform)
+        private void CanvasToMagnify_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            // redraw markers so they're in the right place to appear in the magnifying glass
+            this.RedrawMagnifierMarkers();
+
+            // update the magnifying glass's contents
+            this.RedrawMagnifyingGlassIfVisible();
+        }
+
+        private Canvas DrawMarker(Marker marker, Size canvasRenderSize, bool imageToDisplayMarkers)
         {
             Canvas markerCanvas = new Canvas();
-            markerCanvas.MouseRightButtonUp += new MouseButtonEventHandler(this.Marker_MouseRightButtonUp);
-            markerCanvas.MouseWheel += new MouseWheelEventHandler(this.ImageOrCanvas_MouseWheel); // Make the mouse wheel work over marks as well as the image
-
             if (marker.Tooltip.Trim() == String.Empty)
             {
                 markerCanvas.ToolTip = null;
@@ -323,9 +340,9 @@ namespace Carnassial.Images
 
             // Get the point from the marker, and convert it so that the marker will be in the right place
             Point screenPosition = Marker.ConvertRatioToPoint(marker.Position, canvasRenderSize.Width, canvasRenderSize.Height);
-            if (doTransform)
+            if (imageToDisplayMarkers)
             {
-                screenPosition = this.transformGroup.Transform(screenPosition);
+                screenPosition = this.ImageToDisplay.RenderTransform.Transform(screenPosition);
             }
 
             Canvas.SetLeft(markerCanvas, screenPosition.X - markerCanvas.Width / 2.0);
@@ -333,7 +350,9 @@ namespace Carnassial.Images
             Canvas.SetZIndex(markerCanvas, 0);
             markerCanvas.MouseDown += this.ImageOrCanvas_MouseDown;
             markerCanvas.MouseMove += this.MarkableCanvas_MouseMove;
+            markerCanvas.MouseRightButtonUp += this.Marker_MouseRightButtonUp;
             markerCanvas.MouseUp += this.ImageOrCanvas_MouseUp;
+            markerCanvas.MouseWheel += this.ImageOrCanvas_MouseWheel; // Make the mouse wheel work over marks as well as the image
             return markerCanvas;
         }
 
@@ -349,12 +368,6 @@ namespace Carnassial.Images
             }
         }
 
-        // Whenever the image size changes, refresh the markers so they appear in the correct place
-        private void ImageToDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            this.RedrawMarkers();
-        }
-
         // On Mouse down, record the location, who sent it, and the time.
         // We will use this information on move and up events to discriminate between 
         // panning/zooming vs. marking. 
@@ -365,7 +378,7 @@ namespace Carnassial.Images
             {
                 this.mouseDownLocation = e.GetPosition(this.ImageToDisplay);
                 this.mouseDownSender = (UIElement)sender;
-                this.mouseDownTime = DateTime.Now;
+                this.mouseDownTime = DateTime.UtcNow;
             }
         }
 
@@ -381,7 +394,7 @@ namespace Carnassial.Images
             this.Cursor = Cursors.Arrow;
 
             // Get the current position
-            Point mouseLocation = e.GetPosition(this.ImageToDisplay);
+            Point mousePosition = e.GetPosition(this.ImageToDisplay);
 
             // Is this the end of a translate operation, or a marking operation?
             // We decide by checking if the left button has been released, the mouse location is
@@ -389,9 +402,9 @@ namespace Carnassial.Images
             // mouse down. i.e., the use has done a rapid click and release on a small location
             if ((e.LeftButton == MouseButtonState.Released) &&
                 (sender == this.mouseDownSender) &&
-                (this.mouseDownLocation - mouseLocation).Length <= 2.0)
+                (this.mouseDownLocation - mousePosition).Length <= 2.0)
             {
-                TimeSpan timeSinceDown = DateTime.Now - this.mouseDownTime;
+                TimeSpan timeSinceDown = DateTime.UtcNow - this.mouseDownTime;
                 if (timeSinceDown.TotalMilliseconds < 200)
                 {
                     // Get the current point, and create a marker on it.
@@ -405,6 +418,7 @@ namespace Carnassial.Images
                 }
             }
 
+            // show the magnifying glass again if it was hidden during a pan
             this.RedrawMagnifyingGlassIfVisible();
         }
 
@@ -418,6 +432,20 @@ namespace Carnassial.Images
                 bool zoomIn = e.Delta > 0; // Zooming in if delta is positive, else zooming out
                 this.ScaleImage(mousePosition, zoomIn);
             }
+        }
+
+        private void ImageToDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            // when the display image size changes refresh the markers so they appear in the correct place
+            this.RedrawDisplayMarkers();
+        }
+
+        private void ImageToMagnify_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            // keep the magnifying glass canvas in sync with the magnified image size
+            // this update triggers a call to CanvasToMagnify_SizeChanged
+            this.canvasToMagnify.Width = this.ImageToMagnify.ActualWidth;
+            this.canvasToMagnify.Height = this.ImageToMagnify.ActualHeight;
         }
 
         /// <summary>
@@ -436,18 +464,18 @@ namespace Carnassial.Images
             this.MagnifyingGlassZoom += this.magnifyingGlassZoomStep;
         }
 
-        // If we move the mouse with the left mouse button press, translate the image
         private void MarkableCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            // The visibility of the magnifying glass depends on whether the mouse is over the image
-            // The magnifying glass is visible only if the current mouse position is over the image. 
-            // The the actual (transformed) bounds of the image
-            Point mousePosition = e.GetPosition(this);
+            // magnifying glass should be visible only if the current mouse position is over the display image
             if (this.magnifyingGlass.IsEnabled)
             {
-                Point transformedSize = this.transformGroup.Transform(new Point(this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight));
-                bool mouseOverImage = (mousePosition.X <= transformedSize.X) && (mousePosition.Y <= transformedSize.Y);
-                if (mouseOverImage)
+                bool mouseOverDisplayImage = false;
+                if (this.ImageToDisplay.IsVisible)
+                {
+                    mouseOverDisplayImage = this.ImageToDisplay.Contains(e.GetPosition(this.ImageToDisplay));
+                }
+
+                if (mouseOverDisplayImage)
                 {
                     this.magnifyingGlass.Visibility = Visibility.Visible;
                 }
@@ -457,31 +485,31 @@ namespace Carnassial.Images
                 }
             }
 
-            // Calculate how much time has passed since the mouse down event?
-            TimeSpan timeSinceDown = DateTime.Now - this.mouseDownTime;
-
-            // If at least WAIT_TIME milliseconds has passed
-            if (timeSinceDown >= TimeSpan.FromMilliseconds(100))
+            // panning isn't supported on videos
+            if (this.ImageToDisplay.IsVisible == false)
             {
-                // If the left button is pressed, translate (pan) across the image 
-                //  Also hide the magnifying glass so it won't be distracting
-                if (e.LeftButton == MouseButtonState.Pressed)
-                {
-                    this.Cursor = Cursors.ScrollAll;    // Change the cursor to a panning cursor
-                    this.TranslateImage(mousePosition);
-                    this.magnifyingGlass.Hide();
-                }
-                else
-                {
-                    this.canvasToMagnify.Width = this.ImageToMagnify.ActualWidth;      // Make sure that the canvas is the same size as the image
-                    this.canvasToMagnify.Height = this.ImageToMagnify.ActualHeight;
-
-                    // update the magnifying glass
-                    this.RedrawMagnifyingGlassIfVisible();
-                }
-
-                this.previousMousePosition = mousePosition;
+                return;
             }
+
+            // pan or update magnifying glass
+            // if the left button is pressed pan the image 
+            Point mousePosition = e.GetPosition(this);
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                // change to a panning cursor
+                this.Cursor = Cursors.ScrollAll;
+                // pan
+                this.TranslateImage(mousePosition);
+                // also hide the magnifying glass so it won't be distracting
+                this.magnifyingGlass.Hide();
+            }
+            else
+            {
+                // update the magnifying glass
+                this.RedrawMagnifyingGlassIfVisible();
+            }
+
+            this.previousMousePosition = mousePosition;
         }
 
         // if it's < or > key zoom out or in around the mouse point
@@ -530,8 +558,8 @@ namespace Carnassial.Images
             this.VideoToDisplay.Width = this.ActualWidth;
             this.VideoToDisplay.Height = this.ActualHeight;
 
-            this.scaleTransform.CenterX = 0.5 * this.ActualWidth;
-            this.scaleTransform.CenterY = 0.5 * this.ActualHeight;
+            this.imageToDisplayScale.CenterX = 0.5 * this.ActualWidth;
+            this.imageToDisplayScale.CenterY = 0.5 * this.ActualHeight;
 
             // clear the bookmark (if any) as it will no longer be correct
             // if needed, the bookmark could be rescaled instead
@@ -550,11 +578,22 @@ namespace Carnassial.Images
 
         private void RedrawMagnifyingGlassIfVisible()
         {
-            this.magnifyingGlass.RedrawIfVisible(NativeMethods.GetCursorPos(this),
-                                                 NativeMethods.GetCursorPos(this.ImageToDisplay),
-                                                 this.ImageToDisplay.ActualWidth,
-                                                 this.ImageToDisplay.ActualHeight,
-                                                 this.canvasToMagnify);
+            // nothing to magnify
+            if ((this.IsVisible == false) ||
+                (this.ImageToMagnify.Source == null))
+            {
+                return;
+            }
+
+            // mouse is off of display image and magnifying glass shouldn't be shown
+            Point mousePosition = NativeMethods.GetCursorPos(this.ImageToDisplay);
+            if (this.ImageToDisplay.Contains(mousePosition) == false)
+            {
+                this.magnifyingGlass.Hide();
+                return;
+            }
+
+            this.magnifyingGlass.RedrawIfVisible(this.canvasToMagnify);
         }
 
         /// <summary>
@@ -562,13 +601,20 @@ namespace Carnassial.Images
         /// </summary>
         private void RedrawMarkers()
         {
+            this.RedrawDisplayMarkers();
+            this.RedrawMagnifierMarkers();
+        }
+
+        private void RedrawDisplayMarkers()
+        {
             this.RemoveMarkers(this);
+            this.DrawMarkers(this, this.ImageToDisplay.RenderSize, true);
+        }
+
+        private void RedrawMagnifierMarkers()
+        {
             this.RemoveMarkers(this.canvasToMagnify);
-            if (this.ImageToDisplay != null)
-            {
-                this.DrawMarkers(this, this.ImageToDisplay.RenderSize, true);
-                this.DrawMarkers(this.canvasToMagnify, this.canvasToMagnify.RenderSize, false);
-            }
+            this.DrawMarkers(this.canvasToMagnify, this.canvasToMagnify.RenderSize, false);
         }
 
         // remove all markers from the canvas
@@ -602,8 +648,8 @@ namespace Carnassial.Images
         public void ScaleImage(Point mousePosition, bool zoomIn)
         {
             // nothing to do if at maximum or minimum scaling value whilst zooming in or out, respectively 
-            if ((zoomIn && this.scaleTransform.ScaleX >= this.ZoomMaximum) ||
-                (!zoomIn && this.scaleTransform.ScaleX <= Constant.MarkableCanvas.ZoomMinimum))
+            if ((zoomIn && this.imageToDisplayScale.ScaleX >= this.ZoomMaximum) ||
+                (!zoomIn && this.imageToDisplayScale.ScaleX <= Constant.MarkableCanvas.ZoomMinimum))
             {
                 return;
             }
@@ -613,21 +659,21 @@ namespace Carnassial.Images
                 // update scaling factor, keeping within maximum and minimum bounds
                 if (zoomIn)
                 {
-                    this.scaleTransform.ScaleX *= Constant.MarkableCanvas.MagnifyingGlassZoomIncrement;
-                    this.scaleTransform.ScaleX = Math.Min(this.ZoomMaximum, this.scaleTransform.ScaleX);
+                    this.imageToDisplayScale.ScaleX *= Constant.MarkableCanvas.MagnifyingGlassZoomIncrement;
+                    this.imageToDisplayScale.ScaleX = Math.Min(this.ZoomMaximum, this.imageToDisplayScale.ScaleX);
                 }
                 else
                 {
-                    this.scaleTransform.ScaleX /= Constant.MarkableCanvas.MagnifyingGlassZoomIncrement;
-                    this.scaleTransform.ScaleX = Math.Max(Constant.MarkableCanvas.ZoomMinimum, this.scaleTransform.ScaleX);
+                    this.imageToDisplayScale.ScaleX /= Constant.MarkableCanvas.MagnifyingGlassZoomIncrement;
+                    this.imageToDisplayScale.ScaleX = Math.Max(Constant.MarkableCanvas.ZoomMinimum, this.imageToDisplayScale.ScaleX);
                 }
-                this.scaleTransform.ScaleY = this.scaleTransform.ScaleX;
+                this.imageToDisplayScale.ScaleY = this.imageToDisplayScale.ScaleX;
 
-                if (this.scaleTransform.ScaleX <= Constant.MarkableCanvas.ZoomMinimum)
+                if (this.imageToDisplayScale.ScaleX <= Constant.MarkableCanvas.ZoomMinimum)
                 {
                     // no translation needed if no scaling
-                    this.translateTransform.X = 0.0;
-                    this.translateTransform.Y = 0.0;
+                    this.imageToDisplayTranslation.X = 0.0;
+                    this.imageToDisplayTranslation.Y = 0.0;
                 }
                 else
                 {
@@ -638,10 +684,10 @@ namespace Carnassial.Images
                     // as the markable canvas's size has to change.
                     // Scale transform is centered at the center of the image so translation is also calculated relative to the image center.
                     Point imageCenter = new Point(this.ImageToDisplay.ActualWidth / 2.0, this.ImageToDisplay.ActualHeight / 2.0);
-                    Point maximumTranslation = new Point(0.5 * this.scaleTransform.ScaleX * this.ImageToDisplay.ActualWidth - imageCenter.X, 0.5 * this.scaleTransform.ScaleY * this.ImageToDisplay.ActualHeight - imageCenter.Y);
+                    Point maximumTranslation = new Point(0.5 * this.imageToDisplayScale.ScaleX * this.ImageToDisplay.ActualWidth - imageCenter.X, 0.5 * this.imageToDisplayScale.ScaleY * this.ImageToDisplay.ActualHeight - imageCenter.Y);
                     Vector unconstrainedTranslation = imageCenter - mousePosition;
-                    this.translateTransform.X = Math.Max(-maximumTranslation.X, Math.Min(unconstrainedTranslation.X, maximumTranslation.X));
-                    this.translateTransform.Y = Math.Max(-maximumTranslation.Y, Math.Min(unconstrainedTranslation.Y, maximumTranslation.Y));
+                    this.imageToDisplayTranslation.X = Math.Max(-maximumTranslation.X, Math.Min(unconstrainedTranslation.X, maximumTranslation.X));
+                    this.imageToDisplayTranslation.Y = Math.Max(-maximumTranslation.Y, Math.Min(unconstrainedTranslation.Y, maximumTranslation.Y));
                 }
 
                 this.RedrawMarkers();
@@ -653,10 +699,10 @@ namespace Carnassial.Images
         {
             // a user may want to flip between completely zoomed out / normal pan settings and a saved zoom / pan setting that focuses in on a particular region
             // To do this, we save / restore the zoom pan settings of a particular view, or return to the default zoom/pan.
-            this.bookmarkTranslation.X = this.translateTransform.X;
-            this.bookmarkTranslation.Y = this.translateTransform.Y;
-            this.bookmarkScale.X = this.scaleTransform.ScaleX;
-            this.bookmarkScale.Y = this.scaleTransform.ScaleY;
+            this.bookmarkTranslation.X = this.imageToDisplayTranslation.X;
+            this.bookmarkTranslation.Y = this.imageToDisplayTranslation.Y;
+            this.bookmarkScale.X = this.imageToDisplayScale.ScaleX;
+            this.bookmarkScale.Y = this.imageToDisplayScale.ScaleY;
         }
 
         /// <summary>
@@ -668,33 +714,62 @@ namespace Carnassial.Images
         }
 
         /// <summary>
-        /// Set a wholly new image.  Clears existing markers and syncs the magnifier image to the display image.
+        /// Set a wholly new image.  Clears any existing markers and syncs the magnifier image to the display image.
         /// </summary>
-        public void SetNewImage(BitmapSource bitmapSource)
+        public void SetNewImage(BitmapSource bitmapSource, List<Marker> markers)
         {
-            this.Markers = null;
-            this.RedrawMarkers();
+            // change to new markres
+            this.markers = markers;
 
+            // initate render of new image for display
             this.ImageToDisplay.Source = bitmapSource;
+
+            // initiate render of magnified image
+            // The asynchronous chain behind this is not entirely trivial.  The links are
+            //   1) ImageToMagnify_SizeChanged fires and updates canvasToMagnify's size to match
+            //   2) CanvasToMagnify_SizeChanged fires and redraws the magnified markers since the cavas size is now known and marker positions can update
+            //   3) CanvasToMagnify_SizeChanged initiates a render on the magnifying glass to show the new image and marker positions
+            //   4) if it's visible the magnifying glass content updates
+            // This synchronization to WPF render opertations is necessary as, despite their appearance, properties like Source, Width, and Height are 
+            // asynchronous.  Other approaches therefore tend to be subject to race conditions in render order which hide or misplace markers in the 
+            // magnified view and also have a proclivity towards leaving incorrect or stale magnifying glass content on screen.
+            // 
+            // Another race exists as this.Markers can be set during the above rendering, initiating a second, concurrent marker render.  This is unavoidable
+            // due to the need to expose a marker property but is mitigated by accepting new markers through this API and performing the set above as 
+            // this.markers rather than this.Markers.
             this.ImageToMagnify.Source = bitmapSource;
 
+            // ensure display image is visible and magnifying glass is visible if it's enabled
             this.ImageToDisplay.Visibility = Visibility.Visible;
-            this.VideoToDisplay.Reset();
-            this.VideoToDisplay.Visibility = Visibility.Collapsed;
+            if (this.MagnifyingGlassEnabled)
+            {
+                this.magnifyingGlass.Show();
+            }
+
+            // ensure any previous video is stopped and hidden
+            if (this.VideoToDisplay.Visibility == Visibility.Visible)
+            {
+                this.VideoToDisplay.Reset();
+                this.VideoToDisplay.Visibility = Visibility.Collapsed;
+            }
         }
 
-        public void SetNewVideo(FileInfo videoFile)
+        public void SetNewVideo(FileInfo videoFile, List<Marker> markers)
         {
             if (videoFile.Exists == false)
             {
-                this.SetNewImage(Constant.Images.FileNoLongerAvailable);
+                this.SetNewImage(Constant.Images.FileNoLongerAvailable, markers);
                 return;
             }
 
+            this.markers = markers;
             this.VideoToDisplay.SetSource(new Uri(videoFile.FullName));
 
             this.ImageToDisplay.Visibility = Visibility.Collapsed;
+            this.magnifyingGlass.Hide();
             this.VideoToDisplay.Visibility = Visibility.Visible;
+
+            // leave the magnifying glass's enabled state unchanged so user doesn't have to constantly keep re-enabling it in hybrid image sets
         }
 
         // Given the mouse location on the image, translate the image
@@ -709,8 +784,8 @@ namespace Carnassial.Images
             double newY = center.Y + mousePosition.Y - this.previousMousePosition.Y;
 
             // get the translated image width
-            double imageWidth = this.ImageToDisplay.Width * this.scaleTransform.ScaleX;
-            double imageHeight = this.ImageToDisplay.Height * this.scaleTransform.ScaleY;
+            double imageWidth = this.ImageToDisplay.Width * this.imageToDisplayScale.ScaleX;
+            double imageHeight = this.ImageToDisplay.Height * this.imageToDisplayScale.ScaleY;
 
             // Limit the delta position so that the image stays on the screen
             if (newX - imageWidth / 2.0 >= 0.0)
@@ -732,8 +807,8 @@ namespace Carnassial.Images
             }
 
             // Translate the canvas and redraw the markers
-            this.translateTransform.X += newX - center.X;
-            this.translateTransform.Y += newY - center.Y;
+            this.imageToDisplayTranslation.X += newX - center.X;
+            this.imageToDisplayTranslation.Y += newY - center.Y;
 
             this.RedrawMarkers();
         }
@@ -747,10 +822,10 @@ namespace Carnassial.Images
         // Return to the zoomed out level, with no panning
         public void ZoomOutAllTheWay()
         {
-            this.scaleTransform.ScaleX = 1;
-            this.scaleTransform.ScaleY = 1;
-            this.translateTransform.X = 0;
-            this.translateTransform.Y = 0;
+            this.imageToDisplayScale.ScaleX = 1;
+            this.imageToDisplayScale.ScaleY = 1;
+            this.imageToDisplayTranslation.X = 0;
+            this.imageToDisplayTranslation.Y = 0;
             this.RedrawMarkers();
         }
     }

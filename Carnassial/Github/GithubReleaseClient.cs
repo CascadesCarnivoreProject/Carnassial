@@ -82,20 +82,20 @@ namespace Carnassial.Github
                 // ask the user if he would like to download the new version  
                 string title = String.Format("A new version of {0} is available.", this.applicationName);
                 MessageBox messageBox = new MessageBox(title, Application.Current.MainWindow, MessageBoxButton.YesNo);
-                messageBox.Message.What = String.Format("You a running an old release of {0}: release {1}", this.applicationName, currentVersion);
-                messageBox.Message.Reason = String.Format("A new version of {0} is available: version {1}", this.applicationName, publicallyAvailableVersion);
+                messageBox.Message.What = String.Format("You're running an old release, {0} {1}.", this.applicationName, currentVersion);
+                messageBox.Message.Reason = String.Format("A new version available, {0} {1}", this.applicationName, publicallyAvailableVersion);
                 messageBox.Message.Solution = "Select 'Yes' to go to the website and download it.";
-                messageBox.Message.Result = "The new release contain these changes:";
+                messageBox.Message.Result = "The new release contains these changes:";
                 messageBox.Message.Result += description;
                 messageBox.Message.Hint = "\u2022 We recommend downloading the latest release." + Environment.NewLine;
-                messageBox.Message.Hint += String.Format(@"\u2022 To see all changes, go to {0}.", CarnassialConfigurationSettings.GetReleasesAddress());
+                messageBox.Message.Hint += String.Format(@"\u2022 To see all changes, go to {0}.", CarnassialConfigurationSettings.GetReleasesBrowserAddress());
                 messageBox.Message.Icon = MessageBoxImage.Exclamation;
                 messageBox.ShowDialog();
             }
             else if (showNoUpdatesMessage)
             {
                 MessageBox messageBox = new MessageBox(String.Format("No updates to {0} are available.", this.applicationName), Application.Current.MainWindow);
-                messageBox.Message.Reason = String.Format("You a running the latest release of {0}, release: {1}", this.applicationName, currentVersion);
+                messageBox.Message.Reason = String.Format("You're running the latest release, {0} {1}.", this.applicationName, currentVersion);
                 messageBox.Message.Icon = MessageBoxImage.Information;
                 bool? messageBoxResult = messageBox.ShowDialog();
             }

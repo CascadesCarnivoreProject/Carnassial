@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Carnassial.Util;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -113,95 +114,99 @@ namespace Carnassial.Images
             this.lensCanvas.Children.Add(horizontalCrosshair);
         }
 
-        public void RedrawIfVisible(Point mouseLocation, Point imageControlPoint, double actualWidth, double actualHeight, Canvas canvasToMagnify)
+        // return the current angle if it matches one of the desired angle, or the the desired angle that is closest to the angle in degrees
+        private double AdjustAngle(double currentAngle, double angle1, double angle2)
         {
-            // nothing to draw
-            if ((this.IsEnabled == false) || (this.Visibility != Visibility.Visible) || (canvasToMagnify == null) || (this.Parent.ImageToMagnify.Source == null))
+            if (currentAngle == angle2)
+            {
+                return angle2;
+            }
+            else if (Math.Abs(currentAngle - angle1) > 180)
+            {
+                return angle2;
+            }
+            return angle1;
+        }
+
+        public void Hide()
+        {
+            this.Visibility = Visibility.Collapsed;
+        }
+
+        public void RedrawIfVisible(Canvas canvasToMagnify)
+        {
+            // not visible or nothing to draw
+            if ((this.IsEnabled == false) || 
+                (this.IsVisible == false) ||
+                (this.Visibility != Visibility.Visible))
             {
                 return;
             }
 
-            // Given a mouse position over the displayed image, we need to know where the equivalent position is over the magnified image (which is a different size)
-            // We do this by calculating the ratio of the point over the displayed image, and then using that to calculate the position over the cached image
-            Point ratioImageControlPoint = Marker.ConvertPointToRatio(imageControlPoint, actualWidth, actualHeight);
-            Point imageUnalteredPoint = Marker.ConvertRatioToPoint(ratioImageControlPoint, canvasToMagnify.Width, canvasToMagnify.Height);
+            // given the mouse position over the displayed image find the equivalent position in magnified image (which is a different size)
+            Point mousePosition = NativeMethods.GetCursorPos(this.Parent.ImageToDisplay);
+            Point mouseLocationRatio = Marker.ConvertPointToRatio(mousePosition, this.Parent.ImageToDisplay.ActualWidth, this.Parent.ImageToDisplay.ActualHeight);
+            Point magnifiedLocation = Marker.ConvertRatioToPoint(mouseLocationRatio, canvasToMagnify.Width, canvasToMagnify.Height);
 
-            // Create an Visual brush from the unaltered image in the magnification canvas magCanvas, set its properties, and use it to fill the magnifying glass.
-            VisualBrush imageBrush = new VisualBrush(canvasToMagnify);
-            imageBrush.ViewboxUnits = BrushMappingMode.Absolute;
-            imageBrush.ViewportUnits = BrushMappingMode.RelativeToBoundingBox;
-            imageBrush.Viewport = new Rect(0, 0, 1, 1);
-
-            // And now calculate the position and zoom of the viewbox within that brush
-            double size = this.magnifierLens.Width;
-
-            Rect viewBox = imageBrush.Viewbox;
-            viewBox.Width = this.Zoom;
-            viewBox.Height = this.Zoom;
-
-            double xoffset = viewBox.Width / 2.0;
-            double yoffset = viewBox.Height / 2.0;
-            viewBox.X = imageUnalteredPoint.X - xoffset;
-            viewBox.Y = imageUnalteredPoint.Y - yoffset;
-            imageBrush.Viewbox = viewBox;
-
-            // Finally, fill the magnifying glass with this brush
-            this.magnifierLens.Fill = imageBrush;
+            // create a brush from the unaltered image in the magnification canvas and use it to fill the magnifying glass
+            VisualBrush magnifierBrush = new VisualBrush(canvasToMagnify);
+            magnifierBrush.ViewboxUnits = BrushMappingMode.Absolute;
+            magnifierBrush.ViewportUnits = BrushMappingMode.RelativeToBoundingBox;
+            magnifierBrush.Viewport = new Rect(0, 0, 1, 1);
+            magnifierBrush.Viewbox = new Rect(magnifiedLocation.X - this.Zoom / 2.0, magnifiedLocation.Y - this.Zoom / 2.0, this.Zoom, this.Zoom);
+            this.magnifierLens.Fill = magnifierBrush;
 
             // figure out the magnifying glass angle needed
             // The idea is that we will start rotating when the magnifying glass is near the top and the left of the display
             // The critical distance is size for the Y direction, and somewhat larger than size for the X direction (as we have to start
             // rotating earlier so it doesn't get clipped). xsize is somewhat arbitrary, i.e., determined by trial and error
-            const double EdgeThreshold = 250; // proximity to an edge where the magnifying glass change angles
-            double newMagnifyingGlassAngle = this.magnifyingGlassAngle;  // the new angle to rotate the magnifying glass to
             // positions of edges where angle should change 
-            double leftEdge = EdgeThreshold;
-            double rightEdge = this.Parent.ImageToDisplay.ActualWidth - EdgeThreshold;
-            double topEdge = EdgeThreshold;
-            double bottomEdge = this.Parent.ImageToDisplay.ActualHeight - EdgeThreshold;
-            double canvasHeight = this.Parent.ImageToDisplay.ActualHeight;
-            double canvasWidth = this.Parent.ImageToDisplay.ActualWidth;
+            double leftEdge = Constant.MarkableCanvas.MagnifyingGlassDiameter;
+            double rightEdge = this.Parent.ImageToDisplay.ActualWidth - Constant.MarkableCanvas.MagnifyingGlassDiameter;
+            double topEdge = Constant.MarkableCanvas.MagnifyingGlassDiameter;
+            double bottomEdge = this.Parent.ImageToDisplay.ActualHeight - Constant.MarkableCanvas.MagnifyingGlassDiameter;
 
             // In various cases, several angles can work so choose a new angle whose difference from the existing angle will cause the least amount of animation 
-            // BUG: Could improve this. There are cases where it rotates to a non-optimal angle.
-            if ((mouseLocation.X < leftEdge) && (mouseLocation.Y < topEdge))
+            double newMagnifyingGlassAngle;
+            if ((mousePosition.X < leftEdge) && (mousePosition.Y < topEdge))
             {
-                newMagnifyingGlassAngle = 180;        // upper left corner
+                newMagnifyingGlassAngle = 180;                                                   // upper left corner
             }
-            else if ((mouseLocation.X < leftEdge) && (mouseLocation.Y > bottomEdge))
+            else if ((mousePosition.X < leftEdge) && (mousePosition.Y > bottomEdge))
             {
-                newMagnifyingGlassAngle = 90; // lower left corner
+                newMagnifyingGlassAngle = 90;                                                    // lower left corner
             }
-            else if (mouseLocation.X < leftEdge)
+            else if (mousePosition.X < leftEdge)
             {
-                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 90, 180);      // middle left edge
+                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 90, 180);  // middle left edge
             }
-            else if ((mouseLocation.X > rightEdge) && (mouseLocation.Y < topEdge))
+            else if ((mousePosition.X > rightEdge) && (mousePosition.Y < topEdge))
             {
-                newMagnifyingGlassAngle = 270;   // upper right corner
+                newMagnifyingGlassAngle = 270;                                                   // upper right corner
             }
-            else if ((mouseLocation.X > rightEdge) && (mouseLocation.Y > bottomEdge))
+            else if ((mousePosition.X > rightEdge) && (mousePosition.Y > bottomEdge))
             {
-                newMagnifyingGlassAngle = 0;  // lower right corner
+                newMagnifyingGlassAngle = 0;                                                     // lower right corner
             }
-            else if (mouseLocation.X > rightEdge)
+            else if (mousePosition.X > rightEdge)
             {
-                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 270, 0);       // middle right edge
+                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 270, 0);   // middle right edge
             }
-            else if (mouseLocation.Y < topEdge)
+            else if (mousePosition.Y < topEdge)
             {
-                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 270, 180);     // top edge, middle
+                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 270, 180); // top edge, middle
             }
-            else if (mouseLocation.Y > bottomEdge)
+            else if (mousePosition.Y > bottomEdge)
             {
-                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 0, 90);       // bottom edge, middle
+                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 0, 90);    // bottom edge, middle
             }
             else
             {
-                newMagnifyingGlassAngle = this.magnifyingGlassAngle;                           // center; any angle will work
+                newMagnifyingGlassAngle = this.magnifyingGlassAngle; // far enough from edges the magnifer stays on the display image at any angle
             }
 
             // If the angle has changed, animate the magnifying glass and its contained image to the new angle
+            double lensDiameter = this.magnifierLens.Width;
             if (this.magnifyingGlassAngle != newMagnifyingGlassAngle)
             {
                 // Correct the rotation in those cases where it would turn the long way around. 
@@ -226,12 +231,12 @@ namespace Carnassial.Images
                 // Rotate the lens within the magnifying glass
                 Duration animationDuration = new Duration(new TimeSpan(0, 0, 0, 0, 500));
                 DoubleAnimation lensAnimation = new DoubleAnimation(this.lensAngle, newLensAngle, animationDuration);
-                RotateTransform rotateTransformLens = new RotateTransform(this.magnifyingGlassAngle, size / 2, size / 2);
+                RotateTransform rotateTransformLens = new RotateTransform(this.magnifyingGlassAngle, lensDiameter / 2.0, lensDiameter / 2.0);
                 rotateTransformLens.BeginAnimation(RotateTransform.AngleProperty, lensAnimation);
                 this.lensCanvas.RenderTransform = rotateTransformLens;
 
                 // Now rotate and position the entire magnifying glass
-                RotateTransform rotateTransformMagnifyingGlass = new RotateTransform(this.magnifyingGlassAngle, size, size);
+                RotateTransform rotateTransformMagnifyingGlass = new RotateTransform(this.magnifyingGlassAngle, lensDiameter, lensDiameter);
                 DoubleAnimation magnifyingGlassAnimation = new DoubleAnimation(this.magnifyingGlassAngle, newMagnifyingGlassAngle, animationDuration);
                 rotateTransformMagnifyingGlass.BeginAnimation(RotateTransform.AngleProperty, magnifyingGlassAnimation);
                 this.RenderTransform = rotateTransformMagnifyingGlass;
@@ -248,27 +253,14 @@ namespace Carnassial.Images
                 this.magnifyingGlassAngle = newMagnifyingGlassAngle;
                 this.lensAngle = uncorrectedNewLensAngle;
             }
-            Canvas.SetLeft(this, mouseLocation.X - size);
-            Canvas.SetTop(this, mouseLocation.Y - size);
+
+            Canvas.SetLeft(this, mousePosition.X - lensDiameter);
+            Canvas.SetTop(this, mousePosition.Y - lensDiameter);
         }
 
-        // return the current angle if it matches one of the desired angle, or the the desired angle that is closest to the angle in degrees
-        private double AdjustAngle(double currentAngle, double angle1, double angle2)
+        public void Show()
         {
-            if (currentAngle == angle2)
-            {
-                return angle2;
-            }
-            else if (Math.Abs(currentAngle - angle1) > 180)
-            {
-                return angle2;
-            }
-            return angle1;
-        }
-
-        public void Hide()
-        {
-            this.Visibility = Visibility.Collapsed;
+            this.Visibility = Visibility.Visible;
         }
     }
 }
