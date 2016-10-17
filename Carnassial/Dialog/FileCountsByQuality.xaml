@@ -10,15 +10,15 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
     <DockPanel Margin="0,0,0,0">
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
-                            Icon="Information"
+                            StatusImage="Information"
                             Title="Summary counts of your files"
                             What="Carnassial automatically categorizes the 'Image Quality' of your images and videos."
                             Hint="Use the Select menu to selectively view and work with files in the image set." />
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
+            <TextBlock HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" TextWrapping="Wrap" FontSize="12" >
                 <Run FontWeight="Bold" Text="Counts: " FontSize="14"/>
             </TextBlock>
-            <TextBlock HorizontalAlignment="Left" Margin="80,-16,0,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" Width="442">
+            <TextBlock HorizontalAlignment="Left" Margin="80,-16,0,0"  VerticalAlignment="Top" TextWrapping="Wrap" FontSize="12" Width="442">
                 <Run x:Name="Ok"  FontWeight="Bold" Text=" light " />
                 <Run Text="images and videos that can be displayed" />
                  <LineBreak/>

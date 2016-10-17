@@ -17,7 +17,7 @@ namespace Carnassial.Dialog
         // these variables will hold the values of the passed in parameters
         private bool deleteImageAndData;
         private FileDatabase fileDatabase;
-        private List<ImageRow> imagesToDelete;
+        private List<ImageRow> filesToDelete;
 
         /// <summary>
         /// Ask the user if he/she wants to delete one or more images and (depending on whether deleteData is set) the data associated with those images.
@@ -30,7 +30,7 @@ namespace Carnassial.Dialog
             this.InitializeComponent();
             this.deleteImageAndData = deleteImageAndData;
             this.fileDatabase = database;
-            this.imagesToDelete = imagesToDelete;
+            this.filesToDelete = imagesToDelete;
             this.Owner = owner;
 
             if (this.deleteImageAndData)
@@ -53,53 +53,48 @@ namespace Carnassial.Dialog
                 {
                     // Case 1: Delete the current image, but not its data.
                     this.Message.Title = String.Format("Delete the current {0} but not its data.", imageOrVideo);
-                    this.Message.What = String.Format("Deletes the current {0} file (shown below) but not its data.", imageOrVideo);
-                    this.Message.Result = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named {1}.{2}", imageOrVideo, Constant.File.DeletedFilesFolder, Environment.NewLine);
+                    this.Message.What = String.Format("Deletes the current {0} (shown below) but not its data.", imageOrVideo);
+                    this.Message.Result = String.Format("\u2022 The deleted {0} will be backed up in a sub-folder named {1}.{2}", imageOrVideo, Constant.File.DeletedFilesFolder, Environment.NewLine);
                     this.Message.Result += String.Format("\u2022 A placeholder {0} will be shown when you try to view a deleted {0}.", imageOrVideo);
-                    this.Message.Hint = String.Format("\u2022 Restore deleted {0}s by manually copying or moving them back to their original location, or{1}", imageOrVideo, Environment.NewLine);
-                    this.Message.Hint += String.Format("\u2022 Delete your {0} backups by deleting the {1} folder.", imageOrVideo, Constant.File.DeletedFilesFolder);
+                    this.Message.Hint = String.Format("\u2022 Restore the deleted {0} by manually moving it back to its original location, or{1}", imageOrVideo, Environment.NewLine);
+                    this.Message.Hint += String.Format("\u2022 Permanently delete the {0} by deleting it from the {1} folder.", imageOrVideo, Constant.File.DeletedFilesFolder);
                 }
                 else
                 {
                     // Case 2: Delete the current image and its data
                     this.Message.Title = String.Format("Delete the current {0} and its data", imageOrVideo);
-                    this.Message.What = String.Format("Deletes the current {0} file (shown below) and the data associated with that {0}.", imageOrVideo);
-                    this.Message.Result = String.Format("\u2022 The deleted {0} file will be backed up in a sub-folder named {1}.{2}", imageOrVideo, Constant.File.DeletedFilesFolder, Environment.NewLine);
+                    this.Message.What = String.Format("Deletes the current {0} (shown below) and the data associated with that {0}.", imageOrVideo);
+                    this.Message.Result = String.Format("\u2022 The deleted {0} will be backed up in a sub-folder named {1}.{2}", imageOrVideo, Constant.File.DeletedFilesFolder, Environment.NewLine);
                     this.Message.Result += String.Format("\u2022 However, the data associated with that {0} will be permanently deleted.", imageOrVideo);
-                    this.Message.Hint = String.Format("You can permanently delete your {0} backup by deleting the {1} folder.", imageOrVideo, Constant.File.DeletedFilesFolder);
+                    this.Message.Hint = String.Format("You can permanently delete the {0} by deleting it from the {1} folder.", imageOrVideo, Constant.File.DeletedFilesFolder);
                 }
             }
             else
             {
-                int numberOfImagesToDelete = this.imagesToDelete.Count;
+                int numberOfFilesToDelete = this.filesToDelete.Count;
+                this.Message.Title = "Delete " + numberOfFilesToDelete.ToString() + " images and videos marked for deletion in this selection";
+                this.Message.Result = String.Empty;
+                if (numberOfFilesToDelete > Constant.Images.LargeNumberOfDeletedImages)
+                {
+                    this.Message.Result += "Deleting " + numberOfFilesToDelete.ToString() + " files will take a few moments. Please be patient." + Environment.NewLine;
+                }
+                this.Message.Result += String.Format("\u2022 The deleted files will be backed up in a sub-folder named {0}.{1}", Constant.File.DeletedFilesFolder, Environment.NewLine);
+
                 if (deleteImageAndData == false)
                 {
-                    // Case 3: Delete the images that have the delete flag set but not their data
-                    this.Message.Title = "Delete " + numberOfImagesToDelete.ToString() + " images and videos marked for deletion in this selection";
-                    this.Message.What = "Deletes " + numberOfImagesToDelete.ToString() + " image and video file(s) marked for deletion (shown below) in this selection, but not the data entered for them.";
-                    this.Message.Result = String.Empty;
-                    if (numberOfImagesToDelete > Constant.Images.LargeNumberOfDeletedImages)
-                    {
-                        this.Message.Result += "Deleting " + numberOfImagesToDelete.ToString() + " files will take a few moments. Please be patient." + Environment.NewLine;
-                    }
-                    this.Message.Result += String.Format("\u2022 The deleted file will be backed up in a sub-folder named {0}.{1}", Constant.File.DeletedFilesFolder, Environment.NewLine);
+                    // Case 3: Delete files which the delete flag set but not their data
+                    this.Message.What = "Deletes " + numberOfFilesToDelete.ToString() + " images and videos marked for deletion (shown below) in this selection, but not the data entered for them.";
                     this.Message.Result += "\u2022 A placeholder image will be shown when you view a deleted file.";
                     this.Message.Hint = "\u2022 Restore deleted files by manually copying or moving them back to their original location, or" + Environment.NewLine;
-                    this.Message.Hint += String.Format("\u2022 Delete the backup files by deleting the {0} folder", Constant.File.DeletedFilesFolder);
+                    this.Message.Hint += String.Format("\u2022 Permanently delete the files by deleting them from the {0} folder", Constant.File.DeletedFilesFolder);
                 }
                 else
                 {
-                    // Case 4: Delete the images that have the delete flag set and their data
-                    this.Message.Title = "Delete " + numberOfImagesToDelete.ToString() + " images and videos marked for deletion";
-                    this.Message.What = "Deletes the image and video files that are marked for deletion (shown below), along with the data entered for them.";
-                    this.Message.Result = String.Empty;
-                    if (numberOfImagesToDelete > Constant.Images.LargeNumberOfDeletedImages)
-                    {
-                        this.Message.Result += "Deleting " + numberOfImagesToDelete.ToString() + " files will take a moment. Please be patient." + Environment.NewLine;
-                    }
-                    this.Message.Result += String.Format("\u2022 The deleted files will be backed up in a sub-folder named {0}{1}", Constant.File.DeletedFilesFolder, Environment.NewLine);
-                    this.Message.Result += "\u2022 However, the data associated with those files will be permanently deleted.";
-                    this.Message.Hint = String.Format("You can permanently delete those backup files by deleting the {0} folder.", Constant.File.DeletedFilesFolder);
+                    // Case 4: Delete files which have the delete flag set and their data
+                    this.Message.Title = "Delete " + numberOfFilesToDelete.ToString() + " images and videos marked for deletion";
+                    this.Message.What = "Deletes images and videos marked for deletion (shown below), along with the data entered for them.";
+                    this.Message.Result += "\u2022 The data for these files will be permanently deleted.";
+                    this.Message.Hint = String.Format("You can permanently delete the files by deleting the {0} folder.", Constant.File.DeletedFilesFolder);
                 }
             }
             this.Title = this.Message.Title;

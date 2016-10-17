@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows.Controls;
 
@@ -9,6 +10,10 @@ namespace Carnassial.Controls
     {
         private string mostRecentAutocompletion;
 
+        // XamlWriter doesn't support generics so this property breaks anything triggering XamlWriter.Save(), such as clearing UI object collections
+        // containing the text box since the clear triggers undo and undo relies on serialization.
+        // If needed serialization support can be added via a TypeConverter.
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public List<string> Autocompletions { get; set; }
 
         /// <summary>

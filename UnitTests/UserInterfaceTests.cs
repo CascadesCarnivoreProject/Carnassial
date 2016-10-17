@@ -71,13 +71,6 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void Carnassial()
         {
-            // Constants.Images needs to load resources from Carnassial.exe and relies on Application.ResourceAssembly to do this
-            // for unit tests (or the editor) ResourceAssembly does not get set as Carnassial.exe is not the entry point
-            if (Application.ResourceAssembly == null)
-            {
-                Application.ResourceAssembly = typeof(Constant.Images).Assembly;
-            }
-
             // open, do nothing, close
             using (CarnassialWindow carnassial = new CarnassialWindow())
             {
@@ -126,7 +119,7 @@ namespace Carnassial.UnitTests
                 // import files from directory
                 Dispatcher.CurrentDispatcher.Invoke(() =>
                 {
-                    Assert.IsTrue((bool)carnassial.TryOpenTemplateAndBeginLoadImagesAsync(templateDatabaseFilePath, out backgroundWorker));
+                    Assert.IsTrue((bool)carnassial.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath, out backgroundWorker));
                     this.WaitForWorkerComplete(backgroundWorker);
                 });
                 this.WaitForRenderingComplete();
@@ -157,7 +150,7 @@ namespace Carnassial.UnitTests
                 BackgroundWorker backgroundWorker;
                 Dispatcher.CurrentDispatcher.Invoke(() =>
                 {
-                    Assert.IsTrue((bool)carnassial.TryOpenTemplateAndBeginLoadImagesAsync(templateDatabaseFilePath, out backgroundWorker));
+                    Assert.IsTrue((bool)carnassial.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath, out backgroundWorker));
                     this.WaitForWorkerComplete(backgroundWorker);
                 });
                 this.WaitForRenderingComplete();
@@ -172,7 +165,7 @@ namespace Carnassial.UnitTests
                 this.ShowDialog(new AdvancedCarnassialOptions(state, carnassial.MarkableCanvas, carnassial));
                 this.ShowDialog(new ChooseFileDatabase(new string[] { TestConstant.File.DefaultNewFileDatabaseFileName }, TestConstant.File.DefaultTemplateDatabaseFileName, carnassial));
 
-                this.ShowDialog(new CustomViewSelection(dataHandler.FileDatabase, carnassial));
+                this.ShowDialog(new Dialog.CustomSelection(dataHandler.FileDatabase, carnassial));
                 this.ShowDialog(new DateCorrectAmbiguous(dataHandler.FileDatabase, carnassial));
                 this.ShowDialog(new DateDaylightSavingsTimeCorrection(dataHandler.FileDatabase, dataHandler.ImageCache, carnassial));
 
@@ -210,7 +203,7 @@ namespace Carnassial.UnitTests
         private MessageBox CreateMessageBox(Window owner, MessageBoxButton buttonType, MessageBoxImage iconType)
         {
             MessageBox messageBox = new MessageBox("Message box title", owner, buttonType);
-            messageBox.Message.Icon = iconType;
+            messageBox.Message.StatusImage = iconType;
             messageBox.Message.Problem = "Problem description.";
             messageBox.Message.Reason = "Explanation of why issue is an issue.";
             messageBox.Message.Solution = "Suggested method for resolving the issue.";

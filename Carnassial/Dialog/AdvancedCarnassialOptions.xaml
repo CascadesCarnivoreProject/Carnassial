@@ -2,54 +2,76 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:Carnassial.Controls"
-        Title="Advanced Carnassial Options" Height="526.5" Width="821.707" >
-    <StackPanel Orientation="Vertical" Width="811" Margin="2,0,1,3">
-        <controls:StockMessageControl x:Name="Message" Margin="15,10,15,10" Icon="Question"
-                            Title="Advanced Carnassial Options"
-                            What="These options should be changed only if you know what you are doing. See the user manual for details." />
-        <GroupBox Header="Maximum Speed for Rapidly Displaying Image Sequences" Margin="15,0,15,0" Padding="10,0,10,0" FontWeight="Bold" FontSize="12" Width="776">
-            <DockPanel Width="751">
-                <StackPanel Orientation="Vertical" >
-                    <TextBlock Text="How rapidly images can appear as you navigate through sequences. This setting is used for all image sets on this machine.
-                               &#10;  &#x2022; Slower settings are safer than faster settings. It is less likely an image will be missed due to frame rate lags or blinking.
-                               &#10;  &#x2022; If rapid image navigations stalls or stutters, try a lower setting" DockPanel.Dock="Top" TextWrapping="Wrap" FontWeight="Normal" FontStyle="Normal" FontSize="12" Width="656" />
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,10,0,0" >
-                        <TextBlock Text="Slow but safe " FontWeight="Normal" Height="26" Width="127" VerticalAlignment="Top" TextAlignment="Right" HorizontalAlignment="Right"/>
-                        <Slider Name="ImageRendersPerSecond" Width="200"  VerticalAlignment="Top" />
-                        <TextBlock Text="Fast, but runs risk of stalling or even crashing." TextWrapping="Wrap" FontWeight="Normal"  />
-                    </StackPanel>
+        Title="Advanced Carnassial options" Width="820" SizeToContent="Height" MaxHeight="860">
+    <StackPanel Orientation="Vertical">
+        <controls:StockMessageControl x:Name="Message" Margin="10,5,10,10" StatusImage="Question"
+                            Title="Advanced Carnassial options"
+                            What="These options should be changed only if you know what you are doing.  See the wiki for details." />
+        <GroupBox Header="Maximum frame rate" Margin="10,5,10,5" Padding="10,10,10,10" FontWeight="Bold">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="How rapidly images can appear.  Settings above 5 frames per second are not recommended if every image needs to be seen while analyzing an image set as blinking typically takes 150-200ms.
+                            &#10;  &#x2022; If single image detections aren't required higher frame rates allow faster analysis of image sets.
+                            &#10;  &#x2022; Try a lower setting if rapid navigations stall or stutters.
+                            &#10;  &#x2022; Use a lower setting if you blink slowly (it can sometimes take 400ms) or the default throttle is overwhelming.
+                            &#10;This setting applies to all image sets on this machine." TextWrapping="Wrap" FontWeight="Normal" Grid.Row="0" Grid.Column="0" />
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0" Grid.Row="1" Grid.Column="0">
+                    <TextBlock Text="low risk of missing detections" FontWeight="Normal" VerticalAlignment="Center" />
+                    <Slider Name="ImageRendersPerSecond" Width="250" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="1" VerticalAlignment="Center" Margin="10,0,10,0" TickFrequency="1.0" TickPlacement="BottomRight" />
+                    <TextBlock Text="higher risk of missing detections or stalling" FontWeight="Normal" VerticalAlignment="Center" />
                 </StackPanel>
-                <Button Name="ResetThrottle" Content="Reset" FontWeight="Normal" Height="30" Width="60" Margin="0,0,0,10" VerticalAlignment="Bottom" Click="ResetThrottle_Click"></Button>
-            </DockPanel>
+                <Button Name="ResetThrottle" Content="_Reset" FontWeight="Normal" Padding="10" Click="ResetImageRendersPerSecond_Click" Grid.Row="1" Grid.Column="1" />
+            </Grid>
         </GroupBox>
 
-        <GroupBox Header="Zooming within the Main Image" Name="groupBox1" Margin="15,0,15,0" Padding="10,0,10,0" FontWeight="Bold" FontSize="12" Width="776">
-            <DockPanel Width="751">
-                <StackPanel Orientation="Vertical" >
-                    <TextBlock Text="The maximum you can zoom into the image. Select the highest zoom that doesn't result in blurry pixels" DockPanel.Dock="Top" FontWeight="Normal" FontStyle="Normal" FontSize="12" Width="656" />
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top"  Margin="0,10,0,0">
-                        <TextBlock Text="Minimal zoom " FontWeight="Normal" Height="26" Width="127" VerticalAlignment="Top" TextAlignment="Right"/>
-                        <Slider Name="MaxZoom" Width="200" ValueChanged="MaxZoom_ValueChanged" VerticalAlignment="Top" />
-                        <TextBlock Text="Mazimum zoom." TextWrapping="Wrap" FontWeight="Normal"  />
-                    </StackPanel>
+        <GroupBox Header="Image differencing threshold" Margin="10,5,10,5" Padding="10" FontWeight="Bold">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="This threshold determines how image differences are calculated. Navigate to a new image to see the results.
+                            &#10;Low thresholds increases noise, while high thresholds may miss differences." FontWeight="Normal" Grid.Row="0" Grid.Column="0" />
+                <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0">
+                    <TextBlock Text="low" FontWeight="Normal" VerticalAlignment="Center" />
+                    <Slider Name="DifferenceThreshold" Width="300" ValueChanged="DifferenceThreshold_ValueChanged" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" TickFrequency="25.5" TickPlacement="BottomRight" Margin="10,0,10,0" VerticalAlignment="Center" />
+                    <TextBlock Text="high" FontWeight="Normal" VerticalAlignment="Center" />
                 </StackPanel>
-                <Button Name="ResetMaxZoom" Content="Reset" FontWeight="Normal" Height="30" Width="60" Margin="0,0,0,10" VerticalAlignment="Bottom" Click="ResetMaxZoom_Click"></Button>
-            </DockPanel>
+                <Button Name="ResetImageDifferencing" Click="ResetImageDifferencingButton_Click" Content="_Reset" FontWeight="Normal" Padding="10" Grid.Row="1" Grid.Column="1" />
+            </Grid>
         </GroupBox>
-        <GroupBox Header="Image Differencing Threshold" Margin="15,15,15,0" Padding="10,0,10,0" HorizontalAlignment="Left"   VerticalAlignment="Top" FontWeight="Bold" FontSize="12" Height="95" Width="777">
-            <DockPanel>
-                <StackPanel Orientation="Vertical">
-                    <TextBlock Text="This threshold determines how image differences are calculated. Navigate to a new image to see the results.
-                               &#10;Low thresholds increases noise, while high thresholds may miss differences." DockPanel.Dock="Top" FontWeight="Normal" FontStyle="Normal" FontSize="12"  Width="660" />
-                    <StackPanel Orientation="Horizontal"  Margin="0,10,0,0">
-                        <TextBlock Text="Low threshold " Height="27" FontWeight="Normal" Width="128" VerticalAlignment="Top" TextAlignment="Right"/>
-                        <Slider Name="DifferenceThreshold"  Width="200" ValueChanged="DifferenceThreshold_ValueChanged" Height="25" VerticalAlignment="Top" />
-                        <TextBlock Text="High threshold" TextWrapping="Wrap" FontWeight="Normal" Height="54" Width="300" />
-                    </StackPanel>
+
+        <GroupBox Header="Zooming within images" Margin="10,5,10,5" Padding="10,10,10,10" FontWeight="Bold">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="The maximum you can zoom into an image before needing to switch over to the magnifier for more zoom. Select the highest zoom which doesn't result in blurry pixels." FontWeight="Normal" Grid.Row="0" Grid.Column="0" />
+                <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0">
+                    <TextBlock Text="less zoom" FontWeight="Normal" VerticalAlignment="Center" />
+                    <Slider Name="MaxZoom" Width="300" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="2" ValueChanged="MaxZoom_ValueChanged" Margin="10,0,10,0" TickFrequency="10.0" TickPlacement="BottomRight" VerticalAlignment="Center" />
+                    <TextBlock Text="more zoom" FontWeight="Normal" VerticalAlignment="Center" />
                 </StackPanel>
-                <Button Name="ResetImageDifferencing" Content="Reset" FontWeight="Normal" Height="30" Width="58" Margin="0,0,0,10" VerticalAlignment="Bottom" Click="ResetImageDifferencingButton_Click"></Button>
-            </DockPanel>
+                <Button Name="ResetMaxZoom" Content="_Reset" FontWeight="Normal" Padding="10" Click="ResetMaxZoom_Click" Grid.Row="1" Grid.Column="1" />
+            </Grid>
         </GroupBox>
-        <Button Margin="698,15,37,0" x:Name="OkButton" Content="Ok" IsDefault="True" Height="34" Click="OkButton_Click" AutomationProperties.AutomationId="OkButton" />
+
+        <Button x:Name="OkButton" Content="_Okay" IsDefault="True" Click="OkButton_Click" Margin="10,10,10,10" Padding="10" HorizontalAlignment="Right" AutomationProperties.AutomationId="OkButton" />
     </StackPanel>
 </Window>

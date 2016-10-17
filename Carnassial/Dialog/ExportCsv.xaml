@@ -9,12 +9,11 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
     <DockPanel>
-        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Information" 
+        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" StatusImage="Information" 
                             Title="Exporting your data"
-                            What="Exporting to file "
+                            What="Exporting to "
                             Result="This file is overwritten every time you export it (but backups can be found in the Backups folder). "
-                            Hint="&#x2022; You can open this file with most spreadsheet programs (e.g. Excel).&#10;&#x2022; If you make changes in the spreadsheet file, you will need to import it to see those changes.&#10;&#x2022; If you check don't show this message again you can still see the name of the CSV file in the status bar at the lower right corner of the main Carnassial window.  This dialog can also be turned back on through the Options menu."
-                            />
+                            Hint="&#x2022; You can open this file with most spreadsheet programs (e.g. Excel).&#10;&#x2022; If you make changes in the spreadsheet file, you will need to import it to see those changes.&#10;&#x2022; If you check don't show this message again you can still see the name of the CSV file in the status bar at the lower right corner of the main Carnassial window.  This dialog can also be turned back on through the Options menu." />
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <CheckBox x:Name="DontShowAgain" Margin="78,10,10,10" Content="_Don't show this message again." />
         </StackPanel>

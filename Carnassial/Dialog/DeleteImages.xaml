@@ -4,14 +4,13 @@
         xmlns:controls="clr-namespace:Carnassial.Controls"
         xmlns:local="clr-namespace:Carnassial"
         Title="Delete ..." 
-        Height="780" Width="1079"
-        MinHeight="780" MinWidth="1079"
+        Height="780" Width="1000"
 		ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
-                            Icon="Question"
+                            StatusImage="Question"
                             HideExplanationCheckboxIsVisible="True" />
         <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
@@ -22,7 +21,7 @@
             <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
             <Button Name="OkButton" IsDefault="True" IsEnabled="False" AutomationProperties.AutomationId="ChangesButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
         </StackPanel>
-        <ScrollViewer Name="scroller" HorizontalScrollBarVisibility="Auto"  VerticalScrollBarVisibility="Visible" CanContentScroll="True" PanningMode="Both" DockPanel.Dock="Top">
+        <ScrollViewer Name="scroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible" CanContentScroll="True" PanningMode="Both" DockPanel.Dock="Top">
             <Grid Name="GridGallery" DockPanel.Dock="Top" Margin="10,10,10,10" ShowGridLines="False" >
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="200"/>

@@ -11,7 +11,7 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
-        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Question"
+        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" StatusImage="Question"
                             Title="Correct the date/time of all files selected"
                             Problem="If your camera was not initialized to the correct date/time every file's time will be off by a fixed amount."
                             Solution="Your currently selected file is shown below.

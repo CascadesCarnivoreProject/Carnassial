@@ -1,50 +1,47 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Media;
 
 namespace Carnassial.Controls
 {
     public partial class StockMessageControl : UserControl
     {
-        private MessageBoxImage iconType;
+        private MessageBoxImage statusImage;
 
-        public MessageBoxImage Icon
+        public MessageBoxImage StatusImage
         {
             get
             {
-                return this.iconType;
+                return this.statusImage;
             }
             set
             {
-                this.iconType = value;
-                // the MessageBoxImage enum contains duplicate values:
-                // Hand = Stop = Error
-                // Exclamation = Warning
-                // Asterisk = Information
+                this.statusImage = value;
                 switch (value)
                 {
+                    // the MessageBoxImage enum has some duplicate values, so not all of them needed cases
+                    //   - Hand = Stop = Error
+                    //   - Exclamation = Warning
+                    //   - Asterisk = Information
                     case MessageBoxImage.Question:
-                        this.IconLabel.Content = "?";
+                        this.Image.Source = Constant.Images.StatusHelp.Value;
                         break;
                     case MessageBoxImage.Warning:
-                        this.IconLabel.Content = "!";
+                        this.Image.Source = Constant.Images.StatusWarning.Value;
                         break;
                     case MessageBoxImage.None:
+                        this.Image.Source = null;
+                        break;
                     case MessageBoxImage.Information:
-                        this.IconLabel.Content = "i";
+                        this.Image.Source = Constant.Images.StatusInformation.Value;
                         break;
                     case MessageBoxImage.Error:
-                        Run run = new Run(); // Create a symbol of a stopped hand
-                        run.FontFamily = new FontFamily("Wingdings 2");
-                        run.Text = "\u004e";
-                        this.IconLabel.Content = run;
+                        this.Image.Source = Constant.Images.StatusError.Value;
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled icon type {0}.", this.Icon));
+                        throw new NotSupportedException(String.Format("Unhandled icon type {0}.", this.StatusImage));
                 }
-                this.iconType = value;
+                this.statusImage = value;
             }
         }
 
@@ -155,8 +152,13 @@ namespace Carnassial.Controls
         public StockMessageControl()
         {
             this.InitializeComponent();
-            this.iconType = MessageBoxImage.Exclamation;
+            this.StatusImage = MessageBoxImage.Warning;
 
+            this.SetExplanationVisibility();
+        }
+
+        private void HideExplanation_CheckedChanged(object sender, RoutedEventArgs e)
+        {
             this.SetExplanationVisibility();
         }
 
@@ -181,12 +183,6 @@ namespace Carnassial.Controls
             this.MessageGrid.RowDefinitions[4].Height = String.IsNullOrEmpty(this.Solution) ? zeroHeight : autoHeight;
             this.MessageGrid.RowDefinitions[5].Height = String.IsNullOrEmpty(this.Result) ? zeroHeight : autoHeight;
             this.MessageGrid.RowDefinitions[6].Height = String.IsNullOrEmpty(this.Hint) ? zeroHeight : autoHeight;
-        }
-
-        // This will toggle the visibility of the explanation panel
-        private void HideTextButton_StateChange(object sender, RoutedEventArgs e)
-        {
-            this.SetExplanationVisibility();
         }
     }
 }

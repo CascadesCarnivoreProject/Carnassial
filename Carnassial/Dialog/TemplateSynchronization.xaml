@@ -11,7 +11,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
-                            Icon="Information"
+                            StatusImage="Information"
                             Title="This template is not compatible with this data"
                             Problem="The fields in the Carnassial template file do not match those originally used to create this data. &#10;This is likely because Carnassial template is different from the original one used for this image set."
                             Solution="We will be changing Carnassial to let you resolve inconsistencies.&#10;However, you can still open the data for this image set, which will use its own copy of the original template."
@@ -20,9 +20,8 @@
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="2"/>
             <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Height="150">
-                <TextBlock Name="TextBlockDetails" HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" DataContext="{Binding}" TextWrapping="Wrap" FontSize="12" >
-				    <Run FontWeight="Bold" Text="Details: " FontSize="14"/>
-                    <LineBreak></LineBreak>
+                <TextBlock Name="TextBlockDetails" HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" TextWrapping="Wrap">
+				    <Run FontWeight="Bold" Text="Details: " />
                 </TextBlock>
             </ScrollViewer>
         </StackPanel>

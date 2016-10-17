@@ -10,7 +10,7 @@ namespace Carnassial.Util
         private KeyEventArgs mostRecentKey;
 
         public byte DifferenceThreshold { get; set; } // The threshold used for calculating combined differences
-        public bool ImageNavigatorSliderDragging { get; set; }
+        public bool FileNavigatorSliderDragging { get; set; }
         public DateTime MostRecentDragEvent { get; set; }
         public string MouseOverCounter { get; set; }
 
@@ -20,7 +20,7 @@ namespace Carnassial.Util
             this.mostRecentKey = null;
 
             this.DifferenceThreshold = Constant.Images.DifferenceThresholdDefault;
-            this.ImageNavigatorSliderDragging = false;
+            this.FileNavigatorSliderDragging = false;
             this.MouseOverCounter = null;
             this.MostRecentDragEvent = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;
         }

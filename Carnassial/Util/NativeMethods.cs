@@ -9,14 +9,6 @@ namespace Carnassial.Util
 {
     internal class NativeMethods
     {
-        // This purportedly corrects a WPF problem... not sure if its really needed.
-        public static Point GetCursorPos(Visual relativeTo)
-        {
-            Win32Point w32Mouse = new Win32Point();
-            NativeMethods.GetCursorPos(ref w32Mouse);
-            return relativeTo.PointFromScreen(new Point(w32Mouse.X, w32Mouse.Y));
-        }
-
         public static string GetRelativePath(string fromPath, string toPath)
         {
             int fromAttr = NativeMethods.GetPathAttribute(fromPath);

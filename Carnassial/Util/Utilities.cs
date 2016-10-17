@@ -6,10 +6,12 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using Clipboard = System.Windows.Clipboard;
 using DataFormats = System.Windows.DataFormats;
 using Directory = MetadataExtractor.Directory;
 using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;
+using MessageBox = Carnassial.Dialog.MessageBox;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace Carnassial.Util
@@ -70,7 +72,7 @@ namespace Carnassial.Util
             return false;
         }
 
-        public static void OnHelpDocumentPreviewDrag(DragEventArgs dragEvent)
+        public static void OnInstructionsPreviewDrag(DragEventArgs dragEvent)
         {
             string templateDatabaseFilePath;
             if (Utilities.IsSingleTemplateFileDrag(dragEvent, out templateDatabaseFilePath))
@@ -89,6 +91,30 @@ namespace Carnassial.Util
             Debug.Assert(window.Owner != null, "Window's owner property is null.  Is a set of it prior to calling ShowDialog() missing?");
             window.Left = window.Owner.Left + (window.Owner.Width - window.ActualWidth) / 2; // Center it horizontally
             window.Top = window.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
+        }
+
+        public static void ShowExceptionReportingDialog(string title, UnhandledExceptionEventArgs e, Window owner)
+        {
+            // once .NET 4.5+ is used it's meaningful to also report the .NET release version
+            // See https://msdn.microsoft.com/en-us/library/hh925568.aspx.
+            MessageBox exitNotification = new MessageBox("Uh-oh.  We're so sorry.", owner);
+            exitNotification.Message.StatusImage = MessageBoxImage.Error;
+            exitNotification.Message.Title = title;
+            exitNotification.Message.Problem = String.Format("This is a bug.  The What section below has been copied.  Please paste it into a new issue at {0} or an email to {1}.  Please also include a clear and specific description of what you were doing at the time.",
+                                                             CarnassialConfigurationSettings.GetIssuesBrowserAddress(),
+                                                             CarnassialConfigurationSettings.GetDevTeamEmailLink().ToEmailAddress());
+            exitNotification.Message.What = String.Format("{0}, {1}, .NET runtime {2}{3}", typeof(CarnassialWindow).Assembly.GetName(), Environment.OSVersion, Environment.Version, Environment.NewLine);
+            if (e.ExceptionObject != null)
+            {
+                exitNotification.Message.What += e.ExceptionObject.ToString();
+            }
+            exitNotification.Message.Reason = "It's not you, it's us.  If you let us know we'll get it fixed.  If you don't tell us probably we don't know there's a problem and things won't get any better.";
+            exitNotification.Message.Result = String.Format("The data file is likely OK.  If it's not you can restore from the {0} folder.", Constant.File.BackupFolder);
+            exitNotification.Message.Hint = "\u2022 If you do the same thing this'll probably happen again.  If so, that's helpful to know as well." + Environment.NewLine;
+            exitNotification.Message.Hint += "\u2022 If the automatic copy of the What content didn't take click on the What details, hit ctrl+a to select all of it, and ctrl+c to copy.";
+
+            Clipboard.SetText(exitNotification.Message.What);
+            exitNotification.ShowDialog();
         }
 
         public static bool TryFitWindowInWorkingArea(Window window)

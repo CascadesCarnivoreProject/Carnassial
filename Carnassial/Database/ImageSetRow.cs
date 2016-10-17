@@ -35,10 +35,10 @@ namespace Carnassial.Database
             set { this.Row.SetField(Constant.DatabaseColumn.Log, value); }
         }
 
-        public bool MagnifyingGlassEnabled
+        public ImageSetOptions Options
         {
-            get { return this.Row.GetBooleanField(Constant.DatabaseColumn.Magnifier); }
-            set { this.Row.SetField(Constant.DatabaseColumn.Magnifier, value); }
+            get { return this.Row.GetEnumField<ImageSetOptions>(Constant.DatabaseColumn.Options); }
+            set { this.Row.SetField(Constant.DatabaseColumn.Options, value); }
         }
 
         public string TimeZone
@@ -53,7 +53,7 @@ namespace Carnassial.Database
             columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.FileSelection, this.FileSelection.ToString()));
             columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.InitialFolderName, this.InitialFolderName));
             columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.Log, this.Log));
-            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.Magnifier, this.MagnifyingGlassEnabled));
+            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.Options, this.Options.ToString()));
             columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.MostRecentFileID, this.MostRecentFileID));
             columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.TimeZone, this.TimeZone));
             return new ColumnTuplesWithWhere(columnTuples, this.ID);

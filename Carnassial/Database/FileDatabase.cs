@@ -215,20 +215,20 @@ namespace Carnassial.Database
             // Create ImageSet table with a singleton row
             columnDefinitions.Clear();
             columnDefinitions.Add(new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.Sql.CreationStringPrimaryKey));  // It begins with the ID integer primary key
+            columnDefinitions.Add(new ColumnDefinition(Constant.DatabaseColumn.FileSelection, Constant.Sql.Text));
             columnDefinitions.Add(new ColumnDefinition(Constant.DatabaseColumn.InitialFolderName, Constant.Sql.Text));
             columnDefinitions.Add(new ColumnDefinition(Constant.DatabaseColumn.Log, Constant.Sql.Text));
-            columnDefinitions.Add(new ColumnDefinition(Constant.DatabaseColumn.Magnifier, Constant.Sql.Text));
+            columnDefinitions.Add(new ColumnDefinition(Constant.DatabaseColumn.Options, Constant.Sql.Text));
             columnDefinitions.Add(new ColumnDefinition(Constant.DatabaseColumn.MostRecentFileID, Constant.Sql.Integer));
-            columnDefinitions.Add(new ColumnDefinition(Constant.DatabaseColumn.FileSelection, Constant.Sql.Text));
             columnDefinitions.Add(new ColumnDefinition(Constant.DatabaseColumn.TimeZone, Constant.Sql.Text));
             this.Database.CreateTable(Constant.DatabaseTable.ImageSet, columnDefinitions);
 
             List<ColumnTuple> columnsToUpdate = new List<ColumnTuple>();
+            columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.FileSelection, FileSelection.All.ToString()));
             columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.InitialFolderName, Path.GetFileName(this.FolderPath)));
             columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.Log, Constant.Database.ImageSetDefaultLog));
-            columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.Magnifier, Boolean.FalseString));
             columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.MostRecentFileID, Constant.Database.DefaultFileID));
-            columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.FileSelection, FileSelection.All.ToString()));
+            columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.Options, ImageSetOptions.None.ToString()));
             columnsToUpdate.Add(new ColumnTuple(Constant.DatabaseColumn.TimeZone, TimeZoneInfo.Local.Id));
             List<List<ColumnTuple>> insertionStatements = new List<List<ColumnTuple>>();
             insertionStatements.Add(columnsToUpdate);
@@ -373,7 +373,7 @@ namespace Carnassial.Database
 
         public FileTable GetFilesMarkedForDeletion()
         {
-            string where = this.DataLabelFromStandardControlType[Constant.DatabaseColumn.DeleteFlag] + "=\"true\""; // = value
+            string where = this.DataLabelFromStandardControlType[Constant.DatabaseColumn.DeleteFlag] + "=" + Utilities.QuoteForSql(Boolean.TrueString);
             string query = "Select * FROM " + Constant.DatabaseTable.FileData + " WHERE " + where;
             DataTable images = this.Database.GetDataTableFromSelect(query);
             return new FileTable(images);
@@ -450,9 +450,9 @@ namespace Carnassial.Database
                 case FileSelection.Dark:
                 case FileSelection.NoLongerAvailable:
                 case FileSelection.Ok:
-                    return this.DataLabelFromStandardControlType[Constant.DatabaseColumn.ImageQuality] + "=\"" + selection + "\"";
+                    return this.DataLabelFromStandardControlType[Constant.DatabaseColumn.ImageQuality] + "=" + Utilities.QuoteForSql(selection.ToString());
                 case FileSelection.MarkedForDeletion:
-                    return this.DataLabelFromStandardControlType[Constant.DatabaseColumn.DeleteFlag] + "=\"true\"";
+                    return this.DataLabelFromStandardControlType[Constant.DatabaseColumn.DeleteFlag] + "=" + Utilities.QuoteForSql(Boolean.TrueString);
                 case FileSelection.Custom:
                     return this.CustomSelection.GetFilesWhere();
                 default:

@@ -1,4 +1,5 @@
 ﻿using Carnassial.Util;
+using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,16 +8,18 @@ namespace Carnassial.Dialog
 {
     public partial class RenameFileDatabaseFile : Window
     {
-        private string originalFileName;
-        public string NewFilename { get; private set; }
+        public string NewFileName { get; private set; }
 
         public RenameFileDatabaseFile(string fileName, Window owner)
         {
             this.InitializeComponent();
 
-            this.originalFileName = fileName;
+            this.CurrentFileName.Text = fileName;
             this.Owner = owner;
-            this.NewFilename = Path.GetFileNameWithoutExtension(fileName);
+            this.NewFileNameWithoutExtension.Text = Path.GetFileNameWithoutExtension(fileName);
+            this.NewFileNameWithoutExtension.CaretIndex = this.NewFileNameWithoutExtension.Text.Length;
+            this.NewFileNameWithoutExtension.TextChanged += this.NewFileNameWithoutExtension_TextChanged;
+            this.OkButton.IsEnabled = false;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -24,16 +27,12 @@ namespace Carnassial.Dialog
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            this.runOriginalFileName.Text = this.originalFileName;
-            this.txtboxNewFileName.Text = this.NewFilename;
-            this.OkButton.IsEnabled = false;
-            this.txtboxNewFileName.TextChanged += this.TxtboxNewFileName_TextChanged;
+            this.NewFileNameWithoutExtension.Focus();
         }
 
-        private void TxtboxNewFileName_TextChanged(object sender, TextChangedEventArgs e)
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            this.NewFilename = this.txtboxNewFileName.Text + ".ddb";
-            this.OkButton.IsEnabled = !this.NewFilename.Equals(this.originalFileName); // Enable the button only if the two names differ
+            this.DialogResult = false;
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
@@ -41,9 +40,10 @@ namespace Carnassial.Dialog
             this.DialogResult = true;
         }
 
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        private void NewFileNameWithoutExtension_TextChanged(object sender, TextChangedEventArgs e)
         {
-            this.DialogResult = false;
+            this.NewFileName = this.NewFileNameWithoutExtension.Text + ".ddb";
+            this.OkButton.IsEnabled = !String.Equals(this.NewFileName, this.CurrentFileName.Text, StringComparison.OrdinalIgnoreCase); // Enable the button only if the two names differ
         }
     }
 }

@@ -11,7 +11,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
-                            Icon="Question"
+                            StatusImage="Question"
                             Title="Correct for Standard/Daylight Savings Time Changes"
                             Problem="The camera did not account for daylight savings or standard time changes, which means some images or videos are off by an hour."
                             Solution="1. IMPORTANT.The image or video below should be where the time change occurred. &#10;    If it isn't, click Cancel, navigate to that file in the main window, then come back here.&#10;2. Correct the time + / - one hour in the Time Correction checkbox.&#10;3. Use the Propagate Correction checkbox to propagate changes forwards or backwards from this point.&#10;4. The Okay button will be selectable once you've done the above. Click Okay to confirm, Cancel to abort."

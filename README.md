@@ -17,12 +17,12 @@ Install [Visual Studio 2015 Community](https://www.visualstudio.com/en-us/produc
 
 * Common Tools -> GitHub Extension for Visual Studio
 
-Higher Visual Studio SKUs are fine.  After Visual Studio installation:
+Higher Visual Studio SKUs such as Enterprise are fine.  After Visual Studio installation:
 
 * clone the repo locally through Visual Studio's Team Explorer or GitHub's clone or download options
 * install Visual StyleCop (Tools -> Extensions and Updates -> Online)
 
-Atlassian's [https://www.atlassian.com/software/sourcetree](SourceTree) is a recommended augmentation of the git support available in Visual Studio's Team Explorer.
+Atlassian's [https://www.atlassian.com/software/sourcetree](SourceTree) is a recommended augmentation of the git support available in Visual Studio's Team Explorer.  The [Visual Studio Image Library](https://msdn.microsoft.com/en-us/library/ms246582.aspx) is often helpful for icons.
 
 Commits should
 
@@ -32,11 +32,13 @@ Commits should
 Application development is done against .NET 4.0 as as not all users have newer versions available on their systems or the ability to update .NET.  Test code uses .NET 4.5.
 
 ### Dependencies
-* Carnassial and the template editor are supported and tested on Windows 10.  They should run without issue on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10.  Support is, however, limited.
+* Carnassial and the template editor are supported and tested on Windows 10 Anniversary Update.  They should also run without issue on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10.  Support is, however, limited.
 * Windows Vista SP2 and earlier are not supported.  Windows 7 users will need to [install .NET 4.0 or newer](https://msdn.microsoft.com/en-us/library/bb822049.aspx) if it's not already present.
 * Visual Studio 2015 Community Update 3 or higher is required for development.
 
 Screen sizes of 1600 x 900 or larger are recommended.
 
 ### History
-Carnassial began as a substantial overhaul of Timelapse 2.0 for improved code quality and sufficient flexibility to accomodate typical carnivore studies.  [Timelapse 2.1](http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.HomePage) includes much of the Carnassial effort through September 2016 and the two projects remain parallel due to the similar needs they serve.
+Carnassial is named for [carnassials](https://en.wikipedia.org/wiki/Carnassial) as its function is analogous (though unfortunately it lacks the teeth's self-sharpening properties).
+
+Carnassial began as a substantial overhaul of Timelapse 2.0 for improved code quality and sufficient flexibility to accomodate typical carnivore studies.  [Timelapse 2.1](http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.HomePage) includes several months of the initial Carnassial coding effort but is now diverged

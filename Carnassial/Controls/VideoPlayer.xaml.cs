@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Carnassial.Util;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -9,29 +10,38 @@ namespace Carnassial.Controls
     public partial class VideoPlayer : UserControl
     {
         private bool isProgrammaticUpdate;
-        private DispatcherTimer timer;
+        private DispatcherTimer positionUpdateTimer;
 
         public VideoPlayer()
         {
             this.InitializeComponent();
             this.isProgrammaticUpdate = false;
-            this.timer = new DispatcherTimer();
-            this.timer.Interval = TimeSpan.FromMilliseconds(500.0);
-            this.timer.Tick += this.Timer_Tick;
+            this.positionUpdateTimer = new DispatcherTimer();
+            this.positionUpdateTimer.Interval = TimeSpan.FromMilliseconds(250.0);
+            this.positionUpdateTimer.Tick += this.Timer_Tick;
         }
 
-        private void Pause()
+        public void Pause()
         {
-            this.PlayOrPause.IsChecked = false;
-            this.timer.Stop();
+            this.positionUpdateTimer.Stop();
             this.Video.Pause();
+
+            this.PlayOrPause.IsChecked = false;
+            this.ShowPosition();
         }
 
         private void Play()
         {
             this.PlayOrPause.IsChecked = true;
 
-            this.timer.Start();
+            // start over from beginning if at end of video
+            if (this.Video.NaturalDuration.HasTimeSpan && this.Video.Position == this.Video.NaturalDuration.TimeSpan)
+            {
+                this.Video.Position = TimeSpan.Zero;
+                this.ShowPosition();
+            }
+
+            this.positionUpdateTimer.Start();
             this.Video.Play();
         }
 
@@ -45,13 +55,6 @@ namespace Carnassial.Controls
             {
                 this.Pause();
             }
-        }
-
-        // Reset the video to the beginning
-        public void Reset()
-        {
-            this.VideoPosition.Value = 0;
-            this.Pause();
         }
 
         public void SetSource(Uri source)
@@ -68,16 +71,20 @@ namespace Carnassial.Controls
             this.Video.Pause();
             this.Video.Position = TimeSpan.FromMilliseconds(1.0);
             this.Video.Volume = originalVolume;
+
+            // position updated through the media opened event
         }
 
-        // Show the current play position in the ScrollBar and TextBox, if possible.
         private void ShowPosition()
         {
             this.isProgrammaticUpdate = true;
             if (this.Video.NaturalDuration.HasTimeSpan)
             {
                 this.VideoPosition.Maximum = this.Video.NaturalDuration.TimeSpan.TotalSeconds;
+                this.TimeFromEnd.Text = (this.Video.NaturalDuration.TimeSpan - this.Video.Position).ToString(Constant.Time.VideoPositionFormat);
+                this.VideoPosition.TickFrequency = this.VideoPosition.Maximum / 10.0;
             }
+            this.TimeFromStart.Text = this.Video.Position.ToString(Constant.Time.VideoPositionFormat);
             this.VideoPosition.Value = this.Video.Position.TotalSeconds;
             this.isProgrammaticUpdate = false;
         }
@@ -106,15 +113,20 @@ namespace Carnassial.Controls
 
         private void Video_MediaEnded(object sender, RoutedEventArgs e)
         {
-            this.Reset();
+            this.Pause();
+        }
+
+        private void Video_MediaOpened(object sender, RoutedEventArgs e)
+        {
+            this.ShowPosition();
         }
 
         private void Video_Unloaded(object sender, RoutedEventArgs e)
         {
-            this.timer.Stop();
+            this.positionUpdateTimer.Stop();
         }
 
-        // When the user starts moving the slider, we want to pause the video so the two actions don't interfere with each other
+        // pause video when user starts moving the slider so the two actions don't interfere with eachother
         private void VideoPosition_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
            this.Pause();

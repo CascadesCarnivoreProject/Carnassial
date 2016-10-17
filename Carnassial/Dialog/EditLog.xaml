@@ -4,13 +4,12 @@
         xmlns:controls="clr-namespace:Carnassial.Controls"
         xmlns:local="clr-namespace:Carnassial"
         Title="Edit your notes for this image set" 
-        MinHeight="480" MinWidth="768"
 		Height="600" Width="768"
 		ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
     <DockPanel>
-        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Question" 
+        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" StatusImage="Question" 
                             What="Record any notes about this image set that you may want to refer to in the future. Your notes will be saved and viewable at any time through this software, but it will not be saved in the spreadsheet csv file. Typical uses are to log activities, list to-do items, leave messages for others, etc."
                             Title="Edit your notes for this image set"/>
         <DockPanel>

@@ -175,7 +175,7 @@ namespace Carnassial.Database
             string path = this.GetFilePath(baseFolderPath);
             if (!File.Exists(path))
             {
-                return Constant.Images.FileNoLongerAvailable;
+                return Constant.Images.FileNoLongerAvailable.Value;
             }
 
             try
@@ -207,7 +207,7 @@ namespace Carnassial.Database
             catch (Exception exception)
             {
                 Debug.Fail(String.Format("LoadBitmap: Loading of {0} failed.", this.FileName), exception.ToString());
-                return Constant.Images.CorruptFile;
+                return Constant.Images.CorruptFile.Value;
             }
         }
 

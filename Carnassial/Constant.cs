@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
@@ -22,6 +23,7 @@ namespace Carnassial
 
         public static class ApplicationSettings
         {
+            public const string DevTeamEmail = "devTeamEmail";
             public const string GithubOrganizationAndRepo = "githubOrganizationAndRepo";
         }
 
@@ -153,8 +155,8 @@ namespace Carnassial
             public const string FileSelection = "FileSelection";
             public const string InitialFolderName = "InitialFolderName";
             public const string Log = "Log";
-            public const string Magnifier = "Magnifier";
             public const string MostRecentFileID = "MostRecentFileID";
+            public const string Options = "Options";
             public const string TimeZone = "TimeZone";
         }
 
@@ -209,7 +211,7 @@ namespace Carnassial
             public const int DarkPixelThresholdDefault = 60;
 
             // The threshold to determine differences between images
-            public const int DifferenceThresholdDefault = 20;
+            public const byte DifferenceThresholdDefault = 20;
             public const byte DifferenceThresholdMax = 255;
             public const byte DifferenceThresholdMin = 0;
 
@@ -218,45 +220,51 @@ namespace Carnassial
             // A greyscale pixel has r = g = b. But we will allow some slop in here just in case a bit of color creeps in
             public const int GreyScalePixelThreshold = 40;
 
-            public const int LargeNumberOfDeletedImages = 30;
+            public const int LargeNumberOfDeletedImages = 100;
 
             public const int ThumbnailWidth = 300;
 
-            public static readonly BitmapImage CorruptFile;
-            public static readonly BitmapImage FileNoLongerAvailable;
-            public static readonly BitmapImage NoSelectableFile;
+            public static readonly Lazy<BitmapImage> CorruptFile = Images.Load("CorruptFile_480x.png");
+            public static readonly Lazy<BitmapImage> FileNoLongerAvailable = Images.Load("FileNoLongerAvailable_480x.png");
+            public static readonly Lazy<BitmapImage> NoSelectableFile = Images.Load("NoSelectableFile_480x.png");
 
-            static Images()
+            public static readonly Lazy<BitmapImage> StatusError = Images.Load("StatusCriticalError_64x.png");
+            public static readonly Lazy<BitmapImage> StatusHelp = Images.Load("StatusHelp_64x.png");
+            public static readonly Lazy<BitmapImage> StatusInformation = Images.Load("StatusInformation_64x.png");
+            public static readonly Lazy<BitmapImage> StatusWarning = Images.Load("StatusWarning_64x.png");
+
+            private static Lazy<BitmapImage> Load(string fileName)
             {
-                Images.CorruptFile = new BitmapImage();
-                Images.CorruptFile.BeginInit();
-                Images.CorruptFile.CacheOption = BitmapCacheOption.None;
-                Images.CorruptFile.UriSource = new Uri("pack://application:,,/Resources/CorruptFile.jpg");
-                Images.CorruptFile.EndInit();
-                Images.CorruptFile.Freeze();
+                return new Lazy<BitmapImage>(() =>
+                {
+                    // if the requested image is available as an application resource, prefer that
+                    if (Application.Current != null && Application.Current.Resources.Contains(fileName))
+                    {                        
+                        return (BitmapImage)Application.Current.Resources[fileName];
+                    }
 
-                Images.FileNoLongerAvailable = new BitmapImage();
-                Images.FileNoLongerAvailable.BeginInit();
-                Images.FileNoLongerAvailable.CacheOption = BitmapCacheOption.None;
-                Images.FileNoLongerAvailable.UriSource = new Uri("pack://application:,,/Resources/FileNoLongerAvailable.jpg");
-                Images.FileNoLongerAvailable.EndInit();
-                Images.FileNoLongerAvailable.Freeze();
-
-                Images.NoSelectableFile = new BitmapImage();
-                Images.NoSelectableFile.BeginInit();
-                Images.NoSelectableFile.CacheOption = BitmapCacheOption.None;
-                Images.NoSelectableFile.UriSource = new Uri("pack://application:,,/Resources/NoSelectableFile.jpg");
-                Images.NoSelectableFile.EndInit();
-                Images.NoSelectableFile.Freeze();
+                    // if it's not (editor, unit tests, resource not listed in App.xaml) fall back to loading from the resources assembly
+                    BitmapImage image = new BitmapImage();
+                    image.BeginInit();
+                    image.UriSource = new Uri("pack://application:,,/Resources/" + fileName);
+                    image.EndInit();
+                    image.Freeze();
+                    return image;
+                });
             }
         }
 
         public static class MarkableCanvas
         {
-            public const double MagnifyingGlassDefaultZoom = 60;
-            public const double MagnifyingGlassMaximumZoom = 100;
-            public const double MagnifyingGlassMinimumZoom = 15;
-            public const double MagnifyingGlassZoomIncrement = 1.2;
+            public const double ImageZoomMaximum = 10.0;      // user configurable maximum amount of zoom in a display image
+            public const double ImageZoomMaximumRangeMaximum = 50.0; // the highest zoom a user can configure for a display image
+            public const double ImageZoomMaximumRangeMinimum = 2.0;
+            public const double ImageZoomMinimum = 1.0;       // minimum amount of zoom
+
+            public const double MagnifyingGlassDefaultFieldOfView = 100.0;
+            public const double MagnifyingGlassFieldOfViewIncrement = 1.2;
+            public const double MagnifyingGlassMaximumFieldOfView = 250.0;
+            public const double MagnifyingGlassMinimumFieldOfView = 15.0;
 
             public const int MagnifyingGlassDiameter = 250;
             public const int MagnifyingGlassHandleStart = 200;
@@ -267,10 +275,6 @@ namespace Carnassial
             public const int MarkerStrokeThickness = 2;
             public const double MarkerGlowOpacity = 0.35;
             public const int MarkerGlowStrokeThickness = 7;
-
-            public const double ZoomAbsoluteMaximum = 50; // the highest zoom a user can configure for a display image
-            public const double ZoomMaximum = 10;         // user configurable maximum amount of zoom in a display image
-            public const double ZoomMinimum = 1;          // minimum amount of zoom
         }
 
         public static class Manufacturer
@@ -346,7 +350,7 @@ namespace Carnassial
         public static class ThrottleValues
         {
             public const double DesiredMaximumImageRendersPerSecondLowerBound = 2.0;
-            public const double DesiredMaximumImageRendersPerSecondDefault = 6.0;
+            public const double DesiredMaximumImageRendersPerSecondDefault = 5.0;
             public const double DesiredMaximumImageRendersPerSecondUpperBound = 12.0;
             public const int MaximumBlackFrameAttempts = 5;
             public const int MaximumRenderAttempts = 10;
@@ -367,6 +371,7 @@ namespace Carnassial
             public const string TimeSpanDisplayFormat = @"hh\:mm\:ss";
             public const string UtcOffsetDatabaseFormat = "0.00";
             public const string UtcOffsetDisplayFormat = @"hh\:mm";
+            public const string VideoPositionFormat = @"mm\:ss";
 
             public static readonly TimeSpan DateTimeDatabaseResolution = TimeSpan.FromMilliseconds(1.0);
             public static readonly TimeSpan MaximumUtcOffset = TimeSpan.FromHours(14.0);

@@ -26,8 +26,8 @@ namespace Carnassial.Dialog
             // The Max Zoom Value
             this.MaxZoom.Value = this.markableCanvas.ZoomMaximum;
             this.MaxZoom.ToolTip = this.markableCanvas.ZoomMaximum;
-            this.MaxZoom.Maximum = Constant.MarkableCanvas.ZoomAbsoluteMaximum;
-            this.MaxZoom.Minimum = 2;
+            this.MaxZoom.Maximum = Constant.MarkableCanvas.ImageZoomMaximumRangeMaximum;
+            this.MaxZoom.Minimum = Constant.MarkableCanvas.ImageZoomMaximumRangeMinimum;
 
             // Image Differencing Thresholds
             this.DifferenceThreshold.Value = this.carnassialState.DifferenceThreshold;
@@ -42,7 +42,7 @@ namespace Carnassial.Dialog
             this.ImageRendersPerSecond.ToolTip = this.carnassialState.Throttles.DesiredImageRendersPerSecond;
         }
 
-        private void ResetThrottle_Click(object sender, RoutedEventArgs e)
+        private void ResetImageRendersPerSecond_Click(object sender, RoutedEventArgs e)
         {
             this.carnassialState.Throttles.ResetToDefaults();
             this.ImageRendersPerSecond.Value = this.carnassialState.Throttles.DesiredImageRendersPerSecond;

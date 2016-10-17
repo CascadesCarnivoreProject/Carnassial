@@ -11,7 +11,7 @@
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel >
-        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" Icon="Question"
+        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" StatusImage="Question"
                             Title="Correct the time for a camera whose clock runs fast or slow"
                             Problem="If a camera does not have an accurate clock, the time recorded on successive images or videos will be fast or slow, becoming increasingly inaccurate."
                             Solution="Estimates of when the camera's clock was last correct and when the clock's error was measured are shown below.

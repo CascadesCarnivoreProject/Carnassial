@@ -15,7 +15,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" PreviewKeyDown="Window_PreviewKeyDown">
     <DockPanel PreviewKeyDown="Window_PreviewKeyDown">
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
-                            Icon="Question"
+                            StatusImage="Question"
                             Title="Classify Dark Images and Videos"
                             What="If dark image checking is skipped you can perform it now.  If Carnassial misclassified images and videos as 'dark' or 'ok', you can tune how classification is done."
                             Hint="It helps to understand how Carnassial determines darkness through the following steps.&#10;1. If it appears to be in color, then classify it as Ok (i.e., not dark).&#10;2. Otherwise, count the number of pixels darker than a 'grey color threshold'.&#10;3. If the percentage of dark pixels is greater than  the dark percentage threshold, then classify it as dark."

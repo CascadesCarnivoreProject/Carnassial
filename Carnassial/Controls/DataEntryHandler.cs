@@ -53,7 +53,6 @@ namespace Carnassial.Controls
                 // Nothing to propagate. Note that we shouldn't really see this, as the menu shouldn't be highlit if we are on the last image
                 // But just in case...
                 MessageBox messageBox = new MessageBox("Nothing to copy forward.", Application.Current.MainWindow);
-                messageBox.Message.Icon = MessageBoxImage.Exclamation;
                 messageBox.Message.Reason = "As you are on the last file, there are no files after this.";
                 messageBox.ShowDialog();
                 return;
@@ -109,7 +108,6 @@ namespace Carnassial.Controls
                 // Nothing to propagate. Note that we shouldn't see this, as the menu item should be deactivated if this is the case.
                 // But just in case.
                 MessageBox messageBox = new MessageBox("Nothing to Propagate to Here.", Application.Current.MainWindow);
-                messageBox.Message.Icon = MessageBoxImage.Exclamation;
                 messageBox.Message.Reason = "None of the earlier files have anything in this field, so there are no values to propagate.";
                 messageBox.ShowDialog();
                 return this.FileDatabase.Files[this.ImageCache.CurrentRow].GetValueDisplayString(control.DataLabel); // No change, so return the current value
@@ -299,7 +297,7 @@ namespace Carnassial.Controls
             text = text.Trim();
 
             MessageBox messageBox = new MessageBox("Please confirm 'Copy Forward' for this field...", Application.Current.MainWindow, MessageBoxButton.YesNo);
-            messageBox.Message.Icon = MessageBoxImage.Question;
+            messageBox.Message.StatusImage = MessageBoxImage.Question;
             messageBox.Message.What = "The Copy Forward operation is not undoable, and can overwrite existing values.";
             messageBox.Message.Result = "If you select yes, this operation will:" + Environment.NewLine;
             if (!checkForZero && text.Equals(String.Empty))
@@ -321,7 +319,7 @@ namespace Carnassial.Controls
             text = text.Trim();
 
             MessageBox messageBox = new MessageBox("Please confirm 'Copy to All' for this field...", Application.Current.MainWindow, MessageBoxButton.YesNo);
-            messageBox.Message.Icon = MessageBoxImage.Question;
+            messageBox.Message.StatusImage = MessageBoxImage.Question;
             messageBox.Message.What = "The Copy to All operation is not undoable, and can overwrite existing values.";
             messageBox.Message.Result = "If you select yes, this operation will:" + Environment.NewLine;
             if (!checkForZero && text.Equals(String.Empty))
@@ -341,7 +339,7 @@ namespace Carnassial.Controls
         {
             text = text.Trim();
             MessageBox messageBox = new MessageBox("Please confirm 'Propagate to Here' for this field.", Application.Current.MainWindow, MessageBoxButton.YesNo);
-            messageBox.Message.Icon = MessageBoxImage.Question;
+            messageBox.Message.StatusImage = MessageBoxImage.Question;
             messageBox.Message.What = "The 'Propagate to Here' operation is not undoable, and can overwrite existing values.";
             messageBox.Message.Reason = "\u2022 The last non-empty value \u00AB" + text + "\u00BB was seen " + imagesAffected.ToString() + " files back." + Environment.NewLine;
             messageBox.Message.Reason += "\u2022 That field's value will be copied across all files between that file and this one in the selection";

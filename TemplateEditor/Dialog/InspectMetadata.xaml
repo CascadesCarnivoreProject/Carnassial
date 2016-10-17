@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:Carnassial.Controls;assembly=Carnassial"
-        xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
         Title="Inspect metadata available in files" 
 		MinHeight="600" MinWidth="768"
@@ -14,7 +13,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
-                            Icon="Question"
+                            StatusImage="Question"
                             Title="Inspect what metadata is available in a file of your choosing"
                             What="Cameras typically embed metadata in image files, some of which may be useful to capture as data. 
 &#10;You can inspect an image or video of your choice to see what metadata is typically recorded. 

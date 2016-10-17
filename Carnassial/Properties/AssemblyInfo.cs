@@ -7,7 +7,7 @@ using System.Windows;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Carnassial")]
-[assembly: AssemblyDescription("A tool to help biologists analyze images and videos from remote cameras")]
+[assembly: AssemblyDescription("A tool to simplify analysis of images and videos from remote cameras.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Cascades Carnivore Project")]
 [assembly: AssemblyProduct("Carnassial")]

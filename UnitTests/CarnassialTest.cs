@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Windows;
 
 namespace Carnassial.UnitTests
 {
@@ -12,6 +13,13 @@ namespace Carnassial.UnitTests
         protected CarnassialTest()
         {
             this.WorkingDirectory = Environment.CurrentDirectory;
+
+            // Constants.Images needs to load resources from Carnassial.exe and falls back to Application.ResourceAssembly if Application.Current isn't set
+            // for unit tests neither Current or ResourceAssembly gets set as Carnassial.exe is not the entry point
+            if (Application.ResourceAssembly == null)
+            {
+                Application.ResourceAssembly = typeof(Constant.Images).Assembly;
+            }
         }
 
         public TestContext TestContext { get; set; }
@@ -243,13 +251,13 @@ namespace Carnassial.UnitTests
             // files in same folder as .tdb and .ddb
             DateTimeAdjustment martenDateTimeAdjustment;
             ImageRow martenImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.InfraredMarten, out martenDateTimeAdjustment);
-            Assert.IsTrue((martenDateTimeAdjustment & DateTimeAdjustment.MetadataDate) == DateTimeAdjustment.MetadataDate &&
-                          (martenDateTimeAdjustment & DateTimeAdjustment.MetadataTime) == DateTimeAdjustment.MetadataTime);
+            Assert.IsTrue(martenDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
+                          martenDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
 
             DateTimeAdjustment bobcatDatetimeAdjustment;
             ImageRow bobcatImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightBobcat, out bobcatDatetimeAdjustment);
-            Assert.IsTrue((bobcatDatetimeAdjustment & DateTimeAdjustment.MetadataDate) == DateTimeAdjustment.MetadataDate &&
-                          (bobcatDatetimeAdjustment & DateTimeAdjustment.MetadataTime) == DateTimeAdjustment.MetadataTime);
+            Assert.IsTrue(bobcatDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
+                          bobcatDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
 
             fileDatabase.AddFiles(new List<ImageRow>() { martenImage, bobcatImage }, null);
             fileDatabase.SelectFiles(FileSelection.All);
@@ -286,13 +294,13 @@ namespace Carnassial.UnitTests
             {
                 DateTimeAdjustment martenPairDateTimeAdjustment;
                 ImageRow martenPairImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out martenPairDateTimeAdjustment);
-                Assert.IsTrue((martenPairDateTimeAdjustment & DateTimeAdjustment.MetadataDate) == DateTimeAdjustment.MetadataDate &&
-                              (martenPairDateTimeAdjustment & DateTimeAdjustment.MetadataTime) == DateTimeAdjustment.MetadataTime);
+                Assert.IsTrue(martenPairDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
+                              martenPairDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
 
                 DateTimeAdjustment coyoteDatetimeAdjustment;
                 ImageRow coyoteImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out coyoteDatetimeAdjustment);
-                Assert.IsTrue((coyoteDatetimeAdjustment & DateTimeAdjustment.MetadataDate) == DateTimeAdjustment.MetadataDate &&
-                              (coyoteDatetimeAdjustment & DateTimeAdjustment.MetadataTime) == DateTimeAdjustment.MetadataTime);
+                Assert.IsTrue(coyoteDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
+                              coyoteDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
 
                 fileDatabase.AddFiles(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
                 fileDatabase.SelectFiles(FileSelection.All);

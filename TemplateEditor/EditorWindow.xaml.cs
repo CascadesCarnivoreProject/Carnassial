@@ -18,32 +18,34 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Navigation;
 using MessageBox = Carnassial.Dialog.MessageBox;
 
 namespace Carnassial.Editor
 {
     public partial class EditorWindow : Window
     {
-        // database where the template is stored
-        private TemplateDatabase templateDatabase;
-
         // state tracking
         private EditorControls controls;
         private bool dataGridBeingUpdatedByCode;
         private EditorUserRegistrySettings userSettings;
 
         // These variables support the drag/drop of controls
+        private UIElement dummyMouseDragSource;
         private bool isMouseDown;
         private bool isMouseDragging;
         private Point mouseDownStartPosition;
         private UIElement realMouseDragSource;
-        private UIElement dummyMouseDragSource;
+
+        // database where the template is stored
+        private TemplateDatabase templateDatabase;
 
         /// <summary>
         /// Starts the UI.
         /// </summary>
         public EditorWindow()
         {
+            AppDomain.CurrentDomain.UnhandledException += this.OnUnhandledException;
             this.InitializeComponent();
             this.Title = EditorConstant.MainWindowBaseTitle;
             Utilities.TryFitWindowInWorkingArea(this);
@@ -59,151 +61,197 @@ namespace Carnassial.Editor
             this.dummyMouseDragSource = new UIElement();
             this.dataGridBeingUpdatedByCode = false;
 
-            this.ShowAllColumnsMenuItem_Click(this.ShowAllColumns, null);
+            this.MenuViewShowAllColumns_Click(this.MenuViewShowAllColumns, null);
 
             // Recall state from prior sessions
             this.userSettings = new EditorUserRegistrySettings();
 
             // populate the most recent databases list
-            this.MenuItemRecentTemplates_Refresh();
-        }
+            this.MenuFileRecentTemplates_Refresh();
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            // check for updates
-            if (DateTime.UtcNow - this.userSettings.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
-            {
-                Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
-                if (latestVersionAddress == null)
-                {
-                    return;
-                }
-
-                GithubReleaseClient updater = new GithubReleaseClient(EditorConstant.ApplicationName, latestVersionAddress);
-                updater.TryGetAndParseRelease(false);
-                this.userSettings.MostRecentCheckForUpdates = DateTime.UtcNow;
-            }
-        }
-
-        private void Window_Closing(object sender, CancelEventArgs e)
-        {
-            // apply any pending edits
-            this.TemplateDataGrid.CommitEdit();
-            // persist state to registry
-            this.userSettings.WriteToRegistry();
+            this.TutorialLink.NavigateUri = CarnassialConfigurationSettings.GetTutorialBrowserAddress();
+            this.TutorialLink.ToolTip = this.TutorialLink.NavigateUri.AbsoluteUri;
         }
 
         /// <summary>
-        /// Creates a new database file of a user chosen name in a user chosen location.
+        /// Adds a row to the table. The row type is decided by the button tags.
+        /// Default values are set for the added row, differing depending on type.
         /// </summary>
-        private void NewFileMenuItem_Click(object sender, RoutedEventArgs e)
+        private void AddControlButton_Click(object sender, RoutedEventArgs e)
         {
-            this.TemplateDataGrid.CommitEdit(); // to apply edits that the enter key was not pressed
+            Button button = sender as Button;
+            string controlType = button.Tag.ToString();
 
-            // Configure save file dialog box
-            SaveFileDialog newTemplateFilePathDialog = new SaveFileDialog();
-            newTemplateFilePathDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            newTemplateFilePathDialog.DefaultExt = Constant.File.TemplateDatabaseFileExtension; // Default file extension
-            newTemplateFilePathDialog.Filter = "Database Files (" + Constant.File.TemplateDatabaseFileExtension + ")|*" + Constant.File.TemplateDatabaseFileExtension; // Filter files by extension 
-            newTemplateFilePathDialog.Title = "Select Location to Save New Template File";
+            this.dataGridBeingUpdatedByCode = true;
 
-            // Show save file dialog box
-            Nullable<bool> result = newTemplateFilePathDialog.ShowDialog();
+            this.templateDatabase.AddUserDefinedControl(controlType);
+            this.TemplateDataGrid.DataContext = this.templateDatabase.Controls;
+            this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
 
-            // Process save file dialog box results 
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
+            this.GenerateSpreadsheet();
+            this.OnControlOrderChanged();
+
+            this.dataGridBeingUpdatedByCode = false;
+        }
+
+        // When the  choice list button is clicked, raise a dialog box that lets the user edit the list of choices
+        private void ChoiceListButton_Click(object sender, RoutedEventArgs e)
+        {
+            Button button = (Button)sender;
+
+            // The button tag holds the Control Order of the row the button is in, not the ID.
+            // So we have to search through the rows to find the one with the correct control order
+            // and retrieve / set the ItemList menu in that row.
+            ControlRow choiceControl = this.templateDatabase.Controls.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
+            Debug.Assert(choiceControl != null, String.Format("Control named {0} not found.", button.Tag));
+
+            EditChoiceList choiceListDialog = new EditChoiceList(button, choiceControl.GetChoices(), this);
+            bool? result = choiceListDialog.ShowDialog();
             if (result == true)
             {
-                // Overwrite the file if it exists
-                if (File.Exists(newTemplateFilePathDialog.FileName))
+                choiceControl.SetChoices(choiceListDialog.Choices);
+                this.SyncControlToDatabase(choiceControl);
+            }
+        }
+
+        private void ControlsPanel_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent("UIElement"))
+            {
+                UIElement dropTarget = e.Source as UIElement;
+                int control = 0;
+                int dropTargetIndex = -1;
+                foreach (UIElement element in this.ControlsPanel.Children)
                 {
-                    FileBackup.TryCreateBackup(newTemplateFilePathDialog.FileName);
-                    File.Delete(newTemplateFilePathDialog.FileName);
+                    if (element.Equals(dropTarget))
+                    {
+                        dropTargetIndex = control;
+                        break;
+                    }
+                    else
+                    {
+                        // Check if its a stack panel, and if so check to see if its children are the drop target
+                        StackPanel stackPanel = element as StackPanel;
+                        if (stackPanel != null)
+                        {
+                            // Check the children...
+                            foreach (UIElement subelement in stackPanel.Children)
+                            {
+                                if (subelement.Equals(dropTarget))
+                                {
+                                    dropTargetIndex = control;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    control++;
+                }
+                if (dropTargetIndex != -1)
+                {
+                    StackPanel tsp = this.realMouseDragSource as StackPanel;
+                    if (tsp == null)
+                    {
+                        StackPanel parent = FindVisualParent<StackPanel>(this.realMouseDragSource);
+                        this.realMouseDragSource = parent;
+                    }
+                    this.ControlsPanel.Children.Remove(this.realMouseDragSource);
+                    this.ControlsPanel.Children.Insert(dropTargetIndex, this.realMouseDragSource);
+                    this.OnControlOrderChanged();
                 }
 
-                // Open document 
-                this.InitializeDataGrid(newTemplateFilePathDialog.FileName);
+                this.isMouseDown = false;
+                this.isMouseDragging = false;
+                this.realMouseDragSource.ReleaseMouseCapture();
             }
         }
 
-        /// <summary>
-        /// Opens an existing database file.
-        /// </summary>
-        private void OpenFileMenuItem_Click(object sender, RoutedEventArgs e)
+        private void ControlsPanel_DragEnter(object sender, DragEventArgs e)
         {
-            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
-
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            openFileDialog.DefaultExt = Constant.File.TemplateDatabaseFileExtension; // Default file extension
-            openFileDialog.Filter = "Database Files (" + Constant.File.TemplateDatabaseFileExtension + ")|*" + Constant.File.TemplateDatabaseFileExtension; // Filter files by extension 
-            openFileDialog.Title = "Select an Existing Template File to Open";
-
-            // Show open file dialog box
-            Nullable<bool> result = openFileDialog.ShowDialog();
-
-            // Process open file dialog box results 
-            if (result == true)
+            if (e.Data.GetDataPresent("UIElement"))
             {
-                // Open document 
-                this.InitializeDataGrid(openFileDialog.FileName);
+                e.Effects = DragDropEffects.Move;
             }
         }
 
-        // Opern a recently used template
-        private void MenuItemRecentTemplate_Click(object sender, RoutedEventArgs e)
+        private void ControlsPanel_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            string recentTemplatePath = (string)((MenuItem)sender).ToolTip;
-            this.InitializeDataGrid(recentTemplatePath);
-        }
-
-        /// <summary>
-        /// Exits the application.
-        /// </summary>
-        private void ExitFileMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
-            Application.Current.Shutdown();
-        }
-
-        /// <summary>
-        /// Depending on the menu's checkbox state, show all columns or hide selected columns
-        /// </summary>
-        private void ShowAllColumnsMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            MenuItem mi = sender as MenuItem;
-            if (mi == null)
+            if (e.Source != this.ControlsPanel)
             {
-                return;
+                this.isMouseDown = true;
+                this.mouseDownStartPosition = e.GetPosition(this.ControlsPanel);
             }
+        }
 
-            Visibility visibility = mi.IsChecked ? Visibility.Visible : Visibility.Collapsed;
-            foreach (DataGridColumn column in this.TemplateDataGrid.Columns)
+        private void ControlsPanel_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            this.isMouseDown = false;
+            this.isMouseDragging = false;
+            if (!(this.realMouseDragSource == null))
             {
-                if (column.Header.Equals(EditorConstant.ColumnHeader.ID) || 
-                    column.Header.Equals(EditorConstant.ColumnHeader.ControlOrder) || 
-                    column.Header.Equals(EditorConstant.ColumnHeader.SpreadsheetOrder))
+                this.realMouseDragSource.ReleaseMouseCapture();
+            }
+        }
+
+        private static T FindVisualParent<T>(UIElement element) where T : UIElement
+        {
+            UIElement parent = element;
+            while (parent != null)
+            {
+                T correctlyTyped = parent as T;
+                if (correctlyTyped != null)
                 {
-                    column.Visibility = visibility;
+                    return correctlyTyped;
+                }
+                parent = VisualTreeHelper.GetParent(parent) as UIElement;
+            }
+            return null;
+        }
+
+        private void GenerateSpreadsheet()
+        {
+            List<ControlRow> controlsInSpreadsheetOrder = this.templateDatabase.Controls.OrderBy(control => control.SpreadsheetOrder).ToList();
+            this.dgSpreadsheet.Columns.Clear();
+            foreach (ControlRow control in controlsInSpreadsheetOrder)
+            {
+                DataGridTextColumn column = new DataGridTextColumn();
+                string dataLabel = control.DataLabel;
+                if (String.IsNullOrEmpty(dataLabel))
+                {
+                    Debug.Assert(false, "Database constructors should guarantee data labels are not null.");
+                }
+                else
+                {
+                    column.Header = dataLabel;
+                    this.dgSpreadsheet.Columns.Add(column);
                 }
             }
         }
 
         /// <summary>
-        /// Show the dialog that allows a user to inspect image metadata
+        /// Used in this code to get the child of a DataGridRows, DataGridCellsPresenter. This can be used to get the DataGridCell.
+        /// WPF does not make it easy to get to the actual cells.
         /// </summary>
-        private void MenuItemInspectImageMetadata_Click(object sender, RoutedEventArgs e)
+        // Code from: http://techiethings.blogspot.com/2010/05/get-wpf-datagrid-row-and-cell.html
+        private static T GetVisualChild<T>(Visual parent) where T : Visual
         {
-            InspectMetadata inspectMetadata = new InspectMetadata(this.templateDatabase.FilePath, this);
-            inspectMetadata.ShowDialog();
-        }
-
-        private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            AboutEditor about = new AboutEditor(this);
-            if ((about.ShowDialog() == true) && about.MostRecentCheckForUpdate.HasValue)
+            T child = default(T);
+            int numVisuals = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < numVisuals; i++)
             {
-                this.userSettings.MostRecentCheckForUpdates = about.MostRecentCheckForUpdate.Value;
+                Visual v = (Visual)VisualTreeHelper.GetChild(parent, i);
+                child = v as T;
+                if (child == null)
+                {
+                    child = GetVisualChild<T>(v);
+                }
+                if (child != null)
+                {
+                    break;
+                }
             }
+            return child;
         }
 
         /// <summary>
@@ -230,198 +278,31 @@ namespace Carnassial.Editor
             this.AddNoteButton.IsEnabled = true;
             this.AddFlagButton.IsEnabled = true;
 
-            this.NewFileMenuItem.IsEnabled = false;
-            this.OpenFileMenuItem.IsEnabled = false;
-            this.ViewMenu.IsEnabled = true;
+            this.MenuFileNewTemplate.IsEnabled = false;
+            this.MenuFileOpenTemplate.IsEnabled = false;
+            this.MenuView.IsEnabled = true;
 
             this.TemplatePane.IsActive = true;
             this.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
 
             // update state
-            // disable the recent templates list rather than call this.MenuItemRecentTemplates_Refresh
+            // disable the recent templates list rather than call this.MenuFileRecentTemplates_Refresh
             this.userSettings.MostRecentTemplates.SetMostRecent(templateDatabaseFilePath);
-            this.MenuItemRecentTemplates.IsEnabled = false;
+            this.MenuFileRecentTemplates.IsEnabled = false;
         }
 
-        /// <summary>
-        /// Updates a given control in the database with the current state of the DataGrid. 
-        /// </summary>
-        private void SyncControlToDatabase(ControlRow control)
+        private void Instructions_Drop(object sender, DragEventArgs dropEvent)
         {
-            this.dataGridBeingUpdatedByCode = true;
-
-            this.templateDatabase.SyncControlToDatabase(control);
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-            this.GenerateSpreadsheet();
-
-            this.dataGridBeingUpdatedByCode = false;
-        }
-
-        /// <summary>
-        /// Whenever a row changes save the database, which also updates the grid colors.
-        /// </summary>
-        private void TemplateDataTable_RowChanged(object sender, DataRowChangeEventArgs e)
-        {
-            if (!this.dataGridBeingUpdatedByCode)
+            string templateDatabaseFilePath;
+            if (Utilities.IsSingleTemplateFileDrag(dropEvent, out templateDatabaseFilePath))
             {
-                this.SyncControlToDatabase(new ControlRow(e.Row));
+                this.InitializeDataGrid(templateDatabaseFilePath);
             }
         }
 
-        /// <summary>
-        /// enable or disable the remove control button as appropriate
-        /// </summary>
-        private void TemplateDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void Instructions_PreviewDrag(object sender, DragEventArgs dragEvent)
         {
-            DataRowView selectedRowView = this.TemplateDataGrid.SelectedItem as DataRowView;
-            if (selectedRowView == null)
-            {
-                this.RemoveControlButton.IsEnabled = false;
-                return;
-            }
-
-            ControlRow control = new ControlRow(selectedRowView.Row);
-            this.RemoveControlButton.IsEnabled = !Constant.Control.StandardTypes.Contains(control.Type);
-        }
-
-        /// <summary>
-        /// Adds a row to the table. The row type is decided by the button tags.
-        /// Default values are set for the added row, differing depending on type.
-        /// </summary>
-        private void AddControlButton_Click(object sender, RoutedEventArgs e)
-        {
-            Button button = sender as Button;
-            string controlType = button.Tag.ToString();
-
-            this.dataGridBeingUpdatedByCode = true;
-
-            this.templateDatabase.AddUserDefinedControl(controlType);
-            this.TemplateDataGrid.DataContext = this.templateDatabase.Controls;
-            this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
-
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-            this.GenerateSpreadsheet();
-            this.OnControlOrderChanged();
-
-            this.dataGridBeingUpdatedByCode = false;
-        }
-
-        /// <summary>
-        /// Removes a row from the table and shifts up the ids on the remaining rows.
-        /// The required rows are unable to be deleted.
-        /// </summary>
-        private void RemoveControlButton_Click(object sender, RoutedEventArgs e)
-        {
-            DataRowView selectedRowView = this.TemplateDataGrid.SelectedItem as DataRowView;
-            if (selectedRowView == null || selectedRowView.Row == null)
-            {
-                // nothing to do
-                return;
-            }
-
-            ControlRow control = new ControlRow(selectedRowView.Row);
-            if (EditorControls.IsStandardControlType(control.Type))
-            {
-                // standard controls cannot be removed
-                return;
-            }
-
-            this.dataGridBeingUpdatedByCode = true;
-            this.templateDatabase.RemoveUserDefinedControl(new ControlRow(selectedRowView.Row));
-
-            // update the control panel so it reflects the current values in the database
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-            this.GenerateSpreadsheet();
-
-            this.dataGridBeingUpdatedByCode = false;
-        }
-
-        // When the  choice list button is clicked, raise a dialog box that lets the user edit the list of choices
-        private void ChoiceListButton_Click(object sender, RoutedEventArgs e)
-        {
-            Button button = (Button)sender;
-
-            // The button tag holds the Control Order of the row the button is in, not the ID.
-            // So we have to search through the rows to find the one with the correct control order
-            // and retrieve / set the ItemList menu in that row.
-            ControlRow choiceControl = this.templateDatabase.Controls.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
-            Debug.Assert(choiceControl != null, String.Format("Control named {0} not found.", button.Tag));
-
-            EditChoiceList choiceListDialog = new EditChoiceList(button, choiceControl.GetChoices(), this);
-            bool? result = choiceListDialog.ShowDialog();
-            if (result == true)
-            {
-                choiceControl.SetChoices(choiceListDialog.Choices);
-                this.SyncControlToDatabase(choiceControl);
-            }
-        }
-
-        private void TemplateDataGrid_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            DataGridCell currentCell;
-            DataGridRow currentRow;
-            if ((this.TryGetCurrentCell(out currentCell, out currentRow) == false) || currentCell.Background.Equals(EditorConstant.NotEditableCellColor))
-            {
-                e.Handled = true;
-                return;
-            }
-
-            switch ((string)this.TemplateDataGrid.CurrentColumn.Header)
-            {
-                // EditorConstant.Control.ControlOrder is not editable
-                case EditorConstant.ColumnHeader.DataLabel:
-                    if (String.IsNullOrEmpty(e.Text) == false)
-                    {
-                        // one key is provided by the event at a time during typing, multiple keys can be pasted in a single event
-                        // it's not known where in the data label the input occurs, so full validation is postponed to ValidateDataLabel()
-                        if (this.IsValidDataLabelCharacters(e.Text) == false)
-                        {
-                            this.ShowDataLabelRequirementsDialog();
-                            e.Handled = true;
-                        }
-                    }
-                    break;
-                case EditorConstant.ColumnHeader.DefaultValue:
-                    ControlRow control = new ControlRow((currentRow.Item as DataRowView).Row);
-                    switch (control.Type)
-                    {
-                        case Constant.Control.Counter:
-                            e.Handled = !Utilities.IsDigits(e.Text);
-                            break;
-                        case Constant.Control.Flag:
-                            // Only allow t/f and translate to true/false
-                            if (e.Text == "t" || e.Text == "T")
-                            {
-                                control.DefaultValue = Boolean.TrueString;
-                                this.SyncControlToDatabase(control);
-                            }
-                            else if (e.Text == "f" || e.Text == "F")
-                            {
-                                control.DefaultValue = Boolean.FalseString;
-                                this.SyncControlToDatabase(control);
-                            }
-                            e.Handled = true;
-                            break;
-                        case Constant.Control.FixedChoice:
-                            // no restrictions for now
-                            // the default value should be limited to one of the choices defined, however
-                            break;
-                        default:
-                            // no restrictions on note controls
-                            break;
-                    }
-                    break;
-                // EditorConstant.Control.ID is not editable
-                // EditorConstant.Control.SpreadsheetOrder is not editable
-                // Type is not editable
-                case EditorConstant.ColumnHeader.Width:
-                    // only allow digits in widths as they must be parseable as integers
-                    e.Handled = !Utilities.IsDigits(e.Text);
-                    break;
-                default:
-                    // no restrictions on copyable, label, tooltip, or visibile columns
-                    break;
-            }
+            Utilities.OnInstructionsPreviewDrag(dragEvent);
         }
 
         private bool IsValidDataLabel(string dataLabel)
@@ -457,6 +338,248 @@ namespace Carnassial.Editor
                 }
             }
             return true;
+        }
+
+        /// <summary>
+        /// Exits the application.
+        /// </summary>
+        private void MenuFileExit_Click(object sender, RoutedEventArgs e)
+        {
+            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
+            Application.Current.Shutdown();
+        }
+
+        /// <summary>
+        /// Creates a new template of a user chosen name in a user chosen location.
+        /// </summary>
+        private void MenuFileNewTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            this.TemplateDataGrid.CommitEdit(); // to apply edits that the enter key was not pressed
+
+            // Configure save file dialog box
+            SaveFileDialog newTemplateFilePathDialog = new SaveFileDialog();
+            newTemplateFilePathDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
+            newTemplateFilePathDialog.DefaultExt = Constant.File.TemplateDatabaseFileExtension; // Default file extension
+            newTemplateFilePathDialog.Filter = "Database Files (" + Constant.File.TemplateDatabaseFileExtension + ")|*" + Constant.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            newTemplateFilePathDialog.Title = "Select Location to Save New Template File";
+
+            // Show save file dialog box
+            Nullable<bool> result = newTemplateFilePathDialog.ShowDialog();
+
+            // Process save file dialog box results 
+            if (result == true)
+            {
+                // Overwrite the file if it exists
+                if (File.Exists(newTemplateFilePathDialog.FileName))
+                {
+                    FileBackup.TryCreateBackup(newTemplateFilePathDialog.FileName);
+                    File.Delete(newTemplateFilePathDialog.FileName);
+                }
+
+                // Open document 
+                this.InitializeDataGrid(newTemplateFilePathDialog.FileName);
+            }
+        }
+
+        /// <summary>
+        /// Open an existing template.
+        /// </summary>
+        private void MenuFileOpenTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
+
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
+            openFileDialog.DefaultExt = Constant.File.TemplateDatabaseFileExtension; // Default file extension
+            openFileDialog.Filter = "Database Files (" + Constant.File.TemplateDatabaseFileExtension + ")|*" + Constant.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            openFileDialog.Title = "Select an Existing Template File to Open";
+
+            // Show open file dialog box
+            Nullable<bool> result = openFileDialog.ShowDialog();
+
+            // Process open file dialog box results 
+            if (result == true)
+            {
+                // Open document 
+                this.InitializeDataGrid(openFileDialog.FileName);
+            }
+        }
+
+        // Opern a recently used template
+        private void MenuFileRecentTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            string recentTemplatePath = (string)((MenuItem)sender).ToolTip;
+            this.InitializeDataGrid(recentTemplatePath);
+        }
+
+        /// <summary>
+        /// Update the list of recent databases displayed under File -> Recent Databases.
+        /// </summary>
+        private void MenuFileRecentTemplates_Refresh()
+        {
+            this.MenuFileRecentTemplates.IsEnabled = this.userSettings.MostRecentTemplates.Count > 0;
+            this.MenuFileRecentTemplates.Items.Clear();
+
+            int index = 1;
+            foreach (string recentTemplatePath in this.userSettings.MostRecentTemplates)
+            {
+                MenuItem recentImageSetItem = new MenuItem();
+                recentImageSetItem.Click += this.MenuFileRecentTemplate_Click;
+                recentImageSetItem.Header = String.Format("_{0} {1}", index, recentTemplatePath);
+                recentImageSetItem.ToolTip = recentTemplatePath;
+                this.MenuFileRecentTemplates.Items.Add(recentImageSetItem);
+                ++index;
+            }
+        }
+
+        private void MenuHelpAbout_Click(object sender, RoutedEventArgs e)
+        {
+            AboutEditor about = new AboutEditor(this);
+            if ((about.ShowDialog() == true) && about.MostRecentCheckForUpdate.HasValue)
+            {
+                this.userSettings.MostRecentCheckForUpdates = about.MostRecentCheckForUpdate.Value;
+            }
+        }
+
+        /// <summary>
+        /// Show the dialog that allows a user to inspect image metadata
+        /// </summary>
+        private void MenuViewInspectMetadata_Click(object sender, RoutedEventArgs e)
+        {
+            InspectMetadata inspectMetadata = new InspectMetadata(this.templateDatabase.FilePath, this);
+            inspectMetadata.ShowDialog();
+        }
+
+        /// <summary>
+        /// Depending on the menu's checkbox state, show all columns or hide selected columns
+        /// </summary>
+        private void MenuViewShowAllColumns_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem mi = sender as MenuItem;
+            if (mi == null)
+            {
+                return;
+            }
+
+            Visibility visibility = mi.IsChecked ? Visibility.Visible : Visibility.Collapsed;
+            foreach (DataGridColumn column in this.TemplateDataGrid.Columns)
+            {
+                if (column.Header.Equals(EditorConstant.ColumnHeader.ID) || 
+                    column.Header.Equals(EditorConstant.ColumnHeader.ControlOrder) || 
+                    column.Header.Equals(EditorConstant.ColumnHeader.SpreadsheetOrder))
+                {
+                    column.Visibility = visibility;
+                }
+            }
+        }
+
+        private void OnControlOrderChanged()
+        {
+            Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
+            long controlOrder = 1;
+            foreach (UIElement element in this.ControlsPanel.Children)
+            {
+                StackPanel stackPanel = element as StackPanel;
+                if (stackPanel == null)
+                {
+                    continue;
+                }
+                newControlOrderByDataLabel.Add((string)stackPanel.Tag, controlOrder);
+                controlOrder++;
+            }
+
+            this.templateDatabase.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls); // A contorted to make sure the controls panel updates itself
+        }
+
+        private void OnSpreadsheetOrderChanged(object sender, DataGridColumnEventArgs e)
+        {
+            DataGrid dataGrid = (DataGrid)sender;
+            Dictionary<string, long> spreadsheetOrderByDataLabel = new Dictionary<string, long>();
+            for (int control = 0; control < dataGrid.Columns.Count; control++)
+            {
+                string dataLabelFromColumnHeader = dataGrid.Columns[control].Header.ToString();
+                long newSpreadsheetOrder = dataGrid.Columns[control].DisplayIndex + 1;
+                spreadsheetOrderByDataLabel.Add(dataLabelFromColumnHeader, newSpreadsheetOrder);
+            }
+
+            this.templateDatabase.UpdateDisplayOrder(Constant.Control.SpreadsheetOrder, spreadsheetOrderByDataLabel);
+        }
+
+        private void OnPreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            if (this.isMouseDown)
+            {
+                Point currentMousePosition = e.GetPosition(this.ControlsPanel);
+                if ((this.isMouseDragging == false) &&
+                    ((Math.Abs(currentMousePosition.X - this.mouseDownStartPosition.X) > SystemParameters.MinimumHorizontalDragDistance) ||
+                     (Math.Abs(currentMousePosition.Y - this.mouseDownStartPosition.Y) > SystemParameters.MinimumVerticalDragDistance)))
+                {
+                    this.isMouseDragging = true;
+                    this.realMouseDragSource = e.Source as UIElement;
+                    this.realMouseDragSource.CaptureMouse();
+                    DragDrop.DoDragDrop(this.dummyMouseDragSource, new DataObject("UIElement", e.Source, true), DragDropEffects.Move);
+                }
+            }
+        }
+
+        private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Utilities.ShowExceptionReportingDialog("The template editor needs to close.", e, this);
+        }
+
+        private void ShowDataLabelRequirementsDialog()
+        {
+            MessageBox messageBox = new MessageBox("Data Labels can only contain letters, numbers and '_'", this);
+            messageBox.Message.StatusImage = MessageBoxImage.Warning;
+            messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
+            messageBox.Message.Result = "We will automatically ignore other characters, including spaces";
+            messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
+            messageBox.ShowDialog();
+        }
+
+        /// <summary>
+        /// Updates a given control in the database with the current state of the DataGrid. 
+        /// </summary>
+        private void SyncControlToDatabase(ControlRow control)
+        {
+            this.dataGridBeingUpdatedByCode = true;
+
+            this.templateDatabase.SyncControlToDatabase(control);
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
+            this.GenerateSpreadsheet();
+
+            this.dataGridBeingUpdatedByCode = false;
+        }
+
+        /// <summary>
+        /// Removes a row from the table and shifts up the ids on the remaining rows.
+        /// The required rows are unable to be deleted.
+        /// </summary>
+        private void RemoveControlButton_Click(object sender, RoutedEventArgs e)
+        {
+            DataRowView selectedRowView = this.TemplateDataGrid.SelectedItem as DataRowView;
+            if (selectedRowView == null || selectedRowView.Row == null)
+            {
+                // nothing to do
+                return;
+            }
+
+            ControlRow control = new ControlRow(selectedRowView.Row);
+            if (EditorControls.IsStandardControlType(control.Type))
+            {
+                // standard controls cannot be removed
+                return;
+            }
+
+            this.dataGridBeingUpdatedByCode = true;
+            this.templateDatabase.RemoveUserDefinedControl(new ControlRow(selectedRowView.Row));
+
+            // update the control panel so it reflects the current values in the database
+            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
+            this.GenerateSpreadsheet();
+
+            this.dataGridBeingUpdatedByCode = false;
         }
 
         /// <summary>
@@ -607,243 +730,108 @@ namespace Carnassial.Editor
             }
         }
 
-        /// <summary>
-        /// Used in this code to get the child of a DataGridRows, DataGridCellsPresenter. This can be used to get the DataGridCell.
-        /// WPF does not make it easy to get to the actual cells.
-        /// </summary>
-        // Code from: http://techiethings.blogspot.com/2010/05/get-wpf-datagrid-row-and-cell.html
-        private static T GetVisualChild<T>(Visual parent) where T : Visual
+        private void TemplateDataGrid_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            T child = default(T);
-            int numVisuals = VisualTreeHelper.GetChildrenCount(parent);
-            for (int i = 0; i < numVisuals; i++)
+            DataGridCell currentCell;
+            DataGridRow currentRow;
+            if ((this.TryGetCurrentCell(out currentCell, out currentRow) == false) || currentCell.Background.Equals(EditorConstant.NotEditableCellColor))
             {
-                Visual v = (Visual)VisualTreeHelper.GetChild(parent, i);
-                child = v as T;
-                if (child == null)
-                {
-                    child = GetVisualChild<T>(v);
-                }
-                if (child != null)
-                {
-                    break;
-                }
-            }
-            return child;
-        }
-
-        /// <summary>
-        /// Update the list of recent databases displayed under File -> Recent Databases.
-        /// </summary>
-        private void MenuItemRecentTemplates_Refresh()
-        {
-            this.MenuItemRecentTemplates.IsEnabled = this.userSettings.MostRecentTemplates.Count > 0;
-            this.MenuItemRecentTemplates.Items.Clear();
-
-            int index = 1;
-            foreach (string recentTemplatePath in this.userSettings.MostRecentTemplates)
-            {
-                MenuItem recentImageSetItem = new MenuItem();
-                recentImageSetItem.Click += this.MenuItemRecentTemplate_Click;
-                recentImageSetItem.Header = String.Format("_{0} {1}", index, recentTemplatePath);
-                recentImageSetItem.ToolTip = recentTemplatePath;
-                this.MenuItemRecentTemplates.Items.Add(recentImageSetItem);
-                ++index;
-            }
-        }
-
-        private void ShowDataLabelRequirementsDialog()
-        {
-            MessageBox messageBox = new MessageBox("Data Labels can only contain letters, numbers and '_'", this);
-            messageBox.Message.Icon = MessageBoxImage.Warning;
-            messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
-            messageBox.Message.Result = "We will automatically ignore other characters, including spaces";
-            messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-            messageBox.ShowDialog();
-        }
-
-        private void GenerateSpreadsheet()
-        {
-            List<ControlRow> controlsInSpreadsheetOrder = this.templateDatabase.Controls.OrderBy(control => control.SpreadsheetOrder).ToList();
-            this.dgSpreadsheet.Columns.Clear();
-            foreach (ControlRow control in controlsInSpreadsheetOrder)
-            {
-                DataGridTextColumn column = new DataGridTextColumn();
-                string dataLabel = control.DataLabel;
-                if (String.IsNullOrEmpty(dataLabel))
-                {
-                    Debug.Assert(false, "Database constructors should guarantee data labels are not null.");
-                }
-                else
-                {
-                    column.Header = dataLabel;
-                    this.dgSpreadsheet.Columns.Add(column);
-                }
-            }
-        }
-
-        private void OnSpreadsheetOrderChanged(object sender, DataGridColumnEventArgs e)
-        {
-            DataGrid dataGrid = (DataGrid)sender;
-            Dictionary<string, long> spreadsheetOrderByDataLabel = new Dictionary<string, long>();
-            for (int control = 0; control < dataGrid.Columns.Count; control++)
-            {
-                string dataLabelFromColumnHeader = dataGrid.Columns[control].Header.ToString();
-                long newSpreadsheetOrder = dataGrid.Columns[control].DisplayIndex + 1;
-                spreadsheetOrderByDataLabel.Add(dataLabelFromColumnHeader, newSpreadsheetOrder);
+                e.Handled = true;
+                return;
             }
 
-            this.templateDatabase.UpdateDisplayOrder(Constant.Control.SpreadsheetOrder, spreadsheetOrderByDataLabel);
-        }
-
-        private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.Source != this.ControlsPanel)
+            switch ((string)this.TemplateDataGrid.CurrentColumn.Header)
             {
-                this.isMouseDown = true;
-                this.mouseDownStartPosition = e.GetPosition(this.ControlsPanel);
-            }
-        }
-
-        private void OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            try
-            {
-                this.isMouseDown = false;
-                this.isMouseDragging = false;
-                if (!(this.realMouseDragSource == null))
-                {
-                    this.realMouseDragSource.ReleaseMouseCapture();
-                }
-            }
-            catch
-            {
-            }
-        }
-
-        private void OnPreviewMouseMove(object sender, MouseEventArgs e)
-        {
-            if (this.isMouseDown)
-            {
-                Point currentMousePosition = e.GetPosition(this.ControlsPanel);
-                if ((this.isMouseDragging == false) && 
-                    ((Math.Abs(currentMousePosition.X - this.mouseDownStartPosition.X) > SystemParameters.MinimumHorizontalDragDistance) || 
-                     (Math.Abs(currentMousePosition.Y - this.mouseDownStartPosition.Y) > SystemParameters.MinimumVerticalDragDistance)))
-                {
-                    this.isMouseDragging = true;
-                    this.realMouseDragSource = e.Source as UIElement;
-                    this.realMouseDragSource.CaptureMouse();
-                    DragDrop.DoDragDrop(this.dummyMouseDragSource, new DataObject("UIElement", e.Source, true), DragDropEffects.Move);
-                }
-            }
-        }
-
-        private void ControlsPanel_DragEnter(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent("UIElement"))
-            {
-                e.Effects = DragDropEffects.Move;
-            }
-        }
-
-        private void ControlsPanel_DragDrop(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent("UIElement"))
-            {
-                UIElement dropTarget = e.Source as UIElement;
-                int control = 0;
-                int dropTargetIndex = -1;
-                foreach (UIElement element in this.ControlsPanel.Children)
-                {
-                    if (element.Equals(dropTarget))
+                // EditorConstant.Control.ControlOrder is not editable
+                case EditorConstant.ColumnHeader.DataLabel:
+                    if (String.IsNullOrEmpty(e.Text) == false)
                     {
-                        dropTargetIndex = control;
-                        break;
-                    }
-                    else
-                    {
-                        // Check if its a stack panel, and if so check to see if its children are the drop target
-                        StackPanel stackPanel = element as StackPanel;
-                        if (stackPanel != null)
+                        // one key is provided by the event at a time during typing, multiple keys can be pasted in a single event
+                        // it's not known where in the data label the input occurs, so full validation is postponed to ValidateDataLabel()
+                        if (this.IsValidDataLabelCharacters(e.Text) == false)
                         {
-                            // Check the children...
-                            foreach (UIElement subelement in stackPanel.Children)
-                            {
-                                if (subelement.Equals(dropTarget))
-                                {
-                                    dropTargetIndex = control;
-                                    break;
-                                }
-                            }
+                            this.ShowDataLabelRequirementsDialog();
+                            e.Handled = true;
                         }
                     }
-                    control++;
-                }
-                if (dropTargetIndex != -1)
-                {
-                    StackPanel tsp = this.realMouseDragSource as StackPanel;
-                    if (tsp == null)
+                    break;
+                case EditorConstant.ColumnHeader.DefaultValue:
+                    ControlRow control = new ControlRow((currentRow.Item as DataRowView).Row);
+                    switch (control.Type)
                     {
-                        StackPanel parent = FindVisualParent<StackPanel>(this.realMouseDragSource);
-                        this.realMouseDragSource = parent;
+                        case Constant.Control.Counter:
+                            e.Handled = !Utilities.IsDigits(e.Text);
+                            break;
+                        case Constant.Control.Flag:
+                            // Only allow t/f and translate to true/false
+                            if (e.Text == "t" || e.Text == "T")
+                            {
+                                control.DefaultValue = Boolean.TrueString;
+                                this.SyncControlToDatabase(control);
+                            }
+                            else if (e.Text == "f" || e.Text == "F")
+                            {
+                                control.DefaultValue = Boolean.FalseString;
+                                this.SyncControlToDatabase(control);
+                            }
+                            e.Handled = true;
+                            break;
+                        case Constant.Control.FixedChoice:
+                            // no restrictions for now
+                            // the default value should be limited to one of the choices defined, however
+                            break;
+                        default:
+                            // no restrictions on note controls
+                            break;
                     }
-                    this.ControlsPanel.Children.Remove(this.realMouseDragSource);
-                    this.ControlsPanel.Children.Insert(dropTargetIndex, this.realMouseDragSource);
-                    this.OnControlOrderChanged();
-                }
-
-                this.isMouseDown = false;
-                this.isMouseDragging = false;
-                this.realMouseDragSource.ReleaseMouseCapture();
+                    break;
+                // EditorConstant.Control.ID is not editable
+                // EditorConstant.Control.SpreadsheetOrder is not editable
+                // Type is not editable
+                case EditorConstant.ColumnHeader.Width:
+                    // only allow digits in widths as they must be parseable as integers
+                    e.Handled = !Utilities.IsDigits(e.Text);
+                    break;
+                default:
+                    // no restrictions on copyable, label, tooltip, or visibile columns
+                    break;
             }
         }
 
-        private static T FindVisualParent<T>(UIElement element) where T : UIElement
+        /// <summary>
+        /// Whenever a row changes save the database, which also updates the grid colors.
+        /// </summary>
+        private void TemplateDataTable_RowChanged(object sender, DataRowChangeEventArgs e)
         {
-            UIElement parent = element;
-            while (parent != null)
+            if (!this.dataGridBeingUpdatedByCode)
             {
-                T correctlyTyped = parent as T;
-                if (correctlyTyped != null)
-                {
-                    return correctlyTyped;
-                }
-                parent = VisualTreeHelper.GetParent(parent) as UIElement;
+                this.SyncControlToDatabase(new ControlRow(e.Row));
             }
-            return null;
         }
 
-        private void OnControlOrderChanged()
+        /// <summary>
+        /// enable or disable the remove control button as appropriate
+        /// </summary>
+        private void TemplateDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
-            long controlOrder = 1;
-            foreach (UIElement element in this.ControlsPanel.Children)
+            DataRowView selectedRowView = this.TemplateDataGrid.SelectedItem as DataRowView;
+            if (selectedRowView == null)
             {
-                StackPanel stackPanel = element as StackPanel;
-                if (stackPanel == null)
-                {
-                    continue;
-                }
-                newControlOrderByDataLabel.Add((string)stackPanel.Tag, controlOrder);
-                controlOrder++;
+                this.RemoveControlButton.IsEnabled = false;
+                return;
             }
 
-            this.templateDatabase.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls); // A contorted to make sure the controls panel updates itself
+            ControlRow control = new ControlRow(selectedRowView.Row);
+            this.RemoveControlButton.IsEnabled = !Constant.Control.StandardTypes.Contains(control.Type);
         }
 
-        private void HelpDocument_Drop(object sender, DragEventArgs dropEvent)
+        private void TutorialLink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            string templateDatabaseFilePath;
-            if (Utilities.IsSingleTemplateFileDrag(dropEvent, out templateDatabaseFilePath))
+            if (e.Uri != null)
             {
-                this.InitializeDataGrid(templateDatabaseFilePath);
+                Process.Start(e.Uri.AbsoluteUri);
+                e.Handled = true;
             }
-        }
-
-        private void HelpDocument_PreviewDrag(object sender, DragEventArgs dragEvent)
-        {
-            Utilities.OnHelpDocumentPreviewDrag(dragEvent);
         }
 
         private bool TryGetCurrentCell(out DataGridCell currentCell, out DataGridRow currentRow)
@@ -871,7 +859,7 @@ namespace Carnassial.Editor
             if (this.IsValidDataLabel(dataLabel) == false)
             {
                 MessageBox messageBox = new MessageBox("Data label isn't valid.", this);
-                messageBox.Message.Icon = MessageBoxImage.Warning;
+                messageBox.Message.StatusImage = MessageBoxImage.Warning;
                 messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.  They cannot be empty.";
                 messageBox.Message.Result = "We will automatically create a uniquely named data label for you.";
                 messageBox.Message.Hint = "You can create your own name for this data label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
@@ -891,7 +879,7 @@ namespace Carnassial.Editor
                     }
 
                     MessageBox messageBox = new MessageBox("Data Labels must be unique", this);
-                    messageBox.Message.Icon = MessageBoxImage.Warning;
+                    messageBox.Message.StatusImage = MessageBoxImage.Warning;
                     messageBox.Message.Problem = "'" + textBox.Text + "' is not a valid Data Label, as you have already used it in another row.";
                     messageBox.Message.Result = "We will automatically create a unique Data Label for you by adding a number to its end.";
                     messageBox.Message.Hint = "You can create your own unique name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
@@ -922,7 +910,7 @@ namespace Carnassial.Editor
                     replacementDataLabel = Regex.Replace(replacementDataLabel, @"[^A-Za-z0-9_]+", "X");
 
                     MessageBox messageBox = new MessageBox("'" + textBox.Text + "' is not a valid data label.", this);
-                    messageBox.Message.Icon = MessageBoxImage.Warning;
+                    messageBox.Message.StatusImage = MessageBoxImage.Warning;
                     messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
                     messageBox.Message.Result = "We replaced all dissallowed characters with an 'X': " + replacementDataLabel;
                     messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
@@ -938,7 +926,7 @@ namespace Carnassial.Editor
                 if (String.Equals(sqlKeyword, dataLabel, StringComparison.OrdinalIgnoreCase))
                 {
                     MessageBox messageBox = new MessageBox("'" + textBox.Text + "' is not a valid data label.", this);
-                    messageBox.Message.Icon = MessageBoxImage.Warning;
+                    messageBox.Message.StatusImage = MessageBoxImage.Warning;
                     messageBox.Message.Problem = "Data labels cannot match the reserved words.";
                     messageBox.Message.Result = "We will add an '_' suffix to this Data Label to make it differ from the reserved word";
                     messageBox.Message.Hint = "Avoid the reserved words listed below. Start your label with a letter. Then use any combination of letters, numbers, and '_'." + Environment.NewLine;
@@ -952,6 +940,31 @@ namespace Carnassial.Editor
                     break;
                 }
             }
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            // check for updates
+            if (DateTime.UtcNow - this.userSettings.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
+            {
+                Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
+                if (latestVersionAddress == null)
+                {
+                    return;
+                }
+
+                GithubReleaseClient updater = new GithubReleaseClient(EditorConstant.ApplicationName, latestVersionAddress);
+                updater.TryGetAndParseRelease(false);
+                this.userSettings.MostRecentCheckForUpdates = DateTime.UtcNow;
+            }
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            // apply any pending edits
+            this.TemplateDataGrid.CommitEdit();
+            // persist state to registry
+            this.userSettings.WriteToRegistry();
         }
     }
 }

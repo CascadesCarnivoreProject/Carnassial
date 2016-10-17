@@ -27,7 +27,7 @@ namespace Carnassial.Database
             string path = this.GetFilePath(imageFolderPath);
             if (!File.Exists(path))
             {
-                return Constant.Images.FileNoLongerAvailable;
+                return Constant.Images.FileNoLongerAvailable.Value;
             }
 
             for (int renderAttempt = 0; renderAttempt < Constant.ThrottleValues.MaximumRenderAttempts; ++renderAttempt)
@@ -100,7 +100,7 @@ namespace Carnassial.Database
                 catch (Exception exception)
                 {
                     Debug.Fail(String.Format("Loading of {0} failed.", this.FileName), exception.ToString());
-                    return Constant.Images.CorruptFile;
+                    return Constant.Images.CorruptFile.Value;
                 }
 
                 mediaPlayer.Close();

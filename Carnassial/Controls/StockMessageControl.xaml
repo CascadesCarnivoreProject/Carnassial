@@ -11,7 +11,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -22,18 +22,18 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Grid  Margin="10,10,0,10" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+            <Grid Margin="10,10,0,10" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Canvas Width="60" Height="60" Grid.Column="0">
-                    <Ellipse Width="60" Height="60" Stroke="Black" Fill="#46FD0A0A" />
-                    <Label Name="IconLabel" Content="?" FontWeight="Bold" FontSize="40" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Left="0" Canvas.Top="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-                </Canvas>
-                <TextBox x:Name="TitleText" Text="Title" Padding="10,0,0,0" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" BorderThickness="0" IsReadOnly="True" IsTabStop="False" Grid.Column="1" />
-                <CheckBox Name="HideExplanation" Content="_Hide explanation" Grid.Column="2" Visibility="Collapsed" Margin="10,10,5,0" VerticalAlignment="Center" Checked="HideTextButton_StateChange" Unchecked="HideTextButton_StateChange" IsThreeState="False" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Image Name="Image" Width="64" Height="64" Margin="2,2,2,2" Grid.Column="0" Grid.Row="0" />
+                <TextBox x:Name="TitleText" Text="Title" Margin="10,0,10,0" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" BorderThickness="0" IsReadOnly="True" IsTabStop="False" Grid.Column="1" Grid.Row="0" />
+                <CheckBox Name="HideExplanation" Content="_Hide explanation" Visibility="Collapsed" Margin="8,5,10,0" VerticalAlignment="Center" Checked="HideExplanation_CheckedChanged" Unchecked="HideExplanation_CheckedChanged" Grid.Column="1" Grid.Row="1" />
             </Grid>
 
             <TextBlock Margin="10,8,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Text="Problem:" />

@@ -152,14 +152,14 @@ namespace Carnassial.UnitTests
             fileDatabase.ImageSet.FileSelection = FileSelection.Custom;
             fileDatabase.ImageSet.MostRecentFileID = -1;
             fileDatabase.AppendToImageSetLog(new StringBuilder("Test log entry."));
-            fileDatabase.ImageSet.MagnifyingGlassEnabled = true;
+            fileDatabase.ImageSet.Options = fileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, true);
             fileDatabase.ImageSet.TimeZone = "Test Time Zone";
             fileDatabase.SyncImageSetToDatabase();
             Assert.IsTrue(fileDatabase.ImageSet.ID == 1);
             Assert.IsTrue(fileDatabase.ImageSet.FileSelection == FileSelection.Custom);
             Assert.IsTrue(fileDatabase.ImageSet.MostRecentFileID == -1);
             Assert.IsTrue(fileDatabase.ImageSet.Log == Constant.Database.ImageSetDefaultLog + "Test log entry.");
-            Assert.IsTrue(fileDatabase.ImageSet.MagnifyingGlassEnabled);
+            Assert.IsTrue(fileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier));
             Assert.IsTrue(fileDatabase.ImageSet.TimeZone == "Test Time Zone");
 
             fileDatabase.ImageSet.TimeZone = originalTimeZoneID;
@@ -603,6 +603,26 @@ namespace Carnassial.UnitTests
 
             Assert.IsTrue(dateTimeOffsetAsDisplayString.Length > Constant.Time.DateFormat.Length + Constant.Time.TimeFormat.Length);
             Assert.IsTrue(utcOffsetAsDisplayString.Length >= Constant.Time.UtcOffsetDisplayFormat.Length - 1);
+        }
+
+        [TestMethod]
+        public void EnumHandling()
+        {
+            ImageSetOptions options = ImageSetOptions.None;
+
+            options = options.SetFlag(ImageSetOptions.None, false);
+            Assert.IsTrue(options == ImageSetOptions.None);
+            options = options.SetFlag(ImageSetOptions.None, true);
+            Assert.IsTrue(options == ImageSetOptions.None);
+            options = options.SetFlag(ImageSetOptions.None, false);
+            Assert.IsTrue(options == ImageSetOptions.None);
+
+            options = options.SetFlag(ImageSetOptions.Magnifier, false);
+            Assert.IsTrue(options == ImageSetOptions.None);
+            options = options.SetFlag(ImageSetOptions.Magnifier, true);
+            Assert.IsTrue(options == ImageSetOptions.Magnifier);
+            options = options.SetFlag(ImageSetOptions.Magnifier, false);
+            Assert.IsTrue(options == ImageSetOptions.None);
         }
 
         [TestMethod]
@@ -1116,7 +1136,7 @@ namespace Carnassial.UnitTests
                           (fileDatabase.ImageSet.InitialFolderName == "UnitTests"));
             Assert.IsTrue(fileDatabase.ImageSet.MostRecentFileID == Constant.Database.DefaultFileID);
             Assert.IsTrue(fileDatabase.ImageSet.Log == Constant.Database.ImageSetDefaultLog);
-            Assert.IsFalse(fileDatabase.ImageSet.MagnifyingGlassEnabled);
+            Assert.IsFalse(fileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier));
             Assert.IsTrue(fileDatabase.ImageSet.TimeZone == TimeZoneInfo.Local.Id);
         }
 

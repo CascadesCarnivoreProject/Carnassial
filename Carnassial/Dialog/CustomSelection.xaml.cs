@@ -14,7 +14,7 @@ namespace Carnassial.Dialog
     /// <summary>
     /// A dialog allowing a user to create a custom selection by setting conditions on data fields.
     /// </summary>
-    public partial class CustomViewSelection : Window
+    public partial class CustomSelection : Window
     {
         private const int DefaultControlWidth = 200;
         private const double DefaultSearchCriteriaWidth = Double.NaN; // Same as xaml Width = "Auto"
@@ -27,7 +27,7 @@ namespace Carnassial.Dialog
         private FileDatabase database;
         private TimeZoneInfo imageSetTimeZone;
 
-        public CustomViewSelection(FileDatabase database, Window owner)
+        public CustomSelection(FileDatabase database, Window owner)
         {
             this.InitializeComponent();
 
@@ -66,7 +66,7 @@ namespace Carnassial.Dialog
                 ++gridRowIndex;
                 RowDefinition gridRow = new RowDefinition();
                 gridRow.Height = GridLength.Auto;
-                this.grid.RowDefinitions.Add(gridRow);
+                this.SearchTerms.RowDefinitions.Add(gridRow);
 
                 // LABEL column: A checkbox to indicate whether the current search row should be used as part of the search
                 Thickness thickness = new Thickness(5, 2, 5, 2);
@@ -79,8 +79,8 @@ namespace Carnassial.Dialog
                 controlLabel.Checked += this.Select_CheckedOrUnchecked;
                 controlLabel.Unchecked += this.Select_CheckedOrUnchecked;
                 Grid.SetRow(controlLabel, gridRowIndex);
-                Grid.SetColumn(controlLabel, CustomViewSelection.LabelColumn);
-                grid.Children.Add(controlLabel);
+                Grid.SetColumn(controlLabel, CustomSelection.LabelColumn);
+                SearchTerms.Children.Add(controlLabel);
 
                 // The operators allowed for each search term type
                 string controlType = searchTerm.ControlType;
@@ -137,8 +137,8 @@ namespace Carnassial.Dialog
                 operatorsComboBox.Width = 60;
 
                 Grid.SetRow(operatorsComboBox, gridRowIndex);
-                Grid.SetColumn(operatorsComboBox, CustomViewSelection.OperatorColumn);
-                this.grid.Children.Add(operatorsComboBox);
+                Grid.SetColumn(operatorsComboBox, CustomSelection.OperatorColumn);
+                this.SearchTerms.Children.Add(operatorsComboBox);
 
                 // Value column: The value used for comparison in the search
                 // Notes and Counters both uses a text field, so they can be constructed as a textbox
@@ -153,11 +153,11 @@ namespace Carnassial.Dialog
                     dateValue.IsEnabled = searchTerm.UseForSearching;
                     dateValue.Value = dateTime.DateTime;
                     dateValue.ValueChanged += this.DateTime_SelectedDateChanged;
-                    dateValue.Width = CustomViewSelection.DefaultControlWidth;
+                    dateValue.Width = CustomSelection.DefaultControlWidth;
 
                     Grid.SetRow(dateValue, gridRowIndex);
-                    Grid.SetColumn(dateValue, CustomViewSelection.ValueColumn);
-                    this.grid.Children.Add(dateValue);
+                    Grid.SetColumn(dateValue, CustomSelection.ValueColumn);
+                    this.SearchTerms.Children.Add(dateValue);
                 }
                 else if (controlType == Constant.DatabaseColumn.File ||
                          controlType == Constant.Control.Counter ||
@@ -169,7 +169,7 @@ namespace Carnassial.Dialog
                     textBoxValue.IsEnabled = searchTerm.UseForSearching;
                     textBoxValue.Text = searchTerm.DatabaseValue;
                     textBoxValue.Margin = thickness;
-                    textBoxValue.Width = CustomViewSelection.DefaultControlWidth;
+                    textBoxValue.Width = CustomSelection.DefaultControlWidth;
                     textBoxValue.Height = 22;
                     textBoxValue.TextWrapping = TextWrapping.NoWrap;
                     textBoxValue.VerticalAlignment = VerticalAlignment.Center;
@@ -184,8 +184,8 @@ namespace Carnassial.Dialog
                     textBoxValue.TextChanged += this.NoteOrCounter_TextChanged;
 
                     Grid.SetRow(textBoxValue, gridRowIndex);
-                    Grid.SetColumn(textBoxValue, CustomViewSelection.ValueColumn);
-                    this.grid.Children.Add(textBoxValue);
+                    Grid.SetColumn(textBoxValue, CustomSelection.ValueColumn);
+                    this.SearchTerms.Children.Add(textBoxValue);
                 }
                 else if (controlType == Constant.Control.FixedChoice ||
                          controlType == Constant.DatabaseColumn.ImageQuality)
@@ -193,7 +193,7 @@ namespace Carnassial.Dialog
                     // FixedChoice and ImageQuality both present combo boxes, so they can be constructed the same way
                     ComboBox comboBoxValue = new ComboBox();
                     comboBoxValue.IsEnabled = searchTerm.UseForSearching;
-                    comboBoxValue.Width = CustomViewSelection.DefaultControlWidth;
+                    comboBoxValue.Width = CustomSelection.DefaultControlWidth;
                     comboBoxValue.Margin = thickness;
 
                     // Create the dropdown menu 
@@ -201,8 +201,8 @@ namespace Carnassial.Dialog
                     comboBoxValue.SelectedItem = searchTerm.DatabaseValue;
                     comboBoxValue.SelectionChanged += this.FixedChoice_SelectionChanged;
                     Grid.SetRow(comboBoxValue, gridRowIndex);
-                    Grid.SetColumn(comboBoxValue, CustomViewSelection.ValueColumn);
-                    this.grid.Children.Add(comboBoxValue);
+                    Grid.SetColumn(comboBoxValue, CustomSelection.ValueColumn);
+                    this.SearchTerms.Children.Add(comboBoxValue);
                 }
                 else if (controlType == Constant.DatabaseColumn.DeleteFlag ||
                          controlType == Constant.Control.Flag)
@@ -220,8 +220,8 @@ namespace Carnassial.Dialog
                     searchTerm.DatabaseValue = flagCheckBox.IsChecked.Value ? Boolean.TrueString : Boolean.FalseString;
 
                     Grid.SetRow(flagCheckBox, gridRowIndex);
-                    Grid.SetColumn(flagCheckBox, CustomViewSelection.ValueColumn);
-                    this.grid.Children.Add(flagCheckBox);
+                    Grid.SetColumn(flagCheckBox, CustomSelection.ValueColumn);
+                    this.SearchTerms.Children.Add(flagCheckBox);
                 }
                 else if (controlType == Constant.DatabaseColumn.UtcOffset)
                 {
@@ -230,11 +230,11 @@ namespace Carnassial.Dialog
                     utcOffsetValue.IsTabStop = true;
                     utcOffsetValue.Value = searchTerm.GetUtcOffset();
                     utcOffsetValue.ValueChanged += this.UtcOffset_SelectedDateChanged;
-                    utcOffsetValue.Width = CustomViewSelection.DefaultControlWidth;
+                    utcOffsetValue.Width = CustomSelection.DefaultControlWidth;
 
                     Grid.SetRow(utcOffsetValue, gridRowIndex);
-                    Grid.SetColumn(utcOffsetValue, CustomViewSelection.ValueColumn);
-                    this.grid.Children.Add(utcOffsetValue);
+                    Grid.SetColumn(utcOffsetValue, CustomSelection.ValueColumn);
+                    this.SearchTerms.Children.Add(utcOffsetValue);
                 }
                 else
                 {
@@ -243,14 +243,14 @@ namespace Carnassial.Dialog
 
                 // Search Criteria Column: initially as an empty textblock. Indicates the constructed query expression for this row
                 TextBlock searchCriteria = new TextBlock();
-                searchCriteria.Width = CustomViewSelection.DefaultSearchCriteriaWidth;
+                searchCriteria.Width = CustomSelection.DefaultSearchCriteriaWidth;
                 searchCriteria.Margin = thickness;
                 searchCriteria.VerticalAlignment = VerticalAlignment.Center;
                 searchCriteria.HorizontalAlignment = HorizontalAlignment.Left;
 
                 Grid.SetRow(searchCriteria, gridRowIndex);
-                Grid.SetColumn(searchCriteria, CustomViewSelection.SearchCriteriaColumn);
-                this.grid.Children.Add(searchCriteria);
+                Grid.SetColumn(searchCriteria, CustomSelection.SearchCriteriaColumn);
+                this.SearchTerms.Children.Add(searchCriteria);
             }
             this.UpdateSearchCriteriaFeedback();
         }
@@ -276,9 +276,9 @@ namespace Carnassial.Dialog
             SearchTerm searchterms = this.database.CustomSelection.SearchTerms[row - 1];
             searchterms.UseForSearching = select.IsChecked.Value;
 
-            CheckBox label = this.GetGridElement<CheckBox>(CustomViewSelection.LabelColumn, row);
-            ComboBox expression = this.GetGridElement<ComboBox>(CustomViewSelection.OperatorColumn, row);
-            UIElement value = this.GetGridElement<UIElement>(CustomViewSelection.ValueColumn, row);
+            CheckBox label = this.GetGridElement<CheckBox>(CustomSelection.LabelColumn, row);
+            ComboBox expression = this.GetGridElement<ComboBox>(CustomSelection.OperatorColumn, row);
+            UIElement value = this.GetGridElement<UIElement>(CustomSelection.ValueColumn, row);
 
             label.FontWeight = select.IsChecked.Value ? FontWeights.Bold : FontWeights.Normal;
             expression.IsEnabled = select.IsChecked.Value;
@@ -354,7 +354,7 @@ namespace Carnassial.Dialog
         {
             for (int row = 1; row <= this.database.CustomSelection.SearchTerms.Count; row++)
             {
-                CheckBox label = this.GetGridElement<CheckBox>(CustomViewSelection.LabelColumn, row);
+                CheckBox label = this.GetGridElement<CheckBox>(CustomSelection.LabelColumn, row);
                 label.IsChecked = false;
             }
         }
@@ -380,7 +380,7 @@ namespace Carnassial.Dialog
             {
                 int row = index + 1; // we offset the row by 1 as row 0 is the header
                 SearchTerm searchTerm = this.database.CustomSelection.SearchTerms[index];
-                TextBlock searchCriteria = this.GetGridElement<TextBlock>(CustomViewSelection.SearchCriteriaColumn, row);
+                TextBlock searchCriteria = this.GetGridElement<TextBlock>(CustomSelection.SearchCriteriaColumn, row);
 
                 if (searchTerm.UseForSearching == false)
                 {
@@ -411,9 +411,9 @@ namespace Carnassial.Dialog
 
             int count = this.database.GetFileCount(FileSelection.Custom);
             this.OkButton.IsEnabled = count > 0 ? true : false;
-            this.textBlockQueryMatches.Text = count > 0 ? count.ToString() : "0";
+            this.QueryMatches.Text = count > 0 ? count.ToString() : "0";
 
-            this.btnShowAll.IsEnabled = lastExpression == false;
+            this.ShowAll.IsEnabled = lastExpression == false;
         }
 
         // Apply the selection if the Ok button is clicked
@@ -432,7 +432,7 @@ namespace Carnassial.Dialog
         // Get the corresponding grid element from a given a column, row, 
         private TElement GetGridElement<TElement>(int column, int row) where TElement : UIElement
         {
-            return (TElement)this.grid.Children.Cast<UIElement>().First(control => Grid.GetRow(control) == row && Grid.GetColumn(control) == column);
+            return (TElement)this.SearchTerms.Children.Cast<UIElement>().First(control => Grid.GetRow(control) == row && Grid.GetColumn(control) == column);
         }
 
         // Value (Counter) Helper function:  textbox accept only pasted numbers 
@@ -445,7 +445,7 @@ namespace Carnassial.Dialog
             }
 
             string text = args.SourceDataObject.GetData(DataFormats.UnicodeText) as string;
-            if (CustomViewSelection.IsNumbersOnly(text))
+            if (CustomSelection.IsNumbersOnly(text))
             {
                 args.CancelCommand();
             }

@@ -5,119 +5,9 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         AutomationProperties.AutomationId="CarnassialTemplateEditor"
-        Height="900" Width="1350" MinHeight="560" MinWidth="800" Icon="32x32.ico" Loaded="Window_Loaded" Closing="Window_Closing">
+        Height="900" Width="1350" MinHeight="560" MinWidth="800" Icon="Editor.ico" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <ResourceDictionary>
-            <!-- Focus Style for checkbox https://ramontebar.wordpress.com/2010/02/26/wpf-custom-check-box-template/-->
-            <SolidColorBrush x:Key="InputBackgroundFocused" Color="Orange"></SolidColorBrush>
-            <Style x:Key="CheckBoxFocusVisualStyle">
-                <Setter Property="Control.Template">
-                    <Setter.Value>
-                        <ControlTemplate>
-                            <Border CornerRadius="2" Margin="0,0,4,3" BorderThickness="2" BorderBrush="{StaticResource InputBackgroundFocused}" Background="Transparent"/>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <!-- Fill Brushes For Checkbox Style-->
-            <LinearGradientBrush x:Key="NormalBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientBrush.GradientStops>
-                    <GradientStopCollection>
-                        <GradientStop Color="#FFF" Offset="0.0"/>
-                        <GradientStop Color="#CCC" Offset="1.0"/>
-                    </GradientStopCollection>
-                </GradientBrush.GradientStops>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="HorizontalNormalBrush" StartPoint="0,0" EndPoint="1,0">
-                <GradientBrush.GradientStops>
-                    <GradientStopCollection>
-                        <GradientStop Color="#FFF" Offset="0.0"/>
-                        <GradientStop Color="#CCC" Offset="1.0"/>
-                    </GradientStopCollection>
-                </GradientBrush.GradientStops>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="LightBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientBrush.GradientStops>
-                    <GradientStopCollection>
-                        <GradientStop Color="#FFF" Offset="0.0"/>
-                        <GradientStop Color="#EEE" Offset="1.0"/>
-                    </GradientStopCollection>
-                </GradientBrush.GradientStops>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="HorizontalLightBrush" StartPoint="0,0" EndPoint="1,0">
-                <GradientBrush.GradientStops>
-                    <GradientStopCollection>
-                        <GradientStop Color="#FFF" Offset="0.0"/>
-                        <GradientStop Color="#EEE" Offset="1.0"/>
-                    </GradientStopCollection>
-                </GradientBrush.GradientStops>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="DarkBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientBrush.GradientStops>
-                    <GradientStopCollection>
-                        <GradientStop Color="#FFF" Offset="0.0"/>
-                        <GradientStop Color="#AAA" Offset="1.0"/>
-                    </GradientStopCollection>
-                </GradientBrush.GradientStops>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="PressedBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientBrush.GradientStops>
-                    <GradientStopCollection>
-                        <GradientStop Color="#BBB" Offset="0.0"/>
-                        <GradientStop Color="#EEE" Offset="0.1"/>
-                        <GradientStop Color="#EEE" Offset="0.9"/>
-                        <GradientStop Color="#FFF" Offset="1.0"/>
-                    </GradientStopCollection>
-                </GradientBrush.GradientStops>
-            </LinearGradientBrush>
-
-            <SolidColorBrush x:Key="DisabledForegroundBrush" Color="#888" />
-            <SolidColorBrush x:Key="DisabledBackgroundBrush" Color="#EEE" />
-            <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FFF" />
-            <SolidColorBrush x:Key="SelectedBackgroundBrush" Color="#DDD" />
-
-            <!-- Border Brushes For Checkbox Style-->
-            <LinearGradientBrush x:Key="NormalBorderBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientBrush.GradientStops>
-                    <GradientStopCollection>
-                        <GradientStop Color="#CCC" Offset="0.0"/>
-                        <GradientStop Color="#444" Offset="1.0"/>
-                    </GradientStopCollection>
-                </GradientBrush.GradientStops>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="HorizontalNormalBorderBrush" StartPoint="0,0" EndPoint="1,0">
-                <GradientBrush.GradientStops>
-                    <GradientStopCollection>
-                        <GradientStop Color="#CCC" Offset="0.0"/>
-                        <GradientStop Color="#444" Offset="1.0"/>
-                    </GradientStopCollection>
-                </GradientBrush.GradientStops>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="DefaultedBorderBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientBrush.GradientStops>
-                    <GradientStopCollection>
-                        <GradientStop Color="#777" Offset="0.0"/>
-                        <GradientStop Color="#000" Offset="1.0"/>
-                    </GradientStopCollection>
-                </GradientBrush.GradientStops>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="PressedBorderBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientBrush.GradientStops>
-                    <GradientStopCollection>
-                        <GradientStop Color="#444" Offset="0.0"/>
-                        <GradientStop Color="#888" Offset="1.0"/>
-                    </GradientStopCollection>
-                </GradientBrush.GradientStops>
-            </LinearGradientBrush>
             <ToolTip x:Key="DefaultValueToolTip">
                 <TextBlock>An optional default data value that will be displayed to the analyst</TextBlock>
             </ToolTip>
@@ -193,37 +83,37 @@
         <Menu Grid.Row="0">
             <!-- File Menu -->
             <MenuItem Name="FileMenu" Header="_File" >
-                <MenuItem Name="NewFileMenuItem" Header="_New..." Click="NewFileMenuItem_Click" ToolTip="Create a new data template file">
+                <MenuItem Name="MenuFileNewTemplate" Header="_New..." Click="MenuFileNewTemplate_Click" ToolTip="Create a new data template file.">
                     <MenuItem.Icon>
-                        <Image Source="Images/NewFile_6276.png" />
+                        <Image Source="Resources/NewFile_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Name="OpenFileMenuItem" Header="_Open..." Click="OpenFileMenuItem_Click" ToolTip="Open an existing data template file">
+                <MenuItem Name="MenuFileOpenTemplate" Header="_Open..." Click="MenuFileOpenTemplate_Click" ToolTip="Open an existing data template file.">
                     <MenuItem.Icon>
-                        <Image Source="Images/folder_Open_16xLG.png" />
+                        <Image Source="Resources/OpenFolder_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuItemRecentTemplates" Header="_Recent templates" IsEnabled="false" ToolTip="Recently used templates"/>
+                <MenuItem Name="MenuFileRecentTemplates" Header="_Recent templates" IsEnabled="false" ToolTip="Recently used templates."/>
                 <Separator />
-                <MenuItem Name="ExitFileMenuItem" Header="E_xit" Click="ExitFileMenuItem_Click">
+                <MenuItem Header="E_xit" Click="MenuFileExit_Click" ToolTip="Quit the template editor.">
                     <MenuItem.Icon>
-                        <Image Source="Images/Close_16XLG.png" />
+                        <Image Source="Resources/Exit_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
 
             <!-- View Menu -->
-            <MenuItem Name="ViewMenu" Header="_View" IsEnabled="False">
-                <MenuItem Name="ShowAllColumns" IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="ShowAllColumnsMenuItem_Click" ToolTip="Show the ordering used when displaying controls and for CSV file columns">
+            <MenuItem Name="MenuView" Header="_View" IsEnabled="False">
+                <MenuItem Name="MenuViewShowAllColumns" IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="MenuViewShowAllColumns_Click" ToolTip="Show the ordering used when displaying controls and for CSV file columns.">
                 </MenuItem>
-                <MenuItem Name="MenuItemInspectImageMetadata" Header="Inspect file _metadata..." ToolTip="See what metadata is available in an image or video of your choosing" Click="MenuItemInspectImageMetadata_Click">
+                <MenuItem Header="Inspect file _metadata..." ToolTip="See what metadata is available in an image or video of your choosing." Click="MenuViewInspectMetadata_Click">
                 </MenuItem>
             </MenuItem>
 
             <!-- Help Menu -->
             <MenuItem Header="_Help" >
-                <MenuItem Name="AboutMenuItem" Header="_About..." Click="AboutMenuItem_Click" ToolTip="Displays version information about this program and how to contact its creator"/>
+                <MenuItem Header="_About..." Click="MenuHelpAbout_Click" ToolTip="Displays version information about this program and how to contact the developers."/>
             </MenuItem>
         </Menu>
 
@@ -241,120 +131,100 @@
                     <xcad:LayoutDocumentPaneGroup>
                         <xcad:LayoutDocumentPane>
                             <xcad:LayoutDocument x:Name="InstructionPane" Title="Instructions">
-                                <FlowDocumentScrollViewer Name="HelpDocument" AllowDrop="True" Drop="HelpDocument_Drop" PreviewDragEnter="HelpDocument_PreviewDrag" PreviewDragOver="HelpDocument_PreviewDrag">
-                                    <FlowDocument  FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
-                                        <Paragraph FontWeight="Bold" FontSize="20">
-                                            <Run Text="What the Carnassial Template Editor does"/>
-                                        </Paragraph>
-                                        <Paragraph FontSize="12">
-                                            <Run Text="The kinds of information that you and/or your organization want to record from each file will be specific to the kinds of files you want to analyze, your data needs and how you will process that data later. This information will differ between organizations, and possibly between different kinds of image sets. This is where the template comes in."/>
-                                            <LineBreak/>
-                                            <LineBreak/>
-                                            <Run Text="The template specifies the custom data required by you and your organization. You define your data needs through this template editor, which saves it as a file usually named "/>
-                                            <Bold>
-                                                <Run Text="CarnassialTemplate.tdb"/>
-                                            </Bold>
-                                            <Run Text=". You would then include that template file in each image set folder. Carnassial will look for that file and use the template information to create the user interface and to manage the data you enter."/>
-                                        </Paragraph>
-                                        <Paragraph FontSize="12">
-                                            <Run FontWeight="Bold" Text="Note"/>
-                                            <Run FontWeight="Bold" Language="en-ca" Text=": "/>
-                                            <Run Text="Templates are normally created by a knowledgeable person (e.g., the scientist in charge), where they invested time thinking about what data is required and how it will be analyzed."/>
-                                        </Paragraph>
-                                        <Paragraph FontWeight="Bold" FontSize="20">
-                                            <Run Text="To Create a Template"/>
-                                        </Paragraph>
+                                <FlowDocumentScrollViewer AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" VerticalScrollBarVisibility="Auto">
+                                    <FlowDocument FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
+                                        <Paragraph FontWeight="Bold" FontSize="20">What the Template Editor does</Paragraph>
                                         <Paragraph>
-                                            <Run Text="Using the File menu options, You can create a template in three ways. After its created, you can modify its contents (e.g., adding, modifying and deleting data fields)"/>
+                                            Information recorded for each image or video from a camera is specific to the kinds of files you want to analyze, your data needs, and how that data will be processed.  This differs between organizations and possibly between different kinds of image sets.  You define your needs through this template editor which saves them in template (.tdb file) named
+                                            <Bold>CarnassialTemplate.tdb</Bold> by default.  This template file is then included in each image set folder.  Carnassial looks the template and uses it to create the user interface and manage the data you enter.
                                         </Paragraph>
+                                        <Paragraph FontWeight="Bold" FontSize="20">Working with templates</Paragraph>
                                         <List>
                                             <ListItem>
                                                 <Paragraph>
-                                                    <Run FontWeight="Bold" Text="New"/>
-                                                    <Run FontWeight="Bold" Language="en-ca" Text=": "/>
-                                                    <Run Text="Creates a new template with default fields and values."/>
+                                                    <Bold>File -> New</Bold> Creates a new template with required fields which you can then add new fields to.
                                                 </Paragraph>
                                             </ListItem>
                                             <ListItem>
                                                 <Paragraph>
-                                                    <Run FontWeight="Bold" Text="Open"/>
-                                                    <Run FontWeight="Bold" Language="en-ca" Text=": "/>
-                                                    <Run Text="Opens an existing template."/>
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Run FontWeight="Bold" Text="Convert"/>
-                                                    <Run FontWeight="Bold" Language="en-ca" Text=": "/>
-                                                    <Run Text="An earlier version of Carnassial used templates called "/>
-                                                    <Run FontWeight="Bold" Text="CodeTemplate.xml"/>
-                                                    <Run Text=". This option converts these to the new-style template. Its a slow operation, so be patient"/>
+                                                    <Bold>File -> Open</Bold> Opens an existing template so you can further modify its contents.
                                                 </Paragraph>
                                             </ListItem>
                                         </List>
-                                        <Paragraph FontWeight="Bold" FontSize="20">
-                                            <Run Text="To Edit a Template"/>
+                                        <Paragraph>Each template includes several required fields:
+                                            <Bold>RelativePath, File, DateTime, UtcOffset, ImageQuality,</Bold> and
+                                            <Bold>DeleteFlag</Bold> .  
+                                            Carnassial fills these in automatically.  The template editor gives you the option of making these (and other) fields invisible in the user interface.  RelativePath and File locate files on disk and DateTime and UtcOffset completely describe when a file was captured.  ImageQuality powers much of Carnassial's select menu and DeleteFlag enables one selection option as well as delete options under Carnassial's edit menu.
                                         </Paragraph>
-                                        <Paragraph>
-                                            <Run Text="Each template already includes several pre-defined data types: "/>
-                                            <Bold>
-                                                <Run Text="File"/>
-                                            </Bold>
-                                            <Run Text=" name, "/>
-                                            <Bold>
-                                                <Run Text="Folder,"/>
-                                            </Bold>
-                                            <Run Text=" name, "/>
-                                            <Bold>
-                                                <Run Text="Date,"/>
-                                            </Bold>
-                                            <Bold>
-                                                <Run Text="Time,"/>
-                                            </Bold>
-                                            <Bold>
-                                                <Run Text="ImageQuality"/>
-                                            </Bold>
-                                            <Run Text=", and "/>
-                                            <Bold>
-                                                <Run Text="DeleteFlag"/>
-                                            </Bold>
-                                            <Run Text=". Carnassial tries to fill these in automatically. The template editor gives you the option of making these (and other) fields invisible in the user interface."/>
-                                        </Paragraph>
-                                        <Paragraph>
-                                            <Run Text="You can add new data fields specific to your project, where each is created as one of the following types. For each type, you can specify various attributes (e.g., its name, help text, etc.). You can also specify the order of these fields in the Carnassial user interface and in the spreadsheet."/>
-                                        </Paragraph>
+                                        <Paragraph>You can add new data fields specific to your project. Each will be one of the following types.</Paragraph>
                                         <List>
                                             <ListItem>
                                                 <Paragraph>
-                                                    <Run FontWeight="Bold" Text="Count"/>
-                                                    <Run FontWeight="Bold" Language="en-ca" Text=": "/>
-                                                    <Run Text="Numeric data (integers). Normally used to count specific entities seen in an image."/>
+                                                    <Bold>Counter</Bold> Numeric data (integers).  Normally used to count specific entities found in an image.
                                                 </Paragraph>
                                             </ListItem>
                                             <ListItem>
                                                 <Paragraph>
-                                                    <Run FontWeight="Bold" Text="Choice / Fixed Choice: "/>
-                                                    <Run Text="A list of pre-defined values. Normally used to select a value from a menu"/>
+                                                    <Bold>Choice</Bold> A list of values selected from a menu.
                                                 </Paragraph>
                                             </ListItem>
                                             <ListItem>
                                                 <Paragraph>
-                                                    <Run FontWeight="Bold" Text="Note:"/>
-                                                    <Run Text="Textual data that you can use for any purpose (e.g., comments)"/>
+                                                    <Bold>Note</Bold> General purpose textual data usable for any purpose (comments, camera station names, study sites, survey name,
+                                                    <Italic>etc</Italic> .)
                                                 </Paragraph>
                                             </ListItem>
                                             <ListItem>
                                                 <Paragraph>
-                                                    <Run Text="Boolean data, i.e., true or false"/>
+                                                    <Bold>Flag</Bold> Boolean data; true or false.
                                                 </Paragraph>
                                             </ListItem>
                                         </List>
-                                        <Paragraph FontWeight="Bold" FontSize="20">
-                                            <Run Text="Go through the Tutorial Manual"/>
-                                        </Paragraph>
-                                        <Paragraph>
-                                            <Run Text="The manual contains a tutorial that illustrates how you can create and modify templates. "/>
-                                        </Paragraph>
+                                        <Paragraph>You can specify various attributes for each field.</Paragraph>
+                                        <List>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Bold>Default value</Bold>  The field's initial value.  For example, if a survey name field is present it's often quite convenient to have it default to something like "Our Spiffy Project" rather than requiring this be typed in for every file in the image set.
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Bold>Label</Bold>  The name displayed for the field in Carnassial's user interface.
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Bold>Data label</Bold>  The field's column name in Carnassial's database file (.ddb).  Much more restricted than the label.
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Bold>Tooltip</Bold>  Help text displayed when a Carnassial user hovers the mouse cursor over the field's name.
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Bold>Copyable</Bold>  Whether or not Carnassial's copy from previous button and context menus can be used to populate data in the field.  In most cases it's desirable to have fields be copyable.
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Bold>Visible</Bold>  Whether or not a field is displayed in the Carnassial user interface.  Fields should generally be visible.
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Bold>Width</Bold>  How wide the field appears in the Carnassial user interface.  The editor shows a preview of the layout.
+                                                </Paragraph>
+                                            </ListItem>
+                                            <ListItem>
+                                                <Paragraph>
+                                                    <Bold>List</Bold> The choices available for a choice field, entered one per line.  Including an empty line allows the field to be set to empty.  Each choice must be unique.
+                                                </Paragraph>
+                                            </ListItem>
+                                        </List>
+                                        <Paragraph>You can also drag and drop the fields in the preview windows to set their order in the Carnassial user interface and the column order in .csv spreadsheet files.</Paragraph>
+                                        <Paragraph>If you're new to Carnassial <Hyperlink Name="TutorialLink" RequestNavigate="TutorialLink_RequestNavigate">check out the tutorial</Hyperlink> for more help.</Paragraph>
                                     </FlowDocument>
                                 </FlowDocumentScrollViewer>
                             </xcad:LayoutDocument>
@@ -488,7 +358,7 @@
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
                                                         <StackPanel>
-                                                            <Button Name="btnButton" Tag="{Binding Path=ControlOrder}" Click="ChoiceListButton_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Margin="1"  Content="Define List" >
+                                                            <Button Tag="{Binding Path=ControlOrder}" Click="ChoiceListButton_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Margin="1"  Content="Define List" >
                                                                 <Button.Style>
                                                                     <Style TargetType="{x:Type Button}">
                                                                         <Style.Triggers>
@@ -591,7 +461,7 @@
 
                                     <Border Grid.Row="0" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
                                         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                                            <WrapPanel x:Name="ControlsPanel" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="OnPreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="OnPreviewMouseLeftButtonUp" PreviewMouseMove="OnPreviewMouseMove"
+                                            <WrapPanel x:Name="ControlsPanel" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="ControlsPanel_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="ControlsPanel_PreviewMouseLeftButtonUp" PreviewMouseMove="OnPreviewMouseMove"
                                                        DragEnter="ControlsPanel_DragEnter" Drop="ControlsPanel_DragDrop" />
                                         </ScrollViewer>
                                     </Border>

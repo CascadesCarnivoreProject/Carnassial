@@ -16,7 +16,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <controls:StockMessageControl x:Name="Message" Grid.Row="0" Icon="Question"
+        <controls:StockMessageControl x:Name="Message" Grid.Row="0" StatusImage="Question"
                             Title="Choose a data file"
                             Problem="There are multiple Carnassial database files (.ddb) in the same directory as the template."
                             Solution="Choose the Carnassial file you want to use."

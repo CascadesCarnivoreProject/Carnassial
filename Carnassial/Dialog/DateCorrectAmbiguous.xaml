@@ -21,7 +21,7 @@
         </Grid.RowDefinitions>
     <controls:StockMessageControl Grid.Row="0" x:Name="Message"
                             Title="Correct for Ambiguous Dates"
-                            Icon="Question"
+                            StatusImage="Question"
                             Problem="Carnassial may have interpretted the Day/Month as Month/Day for days of the month that are 12 or less."
                             Reason="Some  cameras record dates ambiguously, e.g. a date recorded as 01-02-2015 could be either 2-Jan-2015 or 01-Feb-2015.
 &#10;Carnassial relies on your computer's  Windows Control Panel date format to interpret these ambiguous dates. 
