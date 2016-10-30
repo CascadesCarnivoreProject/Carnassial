@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:Carnassial.Controls"
-        Title="Date/time - Correct for changes to or from daylight savings time" 
+        Title="Date/time - Correct for changes to or from daylight savings time." 
 		Name="DaylightSavingsTimeCorrection"
 		MinHeight="826" MinWidth="768"
 		Height="856" Width="768"
@@ -12,7 +12,7 @@
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             StatusImage="Question"
-                            Title="Correct for Standard/Daylight Savings Time Changes"
+                            Title="Correct for Standard and Daylight Savings Time changes"
                             Problem="The camera did not account for daylight savings or standard time changes, which means some images or videos are off by an hour."
                             Solution="1. IMPORTANT.The image or video below should be where the time change occurred. &#10;    If it isn't, click Cancel, navigate to that file in the main window, then come back here.&#10;2. Correct the time + / - one hour in the Time Correction checkbox.&#10;3. Use the Propagate Correction checkbox to propagate changes forwards or backwards from this point.&#10;4. The Okay button will be selectable once you've done the above. Click Okay to confirm, Cancel to abort."
                             Result="The dates and times will be adjusted forwards or backwards from this file by +/- one hour (except corrupted ones)."

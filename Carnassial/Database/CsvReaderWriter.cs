@@ -14,7 +14,7 @@ namespace Carnassial.Database
     internal class CsvReaderWriter
     {
         /// <summary>
-        /// Export all the database data associated with the selection to the CSV file indicated in the file path so that spreadsheet applications (like Excel) can display it.
+        /// Export all the database data associated with the selection to the .csv file indicated in the file path so that spreadsheet applications (like Excel) can display it.
         /// </summary>
         public void ExportToCsv(FileDatabase database, string filePath)
         {
@@ -55,17 +55,17 @@ namespace Carnassial.Database
             {
                 using (StreamReader csvReader = new StreamReader(stream))
                 {
-                    // validate CSV file headers against the database
+                    // validate .csv file headers against the database
                     List<string> dataLabelsFromHeader = this.ReadAndParseLine(csvReader);
                     List<string> dataLabelsInFileDatabaseButNotInHeader = dataLabels.Except(dataLabelsFromHeader).ToList();
                     foreach (string dataLabel in dataLabelsInFileDatabaseButNotInHeader)
                     {
-                        importErrors.Add("- A column with the DataLabel '" + dataLabel + "' is present in the database but nothing matches that in the CSV file." + Environment.NewLine);
+                        importErrors.Add("- A column with the DataLabel '" + dataLabel + "' is present in the database but nothing matches that in the .csv file." + Environment.NewLine);
                     }
                     List<string> dataLabelsInHeaderButNotFileDatabase = dataLabelsFromHeader.Except(dataLabels).ToList();
                     foreach (string dataLabel in dataLabelsInHeaderButNotFileDatabase)
                     {
-                        importErrors.Add("- A column with the DataLabel '" + dataLabel + "' is present in the CSV file but nothing matches that in the database." + Environment.NewLine);
+                        importErrors.Add("- A column with the DataLabel '" + dataLabel + "' is present in the .csv file but nothing matches that in the database." + Environment.NewLine);
                     }
 
                     if (importErrors.Count > 0)
@@ -73,7 +73,7 @@ namespace Carnassial.Database
                         return false;
                     }
 
-                    // read image updates from the CSV file
+                    // read image updates from the .csv file
                     List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
                     for (List<string> row = this.ReadAndParseLine(csvReader); row != null; row = this.ReadAndParseLine(csvReader))
                     {

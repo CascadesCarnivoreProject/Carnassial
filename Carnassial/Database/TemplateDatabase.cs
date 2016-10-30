@@ -169,7 +169,6 @@ namespace Carnassial.Database
                 }
                 Debug.Assert(String.IsNullOrWhiteSpace(dataLabel) == false, String.Format("Encountered empty data label and label at ID {0} in template table.", control.ID));
 
-                // get a list of datalabels so we can add columns in the order that matches the current template table order
                 if (Constant.DatabaseColumn.ID != dataLabel)
                 {
                     dataLabels.Add(dataLabel);
@@ -559,15 +558,14 @@ namespace Carnassial.Database
 
         public string GetNextUniqueDataLabel(string dataLabelPrefix)
         {
-            // get all existing data labels, as we have to ensure that a new data label doesn't have the same name as an existing one
+            // get all existing data labels
             List<string> dataLabels = new List<string>();
             foreach (ControlRow control in this.Controls)
             {
                 dataLabels.Add(control.DataLabel);
             }
 
-            // If the data label name exists, keep incrementing the count that is appended to the end
-            // of the field type until it forms a unique data label name
+            // if the candidate data label exists, keep incrementing the count a unique data label is found
             int dataLabelUniqueIdentifier = 0;
             string nextDataLabel = dataLabelPrefix + dataLabelUniqueIdentifier.ToString();
             while (dataLabels.Contains(nextDataLabel))

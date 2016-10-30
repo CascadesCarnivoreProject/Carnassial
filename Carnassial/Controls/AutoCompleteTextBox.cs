@@ -10,6 +10,8 @@ namespace Carnassial.Controls
     {
         private string mostRecentAutocompletion;
 
+        public bool AllowLeadingWhitespace { get; set; }
+
         // XamlWriter doesn't support generics so this property breaks anything triggering XamlWriter.Save(), such as clearing UI object collections
         // containing the text box since the clear triggers undo and undo relies on serialization.
         // If needed serialization support can be added via a TypeConverter.
@@ -23,28 +25,32 @@ namespace Carnassial.Controls
 
         public AutocompleteTextBox()
         {
+            this.AllowLeadingWhitespace = false;
             this.mostRecentAutocompletion = null;
             this.TextChanged += this.OnTextChanged;
         }
 
         private void OnTextChanged(object sender, TextChangedEventArgs eventArgs)
         {
-            // Don't allow leading whitespace
-            // Updating the text box moves the caret to the start position, which results in poor user experience when the text box initially contains only
-            // whitespace and the user happens to move focus to the control in such a way that the first non-whitespace character entered follows some of the
-            // whitespace---the result's the first character of the word ends up at the end rather than at the beginning.
-            int cursorPosition = this.CaretIndex;
-            string trimmedNote = this.Text.TrimStart();
-            if (trimmedNote != this.Text)
+            // if leading whitespace is disabled, reject it
+            if (this.AllowLeadingWhitespace == false)
             {
-                cursorPosition -= this.Text.Length - trimmedNote.Length;
-                if (cursorPosition < 0)
+                // Updating the text box moves the caret to the start position, which results in poor user experience when the text box initially contains only
+                // whitespace and the user happens to move focus to the control in such a way that the first non-whitespace character entered follows some of the
+                // whitespace---the result's the first character of the word ends up at the end rather than at the beginning.
+                int cursorPosition = this.CaretIndex;
+                string trimmedNote = this.Text.TrimStart();
+                if (trimmedNote != this.Text)
                 {
-                    cursorPosition = 0;
-                }
+                    cursorPosition -= this.Text.Length - trimmedNote.Length;
+                    if (cursorPosition < 0)
+                    {
+                        cursorPosition = 0;
+                    }
 
-                this.Text = trimmedNote;
-                this.CaretIndex = cursorPosition;
+                    this.Text = trimmedNote;
+                    this.CaretIndex = cursorPosition;
+                }
             }
 
             // check if autocompletion is possible when text is added

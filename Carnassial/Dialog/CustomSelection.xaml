@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         mc:Ignorable="d"
-        Title="Create a custom selection"
+        Title="Create a custom selection."
         MinHeight="500" MinWidth="700"
 		Height="900" Width="768"
 		ResizeMode="CanResizeWithGrip"
@@ -14,7 +14,7 @@
 		WindowStartupLocation="CenterOwner"  Loaded="Window_Loaded" >
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" StatusImage="Question"
-                            Title="Create a custom selection"
+                            Title="Create a custom selection."
                             What="You may want to view only a subset of your images and videos which fit some criteria of interest to you."
                             Solution="Specify some search terms which describe your criteria.&#10;1. Each row below reflects one of your data fields.&#10;2. Select one or more data fields that you want to use as part of your search.
                             &#10;3. Select the expresson you want to use.&#10;4. Select or enter the value you want to use to compare against the data field's contents."

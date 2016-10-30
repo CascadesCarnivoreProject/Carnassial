@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:Carnassial"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-		Title="Date/time - Add a fixed correction value to all files selected"
+		Title="Date/time - Add a fixed correction value to all files selected."
 		MinHeight="826" MinWidth="768"
 		Height="856" Width="768"
 		ResizeMode="CanResizeWithGrip"
@@ -12,8 +12,8 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" StatusImage="Question"
-                            Title="Correct the date/time of all files selected"
-                            Problem="If your camera was not initialized to the correct date/time every file's time will be off by a fixed amount."
+                            Title="Adjust the date/time of all files selected."
+                            Problem="If your camera was not initialized to the correct date/time every file's time will be off by the same amount."
                             Solution="Your currently selected file is shown below.
 &#10;&#x2022; Adjust the date/time for this file the correct data and time.
 &#10;&#x2022; Click Preview Changes (which becomes active after you enter an adjusted date/time) to review the changes that will be made.

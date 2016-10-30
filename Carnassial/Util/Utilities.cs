@@ -1,4 +1,5 @@
 ﻿using MetadataExtractor;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,10 +9,11 @@ using System.Windows;
 using System.Windows.Forms;
 using Clipboard = System.Windows.Clipboard;
 using DataFormats = System.Windows.DataFormats;
-using Directory = MetadataExtractor.Directory;
 using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;
 using MessageBox = Carnassial.Dialog.MessageBox;
+using MetadataDirectory = MetadataExtractor.Directory;
+using OpenFileDialog = System.Windows.Forms.OpenFileDialog;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace Carnassial.Util
@@ -21,17 +23,61 @@ namespace Carnassial.Util
     /// </summary>
     public class Utilities
     {
+        private static string GetDotNetVersion()
+        {
+            // adapted from https://msdn.microsoft.com/en-us/library/hh925568.aspx.
+            int release = 0;
+            using (RegistryKey ndpKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(@"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\"))
+            {
+                if (ndpKey != null)
+                {
+                    object releaseAsObject = ndpKey.GetValue("Release");
+                    if (releaseAsObject != null)
+                    {
+                        release = (int)releaseAsObject;
+                    }
+                }
+            }
+
+            if (release >= 394802)
+            {
+                return "4.6.2 or later";
+            }
+            if (release >= 394254)
+            {
+                return "4.6.1";
+            }
+            if (release >= 393295)
+            {
+                return "4.6";
+            }
+            if (release >= 379893)
+            {
+                return "4.5.2";
+            }
+            if (release >= 378675)
+            {
+                return "4.5.1";
+            }
+            if (release >= 378389)
+            {
+                return "4.5";
+            }
+
+            return "4.5 or later not detected";
+        }
+
         public static ParallelOptions GetParallelOptions(int maximumDegreeOfParallelism)
         {
             ParallelOptions parallelOptions = new ParallelOptions();
-            parallelOptions.MaxDegreeOfParallelism = Environment.ProcessorCount > 1 ? Math.Min(Environment.ProcessorCount - 1, maximumDegreeOfParallelism) : 1;
+            parallelOptions.MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, maximumDegreeOfParallelism);
             return parallelOptions;
         }
 
         public static Dictionary<string, string> LoadMetadata(string filePath)
         {
             Dictionary<string, string> metadata = new Dictionary<string, string>();
-            foreach (Directory metadataDirectory in ImageMetadataReader.ReadMetadata(filePath))
+            foreach (MetadataDirectory metadataDirectory in ImageMetadataReader.ReadMetadata(filePath))
             {
                 foreach (Tag metadataTag in metadataDirectory.Tags)
                 {
@@ -95,15 +141,13 @@ namespace Carnassial.Util
 
         public static void ShowExceptionReportingDialog(string title, UnhandledExceptionEventArgs e, Window owner)
         {
-            // once .NET 4.5+ is used it's meaningful to also report the .NET release version
-            // See https://msdn.microsoft.com/en-us/library/hh925568.aspx.
             MessageBox exitNotification = new MessageBox("Uh-oh.  We're so sorry.", owner);
             exitNotification.Message.StatusImage = MessageBoxImage.Error;
             exitNotification.Message.Title = title;
             exitNotification.Message.Problem = String.Format("This is a bug.  The What section below has been copied.  Please paste it into a new issue at {0} or an email to {1}.  Please also include a clear and specific description of what you were doing at the time.",
                                                              CarnassialConfigurationSettings.GetIssuesBrowserAddress(),
                                                              CarnassialConfigurationSettings.GetDevTeamEmailLink().ToEmailAddress());
-            exitNotification.Message.What = String.Format("{0}, {1}, .NET runtime {2}{3}", typeof(CarnassialWindow).Assembly.GetName(), Environment.OSVersion, Environment.Version, Environment.NewLine);
+            exitNotification.Message.What = String.Format("{0}, {1}, .NET {2}{3}", typeof(CarnassialWindow).Assembly.GetName(), Environment.OSVersion, Utilities.GetDotNetVersion(), Environment.NewLine);
             if (e.ExceptionObject != null)
             {
                 exitNotification.Message.What += e.ExceptionObject.ToString();
@@ -176,10 +220,11 @@ namespace Carnassial.Util
         {
             // Get the template file, which should be located where the images reside
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Title = title;
+            openFileDialog.AutoUpgradeEnabled = true;
             openFileDialog.CheckFileExists = true;
             openFileDialog.CheckPathExists = true;
             openFileDialog.Multiselect = false;
+            openFileDialog.Title = title;
             if (String.IsNullOrWhiteSpace(defaultFilePath))
             {
                 openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -189,7 +234,6 @@ namespace Carnassial.Util
                 openFileDialog.InitialDirectory = Path.GetDirectoryName(defaultFilePath);
                 openFileDialog.FileName = Path.GetFileName(defaultFilePath);
             }
-            openFileDialog.AutoUpgradeEnabled = true;
 
             // Set filter for file extension and default file extension 
             openFileDialog.DefaultExt = Constant.File.TemplateDatabaseFileExtension;

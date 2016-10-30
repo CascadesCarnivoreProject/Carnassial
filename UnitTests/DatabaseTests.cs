@@ -54,7 +54,7 @@ namespace Carnassial.UnitTests
             string currentDirectoryName = Path.GetFileName(fileDatabase.FolderPath);
             fileDatabase.SelectFiles(FileSelection.All);
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
-            foreach (FileSelection nextSelection in new List<FileSelection>() { FileSelection.All, FileSelection.Ok, FileSelection.Ok })
+            foreach (FileSelection nextSelection in new List<FileSelection>() { FileSelection.All, FileSelection.Ok, FileSelection.All })
             {
                 Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount == fileExpectations.Count);
                 fileDatabase.SelectFiles(FileSelection.All);
@@ -64,13 +64,13 @@ namespace Carnassial.UnitTests
 
                 for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
                 {
-                    // verify image
-                    ImageRow image = fileDatabase.Files[fileIndex];
+                    // verify file
+                    ImageRow file = fileDatabase.Files[fileIndex];
                     FileExpectations fileExpectation = fileExpectations[fileIndex];
-                    fileExpectation.Verify(image, imageSetTimeZone);
+                    fileExpectation.Verify(file, imageSetTimeZone);
 
-                    // verify no markers associated with image
-                    List<MarkersForCounter> markersOnImage = fileDatabase.GetMarkersOnFile(image.ID);
+                    // verify no markers associated with file
+                    List<MarkersForCounter> markersOnImage = fileDatabase.GetMarkersOnFile(file.ID);
                     Assert.IsTrue(markersOnImage.Count == counterControls);
                     foreach (MarkersForCounter markerForCounter in markersOnImage)
                     {
@@ -79,8 +79,8 @@ namespace Carnassial.UnitTests
                     }
 
                     // retrieval by path
-                    FileInfo fileInfo = image.GetFileInfo(fileDatabase.FolderPath);
-                    Assert.IsTrue(fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out image));
+                    FileInfo fileInfo = file.GetFileInfo(fileDatabase.FolderPath);
+                    Assert.IsTrue(fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file));
 
                     // retrieval by specific method
                     // fileDatabase.GetImageValue();
@@ -207,10 +207,10 @@ namespace Carnassial.UnitTests
             dateTime.UseForSearching = false;
             fileDatabase.CustomSelection.TermCombiningOperator = CustomSelectionOperator.And;
 
-            SearchTerm file = fileDatabase.CustomSelection.SearchTerms.Single(term => term.DataLabel == Constant.DatabaseColumn.File);
-            file.UseForSearching = true;
-            file.Operator = Constant.SearchTermOperator.Glob;
-            file.DatabaseValue = "*" + Constant.File.JpgFileExtension.ToUpperInvariant();
+            SearchTerm fileName = fileDatabase.CustomSelection.SearchTerms.Single(term => term.DataLabel == Constant.DatabaseColumn.File);
+            fileName.UseForSearching = true;
+            fileName.Operator = Constant.SearchTermOperator.Glob;
+            fileName.DatabaseValue = "*" + Constant.File.JpgFileExtension.ToUpperInvariant();
             Assert.IsFalse(String.IsNullOrEmpty(fileDatabase.CustomSelection.GetFilesWhere()));
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
@@ -1083,12 +1083,11 @@ namespace Carnassial.UnitTests
                 {
                     Marker marker = markersForCounter.Markers[markerIndex];
                     // only Point is persisted to the database so other Marker fields should have default values on read
-                    Assert.IsFalse(marker.Annotate);
-                    Assert.IsTrue(marker.AnnotationPreviouslyShown);
+                    Assert.IsFalse(marker.ShowLabel);
+                    Assert.IsTrue(marker.LabelShownPreviously);
                     Assert.IsNotNull(marker.Brush);
                     Assert.IsTrue(marker.DataLabel == markersForCounter.DataLabel);
                     Assert.IsFalse(marker.Emphasise);
-                    Assert.IsNotNull(marker.Guid);
                     Assert.IsTrue(marker.Position == expectedPositions[markerIndex]);
                     Assert.IsNull(marker.Tooltip);
                 }

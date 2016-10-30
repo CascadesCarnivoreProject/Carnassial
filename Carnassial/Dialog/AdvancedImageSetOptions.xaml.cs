@@ -16,7 +16,7 @@ namespace Carnassial.Dialog
             this.database = database;
 
             this.currentImageSetTimeZone = database.ImageSet.GetTimeZone();
-            this.TimeZones.SelectedItem = this.currentImageSetTimeZone.DisplayName;
+            this.TimeZones.SelectTimeZone(this.currentImageSetTimeZone);
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
@@ -26,7 +26,7 @@ namespace Carnassial.Dialog
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            this.database.ImageSet.TimeZone = this.TimeZones.TimeZonesByDisplayName[(string)this.TimeZones.SelectedItem].Id;
+            this.database.ImageSet.TimeZone = this.TimeZones.TimeZonesByDisplayIdentifier[(string)this.TimeZones.SelectedItem].Id;
             this.database.SyncImageSetToDatabase();
 
             this.DialogResult = true;
@@ -34,7 +34,7 @@ namespace Carnassial.Dialog
 
         private void ResetTimeZone_Click(object sender, RoutedEventArgs e)
         {
-            this.TimeZones.SelectedItem = this.currentImageSetTimeZone;
+            this.TimeZones.SelectTimeZone(this.currentImageSetTimeZone);
         }
     }
 }

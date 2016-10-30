@@ -178,16 +178,12 @@ namespace Carnassial.Images
             this.magnifierLens.Fill = magnifierBrush;
 
             // figure out the magnifying glass angle needed
-            // The idea is that we will start rotating when the magnifying glass is near the top and the left of the display
-            // The critical distance is size for the Y direction, and somewhat larger than size for the X direction (as we have to start
-            // rotating earlier so it doesn't get clipped). xsize is somewhat arbitrary, i.e., determined by trial and error
-            // positions of edges where angle should change 
+            // Often several angles work so choose a new angle whose difference from the existing angle will cause the least amount of animation 
             double leftEdge = Constant.MarkableCanvas.MagnifyingGlassDiameter;
             double rightEdge = this.Parent.ImageToDisplay.ActualWidth - Constant.MarkableCanvas.MagnifyingGlassDiameter;
             double topEdge = Constant.MarkableCanvas.MagnifyingGlassDiameter;
             double bottomEdge = this.Parent.ImageToDisplay.ActualHeight - Constant.MarkableCanvas.MagnifyingGlassDiameter;
 
-            // In various cases, several angles can work so choose a new angle whose difference from the existing angle will cause the least amount of animation 
             double newMagnifyingGlassAngle;
             if ((mousePosition.X < leftEdge) && (mousePosition.Y < topEdge))
             {

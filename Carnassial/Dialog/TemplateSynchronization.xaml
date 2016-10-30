@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:Carnassial.Controls"
         xmlns:local="clr-namespace:Carnassial"
-        Title="This template cannot be used with this data" 
+        Title="Sorry, this template isn't compatible with this data file." 
 		MinHeight="500" MinWidth="600"
 		Height="500" Width="702"
 		ResizeMode="CanResizeWithGrip"
@@ -11,17 +11,17 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
-                            StatusImage="Information"
-                            Title="This template is not compatible with this data"
-                            Problem="The fields in the Carnassial template file do not match those originally used to create this data. &#10;This is likely because Carnassial template is different from the original one used for this image set."
-                            Solution="We will be changing Carnassial to let you resolve inconsistencies.&#10;However, you can still open the data for this image set, which will use its own copy of the original template."
-                            Result="Depending on your choice, the image set will be opened with the original template or the program will exit."
-                            HideExplanationCheckboxIsVisible="True"/>
+                            StatusImage="Warning"
+                            Title="Template and data file aren't compatible."
+                            Problem="The data file can't be updated wit the data field definitions in the current template."
+                            Solution="You can still open the image set using its copy of the original template."
+                            Hint="When a template is edited Carnassial tries to automatically update the data file's copy of the template.  Many edits can be safely propagated but some types of changes aren't supported and applying certain other kinds of changes would result in data loss or an unusable data file.  The specific problems are listed below."
+                            HideExplanationCheckboxIsVisible="True" />
         <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
             <Rectangle Fill="#FF868686" Height="2"/>
             <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Height="150">
-                <TextBlock Name="TextBlockDetails" HorizontalAlignment="Left" Margin="10,10,10,0"  VerticalAlignment="Top" TextWrapping="Wrap">
-				    <Run FontWeight="Bold" Text="Details: " />
+                <TextBlock Name="TextBlockDetails" HorizontalAlignment="Left" Margin="10,10,10,0" VerticalAlignment="Top" TextWrapping="Wrap">
+				    <Run FontWeight="Bold" Text="Details:" />
                 </TextBlock>
             </ScrollViewer>
         </StackPanel>
@@ -31,7 +31,6 @@
                 <Button Name="UseOldTemplateButton" IsDefault="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="UseOldTemplate_Click">Open image set using the _original template</Button>
                 <Button Name="ExitProgramButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="ExitProgram_Click" IsEnabled="True">E_xit Carnassial</Button>
             </StackPanel>
-            <Image Name="imgDateImage" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" DockPanel.Dock="Top" HorizontalAlignment="Stretch" />
         </DockPanel>
     </DockPanel>
 </Window>

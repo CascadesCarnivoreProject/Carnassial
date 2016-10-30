@@ -22,16 +22,16 @@ namespace Carnassial.Dialog
 
             // Fill in the counts
             int ok = counts[FileSelection.Ok];
-            this.Ok.Text = String.Format("{0,5}", ok) + this.Ok.Text;
+            this.Ok.Text = String.Format("{0,5}", ok);
             int fileNoLongerAvailable = counts[FileSelection.NoLongerAvailable];
-            this.FileNoLongerAvailable.Text = String.Format("{0,5}", fileNoLongerAvailable) + this.FileNoLongerAvailable.Text;
+            this.FileNoLongerAvailable.Text = String.Format("{0,5}", fileNoLongerAvailable);
             int dark = counts[FileSelection.Dark];
-            this.Dark.Text = String.Format("{0,5}", dark) + this.Dark.Text;
+            this.Dark.Text = String.Format("{0,5}", dark);
             int corrupted = counts[FileSelection.Corrupt];
-            this.Corrupted.Text = String.Format("{0,5}", corrupted) + this.Corrupted.Text;
+            this.Corrupted.Text = String.Format("{0,5}", corrupted);
 
             int total = ok + dark + corrupted + fileNoLongerAvailable;
-            this.Total.Text = String.Format("{0,5}", total) + this.Total.Text;
+            this.Total.Text = String.Format("{0,5}", total);
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

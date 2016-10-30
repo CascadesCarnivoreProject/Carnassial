@@ -76,7 +76,10 @@ namespace Carnassial.Database
             {
                 fileDatabase.GetImageSet();
             }
-            fileDatabase.GetMarkers();
+            if (fileDatabase.Markers == null)
+            {
+                fileDatabase.GetMarkers();
+            }
 
             fileDatabase.CustomSelection = new CustomSelection(fileDatabase.Controls, customSelectionTermCombiningOperator);
             fileDatabase.OrderFilesByDateTime = orderFilesByDate;
@@ -167,7 +170,7 @@ namespace Carnassial.Database
                 }
             }
 
-            // Load the marker table from the database - Doing so here will make sure that there is one row for each image.
+            // refresh the marker table to keep it in sync
             this.GetMarkers();
         }
 
@@ -206,12 +209,6 @@ namespace Carnassial.Database
             // index the DateTime column
             this.Database.ExecuteNonQuery("CREATE INDEX 'FileDateTimeIndex' ON 'FileData' ('DateTime')");
 
-            // initialize Files
-            // this is necessary as images can't be added unless Files.Columns is available
-            // can't use TryGetImagesAll() here as that function's contract is not to update ImageDataTable if the select against the underlying database table 
-            // finds no rows, which is the case for a database being created
-            this.SelectFiles(FileSelection.All);
-
             // Create ImageSet table with a singleton row
             columnDefinitions.Clear();
             columnDefinitions.Add(new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.Sql.CreationStringPrimaryKey));  // It begins with the ID integer primary key
@@ -233,6 +230,13 @@ namespace Carnassial.Database
             List<List<ColumnTuple>> insertionStatements = new List<List<ColumnTuple>>();
             insertionStatements.Add(columnsToUpdate);
             this.Database.Insert(Constant.DatabaseTable.ImageSet, insertionStatements);
+
+            this.GetImageSet();
+
+            // create the Files table
+            // This is necessary as files can't be added unles Files.Columns is available.  SelectFiles() has to be called after the ImageSetTable is created
+            // so that the selection can be persisted.
+            this.SelectFiles(FileSelection.All);
 
             // Create the Markers table and initialize it from the controls
             columnDefinitions.Clear();
@@ -334,24 +338,20 @@ namespace Carnassial.Database
 
         private ImageRow GetFile(string where)
         {
-            if (String.IsNullOrWhiteSpace(where))
-            {
-                throw new ArgumentOutOfRangeException("where");
-            }
-
-            string query = "Select * FROM " + Constant.DatabaseTable.FileData + " WHERE " + where;
-            DataTable images = this.Database.GetDataTableFromSelect(query);
-            FileTable temporaryTable = new FileTable(images);
-            if (temporaryTable.RowCount != 1)
+            List<ImageRow> files = this.Files.Select(where);
+            if (files.Count == 0)
             {
                 return null;
             }
-            return temporaryTable[0];
+            if (files.Count == 1)
+            {
+                return files[0];
+            }
+            throw new ArgumentOutOfRangeException("where", String.Format("{0} files match '{1}'.", files.Count, where));
         }
 
         /// <summary> 
-        /// Populate the image table so that it matches all the entries in its associated database table.
-        /// Then set the currentID and currentRow to the the first record in the returned set
+        /// Rebuild the file table with all files in the database table which match the specified selection.
         /// </summary>
         public void SelectFiles(FileSelection selection)
         {
@@ -369,6 +369,9 @@ namespace Carnassial.Database
             DataTable images = this.Database.GetDataTableFromSelect(query);
             this.Files = new FileTable(images);
             this.Files.BindDataGrid(this.boundDataGrid, this.onFileDataTableRowChanged);
+
+            // persist the current selection
+            this.ImageSet.FileSelection = selection;
         }
 
         public FileTable GetFilesMarkedForDeletion()
@@ -404,6 +407,7 @@ namespace Carnassial.Database
             {
                 file = this.Files.NewRow(fileInfo);
                 file.RelativePath = relativePath;
+                Debug.Assert(File.Exists(file.GetFilePath(this.FolderPath)), "Failure in ImageRow formation.");
                 file.SetDateTimeOffsetFromFileInfo(this.FolderPath, imageSetTimeZone);
                 return false;
             }

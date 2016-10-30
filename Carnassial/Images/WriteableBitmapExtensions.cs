@@ -64,11 +64,6 @@ namespace Carnassial.Images
             return difference;
         }
 
-        // Return whether the image is mostly dark. This is done by counting the number of pixels that are
-        // below a certain tolerance (i.e., mostly black), and seeing if the % of mostly dark pixels are
-        // at or higher than the given darkPercent.
-        // We also check to see if the image is predominantly color. We do this by checking to see if pixels are grey scale
-        // (where r=g=b, with a bit of slop added) and then check that against a threshold.
         public static FileSelection IsDark(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio)
         {
             double ignored1;
@@ -76,11 +71,10 @@ namespace Carnassial.Images
             return image.IsDark(darkPixelThreshold, darkPixelRatio, out ignored1, out ignored2);
         }
 
-        // Return whether the image is mostly dark. This is done by counting the number of pixels that are
-        // below a certain tolerance (i.e., mostly black), and seeing if the % of mostly dark pixels are
-        // at or higher than the given darkPercent.
-        // We also check to see if the image is predominantly color. We do this by checking to see if pixels are grey scale
-        // (where r=g=b, with a bit of slop added) and then check that against a threshold.
+        /// <summary>
+        /// Find the percentage of pixels whose brightness is below the threshold.
+        /// </summary>
+        /// <returns>Dark if the specified ratio is exceeded, Ok otherwise.</returns>
         public static unsafe FileSelection IsDark(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio, out double darkPixelFraction, out bool isColor)
         {
             // The RGB offsets from the beginning of the pixel (i.e., 0, 1 or 2)
@@ -117,12 +111,7 @@ namespace Carnassial.Images
                 }
 
                 // Check if the pixel is a grey scale vs. color pixel, using a heuristic. 
-                // In precise grey scales, r = g = b. However, we allow a bit of slop as some cameras actually
-                // have a bit of color in their dark shots (don't ask me why, it just happens). 
-                // i.e. if the total delta is less than the color slop, then we consider it a grey level.
-                // Given a pixel's rgb values, calculate the delta between all those values. This is used to determine if its a grey scale pixel.
-                // In practice a grey scale pixel's rgb are all equal (i.e., delta = 0) but we need the value as we want to see how 'close' the pixel 
-                // actually is to 0, i.e., to allow some slop in determining grey versus color pixels.
+                // In greyscale r = g = b but some cameras have a bit of color in night time images, so allow a tolerance.
                 int rgbDelta = Math.Abs(r - g) + Math.Abs(g - b) + Math.Abs(b - r);
                 if (rgbDelta <= Constant.Images.GreyScalePixelThreshold)
                 {
@@ -133,6 +122,7 @@ namespace Carnassial.Images
                 ++countedPixels;
                 currentPixel += pixelSizeInBytes * pixelStride; // Advance the pointer to the beginning of the next pixel of interest
             }
+
             // Check if its a grey scale image, i.e., at least 90% of the pixels in this image (given this slop) are grey scale.
             // If not, its a color image so judge it as not dark
             double uncoloredPixelFraction = 1d * uncoloredPixels / countedPixels;

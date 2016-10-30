@@ -6,7 +6,7 @@
         xmlns:controls="clr-namespace:Carnassial.Controls"
         xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
-        Title="Populate a data field with metadata" 
+        Title="Populate a data field with metadata." 
 		MinHeight="600" MinWidth="768"
 		Height="856" Width="840"
 		ResizeMode="CanResizeWithGrip"
@@ -15,7 +15,7 @@
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             StatusImage="Question"
-                            Title="Populate a Data Field with Metadata of your Choosing"
+                            Title="Populate a data field with metadata of your choosing."
                             What="Images often embed metadata, some of which may be useful to capture as data."
                             Solution="For all your files, you can choose and populate one of your data fields with metadata of your choosing.
 &#10;1. Select a data field from the left list (only Note fields and the DateTime field can be populated)

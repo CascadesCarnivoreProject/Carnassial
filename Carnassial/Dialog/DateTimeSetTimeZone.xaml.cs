@@ -29,8 +29,7 @@ namespace Carnassial.Dialog
             this.image.Source = imageToCorrect.LoadBitmap(this.fileDatabase.FolderPath);
 
             // configure timezone picker
-            TimeZoneInfo imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZone();
-            this.TimeZones.SelectedItem = imageSetTimeZone.DisplayName;
+            this.TimeZones.SelectTimeZone(this.fileDatabase.ImageSet.GetTimeZone());
             this.TimeZones.SelectionChanged += this.TimeZones_SelectionChanged;
         }
 
@@ -46,7 +45,7 @@ namespace Carnassial.Dialog
             this.FeedbackPanel.Visibility = Visibility.Visible;
 
             // Preview the changes
-            TimeZoneInfo newTimeZone = this.TimeZones.TimeZonesByDisplayName[(string)this.TimeZones.SelectedItem];
+            TimeZoneInfo newTimeZone = this.TimeZones.TimeZonesByDisplayIdentifier[(string)this.TimeZones.SelectedItem];
             foreach (ImageRow image in this.fileDatabase.Files)
             {
                 string newDateTime = String.Empty;
@@ -94,7 +93,7 @@ namespace Carnassial.Dialog
 
             // 2nd click
             // Update the database
-            TimeZoneInfo newTimeZone = this.TimeZones.TimeZonesByDisplayName[(string)this.TimeZones.SelectedItem];
+            TimeZoneInfo newTimeZone = this.TimeZones.TimeZonesByDisplayIdentifier[(string)this.TimeZones.SelectedItem];
             this.fileDatabase.AdjustFileTimes(
                 (DateTimeOffset imageDateTime) =>
                 {

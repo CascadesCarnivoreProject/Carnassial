@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -7,18 +8,35 @@ namespace Carnassial.Controls
 {
     public class TimeZonePicker : ComboBox
     {
-        // can't use ReadOnlyDictionary as it's in .NET 4.5
-        public Dictionary<string, TimeZoneInfo> TimeZonesByDisplayName { get; private set; }
+        public ReadOnlyDictionary<string, TimeZoneInfo> TimeZonesByDisplayIdentifier { get; private set; }
 
         public TimeZonePicker()
         {
             this.FontWeight = FontWeights.Normal;
 
-            this.TimeZonesByDisplayName = new Dictionary<string, TimeZoneInfo>();
+            Dictionary<string, TimeZoneInfo> timeZones = new Dictionary<string, TimeZoneInfo>();
             foreach (TimeZoneInfo timeZone in TimeZoneInfo.GetSystemTimeZones())
             {
-                this.TimeZonesByDisplayName.Add(timeZone.DisplayName, timeZone);
-                this.Items.Add(timeZone.DisplayName);
+                string timeZoneDisplayIdentifier = timeZone.DisplayName;
+                if (timeZone.SupportsDaylightSavingTime == false)
+                {
+                    timeZoneDisplayIdentifier += " [no daylight savings]";
+                }
+                timeZones.Add(timeZoneDisplayIdentifier, timeZone);
+                this.Items.Add(timeZoneDisplayIdentifier);
+            }
+
+            this.TimeZonesByDisplayIdentifier = new ReadOnlyDictionary<string, TimeZoneInfo>(timeZones);
+        }
+
+        public void SelectTimeZone(TimeZoneInfo timeZone)
+        {
+            foreach (string item in this.Items)
+            {
+                if (item != null && item.StartsWith(timeZone.DisplayName))
+                {
+                    this.SelectedItem = item;
+                }
             }
         }
     }

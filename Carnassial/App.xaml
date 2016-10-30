@@ -2,7 +2,7 @@
     StartupUri="CarnassialWindow.xaml">
     <Application.Resources>
         <!-- register resource files so Visual Studio's XAML design window makes them available when calling into user controls such as StockMessageControl -->
-        <BitmapImage x:Key="StatusError_64x.png" UriSource="pack://application:,,/Resources/StatusCriticalError_64x.png" />
+        <BitmapImage x:Key="StatusCriticalError_64x.png" UriSource="pack://application:,,/Resources/StatusCriticalError_64x.png" />
         <BitmapImage x:Key="StatusHelp_64x.png" UriSource="pack://application:,,/Resources/StatusHelp_64x.png" />
         <BitmapImage x:Key="StatusInformation_64x.png" UriSource="pack://application:,,/Resources/StatusInformation_64x.png" />
         <BitmapImage x:Key="StatusWarning_64x.png" UriSource="pack://application:,,/Resources/StatusWarning_64x.png" />

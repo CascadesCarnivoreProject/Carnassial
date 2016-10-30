@@ -31,11 +31,6 @@ namespace Carnassial.Controls
         public DataEntryCounter(ControlRow control, DataEntryControls styleProvider) : 
             base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.CounterButton)
         {
-            // Modify the context menu so it can have a propage submenu
-            // TODO DISCRETIONARY: the context menu's attached to the container rather than the content?
-            //             and if the context menu is nulled out after creation why is it possible to pass createContextMenu = true?
-            this.ContentControl.ContextMenu = null;
-
             // Assign all counters to a single group so that selecting a new counter deselects any currently selected counter
             this.LabelControl.GroupName = "DataEntryCounter";
 

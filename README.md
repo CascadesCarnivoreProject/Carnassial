@@ -1,4 +1,4 @@
-### Overview
+﻿### Overview
 This repository contains the source code for and releases of Carnassial and its associated tenplate editor.  Refer to the wiki tab above to find out how to get started and learn more about Carnassial.
 
 ### Contributing
@@ -29,7 +29,7 @@ Commits should
 * include appropriate test coverage
 * have no build warnings, pass code analysis (Analyze -> Run Code Analysis), and be free of StyleCop issues (right click solution -> Run StyleCop)
 
-Application development is done against .NET 4.0 as as not all users have newer versions available on their systems or the ability to update .NET.  Test code uses .NET 4.5.
+Application development is done against .NET 4.5 as as not all users have newer versions available on their systems or the ability to update .NET.  Test code uses .NET 4.5.
 
 ### Dependencies
 * Carnassial and the template editor are supported and tested on Windows 10 Anniversary Update.  They should also run without issue on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10.  Support is, however, limited.
@@ -41,4 +41,13 @@ Screen sizes of 1600 x 900 or larger are recommended.
 ### History
 Carnassial is named for [carnassials](https://en.wikipedia.org/wiki/Carnassial) as its function is analogous (though unfortunately it lacks the teeth's self-sharpening properties).
 
-Carnassial began as a substantial overhaul of Timelapse 2.0 for improved code quality and sufficient flexibility to accomodate typical carnivore studies.  [Timelapse 2.1](http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.HomePage) includes several months of the initial Carnassial coding effort but is now diverged
+Carnassial began as a substantial overhaul of Timelapse 2.0 for improved code quality and sufficient flexibility to accomodate typical carnivore studies.  [Timelapse 2.1](http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.HomePage) includes several months of the initial Carnassial coding effort but is now diverged.
+
+### Alternatives
+The need to analyze remote camera data is a common one.  In addition to Carnassial and Timelapse we're aware of [CPW Photo Warehouse​](http://cpw.state.co.us/learn/Pages/ResearchMammalsSoftware.aspx) and [eMammal](http://emammal.si.edu/).  Key differences are
+
+* Carnassial is fully free whilst CPW Photo Warehouse​ requires a Microsoft Access license (and permissions configuration).  Carnassial is more flexible and smoother in data entry but presently lacks equivalents to CPW's station information, occupancy analysis, and mark recapture analysis.  [CritterShell](https://github.com/CascadesCarnivoreProject/CritterShell) offers detection and occupancy analysis.
+* Carnassial is readily available.  Obtaining the eMammal client requires a logon be issued, which can be hard to get.
+* Carnassial and Timelapse are pretty similar.  As of November 2016 Carnassial carries a few more features and less bugs than Timelapse.
+
+If you know of others please email carnassialdev@gmail.com to let us know.

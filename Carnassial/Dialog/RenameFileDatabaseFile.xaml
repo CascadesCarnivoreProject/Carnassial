@@ -6,14 +6,14 @@
         xmlns:controls="clr-namespace:Carnassial.Controls"
         xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
-        Title="Rename the Carnassial Data File" Height="350" Width="600" MinHeight="350" MinWidth="600"
+        Title="Rename the data file." Height="350" Width="600" MinHeight="350" MinWidth="600"
         ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             StatusImage="Question"
-                            Title="Rename the Carnassial Data File"
+                            Title="Rename the data file."
                             What="By default, Carnassial creates a file called 'CarnassialData.ddb' that contains your image set data. You may want to rename it to something more descriptive."
                             Solution="In the field below, rename that file to whatever you want."
                             Result="The file will be renamed, and Carnassial will subsequently save data to the renamed file."/>

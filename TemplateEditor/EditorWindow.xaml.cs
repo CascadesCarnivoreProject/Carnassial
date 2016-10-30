@@ -95,14 +95,11 @@ namespace Carnassial.Editor
             this.dataGridBeingUpdatedByCode = false;
         }
 
-        // When the  choice list button is clicked, raise a dialog box that lets the user edit the list of choices
+        // raise a dialog box that lets the user edit the list of choices
         private void ChoiceListButton_Click(object sender, RoutedEventArgs e)
         {
+            // the button's tag is the ControlOrder of the row the button is in; find the control with the same control order
             Button button = (Button)sender;
-
-            // The button tag holds the Control Order of the row the button is in, not the ID.
-            // So we have to search through the rows to find the one with the correct control order
-            // and retrieve / set the ItemList menu in that row.
             ControlRow choiceControl = this.templateDatabase.Controls.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
             Debug.Assert(choiceControl != null, String.Format("Control named {0} not found.", button.Tag));
 
@@ -530,7 +527,7 @@ namespace Carnassial.Editor
 
         private void ShowDataLabelRequirementsDialog()
         {
-            MessageBox messageBox = new MessageBox("Data Labels can only contain letters, numbers and '_'", this);
+            MessageBox messageBox = new MessageBox("Data Labels can only contain letters, numbers and '_'.", this);
             messageBox.Message.StatusImage = MessageBoxImage.Warning;
             messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
             messageBox.Message.Result = "We will automatically ignore other characters, including spaces";
@@ -631,18 +628,16 @@ namespace Carnassial.Editor
         }
 
         /// <summary>
-        /// Updates colors when the Layout changes.
+        /// Updates colors when rows are added, moved, or deleted.
         /// </summary>
         private void TemplateDataGrid_LayoutUpdated(object sender, EventArgs e)
         {
-            // Greys out cells as defined by logic. 
-            // This is to show the user uneditable cells, and informs events about whether a cell can be edited.
-            // This is called after row are added/moved/deleted to update the colors. 
-            // This also disables checkboxes which cannot be edited. Disabling checkboxes does not affect row interactions.
+            // Greys out cells as defined by logic and also disables checkboxes which cannot be edited.
+            // This is to show the user uneditable cells.
             for (int rowIndex = 0; rowIndex < this.TemplateDataGrid.Items.Count; rowIndex++)
             {
-                // In order for ItemContainerGenerator to work, we need to set the TemplateGrid in the XAML to VirtualizingStackPanel.IsVirtualizing="False"
-                // Alternately, we could just do the following, which may be more efficient for large grids (which we normally don't have)
+                // for ItemContainerGenerator to work the DataGrid must have VirtualizingStackPanel.IsVirtualizing="False"
+                // Alternately, the following may be more efficient for large grids (which we normally don't have)
                 // this.TemplateDataGrid.UpdateLayout();
                 // this.TemplateDataGrid.ScrollIntoView(rowIndex + 1);
                 DataGridRow row = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex);
@@ -878,7 +873,7 @@ namespace Carnassial.Editor
                         continue; // Its the same row, so its the same key, so skip it
                     }
 
-                    MessageBox messageBox = new MessageBox("Data Labels must be unique", this);
+                    MessageBox messageBox = new MessageBox("Data Labels must be unique.", this);
                     messageBox.Message.StatusImage = MessageBoxImage.Warning;
                     messageBox.Message.Problem = "'" + textBox.Text + "' is not a valid Data Label, as you have already used it in another row.";
                     messageBox.Message.Result = "We will automatically create a unique Data Label for you by adding a number to its end.";
@@ -890,8 +885,7 @@ namespace Carnassial.Editor
             }
 
             // Check to see if the label (if its not empty, which it shouldn't be) has any illegal characters.
-            // Note that most of this is redundant, as we have already checked for illegal characters as they are typed. However,
-            // we have not checked to see if the first letter is alphabetic.
+            // Much of this is redundant characters are also checked as they are typed.  However, the first check has not been performed.
             if (dataLabel.Length > 0)
             {
                 Regex alphanumdash = new Regex("^[a-zA-Z0-9_]*$");

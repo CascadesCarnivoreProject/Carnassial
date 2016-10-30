@@ -14,7 +14,7 @@
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
                             StatusImage="Question"
-                            Title="Inspect what metadata is available in a file of your choosing"
+                            Title="See what metadata is available in a file of your choosing."
                             What="Cameras typically embed metadata in image files, some of which may be useful to capture as data. 
 &#10;You can inspect an image or video of your choice to see what metadata is typically recorded. 
 &#10;You can then create a Note field representing that metadata, where Carnassial can automatically populate its values."

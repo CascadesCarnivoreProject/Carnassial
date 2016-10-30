@@ -36,8 +36,8 @@ namespace Carnassial.Editor.Dialog
             }
             this.Left = topLeft.X;
 
-            // On some older window systems, the above positioning doesn't work, where it seems to put it the the right of the main window
-            // So we check to make sure it's in the main window, and if not, we try to position it there
+            // on some older Windows versions the above positioning doesn't work as the list ends up to the right of the main window
+            // Check to make sure the popup dialog is over the main window, and if not, try to position it there.
             if (Application.Current != null)
             {
                 double choiceRightSide = this.Left + this.ActualWidth;

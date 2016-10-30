@@ -177,7 +177,6 @@ namespace Carnassial.UnitTests
                 this.ShowDialog(clockDriftCorrection);
 
                 this.ShowDialog(new EditLog(dataHandler.FileDatabase.ImageSet.Log, carnassial));
-                this.ShowDialog(new ExportCsv("test.csv", carnassial));
 
                 using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(dataHandler.FileDatabase, dataHandler.ImageCache.CurrentRow, new CarnassialState(), carnassial))
                 {
@@ -202,7 +201,7 @@ namespace Carnassial.UnitTests
 
         private MessageBox CreateMessageBox(Window owner, MessageBoxButton buttonType, MessageBoxImage iconType)
         {
-            MessageBox messageBox = new MessageBox("Message box title", owner, buttonType);
+            MessageBox messageBox = new MessageBox("Message box title.", owner, buttonType);
             messageBox.Message.StatusImage = iconType;
             messageBox.Message.Problem = "Problem description.";
             messageBox.Message.Reason = "Explanation of why issue is an issue.";

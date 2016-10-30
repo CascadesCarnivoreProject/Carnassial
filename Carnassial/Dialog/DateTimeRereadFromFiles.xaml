@@ -3,14 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:Carnassial.Controls"
         xmlns:local="clr-namespace:Carnassial"
-        Title="Reread dates and times from image and video files" MinHeight="600" MinWidth="768"
+        Title="Date/time - Reread dates and times from image and video files." MinHeight="600" MinWidth="768"
 		Height="856" Width="768"
 		ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" StatusImage="Question"
-                            Title="Reread dates and times from images and videos"
+                            Title="Reread dates and times from images and videos."
                             Problem="The dates and times in your images and videos may have been incorrectly read by earlier versions of Carnassial.&#10;Or you may have previously changed the dates and times and you now want to go back to their original dates"
                             Solution="Click 'Start' below to replace the existing dates/times with the original dates/times on the files. &#10;Click Cancel if you don't want to do this."
                             Result="Carnassial will replace the current date/time with the original date/time (if they differ).&#10;A list showing what was done will be displayed below"

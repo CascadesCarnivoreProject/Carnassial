@@ -261,7 +261,7 @@ namespace Carnassial
             public const double ImageZoomMaximumRangeMinimum = 2.0;
             public const double ImageZoomMinimum = 1.0;       // minimum amount of zoom
 
-            public const double MagnifyingGlassDefaultFieldOfView = 100.0;
+            public const double MagnifyingGlassDefaultFieldOfView = 150.0;
             public const double MagnifyingGlassFieldOfViewIncrement = 1.2;
             public const double MagnifyingGlassMaximumFieldOfView = 250.0;
             public const double MagnifyingGlassMinimumFieldOfView = 15.0;

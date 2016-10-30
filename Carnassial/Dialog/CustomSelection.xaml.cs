@@ -165,6 +165,7 @@ namespace Carnassial.Dialog
                          controlType == Constant.DatabaseColumn.RelativePath)
                 {
                     AutocompleteTextBox textBoxValue = new AutocompleteTextBox();
+                    textBoxValue.AllowLeadingWhitespace = true;
                     textBoxValue.Autocompletions = this.database.GetDistinctValuesInFileDataColumn(searchTerm.DataLabel);
                     textBoxValue.IsEnabled = searchTerm.UseForSearching;
                     textBoxValue.Text = searchTerm.DatabaseValue;
@@ -175,13 +176,12 @@ namespace Carnassial.Dialog
                     textBoxValue.VerticalAlignment = VerticalAlignment.Center;
                     textBoxValue.VerticalContentAlignment = VerticalAlignment.Center;
 
-                    // The following is specific only to Counters
+                    textBoxValue.TextAutocompleted += this.SearchTermDatabaseValue_TextAutocompleted;
                     if (controlType == Constant.Control.Counter)
                     {
                         textBoxValue.PreviewTextInput += this.Counter_PreviewTextInput;
                         DataObject.AddPastingHandler(textBoxValue, this.Counter_Paste);
                     }
-                    textBoxValue.TextChanged += this.NoteOrCounter_TextChanged;
 
                     Grid.SetRow(textBoxValue, gridRowIndex);
                     Grid.SetColumn(textBoxValue, CustomSelection.ValueColumn);
@@ -298,10 +298,10 @@ namespace Carnassial.Dialog
             this.UpdateSearchCriteriaFeedback();
         }
 
-        // Value (Counters and Notes): The user has selected a new value
+        // Value: The user has selected a new value
         // - set its corresponding search term in the searchList data structure
         // - update the UI to show the search criteria 
-        private void NoteOrCounter_TextChanged(object sender, TextChangedEventArgs args)
+        private void SearchTermDatabaseValue_TextAutocompleted(object sender, TextChangedEventArgs args)
         {
             TextBox textBox = sender as TextBox;
             int row = Grid.GetRow(textBox);

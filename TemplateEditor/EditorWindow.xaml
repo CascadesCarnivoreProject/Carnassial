@@ -105,7 +105,7 @@
 
             <!-- View Menu -->
             <MenuItem Name="MenuView" Header="_View" IsEnabled="False">
-                <MenuItem Name="MenuViewShowAllColumns" IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="MenuViewShowAllColumns_Click" ToolTip="Show the ordering used when displaying controls and for CSV file columns.">
+                <MenuItem Name="MenuViewShowAllColumns" IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="MenuViewShowAllColumns_Click" ToolTip="Show the ordering used when displaying controls and for .csv file columns.">
                 </MenuItem>
                 <MenuItem Header="Inspect file _metadata..." ToolTip="See what metadata is available in an image or video of your choosing." Click="MenuViewInspectMetadata_Click">
                 </MenuItem>

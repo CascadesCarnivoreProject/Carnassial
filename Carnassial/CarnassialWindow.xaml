@@ -36,13 +36,13 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuFileExportCsv" Header="Export data for this image set as a _CSV file..." IsEnabled="False" Click="MenuFileExportCsv_Click" ToolTip="Exports data for the selected images into a CSV (comma separated value) file.">
+                <MenuItem Name="MenuFileExportCsv" Header="Export data for this image set as a ._csv file..." IsEnabled="False" Click="MenuFileExportCsv_Click" ToolTip="Exports data for the selected images into a .csv (comma separated value) file.">
                     <MenuItem.Icon>
                         <Image Source="Resources/ExportFile_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Name="MenuFileExportCsvAndView" Header="Export data for this image set as a CSV file and preview in _Excel..." IsEnabled="False" Click="MenuFileExportCsv_Click" ToolTip="Exports data for the selected files in the image set into a CSV (comma separated value) file and previews it in Excel." />
-                <MenuItem Name="MenuFileImportCsv" Header="I_mport data from a CSV file..." IsEnabled="False" Click="MenuFileImportFromCsv_Click" ToolTip="Exports data for the selected files in the image set into a CSV (comma separated value) file.">
+                <MenuItem Name="MenuFileExportCsvAndView" Header="Export data for this image set as a .csv file and preview in _Excel..." IsEnabled="False" Click="MenuFileExportCsv_Click" ToolTip="Exports data for the selected files in the image set into a .csv (comma separated value) file and previews it in Excel." />
+                <MenuItem Name="MenuFileImportCsv" Header="I_mport data from a .csv file..." IsEnabled="False" Click="MenuFileImportFromCsv_Click" ToolTip="Exports data for the selected files in the image set into a .csv (comma separated value) file.">
                     <MenuItem.Icon>
                         <Image Source="Resources/ImportFile_16x.png" />
                     </MenuItem.Icon>
@@ -70,7 +70,7 @@
                 <MenuItem Name="MenuEditRereadDateTimesfromFiles" Header="_Reread date/times from files..." Click="MenuEditRereadDateTimesFromFiles_Click" ToolTip="Reread dates and times from all selected files." />
                 <MenuItem Name="MenuEditDaylightSavingsTimeCorrection" Header="Adjust for _daylight savings time..." Click="MenuEditDaylightSavingsTimeCorrection_Click" ToolTip="Correct daylight saving time issues" />
                 <MenuItem Name="MenuEditDateTimeFixedCorrection" Header="Add a _fixed correction value to every date/time..." Click="MenuEditDateTimeFixedCorrection_Click" ToolTip="Correct for dates or times which are all off by a fixed amount, which happens if your camera was not set to the correct date/time." />
-                <MenuItem Name="MenuEditDateTimeLinearCorrection" Header="Correct for camera cloc_k drift..." Click="MenuEditDateTimeLinearCorrection_Click" ToolTip="Correct for a camera's clock running fast or slow.">
+                <MenuItem Name="MenuEditDateTimeLinearCorrection" Header="Correct for camera clock drif_t..." Click="MenuEditDateTimeLinearCorrection_Click" ToolTip="Correct for a camera's clock running fast or slow.">
                     <MenuItem.Icon>
                         <Image Source="Resources/TimePicker_16x.png" />
                     </MenuItem.Icon>
@@ -108,9 +108,9 @@
                     <MenuItem Name="MenuOptionsEnableSelectedAmbiguousDatesPrompt" IsCheckable="True" Header="Display _ambiguous dates subset prompt" Click="MenuOptionsEnableSelectedAmbiguousDatesPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when ambiguous date clarification is performed when only some of the image set is selected." />
                     <MenuItem Name="MenuOptionsEnableFileCountOnImportDialog" IsCheckable="True" Header="Display _counts when files are added" Click="MenuOptionsEnableFileCountOnImportDialog_Click" ToolTip="Turn on or off the informational dialog displaying image counts when files are loaded into an image set." />
                     <MenuItem Name="MenuOptionsEnableSelectedDateTimeLinearCorrectionPrompt" IsCheckable="True" Header="Display _clock drift subset prompt" Click="MenuOptionsEnableSelectedDateTimeLinearCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when clock drift correction is performed when only some of the image set is selected." />
-                    <MenuItem Name="MenuOptionsEnableCsvExportDialog" IsCheckable="True" Header="Display _CSV export dialog" Click="MenuOptionsEnableCsvExportDialog_Click" ToolTip="Turn on or off the informational dialog displayed when CSV files are exported." />
-                    <MenuItem Name="MenuOptionsEnableSelectedCsvExportPrompt" IsCheckable="True" Header="Display _CSV export subset prompt" Click="MenuOptionsEnableSelectedCsvExportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when CSV export is performed when only some of the image set is selected." />
-                    <MenuItem Name="MenuOptionsEnableCsvImportPrompt" IsCheckable="True" Header="Display _CSV import prompt" Click="MenuOptionsEnableCsvImportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when a CSV file is imported." />
+                    <MenuItem Name="MenuOptionsEnableCsvExportDialog" IsCheckable="True" Header="Display _CSV export dialog" Click="MenuOptionsEnableCsvExportDialog_Click" ToolTip="Turn on or off the informational dialog displayed when .csv files are exported." />
+                    <MenuItem Name="MenuOptionsEnableSelectedCsvExportPrompt" IsCheckable="True" Header="Display _CSV export subset prompt" Click="MenuOptionsEnableSelectedCsvExportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when .csv export is performed when only some of the image set is selected." />
+                    <MenuItem Name="MenuOptionsEnableCsvImportPrompt" IsCheckable="True" Header="Display _CSV import prompt" Click="MenuOptionsEnableCsvImportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when a .csv file is imported." />
                     <MenuItem Name="MenuOptionsEnableSelectedDarkThresholdPrompt" IsCheckable="True" Header="Display dark _threshold subset prompt" Click="MenuOptionsEnableSelectedDarkThresholdPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when adjusting the dark threshold when only some of the image set is selected." />
                     <MenuItem Name="MenuOptionsEnableSelectedDaylightSavingsCorrectionPrompt" IsCheckable="True" Header="Display _daylight savings correction subset prompt" Click="MenuOptionsEnableSelectedDaylightSavingsCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when corrections for daylight savings time is performed when only some of the image set is selected." />
                     <MenuItem Name="MenuOptionsEnableSelectedDateTimeFixedCorrectionPrompt" IsCheckable="True" Header="Display _fixed date/time correction subset prompt" Click="MenuOptionsEnableSelectedDateTimeFixedCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when fixed date/time correction is performed when only some of the image set is selected." />
@@ -181,9 +181,9 @@
             </MenuItem>
 
             <!-- Select menu -->
-            <MenuItem Name="MenuSelect" Header="_Select" IsEnabled="False" SubmenuOpened="MenuSelect_SubmenuOpening" ToolTip="Select a subset of the files.">
+            <MenuItem Name="MenuSelect" Header="_Select" IsEnabled="False" SubmenuOpened="MenuSelect_SubmenuOpening" ToolTip="Select a subset of files.">
                 <MenuItem Name="MenuSelectAllFiles" IsCheckable="True" IsChecked="True" Header="_All files" Click="MenuSelectFiles_Click" ToolTip="Shows all files, including corrupted and dark ones." />
-                <MenuItem Name="MenuSelectOkFiles" IsCheckable="True" IsChecked="False" Header="_Light files" Click="MenuSelectFiles_Click" ToolTip="Exlcudes dark, corrupted, or missing files." />
+                <MenuItem Name="MenuSelectOkFiles" IsCheckable="True" IsChecked="False" Header="_Ok files" Click="MenuSelectFiles_Click" ToolTip="Exlcudes dark, corrupted, or missing files." />
                 <MenuItem Name="MenuSelectDarkFiles" IsCheckable="True" IsChecked="False" Header="_Dark files" Click="MenuSelectFiles_Click" ToolTip="Show only dark images." />
                 <MenuItem Name="MenuSelectCorruptedFiles" IsCheckable="True" IsChecked="False" Header="_Corrupted files" Click="MenuSelectFiles_Click" ToolTip="Show only corrupted images." />
                 <MenuItem Name="MenuSelectFilesNoLongerAvailable" IsCheckable="True" IsChecked="False" Header="_Missing files" Click="MenuSelectFiles_Click" ToolTip="Show records for files no longer available." />
@@ -224,7 +224,7 @@
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
                                     <controls:FeedbackControl x:Name="FeedbackControl" Grid.Row="0" Visibility="Collapsed" />
-                                    <Slider Name="FileNavigatorSlider" Grid.Row="1" Minimum="1" IsSnapToTickEnabled="True" TickFrequency="1" LargeChange="1" AutoToolTipPlacement="BottomRight" ToolTip="Scroll through all files" Margin="5,0,5,0"
+                                    <Slider Name="FileNavigatorSlider" Grid.Row="1" Minimum="1" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" LargeChange="1" TickPlacement="BottomRight" ToolTip="Scroll through all files" Margin="5,0,5,0"
                                             Thumb.DragStarted="FileNavigatorSlider_DragStarted" 
                                             Thumb.DragCompleted="FileNavigatorSlider_DragCompleted"
                                             ValueChanged="FileNavigatorSlider_ValueChanged" />

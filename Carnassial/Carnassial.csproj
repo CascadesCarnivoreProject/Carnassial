@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Carnassial</RootNamespace>
     <AssemblyName>Carnassial</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
@@ -62,6 +62,7 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -72,6 +73,7 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestCertificateThumbprint>0744795F13F850C9EC610B9A48630CB31A2D2F1D</ManifestCertificateThumbprint>
@@ -100,7 +102,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="MetadataExtractor, Version=1.5.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MetadataExtractor.1.5.3\lib\net35\MetadataExtractor.dll</HintPath>
+      <HintPath>..\packages\MetadataExtractor.1.5.3\lib\net45\MetadataExtractor.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.2.0, Culture=neutral, processorArchitecture=MSIL">
@@ -112,7 +114,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -121,7 +123,7 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data.SQLite, Version=1.0.103.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Core.1.0.103\lib\net40\System.Data.SQLite.dll</HintPath>
+      <HintPath>..\packages\System.Data.SQLite.Core.1.0.103\lib\net45\System.Data.SQLite.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Deployment" />
@@ -195,7 +197,9 @@
       <DependentUpon>DateTimeLinearCorrection.xaml</DependentUpon>
     </Compile>
     <Compile Include="Github\GithubAsset.cs" />
+    <Compile Include="Images\FolderLoadProgress.cs" />
     <Compile Include="Images\FrameworkElementExtensions.cs" />
+    <Compile Include="Images\ZoomBookmark.cs" />
     <Compile Include="Util\CarnassialConfigurationSettings.cs" />
     <Compile Include="Util\DataGridExtensions.cs" />
     <Compile Include="Util\DateTimeExtensions.cs" />
@@ -295,17 +299,9 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Dialog\ImportImageSetXmlFile.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="Dialog\MessageBox.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Dialog\ExportCsv.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dialog\DarkImagesThreshold.xaml">
       <SubType>Designer</SubType>
@@ -367,9 +363,6 @@
     </Compile>
     <Compile Include="Images\Marker.cs" />
     <Compile Include="Images\WriteableBitmapExtensions.cs" />
-    <Compile Include="Dialog\ImportImageSetXmlFile.xaml.cs">
-      <DependentUpon>ImportImageSetXmlFile.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Dialog\MessageBox.xaml.cs">
       <DependentUpon>MessageBox.xaml</DependentUpon>
     </Compile>
@@ -408,9 +401,6 @@
     <Compile Include="Dialog\EditLog.xaml.cs">
       <DependentUpon>EditLog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\ExportCsv.xaml.cs">
-      <DependentUpon>ExportCsv.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Dialog\FileCountsByQuality.xaml.cs">
       <DependentUpon>FileCountsByQuality.xaml</DependentUpon>
     </Compile>
@@ -435,7 +425,7 @@
       <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
     </Compile>
     <Compile Include="Database\SQLiteWrapper.cs" />
-    <Compile Include="Util\StatusBarExtensions.cs" />
+    <Compile Include="Controls\StatusBarExtensions.cs" />
     <Compile Include="Database\TemplateDatabase.cs" />
     <Compile Include="Util\CarnassialState.cs" />
     <Compile Include="Util\Utilities.cs" />
@@ -570,12 +560,12 @@
     <Resource Include="Resources\PlayVideo_16x.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\System.Data.SQLite.Core.1.0.103\build\net40\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.103\build\net40\System.Data.SQLite.Core.targets')" />
+  <Import Project="..\packages\System.Data.SQLite.Core.1.0.103\build\net45\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.103\build\net45\System.Data.SQLite.Core.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.103\build\net40\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.103\build\net40\System.Data.SQLite.Core.targets'))" />
+    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.103\build\net45\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.103\build\net45\System.Data.SQLite.Core.targets'))" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

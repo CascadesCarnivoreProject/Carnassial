@@ -85,18 +85,16 @@ namespace Carnassial.Database
             // Construct and show the search term only if that search row is activated
             foreach (SearchTerm searchTerm in this.SearchTerms.Where(term => term.UseForSearching))
             {
+                // check to see if the search should match an empty string
+                // If so, nulls need also to be matched as NULL and empty are considered interchangeable.
                 string whereForTerm;
-                // Check to see if the search should match an empty value, in which case we also need to deal with NULLs 
-                if (String.IsNullOrEmpty(searchTerm.DatabaseValue))
+                if (String.IsNullOrEmpty(searchTerm.DatabaseValue) && searchTerm.Operator == Constant.SearchTermOperator.Equal)
                 {
-                    // The where expression constructed should look something like: (DataLabel IS NULL OR DataLabel = '')
-                    whereForTerm = " (" + searchTerm.DataLabel + " IS NULL OR " + searchTerm.DataLabel + " = '') ";
+                    whereForTerm = "(" + searchTerm.DataLabel + " IS NULL OR " + searchTerm.DataLabel + " = '')";
                 }
                 else
                 {
-                    // The where expression constructed should look something like DataLabel > "5"
-                    Debug.Assert(searchTerm.DatabaseValue.Contains("\"") == false, String.Format("Search term '{0}' contains quotation marks and could be used for SQL injection.", searchTerm.DatabaseValue));
-                    whereForTerm = searchTerm.DataLabel + this.TermToSqlOperator(searchTerm.Operator) + "\"" + searchTerm.DatabaseValue.Trim() + "\""; // Need to quote the value 
+                    whereForTerm = searchTerm.DataLabel + this.TermToSqlOperator(searchTerm.Operator) + Utilities.QuoteForSql(searchTerm.DatabaseValue);
                 }
 
                 // if there is already a term in the query add either and 'And' or an 'Or' to it 
@@ -105,10 +103,10 @@ namespace Carnassial.Database
                     switch (this.TermCombiningOperator)
                     {
                         case CustomSelectionOperator.And:
-                            where += " And ";
+                            where += " AND ";
                             break;
                         case CustomSelectionOperator.Or:
-                            where += " Or ";
+                            where += " OR ";
                             break;
                         default:
                             throw new NotSupportedException(String.Format("Unhandled logical operator {0}.", this.TermCombiningOperator));
@@ -116,7 +114,8 @@ namespace Carnassial.Database
                 }
                 where += whereForTerm;
             }
-            return where.Trim();
+
+            return where;
         }
 
         public void SetDateTime(int dateTimeSearchTermIndex, DateTimeOffset newDateTime, TimeZoneInfo imageSetTimeZone)

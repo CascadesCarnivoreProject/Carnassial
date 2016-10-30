@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:Carnassial"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-		Title="Date/time - Set the time zone of all files selected"
+		Title="Date/time - Set the time zone of all files selected."
 		MinHeight="826" MinWidth="768"
 		Height="856" Width="768"
 		ResizeMode="CanResizeWithGrip"
@@ -12,7 +12,7 @@
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
     <DockPanel>
         <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" StatusImage="Question"
-                            Title="Set the time zone of all files selected"
+                            Title="Set the time zone of all files selected."
                             Problem="The UTC offset needs to be changed.  This could be because the camera is located in a different time zone from the image set's time zone, no metadata was available from the files (meaning local file times were used), or the wrong time zone was set when the files were added to the image set."
                             Solution="Your currently selected file is shown below.
 &#10;&#x2022; Choose the desired time zone for this image from the drop down.

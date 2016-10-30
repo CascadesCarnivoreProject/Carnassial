@@ -350,7 +350,7 @@ namespace Carnassial.Database
                 }
             }
 
-            IList<MetadataDirectory> metadataDirectories = ImageMetadataReader.ReadMetadata(previousFilePath);
+            IReadOnlyList<MetadataDirectory> metadataDirectories = ImageMetadataReader.ReadMetadata(previousFilePath);
             ExifSubIfdDirectory exifSubIfd = metadataDirectories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
             if (exifSubIfd == null)
             {
@@ -381,7 +381,7 @@ namespace Carnassial.Database
         public DateTimeAdjustment TryReadDateTimeOriginalFromMetadata(string folderPath, TimeZoneInfo imageSetTimeZone)
         {
             string filePath = this.GetFilePath(folderPath);
-            IList<MetadataDirectory> metadataDirectories = ImageMetadataReader.ReadMetadata(filePath);
+            IReadOnlyList<MetadataDirectory> metadataDirectories = ImageMetadataReader.ReadMetadata(filePath);
             ExifSubIfdDirectory exifSubIfd = metadataDirectories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
 
             bool previousImageUsed = false;

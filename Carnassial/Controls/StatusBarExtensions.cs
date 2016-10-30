@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Controls.Primitives;
 
-namespace Carnassial.Util
+namespace Carnassial.Controls
 {
     /// <summary>
     /// The Status Bar convenience class that collects methods to update different parts of the status bar

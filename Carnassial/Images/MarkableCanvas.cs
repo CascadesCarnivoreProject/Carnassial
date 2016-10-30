@@ -23,9 +23,7 @@ namespace Carnassial.Images
     {
         private static readonly SolidColorBrush MarkerFillBrush = new SolidColorBrush(Color.FromArgb(2, 0, 0, 0));
 
-        // bookmarked pan and zoom setting
-        private Point bookmarkScale;
-        private Point bookmarkTranslation;
+        private ZoomBookmark bookmark;
 
         // the canvas to magnify contains both an image and markers so the magnifying glass view matches the display image
         private Canvas canvasToMagnify;
@@ -165,12 +163,9 @@ namespace Carnassial.Images
             // initialize render transforms
             // scale transform's center is set during layout once the image size is known
             // default bookmark is default zoomed out, normal pan state
-            this.bookmarkScale = new Point();
-            this.bookmarkTranslation = new Point();
-            this.ResetBookmark();
-
-            this.imageToDisplayScale = new ScaleTransform(1.0, 1.0);
-            this.imageToDisplayTranslation = new TranslateTransform(0.0, 0.0);
+            this.bookmark = new ZoomBookmark();
+            this.imageToDisplayScale = new ScaleTransform(this.bookmark.Scale.X, this.bookmark.Scale.Y);
+            this.imageToDisplayTranslation = new TranslateTransform(this.bookmark.Translation.X, this.bookmark.Translation.Y);
 
             TransformGroup transformGroup = new TransformGroup();
             transformGroup.Children.Add(this.imageToDisplayScale);
@@ -228,10 +223,7 @@ namespace Carnassial.Images
         // Return to the zoom / pan levels saved as a bookmark
         public void ApplyBookmark()
         {
-            this.imageToDisplayScale.ScaleX = this.bookmarkScale.X;
-            this.imageToDisplayScale.ScaleY = this.bookmarkScale.Y;
-            this.imageToDisplayTranslation.X = this.bookmarkTranslation.X;
-            this.imageToDisplayTranslation.Y = this.bookmarkTranslation.Y;
+            this.bookmark.Apply(this.imageToDisplayScale, this.imageToDisplayTranslation);
             this.RedrawMarkers();
         }
 
@@ -320,7 +312,7 @@ namespace Carnassial.Images
                 Canvas.SetTop(glow, position);
             }
 
-            if (marker.Annotate)
+            if (marker.ShowLabel)
             {
                 Label label = new Label();
                 label.Content = marker.Tooltip;
@@ -365,9 +357,8 @@ namespace Carnassial.Images
             }
         }
 
-        // On Mouse down, record the location, who sent it, and the time.
-        // We will use this information on move and up events to discriminate between 
-        // panning/zooming vs. marking. 
+        // record the location, who sent it, and the time.
+        // This information is used on move and up events to discriminate between marker placement and panning. 
         private void ImageOrCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             this.previousMousePosition = e.GetPosition(this);
@@ -393,10 +384,9 @@ namespace Carnassial.Images
             // Get the current position
             Point mousePosition = e.GetPosition(this.ImageToDisplay);
 
-            // Is this the end of a translate operation, or a marking operation?
-            // We decide by checking if the left button has been released, the mouse location is
-            // smaller than a given threshold, and less than 200 ms have passed since the original
-            // mouse down. i.e., the use has done a rapid click and release on a small location
+            // Is this the end of a translate operation or of placing a maker?
+            // Create a marker if the left button has been released, the mouse movement is below threshold, and less than 200 ms have passed since the original
+            // mouse down.
             if ((e.LeftButton == MouseButtonState.Released) &&
                 (sender == this.mouseDownSender) &&
                 (this.mouseDownLocation - mousePosition).Length <= 2.0)
@@ -419,14 +409,14 @@ namespace Carnassial.Images
             this.RedrawMagnifyingGlassIfVisible();
         }
 
-        // Use the  mouse wheel to scale the image
+        // use the mouse wheel to scale the image
         private void ImageOrCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             lock (this)
             {
-                // We will scale around the current point
+                // use the current mouse position as the zoom center
                 Point mousePosition = e.GetPosition(this.ImageToDisplay);
-                bool zoomIn = e.Delta > 0; // Zooming in if delta is positive, else zooming out
+                bool zoomIn = e.Delta > 0; // zoom in if delta is positive, otherwise out
                 this.ScaleImage(mousePosition, zoomIn);
             }
         }
@@ -595,7 +585,7 @@ namespace Carnassial.Images
 
             // clear the bookmark (if any) as it will no longer be correct
             // if needed, the bookmark could be rescaled instead
-            this.ResetBookmark();
+            this.bookmark.Reset();
         }
 
         // Remove a marker on a right mouse button up event
@@ -672,22 +662,12 @@ namespace Carnassial.Images
             }
         }
 
-        // Clear the current zoom / pan levels as a bookmark, where its set to the zoomed out levels
-        private void ResetBookmark()
-        {
-            this.bookmarkTranslation.X = 0;
-            this.bookmarkTranslation.Y = 0;
-            this.bookmarkScale.X = 1;
-            this.bookmarkScale.Y = 1;
-        }
-
         public void ResetMaximumZoom()
         {
             this.ZoomMaximum = Constant.MarkableCanvas.ImageZoomMaximum;
         }
 
-        // Scale the image around the given image location point, where we are zooming in if
-        // zoomIn is true, and zooming out if zoomIn is false
+        // scale the image around the given position
         public void ScaleImage(Point mousePosition, bool zoomIn)
         {
             // nothing to do if at maximum or minimum scaling value whilst zooming in or out, respectively 
@@ -737,15 +717,10 @@ namespace Carnassial.Images
             }
         }
 
-        // Save the current zoom / pan levels as a bookmark
         public void SetBookmark()
         {
-            // a user may want to flip between completely zoomed out / normal pan settings and a saved zoom / pan setting that focuses in on a particular region
-            // To do this, we save / restore the zoom pan settings of a particular view, or return to the default zoom/pan.
-            this.bookmarkTranslation.X = this.imageToDisplayTranslation.X;
-            this.bookmarkTranslation.Y = this.imageToDisplayTranslation.Y;
-            this.bookmarkScale.X = this.imageToDisplayScale.ScaleX;
-            this.bookmarkScale.Y = this.imageToDisplayScale.ScaleY;
+            // a user may want to flip between zoom all and a remembered zoom / pan setting that focuses in on a particular region
+            this.bookmark.Set(this.imageToDisplayScale, this.imageToDisplayTranslation);
         }
 
         /// <summary>
@@ -870,10 +845,10 @@ namespace Carnassial.Images
         // Return to the zoomed out level, with no panning
         public void ZoomToFit()
         {
-            this.imageToDisplayScale.ScaleX = 1;
-            this.imageToDisplayScale.ScaleY = 1;
-            this.imageToDisplayTranslation.X = 0;
-            this.imageToDisplayTranslation.Y = 0;
+            this.imageToDisplayScale.ScaleX = 1.0;
+            this.imageToDisplayScale.ScaleY = 1.0;
+            this.imageToDisplayTranslation.X = 0.0;
+            this.imageToDisplayTranslation.Y = 0.0;
             this.RedrawMarkers();
         }
     }

@@ -129,13 +129,13 @@ namespace Carnassial
         {
             if (eventArgs.Key == Key.Enter)
             {
-                this.SetTopLevelFocus(false, eventArgs);
+                this.TrySetKeyboardFocusToMarkableCanvas(false, eventArgs);
                 eventArgs.Handled = true;
             }
             // The 'empty else' means don't check to see if a textbox or control has the focus, as we want to reset the focus elsewhere
         }
 
-        /// <summary>Preview callback for counters, to ensure ensure that we only accept numbers</summary>
+        /// <summary>Ensures only numbers are entered for counters.</summary>
         /// <param name="sender">the event source</param>
         /// <param name="e">event information</param>
         private void CounterControl_PreviewTextInput(object sender, TextCompositionEventArgs e)
@@ -149,7 +149,8 @@ namespace Carnassial
             int previousRow = this.dataHandler.ImageCache.CurrentRow - 1;
             if (previousRow < 0)
             {
-                return; // We are already on the first image, so there is nothing to copy
+                // at first image, so nothing to copy
+                return; 
             }
 
             foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
@@ -287,16 +288,6 @@ namespace Carnassial
             }
         }
 
-        private void Feedback(BitmapSource bitmap, int percent, string message)
-        {
-            if (bitmap != null)
-            {
-                this.MarkableCanvas.SetNewImage(bitmap, null);
-            }
-            this.FeedbackControl.Message.Content = message;
-            this.FeedbackControl.ProgressBar.Value = percent;
-        }
-
         private void File_SubmenuOpening(object sender, RoutedEventArgs e)
         {
             this.MenuFileRecentImageSets_Refresh();
@@ -382,10 +373,9 @@ namespace Carnassial
                 DataEntryControl control;
                 if (this.DataEntryControls.ControlsByDataLabel.TryGetValue(markersForCounter.DataLabel, out control) == false)
                 {
-                    // If we can't find the counter, its likely because the control was made invisible in the template,
-                    // which means that there is no control associated with the marker. So just don't create the 
-                    // markers associated with this control. Note that if the control is later made visible in the template,
-                    // the markers will then be shown. 
+                    // if the counter can't be found it's likely because the control was made invisible in the template
+                    // This means there is no user visible control associated with the marker.  For consistency, don't show those markers.
+                    // If the control is later made visible in the template the markers will again be shown. 
                     continue;
                 }
 
@@ -394,15 +384,15 @@ namespace Carnassial
                 bool emphasize = markersForCounter.DataLabel == this.state.MouseOverCounter;
                 foreach (Marker marker in markersForCounter.Markers)
                 {
-                    // the first time through, show an annotation. Otherwise we clear the flags to hide the annotation.
-                    if (marker.Annotate && !marker.AnnotationPreviouslyShown)
+                    // label markers when they're first created, don't show a label afterwards
+                    if (marker.ShowLabel && !marker.LabelShownPreviously)
                     {
-                        marker.Annotate = true;
-                        marker.AnnotationPreviouslyShown = true;
+                        marker.ShowLabel = true;
+                        marker.LabelShownPreviously = true;
                     }
                     else
                     {
-                        marker.Annotate = false;
+                        marker.ShowLabel = false;
                     }
 
                     if (selectedCounter != null && currentCounter.DataLabel == selectedCounter.DataLabel)
@@ -454,11 +444,10 @@ namespace Carnassial
             return true;
         }
 
-        // If we are not showing all images, then warn the user and make sure they want to continue.
-        private bool MaybePromptToApplyOperationIfPartialSelection(bool userOptedOutOfMessage, string operationDescription, Action<bool> persistOptOut)
+        private bool MaybePromptToApplyOperationIfPartialSelection(bool userOptedOutOfPrompt, string operationDescription, Action<bool> persistOptOut)
         {
-            // if showing all images then no need for showing the warning message
-            if (userOptedOutOfMessage || this.dataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.All)
+            // if showing all images then no need for showing a warning message as it's not a partial selection
+            if (userOptedOutOfPrompt || this.dataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.All)
             {
                 return true;
             }
@@ -470,8 +459,8 @@ namespace Carnassial
             messageBox.Message.What += "Is this what you want?";
 
             messageBox.Message.Reason = "You have the following selection on: " + this.dataHandler.FileDatabase.ImageSet.FileSelection + "." + Environment.NewLine;
-            messageBox.Message.Reason += "Only data for those images available in this " + this.dataHandler.FileDatabase.ImageSet.FileSelection + " selection will be affected" + Environment.NewLine;
-            messageBox.Message.Reason += "Data for images not shown in this " + this.dataHandler.FileDatabase.ImageSet.FileSelection + " selection will be unaffected." + Environment.NewLine;
+            messageBox.Message.Reason += "Only data for those files available in this selection will be affected" + Environment.NewLine;
+            messageBox.Message.Reason += "Data for files not shown in this selection will be unaffected." + Environment.NewLine;
 
             messageBox.Message.Solution = "Choose " + Environment.NewLine;
             messageBox.Message.Solution += "\u2022 Okay for Carnassial to continue to " + operationDescription + Environment.NewLine;
@@ -479,7 +468,7 @@ namespace Carnassial
 
             messageBox.Message.Hint = "This is not an error." + Environment.NewLine;
             messageBox.Message.Hint += "\u2022 We are asking just in case you forgot you had the " + this.dataHandler.FileDatabase.ImageSet.FileSelection.ToString().ToLowerInvariant() + " selection applied. " + Environment.NewLine;
-            messageBox.Message.Hint += "\u2022 You can use the 'Select' menu to change to other views (including viewing All files)" + Environment.NewLine;
+            messageBox.Message.Hint += "\u2022 You can use the 'Select' menu to change to other views (including all files)" + Environment.NewLine;
             messageBox.Message.Hint += "If you check 'Don't show this message again.' this dialog can be turned back on via the Options menu.";
 
             messageBox.Message.StatusImage = MessageBoxImage.Question;
@@ -521,12 +510,14 @@ namespace Carnassial
         /// </summary>
         private void MarkableCanvas_AddMarker(DataEntryCounter counter, Marker marker)
         {
-            // Get the Counter Control's contents,  increment its value (as we have added a new marker) 
-            // Then update the control's content as well as the database
-            // If we can't convert it to an int, assume that someone set the default value to either a non-integer in the template, or that it's a space. In either case, revert it to zero.
+            // increment the counter to reflect the new marker
             int count;
             if (Int32.TryParse(counter.Content, out count) == false)
             {
+                // if the current value's not parseable assume that 
+                // 1) the default value is set to a non-integer in the template
+                // 2) or it's a space
+                // In either case, revert to zero.
                 count = 0;
             }
             ++count;
@@ -549,8 +540,8 @@ namespace Carnassial
             }
 
             // fill in marker information
-            marker.Annotate = true; // Show the annotation as its created. We will clear it on the next refresh
-            marker.AnnotationPreviouslyShown = false;
+            marker.ShowLabel = true; // show label on creation, cleared on next refresh
+            marker.LabelShownPreviously = false;
             marker.Brush = Brushes.Red;               // Make it Red (for now)
             marker.DataLabel = counter.DataLabel;
             marker.Tooltip = counter.Label;   // The tooltip will be the counter label plus its data label
@@ -570,13 +561,14 @@ namespace Carnassial
             IInputElement focusedElement = FocusManager.GetFocusedElement(this);
             if ((focusedElement == null) || (focusedElement is TextBox == false))
             {
-                this.SetTopLevelFocus(true, eventArgs);
+                this.TrySetKeyboardFocusToMarkableCanvas(true, eventArgs);
             }
         }
+
         // Whenever the user clicks on the image, reset the image focus to the image control 
         private void MarkableCanvas_PreviewMouseDown(object sender, MouseButtonEventArgs eventArgs)
         {
-            this.SetTopLevelFocus(true, eventArgs);
+            this.TrySetKeyboardFocusToMarkableCanvas(true, eventArgs);
         }
 
         // Event handler: A marker, as defined in e.Marker, has been either added (if e.IsNew is true) or deleted (if it is false)
@@ -686,8 +678,7 @@ namespace Carnassial
                 DateCorrectAmbiguous ambiguousDateCorrection = new DateCorrectAmbiguous(this.dataHandler.FileDatabase, this);
                 if (ambiguousDateCorrection.Abort)
                 {
-                    MessageBox messageBox = new MessageBox("No ambiguous dates found", this);
-                    messageBox.Message.What = "No ambiguous dates found.";
+                    MessageBox messageBox = new MessageBox("No ambiguous dates found.", this);
                     messageBox.Message.Reason = "All of the selected images have unambguous date fields." + Environment.NewLine;
                     messageBox.Message.Result = "No corrections needed, and no changes have been made." + Environment.NewLine;
                     messageBox.Message.StatusImage = MessageBoxImage.Information;
@@ -746,7 +737,7 @@ namespace Carnassial
                 DateTimeLinearCorrection linearDateCorrection = new DateTimeLinearCorrection(this.dataHandler.FileDatabase, this);
                 if (linearDateCorrection.Abort)
                 {
-                    MessageBox messageBox = new MessageBox("Can't correct for clock drift", this);
+                    MessageBox messageBox = new MessageBox("Can't correct for clock drift.", this);
                     messageBox.Message.Problem = "Can't correct for clock drift.";
                     messageBox.Message.Reason = "All of the files selected have date/time fields whose contents are not recognizable as dates or times." + Environment.NewLine;
                     messageBox.Message.Reason += "\u2022 dates should look like dd-MMM-yyyy e.g., 16-Jan-2016" + Environment.NewLine;
@@ -831,9 +822,9 @@ namespace Carnassial
             // if there aren't any images to delete. Still,...
             if (imagesToDelete == null || imagesToDelete.Count < 1)
             {
-                MessageBox messageBox = new MessageBox("No files are marked for deletion", this);
-                messageBox.Message.Problem = "You are trying to delete files marked for deletion, but none of the files have their 'Delete?' field checked.";
-                messageBox.Message.Hint = "If you have files that you think should be deleted, check thier Delete? field.";
+                MessageBox messageBox = new MessageBox("No files are marked for deletion.", this);
+                messageBox.Message.Problem = "You are trying to delete files marked for deletion, but No files have their 'Delete?' box checked.";
+                messageBox.Message.Hint = "If you have files that you think should be deleted, check thier Delete? box.";
                 messageBox.Message.StatusImage = MessageBoxImage.Information;
                 messageBox.ShowDialog();
                 return;
@@ -884,7 +875,7 @@ namespace Carnassial
                     // drop images
                     this.dataHandler.FileDatabase.DeleteFilesAndMarkers(imageIDsToDropFromDatabase);
 
-                    // Reload the datatable. Then find and show the file closest to the last one shown
+                    // Reload the file data table. Then find and show the file closest to the last one shown
                     if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0)
                     {
                         this.SelectFilesAndShowFile(currentFileID, this.dataHandler.FileDatabase.ImageSet.FileSelection);
@@ -999,12 +990,13 @@ namespace Carnassial
         /// </summary>
         private void MenuFileCloneCurrent_Click(object sender, RoutedEventArgs e)
         {
+            Debug.Assert(this.dataHandler != null && this.dataHandler.ImageCache.Current != null, "MenuFileCloneCurrent unexpectedly enabled.");
             if (!this.dataHandler.ImageCache.Current.IsDisplayable())
             {
                 MessageBox messageBox = new MessageBox("Can't copy this file!", this);
                 messageBox.Message.StatusImage = MessageBoxImage.Error;
-                messageBox.Message.Problem = "We can't copy the currently file.";
-                messageBox.Message.Reason = "It is likely corrupted or missing file.";
+                messageBox.Message.Problem = "Carnassial can't copy the current file.";
+                messageBox.Message.Reason = "It is likely corrupted or missing.";
                 messageBox.Message.Solution = "Make sure you have navigated to, and are displaying, a valid file before you try to export it.";
                 messageBox.ShowDialog();
                 return;
@@ -1022,7 +1014,7 @@ namespace Carnassial
             if (result == System.Windows.Forms.DialogResult.OK)
             {
                 // Set the source and destination file names, including the complete path
-                string sourcePath = Path.Combine(this.FolderPath, sourceFileName);
+                string sourcePath = this.dataHandler.ImageCache.Current.GetFilePath(this.FolderPath);
                 string destinationPath = dialog.FileName;
 
                 // Try to copy the source file to the destination, overwriting the destination file if it already exists.
@@ -1050,22 +1042,22 @@ namespace Carnassial
             }     
         }
 
-        /// <summary>Write the CSV file and preview it in excel.</summary>
+        /// <summary>Write the .csv file and preview it in excel.</summary>
         private void MenuFileExportCsv_Click(object sender, RoutedEventArgs e)
         {
             if (this.state.SuppressSelectedCsvExportPrompt == false &&
                 this.dataHandler.FileDatabase.ImageSet.FileSelection != FileSelection.All)
             {
-                MessageBox messageBox = new MessageBox("Exporting a partial selection to a CSV file", this, MessageBoxButton.OKCancel);
-                messageBox.Message.What = "Only a subset of your data will be exported to the CSV file.";
+                MessageBox messageBox = new MessageBox("Exporting a partial selection to a .csv file.", this, MessageBoxButton.OKCancel);
+                messageBox.Message.What = "Only a subset of your data will be exported to the .csv file.";
                 messageBox.Message.Reason = "As your selection (in the Select menu) is not set to 'All', ";
-                messageBox.Message.Reason += "only data for those files selected will be exported. ";
+                messageBox.Message.Reason += "only data for selected files will be exported. ";
                 messageBox.Message.Solution = "If you want to export just this subset, then " + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 click Okay" + Environment.NewLine + Environment.NewLine;
-                messageBox.Message.Solution += "If you want to export all your data for all your files, then " + Environment.NewLine;
+                messageBox.Message.Solution += "If you want to export data for all files, then " + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 click Cancel," + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 select 'All Files' in the Select menu, " + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 retry exporting your data as a CSV file.";
+                messageBox.Message.Solution += "\u2022 select all via the Select menu, " + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 export your data as a .csv file";
                 messageBox.Message.Hint = "If you check don't show this message this dialog can be turned back on via the Options menu.";
                 messageBox.Message.StatusImage = MessageBoxImage.Warning;
                 messageBox.DontShowAgain.Visibility = Visibility.Visible;
@@ -1129,8 +1121,16 @@ namespace Carnassial
             }
             else if (this.state.SuppressCsvExportDialog == false)
             {
-                // Since we don't show the file, give the user some feedback about the export operation
-                ExportCsv csvExportInformation = new ExportCsv(csvFileName, this);
+                // since the exported file isn't shown give the user some feedback about the export operation
+                MessageBox csvExportInformation = new MessageBox("Data exported.", this);
+                csvExportInformation.Message.What = "The selected files were exported to " + csvFileName;
+                csvExportInformation.Message.Result = String.Format("This file is overwritten every time you export it (backups can be found in the {0} folder).", Constant.File.BackupFolder);
+                csvExportInformation.Message.Hint = "\u2022 You can open this file with most spreadsheet programs, such as Excel." + Environment.NewLine;
+                csvExportInformation.Message.Hint += "\u2022 If you make changes in the spreadsheet file, you will need to import it to see those changes." + Environment.NewLine;
+                csvExportInformation.Message.Hint += "\u2022 If you check don't show this message again you can still see the name of the .csv file in the status bar at the lower right corner of the main Carnassial window.  This dialog can also be turned back on through the Options menu.";
+                csvExportInformation.Message.StatusImage = MessageBoxImage.Information;
+                csvExportInformation.DontShowAgain.Visibility = Visibility.Visible;
+
                 bool? result = csvExportInformation.ShowDialog();
                 if (result.HasValue && result.Value && csvExportInformation.DontShowAgain.IsChecked.HasValue)
                 {
@@ -1145,11 +1145,11 @@ namespace Carnassial
         {
             if (this.state.SuppressCsvImportPrompt == false)
             {
-                MessageBox messageBox = new MessageBox("How importing CSV data works", this, MessageBoxButton.OKCancel);
-                messageBox.Message.What = "Importing data from a CSV (comma separated value) file follows the rules below.";
-                messageBox.Message.Reason = "Carnassial requires the CSV file follow a specific format and processes its data a specific way.";
-                messageBox.Message.Solution = "\u2022 Only modify and import a CSV file previously exported by Carnassial." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Do not change Folder, RelativePath, or File as those fields uniquely identify a file" + Environment.NewLine;
+                MessageBox messageBox = new MessageBox("How import of .csv data works.", this, MessageBoxButton.OKCancel);
+                messageBox.Message.What = "Importing data from a .csv (comma separated value) file follows the rules below.";
+                messageBox.Message.Reason = "Carnassial requires the .csv file follow a specific format and processes its data in a specific way.";
+                messageBox.Message.Solution = "\u2022 Only modify and import a .csv file previously exported by Carnassial." + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Do not change RelativePath or File as those fields uniquely identify a file" + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 Do not change column names" + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 Do not add or delete rows (those changes will be ignored)" + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 Restrict modifications as follows:" + Environment.NewLine;
@@ -1157,12 +1157,12 @@ namespace Carnassial
                 messageBox.Message.Solution += String.Format("    \u2022 UtcOffset must be a floating point number between {0} and {1}, inclusive{2}", DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), Environment.NewLine);
                 messageBox.Message.Solution += "    \u2022 Counter data must be zero or a positive integer" + Environment.NewLine;
                 messageBox.Message.Solution += "    \u2022 Flag data must be 'true' or 'false'" + Environment.NewLine;
-                messageBox.Message.Solution += "    \u2022 FixedChoice data must be a string that exactly matches one of the FixedChoice menu options or the default value." + Environment.NewLine;
+                messageBox.Message.Solution += "    \u2022 FixedChoice data must be a string that exactly matches one of the FixedChoice menu options or the field's default value." + Environment.NewLine;
                 messageBox.Message.Solution += "    \u2022 Note data can be any string, including empty.";
                 messageBox.Message.Result = "Carnassial will create a backup .ddb file in the Backups folder and then try its best.";
                 messageBox.Message.Hint = "\u2022 After you import, check your data. If it is not what you expect, restore your data by using that backup file." + Environment.NewLine;
                 messageBox.Message.Hint += "\u2022 If you check don't show this message this dialog can be turned back on via the Options menu.";
-                messageBox.Message.StatusImage = MessageBoxImage.Warning;
+                messageBox.Message.StatusImage = MessageBoxImage.Information;
                 messageBox.DontShowAgain.Visibility = Visibility.Visible;
 
                 bool? proceeed = messageBox.ShowDialog();
@@ -1204,17 +1204,17 @@ namespace Carnassial
                 List<string> importErrors;
                 if (csvReader.TryImportFromCsv(csvFilePath, this.dataHandler.FileDatabase, out importErrors) == false)
                 {
-                    MessageBox messageBox = new MessageBox("Can't import the CSV file.", this);
+                    MessageBox messageBox = new MessageBox("Can't import the .csv file.", this);
                     messageBox.Message.StatusImage = MessageBoxImage.Error;
                     messageBox.Message.Problem = String.Format("The file {0} could not be read.", csvFilePath);
-                    messageBox.Message.Reason = "The CSV file is not compatible with the current image set.";
+                    messageBox.Message.Reason = "The .csv file is not compatible with the current image set.";
                     messageBox.Message.Solution = "Check that:" + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 The first row of the CSV file is a header line." + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 The first row of the .csv file is a header line." + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 The column names in the header line match the database." + Environment.NewLine; 
                     messageBox.Message.Solution += "\u2022 Choice values use the correct case." + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 Counter values are numbers." + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 Flag values are either 'true' or 'false'.";
-                    messageBox.Message.Result = "Either no data was imported or invalid parts of the CSV were skipped.";
+                    messageBox.Message.Result = "Either no data was imported or invalid parts of the .csv were skipped.";
                     messageBox.Message.Hint = "The errors encountered were:";
                     foreach (string importError in importErrors)
                     {
@@ -1225,7 +1225,7 @@ namespace Carnassial
             }
             catch (Exception exception)
             {
-                MessageBox messageBox = new MessageBox("Can't import the CSV file.", this);
+                MessageBox messageBox = new MessageBox("Can't import the .csv file.", this);
                 messageBox.Message.StatusImage = MessageBoxImage.Error;
                 messageBox.Message.Problem = String.Format("The file {0} could not be opened.", csvFilePath);
                 messageBox.Message.Reason = "Most likely the file is open in another program.";
@@ -1236,8 +1236,8 @@ namespace Carnassial
             }
 
             // Reload the data table
-            this.SelectFilesAndShowFile(this.dataHandler.ImageCache.Current.ID, this.dataHandler.FileDatabase.ImageSet.FileSelection);
-            this.statusBar.SetMessage("CSV file imported.");
+            this.SelectFilesAndShowFile();
+            this.statusBar.SetMessage(".csv file imported.");
         }
 
         private void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs e)
@@ -1427,7 +1427,7 @@ namespace Carnassial
                 this.dataHandler.FileDatabase.OrderFilesByDateTime = this.state.OrderFilesByDateTime;
             }
             this.MenuOptionsOrderFilesByDateTime.IsChecked = this.state.OrderFilesByDateTime;
-            this.SelectFilesAndShowFile(this.dataHandler.ImageCache.Current.ID, this.dataHandler.FileDatabase.ImageSet.FileSelection);
+            this.SelectFilesAndShowFile();
         }
 
         private void MenuOptionsSkipDarkFileCheck_Click(object sender, RoutedEventArgs e)
@@ -1451,7 +1451,7 @@ namespace Carnassial
             bool? changeToCustomSelection = customSelection.ShowDialog();
             if (changeToCustomSelection == true)
             {
-                this.SelectFilesAndShowFile(this.dataHandler.ImageCache.Current.ID, FileSelection.Custom);
+                this.SelectFilesAndShowFile(FileSelection.Custom);
             }
         }
 
@@ -1496,7 +1496,7 @@ namespace Carnassial
             }
 
             // Go to the first result (i.e., index 0) in the selection
-            this.SelectFilesAndShowFile(this.dataHandler.ImageCache.Current.ID, selection);
+            this.SelectFilesAndShowFile(selection);
         }
 
         private void MenuSelect_SubmenuOpening(object sender, RoutedEventArgs e)
@@ -1650,9 +1650,9 @@ namespace Carnassial
         }
 
         /// <summary>
-        /// When file loading has completed add callbacks, prepare the UI, set up the image set, and show the image.
+        /// When folder loading has completed add callbacks, prepare the UI, set up the image set, and show the image.
         /// </summary>
-        private void OnFileLoadingComplete(bool filesJustAdded)
+        private void OnFolderLoadingComplete(bool filesJustAdded)
         {
             // Show the image, hide the load button, and make the feedback panels visible
             this.ImageSetPane.IsActive = true;
@@ -1667,6 +1667,9 @@ namespace Carnassial
             {
                 // if this is completion of an add to an existing image set stay on the file, ideally, shown before the import
                 mostRecentFileID = this.dataHandler.ImageCache.Current.ID;
+                // however, the cache doesn't know file loading changed the display image so invalidate to force a redraw
+                // This is heavier weight than desirable, but it's a one off.
+                this.dataHandler.ImageCache.TryInvalidate(mostRecentFileID);
             }
             this.SelectFilesAndShowFile(mostRecentFileID, fileSelection);
 
@@ -1677,6 +1680,22 @@ namespace Carnassial
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Utilities.ShowExceptionReportingDialog("Carnassial needs to close.", e, this);
+        }
+
+        private void SelectFilesAndShowFile()
+        {
+            Debug.Assert(this.dataHandler != null && this.dataHandler.FileDatabase != null, "Expected a file database to be available.");
+            this.SelectFilesAndShowFile(this.dataHandler.FileDatabase.ImageSet.FileSelection);
+        }
+
+        private void SelectFilesAndShowFile(FileSelection selection)
+        {
+            long fileID = Constant.Database.DefaultFileID;
+            if (this.dataHandler != null && this.dataHandler.ImageCache != null && this.dataHandler.ImageCache.Current != null)
+            {
+                fileID = this.dataHandler.ImageCache.Current.ID;
+            }
+            this.SelectFilesAndShowFile(fileID, selection);
         }
 
         private void SelectFilesAndShowFile(long fileID, FileSelection selection)
@@ -1692,7 +1711,7 @@ namespace Carnassial
             {
                 // These cases are reached when 
                 // 1) datetime modifications result in no files matching a custom selection
-                // 2) all files which match the selection got deleted
+                // 2) all files which match the selection get deleted
                 this.statusBar.SetMessage("Resetting selection to 'All files'.");
 
                 MessageBox messageBox = new MessageBox("Resetting selection to 'All files' (no files match the current selection)", this);
@@ -1701,33 +1720,33 @@ namespace Carnassial
                 {
                     case FileSelection.Corrupt:
                         messageBox.Message.Problem = "Corrupted files were previously selected but no files are currently corrupted, so nothing can be shown.";
-                        messageBox.Message.Reason = "None of the files have their 'ImageQuality' field set to Corrupted.";
-                        messageBox.Message.Hint = "If you have files you think should be marked as 'Corrupted', set their 'ImageQuality' field to 'Corrupted' and then reselect corrupted files.";
+                        messageBox.Message.Reason = "No files have their ImageQuality set to Corrupted.";
+                        messageBox.Message.Hint = "If you have files you think should be marked as Corrupted, set their ImageQuality to Corrupted and then reselect corrupted files.";
                         break;
                     case FileSelection.Custom:
                         messageBox.Message.Problem = "No files currently match the custom selection so nothing can be shown.";
-                        messageBox.Message.Reason = "None of the files match the criteria set in the current Custom selection.";
+                        messageBox.Message.Reason = "No files match the criteria set in the current Custom selection.";
                         messageBox.Message.Hint = "Create a different custom selection and apply it view the matching files.";
                         break;
                     case FileSelection.Dark:
                         messageBox.Message.Problem = "Dark files were previously selected but no files are currently dark so nothing can be shown.";
-                        messageBox.Message.Reason = "None of the files have their 'ImageQuality' field set to Dark.";
-                        messageBox.Message.Hint = "If you have files you think should be marked as 'Dark', set their 'ImageQuality' field to 'Dark' and then reselect dark files.";
+                        messageBox.Message.Reason = "No files have their ImageQuality set to Dark.";
+                        messageBox.Message.Hint = "If you have files you think should be marked as Dark, set their ImageQuality to Dark and then reselect dark files.";
                         break;
                     case FileSelection.NoLongerAvailable:
                         messageBox.Message.Problem = "Files no londer available were previously selected but all files are availale so nothing can be shown.";
-                        messageBox.Message.Reason = "None of the files have their 'ImageQuality' field set to FilesNoLongerAvailable.";
-                        messageBox.Message.Hint = "If you have removed files set their 'ImageQuality' field to 'FilesNoLongerAvailable' and then reselect files no longer available.";
+                        messageBox.Message.Reason = "No files have their ImageQuality field set to FilesNoLongerAvailable.";
+                        messageBox.Message.Hint = "If you have removed files set their ImageQuality field to FilesNoLongerAvailable and then reselect files no longer available.";
                         break;
                     case FileSelection.MarkedForDeletion:
                         messageBox.Message.Problem = "Files marked for deletion were previously selected but no files are currently marked so nothing can be shown.";
-                        messageBox.Message.Reason = "None of the files have their 'Delete?' field checked.";
-                        messageBox.Message.Hint = "If you have files you think should be marked for deletion, check their 'Delete?' field and then reselect files marked for deletion.";
+                        messageBox.Message.Reason = "No files have their Delete? box checked.";
+                        messageBox.Message.Hint = "If you have files you think should be marked for deletion, check their Delete? box and then reselect files marked for deletion.";
                         break;
                     case FileSelection.Ok:
                         messageBox.Message.Problem = "Ok files were previously selected but no files are currently OK so nothing can be shown.";
-                        messageBox.Message.Reason = "None of the files have their 'ImageQuality' field set to Ol.";
-                        messageBox.Message.Hint = "If you have files you think should be marked as 'Ok', set their 'ImageQuality' field to 'Ok' and then reselect Ok files.";
+                        messageBox.Message.Reason = "No files have their ImageQuality field set to Ok.";
+                        messageBox.Message.Hint = "If you have files you think should be marked as Ok, set their ImageQuality field to Ok and then reselect Ok files.";
                         break;
                     default:
                         throw new NotSupportedException(String.Format("Unhandled selection {0}.", selection));
@@ -1762,7 +1781,7 @@ namespace Carnassial
                     status = "files no longer available";
                     break;
                 case FileSelection.Ok:
-                    status = "light files";
+                    status = "Ok files";
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled file selection {0}.", selection));
@@ -1770,17 +1789,27 @@ namespace Carnassial
 
             this.statusBar.SetView(status);
 
-            this.MenuSelectAllFiles.IsChecked = (selection == FileSelection.All) ? true : false;
-            this.MenuSelectCorruptedFiles.IsChecked = (selection == FileSelection.Corrupt) ? true : false;
-            this.MenuSelectDarkFiles.IsChecked = (selection == FileSelection.Dark) ? true : false;
-            this.MenuSelectOkFiles.IsChecked = (selection == FileSelection.Ok) ? true : false;
-            this.MenuSelectFilesNoLongerAvailable.IsChecked = (selection == FileSelection.NoLongerAvailable) ? true : false;
-            this.MenuSelectFilesMarkedForDeletion.IsChecked = (selection == FileSelection.MarkedForDeletion) ? true : false;
-            this.MenuSelectCustom.IsChecked = (selection == FileSelection.Custom) ? true : false;
+            this.MenuSelectAllFiles.IsChecked = selection == FileSelection.All;
+            this.MenuSelectCorruptedFiles.IsChecked = selection == FileSelection.Corrupt;
+            this.MenuSelectDarkFiles.IsChecked = selection == FileSelection.Dark;
+            this.MenuSelectOkFiles.IsChecked = selection == FileSelection.Ok;
+            this.MenuSelectFilesNoLongerAvailable.IsChecked = selection == FileSelection.NoLongerAvailable;
+            this.MenuSelectFilesMarkedForDeletion.IsChecked = selection == FileSelection.MarkedForDeletion;
+            this.MenuSelectCustom.IsChecked = selection == FileSelection.Custom;
 
-            // After a selection change, set the slider to represent the index and the count of the selection
+            // after a selection change update the file navigatior slider's range and tick space
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-            this.FileNavigatorSlider.Maximum = this.dataHandler.FileDatabase.CurrentlySelectedFileCount;  // match the nav slider to the number of selected files; slider is one based so no - 1 on the count
+            this.FileNavigatorSlider.Maximum = this.dataHandler.FileDatabase.CurrentlySelectedFileCount;  // slider is one based so no - 1 on the count
+            if (this.FileNavigatorSlider.Maximum <= 50)
+            {
+                this.FileNavigatorSlider.IsSnapToTickEnabled = true;
+                this.FileNavigatorSlider.TickFrequency = 1.0;
+            }
+            else
+            {
+                this.FileNavigatorSlider.IsSnapToTickEnabled = false;
+                this.FileNavigatorSlider.TickFrequency = 0.02 * this.FileNavigatorSlider.Maximum;
+            }
 
             // Display the specified file or, if it's no longer selected, the next closest one
             // Showfile() handles empty image sets, so those don't need to be checked for here.
@@ -1790,8 +1819,6 @@ namespace Carnassial
             this.statusBar.SetCurrentFile(this.dataHandler.ImageCache.CurrentRow + 1); // We add 1 because its a 0-based list
             this.statusBar.SetCount(this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
-
-            this.dataHandler.FileDatabase.ImageSet.FileSelection = selection; // persist the current selection
         }
 
         private bool SendKeyToDataEntryControlOrMenu(KeyEventArgs eventData)
@@ -1829,26 +1856,6 @@ namespace Carnassial
             }
 
             return false;
-        }
-
-        // Actually set the top level keyboard focus to the image control
-        private void SetTopLevelFocus(bool checkForControlFocus, InputEventArgs eventArgs)
-        {
-            // If the text box or combobox has the focus, we usually don't want to reset the focus. 
-            // However, there are a few instances (e.g., after enter has been pressed) where we no longer want it 
-            // to have the focus, so we allow for that via this flag.
-            if (checkForControlFocus && eventArgs is KeyEventArgs)
-            {
-                // If we are in a data control, don't reset the focus.
-                if (this.SendKeyToDataEntryControlOrMenu((KeyEventArgs)eventArgs))
-                {
-                    return;
-                }
-            }
-
-            // Don't raise the window just because we set the keyboard focus to it
-            Keyboard.DefaultRestoreFocusMode = RestoreFocusMode.None;
-            Keyboard.Focus(this.MarkableCanvas);
         }
 
         /// <summary>
@@ -2080,22 +2087,33 @@ namespace Carnassial
         private bool ShowFolderSelectionDialog(out IEnumerable<string> folderPaths)
         {
             CommonOpenFileDialog folderSelectionDialog = new CommonOpenFileDialog();
-            folderSelectionDialog.Title = "Select a folder ...";
+            folderSelectionDialog.Title = "Select one or more folders ...";
             folderSelectionDialog.DefaultDirectory = this.mostRecentFileAddFolderPath == null ? this.FolderPath : this.mostRecentFileAddFolderPath;
+            folderSelectionDialog.InitialDirectory = folderSelectionDialog.DefaultDirectory;
             folderSelectionDialog.IsFolderPicker = true;
             folderSelectionDialog.Multiselect = true;
+            folderSelectionDialog.FolderChanging += this.FolderSelectionDialog_FolderChanging;
             if (folderSelectionDialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 folderPaths = folderSelectionDialog.FileNames;
 
                 // remember the parent of the selected folder path to save the user clicks and scrolling in case images from additional 
                 // directories are added
-                this.mostRecentFileAddFolderPath = Path.GetDirectoryName(folderPaths.Last());
+                this.mostRecentFileAddFolderPath = Path.GetDirectoryName(folderPaths.First());
                 return true;
             }
 
             folderPaths = null;
             return false;
+        }
+
+        private void FolderSelectionDialog_FolderChanging(object sender, CommonFileDialogFolderChangeEventArgs e)
+        {
+            // require folders to be loaded be either the same folder as the .tdb and .ddb or subfolders of it
+            if (e.Folder.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase) == false)
+            {
+                e.Cancel = true;
+            }
         }
 
         private void Speak(string text)
@@ -2171,11 +2189,13 @@ namespace Carnassial
                 WorkerReportsProgress = true
             };
 
-            FolderLoadProgress progressState = new FolderLoadProgress();
+            FolderLoadProgress folderLoadProgress = new FolderLoadProgress(filesToAdd.Count);
             int renderWidthBestEstimate = this.MarkableCanvas.Width > 0 ? (int)this.MarkableCanvas.Width : (int)this.Width;
             backgroundWorker.DoWork += (ow, ea) =>
             {
                 // First pass: Examine files to extract their basic properties and build a list of files not already in the database
+                //
+                // With dark calculations enabled:
                 // Profiling of a 1000 image load on quad core, single 80+MB/s capable SSD shows the following:
                 // - one thread:   100% normalized execution time, 35% CPU, 16MB/s disk (100% normalized time = 1 minute 58 seconds)
                 // - two threads:   55% normalized execution time, 50% CPU, 17MB/s disk (6.3% normalized time with dark checking skipped)
@@ -2187,6 +2207,15 @@ namespace Carnassial
                 // due to initial frame rendering and benefit from additional threads.  This requires further investigation.  It may also be desirable to reduce 
                 // the pixel stride in image quality calculation, which would increase CPU load.
                 //
+                // With dark calculations disabled:
+                // The bottleneck's the SQL insert though using more than four threads (or possibly more threads than the number of physical processors as the 
+                // test machine was quad core) results in slow progress on the first 20 files or so, making the optimum number of loading threads complex as it
+                // depends on amortizing startup lag across faster progress on the remaining import.  As this is comparatively minor relative to SQL (at least
+                // for O(10,000) files for now just default to four threads in the disabled case.
+                //
+                // Note: the UI thread is free during loading.  So if loading's going slow the user can switch off dark checking asynchronously to speed up 
+                // loading.
+                //
                 // A sequential partitioner is used as this keeps the preview images displayed to the user in pretty much the same order as they're named,
                 // which is less confusing than TPL's default partitioning where the displayed image jumps back and forth through the image set.  Pulling files
                 // nearly sequentially may also offer some minor disk performance benefit.
@@ -2194,7 +2223,7 @@ namespace Carnassial
                 TimeZoneInfo imageSetTimeZone = this.dataHandler.FileDatabase.ImageSet.GetTimeZone();
                 DateTime previousImageRender = DateTime.UtcNow - this.state.Throttles.DesiredIntervalBetweenRenders;
 
-                Parallel.ForEach(new SequentialPartitioner<FileInfo>(filesToAdd), Utilities.GetParallelOptions(2), (FileInfo fileInfo) =>
+                Parallel.ForEach(new SequentialPartitioner<FileInfo>(filesToAdd), Utilities.GetParallelOptions(this.state.SkipDarkImagesCheck ? 4 : 2), (FileInfo fileInfo) =>
                 {
                     ImageRow file;
                     if (this.dataHandler.FileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file))
@@ -2242,17 +2271,15 @@ namespace Carnassial
                         file.ImageQuality = FileSelection.Corrupt;
                     }
 
-                    int filesPendingInsert;
                     lock (filesToInsert)
                     {
                         filesToInsert.Add(file);
-                        filesPendingInsert = filesToInsert.Count;
                     }
 
                     DateTime utcNow = DateTime.UtcNow;
                     if (utcNow - previousImageRender > this.state.Throttles.DesiredIntervalBetweenRenders)
                     {
-                        lock (progressState)
+                        lock (folderLoadProgress)
                         {
                             if (utcNow - previousImageRender > this.state.Throttles.DesiredIntervalBetweenRenders)
                             {
@@ -2260,16 +2287,17 @@ namespace Carnassial
                                 // otherwise, load the file for display
                                 if (bitmapSource != null)
                                 {
-                                    progressState.BitmapSource = bitmapSource;
+                                    folderLoadProgress.BitmapSource = bitmapSource;
                                 }
                                 else
                                 {
-                                    progressState.BitmapSource = file.LoadBitmap(this.FolderPath, renderWidthBestEstimate);
+                                    folderLoadProgress.BitmapSource = file.LoadBitmap(this.FolderPath, renderWidthBestEstimate);
                                 }
-                                progressState.Message = String.Format("{0}/{1}: Examining {2}", filesPendingInsert, filesToAdd.Count, file.FileName);
+                                folderLoadProgress.CurrentFile = filesToInsert.Count;
+                                folderLoadProgress.CurrentFileName = file.FileName;
 
                                 int percentProgress = (int)(100.0 * filesToInsert.Count / (double)filesToAdd.Count);
-                                backgroundWorker.ReportProgress(percentProgress, progressState);
+                                backgroundWorker.ReportProgress(percentProgress, folderLoadProgress);
                                 previousImageRender = utcNow;
                             }
                         }
@@ -2283,16 +2311,17 @@ namespace Carnassial
                 this.dataHandler.FileDatabase.AddFiles(filesToInsert, (ImageRow file, int fileIndex) =>
                 {
                     // skip reloading images to display as the user's already seen them import
-                    progressState.BitmapSource = null;
-                    progressState.Message = String.Format("{0}/{1}: Adding {2}", fileIndex, filesToAdd.Count, file.FileName);
+                    folderLoadProgress.BitmapSource = null;
+                    folderLoadProgress.CurrentFile = fileIndex;
+                    folderLoadProgress.CurrentFileName = file.FileName;
                     int percentProgress = (int)(100.0 * fileIndex / (double)filesToInsert.Count);
-                    backgroundWorker.ReportProgress(percentProgress, progressState);
+                    backgroundWorker.ReportProgress(percentProgress, folderLoadProgress);
                 });
             };
             backgroundWorker.ProgressChanged += (o, ea) =>
             {
                 // this gets called on the UI thread
-                this.Feedback(progressState.BitmapSource, ea.ProgressPercentage, progressState.Message);
+                this.UpdateFolderLoadProgress(folderLoadProgress.BitmapSource, ea.ProgressPercentage, folderLoadProgress.GetMessage());
                 if (this.MarkableCanvas.Width > 0)
                 {
                     renderWidthBestEstimate = (int)this.MarkableCanvas.Width;
@@ -2300,11 +2329,21 @@ namespace Carnassial
             };
             backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
+                // BackgroundWorker aborts execution on an exception and transfers it to completion for handling
+                // If something went wrong rethrow the error so the user knows there's a problem.  Otherwise what would happen is either 
+                //  1) some or all of the folder load file scan progress displays but no files get added to the database as the insert is skipped
+                //  2) only some of the files get inserted and the rest are silently dropped
+                // Both of these outcomes result in quite poor user experience and are best avoided.
+                if (ea.Error != null)
+                {
+                    throw new FileLoadException("Folder loading failed unexpectedly.  See inner exception for details.", ea.Error);
+                }
+
                 // hide the feedback bar, show the file slider
                 this.FeedbackControl.Visibility = Visibility.Collapsed;
                 this.FileNavigatorSlider.Visibility = Visibility.Visible;
 
-                this.OnFileLoadingComplete(true);
+                this.OnFolderLoadingComplete(true);
 
                 // Finally, tell the user how many images were loaded, etc.
                 this.MaybeShowFileCountsDialog(true);
@@ -2313,7 +2352,8 @@ namespace Carnassial
             // update UI for import (visibility is inverse of RunWorkerCompleted)
             this.FeedbackControl.Visibility = Visibility.Visible;
             this.FileNavigatorSlider.Visibility = Visibility.Collapsed;
-            this.Feedback(null, 0, "Examining files...");
+            this.UpdateFolderLoadProgress(null, 0, "Folder loading beginning...");
+            this.statusBar.SetMessage("Loading folders...");
             this.ImageSetPane.IsActive = true;
 
             // start import and return
@@ -2328,7 +2368,7 @@ namespace Carnassial
             // default the template selection dialog to the most recently opened database
             string defaultTemplateDatabasePath;
             this.state.MostRecentImageSets.TryGetMostRecent(out defaultTemplateDatabasePath);
-            if (Utilities.TryGetFileFromUser("Select a CarnassialTemplate.tdb file, which should be located in the root folder containing your images and videos",
+            if (Utilities.TryGetFileFromUser("Select a template file, which should be located in the root folder containing your images and videos",
                                              defaultTemplateDatabasePath,
                                              String.Format("Template files (*{0})|*{0}", Constant.File.TemplateDatabaseFileExtension),
                                              out templateDatabasePath) == false)
@@ -2419,7 +2459,7 @@ namespace Carnassial
                 this.TryBeginFolderLoadAsync(new List<string>() { this.FolderPath }, out backgroundWorker);
             }
 
-            this.OnFileLoadingComplete(false);
+            this.OnFolderLoadingComplete(false);
             return true;
         }
 
@@ -2469,6 +2509,26 @@ namespace Carnassial
             }
 
             databaseFilePath = Path.Combine(directoryPath, databaseFileName);
+            return true;
+        }
+
+        private bool TrySetKeyboardFocusToMarkableCanvas(bool checkForControlFocus, InputEventArgs eventArgs)
+        {
+            // If the text box or combobox has the focus, we usually don't want to reset the focus. 
+            // However, there are a few instances (e.g., after enter has been pressed) where we no longer want it 
+            // to have the focus, so we allow for that via this flag.
+            if (checkForControlFocus && eventArgs is KeyEventArgs)
+            {
+                // If we are in a data control, don't reset the focus.
+                if (this.SendKeyToDataEntryControlOrMenu((KeyEventArgs)eventArgs))
+                {
+                    return false;
+                }
+            }
+
+            // don't raise the control on receiving keyboard focus
+            Keyboard.DefaultRestoreFocusMode = RestoreFocusMode.None;
+            Keyboard.Focus(this.MarkableCanvas);
             return true;
         }
 
@@ -2579,6 +2639,16 @@ namespace Carnassial
             this.statusBar.SetMessage(String.Format("Viewing difference from {0} file.", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next"));
         }
 
+        private void UpdateFolderLoadProgress(BitmapSource bitmap, int percent, string message)
+        {
+            if (bitmap != null)
+            {
+                this.MarkableCanvas.SetNewImage(bitmap, null);
+            }
+            this.FeedbackControl.Message.Content = message;
+            this.FeedbackControl.ProgressBar.Value = percent;
+        }
+
         // On exiting, save various attributes so we can use recover them later
         private void Window_Closing(object sender, CancelEventArgs e)
         {
@@ -2586,7 +2656,7 @@ namespace Carnassial
                 (this.dataHandler.FileDatabase != null) &&
                 (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0))
             {
-                // revert to custom selections to All 
+                // revert to custom selections to all 
                 if (this.dataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.Custom)
                 {
                     this.dataHandler.FileDatabase.ImageSet.FileSelection = FileSelection.All;
@@ -2677,7 +2747,7 @@ namespace Carnassial
                     this.ToggleCurrentFileDeleteFlag();
                     break;
                 case Key.Escape:            // exit current control, if any
-                    this.SetTopLevelFocus(false, currentKey);
+                    this.TrySetKeyboardFocusToMarkableCanvas(false, currentKey);
                     break;
                 case Key.M:                 // toggle the magnifying glass on and off
                     this.MenuViewDisplayMagnifier_Click(this, null);
@@ -2707,18 +2777,6 @@ namespace Carnassial
                     return;
             }
             currentKey.Handled = true;
-        }
-
-        internal class FolderLoadProgress
-        {
-            public BitmapSource BitmapSource { get; set; }
-            public string Message { get; set; }
-
-            public FolderLoadProgress()
-            {
-                this.BitmapSource = null;
-                this.Message = String.Empty;
-            }
         }
     }
 }

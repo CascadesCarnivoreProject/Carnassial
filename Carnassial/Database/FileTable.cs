@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 
@@ -29,10 +30,32 @@ namespace Carnassial.Database
 
         public ImageRow NewRow(FileInfo file)
         {
-            DataRow row = this.DataTable.NewRow();
+            // NewRow() isn't thread safe and this function is called concurrently during folder loading
+            DataRow row;
+            lock (this.DataTable)
+            {
+                row = this.DataTable.NewRow();
+            }
+
             row[Constant.DatabaseColumn.ID] = Constant.Database.InvalidID;
             row[Constant.DatabaseColumn.File] = file.Name;
             return FileTable.CreateRow(row);
+        }
+
+        public List<ImageRow> Select(string where)
+        {
+            DataRow[] matchingRows = this.DataTable.Select(where);
+            if (matchingRows == null)
+            {
+                return new List<ImageRow>();
+            }
+
+            List<ImageRow> files = new List<ImageRow>(matchingRows.Length);
+            foreach (DataRow row in matchingRows)
+            {
+                files.Add(FileTable.CreateRow(row));
+            }
+            return files;
         }
     }
 }
