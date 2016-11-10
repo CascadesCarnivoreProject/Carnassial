@@ -257,23 +257,24 @@ namespace Carnassial.Database
             string sourceFilePath = this.GetFilePath(folderPath);
             if (!File.Exists(sourceFilePath))
             {
-                return false;  // If there is no source file, its a missing file so we can't back it up
+                // nothing to do if the file doesn't exist
+                return false;
             }
 
-            // Create a new target folder, if necessary.
+            // create a new target folder, if necessary
             string deletedFilesFolderPath = Path.Combine(folderPath, Constant.File.DeletedFilesFolder);
             if (!Directory.Exists(deletedFilesFolderPath))
             {
                 Directory.CreateDirectory(deletedFilesFolderPath);
             }
 
-            // Move the file to the backup location.           
+            // move the file to the backup location
             string destinationFilePath = Path.Combine(deletedFilesFolderPath, this.FileName);
             if (File.Exists(destinationFilePath))
             {
                 try
                 {
-                    // Becaue move doesn't allow overwriting, delete the destination file if it already exists.
+                    // delete the destination file if it already exists since File.Move() doesn't allow overwriting
                     File.Delete(sourceFilePath);
                     return true;
                 }

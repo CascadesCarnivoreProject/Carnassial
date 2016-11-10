@@ -4,10 +4,6 @@ using System.IO;
 using System.Linq;
 namespace Carnassial.Database
 {
-    /// <summary>
-    /// Make a time-stamped backup of the given file in the backup folder.
-    /// At the same time, limit the number of backup files, where we prune older files with the same extension as needed. 
-    /// </summary>
     public class FileBackup
     {
         private static IEnumerable<FileInfo> GetBackupFiles(DirectoryInfo backupFolder, string sourceFilePath)
@@ -45,6 +41,9 @@ namespace Carnassial.Database
             return FileBackup.TryCreateBackup(Path.GetDirectoryName(sourceFilePath), Path.GetFileName(sourceFilePath));
         }
 
+        /// <summary>
+        /// Make a time stamped backup of the given file in the backup folder, pruning older files with the same extension as needed. 
+        /// </summary>
         public static bool TryCreateBackup(string folderPath, string sourceFileName)
         {
             string sourceFilePath = Path.Combine(folderPath, sourceFileName);

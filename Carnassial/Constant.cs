@@ -215,9 +215,9 @@ namespace Carnassial
             public const byte DifferenceThresholdMax = 255;
             public const byte DifferenceThresholdMin = 0;
 
-            // A greyscale image (given the above slop) will typically have about 90% of its pixels as grey scale
+            // a greyscale image (given the threshold tolerance) will typically have about 90% of its pixels as grey scale
             public const double GreyScaleImageThreshold = 0.9;
-            // A greyscale pixel has r = g = b. But we will allow some slop in here just in case a bit of color creeps in
+            // a truly greyscale pixel has r = g = b but some cameras exhibit a tint
             public const int GreyScalePixelThreshold = 40;
 
             public const int LargeNumberOfDeletedImages = 100;
@@ -263,7 +263,7 @@ namespace Carnassial
 
             public const double MagnifyingGlassDefaultFieldOfView = 150.0;
             public const double MagnifyingGlassFieldOfViewIncrement = 1.2;
-            public const double MagnifyingGlassMaximumFieldOfView = 250.0;
+            public const double MagnifyingGlassMaximumFieldOfView = 300.0;
             public const double MagnifyingGlassMinimumFieldOfView = 15.0;
 
             public const int MagnifyingGlassDiameter = 250;
@@ -345,6 +345,7 @@ namespace Carnassial
             public const string Text = "TEXT";
 
             public const string Comma = ", ";
+            public const int MaximumStatementCount = 500;
         }
 
         public static class ThrottleValues

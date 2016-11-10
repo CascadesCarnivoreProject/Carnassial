@@ -54,52 +54,47 @@ namespace Carnassial.Images
         {
             Debug.Assert((this.Current != null) && (this.Current.IsVideo == false), "No current file or current file is an image.");
 
-            // If we are looking at the combined differenced image, then always go to the unaltered image.
+            // always go to unaltered from combined difference
             if (this.CurrentDifferenceState == ImageDifference.Combined)
             {
                 this.CurrentDifferenceState = ImageDifference.Unaltered;
                 return;
             }
 
-            // If the current image is marked as corrupted, we will only show the original (replacement) image
             if (!this.Current.IsDisplayable())
             {
+                // can't calculate differences for files which aren't displayble
                 this.CurrentDifferenceState = ImageDifference.Unaltered;
                 return;
             }
             else
             {
-                // We are going around in a cycle, so go back to the beginning if we are at the end of it.
+                // move to next state in cycle, wrapping around as needed
                 this.CurrentDifferenceState = (this.CurrentDifferenceState >= ImageDifference.Next) ? ImageDifference.Previous : ++this.CurrentDifferenceState;
             }
 
-            // Because we can always display the unaltered image, we don't have to do any more tests if that is the current one in the cyle
+            // unaltered is always displayable; no more checks required
             if (this.CurrentDifferenceState == ImageDifference.Unaltered)
             {
                 return;
             }
 
-            // We can't actually show the previous or next image differencing if we are on the first or last image in the set respectively
-            // Nor can we do it if the next image in the sequence is a corrupted one.
-            // If that is the case, skip to the next one in the sequence
+            // can't calculate previous or next difference for the first or last file in the image set, respectively
+            // can't calculate difference if needed file isn't displayable
             if (this.CurrentDifferenceState == ImageDifference.Previous && this.CurrentRow == 0)
             {
-                // Already at the beginning
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
             }
             else if (this.CurrentDifferenceState == ImageDifference.Next && this.CurrentRow == this.Database.CurrentlySelectedFileCount - 1)
             {
-                // Already at the end
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
             }
             else if (this.CurrentDifferenceState == ImageDifference.Next && !this.Database.IsFileDisplayable(this.CurrentRow + 1))
             {
-                // Can't use the next image as its corrupted
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
             }
             else if (this.CurrentDifferenceState == ImageDifference.Previous && !this.Database.IsFileDisplayable(this.CurrentRow - 1))
             {
-                // Can't use the previous image as its corrupted
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
             }
         }
@@ -155,7 +150,7 @@ namespace Carnassial.Images
                 return ImageDifferenceResult.NotCalculable;
             }
 
-            // We need three valid images: the current one, the previous one, and the next one.
+            // three valid images are needed: the current one, the previous one, and the next one
             if (this.Current == null || this.Current.IsVideo || this.Current.IsDisplayable() == false)
             {
                 this.CurrentDifferenceState = ImageDifference.Unaltered;

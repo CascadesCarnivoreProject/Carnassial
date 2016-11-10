@@ -14,7 +14,7 @@ namespace Carnassial.Dialog
     public partial class DateTimeLinearCorrection : Window
     {
         private readonly DateTimeOffset earliestImageDateTimeUncorrected;
-        private readonly DateTimeOffset latestImageDateTimeUncorrected;
+        private readonly DateTimeOffset latestFileDateTimeUncorrected;
 
         private bool displayingPreview;
         private FileDatabase fileDatabase;
@@ -29,36 +29,32 @@ namespace Carnassial.Dialog
 
             this.displayingPreview = false;
             this.earliestImageDateTimeUncorrected = DateTime.MaxValue.ToUniversalTime();
-            this.latestImageDateTimeUncorrected = DateTime.MinValue.ToUniversalTime();
+            this.latestFileDateTimeUncorrected = DateTime.MinValue.ToUniversalTime();
             this.fileDatabase = fileDatabase;
 
-            // Skip images with bad dates
             ImageRow earliestImage = null;
             bool foundEarliest = false;
             bool foundLatest = false;
             ImageRow latestImage = null;
-            foreach (ImageRow currentImageRow in fileDatabase.Files)
+            foreach (ImageRow file in fileDatabase.Files)
             {
-                DateTimeOffset currentImageDateTime = currentImageRow.GetDateTime();
+                DateTimeOffset fileDateTime = file.GetDateTime();
 
-                // If the current image's date is later, then its a candidate latest image  
-                if (currentImageDateTime >= this.latestImageDateTimeUncorrected)
+                if (fileDateTime >= this.latestFileDateTimeUncorrected)
                 {
-                    latestImage = currentImageRow;
-                    this.latestImageDateTimeUncorrected = currentImageDateTime;
+                    latestImage = file;
+                    this.latestFileDateTimeUncorrected = fileDateTime;
                     foundLatest = true;
                 }
 
-                if (currentImageDateTime <= this.earliestImageDateTimeUncorrected)
+                if (fileDateTime <= this.earliestImageDateTimeUncorrected)
                 {
-                    earliestImage = currentImageRow;
-                    this.earliestImageDateTimeUncorrected = currentImageDateTime;
+                    earliestImage = file;
+                    this.earliestImageDateTimeUncorrected = fileDateTime;
                     foundEarliest = true;
                 }
             }
 
-            // At this point, we should have succeeded getting the oldest and newest data/time
-            // If not, we should abort
             if ((foundEarliest == false) || (foundLatest == false))
             {
                 this.Abort = true;
@@ -76,9 +72,9 @@ namespace Carnassial.Dialog
 
             // configure interval
             DataEntryHandler.Configure(this.ClockLastCorrect, this.earliestImageDateTimeUncorrected.DateTime);
-            DataEntryHandler.Configure(this.ClockDriftMeasured, this.latestImageDateTimeUncorrected.DateTime);
+            DataEntryHandler.Configure(this.ClockDriftMeasured, this.latestFileDateTimeUncorrected.DateTime);
             this.ClockLastCorrect.Maximum = this.earliestImageDateTimeUncorrected.DateTime;
-            this.ClockDriftMeasured.Minimum = this.latestImageDateTimeUncorrected.DateTime;
+            this.ClockDriftMeasured.Minimum = this.latestFileDateTimeUncorrected.DateTime;
             this.ClockLastCorrect.ValueChanged += this.Interval_ValueChanged;
             this.ClockDriftMeasured.ValueChanged += this.Interval_ValueChanged;
 
@@ -92,7 +88,6 @@ namespace Carnassial.Dialog
             this.RefreshImageTimes();
         }
 
-        // Cancel - do nothing
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
@@ -104,7 +99,7 @@ namespace Carnassial.Dialog
 
             // the faster the camera's clock the more likely it is the latest image is in the future relative to when it should be
             // relax the measurement time constraint accordingly
-            this.ClockDriftMeasured.Minimum = this.latestImageDateTimeUncorrected.DateTime;
+            this.ClockDriftMeasured.Minimum = this.latestFileDateTimeUncorrected.DateTime;
             if (this.ClockDrift.Value.Value < TimeSpan.Zero)
             {
                 this.ClockDriftMeasured.Minimum += this.ClockDrift.Value.Value;
@@ -186,22 +181,21 @@ namespace Carnassial.Dialog
             DateTimeOffset earliestImageDateTime = this.earliestImageDateTimeUncorrected + this.GetAdjustment(intervalFromCorrectToMeasured, this.earliestImageDateTimeUncorrected);
             this.EarliestImageDateTime.Content = DateTimeHandler.ToDisplayDateTimeString(earliestImageDateTime);
 
-            DateTimeOffset latestImageDateTime = this.latestImageDateTimeUncorrected + this.GetAdjustment(intervalFromCorrectToMeasured, this.latestImageDateTimeUncorrected);
+            DateTimeOffset latestImageDateTime = this.latestFileDateTimeUncorrected + this.GetAdjustment(intervalFromCorrectToMeasured, this.latestFileDateTimeUncorrected);
             this.LatestImageDateTime.Content = DateTimeHandler.ToDisplayDateTimeString(latestImageDateTime);
 
-            this.ClockDriftMeasured.Minimum = this.latestImageDateTimeUncorrected.DateTime;
+            this.ClockDriftMeasured.Minimum = this.latestFileDateTimeUncorrected.DateTime;
         }
 
         private void ChangesButton_Click(object sender, RoutedEventArgs e)
         {
-            // A few checks just to make sure we actually have something to do...
             if (this.ClockDriftMeasured.Value.HasValue == false)
             {
                 this.DialogResult = false;
                 return;
             }
 
-            // 1st click: Show the preview before actually making any changes.
+            // 1st click: show the preview before actually making any changes.
             if (this.displayingPreview == false)
             {
                 this.PreviewDateTimeChanges();

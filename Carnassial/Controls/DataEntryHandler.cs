@@ -12,13 +12,12 @@ using MessageBox = Carnassial.Dialog.MessageBox;
 namespace Carnassial.Controls
 {
     /// <summary>
-    /// The code in here propagates values of a control across the various images in various ways.
-    /// Note that this is control-type specific, which means this code would have to be modified to handle new control types
+    /// Callbacks for data entry or the context menu for propagation.
     /// </summary>
     public class DataEntryHandler : IDisposable
     {
-        private const int CopyForwardIndex = 1;
-        private const int PropagateFromLastValueIndex = 0;
+        private const int CopyForwardMenuIndex = 1;
+        private const int PropagateFromLastValueMenuIndex = 0;
 
         private bool disposed;
 
@@ -30,7 +29,7 @@ namespace Carnassial.Controls
         {
             this.disposed = false;
             this.ImageCache = new ImageCache(fileDatabase);
-            this.FileDatabase = fileDatabase;  // We need a reference to the database if we are going to update it.
+            this.FileDatabase = fileDatabase;
             this.IsProgrammaticControlUpdate = false;
         }
 
@@ -45,13 +44,12 @@ namespace Carnassial.Controls
         }
 
         /// <summary>Propagate the current value of this control forward from this point across the current selection.</summary>
-        public void CopyForward(string dataLabel, bool checkForZero)
+        public void CopyForward(string dataLabel, bool checkForZeroValue)
         {
-            int imagesAffected = this.FileDatabase.CurrentlySelectedFileCount - this.ImageCache.CurrentRow - 1;
-            if (imagesAffected == 0)
+            int filesAffected = this.FileDatabase.CurrentlySelectedFileCount - this.ImageCache.CurrentRow - 1;
+            if (filesAffected == 0)
             {
-                // Nothing to propagate. Note that we shouldn't really see this, as the menu shouldn't be highlit if we are on the last image
-                // But just in case...
+                // should be unreachable as the menu shouldn't be be enabled on the last file
                 MessageBox messageBox = new MessageBox("Nothing to copy forward.", Application.Current.MainWindow);
                 messageBox.Message.Reason = "As you are on the last file, there are no files after this.";
                 messageBox.ShowDialog();
@@ -59,12 +57,12 @@ namespace Carnassial.Controls
             }
 
             string valueToCopy = this.ImageCache.Current.GetValueDisplayString(dataLabel);
-            if (this.ConfirmCopyForward(valueToCopy, imagesAffected, checkForZero) != true)
+            if (this.ConfirmCopyForward(valueToCopy, filesAffected, checkForZeroValue) != true)
             {
                 return;
             }
 
-            // Update. Note that we start on the next row, as we are copying from the current row.
+            // update starts on the next row since copying from the current row
             this.FileDatabase.UpdateFiles(this.ImageCache.Current, dataLabel, this.ImageCache.CurrentRow + 1, this.FileDatabase.CurrentlySelectedFileCount - 1);
         }
 
@@ -73,12 +71,12 @@ namespace Carnassial.Controls
         /// </summary>
         public string CopyFromLastNonEmptyValue(DataEntryControl control)
         {
-            bool checkForZero = control is DataEntryCounter;
+            bool isCounter = control is DataEntryCounter;
             bool isFlag = control is DataEntryFlag;
 
-            int indexToCopyFrom = -1;
-            ImageRow valueSource = null;
-            string valueToCopy = checkForZero ? "0" : String.Empty;
+            ImageRow fileWithLastNonEmptyValue = null;
+            int indexToCopyFrom = Constant.Database.InvalidRow;
+            string valueToCopy = isCounter ? "0" : String.Empty;
             for (int previousIndex = this.ImageCache.CurrentRow - 1; previousIndex >= 0; previousIndex--)
             {
                 // Search for the row with some value in it, starting from the previous row
@@ -92,18 +90,18 @@ namespace Carnassial.Controls
                 valueToCopy = valueToCopy.Trim();
                 if (valueToCopy.Length > 0)
                 {
-                    if ((checkForZero && !valueToCopy.Equals("0")) ||             // Skip over non-zero values for counters
-                        (isFlag && !valueToCopy.Equals(Boolean.FalseString, StringComparison.OrdinalIgnoreCase)) || // Skip over false values for flags
-                        (!checkForZero && !isFlag))
+                    if ((isCounter && !valueToCopy.Equals("0")) ||                                               // skip zero values for counters
+                        (isFlag && !valueToCopy.Equals(Boolean.FalseString, StringComparison.OrdinalIgnoreCase)) || // false values for flags are considered empty
+                        (!isCounter && !isFlag))
                     {
-                        indexToCopyFrom = previousIndex;    // We found a non-empty value
-                        valueSource = file;
+                        indexToCopyFrom = previousIndex;
+                        fileWithLastNonEmptyValue = file;
                         break;
                     }
                 }
             }
 
-            if (indexToCopyFrom < 0)
+            if (indexToCopyFrom == Constant.Database.InvalidRow)
             {
                 // Nothing to propagate.  If the menu item is deactivated as expected this shouldn't be reachable.
                 MessageBox messageBox = new MessageBox("Nothing to propagate to here.", Application.Current.MainWindow);
@@ -118,8 +116,7 @@ namespace Carnassial.Controls
                 return this.FileDatabase.Files[this.ImageCache.CurrentRow].GetValueDisplayString(control.DataLabel); // No change, so return the current value
             }
 
-            // Update. Note that we start on the next row, as we are copying from the current row.
-            this.FileDatabase.UpdateFiles(valueSource, control.DataLabel, indexToCopyFrom + 1, this.ImageCache.CurrentRow);
+            this.FileDatabase.UpdateFiles(fileWithLastNonEmptyValue, control.DataLabel, indexToCopyFrom + 1, this.ImageCache.CurrentRow);
             return valueToCopy;
         }
 
@@ -184,7 +181,7 @@ namespace Carnassial.Controls
                 {
                     if ((checkForZero && !valueToCopy.Equals("0")) || !checkForZero)
                     {
-                        nearestRowWithCopyableValue = fileIndex;    // We found a non-empty value
+                        nearestRowWithCopyableValue = fileIndex;    // found a non-empty value
                         break;
                     }
                 }
@@ -353,9 +350,9 @@ namespace Carnassial.Controls
             StackPanel stackPanel = (StackPanel)sender;
             DataEntryControl control = (DataEntryControl)stackPanel.Tag;
 
-            MenuItem menuItemCopyForward = (MenuItem)stackPanel.ContextMenu.Items[DataEntryHandler.CopyForwardIndex];
+            MenuItem menuItemCopyForward = (MenuItem)stackPanel.ContextMenu.Items[DataEntryHandler.CopyForwardMenuIndex];
             menuItemCopyForward.IsEnabled = this.IsCopyForwardPossible(control);
-            MenuItem menuItemPropagateFromLastValue = (MenuItem)stackPanel.ContextMenu.Items[DataEntryHandler.PropagateFromLastValueIndex];
+            MenuItem menuItemPropagateFromLastValue = (MenuItem)stackPanel.ContextMenu.Items[DataEntryHandler.PropagateFromLastValueMenuIndex];
             menuItemPropagateFromLastValue.IsEnabled = this.IsCopyFromLastNonEmptyValuePossible(control);
         }
 
@@ -472,24 +469,24 @@ namespace Carnassial.Controls
         {
             MenuItem menuItemPropagateFromLastValue = new MenuItem();
             menuItemPropagateFromLastValue.IsCheckable = false;
-            menuItemPropagateFromLastValue.Header = "Propagate from the _last non-empty value to here";
+            menuItemPropagateFromLastValue.Header = "Propagate from the _last non-empty value to here...";
             if (control is DataEntryCounter)
             {
-                menuItemPropagateFromLastValue.Header = "Propagate from the _last non-zero value to here";
+                menuItemPropagateFromLastValue.Header = "Propagate from the _last non-zero value to here...";
             }
             menuItemPropagateFromLastValue.Click += this.MenuItemPropagateFromLastValue_Click;
             menuItemPropagateFromLastValue.Tag = control;
 
             MenuItem menuItemCopyForward = new MenuItem();
             menuItemCopyForward.IsCheckable = false;
-            menuItemCopyForward.Header = "Copy forward to _end";
+            menuItemCopyForward.Header = "Copy forward to _end...";
             menuItemCopyForward.ToolTip = "The value of this field will be copied forward from this file to the last file in this set";
             menuItemCopyForward.Click += this.MenuItemPropagateForward_Click;
             menuItemCopyForward.Tag = control;
 
             MenuItem menuItemCopyCurrentValue = new MenuItem();
             menuItemCopyCurrentValue.IsCheckable = false;
-            menuItemCopyCurrentValue.Header = "Copy to _all";
+            menuItemCopyCurrentValue.Header = "Copy to _all...";
             menuItemCopyCurrentValue.Click += this.MenuItemCopyCurrentValue_Click;
             menuItemCopyCurrentValue.Tag = control;
 

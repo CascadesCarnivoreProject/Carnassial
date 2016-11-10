@@ -465,8 +465,7 @@ namespace Carnassial.Database
         }
 
         /// <summary>
-        /// Update a column value (identified by its key) in an existing row (identified by its ID) 
-        /// By default, if the table parameter is not included, we use the TABLEDATA table
+        /// Update a column's value (identified by its data label) in the row of an existing file (identified by its ID) 
         /// </summary>
         public void UpdateFile(long fileID, string dataLabel, string value)
         {
@@ -529,41 +528,40 @@ namespace Carnassial.Database
             this.AdjustFileDateTimes(adjustment, 0, this.CurrentlySelectedFileCount - 1);
         }
 
-        public void AdjustFileDateTimes(TimeSpan adjustment, int startRow, int endRow)
+        public void AdjustFileDateTimes(TimeSpan adjustment, int startIndex, int endIndex)
         {
             if (adjustment.Milliseconds != 0)
             {
                 throw new ArgumentOutOfRangeException("adjustment", "The current format of the time column does not support milliseconds.");
             }
-            this.AdjustFileTimes((DateTimeOffset imageTime) => { return imageTime + adjustment; }, startRow, endRow);
+            this.AdjustFileTimes((DateTimeOffset imageTime) => { return imageTime + adjustment; }, startIndex, endIndex);
         }
 
-        // Given a time difference in ticks, update all the date/time field in the database
-        // Note that it does NOT update the dataTable - this has to be done outside of this routine by regenerating the datatables with whatever selection is being used.
-        public void AdjustFileTimes(Func<DateTimeOffset, DateTimeOffset> adjustment, int startRow, int endRow)
+        // invoke the passed function to modify the DateTime field over the specified range of files
+        // Does NOT update the dataTable.  That has to be done by the caller.
+        public void AdjustFileTimes(Func<DateTimeOffset, DateTimeOffset> adjustment, int startIndex, int endIndex)
         {
-            if (this.IsFileRowInRange(startRow) == false)
+            if (this.IsFileRowInRange(startIndex) == false)
             {
-                throw new ArgumentOutOfRangeException("startRow");
+                throw new ArgumentOutOfRangeException("startIndex");
             }
-            if (this.IsFileRowInRange(endRow) == false)
+            if (this.IsFileRowInRange(endIndex) == false)
             {
-                throw new ArgumentOutOfRangeException("endRow");
+                throw new ArgumentOutOfRangeException("endIndex");
             }
-            if (endRow < startRow)
+            if (endIndex < startIndex)
             {
-                throw new ArgumentOutOfRangeException("endRow", "endRow must be greater than or equal to startRow.");
+                throw new ArgumentOutOfRangeException("endIndex", "endIndex must be greater than or equal to startIndex.");
             }
             if (this.CurrentlySelectedFileCount == 0)
             {
                 return;
             }
 
-            // We now have an unfiltered temporary data table
-            // Get the original value of each, and update each date by the corrected amount if possible
+            // modify date/times
             List<ImageRow> imagesToAdjust = new List<ImageRow>();
             TimeSpan mostRecentAdjustment = TimeSpan.Zero;
-            for (int row = startRow; row <= endRow; ++row)
+            for (int row = startIndex; row <= endIndex; ++row)
             { 
                 ImageRow image = this.Files[row];
                 DateTimeOffset currentImageDateTime = image.GetDateTime();
@@ -574,12 +572,13 @@ namespace Carnassial.Database
                 {
                     continue;
                 }
+
                 mostRecentAdjustment = newImageDateTime - currentImageDateTime;
                 image.SetDateTimeOffset(newImageDateTime);
                 imagesToAdjust.Add(image);
             }
 
-            // update the database with the new date/time values
+            // update the database with the new date/times
             List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
             foreach (ImageRow image in imagesToAdjust)
             {
@@ -591,7 +590,7 @@ namespace Carnassial.Database
                 this.CreateBackupIfNeeded();
                 this.Database.Update(Constant.DatabaseTable.FileData, imagesToUpdate);
 
-                // Add an entry into the log detailing what we just did
+                // add log entry recording the change
                 StringBuilder log = new StringBuilder(Environment.NewLine);
                 log.AppendFormat("System entry: Adjusted dates and times of {0} selected files.{1}", imagesToAdjust.Count, Environment.NewLine);
                 log.AppendFormat("The first file adjusted was '{0}', the last '{1}', and the last file was adjusted by {2}.{3}", imagesToAdjust[0].FileName, imagesToAdjust[imagesToAdjust.Count - 1].FileName, mostRecentAdjustment, Environment.NewLine);
@@ -628,7 +627,7 @@ namespace Carnassial.Database
                 return;
             }
 
-            // Get the original date value of each. If we can swap the date order, do so. 
+            // swap day and month for each file where it's possible
             List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
             ImageRow firstImage = this.Files[startRow];
             ImageRow lastImage = null;
@@ -644,7 +643,7 @@ namespace Carnassial.Database
                     continue;
                 }
 
-                // Now update the actual database with the new date/time values stored in the temporary table
+                // update in memory table with the new datetime
                 image.SetDateTimeOffset(reversedDateTime);
                 imagesToUpdate.Add(image.GetDateTimeColumnTuples());
                 lastImage = image;
@@ -652,6 +651,7 @@ namespace Carnassial.Database
                 mostRecentReversedDateTime = reversedDateTime;
             }
 
+            // update database with new datetimes
             if (imagesToUpdate.Count > 0)
             {
                 this.CreateBackupIfNeeded();
@@ -723,9 +723,11 @@ namespace Carnassial.Database
             return -1;
         }
 
-        // Find the file whose ID is closest to the provided ID in the current image set
-        // If the ID does not exist, then return the file whose ID is just greater than the provided one. 
-        // However, if there is no greater ID (i.e., we are at the end) return the last row. 
+        /// <summary>
+        /// Find the file whose ID is closest to the provided ID in the current image set. 
+        /// </summary>
+        /// <returns>If the passed ID does not exist, the index of the file with and ID just greater than the provided one.  Or, if no greater ID, the index
+        /// of the file with the ID.</returns>
         public int GetFileOrNextFileIndex(long fileID)
         {
             // try primary key lookup first as typically the requested ID will be present in the data table

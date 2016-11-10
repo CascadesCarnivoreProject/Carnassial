@@ -121,13 +121,13 @@ namespace Carnassial.Dialog
             this.UpdateLabels();
         }
 
-        // Update all the labels to show the current values
+        // update all the labels to show the current values
         private void UpdateLabels()
         {
             this.DarkPixelRatio.Content = String.Format("{0,3:##0}%", 100 * this.darkPixelRatio);
             this.RatioFound.Content = String.Format("{0,3:##0}", 100 * this.darkPixelRatioFound);
 
-            //// We don't want to update labels if the image is not valid 
+            // don't update labels if the file isn't valid 
             if (this.OriginalClassification.Content.ToString() == Constant.ImageQuality.Ok || this.OriginalClassification.Content.ToString() == Constant.ImageQuality.Dark)
             {
                 if (this.isColor)
@@ -143,15 +143,15 @@ namespace Carnassial.Dialog
 
                 if (this.isColor)
                 {
-                    this.NewClassification.Content = Constant.ImageQuality.Ok;       // Color image
+                    this.NewClassification.Content = Constant.ImageQuality.Ok;
                 }
                 else if (this.darkPixelRatio <= this.darkPixelRatioFound)
                 {
-                    this.NewClassification.Content = Constant.ImageQuality.Dark;  // Dark grey scale image
+                    this.NewClassification.Content = Constant.ImageQuality.Dark; // dark grey scale image
                 }
                 else
                 {
-                    this.NewClassification.Content = Constant.ImageQuality.Ok;   // Light grey scale image
+                    this.NewClassification.Content = Constant.ImageQuality.Ok;   // light grey scale image
                 }
             }
             else
@@ -296,7 +296,7 @@ namespace Carnassial.Dialog
             }
 
             this.RecalculateImageQualityForCurrentImage();
-            // We don't repaint, as this will screw up the thumb dragging. So just update the labels instead.
+            // don't repaint as it would interfere with the thumb drag; just update the labels instead.
             this.UpdateLabels();
         }
 
@@ -390,8 +390,7 @@ namespace Carnassial.Dialog
 
                     try
                     {
-                        // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
-                        // Note that if the image can't be created, we will just go to the catch.
+                        // find the new image quality and add it to the list of updated 
                         imageQuality.Bitmap = file.LoadBitmap(this.database.FolderPath).AsWriteable();
                         imageQuality.NewImageQuality = imageQuality.Bitmap.IsDark(this.darkPixelThreshold, this.darkPixelRatio, out this.darkPixelRatioFound, out this.isColor);
                         imageQuality.IsColor = this.isColor;

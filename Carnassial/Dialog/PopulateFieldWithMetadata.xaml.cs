@@ -83,21 +83,18 @@ namespace Carnassial.Dialog
                 return;
             }
 
-            // We should only have a single selected cell, so just grab the first one
+            // should only have a single selected cell, so just grab the first one
             DataGridCellInfo di = selectedcells[0];
 
-            // the selected item is the entire row, where the format returned is [MetadataName , MetadataValue] 
-            // Parse out the metadata name
-            String[] s = di.Item.ToString().Split(',');  // Get the "[Metadataname" portion before the ','
-            this.metadataFieldName = s[0].Substring(1);              // Remove the leading '['
+            // the selected item is the entire row, where the format returned is [MetadataName, MetadataValue] 
+            String[] s = di.Item.ToString().Split(',');  // Get the "[MetadataName" portion before the ','
+            this.metadataFieldName = s[0].Substring(1);  // Remove the leading '['
             this.Metadata.Content = this.metadataFieldName;
 
-            // Note that metadata name may still has spaces in it. We will have to strip it out and check it to make sure its an acceptable data label
             this.metadataFieldSelected = true;
             this.PopulateButton.IsEnabled = this.dataFieldSelected && this.metadataFieldSelected;
         }
 
-        // Listbox Callback indicating the user has selected a data field. 
         private void NoteFieldsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (this.DataFields.SelectedItem != null)
@@ -110,19 +107,18 @@ namespace Carnassial.Dialog
             this.PopulateButton.IsEnabled = this.dataFieldSelected && this.metadataFieldSelected;
         }
 
-        // Populate the database with the metadata for the selected note field
-        private void Populate()
+        // populate the database with the metadata for the selected field
+        private void PopulateField()
         {
-            // This list will hold key / value pairs that will be bound to the datagrid feedback, 
-            // which is the way to make those pairs appear in the data grid during background worker progress updates
+            // key/value pairs that will be bound to the datagrid feedback so they appear during background worker progress updates
             ObservableCollection<KeyValuePair<string, string>> keyValueList = new ObservableCollection<KeyValuePair<string, string>>();
             this.FeedbackGrid.ItemsSource = keyValueList;
 
-            // Update the UI to show the feedback datagrid, 
+            // update UI to show the feedback datagrid
             this.PopulatingMessage.Text = "Populating the data field '" + this.dataFieldLabel + "' from each file's '" + this.metadataFieldName + "' metadata ";
-            this.PopulateButton.Visibility = Visibility.Collapsed; // Hide the populate button, as we are now in the act of populating things
-            this.ClearIfNoMetadata.Visibility = Visibility.Collapsed; // Hide the checkbox button for the same reason
-            this.PrimaryPanel.Visibility = Visibility.Collapsed;  // Hide the various panels to reveal the feedback datagrid
+            this.PopulateButton.Visibility = Visibility.Collapsed;
+            this.ClearIfNoMetadata.Visibility = Visibility.Collapsed;
+            this.PrimaryPanel.Visibility = Visibility.Collapsed;
             this.DataFields.Visibility = Visibility.Collapsed;
             this.FeedbackPanel.Visibility = Visibility.Visible;
             this.PanelHeader.Visibility = Visibility.Collapsed;
@@ -130,44 +126,34 @@ namespace Carnassial.Dialog
             BackgroundWorker backgroundWorker = new BackgroundWorker() { WorkerReportsProgress = true };
             backgroundWorker.DoWork += (ow, ea) =>
             {
-                // this runs on the background thread; its written as an anonymous delegate
-                // We need to invoke this to allow updates on the UI
-                this.Dispatcher.Invoke(new Action(() =>
-                {
-                }));
-
-                // For each row in the database, get the image filename and try to extract the chosen metadata value.
-                // If we can't decide if we want to leave the data field alone or to clear it depending on the state of the isClearIfNoMetadata (set via the checkbox)
-                // Report progress as needed.
-                // This tuple list will hold the id, key and value that we will want to update in the database
+                // for each file try to get the chosen metadata value.
                 string dataLabelToUpdate = this.dataLabelByLabel[this.dataFieldLabel];
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
                 TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
-                for (int imageIndex = 0; imageIndex < database.CurrentlySelectedFileCount; ++imageIndex)
+                for (int fileIndex = 0; fileIndex < database.CurrentlySelectedFileCount; ++fileIndex)
                 {
-                    ImageRow image = database.Files[imageIndex];
-                    Dictionary<string, string> metadata = Utilities.LoadMetadata(image.GetFilePath(database.FolderPath));
+                    ImageRow file = database.Files[fileIndex];
+                    Dictionary<string, string> metadata = Utilities.LoadMetadata(file.GetFilePath(database.FolderPath));
                     if (metadata.ContainsKey(this.metadataFieldName) == false)
                     {
                         if (this.clearIfNoMetadata)
                         {
-                            // Clear the data field if there is no metadata...
                             if (dataLabelToUpdate == Constant.DatabaseColumn.DateTime)
                             {
-                                image.SetDateTimeOffsetFromFileInfo(this.database.FolderPath, imageSetTimeZone);
-                                imagesToUpdate.Add(image.GetDateTimeColumnTuples());
-                                backgroundWorker.ReportProgress(0, new FeedbackMessage(image.FileName, "No metadata found - date/time reread from file"));
+                                file.SetDateTimeOffsetFromFileInfo(this.database.FolderPath, imageSetTimeZone);
+                                imagesToUpdate.Add(file.GetDateTimeColumnTuples());
+                                backgroundWorker.ReportProgress(0, new FeedbackMessage(file.FileName, "No metadata found - date/time reread from file"));
                             }
                             else
                             {
                                 List<ColumnTuple> clearField = new List<ColumnTuple>() { new ColumnTuple(this.dataLabelByLabel[this.dataFieldLabel], String.Empty) };
-                                imagesToUpdate.Add(new ColumnTuplesWithWhere(clearField, image.ID));
-                                backgroundWorker.ReportProgress(0, new FeedbackMessage(image.FileName, "No metadata found - data field is cleared"));
+                                imagesToUpdate.Add(new ColumnTuplesWithWhere(clearField, file.ID));
+                                backgroundWorker.ReportProgress(0, new FeedbackMessage(file.FileName, "No metadata found - data field is cleared"));
                             }
                         }
                         else
                         {
-                            backgroundWorker.ReportProgress(0, new FeedbackMessage(image.FileName, "No metadata found - data field remains unaltered"));
+                            backgroundWorker.ReportProgress(0, new FeedbackMessage(file.FileName, "No metadata found - data field remains unaltered"));
                         }
                         continue;
                     }
@@ -179,26 +165,26 @@ namespace Carnassial.Dialog
                         DateTimeOffset metadataDateTime;
                         if (DateTimeHandler.TryParseMetadataDateTaken(metadataValue, imageSetTimeZone, out metadataDateTime))
                         {
-                            image.SetDateTimeOffset(metadataDateTime);
-                            imageUpdate = image.GetDateTimeColumnTuples();
-                            backgroundWorker.ReportProgress(0, new FeedbackMessage(image.FileName, metadataValue));
+                            file.SetDateTimeOffset(metadataDateTime);
+                            imageUpdate = file.GetDateTimeColumnTuples();
+                            backgroundWorker.ReportProgress(0, new FeedbackMessage(file.FileName, metadataValue));
                         }
                         else
                         {
-                            backgroundWorker.ReportProgress(0, new FeedbackMessage(image.FileName, String.Format("'{0}' - data field remains unaltered - not a valid date/time.", metadataValue)));
+                            backgroundWorker.ReportProgress(0, new FeedbackMessage(file.FileName, String.Format("'{0}' - data field remains unaltered - not a valid date/time.", metadataValue)));
                             continue;
                         }
                     }
                     else
                     {
-                        imageUpdate = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(dataLabelToUpdate, metadataValue) }, image.ID);
-                        backgroundWorker.ReportProgress(0, new FeedbackMessage(image.FileName, metadataValue));
+                        imageUpdate = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(dataLabelToUpdate, metadataValue) }, file.ID);
+                        backgroundWorker.ReportProgress(0, new FeedbackMessage(file.FileName, metadataValue));
                     }
                     imagesToUpdate.Add(imageUpdate);
 
-                    if (imageIndex % Constant.ThrottleValues.SleepForImageRenderInterval == 0)
+                    if (fileIndex % Constant.ThrottleValues.SleepForImageRenderInterval == 0)
                     {
-                        Thread.Sleep(Constant.ThrottleValues.RenderingBackoffTime); // Put in a short delay every now and then, as otherwise the UI may not update.
+                        Thread.Sleep(Constant.ThrottleValues.RenderingBackoffTime); // put in a short delay every now and then, as otherwise the UI may not update
                     }
                 }
 
@@ -208,17 +194,17 @@ namespace Carnassial.Dialog
             };
             backgroundWorker.ProgressChanged += (o, ea) =>
             {
-                // Get the message and add it to the data structure 
+                // get the message and add it to the data structure 
                 FeedbackMessage message = (FeedbackMessage)ea.UserState;
                 keyValueList.Add(new KeyValuePair<string, string>(message.FileName, message.Message));
 
-                // Scrolls so the last object added is visible
-                this.FeedbackGrid.ScrollIntoView(FeedbackGrid.Items[FeedbackGrid.Items.Count - 1]);
+                // scroll so the last object added is visible
+                this.FeedbackGrid.ScrollIntoView(this.FeedbackGrid.Items[this.FeedbackGrid.Items.Count - 1]);
             };
             backgroundWorker.RunWorkerCompleted += (o, ea) =>
             {
-                btnCancel.Content = "Done"; // Change the Cancel button to Done, but inactivate it as we don't want the operation to be cancellable (due to worries about database corruption)
-                btnCancel.IsEnabled = true;
+                this.CancelDone.Content = "Done";
+                this.CancelDone.IsEnabled = true;
             };
             backgroundWorker.RunWorkerAsync();
         }
@@ -232,22 +218,19 @@ namespace Carnassial.Dialog
 
         private void PopulateButton_Click(object sender, RoutedEventArgs e)
         {
-            this.Populate();
+            this.PopulateField();
         }
 
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        private void CancelDoneButton_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = ((string)btnCancel.Content == "Cancel") ? false : true;
+            this.DialogResult = ((string)this.CancelDone.Content == "Cancel") ? false : true;
         }
 
-        // This checkbox sets the state as to whether the data field should be cleared or left alone if there is no metadata
         private void ClearIfNoMetadata_Checked(object sender, RoutedEventArgs e)
         {
             this.clearIfNoMetadata = (ClearIfNoMetadata.IsChecked == true) ? true : false;
         }
 
-        // Classes that tracks our progress as we load the images
-        // These are needed to make the background worker update correctly.
         private class FeedbackMessage
         {
             public string FileName { get; set; }

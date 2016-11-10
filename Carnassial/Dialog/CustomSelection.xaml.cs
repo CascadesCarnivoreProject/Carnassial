@@ -90,7 +90,7 @@ namespace Carnassial.Dialog
                     controlType == Constant.DatabaseColumn.ImageQuality ||
                     controlType == Constant.Control.FixedChoice)
                 {
-                    // No globs in Counters as that text field only allows numbers, we can't enter the special characters Glob required
+                    // No globs in Counters they use only numbers
                     // No globs in Dates the date entries are constrained by the date picker
                     // No globs in Fixed Choices as choice entries are constrained by menu selection
                     termOperators = new string[]
@@ -255,7 +255,7 @@ namespace Carnassial.Dialog
             this.UpdateSearchCriteriaFeedback();
         }
 
-        // Radio buttons for determing if we use And or Or
+        // radio buttons for search term combining operator
         private void AndOrRadioButton_Checked(object sender, RoutedEventArgs args)
         {
             RadioButton radioButton = sender as RadioButton;
@@ -309,13 +309,12 @@ namespace Carnassial.Dialog
             this.UpdateSearchCriteriaFeedback();
         }
 
-        // Value (Counter) Helper function: textbox accept only typed numbers 
         private void Counter_PreviewTextInput(object sender, TextCompositionEventArgs args)
         {
-            args.Handled = IsNumbersOnly(args.Text);
+            // counters accept only numbers
+            args.Handled = CustomSelection.IsNumbersOnly(args.Text);
         }
 
-        // Value (DateTime): we need to construct a string DateTime from it
         private void DateTime_SelectedDateChanged(object sender, RoutedPropertyChangedEventArgs<object> args)
         {
             DateTimePicker datePicker = sender as DateTimePicker;
@@ -327,9 +326,6 @@ namespace Carnassial.Dialog
             }
         }
 
-        // Value (FixedChoice): The user has selected a new value 
-        // - set its corresponding search term in the searchList data structure
-        // - update the UI to show the search criteria 
         private void FixedChoice_SelectionChanged(object sender, SelectionChangedEventArgs args)
         {
             ComboBox comboBox = sender as ComboBox;
@@ -338,9 +334,6 @@ namespace Carnassial.Dialog
             this.UpdateSearchCriteriaFeedback();
         }
 
-        // Value (Flags): The user has checked or unchecked a new value 
-        // - set its corresponding search term in the searchList data structure
-        // - update the UI to show the search criteria 
         private void Flag_CheckedOrUnchecked(object sender, RoutedEventArgs e)
         {
             CheckBox checkBox = sender as CheckBox;
@@ -349,9 +342,9 @@ namespace Carnassial.Dialog
             this.UpdateSearchCriteriaFeedback();
         }
 
-        // When this button is pressed, all the search terms checkboxes are cleared, which is equivalent to showing all images
-        private void ShowAllButton_Click(object sender, RoutedEventArgs e)
+        private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
+            // disable all search terms
             for (int row = 1; row <= this.database.CustomSelection.SearchTerms.Count; row++)
             {
                 CheckBox label = this.GetGridElement<CheckBox>(CustomSelection.LabelColumn, row);
@@ -374,11 +367,11 @@ namespace Carnassial.Dialog
         // which also show or hides the search term feedback for that row.
         private void UpdateSearchCriteriaFeedback()
         {
-            // We go backwards, as we don't want to print the AND or OR on the last expression
+            // loop runs backwards for final term combining operator check
             bool lastExpression = true;
             for (int index = this.database.CustomSelection.SearchTerms.Count - 1; index >= 0; index--)
             {
-                int row = index + 1; // we offset the row by 1 as row 0 is the header
+                int row = index + 1; // row 0 in the data grid is the header
                 SearchTerm searchTerm = this.database.CustomSelection.SearchTerms[index];
                 TextBlock searchCriteria = this.GetGridElement<TextBlock>(CustomSelection.SearchCriteriaColumn, row);
 
@@ -389,17 +382,16 @@ namespace Carnassial.Dialog
                     continue;
                 }
 
-                // Construct the search term 
-                string searchCriteriaText = searchTerm.DataLabel + " " + searchTerm.Operator + " "; // So far, we have "Data Label = "
-
-                string value = searchTerm.DatabaseValue.Trim();    // the Value, but if its 
+                // construct the search term 
+                string searchCriteriaText = searchTerm.DataLabel + " " + searchTerm.Operator + " ";
+                string value = searchTerm.DatabaseValue.Trim();
                 if (value.Length == 0)
                 {
                     value = "\"\"";  // an empty string, display it as ""
                 }
                 searchCriteriaText += value;
 
-                // If it's not the last expression and if there are multiple queries (i.e., search terms) then show the And or Or at its end.
+                // include term combining operator
                 if (!lastExpression)
                 {
                     searchCriteriaText += " " + this.database.CustomSelection.TermCombiningOperator.ToString();
@@ -413,7 +405,7 @@ namespace Carnassial.Dialog
             this.OkButton.IsEnabled = count > 0 ? true : false;
             this.QueryMatches.Text = count > 0 ? count.ToString() : "0";
 
-            this.ShowAll.IsEnabled = lastExpression == false;
+            this.Reset.IsEnabled = lastExpression == false;
         }
 
         // Apply the selection if the Ok button is clicked

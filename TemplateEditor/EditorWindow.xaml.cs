@@ -637,7 +637,7 @@ namespace Carnassial.Editor
             for (int rowIndex = 0; rowIndex < this.TemplateDataGrid.Items.Count; rowIndex++)
             {
                 // for ItemContainerGenerator to work the DataGrid must have VirtualizingStackPanel.IsVirtualizing="False"
-                // Alternately, the following may be more efficient for large grids (which we normally don't have)
+                // the following may be more efficient for large grids but is not used as more than dozen or so controls is unlikely
                 // this.TemplateDataGrid.UpdateLayout();
                 // this.TemplateDataGrid.ScrollIntoView(rowIndex + 1);
                 DataGridRow row = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex);

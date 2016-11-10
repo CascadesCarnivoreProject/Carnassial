@@ -12,7 +12,7 @@ Having these in our archives helps us help you, so don't be shy.
 
 If you're a developer and would like to submit a pull request please see below.
 
-### Dev Environment
+### Development Environment
 Install [Visual Studio 2015 Community](https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx) Update 3 or newer with the below options in addition to the defaults:
 
 * Common Tools -> GitHub Extension for Visual Studio
@@ -22,14 +22,18 @@ Higher Visual Studio SKUs such as Enterprise are fine.  After Visual Studio inst
 * clone the repo locally through Visual Studio's Team Explorer or GitHub's clone or download options
 * install Visual StyleCop (Tools -> Extensions and Updates -> Online)
 
-Atlassian's [https://www.atlassian.com/software/sourcetree](SourceTree) is a recommended augmentation of the git support available in Visual Studio's Team Explorer.  The [Visual Studio Image Library](https://msdn.microsoft.com/en-us/library/ms246582.aspx) is often helpful for icons.
-
 Commits should
 
 * include appropriate test coverage
 * have no build warnings, pass code analysis (Analyze -> Run Code Analysis), and be free of StyleCop issues (right click solution -> Run StyleCop)
 
 Application development is done against .NET 4.5 as as not all users have newer versions available on their systems or the ability to update .NET.  Test code uses .NET 4.5.
+
+Also helpful are
+
+* Atlassian's [https://www.atlassian.com/software/sourcetree](SourceTree), a recommended augmentation of the git support available in Visual Studio's Team Explorer.
+* The [Visual Studio Image Library](https://msdn.microsoft.com/en-us/library/ms246582.aspx) for icons.
+* John Skeet's discussion of [DateTime, DateTimeOffset, and TimeZoneInfo limitations](http://blog.nodatime.org/2011/08/what-wrong-with-datetime-anyway.html).
 
 ### Dependencies
 * Carnassial and the template editor are supported and tested on Windows 10 Anniversary Update.  They should also run without issue on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10.  Support is, however, limited.

@@ -60,32 +60,24 @@ namespace Carnassial.Dialog
 
             backgroundWorker.DoWork += (ow, ea) =>
             {
-                // this runs on the background thread; its written as an anonymous delegate
-                // We need to invoke this to allow updates on the UI
-                this.Dispatcher.Invoke(new Action(() =>
-                {
-                    // First, change the UIprovide some feedback
-                    backgroundWorker.ReportProgress(0, new DateTimeRereadFeedbackTuple("Pass 1: Examining images and videos...", "Checking if dates/time differ"));
-                }));
+                backgroundWorker.ReportProgress(0, new DateTimeRereadFeedbackTuple("Pass 1: Examining images and videos...", "Checking if dates/time differ"));
 
-                // Pass 1. Check to see what dates/times need updating.
+                // check to see what date/times need updating
                 List<ImageRow> filesToAdjust = new List<ImageRow>();
                 int count = this.database.CurrentlySelectedFileCount;
                 TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
                 for (int fileIndex = 0; fileIndex < count; ++fileIndex)
                 {
-                    // We will store the various times here
                     ImageRow file = this.database.Files[fileIndex];
                     DateTimeOffset originalDateTime = file.GetDateTime();
                     string feedbackMessage = String.Empty;
                     try
                     {
-                        // Get the image (if its there), get the new dates/times, and add it to the list of images to be updated 
-                        // Note that if the image can't be created, we will just to the catch.
                         DateTimeAdjustment dateTimeAdjustment = file.TryReadDateTimeOriginalFromMetadata(this.database.FolderPath, imageSetTimeZone);
                         if (dateTimeAdjustment == DateTimeAdjustment.None)
                         {
-                            file.SetDateTimeOffsetFromFileInfo(this.database.FolderPath, imageSetTimeZone);  // We couldn't read the metadata, so get a candidate date/time from the file
+                            // couldn't read metadata, so get a candidate date/time from the file
+                            file.SetDateTimeOffsetFromFileInfo(this.database.FolderPath, imageSetTimeZone);
                             feedbackMessage = "Using file date/time: ";
                         }
                         else if ((dateTimeAdjustment & DateTimeAdjustment.PreviousMetadata) == DateTimeAdjustment.PreviousMetadata)

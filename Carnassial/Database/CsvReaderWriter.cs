@@ -20,8 +20,7 @@ namespace Carnassial.Database
         {
             using (TextWriter fileWriter = new StreamWriter(filePath, false))
             {
-                // Write the header as defined by the data labels in the template file
-                // If the data label is an empty string, we use the label instead.
+                // write the header as defined by the data labels in the template file
                 // The append sequence results in a trailing comma which is retained when writing the line.
                 StringBuilder header = new StringBuilder();
                 List<string> dataLabels = database.GetDataLabelsExceptIDInSpreadsheetOrder();
@@ -31,8 +30,7 @@ namespace Carnassial.Database
                 }
                 fileWriter.WriteLine(header.ToString());
 
-                // For each row in the data table, write out the columns in the same order as the 
-                // data labels in the template file
+                // for each row in the data table, write out the columns in the same order as the data labels in the template file
                 for (int row = 0; row < database.CurrentlySelectedFileCount; row++)
                 {
                     StringBuilder csvRow = new StringBuilder();

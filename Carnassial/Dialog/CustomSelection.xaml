@@ -40,7 +40,7 @@
         </StackPanel>
         <DockPanel DockPanel.Dock="Bottom">
             <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
-            <Button Name="ShowAll" Content="_Reset to All Images" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,0,0"  Padding="10" Click="ShowAllButton_Click" IsEnabled="False"/>
+            <Button Name="Reset" Content="_Reset" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,0,0" Padding="10" Click="ResetButton_Click" IsEnabled="False"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <TextBlock Name="QueryMatches" HorizontalAlignment="Left"  Margin="10,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"  FontWeight="DemiBold" FontSize="12"><Run Text="0  "/></TextBlock>
                 <TextBlock HorizontalAlignment="Left"  Margin="0,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"  FontSize="12"><Run Text=" files match your query "/></TextBlock>

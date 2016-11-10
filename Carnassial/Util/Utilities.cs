@@ -161,6 +161,12 @@ namespace Carnassial.Util
             exitNotification.ShowDialog();
         }
 
+        public static int ToDisplayIndex(int databaseIndex)
+        {
+            // +1 since database file indices are zero based but display file indices are ones based
+            return databaseIndex + 1;
+        }
+
         public static bool TryFitWindowInWorkingArea(Window window)
         {
             if (Double.IsNaN(window.Left))

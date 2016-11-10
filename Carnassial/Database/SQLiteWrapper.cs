@@ -196,13 +196,21 @@ namespace Carnassial.Database
         /// </summary>
         public void ExecuteNonQueryWrappedInBeginEnd(List<string> statements)
         {
+            // # query0
             // BEGIN
-            //      query1
-            //      query2
+            //      statement0
+            //      statement1
             //      ...
-            //      queryn
+            //      statementMax
             // END
-            const int MaxStatementCount = 500;
+            // # query1
+            // BEGIN
+            //      statement0
+            //      statement1
+            //      ...
+            //      statementMax
+            // END
+            // ...
             string mostRecentStatement = null;
             using (SQLiteConnection connection = new SQLiteConnection(this.connectionString))
             {
@@ -215,29 +223,29 @@ namespace Carnassial.Database
                     int statementsInQuery = 0;
                     foreach (string statement in statements)
                     {
-                        // capture the most recent statement so it's available for debugging
-                        mostRecentStatement = statement;
-                        statementsInQuery++;
-
-                        // Insert a BEGIN if we are at the beginning of the count
-                        if (statementsInQuery == 1)
+                        if (statementsInQuery == 0)
                         {
                             command.CommandText = "BEGIN ";
                             command.ExecuteNonQuery();
                         }
 
+                        // capture the most recent statement so it's available for debugging
+                        mostRecentStatement = statement;
+                        statementsInQuery++;
+
                         command.CommandText = statement;
                         rowsUpdated += command.ExecuteNonQuery();
 
                         // END
-                        if (statementsInQuery >= MaxStatementCount)
+                        if (statementsInQuery >= Constant.Sql.MaximumStatementCount)
                         {
                             command.CommandText = Constant.Sql.End;
                             rowsUpdated += command.ExecuteNonQuery();
                             statementsInQuery = 0;
                         }
                     }
-                    // END
+
+                    // END final query and execute it
                     if (statementsInQuery != 0)
                     {
                         command.CommandText = Constant.Sql.End;
@@ -312,7 +320,6 @@ namespace Carnassial.Database
             foreach (ColumnTuple column in columnsToUpdate.Columns)
             {
                 // column_name = 'value'
-                // we have to cater to different formats for integers, NULLS and strings...
                 if (column.Value == null)
                 {
                     query += String.Format(" {0} = {1}{2}", column.Name.ToString(), "NULL", Constant.Sql.Comma);
@@ -407,7 +414,6 @@ namespace Carnassial.Database
 
         /// <summary>
         /// Add a column to the table named sourceTable at position columnNumber using the provided columnDefinition
-        /// The value in columnDefinition is assumed to be the desired default value
         /// </summary>
         public void AddColumnToTable(string tableName, int columnNumber, ColumnDefinition columnDefinition)
         {
@@ -415,92 +421,80 @@ namespace Carnassial.Database
             {
                 connection.Open();
 
-                // Some basic error checking to make sure we can do the operation
-                List<string> columnNames = this.GetColumnNamesAsList(connection, tableName);
-
-                // Check if a column named Name already exists in the source Table. If so, abort as we cannot add duplicate column names
-                if (columnNames.Contains(columnDefinition.Name))
+                List<string> existingColumnNames = this.GetColumnNamesAsList(connection, tableName);
+                if (existingColumnNames.Contains(columnDefinition.Name))
                 {
                     throw new ArgumentException(String.Format("Column '{0}' is already present in table '{1}'.", columnDefinition.Name, tableName), "columnDefinition");
                 }
 
-                // If columnNumber would result in the column being inserted at the end of the table, then use the more efficient method to do so.
-                if (columnNumber >= columnNames.Count)
+                // if columnNumber would result in the column being inserted at the end of the table, then use the more efficient method to do so.
+                if (columnNumber >= existingColumnNames.Count)
                 {
                     this.AddColumnToEndOfTable(tableName, columnDefinition);
                     return;
                 }
 
-                // We need to add a column elsewhere than the end. This requires us to 
-                // create a new schema, create a new table from that schema, copy data over to it, remove the old table
-                // and rename the new table to the name of the old one.
+                // addding a column in a specific location requires
+                // - creating a new schema
+                // - creating a new table from that schema
+                // - copying data to the new table
+                // - removing the old table
+                // - renaming the new table to the name of the old one
 
-                // Get a schema definition identical to the schema in the existing table, 
-                // but with a new column definition of type TEXT added at the given position, where the value is assumed to be the default value
+                // clone current schema and insert new column
                 string newSchema = this.InsertColumnInSchema(connection, tableName, columnNumber, columnDefinition);
 
-                // Create a new table 
+                // copy the existing table to a new table with the new schema
                 string destTable = tableName + "NEW";
                 string sql = "CREATE TABLE " + destTable + " (" + newSchema + ")";
                 using (SQLiteCommand command = new SQLiteCommand(sql, connection))
                 {
                     command.ExecuteNonQuery();
                 }
-
-                // Copy the old table's contents to the new table
                 this.CopyAllValuesFromTable(connection, tableName, tableName, destTable);
 
-                // Now drop the source table and rename the destination table to that of the source table
+                // remove the existing table and rename the new table
                 this.DropTable(connection, tableName);
-
-                // Rename the table
                 this.RenameTable(connection, destTable, tableName);
             }
         }
 
-        public bool DeleteColumn(string sourceTable, string columnName)
+        public void DeleteColumn(string sourceTable, string columnName)
         {
+            if (String.IsNullOrWhiteSpace(columnName))
+            {
+                throw new ArgumentOutOfRangeException("columnName");
+            }
+
             using (SQLiteConnection connection = new SQLiteConnection(this.connectionString))
             {
                 connection.Open();
-                // Some basic error checking to make sure we can do the operation
-                if (columnName.Trim() == String.Empty)
-                {
-                    return false;  // The provided column names= is an empty string
-                }
                 List<string> columnNames = this.GetColumnNamesAsList(connection, sourceTable);
                 if (!columnNames.Contains(columnName))
                 {
-                    return false; // There is no column called columnName in the source Table, so we can't delete ti
+                    throw new ArgumentOutOfRangeException("columnName");
                 }
 
-                // Get a schema definition identical to the schema in the existing table, 
-                // but with the column named columnName deleted from it
+                // drop the requested column from the schema
                 string newSchema = this.RemoveColumnFromSchema(connection, sourceTable, columnName);
 
-                // Create a new table 
+                // copy the existing table to a new table with the new schema
                 string destTable = sourceTable + "NEW";
                 string sql = "CREATE TABLE " + destTable + " (" + newSchema + ")";
                 using (SQLiteCommand command = new SQLiteCommand(sql, connection))
                 {
                     command.ExecuteNonQuery();
                 }
-
-                // Copy the old table's contents to the new table
                 this.CopyAllValuesFromTable(connection, destTable, sourceTable, destTable);
 
-                // Now drop the source table and rename the destination table to that of the source table
+                // remove the existing table and rename the new table
                 this.DropTable(connection, sourceTable);
-
-                // Rename the table
                 this.RenameTable(connection, destTable, sourceTable);
-                return true;
             }
         }
 
         public void RenameColumn(string sourceTable, string currentColumnName, string newColumnName)
         {
-            // Some basic error checking to make sure we can do the operation
             if (String.IsNullOrWhiteSpace(currentColumnName))
             {
                 throw new ArgumentOutOfRangeException("currentColumnName");

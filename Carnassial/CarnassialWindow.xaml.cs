@@ -123,8 +123,6 @@ namespace Carnassial
         /// This preview callback is used by all controls to reset the focus.
         /// Whenever the user hits enter over the control, set the focus back to the top-level
         /// </summary>
-        /// <param name="sender">source of the event</param>
-        /// <param name="eventArgs">event information</param>
         private void ContentControl_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
         {
             if (eventArgs.Key == Key.Enter)
@@ -132,12 +130,9 @@ namespace Carnassial
                 this.TrySetKeyboardFocusToMarkableCanvas(false, eventArgs);
                 eventArgs.Handled = true;
             }
-            // The 'empty else' means don't check to see if a textbox or control has the focus, as we want to reset the focus elsewhere
         }
 
         /// <summary>Ensures only numbers are entered for counters.</summary>
-        /// <param name="sender">the event source</param>
-        /// <param name="e">event information</param>
         private void CounterControl_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             e.Handled = (Utilities.IsDigits(e.Text) || String.IsNullOrWhiteSpace(e.Text)) ? false : true;
@@ -283,8 +278,8 @@ namespace Carnassial
             {
                 this.ShowFile(Constant.Database.InvalidRow);
                 this.statusBar.SetMessage("Image set is empty.");
-                this.statusBar.SetCurrentFile(0);
-                this.statusBar.SetCount(0);
+                this.statusBar.SetCurrentFile(Constant.Database.InvalidRow);
+                this.statusBar.SetFileCount(0);
             }
         }
 
@@ -467,7 +462,7 @@ namespace Carnassial
             messageBox.Message.Solution += "\u2022 Cancel to abort";
 
             messageBox.Message.Hint = "This is not an error." + Environment.NewLine;
-            messageBox.Message.Hint += "\u2022 We are asking just in case you forgot you had the " + this.dataHandler.FileDatabase.ImageSet.FileSelection.ToString().ToLowerInvariant() + " selection applied. " + Environment.NewLine;
+            messageBox.Message.Hint += "\u2022 Carnassial is asking just in case you forgot you had the " + this.dataHandler.FileDatabase.ImageSet.FileSelection.ToString().ToLowerInvariant() + " selection applied. " + Environment.NewLine;
             messageBox.Message.Hint += "\u2022 You can use the 'Select' menu to change to other views (including all files)" + Environment.NewLine;
             messageBox.Message.Hint += "If you check 'Don't show this message again.' this dialog can be turned back on via the Options menu.";
 
@@ -555,9 +550,9 @@ namespace Carnassial
             this.Speak(counter.Content + " " + counter.Label); // Speak the current count
         }
 
-        // When we move over the canvas and the user isn't in the midst of typing into a text field, reset the top level focus
         private void MarkableCanvas_MouseEnter(object sender, MouseEventArgs eventArgs)
         {
+            // change focus to the canvas if the mouse enters the canvas and the user isn't in the midst of typing into a text field
             IInputElement focusedElement = FocusManager.GetFocusedElement(this);
             if ((focusedElement == null) || (focusedElement is TextBox == false))
             {
@@ -643,7 +638,8 @@ namespace Carnassial
 
         private void MarkableCanvas_UpdateMarkers()
         {
-            this.MarkableCanvas.Markers = this.GetDisplayMarkers(false); // By default, we don't show the annotation
+            // by default, don't show markers' labels
+            this.MarkableCanvas.Markers = this.GetDisplayMarkers(false);
         }
 
         private void MenuEdit_SubmenuOpened(object sender, RoutedEventArgs e)
@@ -780,14 +776,13 @@ namespace Carnassial
             }
         }
 
-        /// <summary>Delete all images marked for deletion, and optionally the data associated with those images.
-        /// Deleted images are actually moved to a backup folder.</summary>
-        private void MenuEditDeleteImages_Click(object sender, RoutedEventArgs e)
+        /// <summary>Soft delete one or more files marked for deletion, and optionally the data associated with those files.</summary>
+        private void MenuEditDeleteFiles_Click(object sender, RoutedEventArgs e)
         {
             MenuItem menuItem = sender as MenuItem;
 
-            // This callback is invoked by DeleteImage (which deletes the current image) and DeleteImages (which deletes the images marked by the deletion flag)
-            // Thus we need to use two different methods to construct a table containing all the images marked for deletion
+            // this callback is invoked by DeleteCurrentFile and DeleteFiles
+            // The logic therefore branches for removing a single file versus all selected files marked for deletion.
             List<ImageRow> imagesToDelete;
             bool deleteCurrentImageOnly;
             bool deleteFilesAndData;
@@ -795,7 +790,7 @@ namespace Carnassial
             {
                 deleteCurrentImageOnly = false;
                 deleteFilesAndData = menuItem.Name.Equals(this.MenuEditDeleteFilesAndData.Name);
-                // get list of all images marked for deletion in the current seletion
+                // get files marked for deletion in the current seletion
                 imagesToDelete = this.dataHandler.FileDatabase.GetFilesMarkedForDeletion().ToList();
                 for (int index = imagesToDelete.Count - 1; index >= 0; index--)
                 {
@@ -807,7 +802,7 @@ namespace Carnassial
             }
             else
             {
-                // Delete current image case. Get the ID of the current image and construct a datatable that contains that image's datarow
+                // delete current file
                 deleteCurrentImageOnly = true;
                 deleteFilesAndData = menuItem.Name.Equals(this.MenuEditDeleteCurrentFileAndData.Name);
                 imagesToDelete = new List<ImageRow>();
@@ -817,13 +812,12 @@ namespace Carnassial
                 }
             }
 
-            // If no images are selected for deletion. Warn the user.
-            // Note that this should never happen, as the invoking menu item should be disabled (and thus not selectable)
-            // if there aren't any images to delete. Still,...
+            // notify the user if no files are selected for deletion
+            // This should be unreachable as the invoking menu item should be disabled.
             if (imagesToDelete == null || imagesToDelete.Count < 1)
             {
                 MessageBox messageBox = new MessageBox("No files are marked for deletion.", this);
-                messageBox.Message.Problem = "You are trying to delete files marked for deletion, but No files have their 'Delete?' box checked.";
+                messageBox.Message.Problem = "You are trying to delete files marked for deletion, but no files have thier 'Delete?' box checked.";
                 messageBox.Message.Hint = "If you have files that you think should be deleted, check thier Delete? box.";
                 messageBox.Message.StatusImage = MessageBoxImage.Information;
                 messageBox.ShowDialog();
@@ -1273,8 +1267,8 @@ namespace Carnassial
                 Debug.Assert(result, String.Format("Removal of image set '{0}' no longer present on disk unexpectedly failed.", path));
             }
 
-            // Enable the menu only when there are items in it and only if the load menu is also enabled (i.e., that we haven't loaded anything yet)
-            this.MenuFileRecentImageSets.IsEnabled = this.state.MostRecentImageSets.Count > 0 && this.MenuFileLoadImageSet.IsEnabled;
+            // Enable recent image sets only if there are recent sets and the parent menu is also enabled (indicating no image set has been loaded)
+            this.MenuFileRecentImageSets.IsEnabled = this.MenuFileLoadImageSet.IsEnabled && this.state.MostRecentImageSets.Count > 0;
             this.MenuFileRecentImageSets.Items.Clear();
 
             // add menu items most recently used image sets
@@ -1650,14 +1644,15 @@ namespace Carnassial
         }
 
         /// <summary>
-        /// When folder loading has completed add callbacks, prepare the UI, set up the image set, and show the image.
+        /// When folder loading has completed add callbacks, prepare the UI, set up the image set, and show the file.
         /// </summary>
         private void OnFolderLoadingComplete(bool filesJustAdded)
         {
             // Show the image, hide the load button, and make the feedback panels visible
             this.ImageSetPane.IsActive = true;
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-            this.MarkableCanvas.Focus(); // We start with this having the focus so it can interpret keyboard shortcuts if needed. 
+            // Set focus to the markable canvas by default so it can interpret keys. 
+            this.MarkableCanvas.Focus();
 
             // if this is completion of an existing .ddb open set the current selection and the image index to the ones from the previous session with the image set
             // also if this is completion of import to a new .ddb
@@ -1816,8 +1811,8 @@ namespace Carnassial
             this.ShowFile(this.dataHandler.FileDatabase.GetFileOrNextFileIndex(fileID));
 
             // Update the status bar accordingly
-            this.statusBar.SetCurrentFile(this.dataHandler.ImageCache.CurrentRow + 1); // We add 1 because its a 0-based list
-            this.statusBar.SetCount(this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
+            this.statusBar.SetCurrentFile(this.dataHandler.ImageCache.CurrentRow);
+            this.statusBar.SetFileCount(this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
         }
 
@@ -1943,8 +1938,6 @@ namespace Carnassial
                 this.MarkableCanvas.SetNewImage(Constant.Images.NoSelectableFile.Value, null);
                 this.markersOnCurrentFile = null;
                 this.MarkableCanvas_UpdateMarkers();
-
-                // We could invalidate the cache here, but it will be reset anyways when images are loaded. 
                 return;
             }
 
@@ -1978,15 +1971,14 @@ namespace Carnassial
             }
             this.dataHandler.IsProgrammaticControlUpdate = false;
 
-            // update the status bar to show which image we are on out of the total displayed under the current selection
-            // the total is always refreshed as it's not known if ShowImage() is being called due to a seletion change
-            this.statusBar.SetCurrentFile(fileIndex + 1); // Add one because indexes are 0-based
-            this.statusBar.SetCount(this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
+            // update status bar
+            // The file count is always refreshed as it's not known if ShowFile() is being called due to a seletion change.
+            this.statusBar.SetCurrentFile(fileIndex);
+            this.statusBar.SetFileCount(this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
             this.statusBar.ClearMessage();
 
-            // update nav slider's position
-            // +1 since slider is ones based
-            this.FileNavigatorSlider.Value = fileIndex + 1;
+            // update nav slider thumb's position to the current file
+            this.FileNavigatorSlider.Value = Utilities.ToDisplayIndex(fileIndex);
 
             // display new file if the file changed
             // This avoids unnecessary image reloads and refreshes in cases where ShowFile() is just being called to refresh controls.
@@ -2514,12 +2506,11 @@ namespace Carnassial
 
         private bool TrySetKeyboardFocusToMarkableCanvas(bool checkForControlFocus, InputEventArgs eventArgs)
         {
-            // If the text box or combobox has the focus, we usually don't want to reset the focus. 
-            // However, there are a few instances (e.g., after enter has been pressed) where we no longer want it 
-            // to have the focus, so we allow for that via this flag.
+            // if a data entry control has focus typically focus should remain on the control
+            // However, there are a few instances (mainly after enter or escape) where focus should go back to the markable canvas.  Among other things,
+            // this lets arrow keys be used to move to the next file after data entry's completed.
             if (checkForControlFocus && eventArgs is KeyEventArgs)
             {
-                // If we are in a data control, don't reset the focus.
                 if (this.SendKeyToDataEntryControlOrMenu((KeyEventArgs)eventArgs))
                 {
                     return false;
@@ -2649,9 +2640,9 @@ namespace Carnassial
             this.FeedbackControl.ProgressBar.Value = percent;
         }
 
-        // On exiting, save various attributes so we can use recover them later
         private void Window_Closing(object sender, CancelEventArgs e)
         {
+            // persist image set properties
             if ((this.dataHandler != null) &&
                 (this.dataHandler.FileDatabase != null) &&
                 (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0))
@@ -2673,7 +2664,7 @@ namespace Carnassial
                     this.dataHandler.FileDatabase.ImageSet.MostRecentFileID = this.dataHandler.ImageCache.Current.ID;
                 }
 
-                // save image set properties to the database
+                // write image set properties to the database
                 this.dataHandler.FileDatabase.SyncImageSetToDatabase();
 
                 // ensure custom filter operator is synchronized in state for writing to user's registry

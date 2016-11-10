@@ -83,17 +83,15 @@ namespace Carnassial.Images
             int redOffset;
             WriteableBitmapExtensions.GetColorOffsets(image, out blueOffset, out greenOffset, out redOffset);
 
-            // various counters that we will use in calculation of image darkness
-            int darkPixels = 0;
-            int uncoloredPixels = 0;
-            int countedPixels = 0;
-
             // Examine only a subset of pixels as otherwise this is a very expensive operation
             // TODO DISCRETIONARY: Calculate pixelStride as a function of image size so future high res images will still be processed quickly.
             byte* currentPixel = (byte*)image.BackBuffer.ToPointer(); // the imageIndex will point to a particular byte in the pixel array
             int pixelSizeInBytes = image.Format.BitsPerPixel / 8;
             int pixelStride = Constant.Images.DarkPixelSampleStrideDefault;
             int totalPixels = image.PixelHeight * image.PixelWidth; // total number of pixels in the image
+            int countedPixels = 0;
+            int darkPixels = 0;
+            int uncoloredPixels = 0;
             for (int pixelIndex = 0; pixelIndex < totalPixels; pixelIndex += pixelStride)
             {
                 // get next pixel of interest

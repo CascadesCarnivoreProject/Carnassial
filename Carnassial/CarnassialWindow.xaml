@@ -48,7 +48,7 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuFileCloneCurrent" Header="Copy the current image or video _file..." Click="MenuFileCloneCurrent_Click" IsEnabled="False" ToolTip="Makes a copy of the current file in a location of your choosing." />
+                <MenuItem Name="MenuFileCloneCurrent" Header="Make a copy of the current _file..." Click="MenuFileCloneCurrent_Click" IsEnabled="False" ToolTip="Makes a copy of the current file in a location of your choosing." />
                 <Separator />
                 <MenuItem Name="MenuFileRenameFileDatabase" Header="Rename the _data file..." Click="MenuFileRenameFileDatabase_Click" IsEnabled="False" ToolTip="Renames the data file to a name of your choosing." />
                 <Separator />
@@ -91,10 +91,10 @@
                         <Image Source="Resources/ShowHideDeletedItem_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Name="MenuEditDeleteCurrentFile" Header="D_elete the current file..." Click="MenuEditDeleteImages_Click" ToolTip="Deletes the file but not the data entered for it." />
-                <MenuItem Name="MenuEditDeleteCurrentFileAndData" Header="D_elete the current file and its data..." Click="MenuEditDeleteImages_Click" ToolTip="Deletes the file and the data entered for it." />
-                <MenuItem Name="MenuEditDeleteFiles" Header="Delete all files in the _current selection marked for deletion ..." Click="MenuEditDeleteImages_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, but leaves entered data intact." />
-                <MenuItem Name="MenuEditDeleteFilesAndData" Header="Delete all files in the _current selection marked for deletion and their data..." Click="MenuEditDeleteImages_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files." />
+                <MenuItem Name="MenuEditDeleteCurrentFile" Header="D_elete the current file..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes the file but not the data entered for it." />
+                <MenuItem Name="MenuEditDeleteCurrentFileAndData" Header="D_elete the current file and its data..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes the file and the data entered for it." />
+                <MenuItem Name="MenuEditDeleteFiles" Header="Delete all files in the _current selection marked for deletion ..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, but leaves entered data intact." />
+                <MenuItem Name="MenuEditDeleteFilesAndData" Header="Delete all files in the _current selection marked for deletion and their data..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files." />
             </MenuItem>
             
             <!-- Options Menu -->
