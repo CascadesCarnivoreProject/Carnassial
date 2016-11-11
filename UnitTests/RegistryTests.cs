@@ -13,7 +13,7 @@ namespace Carnassial.UnitTests
     public class RegistryTests : CarnassialTest
     {
         /// <summary>
-        /// Sanity test against whatever the current state of Carnassial' registry keys is.
+        /// Sanity test against whatever the current state of Carnassial's registry keys is.
         /// </summary>
         [TestMethod]
         public void CarnassialProductionKeysRead()
@@ -62,18 +62,8 @@ namespace Carnassial.UnitTests
             userSettings.OrderFilesByDateTime = true;
             userSettings.SkipDarkImagesCheck = true;
             userSettings.SuppressAmbiguousDatesDialog = true;
-            userSettings.SuppressCsvExportDialog = true;
             userSettings.SuppressCsvImportPrompt = true;
             userSettings.SuppressFileCountOnImportDialog = true;
-            userSettings.SuppressSelectedAmbiguousDatesPrompt = true;
-            userSettings.SuppressSelectedCsvExportPrompt = true;
-            userSettings.SuppressSelectedDarkThresholdPrompt = true;
-            userSettings.SuppressSelectedDateTimeFixedCorrectionPrompt = true;
-            userSettings.SuppressSelectedDateTimeLinearCorrectionPrompt = true;
-            userSettings.SuppressSelectedDaylightSavingsCorrectionPrompt = true;
-            userSettings.SuppressSelectedPopulateFieldFromMetadataPrompt = true;
-            userSettings.SuppressSelectedRereadDatesFromFilesPrompt = true;
-            userSettings.SuppressSelectedSetTimeZonePrompt = true;
             userSettings.Throttles.SetDesiredImageRendersPerSecond(Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
 
             userSettings.WriteToRegistry();
@@ -93,18 +83,8 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.OrderFilesByDateTime);
             Assert.IsTrue(userSettings.SkipDarkImagesCheck);
             Assert.IsTrue(userSettings.SuppressAmbiguousDatesDialog);
-            Assert.IsTrue(userSettings.SuppressCsvExportDialog);
             Assert.IsTrue(userSettings.SuppressCsvImportPrompt);
             Assert.IsTrue(userSettings.SuppressFileCountOnImportDialog);
-            Assert.IsTrue(userSettings.SuppressSelectedAmbiguousDatesPrompt);
-            Assert.IsTrue(userSettings.SuppressSelectedCsvExportPrompt);
-            Assert.IsTrue(userSettings.SuppressSelectedDarkThresholdPrompt);
-            Assert.IsTrue(userSettings.SuppressSelectedDateTimeFixedCorrectionPrompt);
-            Assert.IsTrue(userSettings.SuppressSelectedDateTimeLinearCorrectionPrompt);
-            Assert.IsTrue(userSettings.SuppressSelectedDaylightSavingsCorrectionPrompt);
-            Assert.IsTrue(userSettings.SuppressSelectedPopulateFieldFromMetadataPrompt);
-            Assert.IsTrue(userSettings.SuppressSelectedRereadDatesFromFilesPrompt);
-            Assert.IsTrue(userSettings.SuppressSelectedSetTimeZonePrompt);
             Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
 
             Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
@@ -283,17 +263,8 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(userSettings.OrderFilesByDateTime);
             Assert.IsFalse(userSettings.SkipDarkImagesCheck);
             Assert.IsFalse(userSettings.SuppressAmbiguousDatesDialog);
-            Assert.IsFalse(userSettings.SuppressCsvExportDialog);
             Assert.IsFalse(userSettings.SuppressCsvImportPrompt);
             Assert.IsFalse(userSettings.SuppressFileCountOnImportDialog);
-            Assert.IsFalse(userSettings.SuppressSelectedAmbiguousDatesPrompt);
-            Assert.IsFalse(userSettings.SuppressSelectedCsvExportPrompt);
-            Assert.IsFalse(userSettings.SuppressSelectedDarkThresholdPrompt);
-            Assert.IsFalse(userSettings.SuppressSelectedDateTimeFixedCorrectionPrompt);
-            Assert.IsFalse(userSettings.SuppressSelectedDateTimeLinearCorrectionPrompt);
-            Assert.IsFalse(userSettings.SuppressSelectedPopulateFieldFromMetadataPrompt);
-            Assert.IsFalse(userSettings.SuppressSelectedRereadDatesFromFilesPrompt);
-            Assert.IsFalse(userSettings.SuppressSelectedSetTimeZonePrompt);
         }
     }
 }

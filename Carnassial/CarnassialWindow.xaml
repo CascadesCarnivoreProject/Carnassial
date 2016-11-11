@@ -23,64 +23,93 @@
         <!-- Menu Bar -->
         <Menu Grid.Row="0">
             <!-- File Menu -->
-            <MenuItem Header="_File" SubmenuOpened="File_SubmenuOpening">
+            <MenuItem Header="_File" SubmenuOpened="MenuFile_SubmenuOpened">
                 <MenuItem Name="MenuFileLoadImageSet" Header="_Load template, images, and videos..." Click="MenuFileLoadImageSet_Click" ToolTip="Asks for a template and then opens an existing database or creates a new database.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/OpenFolder_16x.png" />
+                        <Image Source="Resources/Menu/OpenFolder_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Name="MenuFileRecentImageSets" Header="Load a _recently used image set" IsEnabled="False" ToolTip="Open a recently used image set." />
                 <MenuItem Name="MenuFileAddFilesToImageSet" Header="_Add images and videos to image set..." Click="MenuFileAddFilesToImageSet_Click" IsEnabled="False" ToolTip="Add more images or videos to the currently opened image set.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/AddItem_16x.png" />
+                        <Image Source="Resources/Menu/AddItem_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuFileExportCsv" Header="Export data for this image set as a ._csv file..." IsEnabled="False" Click="MenuFileExportCsv_Click" ToolTip="Exports data for the selected images into a .csv (comma separated value) file.">
+                <MenuItem Name="MenuFileExportCsv" Header="Ex_port data for this image set as a .csv file..." IsEnabled="False" Click="MenuFileExportCsv_Click" ToolTip="Exports data for the selected images into a .csv (comma separated value) file.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/ExportFile_16x.png" />
+                        <Image Source="Resources/Menu/ExportFile_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Name="MenuFileExportCsvAndView" Header="Export data for this image set as a .csv file and preview in _Excel..." IsEnabled="False" Click="MenuFileExportCsv_Click" ToolTip="Exports data for the selected files in the image set into a .csv (comma separated value) file and previews it in Excel." />
-                <MenuItem Name="MenuFileImportCsv" Header="I_mport data from a .csv file..." IsEnabled="False" Click="MenuFileImportFromCsv_Click" ToolTip="Exports data for the selected files in the image set into a .csv (comma separated value) file.">
+                <MenuItem Name="MenuFileImportCsv" Header="I_mport data from a .csv file..." IsEnabled="False" Click="MenuFileImportCsv_Click" ToolTip="Exports data for the selected files in the image set into a .csv (comma separated value) file.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/ImportFile_16x.png" />
+                        <Image Source="Resources/Menu/ImportFile_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuFileCloneCurrent" Header="Make a copy of the current _file..." Click="MenuFileCloneCurrent_Click" IsEnabled="False" ToolTip="Makes a copy of the current file in a location of your choosing." />
+                <MenuItem Name="MenuFileCloneCurrent" Header="Make a copy of the current _file..." Click="MenuFileCloneCurrent_Click" IsEnabled="False" ToolTip="Make a copy of the current file in a location of your choosing." />
+                <MenuItem Name="MenuFileMoveFiles" Header="Mo_ve selected files..." Click="MenuFileMoveFiles_Click" IsEnabled="False" ToolTip="Move all currently selected file to a location of your choosing.">
+                    <MenuItem.Icon>
+                        <Image Source="Resources/Menu/MoveToSubmodule_16x.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator />
                 <MenuItem Name="MenuFileRenameFileDatabase" Header="Rename the _data file..." Click="MenuFileRenameFileDatabase_Click" IsEnabled="False" ToolTip="Renames the data file to a name of your choosing." />
                 <Separator />
-                <MenuItem Name="MenuFileExit" Header="E_xit" Click="MenuFileExit_Click" ToolTip="Quit Carnassial.">
+                <MenuItem Name="MenuFileCloseImageSet" Header="_Close image set" Click="MenuFileCloseImageSet_Click" IsEnabled="False" ToolTip="Asks for a template and then opens an existing database or creates a new database.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/Exit_16x.png" />
-                    </MenuItem.Icon>
-                </MenuItem>
-            </MenuItem>
-
-            <!-- Edit Menu -->
-            <MenuItem Name="MenuEdit" Header="_Edit" IsEnabled="False">
-                <MenuItem Name="MenuEditCopyPreviousValues" Header="_Copy previous values" Click="CopyPreviousValues_Click" InputGestureText="C" ToolTip="Copy selected data as recorded on the previous file. Applies only to data marked 'Copyable' in the template.">
-                    <MenuItem.Icon>
-                        <Image Source="Resources/CopyDynamicValue_16x.png" />
+                        <Image Source="Resources/Menu/CloseSolution_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuEditRereadDateTimesfromFiles" Header="_Reread date/times from files..." Click="MenuEditRereadDateTimesFromFiles_Click" ToolTip="Reread dates and times from all selected files." />
-                <MenuItem Name="MenuEditDaylightSavingsTimeCorrection" Header="Adjust for _daylight savings time..." Click="MenuEditDaylightSavingsTimeCorrection_Click" ToolTip="Correct daylight saving time issues" />
-                <MenuItem Name="MenuEditDateTimeFixedCorrection" Header="Add a _fixed correction value to every date/time..." Click="MenuEditDateTimeFixedCorrection_Click" ToolTip="Correct for dates or times which are all off by a fixed amount, which happens if your camera was not set to the correct date/time." />
-                <MenuItem Name="MenuEditDateTimeLinearCorrection" Header="Correct for camera clock drif_t..." Click="MenuEditDateTimeLinearCorrection_Click" ToolTip="Correct for a camera's clock running fast or slow.">
+                <MenuItem Name="MenuFileExit" Header="E_xit" Click="MenuFileExit_Click" ToolTip="Quit Carnassial.">
+                <MenuItem.Icon>
+                    <Image Source="Resources/Menu/Exit_16x.png" />
+                </MenuItem.Icon>
+            </MenuItem>
+            </MenuItem>
+
+            <!-- Edit Menu -->
+            <MenuItem Name="MenuEdit" Header="_Edit" IsEnabled="False" SubmenuOpened="MenuEdit_SubmenuOpened">
+                <MenuItem Name="MenuEditUndo" Header="_Undo last paste" Click="MenuEditUndo_Click" ToolTip="Undo application of copied values to the current file." InputGestureText="Ctrl+Z" IsEnabled="False">
                     <MenuItem.Icon>
-                        <Image Source="Resources/TimePicker_16x.png" />
+                        <Image Source="Resources/Menu/Undo_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Name="MenuEditModifyAmbiguousDates" Header="Correct for _ambiguous dates..." Click="MenuEditCorrectAmbiguousDates_Click" ToolTip="Check and optionally correct ambiguous dates (day-month vs month-day)." />
+                <Separator />
+                <MenuItem Name="MenuEditCopy" Header="_Copy values" Click="MenuEditCopy_Click" ToolTip="Copy data entered for the current file to the clipboard." InputGestureText="Ctrl+C">
+                    <MenuItem.Icon>
+                        <Image Source="Resources/Menu/Copy_16x.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Name="MenuEditPaste" Header="_Paste values" Click="MenuEditPaste_Click" ToolTip="Apply data copied to the clipboard to the current file.  Only fields marked copyable in the template are set." InputGestureText="Ctrl+V">
+                    <MenuItem.Icon>
+                        <Image Source="Resources/Menu/Paste_16x.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Name="MenuEditCopyPreviousValues" Header="Paste pre_vious values" Click="PastePreviousValues_Click" InputGestureText="Alt+P" ToolTip="Paste data entered for the previous file into this file.  Only fields marked copyable in the template are copied.">
+                    <MenuItem.Icon>
+                        <Image Source="Resources/Menu/CopyDynamicValue_16x.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Name="MenuEditCopyValuesToAnalysis" Header="Copy values to _analysis" ToolTip="Copy data entered for the current file where it can be reused under a particular analysis number." />
+                <MenuItem Name="MenuEditPasteValuesFromAnalysis" Header="Paste values from anal_ysis" ToolTip="Apply data in an analysis to the current file.  Only fields marked copyable in the template are set." />
+                <Separator />
+                <MenuItem Name="MenuEditRereadDateTimesfromFiles" Header="_Reread date/times from files..." Click="MenuEditRereadDateTimesFromFiles_Click" ToolTip="Reread dates and times from all selected files." />
+                <MenuItem Name="MenuEditDaylightSavingsTimeCorrection" Header="Adjust for dayl_ight savings time..." Click="MenuEditDaylightSavingsTimeCorrection_Click" ToolTip="Correct daylight saving time issues" />
+                <MenuItem Name="MenuEditDateTimeFixedCorrection" Header="Add a fi_xed correction value to every date/time..." Click="MenuEditDateTimeFixedCorrection_Click" ToolTip="Correct for dates or times which are all off by a fixed amount, which happens if your camera was not set to the correct date/time." />
+                <MenuItem Name="MenuEditDateTimeLinearCorrection" Header="Correct for camera clock drif_t..." Click="MenuEditDateTimeLinearCorrection_Click" ToolTip="Correct for a camera's clock running fast or slow.">
+                    <MenuItem.Icon>
+                        <Image Source="Resources/Menu/TimePicker_16x.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Name="MenuEditModifyAmbiguousDates" Header="Correct for ambi_guous dates..." Click="MenuEditCorrectAmbiguousDates_Click" ToolTip="Check and optionally correct ambiguous dates (day-month vs month-day)." />
                 <MenuItem Name="MenuEditSetTimeZone" Header="Set time _zone..." Click="MenuEditSetTimeZone_Click" ToolTip="Reassign the selected files to a particular time zone." />
                 <Separator />
                 <MenuItem Name="MenuEditDarkImages" Header="Identify or reclassify dar_k files..." Click="MenuEditDarkImages_Click" ToolTip="Determine which files are dark and light or reclassify your files.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/DarkTheme_16x.png" />
+                        <Image Source="Resources/Menu/DarkTheme_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Name="MenuEditPopulateFieldFromMetadata" Header="Populate a field with _metadata..." ToolTip="Match a data field with a metadata type. Then populate that field across all files with the corresponding metadata value." Click="MenuEditPopulateFieldFromMetadata_Click" />
@@ -88,35 +117,25 @@
                 <Separator />
                 <MenuItem Name="MenuItemToggleCurrentFileDeleteFlag" Header="Mark or unmark the current file for d_eletion" Click="MenuEditToggleCurrentFileDeleteFlag_Click" InputGestureText="Delete" ToolTip="Check or uncheck the current file's Delete? box.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/ShowHideDeletedItem_16x.png" />
+                        <Image Source="Resources/Menu/ShowHideDeletedItem_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Name="MenuEditDeleteCurrentFile" Header="D_elete the current file..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes the file but not the data entered for it." />
                 <MenuItem Name="MenuEditDeleteCurrentFileAndData" Header="D_elete the current file and its data..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes the file and the data entered for it." />
-                <MenuItem Name="MenuEditDeleteFiles" Header="Delete all files in the _current selection marked for deletion ..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, but leaves entered data intact." />
-                <MenuItem Name="MenuEditDeleteFilesAndData" Header="Delete all files in the _current selection marked for deletion and their data..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files." />
+                <MenuItem Name="MenuEditDeleteFiles" Header="D_elete all files in the current selection marked for deletion..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, but leaves entered data intact." />
+                <MenuItem Name="MenuEditDeleteFilesAndData" Header="D_elete all files in the current selection marked for deletion and their data..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files." />
             </MenuItem>
             
             <!-- Options Menu -->
-            <MenuItem Name="MenuOptions" Header="_Options" IsEnabled="False" SubmenuOpened="MenuEdit_SubmenuOpened">
+            <MenuItem Name="MenuOptions" Header="_Options" IsEnabled="False">
                 <MenuItem Name="MenuOptionsSkipDarkFileCheck" IsCheckable="True" IsChecked="False" Header="_Skip dark check when adding files" Click="MenuOptionsSkipDarkFileCheck_Click" ToolTip="Make adding files to an image set faster by not checking if they're dark.  They can be checked for dark later through the Edit menu." />
                 <MenuItem Name="MenuOptionsOrderFilesByDateTime" IsCheckable="True" IsChecked="False" Header="_Order files by date/time" Click="MenuOptionsOrderFilesByDateTime_Click" ToolTip="Sort files by their date/time rather than the order in which they were added to the image set." />
                 <MenuItem Name="MenuOptionsAudioFeedback" IsCheckable="True" IsChecked="False" IsEnabled="False" Header="_Audio feedback" Click="MenuOptionsAudioFeedback_Click" ToolTip="Toggles the audio that speaks the count whenever you add a counting mark to the image." />
                 <Separator/>
                 <MenuItem Name="MenuOptionsDialogsOnOrOff" Header="Turn _dialogs on or off" IsEnabled="False">
                     <MenuItem Name="MenuOptionsEnableAmbiguousDatesDialog" IsCheckable="True" Header="Display _ambiguous dates imported dialog" Click="MenuOptionsAmbiguousDatesDialog_Click" ToolTip="Turn on or off the informational dialog displayed when files with ambiguous dates are added to an image set." />
-                    <MenuItem Name="MenuOptionsEnableSelectedAmbiguousDatesPrompt" IsCheckable="True" Header="Display _ambiguous dates subset prompt" Click="MenuOptionsEnableSelectedAmbiguousDatesPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when ambiguous date clarification is performed when only some of the image set is selected." />
                     <MenuItem Name="MenuOptionsEnableFileCountOnImportDialog" IsCheckable="True" Header="Display _counts when files are added" Click="MenuOptionsEnableFileCountOnImportDialog_Click" ToolTip="Turn on or off the informational dialog displaying image counts when files are loaded into an image set." />
-                    <MenuItem Name="MenuOptionsEnableSelectedDateTimeLinearCorrectionPrompt" IsCheckable="True" Header="Display _clock drift subset prompt" Click="MenuOptionsEnableSelectedDateTimeLinearCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when clock drift correction is performed when only some of the image set is selected." />
-                    <MenuItem Name="MenuOptionsEnableCsvExportDialog" IsCheckable="True" Header="Display _CSV export dialog" Click="MenuOptionsEnableCsvExportDialog_Click" ToolTip="Turn on or off the informational dialog displayed when .csv files are exported." />
-                    <MenuItem Name="MenuOptionsEnableSelectedCsvExportPrompt" IsCheckable="True" Header="Display _CSV export subset prompt" Click="MenuOptionsEnableSelectedCsvExportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when .csv export is performed when only some of the image set is selected." />
-                    <MenuItem Name="MenuOptionsEnableCsvImportPrompt" IsCheckable="True" Header="Display _CSV import prompt" Click="MenuOptionsEnableCsvImportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when a .csv file is imported." />
-                    <MenuItem Name="MenuOptionsEnableSelectedDarkThresholdPrompt" IsCheckable="True" Header="Display dark _threshold subset prompt" Click="MenuOptionsEnableSelectedDarkThresholdPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when adjusting the dark threshold when only some of the image set is selected." />
-                    <MenuItem Name="MenuOptionsEnableSelectedDaylightSavingsCorrectionPrompt" IsCheckable="True" Header="Display _daylight savings correction subset prompt" Click="MenuOptionsEnableSelectedDaylightSavingsCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when corrections for daylight savings time is performed when only some of the image set is selected." />
-                    <MenuItem Name="MenuOptionsEnableSelectedDateTimeFixedCorrectionPrompt" IsCheckable="True" Header="Display _fixed date/time correction subset prompt" Click="MenuOptionsEnableSelectedDateTimeFixedCorrectionPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when fixed date/time correction is performed when only some of the image set is selected." />
-                    <MenuItem Name="MenuOptionsEnableSelectedPopulateFieldFromMetadataPrompt" IsCheckable="True" Header="Display _metadata subset prompt" Click="MenuOptionsEnableSelectedPopulateFieldFromMetadataPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when metadata is read from when only some of the image set is selected." />
-                    <MenuItem Name="MenuOptionsEnableSelectedRereadDatesFromFilesPrompt" IsCheckable="True" Header="Display _reread dates subset prompt" Click="MenuOptionsEnableSelectedRereadDatesFromFilesPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when dates are reloaded from files when only some of the image set is selected." />
-                    <MenuItem Name="MenuOptionsEnableSelectedSetTimeZonePrompt" IsCheckable="True" Header="Display set time _zone subset prompt" Click="MenuOptionsEnableSelectedSetTimeZonePrompt_Click" ToolTip="Turn on or off the informational dialog displayed when time zones are assigned when only some of the image set is selected." />
+                    <MenuItem Name="MenuOptionsEnableCsvImportPrompt" IsCheckable="True" Header="Display ._csv import prompt" Click="MenuOptionsEnableCsvImportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when a .csv file is imported." />
                 </MenuItem>
                 <Separator/>
                 <MenuItem Name="MenuOptionsAdvancedImageSetOptions" Header="Advanced _image set options..." Click="MenuOptionsAdvancedImageSetOptions_Click" ToolTip="Image set configuration options that should only be used by advanced users."/>
@@ -127,33 +146,33 @@
             <MenuItem Name="MenuView" Header="_View" IsEnabled="False" ToolTip="Zooming, navigating, and image differencing.">
                 <MenuItem Name="MenuViewShowNextFile" Header="View _next file" Click="MenuViewShowNextFile_Click" InputGestureText="&#x2192;" ToolTip="View the next file in the image set.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/Forward_16x.png" />
+                        <Image Source="Resources/Menu/Forward_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Name="MenuViewShowPreviousFile" Header="View _previous file" Click="MenuViewShowPreviousFile_Click" InputGestureText="&#x2190;" ToolTip="View the previous file in the image set.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/Backward_16x.png" />
+                        <Image Source="Resources/Menu/Backward_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Name="MenuViewPlayVideo" Header="Play or pause _video" Click="MenuViewPlayVideo_Click" InputGestureText="Space" ToolTip="Play the current video or pause it if it's currently playing.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/PlayVideo_16x.png" />
+                        <Image Source="Resources/Menu/PlayVideo_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
                 <MenuItem Name="MenuViewZoomIn" Header="Zoom _in" Click="MenuViewZoomIn_Click" InputGestureText="=" ToolTip="Zoom into this file.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/ZoomIn_16x.png" />
+                        <Image Source="Resources/Menu/ZoomIn_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Name="MenuViewZoomOut" Header="Zoom _out" Click="MenuViewZoomOut_Click" InputGestureText="-" ToolTip="Zoom out in this file.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/ZoomOut_16x.png" />
+                        <Image Source="Resources/Menu/ZoomOut_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Name="MenuViewZoomToFit" Header="Zoom out _all the way" Click="MenuViewZoomToFit_Click" InputGestureText="Ctrl+0" ToolTip="Zoom out to the entire file.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/ZoomToFit_16x.png" />
+                        <Image Source="Resources/Menu/ZoomToFit_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -163,19 +182,19 @@
                 <MenuItem Name="MenuOptionsDisplayMagnifier" IsCheckable="True" InputGestureText="M" Header="Display _magnifying glass on images" Click="MenuViewDisplayMagnifier_Click" ToolTip="Toggles the presence of the magnifying glass on image files.  The magnifying glass is not available on videos." />
                 <MenuItem Name="MenuViewMagnifierZoomIncrease" InputGestureText="U" Header="Increase magnifying _glass magnification" Click="MenuViewMagnifierIncrease_Click" ToolTip="Increase the magnification of the magnifying glass.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/ExpandArrow_16x.png" />
+                        <Image Source="Resources/Menu/ExpandArrow_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Name="MenuViewMagnifierZoomDecrease" InputGestureText="D" Header="_Decrease magnifying glass magnification" Click="MenuViewMagnifierDecrease_Click" ToolTip="Decrease the magnification of the magnifying glass.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/ContractArrow_16x.png" />
+                        <Image Source="Resources/Menu/ContractArrow_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
                 <MenuItem Name="MenuViewSetBookmark"  Header="Zoom to _bookmark in image" InputGestureText="B" Click="MenuViewApplyBookmark_Click" ToolTip="Zoom to the region saved in the bookmark." />
                 <MenuItem Name="MenuViewApplyBookmark" Header="Bookmark current _zoom in image" InputGestureText="Ctrl+B" Click="MenuViewSetBookmark_Click" ToolTip="Save the current zoom region setting as a bookmark.">
                     <MenuItem.Icon>
-                        <Image Source="Resources/Bookmark_002_16xMD.png" />
+                        <Image Source="Resources/Menu/Bookmark_002_16xMD.png" />
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
@@ -254,10 +273,17 @@
                                             <controls:DataEntryControls x:Name="DataEntryControls" />
                                         </StackPanel>
                                     </ScrollViewer>
-                                    <Button Name="CopyPreviousValues" Click="CopyPreviousValues_Click" Margin="10,10,10,10" Padding="5,5,5,5" Grid.Column="0" Grid.Row="1" 
-                                        HorizontalAlignment="Left" Content="_Copy previous values" IsEnabled="False"
-                                        MouseEnter="CopyPreviousValues_MouseEnter" MouseLeave="CopyPreviousValues_MouseLeave"
+                                    <StackPanel Orientation="Horizontal" Grid.Column="0" Grid.Row="1">
+                                    <Button Name="PastePreviousValues" Click="PastePreviousValues_Click" Margin="10,10,10,10" Padding="5,5,5,5" Content="_Paste previous" IsEnabled="False"
+                                        MouseEnter="PasteButton_MouseEnter" MouseLeave="PasteButton_MouseLeave"
                                         ToolTip="Copy the highlighted data (fields marked 'Copyable' in the template) from the previous file." />
+                                    <Button Name="PasteAnalysis1" Click="PasteAnalysis1_Click" Margin="10,10,10,10" Padding="5,5,5,5" Content="Analysis _1" IsEnabled="False"
+                                        MouseEnter="PasteButton_MouseEnter" MouseLeave="PasteButton_MouseLeave"
+                                        ToolTip="Apply data in analysis 1." />
+                                    <Button Name="PasteAnalysis2" Click="PasteAnalysis2_Click" Margin="10,10,10,10" Padding="5,5,5,5" Content="Analysis _2" IsEnabled="False"
+                                        MouseEnter="PasteButton_MouseEnter" MouseLeave="PasteButton_MouseLeave"
+                                        ToolTip="Apply data in analysis 2." />
+                                    </StackPanel>
                                 </Grid>
                             </xcad:LayoutAnchorable>
                         </xcad:LayoutAnchorablePane>

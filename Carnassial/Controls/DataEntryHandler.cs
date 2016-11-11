@@ -211,10 +211,6 @@ namespace Carnassial.Controls
                     case Constant.DatabaseColumn.RelativePath:
                         DataEntryNote note = (DataEntryNote)pair.Value;
                         note.ContentControl.TextAutocompleted += this.NoteControl_TextAutocompleted;
-                        if (controlType == Constant.Control.Note)
-                        {
-                            this.SetContextMenuCallbacks(note);
-                        }
                         break;
                     case Constant.DatabaseColumn.DateTime:
                         DataEntryDateTime dateTime = (DataEntryDateTime)pair.Value;
@@ -229,27 +225,23 @@ namespace Carnassial.Controls
                         DataEntryFlag flag = (DataEntryFlag)pair.Value;
                         flag.ContentControl.Checked += this.FlagControl_CheckedChanged;
                         flag.ContentControl.Unchecked += this.FlagControl_CheckedChanged;
-                        if (controlType == Constant.Control.Flag)
-                        {
-                            this.SetContextMenuCallbacks(flag);
-                        }
                         break;
                     case Constant.DatabaseColumn.ImageQuality:
                     case Constant.Control.FixedChoice:
                         DataEntryChoice choice = (DataEntryChoice)pair.Value;
                         choice.ContentControl.SelectionChanged += this.ChoiceControl_SelectionChanged;
-                        if (controlType == Constant.Control.FixedChoice)
-                        {
-                            this.SetContextMenuCallbacks(choice);
-                        }
                         break;
                     case Constant.Control.Counter:
                         DataEntryCounter counter = (DataEntryCounter)pair.Value;
                         counter.ContentControl.TextChanged += this.CounterControl_TextChanged;
-                        this.SetContextMenuCallbacks(counter);
                         break;
                     default:
-                        break;
+                        throw new NotSupportedException(String.Format("Unhandled control type '{0}'.", controlType));
+                }
+
+                if (pair.Value.Copyable)
+                {
+                    this.SetPropagateContextMenu(pair.Value);
                 }
             }
         }
@@ -465,7 +457,7 @@ namespace Carnassial.Controls
             this.IsProgrammaticControlUpdate = false;
         }
 
-        private void SetContextMenuCallbacks(DataEntryControl control)
+        private void SetPropagateContextMenu(DataEntryControl control)
         {
             MenuItem menuItemPropagateFromLastValue = new MenuItem();
             menuItemPropagateFromLastValue.IsCheckable = false;

@@ -93,9 +93,14 @@ namespace Carnassial.Database
             get { return this.Files.RowCount; }
         }
 
-        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", Justification = "StyleCop bug.")]
         public void AddFiles(List<ImageRow> files, Action<ImageRow, int> onFileAdded)
         {
+            if (files.Count < 1)
+            {
+                // nothing to do
+                return;
+            }
+
             // setup
             string lastUserDefinedCounterDataLabel = null;
             Dictionary<string, string> defaultValuesByDataLabel = new Dictionary<string, string>();
@@ -185,6 +190,26 @@ namespace Carnassial.Database
             this.boundDataGrid = dataGrid;
             this.onFileDataTableRowChanged = onRowChanged;
             this.Files.BindDataGrid(dataGrid, onRowChanged);
+        }
+
+        public List<string> MoveFilesToFolder(string destinationFolderPath)
+        {
+            Debug.Assert(destinationFolderPath.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase), String.Format("Destination path '{0}' is not under '{1}'.", destinationFolderPath, this.FolderPath));
+
+            List<ColumnTuplesWithWhere> filesToUpdate = new List<ColumnTuplesWithWhere>();
+            List<string> immovableFiles = new List<string>();
+            foreach (ImageRow file in this.Files)
+            {
+                if (file.TryMoveToFolder(this.FolderPath, destinationFolderPath, false))
+                {
+                    ColumnTuple relativePath = new ColumnTuple(Constant.DatabaseColumn.RelativePath, file.RelativePath);
+                    ColumnTuplesWithWhere fileUpdate = new ColumnTuplesWithWhere(new List<ColumnTuple>() { relativePath }, file.ID);
+                    filesToUpdate.Add(fileUpdate);
+                }
+            }
+
+            this.UpdateFiles(filesToUpdate);
+            return immovableFiles;
         }
 
         /// <summary>
@@ -336,20 +361,6 @@ namespace Carnassial.Database
             }
         }
 
-        private ImageRow GetFile(string where)
-        {
-            List<ImageRow> files = this.Files.Select(where);
-            if (files.Count == 0)
-            {
-                return null;
-            }
-            if (files.Count == 1)
-            {
-                return files[0];
-            }
-            throw new ArgumentOutOfRangeException("where", String.Format("{0} files match '{1}'.", files.Count, where));
-        }
-
         /// <summary> 
         /// Rebuild the file table with all files in the database table which match the specified selection.
         /// </summary>
@@ -395,22 +406,16 @@ namespace Carnassial.Database
             string relativePath = NativeMethods.GetRelativePath(this.FolderPath, fileInfo.FullName);
             relativePath = Path.GetDirectoryName(relativePath);
 
-            ColumnTuplesWithWhere imageQuery = new ColumnTuplesWithWhere();
-            imageQuery.SetWhere(relativePath, fileInfo.Name);
-            file = this.GetFile(imageQuery.Where);
-
-            if (file != null)
+            if (this.TryGetFile(relativePath, fileInfo.Name, out file))
             {
                 return true;
             }
-            else
-            {
-                file = this.Files.NewRow(fileInfo);
-                file.RelativePath = relativePath;
-                Debug.Assert(File.Exists(file.GetFilePath(this.FolderPath)), "Failure in ImageRow formation.");
-                file.SetDateTimeOffsetFromFileInfo(this.FolderPath, imageSetTimeZone);
-                return false;
-            }
+
+            file = this.Files.NewRow(fileInfo);
+            file.RelativePath = relativePath;
+            Debug.Assert(File.Exists(file.GetFilePath(this.FolderPath)), "Failure in ImageRow formation.");
+            file.SetDateTimeOffsetFromFileInfo(this.FolderPath, imageSetTimeZone);
+            return false;
         }
 
         public Dictionary<FileSelection, int> GetFileCountsBySelection()
@@ -464,6 +469,25 @@ namespace Carnassial.Database
             }
         }
 
+        private bool TryGetFile(string relativePath, string fileName, out ImageRow file)
+        {
+            ColumnTuplesWithWhere fileQuery = new ColumnTuplesWithWhere();
+            fileQuery.SetWhere(relativePath, fileName);
+            List<ImageRow> files = this.Files.Select(fileQuery.Where);
+            if (files.Count == 0)
+            {
+                file = null;
+                return false;
+            }
+            if (files.Count == 1)
+            {
+                file = files[0];
+                return true;
+            }
+
+            throw new ArgumentOutOfRangeException("relativePath, fileName", String.Format("{0} files match '{1}'.", files.Count, fileQuery.Where));
+        }
+
         /// <summary>
         /// Update a column's value (identified by its data label) in the row of an existing file (identified by its ID) 
         /// </summary>
@@ -488,10 +512,16 @@ namespace Carnassial.Database
             this.UpdateFiles(valueSource, dataLabel, 0, this.CurrentlySelectedFileCount - 1);
         }
 
-        public void UpdateFiles(List<ColumnTuplesWithWhere> imagesToUpdate)
+        public void UpdateFiles(List<ColumnTuplesWithWhere> filesToUpdate)
         {
+            if (filesToUpdate.Count < 1)
+            {
+                // nothing to do
+                return;
+            }
+
             this.CreateBackupIfNeeded();
-            this.Database.Update(Constant.DatabaseTable.FileData, imagesToUpdate);
+            this.Database.Update(Constant.DatabaseTable.FileData, filesToUpdate);
         }
 
         public void UpdateFiles(ImageRow valueSource, string dataLabel, int fromIndex, int toIndex)

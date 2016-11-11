@@ -101,30 +101,30 @@ namespace Carnassial.UnitTests
             return DateTimeOffset.ParseExact(dateTimeAsString, TestConstant.DateTimeWithOffsetFormat, CultureInfo.InvariantCulture);
         }
 
-        public void Verify(ImageRow image, TimeZoneInfo timeZone)
+        public void Verify(ImageRow file, TimeZoneInfo timeZone)
         {
             // this.DarkPixelFraction isn't applicable
-            Assert.IsTrue(image.DateTime.Kind == DateTimeKind.Utc);
-            Assert.IsTrue(image.DeleteFlag == this.DeleteFlag);
-            Assert.IsTrue(image.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, image.FileName);
-            Assert.IsTrue(image.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, image.ID);
-            Assert.IsTrue(image.ImageQuality == this.Quality, "{0}: Expected ImageQuality '{1}' but found '{2}'.", this.FileName, this.Quality, image.ImageQuality);
+            Assert.IsTrue(file.DateTime.Kind == DateTimeKind.Utc);
+            Assert.IsTrue(file.DeleteFlag == this.DeleteFlag);
+            Assert.IsTrue(file.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, file.FileName);
+            Assert.IsTrue(file.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, file.ID);
+            Assert.IsTrue(file.ImageQuality == this.Quality, "{0}: Expected ImageQuality '{1}' but found '{2}'.", this.FileName, this.Quality, file.ImageQuality);
             // this.IsColor isn't applicable
-            Assert.IsTrue(image.RelativePath == this.RelativePath, "{0}: Expected RelativePath '{1}' but found '{2}'.", this.FileName, this.RelativePath, image.RelativePath);
+            Assert.IsTrue(file.RelativePath == this.RelativePath, "{0}: Expected RelativePath '{1}' but found '{2}'.", this.FileName, this.RelativePath, file.RelativePath);
             // this.UserDefinedColumnsByDataLabel isn't current applicable
 
             // bypass checking of Date and Time properties if requested, for example if the camera didn't generate image taken metadata
             if (this.SkipDateTimeVerification == false)
             {
-                DateTimeOffset imageDateTime = image.GetDateTime();
+                DateTimeOffset imageDateTime = file.GetDateTime();
                 DateTimeOffset expectedDateTime = this.ConvertDateTimeToTimeZone(timeZone);
                 Assert.IsTrue(imageDateTime.UtcDateTime == expectedDateTime.UtcDateTime, "{0}: Expected date time '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(imageDateTime.UtcDateTime));
                 Assert.IsTrue(imageDateTime.Offset == expectedDateTime.Offset, "{0}: Expected date time offset '{1}' but found '{2}'.", this.FileName, expectedDateTime.Offset, imageDateTime.Offset);
 
                 string expectedDate = DateTimeHandler.ToDisplayDateString(expectedDateTime);
-                Assert.IsTrue(image.DateTime == expectedDateTime.UtcDateTime, "{0}: Expected DateTime '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(image.DateTime));
+                Assert.IsTrue(file.DateTime == expectedDateTime.UtcDateTime, "{0}: Expected DateTime '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(file.DateTime));
                 string expectedTime = DateTimeHandler.ToDisplayTimeString(expectedDateTime);
-                Assert.IsTrue(image.UtcOffset == expectedDateTime.Offset, "{0}: Expected UtcOffset '{1}' but found '{2}'.", this.FileName, expectedDateTime.Offset, image.UtcOffset);
+                Assert.IsTrue(file.UtcOffset == expectedDateTime.Offset, "{0}: Expected UtcOffset '{1}' but found '{2}'.", this.FileName, expectedDateTime.Offset, file.UtcOffset);
             }
         }
     }

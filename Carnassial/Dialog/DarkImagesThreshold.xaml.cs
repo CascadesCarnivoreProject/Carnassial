@@ -432,8 +432,8 @@ namespace Carnassial.Dialog
 
                 this.OriginalClassification.Content = imageQuality.OldImageQuality;
                 this.NewClassification.Content = imageQuality.NewImageQuality;
-                this.DarkPixelRatio.Content = String.Format("{0,3:##0}%", 100 * this.darkPixelRatio);
-                this.RatioFound.Content = String.Format("{0,3:##0}", 100 * imageQuality.DarkPixelRatioFound);
+                this.DarkPixelRatio.Content = String.Format("{0,3:##0}%", 100.0 * this.darkPixelRatio);
+                this.RatioFound.Content = String.Format("{0,3:##0}", 100.0 * imageQuality.DarkPixelRatioFound);
 
                 if (imageQuality.IsColor) // color image 
                 {

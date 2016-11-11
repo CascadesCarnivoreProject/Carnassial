@@ -52,6 +52,6 @@ The need to analyze remote camera data is a common one.  In addition to Carnassi
 
 * Carnassial is fully free whilst CPW Photo Warehouse​ requires a Microsoft Access license (and permissions configuration).  Carnassial is more flexible and smoother in data entry but presently lacks equivalents to CPW's station information, occupancy analysis, and mark recapture analysis.  [CritterShell](https://github.com/CascadesCarnivoreProject/CritterShell) offers detection and occupancy analysis.
 * Carnassial is readily available.  Obtaining the eMammal client requires a logon be issued, which can be hard to get.
-* Carnassial and Timelapse are pretty similar.  As of November 2016 Carnassial carries a few more features and less bugs than Timelapse.
+* Carnassial and Timelapse are broadly similar.  As of November 2016 Carnassial offers faster analysis, more flexibility, and fewer defects than Timelapse.
 
 If you know of others please email carnassialdev@gmail.com to let us know.

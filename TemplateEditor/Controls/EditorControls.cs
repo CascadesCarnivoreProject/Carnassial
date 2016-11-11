@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Xceed.Wpf.Toolkit;
 
-namespace Carnassial.Editor.Util
+namespace Carnassial.Editor.Controls
 {
     /// <summary>Generates controls in the provided wrap panel based upon the information in the data grid templateTable.</summary>
     /// <remarks>

@@ -128,6 +128,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="App.config" />
+    <Content Include="CarnassialData.Carnassial.UnitTests.DatabaseTests.RoundtripCsv.FilesToMerge.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="packages.config" />
     <Content Include="CarnivoreTestImages\Reconyx-HC500-20150128-201.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

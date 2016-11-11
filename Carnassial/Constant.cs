@@ -1,4 +1,5 @@
 ﻿using Carnassial.Controls;
+using Carnassial.Database;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -13,6 +14,9 @@ namespace Carnassial
 {
     public static class Constant
     {
+        // cases in CarnassialWindow.Window_PreviewKeyDown must be kept in sync with the number of analysis slots
+        public const int AnalysisSlots = 6;
+
         public const string ApplicationName = "Carnassial";
         public const string MainWindowBaseTitle = "Carnassial: Simplifying Remote Camera Data";
         public const int NumberOfMostRecentDatabasesToTrack = 9;
@@ -224,6 +228,9 @@ namespace Carnassial
 
             public const int ThumbnailWidth = 300;
 
+            public static readonly Lazy<BitmapImage> Copy = Images.Load("Menu/Copy_16x.png");
+            public static readonly Lazy<BitmapImage> Paste = Images.Load("Menu/Paste_16x.png");
+
             public static readonly Lazy<BitmapImage> CorruptFile = Images.Load("CorruptFile_480x.png");
             public static readonly Lazy<BitmapImage> FileNoLongerAvailable = Images.Load("FileNoLongerAvailable_480x.png");
             public static readonly Lazy<BitmapImage> NoSelectableFile = Images.Load("NoSelectableFile_480x.png");
@@ -307,18 +314,8 @@ namespace Carnassial
 
                 // dialog opt outs
                 public const string SuppressAmbiguousDatesDialog = "SuppressAmbiguousDatesDialog";
-                public const string SuppressCsvExportDialog = "SuppressCsvExportDialog";
                 public const string SuppressCsvImportPrompt = "SuppressCsvImportPrompt";
                 public const string SuppressFileCountOnImportDialog = "SuppressFileCountOnImportDialog";
-                public const string SuppressSelectedAmbiguousDatesPrompt = "SuppressSelectedAmbiguousDatesPrompt";
-                public const string SuppressSelectedCsvExportPrompt = "SuppressSelectedCsvExportPrompt";
-                public const string SuppressSelectedDarkThresholdPrompt = "SuppressSelectedDarkThresholdPrompt";
-                public const string SuppressSelectedDateTimeFixedCorrectionPrompt = "SuppressSelectedDateTimeFixedCorrectionPrompt";
-                public const string SuppressSelectedDateTimeLinearCorrectionPrompt = "SuppressSelectedDateTimeLinearCorrectionPrompt";
-                public const string SuppressSelectedDaylightSavingsCorrectionPrompt = "SuppressSelectedDaylightSavingsCorrectionPrompt";
-                public const string SuppressSelectedPopulateFieldFromMetadataPrompt = "SuppressSelectedPopulateFieldFromMetadataPrompt";
-                public const string SuppressSelectedRereadDatesFromFilesPrompt = "SuppressSelectedRereadDatesFromFilesPrompt";
-                public const string SuppressSelectedSetTimeZonePrompt = "SuppressSelectedSetTimeZonePrompt";
             }
 
             public const string RootKey = @"Software\Cascades Carnivore Project\Carnassial\2.0";

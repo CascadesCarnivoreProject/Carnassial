@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Carnassial.Database;
+using System;
+using System.Collections.Generic;
 using System.Windows.Input;
 
 namespace Carnassial.Util
@@ -9,20 +11,24 @@ namespace Carnassial.Util
         private int keyRepeatCount;
         private KeyEventArgs mostRecentKey;
 
+        public List<ImageRow> Analysis { get; private set; }
         public byte DifferenceThreshold { get; set; } // The threshold used for calculating combined differences
         public bool FileNavigatorSliderDragging { get; set; }
         public DateTime MostRecentDragEvent { get; set; }
         public string MouseOverCounter { get; set; }
+        public Dictionary<string, string> UndoBuffer { get; set; }
 
         public CarnassialState()
         {
             this.keyRepeatCount = 0;
             this.mostRecentKey = null;
 
+            this.Analysis = new List<ImageRow>(Constant.AnalysisSlots);
             this.DifferenceThreshold = Constant.Images.DifferenceThresholdDefault;
             this.FileNavigatorSliderDragging = false;
-            this.MouseOverCounter = null;
             this.MostRecentDragEvent = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;
+            this.MouseOverCounter = null;
+            this.UndoBuffer = null;
         }
 
         public int GetKeyRepeatCount(KeyEventArgs key)

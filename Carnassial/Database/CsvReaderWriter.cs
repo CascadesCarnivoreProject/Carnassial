@@ -34,22 +34,24 @@ namespace Carnassial.Database
                 for (int row = 0; row < database.CurrentlySelectedFileCount; row++)
                 {
                     StringBuilder csvRow = new StringBuilder();
-                    ImageRow image = database.Files[row];
+                    ImageRow file = database.Files[row];
                     foreach (string dataLabel in dataLabels)
                     {
-                        csvRow.Append(this.AddColumnValue(image.GetValueDatabaseString(dataLabel)));
+                        csvRow.Append(this.AddColumnValue(file.GetValueDatabaseString(dataLabel)));
                     }
                     fileWriter.WriteLine(csvRow.ToString());
                 }
             }
         }
 
-        public bool TryImportFromCsv(string filePath, FileDatabase fileDatabase, out List<string> importErrors)
+        public bool TryImportFromCsv(string csvFilePath, FileDatabase fileDatabase, out List<string> importErrors)
         {
             importErrors = new List<string>();
-            
+
+            string csvFileFolderPath = Path.GetDirectoryName(csvFilePath);
             List<string> dataLabels = fileDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
-            using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
+            using (FileStream stream = new FileStream(csvFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 using (StreamReader csvReader = new StreamReader(stream))
                 {
@@ -58,12 +60,12 @@ namespace Carnassial.Database
                     List<string> dataLabelsInFileDatabaseButNotInHeader = dataLabels.Except(dataLabelsFromHeader).ToList();
                     foreach (string dataLabel in dataLabelsInFileDatabaseButNotInHeader)
                     {
-                        importErrors.Add("- A column with the DataLabel '" + dataLabel + "' is present in the database but nothing matches that in the .csv file." + Environment.NewLine);
+                        importErrors.Add("- A column with the data label '" + dataLabel + "' is present in the image set but not in the .csv file." + Environment.NewLine);
                     }
                     List<string> dataLabelsInHeaderButNotFileDatabase = dataLabelsFromHeader.Except(dataLabels).ToList();
                     foreach (string dataLabel in dataLabelsInHeaderButNotFileDatabase)
                     {
-                        importErrors.Add("- A column with the DataLabel '" + dataLabel + "' is present in the .csv file but nothing matches that in the database." + Environment.NewLine);
+                        importErrors.Add("- A column with the data label '" + dataLabel + "' is present in the .csv file but not in the image set." + Environment.NewLine);
                     }
 
                     if (importErrors.Count > 0)
@@ -71,8 +73,9 @@ namespace Carnassial.Database
                         return false;
                     }
 
-                    // read image updates from the .csv file
-                    List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
+                    // read data for file from the .csv file
+                    List<ImageRow> filesToInsert = new List<ImageRow>();
+                    List<ColumnTuplesWithWhere> filesToUpdate = new List<ColumnTuplesWithWhere>();
                     for (List<string> row = this.ReadAndParseLine(csvReader); row != null; row = this.ReadAndParseLine(csvReader))
                     {
                         if (row.Count == dataLabels.Count - 1)
@@ -88,22 +91,22 @@ namespace Carnassial.Database
                         }
 
                         // assemble set of column values to update
-                        string imageFileName = null;
+                        string fileName = null;
                         string relativePath = null;
-                        ColumnTuplesWithWhere imageToUpdate = new ColumnTuplesWithWhere();
+                        ColumnTuplesWithWhere fileTuples = new ColumnTuplesWithWhere();
                         for (int field = 0; field < row.Count; ++field)
                         {
                             string dataLabel = dataLabelsFromHeader[field];
                             string value = row[field];
 
-                            // capture components of image's unique identifier for constructing where clause
+                            // capture components of file's unique identifier for constructing where clause
                             // at least for now, it's assumed all renames or moves are done through Carnassial and hence relative path + file name form 
                             // an immutable (and unique) ID
                             DateTime dateTime;
                             TimeSpan utcOffset;
                             if (dataLabel == Constant.DatabaseColumn.File)
                             {
-                                imageFileName = value;
+                                fileName = value;
                             }
                             else if (dataLabel == Constant.DatabaseColumn.RelativePath)
                             {
@@ -112,17 +115,17 @@ namespace Carnassial.Database
                             else if (dataLabel == Constant.DatabaseColumn.DateTime && DateTimeHandler.TryParseDatabaseDateTime(value, out dateTime))
                             {
                                 // pass DateTime to ColumnTuple rather than the string as ColumnTuple owns validation and formatting
-                                imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, dateTime));
+                                fileTuples.Columns.Add(new ColumnTuple(dataLabel, dateTime));
                             }
                             else if (dataLabel == Constant.DatabaseColumn.UtcOffset && DateTimeHandler.TryParseDatabaseUtcOffsetString(value, out utcOffset))
                             {
                                 // as with DateTime, pass parsed UTC offset to ColumnTuple rather than the string as ColumnTuple owns validation and formatting
-                                imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, utcOffset));
+                                fileTuples.Columns.Add(new ColumnTuple(dataLabel, utcOffset));
                             }
                             else if (fileDatabase.FileTableColumnsByDataLabel[dataLabel].IsContentValid(value))
                             {
                                 // include column in update query if value is valid
-                                imageToUpdate.Columns.Add(new ColumnTuple(dataLabel, value));
+                                fileTuples.Columns.Add(new ColumnTuple(dataLabel, value));
                             }
                             else
                             {
@@ -131,21 +134,35 @@ namespace Carnassial.Database
                             }
                         }
 
-                        // accumulate image
-                        Debug.Assert(String.IsNullOrWhiteSpace(imageFileName) == false, "File name was not loaded.");
-                        imageToUpdate.SetWhere(relativePath, imageFileName);
-                        imagesToUpdate.Add(imageToUpdate);
-
-                        // write current batch of updates to database
-                        if (imagesToUpdate.Count >= 100)
+                        if (String.IsNullOrWhiteSpace(fileName))
                         {
-                            fileDatabase.UpdateFiles(imagesToUpdate);
-                            imagesToUpdate.Clear();
+                            importErrors.Add(String.Format("No file name found in row {0}.", row));
+                            continue;
+                        }
+
+                        // if file's already in the image set prepare to set its fields to those in the .csv
+                        // if file's not in the image set prepare to add it to the image set
+                        FileInfo fileInfo = new FileInfo(Path.Combine(csvFileFolderPath, relativePath, fileName));
+                        ImageRow file;
+                        if (fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file))
+                        {
+                            fileTuples.SetWhere(file.ID);
+                            filesToUpdate.Add(fileTuples);
+                        }
+                        else
+                        {
+                            // newly created files have only their name and relative path set; populate all other fields with the data from the .csv
+                            // Population is done via update as insertion is done with default values.
+                            filesToInsert.Add(file);
+                            fileTuples.SetWhere(file.RelativePath, file.FileName);
+                            filesToUpdate.Add(fileTuples);
                         }
                     }
 
-                    // perform any remaining updates
-                    fileDatabase.UpdateFiles(imagesToUpdate);
+                    // perform inserts and updates
+                    // Inserts need to be done first so newly added files can be updated.
+                    fileDatabase.AddFiles(filesToInsert, null);
+                    fileDatabase.UpdateFiles(filesToUpdate);
                     return true;
                 }
             }

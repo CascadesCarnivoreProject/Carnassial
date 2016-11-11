@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace Carnassial.Controls
 {
@@ -27,7 +29,49 @@ namespace Carnassial.Controls
         {
             this.AllowLeadingWhitespace = false;
             this.mostRecentAutocompletion = null;
+            this.PreviewKeyDown += this.OnPreviewKeyDown;
             this.TextChanged += this.OnTextChanged;
+        }
+
+        private int GetIndexOfCurrentAutocompletion()
+        {
+            if (this.Autocompletions == null)
+            {
+                return -1;
+            }
+            return this.Autocompletions.IndexOf(this.Text);
+        }
+
+        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", Justification = "StyleCop bug.")]
+        private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Down:
+                    if (this.Autocompletions == null)
+                    {
+                        return;
+                    }
+                    int indexOfCurrentAutocompletion = this.GetIndexOfCurrentAutocompletion();
+                    if (indexOfCurrentAutocompletion >= this.Autocompletions.Count - 2)
+                    {
+                        return;
+                    }
+                    this.Text = this.Autocompletions[indexOfCurrentAutocompletion + 1];
+                    break;
+                case Key.Up:
+                    indexOfCurrentAutocompletion = this.GetIndexOfCurrentAutocompletion();
+                    if (indexOfCurrentAutocompletion < 1)
+                    {
+                        return;
+                    }
+                    this.Text = this.Autocompletions[indexOfCurrentAutocompletion - 1];
+                    break;
+                default:
+                    return;
+            }
+
+            e.Handled = true;
         }
 
         private void OnTextChanged(object sender, TextChangedEventArgs eventArgs)

@@ -1,4 +1,5 @@
 ﻿using Carnassial.Database;
+using Carnassial.Editor.Controls;
 using Carnassial.Editor.Dialog;
 using Carnassial.Editor.Util;
 using Carnassial.Github;
@@ -89,7 +90,7 @@ namespace Carnassial.Editor
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
 
             this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-            this.GenerateSpreadsheet();
+            this.GenerateSpreadsheetOrderPreview();
             this.OnControlOrderChanged();
 
             this.dataGridBeingUpdatedByCode = false;
@@ -206,10 +207,10 @@ namespace Carnassial.Editor
             return null;
         }
 
-        private void GenerateSpreadsheet()
+        private void GenerateSpreadsheetOrderPreview()
         {
             List<ControlRow> controlsInSpreadsheetOrder = this.templateDatabase.Controls.OrderBy(control => control.SpreadsheetOrder).ToList();
-            this.dgSpreadsheet.Columns.Clear();
+            this.SpreadsheetOrderPreview.Columns.Clear();
             foreach (ControlRow control in controlsInSpreadsheetOrder)
             {
                 DataGridTextColumn column = new DataGridTextColumn();
@@ -221,7 +222,7 @@ namespace Carnassial.Editor
                 else
                 {
                     column.Header = dataLabel;
-                    this.dgSpreadsheet.Columns.Add(column);
+                    this.SpreadsheetOrderPreview.Columns.Add(column);
                 }
             }
         }
@@ -267,7 +268,7 @@ namespace Carnassial.Editor
 
             // Update the user interface specified by the contents of the table
             this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-            this.GenerateSpreadsheet();
+            this.GenerateSpreadsheetOrderPreview();
 
             // update UI for having a .tdb loaded
             this.AddCounterButton.IsEnabled = true;
@@ -544,7 +545,7 @@ namespace Carnassial.Editor
 
             this.templateDatabase.SyncControlToDatabase(control);
             this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-            this.GenerateSpreadsheet();
+            this.GenerateSpreadsheetOrderPreview();
 
             this.dataGridBeingUpdatedByCode = false;
         }
@@ -574,7 +575,7 @@ namespace Carnassial.Editor
 
             // update the control panel so it reflects the current values in the database
             this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-            this.GenerateSpreadsheet();
+            this.GenerateSpreadsheetOrderPreview();
 
             this.dataGridBeingUpdatedByCode = false;
         }

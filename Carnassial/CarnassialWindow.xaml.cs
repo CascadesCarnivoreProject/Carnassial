@@ -63,16 +63,7 @@ namespace Carnassial
             this.state.ReadFromRegistry();
 
             this.MenuOptionsAudioFeedback.IsChecked = this.state.AudioFeedback;
-            this.MenuOptionsEnableCsvExportDialog.IsChecked = !this.state.SuppressCsvExportDialog;
             this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.state.SuppressCsvImportPrompt;
-            this.MenuOptionsEnableSelectedAmbiguousDatesPrompt.IsChecked = !this.state.SuppressSelectedAmbiguousDatesPrompt;
-            this.MenuOptionsEnableSelectedCsvExportPrompt.IsChecked = !this.state.SuppressSelectedCsvExportPrompt;
-            this.MenuOptionsEnableSelectedDarkThresholdPrompt.IsChecked = !this.state.SuppressSelectedDarkThresholdPrompt;
-            this.MenuOptionsEnableSelectedDateTimeFixedCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDateTimeFixedCorrectionPrompt;
-            this.MenuOptionsEnableSelectedDateTimeLinearCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDateTimeLinearCorrectionPrompt;
-            this.MenuOptionsEnableSelectedDaylightSavingsCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDaylightSavingsCorrectionPrompt;
-            this.MenuOptionsEnableSelectedPopulateFieldFromMetadataPrompt.IsChecked = !this.state.SuppressSelectedPopulateFieldFromMetadataPrompt;
-            this.MenuOptionsEnableSelectedRereadDatesFromFilesPrompt.IsChecked = !this.state.SuppressSelectedRereadDatesFromFilesPrompt;
             this.MenuOptionsOrderFilesByDateTime.IsChecked = this.state.OrderFilesByDateTime;
             this.MenuOptionsSkipDarkFileCheck.IsChecked = this.state.SkipDarkImagesCheck;
 
@@ -81,7 +72,32 @@ namespace Carnassial
             this.timerFileNavigatorSlider.Interval = this.state.Throttles.DesiredIntervalBetweenRenders;
             this.timerFileNavigatorSlider.Tick += this.FileNavigatorSlider_TimerTick;
 
-            // populate the most recent image set list
+            // populate lists of menu items
+            for (int analysisSlot = 0; analysisSlot < Constant.AnalysisSlots; ++analysisSlot)
+            {
+                int displaySlot = analysisSlot + 1;
+
+                MenuItem copyToAnalysisSlot = new MenuItem();
+                copyToAnalysisSlot.Click += this.MenuEditCopyValuesToAnalysis_Click;
+                copyToAnalysisSlot.Header = String.Format("Analysis _{0}", displaySlot);
+                copyToAnalysisSlot.Icon = new Image() { Source = Constant.Images.Copy.Value };
+                copyToAnalysisSlot.InputGestureText = String.Format("Ctrl+{0}", displaySlot);
+                copyToAnalysisSlot.Tag = analysisSlot;
+                copyToAnalysisSlot.ToolTip = String.Format("Copy data entered for the current file analysis number {0}.", displaySlot);
+                this.MenuEditCopyValuesToAnalysis.Items.Add(copyToAnalysisSlot);
+
+                MenuItem pasteFromAnalysisSlot = new MenuItem();
+                pasteFromAnalysisSlot.Click += this.MenuEditPasteFromAnalysis_Click;
+                pasteFromAnalysisSlot.Icon = new Image() { Source = Constant.Images.Paste.Value };
+                pasteFromAnalysisSlot.InputGestureText = String.Format("Alt+{0}", displaySlot);
+                pasteFromAnalysisSlot.IsEnabled = false;
+                pasteFromAnalysisSlot.Header = String.Format("Analysis _{0}", displaySlot);
+                pasteFromAnalysisSlot.Tag = analysisSlot;
+                pasteFromAnalysisSlot.ToolTip = String.Format("Apply data in analysis {0}.", displaySlot);
+                this.MenuEditPasteValuesFromAnalysis.Items.Add(pasteFromAnalysisSlot);
+
+                this.state.Analysis.Add(null);
+            }
             this.MenuFileRecentImageSets_Refresh();
 
             this.Top = this.state.CarnassialWindowPosition.Y;
@@ -139,55 +155,6 @@ namespace Carnassial
             this.OnPreviewTextInput(e);
         }
 
-        private void CopyPreviousValues_Click(object sender, RoutedEventArgs e)
-        {
-            int previousRow = this.dataHandler.ImageCache.CurrentRow - 1;
-            if (previousRow < 0)
-            {
-                // at first image, so nothing to copy
-                return; 
-            }
-
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
-            {
-                DataEntryControl control = pair.Value;
-                if (this.dataHandler.FileDatabase.IsControlCopyable(control.DataLabel))
-                {
-                    control.SetContentAndTooltip(this.dataHandler.FileDatabase.Files[previousRow].GetValueDisplayString(control.DataLabel));
-                }
-            }
-        }
-
-        /// <summary>
-        /// When the mouse enters / leaves the copy button, the controls that are copyable will be highlighted. 
-        /// </summary>
-        private void CopyPreviousValues_MouseEnter(object sender, MouseEventArgs e)
-        {
-            this.CopyPreviousValues.Background = Constant.Control.CopyableFieldHighlightBrush;
-
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
-            {
-                DataEntryControl control = (DataEntryControl)pair.Value;
-                if (control.Copyable)
-                {
-                    control.Container.Background = Constant.Control.CopyableFieldHighlightBrush;
-                }
-            }
-        }
-
-        /// <summary>
-        ///  When the mouse enters / leaves the copy button, the controls that are copyable will be highlighted. 
-        /// </summary>
-        private void CopyPreviousValues_MouseLeave(object sender, MouseEventArgs e)
-        {
-            this.CopyPreviousValues.ClearValue(Control.BackgroundProperty);
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
-            {
-                DataEntryControl control = (DataEntryControl)pair.Value;
-                control.Container.ClearValue(Control.BackgroundProperty);
-            }
-        }
-
         // lazily defer binding of data grid until user selects the data gind tab
         // This reduces startup and scrolling lag as filling and updating the grid is fairly expensive.
         private void DataGridPane_IsActiveChanged(object sender, EventArgs e)
@@ -239,18 +206,24 @@ namespace Carnassial
 
         private void EnableOrDisableMenusAndControls()
         {
-            bool filesSelected = this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0;
+            bool imageSetAvailable = (this.dataHandler != null) && (this.dataHandler.FileDatabase != null);
+            bool filesSelected = false;
+            if (imageSetAvailable)
+            {
+                filesSelected = this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0;
+            }
 
-            // Depending upon whether images exist in the data set,
-            // enable / disable menus and menu items as needed
+            // enable/disable menus and menu items as appropriate depending upon whether files are selected
             // file menu
-            this.MenuFileAddFilesToImageSet.IsEnabled = true;
-            this.MenuFileLoadImageSet.IsEnabled = false;
-            this.MenuFileRecentImageSets.IsEnabled = false;
+            this.MenuFileAddFilesToImageSet.IsEnabled = imageSetAvailable;
+            this.MenuFileLoadImageSet.IsEnabled = !imageSetAvailable;
+            this.MenuFileRecentImageSets.IsEnabled = !imageSetAvailable;
+            this.MenuFileCloseImageSet.IsEnabled = imageSetAvailable;
             this.MenuFileCloneCurrent.IsEnabled = filesSelected;
             this.MenuFileExportCsvAndView.IsEnabled = filesSelected;
             this.MenuFileExportCsv.IsEnabled = filesSelected;
-            this.MenuFileImportCsv.IsEnabled = filesSelected;
+            this.MenuFileImportCsv.IsEnabled = imageSetAvailable;
+            this.MenuFileMoveFiles.IsEnabled = filesSelected;
             this.MenuFileRenameFileDatabase.IsEnabled = filesSelected;
             // edit menu
             this.MenuEdit.IsEnabled = filesSelected;
@@ -261,18 +234,20 @@ namespace Carnassial
             this.MenuSelect.IsEnabled = filesSelected;
             // options menu
             // always enable at top level when an image set exists so that image set advanced options are accessible
-            this.MenuOptions.IsEnabled = true;
+            this.MenuOptions.IsEnabled = imageSetAvailable;
             this.MenuOptionsAudioFeedback.IsEnabled = filesSelected;
-            this.MenuOptionsDisplayMagnifier.IsChecked = this.dataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
+            this.MenuOptionsDisplayMagnifier.IsChecked = imageSetAvailable && this.dataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
             this.MenuOptionsDialogsOnOrOff.IsEnabled = filesSelected;
             this.MenuOptionsAdvancedCarnassialOptions.IsEnabled = filesSelected;
 
             // other UI components
             this.ControlsPanel.IsEnabled = filesSelected;  // no files are selected there's nothing for the user to do with data entry
-            this.CopyPreviousValues.IsEnabled = filesSelected;
+            this.PastePreviousValues.IsEnabled = filesSelected;
             this.FileNavigatorSlider.IsEnabled = filesSelected;
             this.MarkableCanvas.IsEnabled = filesSelected;
             this.MarkableCanvas.MagnifyingGlassEnabled = filesSelected && this.dataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
+            this.PasteAnalysis1.IsEnabled = filesSelected && (this.state.Analysis[0] != null);
+            this.PasteAnalysis2.IsEnabled = filesSelected && (this.state.Analysis[1] != null);
 
             if (filesSelected == false)
             {
@@ -281,11 +256,6 @@ namespace Carnassial
                 this.statusBar.SetCurrentFile(Constant.Database.InvalidRow);
                 this.statusBar.SetFileCount(0);
             }
-        }
-
-        private void File_SubmenuOpening(object sender, RoutedEventArgs e)
-        {
-            this.MenuFileRecentImageSets_Refresh();
         }
 
         private void FileNavigatorSlider_DragCompleted(object sender, DragCompletedEventArgs args)
@@ -437,44 +407,6 @@ namespace Carnassial
             }
 
             return true;
-        }
-
-        private bool MaybePromptToApplyOperationIfPartialSelection(bool userOptedOutOfPrompt, string operationDescription, Action<bool> persistOptOut)
-        {
-            // if showing all images then no need for showing a warning message as it's not a partial selection
-            if (userOptedOutOfPrompt || this.dataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.All)
-            {
-                return true;
-            }
-
-            string title = "Apply " + operationDescription + " to this selection?";
-            MessageBox messageBox = new MessageBox(title, this, MessageBoxButton.OKCancel);
-
-            messageBox.Message.What = operationDescription + " will be applied only to the subset of files shown by the " + this.dataHandler.FileDatabase.ImageSet.FileSelection.ToString().ToLowerInvariant() + " selection." + Environment.NewLine;
-            messageBox.Message.What += "Is this what you want?";
-
-            messageBox.Message.Reason = "You have the following selection on: " + this.dataHandler.FileDatabase.ImageSet.FileSelection + "." + Environment.NewLine;
-            messageBox.Message.Reason += "Only data for those files available in this selection will be affected" + Environment.NewLine;
-            messageBox.Message.Reason += "Data for files not shown in this selection will be unaffected." + Environment.NewLine;
-
-            messageBox.Message.Solution = "Choose " + Environment.NewLine;
-            messageBox.Message.Solution += "\u2022 Okay for Carnassial to continue to " + operationDescription + Environment.NewLine;
-            messageBox.Message.Solution += "\u2022 Cancel to abort";
-
-            messageBox.Message.Hint = "This is not an error." + Environment.NewLine;
-            messageBox.Message.Hint += "\u2022 Carnassial is asking just in case you forgot you had the " + this.dataHandler.FileDatabase.ImageSet.FileSelection.ToString().ToLowerInvariant() + " selection applied. " + Environment.NewLine;
-            messageBox.Message.Hint += "\u2022 You can use the 'Select' menu to change to other views (including all files)" + Environment.NewLine;
-            messageBox.Message.Hint += "If you check 'Don't show this message again.' this dialog can be turned back on via the Options menu.";
-
-            messageBox.Message.StatusImage = MessageBoxImage.Question;
-            messageBox.DontShowAgain.Visibility = Visibility.Visible;
-
-            bool proceedWithOperation = (bool)messageBox.ShowDialog();
-            if (proceedWithOperation && messageBox.DontShowAgain.IsChecked.HasValue)
-            {
-                persistOptOut(messageBox.DontShowAgain.IsChecked.Value);
-            }
-            return proceedWithOperation;
         }
 
         private void MaybeShowFileCountsDialog(bool onFileLoading)
@@ -660,92 +592,70 @@ namespace Carnassial
             this.MenuEditDeleteFilesAndData.IsEnabled = deletedImages > 0;
         }
 
+        private void MenuEditCopy_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsFileAvailable())
+            {
+                DataObject clipboardData = new DataObject(this.dataHandler.ImageCache.Current.AsDisplayDictionary());
+                Clipboard.SetDataObject(clipboardData);
+            }
+        }
+
+        private void MenuEditCopyValuesToAnalysis_Click(object sender, RoutedEventArgs e)
+        {
+            this.TryCopyValuesToAnalysis((int)((MenuItem)sender).Tag);
+        }
+
         // Correct ambiguous dates dialog (i.e. dates that could be read as either month/day or day/month
         private void MenuEditCorrectAmbiguousDates_Click(object sender, RoutedEventArgs e)
         {
-            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedAmbiguousDatesPrompt,
-                                                                   "'Correct ambiguous dates...'",
-                                                                   (bool optOut) =>
-                                                                   {
-                                                                       this.state.SuppressSelectedAmbiguousDatesPrompt = optOut;
-                                                                       this.MenuOptionsEnableSelectedAmbiguousDatesPrompt.IsChecked = !optOut;
-                                                                   }))
+            DateCorrectAmbiguous ambiguousDateCorrection = new DateCorrectAmbiguous(this.dataHandler.FileDatabase, this);
+            if (ambiguousDateCorrection.Abort)
             {
-                DateCorrectAmbiguous ambiguousDateCorrection = new DateCorrectAmbiguous(this.dataHandler.FileDatabase, this);
-                if (ambiguousDateCorrection.Abort)
-                {
-                    MessageBox messageBox = new MessageBox("No ambiguous dates found.", this);
-                    messageBox.Message.Reason = "All of the selected images have unambguous date fields." + Environment.NewLine;
-                    messageBox.Message.Result = "No corrections needed, and no changes have been made." + Environment.NewLine;
-                    messageBox.Message.StatusImage = MessageBoxImage.Information;
-                    messageBox.ShowDialog();
-                    messageBox.Close();
-                    return;
-                }
-                this.ShowBulkFileEditDialog(ambiguousDateCorrection);
+                MessageBox messageBox = new MessageBox("No ambiguous dates found.", this);
+                messageBox.Message.Reason = "All of the selected images have unambguous date fields." + Environment.NewLine;
+                messageBox.Message.Result = "No corrections needed, and no changes have been made." + Environment.NewLine;
+                messageBox.Message.StatusImage = MessageBoxImage.Information;
+                messageBox.ShowDialog();
+                messageBox.Close();
+                return;
             }
+            this.ShowBulkFileEditDialog(ambiguousDateCorrection);
         }
 
         private void MenuEditDarkImages_Click(object sender, RoutedEventArgs e)
         {
-            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDarkThresholdPrompt,
-                                                                   "'Classify dark files...'",
-                                                                   (bool optOut) =>
-                                                                   {
-                                                                       this.state.SuppressSelectedDarkThresholdPrompt = optOut;
-                                                                       this.MenuOptionsEnableSelectedDarkThresholdPrompt.IsChecked = !optOut;
-                                                                   }))
+            using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.CurrentRow, this.state, this))
             {
-                using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.CurrentRow, this.state, this))
-                {
-                    darkThreshold.ShowDialog();
-                }
+                darkThreshold.ShowDialog();
             }
         }
 
         /// <summary>Correct the date by specifying an offset.</summary>
         private void MenuEditDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
         {
-            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDateTimeFixedCorrectionPrompt,
-                                                                   "'Add a fixed correction value to every date/time...'",
-                                                                   (bool optOut) =>
-                                                                   {
-                                                                       this.state.SuppressSelectedDateTimeFixedCorrectionPrompt = optOut;
-                                                                       this.MenuOptionsEnableSelectedDateTimeFixedCorrectionPrompt.IsChecked = !optOut;
-                                                                   }))
-            {
-                DateTimeFixedCorrection fixedDateCorrection = new DateTimeFixedCorrection(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current, this);
-                this.ShowBulkFileEditDialog(fixedDateCorrection);
-            }
+            DateTimeFixedCorrection fixedDateCorrection = new DateTimeFixedCorrection(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current, this);
+            this.ShowBulkFileEditDialog(fixedDateCorrection);
         }
 
         /// <summary>Correct for drifting clock times. Correction applied only to selected files.</summary>
         private void MenuEditDateTimeLinearCorrection_Click(object sender, RoutedEventArgs e)
         {
-            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDateTimeLinearCorrectionPrompt,
-                                                                   "'Correct for camera clock drift'",
-                                                                   (bool optOut) =>
-                                                                   {
-                                                                       this.state.SuppressSelectedDateTimeLinearCorrectionPrompt = optOut;
-                                                                       this.MenuOptionsEnableSelectedDateTimeLinearCorrectionPrompt.IsChecked = !optOut;
-                                                                   }))
+            DateTimeLinearCorrection linearDateCorrection = new DateTimeLinearCorrection(this.dataHandler.FileDatabase, this);
+            if (linearDateCorrection.Abort)
             {
-                DateTimeLinearCorrection linearDateCorrection = new DateTimeLinearCorrection(this.dataHandler.FileDatabase, this);
-                if (linearDateCorrection.Abort)
-                {
-                    MessageBox messageBox = new MessageBox("Can't correct for clock drift.", this);
-                    messageBox.Message.Problem = "Can't correct for clock drift.";
-                    messageBox.Message.Reason = "All of the files selected have date/time fields whose contents are not recognizable as dates or times." + Environment.NewLine;
-                    messageBox.Message.Reason += "\u2022 dates should look like dd-MMM-yyyy e.g., 16-Jan-2016" + Environment.NewLine;
-                    messageBox.Message.Reason += "\u2022 times should look like HH:mm:ss using 24 hour time e.g., 01:05:30 or 13:30:00";
-                    messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
-                    messageBox.Message.Hint = "Check the format of your dates and times. You may also want to change your selection if you're not viewing All files.";
-                    messageBox.Message.StatusImage = MessageBoxImage.Error;
-                    messageBox.ShowDialog();
-                    return;
-                }
-                this.ShowBulkFileEditDialog(linearDateCorrection);
+                MessageBox messageBox = new MessageBox("Can't correct for clock drift.", this);
+                messageBox.Message.Problem = "Can't correct for clock drift.";
+                messageBox.Message.Reason = "All of the files selected have date/time fields whose contents are not recognizable as dates or times." + Environment.NewLine;
+                messageBox.Message.Reason += "\u2022 dates should look like dd-MMM-yyyy e.g., 16-Jan-2016" + Environment.NewLine;
+                messageBox.Message.Reason += "\u2022 times should look like HH:mm:ss using 24 hour time e.g., 01:05:30 or 13:30:00";
+                messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
+                messageBox.Message.Hint = "Check the format of your dates and times. You may also want to change your selection if you're not viewing All files.";
+                messageBox.Message.StatusImage = MessageBoxImage.Error;
+                messageBox.ShowDialog();
+                return;
             }
+            this.ShowBulkFileEditDialog(linearDateCorrection);
         }
 
         /// <summary>Correct for daylight savings time</summary>
@@ -763,17 +673,8 @@ namespace Carnassial
                 return;
             }
 
-            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedDaylightSavingsCorrectionPrompt,
-                                                                   "'Correct for daylight savings time...'",
-                                                                   (bool optOut) =>
-                                                                   {
-                                                                       this.state.SuppressSelectedDaylightSavingsCorrectionPrompt = optOut;
-                                                                       this.MenuOptionsEnableSelectedDaylightSavingsCorrectionPrompt.IsChecked = !optOut;
-                                                                   }))
-            {
-                DateDaylightSavingsTimeCorrection daylightSavingsCorrection = new DateDaylightSavingsTimeCorrection(this.dataHandler.FileDatabase, this.dataHandler.ImageCache, this);
-                this.ShowBulkFileEditDialog(daylightSavingsCorrection);
-            }
+            DateDaylightSavingsTimeCorrection daylightSavingsCorrection = new DateDaylightSavingsTimeCorrection(this.dataHandler.FileDatabase, this.dataHandler.ImageCache, this);
+            this.ShowBulkFileEditDialog(daylightSavingsCorrection);
         }
 
         /// <summary>Soft delete one or more files marked for deletion, and optionally the data associated with those files.</summary>
@@ -903,6 +804,35 @@ namespace Carnassial
             }
         }
 
+        private void MenuEditPaste_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsFileAvailable() == false)
+            {
+                return;
+            }
+
+            IDataObject clipboardData = Clipboard.GetDataObject();
+            if (clipboardData == null || clipboardData.GetDataPresent(typeof(Dictionary<string, string>)) == false)
+            {
+                return;
+            }
+            Dictionary<string, string> sourceFile = (Dictionary<string, string>)clipboardData.GetData(typeof(Dictionary<string, string>));
+            if (sourceFile == null)
+            {
+                return;
+            }
+
+            this.PasteValuesToCurrentFile(sourceFile);
+        }
+
+        private void MenuEditPasteFromAnalysis_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsFileAvailable())
+            {
+                this.TryPasteValuesFromAnalysis((int)((MenuItem)sender).Tag);
+            }
+        }
+
         // Populate a data field from metadata (example metadata displayed from the currently selected image)
         private void MenuEditPopulateFieldFromMetadata_Click(object sender, RoutedEventArgs e)
         {
@@ -921,52 +851,38 @@ namespace Carnassial
                 }
             }
 
-            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedPopulateFieldFromMetadataPrompt,
-                                                                   "'Populate a data field with image metadata of your choosing...'",
-                                                                   (bool optOut) =>
-                                                                   {
-                                                                       this.state.SuppressSelectedPopulateFieldFromMetadataPrompt = optOut;
-                                                                       this.MenuOptionsEnableSelectedPopulateFieldFromMetadataPrompt.IsChecked = !optOut;
-                                                                   }))
-            {
-                PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current.GetFilePath(this.FolderPath), this);
-                this.ShowBulkFileEditDialog(populateField);
-            }
+            PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current.GetFilePath(this.FolderPath), this);
+            this.ShowBulkFileEditDialog(populateField);
         }
 
         private void MenuEditRereadDateTimesFromFiles_Click(object sender, RoutedEventArgs e)
         {
-            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedRereadDatesFromFilesPrompt,
-                                                                   "'Reread dates from files...'",
-                                                                   (bool optOut) =>
-                                                                   {
-                                                                       this.state.SuppressSelectedRereadDatesFromFilesPrompt = optOut;
-                                                                       this.MenuOptionsEnableSelectedRereadDatesFromFilesPrompt.IsChecked = !optOut;
-                                                                   }))
-            {
-                DateTimeRereadFromFiles rereadDates = new DateTimeRereadFromFiles(this.dataHandler.FileDatabase, this);
-                this.ShowBulkFileEditDialog(rereadDates);
-            }
+            DateTimeRereadFromFiles rereadDates = new DateTimeRereadFromFiles(this.dataHandler.FileDatabase, this);
+            this.ShowBulkFileEditDialog(rereadDates);
         }
 
         private void MenuEditSetTimeZone_Click(object sender, RoutedEventArgs e)
         {
-            if (this.MaybePromptToApplyOperationIfPartialSelection(this.state.SuppressSelectedSetTimeZonePrompt,
-                                                                   "'Set the time zone of every date/time...'",
-                                                                   (bool optOut) =>
-                                                                   {
-                                                                       this.state.SuppressSelectedSetTimeZonePrompt = optOut;
-                                                                       this.MenuOptionsEnableSelectedSetTimeZonePrompt.IsChecked = !optOut;
-                                                                   }))
-            {
-                DateTimeSetTimeZone setTimeZone = new DateTimeSetTimeZone(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current, this);
-                this.ShowBulkFileEditDialog(setTimeZone);
-            }
+            DateTimeSetTimeZone setTimeZone = new DateTimeSetTimeZone(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current, this);
+            this.ShowBulkFileEditDialog(setTimeZone);
         }
 
         private void MenuEditToggleCurrentFileDeleteFlag_Click(object sender, RoutedEventArgs e)
         {
             this.ToggleCurrentFileDeleteFlag();
+        }
+
+        private void MenuEditUndo_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsFileAvailable() && this.state.UndoBuffer != null)
+            {
+                this.PasteValuesToCurrentFile(this.state.UndoBuffer);
+            }
+        }
+
+        private void MenuFile_SubmenuOpened(object sender, RoutedEventArgs e)
+        {
+            this.MenuFileRecentImageSets_Refresh();
         }
 
         private void MenuFileAddFilesToImageSet_Click(object sender, RoutedEventArgs e)
@@ -1026,6 +942,15 @@ namespace Carnassial
             }
         }
 
+        private void MenuFileCloseImageSet_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.TryCloseImageSet())
+            {
+                // switch back to the instructions pane
+                this.InstructionPane.IsActive = true;
+            }
+        }
+
         private void MenuFileLoadImageSet_Click(object sender, RoutedEventArgs e)
         {
             string templateDatabasePath;
@@ -1036,61 +961,68 @@ namespace Carnassial
             }     
         }
 
-        /// <summary>Write the .csv file and preview it in excel.</summary>
+        private void MenuFileMoveFiles_Click(object sender, RoutedEventArgs e)
+        {
+            CommonOpenFileDialog folderSelectionDialog = new CommonOpenFileDialog();
+            folderSelectionDialog.Title = "Select the folder to move files to...";
+            folderSelectionDialog.DefaultDirectory = this.FolderPath;
+            folderSelectionDialog.InitialDirectory = folderSelectionDialog.DefaultDirectory;
+            folderSelectionDialog.IsFolderPicker = true;
+            folderSelectionDialog.FolderChanging += this.FolderSelectionDialog_FolderChanging;
+            if (folderSelectionDialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                // move files
+                List<string> immovableFiles = this.dataHandler.FileDatabase.MoveFilesToFolder(folderSelectionDialog.FileName);
+                if (immovableFiles.Count > 0)
+                {
+                    MessageBox messageBox = new MessageBox("Not all files could be moved.", this);
+                    messageBox.Message.What = String.Format("{0} of {1} files were moved.", this.dataHandler.FileDatabase.CurrentlySelectedFileCount - immovableFiles.Count, this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
+                    messageBox.Message.Reason = "This occurs when the selection 1) contains multiple files with the same name and 2) files with the same name as files already in the destination folder.";
+                    messageBox.Message.Solution = "Remove or rename the conflicting files and apply the move command again to move the remaining files.";
+                    messageBox.Message.Result = "Carnassial moved the files which could be moved.  The remaining files were left in place.";
+                    messageBox.Message.Hint = String.Format("The {0} files which could not be moved are{1}", immovableFiles.Count, Environment.NewLine);
+                    foreach (string fileName in immovableFiles)
+                    {
+                        messageBox.Message.Hint += String.Format("\u2022 {0}", fileName);
+                    }
+                    messageBox.ShowDialog();
+                }
+
+                // refresh the current file to show its new relative path field 
+                this.ShowFile(this.dataHandler.ImageCache.CurrentRow);
+            }
+        }
+
+        /// <summary>Write the .csv file and preview it in Excel</summary>
         private void MenuFileExportCsv_Click(object sender, RoutedEventArgs e)
         {
-            if (this.state.SuppressSelectedCsvExportPrompt == false &&
-                this.dataHandler.FileDatabase.ImageSet.FileSelection != FileSelection.All)
-            {
-                MessageBox messageBox = new MessageBox("Exporting a partial selection to a .csv file.", this, MessageBoxButton.OKCancel);
-                messageBox.Message.What = "Only a subset of your data will be exported to the .csv file.";
-                messageBox.Message.Reason = "As your selection (in the Select menu) is not set to 'All', ";
-                messageBox.Message.Reason += "only data for selected files will be exported. ";
-                messageBox.Message.Solution = "If you want to export just this subset, then " + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 click Okay" + Environment.NewLine + Environment.NewLine;
-                messageBox.Message.Solution += "If you want to export data for all files, then " + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 click Cancel," + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 select all via the Select menu, " + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 export your data as a .csv file";
-                messageBox.Message.Hint = "If you check don't show this message this dialog can be turned back on via the Options menu.";
-                messageBox.Message.StatusImage = MessageBoxImage.Warning;
-                messageBox.DontShowAgain.Visibility = Visibility.Visible;
-
-                bool? exportCsv = messageBox.ShowDialog();
-                if (exportCsv != true)
-                {
-                    return;
-                }
-
-                if (messageBox.DontShowAgain.IsChecked.HasValue)
-                {
-                    this.state.SuppressSelectedCsvExportPrompt = messageBox.DontShowAgain.IsChecked.Value;
-                    this.MenuOptionsEnableSelectedCsvExportPrompt.IsChecked = !this.state.SuppressSelectedCsvExportPrompt;
-                }
-            }
-
-            // Generate the file names/path
+            // backup any existing .csv file as it's overwritten on export
             string csvFileName = Path.GetFileNameWithoutExtension(this.dataHandler.FileDatabase.FileName) + ".csv";
             string csvFilePath = Path.Combine(this.FolderPath, csvFileName);
-
-            // Backup the csv file if it exists, as the export will overwrite it. 
             if (FileBackup.TryCreateBackup(this.FolderPath, csvFileName))
             {
-                this.statusBar.SetMessage("Backup of csv file made.");
-            }
-            else
-            {
-                this.statusBar.SetMessage("No csv file backup was made.");
+                this.statusBar.SetMessage("Backup of .csv file made.");
             }
 
             CsvReaderWriter csvWriter = new CsvReaderWriter();
             try
             {
                 csvWriter.ExportToCsv(this.dataHandler.FileDatabase, csvFilePath);
+                this.statusBar.SetMessage("Data exported to " + csvFileName);
+
+                MenuItem menuItem = (MenuItem)sender;
+                if (menuItem == this.MenuFileExportCsvAndView)
+                {
+                    // show the file in whatever program is associated with the .csv extension
+                    Process process = new Process();
+                    process.StartInfo.UseShellExecute = true;
+                    process.StartInfo.RedirectStandardOutput = false;
+                    process.StartInfo.FileName = csvFilePath;
+                    process.Start();
+                }
             }
             catch (IOException exception)
             {
-                // Can't write the spreadsheet file
                 MessageBox messageBox = new MessageBox("Can't write the spreadsheet file.", this);
                 messageBox.Message.StatusImage = MessageBoxImage.Error;
                 messageBox.Message.Problem = "The following file can't be written: " + csvFilePath;
@@ -1100,62 +1032,29 @@ namespace Carnassial
                 messageBox.ShowDialog();
                 return;
             }
-
-            MenuItem menuItem = (MenuItem)sender;
-            if (menuItem == this.MenuFileExportCsvAndView)
-            {
-                // Show the file in excel
-                // Create a process that will try to show the file
-                Process process = new Process();
-
-                process.StartInfo.UseShellExecute = true;
-                process.StartInfo.RedirectStandardOutput = false;
-                process.StartInfo.FileName = csvFilePath;
-                process.Start();
-            }
-            else if (this.state.SuppressCsvExportDialog == false)
-            {
-                // since the exported file isn't shown give the user some feedback about the export operation
-                MessageBox csvExportInformation = new MessageBox("Data exported.", this);
-                csvExportInformation.Message.What = "The selected files were exported to " + csvFileName;
-                csvExportInformation.Message.Result = String.Format("This file is overwritten every time you export it (backups can be found in the {0} folder).", Constant.File.BackupFolder);
-                csvExportInformation.Message.Hint = "\u2022 You can open this file with most spreadsheet programs, such as Excel." + Environment.NewLine;
-                csvExportInformation.Message.Hint += "\u2022 If you make changes in the spreadsheet file, you will need to import it to see those changes." + Environment.NewLine;
-                csvExportInformation.Message.Hint += "\u2022 If you check don't show this message again you can still see the name of the .csv file in the status bar at the lower right corner of the main Carnassial window.  This dialog can also be turned back on through the Options menu.";
-                csvExportInformation.Message.StatusImage = MessageBoxImage.Information;
-                csvExportInformation.DontShowAgain.Visibility = Visibility.Visible;
-
-                bool? result = csvExportInformation.ShowDialog();
-                if (result.HasValue && result.Value && csvExportInformation.DontShowAgain.IsChecked.HasValue)
-                {
-                    this.state.SuppressCsvExportDialog = csvExportInformation.DontShowAgain.IsChecked.Value;
-                    this.MenuOptionsEnableCsvExportDialog.IsChecked = !this.state.SuppressCsvExportDialog;
-                }
-            }
-            this.statusBar.SetMessage("Data exported to " + csvFileName);
         }
 
-        private void MenuFileImportFromCsv_Click(object sender, RoutedEventArgs e)
+        private void MenuFileImportCsv_Click(object sender, RoutedEventArgs e)
         {
             if (this.state.SuppressCsvImportPrompt == false)
             {
                 MessageBox messageBox = new MessageBox("How import of .csv data works.", this, MessageBoxButton.OKCancel);
                 messageBox.Message.What = "Importing data from a .csv (comma separated value) file follows the rules below.";
                 messageBox.Message.Reason = "Carnassial requires the .csv file follow a specific format and processes its data in a specific way.";
-                messageBox.Message.Solution = "\u2022 Only modify and import a .csv file previously exported by Carnassial." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Do not change RelativePath or File as those fields uniquely identify a file" + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Do not change column names" + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Do not add or delete rows (those changes will be ignored)" + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Restrict modifications as follows:" + Environment.NewLine;
-                messageBox.Message.Solution += String.Format("    \u2022 DateTime must be in '{0}' format{1}", Constant.Time.DateTimeDatabaseFormat, Environment.NewLine);
-                messageBox.Message.Solution += String.Format("    \u2022 UtcOffset must be a floating point number between {0} and {1}, inclusive{2}", DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), Environment.NewLine);
-                messageBox.Message.Solution += "    \u2022 Counter data must be zero or a positive integer" + Environment.NewLine;
-                messageBox.Message.Solution += "    \u2022 Flag data must be 'true' or 'false'" + Environment.NewLine;
-                messageBox.Message.Solution += "    \u2022 FixedChoice data must be a string that exactly matches one of the FixedChoice menu options or the field's default value." + Environment.NewLine;
-                messageBox.Message.Solution += "    \u2022 Note data can be any string, including empty.";
-                messageBox.Message.Result = "Carnassial will create a backup .ddb file in the Backups folder and then try its best.";
+                messageBox.Message.Solution = "Modifying and importing a .csv file is supported only if the .csv file is exported from and then back into Carnassial image sets with the same template." + Environment.NewLine;
+                messageBox.Message.Solution += "A limited set of modifications is allowed:" + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Adding columns, removing columns, or changing column names is not supported." + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 FileName and RelativePath identify the file updates are applied to.  Changing them causes a different file to be updated or a new file to be added." + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 RelativePath is interpreted relative to the .csv file.  Make sure it's in the right place!" + Environment.NewLine;
+                messageBox.Message.Solution += String.Format("\u2022 DateTime must be in '{0}' format.{1}", Constant.Time.DateTimeDatabaseFormat, Environment.NewLine);
+                messageBox.Message.Solution += String.Format("\u2022 UtcOffset must be a floating point number between {0} and {1}, inclusive.{2}", DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), Environment.NewLine);
+                messageBox.Message.Solution += "\u2022 Counter data must be zero or a positive integer." + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Flag data must be 'true' or 'false', case insensitive." + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 FixedChoice data must be a string that exactly matches one of the FixedChoice menu options or the field's default value." + Environment.NewLine;
+                messageBox.Message.Result = String.Format("Carnassial will create a backup .ddb file in the {0} folder and then import as much data as it can.  If data can't be imported you'll get a dialog listing the problems.", Constant.File.BackupFolder);
                 messageBox.Message.Hint = "\u2022 After you import, check your data. If it is not what you expect, restore your data by using that backup file." + Environment.NewLine;
-                messageBox.Message.Hint += "\u2022 If you check don't show this message this dialog can be turned back on via the Options menu.";
+                messageBox.Message.Hint += String.Format("\u2022 Usually the .csv file should be in the same folder as the data file ({0}) it was exported from.{1}", Constant.File.FileDatabaseFileExtension, Environment.NewLine);
+                messageBox.Message.Hint += "\u2022 If you check 'Don't show this message' this dialog can be turned back on via the Options menu.";
                 messageBox.Message.StatusImage = MessageBoxImage.Information;
                 messageBox.DontShowAgain.Visibility = Visibility.Visible;
 
@@ -1229,8 +1128,9 @@ namespace Carnassial
                 messageBox.ShowDialog();
             }
 
-            // Reload the data table
+            // reload the file data table and update the enable/disable state of the user interface to match
             this.SelectFilesAndShowFile();
+            this.EnableOrDisableMenusAndControls();
             this.statusBar.SetMessage(".csv file imported.");
         }
 
@@ -1341,12 +1241,6 @@ namespace Carnassial
             this.MenuOptionsAudioFeedback.IsChecked = this.state.AudioFeedback;
         }
 
-        private void MenuOptionsEnableCsvExportDialog_Click(object sender, RoutedEventArgs e)
-        {
-            this.state.SuppressCsvExportDialog = !this.state.SuppressCsvExportDialog;
-            this.MenuOptionsEnableCsvExportDialog.IsChecked = !this.state.SuppressCsvExportDialog;
-        }
-
         private void MenuOptionsEnableCsvImportPrompt_Click(object sender, RoutedEventArgs e)
         {
             this.state.SuppressCsvImportPrompt = !this.state.SuppressCsvImportPrompt;
@@ -1357,60 +1251,6 @@ namespace Carnassial
         {
             this.state.SuppressFileCountOnImportDialog = !this.state.SuppressFileCountOnImportDialog;
             this.MenuOptionsEnableFileCountOnImportDialog.IsChecked = !this.state.SuppressFileCountOnImportDialog;
-        }
-
-        private void MenuOptionsEnableSelectedAmbiguousDatesPrompt_Click(object sender, RoutedEventArgs e)
-        {
-            this.state.SuppressSelectedAmbiguousDatesPrompt = !this.state.SuppressSelectedAmbiguousDatesPrompt;
-            this.MenuOptionsEnableSelectedAmbiguousDatesPrompt.IsChecked = !this.state.SuppressSelectedAmbiguousDatesPrompt;
-        }
-
-        private void MenuOptionsEnableSelectedCsvExportPrompt_Click(object sender, RoutedEventArgs e)
-        {
-            this.state.SuppressSelectedCsvExportPrompt = !this.state.SuppressSelectedCsvExportPrompt;
-            this.MenuOptionsEnableSelectedCsvExportPrompt.IsChecked = !this.state.SuppressSelectedCsvExportPrompt;
-        }
-
-        private void MenuOptionsEnableSelectedDarkThresholdPrompt_Click(object sender, RoutedEventArgs e)
-        {
-            this.state.SuppressSelectedDarkThresholdPrompt = !this.state.SuppressSelectedDarkThresholdPrompt;
-            this.MenuOptionsEnableSelectedDarkThresholdPrompt.IsChecked = !this.state.SuppressSelectedDarkThresholdPrompt;
-        }
-
-        private void MenuOptionsEnableSelectedDateTimeFixedCorrectionPrompt_Click(object sender, RoutedEventArgs e)
-        {
-            this.state.SuppressSelectedDateTimeFixedCorrectionPrompt = !this.state.SuppressSelectedDateTimeFixedCorrectionPrompt;
-            this.MenuOptionsEnableSelectedDateTimeFixedCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDateTimeFixedCorrectionPrompt;
-        }
-
-        private void MenuOptionsEnableSelectedDateTimeLinearCorrectionPrompt_Click(object sender, RoutedEventArgs e)
-        {
-            this.state.SuppressSelectedDateTimeLinearCorrectionPrompt = !this.state.SuppressSelectedDateTimeLinearCorrectionPrompt;
-            this.MenuOptionsEnableSelectedDateTimeLinearCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDateTimeLinearCorrectionPrompt;
-        }
-
-        private void MenuOptionsEnableSelectedDaylightSavingsCorrectionPrompt_Click(object sender, RoutedEventArgs e)
-        {
-            this.state.SuppressSelectedDaylightSavingsCorrectionPrompt = !this.state.SuppressSelectedDaylightSavingsCorrectionPrompt;
-            this.MenuOptionsEnableSelectedDaylightSavingsCorrectionPrompt.IsChecked = !this.state.SuppressSelectedDaylightSavingsCorrectionPrompt;
-        }
-
-        private void MenuOptionsEnableSelectedPopulateFieldFromMetadataPrompt_Click(object sender, RoutedEventArgs e)
-        {
-            this.state.SuppressSelectedPopulateFieldFromMetadataPrompt = !this.state.SuppressSelectedPopulateFieldFromMetadataPrompt;
-            this.MenuOptionsEnableSelectedPopulateFieldFromMetadataPrompt.IsChecked = !this.state.SuppressSelectedPopulateFieldFromMetadataPrompt;
-        }
-
-        private void MenuOptionsEnableSelectedRereadDatesFromFilesPrompt_Click(object sender, RoutedEventArgs e)
-        {
-            this.state.SuppressSelectedRereadDatesFromFilesPrompt = !this.state.SuppressSelectedRereadDatesFromFilesPrompt;
-            this.MenuOptionsEnableSelectedRereadDatesFromFilesPrompt.IsChecked = !this.state.SuppressSelectedRereadDatesFromFilesPrompt;
-        }
-
-        private void MenuOptionsEnableSelectedSetTimeZonePrompt_Click(object sender, RoutedEventArgs e)
-        {
-            this.state.SuppressSelectedSetTimeZonePrompt = !this.state.SuppressSelectedSetTimeZonePrompt;
-            this.MenuOptionsEnableSelectedSetTimeZonePrompt.IsChecked = !this.state.SuppressSelectedSetTimeZonePrompt;
         }
 
         private void MenuOptionsOrderFilesByDateTime_Click(object sender, RoutedEventArgs e)
@@ -1677,6 +1517,80 @@ namespace Carnassial
             Utilities.ShowExceptionReportingDialog("Carnassial needs to close.", e, this);
         }
 
+        private void PasteAnalysis1_Click(object sender, RoutedEventArgs e)
+        {
+            this.TryPasteValuesFromAnalysis(0);
+        }
+
+        private void PasteAnalysis2_Click(object sender, RoutedEventArgs e)
+        {
+            this.TryPasteValuesFromAnalysis(1);
+        }
+
+        /// <summary>
+        /// When the mouse enters a paste button highlight the controls that are copyable.
+        /// </summary>
+        private void PasteButton_MouseEnter(object sender, MouseEventArgs e)
+        {
+            this.PastePreviousValues.Background = Constant.Control.CopyableFieldHighlightBrush;
+
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
+            {
+                DataEntryControl control = (DataEntryControl)pair.Value;
+                if (control.Copyable)
+                {
+                    control.Container.Background = Constant.Control.CopyableFieldHighlightBrush;
+                }
+            }
+        }
+
+        /// <summary>
+        ///  When the mouse leaves a paste button highlight the controls that are copyable.
+        /// </summary>
+        private void PasteButton_MouseLeave(object sender, MouseEventArgs e)
+        {
+            this.PastePreviousValues.ClearValue(Control.BackgroundProperty);
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
+            {
+                DataEntryControl control = (DataEntryControl)pair.Value;
+                control.Container.ClearValue(Control.BackgroundProperty);
+            }
+        }
+
+        private void PastePreviousValues_Click(object sender, RoutedEventArgs e)
+        {
+            int previousIndex = this.dataHandler.ImageCache.CurrentRow - 1;
+            if (previousIndex < 0)
+            {
+                // at first image, so nothing to copy
+                return;
+            }
+
+            ImageRow previousFile = this.dataHandler.FileDatabase.Files[previousIndex];
+            this.PasteValuesToCurrentFile(previousFile);
+        }
+
+        private void PasteValuesToCurrentFile(Dictionary<string, string> propertyBag)
+        {
+            this.state.UndoBuffer = this.dataHandler.ImageCache.Current.AsDisplayDictionary();
+            this.MenuEditUndo.IsEnabled = true;
+
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
+            {
+                DataEntryControl control = pair.Value;
+                string value;
+                if (this.dataHandler.FileDatabase.IsControlCopyable(control.DataLabel) && propertyBag.TryGetValue(control.DataLabel, out value))
+                {
+                    control.SetContentAndTooltip(value);
+                }
+            }
+        }
+
+        private void PasteValuesToCurrentFile(ImageRow sourceFile)
+        {
+            this.PasteValuesToCurrentFile(sourceFile.AsDisplayDictionary());
+        }
+
         private void SelectFilesAndShowFile()
         {
             Debug.Assert(this.dataHandler != null && this.dataHandler.FileDatabase != null, "Expected a file database to be available.");
@@ -1822,7 +1736,7 @@ namespace Carnassial
             // it is sufficient to check one always visible item from each top level menu (file, edit, etc.)
             // NOTE: this must be kept in sync with the menu definitions in XAML
             if (this.MenuFileExit.IsVisible || // file menu
-                this.MenuEditCopyPreviousValues.IsVisible || // edit menu
+                this.MenuEditCopy.IsVisible || // edit menu
                 this.MenuOptionsSkipDarkFileCheck.IsVisible || // options menu
                 this.MenuViewShowNextFile.IsVisible || // view menu
                 this.MenuSelectAllFiles.IsVisible || // select menu, and then the help menu...
@@ -1932,8 +1846,8 @@ namespace Carnassial
 
         private void ShowFile(int fileIndex)
         {
-            // If there is no image to show, then show an image indicating the empty image set.
-            if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount < 1)
+            // if there is no file to show, then show an image indicating no image set or an empty image set
+            if ((this.dataHandler == null) || (this.dataHandler.FileDatabase == null) || (this.dataHandler.FileDatabase.CurrentlySelectedFileCount < 1))
             {
                 this.MarkableCanvas.SetNewImage(Constant.Images.NoSelectableFile.Value, null);
                 this.markersOnCurrentFile = null;
@@ -1964,7 +1878,7 @@ namespace Carnassial
                     DataEntryNote noteControl = (DataEntryNote)control.Value;
                     if (noteControl.ContentChanged)
                     {
-                        noteControl.ContentControl.Autocompletions = this.dataHandler.FileDatabase.GetDistinctValuesInFileDataColumn(control.Value.DataLabel);
+                        noteControl.SetAutocompletions(this.dataHandler.FileDatabase.GetDistinctValuesInFileDataColumn(control.Value.DataLabel));
                         noteControl.ContentChanged = false;
                     }
                 }
@@ -1980,10 +1894,11 @@ namespace Carnassial
             // update nav slider thumb's position to the current file
             this.FileNavigatorSlider.Value = Utilities.ToDisplayIndex(fileIndex);
 
-            // display new file if the file changed
+            // display new file and update menu item enables if the file changed
             // This avoids unnecessary image reloads and refreshes in cases where ShowFile() is just being called to refresh controls.
             if (newFileToDisplay)
             {
+                // show the file and enable or disable menu items whose availability depends on whether the file's an image or video
                 this.markersOnCurrentFile = this.dataHandler.FileDatabase.GetMarkersOnFile(this.dataHandler.ImageCache.Current.ID);
                 List<Marker> displayMarkers = this.GetDisplayMarkers(false);
 
@@ -2022,6 +1937,10 @@ namespace Carnassial
 
                 // draw markers for this file
                 this.MarkableCanvas_UpdateMarkers();
+
+                // clear any undo buffer as it no longer applies and disable the undo menu item
+                this.MenuEditUndo.IsEnabled = false;
+                this.state.UndoBuffer = null;
             }
 
             // if the data grid has been bound, set the selected row to the current file and scroll so it's visible
@@ -2079,7 +1998,7 @@ namespace Carnassial
         private bool ShowFolderSelectionDialog(out IEnumerable<string> folderPaths)
         {
             CommonOpenFileDialog folderSelectionDialog = new CommonOpenFileDialog();
-            folderSelectionDialog.Title = "Select one or more folders ...";
+            folderSelectionDialog.Title = "Select one or more folders...";
             folderSelectionDialog.DefaultDirectory = this.mostRecentFileAddFolderPath == null ? this.FolderPath : this.mostRecentFileAddFolderPath;
             folderSelectionDialog.InitialDirectory = folderSelectionDialog.DefaultDirectory;
             folderSelectionDialog.IsFolderPicker = true;
@@ -2354,6 +2273,73 @@ namespace Carnassial
             return true;
         }
 
+        private bool TryCloseImageSet()
+        {
+            if ((this.dataHandler == null) ||
+                (this.dataHandler.FileDatabase == null))
+            {
+                // no image set to close
+                return false;
+            }
+
+            // persist image set properties if an image set has been opened
+            if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0)
+            {
+                // revert to custom selections to all 
+                if (this.dataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.Custom)
+                {
+                    this.dataHandler.FileDatabase.ImageSet.FileSelection = FileSelection.All;
+                }
+
+                // sync image set properties
+                if (this.MarkableCanvas != null)
+                {
+                    this.dataHandler.FileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, this.MarkableCanvas.MagnifyingGlassEnabled);
+                }
+
+                if (this.dataHandler.ImageCache != null && this.dataHandler.ImageCache.Current != null)
+                {
+                    this.dataHandler.FileDatabase.ImageSet.MostRecentFileID = this.dataHandler.ImageCache.Current.ID;
+                }
+
+                // write image set properties to the database
+                this.dataHandler.FileDatabase.SyncImageSetToDatabase();
+
+                // ensure custom filter operator is synchronized in state for writing to user's registry
+                this.state.CustomSelectionTermCombiningOperator = this.dataHandler.FileDatabase.CustomSelection.TermCombiningOperator;
+            }
+
+            // discard the image set and reset UX for no open image set/no selected files
+            this.dataHandler.Dispose();
+            this.dataHandler = null;
+            this.EnableOrDisableMenusAndControls();
+            return true;
+        }
+
+        private bool TryCopyValuesToAnalysis(int analysisSlot)
+        {
+            if (this.IsFileAvailable() == false)
+            {
+                return false;
+            }
+            this.state.Analysis[analysisSlot] = this.dataHandler.ImageCache.Current;
+
+            ((MenuItem)this.MenuEditPasteValuesFromAnalysis.Items[analysisSlot]).IsEnabled = true;
+            switch (analysisSlot)
+            {
+                case 0:
+                    this.PasteAnalysis1.IsEnabled = true;
+                    break;
+                case 1:
+                    this.PasteAnalysis2.IsEnabled = true;
+                    break;
+                default:
+                    // do nothing as there's no button associated with analysis 3 and higher
+                    break;
+            }
+            return true;
+        }
+
         private bool TryGetTemplatePath(out string templateDatabasePath)
         {
             // prompt user to select a template
@@ -2455,7 +2441,20 @@ namespace Carnassial
             return true;
         }
 
-        // Given the location path of the template,  return:
+        private bool TryPasteValuesFromAnalysis(int analysisSlot)
+        {
+            ImageRow sourceFile = this.state.Analysis[analysisSlot];
+            if (sourceFile == null)
+            {
+                // nothing to copy
+                return false;
+            }
+
+            this.PasteValuesToCurrentFile(sourceFile);
+            return true;
+        }
+
+        // Given the location path of the template, return:
         // - true if a database file was specified
         // - databaseFilePath: the path to the data database file (or null if none was specified).
         // - importImages: true when the database file has just been created, which means images still have to be imported.
@@ -2642,34 +2641,7 @@ namespace Carnassial
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            // persist image set properties
-            if ((this.dataHandler != null) &&
-                (this.dataHandler.FileDatabase != null) &&
-                (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0))
-            {
-                // revert to custom selections to all 
-                if (this.dataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.Custom)
-                {
-                    this.dataHandler.FileDatabase.ImageSet.FileSelection = FileSelection.All;
-                }
-
-                // sync image set properties
-                if (this.MarkableCanvas != null)
-                {
-                    this.dataHandler.FileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, this.MarkableCanvas.MagnifyingGlassEnabled);
-                }
-
-                if (this.dataHandler.ImageCache != null && this.dataHandler.ImageCache.Current != null)
-                {
-                    this.dataHandler.FileDatabase.ImageSet.MostRecentFileID = this.dataHandler.ImageCache.Current.ID;
-                }
-
-                // write image set properties to the database
-                this.dataHandler.FileDatabase.SyncImageSetToDatabase();
-
-                // ensure custom filter operator is synchronized in state for writing to user's registry
-                this.state.CustomSelectionTermCombiningOperator = this.dataHandler.FileDatabase.CustomSelection.TermCombiningOperator;
-            }
+            this.TryCloseImageSet();
 
             // persist user specific state to the registry
             if (this.Top > -10 && this.Left > -10)
@@ -2703,45 +2675,93 @@ namespace Carnassial
             }
         }
 
-        // If its an arrow key and the textbox doesn't have the focus,
-        // navigate left/right image or up/down to look at differenced image
         private void Window_PreviewKeyDown(object sender, KeyEventArgs currentKey)
         {
-            if (this.dataHandler == null ||
-                this.dataHandler.FileDatabase == null ||
-                this.dataHandler.FileDatabase.CurrentlySelectedFileCount == 0)
+            if (this.IsFileAvailable() == false)
             {
-                return; // No images are loaded, so don't try to interpret any keys
+                // no file loaded so nothing to do
+                return;
             }
 
-            // Don't interpret keyboard shortcuts if the focus is on a control in the control grid, as the text entered may be directed
-            // to the controls within it. That is, if a textbox or combo box has the focus, then take no as this is normal text input
-            // and NOT a shortcut key.  Similarly, if a menu is displayed keys should be directed to the menu rather than interpreted as
-            // shortcuts.
+            // if the focus is on a control in the control grid send keys to the control
             if (this.SendKeyToDataEntryControlOrMenu(currentKey))
             {
                 return;
             }
-            // An alternate way of doing this, but not as good -> 
-            // if ( this.ControlGrid.IsMouseOver) return;
-            // if (!this.markableCanvas.IsMouseOver) return; // if its outside the window, return as well.
 
-            // Interpret key as a possible shortcut key. 
-            // Depending on the key, take the appropriate action
+            // check if input key or chord is a shortcut key and dispatch appropriately if so
             int keyRepeatCount = this.state.GetKeyRepeatCount(currentKey);
             switch (currentKey.Key)
             {
-                case Key.C:                 // copy whatever data fields are copyable from the previous file
-                    this.CopyPreviousValues_Click(null, null);
+                // copy whatever data fields are copyable from the previous file
+                case Key.C:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.MenuEditCopy_Click(null, null);
+                    }
                     break;
-                case Key.Delete:            // toggle the file's delete flag and, if set, move to the next file
+                // toggle the file's delete flag and, if set, move to the next file
+                case Key.Delete:
                     this.ToggleCurrentFileDeleteFlag();
+                    break;
+                // Alt+Key.D1 and D2 are handled by routine keyboard shortcuts for the analysis 1 and 2 buttons
+                case Key.D1:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.TryCopyValuesToAnalysis(0);
+                    }
+                    break;
+                case Key.D2:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.TryCopyValuesToAnalysis(1);
+                    }
+                    break;
+                case Key.D3:
+                    // see Key.System case for ModifierKeys.Alt
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.TryCopyValuesToAnalysis(2);
+                    }
+                    break;
+                case Key.D4:
+                    // see Key.System case for ModifierKeys.Alt
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.TryCopyValuesToAnalysis(3);
+                    }
+                    break;
+                case Key.D5:
+                    // see Key.System case for ModifierKeys.Alt
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.TryCopyValuesToAnalysis(4);
+                    }
+                    break;
+                case Key.D6:
+                    // see Key.System case for ModifierKeys.Alt
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.TryCopyValuesToAnalysis(5);
+                    }
                     break;
                 case Key.Escape:            // exit current control, if any
                     this.TrySetKeyboardFocusToMarkableCanvas(false, currentKey);
                     break;
                 case Key.M:                 // toggle the magnifying glass on and off
                     this.MenuViewDisplayMagnifier_Click(this, null);
+                    break;
+                case Key.V:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.MenuEditPaste_Click(null, null);
+                    }
+                    break;
+                case Key.Z:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.MenuEditUndo_Click(null, null);
+                    }
                     break;
                 case Key.Left:              // previous image
                     if (keyRepeatCount % this.state.Throttles.RepeatedKeyAcceptanceInterval == 0)
@@ -2755,7 +2775,29 @@ namespace Carnassial
                         this.ShowFileWithoutSliderCallback(true, Keyboard.Modifiers);
                     }
                     break;
-                case Key.Tab:                // next or previous control
+                case Key.System:            // most commonly reached when Keyboard.Modifiers includes ModifierKeys.Alt
+                    if (Keyboard.Modifiers == ModifierKeys.Alt)
+                    {
+                        switch (currentKey.SystemKey)
+                        {
+                            case Key.D3:
+                                this.TryPasteValuesFromAnalysis(2);
+                                break;
+                            case Key.D4:
+                                this.TryPasteValuesFromAnalysis(3);
+                                break;
+                            case Key.D5:
+                                this.TryPasteValuesFromAnalysis(4);
+                                break;
+                            case Key.D6:
+                                this.TryPasteValuesFromAnalysis(5);
+                                break;
+                            default:
+                                return;
+                        }
+                    }
+                    break;
+                case Key.Tab:               // next or previous control
                     this.MoveFocusToNextOrPreviousControlOrImageSlider(Keyboard.Modifiers == ModifierKeys.Shift);
                     break;
                 case Key.Up:                // show visual difference to next image

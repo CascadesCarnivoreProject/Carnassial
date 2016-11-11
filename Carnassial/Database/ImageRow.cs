@@ -81,6 +81,17 @@ namespace Carnassial.Database
             private set { this.Row.SetUtcOffsetField(Constant.DatabaseColumn.UtcOffset, value); }
         }
 
+        public Dictionary<string, string> AsDisplayDictionary()
+        {
+            Dictionary<string, string> propertyBag = new Dictionary<string, string>();
+            foreach (DataColumn column in this.Row.Table.Columns)
+            {
+                string dataLabel = column.ColumnName;
+                propertyBag.Add(dataLabel, this.GetValueDisplayString(dataLabel));
+            }
+            return propertyBag;
+        }
+
         public override ColumnTuplesWithWhere GetColumnTuples()
         {
             ColumnTuplesWithWhere columnTuples = this.GetDateTimeColumnTuples();
@@ -147,10 +158,12 @@ namespace Carnassial.Database
             {
                 case Constant.DatabaseColumn.DateTime:
                     return this.GetDisplayDateTime();
-                case Constant.DatabaseColumn.UtcOffset:
-                    return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
+                case Constant.DatabaseColumn.ID:
+                    return this.ID.ToString();
                 case Constant.DatabaseColumn.ImageQuality:
                     return this.ImageQuality.ToString();
+                case Constant.DatabaseColumn.UtcOffset:
+                    return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
                 default:
                     return this.Row.GetStringField(dataLabel);
             }
@@ -254,27 +267,43 @@ namespace Carnassial.Database
         /// </summary>
         public bool TryMoveFileToDeletedFilesFolder(string folderPath)
         {
-            string sourceFilePath = this.GetFilePath(folderPath);
-            if (!File.Exists(sourceFilePath))
-            {
-                // nothing to do if the file doesn't exist
-                return false;
-            }
-
-            // create a new target folder, if necessary
+           // create the deleted files folder if necessary
             string deletedFilesFolderPath = Path.Combine(folderPath, Constant.File.DeletedFilesFolder);
             if (!Directory.Exists(deletedFilesFolderPath))
             {
                 Directory.CreateDirectory(deletedFilesFolderPath);
             }
 
-            // move the file to the backup location
-            string destinationFilePath = Path.Combine(deletedFilesFolderPath, this.FileName);
+            return this.TryMoveToFolder(folderPath, deletedFilesFolderPath, true);
+        }
+
+        public bool TryMoveToFolder(string folderPath, string destinationFolderPath, bool isSoftDelete)
+        {
+            string sourceFilePath = this.GetFilePath(folderPath);
+            if (!File.Exists(sourceFilePath))
+            {
+                // nothing to do if the source file doesn't exist
+                return false;
+            }
+
+            string destinationFilePath = Path.Combine(destinationFolderPath, this.FileName);
+            if (String.Equals(sourceFilePath, destinationFilePath, StringComparison.OrdinalIgnoreCase))
+            {
+                // nothing to do if the file is already at the desired location
+                return true;
+            }
+
             if (File.Exists(destinationFilePath))
             {
+                // can't move file since one with the same name already exists at the destination
+                if (isSoftDelete == false)
+                {
+                    return false;
+                }
+
+                // delete the destination file if it already exists since File.Move() doesn't allow overwriting
                 try
                 {
-                    // delete the destination file if it already exists since File.Move() doesn't allow overwriting
                     File.Delete(sourceFilePath);
                     return true;
                 }
@@ -288,6 +317,15 @@ namespace Carnassial.Database
             try
             {
                 File.Move(sourceFilePath, destinationFilePath);
+                if (isSoftDelete == false)
+                {
+                    string relativePath = NativeMethods.GetRelativePath(folderPath, destinationFolderPath);
+                    if (relativePath == String.Empty || relativePath == ".")
+                    {
+                        relativePath = null;
+                    }
+                    this.RelativePath = relativePath;
+                }
                 return true;
             }
             catch (IOException exception)

@@ -181,7 +181,7 @@
     </Compile>
     <Compile Include="Util\CallerMemberNameAttribute.cs" />
     <Compile Include="CellTextBlockConverter.cs" />
-    <Compile Include="Util\EditorControls.cs" />
+    <Compile Include="Controls\EditorControls.cs" />
     <Compile Include="EditorWindowExtensions.cs" />
     <Compile Include="Util\EditorUserRegistrySettings.cs" />
     <Page Include="Dialog\AboutEditor.xaml">
@@ -255,16 +255,16 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\Carnassial\Resources\Exit_16x.png">
-      <Link>Resources\Exit_16x.png</Link>
+    <Resource Include="..\Carnassial\Resources\Menu\Exit_16x.png">
+      <Link>Resources\Menu\Exit_16x.png</Link>
     </Resource>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\NewFile_16x.png" />
+    <Resource Include="Resources\Menu\NewFile_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\Carnassial\Resources\OpenFolder_16x.png">
-      <Link>Resources\OpenFolder_16x.png</Link>
+    <Resource Include="..\Carnassial\Resources\Menu\OpenFolder_16x.png">
+      <Link>Resources\Menu\OpenFolder_16x.png</Link>
     </Resource>
   </ItemGroup>
   <ItemGroup>

@@ -508,56 +508,71 @@
     <Resource Include="Resources\StatusHelp_64x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Exit_16x.png" />
-    <Resource Include="Resources\OpenFolder_16x.png" />
+    <Resource Include="Resources\Menu\Exit_16x.png" />
+    <Resource Include="Resources\Menu\OpenFolder_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Forward_16x.png" />
+    <Resource Include="Resources\Menu\Forward_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Backward_16x.png" />
+    <Resource Include="Resources\Menu\Backward_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\ZoomIn_16x.png" />
+    <Resource Include="Resources\Menu\ZoomIn_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\ZoomOut_16x.png" />
+    <Resource Include="Resources\Menu\ZoomOut_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\ZoomToFit_16x.png" />
+    <Resource Include="Resources\Menu\ZoomToFit_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\AddItem_16x.png" />
+    <Resource Include="Resources\Menu\AddItem_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\ExportFile_16x.png" />
+    <Resource Include="Resources\Menu\ExportFile_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\ImportFile_16x.png" />
+    <Resource Include="Resources\Menu\ImportFile_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\CopyDynamicValue_16x.png" />
+    <Resource Include="Resources\Menu\CopyDynamicValue_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\ShowHideDeletedItem_16x.png" />
+    <Resource Include="Resources\Menu\ShowHideDeletedItem_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\TimePicker_16x.png" />
+    <Resource Include="Resources\Menu\TimePicker_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Bookmark_002_16xMD.png" />
+    <Resource Include="Resources\Menu\Bookmark_002_16xMD.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\DarkTheme_16x.png" />
+    <Resource Include="Resources\Menu\DarkTheme_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\ContractArrow_16x.png" />
+    <Resource Include="Resources\Menu\ContractArrow_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\ExpandArrow_16x.png" />
+    <Resource Include="Resources\Menu\ExpandArrow_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\PlayVideo_16x.png" />
+    <Resource Include="Resources\Menu\PlayVideo_16x.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Menu\Copy_16x.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Menu\Paste_16x.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Menu\MoveToSubmodule_16x.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Menu\Undo_16x.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Menu\CloseSolution_16x.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.Data.SQLite.Core.1.0.103\build\net45\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.103\build\net45\System.Data.SQLite.Core.targets')" />

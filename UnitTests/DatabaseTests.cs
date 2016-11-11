@@ -727,6 +727,8 @@ namespace Carnassial.UnitTests
 
                 // for images, verify the date can be found in metadata
                 // for videos, verify the date is found in the previous image's metadata or not found if there's no previous image
+                // don't check DateTimeAdjustment.ImageSetOffset as its value varies depending on when the underlying file on disk was created
+                // during syncing or test deployment and therefore may or may not match the daylight savings status of the metadata date taken
                 DateTimeAdjustment dateTimeAdjustment = file.TryReadDateTimeOriginalFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
                 if (Path.GetFileNameWithoutExtension(file.FileName) == "06260048")
                 {
@@ -735,13 +737,19 @@ namespace Carnassial.UnitTests
                 else if (String.Equals(Path.GetExtension(file.FileName), Constant.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase))
                 {
                     Assert.IsTrue(dateTimeAdjustment == DateTimeAdjustment.None ||
-                                  dateTimeAdjustment == (DateTimeAdjustment.MetadataDate | DateTimeAdjustment.MetadataTime));
+                                  (dateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) && 
+                                   dateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime) &&
+                                   dateTimeAdjustment.HasFlag(DateTimeAdjustment.NoChange) == false && 
+                                   dateTimeAdjustment.HasFlag(DateTimeAdjustment.PreviousMetadata) == false));
                     DateTimeOffset fileDateTime = file.GetDateTime();
                     Assert.IsTrue(fileDateTime.Date == TestConstant.FileExpectation.HybridVideoFileDate);
                 }
                 else
                 {
-                    Assert.IsTrue(dateTimeAdjustment == (DateTimeAdjustment.MetadataDate | DateTimeAdjustment.MetadataTime | DateTimeAdjustment.PreviousMetadata));
+                    Assert.IsTrue(dateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate));
+                    Assert.IsTrue(dateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
+                    Assert.IsFalse(dateTimeAdjustment.HasFlag(DateTimeAdjustment.NoChange));
+                    Assert.IsTrue(dateTimeAdjustment.HasFlag(DateTimeAdjustment.PreviousMetadata));
                     DateTimeOffset fileDateTime = file.GetDateTime();
                     Assert.IsTrue(fileDateTime.Date == TestConstant.FileExpectation.HybridVideoFileDate);
                 }
@@ -888,6 +896,53 @@ namespace Carnassial.UnitTests
         }
 
         [TestMethod]
+        public void MoveFile()
+        {
+            // remove any existing files from previous test executions
+            string sourceFilePath = Path.Combine(Environment.CurrentDirectory, "DatabaseTests.MoveFile.jpg");
+            if (File.Exists(sourceFilePath))
+            {
+                File.Delete(sourceFilePath);
+            }
+            string subfolderPath = Path.Combine(Environment.CurrentDirectory, "DatabaseTests.MoveFileFolder");
+            if (Directory.Exists(subfolderPath) == false)
+            {
+                Directory.CreateDirectory(subfolderPath);
+            }
+            string destinationFilePath = Path.Combine(subfolderPath, Path.GetFileName(sourceFilePath));
+            if (File.Exists(destinationFilePath))
+            {
+                File.Delete(destinationFilePath);
+            }
+
+            FileExpectations fileExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightBobcat);
+            fileExpectation.ID = Constant.Database.InvalidID;
+
+            // create ImageRow object for file
+            File.Copy(fileExpectation.FileName, sourceFilePath);
+            FileInfo fileInfo = new FileInfo(sourceFilePath);
+
+            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
+            ImageRow file;
+            fileDatabase.GetOrCreateFile(fileInfo, fileDatabase.ImageSet.GetTimeZone(), out file);
+            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
+            file.TryReadDateTimeOriginalFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
+
+            fileExpectation.FileName = Path.GetFileName(sourceFilePath);
+            fileExpectation.Verify(file, imageSetTimeZone);
+
+            // move file
+            Assert.IsTrue(file.TryMoveToFolder(fileDatabase.FolderPath, subfolderPath, false));
+            fileExpectation.RelativePath = Path.GetFileName(subfolderPath);
+            fileExpectation.Verify(file, imageSetTimeZone);
+
+            // move file back
+            Assert.IsTrue(file.TryMoveToFolder(fileDatabase.FolderPath, fileDatabase.FolderPath, false));
+            fileExpectation.RelativePath = null;
+            fileExpectation.Verify(file, imageSetTimeZone);
+        }
+
+        [TestMethod]
         public void RoundtripCsv()
         {
             // create database, push test images into the database, and load the image data table
@@ -902,7 +957,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(csvReaderWriter.TryImportFromCsv(initialCsvFilePath, fileDatabase, out importErrors));
             Assert.IsTrue(importErrors.Count == 0);
 
-            // verify Files content hasn't changed
+            // verify File table content hasn't changed
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
             for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
             {
@@ -918,6 +973,23 @@ namespace Carnassial.UnitTests
             string initialCsv = File.ReadAllText(initialCsvFilePath);
             string roundtripCsv = File.ReadAllText(roundtripCsvFilePath);
             Assert.IsTrue(initialCsv == roundtripCsv, "Initial and roundtrip .csv files don't match.");
+
+            // merge and refresh in memory table
+            int filesBeforeMerge = fileDatabase.CurrentlySelectedFileCount;
+            string mergeCsvFilePath = Path.Combine(Path.GetDirectoryName(initialCsvFilePath), Path.GetFileNameWithoutExtension(initialCsvFilePath) + ".FilesToMerge" + Constant.File.CsvFileExtension);
+            Assert.IsTrue(csvReaderWriter.TryImportFromCsv(mergeCsvFilePath, fileDatabase, out importErrors));
+            Assert.IsTrue(importErrors.Count == 0);
+
+            fileDatabase.SelectFiles(FileSelection.All);
+            Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount - filesBeforeMerge == 2);
+
+            // verify merge didn't affect existing File table content
+            for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
+            {
+                ImageRow file = fileDatabase.Files[fileIndex];
+                FileExpectations fileExpectation = fileExpectations[fileIndex];
+                fileExpectation.Verify(file, imageSetTimeZone);
+            }
         }
 
         /// <summary>
