@@ -34,7 +34,7 @@ namespace Carnassial.Dialog
             // configure datetime picker
             this.InitialDate = imageToCorrect.GetDateTime();
             this.OriginalDate.Content = DateTimeHandler.ToDisplayDateTimeString(this.InitialDate);
-            DataEntryHandler.Configure(this.DateTimePicker, this.InitialDate.DateTime);
+            this.DateTimePicker.Value = this.InitialDate;
             this.DateTimePicker.ValueChanged += this.DateTimePicker_ValueChanged;
         }
 
@@ -49,7 +49,7 @@ namespace Carnassial.Dialog
             this.PrimaryPanel.Visibility = Visibility.Collapsed;
             this.FeedbackPanel.Visibility = Visibility.Visible;
 
-            TimeSpan adjustment = this.DateTimePicker.Value.Value - this.InitialDate.DateTime;
+            TimeSpan adjustment = this.DateTimePicker.Value - this.InitialDate;
 
             // Preview the changes
             foreach (ImageRow image in this.fileDatabase.Files)
@@ -76,12 +76,6 @@ namespace Carnassial.Dialog
 
         private void ChangesButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.DateTimePicker.Value.HasValue == false)
-            {
-                this.DialogResult = false;
-                return;
-            }
-
             // 1st click: Show the preview before actually making any changes.
             if (this.displayingPreview == false)
             {
@@ -94,7 +88,7 @@ namespace Carnassial.Dialog
             // 2nd click
             // Calculate and apply the date/time difference
             DateTime originalDateTime = DateTimeHandler.ParseDisplayDateTimeString((string)this.OriginalDate.Content);
-            TimeSpan adjustment = this.DateTimePicker.Value.Value - originalDateTime;
+            TimeSpan adjustment = this.DateTimePicker.Value - originalDateTime;
             if (adjustment == TimeSpan.Zero)
             {
                 this.DialogResult = false; // No difference, so nothing to correct
@@ -112,10 +106,10 @@ namespace Carnassial.Dialog
             this.DialogResult = false;
         }
 
-        private void DateTimePicker_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        private void DateTimePicker_ValueChanged(DateTimeOffsetPicker sender, DateTimeOffset newDateTime)
         {
-            TimeSpan difference = this.DateTimePicker.Value.Value - this.InitialDate;
-            this.ChangesButton.IsEnabled = (difference == TimeSpan.Zero) ? false : true;
+            TimeSpan difference = newDateTime - this.InitialDate;
+            this.ChangesButton.IsEnabled = difference != TimeSpan.Zero;
         }
     }
 }

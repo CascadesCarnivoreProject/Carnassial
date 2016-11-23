@@ -11,6 +11,7 @@ namespace Carnassial.Util
     {
         private static readonly List<string> CarnassialRequiredBinaries = new List<string>()
         {
+            "EPPlus.dll", // xlsx
             "Microsoft.WindowsAPICodePack.dll", // required by Microsoft.WindowsAPICodePack.Shell.dll
             "Microsoft.WindowsAPICodePack.Shell.dll" // just for CarnassialWindow's use of CommonOpenFileDialog
         };
@@ -27,8 +28,7 @@ namespace Carnassial.Util
             "System.Data.SQLite.xml",
             "x64/SQLite.Interop.dll",
             "x86/SQLite.Interop.dll",
-            "Xceed.Wpf.AvalonDock.dll",
-            "Xceed.Wpf.Toolkit.dll"
+            "Xceed.Wpf.AvalonDock.dll"
         };
 
         private static readonly List<string> EditorRequiredBinaries = new List<string>()

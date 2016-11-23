@@ -7,7 +7,6 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Xceed.Wpf.Toolkit;
 
 namespace Carnassial.Dialog
 {
@@ -147,12 +146,10 @@ namespace Carnassial.Dialog
                 {
                     DateTimeOffset dateTime = this.database.CustomSelection.GetDateTime(gridRowIndex - 1, this.imageSetTimeZone);
 
-                    DateTimePicker dateValue = new DateTimePicker();
-                    dateValue.Format = DateTimeFormat.Custom;
-                    dateValue.FormatString = Constant.Time.DateTimeDisplayFormat;
+                    DateTimeOffsetPicker dateValue = new DateTimeOffsetPicker();
                     dateValue.IsEnabled = searchTerm.UseForSearching;
-                    dateValue.Value = dateTime.DateTime;
-                    dateValue.ValueChanged += this.DateTime_SelectedDateChanged;
+                    dateValue.Value = dateTime;
+                    dateValue.ValueChanged += this.DateTime_ValueChanged;
                     dateValue.Width = CustomSelection.DefaultControlWidth;
 
                     Grid.SetRow(dateValue, gridRowIndex);
@@ -225,11 +222,11 @@ namespace Carnassial.Dialog
                 }
                 else if (controlType == Constant.DatabaseColumn.UtcOffset)
                 {
-                    UtcOffsetUpDown utcOffsetValue = new UtcOffsetUpDown();
+                    UtcOffsetPicker utcOffsetValue = new UtcOffsetPicker();
                     utcOffsetValue.IsEnabled = searchTerm.UseForSearching;
                     utcOffsetValue.IsTabStop = true;
                     utcOffsetValue.Value = searchTerm.GetUtcOffset();
-                    utcOffsetValue.ValueChanged += this.UtcOffset_SelectedDateChanged;
+                    utcOffsetValue.ValueChanged += this.UtcOffset_ValueChanged;
                     utcOffsetValue.Width = CustomSelection.DefaultControlWidth;
 
                     Grid.SetRow(utcOffsetValue, gridRowIndex);
@@ -315,15 +312,11 @@ namespace Carnassial.Dialog
             args.Handled = CustomSelection.IsNumbersOnly(args.Text);
         }
 
-        private void DateTime_SelectedDateChanged(object sender, RoutedPropertyChangedEventArgs<object> args)
+        private void DateTime_ValueChanged(DateTimeOffsetPicker datePicker, DateTimeOffset newDateTime)
         {
-            DateTimePicker datePicker = sender as DateTimePicker;
-            if (datePicker.Value.HasValue)
-            {
-                int row = Grid.GetRow(datePicker);
-                this.database.CustomSelection.SetDateTime(row - 1, datePicker.Value.Value, this.imageSetTimeZone);
-                this.UpdateSearchCriteriaFeedback();
-            }
+            int row = Grid.GetRow(datePicker);
+            this.database.CustomSelection.SetDateTime(row - 1, datePicker.Value, this.imageSetTimeZone);
+            this.UpdateSearchCriteriaFeedback();
         }
 
         private void FixedChoice_SelectionChanged(object sender, SelectionChangedEventArgs args)
@@ -352,15 +345,11 @@ namespace Carnassial.Dialog
             }
         }
 
-        private void UtcOffset_SelectedDateChanged(object sender, RoutedPropertyChangedEventArgs<object> args)
+        private void UtcOffset_ValueChanged(TimeSpanPicker utcOffsetPicker, TimeSpan newTimeSpan)
         {
-            UtcOffsetUpDown utcOffsetPicker = sender as UtcOffsetUpDown;
-            if (utcOffsetPicker.Value.HasValue)
-            {
-                int row = Grid.GetRow(utcOffsetPicker);
-                this.database.CustomSelection.SearchTerms[row - 1].SetDatabaseValue(utcOffsetPicker.Value.Value);
-                this.UpdateSearchCriteriaFeedback();
-            }
+            int row = Grid.GetRow(utcOffsetPicker);
+            this.database.CustomSelection.SearchTerms[row - 1].SetDatabaseValue(utcOffsetPicker.Value);
+            this.UpdateSearchCriteriaFeedback();
         }
 
         // Updates the search criteria shown across all rows to reflect the contents of the search list,

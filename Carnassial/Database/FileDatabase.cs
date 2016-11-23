@@ -54,12 +54,12 @@ namespace Carnassial.Database
             this.OrderFilesByDateTime = false;
         }
 
-        public static FileDatabase CreateOrOpen(string filePath, TemplateDatabase templateDatabase, bool orderFilesByDate, CustomSelectionOperator customSelectionTermCombiningOperator)
+        public static bool TryCreateOrOpen(string filePath, TemplateDatabase templateDatabase, bool orderFilesByDate, CustomSelectionOperator customSelectionTermCombiningOperator, out FileDatabase fileDatabase)
         {
             // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
             bool populateDatabase = !File.Exists(filePath);
 
-            FileDatabase fileDatabase = new FileDatabase(filePath);
+            fileDatabase = new FileDatabase(filePath);
             if (populateDatabase)
             {
                 // initialize the database if it's newly created
@@ -68,7 +68,10 @@ namespace Carnassial.Database
             else
             {
                 // if it's an existing database check if it needs updating to current structure and load data tables
-                fileDatabase.OnExistingDatabaseOpened(templateDatabase);
+                if (fileDatabase.OnExistingDatabaseOpened(templateDatabase) == false)
+                {
+                    return false;
+                }
             }
 
             // ensure all tables have been loaded from the database
@@ -84,7 +87,7 @@ namespace Carnassial.Database
             fileDatabase.CustomSelection = new CustomSelection(fileDatabase.Controls, customSelectionTermCombiningOperator);
             fileDatabase.OrderFilesByDateTime = orderFilesByDate;
             fileDatabase.PopulateDataLabelMaps();
-            return fileDatabase;
+            return true;
         }
 
         /// <summary>Gets the number of files currently in the files table.</summary>
@@ -277,10 +280,13 @@ namespace Carnassial.Database
             this.Database.CreateTable(Constant.DatabaseTable.Markers, columnDefinitions);
         }
 
-        protected override void OnExistingDatabaseOpened(TemplateDatabase templateDatabase)
+        protected override bool OnExistingDatabaseOpened(TemplateDatabase templateDatabase)
         {
             // perform TemplateTable initializations and migrations, then check for synchronization issues
-            base.OnExistingDatabaseOpened(templateDatabase);
+            if (base.OnExistingDatabaseOpened(templateDatabase) == false)
+            {
+                return false;
+            }
 
             List<string> templateDataLabels = templateDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
             List<string> dataLabels = this.GetDataLabelsExceptIDInSpreadsheetOrder();
@@ -330,6 +336,8 @@ namespace Carnassial.Database
                     }
                 }
             }
+
+            return this.ControlSynchronizationIssues.Count == 0;
         }
 
         /// <summary>

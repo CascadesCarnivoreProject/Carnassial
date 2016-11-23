@@ -7,7 +7,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:s="clr-namespace:System;assembly=mscorlib"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         AutomationProperties.AutomationId="Carnassial"
         Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown" 
@@ -36,19 +35,27 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuFileExportCsv" Header="Ex_port data for this image set as a .csv file..." IsEnabled="False" Click="MenuFileExportCsv_Click" ToolTip="Exports data for the selected images into a .csv (comma separated value) file.">
-                    <MenuItem.Icon>
-                        <Image Source="Resources/Menu/ExportFile_16x.png" />
-                    </MenuItem.Icon>
+                <MenuItem Name="MenuFileExport" Header="Ex_port selected data" IsEnabled="False">
+                    <MenuItem Name="MenuFileExportXlsx" Header="to an ._xlsx file" Click="MenuFileExportSpreadsheet_Click" ToolTip="Exports data for the selected files to an .xlsx (Excel) file.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/ExportFile_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Name="MenuFileExportXlsxAndOpen" Header="to an .xlsx file and o_pen..." Click="MenuFileExportSpreadsheet_Click" ToolTip="Exports data for the selected files to an .xlsx (Excel) file and opens it in the program associated with the .xlsx extension, which is usually Excel." />
+                    <MenuItem Name="MenuFileExportCsv" Header="to a ._csv file" Click="MenuFileExportSpreadsheet_Click" ToolTip="Export data for the selected files to a .csv (comma separated value) file.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/ExportFile_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Name="MenuFileExportCsvAndOpen" Header="to a ._csv file and open..." Click="MenuFileExportSpreadsheet_Click" ToolTip="Export data for the selected files to a .csv (comma separated value) file and opens it in the program associated with the .csv extension, which is usually Excel." />
                 </MenuItem>
-                <MenuItem Name="MenuFileExportCsvAndView" Header="Export data for this image set as a .csv file and preview in _Excel..." IsEnabled="False" Click="MenuFileExportCsv_Click" ToolTip="Exports data for the selected files in the image set into a .csv (comma separated value) file and previews it in Excel." />
-                <MenuItem Name="MenuFileImportCsv" Header="I_mport data from a .csv file..." IsEnabled="False" Click="MenuFileImportCsv_Click" ToolTip="Exports data for the selected files in the image set into a .csv (comma separated value) file.">
+                <MenuItem Name="MenuFileImport" Header="I_mport data..." IsEnabled="False" Click="MenuFileImportSpreadsheet_Click" ToolTip="Import data from a .csv (comma separated value) or .xlsx (Excel) file.">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/ImportFile_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuFileCloneCurrent" Header="Make a copy of the current _file..." Click="MenuFileCloneCurrent_Click" IsEnabled="False" ToolTip="Make a copy of the current file in a location of your choosing." />
+                <MenuItem Name="MenuFileCloneCurrent" Header="Make a copy of the current _file..." Click="MenuFileCloneCurrent_Click" IsEnabled="False" ToolTip="Make a copy of the current file in a location of your choosing.  The copy is not added to the image set." />
                 <MenuItem Name="MenuFileMoveFiles" Header="Mo_ve selected files..." Click="MenuFileMoveFiles_Click" IsEnabled="False" ToolTip="Move all currently selected file to a location of your choosing.">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/MoveToSubmodule_16x.png" />
@@ -95,6 +102,11 @@
                 </MenuItem>
                 <MenuItem Name="MenuEditCopyValuesToAnalysis" Header="Copy values to _analysis" ToolTip="Copy data entered for the current file where it can be reused under a particular analysis number." />
                 <MenuItem Name="MenuEditPasteValuesFromAnalysis" Header="Paste values from anal_ysis" ToolTip="Apply data in an analysis to the current file.  Only fields marked copyable in the template are set." />
+                <MenuItem Name="MenuEditResetValues" Header="Re_set values to defaults" Click="MenuEditResetValues_Click" ToolTip="Reset data the defaults specified in the template.  Only fields marked copyable in the template are reset." InputGestureText="Alt+R">
+                    <MenuItem.Icon>
+                        <Image Source="Resources/Menu/Restart_16x.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator />
                 <MenuItem Name="MenuEditRereadDateTimesfromFiles" Header="_Reread date/times from files..." Click="MenuEditRereadDateTimesFromFiles_Click" ToolTip="Reread dates and times from all selected files." />
                 <MenuItem Name="MenuEditDaylightSavingsTimeCorrection" Header="Adjust for dayl_ight savings time..." Click="MenuEditDaylightSavingsTimeCorrection_Click" ToolTip="Correct daylight saving time issues" />
@@ -144,16 +156,40 @@
 
             <!-- View Menu -->
             <MenuItem Name="MenuView" Header="_View" IsEnabled="False" ToolTip="Zooming, navigating, and image differencing.">
-                <MenuItem Name="MenuViewShowNextFile" Header="View _next file" Click="MenuViewShowNextFile_Click" InputGestureText="&#x2192;" ToolTip="View the next file in the image set.">
+                <MenuItem Name="MenuViewShowNextFile" Header="View _next file" Click="MenuViewShowNextFile_Click" InputGestureText="&#x2192;" ToolTip="View the next file in the current selection.">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/Forward_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Name="MenuViewShowPreviousFile" Header="View _previous file" Click="MenuViewShowPreviousFile_Click" InputGestureText="&#x2190;" ToolTip="View the previous file in the image set.">
+                <MenuItem Name="MenuViewShowPreviousFile" Header="View _previous file" Click="MenuViewShowPreviousFile_Click" InputGestureText="&#x2190;" ToolTip="View the previous file in the current selection.">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/Backward_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="View _file">
+                    <MenuItem Header="_go to..." Click="MenuViewGotoFile_Click" InputGestureText="Ctrl+G" ToolTip="Go to a specific file in the current selection." />
+                    <Separator />
+                    <MenuItem Header="fi_ve ahead" Click="MenuViewShowNextFileShift_Click" InputGestureText="Shift+&#x2192;" ToolTip="View the file five files after this one in the current selection." />
+                    <MenuItem Header="fi_ve back" Click="MenuViewShowPreviousFileShift_Click" InputGestureText="Shift+&#x2190;" ToolTip="View the file five files before this one in the current selection." />
+                    <MenuItem Header="_10 ahead" Click="MenuViewShowNextFileControl_Click" InputGestureText="Ctrl+&#x2192;" ToolTip="View the file 10 files after this one in the current selection." />
+                    <MenuItem Header="_10 back" Click="MenuViewShowPreviousFileControl_Click" InputGestureText="Ctrl+&#x2190;" ToolTip="View the 10 file before this one in the current selection." />
+                    <MenuItem Header="_50 ahead" Click="MenuViewShowNextFileControlShift_Click" InputGestureText="Ctrl+Shift+&#x2192;" ToolTip="View the file 50 files after this one in the current selection." />
+                    <MenuItem Header="_50 back" Click="MenuViewShowPreviousFileControlShift_Click" InputGestureText="Ctrl+Shift+&#x2190;" ToolTip="View the file 50 files before this one in the current selection." />
+                    <Separator />
+                    <MenuItem Header="10_% ahead" Click="MenuViewShowNextFilePageDown_Click" InputGestureText="PgDn" ToolTip="Move a tenth of the way forward in the current selection." />
+                    <MenuItem Header="10_% back" Click="MenuViewShowPreviousFilePageUp_Click" InputGestureText="PgUp" ToolTip="Move a tenth of the way back in the current selection." />
+                    <MenuItem Header="_first" Click="MenuViewShowFirstFile_Click" InputGestureText="Home" ToolTip="View the first file in the current selection.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/GoToFirstRow_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="_last" Click="MenuViewShowLastFile_Click" InputGestureText="End" ToolTip="View the first file in the current selection.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/GoToLastRow_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </MenuItem>
+                <Separator />
                 <MenuItem Name="MenuViewPlayVideo" Header="Play or pause _video" Click="MenuViewPlayVideo_Click" InputGestureText="Space" ToolTip="Play the current video or pause it if it's currently playing.">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/PlayVideo_16x.png" />
@@ -196,6 +232,12 @@
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/Bookmark_002_16xMD.png" />
                     </MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="View _window">
+                    <MenuItem Header="i_nstructions" Click="MenuViewShowInstructions_Click" ToolTip="View the instructions tab." />
+                    <MenuItem Header="_image set" Click="MenuViewShowImageSet_Click" ToolTip="View the image set tab." />
+                    <MenuItem Header="_data grid" Click="MenuViewShowDataGrid_Click" ToolTip="View the data grid tab." />
                 </MenuItem>
             </MenuItem>
 

@@ -41,11 +41,11 @@
                             <Paragraph><Bold>Flag</Bold> can be set to true or false.</Paragraph>
                         </ListItem>
                     </List>
-                    <Paragraph>The <Bold>Copy previous values</Bold> button (or pressing the c key) copies available values from the previous file to the fields of the current file.  The fields copyable are defined in the template (.tdb); hover the mouse over the button to see which fields are copyable.  <Bold>Right click menus</Bold> for copying values are available on all controls.  Each lets you copy existing or previous data in different ways.</Paragraph>
+                    <Paragraph>Pressing Ctrl+1, Ctrl+2, <Italic>etc.</Italic> <Bold>copies the current values</Bold> to an analysis slot.  Pressing Alt+1, Alt+2, <Italic>etc.</Italic> or an Analysis button <Bold>applies the values</Bold> in that analysis slot.  The <Bold>Copy previous values</Bold> button (or pressing Alt+P) copies available values from the previous file to the fields of the current file.  The fields copyable are defined in the template (.tdb); hover the mouse over the button to see which fields are copyable.  <Bold>Right click menus</Bold> for copying values are available on all controls whose values are copyable; each lets you copy existing or previous data in different ways.</Paragraph>
                 </ListItem>
                 <ListItem>
                     <Paragraph>
-                        <Bold>Navigation</Bold>  Use the left and right arrow keys or the slider to move between files.  Tip: shift+left/right moves 5 files, control+left/right moves 10, control+shift moves 50.
+                        <Bold>Navigation</Bold>  Use the left and right arrow keys or the slider to move between files.  Tip: shift+left/right moves 5 files, control+left/right moves 10, control+shift moves 50, home and end go to the first and last files, and page up and page down jump 10% of the way through the files.
                     </Paragraph>
                 </ListItem>
                 <ListItem>

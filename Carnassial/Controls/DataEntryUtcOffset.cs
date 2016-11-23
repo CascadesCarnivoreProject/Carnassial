@@ -4,7 +4,7 @@ using System.Windows.Controls;
 
 namespace Carnassial.Controls
 {
-    public class DataEntryUtcOffset : DataEntryControl<UtcOffsetUpDown, Label>
+    public class DataEntryUtcOffset : DataEntryControl<UtcOffsetPicker, Label>
     {
         public override string Content
         {

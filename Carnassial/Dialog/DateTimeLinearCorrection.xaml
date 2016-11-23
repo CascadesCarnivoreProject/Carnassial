@@ -3,7 +3,6 @@
         xmlns:controls="clr-namespace:Carnassial.Controls"
         xmlns:local="clr-namespace:Carnassial"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
 		Title="Date/time - Add a varying correction value"
 		MinHeight="650" MinWidth="768"
 		Height="856" Width="788"
@@ -57,7 +56,7 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Label Content="Camera last correct:" HorizontalAlignment="Left" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
-                    <xctk:DateTimePicker HorizontalAlignment="Right" HorizontalContentAlignment="Left" Grid.Row="0" Grid.Column="1" x:Name="ClockLastCorrect" Width="165" />
+                    <controls:DateTimeOffsetPicker HorizontalAlignment="Right" HorizontalContentAlignment="Left" Grid.Row="0" Grid.Column="1" x:Name="ClockLastCorrect" Width="165" />
                 </Grid>
 
                 <!-- adjustment row: end of interval and adjustment -->
@@ -71,8 +70,8 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Label Content="Clock drift measured:" HorizontalAlignment="Left" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
-                    <xctk:DateTimePicker Grid.Row="0" Grid.Column="1" x:Name="ClockDriftMeasured" HorizontalAlignment="Left" Width="165" />
-                    <xctk:TimeSpanUpDown Grid.Row="0" Grid.Column="2" x:Name="ClockDrift" HorizontalAlignment="Left" Height="26" IsTabStop="True" Width="80" />
+                    <controls:DateTimeOffsetPicker Grid.Row="0" Grid.Column="1" x:Name="ClockDriftMeasured" HorizontalAlignment="Left" Width="165" />
+                    <controls:TimeSpanPicker Grid.Row="0" Grid.Column="2" x:Name="ClockDrift" HorizontalAlignment="Left" Height="26" IsTabStop="True" Width="80" />
                 </Grid>
 
                 <!-- image info row: earliest -->

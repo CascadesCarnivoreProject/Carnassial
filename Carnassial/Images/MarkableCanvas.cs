@@ -527,6 +527,7 @@ namespace Carnassial.Images
                     break;
                 // return to full view of display image
                 case Key.D0:
+                case Key.NumPad0:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.ZoomToFit();

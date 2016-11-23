@@ -63,7 +63,7 @@ namespace Carnassial
             this.state.ReadFromRegistry();
 
             this.MenuOptionsAudioFeedback.IsChecked = this.state.AudioFeedback;
-            this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.state.SuppressCsvImportPrompt;
+            this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.state.SuppressSpreadsheetImportPrompt;
             this.MenuOptionsOrderFilesByDateTime.IsChecked = this.state.OrderFilesByDateTime;
             this.MenuOptionsSkipDarkFileCheck.IsChecked = this.state.SkipDarkImagesCheck;
 
@@ -220,9 +220,8 @@ namespace Carnassial
             this.MenuFileRecentImageSets.IsEnabled = !imageSetAvailable;
             this.MenuFileCloseImageSet.IsEnabled = imageSetAvailable;
             this.MenuFileCloneCurrent.IsEnabled = filesSelected;
-            this.MenuFileExportCsvAndView.IsEnabled = filesSelected;
-            this.MenuFileExportCsv.IsEnabled = filesSelected;
-            this.MenuFileImportCsv.IsEnabled = imageSetAvailable;
+            this.MenuFileExport.IsEnabled = filesSelected;
+            this.MenuFileImport.IsEnabled = imageSetAvailable;
             this.MenuFileMoveFiles.IsEnabled = filesSelected;
             this.MenuFileRenameFileDatabase.IsEnabled = filesSelected;
             // edit menu
@@ -382,13 +381,7 @@ namespace Carnassial
             string templateDatabaseFilePath;
             if (Utilities.IsSingleTemplateFileDrag(dropEvent, out templateDatabaseFilePath))
             {
-                BackgroundWorker ignored;
-                if (this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath, out ignored) == false)
-                {
-                    this.state.MostRecentImageSets.TryRemove(templateDatabaseFilePath);
-                    this.MenuFileRecentImageSets_Refresh();
-                }
-                dropEvent.Handled = true;
+                dropEvent.Handled = this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
             }
         }
 
@@ -402,6 +395,17 @@ namespace Carnassial
             if (this.dataHandler == null ||
                 this.dataHandler.ImageCache == null ||
                 this.dataHandler.ImageCache.Current == null)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool IsFileDatabaseAvailable()
+        {
+            if (this.dataHandler == null ||
+                this.dataHandler.FileDatabase == null)
             {
                 return false;
             }
@@ -861,6 +865,26 @@ namespace Carnassial
             this.ShowBulkFileEditDialog(rereadDates);
         }
 
+        private void MenuEditResetValues_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsFileAvailable() == false)
+            {
+                return;
+            }
+
+            this.state.UndoBuffer = this.dataHandler.ImageCache.Current.AsDisplayDictionary();
+            this.MenuEditUndo.IsEnabled = true;
+
+            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
+            {
+                DataEntryControl control = pair.Value;
+                if (this.dataHandler.FileDatabase.IsControlCopyable(control.DataLabel))
+                {
+                    control.SetContentAndTooltip(control.DefaultValue);
+                }
+            }
+        }
+
         private void MenuEditSetTimeZone_Click(object sender, RoutedEventArgs e)
         {
             DateTimeSetTimeZone setTimeZone = new DateTimeSetTimeZone(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current, this);
@@ -953,11 +977,10 @@ namespace Carnassial
 
         private void MenuFileLoadImageSet_Click(object sender, RoutedEventArgs e)
         {
-            string templateDatabasePath;
-            if (this.TryGetTemplatePath(out templateDatabasePath))
+            string templateDatabaseFilePath;
+            if (this.TryGetTemplatePath(out templateDatabaseFilePath))
             {
-                BackgroundWorker ignored;
-                this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabasePath, out ignored);
+                this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
             }     
         }
 
@@ -993,31 +1016,42 @@ namespace Carnassial
             }
         }
 
-        /// <summary>Write the .csv file and preview it in Excel</summary>
-        private void MenuFileExportCsv_Click(object sender, RoutedEventArgs e)
+        /// <summary>Write the .csv or .xlsx file and maybe send an open command to the system</summary>
+        private void MenuFileExportSpreadsheet_Click(object sender, RoutedEventArgs e)
         {
-            // backup any existing .csv file as it's overwritten on export
-            string csvFileName = Path.GetFileNameWithoutExtension(this.dataHandler.FileDatabase.FileName) + ".csv";
-            string csvFilePath = Path.Combine(this.FolderPath, csvFileName);
-            if (FileBackup.TryCreateBackup(this.FolderPath, csvFileName))
+            MenuItem menuItem = (MenuItem)sender;
+            bool exportXlsx = (sender == this.MenuFileExportXlsxAndOpen) || (sender == this.MenuFileExportXlsx);
+            bool openFile = (sender == this.MenuFileExportXlsxAndOpen) || (sender == this.MenuFileExportCsvAndOpen);
+
+            // backup any existing file as it's overwritten on export
+            string spreadsheetFileExtension = exportXlsx ? Constant.File.ExcelFileExtension : Constant.File.CsvFileExtension;
+            string spreadsheetFileName = Path.GetFileNameWithoutExtension(this.dataHandler.FileDatabase.FileName) + spreadsheetFileExtension;
+            string spreadsheetFilePath = Path.Combine(this.FolderPath, spreadsheetFileName);
+            if (FileBackup.TryCreateBackup(this.FolderPath, spreadsheetFileName))
             {
-                this.statusBar.SetMessage("Backup of .csv file made.");
+                this.statusBar.SetMessage(String.Format("Backup of {0} made.", spreadsheetFileName));
             }
 
-            CsvReaderWriter csvWriter = new CsvReaderWriter();
+            SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter();
             try
             {
-                csvWriter.ExportToCsv(this.dataHandler.FileDatabase, csvFilePath);
-                this.statusBar.SetMessage("Data exported to " + csvFileName);
-
-                MenuItem menuItem = (MenuItem)sender;
-                if (menuItem == this.MenuFileExportCsvAndView)
+                if (exportXlsx)
                 {
-                    // show the file in whatever program is associated with the .csv extension
+                    spreadsheetWriter.ExportFileDataToXlsx(this.dataHandler.FileDatabase, spreadsheetFilePath);
+                }
+                else
+                {
+                    spreadsheetWriter.ExportFileDataToCsv(this.dataHandler.FileDatabase, spreadsheetFilePath);
+                }
+                this.statusBar.SetMessage("Data exported to " + spreadsheetFileName);
+
+                if (openFile)
+                {
+                    // show the exported file in whatever program is associated with its extension
                     Process process = new Process();
                     process.StartInfo.UseShellExecute = true;
                     process.StartInfo.RedirectStandardOutput = false;
-                    process.StartInfo.FileName = csvFilePath;
+                    process.StartInfo.FileName = spreadsheetFilePath;
                     process.Start();
                 }
             }
@@ -1025,7 +1059,7 @@ namespace Carnassial
             {
                 MessageBox messageBox = new MessageBox("Can't write the spreadsheet file.", this);
                 messageBox.Message.StatusImage = MessageBoxImage.Error;
-                messageBox.Message.Problem = "The following file can't be written: " + csvFilePath;
+                messageBox.Message.Problem = "The following file can't be written: " + spreadsheetFilePath;
                 messageBox.Message.Reason = "You may already have it open in Excel or another application.";
                 messageBox.Message.Solution = "If the file is open in another application, close it and try again.";
                 messageBox.Message.Hint = String.Format("{0}: {1}", exception.GetType().FullName, exception.Message);
@@ -1034,26 +1068,29 @@ namespace Carnassial
             }
         }
 
-        private void MenuFileImportCsv_Click(object sender, RoutedEventArgs e)
+        private void MenuFileImportSpreadsheet_Click(object sender, RoutedEventArgs e)
         {
-            if (this.state.SuppressCsvImportPrompt == false)
+            if (this.state.SuppressSpreadsheetImportPrompt == false)
             {
-                MessageBox messageBox = new MessageBox("How import of .csv data works.", this, MessageBoxButton.OKCancel);
-                messageBox.Message.What = "Importing data from a .csv (comma separated value) file follows the rules below.";
-                messageBox.Message.Reason = "Carnassial requires the .csv file follow a specific format and processes its data in a specific way.";
-                messageBox.Message.Solution = "Modifying and importing a .csv file is supported only if the .csv file is exported from and then back into Carnassial image sets with the same template." + Environment.NewLine;
+                MessageBox messageBox = new MessageBox("How importing spreadsheet data works.", this, MessageBoxButton.OKCancel);
+                messageBox.Message.What = "Importing data from .csv (comma separated value) and .xslx (Excel) files follows the rules below.";
+                messageBox.Message.Reason = "Carnassial requires the file follow a specific format and processes its data in a specific way.";
+                messageBox.Message.Solution = "Modifying and importing a spreadsheet is supported only if the file is exported from and then back into image set with the same template." + Environment.NewLine;
                 messageBox.Message.Solution += "A limited set of modifications is allowed:" + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Adding columns, removing columns, or changing column names is not supported." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 FileName and RelativePath identify the file updates are applied to.  Changing them causes a different file to be updated or a new file to be added." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 RelativePath is interpreted relative to the .csv file.  Make sure it's in the right place!" + Environment.NewLine;
-                messageBox.Message.Solution += String.Format("\u2022 DateTime must be in '{0}' format.{1}", Constant.Time.DateTimeDatabaseFormat, Environment.NewLine);
-                messageBox.Message.Solution += String.Format("\u2022 UtcOffset must be a floating point number between {0} and {1}, inclusive.{2}", DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), Environment.NewLine);
                 messageBox.Message.Solution += "\u2022 Counter data must be zero or a positive integer." + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 Flag data must be 'true' or 'false', case insensitive." + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 FixedChoice data must be a string that exactly matches one of the FixedChoice menu options or the field's default value." + Environment.NewLine;
+                messageBox.Message.Solution += String.Format("\u2022 DateTime must be in '{0}' format.{1}", Constant.Time.DateTimeDatabaseFormat, Environment.NewLine);
+                messageBox.Message.Solution += String.Format("\u2022 UtcOffset must be a floating point number between {0} and {1}, inclusive.{2}", DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), Environment.NewLine);
+                messageBox.Message.Solution += "Changing these things either doesn't work or is best done with care:" + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 FileName and RelativePath identify the file updates are applied to.  Changing them causes a different file to be updated or a new file to be added." + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 RelativePath is interpreted relative to the spreadsheet file.  Make sure it's in the right place!" + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Column names can be swapped to assign data to different fields." + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Adding, removing, or otherwise changing columns is not supported." + Environment.NewLine;
+                messageBox.Message.Solution += String.Format("\u2022 Using a worksheet with a name other than '{0}' in .xlsx files is not supported.{1}", Constant.Excel.FileDataWorksheetName, Environment.NewLine);
                 messageBox.Message.Result = String.Format("Carnassial will create a backup .ddb file in the {0} folder and then import as much data as it can.  If data can't be imported you'll get a dialog listing the problems.", Constant.File.BackupFolder);
                 messageBox.Message.Hint = "\u2022 After you import, check your data. If it is not what you expect, restore your data by using that backup file." + Environment.NewLine;
-                messageBox.Message.Hint += String.Format("\u2022 Usually the .csv file should be in the same folder as the data file ({0}) it was exported from.{1}", Constant.File.FileDatabaseFileExtension, Environment.NewLine);
+                messageBox.Message.Hint += String.Format("\u2022 Usually the spreadsheet should be in the same folder as the data file ({0}) it was exported from.{1}", Constant.File.FileDatabaseFileExtension, Environment.NewLine);
                 messageBox.Message.Hint += "\u2022 If you check 'Don't show this message' this dialog can be turned back on via the Options menu.";
                 messageBox.Message.StatusImage = MessageBoxImage.Information;
                 messageBox.DontShowAgain.Visibility = Visibility.Visible;
@@ -1066,17 +1103,17 @@ namespace Carnassial
 
                 if (messageBox.DontShowAgain.IsChecked.HasValue)
                 {
-                    this.state.SuppressCsvImportPrompt = messageBox.DontShowAgain.IsChecked.Value;
-                    this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.state.SuppressCsvImportPrompt;
+                    this.state.SuppressSpreadsheetImportPrompt = messageBox.DontShowAgain.IsChecked.Value;
+                    this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.state.SuppressSpreadsheetImportPrompt;
                 }
             }
 
-            string csvFileName = Path.GetFileNameWithoutExtension(this.dataHandler.FileDatabase.FileName) + Constant.File.CsvFileExtension;
-            string csvFilePath;
-            if (Utilities.TryGetFileFromUser("Select a .csv file to merge into the current image set",
-                                             Path.Combine(this.dataHandler.FileDatabase.FolderPath, csvFileName),
-                                             String.Format("Comma separated value files (*{0})|*{0}", Constant.File.CsvFileExtension),
-                                             out csvFilePath) == false)
+            string defaultSpreadsheetFileName = Path.GetFileNameWithoutExtension(this.dataHandler.FileDatabase.FileName) + Constant.File.ExcelFileExtension;
+            string spreadsheetFilePath;
+            if (Utilities.TryGetFileFromUser("Select a file to merge into the current image set",
+                                             Path.Combine(this.dataHandler.FileDatabase.FolderPath, defaultSpreadsheetFileName),
+                                             String.Format("Spreadsheet files (*{0};*{1})|*{0};*{1}", Constant.File.CsvFileExtension, Constant.File.ExcelFileExtension),
+                                             out spreadsheetFilePath) == false)
             {
                 return;
             }
@@ -1091,23 +1128,32 @@ namespace Carnassial
                 this.statusBar.SetMessage("No data file backup was made.");
             }
 
-            CsvReaderWriter csvReader = new CsvReaderWriter();
+            SpreadsheetReaderWriter spreadsheetReader = new SpreadsheetReaderWriter();
             try
             {
                 List<string> importErrors;
-                if (csvReader.TryImportFromCsv(csvFilePath, this.dataHandler.FileDatabase, out importErrors) == false)
+                bool importSuccededFully;
+                if (String.Equals(Path.GetExtension(spreadsheetFilePath), Constant.File.ExcelFileExtension, StringComparison.OrdinalIgnoreCase))
                 {
-                    MessageBox messageBox = new MessageBox("Can't import the .csv file.", this);
+                    importSuccededFully = spreadsheetReader.TryImportFileDataFromXlsx(spreadsheetFilePath, this.dataHandler.FileDatabase, out importErrors);
+                }
+                else
+                {
+                    importSuccededFully = spreadsheetReader.TryImportFileDataFromCsv(spreadsheetFilePath, this.dataHandler.FileDatabase, out importErrors);
+                }
+                if (importSuccededFully == false)
+                {
+                    MessageBox messageBox = new MessageBox("Spreadsheet import incomplete.", this);
                     messageBox.Message.StatusImage = MessageBoxImage.Error;
-                    messageBox.Message.Problem = String.Format("The file {0} could not be read.", csvFilePath);
-                    messageBox.Message.Reason = "The .csv file is not compatible with the current image set.";
+                    messageBox.Message.Problem = String.Format("The file {0} could not be fully read.", spreadsheetFilePath);
+                    messageBox.Message.Reason = "The spreadsheet is not fully compatible with the current image set.";
                     messageBox.Message.Solution = "Check that:" + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 The first row of the .csv file is a header line." + Environment.NewLine;
+                    messageBox.Message.Solution += "\u2022 The first row of the file is a header line." + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 The column names in the header line match the database." + Environment.NewLine; 
                     messageBox.Message.Solution += "\u2022 Choice values use the correct case." + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 Counter values are numbers." + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 Flag values are either 'true' or 'false'.";
-                    messageBox.Message.Result = "Either no data was imported or invalid parts of the .csv were skipped.";
+                    messageBox.Message.Result = "Either no data was imported or invalid parts of the spreadsheet were skipped.";
                     messageBox.Message.Hint = "The errors encountered were:";
                     foreach (string importError in importErrors)
                     {
@@ -1120,7 +1166,7 @@ namespace Carnassial
             {
                 MessageBox messageBox = new MessageBox("Can't import the .csv file.", this);
                 messageBox.Message.StatusImage = MessageBoxImage.Error;
-                messageBox.Message.Problem = String.Format("The file {0} could not be opened.", csvFilePath);
+                messageBox.Message.Problem = String.Format("The file {0} could not be opened.", spreadsheetFilePath);
                 messageBox.Message.Reason = "Most likely the file is open in another program.";
                 messageBox.Message.Solution = "If the file is open in another program, close it.";
                 messageBox.Message.Result = String.Format("{0}: {1}", exception.GetType().FullName, exception.Message);
@@ -1136,13 +1182,7 @@ namespace Carnassial
 
         private void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs e)
         {
-            string recentDatabasePath = (string)((MenuItem)sender).ToolTip;
-            BackgroundWorker backgroundWorker;
-            if (this.TryOpenTemplateAndBeginLoadFoldersAsync(recentDatabasePath, out backgroundWorker) == false)
-            {
-                this.state.MostRecentImageSets.TryRemove(recentDatabasePath);
-                this.MenuFileRecentImageSets_Refresh();
-            }
+            this.TryOpenTemplateAndBeginLoadFoldersAsync((string)((MenuItem)sender).ToolTip);
         }
 
         /// <summary>
@@ -1243,8 +1283,8 @@ namespace Carnassial
 
         private void MenuOptionsEnableCsvImportPrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.state.SuppressCsvImportPrompt = !this.state.SuppressCsvImportPrompt;
-            this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.state.SuppressCsvImportPrompt;
+            this.state.SuppressSpreadsheetImportPrompt = !this.state.SuppressSpreadsheetImportPrompt;
+            this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.state.SuppressSpreadsheetImportPrompt;
         }
 
         private void MenuOptionsEnableFileCountOnImportDialog_Click(object sender, RoutedEventArgs e)
@@ -1373,6 +1413,20 @@ namespace Carnassial
             this.MarkableCanvas.MagnifierZoomIn();
         }
 
+        private void MenuViewGotoFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsFileDatabaseAvailable() == false)
+            {
+                return;
+            }
+
+            GoToFile goToFile = new GoToFile(this.dataHandler.ImageCache.CurrentRow, this.dataHandler.FileDatabase.CurrentlySelectedFileCount, this);
+            if (goToFile.ShowDialog() == true)
+            {
+                this.ShowFileWithoutSliderCallback(goToFile.FileIndex);
+            }
+        }
+
         /// <summary>Decrease the magnification of the magnifying glass by several keyboard steps.</summary>
         private void MenuViewMagnifierDecrease_Click(object sender, RoutedEventArgs e)
         {
@@ -1397,16 +1451,90 @@ namespace Carnassial
             this.MarkableCanvas.SetBookmark();
         }
 
+        private void MenuViewShowDataGrid_Click(object sender, RoutedEventArgs e)
+        {
+            this.DataGridPane.IsActive = true;
+        }
+
+        private void MenuViewShowFirstFile_Click(object sender, RoutedEventArgs e)
+        {
+            this.ShowFileWithoutSliderCallback(0);
+        }
+
+        private void MenuViewShowImageSet_Click(object sender, RoutedEventArgs e)
+        {
+            this.ImageSetPane.IsActive = true;
+        }
+
+        private void MenuViewShowInstructions_Click(object sender, RoutedEventArgs e)
+        {
+            this.InstructionPane.IsActive = true;
+        }
+
+        private void MenuViewShowLastFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsFileDatabaseAvailable())
+            {
+                this.ShowFileWithoutSliderCallback(this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1);
+            }
+        }
+
         /// <summary>Navigate to the next file in this image set</summary>
         private void MenuViewShowNextFile_Click(object sender, RoutedEventArgs e)
         {
             this.ShowFileWithoutSliderCallback(true, ModifierKeys.None);
         }
 
+        private void MenuViewShowNextFileControl_Click(object sender, RoutedEventArgs e)
+        {
+            this.ShowFileWithoutSliderCallback(true, ModifierKeys.Control);
+        }
+
+        private void MenuViewShowNextFileControlShift_Click(object sender, RoutedEventArgs e)
+        {
+            this.ShowFileWithoutSliderCallback(true, ModifierKeys.Control | ModifierKeys.Shift);
+        }
+
+        private void MenuViewShowNextFileShift_Click(object sender, RoutedEventArgs e)
+        {
+            this.ShowFileWithoutSliderCallback(true, ModifierKeys.Shift);
+        }
+
+        private void MenuViewShowNextFilePageDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsFileDatabaseAvailable())
+            {
+                this.ShowFileWithoutSliderCallback(this.dataHandler.ImageCache.CurrentRow + (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
+            }
+        }
+
         /// <summary>Navigate to the previous file in this image set</summary>
         private void MenuViewShowPreviousFile_Click(object sender, RoutedEventArgs e)
         {
             this.ShowFileWithoutSliderCallback(false, ModifierKeys.None);
+        }
+
+        private void MenuViewShowPreviousFileControl_Click(object sender, RoutedEventArgs e)
+        {
+            this.ShowFileWithoutSliderCallback(false, ModifierKeys.Control);
+        }
+
+        private void MenuViewShowPreviousFileControlShift_Click(object sender, RoutedEventArgs e)
+        {
+            this.ShowFileWithoutSliderCallback(false, ModifierKeys.Control | ModifierKeys.Shift);
+        }
+
+        private void MenuViewShowPreviousFileShift_Click(object sender, RoutedEventArgs e)
+        {
+            this.ShowFileWithoutSliderCallback(false, ModifierKeys.Shift);
+        }
+
+        private void MenuViewShowPreviousFilePageUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsFileDatabaseAvailable())
+            {
+                this.ShowFileWithoutSliderCallback(this.dataHandler.ImageCache.CurrentRow - (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
+            }
         }
 
         private void MenuViewZoomIn_Click(object sender, RoutedEventArgs e)
@@ -1960,38 +2088,35 @@ namespace Carnassial
         private void ShowFileWithoutSliderCallback(bool forward, ModifierKeys modifiers)
         {
             // determine how far to move and in which direction
-            int increment = forward ? 1 : -1;
-            if (modifiers.HasFlag(ModifierKeys.Shift))
-            {
-                increment *= 5;
-            }
-            if (modifiers.HasFlag(ModifierKeys.Control))
-            {
-                increment *= 10;
-            }
+            int increment = Utilities.GetIncrement(forward, modifiers);
+            int newFileIndex = this.dataHandler.ImageCache.CurrentRow + increment;
 
-            // clamp to the maximum or minimum row available
-            int newFileRow = this.dataHandler.ImageCache.CurrentRow + increment;
-            if (newFileRow >= this.dataHandler.FileDatabase.CurrentlySelectedFileCount)
-            {
-                newFileRow = this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1;
-            }
-            else if (newFileRow < 0)
-            {
-                newFileRow = 0;
-            }
+            this.ShowFileWithoutSliderCallback(newFileIndex);
+        }
 
+        private void ShowFileWithoutSliderCallback(int newFileIndex)
+        {
             // if no change the file is already being displayed
             // For example, the end of the image set has been reached but key repeat means right arrow events are still coming in as the user hasn't
             // reacted yet.
-            if (newFileRow == this.dataHandler.ImageCache.CurrentRow)
+            if (newFileIndex == this.dataHandler.ImageCache.CurrentRow)
             {
                 return;
             }
 
+            // clamp to the maximum or minimum row available
+            if (newFileIndex >= this.dataHandler.FileDatabase.CurrentlySelectedFileCount)
+            {
+                newFileIndex = this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1;
+            }
+            else if (newFileIndex < 0)
+            {
+                newFileIndex = 0;
+            }
+
             // show the new file
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-            this.ShowFile(newFileRow);
+            this.ShowFile(newFileIndex);
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
         }
 
@@ -2348,7 +2473,7 @@ namespace Carnassial
             this.state.MostRecentImageSets.TryGetMostRecent(out defaultTemplateDatabasePath);
             if (Utilities.TryGetFileFromUser("Select a template file, which should be located in the root folder containing your images and videos",
                                              defaultTemplateDatabasePath,
-                                             String.Format("Template files (*{0})|*{0}", Constant.File.TemplateDatabaseFileExtension),
+                                             String.Format("Template files (*{0})|*{0}", Constant.File.TemplateFileExtension),
                                              out templateDatabasePath) == false)
             {
                 return false;
@@ -2360,6 +2485,18 @@ namespace Carnassial
                 return false;
             }
 
+            return true;
+        }
+
+        private bool TryOpenTemplateAndBeginLoadFoldersAsync(string templateDatabasePath)
+        {
+            BackgroundWorker ignored;
+            if (this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabasePath, out ignored) == false)
+            {
+                this.state.MostRecentImageSets.TryRemove(templateDatabasePath);
+                this.MenuFileRecentImageSets_Refresh();
+                return false;
+            }
             return true;
         }
 
@@ -2376,17 +2513,16 @@ namespace Carnassial
 
             // Try to create or open the template database
             TemplateDatabase templateDatabase;
-            if (!TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out templateDatabase))
+            if (TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out templateDatabase) == false)
             {
-                // notify the user the template couldn't be loaded rather than silently doing nothing
+                // notify the user the template couldn't be loaded
                 MessageBox messageBox = new MessageBox("Carnassial could not load the template.", this);
-                messageBox.Message.Problem = "Carnassial could not load the Template File:" + Environment.NewLine;
-                messageBox.Message.Problem += "\u2022 " + templateDatabasePath;
-                messageBox.Message.Reason = "The template may be corrupted or somehow otherwise invalid. ";
-                messageBox.Message.Solution = "You may have to recreate the template, or use another copy of it (if you have one).";
-                messageBox.Message.Result = "Carnassial won't do anything. You can try to select another template file.";
-                messageBox.Message.Hint = "See if you can examine the template file in the Carnassial Template Editor.";
-                messageBox.Message.Hint += "If you can't, there is likley something wrong with it and you will have to recreate it.";
+                messageBox.Message.Problem = "Carnassial could not load " + Path.GetFileName(templateDatabasePath) + Environment.NewLine;
+                messageBox.Message.Reason = "\u2022 The template was created with the Timelapse template editor instead of the Carnassial editor." + Environment.NewLine;
+                messageBox.Message.Reason = "\u2022 The template may be corrupted or somehow otherwise invalid.";
+                messageBox.Message.Solution = String.Format("You may have to recreate the template, restore it from the {0} folder, or use another copy of it if you have one.", Constant.File.BackupFolder);
+                messageBox.Message.Result = "Carnassial won't do anything.  You can try to select another template file.";
+                messageBox.Message.Hint = "If the template can't be opened in a SQLite database editor the file is corrupt.";
                 messageBox.Message.StatusImage = MessageBoxImage.Error;
                 messageBox.ShowDialog();
                 return false;
@@ -2405,7 +2541,21 @@ namespace Carnassial
 
             // Before running from an existing file database, check the controls in the template database are compatible with those
             // of the file database.
-            FileDatabase fileDatabase = FileDatabase.CreateOrOpen(fileDatabaseFilePath, templateDatabase, this.state.OrderFilesByDateTime, this.state.CustomSelectionTermCombiningOperator);
+            FileDatabase fileDatabase;
+            if (FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, this.state.OrderFilesByDateTime, this.state.CustomSelectionTermCombiningOperator, out fileDatabase) == false)
+            {
+                // notify the user the database couldn't be loaded
+                MessageBox messageBox = new MessageBox("Carnassial could not load the database.", this);
+                messageBox.Message.Problem = "Carnassial could not load " + Path.GetFileName(fileDatabaseFilePath) + Environment.NewLine;
+                messageBox.Message.Reason = "\u2022 The database was created with Timelapse instead of Carnassial." + Environment.NewLine;
+                messageBox.Message.Reason = "\u2022 The database may be corrupted or somehow otherwise invalid.";
+                messageBox.Message.Solution = String.Format("You may have to recreate the database, restore it from the {0} folder, or use another copy of it if you have one.", Constant.File.BackupFolder);
+                messageBox.Message.Result = "Carnassial won't do anything.  You can try to select another template or database file.";
+                messageBox.Message.Hint = "If the database can't be opened in a SQLite database editor the file is corrupt.";
+                messageBox.Message.StatusImage = MessageBoxImage.Error;
+                messageBox.ShowDialog();
+                return false;
+            }
             templateDatabase.Dispose();
 
             if (fileDatabase.ControlSynchronizationIssues.Count > 0)
@@ -2657,7 +2807,10 @@ namespace Carnassial
             if (Dependencies.AreRequiredBinariesPresent(Constant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
             {
                 Dependencies.ShowMissingBinariesDialog(Constant.ApplicationName);
-                Application.Current.Shutdown();
+                if (Application.Current != null)
+                {
+                    Application.Current.Shutdown();
+                }
             }
 
             // check for updates
@@ -2672,6 +2825,27 @@ namespace Carnassial
                 GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, latestVersionAddress);
                 updater.TryGetAndParseRelease(false);
                 this.state.MostRecentCheckForUpdates = DateTime.UtcNow;
+            }
+
+            // if a file was passed on the command line, try to open it
+            // args[0] is the .exe
+            string[] args = Environment.GetCommandLineArgs();
+            if (args != null && args.Length > 1)
+            {
+                string filePath = args[1];
+                string fileExtension = Path.GetExtension(filePath);
+                if (String.Equals(fileExtension, Constant.File.TemplateFileExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    this.TryOpenTemplateAndBeginLoadFoldersAsync(filePath);
+                }
+                else if (String.Equals(fileExtension, Constant.File.FileDatabaseFileExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    string[] templatePaths = Directory.GetFiles(Path.GetDirectoryName(filePath), "*" + Constant.File.TemplateFileExtension);
+                    if (templatePaths != null && templatePaths.Length == 1)
+                    {
+                        this.TryOpenTemplateAndBeginLoadFoldersAsync(templatePaths[0]);
+                    }
+                }
             }
         }
 
@@ -2706,18 +2880,21 @@ namespace Carnassial
                     break;
                 // Alt+Key.D1 and D2 are handled by routine keyboard shortcuts for the analysis 1 and 2 buttons
                 case Key.D1:
+                case Key.NumPad1:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.TryCopyValuesToAnalysis(0);
                     }
                     break;
                 case Key.D2:
+                case Key.NumPad2:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.TryCopyValuesToAnalysis(1);
                     }
                     break;
                 case Key.D3:
+                case Key.NumPad3:
                     // see Key.System case for ModifierKeys.Alt
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
@@ -2725,6 +2902,7 @@ namespace Carnassial
                     }
                     break;
                 case Key.D4:
+                case Key.NumPad4:
                     // see Key.System case for ModifierKeys.Alt
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
@@ -2732,6 +2910,7 @@ namespace Carnassial
                     }
                     break;
                 case Key.D5:
+                case Key.NumPad5:
                     // see Key.System case for ModifierKeys.Alt
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
@@ -2739,17 +2918,51 @@ namespace Carnassial
                     }
                     break;
                 case Key.D6:
+                case Key.NumPad6:
                     // see Key.System case for ModifierKeys.Alt
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.TryCopyValuesToAnalysis(5);
                     }
                     break;
+                case Key.D7:
+                case Key.NumPad7:
+                    // see Key.System case for ModifierKeys.Alt
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.TryCopyValuesToAnalysis(6);
+                    }
+                    break;
+                case Key.D8:
+                case Key.NumPad8:
+                    // see Key.System case for ModifierKeys.Alt
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.TryCopyValuesToAnalysis(7);
+                    }
+                    break;
+                case Key.D9:
+                case Key.NumPad9:
+                    // see Key.System case for ModifierKeys.Alt
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.TryCopyValuesToAnalysis(8);
+                    }
+                    break;
                 case Key.Escape:            // exit current control, if any
                     this.TrySetKeyboardFocusToMarkableCanvas(false, currentKey);
                     break;
+                case Key.G:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.MenuViewGotoFile_Click(this, null);
+                    }
+                    break;
                 case Key.M:                 // toggle the magnifying glass on and off
                     this.MenuViewDisplayMagnifier_Click(this, null);
+                    break;
+                case Key.R:
+                    this.MenuEditResetValues_Click(this, null);
                     break;
                 case Key.V:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
@@ -2763,10 +2976,31 @@ namespace Carnassial
                         this.MenuEditUndo_Click(null, null);
                     }
                     break;
+                case Key.End:
+                    if (this.IsFileDatabaseAvailable())
+                    {
+                        this.ShowFileWithoutSliderCallback(this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1);
+                    }
+                    break;
                 case Key.Left:              // previous image
                     if (keyRepeatCount % this.state.Throttles.RepeatedKeyAcceptanceInterval == 0)
                     {
                         this.ShowFileWithoutSliderCallback(false, Keyboard.Modifiers);
+                    }
+                    break;
+                case Key.Home:
+                    this.ShowFileWithoutSliderCallback(0);
+                    break;
+                case Key.PageDown:
+                    if (this.IsFileDatabaseAvailable())
+                    {
+                        this.ShowFileWithoutSliderCallback(this.dataHandler.ImageCache.CurrentRow + (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
+                    }
+                    break;
+                case Key.PageUp:
+                    if (this.IsFileDatabaseAvailable())
+                    {
+                        this.ShowFileWithoutSliderCallback(this.dataHandler.ImageCache.CurrentRow - (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
                     }
                     break;
                 case Key.Right:             // next image
@@ -2781,16 +3015,32 @@ namespace Carnassial
                         switch (currentKey.SystemKey)
                         {
                             case Key.D3:
+                            case Key.NumPad3:
                                 this.TryPasteValuesFromAnalysis(2);
                                 break;
                             case Key.D4:
+                            case Key.NumPad4:
                                 this.TryPasteValuesFromAnalysis(3);
                                 break;
                             case Key.D5:
+                            case Key.NumPad5:
                                 this.TryPasteValuesFromAnalysis(4);
                                 break;
                             case Key.D6:
+                            case Key.NumPad6:
                                 this.TryPasteValuesFromAnalysis(5);
+                                break;
+                            case Key.D7:
+                            case Key.NumPad7:
+                                this.TryPasteValuesFromAnalysis(6);
+                                break;
+                            case Key.D8:
+                            case Key.NumPad8:
+                                this.TryPasteValuesFromAnalysis(7);
+                                break;
+                            case Key.D9:
+                            case Key.NumPad9:
+                                this.TryPasteValuesFromAnalysis(8);
                                 break;
                             default:
                                 return;

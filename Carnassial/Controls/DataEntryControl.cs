@@ -24,6 +24,8 @@ namespace Carnassial.Controls
         /// <summary>Gets the data label which corresponds to this control.</summary>
         public string DataLabel { get; private set; }
 
+        public string DefaultValue { get; private set; }
+
         public abstract void Focus(DependencyObject focusScope);
 
         protected DataEntryControl(ControlRow control, DataEntryControls styleProvider)
@@ -32,6 +34,7 @@ namespace Carnassial.Controls
             // this.Content and Tooltip can't be set, however, as the caller hasn't instantiated the content control yet
             this.Copyable = control.Copyable;
             this.DataLabel = control.DataLabel;
+            this.DefaultValue = control.DefaultValue;
 
             // Create the stack panel
             this.Container = new StackPanel();

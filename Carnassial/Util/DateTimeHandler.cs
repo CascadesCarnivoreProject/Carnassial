@@ -92,14 +92,6 @@ namespace Carnassial.Util
             return sign + duration.Days.ToString("D") + " days " + timeSpanAsString;
         }
 
-        /// <summary>
-        /// Given a time as a DateTimeOffset return it as a string in 24 hour forma with the offset.
-        /// </summary>
-        public static string ToDisplayTimeString(DateTimeOffset time)
-        {
-            return time.DateTime.ToString(Constant.Time.TimeFormat);
-        }
-
         public static string ToDisplayUtcOffsetString(TimeSpan utcOffset)
         {
             string displayString = utcOffset.ToString(Constant.Time.UtcOffsetDisplayFormat);

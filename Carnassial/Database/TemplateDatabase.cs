@@ -54,25 +54,6 @@ namespace Carnassial.Database
             this.mostRecentBackup = DateTime.UtcNow;
         }
 
-        public static TemplateDatabase CreateOrOpen(string filePath)
-        {
-            // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
-            bool populateDatabase = !File.Exists(filePath);
-
-            TemplateDatabase templateDatabase = new TemplateDatabase(filePath);
-            if (populateDatabase)
-            {
-                // initialize the database if it's newly created
-                templateDatabase.OnDatabaseCreated(null);
-            }
-            else
-            {
-                // if it's an existing database check if it needs updating to current structure and load data tables
-                templateDatabase.OnExistingDatabaseOpened(null);
-            }
-            return templateDatabase;
-        }
-
         public ControlRow AddUserDefinedControl(string controlType)
         {
             this.CreateBackupIfNeeded();
@@ -267,19 +248,26 @@ namespace Carnassial.Database
             this.GetControlsSortedByControlOrder();
         }
 
-        public static bool TryCreateOrOpen(string filePath, out TemplateDatabase database)
+        public static bool TryCreateOrOpen(string filePath, out TemplateDatabase templateDatabase)
         {
-            try
+            // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
+            bool populateDatabase = !File.Exists(filePath);
+
+            templateDatabase = new TemplateDatabase(filePath);
+            if (populateDatabase)
             {
-                database = TemplateDatabase.CreateOrOpen(filePath);
-                return true;
+                // initialize the database if it's newly created
+                templateDatabase.OnDatabaseCreated(null);
             }
-            catch (Exception exception)
+            else
             {
-                Debug.Fail(exception.ToString());
-                database = null;
-                return false;
+                // if it's an existing database check if it needs updating to current structure and load data tables
+                if (templateDatabase.OnExistingDatabaseOpened(null) == false)
+                {
+                    return false;
+                }
             }
+            return true;
         }
 
         public void UpdateDisplayOrder(string orderColumnName, Dictionary<string, long> newOrderByDataLabel)
@@ -456,9 +444,16 @@ namespace Carnassial.Database
             this.GetControlsSortedByControlOrder();
         }
 
-        protected virtual void OnExistingDatabaseOpened(TemplateDatabase other)
+        protected virtual bool OnExistingDatabaseOpened(TemplateDatabase other)
         {
+            List<string> tables = this.Database.GetTableNames();
+            if (tables.Contains(Constant.DatabaseTable.Controls) == false)
+            {
+                return false;
+            }
+
             this.GetControlsSortedByControlOrder();
+            return true;
         }
 
         /// <summary>

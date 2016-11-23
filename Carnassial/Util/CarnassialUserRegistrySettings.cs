@@ -17,8 +17,8 @@ namespace Carnassial.Util
         public bool OrderFilesByDateTime { get; set; }
         public bool SkipDarkImagesCheck { get; set; }
         public bool SuppressAmbiguousDatesDialog { get; set; }
-        public bool SuppressCsvImportPrompt { get; set; }
         public bool SuppressFileCountOnImportDialog { get; set; }
+        public bool SuppressSpreadsheetImportPrompt { get; set; }
         public Throttles Throttles { get; private set; }
 
         public CarnassialUserRegistrySettings() :
@@ -48,8 +48,8 @@ namespace Carnassial.Util
                 this.OrderFilesByDateTime = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.OrderFilesByDateTime, false);
                 this.SkipDarkImagesCheck = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SkipDarkImagesCheck, false);
                 this.SuppressAmbiguousDatesDialog = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, false);
-                this.SuppressCsvImportPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressCsvImportPrompt, false);
                 this.SuppressFileCountOnImportDialog = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressFileCountOnImportDialog, false);
+                this.SuppressSpreadsheetImportPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSpreadsheetImportPrompt, false);
                 this.Throttles.SetDesiredImageRendersPerSecond(registryKey.ReadDouble(Constant.Registry.CarnassialKey.DesiredImageRendersPerSecond, Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault));
             }
         }
@@ -69,8 +69,8 @@ namespace Carnassial.Util
                 registryKey.Write(Constant.Registry.CarnassialKey.OrderFilesByDateTime, this.OrderFilesByDateTime);
                 registryKey.Write(Constant.Registry.CarnassialKey.SkipDarkImagesCheck, this.SkipDarkImagesCheck);
                 registryKey.Write(Constant.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, this.SuppressAmbiguousDatesDialog);
-                registryKey.Write(Constant.Registry.CarnassialKey.SuppressCsvImportPrompt, this.SuppressCsvImportPrompt);
                 registryKey.Write(Constant.Registry.CarnassialKey.SuppressFileCountOnImportDialog, this.SuppressFileCountOnImportDialog);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressSpreadsheetImportPrompt, this.SuppressSpreadsheetImportPrompt);
             }
         }
     }

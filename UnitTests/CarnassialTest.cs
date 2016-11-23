@@ -46,7 +46,9 @@ namespace Carnassial.UnitTests
             string fileDatabaseCloneFilePath = this.GetUniqueFilePathForTest(fileDatabaseFileName);
             File.Copy(fileDatabaseSourceFilePath, fileDatabaseCloneFilePath, true);
 
-            return FileDatabase.CreateOrOpen(fileDatabaseCloneFilePath, templateDatabase, false, CustomSelectionOperator.And);
+            FileDatabase fileDatabase;
+            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseCloneFilePath, templateDatabase, false, CustomSelectionOperator.And, out fileDatabase));
+            return fileDatabase;
         }
 
         /// <summary>
@@ -96,7 +98,9 @@ namespace Carnassial.UnitTests
                 File.Delete(fileDatabaseFilePath);
             }
 
-            return FileDatabase.CreateOrOpen(fileDatabaseFilePath, templateDatabase, false, CustomSelectionOperator.And);
+            FileDatabase fileDatabase;
+            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, false, CustomSelectionOperator.And, out fileDatabase));
+            return fileDatabase;
         }
 
         /// <summary>
@@ -112,7 +116,9 @@ namespace Carnassial.UnitTests
             }
 
             // create the new database
-            return TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
+            TemplateDatabase templateDatabase;
+            Assert.IsTrue(TemplateDatabase.TryCreateOrOpen(templateDatabaseFilePath, out templateDatabase));
+            return templateDatabase;
         }
 
         protected void EnsureTestClassSubdirectory()

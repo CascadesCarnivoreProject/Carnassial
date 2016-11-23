@@ -1,25 +1,23 @@
 ﻿using Carnassial.Controls;
-using Carnassial.Database;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Xceed.Wpf.Toolkit;
 
 namespace Carnassial
 {
     public static class Constant
     {
         // cases in CarnassialWindow.Window_PreviewKeyDown must be kept in sync with the number of analysis slots
-        public const int AnalysisSlots = 6;
+        public const int AnalysisSlots = 9;
 
         public const string ApplicationName = "Carnassial";
         public const string MainWindowBaseTitle = "Carnassial: Simplifying Remote Camera Data";
         public const int NumberOfMostRecentDatabasesToTrack = 9;
+        public const double PageUpDownNavigationFraction = 0.1;
         public const string StandardColour = "Gold";
         public const string SelectionColour = "MediumBlue";
 
@@ -60,14 +58,13 @@ namespace Carnassial
 
             public static readonly ReadOnlyCollection<Type> KeyboardInputTypes = new List<Type>()
             {
-                typeof(AutocompleteTextBox), // note controls
-                typeof(Calendar),            // date time control
-                typeof(CalendarDayButton),   // date time control
-                typeof(CheckBox),            // flag controls
-                typeof(ComboBox),            // choice controls
-                typeof(ComboBoxItem),        // choice controls
-                typeof(TextBox),             // counter controls
-                typeof(WatermarkTextBox)     // date time control
+                typeof(AutocompleteTextBox),  // note controls
+                typeof(Calendar),             // date time control
+                typeof(CheckBox),             // flag controls
+                typeof(ComboBox),             // choice controls
+                typeof(ComboBoxItem),         // choice controls
+                typeof(DateTimeOffsetPicker), // date time control
+                typeof(TextBox)               // counter controls
             }.AsReadOnly();
 
             public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
@@ -172,6 +169,14 @@ namespace Carnassial
             public const string Markers = "Markers";   // table containing counter markers
         }
 
+        public static class Excel
+        {
+            public const string Extension = ".xlsx";
+            public const string FileDataWorksheetName = "file data";
+            public const double MinimumColumnWidth = 5.0;
+            public const double MaximumColumnWidth = 40.0;
+        }
+
         public static class File
         {
             public const string AviFileExtension = ".avi";
@@ -181,10 +186,11 @@ namespace Carnassial
             public const string DefaultFileDatabaseFileName = "CarnassialData.ddb";
             public const string DefaultTemplateDatabaseFileName = "CarnassialTemplate.tdb";
             public const string DeletedFilesFolder = "DeletedFiles"; // Sub-folder that will contain backups of deleted files
+            public const string ExcelFileExtension = ".xlsx";
             public const string FileDatabaseFileExtension = ".ddb";
             public const string JpgFileExtension = ".jpg";
             public const string Mp4FileExtension = ".mp4";
-            public const string TemplateDatabaseFileExtension = ".tdb";
+            public const string TemplateFileExtension = ".tdb";
 
             public static readonly TimeSpan BackupInterval = TimeSpan.FromMinutes(10);
         }
@@ -314,8 +320,8 @@ namespace Carnassial
 
                 // dialog opt outs
                 public const string SuppressAmbiguousDatesDialog = "SuppressAmbiguousDatesDialog";
-                public const string SuppressCsvImportPrompt = "SuppressCsvImportPrompt";
                 public const string SuppressFileCountOnImportDialog = "SuppressFileCountOnImportDialog";
+                public const string SuppressSpreadsheetImportPrompt = "SuppressSpreadsheetImportPrompt";
             }
 
             public const string RootKey = @"Software\Cascades Carnivore Project\Carnassial\2.0";
@@ -360,7 +366,6 @@ namespace Carnassial
 
         public static class Time
         {
-            // The standard date format, e.g., 05-Apr-2011
             public const string DateFormat = "dd-MMM-yyyy";
             public const string DateTimeDatabaseFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
             public const string DateTimeDisplayFormat = "dd-MMM-yyyy HH:mm:ss";
@@ -372,8 +377,10 @@ namespace Carnassial
             public const string VideoPositionFormat = @"mm\:ss";
 
             public static readonly TimeSpan DateTimeDatabaseResolution = TimeSpan.FromMilliseconds(1.0);
+            public static readonly ReadOnlyCollection<char> DateTimeFieldCharacters = new List<char>() { 'd', 'f', 'h', 'H', 'K', 'm', 'M', 's', 't', 'y' }.AsReadOnly();
             public static readonly TimeSpan MaximumUtcOffset = TimeSpan.FromHours(14.0);
             public static readonly TimeSpan MinimumUtcOffset = TimeSpan.FromHours(-12.0);
+            public static readonly ReadOnlyCollection<char> TimeSpanFieldCharacters = new List<char>() { 'd', 'f', 'F', 'h', 's', 'm' }.AsReadOnly();
             public static readonly TimeSpan UtcOffsetGranularity = TimeSpan.FromTicks(9000000000); // 15 minutes
 
             public static readonly string[] DateTimeMetadataFormats =

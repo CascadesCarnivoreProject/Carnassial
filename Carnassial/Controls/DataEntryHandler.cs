@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Xceed.Wpf.Toolkit;
 using MessageBox = Carnassial.Dialog.MessageBox;
 
 namespace Carnassial.Controls
@@ -31,16 +30,6 @@ namespace Carnassial.Controls
             this.ImageCache = new ImageCache(fileDatabase);
             this.FileDatabase = fileDatabase;
             this.IsProgrammaticControlUpdate = false;
-        }
-
-        public static void Configure(DateTimePicker dateTimePicker, Nullable<DateTime> defaultValue)
-        {
-            dateTimePicker.AutoCloseCalendar = true;
-            dateTimePicker.Format = DateTimeFormat.Custom;
-            dateTimePicker.FormatString = Constant.Time.DateTimeDisplayFormat;
-            dateTimePicker.TimeFormat = DateTimeFormat.Custom;
-            dateTimePicker.TimeFormatString = Constant.Time.TimeFormat;
-            dateTimePicker.Value = defaultValue;
         }
 
         /// <summary>Propagate the current value of this control forward from this point across the current selection.</summary>
@@ -260,7 +249,7 @@ namespace Carnassial.Controls
                 // for complex controls which dynamic generate child controls, such as date time pickers, the tag of the focused element can't be set
                 // so try to locate a parent of the focused element with a tag indicating the control
                 FrameworkElement parent = null;
-                if (focusedFrameworkElement.Parent != null && focusedFrameworkElement.TemplatedParent is FrameworkElement)
+                if (focusedFrameworkElement.Parent != null && focusedFrameworkElement.Parent is FrameworkElement)
                 {
                     parent = (FrameworkElement)focusedFrameworkElement.Parent;
                 }
@@ -383,22 +372,16 @@ namespace Carnassial.Controls
             this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
         }
 
-        private void DateTimeControl_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        private void DateTimeControl_ValueChanged(DateTimeOffsetPicker dateTimePicker, DateTimeOffset newDateTime)
         {
             if (this.IsProgrammaticControlUpdate)
             {
                 return;
             }
 
-            DateTimePicker dateTimePicker = (DateTimePicker)sender;
-            if (dateTimePicker.Value.HasValue == false)
-            {
-                return;
-            }
-
             // update file data table and write the new DateTime to the database
-            this.ImageCache.Current.SetDateTimeOffset(new DateTimeOffset(dateTimePicker.Value.Value, this.ImageCache.Current.UtcOffset));
-            dateTimePicker.ToolTip = DateTimeHandler.ToDisplayDateTimeString(dateTimePicker.Value.Value);
+            this.ImageCache.Current.SetDateTimeOffset(newDateTime);
+            dateTimePicker.ToolTip = DateTimeHandler.ToDisplayDateTimeString(newDateTime);
 
             List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
             this.FileDatabase.UpdateFiles(imageToUpdate);
@@ -517,23 +500,17 @@ namespace Carnassial.Controls
             }
         }
 
-        private void UtcOffsetControl_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        private void UtcOffsetControl_ValueChanged(TimeSpanPicker utcOffsetPicker, TimeSpan newTimeSpan)
         {
             if (this.IsProgrammaticControlUpdate)
             {
                 return;
             }
 
-            UtcOffsetUpDown utcOffsetPicker = (UtcOffsetUpDown)sender;
-            if (utcOffsetPicker.Value.HasValue == false)
-            {
-                return;
-            }
-
             DateTimeOffset currentImageDateTime = this.ImageCache.Current.GetDateTime();
-            DateTimeOffset newImageDateTime = currentImageDateTime.SetOffset(utcOffsetPicker.Value.Value);
+            DateTimeOffset newImageDateTime = currentImageDateTime.SetOffset(utcOffsetPicker.Value);
             this.ImageCache.Current.SetDateTimeOffset(newImageDateTime);
-            utcOffsetPicker.ToolTip = DateTimeHandler.ToDisplayUtcOffsetString(utcOffsetPicker.Value.Value);
+            utcOffsetPicker.ToolTip = DateTimeHandler.ToDisplayUtcOffsetString(utcOffsetPicker.Value);
 
             List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
             this.FileDatabase.UpdateFiles(imageToUpdate);  // write the new UtcOffset to the database

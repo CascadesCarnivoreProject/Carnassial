@@ -252,41 +252,50 @@ namespace Carnassial.Editor
             return child;
         }
 
-        /// <summary>
-        /// Given a database file path,create a new DB file if one does not exist, or load a DB file if there is one.
-        /// After a DB file is loaded, the table is extracted and loaded a DataTable for binding to the DataGrid.
-        /// Some listeners are added to the DataTable, and the DataTable is bound. The add row buttons are enabled.
-        /// </summary>
-        /// <param name="templateDatabaseFilePath">The path of the DB file created or loaded</param>
-        private void InitializeDataGrid(string templateDatabaseFilePath)
+        private void InitializeDataGrid(string templateDatabasePath)
         {
-            // Create a new DB file if one does not exist, or load a DB file if there is one.
-            this.templateDatabase = TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
+            // create a new template file if one does not exist or load a DB file if there is one.
+            bool templateLoaded = TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out this.templateDatabase);
+            if (templateLoaded)
+            {
+                this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateDataTable_RowChanged);
 
-            // Map the data table to the data grid, and create a callback executed whenever the datatable row changes
-            this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateDataTable_RowChanged);
+                // populate controls interface in UX
+                this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
+                this.GenerateSpreadsheetOrderPreview();
+                this.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
 
-            // Update the user interface specified by the contents of the table
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-            this.GenerateSpreadsheetOrderPreview();
+                this.userSettings.MostRecentTemplates.SetMostRecent(templateDatabasePath);
+            }
+            else
+            {
+                this.Title = EditorConstant.MainWindowBaseTitle;
 
-            // update UI for having a .tdb loaded
-            this.AddCounterButton.IsEnabled = true;
-            this.AddFixedChoiceButton.IsEnabled = true;
-            this.AddNoteButton.IsEnabled = true;
-            this.AddFlagButton.IsEnabled = true;
+                // notify the user the template couldn't be loaded
+                MessageBox messageBox = new MessageBox("Carnassial could not load the template.", this);
+                messageBox.Message.Problem = "Carnassial could not load " + Path.GetFileName(templateDatabasePath) + Environment.NewLine;
+                messageBox.Message.Reason = "\u2022 The template was created with the Timelapse template editor instead of the Carnassial editor." + Environment.NewLine;
+                messageBox.Message.Reason = "\u2022 The template may be corrupted or somehow otherwise invalid.";
+                messageBox.Message.Solution = "You may have to recreate the template or use another copy of it (if you have one).";
+                messageBox.Message.Result = "Carnassial won't do anything. You can try to select another template file.";
+                messageBox.Message.Hint = "If the template can't be opened in a SQLite database editor the file is corrupt and you'll have to recreate it.";
+                messageBox.Message.StatusImage = MessageBoxImage.Error;
+                messageBox.ShowDialog();
+            }
 
-            this.MenuFileNewTemplate.IsEnabled = false;
-            this.MenuFileOpenTemplate.IsEnabled = false;
-            this.MenuView.IsEnabled = true;
+            // update UI states
+            this.AddCounterButton.IsEnabled = templateLoaded;
+            this.AddFixedChoiceButton.IsEnabled = templateLoaded;
+            this.AddNoteButton.IsEnabled = templateLoaded;
+            this.AddFlagButton.IsEnabled = templateLoaded;
 
-            this.TemplatePane.IsActive = true;
-            this.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
+            this.MenuFileNewTemplate.IsEnabled = templateLoaded;
+            this.MenuFileOpenTemplate.IsEnabled = !templateLoaded;
+            this.MenuFileRecentTemplates.IsEnabled = !templateLoaded;
+            this.MenuView.IsEnabled = templateLoaded;
 
-            // update state
-            // disable the recent templates list rather than call this.MenuFileRecentTemplates_Refresh
-            this.userSettings.MostRecentTemplates.SetMostRecent(templateDatabaseFilePath);
-            this.MenuFileRecentTemplates.IsEnabled = false;
+            this.InstructionPane.IsActive = !templateLoaded;
+            this.TemplatePane.IsActive = templateLoaded;
         }
 
         private void Instructions_Drop(object sender, DragEventArgs dropEvent)
@@ -357,8 +366,8 @@ namespace Carnassial.Editor
             // Configure save file dialog box
             SaveFileDialog newTemplateFilePathDialog = new SaveFileDialog();
             newTemplateFilePathDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            newTemplateFilePathDialog.DefaultExt = Constant.File.TemplateDatabaseFileExtension; // Default file extension
-            newTemplateFilePathDialog.Filter = "Database Files (" + Constant.File.TemplateDatabaseFileExtension + ")|*" + Constant.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            newTemplateFilePathDialog.DefaultExt = Constant.File.TemplateFileExtension; // Default file extension
+            newTemplateFilePathDialog.Filter = "Database Files (" + Constant.File.TemplateFileExtension + ")|*" + Constant.File.TemplateFileExtension; // Filter files by extension 
             newTemplateFilePathDialog.Title = "Select Location to Save New Template File";
 
             // Show save file dialog box
@@ -388,8 +397,8 @@ namespace Carnassial.Editor
 
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            openFileDialog.DefaultExt = Constant.File.TemplateDatabaseFileExtension; // Default file extension
-            openFileDialog.Filter = "Database Files (" + Constant.File.TemplateDatabaseFileExtension + ")|*" + Constant.File.TemplateDatabaseFileExtension; // Filter files by extension 
+            openFileDialog.DefaultExt = Constant.File.TemplateFileExtension; // Default file extension
+            openFileDialog.Filter = "Database Files (" + Constant.File.TemplateFileExtension + ")|*" + Constant.File.TemplateFileExtension; // Filter files by extension 
             openFileDialog.Title = "Select an Existing Template File to Open";
 
             // Show open file dialog box
@@ -951,6 +960,19 @@ namespace Carnassial.Editor
                 GithubReleaseClient updater = new GithubReleaseClient(EditorConstant.ApplicationName, latestVersionAddress);
                 updater.TryGetAndParseRelease(false);
                 this.userSettings.MostRecentCheckForUpdates = DateTime.UtcNow;
+            }
+
+            // if a file was passed on the command line, try to open it
+            // args[0] is the .exe
+            string[] args = Environment.GetCommandLineArgs();
+            if (args != null && args.Length > 1)
+            {
+                string filePath = args[1];
+                string fileExtension = Path.GetExtension(filePath);
+                if (String.Equals(fileExtension, Constant.File.TemplateFileExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    this.InitializeDataGrid(filePath);
+                }
             }
         }
 

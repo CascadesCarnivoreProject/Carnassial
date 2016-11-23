@@ -62,8 +62,8 @@ namespace Carnassial.UnitTests
             userSettings.OrderFilesByDateTime = true;
             userSettings.SkipDarkImagesCheck = true;
             userSettings.SuppressAmbiguousDatesDialog = true;
-            userSettings.SuppressCsvImportPrompt = true;
             userSettings.SuppressFileCountOnImportDialog = true;
+            userSettings.SuppressSpreadsheetImportPrompt = true;
             userSettings.Throttles.SetDesiredImageRendersPerSecond(Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
 
             userSettings.WriteToRegistry();
@@ -83,8 +83,8 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.OrderFilesByDateTime);
             Assert.IsTrue(userSettings.SkipDarkImagesCheck);
             Assert.IsTrue(userSettings.SuppressAmbiguousDatesDialog);
-            Assert.IsTrue(userSettings.SuppressCsvImportPrompt);
             Assert.IsTrue(userSettings.SuppressFileCountOnImportDialog);
+            Assert.IsTrue(userSettings.SuppressSpreadsheetImportPrompt);
             Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
 
             Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
@@ -263,7 +263,7 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(userSettings.OrderFilesByDateTime);
             Assert.IsFalse(userSettings.SkipDarkImagesCheck);
             Assert.IsFalse(userSettings.SuppressAmbiguousDatesDialog);
-            Assert.IsFalse(userSettings.SuppressCsvImportPrompt);
+            Assert.IsFalse(userSettings.SuppressSpreadsheetImportPrompt);
             Assert.IsFalse(userSettings.SuppressFileCountOnImportDialog);
         }
     }

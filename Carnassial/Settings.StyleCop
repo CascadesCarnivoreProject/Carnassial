@@ -15,6 +15,7 @@
       <Value>nnnn</Value>
       <Value>rgb</Value>
       <Value>xaml</Value>
+      <Value>xlsx</Value>
     </CollectionProperty>
   </GlobalSettings>
   <Analyzers>
@@ -166,7 +167,12 @@
           </RuleSettings>
         </Rule>
       </Rules>
-      <AnalyzerSettings />
+      <AnalyzerSettings>
+        <CollectionProperty Name="Hungarian">
+          <Value>go</Value>
+          <Value>up</Value>
+        </CollectionProperty>
+      </AnalyzerSettings>
     </Analyzer>
   </Analyzers>
 </StyleCopSettings>

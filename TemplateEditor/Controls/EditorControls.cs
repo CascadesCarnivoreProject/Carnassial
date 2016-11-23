@@ -3,7 +3,6 @@ using Carnassial.Database;
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using Xceed.Wpf.Toolkit;
 
 namespace Carnassial.Editor.Controls
 {
@@ -56,12 +55,12 @@ namespace Carnassial.Editor.Controls
                         break;
                     case Constant.DatabaseColumn.DateTime:
                         Label dateTimeLabel = this.CreateLabel(styleProvider, control);
-                        DateTimePicker dateTimeContent = this.CreateDateTimePicker(control);
+                        DateTimeOffsetPicker dateTimeContent = this.CreateDateTimePicker(control);
                         stackPanel = this.CreateStackPanel(styleProvider, dateTimeLabel, dateTimeContent);
                         break;
                     case Constant.DatabaseColumn.UtcOffset:
                         Label utcOffsetLabel = this.CreateLabel(styleProvider, control);
-                        UtcOffsetUpDown utcOffsetContent = this.CreateUtcOffsetPicker(control);
+                        UtcOffsetPicker utcOffsetContent = this.CreateUtcOffsetPicker(control);
                         stackPanel = this.CreateStackPanel(styleProvider, utcOffsetLabel, utcOffsetContent);
                         break;
                     default:
@@ -84,12 +83,12 @@ namespace Carnassial.Editor.Controls
             return Constant.Control.StandardTypes.Contains(controlType);
         }
 
-        private DateTimePicker CreateDateTimePicker(ControlRow control)
+        private DateTimeOffsetPicker CreateDateTimePicker(ControlRow control)
         {
-            DateTimePicker dateTimePicker = new DateTimePicker();
+            DateTimeOffsetPicker dateTimePicker = new DateTimeOffsetPicker();
+            dateTimePicker.Value = Constant.ControlDefault.DateTimeValue;
             dateTimePicker.ToolTip = control.Tooltip;
             dateTimePicker.Width = control.Width;
-            DataEntryHandler.Configure(dateTimePicker, Constant.ControlDefault.DateTimeValue.DateTime);
             return dateTimePicker;
         }
 
@@ -107,9 +106,9 @@ namespace Carnassial.Editor.Controls
             return stackPanel;
         }
 
-        private UtcOffsetUpDown CreateUtcOffsetPicker(ControlRow control)
+        private UtcOffsetPicker CreateUtcOffsetPicker(ControlRow control)
         {
-            UtcOffsetUpDown utcOffsetPicker = new UtcOffsetUpDown();
+            UtcOffsetPicker utcOffsetPicker = new UtcOffsetPicker();
             utcOffsetPicker.ToolTip = control.Tooltip;
             utcOffsetPicker.Value = Constant.ControlDefault.DateTimeValue.Offset;
             utcOffsetPicker.Width = control.Width;

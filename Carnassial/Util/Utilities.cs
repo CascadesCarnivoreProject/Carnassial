@@ -7,6 +7,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Input;
 using Clipboard = System.Windows.Clipboard;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.DragDropEffects;
@@ -67,6 +68,20 @@ namespace Carnassial.Util
             return "4.5 or later not detected";
         }
 
+        public static int GetIncrement(bool forward, ModifierKeys modifiers)
+        {
+            int increment = forward ? 1 : -1;
+            if (modifiers.HasFlag(ModifierKeys.Shift))
+            {
+                increment *= 5;
+            }
+            if (modifiers.HasFlag(ModifierKeys.Control))
+            {
+                increment *= 10;
+            }
+            return increment;
+        }
+
         public static ParallelOptions GetParallelOptions(int maximumDegreeOfParallelism)
         {
             ParallelOptions parallelOptions = new ParallelOptions();
@@ -107,7 +122,7 @@ namespace Carnassial.Util
                 if (droppedFiles != null && droppedFiles.Length == 1)
                 {
                     templateDatabasePath = droppedFiles[0];
-                    if (Path.GetExtension(templateDatabasePath) == Constant.File.TemplateDatabaseFileExtension)
+                    if (Path.GetExtension(templateDatabasePath) == Constant.File.TemplateFileExtension)
                     {
                         return true;
                     }
@@ -242,7 +257,7 @@ namespace Carnassial.Util
             }
 
             // Set filter for file extension and default file extension 
-            openFileDialog.DefaultExt = Constant.File.TemplateDatabaseFileExtension;
+            openFileDialog.DefaultExt = Constant.File.TemplateFileExtension;
             openFileDialog.Filter = filter;
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)

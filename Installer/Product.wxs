@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+  <Product Id="*" Name="Carnassial" Language="1033" Version="2.2.0.0" Manufacturer="Cascades Carnivore Project" UpgradeCode="9ffdb794-897b-44a6-ba07-debb23f41400">
+		<Package InstallerVersion="200" Compressed="yes" InstallScope="perUser" Platform="x64" />
+    <Property Id="ALLUSERS" Value="2" />
+    <Property Id="ARPPRODUCTICON" Value="Carnassial.ico" />
+    <Property Id="MSIINSTALLPERUSER" Value="1" />
+
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <Icon Id="Carnassial.ico" SourceFile="$(var.Carnassial.ProjectDir)\Carnassial.ico" />
+    <Icon Id="Editor.ico" SourceFile="$(var.TemplateEditor.ProjectDir)\Editor.ico" />
+
+    <Feature Id="ProductFeature" Title="Installer" Level="1">
+      <ComponentGroupRef Id="CarnassialFiles" />
+      <ComponentRef Id="InstallFolder" />
+		</Feature>
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFiles64Folder">
+				<Directory Id="ManufacturerProgramsFolder" Name="Cascades Carnivore Project">
+				  <Directory Id="ProductFolder" Name="Carnassial">
+				    <Directory Id="INSTALLFOLDER" Name="v2.2" />
+          </Directory>
+        </Directory>
+        <Component Id="InstallFolder" Guid="53058a3f-2fd8-4787-bcac-896908747ff9" Win64="yes">
+          <RemoveFolder Id="INSTALLFOLDER" On="uninstall"/>
+        </Component>
+      </Directory>
+    </Directory>
+	</Fragment>
+
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="$(var.Carnassial.TargetFileName)" Guid="*" Win64="yes">
+        <File Id="$(var.Carnassial.TargetFileName)" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\$(var.Carnassial.TargetFileName)">
+          <netfx:NativeImage Id="ngen_$(var.Carnassial.TargetFileName)" Platform="64bit" Priority="0" AppBaseDirectory="INSTALLFOLDER"/>
+          <Shortcut Id="$(var.Carnassial.TargetName).shortcut"
+                    Name="$(var.Carnassial.TargetFileName)"
+                    Advertise="yes"
+                    Description="Starts $(var.Carnassial.TargetFileName)"
+                    Directory="ProgramMenuFolder"
+                    Icon="Carnassial.ico" />
+        </File>
+      </Component>
+      <Component Id="$(var.Carnassial.TargetFileName).config" Guid="*" Win64="yes">
+        <File Id="$(var.Carnassial.TargetFileName).config" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\$(var.Carnassial.TargetFileName).config" />
+      </Component>
+      <Component Id="$(var.Carnassial.TargetName).pdb" Guid="*" Win64="yes">
+        <File Id="$(var.Carnassial.TargetName).pdb" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\$(var.Carnassial.TargetName).pdb" />
+      </Component>
+      <Component Id="$(var.TemplateEditor.TargetFileName)" Guid="*" Win64="yes">
+        <File Id="$(var.TemplateEditor.TargetFileName)" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)\$(var.TemplateEditor.TargetFileName)">
+          <netfx:NativeImage Id="ngen_$(var.TemplateEditor.TargetFileName)" Platform="64bit" Priority="0" AppBaseDirectory="INSTALLFOLDER"/>
+          <Shortcut Id="$(var.TemplateEditor.TargetName).shortcut"
+                    Name="$(var.TemplateEditor.TargetFileName)"
+                    Advertise="yes"
+                    Description="Starts $(var.TemplateEditor.TargetFileName)"
+                    Directory="ProgramMenuFolder"
+                    Icon="Editor.ico" />
+        </File>
+      </Component>
+      <Component Id="$(var.TemplateEditor.TargetFileName).config" Guid="*" Win64="yes">
+        <File Id="$(var.TemplateEditor.TargetFileName).config" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)\$(var.TemplateEditor.TargetFileName).config" />
+      </Component>
+      <Component Id="$(var.TemplateEditor.TargetName).pdb" Guid="*" Win64="yes">
+        <File Id="$(var.TemplateEditor.TargetName).pdb" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)\$(var.TemplateEditor.TargetName).pdb" />
+      </Component>
+      <Component Id="EPPlus.dll" Guid="*" Win64="yes">
+        <File Id="EPPlus.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\EPPlus.dll" />
+      </Component>
+      <Component Id="EPPlus.xml" Guid="*" Win64="yes">
+        <File Id="EPPlus.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\EPPlus.xml" />
+      </Component>
+      <Component Id="ICSharpCode.SharpZipLib.dll" Guid="*" Win64="yes">
+        <File Id="ICSharpCode.SharpZipLib.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\ICSharpCode.SharpZipLib.dll" />
+      </Component>
+      <Component Id="MetadataExtractor.dll" Guid="*" Win64="yes">
+        <File Id="MetadataExtractor.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\MetadataExtractor.dll" />
+      </Component>
+      <Component Id="MetadataExtractor.xml" Guid="*" Win64="yes">
+        <File Id="MetadataExtractor.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\MetadataExtractor.xml" />
+      </Component>
+      <Component Id="Microsoft.WindowsAPICodePack.dll" Guid="*" Win64="yes">
+        <File Id="Microsoft.WindowsAPICodePack.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Microsoft.WindowsAPICodePack.dll" />
+      </Component>
+      <Component Id="Microsoft.WindowsAPICodePack.Shell.dll" Guid="*" Win64="yes">
+        <File Id="Microsoft.WindowsAPICodePack.Shell.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Microsoft.WindowsAPICodePack.Shell.dll" />
+      </Component>
+      <Component Id="Microsoft.WindowsAPICodePack.Shell.xml" Guid="*" Win64="yes">
+        <File Id="Microsoft.WindowsAPICodePack.Shell.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Microsoft.WindowsAPICodePack.Shell.xml" />
+      </Component>
+      <Component Id="Microsoft.WindowsAPICodePack.xml" Guid="*" Win64="yes">
+        <File Id="Microsoft.WindowsAPICodePack.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Microsoft.WindowsAPICodePack.xml" />
+      </Component>
+      <Component Id="Newtonsoft.Json.dll" Guid="*" Win64="yes">
+        <File Id="Newtonsoft.Json.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Newtonsoft.Json.dll" />
+      </Component>
+      <Component Id="Newtonsoft.Json.xml" Guid="*" Win64="yes">
+        <File Id="Newtonsoft.Json.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Newtonsoft.Json.xml" />
+      </Component>
+      <Component Id="System.Data.SQLite.dll" Guid="*" Win64="yes">
+        <File Id="System.Data.SQLite.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\System.Data.SQLite.dll" />
+      </Component>
+      <Component Id="System.Data.SQLite.xml" Guid="*" Win64="yes">
+        <File Id="System.Data.SQLite.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\System.Data.SQLite.xml" />
+      </Component>
+      <Component Id="Xceed.Wpf.AvalonDock.dll" Guid="*" Win64="yes">
+        <File Id="Xceed.Wpf.AvalonDock.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Xceed.Wpf.AvalonDock.dll" />
+      </Component>
+      <Component Id="Xceed.Wpf.AvalonDock.xml" Guid="*" Win64="yes">
+        <File Id="Xceed.Wpf.AvalonDock.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Xceed.Wpf.AvalonDock.xml" />
+      </Component>
+      <Component Id="XmpCore.dll" Guid="*" Win64="yes">
+        <File Id="XmpCore.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\XmpCore.dll" />
+      </Component>
+      <Component Id="XmpCore.xml" Guid="*" Win64="yes">
+        <File Id="XmpCore.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\XmpCore.xml" />
+      </Component>
+      <Directory Id="de" Name="de">
+        <Component Id="de.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
+          <File Id="de.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\de\Xceed.Wpf.AvalonDock.resources.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="es" Name="es">
+        <Component Id="es.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
+          <File Id="es.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\es\Xceed.Wpf.AvalonDock.resources.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="fr" Name="fr">
+        <Component Id="fr.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
+          <File Id="fr.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\fr\Xceed.Wpf.AvalonDock.resources.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="hu" Name="hu">
+        <Component Id="hu.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
+          <File Id="hu.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\hu\Xceed.Wpf.AvalonDock.resources.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="it" Name="it">
+        <Component Id="it.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
+          <File Id="it.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\it\Xceed.Wpf.AvalonDock.resources.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="ptBR" Name="pt-BR">
+        <Component Id="ptBR.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
+          <File Id="ptBR.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\pt-BR\Xceed.Wpf.AvalonDock.resources.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="ro" Name="ro">
+        <Component Id="ro.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
+          <File Id="ro.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\ro\Xceed.Wpf.AvalonDock.resources.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="ru" Name="ru">
+        <Component Id="ru.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
+          <File Id="ru.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\ru\Xceed.Wpf.AvalonDock.resources.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="sv" Name="sv">
+        <Component Id="sv.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
+          <File Id="sv.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\sv\Xceed.Wpf.AvalonDock.resources.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="x64.Interop" Name="x64">
+        <Component Id="x64.SQLite.Interop.dll" Guid="*" Win64="yes">
+          <File Id="x64.SQLite.Interop.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\x64\SQLite.Interop.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="x86.Interop" Name="x86">
+        <Component Id="x86.SQLite.Interop.dll" Guid="*" Win64="yes">
+          <File Id="x86.SQLite.Interop.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\x86\SQLite.Interop.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="zhHans" Name="zh-Hans">
+        <Component Id="zhHans.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
+          <File Id="zhHans.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\zh-Hans\Xceed.Wpf.AvalonDock.resources.dll" />
+        </Component>
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="Cascades Carnivore Project">
+          <Component Id="ApplicationComponent" Guid="b8dd2731-79e8-4225-86b3-87979e0188eb" Win64="yes">
+            <ProgId Id="CarnassialDatabase" Description="Carnassial database">
+              <Extension Id="ddb" ContentType="application/ddb">
+                <Verb Id="open" Command="Open" TargetFile="$(var.Carnassial.TargetFileName)" Argument='"%1"' />
+              </Extension>
+            </ProgId>
+            <ProgId Id="CarnassialTemplate" Description="Carnassial template database">
+              <Extension Id="tdb" ContentType="application/tdb">
+                <Verb Id="edit" Command="Edit" TargetFile="$(var.TemplateEditor.TargetFileName)" Argument='"%1"' />
+                <Verb Id="open" Command="Open" TargetFile="$(var.Carnassial.TargetFileName)" Argument='"%1"' />
+              </Extension>
+            </ProgId>
+            <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
+          </Component>
+        </Directory>
+      </Directory>
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="CarnassialFiles">
+      <ComponentRef Id="$(var.Carnassial.TargetFileName)" />
+      <ComponentRef Id="$(var.Carnassial.TargetFileName).config" />
+      <ComponentRef Id="$(var.Carnassial.TargetName).pdb" />
+      <ComponentRef Id="$(var.TemplateEditor.TargetFileName)" />
+      <ComponentRef Id="$(var.TemplateEditor.TargetFileName).config" />
+      <ComponentRef Id="$(var.TemplateEditor.TargetName).pdb" />
+      <ComponentRef Id="EPPlus.dll" />
+      <ComponentRef Id="EPPlus.xml" />
+      <ComponentRef Id="ICSharpCode.SharpZipLib.dll" />
+      <ComponentRef Id="MetadataExtractor.dll" />
+      <ComponentRef Id="MetadataExtractor.xml" />
+      <ComponentRef Id="Microsoft.WindowsAPICodePack.dll" />
+      <ComponentRef Id="Microsoft.WindowsAPICodePack.Shell.dll" />
+      <ComponentRef Id="Microsoft.WindowsAPICodePack.Shell.xml" />
+      <ComponentRef Id="Microsoft.WindowsAPICodePack.xml" />
+      <ComponentRef Id="Newtonsoft.Json.dll" />
+      <ComponentRef Id="Newtonsoft.Json.xml" />
+      <ComponentRef Id="System.Data.SQLite.dll" />
+      <ComponentRef Id="System.Data.SQLite.xml" />
+      <ComponentRef Id="Xceed.Wpf.AvalonDock.dll" />
+      <ComponentRef Id="Xceed.Wpf.AvalonDock.xml" />
+      <ComponentRef Id="XmpCore.dll" />
+      <ComponentRef Id="XmpCore.xml" />
+      <ComponentRef Id="de.Xceed.Wpf.AvalonDock.resources.dll" />
+      <ComponentRef Id="es.Xceed.Wpf.AvalonDock.resources.dll" />
+      <ComponentRef Id="fr.Xceed.Wpf.AvalonDock.resources.dll" />
+      <ComponentRef Id="hu.Xceed.Wpf.AvalonDock.resources.dll" />
+      <ComponentRef Id="it.Xceed.Wpf.AvalonDock.resources.dll" />
+      <ComponentRef Id="ptBR.Xceed.Wpf.AvalonDock.resources.dll" />
+      <ComponentRef Id="ro.Xceed.Wpf.AvalonDock.resources.dll" />
+      <ComponentRef Id="ru.Xceed.Wpf.AvalonDock.resources.dll" />
+      <ComponentRef Id="sv.Xceed.Wpf.AvalonDock.resources.dll" />
+      <ComponentRef Id="x64.SQLite.Interop.dll" />
+      <ComponentRef Id="x86.SQLite.Interop.dll" />
+      <ComponentRef Id="zhHans.Xceed.Wpf.AvalonDock.resources.dll" />
+      <ComponentRef Id="ApplicationComponent" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>

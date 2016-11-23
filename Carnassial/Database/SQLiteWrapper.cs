@@ -724,6 +724,23 @@ namespace Carnassial.Database
             return command.ExecuteReader();
         }
 
+        public List<string> GetTableNames()
+        {
+            string sql = "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name";
+            using (SQLiteConnection connection = new SQLiteConnection(this.connectionString))
+            {
+                connection.Open();
+                SQLiteCommand command = new SQLiteCommand(sql, connection);
+                SQLiteDataReader reader = command.ExecuteReader();
+                List<string> tableNames = new List<string>();
+                while (reader.Read())
+                {
+                    tableNames.Add(reader[0].ToString());
+                }
+                return tableNames;
+            }
+        }
+
         /// <summary>
         /// Add a column definition into the provided schema at the given column location
         /// </summary>

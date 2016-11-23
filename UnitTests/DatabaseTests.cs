@@ -92,7 +92,7 @@ namespace Carnassial.UnitTests
                 }
 
                 // reopen database for test and refresh images so next iteration of the loop checks state after reload
-                fileDatabase = FileDatabase.CreateOrOpen(fileDatabase.FilePath, fileDatabase, false, CustomSelectionOperator.And);
+                Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabase.FilePath, fileDatabase, false, CustomSelectionOperator.And, out fileDatabase));
                 fileDatabase.SelectFiles(nextSelection);
                 Assert.IsTrue(fileDatabase.Files.RowCount > 0);
             }
@@ -194,7 +194,7 @@ namespace Carnassial.UnitTests
 
             SearchTerm dateTime = fileDatabase.CustomSelection.SearchTerms.First(term => term.DataLabel == Constant.DatabaseColumn.DateTime);
             dateTime.UseForSearching = true;
-            dateTime.DatabaseValue = DateTimeHandler.ToDisplayDateString(new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero));
+            dateTime.DatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero));
             Assert.IsFalse(String.IsNullOrEmpty(fileDatabase.CustomSelection.GetFilesWhere()));
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
@@ -458,7 +458,7 @@ namespace Carnassial.UnitTests
 
             // reopen the template database and check again
             string templateDatabaseFilePath = templateDatabase.FilePath;
-            templateDatabase = TemplateDatabase.CreateOrOpen(templateDatabaseFilePath);
+            Assert.IsTrue(TemplateDatabase.TryCreateOrOpen(templateDatabaseFilePath, out templateDatabase));
             this.VerifyTemplateDatabase(templateDatabase, templateDatabaseFilePath);
             Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + (4 * iterations) - 2);
             DataTable templateDataTable = templateDatabase.Controls.ExtractDataTable();
@@ -473,7 +473,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(templateDatabase.Controls[widthIndex].Width == modifiedWidth);
 
             // reopen the file database to synchronize its template table with the modified table in the current template
-            fileDatabase = FileDatabase.CreateOrOpen(fileDatabase.FilePath, templateDatabase, false, CustomSelectionOperator.And);
+            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabase.FilePath, templateDatabase, false, CustomSelectionOperator.And, out fileDatabase));
             Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 0);
             this.VerifyTemplateDatabase(fileDatabase, fileDatabase.FilePath);
             Assert.IsTrue(fileDatabase.Controls.RowCount == numberOfStandardControls + (4 * iterations) - 2);
@@ -601,7 +601,7 @@ namespace Carnassial.UnitTests
             string dateTimeOffsetAsDisplayString = DateTimeHandler.ToDisplayDateTimeUtcOffsetString(dateTimeOffset);
             string utcOffsetAsDisplayString = DateTimeHandler.ToDisplayUtcOffsetString(dateTimeOffset.Offset);
 
-            Assert.IsTrue(dateTimeOffsetAsDisplayString.Length > Constant.Time.DateFormat.Length + Constant.Time.TimeFormat.Length);
+            Assert.IsTrue(dateTimeOffsetAsDisplayString.Length > Constant.Time.DateTimeDisplayFormat.Length);
             Assert.IsTrue(utcOffsetAsDisplayString.Length >= Constant.Time.UtcOffsetDisplayFormat.Length - 1);
         }
 
@@ -891,7 +891,7 @@ namespace Carnassial.UnitTests
             noteControl.Type = Constant.Control.FixedChoice;
             templateDatabase.SyncControlToDatabase(noteControl);
 
-            fileDatabase = FileDatabase.CreateOrOpen(fileDatabase.FileName, templateDatabase, false, CustomSelectionOperator.And);
+            Assert.IsFalse(FileDatabase.TryCreateOrOpen(fileDatabase.FileName, templateDatabase, false, CustomSelectionOperator.And, out fileDatabase));
             Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 5);
         }
 
@@ -943,52 +943,91 @@ namespace Carnassial.UnitTests
         }
 
         [TestMethod]
-        public void RoundtripCsv()
+        public void RoundtripSpreadsheets()
         {
-            // create database, push test images into the database, and load the image data table
-            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
-            List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
-
-            // roundtrip data through .csv
-            CsvReaderWriter csvReaderWriter = new CsvReaderWriter();
-            string initialCsvFilePath = this.GetUniqueFilePathForTest(Path.GetFileNameWithoutExtension(Constant.File.DefaultFileDatabaseFileName) + Constant.File.CsvFileExtension);
-            csvReaderWriter.ExportToCsv(fileDatabase, initialCsvFilePath);
-            List<string> importErrors;
-            Assert.IsTrue(csvReaderWriter.TryImportFromCsv(initialCsvFilePath, fileDatabase, out importErrors));
-            Assert.IsTrue(importErrors.Count == 0);
-
-            // verify File table content hasn't changed
-            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
-            for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
+            foreach (string spreadsheetFileExtension in new List<string>() { Constant.File.CsvFileExtension, Constant.File.ExcelFileExtension })
             {
-                ImageRow file = fileDatabase.Files[fileIndex];
-                FileExpectations fileExpectation = fileExpectations[fileIndex];
-                fileExpectation.Verify(file, imageSetTimeZone);
-            }
+                bool xlsx = spreadsheetFileExtension == Constant.File.ExcelFileExtension;
 
-            // verify consistency of .csv export
-            string roundtripCsvFilePath = Path.Combine(Path.GetDirectoryName(initialCsvFilePath), Path.GetFileNameWithoutExtension(initialCsvFilePath) + "-roundtrip" + Constant.File.CsvFileExtension);
-            csvReaderWriter.ExportToCsv(fileDatabase, roundtripCsvFilePath);
+                // create database, push test images into the database, and load the image data table
+                FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
+                List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
 
-            string initialCsv = File.ReadAllText(initialCsvFilePath);
-            string roundtripCsv = File.ReadAllText(roundtripCsvFilePath);
-            Assert.IsTrue(initialCsv == roundtripCsv, "Initial and roundtrip .csv files don't match.");
+                // roundtrip data
+                SpreadsheetReaderWriter readerWriter = new SpreadsheetReaderWriter();
+                string initialFilePath = this.GetUniqueFilePathForTest(Path.GetFileNameWithoutExtension(Constant.File.DefaultFileDatabaseFileName) + spreadsheetFileExtension);
+                if (xlsx)
+                {
+                    readerWriter.ExportFileDataToXlsx(fileDatabase, initialFilePath);
+                }
+                else
+                {
+                    readerWriter.ExportFileDataToCsv(fileDatabase, initialFilePath);
+                }
 
-            // merge and refresh in memory table
-            int filesBeforeMerge = fileDatabase.CurrentlySelectedFileCount;
-            string mergeCsvFilePath = Path.Combine(Path.GetDirectoryName(initialCsvFilePath), Path.GetFileNameWithoutExtension(initialCsvFilePath) + ".FilesToMerge" + Constant.File.CsvFileExtension);
-            Assert.IsTrue(csvReaderWriter.TryImportFromCsv(mergeCsvFilePath, fileDatabase, out importErrors));
-            Assert.IsTrue(importErrors.Count == 0);
+                List<string> importErrors;
+                if (xlsx)
+                {
+                    Assert.IsTrue(readerWriter.TryImportFileDataFromXlsx(initialFilePath, fileDatabase, out importErrors));
+                }
+                else
+                {
+                    Assert.IsTrue(readerWriter.TryImportFileDataFromCsv(initialFilePath, fileDatabase, out importErrors));
+                }
+                Assert.IsTrue(importErrors.Count == 0);
 
-            fileDatabase.SelectFiles(FileSelection.All);
-            Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount - filesBeforeMerge == 2);
+                // verify File table content hasn't changed
+                TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
+                for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
+                {
+                    ImageRow file = fileDatabase.Files[fileIndex];
+                    FileExpectations fileExpectation = fileExpectations[fileIndex];
+                    fileExpectation.Verify(file, imageSetTimeZone);
+                }
 
-            // verify merge didn't affect existing File table content
-            for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
-            {
-                ImageRow file = fileDatabase.Files[fileIndex];
-                FileExpectations fileExpectation = fileExpectations[fileIndex];
-                fileExpectation.Verify(file, imageSetTimeZone);
+                // verify consistency of .csv export
+                string roundtripFilePath = Path.Combine(Path.GetDirectoryName(initialFilePath), Path.GetFileNameWithoutExtension(initialFilePath) + ".Roundtrip" + spreadsheetFileExtension);
+                if (xlsx)
+                {
+                    readerWriter.ExportFileDataToXlsx(fileDatabase, roundtripFilePath);
+                }
+                else
+                {
+                    readerWriter.ExportFileDataToCsv(fileDatabase, roundtripFilePath);
+                }
+
+                if (xlsx == false)
+                {
+                    // check .csv content is identical
+                    // For .xlsx this isn't meaningful as file internals can change.
+                    string initialFileContent = File.ReadAllText(initialFilePath);
+                    string roundtripFileContent = File.ReadAllText(roundtripFilePath);
+                    Assert.IsTrue(initialFileContent == roundtripFileContent, "Initial and roundtrip {0} files don't match.", spreadsheetFileExtension);
+                }
+
+                // merge and refresh in memory table
+                int filesBeforeMerge = fileDatabase.CurrentlySelectedFileCount;
+                string mergeFilePath = Path.Combine(Path.GetDirectoryName(initialFilePath), Path.GetFileNameWithoutExtension(initialFilePath) + ".FilesToMerge" + spreadsheetFileExtension);
+                if (xlsx)
+                {
+                    Assert.IsTrue(readerWriter.TryImportFileDataFromXlsx(mergeFilePath, fileDatabase, out importErrors));
+                }
+                else
+                {
+                    Assert.IsTrue(readerWriter.TryImportFileDataFromCsv(mergeFilePath, fileDatabase, out importErrors));
+                }
+                Assert.IsTrue(importErrors.Count == 0);
+
+                fileDatabase.SelectFiles(FileSelection.All);
+                Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount - filesBeforeMerge == 2);
+
+                // verify merge didn't affect existing File table content
+                for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
+                {
+                    ImageRow file = fileDatabase.Files[fileIndex];
+                    FileExpectations fileExpectation = fileExpectations[fileIndex];
+                    fileExpectation.Verify(file, imageSetTimeZone);
+                }
             }
         }
 
