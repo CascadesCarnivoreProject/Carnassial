@@ -12,16 +12,22 @@
 		ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner"  Loaded="Window_Loaded" >
-    <DockPanel>
-        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" StatusImage="Question"
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <controls:StockMessageControl x:Name="Message" StatusImage="Question"
                             Title="Create a custom selection."
                             What="You may want to view only a subset of your images and videos which fit some criteria of interest to you."
                             Solution="Specify some search terms which describe your criteria.&#10;1. Each row below reflects one of your data fields.&#10;2. Select one or more data fields that you want to use as part of your search.
                             &#10;3. Select the expresson you want to use.&#10;4. Select or enter the value you want to use to compare against the data field's contents."
                             Result="Only those images and videos matching your search criteria will be displayed."
                             Hint="Glob expressions are case sensitive and allow wildcards as follows:&#10;&#x2022; * matches any number of characters and ? matches any single character&#10;&#x2022; [abc] matches one of the indicated characters; [a-z] matches one character in the range of indicated characters. "
-                            HideExplanationCheckboxIsVisible="True"/>
-        <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch" >
+                            HideExplanationCheckboxIsVisible="True" Grid.Row="0"/>
+        <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Grid.Row="1">
             <Rectangle Fill="#FF868686" Height="1" />
             <StackPanel Orientation="Horizontal">
                 <TextBlock Margin="10" FontWeight="Bold" VerticalAlignment="Center" Text="Combine searches using: "/>
@@ -38,18 +44,8 @@
             </StackPanel>
             <Rectangle Fill="#FF868686" Height="1" />
         </StackPanel>
-        <DockPanel DockPanel.Dock="Bottom">
-            <Rectangle Fill="#FF868686" Height="2" DockPanel.Dock="Top"/>
-            <Button Name="Reset" Content="_Reset" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,0,0" Padding="10" Click="ResetButton_Click" IsEnabled="False"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <TextBlock Name="QueryMatches" HorizontalAlignment="Left"  Margin="10,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"  FontWeight="DemiBold" FontSize="12"><Run Text="0  "/></TextBlock>
-                <TextBlock HorizontalAlignment="Left"  Margin="0,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"  FontSize="12"><Run Text=" files match your query "/></TextBlock>
-                <Button Name="CancelButton" Grid.Column="0" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
-                <Button Name="OkButton" Grid.Column="1" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
-            </StackPanel>
-        </DockPanel>
-        <ScrollViewer>
-            <Grid Name="SearchTerms" Width="Auto" Height="Auto" DockPanel.Dock="Bottom">
+        <ScrollViewer Grid.Row="2">
+            <Grid Name="SearchTerms">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
@@ -66,5 +62,14 @@
                 <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="Database Query" Grid.Row="0" Grid.Column="3"/>
             </Grid>
         </ScrollViewer>
-    </DockPanel>
+        <DockPanel Grid.Row="3">
+            <Button Name="Reset" Content="_Reset" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,0,0" Padding="10" Click="ResetButton_Click" IsEnabled="False"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock Name="QueryMatches" HorizontalAlignment="Left"  Margin="10,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" FontWeight="DemiBold"><Run Text="0  "/></TextBlock>
+                <TextBlock HorizontalAlignment="Left"  Margin="0,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"><Run Text=" files match your query "/></TextBlock>
+                <Button Name="OkButton" Grid.Column="1" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
+                <Button Name="CancelButton" Grid.Column="0" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
 </Window>

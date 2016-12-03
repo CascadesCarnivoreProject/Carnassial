@@ -4,6 +4,7 @@
     {
         ChoiceComboBox,
         FlagCheckBox,
-        NoteCounterTextBox
+        NoteCounterTextBox,
+        UtcOffsetPicker
     }
 }

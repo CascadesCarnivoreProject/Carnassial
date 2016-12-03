@@ -7,7 +7,6 @@ using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -95,10 +94,10 @@ namespace Carnassial.UnitTests
 
             // open, load database by scanning folder, move through images, close
             // The threading model for this is somewhat involved.  The test thread is the UI thread and therefore must drive the dispatcher.  This means the test
-            // thread locks into UI message pumping when modal dialog is displayed, such as when the BackgroundWorker for loading files from a directory pops the
-            // file count summary upon completion.  The test must therefore spin up a separate thread to close the dialogs and allow the main test thread to return
-            // from the dispatcher and resume test execution.  If something jams up on the dialog handler thread Visual Studio may still consider the test running
-            // when also attached as a debugger even if the test thread has completed.
+            // thread locks into UI message pumping when modal dialog is displayed, such as when loading files from a directory pops the file count summary upon 
+            // completion.  The test must therefore spin up a separate thread to close the dialogs and allow the main test thread to return from the dispatcher 
+            // and resume test execution.  If something jams up on the dialog handler thread Visual Studio may still consider the test running when also attached 
+            // as a debugger even if the test thread has completed.
             using (CarnassialWindow carnassial = new CarnassialWindow())
             {
                 // show main window
@@ -106,23 +105,30 @@ namespace Carnassial.UnitTests
                 this.WaitForRenderingComplete();
 
                 // start thread for handling file dialogs
-                BackgroundWorker backgroundWorker = null;
-                Task dialogDismissal = Task.Factory.StartNew(() =>
+                CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+                Task dialogDismissal = Task.Run(() =>
                 {
                     AutomationElement carnassialAutomation = AutomationElement.RootElement.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, TestConstant.CarnassialAutomationID));
-                    InvokePattern ambiguousDatesOkButton = this.FindDialogOkButton(carnassialAutomation, TestConstant.MessageBoxAutomationID);
-                    ambiguousDatesOkButton.Invoke();
+                    InvokePattern ambiguousDatesOkButton;
+                    if (this.TryFindDialogOkButton(carnassialAutomation, cancellationTokenSource.Token, TestConstant.MessageBoxAutomationID, out ambiguousDatesOkButton))
+                    {
+                        ambiguousDatesOkButton.Invoke();
+                    }
 
-                    InvokePattern fileCountsOkButton = this.FindDialogOkButton(carnassialAutomation, TestConstant.FileCountsAutomationID);
-                    fileCountsOkButton.Invoke();
-                });
+                    InvokePattern fileCountsOkButton;
+                    if (this.TryFindDialogOkButton(carnassialAutomation, cancellationTokenSource.Token, TestConstant.FileCountsAutomationID, out fileCountsOkButton))
+                    {
+                        fileCountsOkButton.Invoke();
+                    }
+                }, cancellationTokenSource.Token);
+
                 // import files from directory
+                Task<bool> loadFolder = null;
                 Dispatcher.CurrentDispatcher.Invoke(() =>
                 {
-                    Assert.IsTrue((bool)carnassial.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath, out backgroundWorker));
-                    this.WaitForWorkerComplete(backgroundWorker);
+                    loadFolder = carnassial.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
                 });
-                this.WaitForRenderingComplete();
+                this.WaitForFolderLoadComplete(loadFolder);
 
                 // verify import succeeded
                 PrivateObject carnassialAccessor = new PrivateObject(carnassial);
@@ -131,13 +137,23 @@ namespace Carnassial.UnitTests
                 Assert.IsNotNull(dataHandler.ImageCache.Current);
 
                 // verify forward and backward moves of the displayed image
-                carnassialAccessor.Invoke(TestConstant.ShowFileWithoutSliderCallbackMethodName, true, ModifierKeys.None);
-                carnassialAccessor.Invoke(TestConstant.ShowFileWithoutSliderCallbackMethodName, true, ModifierKeys.None);
+                DispatcherOperation<Task> moveForward = carnassial.Dispatcher.InvokeAsync(async () =>
+                {
+                    await carnassial.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.None);
+                    await carnassial.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.None);
+                });
                 this.WaitForRenderingComplete();
-                carnassialAccessor.Invoke(TestConstant.ShowFileWithoutSliderCallbackMethodName, false, ModifierKeys.None);
-                carnassialAccessor.Invoke(TestConstant.ShowFileWithoutSliderCallbackMethodName, false, ModifierKeys.None);
+                DispatcherOperation<Task> moveBackwards = carnassial.Dispatcher.InvokeAsync(async () =>
+                {
+                    await carnassial.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.None);
+                    await carnassial.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.None);
+                });
                 this.WaitForRenderingComplete();
 
+                if (cancellationTokenSource.Token.CanBeCanceled)
+                {
+                    cancellationTokenSource.Cancel();
+                }
                 carnassial.Close();
             }
 
@@ -147,13 +163,12 @@ namespace Carnassial.UnitTests
                 carnassial.Show();
                 this.WaitForRenderingComplete();
 
-                BackgroundWorker backgroundWorker;
+                Task<bool> loadFolder = null;
                 Dispatcher.CurrentDispatcher.Invoke(() =>
                 {
-                    Assert.IsTrue((bool)carnassial.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath, out backgroundWorker));
-                    this.WaitForWorkerComplete(backgroundWorker);
+                    loadFolder = carnassial.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
                 });
-                this.WaitForRenderingComplete();
+                this.WaitForFolderLoadComplete(loadFolder);
 
                 PrivateObject carnassialAccessor = new PrivateObject(carnassial);
                 DataEntryHandler dataHandler = (DataEntryHandler)carnassialAccessor.GetField(TestConstant.DataHandlerFieldName);
@@ -166,6 +181,11 @@ namespace Carnassial.UnitTests
                 this.ShowDialog(new ChooseFileDatabase(new string[] { TestConstant.File.DefaultNewFileDatabaseFileName }, TestConstant.File.DefaultTemplateDatabaseFileName, carnassial));
 
                 this.ShowDialog(new Dialog.CustomSelection(dataHandler.FileDatabase, carnassial));
+                using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(dataHandler.FileDatabase, dataHandler.ImageCache.CurrentRow, new CarnassialState(), carnassial))
+                {
+                    this.ShowDialog(darkThreshold);
+                }
+
                 this.ShowDialog(new DateCorrectAmbiguous(dataHandler.FileDatabase, carnassial));
                 this.ShowDialog(new DateDaylightSavingsTimeCorrection(dataHandler.FileDatabase, dataHandler.ImageCache, carnassial));
 
@@ -176,16 +196,13 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(clockDriftCorrection.Abort == (dataHandler.ImageCache.Current == null));
                 this.ShowDialog(clockDriftCorrection);
 
+                this.ShowDialog(new DateTimeRereadFromFiles(dataHandler.FileDatabase, carnassial));
+                this.ShowDialog(new DateTimeSetTimeZone(dataHandler.FileDatabase, dataHandler.ImageCache.Current, carnassial));
+                this.ShowDialog(new FileCountsByQuality(dataHandler.FileDatabase.GetFileCountsBySelection(), carnassial));
                 this.ShowDialog(new EditLog(dataHandler.FileDatabase.ImageSet.Log, carnassial));
 
-                using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(dataHandler.FileDatabase, dataHandler.ImageCache.CurrentRow, new CarnassialState(), carnassial))
-                {
-                    this.ShowDialog(darkThreshold);
-                }
                 this.ShowDialog(new PopulateFieldWithMetadata(dataHandler.FileDatabase, dataHandler.ImageCache.Current.GetFilePath(dataHandler.FileDatabase.FolderPath), carnassial));
                 this.ShowDialog(new RenameFileDatabaseFile(dataHandler.FileDatabase.FileName, carnassial));
-                this.ShowDialog(new DateTimeRereadFromFiles(dataHandler.FileDatabase, carnassial));
-                this.ShowDialog(new FileCountsByQuality(dataHandler.FileDatabase.GetFileCountsBySelection(), carnassial));
                 this.ShowDialog(new TemplateSynchronization(dataHandler.FileDatabase.ControlSynchronizationIssues, carnassial));
 
                 MessageBox okMessageBox = this.CreateMessageBox(carnassial, MessageBoxButton.OK, MessageBoxImage.Error);
@@ -211,20 +228,26 @@ namespace Carnassial.UnitTests
             return messageBox;
         }
 
-        private InvokePattern FindDialogOkButton(AutomationElement parent, string automationID)
+        private bool TryFindDialogOkButton(AutomationElement parent, CancellationToken cancellationToken, string automationID, out InvokePattern okButtonInvoke)
         {
             AutomationElement dialog = null;
             DateTime startTime = DateTime.UtcNow;
             while ((dialog == null) && (DateTime.UtcNow - startTime < TestConstant.UIElementSearchTimeout))
             {
                 Thread.Sleep(TimeSpan.FromMilliseconds(100));
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    okButtonInvoke = null;
+                    return false;
+                }
                 dialog = parent.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, automationID));
             }
             Assert.IsNotNull(dialog);
 
             AutomationElement okButton = dialog.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, TestConstant.OkButtonAutomationID));
             Assert.IsNotNull(okButton);
-            return (InvokePattern)okButton.GetCurrentPattern(InvokePattern.Pattern);
+            okButtonInvoke = (InvokePattern)okButton.GetCurrentPattern(InvokePattern.Pattern);
+            return true;
         }
 
         private void ShowDialog(Window dialog)
@@ -237,17 +260,14 @@ namespace Carnassial.UnitTests
             this.WaitForRenderingComplete();
         }
 
-        private void WaitForWorkerComplete(BackgroundWorker backgroundWorker)
+        private void WaitForFolderLoadComplete(Task<bool> loadFolder)
         {
-            if (backgroundWorker == null)
-            {
-                return;
-            }
-
-            while (backgroundWorker.IsBusy)
+            while (loadFolder.Status != TaskStatus.RanToCompletion)
             {
                 this.WaitForRenderingComplete();
             }
+            Assert.IsTrue(loadFolder.Result);
+            this.WaitForRenderingComplete();
         }
 
         private void WaitForRenderingComplete()

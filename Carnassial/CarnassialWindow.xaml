@@ -79,9 +79,14 @@
 
             <!-- Edit Menu -->
             <MenuItem Name="MenuEdit" Header="_Edit" IsEnabled="False" SubmenuOpened="MenuEdit_SubmenuOpened">
-                <MenuItem Name="MenuEditUndo" Header="_Undo last paste" Click="MenuEditUndo_Click" ToolTip="Undo application of copied values to the current file." InputGestureText="Ctrl+Z" IsEnabled="False">
+                <MenuItem Name="MenuEditUndo" Header="_Undo last paste" Click="MenuEditUndo_Click" ToolTip="Undo application of values to the current file." InputGestureText="Ctrl+Z" IsEnabled="False">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/Undo_16x.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Name="MenuEditRedo" Header="_Redo last paste" Click="MenuEditRedo_Click" ToolTip="Redo application of values to the current file." InputGestureText="Ctrl+Y" IsEnabled="False">
+                    <MenuItem.Icon>
+                        <Image Source="Resources/Menu/Redo_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -95,20 +100,20 @@
                         <Image Source="Resources/Menu/Paste_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Name="MenuEditCopyPreviousValues" Header="Paste pre_vious values" Click="PastePreviousValues_Click" InputGestureText="Alt+P" ToolTip="Paste data entered for the previous file into this file.  Only fields marked copyable in the template are copied.">
+                <MenuItem Name="MenuEditCopyPreviousValues" Header="Paste pre_vious values" Click="PastePreviousValues_Click" InputGestureText="Ctrl+P" ToolTip="Paste data entered for the previous file into this file.  Only fields marked copyable in the template are copied.">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/CopyDynamicValue_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Name="MenuEditCopyValuesToAnalysis" Header="Copy values to _analysis" ToolTip="Copy data entered for the current file where it can be reused under a particular analysis number." />
                 <MenuItem Name="MenuEditPasteValuesFromAnalysis" Header="Paste values from anal_ysis" ToolTip="Apply data in an analysis to the current file.  Only fields marked copyable in the template are set." />
-                <MenuItem Name="MenuEditResetValues" Header="Re_set values to defaults" Click="MenuEditResetValues_Click" ToolTip="Reset data the defaults specified in the template.  Only fields marked copyable in the template are reset." InputGestureText="Alt+R">
+                <MenuItem Name="MenuEditResetValues" Header="Re_set values to defaults" Click="MenuEditResetValues_Click" ToolTip="Reset data the defaults specified in the template.  Only fields marked copyable in the template are reset." InputGestureText="Ctrl+R">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/Restart_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuEditRereadDateTimesfromFiles" Header="_Reread date/times from files..." Click="MenuEditRereadDateTimesFromFiles_Click" ToolTip="Reread dates and times from all selected files." />
+                <MenuItem Name="MenuEditRereadDateTimesfromFiles" Header="Reread date/times from _files..." Click="MenuEditRereadDateTimesFromFiles_Click" ToolTip="Reread dates and times from all selected files." />
                 <MenuItem Name="MenuEditDaylightSavingsTimeCorrection" Header="Adjust for dayl_ight savings time..." Click="MenuEditDaylightSavingsTimeCorrection_Click" ToolTip="Correct daylight saving time issues" />
                 <MenuItem Name="MenuEditDateTimeFixedCorrection" Header="Add a fi_xed correction value to every date/time..." Click="MenuEditDateTimeFixedCorrection_Click" ToolTip="Correct for dates or times which are all off by a fixed amount, which happens if your camera was not set to the correct date/time." />
                 <MenuItem Name="MenuEditDateTimeLinearCorrection" Header="Correct for camera clock drif_t..." Click="MenuEditDateTimeLinearCorrection_Click" ToolTip="Correct for a camera's clock running fast or slow.">
@@ -212,8 +217,8 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuViewNextOrPreviousDifference" Header="View next or previous image _difference" Click="MenuViewPreviousOrNextDifference_Click" InputGestureText="&#x2191;" ToolTip="Show difference between the current and the next file, and then the current and the previous file." />
-                <MenuItem Name="MenuViewDifferencesCombined" Header="View _combined image differences" Click="MenuViewDifferencesCombined_Click" InputGestureText="&#x2193;" ToolTip="Show the difference between the current image and the next and previous files simultaneously." />
+                <MenuItem Name="MenuViewNextOrPreviousDifference" Header="View next or previous image _difference" Click="MenuViewPreviousOrNextDifference_Click" InputGestureText="&#x2191;" ToolTip="Show difference between the current and the next image, and then the current and the previous image." />
+                <MenuItem Name="MenuViewDifferencesCombined" Header="View _combined image differences" Click="MenuViewDifferencesCombined_Click" InputGestureText="&#x2193;" ToolTip="Show the difference between the current image and the next and previous images simultaneously." />
                 <Separator />
                 <MenuItem Name="MenuOptionsDisplayMagnifier" IsCheckable="True" InputGestureText="M" Header="Display _magnifying glass on images" Click="MenuViewDisplayMagnifier_Click" ToolTip="Toggles the presence of the magnifying glass on image files.  The magnifying glass is not available on videos." />
                 <MenuItem Name="MenuViewMagnifierZoomIncrease" InputGestureText="U" Header="Increase magnifying _glass magnification" Click="MenuViewMagnifierIncrease_Click" ToolTip="Increase the magnification of the magnifying glass.">
@@ -277,7 +282,7 @@
                             <xcad:LayoutDocument x:Name="InstructionPane" Title="Instructions  " CanClose="False">
                                 <controls:HelpUserControl AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" Height="Auto" />
                             </xcad:LayoutDocument>
-                            <xcad:LayoutDocument x:Name="ImageSetPane" Title="Image set  " CanClose="False" >
+                            <xcad:LayoutDocument x:Name="FileViewPane" Title="File view  " CanClose="False" >
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
@@ -286,14 +291,15 @@
                                     </Grid.RowDefinitions>
                                     <controls:FeedbackControl x:Name="FeedbackControl" Grid.Row="0" Visibility="Collapsed" />
                                     <Slider Name="FileNavigatorSlider" Grid.Row="1" Minimum="1" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" LargeChange="1" TickPlacement="BottomRight" ToolTip="Scroll through all files" Margin="5,0,5,0"
+                                            PreviewKeyDown="FileNavigatorSlider_PreviewKeyDown"
                                             Thumb.DragStarted="FileNavigatorSlider_DragStarted" 
                                             Thumb.DragCompleted="FileNavigatorSlider_DragCompleted"
                                             ValueChanged="FileNavigatorSlider_ValueChanged" />
                                     <images:MarkableCanvas x:Name="MarkableCanvas" Grid.Row="2" />
                                 </Grid>
                             </xcad:LayoutDocument>
-                            <xcad:LayoutDocument x:Name="DataGridPane" Title="Data grid  " CanClose="False" IsActiveChanged="DataGridPane_IsActiveChanged">
-                                <DataGrid Name="DataGrid" MinHeight="100" MinWidth="100"  DockPanel.Dock="Top" HorizontalAlignment="Stretch" FontSize="12" VerticalScrollBarVisibility="Auto"/>
+                            <xcad:LayoutDocument x:Name="FileDataPane" Title="File data  " CanClose="False" IsActiveChanged="FileDataPane_IsActiveChanged">
+                                <DataGrid Name="DataGrid" MinHeight="100" MinWidth="100" HorizontalAlignment="Stretch" VerticalScrollBarVisibility="Auto"/>
                             </xcad:LayoutDocument>
                         </xcad:LayoutDocumentPane>
                     </xcad:LayoutDocumentPaneGroup>

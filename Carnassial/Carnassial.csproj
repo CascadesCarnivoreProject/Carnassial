@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Carnassial</RootNamespace>
     <AssemblyName>Carnassial</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
@@ -127,7 +127,7 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data.SQLite, Version=1.0.103.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Core.1.0.103\lib\net45\System.Data.SQLite.dll</HintPath>
+      <HintPath>..\packages\System.Data.SQLite.Core.1.0.103\lib\net46\System.Data.SQLite.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Deployment" />
@@ -163,12 +163,15 @@
     <Compile Include="Controls\BooleanInverter.cs" />
     <Compile Include="Controls\DataEntryDateTime.cs" />
     <Compile Include="Controls\DataEntryUtcOffset.cs" />
+    <Compile Include="Controls\TimeSpanPicker.xaml.cs">
+      <DependentUpon>TimeSpanPicker.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\DateTimeOffsetPicker.xaml.cs">
       <DependentUpon>DateTimeOffsetPicker.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\Direction.cs" />
+    <Compile Include="Controls\IndexedDateTimePart.cs" />
     <Compile Include="Controls\TextBoxUpDownAdorner.cs" />
-    <Compile Include="Controls\TimeSpanPicker.cs" />
     <Compile Include="Controls\TimeZonePicker.cs" />
     <Compile Include="Controls\UtcOffsetPicker.cs" />
     <Compile Include="Database\ColumnDefinition.cs" />
@@ -207,8 +210,10 @@
       <DependentUpon>GoToFile.xaml</DependentUpon>
     </Compile>
     <Compile Include="Github\GithubAsset.cs" />
+    <Compile Include="Images\FolderLoad.cs" />
     <Compile Include="Images\FolderLoadProgress.cs" />
     <Compile Include="Images\FrameworkElementExtensions.cs" />
+    <Compile Include="Images\MoveToFileResult.cs" />
     <Compile Include="Images\ZoomBookmark.cs" />
     <Compile Include="Util\CarnassialConfigurationSettings.cs" />
     <Compile Include="Util\DataGridExtensions.cs" />
@@ -258,9 +263,13 @@
     <Compile Include="Dialog\DateTimeRereadFromFiles.xaml.cs">
       <DependentUpon>DateTimeRereadFromFiles.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\DeleteImages.xaml.cs">
-      <DependentUpon>DeleteImages.xaml</DependentUpon>
+    <Compile Include="Dialog\DeleteFiles.xaml.cs">
+      <DependentUpon>DeleteFiles.xaml</DependentUpon>
     </Compile>
+    <Page Include="Controls\TimeSpanPicker.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Controls\DateTimeOffsetPicker.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -306,7 +315,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Dialog\DeleteImages.xaml">
+    <Page Include="Dialog\DeleteFiles.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -431,6 +440,9 @@
     </Compile>
     <Compile Include="Images\MarkableCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
+    <Compile Include="Util\UndoRedoChain.cs" />
+    <Compile Include="Util\UndoRedoState.cs" />
+    <Compile Include="Util\UndoRedoType.cs" />
     <Compile Include="Util\UriExtensions.cs" />
     <Compile Include="Util\UserRegistrySettings.cs" />
     <Compile Include="Controls\DataEntryControls.xaml.cs">
@@ -510,9 +522,6 @@
     <Resource Include="Resources\FileNoLongerAvailable_480x.png" />
     <Resource Include="Resources\VideoPlayIcon.png" />
     <Resource Include="Resources\VideoPauseIcon.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="version.xml" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\StatusCriticalError_64x.png" />
@@ -605,13 +614,19 @@
   <ItemGroup>
     <Resource Include="Resources\Menu\GoToLastRow_16x.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Menu\Redo_16x.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\StatusCriticalError_16x.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\System.Data.SQLite.Core.1.0.103\build\net45\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.103\build\net45\System.Data.SQLite.Core.targets')" />
+  <Import Project="..\packages\System.Data.SQLite.Core.1.0.103\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.103\build\net46\System.Data.SQLite.Core.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.103\build\net45\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.103\build\net45\System.Data.SQLite.Core.targets'))" />
+    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.103\build\net46\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.103\build\net46\System.Data.SQLite.Core.targets'))" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

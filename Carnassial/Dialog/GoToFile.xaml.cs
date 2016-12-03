@@ -57,11 +57,10 @@ namespace Carnassial.Dialog
                     case Key.D7:
                     case Key.D8:
                     case Key.D9:
+                    case Key.Delete:
                     case Key.Enter:
                     case Key.Escape:
                     case Key.Left:
-                    case Key.Right:
-                    case Key.Delete:
                     case Key.NumPad0:
                     case Key.NumPad1:
                     case Key.NumPad2:
@@ -72,9 +71,12 @@ namespace Carnassial.Dialog
                     case Key.NumPad7:
                     case Key.NumPad8:
                     case Key.NumPad9:
+                    case Key.Right:
+                    case Key.Tab:
                         // leave event unhandled so key is accepted as input
                         return;
                     default:
+                        // block all other keys as they're neither navigation, editing, or digits
                         break;
                 }
             }

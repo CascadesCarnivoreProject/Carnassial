@@ -1,10 +1,10 @@
-﻿using Carnassial.Images;
+﻿using Carnassial.Controls;
+using Carnassial.Images;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -515,9 +515,9 @@ namespace Carnassial.Database
         }
 
         // Set one property on all rows in the selection to a given value
-        public void UpdateFiles(ImageRow valueSource, string dataLabel)
+        public void UpdateFiles(ImageRow valueSource, DataEntryControl control)
         {
-            this.UpdateFiles(valueSource, dataLabel, 0, this.CurrentlySelectedFileCount - 1);
+            this.UpdateFiles(valueSource, control, 0, this.CurrentlySelectedFileCount - 1);
         }
 
         public void UpdateFiles(List<ColumnTuplesWithWhere> filesToUpdate)
@@ -532,7 +532,7 @@ namespace Carnassial.Database
             this.Database.Update(Constant.DatabaseTable.FileData, filesToUpdate);
         }
 
-        public void UpdateFiles(ImageRow valueSource, string dataLabel, int fromIndex, int toIndex)
+        public void UpdateFiles(ImageRow valueSource, DataEntryControl control, int fromIndex, int toIndex)
         {
             if (fromIndex < 0)
             {
@@ -543,16 +543,16 @@ namespace Carnassial.Database
                 throw new ArgumentOutOfRangeException("toIndex");
             }
 
-            string value = valueSource.GetValueDatabaseString(dataLabel);
+            string value = valueSource.GetValueDatabaseString(control.DataLabel);
             List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
             for (int index = fromIndex; index <= toIndex; index++)
             {
                 // update data table
                 ImageRow image = this.Files[index];
-                image.SetValueFromDatabaseString(dataLabel, value);
+                image.SetValueFromDatabaseString(control.DataLabel, value);
 
                 // update database
-                List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(dataLabel, value) };
+                List<ColumnTuple> columnToUpdate = new List<ColumnTuple>() { new ColumnTuple(control.DataLabel, value) };
                 ColumnTuplesWithWhere imageUpdate = new ColumnTuplesWithWhere(columnToUpdate, image.ID);
                 imagesToUpdate.Add(imageUpdate);
             }

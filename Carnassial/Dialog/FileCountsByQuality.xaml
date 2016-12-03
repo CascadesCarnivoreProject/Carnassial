@@ -7,70 +7,72 @@
         Title="Files by image quality." Height="425" Width="600"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
-    <DockPanel Margin="0,0,0,0">
-        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <controls:StockMessageControl x:Name="Message" 
                             StatusImage="Information"
                             Title="Summary counts of files."
                             What="Carnassial automatically categorizes the 'Image Quality' of your images and videos."
-                            Hint="Use the Select menu to selectively view and work with files in the image set." />
-        <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <Grid Margin="10,0,10,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="60" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Grid.Column="0">
-                    <Run FontWeight="Bold" Text="Counts:" />
-                </TextBlock>
-                <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,5,0">
-                    <Run x:Name="Ok" Text="0000" />
-                </TextBlock>
-                <TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,5,0">
-                    <Run x:Name="Dark" Text="000" />
-                </TextBlock>
-                <TextBlock Grid.Row="2" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,5,0">
-                    <Run x:Name="Corrupted" Text="00" />
-                </TextBlock>
-                <TextBlock Grid.Row="3" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,5,0">
-                    <Run x:Name="FileNoLongerAvailable" Text="0" />
-                </TextBlock>
-                <TextBlock Grid.Row="4" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,5,0">
-                    <Run x:Name="Total" Text="0000" />
-                </TextBlock>
-                <TextBlock Grid.Row="0" Grid.Column="2">
-                    <Run FontWeight="Bold" Text="Ok" />
-                    <Run Text="images and videos that can be displayed" />
-                </TextBlock>
-                <TextBlock Grid.Row="1" Grid.Column="2">
-                    <Run FontWeight="Bold" Text="dark" />
-                    <Run Text="likely night time images and videos that can be displayed" />
-                </TextBlock>
-                <TextBlock Grid.Row="2" Grid.Column="2">
-                    <Run FontWeight="Bold" Text="corrupted" />
-                    <Run Text="images and videos that cannot be displayed" />
-                </TextBlock>
-                <TextBlock Grid.Row="3" Grid.Column="2">
-                    <Run FontWeight="Bold" Text="no longer available" />
-                    <Run Text="images and videos that were likely deleted" />
-                </TextBlock>
-                <TextBlock Grid.Row="4" Grid.Column="2">
-                    <Run FontWeight="Bold" Text="files total" />
-                </TextBlock>
-            </Grid>
+                            Hint="Use the Select menu to selectively view and work with files in the image set." Grid.Row="0" />
+        <CheckBox x:Name="DontShowAgain" Margin="79,10,10,10" Content="_Don't show this message again." Visibility="Collapsed" Grid.Row="1" />
+        <Grid Margin="10,0,10,0" Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="60" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Grid.Column="0">
+                <Run FontWeight="Bold" Text="Counts:" />
+            </TextBlock>
+            <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,5,0">
+                <Run x:Name="Ok" Text="0000" />
+            </TextBlock>
+            <TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,5,0">
+                <Run x:Name="Dark" Text="000" />
+            </TextBlock>
+            <TextBlock Grid.Row="2" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,5,0">
+                <Run x:Name="Corrupted" Text="00" />
+            </TextBlock>
+            <TextBlock Grid.Row="3" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,5,0">
+                <Run x:Name="FileNoLongerAvailable" Text="0" />
+            </TextBlock>
+            <TextBlock Grid.Row="4" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,5,0">
+                <Run x:Name="Total" Text="0000" />
+            </TextBlock>
+            <TextBlock Grid.Row="0" Grid.Column="2">
+                <Run FontWeight="Bold" Text="Ok" />
+                <Run Text="images and videos that can be displayed" />
+            </TextBlock>
+            <TextBlock Grid.Row="1" Grid.Column="2">
+                <Run FontWeight="Bold" Text="dark" />
+                <Run Text="likely night time images and videos that can be displayed" />
+            </TextBlock>
+            <TextBlock Grid.Row="2" Grid.Column="2">
+                <Run FontWeight="Bold" Text="corrupted" />
+                <Run Text="images and videos that cannot be displayed" />
+            </TextBlock>
+            <TextBlock Grid.Row="3" Grid.Column="2">
+                <Run FontWeight="Bold" Text="no longer available" />
+                <Run Text="images and videos that were likely deleted" />
+            </TextBlock>
+            <TextBlock Grid.Row="4" Grid.Column="2">
+                <Run FontWeight="Bold" Text="files total" />
+            </TextBlock>
+        </Grid>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
+            <Button Name="OkButton" IsCancel="True" IsDefault="True" AutomationProperties.AutomationId="OkButton" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True">_Okay</Button>
         </StackPanel>
-        <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <CheckBox x:Name="DontShowAgain" Margin="79,10,10,10" Content="_Don't show this message again." Visibility="Hidden" />
-        </StackPanel>
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Name="OkButton" IsCancel="True" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True">_Okay</Button>
-        </StackPanel>
-    </DockPanel>
+    </Grid>
 </Window>

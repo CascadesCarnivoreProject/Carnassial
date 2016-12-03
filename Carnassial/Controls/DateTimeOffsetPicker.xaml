@@ -10,7 +10,6 @@
             </Border>
         </ControlTemplate>
     </UserControl.Resources>
-
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -19,18 +18,9 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBox x:Name="DateTimeDisplay" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" MinHeight="{Binding ElementName=PopUpCalendarButton, Path=ActualHeight}" 
-                 Text="dd-MMM-yyyy HH:mm:ss" Grid.Row="0" Grid.Column="0">
-            <TextBox.Style>
-                <Style TargetType="TextBox">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding DateTextIsWrong, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}" Value="True">
-                            <Setter Property="Background" Value="LightGray" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TextBox.Style>
-        </TextBox>
+        <TextBox x:Name="DateTimeDisplay" VerticalContentAlignment="Center" MinHeight="{Binding ElementName=PopUpCalendarButton, Path=ActualHeight}" 
+                 Text="dd-MMM-yyyy HH:mm:ss" Grid.Row="0" Grid.Column="0" />
+        <Image Name="ErrorIcon" Source="/Resources/StatusCriticalError_16x.png" Stretch="None" Grid.Row="0" Grid.Column="1" Panel.ZIndex="1" Visibility="Hidden" />
         <ToggleButton Name="CalendarButton" Template="{StaticResource IconButton}"
                       IsChecked="False" IsTabStop="False"
                       IsHitTestVisible="{Binding ElementName=CalendarPopup, Path=IsOpen, Mode=OneWay, Converter={controls:BooleanInverter}}" Grid.Row="0" Grid.Column="1">

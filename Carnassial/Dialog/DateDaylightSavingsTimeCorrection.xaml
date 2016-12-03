@@ -9,18 +9,23 @@
 		ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
-    <DockPanel>
-        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" 
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <controls:StockMessageControl x:Name="Message"
                             StatusImage="Question"
                             Title="Correct for Standard and Daylight Savings Time changes"
                             Problem="The camera did not account for daylight savings or standard time changes, which means some images or videos are off by an hour."
                             Solution="1. IMPORTANT.The image or video below should be where the time change occurred. &#10;    If it isn't, click Cancel, navigate to that file in the main window, then come back here.&#10;2. Correct the time + / - one hour in the Time Correction checkbox.&#10;3. Use the Propagate Correction checkbox to propagate changes forwards or backwards from this point.&#10;4. The Okay button will be selectable once you've done the above. Click Okay to confirm, Cancel to abort."
                             Result="The dates and times will be adjusted forwards or backwards from this file by +/- one hour (except corrupted ones)."
-                            HideExplanationCheckboxIsVisible="True"/>
-        <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <Rectangle Fill="#FF868686" Height="1" />
-        </StackPanel>
-        <Grid DockPanel.Dock="Top">
+                            HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
+        <Rectangle Fill="#FF868686" Height="1" Grid.Row="1" />
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -30,10 +35,10 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <DockPanel Grid.Column="0" Grid.Row="0">
-                <Label Content="File:" HorizontalContentAlignment="Left" DockPanel.Dock="Left" FontWeight="Bold" VerticalAlignment="Top" />
-                <Label Content="[ --- file name --- ]" HorizontalContentAlignment="Left" DockPanel.Dock="Left" FontWeight="Normal" Name="FileName" VerticalAlignment="Top" />
-            </DockPanel>
+            <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal">
+                <Label Content="File:" HorizontalContentAlignment="Left" FontWeight="Bold" VerticalAlignment="Top" />
+                <Label Content="[ --- file name --- ]" HorizontalContentAlignment="Left" FontWeight="Normal" Name="FileName" VerticalAlignment="Top" />
+            </StackPanel>
             <Grid Grid.Column="1" Grid.Row="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -61,10 +66,10 @@
                 </StackPanel>
             </GroupBox>
         </Grid>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
-            <Button Name="CancelButton" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
-            <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">_Okay</Button>
+        <Image Name="Image" MinHeight="100" MinWidth="100" Stretch="Uniform" StretchDirection="Both" Grid.Row="3" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="4">
+            <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">_Okay</Button>
+            <Button Name="CancelButton" IsCancel="True" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
         </StackPanel>
-        <Image Name="Image" MinHeight="100" MinWidth="100" Stretch="Uniform" StretchDirection="Both" DockPanel.Dock="Top" />
-    </DockPanel>
+    </Grid>
 </Window>

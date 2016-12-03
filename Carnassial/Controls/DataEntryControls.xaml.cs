@@ -25,10 +25,13 @@ namespace Carnassial.Controls
         {
             // Depending on how the user interacts with the file import process image set loading can be aborted after controls are generated and then
             // another image set loaded.  Any existing controls therefore need to be cleared.
-            this.ControlGrid.Inlines.Clear();
+            this.ControlGrid.Children.Clear();
             this.Controls.Clear();
             this.ControlsByDataLabel.Clear();
 
+            DataEntryDateTime dateTimeControl = null;
+            DataEntryUtcOffset utcOffsetControl = null;
+            List<DataEntryControl> visibleControls = new List<DataEntryControl>();
             foreach (ControlRow control in database.Controls)
             {
                 // no point in generating a control if it doesn't render in the UX
@@ -37,11 +40,10 @@ namespace Carnassial.Controls
                     continue;
                 }
 
-                DataEntryControl controlToAdd;
                 if (control.Type == Constant.DatabaseColumn.DateTime)
                 {
-                    DataEntryDateTime dateTimeControl = new DataEntryDateTime(control, this);
-                    controlToAdd = dateTimeControl;
+                    dateTimeControl = new DataEntryDateTime(control, this);
+                    visibleControls.Add(dateTimeControl);
                 }
                 else if (control.Type == Constant.DatabaseColumn.File ||
                          control.Type == Constant.DatabaseColumn.RelativePath ||
@@ -56,37 +58,46 @@ namespace Carnassial.Controls
                     }
                     DataEntryNote noteControl = new DataEntryNote(control, autocompletions, this);
                     noteControl.ContentReadOnly = readOnly;
-                    controlToAdd = noteControl;
+                    visibleControls.Add(noteControl);
                 }
                 else if (control.Type == Constant.Control.Flag || control.Type == Constant.DatabaseColumn.DeleteFlag)
                 {
                     DataEntryFlag flagControl = new DataEntryFlag(control, this);
-                    controlToAdd = flagControl;
+                    visibleControls.Add(flagControl);
                 }
                 else if (control.Type == Constant.Control.Counter)
                 {
                     DataEntryCounter counterControl = new DataEntryCounter(control, this);
-                    controlToAdd = counterControl;
+                    visibleControls.Add(counterControl);
                 }
                 else if (control.Type == Constant.Control.FixedChoice || control.Type == Constant.DatabaseColumn.ImageQuality)
                 {
                     DataEntryChoice choiceControl = new DataEntryChoice(control, this);
-                    controlToAdd = choiceControl;
+                    visibleControls.Add(choiceControl);
                 }
                 else if (control.Type == Constant.DatabaseColumn.UtcOffset)
                 {
-                    DataEntryUtcOffset utcOffsetControl = new DataEntryUtcOffset(control, this);
-                    controlToAdd = utcOffsetControl;
+                    utcOffsetControl = new DataEntryUtcOffset(control, this);
+                    visibleControls.Add(utcOffsetControl);
                 }
                 else
                 {
                     Debug.Fail(String.Format("Unhandled control type {0}.", control.Type));
                     continue;
                 }
+            }
 
-                this.ControlGrid.Inlines.Add(controlToAdd.Container);
-                this.Controls.Add(controlToAdd);
-                this.ControlsByDataLabel.Add(control.DataLabel, controlToAdd);
+            if ((dateTimeControl != null) && (utcOffsetControl != null))
+            {
+                dateTimeControl.ShowUtcOffset();
+                visibleControls.Remove(utcOffsetControl);
+            }
+
+            foreach (DataEntryControl control in visibleControls)
+            {
+                this.ControlGrid.Children.Add(control.Container);
+                this.Controls.Add(control);
+                this.ControlsByDataLabel.Add(control.DataLabel, control);
             }
 
             dataEntryPropagator.SetDataEntryCallbacks(this.ControlsByDataLabel);

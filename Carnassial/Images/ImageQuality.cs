@@ -8,6 +8,7 @@ namespace Carnassial.Images
     {
         public WriteableBitmap Bitmap { get; set; }
         public double DarkPixelRatioFound { get; set; }
+        public int FileIndex { get; set; }
         public string FileName { get; set; }
         public bool IsColor { get; set; }
         public Nullable<FileSelection> NewImageQuality { get; set; }
@@ -17,6 +18,7 @@ namespace Carnassial.Images
         {
             this.Bitmap = null;
             this.DarkPixelRatioFound = 0;
+            this.FileIndex = Constant.Database.InvalidRow;
             this.FileName = image.FileName;
             this.IsColor = false;
             this.OldImageQuality = image.ImageQuality;

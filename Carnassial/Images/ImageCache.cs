@@ -106,7 +106,7 @@ namespace Carnassial.Images
             this.ResetDifferenceState(null);
         }
 
-        public ImageDifferenceResult TryCalculateDifference()
+        public async Task<ImageDifferenceResult> TryCalculateDifferenceAsync()
         {
             if (this.Current == null || this.Current.IsVideo || this.Current.IsDisplayable() == false)
             {
@@ -118,14 +118,16 @@ namespace Carnassial.Images
             WriteableBitmap comparisonBitmap = null;
             if (this.CurrentDifferenceState == ImageDifference.Previous)
             {
-                if (this.TryGetPreviousBitmapAsWriteable(out comparisonBitmap) == false)
+                comparisonBitmap = await this.TryGetPreviousBitmapAsWriteableAsync();
+                if (comparisonBitmap == null)
                 {
                     return ImageDifferenceResult.PreviousImageNotAvailable;
                 }
             }
             else if (this.CurrentDifferenceState == ImageDifference.Next)
             {
-                if (this.TryGetNextBitmapAsWriteable(out comparisonBitmap) == false)
+                comparisonBitmap = await this.TryGetNextBitmapAsWriteableAsync();
+                if (comparisonBitmap == null)
                 {
                     return ImageDifferenceResult.NextImageNotAvailable;
                 }
@@ -138,12 +140,12 @@ namespace Carnassial.Images
             WriteableBitmap unalteredBitmap = this.differenceBitmapCache[ImageDifference.Unaltered].AsWriteable();
             this.differenceBitmapCache[ImageDifference.Unaltered] = unalteredBitmap;
 
-            BitmapSource differenceBitmap = unalteredBitmap.Subtract(comparisonBitmap);
+            BitmapSource differenceBitmap = await Task.Run(() => { return unalteredBitmap.Difference(comparisonBitmap); });
             this.differenceBitmapCache[this.CurrentDifferenceState] = differenceBitmap;
             return differenceBitmap != null ? ImageDifferenceResult.Success : ImageDifferenceResult.NotCalculable;
         }
 
-        public ImageDifferenceResult TryCalculateCombinedDifference(byte differenceThreshold)
+        public async Task<ImageDifferenceResult> TryCalculateCombinedDifferenceAsync(byte differenceThreshold)
         {
             if (this.CurrentDifferenceState != ImageDifference.Combined)
             {
@@ -157,23 +159,25 @@ namespace Carnassial.Images
                 return ImageDifferenceResult.CurrentImageNotAvailable;
             }
 
-            WriteableBitmap previousBitmap;
-            if (this.TryGetPreviousBitmapAsWriteable(out previousBitmap) == false)
+            WriteableBitmap previousBitmap = await this.TryGetPreviousBitmapAsWriteableAsync();
+            if (previousBitmap == null)
             {
                 return ImageDifferenceResult.PreviousImageNotAvailable;
             }
 
-            WriteableBitmap nextBitmap;
-            if (this.TryGetNextBitmapAsWriteable(out nextBitmap) == false)
+            WriteableBitmap nextBitmap = await this.TryGetNextBitmapAsWriteableAsync();
+            if (nextBitmap == null)
             {
                 return ImageDifferenceResult.NextImageNotAvailable;
             }
 
-            WriteableBitmap unalteredBitmap = this.differenceBitmapCache[ImageDifference.Unaltered].AsWriteable();
-            this.differenceBitmapCache[ImageDifference.Unaltered] = unalteredBitmap;
+            BitmapSource unalteredBitmap = this.differenceBitmapCache[ImageDifference.Unaltered];
+            Debug.Assert(unalteredBitmap != null, "Difference cache coherency error: unaltered bitmap is null.");
+            WriteableBitmap unalteredWriteableBitmap = unalteredBitmap.AsWriteable();
+            this.differenceBitmapCache[ImageDifference.Unaltered] = unalteredWriteableBitmap;
 
             // all three images are available, so calculate and cache difference
-            BitmapSource differenceBitmap = unalteredBitmap.CombinedDifference(previousBitmap, nextBitmap, differenceThreshold);
+            BitmapSource differenceBitmap = await Task.Run(() => { return unalteredWriteableBitmap.Difference(previousBitmap, nextBitmap, differenceThreshold); });
             this.differenceBitmapCache[ImageDifference.Combined] = differenceBitmap;
             return differenceBitmap != null ? ImageDifferenceResult.Success : ImageDifferenceResult.NotCalculable;
         }
@@ -200,11 +204,11 @@ namespace Carnassial.Images
 
         public override bool TryMoveToFile(int fileIndex)
         {
-            bool ignored;
-            return this.TryMoveToFile(fileIndex, out ignored);
+            MoveToFileResult moveToFile = this.TryMoveToFileAsync(fileIndex, false).GetAwaiter().GetResult();
+            return moveToFile.Succeeded;
         }
 
-        public bool TryMoveToFile(int fileIndex, out bool newFileToDisplay)
+        public async Task<MoveToFileResult> TryMoveToFileAsync(int fileIndex, bool suppressPrefetch)
         {
             long oldFileID = -1;
             if (this.Current != null)
@@ -212,19 +216,19 @@ namespace Carnassial.Images
                 oldFileID = this.Current.ID;
             }
 
-            newFileToDisplay = false;
             if (base.TryMoveToFile(fileIndex) == false)
             {
-                return false;
+                return new MoveToFileResult();
             }
 
+            bool newFileToDisplay = false;
             if (this.Current.ID != oldFileID)
             {
                 // if this is an image load it from cache or disk
                 BitmapSource unalteredImage = null;
                 if (this.Current.IsVideo == false)
                 {
-                    this.TryGetBitmap(this.Current, out unalteredImage);
+                    unalteredImage = await this.TryGetBitmapAsync(this.Current, suppressPrefetch);
                 }
 
                 // all moves are to display of unaltered images and invalidate any cached differences
@@ -234,7 +238,7 @@ namespace Carnassial.Images
                 newFileToDisplay = true;
             }
 
-            return true;
+            return new MoveToFileResult(newFileToDisplay);
         }
 
         private void CacheBitmap(long id, BitmapSource bitmap)
@@ -277,64 +281,53 @@ namespace Carnassial.Images
             this.differenceBitmapCache[ImageDifference.Combined] = null;
         }
 
-        private bool TryGetBitmap(ImageRow file, out BitmapSource bitmap)
+        private async Task<WriteableBitmap> TryGetBitmapAsWriteableAsync(int fileRow)
+        {
+            ImageRow file;
+            if (this.TryGetFile(fileRow, out file) == false || file.IsVideo)
+            {
+                return null;
+            }
+
+            BitmapSource bitmapSource = await this.TryGetBitmapAsync(file, false);
+            if (bitmapSource == null)
+            {
+                return null;
+            }
+
+            WriteableBitmap bitmap = bitmapSource.AsWriteable();
+            this.CacheBitmap(file.ID, bitmap);
+            return bitmap;
+        }
+
+        private async Task<BitmapSource> TryGetBitmapAsync(ImageRow file, bool suppressPrefetch)
         {
             // locate the requested bitmap
+            BitmapSource bitmap;
             if (this.unalteredBitmapsByID.TryGetValue(file.ID, out bitmap) == false)
             {
                 Task prefetch;
                 if (this.prefetechesByID.TryGetValue(file.ID, out prefetch))
                 {
                     // bitmap retrieval's already in progress, so wait for it to complete
-                    prefetch.Wait();
+                    await prefetch;
                     bitmap = this.unalteredBitmapsByID[file.ID];
                 }
                 else
                 {
-                    // synchronously load the requested bitmap from disk as it isn't cached, doesn't have a prefetch running, and is needed right now by the caller
-                    bitmap = file.LoadBitmap(this.Database.FolderPath);
+                    // load the requested bitmap from disk as it isn't cached, doesn't have a prefetch running, and is needed right now by the caller
+                    bitmap = await file.LoadBitmapAsync(this.Database.FolderPath);
                     this.CacheBitmap(file.ID, bitmap);
                 }
             }
 
-            // assuming a sequential forward scan order, start on the next bitmap
-            this.TryInitiateBitmapPrefetch(this.CurrentRow + 1);
-            return true;
-        }
-
-        private bool TryGetBitmap(int fileRow, out BitmapSource bitmap)
-        {
-            // get properties for the image to retrieve
-            ImageRow file;
-            if (this.TryGetFile(fileRow, out file) == false)
+            // start prefetches of nearby bitmaps if requested
+            if (suppressPrefetch == false)
             {
-                bitmap = null;
-                return false;
+                // assuming a sequential forward scan order the next file is the most likely to be requested
+                this.TryInitiateBitmapPrefetch(this.CurrentRow + 1);
             }
-
-            // get the associated bitmap
-            return this.TryGetBitmap(file, out bitmap);
-        }
-
-        private bool TryGetBitmapAsWriteable(int fileRow, out WriteableBitmap bitmap)
-        {
-            ImageRow file;
-            if (this.TryGetFile(fileRow, out file) == false || file.IsVideo)
-            {
-                bitmap = null;
-                return false;
-            }
-
-            BitmapSource bitmapSource;
-            if (this.TryGetBitmap(file, out bitmapSource) == false)
-            {
-                bitmap = null;
-                return false;
-            }
-
-            bitmap = bitmapSource.AsWriteable();
-            this.CacheBitmap(file.ID, bitmap);
-            return true;
+            return bitmap;
         }
 
         private bool TryGetFile(int fileRow, out ImageRow file)
@@ -355,14 +348,14 @@ namespace Carnassial.Images
             return file.IsDisplayable();
         }
 
-        private bool TryGetNextBitmapAsWriteable(out WriteableBitmap nextBitmap)
+        private async Task<WriteableBitmap> TryGetNextBitmapAsWriteableAsync()
         {
-            return this.TryGetBitmapAsWriteable(this.CurrentRow + 1, out nextBitmap);
+            return await this.TryGetBitmapAsWriteableAsync(this.CurrentRow + 1);
         }
 
-        private bool TryGetPreviousBitmapAsWriteable(out WriteableBitmap previousBitmap)
+        private async Task<WriteableBitmap> TryGetPreviousBitmapAsWriteableAsync()
         {
-            return this.TryGetBitmapAsWriteable(this.CurrentRow - 1, out previousBitmap);
+            return await this.TryGetBitmapAsWriteableAsync(this.CurrentRow - 1);
         }
 
         private bool TryInitiateBitmapPrefetch(int fileIndex)
@@ -378,9 +371,9 @@ namespace Carnassial.Images
                 return false;
             }
 
-            Task prefetch = Task.Factory.StartNew(() =>
+            Task prefetch = Task.Run(async () =>
             {
-                BitmapSource nextBitmap = nextFile.LoadBitmap(this.Database.FolderPath);
+                BitmapSource nextBitmap = await nextFile.LoadBitmapAsync(this.Database.FolderPath);
                 this.CacheBitmap(nextFile.ID, nextBitmap);
                 Task ignored;
                 this.prefetechesByID.TryRemove(nextFile.ID, out ignored);

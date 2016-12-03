@@ -14,10 +14,12 @@ namespace Carnassial.Dialog
     public partial class DateTimeLinearCorrection : Window
     {
         private readonly DateTimeOffset earliestFileDateTimeUncorrected;
+        private readonly ImageRow earliestFile;
+        private readonly FileDatabase fileDatabase;
         private readonly DateTimeOffset latestFileDateTimeUncorrected;
+        private readonly ImageRow latestFile;
 
         private bool displayingPreview;
-        private FileDatabase fileDatabase;
 
         public bool Abort { get; private set; }
         
@@ -32,24 +34,24 @@ namespace Carnassial.Dialog
             this.latestFileDateTimeUncorrected = DateTime.MinValue.ToUniversalTime();
             this.fileDatabase = fileDatabase;
 
-            ImageRow earliestImage = null;
+            this.earliestFile = null;
+            this.latestFile = null;
             bool foundEarliest = false;
             bool foundLatest = false;
-            ImageRow latestImage = null;
             foreach (ImageRow file in fileDatabase.Files)
             {
                 DateTimeOffset fileDateTime = file.GetDateTime();
 
                 if (fileDateTime >= this.latestFileDateTimeUncorrected)
                 {
-                    latestImage = file;
+                    this.latestFile = file;
                     this.latestFileDateTimeUncorrected = fileDateTime;
                     foundLatest = true;
                 }
 
                 if (fileDateTime <= this.earliestFileDateTimeUncorrected)
                 {
-                    earliestImage = file;
+                    this.earliestFile = file;
                     this.earliestFileDateTimeUncorrected = fileDateTime;
                     foundEarliest = true;
                 }
@@ -62,13 +64,12 @@ namespace Carnassial.Dialog
             }
 
             // configure earliest and latest images
-            this.EarliestImageFileName.Content = earliestImage.FileName;
+            // Images proper are loaded in Window_Loaded().
+            this.EarliestImageFileName.Content = this.earliestFile.FileName;
             this.EarliestImageFileName.ToolTip = this.EarliestImageFileName.Content;
-            this.EarliestImage.Source = earliestImage.LoadBitmap(this.fileDatabase.FolderPath);
 
-            this.LatestImageFileName.Content = latestImage.FileName;
+            this.LatestImageFileName.Content = this.latestFile.FileName;
             this.LatestImageFileName.ToolTip = this.LatestImageFileName.Content;
-            this.LatestImage.Source = latestImage.LoadBitmap(this.fileDatabase.FolderPath);
 
             // configure interval
             this.ClockLastCorrect.Maximum = this.earliestFileDateTimeUncorrected;
@@ -214,10 +215,14 @@ namespace Carnassial.Dialog
             this.DialogResult = true;
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
+
+            this.EarliestImage.Source = await this.earliestFile.LoadBitmapAsync(this.fileDatabase.FolderPath);
+            this.LatestImage.Source = await this.latestFile.LoadBitmapAsync(this.fileDatabase.FolderPath);
+            this.ClockDrift.TimeSpanDisplay.Focus();
         }
     }
 }

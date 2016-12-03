@@ -5,9 +5,14 @@
         Title="About Carnassial" Height="Auto" MaxHeight="860" MinHeight="450" SizeToContent="Height" Width="550"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black">
-    <DockPanel>
-        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" StatusImage="Information" Title="About Carnassial" />
-        <StackPanel Name="StackPanelCorrect" Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <controls:StockMessageControl x:Name="Message" StatusImage="Information" Title="About Carnassial" Grid.Row="0" />
+        <StackPanel Orientation="Vertical" Grid.Row="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -36,12 +41,6 @@
                 Carnassial is licensed under the <Hyperlink NavigateUri="https://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International license</Hyperlink> and derives from <Hyperlink NavigateUri="http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.TimelapseVersions">Timelapse 2.0.2.4</Hyperlink>.
             </TextBlock>
         </StackPanel>
-        <DockPanel>
-            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Name="OkButton" IsCancel="True" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True">_Okay</Button>
-            </StackPanel>
-        </DockPanel>
-    </DockPanel>
-
+        <Button Name="OkButton" IsCancel="True" IsDefault="True" AutomationProperties.AutomationId="OkButton" HorizontalAlignment="Right" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True" Grid.Row="2">_Okay</Button>
+    </Grid>
 </Window>
-

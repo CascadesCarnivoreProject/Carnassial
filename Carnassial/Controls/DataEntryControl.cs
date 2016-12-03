@@ -46,7 +46,8 @@ namespace Carnassial.Controls
             this.Container.Tag = this;
         }
 
-        public abstract void SetContentAndTooltip(string value);
+        public abstract void SetContentAndTooltip(string valueAsString);
+        public abstract void SetValue(object valueAsObject);
     }
 
     // A generic control comprises a stack panel containing 

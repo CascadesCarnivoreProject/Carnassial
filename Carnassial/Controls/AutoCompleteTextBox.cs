@@ -53,7 +53,7 @@ namespace Carnassial.Controls
                         return;
                     }
                     int indexOfCurrentAutocompletion = this.GetIndexOfCurrentAutocompletion();
-                    if (indexOfCurrentAutocompletion >= this.Autocompletions.Count - 2)
+                    if (indexOfCurrentAutocompletion > this.Autocompletions.Count - 2)
                     {
                         return;
                     }

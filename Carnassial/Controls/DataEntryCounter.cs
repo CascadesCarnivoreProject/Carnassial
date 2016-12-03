@@ -1,4 +1,6 @@
 ﻿using Carnassial.Database;
+using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -28,7 +30,7 @@ namespace Carnassial.Controls
             get { return this.LabelControl.IsChecked.HasValue ? (bool)this.LabelControl.IsChecked : false; }
         }
 
-        public DataEntryCounter(ControlRow control, DataEntryControls styleProvider) : 
+        public DataEntryCounter(ControlRow control, DataEntryControls styleProvider) :
             base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.CounterButton)
         {
             // Assign all counters to a single group so that selecting a new counter deselects any currently selected counter
@@ -47,10 +49,16 @@ namespace Carnassial.Controls
             this.previousLabelControlIsChecked = this.LabelControl.IsChecked.Value;
         }
 
-        public override void SetContentAndTooltip(string value)
+        public override void SetContentAndTooltip(string valueAsString)
         {
-            this.ContentControl.Text = value;
-            this.ContentControl.ToolTip = value;
+            this.ContentControl.Text = valueAsString;
+            this.ContentControl.ToolTip = valueAsString;
+        }
+
+        public override void SetValue(object valueAsObject)
+        {
+            // counter values are unsigned integers but are are manipulated as strings
+            this.SetContentAndTooltip((string)valueAsObject);
         }
     }
 }

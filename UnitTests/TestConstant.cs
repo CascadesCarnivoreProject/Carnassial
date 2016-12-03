@@ -16,7 +16,6 @@ namespace Carnassial.UnitTests
         public const string InitializeDataGridMethodName = "InitializeDataGrid";
         public const string MessageBoxAutomationID = "CarnassialMessageBox";
         public const string OkButtonAutomationID = "OkButton";
-        public const string ShowFileWithoutSliderCallbackMethodName = "ShowFileWithoutSliderCallback";
         public const string TemplatePaneAutomationID = "TemplatePane";
 
         public static readonly TimeSpan UIElementSearchTimeout = TimeSpan.FromSeconds(15.0);

@@ -89,6 +89,19 @@ namespace Carnassial.Util
             return parallelOptions;
         }
 
+        public static TimeSpan Limit(TimeSpan value, TimeSpan minimum, TimeSpan maximum)
+        {
+            if (value > maximum)
+            {
+                return maximum;
+            }
+            if (value < minimum)
+            {
+                value = minimum;
+            }
+            return value;
+        }
+
         public static Dictionary<string, string> LoadMetadata(string filePath)
         {
             Dictionary<string, string> metadata = new Dictionary<string, string>();
@@ -236,14 +249,14 @@ namespace Carnassial.Util
             return windowFitsInWorkingArea;
         }
 
-        // get a location for the template database from the user
         public static bool TryGetFileFromUser(string title, string defaultFilePath, string filter, out string selectedFilePath)
         {
-            // Get the template file, which should be located where the images reside
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.AutoUpgradeEnabled = true;
             openFileDialog.CheckFileExists = true;
             openFileDialog.CheckPathExists = true;
+            openFileDialog.DefaultExt = Constant.File.TemplateFileExtension;
+            openFileDialog.Filter = filter;
             openFileDialog.Multiselect = false;
             openFileDialog.Title = title;
             if (String.IsNullOrWhiteSpace(defaultFilePath))
@@ -252,13 +265,11 @@ namespace Carnassial.Util
             }
             else
             {
+                // it would be ideal to reapply the filter and assign a new default file name when the folder changes
+                // Unfortunately this is not supported by CommonOpenFileDialog, the WinForms OpenFileDialog, or the WPF OpenFileDialog.
                 openFileDialog.InitialDirectory = Path.GetDirectoryName(defaultFilePath);
                 openFileDialog.FileName = Path.GetFileName(defaultFilePath);
             }
-
-            // Set filter for file extension and default file extension 
-            openFileDialog.DefaultExt = Constant.File.TemplateFileExtension;
-            openFileDialog.Filter = filter;
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {

@@ -13,65 +13,34 @@ namespace Carnassial.Dialog
     /// </summary>
     public partial class DateTimeFixedCorrection : Window
     {
-        private bool displayingPreview;
-        private FileDatabase fileDatabase;
-        private DateTimeOffset InitialDate;
+        private readonly FileDatabase fileDatabase;
+        private readonly ImageRow fileToDisplay;
+        private readonly DateTimeOffset initialDateTime;
 
-        public DateTimeFixedCorrection(FileDatabase fileDatabase, ImageRow imageToCorrect, Window owner)
+        private bool displayingPreview;
+
+        public DateTimeFixedCorrection(FileDatabase fileDatabase, ImageRow fileToDisplay, Window owner)
         {
             this.InitializeComponent();
             this.displayingPreview = false;
             this.fileDatabase = fileDatabase;
+            this.fileToDisplay = fileToDisplay;
             this.Owner = owner;
 
             // get the image filename and display it
-            this.FileName.Content = imageToCorrect.FileName;
+            this.FileName.Content = fileToDisplay.FileName;
             this.FileName.ToolTip = this.FileName.Content;
 
-            // display the image
-            this.Image.Source = imageToCorrect.LoadBitmap(this.fileDatabase.FolderPath);
-
             // configure datetime picker
-            this.InitialDate = imageToCorrect.GetDateTime();
-            this.OriginalDate.Content = DateTimeHandler.ToDisplayDateTimeString(this.InitialDate);
-            this.DateTimePicker.Value = this.InitialDate;
+            this.initialDateTime = fileToDisplay.GetDateTime();
+            this.OriginalDate.Content = DateTimeHandler.ToDisplayDateTimeString(this.initialDateTime);
+            this.DateTimePicker.Value = this.initialDateTime;
             this.DateTimePicker.ValueChanged += this.DateTimePicker_ValueChanged;
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
-        }
-
-        private void PreviewDateTimeChanges()
-        {
-            this.PrimaryPanel.Visibility = Visibility.Collapsed;
-            this.FeedbackPanel.Visibility = Visibility.Visible;
-
-            TimeSpan adjustment = this.DateTimePicker.Value - this.InitialDate;
-
-            // Preview the changes
-            foreach (ImageRow image in this.fileDatabase.Files)
-            {
-                string newDateTime = String.Empty;
-                string status = "Skipped: invalid date/time";
-                string difference = String.Empty;
-                DateTimeOffset imageDateTime = image.GetDateTime();
-
-                // Pretty print the adjustment time
-                if (adjustment.Duration() >= Constant.Time.DateTimeDatabaseResolution)
-                {
-                    difference = DateTimeHandler.ToDisplayTimeSpanString(adjustment);
-                    status = "Changed";
-                    newDateTime = DateTimeHandler.ToDisplayDateTimeString(imageDateTime + adjustment);
-                }
-                else
-                {
-                    status = "Unchanged";
-                }
-                this.DateTimeChangeFeedback.AddFeedbackRow(image.FileName, status, image.GetDisplayDateTime(), newDateTime, difference);
-            }
+            this.DialogResult = false;
         }
 
         private void ChangesButton_Click(object sender, RoutedEventArgs e)
@@ -100,16 +69,49 @@ namespace Carnassial.Dialog
             this.DialogResult = true;
         }
 
-        // Cancel - do nothing
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.DialogResult = false;
-        }
-
         private void DateTimePicker_ValueChanged(DateTimeOffsetPicker sender, DateTimeOffset newDateTime)
         {
-            TimeSpan difference = newDateTime - this.InitialDate;
+            TimeSpan difference = newDateTime - this.initialDateTime;
             this.ChangesButton.IsEnabled = difference != TimeSpan.Zero;
+        }
+
+        private void PreviewDateTimeChanges()
+        {
+            this.PrimaryPanel.Visibility = Visibility.Collapsed;
+            this.FeedbackPanel.Visibility = Visibility.Visible;
+
+            TimeSpan adjustment = this.DateTimePicker.Value - this.initialDateTime;
+
+            // Preview the changes
+            foreach (ImageRow file in this.fileDatabase.Files)
+            {
+                string newDateTime = String.Empty;
+                string status = "Skipped: invalid date/time";
+                string difference = String.Empty;
+                DateTimeOffset imageDateTime = file.GetDateTime();
+
+                // Pretty print the adjustment time
+                if (adjustment.Duration() >= Constant.Time.DateTimeDatabaseResolution)
+                {
+                    difference = DateTimeHandler.ToDisplayTimeSpanString(adjustment);
+                    status = "Changed";
+                    newDateTime = DateTimeHandler.ToDisplayDateTimeString(imageDateTime + adjustment);
+                }
+                else
+                {
+                    status = "Unchanged";
+                }
+                this.DateTimeChangeFeedback.AddFeedbackRow(file.FileName, status, file.GetDisplayDateTime(), newDateTime, difference);
+            }
+        }
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
+
+            // display the image
+            this.Image.Source = await this.fileToDisplay.LoadBitmapAsync(this.fileDatabase.FolderPath);
         }
     }
 }

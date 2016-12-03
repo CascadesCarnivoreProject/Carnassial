@@ -1,4 +1,5 @@
-﻿using Carnassial.Util;
+﻿using Carnassial.Controls;
+using Carnassial.Util;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Exif.Makernotes;
@@ -8,6 +9,7 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using Directory = System.IO.Directory;
 using MetadataDirectory = MetadataExtractor.Directory;
@@ -81,15 +83,15 @@ namespace Carnassial.Database
             private set { this.Row.SetUtcOffsetField(Constant.DatabaseColumn.UtcOffset, value); }
         }
 
-        public Dictionary<string, string> AsDisplayDictionary()
+        public Dictionary<string, object> AsDictionary()
         {
-            Dictionary<string, string> propertyBag = new Dictionary<string, string>();
+            Dictionary<string, object> values = new Dictionary<string, object>();
             foreach (DataColumn column in this.Row.Table.Columns)
             {
                 string dataLabel = column.ColumnName;
-                propertyBag.Add(dataLabel, this.GetValueDisplayString(dataLabel));
+                values.Add(dataLabel, this.GetValue(dataLabel));
             }
-            return propertyBag;
+            return values;
         }
 
         public override ColumnTuplesWithWhere GetColumnTuples()
@@ -141,23 +143,31 @@ namespace Carnassial.Database
             return Path.Combine(rootFolderPath, this.RelativePath, this.FileName);
         }
 
+        public object GetValue(string dataLabel)
+        {
+            switch (dataLabel)
+            {
+                case Constant.DatabaseColumn.DateTime:
+                    return this.GetDateTime();
+                case Constant.DatabaseColumn.DeleteFlag:
+                    return this.DeleteFlag;
+                case Constant.DatabaseColumn.ID:
+                    return this.ID;
+                case Constant.DatabaseColumn.ImageQuality:
+                    return this.ImageQuality;
+                case Constant.DatabaseColumn.UtcOffset:
+                    return this.UtcOffset;
+                default:
+                    return this.Row.GetStringField(dataLabel);
+            }
+        }
+
         public string GetValueDatabaseString(string dataLabel)
         {
             switch (dataLabel)
             {
                 case Constant.DatabaseColumn.DateTime:
                     return DateTimeHandler.ToDatabaseDateTimeString(this.DateTime);
-                default:
-                    return this.GetValueDisplayString(dataLabel);
-            }
-        }
-
-        public string GetValueDisplayString(string dataLabel)
-        {
-            switch (dataLabel)
-            {
-                case Constant.DatabaseColumn.DateTime:
-                    return this.GetDisplayDateTime();
                 case Constant.DatabaseColumn.ID:
                     return this.ID.ToString();
                 case Constant.DatabaseColumn.ImageQuality:
@@ -166,6 +176,23 @@ namespace Carnassial.Database
                     return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
                 default:
                     return this.Row.GetStringField(dataLabel);
+            }
+        }
+
+        public string GetValueDisplayString(DataEntryControl control)
+        {
+            switch (control.DataLabel)
+            {
+                case Constant.DatabaseColumn.DateTime:
+                    return this.GetDisplayDateTime();
+                case Constant.DatabaseColumn.ID:
+                    return this.ID.ToString();
+                case Constant.DatabaseColumn.ImageQuality:
+                    return this.ImageQuality.ToString();
+                case Constant.DatabaseColumn.UtcOffset:
+                    return DateTimeHandler.ToDisplayUtcOffsetString(this.UtcOffset);
+                default:
+                    return this.Row.GetStringField(control.DataLabel);
             }
         }
 
@@ -178,12 +205,12 @@ namespace Carnassial.Database
             return true;
         }
 
-        public BitmapSource LoadBitmap(string baseFolderPath)
+        public async Task<BitmapSource> LoadBitmapAsync(string baseFolderPath)
         {
-            return this.LoadBitmap(baseFolderPath, null);
+            return await this.LoadBitmapAsync(baseFolderPath, null);
         }
 
-        public virtual BitmapSource LoadBitmap(string baseFolderPath, Nullable<int> desiredWidth)
+        public async virtual Task<BitmapSource> LoadBitmapAsync(string baseFolderPath, Nullable<int> desiredWidth)
         {
             string path = this.GetFilePath(baseFolderPath);
             if (!File.Exists(path))
@@ -202,7 +229,7 @@ namespace Carnassial.Database
                     // WPF only a MemoryStream and dispose the FileStream promptly so WPF never gets a file handle to hold on to and the risk of file system 
                     // races is mitigated.
                     byte[] fileContent = new byte[fileStream.Length];
-                    fileStream.Read(fileContent, 0, fileContent.Length);
+                    await fileStream.ReadAsync(fileContent, 0, fileContent.Length);
 
                     BitmapImage bitmap = new BitmapImage();
                     bitmap.BeginInit();
@@ -217,9 +244,9 @@ namespace Carnassial.Database
                     return bitmap;
                 }
             }
-            catch (Exception exception)
+            catch (NotSupportedException)
             {
-                Debug.Fail(String.Format("LoadBitmap: Loading of {0} failed.", this.FileName), exception.ToString());
+                // since loads are always of .jpg files this typically indicates a corrupt file, though a wrong extension is possible
                 return Constant.Images.CorruptFile.Value;
             }
         }
@@ -419,8 +446,19 @@ namespace Carnassial.Database
 
         public DateTimeAdjustment TryReadDateTimeOriginalFromMetadata(string folderPath, TimeZoneInfo imageSetTimeZone)
         {
+            IReadOnlyList<MetadataDirectory> metadataDirectories;
             string filePath = this.GetFilePath(folderPath);
-            IReadOnlyList<MetadataDirectory> metadataDirectories = ImageMetadataReader.ReadMetadata(filePath);
+            try
+            {
+                metadataDirectories = ImageMetadataReader.ReadMetadata(filePath);
+            }
+            catch (ImageProcessingException)
+            {
+                // typically this indicates a corrupt file
+                // Most commonly this is last file in the add as opening cameras to turn them off triggers them, resulting in a race condition between writing
+                // the file and the camera being turned off.
+                return DateTimeAdjustment.None;
+            }
             ExifSubIfdDirectory exifSubIfd = metadataDirectories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
 
             bool previousImageUsed = false;

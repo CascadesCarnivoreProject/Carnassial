@@ -16,6 +16,7 @@ namespace Carnassial
 
         public const string ApplicationName = "Carnassial";
         public const string MainWindowBaseTitle = "Carnassial: Simplifying Remote Camera Data";
+        public const int MaximumUndoRedoStates = 25;
         public const int NumberOfMostRecentDatabasesToTrack = 9;
         public const double PageUpDownNavigationFraction = 0.1;
         public const string StandardColour = "Gold";
@@ -64,7 +65,8 @@ namespace Carnassial
                 typeof(ComboBox),             // choice controls
                 typeof(ComboBoxItem),         // choice controls
                 typeof(DateTimeOffsetPicker), // date time control
-                typeof(TextBox)               // counter controls
+                typeof(TextBox),              // counter controls
+                typeof(UtcOffsetPicker)       // UTC offset
             }.AsReadOnly();
 
             public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
@@ -232,8 +234,6 @@ namespace Carnassial
 
             public const int LargeNumberOfDeletedImages = 100;
 
-            public const int ThumbnailWidth = 300;
-
             public static readonly Lazy<BitmapImage> Copy = Images.Load("Menu/Copy_16x.png");
             public static readonly Lazy<BitmapImage> Paste = Images.Load("Menu/Paste_16x.png");
 
@@ -369,6 +369,8 @@ namespace Carnassial
             public const string DateFormat = "dd-MMM-yyyy";
             public const string DateTimeDatabaseFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
             public const string DateTimeDisplayFormat = "dd-MMM-yyyy HH:mm:ss";
+            public const string DateTimeOffsetDisplayFormat = "dd-MMM-yyyy HH:mm:ss K";
+            public const char DateTimeOffsetPart = 'K';
             public const int MonthsInYear = 12;
             public const string TimeFormat = "HH:mm:ss";
             public const string TimeSpanDisplayFormat = @"hh\:mm\:ss";

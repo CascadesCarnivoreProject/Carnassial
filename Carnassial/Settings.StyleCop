@@ -6,7 +6,21 @@
       <Value>Carnassial</Value>
       <Value>copyable</Value>
       <Value>csv</Value>
+      <Value>dd</Value>
+      <Value>ddd</Value>
+      <Value>dddd</Value>
+      <Value>ddddd</Value>
+      <Value>dddddd</Value>
+      <Value>ddddddd</Value>
+      <Value>dddddddd</Value>
       <Value>dd-MMM-yyyy</Value>
+      <Value>ff</Value>
+      <Value>fff</Value>
+      <Value>ffff</Value>
+      <Value>fffff</Value>
+      <Value>ffffff</Value>
+      <Value>fffffff</Value>
+      <Value>hh</Value>
       <Value>Markable</Value>
       <Value>Mddnnnn</Value>
       <Value>metatag</Value>
@@ -14,8 +28,15 @@
       <Value>MMddnnnn</Value>
       <Value>nnnn</Value>
       <Value>rgb</Value>
+      <Value>ss</Value>
+      <Value>tt</Value>
       <Value>xaml</Value>
       <Value>xlsx</Value>
+      <Value>yy</Value>
+      <Value>yyy</Value>
+      <Value>yyyyy</Value>
+      <Value>zz</Value>
+      <Value>zzz</Value>
     </CollectionProperty>
   </GlobalSettings>
   <Analyzers>

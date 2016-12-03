@@ -9,8 +9,14 @@
 		ResizeMode="CanResizeWithGrip"
 		ShowInTaskbar="False"
 		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
-    <DockPanel>
-        <controls:StockMessageControl x:Name="Message" DockPanel.Dock="Top" StatusImage="Question"
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <controls:StockMessageControl x:Name="Message" StatusImage="Question"
                             Title="Adjust the date/time of all files selected."
                             Problem="If your camera was not initialized to the correct date/time every file's time will be off by the same amount."
                             Solution="Your currently selected file is shown below.
@@ -19,42 +25,46 @@
 &#10;&#x2022; Click Apply Changes to apply those changes."
                             Result="The difference between the original and correct date will be added to all dates for all images and videos selected."
                             Hint="The date/time format you enter should look something like '12-Apr-2016 13:00:00.'&#10;For example, changing 12-Apr-2016 13:00:00 to 13-Apr-2016 14:00:00 would add 1 day and 1 hour to all dates/times"
-                            HideExplanationCheckboxIsVisible="True"/>
-        <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-            <Rectangle Fill="#FF868686" Height="1" />
-        </StackPanel>
+                            HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
+        <Rectangle Fill="#FF868686" Height="1" Grid.Row="1" />
+        <Grid Name="PrimaryPanel" Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Label Content="File:" FontWeight="Bold" Grid.Column="0" VerticalAlignment="Center" />
+                <Label Name="FileName" Content="[ --- file name --- ]" Margin="0,0,0,0" Grid.Column="1" VerticalAlignment="Center" />
+                <Label Content="Original:" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Column="2" VerticalAlignment="Center" Margin="5,0,0,0" />
+                <Label Name="OriginalDate" MinWidth="140" Content="dd-MMM-yyyy HH:mm:ss" Grid.Column="3" VerticalAlignment="Center" Margin="0,0,5,0" />
+                <Label Content="Corrected:" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Column="4" VerticalAlignment="Center" Margin="5,0,2,0" Padding="0,0,0,0" />
+                <controls:DateTimeOffsetPicker x:Name="DateTimePicker" Width="165" HorizontalAlignment="Left" Grid.Column="5" />
+            </Grid>
+            <Image Name="Image" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" Grid.Row="1" />
+        </Grid>
+        <Grid Name="FeedbackPanel" Visibility="Collapsed" Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Label FontWeight="Bold" Content="The following changes to dates and times will occur if you select Apply Changes." Grid.Row="0" />
+            <controls:DateChangesFeedbackControl x:Name="DateTimeChangeFeedback" Grid.Row="1" />
+        </Grid>
         <!-- Ok/Cancel buttons-->
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
-            <Button Name="CancelButton" IsCancel="True" Click="CancelButton_Click" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10">_Cancel</Button>
-            <Button Name="ChangesButton" IsDefault="True" IsEnabled="False" Click="ChangesButton_Click" AutomationProperties.AutomationId="ChangesButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10">_Preview Changes</Button>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
+            <Button Name="ChangesButton" IsDefault="True" IsEnabled="False" Click="ChangesButton_Click" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10">_Preview Changes</Button>
+            <Button Name="CancelButton" IsCancel="True" Click="CancelButton_Click" Padding="10" Margin="10,10,10,10">_Cancel</Button>
         </StackPanel>
-        <DockPanel Name="PrimaryPanel" DockPanel.Dock="Top" >
-            <StackPanel Orientation="Vertical" DockPanel.Dock="Top" VerticalAlignment="Stretch">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Label Content="File:" FontWeight="Bold" Grid.Column="0" VerticalAlignment="Center" />
-                    <Label Name="FileName" Content="[ --- file name --- ]" Margin="0,0,0,0" Grid.Column="1" VerticalAlignment="Center" />
-                    <Label Content="Original:" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Column="2" VerticalAlignment="Center" Margin="5,0,0,0" />
-                    <Label Name="OriginalDate" MinWidth="140" Content="dd-MMM-yyyy HH:mm:ss" Grid.Column="3" VerticalAlignment="Center" Margin="0,0,5,0" />
-                    <Label Content="Corrected:" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Column="4" VerticalAlignment="Center" Margin="5,0,2,0" Padding="0,0,0,0" />
-                    <controls:DateTimeOffsetPicker x:Name="DateTimePicker" Width="165" HorizontalAlignment="Left" Grid.Column="5" />
-                </Grid>
-            </StackPanel>
-            <Image Name="Image" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" DockPanel.Dock="Top" />
-        </DockPanel>
-        <DockPanel Name="FeedbackPanel" Visibility="Collapsed" DockPanel.Dock="Top">
-            <Label FontWeight="Bold" Content="The following changes to dates and times will occur if you select Apply Changes." DockPanel.Dock="Top"/>
-            <controls:DateChangesFeedbackControl x:Name="DateTimeChangeFeedback" DockPanel.Dock="Bottom" />
-        </DockPanel>
-    </DockPanel>
+    </Grid>
 </Window>

@@ -189,6 +189,7 @@ namespace Carnassial.Images
             this.VideoToDisplay.HorizontalAlignment = HorizontalAlignment.Left;
             this.VideoToDisplay.SizeChanged += this.VideoToDisplay_SizeChanged;
             this.VideoToDisplay.VerticalAlignment = VerticalAlignment.Top;
+            this.VideoToDisplay.Visibility = Visibility.Collapsed;
             Canvas.SetLeft(this.VideoToDisplay, 0);
             Canvas.SetTop(this.VideoToDisplay, 0);
             this.Children.Add(this.VideoToDisplay);
@@ -217,7 +218,6 @@ namespace Carnassial.Images
             // this.mouseDownTime not initialized as it's not consumed until after being set from the display image's mouse down handler
             this.MouseLeave += this.ImageOrCanvas_MouseLeave;
             this.MouseMove += this.MarkableCanvas_MouseMove;
-            this.PreviewKeyDown += this.MarkableCanvas_PreviewKeyDown;
         }
 
         // Return to the zoom / pan levels saved as a bookmark
@@ -499,79 +499,6 @@ namespace Carnassial.Images
             this.previousMousePosition = mousePosition;
         }
 
-        // if it's < or > key zoom out or in around the mouse point
-        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", Justification = "StyleCop bug.")]
-        private void MarkableCanvas_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            switch (e.Key)
-            {
-                case Key.B:
-                    if (Keyboard.Modifiers == ModifierKeys.None)
-                    {
-                        // apply the current bookmark
-                        this.ApplyBookmark();
-                    }
-                    else if (Keyboard.Modifiers == ModifierKeys.Control)
-                    {
-                        // bookmark (save) the current pan / zoom of the display image
-                        this.SetBookmark();
-                    }
-                    else
-                    {
-                        return;
-                    }
-                    break;
-                // decrease the magnifing glass zoom
-                case Key.D:
-                    this.MagnifierZoomOut();
-                    break;
-                // return to full view of display image
-                case Key.D0:
-                case Key.NumPad0:
-                    if (Keyboard.Modifiers == ModifierKeys.Control)
-                    {
-                        this.ZoomToFit();
-                    }
-                    else
-                    {
-                        return;
-                    }
-                    break;
-                // zoom out
-                case Key.OemMinus:
-                    Point mousePosition = Mouse.GetPosition(this.ImageToDisplay);
-                    this.ScaleImage(mousePosition, false);
-                    break;
-                // zoom in
-                case Key.OemPlus:
-                    Rect imageToDisplayBounds = new Rect(0.0, 0.0, this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight);
-                    mousePosition = Mouse.GetPosition(this.ImageToDisplay);
-                    if (imageToDisplayBounds.Contains(mousePosition) == false)
-                    {
-                        break; // ignore if mouse is not on the image
-                    }
-                    this.ScaleImage(mousePosition, true);
-                    break;
-                // if the current file's a video allow the user to hit the space bar to start or stop playing the video
-                // This is desirable as the play or pause button doesn't necessarily have focus and it saves the user having to click the button with
-                // the mouse.
-                case Key.Space:
-                    if (this.TryPlayOrPauseVideo() == false)
-                    {
-                        return;
-                    }
-                    break;
-                // increase the magnifing glass zoom
-                case Key.U:
-                    this.MagnifierZoomIn();
-                    break;
-                default:
-                    return;
-            }
-
-            e.Handled = true;
-        }
-
         // resize content and update transforms when canvas size changes
         private void MarkableImageCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
         {
@@ -737,7 +664,7 @@ namespace Carnassial.Images
         /// </summary>
         public void SetNewImage(BitmapSource bitmapSource, List<Marker> markers)
         {
-            // change to new markres
+            // change to new markers
             this.markers = markers;
 
             // initate render of new image for display
@@ -841,6 +768,23 @@ namespace Carnassial.Images
         private void VideoToDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             this.RedrawMarkers();
+        }
+
+        public void ZoomIn()
+        {
+            Point mousePosition = Mouse.GetPosition(this.ImageToDisplay);
+            this.ScaleImage(mousePosition, false);
+        }
+
+        public void ZoomOut()
+        {
+            Rect imageToDisplayBounds = new Rect(0.0, 0.0, this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight);
+            Point mousePosition = Mouse.GetPosition(this.ImageToDisplay);
+            if (imageToDisplayBounds.Contains(mousePosition) == false)
+            {
+                return; // ignore if mouse is not on the image
+            }
+            this.ScaleImage(mousePosition, true);
         }
 
         // Return to the zoomed out level, with no panning

@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 namespace Carnassial.UnitTests
@@ -12,7 +13,7 @@ namespace Carnassial.UnitTests
     public class FileTests : CarnassialTest
     {
         [TestMethod]
-        public void Cache()
+        public async Task Cache()
         {
             FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
             List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
@@ -32,36 +33,49 @@ namespace Carnassial.UnitTests
             BitmapSource currentBitmap = cache.GetCurrentImage();
             Assert.IsNotNull(currentBitmap);
 
-            bool newImageToDisplay;
-            Assert.IsTrue(cache.TryMoveToFile(0, out newImageToDisplay));
-            Assert.IsFalse(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToFile(0, out newImageToDisplay));
-            Assert.IsFalse(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToFile(1, out newImageToDisplay));
-            Assert.IsTrue(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToFile(1, out newImageToDisplay));
-            Assert.IsFalse(newImageToDisplay);
+            MoveToFileResult moveToFile = await cache.TryMoveToFileAsync(0, false);
+            Assert.IsTrue(moveToFile.Succeeded);
+            Assert.IsFalse(moveToFile.NewFileToDisplay);
+            moveToFile = await cache.TryMoveToFileAsync(0, true);
+            Assert.IsTrue(moveToFile.Succeeded);
+            Assert.IsFalse(moveToFile.NewFileToDisplay);
+            moveToFile = await cache.TryMoveToFileAsync(1, false);
+            Assert.IsTrue(moveToFile.Succeeded);
+            Assert.IsTrue(moveToFile.NewFileToDisplay);
+            moveToFile = await cache.TryMoveToFileAsync(1, true);
+            Assert.IsTrue(moveToFile.Succeeded);
+            Assert.IsFalse(moveToFile.NewFileToDisplay);
 
             Assert.IsTrue(cache.TryInvalidate(1));
-            Assert.IsTrue(cache.TryMoveToFile(0, out newImageToDisplay));
-            Assert.IsTrue(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToFile(1, out newImageToDisplay));
-            Assert.IsTrue(newImageToDisplay);
+            moveToFile = await cache.TryMoveToFileAsync(0, false);
+            Assert.IsTrue(moveToFile.Succeeded);
+            Assert.IsTrue(moveToFile.NewFileToDisplay);
+            moveToFile = await cache.TryMoveToFileAsync(1, false);
+            Assert.IsTrue(moveToFile.Succeeded);
+            Assert.IsTrue(moveToFile.NewFileToDisplay);
 
             Assert.IsTrue(cache.TryInvalidate(2));
-            Assert.IsTrue(cache.TryMoveToFile(1, out newImageToDisplay));
-            Assert.IsTrue(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToFile(1, out newImageToDisplay));
-            Assert.IsFalse(newImageToDisplay);
-            Assert.IsTrue(cache.TryMoveToFile(0, out newImageToDisplay));
-            Assert.IsTrue(newImageToDisplay);
+            moveToFile = await cache.TryMoveToFileAsync(1, true);
+            Assert.IsTrue(moveToFile.Succeeded);
+            Assert.IsTrue(moveToFile.NewFileToDisplay);
+            moveToFile = await cache.TryMoveToFileAsync(1, true);
+            Assert.IsTrue(moveToFile.Succeeded);
+            Assert.IsFalse(moveToFile.NewFileToDisplay);
+            moveToFile = await cache.TryMoveToFileAsync(0, true);
+            Assert.IsTrue(moveToFile.Succeeded);
+            Assert.IsTrue(moveToFile.NewFileToDisplay);
 
-            Assert.IsFalse(cache.TryMoveToFile(fileExpectations.Count, out newImageToDisplay));
-            Assert.IsFalse(cache.TryMoveToFile(fileExpectations.Count, out newImageToDisplay));
+            moveToFile = await cache.TryMoveToFileAsync(fileExpectations.Count, false);
+            Assert.IsFalse(moveToFile.Succeeded);
+            moveToFile = await cache.TryMoveToFileAsync(fileExpectations.Count, false);
+            Assert.IsFalse(moveToFile.Succeeded);
 
-            Assert.IsTrue(cache.TryMoveToFile(0));
-            Assert.IsTrue(cache.TryMoveToFile(1));
-            Assert.IsFalse(cache.TryMoveToFile(fileExpectations.Count));
+            moveToFile = await cache.TryMoveToFileAsync(0, false);
+            Assert.IsTrue(moveToFile.Succeeded);
+            moveToFile = await cache.TryMoveToFileAsync(1, false);
+            Assert.IsTrue(moveToFile.Succeeded);
+            moveToFile = await cache.TryMoveToFileAsync(fileExpectations.Count, false);
+            Assert.IsFalse(moveToFile.Succeeded);
 
             for (int step = 0; step < 4; ++step)
             {
@@ -69,8 +83,8 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue((cache.CurrentDifferenceState == ImageDifference.Combined) ||
                               (cache.CurrentDifferenceState == ImageDifference.Unaltered));
 
-                ImageDifferenceResult combinedDifferenceResult = cache.TryCalculateCombinedDifference(Constant.Images.DifferenceThresholdDefault - 2);
-                this.CheckDifferenceResult(combinedDifferenceResult, cache, fileDatabase);
+                ImageDifferenceResult combinedDifferenceResult = await cache.TryCalculateCombinedDifferenceAsync(Constant.Images.DifferenceThresholdDefault - 2);
+                await this.CheckDifferenceResult(combinedDifferenceResult, cache, fileDatabase);
             }
 
             Assert.IsTrue(cache.TryMoveToFile(0));
@@ -81,8 +95,8 @@ namespace Carnassial.UnitTests
                               (cache.CurrentDifferenceState == ImageDifference.Previous) ||
                               (cache.CurrentDifferenceState == ImageDifference.Unaltered));
 
-                ImageDifferenceResult differenceResult = cache.TryCalculateDifference();
-                this.CheckDifferenceResult(differenceResult, cache, fileDatabase);
+                ImageDifferenceResult differenceResult = await cache.TryCalculateDifferenceAsync();
+                await this.CheckDifferenceResult(differenceResult, cache, fileDatabase);
             }
 
             cache.Reset();
@@ -133,7 +147,7 @@ namespace Carnassial.UnitTests
         }
 
         [TestMethod]
-        public void ImageQuality()
+        public async Task ImageQuality()
         {
             List<FileExpectations> fileExpectations = new List<FileExpectations>()
             {
@@ -149,7 +163,7 @@ namespace Carnassial.UnitTests
             {
                 // Load the image
                 ImageRow file = fileExpectation.GetFileData(fileDatabase);
-                BitmapSource bitmap = file.LoadBitmap(this.WorkingDirectory);
+                BitmapSource bitmap = await file.LoadBitmapAsync(this.WorkingDirectory);
 
                 double darkPixelFraction;
                 bool isColor;
@@ -160,7 +174,7 @@ namespace Carnassial.UnitTests
             }
         }
 
-        private void CheckDifferenceResult(ImageDifferenceResult result, ImageCache cache, FileDatabase fileDatabase)
+        private async Task CheckDifferenceResult(ImageDifferenceResult result, ImageCache cache, FileDatabase fileDatabase)
         {
             BitmapSource currentBitmap = cache.GetCurrentImage();
             switch (result)
@@ -206,16 +220,16 @@ namespace Carnassial.UnitTests
                     // check if the image to diff against is matched
                     if (fileDatabase.IsFileRowInRange(previousNextImageRow))
                     {
-                        WriteableBitmap unalteredBitmap = cache.Current.LoadBitmap(fileDatabase.FolderPath).AsWriteable();
+                        WriteableBitmap unalteredBitmap = (await cache.Current.LoadBitmapAsync(fileDatabase.FolderPath)).AsWriteable();
                         ImageRow previousNextImage = fileDatabase.Files[previousNextImageRow];
-                        WriteableBitmap previousNextBitmap = previousNextImage.LoadBitmap(fileDatabase.FolderPath).AsWriteable();
-                        bool mismatched = WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, previousNextBitmap);
+                        WriteableBitmap previousNextBitmap = (await previousNextImage.LoadBitmapAsync(fileDatabase.FolderPath)).AsWriteable();
+                        bool mismatched = WriteableBitmapExtensions.BitmapsMismatchedOrNot24BitRgb(unalteredBitmap, previousNextBitmap);
 
                         if (fileDatabase.IsFileRowInRange(otherImageRowForCombined))
                         {
                             ImageRow otherImageForCombined = fileDatabase.Files[otherImageRowForCombined];
-                            WriteableBitmap otherBitmapForCombined = otherImageForCombined.LoadBitmap(fileDatabase.FolderPath).AsWriteable();
-                            mismatched |= WriteableBitmapExtensions.BitmapsMismatched(unalteredBitmap, otherBitmapForCombined);
+                            WriteableBitmap otherBitmapForCombined = (await otherImageForCombined.LoadBitmapAsync(fileDatabase.FolderPath)).AsWriteable();
+                            mismatched |= WriteableBitmapExtensions.BitmapsMismatchedOrNot24BitRgb(unalteredBitmap, otherBitmapForCombined);
                         }
 
                         expectNullBitmap |= mismatched;

@@ -668,66 +668,58 @@ namespace Carnassial.Editor
                         continue;
                     }
 
+                    string columnHeader = (string)this.TemplateDataGrid.Columns[column].Header;
                     ControlRow control = new ControlRow(((DataRowView)this.TemplateDataGrid.Items[rowIndex]).Row);
                     string controlType = control.Type;
-
-                    string columnHeader = (string)this.TemplateDataGrid.Columns[column].Header;
-                    if ((columnHeader == Constant.Control.Label) ||
-                        (columnHeader == Constant.Control.Tooltip) ||
-                        (columnHeader == Constant.Control.Visible) ||
-                        (columnHeader == EditorConstant.ColumnHeader.Width))
+                    bool disableCell = false;
+                    if ((columnHeader == Constant.DatabaseColumn.ID) ||
+                        (columnHeader == Constant.Control.ControlOrder) ||
+                        (columnHeader == Constant.Control.SpreadsheetOrder) ||
+                        (columnHeader == Constant.Control.Type))
                     {
-                        continue;
+                        // these columns are never editable
+                        disableCell = true;
+                        // these columns are always editable
+                        //   Constant.Control.Label
+                        //   Constant.Control.Tooltip
+                        //   Constant.Control.Visible
+                        //   EditorConstant.ColumnHeader.Width
+                    }
+                    else if ((controlType == Constant.DatabaseColumn.DateTime) ||
+                             (controlType == Constant.DatabaseColumn.File) ||
+                             (controlType == Constant.DatabaseColumn.RelativePath))
+                    {
+                        // these standard controls have no editable properties
+                        disableCell = true;
+                    }
+                    else if ((controlType == Constant.DatabaseColumn.DeleteFlag) ||
+                             (controlType == Constant.DatabaseColumn.ImageQuality) ||
+                             (controlType == Constant.DatabaseColumn.UtcOffset))
+                    {
+                        // standard controls whose copyable and visible can be changed
+                        disableCell = (columnHeader != Constant.Control.Copyable) && (columnHeader != Constant.Control.Visible);
+                    }
+                    else if ((controlType == Constant.Control.Counter) ||
+                             (controlType == Constant.Control.Flag))
+                    {
+                        // all properties are editable except list
+                        disableCell = columnHeader == Constant.Control.List;
+                        // for notes and choices all properties including list are editable
                     }
 
-                    // The following attributes should NOT be editable.
-                    ContentPresenter cellContent = cell.Content as ContentPresenter;
-                    string sortMemberPath = this.TemplateDataGrid.Columns[column].SortMemberPath;
-                    if (String.Equals(sortMemberPath, Constant.DatabaseColumn.ID, StringComparison.OrdinalIgnoreCase) ||
-                        String.Equals(sortMemberPath, Constant.Control.ControlOrder, StringComparison.OrdinalIgnoreCase) ||
-                        String.Equals(sortMemberPath, Constant.Control.SpreadsheetOrder, StringComparison.OrdinalIgnoreCase) ||
-                        String.Equals(sortMemberPath, Constant.Control.Type, StringComparison.OrdinalIgnoreCase) ||
-                        (controlType == Constant.DatabaseColumn.DateTime) ||
-                        (controlType == Constant.DatabaseColumn.DeleteFlag) ||
-                        (controlType == Constant.DatabaseColumn.File) ||
-                        ((controlType == Constant.DatabaseColumn.ImageQuality) && (columnHeader == Constant.Control.Copyable)) ||
-                        ((controlType == Constant.DatabaseColumn.ImageQuality) && (columnHeader == EditorConstant.ColumnHeader.DataLabel)) ||
-                        ((controlType == Constant.DatabaseColumn.ImageQuality) && (columnHeader == Constant.Control.List)) ||
-                        ((controlType == Constant.DatabaseColumn.ImageQuality) && (sortMemberPath == Constant.Control.DefaultValue)) ||
-                        (controlType == Constant.DatabaseColumn.RelativePath) ||
-                        (controlType == Constant.DatabaseColumn.UtcOffset) ||
-                        ((controlType == Constant.Control.Counter) && (columnHeader == Constant.Control.List)) ||
-                        ((controlType == Constant.Control.Flag) && (columnHeader == Constant.Control.List)) ||
-                        ((controlType == Constant.Control.Note) && (columnHeader == Constant.Control.List)))
+                    if (disableCell)
                     {
                         cell.Background = EditorConstant.NotEditableCellColor;
                         cell.Foreground = Brushes.Gray;
 
-                        // if cell has a checkbox, also disable it.
+                        // if cell has a checkbox disable it.
+                        ContentPresenter cellContent = cell.Content as ContentPresenter;
                         if (cellContent != null)
                         {
                             CheckBox checkbox = cellContent.ContentTemplate.FindName("CheckBox", cellContent) as CheckBox;
                             if (checkbox != null)
                             {
                                 checkbox.IsEnabled = false;
-                            }
-                            else if ((controlType == Constant.DatabaseColumn.ImageQuality) && TemplateDataGrid.Columns[column].Header.Equals("List"))
-                            {
-                                cell.IsEnabled = false; // Don't let users edit the ImageQuality menu
-                            }
-                        }
-                    }
-                    else
-                    {
-                        cell.ClearValue(DataGridCell.BackgroundProperty); // otherwise when scrolling cells offscreen get colored randomly
-
-                        // if cell has a checkbox, enable it.
-                        if (cellContent != null)
-                        {
-                            CheckBox checkbox = cellContent.ContentTemplate.FindName("CheckBox", cellContent) as CheckBox;
-                            if (checkbox != null)
-                            {
-                                checkbox.IsEnabled = true;
                             }
                         }
                     }

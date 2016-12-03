@@ -36,6 +36,11 @@ namespace Carnassial.Controls
             item.Content = message;
         }
 
+        public static void SetMessage(this StatusBar statusBar, string format, params object[] arguments)
+        {
+            statusBar.SetMessage(String.Format(format, arguments));
+        }
+
         // display a view in the View portion of the status bar
         public static void SetView(this StatusBar statusBar, string view)
         {

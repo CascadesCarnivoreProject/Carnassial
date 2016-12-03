@@ -1,66 +1,113 @@
 ﻿using Carnassial.Database;
 using System;
+using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace Carnassial.Images
 {
     /// <summary>
-    /// Extends <see cref="WriteableBitmap"/> with differencing calculations.
+    /// Extends <see cref="WriteableBitmap"/> with differencing and other calculations.
     /// </summary>
-    /// <remarks>This class consumes WriteableBitmap.BackBuffer in unsafe operations for speed.  Other Windows Presentation Foundation bitmap classes do not
-    /// expose in memory content of bitmaps, requiring somewhat expensive double buffering for image calculations, and using Marshal to obtain pixels from
-    /// the backing buffer is substantially slower than direct access.</remarks>
+    /// <remarks>This class uses WriteableBitmap.BackBuffer in place for performance.  Other Windows Presentation Foundation bitmap classes do not directly expose 
+    /// pixels and require memory copies.</remarks>
     public static class WriteableBitmapExtensions
     {
-        // Given three images, return an image that highlights the differences in common betwen the main image and the first image
-        // and the main image and a second image.
-        public static unsafe WriteableBitmap CombinedDifference(this WriteableBitmap unaltered, WriteableBitmap previous, WriteableBitmap next, byte threshold)
+        /// <summary>
+        /// Get sum of absolute difference between two images as a greyscale image.
+        /// </summary>
+        // 8MP average performance (n ~= 30), milliseconds, release build
+        // threads  scalar   _mm_sad_epu8   _mm256_sad_epu8
+        // auto     55
+        public static unsafe WriteableBitmap Difference(this WriteableBitmap image1, WriteableBitmap image2)
         {
-            if (WriteableBitmapExtensions.BitmapsMismatched(unaltered, previous) ||
-                WriteableBitmapExtensions.BitmapsMismatched(unaltered, next))
+            if (WriteableBitmapExtensions.BitmapsMismatchedOrNot24BitRgb(image1, image2))
             {
                 return null;
             }
 
-            int blueOffset;
-            int greenOffset;
-            int redOffset;
-            WriteableBitmapExtensions.GetColorOffsets(unaltered, out blueOffset, out greenOffset, out redOffset);
-
-            int totalPixels = unaltered.PixelWidth * unaltered.PixelHeight;
-            int pixelSizeInBytes = unaltered.Format.BitsPerPixel / 8;
-            byte* unalteredIndex = (byte*)unaltered.BackBuffer.ToPointer();
-            byte* previousIndex = (byte*)previous.BackBuffer.ToPointer();
-            byte* nextIndex = (byte*)next.BackBuffer.ToPointer();
-            byte[] differencePixels = new byte[totalPixels * pixelSizeInBytes];
-            int differenceIndex = 0;
-            for (int pixel = 0; pixel < totalPixels; ++pixel)
+            // DateTime start = DateTime.UtcNow;
+            int pixelSizeInBytes = image1.Format.BitsPerPixel / 8;
+            byte* backBuffer1 = (byte*)image1.BackBuffer.ToPointer();
+            byte* backBuffer2 = (byte*)image2.BackBuffer.ToPointer();
+            WriteableBitmap difference = new WriteableBitmap(image1.PixelWidth, image1.PixelHeight, image1.DpiX, image1.DpiY, PixelFormats.Gray8, null);
+            difference.Lock();
+            byte* differenceBackBuffer = (byte*)difference.BackBuffer.ToPointer();
+            Parallel.For(0, image1.PixelHeight, (int row) =>
             {
-                byte b1 = (byte)Math.Abs(*(unalteredIndex + blueOffset) - *(previousIndex + blueOffset));
-                byte g1 = (byte)Math.Abs(*(unalteredIndex + greenOffset) - *(previousIndex + greenOffset));
-                byte r1 = (byte)Math.Abs(*(unalteredIndex + redOffset) - *(previousIndex + redOffset));
+                int startPixel = image1.PixelWidth * row;
+                int endPixel = startPixel + image1.PixelWidth;
+                byte* image1Pixel = backBuffer1 + startPixel * pixelSizeInBytes;
+                byte* image2Pixel = backBuffer2 + startPixel * pixelSizeInBytes;
+                for (int pixel = startPixel; pixel < endPixel; ++pixel, image1Pixel += pixelSizeInBytes, image2Pixel += pixelSizeInBytes)
+                {
+                    // check above ensures pixels start with BRG or RGB
+                    int difference0 = Math.Abs(*image1Pixel - *image2Pixel);
+                    int difference1 = Math.Abs(*(image1Pixel + 1) - *(image2Pixel + 1));
+                    int difference2 = Math.Abs(*(image1Pixel + 2) - *(image2Pixel + 2));
+                    *(differenceBackBuffer + pixel) = (byte)((difference0 + difference1 + difference2) / 3);
+                }
+            });
 
-                byte b2 = (byte)Math.Abs(*(unalteredIndex + blueOffset) - *(nextIndex + blueOffset));
-                byte g2 = (byte)Math.Abs(*(unalteredIndex + greenOffset) - *(nextIndex + greenOffset));
-                byte r2 = (byte)Math.Abs(*(unalteredIndex + redOffset) - *(nextIndex + redOffset));
+            difference.Unlock();
+            difference.Freeze();
+            // Console.WriteLine((DateTime.UtcNow - start).ToString(@"s\.fff"));
+            return difference;
+        }
 
-                byte b = WriteableBitmapExtensions.DifferenceIfAboveThreshold(threshold, b1, b2);
-                byte g = WriteableBitmapExtensions.DifferenceIfAboveThreshold(threshold, g1, g2);
-                byte r = WriteableBitmapExtensions.DifferenceIfAboveThreshold(threshold, r1, r2);
-
-                byte averageDifference = (byte)((b + g + r) / 3);
-                differencePixels[differenceIndex + blueOffset] = averageDifference;
-                differencePixels[differenceIndex + greenOffset] = averageDifference;
-                differencePixels[differenceIndex + redOffset] = averageDifference;
-
-                unalteredIndex += pixelSizeInBytes;
-                previousIndex += pixelSizeInBytes;
-                nextIndex += pixelSizeInBytes;
-                differenceIndex += pixelSizeInBytes;
+        /// <summary>
+        /// Get an image of the differences in common between the unaltered and previous image and the unaltered and next image.
+        /// </summary>
+        /// <remarks>Implementation is color insensitive so it's simply assumed the first three values in input pixels are RGB in some order.</remarks>
+        // 8MP average performance (n ~= 30), milliseconds
+        //          release
+        //          scalar
+        // threads  greyscale
+        // auto     102
+        public static unsafe WriteableBitmap Difference(this WriteableBitmap unaltered, WriteableBitmap previous, WriteableBitmap next, byte threshold)
+        {
+            if (WriteableBitmapExtensions.BitmapsMismatchedOrNot24BitRgb(unaltered, previous) ||
+                WriteableBitmapExtensions.BitmapsMismatchedOrNot24BitRgb(unaltered, next))
+            {
+                return null;
             }
 
-            WriteableBitmap difference = new WriteableBitmap(BitmapSource.Create(unaltered.PixelWidth, unaltered.PixelHeight, unaltered.DpiX, unaltered.DpiY, unaltered.Format, unaltered.Palette, differencePixels, unaltered.BackBufferStride));
+            // DateTime start = DateTime.UtcNow;
+            int pixelSizeInBytes = unaltered.Format.BitsPerPixel / 8;
+            byte* unalteredBackBuffer = (byte*)unaltered.BackBuffer.ToPointer();
+            byte* previousBackBuffer = (byte*)previous.BackBuffer.ToPointer();
+            byte* nextBackBuffer = (byte*)next.BackBuffer.ToPointer();
+            int thresholdAsInt = (int)threshold;
+            WriteableBitmap difference = new WriteableBitmap(unaltered.PixelWidth, unaltered.PixelHeight, unaltered.DpiX, unaltered.DpiY, PixelFormats.Gray8, null);
+            difference.Lock();
+            byte* differenceBackBuffer = (byte*)difference.BackBuffer.ToPointer();
+            Parallel.For(0, unaltered.PixelHeight, (int row) =>
+            {
+                int startPixel = unaltered.PixelWidth * row;
+                int endPixel = startPixel + unaltered.PixelWidth;
+                byte* unalteredPixel = unalteredBackBuffer + startPixel * pixelSizeInBytes;
+                byte* previousPixel = previousBackBuffer + startPixel * pixelSizeInBytes;
+                byte* nextPixel = nextBackBuffer + startPixel * pixelSizeInBytes;
+                for (int pixel = startPixel; pixel < endPixel; ++pixel, unalteredPixel += pixelSizeInBytes, previousPixel += pixelSizeInBytes, nextPixel += pixelSizeInBytes)
+                {
+                    int previous0 = Math.Abs(*unalteredPixel - *previousPixel);
+                    int previous1 = Math.Abs(*(unalteredPixel + 1) - *(previousPixel + 1));
+                    int previous2 = Math.Abs(*(unalteredPixel + 2) - *(previousPixel + 2));
+
+                    int next0 = Math.Abs(*unalteredPixel - *nextPixel);
+                    int next1 = Math.Abs(*(unalteredPixel + 1) - *(nextPixel + 1));
+                    int next2 = Math.Abs(*(unalteredPixel + 2) - *(nextPixel + 2));
+
+                    int difference0 = WriteableBitmapExtensions.DifferenceIfAboveThreshold(thresholdAsInt, previous0, next0);
+                    int difference1 = WriteableBitmapExtensions.DifferenceIfAboveThreshold(thresholdAsInt, previous1, next1);
+                    int difference2 = WriteableBitmapExtensions.DifferenceIfAboveThreshold(thresholdAsInt, previous2, next2);
+                    *(differenceBackBuffer + pixel) = (byte)((difference0 + difference1 + difference2) / 3);
+                }
+            });
+
+            difference.Unlock();
+            difference.Freeze();
+            // Console.WriteLine((DateTime.UtcNow - start).ToString(@"s\.fff"));
             return difference;
         }
 
@@ -72,37 +119,57 @@ namespace Carnassial.Images
         }
 
         /// <summary>
-        /// Find the percentage of pixels whose brightness is below the threshold.
+        /// Find the percentage of pixels whose brightness is below the threshold and classify image accordingly.
         /// </summary>
         /// <returns>Dark if the specified ratio is exceeded, Ok otherwise.</returns>
         public static unsafe FileSelection IsDark(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio, out double darkPixelFraction, out bool isColor)
         {
-            // The RGB offsets from the beginning of the pixel (i.e., 0, 1 or 2)
-            int blueOffset;
-            int greenOffset;
-            int redOffset;
-            WriteableBitmapExtensions.GetColorOffsets(image, out blueOffset, out greenOffset, out redOffset);
+            bool bgrPixels;
+            if (image.Format == PixelFormats.Bgr24 ||
+                image.Format == PixelFormats.Bgr32 ||
+                image.Format == PixelFormats.Bgra32 ||
+                image.Format == PixelFormats.Pbgra32)
+            {
+                bgrPixels = true;
+            }
+            else if (image.Format == PixelFormats.Rgb24)
+            {
+                bgrPixels = false;
+            }
+            else
+            {
+                throw new NotSupportedException(String.Format("Unhandled image format {0}.", image.Format));
+            }
 
-            // Examine only a subset of pixels as otherwise this is a very expensive operation
-            // TODO DISCRETIONARY: Calculate pixelStride as a function of image size so future high res images will still be processed quickly.
-            byte* currentPixel = (byte*)image.BackBuffer.ToPointer(); // the imageIndex will point to a particular byte in the pixel array
+            // examine a fraction of the pixels to reduce computation
+            byte* currentPixel = (byte*)image.BackBuffer.ToPointer();
             int pixelSizeInBytes = image.Format.BitsPerPixel / 8;
             int pixelStride = Constant.Images.DarkPixelSampleStrideDefault;
-            int totalPixels = image.PixelHeight * image.PixelWidth; // total number of pixels in the image
+            int totalPixels = image.PixelHeight * image.PixelWidth;
             int countedPixels = 0;
             int darkPixels = 0;
             int uncoloredPixels = 0;
-            for (int pixelIndex = 0; pixelIndex < totalPixels; pixelIndex += pixelStride)
+            for (int pixel = 0; pixel < totalPixels; pixel += pixelStride, currentPixel += pixelSizeInBytes * pixelStride)
             {
-                // get next pixel of interest
-                byte b = *(currentPixel + blueOffset);
-                byte g = *(currentPixel + greenOffset);
-                byte r = *(currentPixel + redOffset);
+                // get pixel
+                byte pixel0 = *currentPixel;
+                byte pixel1 = *(currentPixel + 1);
+                byte pixel2 = *(currentPixel + 2);
 
                 // The numbers below convert a particular color to its greyscale equivalent, and then checked against the darkPixelThreshold
                 // Colors are not weighted equally. Since pure green is lighter than pure red and pure blue, it has a higher weight. 
                 // Pure blue is the darkest of the three, so it receives the least weight.
-                int humanPercievedLuminosity = (int)Math.Round(0.299 * r + 0.5876 * g + 0.114 * b);
+                int humanPercievedLuminosity;
+                if (bgrPixels)
+                {
+                    ////                                     red               green            blue
+                    humanPercievedLuminosity = (int)(0.299 * pixel2 + 0.5876 * pixel1 + 0.114 * pixel0 + 0.5);
+                }
+                else
+                {
+                    ////                                     red               green            blue
+                    humanPercievedLuminosity = (int)(0.299 * pixel0 + 0.5876 * pixel1 + 0.114 * pixel2 + 0.5);
+                }
                 if (humanPercievedLuminosity <= darkPixelThreshold)
                 {
                     ++darkPixels;
@@ -110,29 +177,27 @@ namespace Carnassial.Images
 
                 // Check if the pixel is a grey scale vs. color pixel, using a heuristic. 
                 // In greyscale r = g = b but some cameras have a bit of color in night time images, so allow a tolerance.
-                int rgbDelta = Math.Abs(r - g) + Math.Abs(g - b) + Math.Abs(b - r);
-                if (rgbDelta <= Constant.Images.GreyScalePixelThreshold)
+                int totalColoration = Math.Abs(pixel2 - pixel1) + Math.Abs(pixel1 - pixel0) + Math.Abs(pixel0 - pixel2);
+                if (totalColoration <= Constant.Images.GreyScalePixelThreshold)
                 {
                     ++uncoloredPixels;
                 }
 
                 // update other loop variables
                 ++countedPixels;
-                currentPixel += pixelSizeInBytes * pixelStride; // Advance the pointer to the beginning of the next pixel of interest
             }
 
-            // Check if its a grey scale image, i.e., at least 90% of the pixels in this image (given this slop) are grey scale.
-            // If not, its a color image so judge it as not dark
-            double uncoloredPixelFraction = 1d * uncoloredPixels / countedPixels;
+            // images with sufficient color are never considered to be dark
+            double uncoloredPixelFraction = 1.0 * uncoloredPixels / countedPixels;
             if (uncoloredPixelFraction < Constant.Images.GreyScaleImageThreshold)
             {
-                darkPixelFraction = 1 - uncoloredPixelFraction;
+                darkPixelFraction = 1.0 - uncoloredPixelFraction;
                 isColor = true;
                 return FileSelection.Ok;
             }
 
-            // It is a grey scale image. If the fraction of dark pixels are higher than the threshold, it is dark.
-            darkPixelFraction = 1d * darkPixels / countedPixels;
+            // if a sufficient fraction of pixels in grey scale (uncolored) images are higher than the threshold they're dark
+            darkPixelFraction = 1.0 * darkPixels / countedPixels;
             isColor = false;
             if (darkPixelFraction >= darkPixelRatio)
             {
@@ -144,28 +209,17 @@ namespace Carnassial.Images
         // checks whether the image is completely black
         public static unsafe bool IsBlack(this WriteableBitmap image)
         {
-            // The RGB offsets from the beginning of the pixel (i.e., 0, 1 or 2)
-            int blueOffset;
-            int greenOffset;
-            int redOffset;
-            WriteableBitmapExtensions.GetColorOffsets(image, out blueOffset, out greenOffset, out redOffset);
-
-            // examine only a subset of pixels as otherwise this is an expensive operation
-            // check pixels from last to first as most cameras put a non-black status bar or at least non-black text at the bottom of the frame,
-            // so reverse order may be a little faster on average in cases of nighttime images with black skies
-            // TODO DISCRETIONARY: Calculate pixelStride as a function of image size so future high res images will still be processed quickly.
-            byte* currentPixel = (byte*)image.BackBuffer.ToPointer(); // the imageIndex will point to a particular byte in the pixel array
+            // examine a fraction of the pixels to reduce computation
+            // Check pixels from last to first as most cameras put a non-black status bar or at least non-black text at the bottom of the frame,
+            // so reverse order may be faster in cases of night time images with black skies.  Depending on pixel format and alignment this may
+            // also be acceleratable by checking ints or longs.
             int pixelSizeInBytes = image.Format.BitsPerPixel / 8;
             int pixelStride = Constant.Images.DarkPixelSampleStrideDefault;
-            int totalPixels = image.PixelHeight * image.PixelWidth; // total number of pixels in the image
-            for (int pixelIndex = totalPixels - 1; pixelIndex > 0; pixelIndex -= pixelStride)
+            int totalBytes = image.PixelHeight * image.PixelWidth;
+            byte* currentPixel = (byte*)image.BackBuffer.ToPointer() + pixelSizeInBytes * (totalBytes - 1);
+            for (int pixel = totalBytes - 1; pixel > 0; pixel -= pixelStride, currentPixel -= pixelSizeInBytes * pixelStride)
             {
-                // get next pixel of interest
-                byte b = *(currentPixel + blueOffset);
-                byte g = *(currentPixel + greenOffset);
-                byte r = *(currentPixel + redOffset);
-
-                if (r != 0 || b != 0 || g != 0)
+                if (*currentPixel != 0 || *(currentPixel + 1) != 0 || *(currentPixel + 2) != 0)
                 {
                     return false;
                 }
@@ -173,78 +227,26 @@ namespace Carnassial.Images
             return true;
         }
 
-        // Given two images, return an image containing the visual difference between them
-        public static unsafe WriteableBitmap Subtract(this WriteableBitmap image1, WriteableBitmap image2)
+        internal static bool BitmapsMismatchedOrNot24BitRgb(WriteableBitmap image1, WriteableBitmap image2)
         {
-            if (WriteableBitmapExtensions.BitmapsMismatched(image1, image2))
+            if ((image1.PixelWidth != image2.PixelWidth) || (image1.PixelHeight != image2.PixelHeight) || (image1.Format != image2.Format))
             {
-                return null;
+                return true;
             }
-
-            int blueOffset;
-            int greenOffset;
-            int redOffset;
-            WriteableBitmapExtensions.GetColorOffsets(image1, out blueOffset, out greenOffset, out redOffset);
-
-            int totalPixels = image1.PixelWidth * image1.PixelHeight;
-            int pixelSizeInBytes = image1.Format.BitsPerPixel / 8;
-            byte* image1Index = (byte*)image1.BackBuffer.ToPointer();
-            byte* image2Index = (byte*)image2.BackBuffer.ToPointer();
-            byte[] differencePixels = new byte[totalPixels * pixelSizeInBytes];
-            int differenceIndex = 0;
-            for (int pixel = 0; pixel < totalPixels; ++pixel)
+            if ((image1.Format == PixelFormats.Bgr24) ||
+                (image1.Format == PixelFormats.Bgr32) ||
+                (image1.Format == PixelFormats.Bgra32) ||
+                (image1.Format == PixelFormats.Pbgra32) ||
+                (image1.Format == PixelFormats.Rgb24))
             {
-                byte b = (byte)Math.Abs(*(image1Index + blueOffset) - *(image2Index + blueOffset));
-                byte g = (byte)Math.Abs(*(image1Index + greenOffset) - *(image2Index + greenOffset));
-                byte r = (byte)Math.Abs(*(image1Index + redOffset) - *(image2Index + redOffset));
-
-                byte averageDifference = (byte)((b + g + r) / 3);
-                differencePixels[differenceIndex + blueOffset] = averageDifference;
-                differencePixels[differenceIndex + greenOffset] = averageDifference;
-                differencePixels[differenceIndex + redOffset] = averageDifference;
-
-                image1Index += pixelSizeInBytes;
-                image2Index += pixelSizeInBytes;
-                differenceIndex += pixelSizeInBytes;
+                return false;
             }
-
-            WriteableBitmap difference = new WriteableBitmap(BitmapSource.Create(image1.PixelWidth, image1.PixelHeight, image1.DpiX, image1.DpiY, image1.Format, image1.Palette, differencePixels, image1.BackBufferStride));
-            return difference;
+            return true;
         }
 
-        internal static bool BitmapsMismatched(WriteableBitmap image1, WriteableBitmap image2)
+        private static int DifferenceIfAboveThreshold(int threshold, int previousDifference, int nextDifference)
         {
-            return (image1.PixelWidth != image2.PixelWidth) ||
-                   (image1.PixelHeight != image2.PixelHeight) ||
-                   (image1.Format != image2.Format);
-        }
-
-        private static byte DifferenceIfAboveThreshold(byte threshold, byte p, byte n)
-        {
-            return p > threshold && n > threshold ? (byte)((p + n) / 2) : Byte.MinValue;
-        }
-
-        private static void GetColorOffsets(WriteableBitmap image, out int blueOffset, out int greenOffset, out int redOffset)
-        {
-            if (image.Format == PixelFormats.Bgr24 ||
-                image.Format == PixelFormats.Bgr32 ||
-                image.Format == PixelFormats.Bgra32 ||
-                image.Format == PixelFormats.Pbgra32)
-            {
-                blueOffset = 0;
-                greenOffset = 1;
-                redOffset = 2;
-            }
-            else if (image.Format == PixelFormats.Rgb24)
-            {
-                redOffset = 0;
-                greenOffset = 1;
-                blueOffset = 2;
-            }
-            else
-            {
-                throw new NotSupportedException(String.Format("Unhandled image format {0}.", image.Format));
-            }
+            return (previousDifference > threshold) && (nextDifference > threshold) ? (previousDifference + nextDifference) / 2 : 0;
         }
     }
 }

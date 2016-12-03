@@ -27,7 +27,7 @@ Commits should
 * include appropriate test coverage
 * have no build warnings, pass code analysis (Analyze -> Run Code Analysis), and be free of StyleCop issues (right click solution -> Run StyleCop)
 
-Application development is done against .NET 4.5 as as not all users have newer versions available on their systems or the ability to update .NET.  Test code uses .NET 4.5.
+Application and test development is done against .NET 4.6.
 
 Also helpful are
 
@@ -37,7 +37,7 @@ Also helpful are
 
 ### Dependencies
 * Carnassial and the template editor are supported and tested on Windows 10 Anniversary Update.  They should also run without issue on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10.  Support is, however, limited.
-* Windows Vista SP2 and earlier are not supported.  Windows 7 users will need to [install .NET 4.0 or newer](https://msdn.microsoft.com/en-us/library/bb822049.aspx) if it's not already present.
+* Windows Vista SP2 and earlier and 32 bit versions of Windows are not supported.  Windows 7 users will need to [install .NET 4.6 or newer](https://msdn.microsoft.com/en-us/library/bb822049.aspx) if it's not already present.
 * Visual Studio 2015 Community Update 3 or higher is required for development.
 
 Screen sizes of 1600 x 900 or larger are recommended.
@@ -52,6 +52,6 @@ The need to analyze remote camera data is a common one.  In addition to Carnassi
 
 * Carnassial is fully free whilst CPW Photo Warehouse​ requires a Microsoft Access license (and permissions configuration).  Carnassial is more flexible and smoother in data entry but presently lacks equivalents to CPW's station information, occupancy analysis, and mark recapture analysis.  [CritterShell](https://github.com/CascadesCarnivoreProject/CritterShell) offers detection and occupancy analysis.
 * Carnassial is readily available.  Obtaining the eMammal client requires a logon be issued, which can be hard to get.
-* Carnassial and Timelapse are broadly similar.  As of November 2016 Carnassial offers faster analysis, more flexibility, and fewer defects than Timelapse.
+* Carnassial and Timelapse are broadly similar.  As of December 2016 Carnassial offers faster analysis, more flexibility, and fewer defects than Timelapse.
 
 If you know of others please email carnassialdev@gmail.com to let us know.

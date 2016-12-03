@@ -35,7 +35,6 @@ namespace Carnassial
         private DataEntryHandler dataHandler;
         private bool disposed;
         private List<MarkersForCounter> markersOnCurrentFile;
-        private string mostRecentFileAddFolderPath;
 
         // speech feedback
         private SpeechSynthesizer speechSynthesizer;
@@ -59,7 +58,7 @@ namespace Carnassial
             this.state = new CarnassialState();
             this.Title = Constant.MainWindowBaseTitle;
 
-            // Recall user's state from prior sessions
+            // recall user's state from prior sessions
             this.state.ReadFromRegistry();
 
             this.MenuOptionsAudioFeedback.IsChecked = this.state.AudioFeedback;
@@ -67,9 +66,9 @@ namespace Carnassial
             this.MenuOptionsOrderFilesByDateTime.IsChecked = this.state.OrderFilesByDateTime;
             this.MenuOptionsSkipDarkFileCheck.IsChecked = this.state.SkipDarkImagesCheck;
 
-            // Timer callback so the display will update to the current slider position when the user pauses whilst dragging the slider 
+            // timer callback so the display will update to the current slider position when the user pauses whilst dragging the slider 
             this.timerFileNavigatorSlider = new DispatcherTimer();
-            this.timerFileNavigatorSlider.Interval = this.state.Throttles.DesiredIntervalBetweenRenders;
+            this.timerFileNavigatorSlider.Interval = TimeSpan.FromSeconds(1.0 / Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
             this.timerFileNavigatorSlider.Tick += this.FileNavigatorSlider_TimerTick;
 
             // populate lists of menu items
@@ -89,14 +88,12 @@ namespace Carnassial
                 MenuItem pasteFromAnalysisSlot = new MenuItem();
                 pasteFromAnalysisSlot.Click += this.MenuEditPasteFromAnalysis_Click;
                 pasteFromAnalysisSlot.Icon = new Image() { Source = Constant.Images.Paste.Value };
-                pasteFromAnalysisSlot.InputGestureText = String.Format("Alt+{0}", displaySlot);
+                pasteFromAnalysisSlot.InputGestureText = String.Format("{0}", displaySlot);
                 pasteFromAnalysisSlot.IsEnabled = false;
                 pasteFromAnalysisSlot.Header = String.Format("Analysis _{0}", displaySlot);
                 pasteFromAnalysisSlot.Tag = analysisSlot;
                 pasteFromAnalysisSlot.ToolTip = String.Format("Apply data in analysis {0}.", displaySlot);
                 this.MenuEditPasteValuesFromAnalysis.Items.Add(pasteFromAnalysisSlot);
-
-                this.state.Analysis.Add(null);
             }
             this.MenuFileRecentImageSets_Refresh();
 
@@ -109,7 +106,78 @@ namespace Carnassial
 
         private string FolderPath
         {
-            get { return this.dataHandler.FileDatabase.FolderPath; }
+            get
+            {
+                Debug.Assert(this.IsFileDatabaseAvailable(), "State management failure: attempt to obtain folder path when database is unavailable.");
+                return this.dataHandler.FileDatabase.FolderPath;
+            }
+        }
+
+        private void ApplyUndoRedoState(UndoRedoState state)
+        {
+            switch (state.Type)
+            {
+                case UndoRedoType.FileValues:
+                    this.PasteValuesToCurrentFile(state.Values);
+                    break;
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled undo/redo state type {0}.", state.Type));
+            }
+        }
+
+        private async Task CloseImageSetAsync()
+        {
+            if (this.IsFileDatabaseAvailable())
+            {
+                // persist image set properties if an image set has been opened
+                if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0)
+                {
+                    // revert to custom selections to all 
+                    if (this.dataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.Custom)
+                    {
+                        this.dataHandler.FileDatabase.ImageSet.FileSelection = FileSelection.All;
+                    }
+
+                    // sync image set properties
+                    if (this.MarkableCanvas != null)
+                    {
+                        this.dataHandler.FileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, this.MarkableCanvas.MagnifyingGlassEnabled);
+                    }
+
+                    if (this.dataHandler.ImageCache != null && this.dataHandler.ImageCache.Current != null)
+                    {
+                        this.dataHandler.FileDatabase.ImageSet.MostRecentFileID = this.dataHandler.ImageCache.Current.ID;
+                    }
+
+                    // write image set properties to the database
+                    this.dataHandler.FileDatabase.SyncImageSetToDatabase();
+
+                    // ensure custom filter operator is synchronized in state for writing to user's registry
+                    this.state.CustomSelectionTermCombiningOperator = this.dataHandler.FileDatabase.CustomSelection.TermCombiningOperator;
+                }
+
+                // discard the image set and reset UX for no open image set/no selected files
+                this.dataHandler.Dispose();
+                this.dataHandler = null;
+                await this.EnableOrDisableMenusAndControlsAsync();
+            }
+
+            this.state.Reset();
+            this.MenuEditRedo.IsEnabled = this.state.UndoRedoChain.CanRedo;
+            this.MenuEditUndo.IsEnabled = this.state.UndoRedoChain.CanUndo;
+        }
+
+        /// <summary>
+        /// This preview callback is used by all controls to reset the focus.
+        /// Whenever the user hits enter over the control, set the focus back to the top-level
+        /// </summary>
+        private void ContentControl_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
+        {
+            if (eventArgs.Key == Key.Enter)
+            {
+                this.TrySetKeyboardFocusToMarkableCanvas(false, eventArgs);
+                eventArgs.Handled = true;
+            }
         }
 
         /// <summary>Click callback: When the user selects a counter, refresh the markers, which will also readjust the colors and emphasis</summary>
@@ -135,48 +203,11 @@ namespace Carnassial
             this.MarkableCanvas_UpdateMarkers();
         }
 
-        /// <summary>
-        /// This preview callback is used by all controls to reset the focus.
-        /// Whenever the user hits enter over the control, set the focus back to the top-level
-        /// </summary>
-        private void ContentControl_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
-        {
-            if (eventArgs.Key == Key.Enter)
-            {
-                this.TrySetKeyboardFocusToMarkableCanvas(false, eventArgs);
-                eventArgs.Handled = true;
-            }
-        }
-
         /// <summary>Ensures only numbers are entered for counters.</summary>
         private void CounterControl_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             e.Handled = (Utilities.IsDigits(e.Text) || String.IsNullOrWhiteSpace(e.Text)) ? false : true;
             this.OnPreviewTextInput(e);
-        }
-
-        // lazily defer binding of data grid until user selects the data gind tab
-        // This reduces startup and scrolling lag as filling and updating the grid is fairly expensive.
-        private void DataGridPane_IsActiveChanged(object sender, EventArgs e)
-        {
-            if (this.dataHandler == null || this.dataHandler.FileDatabase == null)
-            {
-                return;
-            }
-
-            if (this.DataGridPane.IsActive)
-            {
-                this.dataHandler.FileDatabase.BindToDataGrid(this.DataGrid, null);
-                if ((this.dataHandler.ImageCache != null) && (this.dataHandler.ImageCache.CurrentRow != Constant.Database.InvalidRow))
-                {
-                    // both UpdateLayout() calls are needed to get the data grid to highlight the selected row
-                    // This seems related to initial population as the selection highlight updates without calling UpdateLayout() on subsequent calls
-                    // to SelectAndScrollIntoView().
-                    this.DataGrid.UpdateLayout();
-                    this.DataGrid.SelectAndScrollIntoView(this.dataHandler.ImageCache.CurrentRow);
-                    this.DataGrid.UpdateLayout();
-                }
-            }
         }
 
         public void Dispose()
@@ -204,9 +235,9 @@ namespace Carnassial
             this.disposed = true;
         }
 
-        private void EnableOrDisableMenusAndControls()
+        private async Task EnableOrDisableMenusAndControlsAsync()
         {
-            bool imageSetAvailable = (this.dataHandler != null) && (this.dataHandler.FileDatabase != null);
+            bool imageSetAvailable = this.IsFileDatabaseAvailable();
             bool filesSelected = false;
             if (imageSetAvailable)
             {
@@ -250,17 +281,41 @@ namespace Carnassial
 
             if (filesSelected == false)
             {
-                this.ShowFile(Constant.Database.InvalidRow);
+                await this.ShowFileAsync(Constant.Database.InvalidRow);
                 this.statusBar.SetMessage("Image set is empty.");
                 this.statusBar.SetCurrentFile(Constant.Database.InvalidRow);
                 this.statusBar.SetFileCount(0);
             }
         }
 
-        private void FileNavigatorSlider_DragCompleted(object sender, DragCompletedEventArgs args)
+        // lazily defer binding of data grid until user selects the data gind tab
+        // This reduces startup and scrolling lag as filling and updating the grid is fairly expensive.
+        private void FileDataPane_IsActiveChanged(object sender, EventArgs e)
+        {
+            if (this.IsFileDatabaseAvailable() == false)
+            {
+                return;
+            }
+
+            if (this.FileDataPane.IsActive)
+            {
+                this.dataHandler.FileDatabase.BindToDataGrid(this.DataGrid, null);
+                if ((this.dataHandler.ImageCache != null) && (this.dataHandler.ImageCache.CurrentRow != Constant.Database.InvalidRow))
+                {
+                    // both UpdateLayout() calls are needed to get the data grid to highlight the selected row
+                    // This seems related to initial population as the selection highlight updates without calling UpdateLayout() on subsequent calls
+                    // to SelectAndScrollIntoView().
+                    this.DataGrid.UpdateLayout();
+                    this.DataGrid.SelectAndScrollIntoView(this.dataHandler.ImageCache.CurrentRow);
+                    this.DataGrid.UpdateLayout();
+                }
+            }
+        }
+
+        private async void FileNavigatorSlider_DragCompleted(object sender, DragCompletedEventArgs args)
         {
             this.state.FileNavigatorSliderDragging = false;
-            this.ShowFile(this.FileNavigatorSlider);
+            await this.ShowFileAsync(this.FileNavigatorSlider);
             this.timerFileNavigatorSlider.Stop();
         }
 
@@ -282,26 +337,37 @@ namespace Carnassial
             }
         }
 
-        // Timer callback that forces image update to the current slider position. Invoked as the user pauses dragging the image slider 
-        private void FileNavigatorSlider_TimerTick(object sender, EventArgs e)
+        private void FileNavigatorSlider_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            this.ShowFile(this.FileNavigatorSlider);
+            // mark all key events as handled so that they're not processed
+            // This works around a WPF async bug where pressing the up and down keys when focus is on the slider results in the key being handled by
+            // both Window_PreviewKeyDown and the slider, triggering a slider value change event which moves to the next or previous image under the 
+            // differenced view.  Without this block this WPF routing fail results in loss of image cache coherency and further problems.
+            e.Handled = true;
+        }
+
+        // Timer callback that forces image update to the current slider position. Invoked as the user pauses dragging the image slider 
+        private async void FileNavigatorSlider_TimerTick(object sender, EventArgs e)
+        {
+            await this.ShowFileAsync(this.FileNavigatorSlider);
             this.timerFileNavigatorSlider.Stop();
         }
 
-        private void FileNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> args)
+        private async void FileNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> args)
         {
             // since the minimum value is 1 there's a value change event during InitializeComponent() to ignore
             if (this.state == null)
             {
+                args.Handled = true;
                 return;
             }
 
             DateTime utcNow = DateTime.UtcNow;
             if ((this.state.FileNavigatorSliderDragging == false) || (utcNow - this.state.MostRecentDragEvent > this.timerFileNavigatorSlider.Interval))
             {
-                this.ShowFile(this.FileNavigatorSlider);
+                await this.ShowFileAsync(this.FileNavigatorSlider);
                 this.state.MostRecentDragEvent = utcNow;
+                args.Handled = true;
             }
         }
 
@@ -320,6 +386,18 @@ namespace Carnassial
                 }
             }
             return null;
+        }
+
+        private void FolderSelectionDialog_FolderChanging(object sender, CommonFileDialogFolderChangeEventArgs e)
+        {
+            // require folders to be loaded be either the same folder as the .tdb and .ddb or subfolders of it
+            if ((e.Folder == null) || (e.Folder.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase) == false))
+            {
+                // rather than cancel the event, override the selected path
+                // This produces a better experience in cases where the user selects a folder that's above the databases as there's a visible response
+                // when the current folder is a subfolder.
+                e.Folder = this.FolderPath;
+            }
         }
 
         private List<Marker> GetDisplayMarkers(bool showAnnotations)
@@ -376,12 +454,12 @@ namespace Carnassial
             return markers;
         }
 
-        private void Instructions_Drop(object sender, DragEventArgs dropEvent)
+        private async void Instructions_Drop(object sender, DragEventArgs dropEvent)
         {
             string templateDatabaseFilePath;
             if (Utilities.IsSingleTemplateFileDrag(dropEvent, out templateDatabaseFilePath))
             {
-                dropEvent.Handled = this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
+                dropEvent.Handled = await this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
             }
         }
 
@@ -600,7 +678,7 @@ namespace Carnassial
         {
             if (this.IsFileAvailable())
             {
-                DataObject clipboardData = new DataObject(this.dataHandler.ImageCache.Current.AsDisplayDictionary());
+                DataObject clipboardData = new DataObject(this.dataHandler.ImageCache.Current.AsDictionary());
                 Clipboard.SetDataObject(clipboardData);
             }
         }
@@ -611,7 +689,7 @@ namespace Carnassial
         }
 
         // Correct ambiguous dates dialog (i.e. dates that could be read as either month/day or day/month
-        private void MenuEditCorrectAmbiguousDates_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditCorrectAmbiguousDates_Click(object sender, RoutedEventArgs e)
         {
             DateCorrectAmbiguous ambiguousDateCorrection = new DateCorrectAmbiguous(this.dataHandler.FileDatabase, this);
             if (ambiguousDateCorrection.Abort)
@@ -624,7 +702,7 @@ namespace Carnassial
                 messageBox.Close();
                 return;
             }
-            this.ShowBulkFileEditDialog(ambiguousDateCorrection);
+            await this.ShowBulkFileEditDialogAsync(ambiguousDateCorrection);
         }
 
         private void MenuEditDarkImages_Click(object sender, RoutedEventArgs e)
@@ -636,14 +714,14 @@ namespace Carnassial
         }
 
         /// <summary>Correct the date by specifying an offset.</summary>
-        private void MenuEditDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
         {
             DateTimeFixedCorrection fixedDateCorrection = new DateTimeFixedCorrection(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current, this);
-            this.ShowBulkFileEditDialog(fixedDateCorrection);
+            await this.ShowBulkFileEditDialogAsync(fixedDateCorrection);
         }
 
         /// <summary>Correct for drifting clock times. Correction applied only to selected files.</summary>
-        private void MenuEditDateTimeLinearCorrection_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditDateTimeLinearCorrection_Click(object sender, RoutedEventArgs e)
         {
             DateTimeLinearCorrection linearDateCorrection = new DateTimeLinearCorrection(this.dataHandler.FileDatabase, this);
             if (linearDateCorrection.Abort)
@@ -659,11 +737,11 @@ namespace Carnassial
                 messageBox.ShowDialog();
                 return;
             }
-            this.ShowBulkFileEditDialog(linearDateCorrection);
+            await this.ShowBulkFileEditDialogAsync(linearDateCorrection);
         }
 
         /// <summary>Correct for daylight savings time</summary>
-        private void MenuEditDaylightSavingsTimeCorrection_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditDaylightSavingsTimeCorrection_Click(object sender, RoutedEventArgs e)
         {
             if (this.dataHandler.ImageCache.Current.IsDisplayable() == false)
             {
@@ -678,11 +756,11 @@ namespace Carnassial
             }
 
             DateDaylightSavingsTimeCorrection daylightSavingsCorrection = new DateDaylightSavingsTimeCorrection(this.dataHandler.FileDatabase, this.dataHandler.ImageCache, this);
-            this.ShowBulkFileEditDialog(daylightSavingsCorrection);
+            await this.ShowBulkFileEditDialogAsync(daylightSavingsCorrection);
         }
 
         /// <summary>Soft delete one or more files marked for deletion, and optionally the data associated with those files.</summary>
-        private void MenuEditDeleteFiles_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditDeleteFiles_Click(object sender, RoutedEventArgs e)
         {
             MenuItem menuItem = sender as MenuItem;
 
@@ -729,7 +807,7 @@ namespace Carnassial
                 return;
             }
 
-            DeleteImages deleteImagesDialog = new DeleteImages(this.dataHandler.FileDatabase, imagesToDelete, deleteFilesAndData, deleteCurrentImageOnly, this);
+            DeleteFiles deleteImagesDialog = new DeleteFiles(this.dataHandler.FileDatabase, imagesToDelete, deleteFilesAndData, deleteCurrentImageOnly, this);
             bool? result = deleteImagesDialog.ShowDialog();
             if (result == true)
             {
@@ -744,7 +822,7 @@ namespace Carnassial
                     // invalidate cache so FileNoLongerAvailable placeholder will be displayed
                     // release any handle open on the file so it can be moved
                     this.dataHandler.ImageCache.TryInvalidate(image.ID);
-                    if (image.TryMoveFileToDeletedFilesFolder(this.dataHandler.FileDatabase.FolderPath) == false)
+                    if (image.TryMoveFileToDeletedFilesFolder(this.FolderPath) == false)
                     {
                         // attempt to soft delete file failed so leave the image as marked for deletion
                         continue;
@@ -777,11 +855,11 @@ namespace Carnassial
                     // Reload the file data table. Then find and show the file closest to the last one shown
                     if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0)
                     {
-                        this.SelectFilesAndShowFile(currentFileID, this.dataHandler.FileDatabase.ImageSet.FileSelection);
+                        await this.SelectFilesAndShowFileAsync(currentFileID, this.dataHandler.FileDatabase.ImageSet.FileSelection);
                     }
                     else
                     {
-                        this.EnableOrDisableMenusAndControls();
+                        await this.EnableOrDisableMenusAndControlsAsync();
                     }
                 }
                 else
@@ -790,7 +868,7 @@ namespace Carnassial
                     this.dataHandler.FileDatabase.UpdateFiles(imagesToUpdate);
 
                     // display the updated properties on the current file or, if data for the current file was dropped, the next one
-                    this.ShowFile(this.dataHandler.FileDatabase.GetFileOrNextFileIndex(currentFileID));
+                    await this.ShowFileAsync(this.dataHandler.FileDatabase.GetFileOrNextFileIndex(currentFileID));
                 }
                 Mouse.OverrideCursor = null;
             }
@@ -816,17 +894,17 @@ namespace Carnassial
             }
 
             IDataObject clipboardData = Clipboard.GetDataObject();
-            if (clipboardData == null || clipboardData.GetDataPresent(typeof(Dictionary<string, string>)) == false)
+            if (clipboardData == null || clipboardData.GetDataPresent(typeof(Dictionary<string, object>)) == false)
             {
                 return;
             }
-            Dictionary<string, string> sourceFile = (Dictionary<string, string>)clipboardData.GetData(typeof(Dictionary<string, string>));
-            if (sourceFile == null)
+            Dictionary<string, object> valuesFromClipboard = (Dictionary<string, object>)clipboardData.GetData(typeof(Dictionary<string, object>));
+            if (valuesFromClipboard == null)
             {
                 return;
             }
 
-            this.PasteValuesToCurrentFile(sourceFile);
+            this.PasteValuesToCurrentFileWithUndo(valuesFromClipboard);
         }
 
         private void MenuEditPasteFromAnalysis_Click(object sender, RoutedEventArgs e)
@@ -838,7 +916,7 @@ namespace Carnassial
         }
 
         // Populate a data field from metadata (example metadata displayed from the currently selected image)
-        private void MenuEditPopulateFieldFromMetadata_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditPopulateFieldFromMetadata_Click(object sender, RoutedEventArgs e)
         {
             if (this.dataHandler.ImageCache.Current.IsDisplayable() == false)
             {
@@ -856,13 +934,29 @@ namespace Carnassial
             }
 
             PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current.GetFilePath(this.FolderPath), this);
-            this.ShowBulkFileEditDialog(populateField);
+            await this.ShowBulkFileEditDialogAsync(populateField);
         }
 
-        private void MenuEditRereadDateTimesFromFiles_Click(object sender, RoutedEventArgs e)
+        private void MenuEditRedo_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsFileAvailable() == false)
+            {
+                return;
+            }
+
+            UndoRedoState stateToRedoTo;
+            if (this.state.UndoRedoChain.TryGetRedo(out stateToRedoTo))
+            {
+                this.ApplyUndoRedoState(stateToRedoTo);
+            }
+            this.MenuEditRedo.IsEnabled = this.state.UndoRedoChain.CanRedo;
+            this.MenuEditUndo.IsEnabled = this.state.UndoRedoChain.CanUndo;
+        }
+
+        private async void MenuEditRereadDateTimesFromFiles_Click(object sender, RoutedEventArgs e)
         {
             DateTimeRereadFromFiles rereadDates = new DateTimeRereadFromFiles(this.dataHandler.FileDatabase, this);
-            this.ShowBulkFileEditDialog(rereadDates);
+            await this.ShowBulkFileEditDialogAsync(rereadDates);
         }
 
         private void MenuEditResetValues_Click(object sender, RoutedEventArgs e)
@@ -872,9 +966,7 @@ namespace Carnassial
                 return;
             }
 
-            this.state.UndoBuffer = this.dataHandler.ImageCache.Current.AsDisplayDictionary();
-            this.MenuEditUndo.IsEnabled = true;
-
+            this.state.UndoRedoChain.AddStateIfDifferent(this.dataHandler.ImageCache.Current);
             foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
             {
                 DataEntryControl control = pair.Value;
@@ -883,25 +975,37 @@ namespace Carnassial
                     control.SetContentAndTooltip(control.DefaultValue);
                 }
             }
+            this.state.UndoRedoChain.AddStateIfDifferent(this.dataHandler.ImageCache.Current);
+
+            this.MenuEditRedo.IsEnabled = this.state.UndoRedoChain.CanRedo;
+            this.MenuEditUndo.IsEnabled = this.state.UndoRedoChain.CanUndo;
         }
 
-        private void MenuEditSetTimeZone_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditSetTimeZone_Click(object sender, RoutedEventArgs e)
         {
             DateTimeSetTimeZone setTimeZone = new DateTimeSetTimeZone(this.dataHandler.FileDatabase, this.dataHandler.ImageCache.Current, this);
-            this.ShowBulkFileEditDialog(setTimeZone);
+            await this.ShowBulkFileEditDialogAsync(setTimeZone);
         }
 
-        private void MenuEditToggleCurrentFileDeleteFlag_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditToggleCurrentFileDeleteFlag_Click(object sender, RoutedEventArgs e)
         {
-            this.ToggleCurrentFileDeleteFlag();
+            await this.ToggleCurrentFileDeleteFlagAsync();
         }
 
         private void MenuEditUndo_Click(object sender, RoutedEventArgs e)
         {
-            if (this.IsFileAvailable() && this.state.UndoBuffer != null)
+            if (this.IsFileAvailable() == false)
             {
-                this.PasteValuesToCurrentFile(this.state.UndoBuffer);
+                return;
             }
+
+            UndoRedoState stateToUndoTo;
+            if (this.state.UndoRedoChain.TryGetUndo(out stateToUndoTo))
+            {
+                this.ApplyUndoRedoState(stateToUndoTo);
+            }
+            this.MenuEditRedo.IsEnabled = this.state.UndoRedoChain.CanRedo;
+            this.MenuEditUndo.IsEnabled = this.state.UndoRedoChain.CanUndo;
         }
 
         private void MenuFile_SubmenuOpened(object sender, RoutedEventArgs e)
@@ -909,13 +1013,14 @@ namespace Carnassial
             this.MenuFileRecentImageSets_Refresh();
         }
 
-        private void MenuFileAddFilesToImageSet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileAddFilesToImageSet_Click(object sender, RoutedEventArgs e)
         {
             IEnumerable<string> folderPaths;
             if (this.ShowFolderSelectionDialog(out folderPaths))
             {
-                BackgroundWorker backgroundWorker;
-                this.TryBeginFolderLoadAsync(folderPaths, out backgroundWorker);
+                FolderLoad folderLoad = new FolderLoad();
+                folderLoad.FolderPaths.AddRange(folderPaths);
+                await this.TryBeginFolderLoadAsync(folderLoad);
             }
         }
 
@@ -961,30 +1066,27 @@ namespace Carnassial
                 catch (Exception exception)
                 {
                     Debug.Fail(String.Format("Copy of '{0}' to '{1}' failed.", sourceFileName, destinationPath), exception.ToString());
-                    this.statusBar.SetMessage(String.Format("Copy failed with {0}.", exception.GetType().Name));
+                    this.statusBar.SetMessage("Copy failed with {0}.", exception.GetType().Name);
                 }
             }
         }
 
-        private void MenuFileCloseImageSet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileCloseImageSet_Click(object sender, RoutedEventArgs e)
         {
-            if (this.TryCloseImageSet())
-            {
-                // switch back to the instructions pane
-                this.InstructionPane.IsActive = true;
-            }
+            await this.CloseImageSetAsync();
+            this.InstructionPane.IsActive = true;
         }
 
-        private void MenuFileLoadImageSet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileLoadImageSet_Click(object sender, RoutedEventArgs e)
         {
             string templateDatabaseFilePath;
             if (this.TryGetTemplatePath(out templateDatabaseFilePath))
             {
-                this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
+                await this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
             }     
         }
 
-        private void MenuFileMoveFiles_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileMoveFiles_Click(object sender, RoutedEventArgs e)
         {
             CommonOpenFileDialog folderSelectionDialog = new CommonOpenFileDialog();
             folderSelectionDialog.Title = "Select the folder to move files to...";
@@ -996,6 +1098,7 @@ namespace Carnassial
             {
                 // move files
                 List<string> immovableFiles = this.dataHandler.FileDatabase.MoveFilesToFolder(folderSelectionDialog.FileName);
+                this.statusBar.SetMessage("Moved {0} of {1} files to {2}.", this.dataHandler.FileDatabase.CurrentlySelectedFileCount - immovableFiles.Count, this.dataHandler.FileDatabase.CurrentlySelectedFileCount, Path.GetFileName(folderSelectionDialog.FileName));
                 if (immovableFiles.Count > 0)
                 {
                     MessageBox messageBox = new MessageBox("Not all files could be moved.", this);
@@ -1012,7 +1115,7 @@ namespace Carnassial
                 }
 
                 // refresh the current file to show its new relative path field 
-                this.ShowFile(this.dataHandler.ImageCache.CurrentRow);
+                await this.ShowFileAsync(this.dataHandler.ImageCache.CurrentRow);
             }
         }
 
@@ -1029,7 +1132,7 @@ namespace Carnassial
             string spreadsheetFilePath = Path.Combine(this.FolderPath, spreadsheetFileName);
             if (FileBackup.TryCreateBackup(this.FolderPath, spreadsheetFileName))
             {
-                this.statusBar.SetMessage(String.Format("Backup of {0} made.", spreadsheetFileName));
+                this.statusBar.SetMessage("Backup of {0} made.", spreadsheetFileName);
             }
 
             SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter();
@@ -1068,7 +1171,7 @@ namespace Carnassial
             }
         }
 
-        private void MenuFileImportSpreadsheet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileImportSpreadsheet_Click(object sender, RoutedEventArgs e)
         {
             if (this.state.SuppressSpreadsheetImportPrompt == false)
             {
@@ -1175,14 +1278,14 @@ namespace Carnassial
             }
 
             // reload the file data table and update the enable/disable state of the user interface to match
-            this.SelectFilesAndShowFile();
-            this.EnableOrDisableMenusAndControls();
+            await this.SelectFilesAndShowFileAsync();
+            await this.EnableOrDisableMenusAndControlsAsync();
             this.statusBar.SetMessage(".csv file imported.");
         }
 
-        private void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs e)
         {
-            this.TryOpenTemplateAndBeginLoadFoldersAsync((string)((MenuItem)sender).ToolTip);
+            await this.TryOpenTemplateAndBeginLoadFoldersAsync((string)((MenuItem)sender).ToolTip);
         }
 
         /// <summary>
@@ -1293,7 +1396,7 @@ namespace Carnassial
             this.MenuOptionsEnableFileCountOnImportDialog.IsChecked = !this.state.SuppressFileCountOnImportDialog;
         }
 
-        private void MenuOptionsOrderFilesByDateTime_Click(object sender, RoutedEventArgs e)
+        private async void MenuOptionsOrderFilesByDateTime_Click(object sender, RoutedEventArgs e)
         {
             this.state.OrderFilesByDateTime = !this.state.OrderFilesByDateTime;
             if (this.dataHandler != null && this.dataHandler.FileDatabase != null)
@@ -1301,7 +1404,7 @@ namespace Carnassial
                 this.dataHandler.FileDatabase.OrderFilesByDateTime = this.state.OrderFilesByDateTime;
             }
             this.MenuOptionsOrderFilesByDateTime.IsChecked = this.state.OrderFilesByDateTime;
-            this.SelectFilesAndShowFile();
+            await this.SelectFilesAndShowFileAsync();
         }
 
         private void MenuOptionsSkipDarkFileCheck_Click(object sender, RoutedEventArgs e)
@@ -1310,7 +1413,7 @@ namespace Carnassial
             this.MenuOptionsSkipDarkFileCheck.IsChecked = this.state.SkipDarkImagesCheck;
         }
 
-        private void MenuSelectCustom_Click(object sender, RoutedEventArgs e)
+        private async void MenuSelectCustom_Click(object sender, RoutedEventArgs e)
         {
             // the first time the custom selection dialog is launched update the DateTime and UtcOffset search terms to the time of the current image
             SearchTerm firstDateTimeSearchTerm = this.dataHandler.FileDatabase.CustomSelection.SearchTerms.First(searchTerm => searchTerm.DataLabel == Constant.DatabaseColumn.DateTime);
@@ -1325,7 +1428,14 @@ namespace Carnassial
             bool? changeToCustomSelection = customSelection.ShowDialog();
             if (changeToCustomSelection == true)
             {
-                this.SelectFilesAndShowFile(FileSelection.Custom);
+                await this.SelectFilesAndShowFileAsync(FileSelection.Custom);
+            }
+            else
+            {
+                // if needed, uncheck the custom selection menu item
+                // It's checked automatically on click by WPF but, as the user cancelled out of custom selection, this isn't correct in cases where the
+                // selection isn't already custom.
+                this.MenuSelectCustom.IsChecked = this.dataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.Custom;
             }
         }
 
@@ -1336,7 +1446,7 @@ namespace Carnassial
         }
 
         /// <summary>Get the non-custom selection and update the view.</summary>
-        private void MenuSelectFiles_Click(object sender, RoutedEventArgs e)
+        private async void MenuSelectFiles_Click(object sender, RoutedEventArgs e)
         {
             // get selection 
             FileSelection selection;
@@ -1370,7 +1480,7 @@ namespace Carnassial
             }
 
             // Go to the first result (i.e., index 0) in the selection
-            this.SelectFilesAndShowFile(selection);
+            await this.SelectFilesAndShowFileAsync(selection);
         }
 
         private void MenuSelect_SubmenuOpening(object sender, RoutedEventArgs e)
@@ -1400,9 +1510,9 @@ namespace Carnassial
         }
 
         /// <summary>View the combined image differences</summary>
-        private void MenuViewDifferencesCombined_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewDifferencesCombined_Click(object sender, RoutedEventArgs e)
         {
-            this.TryViewCombinedDifference();
+            await this.TryViewCombinedDifferenceAsync();
         }
 
         /// <summary>Increase the magnification of the magnifying glass by several keyboard steps.</summary>
@@ -1413,7 +1523,7 @@ namespace Carnassial
             this.MarkableCanvas.MagnifierZoomIn();
         }
 
-        private void MenuViewGotoFile_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewGotoFile_Click(object sender, RoutedEventArgs e)
         {
             if (this.IsFileDatabaseAvailable() == false)
             {
@@ -1423,7 +1533,7 @@ namespace Carnassial
             GoToFile goToFile = new GoToFile(this.dataHandler.ImageCache.CurrentRow, this.dataHandler.FileDatabase.CurrentlySelectedFileCount, this);
             if (goToFile.ShowDialog() == true)
             {
-                this.ShowFileWithoutSliderCallback(goToFile.FileIndex);
+                await this.ShowFileWithoutSliderCallbackAsync(goToFile.FileIndex);
             }
         }
 
@@ -1441,9 +1551,9 @@ namespace Carnassial
         }
 
         /// <summary>Cycle through next and previous image differences</summary>
-        private void MenuViewPreviousOrNextDifference_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewPreviousOrNextDifference_Click(object sender, RoutedEventArgs e)
         {
-            this.TryViewPreviousOrNextDifference();
+            await this.TryViewPreviousOrNextDifferenceAsync();
         }
 
         private void MenuViewSetBookmark_Click(object sender, RoutedEventArgs e)
@@ -1453,17 +1563,17 @@ namespace Carnassial
 
         private void MenuViewShowDataGrid_Click(object sender, RoutedEventArgs e)
         {
-            this.DataGridPane.IsActive = true;
+            this.FileDataPane.IsActive = true;
         }
 
-        private void MenuViewShowFirstFile_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowFirstFile_Click(object sender, RoutedEventArgs e)
         {
-            this.ShowFileWithoutSliderCallback(0);
+            await this.ShowFileWithoutSliderCallbackAsync(0);
         }
 
         private void MenuViewShowImageSet_Click(object sender, RoutedEventArgs e)
         {
-            this.ImageSetPane.IsActive = true;
+            this.FileViewPane.IsActive = true;
         }
 
         private void MenuViewShowInstructions_Click(object sender, RoutedEventArgs e)
@@ -1471,69 +1581,69 @@ namespace Carnassial
             this.InstructionPane.IsActive = true;
         }
 
-        private void MenuViewShowLastFile_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowLastFile_Click(object sender, RoutedEventArgs e)
         {
             if (this.IsFileDatabaseAvailable())
             {
-                this.ShowFileWithoutSliderCallback(this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1);
+                await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1);
             }
         }
 
         /// <summary>Navigate to the next file in this image set</summary>
-        private void MenuViewShowNextFile_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowNextFile_Click(object sender, RoutedEventArgs e)
         {
-            this.ShowFileWithoutSliderCallback(true, ModifierKeys.None);
+            await this.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.None);
         }
 
-        private void MenuViewShowNextFileControl_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowNextFileControl_Click(object sender, RoutedEventArgs e)
         {
-            this.ShowFileWithoutSliderCallback(true, ModifierKeys.Control);
+            await this.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.Control);
         }
 
-        private void MenuViewShowNextFileControlShift_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowNextFileControlShift_Click(object sender, RoutedEventArgs e)
         {
-            this.ShowFileWithoutSliderCallback(true, ModifierKeys.Control | ModifierKeys.Shift);
+            await this.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.Control | ModifierKeys.Shift);
         }
 
-        private void MenuViewShowNextFileShift_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowNextFileShift_Click(object sender, RoutedEventArgs e)
         {
-            this.ShowFileWithoutSliderCallback(true, ModifierKeys.Shift);
+            await this.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.Shift);
         }
 
-        private void MenuViewShowNextFilePageDown_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowNextFilePageDown_Click(object sender, RoutedEventArgs e)
         {
             if (this.IsFileDatabaseAvailable())
             {
-                this.ShowFileWithoutSliderCallback(this.dataHandler.ImageCache.CurrentRow + (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
+                await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.ImageCache.CurrentRow + (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
             }
         }
 
         /// <summary>Navigate to the previous file in this image set</summary>
-        private void MenuViewShowPreviousFile_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowPreviousFile_Click(object sender, RoutedEventArgs e)
         {
-            this.ShowFileWithoutSliderCallback(false, ModifierKeys.None);
+            await this.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.None);
         }
 
-        private void MenuViewShowPreviousFileControl_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowPreviousFileControl_Click(object sender, RoutedEventArgs e)
         {
-            this.ShowFileWithoutSliderCallback(false, ModifierKeys.Control);
+            await this.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.Control);
         }
 
-        private void MenuViewShowPreviousFileControlShift_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowPreviousFileControlShift_Click(object sender, RoutedEventArgs e)
         {
-            this.ShowFileWithoutSliderCallback(false, ModifierKeys.Control | ModifierKeys.Shift);
+            await this.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.Control | ModifierKeys.Shift);
         }
 
-        private void MenuViewShowPreviousFileShift_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowPreviousFileShift_Click(object sender, RoutedEventArgs e)
         {
-            this.ShowFileWithoutSliderCallback(false, ModifierKeys.Shift);
+            await this.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.Shift);
         }
 
-        private void MenuViewShowPreviousFilePageUp_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowPreviousFilePageUp_Click(object sender, RoutedEventArgs e)
         {
             if (this.IsFileDatabaseAvailable())
             {
-                this.ShowFileWithoutSliderCallback(this.dataHandler.ImageCache.CurrentRow - (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
+                await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.ImageCache.CurrentRow - (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
             }
         }
 
@@ -1614,11 +1724,10 @@ namespace Carnassial
         /// <summary>
         /// When folder loading has completed add callbacks, prepare the UI, set up the image set, and show the file.
         /// </summary>
-        private void OnFolderLoadingComplete(bool filesJustAdded)
+        private async Task OnFolderLoadingCompleteAsync(bool filesJustAdded)
         {
             // Show the image, hide the load button, and make the feedback panels visible
-            this.ImageSetPane.IsActive = true;
-            this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
+            this.FileViewPane.IsActive = true;
             // Set focus to the markable canvas by default so it can interpret keys. 
             this.MarkableCanvas.Focus();
 
@@ -1634,10 +1743,10 @@ namespace Carnassial
                 // This is heavier weight than desirable, but it's a one off.
                 this.dataHandler.ImageCache.TryInvalidate(mostRecentFileID);
             }
-            this.SelectFilesAndShowFile(mostRecentFileID, fileSelection);
+            await this.SelectFilesAndShowFileAsync(mostRecentFileID, fileSelection);
 
             // match UX availability to file availability
-            this.EnableOrDisableMenusAndControls();
+            await this.EnableOrDisableMenusAndControlsAsync();
         }
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -1695,47 +1804,49 @@ namespace Carnassial
             }
 
             ImageRow previousFile = this.dataHandler.FileDatabase.Files[previousIndex];
-            this.PasteValuesToCurrentFile(previousFile);
+            this.PasteValuesToCurrentFileWithUndo(previousFile.AsDictionary());
         }
 
-        private void PasteValuesToCurrentFile(Dictionary<string, string> propertyBag)
+        private void PasteValuesToCurrentFile(Dictionary<string, object> values)
         {
-            this.state.UndoBuffer = this.dataHandler.ImageCache.Current.AsDisplayDictionary();
-            this.MenuEditUndo.IsEnabled = true;
-
             foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
             {
                 DataEntryControl control = pair.Value;
-                string value;
-                if (this.dataHandler.FileDatabase.IsControlCopyable(control.DataLabel) && propertyBag.TryGetValue(control.DataLabel, out value))
+                object value;
+                if (this.dataHandler.FileDatabase.IsControlCopyable(control.DataLabel) && values.TryGetValue(control.DataLabel, out value))
                 {
-                    control.SetContentAndTooltip(value);
+                    control.SetValue(value);
                 }
             }
         }
 
-        private void PasteValuesToCurrentFile(ImageRow sourceFile)
+        private void PasteValuesToCurrentFileWithUndo(Dictionary<string, object> values)
         {
-            this.PasteValuesToCurrentFile(sourceFile.AsDisplayDictionary());
+            this.state.UndoRedoChain.AddStateIfDifferent(this.dataHandler.ImageCache.Current);
+            this.PasteValuesToCurrentFile(values);
+            this.state.UndoRedoChain.AddStateIfDifferent(this.dataHandler.ImageCache.Current);
+
+            this.MenuEditRedo.IsEnabled = this.state.UndoRedoChain.CanRedo;
+            this.MenuEditUndo.IsEnabled = this.state.UndoRedoChain.CanUndo;
         }
 
-        private void SelectFilesAndShowFile()
+        private async Task SelectFilesAndShowFileAsync()
         {
             Debug.Assert(this.dataHandler != null && this.dataHandler.FileDatabase != null, "Expected a file database to be available.");
-            this.SelectFilesAndShowFile(this.dataHandler.FileDatabase.ImageSet.FileSelection);
+            await this.SelectFilesAndShowFileAsync(this.dataHandler.FileDatabase.ImageSet.FileSelection);
         }
 
-        private void SelectFilesAndShowFile(FileSelection selection)
+        private async Task SelectFilesAndShowFileAsync(FileSelection selection)
         {
             long fileID = Constant.Database.DefaultFileID;
             if (this.dataHandler != null && this.dataHandler.ImageCache != null && this.dataHandler.ImageCache.Current != null)
             {
                 fileID = this.dataHandler.ImageCache.Current.ID;
             }
-            this.SelectFilesAndShowFile(fileID, selection);
+            await this.SelectFilesAndShowFileAsync(fileID, selection);
         }
 
-        private void SelectFilesAndShowFile(long fileID, FileSelection selection)
+        private async Task SelectFilesAndShowFileAsync(long fileID, FileSelection selection)
         {
             // change selection
             // if the data grid is bound the file database automatically updates its contents on SelectFiles()
@@ -1850,7 +1961,7 @@ namespace Carnassial
 
             // Display the specified file or, if it's no longer selected, the next closest one
             // Showfile() handles empty image sets, so those don't need to be checked for here.
-            this.ShowFile(this.dataHandler.FileDatabase.GetFileOrNextFileIndex(fileID));
+            await this.ShowFileAsync(this.dataHandler.FileDatabase.GetFileOrNextFileIndex(fileID));
 
             // Update the status bar accordingly
             this.statusBar.SetCurrentFile(this.dataHandler.ImageCache.CurrentRow);
@@ -1947,7 +2058,7 @@ namespace Carnassial
         }
 
         // Various dialogs perform a bulk edit, after which the current file's data needs to be refreshed.
-        private void ShowBulkFileEditDialog(Window dialog)
+        private async Task ShowBulkFileEditDialogAsync(Window dialog)
         {
             Debug.Assert((dialog.GetType() == typeof(PopulateFieldWithMetadata)) ||
                          (dialog.GetType() == typeof(DateTimeFixedCorrection)) ||
@@ -1968,14 +2079,14 @@ namespace Carnassial
                 // show updated data for file
                 // Delete isn't considered a bulk edit so none of the bulk edit dialogs can result in a change in the image which needs to be displayed.
                 // Hence the image cache doesn't need to be invalidated.  However, SelectFiles() may mean the currently displayed file is no longer selected.
-                this.ShowFile(this.dataHandler.FileDatabase.GetFileOrNextFileIndex(currentFileID));
+                await this.ShowFileAsync(this.dataHandler.FileDatabase.GetFileOrNextFileIndex(currentFileID));
             }
         }
 
-        private void ShowFile(int fileIndex)
+        private async Task ShowFileAsync(int fileIndex)
         {
             // if there is no file to show, then show an image indicating no image set or an empty image set
-            if ((this.dataHandler == null) || (this.dataHandler.FileDatabase == null) || (this.dataHandler.FileDatabase.CurrentlySelectedFileCount < 1))
+            if ((this.IsFileDatabaseAvailable() == false) || (this.dataHandler.FileDatabase.CurrentlySelectedFileCount < 1))
             {
                 this.MarkableCanvas.SetNewImage(Constant.Images.NoSelectableFile.Value, null);
                 this.markersOnCurrentFile = null;
@@ -1984,8 +2095,8 @@ namespace Carnassial
             }
 
             // for the bitmap caching logic below to work this should be the only place where code in CarnassialWindow moves the file enumerator
-            bool newFileToDisplay;
-            if (this.dataHandler.ImageCache.TryMoveToFile(fileIndex, out newFileToDisplay) == false)
+            MoveToFileResult moveToFile = await this.dataHandler.ImageCache.TryMoveToFileAsync(fileIndex, this.state.FileNavigatorSliderDragging);
+            if (moveToFile.Succeeded == false)
             {
                 throw new ArgumentOutOfRangeException("fileIndex", String.Format("{0} is not a valid index in the file table.", fileIndex));
             }
@@ -1998,7 +2109,7 @@ namespace Carnassial
             {
                 // update value
                 string controlType = this.dataHandler.FileDatabase.FileTableColumnsByDataLabel[control.Key].ControlType;
-                control.Value.SetContentAndTooltip(this.dataHandler.ImageCache.Current.GetValueDisplayString(control.Value.DataLabel));
+                control.Value.SetValue(this.dataHandler.ImageCache.Current.GetValue(control.Value.DataLabel));
 
                 // for note controls, update the autocomplete list if an edit occurred
                 if (controlType == Constant.Control.Note)
@@ -2024,51 +2135,44 @@ namespace Carnassial
 
             // display new file and update menu item enables if the file changed
             // This avoids unnecessary image reloads and refreshes in cases where ShowFile() is just being called to refresh controls.
-            if (newFileToDisplay)
+            if (moveToFile.NewFileToDisplay)
             {
-                // show the file and enable or disable menu items whose availability depends on whether the file's an image or video
+                // show the file
                 this.markersOnCurrentFile = this.dataHandler.FileDatabase.GetMarkersOnFile(this.dataHandler.ImageCache.Current.ID);
                 List<Marker> displayMarkers = this.GetDisplayMarkers(false);
 
-                if (this.dataHandler.ImageCache.Current.IsVideo)
+                bool isVideo = this.dataHandler.ImageCache.Current.IsVideo;
+                if (isVideo)
                 {
-                    this.MarkableCanvas.SetNewVideo(this.dataHandler.ImageCache.Current.GetFileInfo(this.dataHandler.FileDatabase.FolderPath), displayMarkers);
-
-                    this.MenuOptionsDisplayMagnifier.IsEnabled = false;
-                    this.MenuViewApplyBookmark.IsEnabled = false;
-                    this.MenuViewDifferencesCombined.IsEnabled = false;
-                    this.MenuViewMagnifierZoomIncrease.IsEnabled = false;
-                    this.MenuViewMagnifierZoomDecrease.IsEnabled = false;
-                    this.MenuViewNextOrPreviousDifference.IsEnabled = false;
-                    this.MenuViewPlayVideo.IsEnabled = true;
-                    this.MenuViewSetBookmark.IsEnabled = false;
-                    this.MenuViewZoomIn.IsEnabled = false;
-                    this.MenuViewZoomOut.IsEnabled = false;
-                    this.MenuViewZoomToFit.IsEnabled = false;
+                    this.MarkableCanvas.SetNewVideo(this.dataHandler.ImageCache.Current.GetFileInfo(this.FolderPath), displayMarkers);
                 }
                 else
                 {
                     this.MarkableCanvas.SetNewImage(this.dataHandler.ImageCache.GetCurrentImage(), displayMarkers);
-
-                    this.MenuOptionsDisplayMagnifier.IsEnabled = true;
-                    this.MenuViewApplyBookmark.IsEnabled = true;
-                    this.MenuViewDifferencesCombined.IsEnabled = true;
-                    this.MenuViewMagnifierZoomIncrease.IsEnabled = true;
-                    this.MenuViewMagnifierZoomDecrease.IsEnabled = true;
-                    this.MenuViewNextOrPreviousDifference.IsEnabled = true;
-                    this.MenuViewPlayVideo.IsEnabled = false;
-                    this.MenuViewSetBookmark.IsEnabled = true;
-                    this.MenuViewZoomIn.IsEnabled = true;
-                    this.MenuViewZoomOut.IsEnabled = true;
-                    this.MenuViewZoomToFit.IsEnabled = true;
                 }
+
+                // enable or disable menu items whose availability depends on whether the file's an image or video
+                bool isImage = !isVideo;
+                this.MenuOptionsDisplayMagnifier.IsEnabled = isImage;
+                this.MenuViewApplyBookmark.IsEnabled = isImage;
+                this.MenuViewDifferencesCombined.IsEnabled = isImage;
+                this.MenuViewMagnifierZoomIncrease.IsEnabled = isImage;
+                this.MenuViewMagnifierZoomDecrease.IsEnabled = isImage;
+                this.MenuViewNextOrPreviousDifference.IsEnabled = isImage;
+                this.MenuViewSetBookmark.IsEnabled = isImage;
+                this.MenuViewZoomIn.IsEnabled = isImage;
+                this.MenuViewZoomOut.IsEnabled = isImage;
+                this.MenuViewZoomToFit.IsEnabled = isImage;
+
+                this.MenuViewPlayVideo.IsEnabled = isVideo;
 
                 // draw markers for this file
                 this.MarkableCanvas_UpdateMarkers();
 
-                // clear any undo buffer as it no longer applies and disable the undo menu item
+                // clear any undo buffer as it no longer applies and disable the associated menu item
+                this.MenuEditRedo.IsEnabled = false;
                 this.MenuEditUndo.IsEnabled = false;
-                this.state.UndoBuffer = null;
+                this.state.UndoRedoChain.Clear();
             }
 
             // if the data grid has been bound, set the selected row to the current file and scroll so it's visible
@@ -2080,21 +2184,21 @@ namespace Carnassial
             }
         }
 
-        private void ShowFile(Slider fileNavigatorSlider)
+        private async Task ShowFileAsync(Slider fileNavigatorSlider)
         {
-            this.ShowFile((int)fileNavigatorSlider.Value - 1);
+            await this.ShowFileAsync((int)fileNavigatorSlider.Value - 1);
         }
 
-        private void ShowFileWithoutSliderCallback(bool forward, ModifierKeys modifiers)
+        internal async Task ShowFileWithoutSliderCallbackAsync(bool forward, ModifierKeys modifiers)
         {
             // determine how far to move and in which direction
             int increment = Utilities.GetIncrement(forward, modifiers);
             int newFileIndex = this.dataHandler.ImageCache.CurrentRow + increment;
 
-            this.ShowFileWithoutSliderCallback(newFileIndex);
+            await this.ShowFileWithoutSliderCallbackAsync(newFileIndex);
         }
 
-        private void ShowFileWithoutSliderCallback(int newFileIndex)
+        private async Task ShowFileWithoutSliderCallbackAsync(int newFileIndex)
         {
             // if no change the file is already being displayed
             // For example, the end of the image set has been reached but key repeat means right arrow events are still coming in as the user hasn't
@@ -2116,7 +2220,7 @@ namespace Carnassial
 
             // show the new file
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-            this.ShowFile(newFileIndex);
+            await this.ShowFileAsync(newFileIndex);
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
         }
 
@@ -2124,7 +2228,7 @@ namespace Carnassial
         {
             CommonOpenFileDialog folderSelectionDialog = new CommonOpenFileDialog();
             folderSelectionDialog.Title = "Select one or more folders...";
-            folderSelectionDialog.DefaultDirectory = this.mostRecentFileAddFolderPath == null ? this.FolderPath : this.mostRecentFileAddFolderPath;
+            folderSelectionDialog.DefaultDirectory = this.state.MostRecentFileAddFolderPath;
             folderSelectionDialog.InitialDirectory = folderSelectionDialog.DefaultDirectory;
             folderSelectionDialog.IsFolderPicker = true;
             folderSelectionDialog.Multiselect = true;
@@ -2133,23 +2237,19 @@ namespace Carnassial
             {
                 folderPaths = folderSelectionDialog.FileNames;
 
-                // remember the parent of the selected folder path to save the user clicks and scrolling in case images from additional 
-                // directories are added
-                this.mostRecentFileAddFolderPath = Path.GetDirectoryName(folderPaths.First());
+                // remember the parent of the selected folder path to save the user clicks and scrolling in case files from additional 
+                // directories are added later
+                // Moves above the location of the template file are disallowed, however.
+                string parentFolderPath = Path.GetDirectoryName(folderPaths.First());
+                if ((parentFolderPath != null) && parentFolderPath.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    this.state.MostRecentFileAddFolderPath = parentFolderPath;
+                }
                 return true;
             }
 
             folderPaths = null;
             return false;
-        }
-
-        private void FolderSelectionDialog_FolderChanging(object sender, CommonFileDialogFolderChangeEventArgs e)
-        {
-            // require folders to be loaded be either the same folder as the .tdb and .ddb or subfolders of it
-            if (e.Folder.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase) == false)
-            {
-                e.Cancel = true;
-            }
         }
 
         private void Speak(string text)
@@ -2162,7 +2262,7 @@ namespace Carnassial
             }
         }
 
-        private void ToggleCurrentFileDeleteFlag()
+        private async Task ToggleCurrentFileDeleteFlagAsync()
         {
             DataEntryFlag deleteFlag = (DataEntryFlag)this.DataEntryControls.ControlsByDataLabel[Constant.DatabaseColumn.DeleteFlag];
             deleteFlag.ContentControl.IsChecked = !deleteFlag.ContentControl.IsChecked;
@@ -2173,28 +2273,16 @@ namespace Carnassial
             // the behavior.
             if (deleteFlag.ContentControl.IsChecked == true)
             {
-                this.ShowFileWithoutSliderCallback(true, ModifierKeys.None);
+                await this.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.None);
             }
         }
 
         // out parameters can't be used in anonymous methods, so a separate pointer to backgroundWorker is required for return to the caller
-        private bool TryBeginFolderLoadAsync(IEnumerable<string> folderPaths, out BackgroundWorker externallyVisibleWorker)
+        private async Task<bool> TryBeginFolderLoadAsync(FolderLoad folderLoad)
         {
-            List<FileInfo> filesToAdd = new List<FileInfo>();
-            foreach (string folderPath in folderPaths)
-            {
-                DirectoryInfo folder = new DirectoryInfo(folderPath);
-                foreach (string extension in new List<string>() { Constant.File.AviFileExtension, Constant.File.Mp4FileExtension, Constant.File.JpgFileExtension })
-                {
-                    filesToAdd.AddRange(folder.GetFiles("*" + extension));
-                }
-            }
-            filesToAdd = filesToAdd.OrderBy(file => file.FullName).ToList();
-
+            List<FileInfo> filesToAdd = folderLoad.GetFiles();
             if (filesToAdd.Count == 0)
             {
-                externallyVisibleWorker = null;
-
                 // no images were found in folder; see if user wants to try again
                 MessageBox messageBox = new MessageBox("Select a folder containing images or videos?", this, MessageBoxButton.YesNo);
                 messageBox.Message.Problem = "There aren't any images or videos in the folder '" + this.FolderPath + "' so your image set is currentl empty.";
@@ -2209,57 +2297,67 @@ namespace Carnassial
                     return false;
                 }
 
+                IEnumerable<string> folderPaths;
                 if (this.ShowFolderSelectionDialog(out folderPaths))
                 {
-                    return this.TryBeginFolderLoadAsync(folderPaths, out externallyVisibleWorker);
+                    folderLoad.FolderPaths.Clear();
+                    folderLoad.FolderPaths.AddRange(folderPaths);
+                    return await this.TryBeginFolderLoadAsync(folderLoad);
                 }
 
                 // exit if user changed their mind about trying again
                 return false;
             }
 
+            // update UI for import (visibility is inverse of RunWorkerCompleted)
+            this.FeedbackControl.Visibility = Visibility.Visible;
+            this.FileNavigatorSlider.Visibility = Visibility.Collapsed;
+            IProgress<FolderLoadProgress> folderLoadStatus = new Progress<FolderLoadProgress>(this.UpdateFolderLoadProgress);
+            FolderLoadProgress folderLoadProgress = new FolderLoadProgress(filesToAdd.Count, this.MarkableCanvas.Width > 0 ? (int)this.MarkableCanvas.Width : (int)this.Width);
+            folderLoadStatus.Report(folderLoadProgress);
+            if (this.state.SkipDarkImagesCheck)
+            {
+                this.statusBar.SetMessage("Loading folders...");
+            }
+            else
+            {
+                this.statusBar.SetMessage("Loading folders (if this is slower than you like and dark image detection isn't needed you can select Skip dark check in the Options menu right now)...");
+            }
+            this.FileViewPane.IsActive = true;
+
             // Load all files found
-            // Show previews to the user as loading proceeds.
-            BackgroundWorker backgroundWorker = new BackgroundWorker()
-            {
-                WorkerReportsProgress = true
-            };
-
-            FolderLoadProgress folderLoadProgress = new FolderLoadProgress(filesToAdd.Count);
-            int renderWidthBestEstimate = this.MarkableCanvas.Width > 0 ? (int)this.MarkableCanvas.Width : (int)this.Width;
-            backgroundWorker.DoWork += (ow, ea) =>
-            {
-                // First pass: Examine files to extract their basic properties and build a list of files not already in the database
-                //
-                // With dark calculations enabled:
-                // Profiling of a 1000 image load on quad core, single 80+MB/s capable SSD shows the following:
-                // - one thread:   100% normalized execution time, 35% CPU, 16MB/s disk (100% normalized time = 1 minute 58 seconds)
-                // - two threads:   55% normalized execution time, 50% CPU, 17MB/s disk (6.3% normalized time with dark checking skipped)
-                // - three threads: 46% normalized execution time, 70% CPU, 20MB/s disk
-                // This suggests memory bound operation due to image quality calculation.  The overhead of displaying preview images is fairly low; 
-                // normalized time is about 5% with both dark checking and previewing skipped.
-                //
-                // For now, try to get at least two threads as that captures most of the benefit from parallel operation.  Video loading may be more CPU bound 
-                // due to initial frame rendering and benefit from additional threads.  This requires further investigation.  It may also be desirable to reduce 
-                // the pixel stride in image quality calculation, which would increase CPU load.
-                //
-                // With dark calculations disabled:
-                // The bottleneck's the SQL insert though using more than four threads (or possibly more threads than the number of physical processors as the 
-                // test machine was quad core) results in slow progress on the first 20 files or so, making the optimum number of loading threads complex as it
-                // depends on amortizing startup lag across faster progress on the remaining import.  As this is comparatively minor relative to SQL (at least
-                // for O(10,000) files for now just default to four threads in the disabled case.
-                //
-                // Note: the UI thread is free during loading.  So if loading's going slow the user can switch off dark checking asynchronously to speed up 
-                // loading.
-                //
-                // A sequential partitioner is used as this keeps the preview images displayed to the user in pretty much the same order as they're named,
-                // which is less confusing than TPL's default partitioning where the displayed image jumps back and forth through the image set.  Pulling files
-                // nearly sequentially may also offer some minor disk performance benefit.
-                List<ImageRow> filesToInsert = new List<ImageRow>();
-                TimeZoneInfo imageSetTimeZone = this.dataHandler.FileDatabase.ImageSet.GetTimeZone();
-                DateTime previousImageRender = DateTime.UtcNow - this.state.Throttles.DesiredIntervalBetweenRenders;
-
-                Parallel.ForEach(new SequentialPartitioner<FileInfo>(filesToAdd), Utilities.GetParallelOptions(this.state.SkipDarkImagesCheck ? 4 : 2), (FileInfo fileInfo) =>
+            // First pass: Examine files to extract their basic properties and build a list of files not already in the database
+            //
+            // With dark calculations enabled:
+            // Profiling of a 1000 image load on quad core, single 80+MB/s capable SSD shows the following:
+            // - one thread:   100% normalized execution time, 35% CPU, 16MB/s disk (100% normalized time = 1 minute 58 seconds)
+            // - two threads:   55% normalized execution time, 50% CPU, 17MB/s disk (6.3% normalized time with dark checking skipped)
+            // - three threads: 46% normalized execution time, 70% CPU, 20MB/s disk
+            // This suggests memory bound operation due to image quality calculation.  The overhead of displaying preview images is fairly low; 
+            // normalized time is about 5% with both dark checking and previewing skipped.
+            //
+            // For now, try to get at least two threads as that captures most of the benefit from parallel operation.  Video loading may be more CPU bound 
+            // due to initial frame rendering and benefit from additional threads.  This requires further investigation.  It may also be desirable to reduce 
+            // the pixel stride in image quality calculation, which would increase CPU load.
+            //
+            // With dark calculations disabled:
+            // The bottleneck's the SQL insert though using more than four threads (or possibly more threads than the number of physical processors as the 
+            // test machine was quad core) results in slow progress on the first 20 files or so, making the optimum number of loading threads complex as it
+            // depends on amortizing startup lag across faster progress on the remaining import.  As this is comparatively minor relative to SQL (at least
+            // for O(10,000) files for now just default to four threads in the disabled case.
+            //
+            // Note: the UI thread is free during loading.  So if loading's going slow the user can switch off dark checking asynchronously to speed up 
+            // loading.
+            //
+            // A sequential partitioner is used as this keeps the preview images displayed to the user in pretty much the same order as they're named,
+            // which is less confusing than TPL's default partitioning where the displayed image jumps back and forth through the image set.  Pulling files
+            // nearly sequentially may also offer some minor disk performance benefit.
+            List<ImageRow> filesToInsert = new List<ImageRow>();
+            TimeZoneInfo imageSetTimeZone = this.dataHandler.FileDatabase.ImageSet.GetTimeZone();
+            await Task.Run(() => Parallel.ForEach(
+                new SequentialPartitioner<FileInfo>(filesToAdd),
+                Utilities.GetParallelOptions(this.state.SkipDarkImagesCheck ? Environment.ProcessorCount : 2), 
+                (FileInfo fileInfo) =>
                 {
                     ImageRow file;
                     if (this.dataHandler.FileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file))
@@ -2278,15 +2376,11 @@ namespace Carnassial
                         }
                         else
                         {
-                            // Create the bitmap and determine its quality
-                            // For good display quality the render size is ideally the markable canvas width.  However, its width isn't known until layout of the
-                            // ImageSetPane completes, which occurs asynchronously on the UI thread from background worker thread execution.  Therefore, start with
-                            // a naive guess of the width and refine it as layout information becomes available.  Profiling shows no difference in import speed
-                            // for renders up to at least 1000 pixels wide or so, suggesting there's little reason to degrade the quality of the preview/progress 
-                            // image the user sees.
-                            bitmapSource = file.LoadBitmap(this.FolderPath, renderWidthBestEstimate);
-
-                            // Set the ImageQuality to corrupt if the returned bitmap is the corrupt image, otherwise set it to its Ok/Dark setting
+                            // load bitmap and determine its quality
+                            // Parallel doesn't await async bodies so awaiting the load results in Parallel prematurely concluding the body task completed and
+                            // dispatching another, resulting in system overload.  The simplest solution is to block this worker thread, which is OK as there
+                            // are many workers and they're decoupled from the UI thread.
+                            bitmapSource = file.LoadBitmapAsync(this.FolderPath, folderLoadProgress.RenderWidthBestEstimate).GetAwaiter().GetResult();
                             if (bitmapSource == Constant.Images.CorruptFile.Value)
                             {
                                 file.ImageQuality = FileSelection.Corrupt;
@@ -2313,11 +2407,11 @@ namespace Carnassial
                     }
 
                     DateTime utcNow = DateTime.UtcNow;
-                    if (utcNow - previousImageRender > this.state.Throttles.DesiredIntervalBetweenRenders)
+                    if (utcNow - folderLoadProgress.MostRecentStatusDispatch > this.state.Throttles.DesiredIntervalBetweenRenders)
                     {
                         lock (folderLoadProgress)
                         {
-                            if (utcNow - previousImageRender > this.state.Throttles.DesiredIntervalBetweenRenders)
+                            if (utcNow - folderLoadProgress.MostRecentStatusDispatch > this.state.Throttles.DesiredIntervalBetweenRenders)
                             {
                                 // if file was already loaded for dark checking use the resulting bitmap
                                 // otherwise, load the file for display
@@ -2327,117 +2421,44 @@ namespace Carnassial
                                 }
                                 else
                                 {
-                                    folderLoadProgress.BitmapSource = file.LoadBitmap(this.FolderPath, renderWidthBestEstimate);
+                                    folderLoadProgress.BitmapSource = null;
                                 }
-                                folderLoadProgress.CurrentFile = filesToInsert.Count;
-                                folderLoadProgress.CurrentFileName = file.FileName;
-
-                                int percentProgress = (int)(100.0 * filesToInsert.Count / (double)filesToAdd.Count);
-                                backgroundWorker.ReportProgress(percentProgress, folderLoadProgress);
-                                previousImageRender = utcNow;
+                                folderLoadProgress.CurrentFile = file;
+                                folderLoadProgress.CurrentFileIndex = filesToInsert.Count;
+                                folderLoadProgress.DisplayBitmap = true;
+                                folderLoadProgress.MostRecentStatusDispatch = utcNow;
+                                folderLoadStatus.Report(folderLoadProgress);
                             }
                         }
                     }
+                }));
+
+            // Second pass: Update database
+            // Parallel execution above produces out of order results.  Put them back in order so the user sees images in file name order when
+            // reviewing the image set.
+            folderLoadProgress.DatabaseInsert = true;
+            await Task.Run(() =>
+                {
+                    filesToInsert = filesToInsert.OrderBy(file => Path.Combine(file.RelativePath, file.FileName)).ToList();
+                    this.dataHandler.FileDatabase.AddFiles(filesToInsert, (ImageRow file, int fileIndex) =>
+                    {
+                        // skip reloading images to display as the user's already seen them import
+                        folderLoadProgress.BitmapSource = null;
+                        folderLoadProgress.CurrentFile = file;
+                        folderLoadProgress.CurrentFileIndex = fileIndex;
+                        folderLoadProgress.DisplayBitmap = false;
+                        folderLoadStatus.Report(folderLoadProgress);
+                    });
                 });
 
-                // Second pass: Update database
-                // Parallel execution above produces out of order results.  Put them back in order so the user sees images in file name order when
-                // reviewing the image set.
-                filesToInsert = filesToInsert.OrderBy(file => Path.Combine(file.RelativePath, file.FileName)).ToList();
-                this.dataHandler.FileDatabase.AddFiles(filesToInsert, (ImageRow file, int fileIndex) =>
-                {
-                    // skip reloading images to display as the user's already seen them import
-                    folderLoadProgress.BitmapSource = null;
-                    folderLoadProgress.CurrentFile = fileIndex;
-                    folderLoadProgress.CurrentFileName = file.FileName;
-                    int percentProgress = (int)(100.0 * fileIndex / (double)filesToInsert.Count);
-                    backgroundWorker.ReportProgress(percentProgress, folderLoadProgress);
-                });
-            };
-            backgroundWorker.ProgressChanged += (o, ea) =>
-            {
-                // this gets called on the UI thread
-                this.UpdateFolderLoadProgress(folderLoadProgress.BitmapSource, ea.ProgressPercentage, folderLoadProgress.GetMessage());
-                if (this.MarkableCanvas.Width > 0)
-                {
-                    renderWidthBestEstimate = (int)this.MarkableCanvas.Width;
-                }
-            };
-            backgroundWorker.RunWorkerCompleted += (o, ea) =>
-            {
-                // BackgroundWorker aborts execution on an exception and transfers it to completion for handling
-                // If something went wrong rethrow the error so the user knows there's a problem.  Otherwise what would happen is either 
-                //  1) some or all of the folder load file scan progress displays but no files get added to the database as the insert is skipped
-                //  2) only some of the files get inserted and the rest are silently dropped
-                // Both of these outcomes result in quite poor user experience and are best avoided.
-                if (ea.Error != null)
-                {
-                    throw new FileLoadException("Folder loading failed unexpectedly.  See inner exception for details.", ea.Error);
-                }
+            // hide the feedback bar, show the file slider
+            this.FeedbackControl.Visibility = Visibility.Collapsed;
+            this.FileNavigatorSlider.Visibility = Visibility.Visible;
 
-                // hide the feedback bar, show the file slider
-                this.FeedbackControl.Visibility = Visibility.Collapsed;
-                this.FileNavigatorSlider.Visibility = Visibility.Visible;
+            await this.OnFolderLoadingCompleteAsync(true);
 
-                this.OnFolderLoadingComplete(true);
-
-                // Finally, tell the user how many images were loaded, etc.
-                this.MaybeShowFileCountsDialog(true);
-            };
-
-            // update UI for import (visibility is inverse of RunWorkerCompleted)
-            this.FeedbackControl.Visibility = Visibility.Visible;
-            this.FileNavigatorSlider.Visibility = Visibility.Collapsed;
-            this.UpdateFolderLoadProgress(null, 0, "Folder loading beginning...");
-            this.statusBar.SetMessage("Loading folders...");
-            this.ImageSetPane.IsActive = true;
-
-            // start import and return
-            backgroundWorker.RunWorkerAsync();
-            externallyVisibleWorker = backgroundWorker;
-            return true;
-        }
-
-        private bool TryCloseImageSet()
-        {
-            if ((this.dataHandler == null) ||
-                (this.dataHandler.FileDatabase == null))
-            {
-                // no image set to close
-                return false;
-            }
-
-            // persist image set properties if an image set has been opened
-            if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0)
-            {
-                // revert to custom selections to all 
-                if (this.dataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.Custom)
-                {
-                    this.dataHandler.FileDatabase.ImageSet.FileSelection = FileSelection.All;
-                }
-
-                // sync image set properties
-                if (this.MarkableCanvas != null)
-                {
-                    this.dataHandler.FileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, this.MarkableCanvas.MagnifyingGlassEnabled);
-                }
-
-                if (this.dataHandler.ImageCache != null && this.dataHandler.ImageCache.Current != null)
-                {
-                    this.dataHandler.FileDatabase.ImageSet.MostRecentFileID = this.dataHandler.ImageCache.Current.ID;
-                }
-
-                // write image set properties to the database
-                this.dataHandler.FileDatabase.SyncImageSetToDatabase();
-
-                // ensure custom filter operator is synchronized in state for writing to user's registry
-                this.state.CustomSelectionTermCombiningOperator = this.dataHandler.FileDatabase.CustomSelection.TermCombiningOperator;
-            }
-
-            // discard the image set and reset UX for no open image set/no selected files
-            this.dataHandler.Dispose();
-            this.dataHandler = null;
-            this.EnableOrDisableMenusAndControls();
+            // tell the user how many files were loaded
+            this.MaybeShowFileCountsDialog(true);
             return true;
         }
 
@@ -2447,7 +2468,7 @@ namespace Carnassial
             {
                 return false;
             }
-            this.state.Analysis[analysisSlot] = this.dataHandler.ImageCache.Current;
+            this.state.Analysis[analysisSlot] = this.dataHandler.ImageCache.Current.AsDictionary();
 
             ((MenuItem)this.MenuEditPasteValuesFromAnalysis.Items[analysisSlot]).IsEnabled = true;
             switch (analysisSlot)
@@ -2488,18 +2509,6 @@ namespace Carnassial
             return true;
         }
 
-        private bool TryOpenTemplateAndBeginLoadFoldersAsync(string templateDatabasePath)
-        {
-            BackgroundWorker ignored;
-            if (this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabasePath, out ignored) == false)
-            {
-                this.state.MostRecentImageSets.TryRemove(templateDatabasePath);
-                this.MenuFileRecentImageSets_Refresh();
-                return false;
-            }
-            return true;
-        }
-
         /// <summary>
         /// Load the specified database template and then the associated file database.
         /// </summary>
@@ -2507,10 +2516,8 @@ namespace Carnassial
         /// <returns>true only if both the template and image database file are loaded (regardless of whether any images were loaded), false otherwise</returns>
         /// <remarks>This method doesn't particularly need to be public. But making it private imposes substantial complexity in invoking it via PrivateObject
         /// in unit tests.</remarks>
-        public bool TryOpenTemplateAndBeginLoadFoldersAsync(string templateDatabasePath, out BackgroundWorker backgroundWorker)
+        public async Task<bool> TryOpenTemplateAndBeginLoadFoldersAsync(string templateDatabasePath)
         {
-            backgroundWorker = null;
-
             // Try to create or open the template database
             TemplateDatabase templateDatabase;
             if (TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out templateDatabase) == false)
@@ -2525,6 +2532,9 @@ namespace Carnassial
                 messageBox.Message.Hint = "If the template can't be opened in a SQLite database editor the file is corrupt.";
                 messageBox.Message.StatusImage = MessageBoxImage.Error;
                 messageBox.ShowDialog();
+
+                this.state.MostRecentImageSets.TryRemove(templateDatabasePath);
+                this.MenuFileRecentImageSets_Refresh();
                 return false;
             }
 
@@ -2577,30 +2587,33 @@ namespace Carnassial
             this.DataEntryControls.CreateControls(fileDatabase, this.dataHandler);
             this.SetUserInterfaceCallbacks();
 
-            this.Title = Path.GetFileName(fileDatabase.FilePath) + " - " + Constant.MainWindowBaseTitle;
-            this.state.MostRecentImageSets.SetMostRecent(templateDatabasePath);
             this.MenuFileRecentImageSets_Refresh();
+            this.state.MostRecentFileAddFolderPath = fileDatabase.FolderPath;
+            this.state.MostRecentImageSets.SetMostRecent(templateDatabasePath);
+            this.Title = Path.GetFileName(fileDatabase.FilePath) + " - " + Constant.MainWindowBaseTitle;
 
             // If this is a new file database, try to load files (if any) from the folder...  
             if (addFiles)
             {
-                this.TryBeginFolderLoadAsync(new List<string>() { this.FolderPath }, out backgroundWorker);
+                FolderLoad folderLoad = new FolderLoad();
+                folderLoad.FolderPaths.Add(this.FolderPath);
+                await this.TryBeginFolderLoadAsync(folderLoad);
             }
 
-            this.OnFolderLoadingComplete(false);
+            await this.OnFolderLoadingCompleteAsync(false);
             return true;
         }
 
         private bool TryPasteValuesFromAnalysis(int analysisSlot)
         {
-            ImageRow sourceFile = this.state.Analysis[analysisSlot];
-            if (sourceFile == null)
+            Dictionary<string, object> valuesFromAnalysis = this.state.Analysis[analysisSlot];
+            if (valuesFromAnalysis == null)
             {
                 // nothing to copy
                 return false;
             }
 
-            this.PasteValuesToCurrentFile(sourceFile);
+            this.PasteValuesToCurrentFileWithUndo(valuesFromAnalysis);
             return true;
         }
 
@@ -2672,12 +2685,9 @@ namespace Carnassial
             return true;
         }
 
-        private void TryViewCombinedDifference()
+        private async Task TryViewCombinedDifferenceAsync()
         {
-            if (this.dataHandler == null ||
-                this.dataHandler.ImageCache == null ||
-                this.dataHandler.ImageCache.Current == null ||
-                this.dataHandler.ImageCache.Current.IsVideo)
+            if ((this.IsFileAvailable() == false) || this.dataHandler.ImageCache.Current.IsVideo)
             {
                 return;
             }
@@ -2696,20 +2706,20 @@ namespace Carnassial
             // generate and cache difference image if needed
             if (this.dataHandler.ImageCache.GetCurrentImage() == null)
             {
-                ImageDifferenceResult result = this.dataHandler.ImageCache.TryCalculateCombinedDifference(this.state.DifferenceThreshold);
+                ImageDifferenceResult result = await this.dataHandler.ImageCache.TryCalculateCombinedDifferenceAsync(this.state.DifferenceThreshold);
                 switch (result)
                 {
                     case ImageDifferenceResult.CurrentImageNotAvailable:
                         this.statusBar.SetMessage("Combined differences can't be shown since the current file is not a loadable image (typically it's a video, missing, or corrupt).");
                         return;
                     case ImageDifferenceResult.NextImageNotAvailable:
-                        this.statusBar.SetMessage("Combined differences can't be shown since the next file is not a loadable image (typically it's a video, missing, or corrupt).");
+                        this.statusBar.SetMessage("Combined differences can't be shown since the next file is not available.");
                         return;
                     case ImageDifferenceResult.NotCalculable:
-                        this.statusBar.SetMessage(String.Format("Previous or next file is not compatible with {0}, most likely because it's a different size.", this.dataHandler.ImageCache.Current.FileName));
+                        this.statusBar.SetMessage("Previous or next file is not compatible with {0}, most likely because it's a different size.", this.dataHandler.ImageCache.Current.FileName);
                         return;
                     case ImageDifferenceResult.PreviousImageNotAvailable:
-                        this.statusBar.SetMessage("Combined differences can't be shown since the previous file is not a loadable image (typically it's a video, missing, or corrupt).");
+                        this.statusBar.SetMessage("Combined differences can't be shown since the next file is not available.");
                         return;
                     case ImageDifferenceResult.Success:
                         // set status below so that it's displayed when a cached difference is used
@@ -2727,12 +2737,9 @@ namespace Carnassial
 
         // Cycle through difference images in the order current, then previous and next differenced images.
         // Create and cache the differenced images.
-        private void TryViewPreviousOrNextDifference()
+        private async Task TryViewPreviousOrNextDifferenceAsync()
         {
-            if (this.dataHandler == null || 
-                this.dataHandler.ImageCache == null || 
-                this.dataHandler.ImageCache.Current == null ||
-                this.dataHandler.ImageCache.Current.IsVideo)
+            if ((this.IsFileAvailable() == false) || this.dataHandler.ImageCache.Current.IsVideo)
             {
                 return;
             }
@@ -2751,7 +2758,7 @@ namespace Carnassial
             // generate and cache difference image if needed
             if (this.dataHandler.ImageCache.GetCurrentImage() == null)
             {
-                ImageDifferenceResult result = this.dataHandler.ImageCache.TryCalculateDifference();
+                ImageDifferenceResult result = await this.dataHandler.ImageCache.TryCalculateDifferenceAsync();
                 switch (result)
                 {
                     case ImageDifferenceResult.CurrentImageNotAvailable:
@@ -2759,10 +2766,10 @@ namespace Carnassial
                         return;
                     case ImageDifferenceResult.NextImageNotAvailable:
                     case ImageDifferenceResult.PreviousImageNotAvailable:
-                        this.statusBar.SetMessage(String.Format("View of difference from {0} file unavailable as it is not a displayable image (typically it's a video, missing, or corrupt).", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next"));
+                        this.statusBar.SetMessage("View of difference from {0} file unavailable as it is not a displayable image (typically it's a video, missing, or corrupt).", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next");
                         return;
                     case ImageDifferenceResult.NotCalculable:
-                        this.statusBar.SetMessage(String.Format("{0} file is not compatible with {1}, most likely because it's a different size.", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.dataHandler.ImageCache.Current.FileName));
+                        this.statusBar.SetMessage("{0} file is not compatible with {1}, most likely because it's a different size.", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.dataHandler.ImageCache.Current.FileName);
                         return;
                     case ImageDifferenceResult.Success:
                         // set status below so that it's displayed when a cached difference is used
@@ -2776,22 +2783,41 @@ namespace Carnassial
             // the magnifying glass always displays the original non-diferenced image so ImageToDisplay is updated and ImageToMagnify left unchnaged
             // this allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
             this.MarkableCanvas.SetDisplayImage(this.dataHandler.ImageCache.GetCurrentImage());
-            this.statusBar.SetMessage(String.Format("Viewing difference from {0} file.", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next"));
+            this.statusBar.SetMessage("Viewing difference from {0} file.", this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next");
         }
 
-        private void UpdateFolderLoadProgress(BitmapSource bitmap, int percent, string message)
+        private async void UpdateFolderLoadProgress(FolderLoadProgress progress)
         {
-            if (bitmap != null)
+            this.FeedbackControl.Message.Content = progress.GetMessage();
+            this.FeedbackControl.ProgressBar.Value = progress.GetPercentage();
+            if (progress.DisplayBitmap)
             {
+                // For good display quality the render size is ideally the markable canvas width.  However, its width isn't known until layout of the
+                // FileViewPane completes, which occurs asynchronously on the UI thread from background worker thread execution.  Therefore, start with
+                // a naive guess of the width and refine it as layout information becomes available.  Profiling shows no difference in import speed
+                // for renders up to at least 1000 pixels wide or so, suggesting there's little reason to render at other than display size.
+                int markableCanvasWidth = (int)this.MarkableCanvas.Width;
+                if ((markableCanvasWidth > 0) && (markableCanvasWidth != progress.RenderWidthBestEstimate))
+                {
+                    progress.RenderWidthBestEstimate = markableCanvasWidth;
+                }
+
+                BitmapSource bitmap;
+                if (progress.BitmapSource != null)
+                {
+                    bitmap = progress.BitmapSource;
+                }
+                else
+                {
+                    bitmap = await progress.CurrentFile.LoadBitmapAsync(this.FolderPath, progress.RenderWidthBestEstimate);
+                }
                 this.MarkableCanvas.SetNewImage(bitmap, null);
             }
-            this.FeedbackControl.Message.Content = message;
-            this.FeedbackControl.ProgressBar.Value = percent;
         }
 
-        private void Window_Closing(object sender, CancelEventArgs e)
+        private async void Window_Closing(object sender, CancelEventArgs e)
         {
-            this.TryCloseImageSet();
+            await this.CloseImageSetAsync();
 
             // persist user specific state to the registry
             if (this.Top > -10 && this.Left > -10)
@@ -2801,7 +2827,7 @@ namespace Carnassial
             this.state.WriteToRegistry();
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // abort if required dependencies are missing
             if (Dependencies.AreRequiredBinariesPresent(Constant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
@@ -2836,20 +2862,20 @@ namespace Carnassial
                 string fileExtension = Path.GetExtension(filePath);
                 if (String.Equals(fileExtension, Constant.File.TemplateFileExtension, StringComparison.OrdinalIgnoreCase))
                 {
-                    this.TryOpenTemplateAndBeginLoadFoldersAsync(filePath);
+                    await this.TryOpenTemplateAndBeginLoadFoldersAsync(filePath);
                 }
                 else if (String.Equals(fileExtension, Constant.File.FileDatabaseFileExtension, StringComparison.OrdinalIgnoreCase))
                 {
                     string[] templatePaths = Directory.GetFiles(Path.GetDirectoryName(filePath), "*" + Constant.File.TemplateFileExtension);
                     if (templatePaths != null && templatePaths.Length == 1)
                     {
-                        this.TryOpenTemplateAndBeginLoadFoldersAsync(templatePaths[0]);
+                        await this.TryOpenTemplateAndBeginLoadFoldersAsync(templatePaths[0]);
                     }
                 }
             }
         }
 
-        private void Window_PreviewKeyDown(object sender, KeyEventArgs currentKey)
+        private async void Window_PreviewKeyDown(object sender, KeyEventArgs currentKey)
         {
             if (this.IsFileAvailable() == false)
             {
@@ -2867,87 +2893,90 @@ namespace Carnassial
             int keyRepeatCount = this.state.GetKeyRepeatCount(currentKey);
             switch (currentKey.Key)
             {
-                // copy whatever data fields are copyable from the previous file
+                case Key.B:
+                    if (Keyboard.Modifiers == ModifierKeys.None)
+                    {
+                        // apply the current bookmark
+                        this.MarkableCanvas.ApplyBookmark();
+                    }
+                    else if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        // bookmark (save) the current pan / zoom of the display image
+                        this.MarkableCanvas.SetBookmark();
+                    }
+                    else
+                    {
+                        return;
+                    }
+                    break;
                 case Key.C:
+                    // copy whatever data fields are copyable from the previous file
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
-                        this.MenuEditCopy_Click(null, null);
+                        this.MenuEditCopy_Click(this, currentKey);
+                    }
+                    break;
+                case Key.D:
+                    // decrease the magnifing glass zoom
+                    this.MarkableCanvas.MagnifierZoomOut();
+                    break;
+                // return to full view of display image
+                case Key.D0:
+                case Key.NumPad0:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.MarkableCanvas.ZoomToFit();
+                    }
+                    else
+                    {
+                        return;
+                    }
+                    break;
+                case Key.OemMinus:
+                    this.MarkableCanvas.ZoomOut();
+                    break;
+                case Key.OemPlus:
+                    this.MarkableCanvas.ZoomIn();
+                    break;
+                case Key.D1:
+                case Key.D2:
+                case Key.D3:
+                case Key.D4:
+                case Key.D5:
+                case Key.D6:
+                case Key.D7:
+                case Key.D8:
+                case Key.D9:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.TryCopyValuesToAnalysis(currentKey.Key - Key.D1);
+                    }
+                    else if (Keyboard.Modifiers == ModifierKeys.None)
+                    {
+                        this.TryPasteValuesFromAnalysis(currentKey.Key - Key.D1);
+                    }
+                    break;
+                case Key.NumPad1:
+                case Key.NumPad2:
+                case Key.NumPad3:
+                case Key.NumPad4:
+                case Key.NumPad5:
+                case Key.NumPad6:
+                case Key.NumPad7:
+                case Key.NumPad8:
+                case Key.NumPad9:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.TryCopyValuesToAnalysis(currentKey.Key - Key.NumPad1);
+                    }
+                    else if (Keyboard.Modifiers == ModifierKeys.None)
+                    {
+                        this.TryPasteValuesFromAnalysis(currentKey.Key - Key.NumPad1);
                     }
                     break;
                 // toggle the file's delete flag and, if set, move to the next file
                 case Key.Delete:
-                    this.ToggleCurrentFileDeleteFlag();
-                    break;
-                // Alt+Key.D1 and D2 are handled by routine keyboard shortcuts for the analysis 1 and 2 buttons
-                case Key.D1:
-                case Key.NumPad1:
-                    if (Keyboard.Modifiers == ModifierKeys.Control)
-                    {
-                        this.TryCopyValuesToAnalysis(0);
-                    }
-                    break;
-                case Key.D2:
-                case Key.NumPad2:
-                    if (Keyboard.Modifiers == ModifierKeys.Control)
-                    {
-                        this.TryCopyValuesToAnalysis(1);
-                    }
-                    break;
-                case Key.D3:
-                case Key.NumPad3:
-                    // see Key.System case for ModifierKeys.Alt
-                    if (Keyboard.Modifiers == ModifierKeys.Control)
-                    {
-                        this.TryCopyValuesToAnalysis(2);
-                    }
-                    break;
-                case Key.D4:
-                case Key.NumPad4:
-                    // see Key.System case for ModifierKeys.Alt
-                    if (Keyboard.Modifiers == ModifierKeys.Control)
-                    {
-                        this.TryCopyValuesToAnalysis(3);
-                    }
-                    break;
-                case Key.D5:
-                case Key.NumPad5:
-                    // see Key.System case for ModifierKeys.Alt
-                    if (Keyboard.Modifiers == ModifierKeys.Control)
-                    {
-                        this.TryCopyValuesToAnalysis(4);
-                    }
-                    break;
-                case Key.D6:
-                case Key.NumPad6:
-                    // see Key.System case for ModifierKeys.Alt
-                    if (Keyboard.Modifiers == ModifierKeys.Control)
-                    {
-                        this.TryCopyValuesToAnalysis(5);
-                    }
-                    break;
-                case Key.D7:
-                case Key.NumPad7:
-                    // see Key.System case for ModifierKeys.Alt
-                    if (Keyboard.Modifiers == ModifierKeys.Control)
-                    {
-                        this.TryCopyValuesToAnalysis(6);
-                    }
-                    break;
-                case Key.D8:
-                case Key.NumPad8:
-                    // see Key.System case for ModifierKeys.Alt
-                    if (Keyboard.Modifiers == ModifierKeys.Control)
-                    {
-                        this.TryCopyValuesToAnalysis(7);
-                    }
-                    break;
-                case Key.D9:
-                case Key.NumPad9:
-                    // see Key.System case for ModifierKeys.Alt
-                    if (Keyboard.Modifiers == ModifierKeys.Control)
-                    {
-                        this.TryCopyValuesToAnalysis(8);
-                    }
+                    await this.ToggleCurrentFileDeleteFlagAsync();
                     break;
                 case Key.Escape:            // exit current control, if any
                     this.TrySetKeyboardFocusToMarkableCanvas(false, currentKey);
@@ -2955,106 +2984,95 @@ namespace Carnassial
                 case Key.G:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
-                        this.MenuViewGotoFile_Click(this, null);
+                        this.MenuViewGotoFile_Click(this, currentKey);
                     }
                     break;
                 case Key.M:                 // toggle the magnifying glass on and off
-                    this.MenuViewDisplayMagnifier_Click(this, null);
+                    this.MenuViewDisplayMagnifier_Click(this, currentKey);
+                    break;
+                case Key.P:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.PastePreviousValues_Click(this, currentKey);
+                    }
                     break;
                 case Key.R:
-                    this.MenuEditResetValues_Click(this, null);
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.MenuEditResetValues_Click(this, currentKey);
+                    }
+                    break;
+                case Key.Space:
+                    // if the current file's a video allow the user to hit the space bar to start or stop playing the video
+                    // This is desirable as the play or pause button doesn't necessarily have focus and it saves the user having to click the button with
+                    // the mouse.
+                    if (this.MarkableCanvas.TryPlayOrPauseVideo() == false)
+                    {
+                        return;
+                    }
+                    break;
+                case Key.U:
+                    this.MarkableCanvas.MagnifierZoomIn();
                     break;
                 case Key.V:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
-                        this.MenuEditPaste_Click(null, null);
+                        this.MenuEditPaste_Click(this, currentKey);
+                    }
+                    break;
+                case Key.Y:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.MenuEditRedo_Click(this, currentKey);
                     }
                     break;
                 case Key.Z:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
-                        this.MenuEditUndo_Click(null, null);
+                        this.MenuEditUndo_Click(this, currentKey);
                     }
                     break;
                 case Key.End:
                     if (this.IsFileDatabaseAvailable())
                     {
-                        this.ShowFileWithoutSliderCallback(this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1);
+                        await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1);
                     }
                     break;
                 case Key.Left:              // previous image
                     if (keyRepeatCount % this.state.Throttles.RepeatedKeyAcceptanceInterval == 0)
                     {
-                        this.ShowFileWithoutSliderCallback(false, Keyboard.Modifiers);
+                        await this.ShowFileWithoutSliderCallbackAsync(false, Keyboard.Modifiers);
                     }
                     break;
                 case Key.Home:
-                    this.ShowFileWithoutSliderCallback(0);
+                    await this.ShowFileWithoutSliderCallbackAsync(0);
                     break;
                 case Key.PageDown:
                     if (this.IsFileDatabaseAvailable())
                     {
-                        this.ShowFileWithoutSliderCallback(this.dataHandler.ImageCache.CurrentRow + (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
+                        await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.ImageCache.CurrentRow + (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
                     }
                     break;
                 case Key.PageUp:
                     if (this.IsFileDatabaseAvailable())
                     {
-                        this.ShowFileWithoutSliderCallback(this.dataHandler.ImageCache.CurrentRow - (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
+                        await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.ImageCache.CurrentRow - (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
                     }
                     break;
                 case Key.Right:             // next image
                     if (keyRepeatCount % this.state.Throttles.RepeatedKeyAcceptanceInterval == 0)
                     {
-                        this.ShowFileWithoutSliderCallback(true, Keyboard.Modifiers);
-                    }
-                    break;
-                case Key.System:            // most commonly reached when Keyboard.Modifiers includes ModifierKeys.Alt
-                    if (Keyboard.Modifiers == ModifierKeys.Alt)
-                    {
-                        switch (currentKey.SystemKey)
-                        {
-                            case Key.D3:
-                            case Key.NumPad3:
-                                this.TryPasteValuesFromAnalysis(2);
-                                break;
-                            case Key.D4:
-                            case Key.NumPad4:
-                                this.TryPasteValuesFromAnalysis(3);
-                                break;
-                            case Key.D5:
-                            case Key.NumPad5:
-                                this.TryPasteValuesFromAnalysis(4);
-                                break;
-                            case Key.D6:
-                            case Key.NumPad6:
-                                this.TryPasteValuesFromAnalysis(5);
-                                break;
-                            case Key.D7:
-                            case Key.NumPad7:
-                                this.TryPasteValuesFromAnalysis(6);
-                                break;
-                            case Key.D8:
-                            case Key.NumPad8:
-                                this.TryPasteValuesFromAnalysis(7);
-                                break;
-                            case Key.D9:
-                            case Key.NumPad9:
-                                this.TryPasteValuesFromAnalysis(8);
-                                break;
-                            default:
-                                return;
-                        }
+                        await this.ShowFileWithoutSliderCallbackAsync(true, Keyboard.Modifiers);
                     }
                     break;
                 case Key.Tab:               // next or previous control
                     this.MoveFocusToNextOrPreviousControlOrImageSlider(Keyboard.Modifiers == ModifierKeys.Shift);
                     break;
                 case Key.Up:                // show visual difference to next image
-                    this.TryViewPreviousOrNextDifference();
+                    await this.TryViewPreviousOrNextDifferenceAsync();
                     break;
                 case Key.Down:              // show visual difference to previous image
-                    this.TryViewCombinedDifference();
+                    await this.TryViewCombinedDifferenceAsync();
                     break;
                 default:
                     return;

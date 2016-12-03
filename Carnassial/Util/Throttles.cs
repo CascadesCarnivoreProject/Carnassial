@@ -5,7 +5,6 @@ namespace Carnassial.Util
 {
     public class Throttles
     {
-        // The current setting for images rendered per second. Default is set to the maximum.
         public double DesiredImageRendersPerSecond { get; private set; }
         public TimeSpan DesiredIntervalBetweenRenders { get; private set; }
         public int RepeatedKeyAcceptanceInterval { get; private set; }

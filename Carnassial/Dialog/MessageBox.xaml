@@ -24,8 +24,8 @@
         </ScrollViewer>
         <CheckBox Name="DontShowAgain" Content="_Don't show this message again." Margin="10,10,10,10" Grid.Row="1" Visibility="Collapsed" />
         <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-            <Button Name="CancelButton" IsCancel="True" Visibility="Hidden" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
             <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
+            <Button Name="CancelButton" IsCancel="True" Visibility="Collapsed" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
         </StackPanel>
     </Grid>
 </Window>

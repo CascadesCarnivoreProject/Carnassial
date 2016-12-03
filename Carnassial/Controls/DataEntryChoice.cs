@@ -1,5 +1,6 @@
 ﻿using Carnassial.Database;
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -91,6 +92,22 @@ namespace Carnassial.Controls
         {
             this.ContentControl.SelectedValue = value;
             this.ContentControl.ToolTip = value;
+        }
+
+        public override void SetValue(object valueAsObject)
+        {
+            if (valueAsObject is FileSelection)
+            {
+                this.SetContentAndTooltip(valueAsObject.ToString());
+            }
+            else if ((valueAsObject is string) || (valueAsObject == null))
+            {
+                this.SetContentAndTooltip((string)valueAsObject);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException("valueAsObject", String.Format("Unexpected value type {0}.", valueAsObject.GetType()));
+            }
         }
     }
 }

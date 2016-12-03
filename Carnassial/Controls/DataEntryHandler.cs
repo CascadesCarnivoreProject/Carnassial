@@ -33,7 +33,7 @@ namespace Carnassial.Controls
         }
 
         /// <summary>Propagate the current value of this control forward from this point across the current selection.</summary>
-        public void CopyForward(string dataLabel, bool checkForZeroValue)
+        public void CopyForward(DataEntryControl control, bool checkForZeroValue)
         {
             int filesAffected = this.FileDatabase.CurrentlySelectedFileCount - this.ImageCache.CurrentRow - 1;
             if (filesAffected == 0)
@@ -45,14 +45,14 @@ namespace Carnassial.Controls
                 return;
             }
 
-            string valueToCopy = this.ImageCache.Current.GetValueDisplayString(dataLabel);
+            string valueToCopy = this.ImageCache.Current.GetValueDisplayString(control);
             if (this.ConfirmCopyForward(valueToCopy, filesAffected, checkForZeroValue) != true)
             {
                 return;
             }
 
             // update starts on the next row since copying from the current row
-            this.FileDatabase.UpdateFiles(this.ImageCache.Current, dataLabel, this.ImageCache.CurrentRow + 1, this.FileDatabase.CurrentlySelectedFileCount - 1);
+            this.FileDatabase.UpdateFiles(this.ImageCache.Current, control, this.ImageCache.CurrentRow + 1, this.FileDatabase.CurrentlySelectedFileCount - 1);
         }
 
         /// <summary>
@@ -96,16 +96,16 @@ namespace Carnassial.Controls
                 MessageBox messageBox = new MessageBox("Nothing to propagate to here.", Application.Current.MainWindow);
                 messageBox.Message.Reason = "None of the earlier files have anything in this field, so there are no values to propagate.";
                 messageBox.ShowDialog();
-                return this.FileDatabase.Files[this.ImageCache.CurrentRow].GetValueDisplayString(control.DataLabel); // No change, so return the current value
+                return this.FileDatabase.Files[this.ImageCache.CurrentRow].GetValueDisplayString(control); // No change, so return the current value
             }
 
             int imagesAffected = this.ImageCache.CurrentRow - indexToCopyFrom;
             if (this.ConfirmPropagateFromLastValue(valueToCopy, imagesAffected) != true)
             {
-                return this.FileDatabase.Files[this.ImageCache.CurrentRow].GetValueDisplayString(control.DataLabel); // No change, so return the current value
+                return this.FileDatabase.Files[this.ImageCache.CurrentRow].GetValueDisplayString(control); // No change, so return the current value
             }
 
-            this.FileDatabase.UpdateFiles(fileWithLastNonEmptyValue, control.DataLabel, indexToCopyFrom + 1, this.ImageCache.CurrentRow);
+            this.FileDatabase.UpdateFiles(fileWithLastNonEmptyValue, control, indexToCopyFrom + 1, this.ImageCache.CurrentRow);
             return valueToCopy;
         }
 
@@ -114,12 +114,12 @@ namespace Carnassial.Controls
         {
             bool checkForZero = control is DataEntryCounter;
             int imagesAffected = this.FileDatabase.CurrentlySelectedFileCount;
-            string displayValueToCopy = this.ImageCache.Current.GetValueDisplayString(control.DataLabel);
+            string displayValueToCopy = this.ImageCache.Current.GetValueDisplayString(control);
             if (this.ConfirmCopyCurrentValueToAll(displayValueToCopy, imagesAffected, checkForZero) != true)
             {
                 return;
             }
-            this.FileDatabase.UpdateFiles(this.ImageCache.Current, control.DataLabel);
+            this.FileDatabase.UpdateFiles(this.ImageCache.Current, control);
         }
 
         public void Dispose()
@@ -381,7 +381,7 @@ namespace Carnassial.Controls
 
             // update file data table and write the new DateTime to the database
             this.ImageCache.Current.SetDateTimeOffset(newDateTime);
-            dateTimePicker.ToolTip = DateTimeHandler.ToDisplayDateTimeString(newDateTime);
+            dateTimePicker.ToolTip = newDateTime.ToString(dateTimePicker.Format);
 
             List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
             this.FileDatabase.UpdateFiles(imageToUpdate);
@@ -421,7 +421,7 @@ namespace Carnassial.Controls
         protected virtual void MenuItemPropagateForward_Click(object sender, RoutedEventArgs e)
         {
             DataEntryControl control = (DataEntryControl)((MenuItem)sender).Tag;
-            this.CopyForward(control.DataLabel, control is DataEntryCounter);
+            this.CopyForward(control, control is DataEntryCounter);
         }
 
         // Whenever the text in a particular note box changes, update the particular note field in the database 

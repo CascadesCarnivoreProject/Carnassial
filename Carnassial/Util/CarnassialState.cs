@@ -1,5 +1,4 @@
-﻿using Carnassial.Database;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Windows.Input;
 
@@ -11,24 +10,30 @@ namespace Carnassial.Util
         private int keyRepeatCount;
         private KeyEventArgs mostRecentKey;
 
-        public List<ImageRow> Analysis { get; private set; }
+        public List<Dictionary<string, object>> Analysis { get; private set; }
         public byte DifferenceThreshold { get; set; } // The threshold used for calculating combined differences
         public bool FileNavigatorSliderDragging { get; set; }
         public DateTime MostRecentDragEvent { get; set; }
+        public string MostRecentFileAddFolderPath { get; set; }
         public string MouseOverCounter { get; set; }
-        public Dictionary<string, string> UndoBuffer { get; set; }
+        public UndoRedoChain UndoRedoChain { get; private set; }
 
         public CarnassialState()
         {
             this.keyRepeatCount = 0;
             this.mostRecentKey = null;
 
-            this.Analysis = new List<ImageRow>(Constant.AnalysisSlots);
+            this.Analysis = new List<Dictionary<string, object>>(Constant.AnalysisSlots);
+            for (int analysisSlot = 0; analysisSlot < Constant.AnalysisSlots; ++analysisSlot)
+            {
+                this.Analysis.Add(null);
+            }
             this.DifferenceThreshold = Constant.Images.DifferenceThresholdDefault;
             this.FileNavigatorSliderDragging = false;
             this.MostRecentDragEvent = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;
+            this.MostRecentFileAddFolderPath = null;
             this.MouseOverCounter = null;
-            this.UndoBuffer = null;
+            this.UndoRedoChain = new UndoRedoChain();
         }
 
         public int GetKeyRepeatCount(KeyEventArgs key)
@@ -45,6 +50,17 @@ namespace Carnassial.Util
             }
             this.mostRecentKey = key;
             return this.keyRepeatCount;
+        }
+
+        public void Reset()
+        {
+            for (int analysisSlot = 0; analysisSlot < this.Analysis.Count; ++analysisSlot)
+            {
+                this.Analysis[analysisSlot] = null;
+            }
+            this.FileNavigatorSliderDragging = false;
+            this.MouseOverCounter = null;
+            this.UndoRedoChain.Clear();
         }
     }
 }

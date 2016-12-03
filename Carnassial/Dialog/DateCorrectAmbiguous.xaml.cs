@@ -2,6 +2,7 @@
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -36,7 +37,6 @@ namespace Carnassial.Dialog
             if (this.FindAllAmbiguousDatesInSelectedImages() == true)
             {
                 this.Abort = false;
-                this.MoveToAmbiguousDate(null); // go to first ambiguous date
             }
             else
             {
@@ -47,12 +47,14 @@ namespace Carnassial.Dialog
             this.ambiguousDatesListIndex = 0;
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
+
+            await this.MoveToAmbiguousDateAsync(null); // go to first ambiguous date
             // If the caller invokes Show with Abort = true (i.e., count = 0), this will at least show an empty dialog.
-            this.UpdateDisplay(this.ambiguousDatesList.Count > 0);
+            await this.UpdateDisplayAsync(this.ambiguousDatesList.Count > 0);
         }
 
         // Create a list of all initial images containing ambiguous dates.
@@ -136,7 +138,7 @@ namespace Carnassial.Dialog
 
         // From the current starting range, show the next or previous ambiguous date in the list. 
         // While it tests to ensure there is one, this really should be done before this is called
-        private bool MoveToAmbiguousDate(bool? directionForward)
+        private async Task<bool> MoveToAmbiguousDateAsync(bool? directionForward)
         {
             int index;
             if (directionForward == null)
@@ -166,14 +168,14 @@ namespace Carnassial.Dialog
 
             this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
-            this.Image.Source = imageProperties.LoadBitmap(this.database.FolderPath);
+            this.Image.Source = await imageProperties.LoadBitmapAsync(this.database.FolderPath);
             this.FileName.Content = imageProperties.FileName;
             this.FileName.ToolTip = this.FileName.Content;
 
             return true;
         }
 
-        private void UpdateDisplay(bool isAmbiguousDate)
+        private async Task UpdateDisplayAsync(bool isAmbiguousDate)
         {
             // enable/disable next and previous buttons
             this.NextDate.IsEnabled = this.IsThereAnAmbiguousDate(true);
@@ -190,7 +192,7 @@ namespace Carnassial.Dialog
 
                 this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
-                this.Image.Source = imageProperties.LoadBitmap(this.database.FolderPath);
+                this.Image.Source = await imageProperties.LoadBitmapAsync(this.database.FolderPath);
                 this.FileName.Content = imageProperties.FileName;
                 this.FileName.ToolTip = this.FileName.Content;
 
@@ -286,20 +288,20 @@ namespace Carnassial.Dialog
         }
 
         // If the user clicks the next button, try to show the next ambiguous date.
-        private void NextPreviousButton_Click(object sender, RoutedEventArgs e)
+        private async void NextPreviousButton_Click(object senderAsObject, RoutedEventArgs e)
         {
-            Button direction = sender as Button;
-            bool result = this.MoveToAmbiguousDate(direction == NextDate);
-            this.UpdateDisplay(result);
+            Button sender = senderAsObject as Button;
+            bool result = await this.MoveToAmbiguousDateAsync(sender == this.NextDate);
+            await this.UpdateDisplayAsync(result);
         }
 
-        private void SwapAllButton_Click(object sender, RoutedEventArgs e)
+        private async void SwapAllButton_Click(object sender, RoutedEventArgs e)
         {
             foreach (AmbiguousDate ambDate in this.ambiguousDatesList)
             {
                 ambDate.Swapped = true;
             }
-            this.UpdateDisplay(true);
+            await this.UpdateDisplayAsync(true);
         }
 
         // A class that stores various properties for each ambiguous date found

@@ -3,9 +3,9 @@ using Carnassial.Util;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -41,27 +41,30 @@ namespace Carnassial.Dialog
             this.FeedbackGrid.Columns[1].Width = new DataGridLength(2, DataGridLengthUnitType.Star);
         }
 
-        private void StartDoneButton_Click(object sender, RoutedEventArgs e)
+        private void ReportProgress(DateTimeRereadFeedbackTuple progress)
+        {
+            ObservableCollection<DateTimeRereadFeedbackTuple> feedbackRows = (ObservableCollection<DateTimeRereadFeedbackTuple>)this.FeedbackGrid.ItemsSource;
+            feedbackRows.Add(progress);
+            this.FeedbackGrid.ScrollIntoView(this.FeedbackGrid.Items[this.FeedbackGrid.Items.Count - 1]);
+        }
+
+        private async void StartDoneButton_Click(object sender, RoutedEventArgs e)
         {
             // This list will hold key / value pairs that will be bound to the datagrid feedback, 
             // which is the way to make those pairs appear in the data grid during background worker progress updates
             ObservableCollection<DateTimeRereadFeedbackTuple> feedbackRows = new ObservableCollection<DateTimeRereadFeedbackTuple>();
             this.FeedbackGrid.ItemsSource = feedbackRows;
-            this.cancelButton.IsEnabled = false;
+            this.CancelButton.IsEnabled = false;
             this.StartDoneButton.Content = "_Done";
             this.StartDoneButton.Click -= this.StartDoneButton_Click;
             this.StartDoneButton.Click += this.DoneButton_Click;
             this.StartDoneButton.IsEnabled = false;
 
-            BackgroundWorker backgroundWorker = new BackgroundWorker()
+            IProgress<DateTimeRereadFeedbackTuple> rereadStatus = new Progress<DateTimeRereadFeedbackTuple>(this.ReportProgress);
+            DateTimeRereadFeedbackTuple rereadProgress = new DateTimeRereadFeedbackTuple("Pass 1: Examining images and videos...", "Checking if dates/time differ");
+            rereadStatus.Report(rereadProgress);
+            await Task.Run(() =>
             {
-                WorkerReportsProgress = true
-            };
-
-            backgroundWorker.DoWork += (ow, ea) =>
-            {
-                backgroundWorker.ReportProgress(0, new DateTimeRereadFeedbackTuple("Pass 1: Examining images and videos...", "Checking if dates/time differ"));
-
                 // check to see what date/times need updating
                 List<ImageRow> filesToAdjust = new List<ImageRow>();
                 int count = this.database.CurrentlySelectedFileCount;
@@ -132,18 +135,22 @@ namespace Carnassial.Dialog
                         feedbackMessage += String.Format(" , skipping due to {0}: {1}.", exception.GetType().FullName, exception.Message);
                     }
 
-                    backgroundWorker.ReportProgress(0, new DateTimeRereadFeedbackTuple(file.FileName, feedbackMessage));
                     if (fileIndex % Constant.ThrottleValues.SleepForImageRenderInterval == 0)
                     {
+                        rereadProgress.FileName = file.FileName;
+                        rereadProgress.Message = feedbackMessage;
+                        rereadStatus.Report(new DateTimeRereadFeedbackTuple(file.FileName, feedbackMessage));
                         Thread.Sleep(Constant.ThrottleValues.RenderingBackoffTime); // Put in a delay every now and then, as otherwise the UI won't update.
                     }
                 }
 
                 // Pass 2. Update each date as needed 
-                string message = String.Empty;
-                backgroundWorker.ReportProgress(0, new DateTimeRereadFeedbackTuple(String.Empty, String.Empty)); // A blank separator
-                backgroundWorker.ReportProgress(0, new DateTimeRereadFeedbackTuple("Pass 2: Updating date/times", String.Format("Updating {0} images and videos...", filesToAdjust.Count)));
-                Thread.Yield(); // Allow the UI to update.
+                rereadProgress.FileName = String.Empty;
+                rereadProgress.Message = String.Empty;
+                rereadStatus.Report(rereadProgress);  // A blank separator
+                rereadProgress.FileName = "Pass 2: Updating date/times";
+                rereadProgress.Message = String.Format("Updating {0} images and videos...", filesToAdjust.Count);
+                rereadStatus.Report(rereadProgress);
 
                 List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
                 foreach (ImageRow image in filesToAdjust)
@@ -151,18 +158,12 @@ namespace Carnassial.Dialog
                     imagesToUpdate.Add(image.GetDateTimeColumnTuples());
                 }
                 database.UpdateFiles(imagesToUpdate);  // Write the updates to the database
-                backgroundWorker.ReportProgress(0, new DateTimeRereadFeedbackTuple(null, "Done."));
-            };
-            backgroundWorker.ProgressChanged += (o, ea) =>
-            {
-                feedbackRows.Add((DateTimeRereadFeedbackTuple)ea.UserState);
-                this.FeedbackGrid.ScrollIntoView(FeedbackGrid.Items[FeedbackGrid.Items.Count - 1]);
-            };
-            backgroundWorker.RunWorkerCompleted += (o, ea) =>
-            {
-                this.StartDoneButton.IsEnabled = true;
-            };
-            backgroundWorker.RunWorkerAsync();
+                rereadProgress.FileName = String.Empty;
+                rereadProgress.Message = "Done";
+                rereadStatus.Report(rereadProgress);
+            });
+
+            this.StartDoneButton.IsEnabled = true;
         }
     }
 }

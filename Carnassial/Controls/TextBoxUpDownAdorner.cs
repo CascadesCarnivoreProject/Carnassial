@@ -22,11 +22,11 @@ namespace Carnassial.Controls
         {
             this.triangle = new StreamGeometry();
             this.triangle.FillRule = FillRule.Nonzero;
-            using (StreamGeometryContext c = this.triangle.Open())
+            using (StreamGeometryContext geometryContext = this.triangle.Open())
             {
-                c.BeginFigure(new Point(-6, 0), true /* filled */, true /* closed */);
-                c.LineTo(new Point(6, 0), true, false);
-                c.LineTo(new Point(0, 8), true, false);
+                geometryContext.BeginFigure(new Point(-6, 0), true /* filled */, true /* closed */);
+                geometryContext.LineTo(new Point(6, 0), true, false);
+                geometryContext.LineTo(new Point(0, 8), true, false);
             }
             this.triangle.Freeze();
 
@@ -45,19 +45,18 @@ namespace Carnassial.Controls
 
         private void FocusLostOrSelectionChanged(object sender, RoutedEventArgs e)
         {
-            TextBox box = (TextBox)this.AdornedElement;
-            if (box.IsFocused)
+            TextBox adornedTextBox = (TextBox)this.AdornedElement;
+            if (adornedTextBox.IsFocused && adornedTextBox.IsVisible)
             {
                 // during OnRender() GetRectFromCharacterIndex() may return infinite values so check there's a selection first
-                int selectionLength = box.SelectionLength;
-                int start = box.SelectionStart;
-                if (this.textBoxHasSelection = selectionLength > 0)
+                this.textBoxHasSelection = adornedTextBox.SelectionLength > 0;
+                if (this.textBoxHasSelection)
                 {
-                    Rect rect1 = box.GetRectFromCharacterIndex(start);
-                    Rect rect2 = box.GetRectFromCharacterIndex(start + selectionLength);
-                    this.top = rect1.Top - 2;
-                    this.bottom = rect1.Bottom + 2;
-                    this.x = (rect1.Left + rect2.Left) / 2;
+                    Rect startCharacterBounds = adornedTextBox.GetRectFromCharacterIndex(adornedTextBox.SelectionStart);
+                    Rect endCharacterBounds = adornedTextBox.GetRectFromCharacterIndex(adornedTextBox.SelectionStart + adornedTextBox.SelectionLength);
+                    this.top = startCharacterBounds.Top - 2;
+                    this.bottom = startCharacterBounds.Bottom + 2;
+                    this.x = (startCharacterBounds.Left + endCharacterBounds.Left) / 2;
                 }
             }
             else

@@ -405,7 +405,6 @@
                                             </DataGridTemplateColumn>
                                         </DataGrid.Columns>
                                     </DataGrid>
-
                                     <DockPanel Name="RowControls" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,0,10,0" >
                                         <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="1" Margin="0">
                                             <DockPanel DockPanel.Dock="Top" Margin="0,0,0,-1" >
@@ -418,9 +417,8 @@
                                                 </UniformGrid>
                                             </DockPanel>
                                         </Border>
-                                        <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center"  DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveControlButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveControlButton_Click" Margin="0,30,0,0"/>
+                                        <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center" DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveControlButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveControlButton_Click" Margin="0,30,0,0"/>
                                     </DockPanel>
-
                                     <GridSplitter Grid.Row="1" Grid.ColumnSpan="2"
                                                   Height="2" Background="DarkGray" Margin="-10,10,0,0"
                                                   VerticalAlignment="Top" 

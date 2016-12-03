@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
+using System.Windows.Data;
 
 namespace Carnassial.Dialog
 {
@@ -12,47 +12,45 @@ namespace Carnassial.Dialog
     /// This dialog box asks the user if he/she wants to delete the files (and possibly the data) of file data rows.  Files are soft deleted and the no
     /// longer available placeholder used.  Data is hard deleted.
     /// </summary>
-    public partial class DeleteImages : Window
+    public partial class DeleteFiles : Window
     {
         // these variables will hold the values of the passed in parameters
-        private bool deleteImageAndData;
+        private bool deleteFileAndData;
         private FileDatabase fileDatabase;
         private List<ImageRow> filesToDelete;
 
         /// <summary>
-        /// Ask the user if he/she wants to delete one or more images and (depending on whether deleteData is set) the data associated with those images.
+        /// Ask the user if he/she wants to delete one or more files and (depending on whether deleteData is set) the data associated with those files.
         /// Other parameters indicate various specifics of how the deletion was specified, which also determines what is displayed in the interface:
-        /// -deleteData is true when the data associated with that image should be deleted.
-        /// -useDeleteFlags is true when the user is trying to delete images with the deletion flag set, otherwise its the current image being deleted
         /// </summary>
-        public DeleteImages(FileDatabase database, List<ImageRow> imagesToDelete, bool deleteImageAndData, bool deleteCurrentImageOnly, Window owner)
+        public DeleteFiles(FileDatabase database, List<ImageRow> filesToDelete, bool deleteFileAndData, bool deleteCurrentFileOnly, Window owner)
         {
             this.InitializeComponent();
-            this.deleteImageAndData = deleteImageAndData;
+            this.deleteFileAndData = deleteFileAndData;
             this.fileDatabase = database;
-            this.filesToDelete = imagesToDelete;
+            this.filesToDelete = filesToDelete;
             this.Owner = owner;
+            this.ThumbnailList.ItemsSource = this.filesToDelete;
+            this.ThumbnailList.View = this.GetFileGridView();
 
-            if (this.deleteImageAndData)
+            if (this.deleteFileAndData)
             {
                 this.OkButton.IsEnabled = false;
-                this.chkboxConfirm.Visibility = Visibility.Visible;
             }
             else
             {
                 this.OkButton.IsEnabled = true;
-                this.chkboxConfirm.Visibility = Visibility.Collapsed;
+                this.Confirm.Visibility = Visibility.Collapsed;
             }
-            this.GridGallery.RowDefinitions.Clear();
 
-            // Construct the dialog's text based on the state of the flags
-            if (deleteCurrentImageOnly)
+            // construct the dialog's text based on the state of the flags
+            if (deleteCurrentFileOnly)
             {
-                string imageOrVideo = imagesToDelete[0].IsVideo ? "video" : "image";
-                if (deleteImageAndData == false)
+                string imageOrVideo = filesToDelete[0].IsVideo ? "video" : "image";
+                if (deleteFileAndData == false)
                 {
                     // Case 1: Delete the current image, but not its data.
-                    this.Message.Title = String.Format("Delete the current {0} but not its data.", imageOrVideo);
+                    this.Message.Title = String.Format("Delete the current {0} but not its data?", imageOrVideo);
                     this.Message.What = String.Format("Deletes the current {0} (shown below) but not its data.", imageOrVideo);
                     this.Message.Result = String.Format("\u2022 The deleted {0} will be backed up in a sub-folder named {1}.{2}", imageOrVideo, Constant.File.DeletedFilesFolder, Environment.NewLine);
                     this.Message.Result += String.Format("\u2022 A placeholder {0} will be shown when you try to view a deleted {0}.", imageOrVideo);
@@ -72,7 +70,7 @@ namespace Carnassial.Dialog
             else
             {
                 int numberOfFilesToDelete = this.filesToDelete.Count;
-                this.Message.Title = "Delete " + numberOfFilesToDelete.ToString() + " images and videos marked for deletion in this selection";
+                this.Message.Title = "Delete " + numberOfFilesToDelete.ToString() + " images and videos marked for deletion in this selection?";
                 this.Message.Result = String.Empty;
                 if (numberOfFilesToDelete > Constant.Images.LargeNumberOfDeletedImages)
                 {
@@ -80,7 +78,7 @@ namespace Carnassial.Dialog
                 }
                 this.Message.Result += String.Format("\u2022 The deleted files will be backed up in a sub-folder named {0}.{1}", Constant.File.DeletedFilesFolder, Environment.NewLine);
 
-                if (deleteImageAndData == false)
+                if (deleteFileAndData == false)
                 {
                     // Case 3: Delete files which the delete flag set but not their data
                     this.Message.What = "Deletes " + numberOfFilesToDelete.ToString() + " images and videos marked for deletion (shown below) in this selection, but not the data entered for them.";
@@ -98,40 +96,6 @@ namespace Carnassial.Dialog
                 }
             }
             this.Title = this.Message.Title;
-
-            // load thumbnails of images which will be deleted
-            Mouse.OverrideCursor = Cursors.Wait;
-            this.GridGallery.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(1, GridUnitType.Auto) });
-            this.GridGallery.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(1, GridUnitType.Auto) });
-            int columnIndex = 0;
-            int rowIndex = 0;
-            foreach (ImageRow imageProperties in imagesToDelete)
-            {
-                Label imageLabel = new Label();
-                imageLabel.Content = imageProperties.FileName;
-                imageLabel.Height = 25;
-                imageLabel.VerticalAlignment = VerticalAlignment.Top;
-
-                Image imageControl = new Image();
-                imageControl.Source = imageProperties.LoadBitmap(database.FolderPath, Constant.Images.ThumbnailWidth);
-
-                Grid.SetRow(imageLabel, rowIndex);
-                Grid.SetRow(imageControl, rowIndex + 1);
-                Grid.SetColumn(imageLabel, columnIndex);
-                Grid.SetColumn(imageControl, columnIndex);
-                this.GridGallery.Children.Add(imageLabel);
-                this.GridGallery.Children.Add(imageControl);
-                ++columnIndex;
-                if (columnIndex == 5)
-                {
-                    // A new row is started every five columns
-                    columnIndex = 0;
-                    rowIndex += 2;
-                }
-            }
-            Mouse.OverrideCursor = null;
-
-            this.scroller.CanContentScroll = true;
         }
 
         /// <summary>
@@ -144,12 +108,31 @@ namespace Carnassial.Dialog
 
         private void ConfirmBox_Checked(object sender, RoutedEventArgs e)
         {
-            this.OkButton.IsEnabled = (bool)this.chkboxConfirm.IsChecked;
+            this.OkButton.IsEnabled = (bool)this.Confirm.IsChecked;
         }
 
-        /// <summary>
-        /// Ok button selected
-        /// </summary>
+        public GridView GetFileGridView()
+        {
+            List<string> dataLabels = this.fileDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
+            GridView gridView = new GridView();
+            foreach (string dataLabel in dataLabels)
+            {
+                GridViewColumn column = new GridViewColumn();
+                if (dataLabel == Constant.DatabaseColumn.File)
+                {
+                    column.DisplayMemberBinding = new Binding("FileName");
+                    column.Header = "FileName";
+                }
+                else
+                {
+                    column.DisplayMemberBinding = new Binding(dataLabel);
+                    column.Header = dataLabel;
+                }
+                gridView.Columns.Add(column);
+            }
+            return gridView;
+        }
+
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = true;

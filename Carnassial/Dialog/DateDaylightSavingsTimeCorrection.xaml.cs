@@ -12,27 +12,29 @@ namespace Carnassial.Dialog
     /// </summary>
     public partial class DateDaylightSavingsTimeCorrection : Window
     {
-        private int currentFileIndex;
-        private FileDatabase database;
+        private readonly int currentFileIndex;
+        private readonly FileDatabase database;
+        private readonly ImageRow fileToDisplay;
 
         public DateDaylightSavingsTimeCorrection(FileDatabase database, FileTableEnumerator fileEnumerator, Window owner)
         {
             this.InitializeComponent();
             this.currentFileIndex = fileEnumerator.CurrentRow;
             this.database = database;
+            this.fileToDisplay = fileEnumerator.Current;
             this.Owner = owner;
 
-            // Get the original date and display it
-            this.OriginalDate.Content = fileEnumerator.Current.GetDisplayDateTime();
-
-            this.Image.Source = fileEnumerator.Current.LoadBitmap(this.database.FolderPath);
-            this.FileName.Content = fileEnumerator.Current.FileName;
+            // display file properties
+            this.FileName.Content = this.fileToDisplay.FileName;
+            this.OriginalDate.Content = this.fileToDisplay.GetDisplayDateTime();
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
+
+            this.Image.Source = await this.fileToDisplay.LoadBitmapAsync(this.database.FolderPath);
         }
 
         // When the user clicks ok, add/subtract an hour propagated forwards/backwards as specified

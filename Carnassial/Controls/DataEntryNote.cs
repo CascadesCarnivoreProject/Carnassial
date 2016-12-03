@@ -50,11 +50,16 @@ namespace Carnassial.Controls
             }
         }
 
-        public override void SetContentAndTooltip(string value)
+        public override void SetContentAndTooltip(string valueAsString)
         {
-            this.ContentChanged = this.ContentControl.Text != value;
-            this.ContentControl.Text = value;
-            this.ContentControl.ToolTip = value;
+            this.ContentChanged = this.ContentControl.Text != valueAsString;
+            this.ContentControl.Text = valueAsString;
+            this.ContentControl.ToolTip = valueAsString;
+        }
+
+        public override void SetValue(object valueAsObject)
+        {
+            this.SetContentAndTooltip((string)valueAsObject);
         }
     }
 }
