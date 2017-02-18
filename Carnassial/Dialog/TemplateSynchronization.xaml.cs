@@ -21,12 +21,13 @@ namespace Carnassial.Dialog
 
         private void ExitProgram_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = true;
+            // if the user dismisses the dialog by clicking its close button neither button callback is invoked and DialogResult retains its default value of false
+            this.DialogResult = false;
         }
 
         private void UseOldTemplate_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = false;
+            this.DialogResult = true;
         }
     }
 }

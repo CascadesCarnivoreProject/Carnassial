@@ -8,60 +8,57 @@
     <Window.Resources>
         <ResourceDictionary>
             <ToolTip x:Key="DefaultValueToolTip">
-                <TextBlock>An optional default data value that will be displayed to the analyst</TextBlock>
+                <TextBlock>The value the field will be set to by default.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="LabelToolTip">
-                <TextBlock>The text describing this field as shown in the user interface</TextBlock>
+                <TextBlock>The text describing this field as shown in the user interface.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="DataLabelToolTip">
                 <TextBlock>The text describing this field as written in the output file. Will be the same as the Label if its left empty.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TooltipToolTip">
-                <TextBlock>The help text describing this field as shown in the user interface</TextBlock>
+                <TextBlock>The help text describing this field as shown in the user interface.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="WidthToolTip">
-                <TextBlock>The width of the data entry field as shown in the user interface</TextBlock>
+                <TextBlock>The width of the data entry field as shown in the user interface.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="CopyableToolTip">
-                <TextBlock>Whether the data value from the previous will be copied to the current file if the user selects the ‘Copy’ button in Carnassial</TextBlock>
+                <TextBlock>Whether the data value from the previous will be copied to the current file if the user selects the ‘Copy’ button in Carnassial.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="VisibleToolTip">
-                <TextBlock>Whether this item will be displayed in the user interface</TextBlock>
+                <TextBlock>Whether this item will be displayed in the user interface.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeNoteToolTip">
-                <TextBlock>The Note item accepts free-form text</TextBlock>
+                <TextBlock>A note field accepts free-form text.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeCounterToolTip">
-                <TextBlock>The Count item provides a point and click interface for counting entities in an image or video</TextBlock>
+                <TextBlock>A count field provides a point and click interface for counting entities in an image or video.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeFixedChoiceToolTip">
-                <TextBlock>The Choice item provides a drop down menu of possible choices that can be entered. Edit the list to create these choices</TextBlock>
+                <TextBlock>A choice field provides a drop down menu of possible choices that can be entered. Edit the list to create these choices.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeFlagToolTip">
-                <TextBlock>The Flag item can be toggled between true and false</TextBlock>
+                <TextBlock>A flag field can be toggled between true and false.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeFileToolTip">
-                <TextBlock>The File Item is filled in automatically by the system with the file name of the image or video</TextBlock>
+                <TextBlock>File is filled in automatically by the system with the file name of the image or video.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeFolderToolTip">
-                <TextBlock>The Folder Item is filled in automatically by the system</TextBlock>
+                <TextBlock>Folder is filled in automatically by the system.</TextBlock>
             </ToolTip>
-            <ToolTip x:Key="TypeDateToolTip">
-                <TextBlock>The Date item is filled in automatically by the system but will still be editable if changes are required</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="TypeTimeToolTip">
-                <TextBlock>The Time item is filled in automatically by the system but will still be editable if changes are required</TextBlock>
+            <ToolTip x:Key="TypeDateTimeToolTip">
+                <TextBlock>Date and time are filled in automatically by the system but will still be editable if changes are required.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="TypeImageQualityToolTip">
-                <TextBlock>The Image Quality item is filled in automatically by the system</TextBlock>
+                <TextBlock>Image quality is filled in automatically by the system.</TextBlock>
             </ToolTip>
-            <ToolTip x:Key="TypeDeletionFlagToolTip">
-                <TextBlock>The Deleted flag is a standard control used to mark files for deletion</TextBlock>
+            <ToolTip x:Key="TypeDeleteFlagToolTip">
+                <TextBlock>The deleted flag is a standard control used to mark files for deletion.</TextBlock>
             </ToolTip>
             <ToolTip x:Key="ListFixedChoiceToolTip">
                 <TextBlock>A list of items displayed as a menu of choices. Type in new items; right click on an item to edit, move or delete it.</TextBlock>
             </ToolTip>
-            <local:CellTextBlockConverter x:Key="CellTextBlockConverter" />
+            <local:TrimmingConverter x:Key="TrimmingConverter" />
         </ResourceDictionary>
     </Window.Resources>
     <Grid>
@@ -81,7 +78,7 @@
         <!-- Menus -->
         <Menu Grid.Row="0">
             <!-- File Menu -->
-            <MenuItem Name="FileMenu" Header="_File" >
+            <MenuItem Name="FileMenu" Header="_File">
                 <MenuItem Name="MenuFileNewTemplate" Header="_New..." Click="MenuFileNewTemplate_Click" ToolTip="Create a new data template file.">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/NewFile_16x.png" />
@@ -111,7 +108,7 @@
             </MenuItem>
 
             <!-- Help Menu -->
-            <MenuItem Header="_Help" >
+            <MenuItem Header="_Help">
                 <MenuItem Header="_About..." Click="MenuHelpAbout_Click" ToolTip="Displays version information about this program and how to contact the developers."/>
             </MenuItem>
         </Menu>
@@ -248,7 +245,7 @@
                                               PreviewTextInput="TemplateDataGrid_PreviewTextInput" 
                                               LayoutUpdated="TemplateDataGrid_LayoutUpdated"
                                               SelectionChanged="TemplateDataGrid_SelectionChanged" 
-                                              ItemsSource="{Binding}" Margin="0,0,10,0" SelectionMode="Single"
+                                              Margin="0,0,10,0" SelectionMode="Single"
                                               ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}">
                                         <DataGrid.Resources>
                                             <Style x:Key="VerticalGridHeaderStyle" TargetType="DataGridColumnHeader">
@@ -257,10 +254,10 @@
                                             </Style>
                                         </DataGrid.Resources>
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="ID" CanUserSort="False" IsReadOnly="True" Binding="{Binding Path=Id, Converter={StaticResource CellTextBlockConverter}}" Visibility="Collapsed" />
-                                            <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
-                                            <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
-                                            <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False">
+                                            <DataGridTextColumn Header="ID" IsReadOnly="True" Binding="{Binding Path=Id, Converter={StaticResource TrimmingConverter}}" Visibility="Collapsed" CanUserSort="False" />
+                                            <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder, Converter={StaticResource TrimmingConverter}}" IsReadOnly="True" Visibility="Collapsed" CanUserSort="False" />
+                                            <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder, Converter={StaticResource TrimmingConverter}}" IsReadOnly="True" Visibility="Collapsed" CanUserSort="False" />
+                                            <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="{x:Type TextBlock}">
                                                         <Style.Triggers>
@@ -282,23 +279,20 @@
                                                             <DataTrigger Binding="{Binding Type}" Value="Folder">
                                                                 <Setter Property="ToolTip" Value="{StaticResource TypeFolderToolTip}"/>
                                                             </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Type}" Value="Date">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeDateToolTip}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Type}" Value="Time">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeTimeToolTip}"/>
+                                                            <DataTrigger Binding="{Binding Type}" Value="DateTime">
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeDateTimeToolTip}"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Type}" Value="ImageQuality">
                                                                 <Setter Property="ToolTip" Value="{StaticResource TypeImageQualityToolTip}"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeDeletionFlagToolTip}"/>
+                                                                <Setter Property="ToolTip" Value="{StaticResource TypeDeleteFlagToolTip}"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </DataGridTextColumn.ElementStyle>
                                             </DataGridTextColumn>
-                                            <DataGridTextColumn MinWidth="40"  Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
+                                            <DataGridTextColumn MinWidth="40" Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="{x:Type TextBlock}">
                                                         <Setter Property="ToolTip" Value="{StaticResource DefaultValueToolTip}"/>
@@ -310,42 +304,42 @@
                                                     </Style>
                                                 </DataGridTextColumn.ElementStyle>
                                             </DataGridTextColumn>
-                                            <DataGridTextColumn MinWidth="40"  Header="Label" Binding="{Binding Path=Label, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
+                                            <DataGridTextColumn MinWidth="40" Header="Label" Binding="{Binding Path=Label, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="{x:Type TextBlock}">
                                                         <Setter Property="ToolTip" Value="{StaticResource LabelToolTip}"/>
                                                     </Style>
                                                 </DataGridTextColumn.ElementStyle>
                                             </DataGridTextColumn>
-                                            <DataGridTextColumn MinWidth="40"   Header="Data Label"  Binding="{Binding Path=DataLabel,  Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False" >
+                                            <DataGridTextColumn MinWidth="40" Header="Data Label" Binding="{Binding Path=DataLabel, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="{x:Type TextBlock}">
                                                         <Setter Property="ToolTip" Value="{StaticResource DataLabelToolTip}"/>
                                                     </Style>
                                                 </DataGridTextColumn.ElementStyle>
                                             </DataGridTextColumn>
-                                            <DataGridTextColumn MinWidth="50"  Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource CellTextBlockConverter}}" Width="*" CanUserSort="False">
+                                            <DataGridTextColumn MinWidth="50" Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource TrimmingConverter}}" Width="*" CanUserSort="False">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="{x:Type TextBlock}">
                                                         <Setter Property="ToolTip" Value="{StaticResource TooltipToolTip}"/>
                                                     </Style>
                                                 </DataGridTextColumn.ElementStyle>
                                             </DataGridTextColumn>
-                                            <DataGridTextColumn MinWidth="40"  Header="Width" Binding="{Binding Path=Width, Converter={StaticResource CellTextBlockConverter}}" CanUserSort="False">
+                                            <DataGridTextColumn MinWidth="40" Header="Width" Binding="{Binding Path=Width, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="{x:Type TextBlock}">
                                                         <Setter Property="ToolTip" Value="{StaticResource WidthToolTip}"/>
                                                     </Style>
                                                 </DataGridTextColumn.ElementStyle>
                                             </DataGridTextColumn>
-                                            <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" SortMemberPath="Include" CanUserSort="False" Binding="{Binding Path=Copyable, UpdateSourceTrigger=PropertyChanged}">
+                                            <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" Binding="{Binding Path=Copyable}" CanUserSort="False">
                                                 <DataGridCheckBoxColumn.CellStyle>
                                                     <Style TargetType="{x:Type DataGridCell}">
                                                         <Setter Property="ToolTip" Value="{StaticResource CopyableToolTip}"/>
                                                     </Style>
                                                 </DataGridCheckBoxColumn.CellStyle>
                                             </DataGridCheckBoxColumn>
-                                            <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" SortMemberPath="Include" CanUserSort="False" Binding="{Binding Path=Visible, UpdateSourceTrigger=PropertyChanged}">
+                                            <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" Binding="{Binding Path=Visible}" CanUserSort="False">
                                                 <DataGridCheckBoxColumn.CellStyle>
                                                     <Style TargetType="{x:Type DataGridCell}">
                                                         <Setter Property="ToolTip" Value="{StaticResource VisibleToolTip}"/>
@@ -353,11 +347,11 @@
                                                 </DataGridCheckBoxColumn.CellStyle>
                                             </DataGridCheckBoxColumn>
 
-                                            <DataGridTemplateColumn MinWidth="40" Header="List" Width="80"  CanUserSort="False" >
+                                            <DataGridTemplateColumn MinWidth="40" Header="List" Width="80" CanUserSort="False">
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
                                                         <StackPanel>
-                                                            <Button Tag="{Binding Path=ControlOrder}" Click="ChoiceListButton_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Margin="1"  Content="Define List" >
+                                                            <Button Tag="{Binding Path=ControlOrder}" Click="DefineList_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Margin="1" Content="Define List">
                                                                 <Button.Style>
                                                                     <Style TargetType="{x:Type Button}">
                                                                         <Style.Triggers>
@@ -405,9 +399,9 @@
                                             </DataGridTemplateColumn>
                                         </DataGrid.Columns>
                                     </DataGrid>
-                                    <DockPanel Name="RowControls" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,0,10,0" >
+                                    <DockPanel Name="RowControls" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,0,10,0">
                                         <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="1" Margin="0">
-                                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,-1" >
+                                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,-1">
                                                 <TextBlock Margin="0,0,0,5" DockPanel.Dock="Top" FontSize="14" HorizontalAlignment="Center"><Run Text="Add:"/></TextBlock>
                                                 <UniformGrid Margin="0,0,0,0" Rows="4" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
                                                     <Button Content="Count"  Margin="0,0,0,2.5" Tag="Counter" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton"/>
@@ -453,7 +447,7 @@
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
-                                    <Border Grid.Row="0" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10" >
+                                    <Border Grid.Row="0" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10">
                                         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                                             <WrapPanel x:Name="ControlsPanel" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="ControlsPanel_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="ControlsPanel_PreviewMouseLeftButtonUp" PreviewMouseMove="OnPreviewMouseMove"
                                                        DragEnter="ControlsPanel_DragEnter" Drop="ControlsPanel_DragDrop" />

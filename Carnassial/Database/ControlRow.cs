@@ -107,6 +107,31 @@ namespace Carnassial.Database
             this.List = String.Join("|", choices);
         }
 
+        public void SetValueFromDatabaseString(string dataLabel, string value)
+        {
+            switch (dataLabel)
+            {
+                case Constant.Control.ControlOrder:
+                    this.ControlOrder = Int32.Parse(value);
+                    break;
+                case Constant.Control.Copyable:
+                    this.Copyable = Boolean.Parse(value);
+                    break;
+                case Constant.Control.SpreadsheetOrder:
+                    this.SpreadsheetOrder = Int32.Parse(value);
+                    break;
+                case Constant.Control.Visible:
+                    this.Visible = Boolean.Parse(value);
+                    break;
+                case Constant.Control.Width:
+                    this.Width = Int32.Parse(value);
+                    break;
+                default:
+                    this.Row.SetField(dataLabel, value);
+                    break;
+            }
+        }
+
         public bool Synchronize(ControlRow other)
         {
             bool synchronizationMadeChanges = false;

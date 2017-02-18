@@ -143,6 +143,15 @@ namespace Carnassial.Database
             return Path.Combine(rootFolderPath, this.RelativePath, this.FileName);
         }
 
+        public string GetRelativePath()
+        {
+            if (String.IsNullOrWhiteSpace(this.RelativePath))
+            {
+                return this.FileName;
+            }
+            return Path.Combine(this.RelativePath, this.FileName);
+        }
+
         public object GetValue(string dataLabel)
         {
             switch (dataLabel)

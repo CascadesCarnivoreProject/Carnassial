@@ -18,6 +18,8 @@ namespace Carnassial.Database
         private bool disposed;
         private DataRowChangeEventHandler onFileDataTableRowChanged;
 
+        public List<string> ControlSynchronizationIssues { get; private set; }
+
         public CustomSelection CustomSelection { get; private set; }
 
         /// <summary>Gets the file name of the database on disk.</summary>
@@ -39,8 +41,6 @@ namespace Carnassial.Database
         public DataTableBackedList<MarkerRow> Markers { get; private set; }
 
         public bool OrderFilesByDateTime { get; set; }
-
-        public List<string> ControlSynchronizationIssues { get; private set; }
 
         private FileDatabase(string filePath)
             : base(filePath)
@@ -87,7 +87,10 @@ namespace Carnassial.Database
             fileDatabase.CustomSelection = new CustomSelection(fileDatabase.Controls, customSelectionTermCombiningOperator);
             fileDatabase.OrderFilesByDateTime = orderFilesByDate;
             fileDatabase.PopulateDataLabelMaps();
-            return true;
+
+            // indicate failure if there are synchronization issues as the caller needs to determine if the database can be used anyway
+            // This is different semantics from OnExistingDatabaseOpened().
+            return fileDatabase.ControlSynchronizationIssues.Count == 0;
         }
 
         /// <summary>Gets the number of files currently in the files table.</summary>
@@ -209,6 +212,10 @@ namespace Carnassial.Database
                     ColumnTuplesWithWhere fileUpdate = new ColumnTuplesWithWhere(new List<ColumnTuple>() { relativePath }, file.ID);
                     filesToUpdate.Add(fileUpdate);
                 }
+                else
+                {
+                    immovableFiles.Add(file.GetRelativePath());
+                }
             }
 
             this.UpdateFiles(filesToUpdate);
@@ -217,7 +224,7 @@ namespace Carnassial.Database
 
         /// <summary>
         /// Make an empty Data Table based on the information in the Template Table.
-        /// Assumes that the database has already been opened and that the Template Table is loaded, where the DataLabel always has a valid value.
+        /// Assumes that the database has already been opened and that the Template Table is loaded, where the data label always has a valid value.
         /// Then create both the ImageSet table and the Markers table
         /// </summary>
         protected override void OnDatabaseCreated(TemplateDatabase templateDatabase)
@@ -293,12 +300,12 @@ namespace Carnassial.Database
             List<string> dataLabelsInTemplateButNotFileDatabase = templateDataLabels.Except(dataLabels).ToList();
             foreach (string dataLabel in dataLabelsInTemplateButNotFileDatabase)
             {
-                this.ControlSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the template, but nothing matches that in the file database." + Environment.NewLine);
+                this.ControlSynchronizationIssues.Add("- A field with data label '" + dataLabel + "' was found in the template, but nothing matches that in the file database." + Environment.NewLine);
             }
             List<string> dataLabelsInIFileButNotTemplateDatabase = dataLabels.Except(templateDataLabels).ToList();
             foreach (string dataLabel in dataLabelsInIFileButNotTemplateDatabase)
             {
-                this.ControlSynchronizationIssues.Add("- A field with the DataLabel '" + dataLabel + "' was found in the file database, but nothing matches that in the template." + Environment.NewLine);
+                this.ControlSynchronizationIssues.Add("- A field with data label '" + dataLabel + "' was found in the file database, but nothing matches that in the template." + Environment.NewLine);
             }
 
             if (this.ControlSynchronizationIssues.Count == 0)
@@ -310,15 +317,18 @@ namespace Carnassial.Database
 
                     if (fileDatabaseControl.Type != templateControl.Type)
                     {
-                        this.ControlSynchronizationIssues.Add(String.Format("- The field with DataLabel '{0}' is of type '{1}' in the image data file but of type '{2}' in the template.{3}", dataLabel, fileDatabaseControl.Type, templateControl.Type, Environment.NewLine));
+                        this.ControlSynchronizationIssues.Add(String.Format("- Field with data label '{0}' is of type '{1}' in the file database but of type '{2}' in the template.{3}", dataLabel, fileDatabaseControl.Type, templateControl.Type, Environment.NewLine));
                     }
 
-                    List<string> fileDatabaseChoices = fileDatabaseControl.GetChoices();
-                    List<string> templateChoices = templateControl.GetChoices();
-                    List<string> choiceValuesRemovedInTemplate = fileDatabaseChoices.Except(templateChoices).ToList();
-                    foreach (string removedValue in choiceValuesRemovedInTemplate)
+                    if (fileDatabaseControl.Type == Constant.Control.Choice)
                     {
-                        this.ControlSynchronizationIssues.Add(String.Format("- The choice with DataLabel '{0}' allows the value of '{1}' in the image data file but not in the template.{2}", dataLabel, removedValue, Environment.NewLine));
+                        List<string> fileDatabaseChoices = fileDatabaseControl.GetChoices();
+                        List<string> templateChoices = templateControl.GetChoices();
+                        List<string> choiceValuesRemovedInTemplate = fileDatabaseChoices.Except(templateChoices).ToList();
+                        foreach (string removedValue in choiceValuesRemovedInTemplate)
+                        {
+                            this.ControlSynchronizationIssues.Add(String.Format("- Choice with data label '{0}' allows the value '{1}' in the file database but not in the template.{2}", dataLabel, removedValue, Environment.NewLine));
+                        }
                     }
                 }
             }
@@ -337,7 +347,8 @@ namespace Carnassial.Database
                 }
             }
 
-            return this.ControlSynchronizationIssues.Count == 0;
+            // return true if there are synchronization issues as the database was still opened successfully
+            return true;
         }
 
         /// <summary>

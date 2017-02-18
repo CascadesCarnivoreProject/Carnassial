@@ -146,6 +146,14 @@ namespace Carnassial.Controls
             this.disposed = true;
         }
 
+        public void IncrementOrResetCounter(DataEntryCounter counter)
+        {
+            this.IsProgrammaticControlUpdate = true;
+            counter.IncrementOrReset();
+            this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, counter.DataLabel, counter.Content);
+            this.IsProgrammaticControlUpdate = false;
+        }
+
         public bool IsCopyForwardPossible(DataEntryControl control)
         {
             if (this.ImageCache.Current == null || control.Copyable == false)
@@ -317,9 +325,9 @@ namespace Carnassial.Controls
             text = text.Trim();
             MessageBox messageBox = new MessageBox("Please confirm 'Propagate to Here' for this field.", Application.Current.MainWindow, MessageBoxButton.YesNo);
             messageBox.Message.StatusImage = MessageBoxImage.Question;
-            messageBox.Message.What = "Propagate to here is not undoabl, and can overwrite existing values.";
+            messageBox.Message.What = "Propagate to here is not undoable and can overwrite existing values.";
             messageBox.Message.Reason = "\u2022 The last non-empty value '" + text + "' was seen " + imagesAffected.ToString() + " files back." + Environment.NewLine;
-            messageBox.Message.Reason += "\u2022 That field's value will be copied across all files between that file and this one in the selection";
+            messageBox.Message.Reason += "\u2022 That field's value will be copied to all files between that file and this one in the selection";
             messageBox.Message.Result = "If you select yes: " + Environment.NewLine;
             messageBox.Message.Result = "\u2022 " + imagesAffected.ToString() + " files will be affected.";
             return messageBox.ShowDialog();
@@ -498,6 +506,21 @@ namespace Carnassial.Controls
             {
                 throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.GetType().Name));
             }
+        }
+
+        public bool TryDecrementOrResetCounter(DataEntryCounter counter)
+        {
+            this.IsProgrammaticControlUpdate = true;
+            bool counterValueChanged = counter.TryDecrementOrReset();
+            if (counterValueChanged)
+            {
+                // don't bother updating if the counter hasn't changed
+                // Update the datatable and database with the new counter values.
+                this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, counter.DataLabel, counter.Content);
+            }
+            this.IsProgrammaticControlUpdate = false;
+
+            return counterValueChanged;
         }
 
         private void UtcOffsetControl_ValueChanged(TimeSpanPicker utcOffsetPicker, TimeSpan newTimeSpan)

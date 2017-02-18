@@ -1,5 +1,6 @@
 ﻿using Carnassial.Database;
 using System;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -122,6 +123,7 @@ namespace Carnassial.Images
         /// Find the percentage of pixels whose brightness is below the threshold and classify image accordingly.
         /// </summary>
         /// <returns>Dark if the specified ratio is exceeded, Ok otherwise.</returns>
+        [HandleProcessCorruptedStateExceptions]
         public static unsafe FileSelection IsDark(this WriteableBitmap image, int darkPixelThreshold, double darkPixelRatio, out double darkPixelFraction, out bool isColor)
         {
             bool bgrPixels;
@@ -149,61 +151,68 @@ namespace Carnassial.Images
             int countedPixels = 0;
             int darkPixels = 0;
             int uncoloredPixels = 0;
-            for (int pixel = 0; pixel < totalPixels; pixel += pixelStride, currentPixel += pixelSizeInBytes * pixelStride)
+            try
             {
-                // get pixel
-                byte pixel0 = *currentPixel;
-                byte pixel1 = *(currentPixel + 1);
-                byte pixel2 = *(currentPixel + 2);
-
-                // The numbers below convert a particular color to its greyscale equivalent, and then checked against the darkPixelThreshold
-                // Colors are not weighted equally. Since pure green is lighter than pure red and pure blue, it has a higher weight. 
-                // Pure blue is the darkest of the three, so it receives the least weight.
-                int humanPercievedLuminosity;
-                if (bgrPixels)
+                for (int pixel = 0; pixel < totalPixels; pixel += pixelStride, currentPixel += pixelSizeInBytes * pixelStride)
                 {
-                    ////                                     red               green            blue
-                    humanPercievedLuminosity = (int)(0.299 * pixel2 + 0.5876 * pixel1 + 0.114 * pixel0 + 0.5);
-                }
-                else
-                {
-                    ////                                     red               green            blue
-                    humanPercievedLuminosity = (int)(0.299 * pixel0 + 0.5876 * pixel1 + 0.114 * pixel2 + 0.5);
-                }
-                if (humanPercievedLuminosity <= darkPixelThreshold)
-                {
-                    ++darkPixels;
+                    // get pixel
+                    byte pixel0 = *currentPixel;
+                    byte pixel1 = *(currentPixel + 1);
+                    byte pixel2 = *(currentPixel + 2);
+
+                    // The numbers below convert a particular color to its greyscale equivalent, and then checked against the darkPixelThreshold
+                    // Colors are not weighted equally. Since pure green is lighter than pure red and pure blue, it has a higher weight. 
+                    // Pure blue is the darkest of the three, so it receives the least weight.
+                    int humanPercievedLuminosity;
+                    if (bgrPixels)
+                    {
+                        ////                                     red               green            blue
+                        humanPercievedLuminosity = (int)(0.299 * pixel2 + 0.5876 * pixel1 + 0.114 * pixel0 + 0.5);
+                    }
+                    else
+                    {
+                        ////                                     red               green            blue
+                        humanPercievedLuminosity = (int)(0.299 * pixel0 + 0.5876 * pixel1 + 0.114 * pixel2 + 0.5);
+                    }
+                    if (humanPercievedLuminosity <= darkPixelThreshold)
+                    {
+                        ++darkPixels;
+                    }
+
+                    // Check if the pixel is a grey scale vs. color pixel, using a heuristic. 
+                    // In greyscale r = g = b but some cameras have a bit of color in night time images, so allow a tolerance.
+                    int totalColoration = Math.Abs(pixel2 - pixel1) + Math.Abs(pixel1 - pixel0) + Math.Abs(pixel0 - pixel2);
+                    if (totalColoration <= Constant.Images.GreyScalePixelThreshold)
+                    {
+                        ++uncoloredPixels;
+                    }
+
+                    // update other loop variables
+                    ++countedPixels;
                 }
 
-                // Check if the pixel is a grey scale vs. color pixel, using a heuristic. 
-                // In greyscale r = g = b but some cameras have a bit of color in night time images, so allow a tolerance.
-                int totalColoration = Math.Abs(pixel2 - pixel1) + Math.Abs(pixel1 - pixel0) + Math.Abs(pixel0 - pixel2);
-                if (totalColoration <= Constant.Images.GreyScalePixelThreshold)
+                // images with sufficient color are never considered to be dark
+                double uncoloredPixelFraction = 1.0 * uncoloredPixels / countedPixels;
+                if (uncoloredPixelFraction < Constant.Images.GreyScaleImageThreshold)
                 {
-                    ++uncoloredPixels;
+                    darkPixelFraction = 1.0 - uncoloredPixelFraction;
+                    isColor = true;
+                    return FileSelection.Ok;
                 }
 
-                // update other loop variables
-                ++countedPixels;
-            }
-
-            // images with sufficient color are never considered to be dark
-            double uncoloredPixelFraction = 1.0 * uncoloredPixels / countedPixels;
-            if (uncoloredPixelFraction < Constant.Images.GreyScaleImageThreshold)
-            {
-                darkPixelFraction = 1.0 - uncoloredPixelFraction;
-                isColor = true;
+                // if a sufficient fraction of pixels in grey scale (uncolored) images are higher than the threshold they're dark
+                darkPixelFraction = 1.0 * darkPixels / countedPixels;
+                isColor = false;
+                if (darkPixelFraction >= darkPixelRatio)
+                {
+                    return FileSelection.Dark;
+                }
                 return FileSelection.Ok;
             }
-
-            // if a sufficient fraction of pixels in grey scale (uncolored) images are higher than the threshold they're dark
-            darkPixelFraction = 1.0 * darkPixels / countedPixels;
-            isColor = false;
-            if (darkPixelFraction >= darkPixelRatio)
+            catch (AccessViolationException av)
             {
-                return FileSelection.Dark;
+                throw new SystemException(String.Format("Fatal fault in dark calcuation at pixel 0x{0:x8} from 0x{1:x8} on {2}x{3}@{4} ({5} counted, {6} dark, {7} uncolored).", (long)currentPixel, (long)image.BackBuffer.ToPointer(), image.PixelHeight, image.PixelWidth, image.Format.BitsPerPixel, countedPixels, darkPixels, uncoloredPixels), av);
             }
-            return FileSelection.Ok;
         }
 
         // checks whether the image is completely black

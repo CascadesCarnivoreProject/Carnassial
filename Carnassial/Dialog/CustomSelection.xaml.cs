@@ -79,7 +79,7 @@ namespace Carnassial.Dialog
                 controlLabel.Unchecked += this.Select_CheckedOrUnchecked;
                 Grid.SetRow(controlLabel, gridRowIndex);
                 Grid.SetColumn(controlLabel, CustomSelection.LabelColumn);
-                SearchTerms.Children.Add(controlLabel);
+                this.SearchTerms.Children.Add(controlLabel);
 
                 // The operators allowed for each search term type
                 string controlType = searchTerm.ControlType;

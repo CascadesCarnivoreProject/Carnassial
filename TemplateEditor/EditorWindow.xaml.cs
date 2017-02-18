@@ -28,7 +28,8 @@ namespace Carnassial.Editor
     {
         // state tracking
         private EditorControls controls;
-        private bool dataGridBeingUpdatedByCode;
+        private bool templateDataGridBeingUpdatedByCode;
+        private bool templateDataGridCellEditForcedByCode;
         private EditorUserRegistrySettings userSettings;
 
         // These variables support the drag/drop of controls
@@ -60,7 +61,8 @@ namespace Carnassial.Editor
 
             this.controls = new EditorControls();
             this.dummyMouseDragSource = new UIElement();
-            this.dataGridBeingUpdatedByCode = false;
+            this.templateDataGridBeingUpdatedByCode = false;
+            this.templateDataGridCellEditForcedByCode = false;
 
             this.MenuViewShowAllColumns_Click(this.MenuViewShowAllColumns, null);
 
@@ -83,7 +85,7 @@ namespace Carnassial.Editor
             Button button = sender as Button;
             string controlType = button.Tag.ToString();
 
-            this.dataGridBeingUpdatedByCode = true;
+            this.templateDataGridBeingUpdatedByCode = true;
 
             this.templateDatabase.AddUserDefinedControl(controlType);
             this.TemplateDataGrid.DataContext = this.templateDatabase.Controls;
@@ -93,24 +95,7 @@ namespace Carnassial.Editor
             this.GenerateSpreadsheetOrderPreview();
             this.OnControlOrderChanged();
 
-            this.dataGridBeingUpdatedByCode = false;
-        }
-
-        // raise a dialog box that lets the user edit the list of choices
-        private void ChoiceListButton_Click(object sender, RoutedEventArgs e)
-        {
-            // the button's tag is the ControlOrder of the row the button is in; find the control with the same control order
-            Button button = (Button)sender;
-            ControlRow choiceControl = this.templateDatabase.Controls.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
-            Debug.Assert(choiceControl != null, String.Format("Control named {0} not found.", button.Tag));
-
-            EditChoiceList choiceListDialog = new EditChoiceList(button, choiceControl.GetChoices(), this);
-            bool? result = choiceListDialog.ShowDialog();
-            if (result == true)
-            {
-                choiceControl.SetChoices(choiceListDialog.Choices);
-                this.SyncControlToDatabase(choiceControl);
-            }
+            this.templateDataGridBeingUpdatedByCode = false;
         }
 
         private void ControlsPanel_DragDrop(object sender, DragEventArgs e)
@@ -192,6 +177,23 @@ namespace Carnassial.Editor
             }
         }
 
+        // raise a dialog box that lets the user edit the list of choices or note control default autocompletions
+        private void DefineList_Click(object sender, RoutedEventArgs e)
+        {
+            // the button's tag is the ControlOrder of the row the button is in; find the control with the same control order
+            Button button = (Button)sender;
+            ControlRow choiceControl = this.templateDatabase.Controls.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
+            Debug.Assert(choiceControl != null, String.Format("Control named {0} not found.", button.Tag));
+
+            EditChoiceList choiceListDialog = new EditChoiceList(button, choiceControl.GetChoices(), this);
+            bool? result = choiceListDialog.ShowDialog();
+            if (result == true)
+            {
+                choiceControl.SetChoices(choiceListDialog.Choices);
+                this.SyncControlToDatabaseAndRedraw(choiceControl);
+            }
+        }
+
         private static T FindVisualParent<T>(UIElement element) where T : UIElement
         {
             UIElement parent = element;
@@ -258,7 +260,7 @@ namespace Carnassial.Editor
             bool templateLoaded = TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out this.templateDatabase);
             if (templateLoaded)
             {
-                this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateDataTable_RowChanged);
+                this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateDataGrid_RowChanged);
 
                 // populate controls interface in UX
                 this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
@@ -352,7 +354,8 @@ namespace Carnassial.Editor
         /// </summary>
         private void MenuFileExit_Click(object sender, RoutedEventArgs e)
         {
-            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
+            // flush any pending edits to the currently selected row
+            this.TemplateDataGrid.CommitEdit();
             Application.Current.Shutdown();
         }
 
@@ -545,18 +548,15 @@ namespace Carnassial.Editor
             messageBox.ShowDialog();
         }
 
-        /// <summary>
-        /// Updates a given control in the database with the current state of the DataGrid. 
-        /// </summary>
-        private void SyncControlToDatabase(ControlRow control)
+        private void SyncControlToDatabaseAndRedraw(ControlRow control)
         {
-            this.dataGridBeingUpdatedByCode = true;
+            this.templateDataGridBeingUpdatedByCode = true;
 
             this.templateDatabase.SyncControlToDatabase(control);
             this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
             this.GenerateSpreadsheetOrderPreview();
 
-            this.dataGridBeingUpdatedByCode = false;
+            this.templateDataGridBeingUpdatedByCode = false;
         }
 
         /// <summary>
@@ -579,14 +579,14 @@ namespace Carnassial.Editor
                 return;
             }
 
-            this.dataGridBeingUpdatedByCode = true;
+            this.templateDataGridBeingUpdatedByCode = true;
             this.templateDatabase.RemoveUserDefinedControl(new ControlRow(selectedRowView.Row));
 
             // update the control panel so it reflects the current values in the database
             this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
             this.GenerateSpreadsheetOrderPreview();
 
-            this.dataGridBeingUpdatedByCode = false;
+            this.templateDataGridBeingUpdatedByCode = false;
         }
 
         /// <summary>
@@ -634,6 +634,17 @@ namespace Carnassial.Editor
             if (e.Column.Header.Equals(EditorConstant.ColumnHeader.DataLabel))
             {
                 this.ValidateDataLabel(e);
+            }
+            if ((e.EditAction == DataGridEditAction.Commit) && (this.templateDataGridCellEditForcedByCode == false))
+            {
+                // flush changes in each cell as user exits it to database and trigger a redraw to update control visibility
+                // Generating a call to TemplateDataGrid_RowChanged() here isn't the most elegant approach but it avoids creating separate commit pathways
+                // for cell and row edits.  Data grids don't particularly support immediate data binding (though they can be coerced into it by providing
+                // unknown template cell types at the expense of other state management issues) so a change in cell focus is, within their model, needed to
+                // trigger an update of the control layout preview for Width and Visible at the data grid level.
+                this.templateDataGridCellEditForcedByCode = true;
+                this.TemplateDataGrid.CommitEdit(DataGridEditingUnit.Row, true);
+                this.templateDataGridCellEditForcedByCode = false;
             }
         }
 
@@ -711,15 +722,46 @@ namespace Carnassial.Editor
                     {
                         cell.Background = EditorConstant.NotEditableCellColor;
                         cell.Foreground = Brushes.Gray;
+                        cell.IsEnabled = false;
 
-                        // if cell has a checkbox disable it.
-                        ContentPresenter cellContent = cell.Content as ContentPresenter;
-                        if (cellContent != null)
+                        // if cell has a checkbox disable it
+                        CheckBox checkBox;
+                        if (cell.TryGetCheckBox(out checkBox))
                         {
-                            CheckBox checkbox = cellContent.ContentTemplate.FindName("CheckBox", cellContent) as CheckBox;
-                            if (checkbox != null)
+                            checkBox.IsEnabled = false;
+                        }
+                    }
+                    else if (columnHeader == Constant.Control.Visible)
+                    {
+                        // set up check boxes in the visible column for immediate data binding so user sees the control preview update promptly
+                        // The LayoutUpdated event fires many times so a guard is required to set the callbacks only once.
+                        CheckBox checkBox;
+                        if (cell.TryGetCheckBox(out checkBox))
+                        {
+                            if (checkBox.Tag == null)
                             {
-                                checkbox.IsEnabled = false;
+                                checkBox.Checked += this.TemplateDataGridVisible_Changed;
+                                checkBox.Unchecked += this.TemplateDataGridVisible_Changed;
+                                checkBox.Tag = rowIndex;
+                            }
+                        }
+                        else
+                        {
+                            Debug.Fail("Could not find check box associated with Visible column for immediate data binding.");
+                        }
+                    }
+                    else if (columnHeader == Constant.Control.Width)
+                    {
+                        // set up text boxes in the width column for immediate data binding so user sees the control preview update promptly
+                        // A guard is required as above.  When the DataGrid is first instantiated TextBlocks are used for the cell content; these are
+                        // changed to TextBoxes when the user initiates an edit.
+                        TextBox textBox;
+                        if (cell.TryGetTextBox(out textBox))
+                        {
+                            if (textBox.Tag == null)
+                            {
+                                textBox.TextChanged += this.TemplateDataGridWidth_Changed;
+                                textBox.Tag = rowIndex;
                             }
                         }
                     }
@@ -764,12 +806,12 @@ namespace Carnassial.Editor
                             if (e.Text == "t" || e.Text == "T")
                             {
                                 control.DefaultValue = Boolean.TrueString;
-                                this.SyncControlToDatabase(control);
+                                this.SyncControlToDatabaseAndRedraw(control);
                             }
                             else if (e.Text == "f" || e.Text == "F")
                             {
                                 control.DefaultValue = Boolean.FalseString;
-                                this.SyncControlToDatabase(control);
+                                this.SyncControlToDatabaseAndRedraw(control);
                             }
                             e.Handled = true;
                             break;
@@ -798,11 +840,34 @@ namespace Carnassial.Editor
         /// <summary>
         /// Whenever a row changes save the database, which also updates the grid colors.
         /// </summary>
-        private void TemplateDataTable_RowChanged(object sender, DataRowChangeEventArgs e)
+        private void TemplateDataGrid_RowChanged(object sender, DataRowChangeEventArgs e)
         {
-            if (!this.dataGridBeingUpdatedByCode)
+            if (!this.templateDataGridBeingUpdatedByCode)
             {
-                this.SyncControlToDatabase(new ControlRow(e.Row));
+                this.SyncControlToDatabaseAndRedraw(new ControlRow(e.Row));
+            }
+        }
+
+        private void TemplateDataGridVisible_Changed(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            int rowIndex = (int)checkBox.Tag;
+            if (checkBox.IsChecked.HasValue)
+            {
+                // immediately propagate change in check to underlying data table; this triggers a call to TemplateDataGrid_RowChanged() so the user
+                // sees the control layout preview update in response to their click on the check box
+                this.templateDatabase.Controls[rowIndex].Visible = checkBox.IsChecked.Value;
+            }
+        }
+
+        private void TemplateDataGridWidth_Changed(object sender, RoutedEventArgs e)
+        {
+            TextBox textBox = (TextBox)sender;
+            int rowIndex = (int)textBox.Tag;
+            int newWidth;
+            if (Int32.TryParse(textBox.Text, out newWidth))
+            {
+                this.templateDatabase.Controls[rowIndex].Width = newWidth;
             }
         }
 

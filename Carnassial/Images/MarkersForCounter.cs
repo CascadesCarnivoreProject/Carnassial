@@ -69,7 +69,7 @@ namespace Carnassial.Images
         public void RemoveMarker(Marker marker)
         {
             int index = this.Markers.IndexOf(marker);
-            Debug.Assert(index != -1, "Expected marker to be present in list.");
+            Debug.Assert(index != -1, "Attempt to remove marker unattached to counter.");
             this.Markers.RemoveAt(index);
         }
     }

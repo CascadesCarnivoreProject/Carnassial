@@ -14,13 +14,13 @@ namespace Carnassial.Database
         public List<SearchTerm> SearchTerms { get; private set; }
         public CustomSelectionOperator TermCombiningOperator { get; set; }
 
-        public CustomSelection(DataTableBackedList<ControlRow> templateTable, CustomSelectionOperator termCombiningOperator)
+        public CustomSelection(DataTableBackedList<ControlRow> controlTable, CustomSelectionOperator termCombiningOperator)
         {
             this.SearchTerms = new List<SearchTerm>();
             this.TermCombiningOperator = termCombiningOperator;
 
             // generate search terms for all relevant controls in the template (in control order)
-            foreach (ControlRow control in templateTable)
+            foreach (ControlRow control in controlTable)
             {
                 // skip hidden controls as they're not normally a part of the user experience
                 // this is potentially problematic in corner cases; an option to show terms for all controls can be added if needed

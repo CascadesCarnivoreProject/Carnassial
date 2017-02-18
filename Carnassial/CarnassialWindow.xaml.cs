@@ -113,6 +113,35 @@ namespace Carnassial
             }
         }
 
+        /// <summary>
+        /// A new marker associated with a counter control has been created
+        /// Increment the counter and add the marker to all data structures (including the database)
+        /// </summary>
+        private void AddMarkerToCounter(DataEntryCounter counter, Marker marker)
+        {
+            // increment the counter to reflect the new marker
+            this.dataHandler.IncrementOrResetCounter(counter);
+
+            // Find markers associated with this particular control
+            MarkersForCounter markersForCounter;
+            bool success = this.TryGetMarkersForCounter(counter, out markersForCounter);
+            Debug.Assert(success, String.Format("No markers found for counter {0}.", counter.DataLabel));
+
+            // fill in marker information
+            marker.Brush = Brushes.Red;
+            marker.DataLabel = counter.DataLabel;
+            marker.ShowLabel = true; // show label on creation, cleared on next refresh
+            marker.LabelShownPreviously = false;
+            marker.Tooltip = counter.Label + Environment.NewLine + counter.DataLabel;
+            markersForCounter.AddMarker(marker);
+
+            // update this counter's list of points in the database
+            this.dataHandler.FileDatabase.SetMarkerPositions(this.dataHandler.ImageCache.Current.ID, markersForCounter);
+
+            this.MarkableCanvas.Markers = this.GetDisplayMarkers();
+            this.Speak(counter.Content + " " + counter.Label); // Speak the current count
+        }
+
         private void ApplyUndoRedoState(UndoRedoState state)
         {
             switch (state.Type)
@@ -400,7 +429,7 @@ namespace Carnassial
             }
         }
 
-        private List<Marker> GetDisplayMarkers(bool showAnnotations)
+        private List<Marker> GetDisplayMarkers()
         {
             if (this.markersOnCurrentFile == null)
             {
@@ -513,57 +542,6 @@ namespace Carnassial
             }
         }
 
-        /// <summary>
-        /// A new marker associated with a counter control has been created
-        /// Increment the counter and add the marker to all data structures (including the database)
-        /// </summary>
-        private void MarkableCanvas_AddMarker(DataEntryCounter counter, Marker marker)
-        {
-            // increment the counter to reflect the new marker
-            int count;
-            if (Int32.TryParse(counter.Content, out count) == false)
-            {
-                // if the current value's not parseable assume that 
-                // 1) the default value is set to a non-integer in the template
-                // 2) or it's a space
-                // In either case, revert to zero.
-                count = 0;
-            }
-            ++count;
-
-            string counterContent = count.ToString();
-            this.dataHandler.IsProgrammaticControlUpdate = true;
-            this.dataHandler.FileDatabase.UpdateFile(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, counterContent);
-            counter.SetContentAndTooltip(counterContent);
-            this.dataHandler.IsProgrammaticControlUpdate = false;
-
-            // Find markers associated with this particular control
-            MarkersForCounter markersForCounter = null;
-            foreach (MarkersForCounter markers in this.markersOnCurrentFile)
-            {
-                if (markers.DataLabel == counter.DataLabel)
-                {
-                    markersForCounter = markers;
-                    break;
-                }
-            }
-
-            // fill in marker information
-            marker.ShowLabel = true; // show label on creation, cleared on next refresh
-            marker.LabelShownPreviously = false;
-            marker.Brush = Brushes.Red;               // Make it Red (for now)
-            marker.DataLabel = counter.DataLabel;
-            marker.Tooltip = counter.Label;   // The tooltip will be the counter label plus its data label
-            marker.Tooltip += "\n" + counter.DataLabel;
-            markersForCounter.AddMarker(marker);
-
-            // update this counter's list of points in the database
-            this.dataHandler.FileDatabase.SetMarkerPositions(this.dataHandler.ImageCache.Current.ID, markersForCounter);
-
-            this.MarkableCanvas.Markers = this.GetDisplayMarkers(true);
-            this.Speak(counter.Content + " " + counter.Label); // Speak the current count
-        }
-
         private void MarkableCanvas_MouseEnter(object sender, MouseEventArgs eventArgs)
         {
             // change focus to the canvas if the mouse enters the canvas and the user isn't in the midst of typing into a text field
@@ -590,70 +568,40 @@ namespace Carnassial
         // - regenerate the list of markers used by the markableCanvas
         private void MarkableCanvas_RaiseMarkerEvent(object sender, MarkerEventArgs e)
         {
-            // A marker has been added
-            if (e.IsNew)
+            DataEntryCounter currentCounter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[e.Marker.DataLabel];
+            if (currentCounter == null)
             {
-                DataEntryCounter currentCounter = this.FindSelectedCounter(); // No counters are selected, so don't mark anything
-                if (currentCounter == null)
-                {
-                    return;
-                }
-                this.MarkableCanvas_AddMarker(currentCounter, e.Marker);
                 return;
             }
 
-            // An existing marker has been deleted.
-            DataEntryCounter counter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[e.Marker.DataLabel];
-
-            // Decrement the counter only if there is a number in it
-            string oldCounterData = counter.Content;
-            string newCounterData = String.Empty;
-            if (oldCounterData != String.Empty) 
+            // a new marker has been added
+            if (e.IsNew)
             {
-                int count = Convert.ToInt32(oldCounterData);
-                count = (count == 0) ? 0 : count - 1;           // Make sure its never negative, which could happen if a person manually enters the count 
-                newCounterData = count.ToString();
-            }
-            if (!newCounterData.Equals(oldCounterData))
-            {
-                // Don't bother updating if the value hasn't changed (i.e., already at a 0 count)
-                // Update the datatable and database with the new counter values
-                this.dataHandler.IsProgrammaticControlUpdate = true;
-                counter.SetContentAndTooltip(newCounterData);
-                this.dataHandler.IsProgrammaticControlUpdate = false;
-                this.dataHandler.FileDatabase.UpdateFile(this.dataHandler.ImageCache.Current.ID, counter.DataLabel, newCounterData);
+                this.AddMarkerToCounter(currentCounter, e.Marker);
+                return;
             }
 
-            // Remove the marker in memory and from the database
-            MarkersForCounter markersForCounter = null;
-            foreach (MarkersForCounter markers in this.markersOnCurrentFile)
+            // an existing marker has been deleted
+            if (this.dataHandler.TryDecrementOrResetCounter(currentCounter))
             {
-                if (markers.Markers.Count == 0)
-                {
-                    continue;
-                }
-
-                if (markers.Markers[0].DataLabel == markers.DataLabel)
-                {
-                    markersForCounter = markers;
-                    break;
-                }
+                this.Speak(currentCounter.Content); // speak the current count
             }
 
-            if (markersForCounter != null)
+            // remove the marker in memory and from the database
+            MarkersForCounter markersForCounter;
+            if (this.TryGetMarkersForCounter(currentCounter, out markersForCounter) == false)
             {
-                markersForCounter.RemoveMarker(e.Marker);
-                this.Speak(counter.Content); // Speak the current count
-                this.dataHandler.FileDatabase.SetMarkerPositions(this.dataHandler.ImageCache.Current.ID, markersForCounter);
+                Debug.Fail(String.Format("Markers for counter {0} not found.", currentCounter.DataLabel));
             }
+            markersForCounter.RemoveMarker(e.Marker);
+            this.dataHandler.FileDatabase.SetMarkerPositions(this.dataHandler.ImageCache.Current.ID, markersForCounter);
 
             this.MarkableCanvas_UpdateMarkers();
         }
 
         private void MarkableCanvas_UpdateMarkers()
         {
-            // by default, don't show markers' labels
-            this.MarkableCanvas.Markers = this.GetDisplayMarkers(false);
+            this.MarkableCanvas.Markers = this.GetDisplayMarkers();
         }
 
         private void MenuEdit_SubmenuOpened(object sender, RoutedEventArgs e)
@@ -1102,14 +1050,15 @@ namespace Carnassial
                 if (immovableFiles.Count > 0)
                 {
                     MessageBox messageBox = new MessageBox("Not all files could be moved.", this);
+                    messageBox.Message.Title = "Conflicts prevented some files from being moved.";
                     messageBox.Message.What = String.Format("{0} of {1} files were moved.", this.dataHandler.FileDatabase.CurrentlySelectedFileCount - immovableFiles.Count, this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
-                    messageBox.Message.Reason = "This occurs when the selection 1) contains multiple files with the same name and 2) files with the same name as files already in the destination folder.";
+                    messageBox.Message.Reason = "This occurs when the selection contains multiple files with the same name or files with the same name are already present in the destination folder.";
                     messageBox.Message.Solution = "Remove or rename the conflicting files and apply the move command again to move the remaining files.";
                     messageBox.Message.Result = "Carnassial moved the files which could be moved.  The remaining files were left in place.";
                     messageBox.Message.Hint = String.Format("The {0} files which could not be moved are{1}", immovableFiles.Count, Environment.NewLine);
                     foreach (string fileName in immovableFiles)
                     {
-                        messageBox.Message.Hint += String.Format("\u2022 {0}", fileName);
+                        messageBox.Message.Hint += String.Format("\u2022 {0}{1}", fileName, Environment.NewLine);
                     }
                     messageBox.ShowDialog();
                 }
@@ -2139,7 +2088,7 @@ namespace Carnassial
             {
                 // show the file
                 this.markersOnCurrentFile = this.dataHandler.FileDatabase.GetMarkersOnFile(this.dataHandler.ImageCache.Current.ID);
-                List<Marker> displayMarkers = this.GetDisplayMarkers(false);
+                List<Marker> displayMarkers = this.GetDisplayMarkers();
 
                 bool isVideo = this.dataHandler.ImageCache.Current.IsVideo;
                 if (isVideo)
@@ -2312,6 +2261,7 @@ namespace Carnassial
             // update UI for import (visibility is inverse of RunWorkerCompleted)
             this.FeedbackControl.Visibility = Visibility.Visible;
             this.FileNavigatorSlider.Visibility = Visibility.Collapsed;
+            this.MenuOptions.IsEnabled = true;
             IProgress<FolderLoadProgress> folderLoadStatus = new Progress<FolderLoadProgress>(this.UpdateFolderLoadProgress);
             FolderLoadProgress folderLoadProgress = new FolderLoadProgress(filesToAdd.Count, this.MarkableCanvas.Width > 0 ? (int)this.MarkableCanvas.Width : (int)this.Width);
             folderLoadStatus.Report(folderLoadProgress);
@@ -2486,6 +2436,24 @@ namespace Carnassial
             return true;
         }
 
+        private bool TryGetMarkersForCounter(DataEntryCounter counter, out MarkersForCounter markersForCounter)
+        {
+            markersForCounter = null;
+            if (this.markersOnCurrentFile != null)
+            {
+                foreach (MarkersForCounter markers in this.markersOnCurrentFile)
+                {
+                    if (markers.DataLabel == counter.DataLabel)
+                    {
+                        markersForCounter = markers;
+                        break;
+                    }
+                }
+            }
+
+            return markersForCounter != null;
+        }
+
         private bool TryGetTemplatePath(out string templateDatabasePath)
         {
             // prompt user to select a template
@@ -2554,32 +2522,34 @@ namespace Carnassial
             FileDatabase fileDatabase;
             if (FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, this.state.OrderFilesByDateTime, this.state.CustomSelectionTermCombiningOperator, out fileDatabase) == false)
             {
-                // notify the user the database couldn't be loaded
-                MessageBox messageBox = new MessageBox("Carnassial could not load the database.", this);
-                messageBox.Message.Problem = "Carnassial could not load " + Path.GetFileName(fileDatabaseFilePath) + Environment.NewLine;
-                messageBox.Message.Reason = "\u2022 The database was created with Timelapse instead of Carnassial." + Environment.NewLine;
-                messageBox.Message.Reason = "\u2022 The database may be corrupted or somehow otherwise invalid.";
-                messageBox.Message.Solution = String.Format("You may have to recreate the database, restore it from the {0} folder, or use another copy of it if you have one.", Constant.File.BackupFolder);
-                messageBox.Message.Result = "Carnassial won't do anything.  You can try to select another template or database file.";
-                messageBox.Message.Hint = "If the database can't be opened in a SQLite database editor the file is corrupt.";
-                messageBox.Message.StatusImage = MessageBoxImage.Error;
-                messageBox.ShowDialog();
-                return false;
-            }
-            templateDatabase.Dispose();
-
-            if (fileDatabase.ControlSynchronizationIssues.Count > 0)
-            {
-                TemplateSynchronization templatesNotCompatibleDialog = new TemplateSynchronization(fileDatabase.ControlSynchronizationIssues, this);
-                bool? result = templatesNotCompatibleDialog.ShowDialog();
-                if (result == true)
+                if (fileDatabase.ControlSynchronizationIssues.Count > 0)
                 {
-                    // user indicated not to update to the current template so exit.
-                    Application.Current.Shutdown();
+                    // notify user the template and database are out of sync
+                    TemplateSynchronization templatesNotCompatibleDialog = new TemplateSynchronization(fileDatabase.ControlSynchronizationIssues, this);
+                    if (templatesNotCompatibleDialog.ShowDialog() != true)
+                    {
+                        // user indicated not to update to the current template or cancelled out of the dialog
+                        Application.Current.Shutdown();
+                        return false;
+                    }
+                    // user indicated to run with the stale copy of the template found in the file database
+                }
+                else
+                {
+                    // notify user the database couldn't be loaded
+                    MessageBox messageBox = new MessageBox("Carnassial could not load the database.", this);
+                    messageBox.Message.Problem = "Carnassial could not load " + Path.GetFileName(fileDatabaseFilePath) + Environment.NewLine;
+                    messageBox.Message.Reason = "\u2022 The database was created with Timelapse instead of Carnassial." + Environment.NewLine;
+                    messageBox.Message.Reason = "\u2022 The database may be corrupted or somehow otherwise invalid.";
+                    messageBox.Message.Solution = String.Format("You may have to recreate the database, restore it from the {0} folder, or use another copy of it if you have one.", Constant.File.BackupFolder);
+                    messageBox.Message.Result = "Carnassial won't do anything.  You can try to select another template or database file.";
+                    messageBox.Message.Hint = "If the database can't be opened in a SQLite database editor the file is corrupt.";
+                    messageBox.Message.StatusImage = MessageBoxImage.Error;
+                    messageBox.ShowDialog();
                     return false;
                 }
-                // user indicated to run with the stale copy of the template found in the image database
             }
+            templateDatabase.Dispose();
 
             // valid template and file database loaded
             // generate and render the data entry controls regardless of whether there are actually any files in the file database.

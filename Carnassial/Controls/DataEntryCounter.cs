@@ -60,5 +60,39 @@ namespace Carnassial.Controls
             // counter values are unsigned integers but are are manipulated as strings
             this.SetContentAndTooltip((string)valueAsObject);
         }
+
+        public void IncrementOrReset()
+        {
+            int count;
+            if (Int32.TryParse(this.Content, out count))
+            {
+                ++count;
+                this.SetContentAndTooltip(count.ToString());
+            }
+            else
+            {
+                // if the current value's not parseable assume it's due to the default value being non-integer in the template and revert to zero
+                this.SetContentAndTooltip("0");
+            }
+        }
+
+        public bool TryDecrementOrReset()
+        {
+            // decrement the counter only if it has a positive count
+            int previousCount;
+            int newCount = 0;
+            if (Int32.TryParse(this.Content, out previousCount) && previousCount > 0)
+            {
+                newCount = previousCount - 1;
+                this.SetContentAndTooltip(newCount.ToString());
+            }
+            else
+            {
+                previousCount = 0;
+                this.SetContentAndTooltip("0");
+            }
+
+            return newCount != previousCount;
+        }
     }
 }

@@ -5,9 +5,9 @@ using System.Windows.Data;
 namespace Carnassial.Editor
 {
     /// <summary>
-    /// Converter for CellTextBlock. Removes spaces from beginning and end of string.
+    /// Converter for CellTextBlock. Removes whitespace from beginning and end of string.
     /// </summary>
-    public class CellTextBlockConverter : IValueConverter
+    public class TrimmingConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -16,12 +16,12 @@ namespace Carnassial.Editor
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            string valString = value as string;
-            if (!String.IsNullOrEmpty(valString))
+            string valueAsString = value as string;
+            if (String.IsNullOrEmpty(valueAsString))
             {
-                return valString.Trim();
+                return value;
             }
-            return String.Empty;
+            return valueAsString.Trim();
         }
     }
 }
