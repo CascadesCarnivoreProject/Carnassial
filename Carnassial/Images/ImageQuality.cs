@@ -1,14 +1,13 @@
 ﻿using Carnassial.Database;
+using Carnassial.Native;
 using System;
-using System.Windows.Media.Imaging;
 
 namespace Carnassial.Images
 {
     public class ImageQuality
     {
-        public WriteableBitmap Bitmap { get; set; }
+        public MemoryImage Image { get; set; }
         public double DarkPixelRatioFound { get; set; }
-        public int FileIndex { get; set; }
         public string FileName { get; set; }
         public bool IsColor { get; set; }
         public Nullable<FileSelection> NewImageQuality { get; set; }
@@ -16,10 +15,9 @@ namespace Carnassial.Images
 
         public ImageQuality(ImageRow image)
         {
-            this.Bitmap = null;
             this.DarkPixelRatioFound = 0;
-            this.FileIndex = Constant.Database.InvalidRow;
             this.FileName = image.FileName;
+            this.Image = null;
             this.IsColor = false;
             this.OldImageQuality = image.ImageQuality;
             this.NewImageQuality = null;

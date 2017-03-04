@@ -41,7 +41,6 @@ namespace Carnassial.Controls
                     default:
                         throw new NotSupportedException(String.Format("Unhandled icon type {0}.", this.StatusImage));
                 }
-                this.statusImage = value;
             }
         }
 

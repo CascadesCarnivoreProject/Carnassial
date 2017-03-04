@@ -1,13 +1,12 @@
 ﻿using Carnassial.Controls;
+using Carnassial.Native;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace Carnassial.Images
@@ -400,7 +399,7 @@ namespace Carnassial.Images
                     Marker marker = new Marker(null, position);
 
                     // don't add marker to the marker list
-                    // Main window is responsible for filling in remaining properties and adding it.
+                    // CarnassialWindow is responsible for filling in remaining properties and adding it.
                     this.SendMarkerEvent(new MarkerEventArgs(marker, true));
                 }
             }
@@ -412,13 +411,8 @@ namespace Carnassial.Images
         // use the mouse wheel to scale the image
         private void ImageOrCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-            lock (this)
-            {
-                // use the current mouse position as the zoom center
-                Point mousePosition = e.GetPosition(this.ImageToDisplay);
-                bool zoomIn = e.Delta > 0; // zoom in if delta is positive, otherwise out
-                this.ScaleImage(mousePosition, zoomIn);
-            }
+            // zoom in if delta is positive, otherwise out
+            this.ScaleImage(e.Delta > 0);
         }
 
         private void ImageToDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -508,9 +502,6 @@ namespace Carnassial.Images
             this.VideoToDisplay.Width = this.ActualWidth;
             this.VideoToDisplay.Height = this.ActualHeight;
 
-            this.imageToDisplayScale.CenterX = 0.5 * this.ActualWidth;
-            this.imageToDisplayScale.CenterY = 0.5 * this.ActualHeight;
-
             // clear the bookmark (if any) as it will no longer be correct
             // if needed, the bookmark could be rescaled instead
             this.bookmark.Reset();
@@ -596,7 +587,7 @@ namespace Carnassial.Images
         }
 
         // scale the image around the given position
-        public void ScaleImage(Point mousePosition, bool zoomIn)
+        private void ScaleImage(bool zoomIn)
         {
             // nothing to do if at maximum or minimum scaling value whilst zooming in or out, respectively 
             if ((zoomIn && this.imageToDisplayScale.ScaleX >= this.ZoomMaximum) ||
@@ -607,7 +598,23 @@ namespace Carnassial.Images
 
             lock (this.ImageToDisplay)
             {
-                // update scaling factor, keeping within maximum and minimum bounds
+                // ordering of changes to scale transform is significant
+                // See Min's explanation of the interactions in https://social.msdn.microsoft.com/Forums/vstudio/en-US/63ebc273-89bc-431e-a5bd-c014128c7879/scaletransform-and-translatetransform-what-the?forum=wpf.
+                // If the mouse is outside of the display image's area Mouse.GetPosition() returns corresponding coordinates, though its behavior is
+                // formally undefined.  In the interest of useful behavior out of area positions are clamped to scale centers along the image's edges.
+                double previousScaleCenterX = this.imageToDisplayScale.CenterX;
+                double previousScaleCenterY = this.imageToDisplayScale.CenterY;
+
+                Point constrainedMousePosition = Mouse.GetPosition(this.ImageToDisplay);
+                constrainedMousePosition.X = Math.Max(0, Math.Min(constrainedMousePosition.X, this.ImageToDisplay.ActualWidth));
+                constrainedMousePosition.Y = Math.Max(0, Math.Min(constrainedMousePosition.Y, this.ImageToDisplay.ActualHeight));
+                
+                this.imageToDisplayScale.CenterX = constrainedMousePosition.X;
+                this.imageToDisplayScale.CenterY = constrainedMousePosition.Y;
+
+                this.imageToDisplayTranslation.X += (this.imageToDisplayScale.CenterX - previousScaleCenterX) * (this.imageToDisplayScale.ScaleX - 1);
+                this.imageToDisplayTranslation.Y += (this.imageToDisplayScale.CenterY - previousScaleCenterY) * (this.imageToDisplayScale.ScaleY - 1);
+
                 if (zoomIn)
                 {
                     this.imageToDisplayScale.ScaleX *= Constant.MarkableCanvas.MagnifyingGlassFieldOfViewIncrement;
@@ -620,25 +627,17 @@ namespace Carnassial.Images
                 }
                 this.imageToDisplayScale.ScaleY = this.imageToDisplayScale.ScaleX;
 
+                // clear center and translation when scale factor is unity
+                // This is a convenience to automatically recenter an image as, if the user pans while zoomed, zoom out to unity would otherwise leave the
+                // image panned.  If the user's intent is to zoom out to unity it's desirable to constrian the center and translation so the image occupies
+                // all display area available.  However, doing so would push the scale center off the mouse location and result in inconsistent behavior
+                // if the intent's not to go to unity.
                 if (this.imageToDisplayScale.ScaleX <= Constant.MarkableCanvas.ImageZoomMinimum)
                 {
-                    // no translation needed if no scaling
+                    this.imageToDisplayScale.CenterX = 0.0;
+                    this.imageToDisplayScale.CenterY = 0.0;
                     this.imageToDisplayTranslation.X = 0.0;
                     this.imageToDisplayTranslation.Y = 0.0;
-                }
-                else
-                {
-                    // update translation so zoom is centered about the point in the image under the cursor, clamping so that the display image
-                    // continues to contact its original border on the relevant side(s)
-                    // This is imperfect as, if the display image doesn't entirely fill the available area (there's some of the black backround around it),
-                    // the available background space goes unused.  Additional logic to detect and use this space is desirable, though not currently trivial
-                    // as the markable canvas's size has to change.
-                    // Scale transform is centered at the center of the image so translation is also calculated relative to the image center.
-                    Point imageCenter = new Point(this.ImageToDisplay.ActualWidth / 2.0, this.ImageToDisplay.ActualHeight / 2.0);
-                    Point maximumTranslation = new Point(0.5 * this.imageToDisplayScale.ScaleX * this.ImageToDisplay.ActualWidth - imageCenter.X, 0.5 * this.imageToDisplayScale.ScaleY * this.ImageToDisplay.ActualHeight - imageCenter.Y);
-                    Vector unconstrainedTranslation = imageCenter - mousePosition;
-                    this.imageToDisplayTranslation.X = Math.Max(-maximumTranslation.X, Math.Min(unconstrainedTranslation.X, maximumTranslation.X));
-                    this.imageToDisplayTranslation.Y = Math.Max(-maximumTranslation.Y, Math.Min(unconstrainedTranslation.Y, maximumTranslation.Y));
                 }
 
                 this.RedrawMarkers();
@@ -654,21 +653,21 @@ namespace Carnassial.Images
         /// <summary>
         /// Sets only the display image and leaves markers and the magnifier image unchanged.  Used by the differencing routines to set the difference image.
         /// </summary>
-        public void SetDisplayImage(BitmapSource bitmapSource)
+        public void SetDisplayImage(MemoryImage image)
         {
-            this.ImageToDisplay.Source = bitmapSource;
+            image.SetSource(this.ImageToDisplay);
         }
 
         /// <summary>
         /// Set a wholly new image.  Clears any existing markers and syncs the magnifier image to the display image.
         /// </summary>
-        public void SetNewImage(BitmapSource bitmapSource, List<Marker> markers)
+        public void SetNewImage(MemoryImage image, List<Marker> markers)
         {
             // change to new markers
             this.markers = markers;
 
             // initate render of new image for display
-            this.ImageToDisplay.Source = bitmapSource;
+            this.SetDisplayImage(image);
 
             // initiate render of magnified image
             // The asynchronous chain behind this is not entirely trivial.  The links are
@@ -683,7 +682,7 @@ namespace Carnassial.Images
             // Another race exists as this.Markers can be set during the above rendering, initiating a second, concurrent marker render.  This is unavoidable
             // due to the need to expose a marker property but is mitigated by accepting new markers through this API and performing the set above as 
             // this.markers rather than this.Markers.
-            this.ImageToMagnify.Source = bitmapSource;
+            image.SetSource(this.ImageToMagnify);
 
             // ensure display image is visible and magnifying glass is visible if it's enabled
             this.ImageToDisplay.Visibility = Visibility.Visible;
@@ -772,19 +771,12 @@ namespace Carnassial.Images
 
         public void ZoomIn()
         {
-            Point mousePosition = Mouse.GetPosition(this.ImageToDisplay);
-            this.ScaleImage(mousePosition, false);
+            this.ScaleImage(true);
         }
 
         public void ZoomOut()
         {
-            Rect imageToDisplayBounds = new Rect(0.0, 0.0, this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight);
-            Point mousePosition = Mouse.GetPosition(this.ImageToDisplay);
-            if (imageToDisplayBounds.Contains(mousePosition) == false)
-            {
-                return; // ignore if mouse is not on the image
-            }
-            this.ScaleImage(mousePosition, true);
+            this.ScaleImage(false);
         }
 
         // Return to the zoomed out level, with no panning

@@ -1,4 +1,5 @@
 ﻿using Carnassial.Database;
+using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Windows;
@@ -39,7 +40,8 @@ namespace Carnassial.Dialog
             Utilities.TryFitWindowInWorkingArea(this);
 
             // display the image
-            this.Image.Source = await this.fileToDisplay.LoadBitmapAsync(this.fileDatabase.FolderPath);
+            MemoryImage image = await this.fileToDisplay.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width);
+            image.SetSource(this.Image);
         }
 
         private void PreviewDateTimeChanges()

@@ -1,29 +1,29 @@
 ﻿using Carnassial.Database;
+using Carnassial.Native;
 using System;
-using System.Windows.Media.Imaging;
 
 namespace Carnassial.Images
 {
     internal class FolderLoadProgress
     {
-        public BitmapSource BitmapSource { get; set; }
         public ImageRow CurrentFile { get; set; }
         public int CurrentFileIndex { get; set; }
         public bool DatabaseInsert { get; set; }
-        public bool DisplayBitmap { get; set; }
+        public bool DisplayImage { get; set; }
+        public MemoryImage Image { get; set; }
+        public int ImageRenderWidth { get; set; }
         public DateTime MostRecentStatusDispatch { get; set; }
-        public int RenderWidthBestEstimate { get; set; }
         public int TotalFiles { get; private set; }
 
-        public FolderLoadProgress(int totalFiles, int renderWidthBestEstimate)
+        public FolderLoadProgress(int totalFiles, int imageRenderWidth)
         {
-            this.BitmapSource = null;
             this.CurrentFile = null;
             this.CurrentFileIndex = 0;
             this.DatabaseInsert = false;
-            this.DisplayBitmap = false;
+            this.DisplayImage = false;
+            this.Image = null;
+            this.ImageRenderWidth = Math.Max(imageRenderWidth, Constant.Images.MinimumRenderWidth);
             this.MostRecentStatusDispatch = DateTime.MinValue.ToUniversalTime();
-            this.RenderWidthBestEstimate = renderWidthBestEstimate;
             this.TotalFiles = totalFiles;
         }
 

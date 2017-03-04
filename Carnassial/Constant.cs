@@ -1,4 +1,5 @@
 ﻿using Carnassial.Controls;
+using Carnassial.Native;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -214,45 +215,39 @@ namespace Carnassial
 
         public static class Images
         {
-            public const int BitmapCacheSize = 9;
-
-            // The default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
+            // default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
             public const double DarkPixelRatioThresholdDefault = 0.9;
-            public const int DarkPixelSampleStrideDefault = 20;
-            // The default threshold where a pixel color should be considered as 'dark' when checking image darkness. The Range is 0  (black) - 255 (white)
-            public const int DarkPixelThresholdDefault = 60;
+            // default level where a pixel should be considered as dark when checking image quality, the range is 0 (black) - 255 (white)
+            public const byte DarkPixelThresholdDefault = 60;
 
             // The threshold to determine differences between images
             public const byte DifferenceThresholdDefault = 20;
             public const byte DifferenceThresholdMax = 255;
             public const byte DifferenceThresholdMin = 0;
 
-            // a greyscale image (given the threshold tolerance) will typically have about 90% of its pixels as grey scale
-            public const double GreyScaleImageThreshold = 0.9;
-            // a truly greyscale pixel has r = g = b but some cameras exhibit a tint
-            public const int GreyScalePixelThreshold = 40;
-
+            public const int ImageCacheSize = 9;
             public const int LargeNumberOfDeletedImages = 100;
+            public const int MinimumRenderWidth = 800;
 
-            public static readonly Lazy<BitmapImage> Copy = Images.Load("Menu/Copy_16x.png");
-            public static readonly Lazy<BitmapImage> Paste = Images.Load("Menu/Paste_16x.png");
+            public static readonly Lazy<BitmapImage> Copy = Images.LoadBitmap("Menu/Copy_16x.png");
+            public static readonly Lazy<BitmapImage> Paste = Images.LoadBitmap("Menu/Paste_16x.png");
 
-            public static readonly Lazy<BitmapImage> CorruptFile = Images.Load("CorruptFile_480x.png");
-            public static readonly Lazy<BitmapImage> FileNoLongerAvailable = Images.Load("FileNoLongerAvailable_480x.png");
-            public static readonly Lazy<BitmapImage> NoSelectableFile = Images.Load("NoSelectableFile_480x.png");
+            public static readonly Lazy<MemoryImage> CorruptFile = Images.LoadImage("CorruptFile_480x.png");
+            public static readonly Lazy<MemoryImage> FileNoLongerAvailable = Images.LoadImage("FileNoLongerAvailable_480x.png");
+            public static readonly Lazy<MemoryImage> NoSelectableFile = Images.LoadImage("NoSelectableFile_480x.png");
 
-            public static readonly Lazy<BitmapImage> StatusError = Images.Load("StatusCriticalError_64x.png");
-            public static readonly Lazy<BitmapImage> StatusHelp = Images.Load("StatusHelp_64x.png");
-            public static readonly Lazy<BitmapImage> StatusInformation = Images.Load("StatusInformation_64x.png");
-            public static readonly Lazy<BitmapImage> StatusWarning = Images.Load("StatusWarning_64x.png");
+            public static readonly Lazy<BitmapImage> StatusError = Images.LoadBitmap("StatusCriticalError_64x.png");
+            public static readonly Lazy<BitmapImage> StatusHelp = Images.LoadBitmap("StatusHelp_64x.png");
+            public static readonly Lazy<BitmapImage> StatusInformation = Images.LoadBitmap("StatusInformation_64x.png");
+            public static readonly Lazy<BitmapImage> StatusWarning = Images.LoadBitmap("StatusWarning_64x.png");
 
-            private static Lazy<BitmapImage> Load(string fileName)
+            private static Lazy<BitmapImage> LoadBitmap(string fileName)
             {
                 return new Lazy<BitmapImage>(() =>
                 {
                     // if the requested image is available as an application resource, prefer that
                     if (Application.Current != null && Application.Current.Resources.Contains(fileName))
-                    {                        
+                    {
                         return (BitmapImage)Application.Current.Resources[fileName];
                     }
 
@@ -263,6 +258,15 @@ namespace Carnassial
                     image.EndInit();
                     image.Freeze();
                     return image;
+                });
+            }
+
+            private static Lazy<MemoryImage> LoadImage(string fileName)
+            {
+                return new Lazy<MemoryImage>(() =>
+                {
+                    Lazy<BitmapImage> loadBitmap = Images.LoadBitmap(fileName);
+                    return new MemoryImage(loadBitmap.Value);
                 });
             }
         }
@@ -353,7 +357,7 @@ namespace Carnassial
 
         public static class ThrottleValues
         {
-            public const double DesiredMaximumImageRendersPerSecondLowerBound = 2.0;
+            public const double DesiredMaximumImageRendersPerSecondLowerBound = 1.0;
             public const double DesiredMaximumImageRendersPerSecondDefault = 5.0;
             public const double DesiredMaximumImageRendersPerSecondUpperBound = 12.0;
             public const int MaximumBlackFrameAttempts = 5;

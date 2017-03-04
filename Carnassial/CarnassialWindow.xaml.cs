@@ -3,6 +3,7 @@ using Carnassial.Database;
 using Carnassial.Dialog;
 using Carnassial.Github;
 using Carnassial.Images;
+using Carnassial.Native;
 using Carnassial.Util;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
@@ -19,7 +20,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using DialogResult = System.Windows.Forms.DialogResult;
 using MessageBox = Carnassial.Dialog.MessageBox;
@@ -400,23 +400,6 @@ namespace Carnassial
             }
         }
 
-        // Returns the currently active counter control, otherwise null
-        private DataEntryCounter FindSelectedCounter()
-        {
-            foreach (DataEntryControl control in this.DataEntryControls.Controls)
-            {
-                if (control is DataEntryCounter)
-                {
-                    DataEntryCounter counter = (DataEntryCounter)control;
-                    if (counter.IsSelected)
-                    {
-                        return counter;
-                    }
-                }
-            }
-            return null;
-        }
-
         private void FolderSelectionDialog_FolderChanging(object sender, CommonFileDialogFolderChangeEventArgs e)
         {
             // require folders to be loaded be either the same folder as the .tdb and .ddb or subfolders of it
@@ -437,7 +420,9 @@ namespace Carnassial
             }
 
             List<Marker> markers = new List<Marker>();
-            DataEntryCounter selectedCounter = this.FindSelectedCounter();
+            // if no counter is selected that just indicates no markers need to be highlighted at this time
+            DataEntryCounter selectedCounter;
+            this.TryGetSelectedCounter(out selectedCounter);
             for (int counter = 0; counter < this.markersOnCurrentFile.Count; ++counter)
             {
                 MarkersForCounter markersForCounter = this.markersOnCurrentFile[counter];
@@ -568,30 +553,33 @@ namespace Carnassial
         // - regenerate the list of markers used by the markableCanvas
         private void MarkableCanvas_RaiseMarkerEvent(object sender, MarkerEventArgs e)
         {
-            DataEntryCounter currentCounter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[e.Marker.DataLabel];
-            if (currentCounter == null)
+            DataEntryCounter selectedCounter;
+            if (this.TryGetSelectedCounter(out selectedCounter) == false)
             {
+                // mouse logic in MarkableCanvas sends marker create events based on mouse action and has no way of knowing if a counter is selected
+                // If no counter's selected there's no marker to create and the event can be ignored.
                 return;
             }
 
             // a new marker has been added
             if (e.IsNew)
             {
-                this.AddMarkerToCounter(currentCounter, e.Marker);
+                Debug.Assert(e.Marker.DataLabel != null, "Markable canvas unexpectedly sent new marker with data label set.");
+                this.AddMarkerToCounter(selectedCounter, e.Marker);
                 return;
             }
 
             // an existing marker has been deleted
-            if (this.dataHandler.TryDecrementOrResetCounter(currentCounter))
+            if (this.dataHandler.TryDecrementOrResetCounter(selectedCounter))
             {
-                this.Speak(currentCounter.Content); // speak the current count
+                this.Speak(selectedCounter.Content); // speak the current count
             }
 
             // remove the marker in memory and from the database
             MarkersForCounter markersForCounter;
-            if (this.TryGetMarkersForCounter(currentCounter, out markersForCounter) == false)
+            if (this.TryGetMarkersForCounter(selectedCounter, out markersForCounter) == false)
             {
-                Debug.Fail(String.Format("Markers for counter {0} not found.", currentCounter.DataLabel));
+                Debug.Fail(String.Format("Markers for counter {0} not found.", selectedCounter.DataLabel));
             }
             markersForCounter.RemoveMarker(e.Marker);
             this.dataHandler.FileDatabase.SetMarkerPositions(this.dataHandler.ImageCache.Current.ID, markersForCounter);
@@ -1563,7 +1551,8 @@ namespace Carnassial
         {
             if (this.IsFileDatabaseAvailable())
             {
-                await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.ImageCache.CurrentRow + (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
+                int increment = (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
+                await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.ImageCache.CurrentRow + increment, increment);
             }
         }
 
@@ -1592,20 +1581,21 @@ namespace Carnassial
         {
             if (this.IsFileDatabaseAvailable())
             {
-                await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.ImageCache.CurrentRow - (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
+                int increment = -(int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount);
+                await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.ImageCache.CurrentRow + increment, increment);
             }
         }
 
         private void MenuViewZoomIn_Click(object sender, RoutedEventArgs e)
         {
             Point mousePosition = Mouse.GetPosition(this.MarkableCanvas.ImageToDisplay);
-            this.MarkableCanvas.ScaleImage(mousePosition, true);
+            this.MarkableCanvas.ZoomIn();
         }
 
         private void MenuViewZoomOut_Click(object sender, RoutedEventArgs e)
         {
             Point mousePosition = Mouse.GetPosition(this.MarkableCanvas.ImageToDisplay);
-            this.MarkableCanvas.ScaleImage(mousePosition, false);
+            this.MarkableCanvas.ZoomOut();
         }
 
         private void MenuViewZoomToFit_Click(object sender, RoutedEventArgs e)
@@ -1897,16 +1887,7 @@ namespace Carnassial
             // after a selection change update the file navigatior slider's range and tick space
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
             this.FileNavigatorSlider.Maximum = this.dataHandler.FileDatabase.CurrentlySelectedFileCount;  // slider is one based so no - 1 on the count
-            if (this.FileNavigatorSlider.Maximum <= 50)
-            {
-                this.FileNavigatorSlider.IsSnapToTickEnabled = true;
-                this.FileNavigatorSlider.TickFrequency = 1.0;
-            }
-            else
-            {
-                this.FileNavigatorSlider.IsSnapToTickEnabled = false;
-                this.FileNavigatorSlider.TickFrequency = 0.02 * this.FileNavigatorSlider.Maximum;
-            }
+            Utilities.ConfigureNavigatorSliderTick(this.FileNavigatorSlider);
 
             // Display the specified file or, if it's no longer selected, the next closest one
             // Showfile() handles empty image sets, so those don't need to be checked for here.
@@ -2043,8 +2024,13 @@ namespace Carnassial
                 return;
             }
 
-            // for the bitmap caching logic below to work this should be the only place where code in CarnassialWindow moves the file enumerator
-            MoveToFileResult moveToFile = await this.dataHandler.ImageCache.TryMoveToFileAsync(fileIndex, this.state.FileNavigatorSliderDragging);
+            // for the image caching logic below to work this should be the only place where code in CarnassialWindow moves the file enumerator
+            int prefetchStride = 1;
+            if (this.state.FileNavigatorSliderDragging)
+            {
+                prefetchStride = 0;
+            }
+            MoveToFileResult moveToFile = await this.dataHandler.ImageCache.TryMoveToFileAsync(fileIndex, prefetchStride);
             if (moveToFile.Succeeded == false)
             {
                 throw new ArgumentOutOfRangeException("fileIndex", String.Format("{0} is not a valid index in the file table.", fileIndex));
@@ -2144,10 +2130,15 @@ namespace Carnassial
             int increment = Utilities.GetIncrement(forward, modifiers);
             int newFileIndex = this.dataHandler.ImageCache.CurrentRow + increment;
 
-            await this.ShowFileWithoutSliderCallbackAsync(newFileIndex);
+            await this.ShowFileWithoutSliderCallbackAsync(newFileIndex, increment);
         }
 
         private async Task ShowFileWithoutSliderCallbackAsync(int newFileIndex)
+        {
+            await this.ShowFileWithoutSliderCallbackAsync(newFileIndex, 0);
+        }
+
+        private async Task ShowFileWithoutSliderCallbackAsync(int newFileIndex, int prefetchStride)
         {
             // if no change the file is already being displayed
             // For example, the end of the image set has been reached but key repeat means right arrow events are still coming in as the user hasn't
@@ -2263,7 +2254,7 @@ namespace Carnassial
             this.FileNavigatorSlider.Visibility = Visibility.Collapsed;
             this.MenuOptions.IsEnabled = true;
             IProgress<FolderLoadProgress> folderLoadStatus = new Progress<FolderLoadProgress>(this.UpdateFolderLoadProgress);
-            FolderLoadProgress folderLoadProgress = new FolderLoadProgress(filesToAdd.Count, this.MarkableCanvas.Width > 0 ? (int)this.MarkableCanvas.Width : (int)this.Width);
+            FolderLoadProgress folderLoadProgress = new FolderLoadProgress(filesToAdd.Count, (int)this.Width);
             folderLoadStatus.Report(folderLoadProgress);
             if (this.state.SkipDarkImagesCheck)
             {
@@ -2275,20 +2266,27 @@ namespace Carnassial
             }
             this.FileViewPane.IsActive = true;
 
+            // ensure all files are selected
+            // This prevents files which are in the DB but not selected from being added a second time.
+            FileSelection originalSelection = this.dataHandler.FileDatabase.ImageSet.FileSelection;
+            if (originalSelection != FileSelection.All)
+            {
+                this.dataHandler.FileDatabase.SelectFiles(FileSelection.All);
+            }
+
             // Load all files found
             // First pass: Examine files to extract their basic properties and build a list of files not already in the database
             //
-            // With dark calculations enabled:
-            // Profiling of a 1000 image load on quad core, single 80+MB/s capable SSD shows the following:
-            // - one thread:   100% normalized execution time, 35% CPU, 16MB/s disk (100% normalized time = 1 minute 58 seconds)
-            // - two threads:   55% normalized execution time, 50% CPU, 17MB/s disk (6.3% normalized time with dark checking skipped)
-            // - three threads: 46% normalized execution time, 70% CPU, 20MB/s disk
-            // This suggests memory bound operation due to image quality calculation.  The overhead of displaying preview images is fairly low; 
-            // normalized time is about 5% with both dark checking and previewing skipped.
-            //
-            // For now, try to get at least two threads as that captures most of the benefit from parallel operation.  Video loading may be more CPU bound 
-            // due to initial frame rendering and benefit from additional threads.  This requires further investigation.  It may also be desirable to reduce 
-            // the pixel stride in image quality calculation, which would increase CPU load.
+            // With 8MP images and dark calculations enabled:
+            // Profiling of a 1000 image load on quad core, single 80+MB/s capable SSD with full size decoding finds:
+            //   two threads:   55s, 66% CPU, 33MB/s disk
+            //   three threads: 56s, 90% CPU, 22MB/s disk - worse!
+            // CPU utilization is 90% jpeg decode and 10% IsDark(C++/CLI scalar).
+            // 
+            // Profiling of a 1000 image load on quad core, single 80+MB/s capable SSD with half size decoding finds:
+            //   two threads:   34s, 60% CPU, 56MB/s disk
+            //   three threads: 34s, 91% CPU, 60MB/s disk
+            // So threads for half the available cores are dispatched by by default.
             //
             // With dark calculations disabled:
             // The bottleneck's the SQL insert though using more than four threads (or possibly more threads than the number of physical processors as the 
@@ -2306,7 +2304,7 @@ namespace Carnassial
             TimeZoneInfo imageSetTimeZone = this.dataHandler.FileDatabase.ImageSet.GetTimeZone();
             await Task.Run(() => Parallel.ForEach(
                 new SequentialPartitioner<FileInfo>(filesToAdd),
-                Utilities.GetParallelOptions(this.state.SkipDarkImagesCheck ? Environment.ProcessorCount : 2), 
+                Utilities.GetParallelOptions(this.state.SkipDarkImagesCheck ? Environment.ProcessorCount : Environment.ProcessorCount / 2),
                 (FileInfo fileInfo) =>
                 {
                     ImageRow file;
@@ -2317,7 +2315,7 @@ namespace Carnassial
                         return;
                     }
 
-                    BitmapSource bitmapSource = null;
+                    MemoryImage memoryImage = null;
                     try
                     {
                         if (this.state.SkipDarkImagesCheck)
@@ -2326,18 +2324,24 @@ namespace Carnassial
                         }
                         else
                         {
-                            // load bitmap and determine its quality
+                            // load image and determine its quality
+                            // As noted above, folder loading is jpeg decoding bound.  Lowering the resolution it's loaded at lowers CPU requirements and is
+                            // acceptable here because dark calculation is an estimate based on using a subset of the pixels, the image is displayed only 
+                            // briefly as a status update, and the user has no opportunity to zoom into it.  Downsizing too much results in a poor quality 
+                            // preview and downsizing below the markable canvas's display size is somewhat self defeating but dark estimation is not too
+                            // sensitive.  So image load size here is driven by the size of the window with a floor applied in FolderLoadProgress..ctor() so
+                            // that it doesn't become too small.
                             // Parallel doesn't await async bodies so awaiting the load results in Parallel prematurely concluding the body task completed and
                             // dispatching another, resulting in system overload.  The simplest solution is to block this worker thread, which is OK as there
                             // are many workers and they're decoupled from the UI thread.
-                            bitmapSource = file.LoadBitmapAsync(this.FolderPath, folderLoadProgress.RenderWidthBestEstimate).GetAwaiter().GetResult();
-                            if (bitmapSource == Constant.Images.CorruptFile.Value)
+                            memoryImage = file.LoadAsync(this.FolderPath, folderLoadProgress.ImageRenderWidth).GetAwaiter().GetResult();
+                            if (memoryImage == Constant.Images.CorruptFile.Value)
                             {
                                 file.ImageQuality = FileSelection.Corrupt;
                             }
                             else
                             {
-                                file.ImageQuality = bitmapSource.AsWriteable().IsDark(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold);
+                                file.ImageQuality = memoryImage.IsDark(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold) ? FileSelection.Dark : FileSelection.Ok;
                             }
                         }
 
@@ -2347,7 +2351,7 @@ namespace Carnassial
                     catch (Exception exception)
                     {
                         Debug.Fail(String.Format("Load of {0} failed as it's likely corrupted.", file.FileName), exception.ToString());
-                        bitmapSource = Constant.Images.CorruptFile.Value;
+                        memoryImage = Constant.Images.CorruptFile.Value;
                         file.ImageQuality = FileSelection.Corrupt;
                     }
 
@@ -2363,19 +2367,19 @@ namespace Carnassial
                         {
                             if (utcNow - folderLoadProgress.MostRecentStatusDispatch > this.state.Throttles.DesiredIntervalBetweenRenders)
                             {
-                                // if file was already loaded for dark checking use the resulting bitmap
+                                // if file was already loaded for dark checking use the resulting image
                                 // otherwise, load the file for display
-                                if (bitmapSource != null)
+                                if (memoryImage != null)
                                 {
-                                    folderLoadProgress.BitmapSource = bitmapSource;
+                                    folderLoadProgress.Image = memoryImage;
                                 }
                                 else
                                 {
-                                    folderLoadProgress.BitmapSource = null;
+                                    folderLoadProgress.Image = null;
                                 }
                                 folderLoadProgress.CurrentFile = file;
                                 folderLoadProgress.CurrentFileIndex = filesToInsert.Count;
-                                folderLoadProgress.DisplayBitmap = true;
+                                folderLoadProgress.DisplayImage = true;
                                 folderLoadProgress.MostRecentStatusDispatch = utcNow;
                                 folderLoadStatus.Report(folderLoadProgress);
                             }
@@ -2393,13 +2397,19 @@ namespace Carnassial
                     this.dataHandler.FileDatabase.AddFiles(filesToInsert, (ImageRow file, int fileIndex) =>
                     {
                         // skip reloading images to display as the user's already seen them import
-                        folderLoadProgress.BitmapSource = null;
+                        folderLoadProgress.Image = null;
                         folderLoadProgress.CurrentFile = file;
                         folderLoadProgress.CurrentFileIndex = fileIndex;
-                        folderLoadProgress.DisplayBitmap = false;
+                        folderLoadProgress.DisplayImage = false;
                         folderLoadStatus.Report(folderLoadProgress);
                     });
                 });
+
+            // if needed, revert to original selection
+            if (originalSelection != this.dataHandler.FileDatabase.ImageSet.FileSelection)
+            {
+                this.dataHandler.FileDatabase.SelectFiles(originalSelection);
+            }
 
             // hide the feedback bar, show the file slider
             this.FeedbackControl.Visibility = Visibility.Collapsed;
@@ -2452,6 +2462,24 @@ namespace Carnassial
             }
 
             return markersForCounter != null;
+        }
+
+        private bool TryGetSelectedCounter(out DataEntryCounter selectedCounter)
+        {
+            foreach (DataEntryControl control in this.DataEntryControls.Controls)
+            {
+                if (control is DataEntryCounter)
+                {
+                    DataEntryCounter counter = (DataEntryCounter)control;
+                    if (counter.IsSelected)
+                    {
+                        selectedCounter = counter;
+                        return true;
+                    }
+                }
+            }
+            selectedCounter = null;
+            return false;
         }
 
         private bool TryGetTemplatePath(out string templateDatabasePath)
@@ -2666,7 +2694,7 @@ namespace Carnassial
             if (this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Unaltered)
             {
                 // unaltered image should be cached
-                BitmapSource unalteredImage = this.dataHandler.ImageCache.GetCurrentImage();
+                MemoryImage unalteredImage = this.dataHandler.ImageCache.GetCurrentImage();
                 Debug.Assert(unalteredImage != null, "Unaltered image not available from image cache.");
                 this.MarkableCanvas.SetDisplayImage(unalteredImage);
                 this.statusBar.ClearMessage();
@@ -2718,9 +2746,9 @@ namespace Carnassial
             if (this.dataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Unaltered)
             {
                 // unaltered image should be cached
-                BitmapSource unalteredImage = this.dataHandler.ImageCache.GetCurrentImage();
-                Debug.Assert(unalteredImage != null, "Unaltered image not available from image cache.");
-                this.MarkableCanvas.SetDisplayImage(unalteredImage);
+                MemoryImage unaltered = this.dataHandler.ImageCache.GetCurrentImage();
+                Debug.Assert(unaltered != null, "Unaltered image not available from image cache.");
+                this.MarkableCanvas.SetDisplayImage(unaltered);
                 this.statusBar.ClearMessage();
                 return;
             }
@@ -2728,7 +2756,7 @@ namespace Carnassial
             // generate and cache difference image if needed
             if (this.dataHandler.ImageCache.GetCurrentImage() == null)
             {
-                ImageDifferenceResult result = await this.dataHandler.ImageCache.TryCalculateDifferenceAsync();
+                ImageDifferenceResult result = await this.dataHandler.ImageCache.TryCalculateDifferenceAsync(this.state.DifferenceThreshold);
                 switch (result)
                 {
                     case ImageDifferenceResult.CurrentImageNotAvailable:
@@ -2760,28 +2788,18 @@ namespace Carnassial
         {
             this.FeedbackControl.Message.Content = progress.GetMessage();
             this.FeedbackControl.ProgressBar.Value = progress.GetPercentage();
-            if (progress.DisplayBitmap)
+            if (progress.DisplayImage)
             {
-                // For good display quality the render size is ideally the markable canvas width.  However, its width isn't known until layout of the
-                // FileViewPane completes, which occurs asynchronously on the UI thread from background worker thread execution.  Therefore, start with
-                // a naive guess of the width and refine it as layout information becomes available.  Profiling shows no difference in import speed
-                // for renders up to at least 1000 pixels wide or so, suggesting there's little reason to render at other than display size.
-                int markableCanvasWidth = (int)this.MarkableCanvas.Width;
-                if ((markableCanvasWidth > 0) && (markableCanvasWidth != progress.RenderWidthBestEstimate))
+                MemoryImage image;
+                if (progress.Image != null)
                 {
-                    progress.RenderWidthBestEstimate = markableCanvasWidth;
-                }
-
-                BitmapSource bitmap;
-                if (progress.BitmapSource != null)
-                {
-                    bitmap = progress.BitmapSource;
+                    image = progress.Image;
                 }
                 else
                 {
-                    bitmap = await progress.CurrentFile.LoadBitmapAsync(this.FolderPath, progress.RenderWidthBestEstimate);
+                    image = await progress.CurrentFile.LoadAsync(this.FolderPath, progress.ImageRenderWidth);
                 }
-                this.MarkableCanvas.SetNewImage(bitmap, null);
+                this.MarkableCanvas.SetNewImage(image, null);
             }
         }
 
@@ -2860,6 +2878,9 @@ namespace Carnassial
             }
 
             // check if input key or chord is a shortcut key and dispatch appropriately if so
+            // When dispatch to an async method occurs the key typically needs to be marked handled before the async call.  Otherwise the UI thread continues
+            // event processing on the reasonable assumption the key's unhandled.  This is frequently benign but can have undesirable side effects, such as
+            // navigation keys changing which control has focus in addition to their intended effect.
             int keyRepeatCount = this.state.GetKeyRepeatCount(currentKey);
             switch (currentKey.Key)
             {
@@ -2868,15 +2889,13 @@ namespace Carnassial
                     {
                         // apply the current bookmark
                         this.MarkableCanvas.ApplyBookmark();
+                        currentKey.Handled = true;
                     }
                     else if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         // bookmark (save) the current pan / zoom of the display image
                         this.MarkableCanvas.SetBookmark();
-                    }
-                    else
-                    {
-                        return;
+                        currentKey.Handled = true;
                     }
                     break;
                 case Key.C:
@@ -2884,11 +2903,13 @@ namespace Carnassial
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.MenuEditCopy_Click(this, currentKey);
+                        currentKey.Handled = true;
                     }
                     break;
                 case Key.D:
                     // decrease the magnifing glass zoom
                     this.MarkableCanvas.MagnifierZoomOut();
+                    currentKey.Handled = true;
                     break;
                 // return to full view of display image
                 case Key.D0:
@@ -2896,17 +2917,16 @@ namespace Carnassial
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.MarkableCanvas.ZoomToFit();
-                    }
-                    else
-                    {
-                        return;
+                        currentKey.Handled = true;
                     }
                     break;
                 case Key.OemMinus:
                     this.MarkableCanvas.ZoomOut();
+                    currentKey.Handled = true;
                     break;
                 case Key.OemPlus:
                     this.MarkableCanvas.ZoomIn();
+                    currentKey.Handled = true;
                     break;
                 case Key.D1:
                 case Key.D2:
@@ -2920,10 +2940,12 @@ namespace Carnassial
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.TryCopyValuesToAnalysis(currentKey.Key - Key.D1);
+                        currentKey.Handled = true;
                     }
                     else if (Keyboard.Modifiers == ModifierKeys.None)
                     {
                         this.TryPasteValuesFromAnalysis(currentKey.Key - Key.D1);
+                        currentKey.Handled = true;
                     }
                     break;
                 case Key.NumPad1:
@@ -2938,38 +2960,46 @@ namespace Carnassial
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.TryCopyValuesToAnalysis(currentKey.Key - Key.NumPad1);
+                        currentKey.Handled = true;
                     }
                     else if (Keyboard.Modifiers == ModifierKeys.None)
                     {
                         this.TryPasteValuesFromAnalysis(currentKey.Key - Key.NumPad1);
+                        currentKey.Handled = true;
                     }
                     break;
                 // toggle the file's delete flag and, if set, move to the next file
                 case Key.Delete:
+                    currentKey.Handled = true;
                     await this.ToggleCurrentFileDeleteFlagAsync();
                     break;
                 case Key.Escape:            // exit current control, if any
                     this.TrySetKeyboardFocusToMarkableCanvas(false, currentKey);
+                    currentKey.Handled = true;
                     break;
                 case Key.G:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.MenuViewGotoFile_Click(this, currentKey);
+                        currentKey.Handled = true;
                     }
                     break;
                 case Key.M:                 // toggle the magnifying glass on and off
                     this.MenuViewDisplayMagnifier_Click(this, currentKey);
+                    currentKey.Handled = true;
                     break;
                 case Key.P:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.PastePreviousValues_Click(this, currentKey);
+                        currentKey.Handled = true;
                     }
                     break;
                 case Key.R:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.MenuEditResetValues_Click(this, currentKey);
+                        currentKey.Handled = true;
                     }
                     break;
                 case Key.Space:
@@ -2978,58 +3008,69 @@ namespace Carnassial
                     // the mouse.
                     if (this.MarkableCanvas.TryPlayOrPauseVideo() == false)
                     {
+                        currentKey.Handled = true;
                         return;
                     }
                     break;
                 case Key.U:
                     this.MarkableCanvas.MagnifierZoomIn();
+                    currentKey.Handled = true;
                     break;
                 case Key.V:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.MenuEditPaste_Click(this, currentKey);
+                        currentKey.Handled = true;
                     }
                     break;
                 case Key.Y:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.MenuEditRedo_Click(this, currentKey);
+                        currentKey.Handled = true;
                     }
                     break;
                 case Key.Z:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.MenuEditUndo_Click(this, currentKey);
+                        currentKey.Handled = true;
                     }
                     break;
                 case Key.End:
                     if (this.IsFileDatabaseAvailable())
                     {
+                        currentKey.Handled = true;
                         await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1);
                     }
                     break;
                 case Key.Left:              // previous image
+                    currentKey.Handled = true;
                     if (keyRepeatCount % this.state.Throttles.RepeatedKeyAcceptanceInterval == 0)
                     {
                         await this.ShowFileWithoutSliderCallbackAsync(false, Keyboard.Modifiers);
                     }
                     break;
                 case Key.Home:
+                    currentKey.Handled = true;
                     await this.ShowFileWithoutSliderCallbackAsync(0);
                     break;
                 case Key.PageDown:
                     if (this.IsFileDatabaseAvailable())
                     {
+                        currentKey.Handled = true;
                         await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.ImageCache.CurrentRow + (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
                     }
                     break;
                 case Key.PageUp:
                     if (this.IsFileDatabaseAvailable())
                     {
+                        currentKey.Handled = true;
                         await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.ImageCache.CurrentRow - (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
                     }
                     break;
                 case Key.Right:             // next image
+                    currentKey.Handled = true;
                     if (keyRepeatCount % this.state.Throttles.RepeatedKeyAcceptanceInterval == 0)
                     {
                         await this.ShowFileWithoutSliderCallbackAsync(true, Keyboard.Modifiers);
@@ -3037,17 +3078,19 @@ namespace Carnassial
                     break;
                 case Key.Tab:               // next or previous control
                     this.MoveFocusToNextOrPreviousControlOrImageSlider(Keyboard.Modifiers == ModifierKeys.Shift);
+                    currentKey.Handled = true;
                     break;
                 case Key.Up:                // show visual difference to next image
+                    currentKey.Handled = true;
                     await this.TryViewPreviousOrNextDifferenceAsync();
                     break;
                 case Key.Down:              // show visual difference to previous image
+                    currentKey.Handled = true;
                     await this.TryViewCombinedDifferenceAsync();
                     break;
                 default:
                     return;
             }
-            currentKey.Handled = true;
         }
     }
 }

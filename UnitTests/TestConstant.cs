@@ -16,6 +16,7 @@ namespace Carnassial.UnitTests
         public const string InitializeDataGridMethodName = "InitializeDataGrid";
         public const string MessageBoxAutomationID = "CarnassialMessageBox";
         public const string OkButtonAutomationID = "OkButton";
+        public const string PerformanceIntervalFormat = @"s\.fff";
         public const string TemplatePaneAutomationID = "TemplatePane";
 
         public static readonly TimeSpan UIElementSearchTimeout = TimeSpan.FromSeconds(15.0);
@@ -172,7 +173,7 @@ namespace Carnassial.UnitTests
 
                 FileExpectation.DaylightBobcat = new FileExpectations(pacificTime)
                 {
-                    DarkPixelFraction = 0.242364344315876,
+                    DarkPixelFraction = 0.243754514928039,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-08-05T08:06:23.000-07:00"),
                     FileName = "BushnellTrophyHD-119677C-20160805-926.JPG",
                     IsColor = true,
@@ -181,7 +182,7 @@ namespace Carnassial.UnitTests
 
                 FileExpectation.DaylightCoyote = new FileExpectations(pacificTime)
                 {
-                    DarkPixelFraction = 0.610071236552411,
+                    DarkPixelFraction = 0.608317365996393,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-04-21T06:31:13.000-07:00"),
                     FileName = "BushnellTrophyHDAggressor-119777C-20160421-112.JPG",
                     IsColor = true,
@@ -191,7 +192,7 @@ namespace Carnassial.UnitTests
 
                 FileExpectation.DaylightMartenPair = new FileExpectations(pacificTime)
                 {
-                    DarkPixelFraction = 0.705627292783256,
+                    DarkPixelFraction = 0.702360667828033,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-01-28T11:17:34.000-08:00"),
                     FileName = "Reconyx-HC500-20150128-201.JPG",
                     IsColor = true,
@@ -201,7 +202,7 @@ namespace Carnassial.UnitTests
 
                 FileExpectation.InfraredMarten = new FileExpectations(pacificTime)
                 {
-                    DarkPixelFraction = 0.077128711384332,
+                    DarkPixelFraction = 0.0742653252017767,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-02-24T04:59:46.000-08:00"),
                     FileName = "BushnellTrophyHD-119677C-20160224-056.JPG",
                     IsColor = false,

@@ -21,6 +21,12 @@ namespace Carnassial.Controls
         /// <summary>Gets the container that holds the control.</summary>
         public StackPanel Container { get; private set; }
 
+        /// <summary>Gets the context menu associated with the control.</summary>
+        public ContextMenu ContextMenu
+        {
+            get { return this.Container.ContextMenu; }
+        }
+
         /// <summary>Gets the data label which corresponds to this control.</summary>
         public string DataLabel { get; private set; }
 
@@ -48,6 +54,38 @@ namespace Carnassial.Controls
 
         public abstract void SetContentAndTooltip(string valueAsString);
         public abstract void SetValue(object valueAsObject);
+
+        public void AppendToContextMenu(params MenuItem[] menuItems)
+        {
+            if (menuItems.Length < 1)
+            {
+                throw new ArgumentOutOfRangeException("menuItems");
+            }
+
+            // if a context menu isn't already configured on the control's container create one
+            // The context menu is attached to the containing StackPanel as this provides the context menu throughout the DataEntryControl's display area.  If
+            // the content control defines its own context menu, as is the case for TextBoxes and derived classes by default, that takes priority within the
+            // content control's area.  It would be desirable to also append the menu items here to such default menus but WCF makes this nontrivial as default 
+            // menus are lazily instantiated and MenuItems can only be added to one ContextMenu, meaning it's probably best the caller pass multiple copies of 
+            // menu items as C# is unfriendly towwards copying handlers from one event to another.
+            ContextMenu menu = this.Container.ContextMenu;
+            if (menu == null)
+            {
+                menu = new ContextMenu();
+                this.Container.ContextMenu = menu;
+            }
+            menu.Tag = this;
+
+            if (menu.HasItems)
+            {
+                menu.Items.Add(new Separator());
+            }
+
+            foreach (MenuItem menuItem in menuItems)
+            {
+                menu.Items.Add(menuItem);
+            }
+        }
     }
 
     // A generic control comprises a stack panel containing 

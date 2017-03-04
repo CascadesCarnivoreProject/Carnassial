@@ -1,4 +1,5 @@
 ﻿using Carnassial.Database;
+using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -168,7 +169,8 @@ namespace Carnassial.Dialog
 
             this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
-            this.Image.Source = await imageProperties.LoadBitmapAsync(this.database.FolderPath);
+            MemoryImage image = await imageProperties.LoadAsync(this.database.FolderPath, (int)this.Width);
+            image.SetSource(this.Image);
             this.FileName.Content = imageProperties.FileName;
             this.FileName.ToolTip = this.FileName.Content;
 
@@ -192,7 +194,8 @@ namespace Carnassial.Dialog
 
                 this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
-                this.Image.Source = await imageProperties.LoadBitmapAsync(this.database.FolderPath);
+                MemoryImage image = await imageProperties.LoadAsync(this.database.FolderPath, (int)this.Width);
+                image.SetSource(this.Image);
                 this.FileName.Content = imageProperties.FileName;
                 this.FileName.ToolTip = this.FileName.Content;
 

@@ -1,5 +1,6 @@
 ﻿using Carnassial.Database;
 using Carnassial.Images;
+using Carnassial.Native;
 using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -10,7 +11,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media.Imaging;
 
 namespace Carnassial.UnitTests
 {
@@ -640,10 +640,11 @@ namespace Carnassial.UnitTests
                 ImageRow file;
                 Assert.IsFalse(fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file));
 
-                BitmapSource bitmapSource = await file.LoadBitmapAsync(fileDatabase.FolderPath);
-                WriteableBitmap writeableBitmap = bitmapSource.AsWriteable();
-                Assert.IsFalse(writeableBitmap.IsBlack());
-                file.ImageQuality = writeableBitmap.IsDark(Constant.Images.DarkPixelThresholdDefault, Constant.Images.DarkPixelRatioThresholdDefault);
+                MemoryImage image = await file.LoadAsync(fileDatabase.FolderPath);
+                Assert.IsFalse(image.IsBlack());
+                DateTime darkStart = DateTime.UtcNow;
+                file.ImageQuality = image.IsDark(Constant.Images.DarkPixelThresholdDefault, Constant.Images.DarkPixelRatioThresholdDefault) ? FileSelection.Dark : FileSelection.Ok;
+                this.TestContext.WriteLine("IsDark({0}, {1:0.00}MP): {2}ms", file.FileName, 1E-6 * image.TotalPixels, (DateTime.UtcNow - darkStart).ToString(TestConstant.PerformanceIntervalFormat));
                 Assert.IsTrue(file.ImageQuality == FileSelection.Ok);
 
                 // for images, verify the date can be found in metadata

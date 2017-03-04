@@ -10,7 +10,7 @@ namespace Carnassial.Util
         public bool AudioFeedback { get; set; }
         public Rect CarnassialWindowPosition { get; set; }
         public CustomSelectionOperator CustomSelectionTermCombiningOperator { get; set; }
-        public int DarkPixelThreshold { get; set; }
+        public byte DarkPixelThreshold { get; set; }
         public double DarkPixelRatioThreshold { get; set; }
         public DateTime MostRecentCheckForUpdates { get; set; }
         public MostRecentlyUsedList<string> MostRecentImageSets { get; private set; }
@@ -42,7 +42,7 @@ namespace Carnassial.Util
                 this.CarnassialWindowPosition = registryKey.ReadRect(Constant.Registry.CarnassialKey.CarnassialWindowPosition, new Rect(0.0, 0.0, 1350.0, 900.0));
                 this.CustomSelectionTermCombiningOperator = registryKey.ReadEnum<CustomSelectionOperator>(Constant.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, CustomSelectionOperator.And);
                 this.DarkPixelRatioThreshold = registryKey.ReadDouble(Constant.Registry.CarnassialKey.DarkPixelRatio, Constant.Images.DarkPixelRatioThresholdDefault);
-                this.DarkPixelThreshold = registryKey.ReadInteger(Constant.Registry.CarnassialKey.DarkPixelThreshold, Constant.Images.DarkPixelThresholdDefault);
+                this.DarkPixelThreshold = registryKey.ReadByte(Constant.Registry.CarnassialKey.DarkPixelThreshold, Constant.Images.DarkPixelThresholdDefault);
                 this.MostRecentCheckForUpdates = registryKey.ReadDateTime(Constant.Registry.CarnassialKey.MostRecentCheckForUpdates, DateTime.UtcNow);
                 this.MostRecentImageSets = registryKey.ReadMostRecentlyUsedList(Constant.Registry.CarnassialKey.MostRecentlyUsedImageSets);
                 this.OrderFilesByDateTime = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.OrderFilesByDateTime, false);

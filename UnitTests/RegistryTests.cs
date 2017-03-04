@@ -53,7 +53,7 @@ namespace Carnassial.UnitTests
             userSettings.CustomSelectionTermCombiningOperator = Database.CustomSelectionOperator.Or;
             double modifiedDarkPixelRatioThreshold = userSettings.DarkPixelRatioThreshold + 1.0;
             userSettings.DarkPixelRatioThreshold = modifiedDarkPixelRatioThreshold;
-            int modifiedDarkPixelThreshold = userSettings.DarkPixelThreshold + 1;
+            byte modifiedDarkPixelThreshold = (byte)(userSettings.DarkPixelThreshold + 1);
             userSettings.DarkPixelThreshold = modifiedDarkPixelThreshold;
             string databasePath = Path.Combine(this.WorkingDirectory, Constant.File.DefaultFileDatabaseFileName);
             userSettings.MostRecentImageSets.SetMostRecent(databasePath);

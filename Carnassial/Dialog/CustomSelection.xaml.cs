@@ -58,6 +58,8 @@ namespace Carnassial.Dialog
 
             // Create a new row for each search term. 
             // Each row specifies a particular control and how it can be searched
+            Thickness gridCellMargin = new Thickness(5, 2, 5, 2);
+            int valueTextBoxHeight = 22;
             int gridRowIndex = 0;
             foreach (SearchTerm searchTerm in this.database.CustomSelection.SearchTerms)
             {
@@ -68,10 +70,9 @@ namespace Carnassial.Dialog
                 this.SearchTerms.RowDefinitions.Add(gridRow);
 
                 // LABEL column: A checkbox to indicate whether the current search row should be used as part of the search
-                Thickness thickness = new Thickness(5, 2, 5, 2);
                 CheckBox controlLabel = new CheckBox();
                 controlLabel.Content = "_" + searchTerm.Label;
-                controlLabel.Margin = thickness;
+                controlLabel.Margin = gridCellMargin;
                 controlLabel.VerticalAlignment = VerticalAlignment.Center;
                 controlLabel.HorizontalAlignment = HorizontalAlignment.Left;
                 controlLabel.IsChecked = searchTerm.UseForSearching;
@@ -130,7 +131,7 @@ namespace Carnassial.Dialog
                 ComboBox operatorsComboBox = new ComboBox();
                 operatorsComboBox.IsEnabled = searchTerm.UseForSearching;
                 operatorsComboBox.ItemsSource = termOperators;
-                operatorsComboBox.Margin = thickness;
+                operatorsComboBox.Margin = gridCellMargin;
                 operatorsComboBox.SelectedValue = searchTerm.Operator;
                 operatorsComboBox.SelectionChanged += this.Operator_SelectionChanged; // Create the callback that is invoked whenever the user changes the expresison
                 operatorsComboBox.Width = 60;
@@ -166,9 +167,9 @@ namespace Carnassial.Dialog
                     textBoxValue.Autocompletions = this.database.GetDistinctValuesInFileDataColumn(searchTerm.DataLabel);
                     textBoxValue.IsEnabled = searchTerm.UseForSearching;
                     textBoxValue.Text = searchTerm.DatabaseValue;
-                    textBoxValue.Margin = thickness;
+                    textBoxValue.Margin = gridCellMargin;
                     textBoxValue.Width = CustomSelection.DefaultControlWidth;
-                    textBoxValue.Height = 22;
+                    textBoxValue.Height = valueTextBoxHeight;
                     textBoxValue.TextWrapping = TextWrapping.NoWrap;
                     textBoxValue.VerticalAlignment = VerticalAlignment.Center;
                     textBoxValue.VerticalContentAlignment = VerticalAlignment.Center;
@@ -191,7 +192,7 @@ namespace Carnassial.Dialog
                     ComboBox comboBoxValue = new ComboBox();
                     comboBoxValue.IsEnabled = searchTerm.UseForSearching;
                     comboBoxValue.Width = CustomSelection.DefaultControlWidth;
-                    comboBoxValue.Margin = thickness;
+                    comboBoxValue.Margin = gridCellMargin;
 
                     // Create the dropdown menu 
                     comboBoxValue.ItemsSource = searchTerm.List;
@@ -206,7 +207,7 @@ namespace Carnassial.Dialog
                 {
                     // Flags present checkboxes
                     CheckBox flagCheckBox = new CheckBox();
-                    flagCheckBox.Margin = thickness;
+                    flagCheckBox.Margin = gridCellMargin;
                     flagCheckBox.VerticalAlignment = VerticalAlignment.Center;
                     flagCheckBox.HorizontalAlignment = HorizontalAlignment.Left;
                     flagCheckBox.IsChecked = String.Equals(searchTerm.DatabaseValue, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ? false : true;
@@ -241,7 +242,7 @@ namespace Carnassial.Dialog
                 // Search Criteria Column: initially as an empty textblock. Indicates the constructed query expression for this row
                 TextBlock searchCriteria = new TextBlock();
                 searchCriteria.Width = CustomSelection.DefaultSearchCriteriaWidth;
-                searchCriteria.Margin = thickness;
+                searchCriteria.Margin = gridCellMargin;
                 searchCriteria.VerticalAlignment = VerticalAlignment.Center;
                 searchCriteria.HorizontalAlignment = HorizontalAlignment.Left;
 

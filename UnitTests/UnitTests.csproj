@@ -22,7 +22,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\Debug\</OutputPath>
+    <OutputPath>..\x64\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
@@ -30,7 +30,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>bin\x64\Release\</OutputPath>
+    <OutputPath>..\x64\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -98,6 +98,10 @@
     <Compile Include="VersionTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Native\Native.vcxproj">
+      <Project>{806c1e8c-846d-4a64-9294-35a72946167a}</Project>
+      <Name>Native</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TemplateEditor\TemplateEditor.csproj">
       <Project>{38a59036-3982-4dc8-a19a-ada1d8c1529a}</Project>
       <Name>TemplateEditor</Name>

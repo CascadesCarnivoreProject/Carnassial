@@ -22,6 +22,28 @@ namespace Carnassial.Util
             return defaultValue;
         }
 
+        public static byte ReadByte(this RegistryKey registryKey, string subKeyPath, byte defaultValue)
+        {
+            object value = registryKey.GetValue(subKeyPath);
+            if (value == null)
+            {
+                return defaultValue;
+            }
+
+            // smallest size for integer registry values is a DWORD, so bytes are written as such and need to be read as such
+            if (value is Int32)
+            {
+                return (byte)((Int32)value);
+            }
+
+            if (value is string)
+            {
+                return Byte.Parse((string)value);
+            }
+
+            throw new NotSupportedException(String.Format("Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));
+        }
+
         public static DateTime ReadDateTime(this RegistryKey registryKey, string subKeyPath, DateTime defaultValue)
         {
             string value = registryKey.ReadString(subKeyPath);
@@ -120,6 +142,11 @@ namespace Carnassial.Util
         public static void Write(this RegistryKey registryKey, string subKeyPath, bool value)
         {
             registryKey.Write(subKeyPath, value.ToString());
+        }
+
+        public static void Write(this RegistryKey registryKey, string subKeyPath, byte value)
+        {
+            registryKey.SetValue(subKeyPath, value, RegistryValueKind.DWord);
         }
 
         public static void Write(this RegistryKey registryKey, string subKeyPath, DateTime value)

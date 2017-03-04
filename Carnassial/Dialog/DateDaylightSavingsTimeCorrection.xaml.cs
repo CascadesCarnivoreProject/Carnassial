@@ -1,4 +1,5 @@
 ﻿using Carnassial.Database;
+using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Diagnostics;
@@ -8,7 +9,6 @@ namespace Carnassial.Dialog
 {
     /// <summary>
     /// This dialog lets a user enter a time change correction of +/-1 hour, which is propagated backwards/forwards.
-    /// The current image as set by the user in the radio buttons.
     /// </summary>
     public partial class DateDaylightSavingsTimeCorrection : Window
     {
@@ -34,7 +34,8 @@ namespace Carnassial.Dialog
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            this.Image.Source = await this.fileToDisplay.LoadBitmapAsync(this.database.FolderPath);
+            MemoryImage image = await this.fileToDisplay.LoadAsync(this.database.FolderPath, (int)this.Width);
+            image.SetSource(this.Image);
         }
 
         // When the user clicks ok, add/subtract an hour propagated forwards/backwards as specified

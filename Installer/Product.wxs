@@ -51,6 +51,12 @@
       <Component Id="$(var.Carnassial.TargetName).pdb" Guid="*" Win64="yes">
         <File Id="$(var.Carnassial.TargetName).pdb" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\$(var.Carnassial.TargetName).pdb" />
       </Component>
+      <Component Id="$(var.Native.TargetFileName)" Guid="*" Win64="yes">
+        <File Id="$(var.Native.TargetFileName)" KeyPath="yes" Source="$(var.Native.TargetDir)\$(var.Native.TargetFileName)" />
+      </Component>
+      <Component Id="$(var.Native.TargetName).pdb" Guid="*" Win64="yes">
+        <File Id="$(var.Native.TargetName).pdb" KeyPath="yes" Source="$(var.Native.TargetDir)\$(var.Native.TargetName).pdb" />
+      </Component>
       <Component Id="$(var.TemplateEditor.TargetFileName)" Guid="*" Win64="yes">
         <File Id="$(var.TemplateEditor.TargetFileName)" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)\$(var.TemplateEditor.TargetFileName)">
           <netfx:NativeImage Id="ngen_$(var.TemplateEditor.TargetFileName)" Platform="64bit" Priority="0" AppBaseDirectory="INSTALLFOLDER"/>
@@ -204,6 +210,8 @@
       <ComponentRef Id="$(var.Carnassial.TargetFileName)" />
       <ComponentRef Id="$(var.Carnassial.TargetFileName).config" />
       <ComponentRef Id="$(var.Carnassial.TargetName).pdb" />
+      <ComponentRef Id="$(var.Native.TargetFileName)" />
+      <ComponentRef Id="$(var.Native.TargetName).pdb" />
       <ComponentRef Id="$(var.TemplateEditor.TargetFileName)" />
       <ComponentRef Id="$(var.TemplateEditor.TargetFileName).config" />
       <ComponentRef Id="$(var.TemplateEditor.TargetName).pdb" />

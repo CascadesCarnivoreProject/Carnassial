@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Input;
 using Clipboard = System.Windows.Clipboard;
@@ -24,6 +25,20 @@ namespace Carnassial.Util
     /// </summary>
     public class Utilities
     {
+        public static void ConfigureNavigatorSliderTick(Slider slider)
+        {
+            if (slider.Maximum <= 50)
+            {
+                slider.IsSnapToTickEnabled = true;
+                slider.TickFrequency = 1.0;
+            }
+            else
+            {
+                slider.IsSnapToTickEnabled = false;
+                slider.TickFrequency = 0.02 * slider.Maximum;
+            }
+        }
+
         private static string GetDotNetVersion()
         {
             // adapted from https://msdn.microsoft.com/en-us/library/hh925568.aspx.

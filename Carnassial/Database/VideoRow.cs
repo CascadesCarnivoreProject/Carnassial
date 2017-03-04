@@ -1,4 +1,4 @@
-﻿using Carnassial.Images;
+﻿using Carnassial.Native;
 using System;
 using System.Data;
 using System.Diagnostics;
@@ -23,15 +23,15 @@ namespace Carnassial.Database
             get { return true; }
         }
 
-        public async override Task<BitmapSource> LoadBitmapAsync(string imageFolderPath, Nullable<int> desiredWidth)
+        public async override Task<MemoryImage> LoadAsync(string baseFolderPath, Nullable<int> expectedDisplayWidth)
         {
-            string path = this.GetFilePath(imageFolderPath);
+            string path = this.GetFilePath(baseFolderPath);
             if (!File.Exists(path))
             {
                 return Constant.Images.FileNoLongerAvailable.Value;
             }
 
-            BitmapSource firstFrame = await Task.Run(() =>
+            MemoryImage firstFrame = await Task.Run(() =>
             {
                 for (int renderAttempt = 0; renderAttempt < Constant.ThrottleValues.MaximumRenderAttempts; ++renderAttempt)
                 {
@@ -55,15 +55,8 @@ namespace Carnassial.Database
 
                         // sleep one more time as MediaPlayer has a tendency to still return black frames for a moment after the width and height have populated
                         Thread.Sleep(Constant.ThrottleValues.PollIntervalForVideoLoad);
-
                         int pixelWidth = mediaPlayer.NaturalVideoWidth;
                         int pixelHeight = mediaPlayer.NaturalVideoHeight;
-                        if (desiredWidth.HasValue)
-                        {
-                            double scaling = (double)desiredWidth.Value / (double)pixelWidth;
-                            pixelWidth = (int)(scaling * pixelWidth);
-                            pixelHeight = (int)(scaling * pixelHeight);
-                        }
 
                         // set up to render frame from the video
                         mediaPlayer.Pause();
@@ -79,21 +72,20 @@ namespace Carnassial.Database
                             using (DrawingContext drawingContext = drawingVisual.RenderOpen())
                             {
                                 drawingContext.DrawVideo(mediaPlayer, new Rect(0, 0, pixelWidth, pixelHeight));
-                                RenderTargetBitmap renderBitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, 96, 96, PixelFormats.Default);
+                                RenderTargetBitmap renderBitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, 96, 96, MemoryImage.PreferredPixelFormat);
                                 renderBitmap.Render(drawingVisual);
                                 renderBitmap.Freeze();
+                                MemoryImage memoryImage = new MemoryImage(renderBitmap);
 
                                 // check if render succeeded
-                                // hopefully it did and most of the overhead here is WriteableBitmap conversion though, at 2-3ms for a 1280x720 frame, black 
-                                // checking is not an especially expensive operation relative to the O(175ms) cost of this function
-                                WriteableBitmap writeableBitmap = renderBitmap.AsWriteable();
-                                if (writeableBitmap.IsBlack() == false)
+                                // hopefully it did though, at 2-3ms for a 1280x720 frame, black checking is not an especially expensive operation relative to the 
+                                // O(175ms) cost of this function
+                                if (memoryImage.IsBlack() == false)
                                 {
                                     // Debug.Print("Video frame succeeded: render attempt {0}, black frame attempt {1}.", renderAttempt, blackFrameAttempt);
                                     // If the media player is closed before Render() only black is rendered.
-                                    // If the WriteableBitmap isn't cast the compiler can't figure out the delegate's return type.
                                     mediaPlayer.Close();
-                                    return (BitmapSource)writeableBitmap;
+                                    return memoryImage;
                                 }
                             }
 

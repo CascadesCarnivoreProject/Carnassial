@@ -1,4 +1,6 @@
 ﻿using Carnassial.Controls;
+using Carnassial.Images;
+using Carnassial.Native;
 using Carnassial.Util;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
@@ -10,7 +12,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Media.Imaging;
 using Directory = System.IO.Directory;
 using MetadataDirectory = MetadataExtractor.Directory;
 
@@ -214,50 +215,35 @@ namespace Carnassial.Database
             return true;
         }
 
-        public async Task<BitmapSource> LoadBitmapAsync(string baseFolderPath)
+        public async Task<MemoryImage> LoadAsync(string baseFolderPath)
         {
-            return await this.LoadBitmapAsync(baseFolderPath, null);
+            return await this.LoadAsync(baseFolderPath, null);
         }
 
-        public async virtual Task<BitmapSource> LoadBitmapAsync(string baseFolderPath, Nullable<int> desiredWidth)
+        // 8MP average performance (n ~= 200), milliseconds
+        // scale factor  1.0  1/2   1/4    1/8
+        //               110  76.3  55.9   46.1
+        public async virtual Task<MemoryImage> LoadAsync(string baseFolderPath, Nullable<int> expectedDisplayWidth)
         {
+            // Stopwatch stopwatch = new Stopwatch();
+            // stopwatch.Start();
             string path = this.GetFilePath(baseFolderPath);
             if (!File.Exists(path))
             {
                 return Constant.Images.FileNoLongerAvailable.Value;
             }
 
-            try
+            byte[] jpegBuffer;
+            using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1024 * 1024, FileOptions.SequentialScan))
             {
-                using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1024 * 1024, FileOptions.SequentialScan))
-                {
-                    // All of WPF's image loading assumes, problematically, the file loaded will never need to be deleted or moved on disk until such time as
-                    // as all WPF references to it have been garbage collected.  This is not the case for many applications including, in Carnassial, when the
-                    // user soft deletes the current file or all files marked for deletion.  Disposing a BitmapImage's StreamSource in principle avoids the 
-                    // problem but either WPF or the semi-asynchronous nature of the filesystem prevents success in practice.  The simplest workaround's to give
-                    // WPF only a MemoryStream and dispose the FileStream promptly so WPF never gets a file handle to hold on to and the risk of file system 
-                    // races is mitigated.
-                    byte[] fileContent = new byte[fileStream.Length];
-                    await fileStream.ReadAsync(fileContent, 0, fileContent.Length);
+                jpegBuffer = new byte[fileStream.Length];
+                await fileStream.ReadAsync(jpegBuffer, 0, jpegBuffer.Length);
+            }
 
-                    BitmapImage bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.CacheOption = BitmapCacheOption.None;
-                    if (desiredWidth.HasValue)
-                    {
-                        bitmap.DecodePixelWidth = desiredWidth.Value;
-                    }
-                    bitmap.StreamSource = new MemoryStream(fileContent);
-                    bitmap.EndInit();
-                    bitmap.Freeze();
-                    return bitmap;
-                }
-            }
-            catch (NotSupportedException)
-            {
-                // since loads are always of .jpg files this typically indicates a corrupt file, though a wrong extension is possible
-                return Constant.Images.CorruptFile.Value;
-            }
+            MemoryImage image = new MemoryImage(jpegBuffer, expectedDisplayWidth);
+            // stopwatch.Stop();
+            // Debug::WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
+            return image;
         }
 
         public void SetDateTimeOffset(DateTimeOffset dateTime)

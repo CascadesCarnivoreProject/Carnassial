@@ -3,6 +3,7 @@ using Carnassial.Images;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -15,9 +16,6 @@ namespace Carnassial.Controls
     /// </summary>
     public class DataEntryHandler : IDisposable
     {
-        private const int CopyForwardMenuIndex = 1;
-        private const int PropagateFromLastValueMenuIndex = 0;
-
         private bool disposed;
 
         public FileDatabase FileDatabase { get; private set; }
@@ -191,23 +189,27 @@ namespace Carnassial.Controls
         /// </summary>
         public void SetDataEntryCallbacks(Dictionary<string, DataEntryControl> controlsByDataLabel)
         {
-            // Add data entry callbacks to all editable controls. When the user changes a file's attribute using a particular control,
-            // the callback updates the matching field for that file in the database.
+            // Adds
+            // - copy file path option to file and relative path controls
+            // - data entry callbacks to editable controls
+            // - propagate context menu to copyable controls
             foreach (KeyValuePair<string, DataEntryControl> pair in controlsByDataLabel)
             {
-                if (pair.Value.ContentReadOnly)
-                {
-                    continue;
-                }
-
                 string controlType = this.FileDatabase.FileTableColumnsByDataLabel[pair.Key].ControlType;
                 switch (controlType)
                 {
                     case Constant.Control.Note:
-                    case Constant.DatabaseColumn.File:
-                    case Constant.DatabaseColumn.RelativePath:
                         DataEntryNote note = (DataEntryNote)pair.Value;
                         note.ContentControl.TextAutocompleted += this.NoteControl_TextAutocompleted;
+                        break;
+                    case Constant.DatabaseColumn.File:
+                    case Constant.DatabaseColumn.RelativePath:
+                        note = (DataEntryNote)pair.Value;
+                        Debug.Assert(note.ContentReadOnly, "File name and relative path are expected to be read only fields.");
+                        Debug.Assert(note.Copyable == false, "File name and relative path are not expected to be copyable fields.");
+                        MenuItem filePathItem = new MenuItem() { Header = "Copy file's path" };
+                        filePathItem.Click += this.MenuContextFilePath_Click;
+                        note.AppendToContextMenu(filePathItem);
                         break;
                     case Constant.DatabaseColumn.DateTime:
                         DataEntryDateTime dateTime = (DataEntryDateTime)pair.Value;
@@ -236,9 +238,33 @@ namespace Carnassial.Controls
                         throw new NotSupportedException(String.Format("Unhandled control type '{0}'.", controlType));
                 }
 
+                // add the propagate context menu to copyable fields
                 if (pair.Value.Copyable)
                 {
-                    this.SetPropagateContextMenu(pair.Value);
+                    DataEntryControl control = pair.Value;
+
+                    MenuItem menuItemPropagateFromLastValue = new MenuItem();
+                    menuItemPropagateFromLastValue.Header = "Propagate from the _last non-empty value to here...";
+                    if (control is DataEntryCounter)
+                    {
+                        menuItemPropagateFromLastValue.Header = "Propagate from the _last non-zero value to here...";
+                    }
+                    menuItemPropagateFromLastValue.Click += this.MenuContextPropagateFromLastValue_Click;
+                    menuItemPropagateFromLastValue.Tag = DataEntryControlContextMenuItemType.PropagateFromLastValue;
+
+                    MenuItem menuItemCopyForward = new MenuItem();
+                    menuItemCopyForward.Header = "Copy forward to _end...";
+                    menuItemCopyForward.ToolTip = "The value of this field will be copied forward from this file to the last file in this set.";
+                    menuItemCopyForward.Click += this.MenuContextPropagateForward_Click;
+                    menuItemCopyForward.Tag = DataEntryControlContextMenuItemType.CopyForward;
+
+                    MenuItem menuItemCopyToAll = new MenuItem();
+                    menuItemCopyToAll.Header = "Copy to _all...";
+                    menuItemCopyToAll.ToolTip = "Copy the value of this field to all selected files.";
+                    menuItemCopyToAll.Click += this.MenuContextCopyToAll_Click;
+                    menuItemCopyToAll.Tag = DataEntryControlContextMenuItemType.CopyToAll;
+
+                    control.AppendToContextMenu(menuItemPropagateFromLastValue, menuItemCopyForward, menuItemCopyToAll);
                 }
             }
         }
@@ -336,13 +362,35 @@ namespace Carnassial.Controls
         // enable or disable context menu items
         protected virtual void Container_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            StackPanel stackPanel = (StackPanel)sender;
-            DataEntryControl control = (DataEntryControl)stackPanel.Tag;
+            DataEntryControl control = (DataEntryControl)((FrameworkElement)sender).Tag;
+            ContextMenu contextMenu = control.ContextMenu;
+            if (contextMenu != null && contextMenu.Items != null)
+            {
+                foreach (object menuObject in contextMenu.Items)
+                {
+                    if (menuObject is MenuItem == false)
+                    {
+                        continue;
+                    }
 
-            MenuItem menuItemCopyForward = (MenuItem)stackPanel.ContextMenu.Items[DataEntryHandler.CopyForwardMenuIndex];
-            menuItemCopyForward.IsEnabled = this.IsCopyForwardPossible(control);
-            MenuItem menuItemPropagateFromLastValue = (MenuItem)stackPanel.ContextMenu.Items[DataEntryHandler.PropagateFromLastValueMenuIndex];
-            menuItemPropagateFromLastValue.IsEnabled = this.IsCopyFromLastNonEmptyValuePossible(control);
+                    MenuItem menuItem = (MenuItem)menuObject;
+                    DataEntryControlContextMenuItemType menuItemType = (DataEntryControlContextMenuItemType)menuItem.Tag;
+                    switch (menuItemType)
+                    {
+                        case DataEntryControlContextMenuItemType.CopyForward:
+                            menuItem.IsEnabled = this.IsCopyForwardPossible(control);
+                            break;
+                        case DataEntryControlContextMenuItemType.CopyToAll:
+                            // nothing to do
+                            break;
+                        case DataEntryControlContextMenuItemType.PropagateFromLastValue:
+                            menuItem.IsEnabled = this.IsCopyFromLastNonEmptyValuePossible(control);
+                            break;
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled context menu item type {0}.", menuItemType));
+                    }
+                }
+            }
         }
 
         // when the number in a counter changes, update the counter's field in the database
@@ -411,28 +459,34 @@ namespace Carnassial.Controls
             return;
         }
 
-        // Menu selections for propagating or copying the current value of this control to all images
-        protected virtual void MenuItemPropagateFromLastValue_Click(object sender, RoutedEventArgs e)
+        private void MenuContextFilePath_Click(object sender, RoutedEventArgs e)
         {
-            DataEntryControl control = (DataEntryControl)((MenuItem)sender).Tag;
-            control.SetContentAndTooltip(this.CopyFromLastNonEmptyValue(control));
+            Debug.Assert(this.ImageCache.Current != null, "Context menu unexpectedly reached without a file displayed.");
+            string filePath = this.ImageCache.Current.GetFilePath(this.FileDatabase.FolderPath);
+            Clipboard.SetText(filePath);
         }
 
-        // Copy the current value of this control to all images
-        protected virtual void MenuItemCopyCurrentValue_Click(object sender, RoutedEventArgs e)
+        // copy the current value of this control to all files
+        private void MenuContextCopyToAll_Click(object sender, RoutedEventArgs e)
         {
-            DataEntryControl control = (DataEntryControl)((MenuItem)sender).Tag;
+            DataEntryControl control = (DataEntryControl)((ContextMenu)((MenuItem)sender).Parent).Tag;
             this.CopyToAll(control);
         }
 
-        // Propagate the current value of this control forward from this point across the current selection
-        protected virtual void MenuItemPropagateForward_Click(object sender, RoutedEventArgs e)
+        // propagate the current value of this control forward from this point across the current selection
+        private void MenuContextPropagateForward_Click(object sender, RoutedEventArgs e)
         {
-            DataEntryControl control = (DataEntryControl)((MenuItem)sender).Tag;
+            DataEntryControl control = (DataEntryControl)((ContextMenu)((MenuItem)sender).Parent).Tag;
             this.CopyForward(control, control is DataEntryCounter);
         }
 
-        // Whenever the text in a particular note box changes, update the particular note field in the database 
+        private void MenuContextPropagateFromLastValue_Click(object sender, RoutedEventArgs e)
+        {
+            DataEntryControl control = (DataEntryControl)((ContextMenu)((MenuItem)sender).Parent).Tag;
+            control.SetContentAndTooltip(this.CopyFromLastNonEmptyValue(control));
+        }
+
+        // update database whenever text in a note control changes and mark the field for autocomplete recalculation
         private void NoteControl_TextAutocompleted(object sender, TextChangedEventArgs e)
         {
             if (this.IsProgrammaticControlUpdate)
@@ -440,72 +494,13 @@ namespace Carnassial.Controls
                 return;
             }
 
-            // update control state write current value to the database
+            // update control state and write current value to the database
             DataEntryNote control = (DataEntryNote)((TextBox)sender).Tag;
             control.ContentChanged = true;
 
+            this.IsProgrammaticControlUpdate = true;
             this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
             this.IsProgrammaticControlUpdate = false;
-        }
-
-        private void SetPropagateContextMenu(DataEntryControl control)
-        {
-            MenuItem menuItemPropagateFromLastValue = new MenuItem();
-            menuItemPropagateFromLastValue.IsCheckable = false;
-            menuItemPropagateFromLastValue.Header = "Propagate from the _last non-empty value to here...";
-            if (control is DataEntryCounter)
-            {
-                menuItemPropagateFromLastValue.Header = "Propagate from the _last non-zero value to here...";
-            }
-            menuItemPropagateFromLastValue.Click += this.MenuItemPropagateFromLastValue_Click;
-            menuItemPropagateFromLastValue.Tag = control;
-
-            MenuItem menuItemCopyForward = new MenuItem();
-            menuItemCopyForward.IsCheckable = false;
-            menuItemCopyForward.Header = "Copy forward to _end...";
-            menuItemCopyForward.ToolTip = "The value of this field will be copied forward from this file to the last file in this set";
-            menuItemCopyForward.Click += this.MenuItemPropagateForward_Click;
-            menuItemCopyForward.Tag = control;
-
-            MenuItem menuItemCopyCurrentValue = new MenuItem();
-            menuItemCopyCurrentValue.IsCheckable = false;
-            menuItemCopyCurrentValue.Header = "Copy to _all...";
-            menuItemCopyCurrentValue.Click += this.MenuItemCopyCurrentValue_Click;
-            menuItemCopyCurrentValue.Tag = control;
-
-            // DataEntrHandler.PropagateFromLastValueIndex and CopyForwardIndex must be kept in sync with the add order here
-            ContextMenu menu = new ContextMenu();
-            menu.Items.Add(menuItemPropagateFromLastValue);
-            menu.Items.Add(menuItemCopyForward);
-            menu.Items.Add(menuItemCopyCurrentValue);
-
-            control.Container.ContextMenu = menu;
-            control.Container.PreviewMouseRightButtonDown += this.Container_PreviewMouseRightButtonDown;
-
-            if (control is DataEntryCounter)
-            {
-                DataEntryCounter counter = (DataEntryCounter)control;
-                counter.ContentControl.ContextMenu = menu;
-            }
-            else if (control is DataEntryNote)
-            {
-                DataEntryNote note = (DataEntryNote)control;
-                note.ContentControl.ContextMenu = menu;
-            }
-            else if (control is DataEntryChoice)
-            {
-                DataEntryChoice choice = (DataEntryChoice)control;
-                choice.ContentControl.ContextMenu = menu;
-            }
-            else if (control is DataEntryFlag)
-            {
-                DataEntryFlag flag = (DataEntryFlag)control;
-                flag.ContentControl.ContextMenu = menu;
-            }
-            else
-            {
-                throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.GetType().Name));
-            }
         }
 
         public bool TryDecrementOrResetCounter(DataEntryCounter counter)

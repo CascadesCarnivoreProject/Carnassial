@@ -396,8 +396,8 @@ namespace Carnassial.Database
                 query += " ORDER BY " + Constant.DatabaseColumn.DateTime;
             }
 
-            DataTable images = this.Database.GetDataTableFromSelect(query);
-            this.Files = new FileTable(images);
+            DataTable files = this.Database.GetDataTableFromSelect(query);
+            this.Files = new FileTable(files);
             this.Files.BindDataGrid(this.boundDataGrid, this.onFileDataTableRowChanged);
 
             // persist the current selection
@@ -408,8 +408,8 @@ namespace Carnassial.Database
         {
             string where = this.DataLabelFromStandardControlType[Constant.DatabaseColumn.DeleteFlag] + "=" + Utilities.QuoteForSql(Boolean.TrueString);
             string query = "Select * FROM " + Constant.DatabaseTable.FileData + " WHERE " + where;
-            DataTable images = this.Database.GetDataTableFromSelect(query);
-            return new FileTable(images);
+            DataTable files = this.Database.GetDataTableFromSelect(query);
+            return new FileTable(files);
         }
 
         /// <summary>

@@ -21,13 +21,24 @@ Higher Visual Studio SKUs such as Enterprise are fine.  After Visual Studio inst
 
 * clone the repo locally through Visual Studio's Team Explorer or GitHub's clone or download options
 * install Visual StyleCop (Tools -> Extensions and Updates -> Online)
+* install the [WiX Toolset](http://wixtoolset.org/releases/) build tools and Visual Studio extension
 
 Commits should
 
 * include appropriate test coverage
 * have no build warnings, pass code analysis (Analyze -> Run Code Analysis), and be free of StyleCop issues (right click solution -> Run StyleCop)
 
-Application and test development is done against .NET 4.6.
+Application and test development is done against .NET 4.6.  Carnassial is a 64 bit app and for the most part only an x64 build is needed for development and testing
+(the installer automatically rewires itself to build x86 under an x64 build).  However, the Visual Studio development UI is a 32 bit app and is therefore unable to
+load controls from the regular Carnassial build for display in the WPF designer.  As a result, Carnassial has a vestigial x86 build which needs to be selected when 
+doing UI tasks if the view in the designer is to match what's displayed at x64 runtime.  (Building Carnassial as AnyCPU in the x64 build isn't an option as 
+StockMessageControl hits call graphs which go into Carnassial.Native, an approach which is anyways undesirable as there's a moderate performance penalty to building 
+AnyCPU rather than x64.)
+
+Visual Studio behaves similarly for unit test discovery, looking for an x86 build unless Test -> Test Settings -> Default Processor Architecture -> x64 is set, which
+unfortunately has to be done every time VS is started.  In some cases it's possible to specify a .runsettings without x64 selected and sometimes not, but test
+discovery does not honor the target platform specified in the .runsettings file.  In such situations VS can fail to find any unit tests until restarted, though 
+setting x64 and forcing a build typically gets test discovery unstuck.
 
 Also helpful are
 
@@ -52,6 +63,6 @@ The need to analyze remote camera data is a common one.  In addition to Carnassi
 
 * Carnassial is fully free whilst CPW Photo Warehouse​ requires a Microsoft Access license (and permissions configuration).  Carnassial is more flexible and smoother in data entry but presently lacks equivalents to CPW's station information, occupancy analysis, and mark recapture analysis.  [CritterShell](https://github.com/CascadesCarnivoreProject/CritterShell) offers detection and occupancy analysis.
 * Carnassial is readily available.  Obtaining the eMammal client requires a logon be issued, which can be hard to get.
-* Carnassial and Timelapse are broadly similar.  As of December 2016 Carnassial offers faster analysis, more flexibility, and fewer defects than Timelapse.
+* Carnassial and Timelapse are broadly similar.  As of March 2017 Carnassial offers faster analysis, more flexibility, and fewer defects than Timelapse.
 
 If you know of others please email carnassialdev@gmail.com to let us know.

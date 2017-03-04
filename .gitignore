@@ -4,8 +4,14 @@
 
 # Build results 
 bin/
+ipch/
 packages/
 obj/
+x64/
+x86/
+*.opendb
+*.sdf
+*.VC.db
 **/StyleCop.Cache
 
 # Profiling results

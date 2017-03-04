@@ -17,100 +17,96 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <controls:StockMessageControl x:Name="Message"
                             StatusImage="Question"
                             Title="Identify dark images and videos."
-                            What="If dark image checking was skipped you can perform it now.  If Carnassial misclassified images and videos as dark or Ok you can tune how classification is done."
-                            Hint="It helps to understand how Carnassial determines darkness through the following steps.&#10;1. If it appears to be in color, then classify it as Ok (i.e., not dark).&#10;2. Otherwise, count the number of pixels darker than a 'grey color threshold'.&#10;3. If the percentage of dark pixels is greater than  the dark percentage threshold, then classify it as dark."
-                            Solution="Go to an image or video that you think is a typical 'borderline' dark versus ok case.The color of the horizontal bar below reflects the current 'grey color threshold', while its length shows how many pixels are below that value. The red line shows the 'dark percentage threshold' needed. &#10;1. Drag the red line and the slider to adjust both thresholds, until satisfied with the classification.&#10;2. Check other borderline images or videos to see if it improves classification. If not, repeat the above steps.&#10;3. If it looks good, Apply those settings to all images and videos. Review and repeat if needed.&#10;4. At any time, you can reset thresholds to their initial values or to the Carnassial defaults, and Apply them."
-                            HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
-        <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Grid.Row="1">
-            <Rectangle Fill="#FF868686" Height="2" />
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="100" />
-                </Grid.ColumnDefinitions>
-                <Slider Name="DarkThreshold" Width="Auto" Margin="0,3,0,0" Padding="0,-8,0,0"  Maximum="255" Minimum="1" SmallChange="1" TickFrequency="5" Value="60" VerticalContentAlignment="Bottom"/>
-                <Label Content="Dark pixel threshold" FontWeight="Bold" Grid.Column="0" Padding="0,4,0,0" Margin="0,13,3,0"/>
-                <Canvas Name="FeedbackCanvas" Background="Beige" Width="Auto" Height="30" Grid.Column="1">
-                    <Rectangle Name="RectDarkPixelRatioFound" Stroke="Black" StrokeThickness="2" Fill="DarkGray" Canvas.Left="0" Canvas.Top="0"></Rectangle>
-                    <Thumb Name="DarkPixelRatioThumb" Canvas.Left="50" Canvas.Top="0" Canvas.ZIndex="99" DragDelta="Thumb_DragDelta" Cursor="Hand">
-                        <Thumb.Template>
-                            <ControlTemplate>
-                                <Grid>
-                                    <Rectangle Stroke="Red" StrokeThickness="2" Fill="Red" Height="Auto" Width="Auto"/>
-                                    <Line Stroke="Black"  StrokeThickness="1" X1="0" X2="12" Y1="15" Y2="15" />
-                                    <Line Stroke="Black"  StrokeThickness="1" X1="0" X2="4" Y1="15" Y2="18" />
-                                    <Line Stroke="Black"  StrokeThickness="1" X1="0" X2="4" Y1="15" Y2="12" />
-                                    <Line Stroke="Black"  StrokeThickness="1" X1="8" X2="12" Y1="18" Y2="15" />
-                                    <Line Stroke="Black"  StrokeThickness="1" X1="8" X2="12" Y1="12" Y2="15" />
-                                </Grid>
-                            </ControlTemplate>
-                        </Thumb.Template>
-                    </Thumb>
-                </Canvas>
-                <Label Name="GreyColorThreshold" IsHitTestVisible = "False" Content="---" Grid.Column="1" HorizontalAlignment="Left" Margin="0,5,0,0" Padding="0,-8,0,0">
-                    <Label.Background>
-                        <SolidColorBrush Color="Beige" Opacity="0.7" />
-                    </Label.Background>
-                </Label>
-                <Label Name="DarkPixelRatio" IsHitTestVisible="False" Content="--" Grid.Column="1" HorizontalAlignment="Center" Margin="0,5,0,0" Padding="0,-8,0,0" Height="15">
-                    <Label.Background>
-                        <SolidColorBrush Color="Beige" Opacity="0.7" />
-                    </Label.Background>
-                </Label>
-                <Button Name="ResetButton" Content="_Reset..." Click="ResetButton_Click" ContextMenuService.IsEnabled="False" Grid.Column="2" Margin="5">
-                    <Button.ContextMenu>
-                        <ContextMenu >
-                            <MenuItem Header="Initial threshold settings" ToolTip="Reset the thresholds to those at the start of this dialog" Click="MenuItemResetCurrent_Click"/>
-                            <MenuItem Header="System default threshold settings"  ToolTip="Reset the thresholds to the recommended Carnassial Defaults" Click="MenuItemResetDefault_Click"/>
-                        </ContextMenu>
-                    </Button.ContextMenu>
-                </Button>
-            </Grid>
-            <Rectangle Fill="#FF868686" Height="1" />
-            <Grid Width="Auto" Height="28">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal" Grid.Column="0" HorizontalAlignment="Left" >
-                    <Label Content="File:" HorizontalContentAlignment="Left" FontWeight="Bold" />
-                    <Label Name="FileName" Content="[ --- file name --- ]" HorizontalContentAlignment="Left" FontWeight="Normal" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Left" Margin="5,0,5,0">
-                    <Label Content="Classification:" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                    <Label Name="OriginalClassification" Margin="0,0,0,0" Content="----" HorizontalContentAlignment="Right" VerticalAlignment="Center" />
-                    <Label Margin="0,0,0,0" Content="&#8594;" FontWeight="Bold" Padding="0,0,0,0" VerticalAlignment="Center"/>
-                    <Label Name="NewClassification" Margin="0,0,0,0" Content="----" FontWeight="Normal"  HorizontalContentAlignment="Left" HorizontalAlignment="Left" VerticalAlignment="Center" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5,0,0,0" Grid.Column="2">
-                    <Label Name="RatioFound" Content="100.0" Padding="0,0,0,0" HorizontalContentAlignment="Right" VerticalAlignment="Center" />
-                    <TextBlock Name="ThresholdMessage" Text="% of pixels are darker than the threshold" VerticalAlignment="Center" />
-                </StackPanel>
-            </Grid>
-        </StackPanel>
-        <Image Name="Image" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" HorizontalAlignment="Stretch" Grid.Row="2" />
-        <Grid Width="Auto" Height="Auto" Grid.Row="3">
+                            What="You can perform dark classification of new files as well as tune how classification is done and reclassify files."
+                            Solution="To perform classification just press the Apply button.  To tune classification go to an image or video that you think is a typical 'borderline' dark versus ok case.  Dark classification is performed automatically and the result displayed next to the file name along with the percentage of pixels which are dark.
+&#10;1. Drag the sliders to adjust how dim dark pixels need to be and how many pixels in a file need to be dark until satisfied.
+&#10;2. Navigate to other borderline files using the arrow keys or slider and check the results. Refine the thresholds as needed.
+&#10;3. Once good settings are found, apply them. Review and repeat if needed.
+&#10;At any time, you can reset thresholds to their initial values or to the Carnassial defaults."
+                            Hint="Carnassial always classifies files which appear to be in color as Ok.  On files which appear to be in black and white Carnassial counts the number of pixels darker than the minimum brightness threshold.  If the percentage of such pixels exceeds the dark percentage threshold then the file is classified as dark.  Otherwise it's classified as OK."
+                            HideExplanationCheckboxIsVisible="True" Grid.Row="0" Margin="-4,4,4,3" />
+        <Rectangle Fill="#FF868686" Height="1" Grid.Row="1" />
+        <Grid Width="Auto" Grid.Row="2">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150" />
+                <ColumnDefinition Width="170" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Grid.Column="0" HorizontalAlignment="Left" >
+                <Label Content="File:" HorizontalContentAlignment="Left" FontWeight="Bold" />
+                <Label Name="FileName" Content="[ --- file name --- ]" HorizontalContentAlignment="Left" FontWeight="Normal" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Left" Margin="5,0,5,0">
+                <Label Content="Classification:" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="0,0,1,0" />
+                <Label Name="OriginalClassification" Content="Dark" HorizontalContentAlignment="Right" VerticalAlignment="Center" Padding="2,0,1,0" />
+                <Label Content="&#8594;" FontWeight="Bold" VerticalAlignment="Center" Padding="1,0,1,0" />
+                <Label Name="NewClassification" Content="Dark" VerticalAlignment="Center" Padding="1,0,5,0" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="5,0,0,0" Grid.Column="2">
+                <TextBlock Name="ClassificationInformation" Text="100.0% of pixels below dark threshold" VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Slider Name="FileNavigatorSlider" AutoToolTipPlacement="BottomRight" Grid.Row="0" HorizontalAlignment="Stretch" Padding="0" TickPlacement="BottomRight" VerticalAlignment="Center" />
+                <Image Name="Image" Grid.Row="1" HorizontalAlignment="Stretch" Margin="2,0,5,0" Stretch="Uniform" StretchDirection="Both" />
+            </Grid>
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Label Content="percentage of pixels needing to be dark to classify file as dark" HorizontalContentAlignment="Center" Grid.Column="0">
+                        <Label.LayoutTransform>
+                            <RotateTransform Angle="-90" />
+                        </Label.LayoutTransform>
+                    </Label>
+                    <Slider Name="DarkPixelPercentageThreshold" Minimum="1" Maximum="100" SmallChange="1" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" Value="60" HorizontalAlignment="Center" Orientation="Vertical" Grid.Column="1" />
+                    <Label Content="maximum brightness of a dark pixel" HorizontalContentAlignment="Center" Grid.Column="2">
+                        <Label.LayoutTransform>
+                            <RotateTransform Angle="-90" />
+                        </Label.LayoutTransform>
+                    </Label>
+                    <Slider Name="DarkPixelThreshold" Minimum="1" Maximum="255" SmallChange="1" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" Value="20" HorizontalAlignment="Center" Orientation="Vertical" Grid.Column="3" />
+                </Grid>
+                <Menu Grid.Row="1" Margin="0,5,0,0" Width="78">
+                    <MenuItem Header="_Reset sliders" Name="MenuReset" BorderBrush="Black" BorderThickness="1" Padding="5,5,5,5">
+                        <MenuItem Header="to your previous settings" ToolTip="Reset thresholds to those configured when this dialog was launched." Click="MenuResetCurrent_Click"/>
+                        <MenuItem Header="to Carnassial defaults"  ToolTip="Reset thresholds to the default values Carnassial ships with." Click="MenuResetDefault_Click"/>
+                    </MenuItem>
+                </Menu>
+            </Grid>
+        </Grid>
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-
-            <Button Name="PreviousFile" Width="Auto" Grid.Column="0" VerticalAlignment="Center" Padding="4,0,4,0" Margin="10,10,0,10" HorizontalAlignment="Left" FontFamily="Marlett" FontSize="20" Click="PreviousButton_Click">3</Button>
-            <Slider Name="ScrollImages" Grid.Column="1"  VerticalAlignment="Center" HorizontalAlignment="Stretch" Padding="0" Margin="0,0,0,0" AutoToolTipPlacement="BottomRight"/>
-            <Button Name="NextFile" Width="Auto" Grid.Column="2" VerticalAlignment="Center"  Padding="4,0,4,0" Margin="0,10,40,10" HorizontalAlignment="Right" FontFamily="Marlett" FontSize="20" Click="NextButton_Click">4</Button>
-            <Button Name="ApplyDoneButton" Grid.Column="3" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="ApplyDoneButton_Click">_Apply to selected files</Button>
-            <Button Name="CancelStopButton" Grid.Column="4" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="CancelStopButton_Click">_Cancel</Button>
+            <Button Name="ApplyDoneButton" Grid.Column="1" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" Padding="10" Margin="10,10,10,10" Click="ApplyDoneButton_Click">_Apply to selected files</Button>
+            <Button Name="CancelStopButton" Grid.Column="2" IsCancel="True" VerticalAlignment="Bottom" Padding="10" Margin="10,10,10,10" Click="CancelStopButton_Click">_Cancel</Button>
         </Grid>
     </Grid>
 </Window>

@@ -19,7 +19,7 @@
                             What="Record any notes about this image set that you may want to refer to in the future. Your notes will be saved and viewable at any time through this software, but it will not be saved in the spreadsheet csv file. Typical uses are to log activities, list to-do items, leave messages for others, etc."
                             Title="Edit notes for this image set." Grid.Row="0" />
         <Rectangle Fill="#FF868686" Height="1" Grid.Row="1" />
-        <TextBox Name="Log" MinHeight="100" MinWidth="100" TextWrapping="Wrap" AcceptsTab="True" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextChanged="LogTextBox_TextChanged" Grid.Row="2" />
+        <TextBox Name="Log" TextChanged="LogTextBox_TextChanged" AcceptsTab="True" AcceptsReturn="True" SpellCheck.IsEnabled="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Grid.Row="2" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
             <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">_Save</Button>
             <Button Name="CancelButton" IsCancel="True" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>

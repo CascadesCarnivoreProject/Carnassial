@@ -58,13 +58,13 @@ namespace Carnassial.Database
             this.CurrentRow = Constant.Database.InvalidRow;
         }
 
-        public virtual bool TryMoveToFile(int imageRowIndex)
+        public virtual bool TryMoveToFile(int fileRowIndex)
         {
-            if (this.Database.IsFileRowInRange(imageRowIndex))
+            if (this.Database.IsFileRowInRange(fileRowIndex))
             {
-                this.CurrentRow = imageRowIndex;
+                this.CurrentRow = fileRowIndex;
                 // rebuild ImageProperties regardless of whether the row changed or not as this seek may be a refresh after a database change
-                this.Current = this.Database.Files[imageRowIndex];
+                this.Current = this.Database.Files[fileRowIndex];
                 return true;
             }
 

@@ -49,6 +49,14 @@
       <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
       <RefTargetDir>INSTALLFOLDER</RefTargetDir>
     </ProjectReference>
+    <ProjectReference Include="..\Native\Native.vcxproj">
+      <Name>Native</Name>
+      <Project>{806c1e8c-846d-4a64-9294-35a72946167a}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
     <ProjectReference Include="..\TemplateEditor\TemplateEditor.csproj">
       <Name>TemplateEditor</Name>
       <Project>{38a59036-3982-4dc8-a19a-ada1d8c1529a}</Project>

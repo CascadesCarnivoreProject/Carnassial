@@ -145,9 +145,10 @@
             
             <!-- Options Menu -->
             <MenuItem Name="MenuOptions" Header="_Options" IsEnabled="False">
-                <MenuItem Name="MenuOptionsSkipDarkFileCheck" IsCheckable="True" IsChecked="False" Header="_Skip dark check when adding files" Click="MenuOptionsSkipDarkFileCheck_Click" ToolTip="Make adding files to an image set faster by not checking if they're dark.  They can be checked for dark later through the Edit menu." />
                 <MenuItem Name="MenuOptionsOrderFilesByDateTime" IsCheckable="True" IsChecked="False" Header="_Order files by date/time" Click="MenuOptionsOrderFilesByDateTime_Click" ToolTip="Sort files by their date/time rather than the order in which they were added to the image set." />
                 <MenuItem Name="MenuOptionsAudioFeedback" IsCheckable="True" IsChecked="False" IsEnabled="False" Header="_Audio feedback" Click="MenuOptionsAudioFeedback_Click" ToolTip="Toggles the audio that speaks the count whenever you add a counting mark to the image." />
+                <Separator/>
+                <MenuItem Name="MenuOptionsSkipDarkFileCheck" IsCheckable="True" IsChecked="False" Header="_Skip dark check when adding files" Click="MenuOptionsSkipDarkFileCheck_Click" ToolTip="Make adding files to an image set faster by not checking if they're dark.  They can be checked for dark later through the Edit menu." />
                 <Separator/>
                 <MenuItem Name="MenuOptionsDialogsOnOrOff" Header="Turn _dialogs on or off" IsEnabled="False">
                     <MenuItem Name="MenuOptionsEnableAmbiguousDatesDialog" IsCheckable="True" Header="Display _ambiguous dates imported dialog" Click="MenuOptionsAmbiguousDatesDialog_Click" ToolTip="Turn on or off the informational dialog displayed when files with ambiguous dates are added to an image set." />
@@ -201,12 +202,12 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuViewZoomIn" Header="Zoom _in" Click="MenuViewZoomIn_Click" InputGestureText="=" ToolTip="Zoom into this file.">
+                <MenuItem Name="MenuViewZoomIn" Header="Zoom _in on pointer" Click="MenuViewZoomIn_Click" InputGestureText="=" ToolTip="Zoom into this file using the current mouse or touchpad pointer location.">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/ZoomIn_16x.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Name="MenuViewZoomOut" Header="Zoom _out" Click="MenuViewZoomOut_Click" InputGestureText="-" ToolTip="Zoom out in this file.">
+                <MenuItem Name="MenuViewZoomOut" Header="Zoom _out on pointer" Click="MenuViewZoomOut_Click" InputGestureText="-" ToolTip="Zoom out on this file using the current mouse or touchpad pointer location.">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/ZoomOut_16x.png" />
                     </MenuItem.Icon>
@@ -290,7 +291,7 @@
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
                                     <controls:FeedbackControl x:Name="FeedbackControl" Grid.Row="0" Visibility="Collapsed" />
-                                    <Slider Name="FileNavigatorSlider" Grid.Row="1" Minimum="1" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" LargeChange="1" TickPlacement="BottomRight" ToolTip="Scroll through all files" Margin="5,0,5,0"
+                                    <Slider Name="FileNavigatorSlider" Grid.Row="1" Minimum="1" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" LargeChange="1" TickPlacement="BottomRight" ToolTip="Scroll through all selected files." Margin="5,0,5,0"
                                             PreviewKeyDown="FileNavigatorSlider_PreviewKeyDown"
                                             Thumb.DragStarted="FileNavigatorSlider_DragStarted" 
                                             Thumb.DragCompleted="FileNavigatorSlider_DragCompleted"
