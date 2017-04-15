@@ -48,10 +48,10 @@ namespace Carnassial.Database
             return (long)row[column];
         }
 
-        public static string GetStringField(this DataRow row, string columnName)
+        public static string GetStringField(this DataRow row, string column)
         {
             // throws ArgumentException if column is not present in table
-            object field = row[columnName];
+            object field = row[column];
 
             // SQLite assigns both String.Empty and null to DBNull on input
             if (field is DBNull)

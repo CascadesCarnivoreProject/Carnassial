@@ -1,10 +1,10 @@
-﻿using Carnassial.Util;
+﻿using Carnassial.Database;
+using Carnassial.Util;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
-namespace Carnassial.Database
+namespace Carnassial.Data
 {
     /// <summary>
     /// Holds a list search term particles, each reflecting criteria for a given field
@@ -12,9 +12,9 @@ namespace Carnassial.Database
     public class CustomSelection
     {
         public List<SearchTerm> SearchTerms { get; private set; }
-        public CustomSelectionOperator TermCombiningOperator { get; set; }
+        public LogicalOperator TermCombiningOperator { get; set; }
 
-        public CustomSelection(DataTableBackedList<ControlRow> controlTable, CustomSelectionOperator termCombiningOperator)
+        public CustomSelection(DataTableBackedList<ControlRow> controlTable, LogicalOperator termCombiningOperator)
         {
             this.SearchTerms = new List<SearchTerm>();
             this.TermCombiningOperator = termCombiningOperator;
@@ -72,50 +72,23 @@ namespace Carnassial.Database
             }
         }
 
+        // create and return the query formed by the search term list
+        public Select CreateSelect()
+        {
+            Select select = new Select(Constant.DatabaseTable.FileData);
+            select.WhereCombiningOperator = this.TermCombiningOperator;
+            foreach (SearchTerm searchTerm in this.SearchTerms.Where(term => term.UseForSearching))
+            {
+                select.Where.Add(new WhereClause(searchTerm.DataLabel, this.TermToSqlOperator(searchTerm.Operator), searchTerm.DatabaseValue));
+            }
+
+            return select;
+        }
+
         public DateTimeOffset GetDateTime(int dateTimeSearchTermIndex, TimeZoneInfo imageSetTimeZone)
         {
             DateTime dateTime = this.SearchTerms[dateTimeSearchTermIndex].GetDateTime();
             return DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, imageSetTimeZone.GetUtcOffset(dateTime));
-        }
-
-        // Create and return the query composed from the search term list
-        public string GetFilesWhere()
-        {
-            string where = String.Empty;
-            // Construct and show the search term only if that search row is activated
-            foreach (SearchTerm searchTerm in this.SearchTerms.Where(term => term.UseForSearching))
-            {
-                // check to see if the search should match an empty string
-                // If so, nulls need also to be matched as NULL and empty are considered interchangeable.
-                string whereForTerm;
-                if (String.IsNullOrEmpty(searchTerm.DatabaseValue) && searchTerm.Operator == Constant.SearchTermOperator.Equal)
-                {
-                    whereForTerm = "(" + searchTerm.DataLabel + " IS NULL OR " + searchTerm.DataLabel + " = '')";
-                }
-                else
-                {
-                    whereForTerm = searchTerm.DataLabel + this.TermToSqlOperator(searchTerm.Operator) + Utilities.QuoteForSql(searchTerm.DatabaseValue);
-                }
-
-                // if there is already a term in the query add either and 'And' or an 'Or' to it 
-                if (where.Length > 0)
-                {
-                    switch (this.TermCombiningOperator)
-                    {
-                        case CustomSelectionOperator.And:
-                            where += " AND ";
-                            break;
-                        case CustomSelectionOperator.Or:
-                            where += " OR ";
-                            break;
-                        default:
-                            throw new NotSupportedException(String.Format("Unhandled logical operator {0}.", this.TermCombiningOperator));
-                    }
-                }
-                where += whereForTerm;
-            }
-
-            return where;
         }
 
         public void SetDateTime(int dateTimeSearchTermIndex, DateTimeOffset newDateTime, TimeZoneInfo imageSetTimeZone)
@@ -146,21 +119,21 @@ namespace Carnassial.Database
             switch (expression)
             {
                 case Constant.SearchTermOperator.Equal:
-                    return "=";
-                case Constant.SearchTermOperator.NotEqual:
-                    return "<>";
-                case Constant.SearchTermOperator.LessThan:
-                    return "<";
-                case Constant.SearchTermOperator.GreaterThan:
-                    return ">";
-                case Constant.SearchTermOperator.LessThanOrEqual:
-                    return "<=";
-                case Constant.SearchTermOperator.GreaterThanOrEqual:
-                    return ">=";
+                    return Constant.SqlOperator.Equal;
                 case Constant.SearchTermOperator.Glob:
-                    return Constant.SearchTermOperator.Glob;
+                    return Constant.SqlOperator.Glob;
+                case Constant.SearchTermOperator.GreaterThan:
+                    return Constant.SqlOperator.GreaterThan;
+                case Constant.SearchTermOperator.GreaterThanOrEqual:
+                    return Constant.SqlOperator.GreaterThanOrEqual;
+                case Constant.SearchTermOperator.LessThan:
+                    return Constant.SqlOperator.LessThan;
+                case Constant.SearchTermOperator.LessThanOrEqual:
+                    return Constant.SqlOperator.LessThanOrEqual;
+                case Constant.SearchTermOperator.NotEqual:
+                    return Constant.SqlOperator.NotEqual;
                 default:
-                    return String.Empty;
+                    throw new NotSupportedException(String.Format("Unhandled search term operator '{0}'.", expression));
             }
         }
     }

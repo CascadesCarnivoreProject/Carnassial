@@ -1,4 +1,5 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
+using Carnassial.Database;
 using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -47,7 +48,7 @@ namespace Carnassial.UnitTests
             File.Copy(fileDatabaseSourceFilePath, fileDatabaseCloneFilePath, true);
 
             FileDatabase fileDatabase;
-            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseCloneFilePath, templateDatabase, false, CustomSelectionOperator.And, out fileDatabase));
+            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseCloneFilePath, templateDatabase, false, LogicalOperator.And, out fileDatabase));
             return fileDatabase;
         }
 
@@ -99,7 +100,7 @@ namespace Carnassial.UnitTests
             }
 
             FileDatabase fileDatabase;
-            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, false, CustomSelectionOperator.And, out fileDatabase));
+            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, false, LogicalOperator.And, out fileDatabase));
             return fileDatabase;
         }
 
@@ -272,14 +273,15 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileEnumerator.TryMoveToFile(0));
             Assert.IsTrue(fileEnumerator.MoveNext());
 
-            ColumnTuplesWithWhere bobcatUpdate = new ColumnTuplesWithWhere();
-            bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Choice0, "choice b"));
-            bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString()));
-            bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true));
-            bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "bobcat"));
-            bobcatUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult"));
-            bobcatUpdate.SetWhere(fileEnumerator.Current.ID);
-            fileDatabase.UpdateFiles(new List<ColumnTuplesWithWhere>() { bobcatUpdate });
+            FileTuplesWithID bobcatUpdate = new FileTuplesWithID(new List<ColumnTuple>()
+                {
+                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.Choice0, "choice b"),
+                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString()),
+                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true),
+                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "bobcat"),
+                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult")
+                }, fileEnumerator.Current.ID);
+            fileDatabase.UpdateFiles(bobcatUpdate);
 
             long martenImageID = fileDatabase.Files[0].ID;
             fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
@@ -311,13 +313,15 @@ namespace Carnassial.UnitTests
                 fileDatabase.AddFiles(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
                 fileDatabase.SelectFiles(FileSelection.All);
 
-                ColumnTuplesWithWhere coyoteImageUpdate = new ColumnTuplesWithWhere();
-                coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "coyote"));
-                coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult"));
-                coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty));
-                coyoteImageUpdate.Columns.Add(new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note0, "escaped field, because a comma is present"));
-                coyoteImageUpdate.SetWhere(fileEnumerator.Current.ID);
-                fileDatabase.UpdateFiles(new List<ColumnTuplesWithWhere>() { coyoteImageUpdate });
+                FileTuplesWithID coyoteImageUpdate = new FileTuplesWithID(new List<ColumnTuple>()
+                    {
+                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "coyote"),
+                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult"),
+                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty),
+                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note0, "escaped field, because a comma is present")
+                    },
+                    fileEnumerator.Current.ID);
+                fileDatabase.UpdateFiles(coyoteImageUpdate);
 
                 long martenPairImageID = fileDatabase.Files[3].ID;
                 fileDatabase.UpdateFile(martenPairImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");

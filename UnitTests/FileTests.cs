@@ -1,4 +1,4 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
 using Carnassial.Images;
 using Carnassial.Native;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -157,29 +157,33 @@ namespace Carnassial.UnitTests
                 new FileExpectations(TestConstant.FileExpectation.InfraredMarten)
             };
 
-            TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName);
-            FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName);
-            bool darkFractionError = false;
-            foreach (FileExpectations fileExpectation in fileExpectations)
+            using (TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName))
             {
-                // load the image
-                ImageRow file = fileExpectation.GetFileData(fileDatabase);
-                MemoryImage image = await file.LoadAsync(this.WorkingDirectory);
-
-                double darkPixelFraction;
-                bool isColor;
-                FileSelection imageQuality = image.IsDark(Constant.Images.DarkPixelThresholdDefault, Constant.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor) ? FileSelection.Dark : FileSelection.Ok;
-                if (Math.Abs(darkPixelFraction - fileExpectation.DarkPixelFraction) > TestConstant.DarkPixelFractionTolerance)
+                using (FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName))
                 {
-                    this.TestContext.WriteLine("{0}: Expected dark pixel fraction to be {1}, but was {2}.", fileExpectation.FileName, fileExpectation.DarkPixelFraction, darkPixelFraction);
-                }
-                Assert.IsTrue(isColor == fileExpectation.IsColor, "{0}: Expected isColor to be {1}, but it was {2}", fileExpectation.FileName, fileExpectation.IsColor, isColor);
-                Assert.IsTrue(imageQuality == fileExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}", fileExpectation.FileName, fileExpectation.Quality, imageQuality);
-            }
+                    bool darkFractionError = false;
+                    foreach (FileExpectations fileExpectation in fileExpectations)
+                    {
+                        // load the image
+                        ImageRow file = fileExpectation.GetFileData(fileDatabase);
+                        MemoryImage image = await file.LoadAsync(this.WorkingDirectory);
 
-            if (darkFractionError)
-            {
-                Assert.Fail("At least one dark pixel fraction had error greater than {0}.  See test log for details.", TestConstant.DarkPixelFractionTolerance);
+                        double darkPixelFraction;
+                        bool isColor;
+                        FileSelection imageQuality = image.IsDark(Constant.Images.DarkPixelThresholdDefault, Constant.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor) ? FileSelection.Dark : FileSelection.Ok;
+                        if (Math.Abs(darkPixelFraction - fileExpectation.DarkPixelFraction) > TestConstant.DarkPixelFractionTolerance)
+                        {
+                            this.TestContext.WriteLine("{0}: Expected dark pixel fraction to be {1}, but was {2}.", fileExpectation.FileName, fileExpectation.DarkPixelFraction, darkPixelFraction);
+                        }
+                        Assert.IsTrue(isColor == fileExpectation.IsColor, "{0}: Expected isColor to be {1}, but it was {2}", fileExpectation.FileName, fileExpectation.IsColor, isColor);
+                        Assert.IsTrue(imageQuality == fileExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}", fileExpectation.FileName, fileExpectation.Quality, imageQuality);
+                    }
+
+                    if (darkFractionError)
+                    {
+                        Assert.Fail("At least one dark pixel fraction had error greater than {0}.  See test log for details.", TestConstant.DarkPixelFractionTolerance);
+                    }
+                }
             }
         }
 

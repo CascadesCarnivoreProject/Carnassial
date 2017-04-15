@@ -1,4 +1,4 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
@@ -59,7 +59,7 @@ namespace Carnassial.Controls
         {
             if (menuItems.Length < 1)
             {
-                throw new ArgumentOutOfRangeException("menuItems");
+                throw new ArgumentOutOfRangeException(nameof(menuItems));
             }
 
             // if a context menu isn't already configured on the control's container create one
@@ -132,7 +132,7 @@ namespace Carnassial.Controls
             // the data update callback for each control type in CarnassialWindow, such as NoteControl_TextChanged(), relies on this
             this.ContentControl.Tag = this;
 
-            // Create the label (which is an actual label)
+            // create the label
             this.LabelControl = new TLabel();
             this.LabelControl.Content = control.Label;
             this.LabelControl.Style = (Style)styleProvider.FindResource(labelStyleName.ToString());

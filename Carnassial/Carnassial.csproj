@@ -195,22 +195,22 @@
     <Compile Include="Controls\TimeZonePicker.cs" />
     <Compile Include="Controls\UtcOffsetPicker.cs" />
     <Compile Include="Database\ColumnDefinition.cs" />
-    <Compile Include="Database\ControlRow.cs" />
-    <Compile Include="Database\CustomSelectionOperator.cs" />
+    <Compile Include="Database\ColumnTuplesForUpdate.cs" />
+    <Compile Include="Database\ColumnTuplesForInsert.cs" />
+    <Compile Include="Database\ColumnTuples.cs" />
+    <Compile Include="Database\FileTuplesWithID.cs" />
+    <Compile Include="Database\FileTuplesWithPath.cs" />
+    <Compile Include="Data\ControlRow.cs" />
+    <Compile Include="Database\LogicalOperator.cs" />
     <Compile Include="Database\DataTableBackedList.cs" />
-    <Compile Include="Database\FileTableChoiceColumn.cs" />
-    <Compile Include="Database\FileTableColumn.cs" />
     <Compile Include="Database\DataRowExtensions.cs" />
-    <Compile Include="Database\FileTableCounterColumn.cs" />
-    <Compile Include="Database\FileTableUtcOffsetColumn.cs" />
-    <Compile Include="Database\FileTableDateTimeColumn.cs" />
-    <Compile Include="Database\FileTableFlagColumn.cs" />
-    <Compile Include="Database\FileTableNoteColumn.cs" />
-    <Compile Include="Database\FileTable.cs" />
-    <Compile Include="Database\ImageSetOptions.cs" />
-    <Compile Include="Database\ImageSetRow.cs" />
-    <Compile Include="Database\MarkerRow.cs" />
-    <Compile Include="Database\VideoRow.cs" />
+    <Compile Include="Data\FileTable.cs" />
+    <Compile Include="Data\ImageSetOptions.cs" />
+    <Compile Include="Data\ImageSetRow.cs" />
+    <Compile Include="Data\MarkerRow.cs" />
+    <Compile Include="Database\Select.cs" />
+    <Compile Include="Data\VideoRow.cs" />
+    <Compile Include="Database\WhereClause.cs" />
     <Compile Include="Dialog\AdvancedImageSetOptions.xaml.cs">
       <DependentUpon>AdvancedImageSetOptions.xaml</DependentUpon>
     </Compile>
@@ -251,9 +251,9 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
-    <Compile Include="Database\FileTableEnumerator.cs" />
+    <Compile Include="Data\FileTableEnumerator.cs" />
     <Compile Include="Dialog\DateTimeRereadFeedbackTuple.cs" />
-    <Compile Include="Database\DateTimeAdjustment.cs" />
+    <Compile Include="Data\DateTimeAdjustment.cs" />
     <Compile Include="Images\ImageDifference.cs" />
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
@@ -265,11 +265,11 @@
     <Compile Include="Util\Dependencies.cs" />
     <Compile Include="Github\GithubReleaseClient.cs" />
     <Compile Include="Constant.cs" />
-    <Compile Include="Database\CustomSelection.cs" />
+    <Compile Include="Data\CustomSelection.cs" />
     <Compile Include="Database\ColumnTuple.cs" />
-    <Compile Include="Database\ColumnTuplesWithWhere.cs" />
-    <Compile Include="Database\FileDatabase.cs" />
-    <Compile Include="Database\SearchTerm.cs" />
+    <Compile Include="Database\ColumnTuplesWithID.cs" />
+    <Compile Include="Data\FileDatabase.cs" />
+    <Compile Include="Data\SearchTerm.cs" />
     <Compile Include="Dialog\About.xaml.cs">
       <DependentUpon>About.xaml</DependentUpon>
     </Compile>
@@ -428,8 +428,8 @@
       <DependentUpon>FeedbackControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Database\FileBackup.cs" />
-    <Compile Include="Database\ImageRow.cs" />
-    <Compile Include="Database\FileSelection.cs" />
+    <Compile Include="Data\ImageRow.cs" />
+    <Compile Include="Data\FileSelection.cs" />
     <Compile Include="Images\MarkersForCounter.cs" />
     <Compile Include="Controls\ControlLabelStyle.cs" />
     <Compile Include="Controls\ControlContentStyle.cs" />
@@ -440,7 +440,7 @@
     <Compile Include="Controls\DataEntryFlag.cs" />
     <Compile Include="Controls\DataEntryNote.cs" />
     <Compile Include="Util\NativeMethods.cs" />
-    <Compile Include="Database\SpreadsheetReaderWriter.cs" />
+    <Compile Include="Data\SpreadsheetReaderWriter.cs" />
     <Compile Include="Dialog\DateTimeFixedCorrection.xaml.cs">
       <DependentUpon>DateTimeFixedCorrection.xaml</DependentUpon>
     </Compile>
@@ -473,9 +473,9 @@
     <Compile Include="Controls\DataEntryHandler.cs">
       <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
     </Compile>
-    <Compile Include="Database\SQLiteWrapper.cs" />
+    <Compile Include="Database\SQLiteDatabase.cs" />
     <Compile Include="Controls\StatusBarExtensions.cs" />
-    <Compile Include="Database\TemplateDatabase.cs" />
+    <Compile Include="Data\TemplateDatabase.cs" />
     <Compile Include="Util\CarnassialState.cs" />
     <Compile Include="Util\Utilities.cs" />
     <Compile Include="CarnassialWindow.xaml.cs">

@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Carnassial.Database;
+using System;
 using System.Collections.Generic;
 using System.Data;
 
-namespace Carnassial.Database
+namespace Carnassial.Data
 {
     public class ImageSetRow : DataRowBackedObject
     {
@@ -47,16 +48,33 @@ namespace Carnassial.Database
             set { this.Row.SetField(Constant.DatabaseColumn.TimeZone, value); }
         }
 
-        public override ColumnTuplesWithWhere GetColumnTuples()
+        public static ColumnTuplesForInsert CreateInsert(string folderPath)
         {
-            List<ColumnTuple> columnTuples = new List<ColumnTuple>();
-            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.FileSelection, this.FileSelection.ToString()));
-            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.InitialFolderName, this.InitialFolderName));
-            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.Log, this.Log));
-            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.Options, this.Options.ToString()));
-            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.MostRecentFileID, this.MostRecentFileID));
-            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.TimeZone, this.TimeZone));
-            return new ColumnTuplesWithWhere(columnTuples, this.ID);
+            return new ColumnTuplesForInsert(Constant.DatabaseTable.ImageSet,
+                new List<ColumnTuple>()
+                {
+                    new ColumnTuple(Constant.DatabaseColumn.FileSelection, FileSelection.All.ToString()),
+                    new ColumnTuple(Constant.DatabaseColumn.InitialFolderName, folderPath),
+                    new ColumnTuple(Constant.DatabaseColumn.Log, Constant.Database.ImageSetDefaultLog),
+                    new ColumnTuple(Constant.DatabaseColumn.MostRecentFileID, Constant.Database.DefaultFileID),
+                    new ColumnTuple(Constant.DatabaseColumn.Options, ImageSetOptions.None.ToString()),
+                    new ColumnTuple(Constant.DatabaseColumn.TimeZone, TimeZoneInfo.Local.Id)
+                });
+        }
+
+        public ColumnTuplesWithID CreateUpdate()
+        {
+            return new ColumnTuplesWithID(Constant.DatabaseTable.ImageSet,
+                new List<ColumnTuple>()
+                {
+                    new ColumnTuple(Constant.DatabaseColumn.FileSelection, this.FileSelection.ToString()),
+                    new ColumnTuple(Constant.DatabaseColumn.InitialFolderName, this.InitialFolderName),
+                    new ColumnTuple(Constant.DatabaseColumn.Log, this.Log),
+                    new ColumnTuple(Constant.DatabaseColumn.Options, this.Options.ToString()),
+                    new ColumnTuple(Constant.DatabaseColumn.MostRecentFileID, this.MostRecentFileID),
+                    new ColumnTuple(Constant.DatabaseColumn.TimeZone, this.TimeZone),
+                },
+                this.ID);
         }
 
         public TimeZoneInfo GetTimeZone()

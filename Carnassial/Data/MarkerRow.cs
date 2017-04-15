@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Carnassial.Database;
+using System.Collections.Generic;
 using System.Data;
 
-namespace Carnassial.Database
+namespace Carnassial.Data
 {
     public class MarkerRow : DataRowBackedObject
     {
@@ -30,14 +31,14 @@ namespace Carnassial.Database
             }
         }
 
-        public override ColumnTuplesWithWhere GetColumnTuples()
+        public ColumnTuplesWithID CreateUpdate()
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>();
             foreach (string dataLabel in this.DataLabels)
             {
                 columnTuples.Add(new ColumnTuple(dataLabel, this[dataLabel]));
             }
-            return new ColumnTuplesWithWhere(columnTuples, this.ID);
+            return new ColumnTuplesWithID(Constant.DatabaseTable.Markers, columnTuples, this.ID);
         }
     }
 }

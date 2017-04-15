@@ -1,4 +1,4 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -144,7 +144,7 @@ namespace Carnassial.Dialog
                     }
                 }
 
-                // Pass 2. Update each date as needed 
+                // Pass 2. write updates to database
                 rereadProgress.FileName = String.Empty;
                 rereadProgress.Message = String.Empty;
                 rereadStatus.Report(rereadProgress);  // A blank separator
@@ -152,12 +152,7 @@ namespace Carnassial.Dialog
                 rereadProgress.Message = String.Format("Updating {0} images and videos...", filesToAdjust.Count);
                 rereadStatus.Report(rereadProgress);
 
-                List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
-                foreach (ImageRow image in filesToAdjust)
-                {
-                    imagesToUpdate.Add(image.GetDateTimeColumnTuples());
-                }
-                database.UpdateFiles(imagesToUpdate);  // Write the updates to the database
+                database.UpdateFiles(ImageRow.CreateDateTimeUpdate(filesToAdjust));
                 rereadProgress.FileName = String.Empty;
                 rereadProgress.Message = "Done";
                 rereadStatus.Report(rereadProgress);

@@ -70,7 +70,7 @@ namespace Carnassial
                 typeof(UtcOffsetPicker)       // UTC offset
             }.AsReadOnly();
 
-            public static readonly ReadOnlyCollection<string> StandardTypes = new List<string>()
+            public static readonly ReadOnlyCollection<string> StandardControls = new List<string>()
             {
                 Constant.DatabaseColumn.DateTime,
                 Constant.DatabaseColumn.DeleteFlag,
@@ -107,23 +107,23 @@ namespace Carnassial
 
             // standard controls
             public const string DateTimeTooltip = "Date and time taken";
-            public const string DateTimeWidth = "188";
+            public const int DateTimeWidth = 188;
 
             public const string FileTooltip = "The file name";
-            public const string FileWidth = "221";
+            public const int FileWidth = 221;
             public const string RelativePathTooltip = "Path from the folder containing the template and image data files to the file";
-            public const string RelativePathWidth = "172";
+            public const int RelativePathWidth = 172;
             public const string FolderTooltip = "Name of the folder originally containing the template and image data files";
-            public const string FolderWidth = "206";
+            public const int FolderWidth = 206;
 
             public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
-            public const string ImageQualityWidth = "166";
+            public const int ImageQualityWidth = 166;
 
             public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
             public const string DeleteFlagTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
 
             public const string UtcOffsetTooltip = "Universal Time offset of the time zone for date and time taken";
-            public const string UtcOffsetWidth = "188";
+            public const int UtcOffsetWidth = 188;
 
             public static readonly DateTimeOffset DateTimeValue = new DateTimeOffset(1900, 1, 1, 12, 0, 0, 0, TimeSpan.Zero);
         }
@@ -133,13 +133,14 @@ namespace Carnassial
             // default values
             public const long DefaultFileID = 1;
             public const string ImageSetDefaultLog = "Add text here";
-            public const long ImageSetRowID = 1;
             public const long InvalidID = -1;
             public const int InvalidRow = -1;
-            public const int RowsPerInsert = 100;
+            // chosen to yield a reasonable progress update frequency when adding large numbers of files; see performance remarks in FileDatabase.AddFiles()
+            public const int RowsPerTransaction = 5000;
 
-            // Special characters
-            public const char MarkerBar = '|';              // Separator used to separate marker points in the database i.e. "2.3,5.6 | 7.1, 3.3"
+            // special characters
+            // separator used to separate marker points in the database i.e. "2.3,5.6 | 7.1, 3.3"
+            public const char MarkerBar = '|';
         }
 
         // Names of standard database columns, always included but not always made visible in the user controls
@@ -346,13 +347,21 @@ namespace Carnassial
         {
             public const string CreationStringPrimaryKey = "INTEGER PRIMARY KEY AUTOINCREMENT";
             public const string Integer = "INTEGER";
-            public const string DeleteFrom = "DELETE FROM ";
             public const string Where = " WHERE ";
-            public const string End = "END";
             public const string Text = "TEXT";
 
-            public const string Comma = ", ";
             public const int MaximumStatementCount = 500;
+        }
+
+        public static class SqlOperator
+        {
+            public const string Equal = "=";
+            public const string Glob = "GLOB";
+            public const string GreaterThan = ">";
+            public const string GreaterThanOrEqual = ">=";
+            public const string LessThan = "<";
+            public const string LessThanOrEqual = "<=";
+            public const string NotEqual = "<>";
         }
 
         public static class ThrottleValues

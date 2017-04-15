@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Carnassial.Database;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 
-namespace Carnassial.Database
+namespace Carnassial.Data
 {
     public class FileTable : DataTableBackedList<ImageRow>
     {
@@ -42,8 +43,14 @@ namespace Carnassial.Database
             return FileTable.CreateRow(row);
         }
 
-        public List<ImageRow> Select(string where)
+        public List<ImageRow> Select(string relativePath, string fileName)
         {
+            string where = String.Format("{0} = '{1}'", Constant.DatabaseColumn.File, fileName);
+            if (String.IsNullOrEmpty(relativePath) == false)
+            {
+                where += String.Format(" AND {0} = '{1}'", Constant.DatabaseColumn.RelativePath, relativePath);
+            }
+
             DataRow[] matchingRows = this.DataTable.Select(where);
             if (matchingRows == null)
             {

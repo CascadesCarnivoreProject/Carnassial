@@ -1,4 +1,5 @@
 ﻿using Carnassial.Controls;
+using Carnassial.Data;
 using Carnassial.Database;
 using Carnassial.Util;
 using System;
@@ -43,7 +44,7 @@ namespace Carnassial.Dialog
             Utilities.TryFitWindowInWorkingArea(this);
 
             // And vs Or conditional
-            if (this.database.CustomSelection.TermCombiningOperator == CustomSelectionOperator.And)
+            if (this.database.CustomSelection.TermCombiningOperator == LogicalOperator.And)
             {
                 this.TermCombiningAnd.IsChecked = true;
                 this.TermCombiningOr.IsChecked = false;
@@ -257,7 +258,7 @@ namespace Carnassial.Dialog
         private void AndOrRadioButton_Checked(object sender, RoutedEventArgs args)
         {
             RadioButton radioButton = sender as RadioButton;
-            this.database.CustomSelection.TermCombiningOperator = (radioButton == this.TermCombiningAnd) ? CustomSelectionOperator.And : CustomSelectionOperator.Or;
+            this.database.CustomSelection.TermCombiningOperator = (radioButton == this.TermCombiningAnd) ? LogicalOperator.And : LogicalOperator.Or;
             this.UpdateSearchCriteriaFeedback();
         }
 

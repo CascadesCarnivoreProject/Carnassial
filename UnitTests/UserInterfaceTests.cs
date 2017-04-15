@@ -1,5 +1,5 @@
 ﻿using Carnassial.Controls;
-using Carnassial.Database;
+using Carnassial.Data;
 using Carnassial.Dialog;
 using Carnassial.Editor;
 using Carnassial.Editor.Dialog;
@@ -126,7 +126,7 @@ namespace Carnassial.UnitTests
                 Task<bool> loadFolder = null;
                 Dispatcher.CurrentDispatcher.Invoke(() =>
                 {
-                    loadFolder = carnassial.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
+                    loadFolder = carnassial.TryOpenTemplateAndLoadFoldersAsync(templateDatabaseFilePath);
                 });
                 this.WaitForFolderLoadComplete(loadFolder);
 
@@ -166,7 +166,7 @@ namespace Carnassial.UnitTests
                 Task<bool> loadFolder = null;
                 Dispatcher.CurrentDispatcher.Invoke(() =>
                 {
-                    loadFolder = carnassial.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
+                    loadFolder = carnassial.TryOpenTemplateAndLoadFoldersAsync(templateDatabaseFilePath);
                 });
                 this.WaitForFolderLoadComplete(loadFolder);
 
@@ -262,10 +262,12 @@ namespace Carnassial.UnitTests
 
         private void WaitForFolderLoadComplete(Task<bool> loadFolder)
         {
-            while (loadFolder.Status != TaskStatus.RanToCompletion)
+            while (loadFolder.IsCompleted == false)
             {
                 this.WaitForRenderingComplete();
             }
+            Assert.IsFalse(loadFolder.IsCanceled);
+            Assert.IsFalse(loadFolder.IsFaulted);
             Assert.IsTrue(loadFolder.Result);
             this.WaitForRenderingComplete();
         }

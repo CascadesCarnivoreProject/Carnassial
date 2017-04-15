@@ -1,4 +1,4 @@
-﻿namespace Carnassial.Database
+﻿namespace Carnassial.Data
 {
     public enum FileSelection
     {

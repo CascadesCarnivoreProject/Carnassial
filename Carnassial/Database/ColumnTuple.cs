@@ -21,7 +21,7 @@ namespace Carnassial.Database
         {
             if (value.Kind != DateTimeKind.Utc)
             {
-                throw new ArgumentOutOfRangeException("value");
+                throw new ArgumentOutOfRangeException(nameof(value));
             }
         }
 

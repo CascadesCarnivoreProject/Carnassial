@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Carnassial.Database
+namespace Carnassial.Data
 {
     [Flags]
     public enum ImageSetOptions

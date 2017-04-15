@@ -1,4 +1,5 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
+using Carnassial.Database;
 using Carnassial.Editor.Controls;
 using Carnassial.Editor.Dialog;
 using Carnassial.Editor.Util;
@@ -884,7 +885,7 @@ namespace Carnassial.Editor
             }
 
             ControlRow control = new ControlRow(selectedRowView.Row);
-            this.RemoveControlButton.IsEnabled = !Constant.Control.StandardTypes.Contains(control.Type);
+            this.RemoveControlButton.IsEnabled = !Constant.Control.StandardControls.Contains(control.Type);
         }
 
         private void TutorialLink_RequestNavigate(object sender, RequestNavigateEventArgs e)

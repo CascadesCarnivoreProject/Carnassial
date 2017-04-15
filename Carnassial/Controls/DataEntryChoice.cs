@@ -1,6 +1,5 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
 using System;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;

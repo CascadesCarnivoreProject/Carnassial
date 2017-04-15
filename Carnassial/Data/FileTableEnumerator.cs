@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Carnassial.Database
+namespace Carnassial.Data
 {
     public class FileTableEnumerator : IEnumerator<ImageRow>
     {

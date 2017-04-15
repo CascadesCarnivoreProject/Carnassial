@@ -55,10 +55,31 @@ namespace Carnassial.Database
             }
         }
 
+        public TRow CreateRow()
+        {
+            DataRow row = this.DataTable.NewRow();
+            this.DataTable.Rows.Add(row);
+            return this.createRow(row);
+        }
+
         public void Dispose()
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.DataTable.Dispose();
+            }
+            this.disposed = true;
         }
 
         public IEnumerator<TRow> GetEnumerator()
@@ -88,34 +109,9 @@ namespace Carnassial.Database
             return this.createRow(row);
         }
 
-        public int IndexOf(DataRowBackedObject row)
+        public int IndexOf(TRow row)
         {
             return row.GetIndex(this.DataTable);
-        }
-
-        public TRow NewRow()
-        {
-            DataRow row = this.DataTable.NewRow();
-            return this.createRow(row);
-        }
-
-        public void RemoveAt(int index)
-        {
-            this.DataTable.Rows.RemoveAt(index);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                this.DataTable.Dispose();
-            }
-            this.disposed = true;
         }
     }
 }

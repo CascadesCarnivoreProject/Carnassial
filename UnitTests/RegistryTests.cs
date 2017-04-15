@@ -50,7 +50,7 @@ namespace Carnassial.UnitTests
             int windowLocation = 100; 
             int windowSize = 1000;
             userSettings.CarnassialWindowPosition = new Rect(windowLocation, windowLocation, windowSize, windowSize);
-            userSettings.CustomSelectionTermCombiningOperator = Database.CustomSelectionOperator.Or;
+            userSettings.CustomSelectionTermCombiningOperator = Database.LogicalOperator.Or;
             double modifiedDarkPixelRatioThreshold = userSettings.DarkPixelRatioThreshold + 1.0;
             userSettings.DarkPixelRatioThreshold = modifiedDarkPixelRatioThreshold;
             byte modifiedDarkPixelThreshold = (byte)(userSettings.DarkPixelThreshold + 1);
@@ -70,7 +70,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.AudioFeedback);
             Assert.IsTrue(userSettings.CarnassialWindowPosition.X == windowLocation && userSettings.CarnassialWindowPosition.Y == windowLocation);
             Assert.IsTrue(userSettings.CarnassialWindowPosition.Width == windowSize && userSettings.CarnassialWindowPosition.Height == windowSize);
-            Assert.IsTrue(userSettings.CustomSelectionTermCombiningOperator == Database.CustomSelectionOperator.Or);
+            Assert.IsTrue(userSettings.CustomSelectionTermCombiningOperator == Database.LogicalOperator.Or);
             Assert.IsTrue(userSettings.DarkPixelRatioThreshold == modifiedDarkPixelRatioThreshold);
             Assert.IsTrue(userSettings.DarkPixelThreshold == modifiedDarkPixelThreshold);
             Assert.IsNotNull(userSettings.MostRecentImageSets);

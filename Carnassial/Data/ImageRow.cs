@@ -1,5 +1,5 @@
 ﻿using Carnassial.Controls;
-using Carnassial.Images;
+using Carnassial.Database;
 using Carnassial.Native;
 using Carnassial.Util;
 using MetadataExtractor;
@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using Directory = System.IO.Directory;
 using MetadataDirectory = MetadataExtractor.Directory;
 
-namespace Carnassial.Database
+namespace Carnassial.Data
 {
     /// <summary>
     /// A row in the file database representing a single image.
@@ -95,28 +95,23 @@ namespace Carnassial.Database
             return values;
         }
 
-        public override ColumnTuplesWithWhere GetColumnTuples()
+        public FileTuplesWithID CreateDateTimeUpdate()
         {
-            ColumnTuplesWithWhere columnTuples = this.GetDateTimeColumnTuples();
-            columnTuples.Columns.Add(new ColumnTuple(Constant.DatabaseColumn.File, this.FileName));
-            columnTuples.Columns.Add(new ColumnTuple(Constant.DatabaseColumn.ImageQuality, this.ImageQuality.ToString()));
-            columnTuples.Columns.Add(new ColumnTuple(Constant.DatabaseColumn.RelativePath, this.RelativePath));
-            columnTuples.Columns.Add(new ColumnTuple(Constant.DatabaseColumn.DeleteFlag, this.DeleteFlag));
-            return columnTuples;
+            return ImageRow.CreateDateTimeUpdate(new List<ImageRow>() { this });
         }
 
-        public ColumnTuplesWithWhere GetDateTimeColumnTuples()
+        public static FileTuplesWithID CreateDateTimeUpdate(IEnumerable<ImageRow> files)
         {
-            List<ColumnTuple> columnTuples = new List<ColumnTuple>(2);
-            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.DateTime, this.DateTime));
-            columnTuples.Add(new ColumnTuple(Constant.DatabaseColumn.UtcOffset, this.UtcOffset));
-
-            long id = this.ID;
-            if (id != Constant.Database.InvalidID)
+            FileTuplesWithID dateTimeTuples = new FileTuplesWithID(Constant.DatabaseColumn.DateTime, Constant.DatabaseColumn.UtcOffset);
+            foreach (ImageRow file in files)
             {
-                return new ColumnTuplesWithWhere(columnTuples, this.ID);
+                Debug.Assert(file != null, "files contains null.");
+                Debug.Assert(file.ID != Constant.Database.InvalidID, "GetDateTimeColumnTuples() should only be called on ImageRows which are database backed.");
+
+                dateTimeTuples.Add(file.ID, file.DateTime, file.UtcOffset);
             }
-            return new ColumnTuplesWithWhere(columnTuples);
+
+            return dateTimeTuples;
         }
 
         public DateTimeOffset GetDateTime()
@@ -242,7 +237,7 @@ namespace Carnassial.Database
 
             MemoryImage image = new MemoryImage(jpegBuffer, expectedDisplayWidth);
             // stopwatch.Stop();
-            // Debug::WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
+            // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
             return image;
         }
 

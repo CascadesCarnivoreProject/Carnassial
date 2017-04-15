@@ -1,4 +1,4 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 

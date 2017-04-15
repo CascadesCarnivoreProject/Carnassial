@@ -16,8 +16,6 @@ namespace Carnassial.Database
             get { return this.Row.GetLongField(Constant.DatabaseColumn.ID); }
         }
 
-        public abstract ColumnTuplesWithWhere GetColumnTuples();
-
         public int GetIndex(DataTable dataTable)
         {
             return dataTable.Rows.IndexOf(this.Row);

@@ -1,4 +1,5 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
+using Carnassial.Database;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -128,7 +129,10 @@ namespace Carnassial.Dialog
             {
                 // for each file try to get the chosen metadata value.
                 string dataLabelToUpdate = this.dataLabelByLabel[this.dataFieldLabel];
-                List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
+                bool dateTimeUpdate = dataLabelToUpdate == Constant.DatabaseColumn.DateTime;
+                List<ImageRow> filesForDateTimeUpdate = new List<ImageRow>();
+                FileTuplesWithID filesToUpdate = new FileTuplesWithID(dataLabelToUpdate);
+
                 TimeZoneInfo imageSetTimeZone = this.database.ImageSet.GetTimeZone();
                 for (int fileIndex = 0; fileIndex < database.CurrentlySelectedFileCount; ++fileIndex)
                 {
@@ -138,16 +142,15 @@ namespace Carnassial.Dialog
                     {
                         if (this.clearIfNoMetadata)
                         {
-                            if (dataLabelToUpdate == Constant.DatabaseColumn.DateTime)
+                            if (dateTimeUpdate)
                             {
                                 file.SetDateTimeOffsetFromFileInfo(this.database.FolderPath, imageSetTimeZone);
-                                imagesToUpdate.Add(file.GetDateTimeColumnTuples());
+                                filesForDateTimeUpdate.Add(file);
                                 backgroundWorker.ReportProgress(0, new FeedbackMessage(file.FileName, "No metadata found - date/time reread from file"));
                             }
                             else
                             {
-                                List<ColumnTuple> clearField = new List<ColumnTuple>() { new ColumnTuple(this.dataLabelByLabel[this.dataFieldLabel], String.Empty) };
-                                imagesToUpdate.Add(new ColumnTuplesWithWhere(clearField, file.ID));
+                                filesToUpdate.Add(file.ID, String.Empty);
                                 backgroundWorker.ReportProgress(0, new FeedbackMessage(file.FileName, "No metadata found - data field is cleared"));
                             }
                         }
@@ -159,14 +162,13 @@ namespace Carnassial.Dialog
                     }
 
                     string metadataValue = metadata[this.metadataFieldName];
-                    ColumnTuplesWithWhere imageUpdate;
                     if (dataLabelToUpdate == Constant.DatabaseColumn.DateTime)
                     {
                         DateTimeOffset metadataDateTime;
                         if (DateTimeHandler.TryParseMetadataDateTaken(metadataValue, imageSetTimeZone, out metadataDateTime))
                         {
                             file.SetDateTimeOffset(metadataDateTime);
-                            imageUpdate = file.GetDateTimeColumnTuples();
+                            filesForDateTimeUpdate.Add(file);
                             backgroundWorker.ReportProgress(0, new FeedbackMessage(file.FileName, metadataValue));
                         }
                         else
@@ -177,10 +179,9 @@ namespace Carnassial.Dialog
                     }
                     else
                     {
-                        imageUpdate = new ColumnTuplesWithWhere(new List<ColumnTuple>() { new ColumnTuple(dataLabelToUpdate, metadataValue) }, file.ID);
+                        filesToUpdate.Add(file.ID, metadataValue);
                         backgroundWorker.ReportProgress(0, new FeedbackMessage(file.FileName, metadataValue));
                     }
-                    imagesToUpdate.Add(imageUpdate);
 
                     if (fileIndex % Constant.ThrottleValues.SleepForImageRenderInterval == 0)
                     {
@@ -189,7 +190,14 @@ namespace Carnassial.Dialog
                 }
 
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Writing the data...", "Please wait..."));
-                database.UpdateFiles(imagesToUpdate);
+                if (dateTimeUpdate)
+                {
+                    database.UpdateFiles(ImageRow.CreateDateTimeUpdate(filesForDateTimeUpdate));
+                }
+                else
+                {
+                    database.UpdateFiles(filesToUpdate);
+                }
                 backgroundWorker.ReportProgress(0, new FeedbackMessage("Done", "Done"));
             };
             backgroundWorker.ProgressChanged += (o, ea) =>

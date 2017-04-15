@@ -1,4 +1,4 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
 using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -21,14 +21,14 @@ namespace Carnassial.UnitTests
             this.File.Copyable = false;
             this.File.DefaultValue = Constant.ControlDefault.Value;
             this.File.List = Constant.ControlDefault.Value;
-            this.File.TextBoxWidth = Int32.Parse(Constant.ControlDefault.FileWidth);
+            this.File.TextBoxWidth = Constant.ControlDefault.FileWidth;
             this.File.Tooltip = Constant.ControlDefault.FileTooltip;
             this.File.Type = Constant.DatabaseColumn.File;
             this.RelativePath = ControlExpectations.CreateNote(Constant.DatabaseColumn.RelativePath, id++);
             this.RelativePath.Copyable = false;
             this.RelativePath.DefaultValue = Constant.ControlDefault.Value;
             this.RelativePath.List = Constant.ControlDefault.Value;
-            this.RelativePath.TextBoxWidth = Int32.Parse(Constant.ControlDefault.RelativePathWidth);
+            this.RelativePath.TextBoxWidth = Constant.ControlDefault.RelativePathWidth;
             this.RelativePath.Tooltip = Constant.ControlDefault.RelativePathTooltip;
             this.RelativePath.Type = Constant.DatabaseColumn.RelativePath;
             this.RelativePath.Visible = true;
@@ -36,14 +36,14 @@ namespace Carnassial.UnitTests
             this.DateTime.Copyable = false;
             this.DateTime.DefaultValue = DateTimeHandler.ToDatabaseDateTimeString(Constant.ControlDefault.DateTimeValue);
             this.DateTime.List = Constant.ControlDefault.Value;
-            this.DateTime.TextBoxWidth = Int32.Parse(Constant.ControlDefault.DateTimeWidth);
+            this.DateTime.TextBoxWidth = Constant.ControlDefault.DateTimeWidth;
             this.DateTime.Tooltip = Constant.ControlDefault.DateTimeTooltip;
             this.DateTime.Type = Constant.DatabaseColumn.DateTime;
             this.UtcOffset = ControlExpectations.CreateNote(Constant.DatabaseColumn.UtcOffset, id++);
             this.UtcOffset.Copyable = false;
             this.UtcOffset.DefaultValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constant.ControlDefault.DateTimeValue.Offset);
             this.UtcOffset.List = Constant.ControlDefault.Value;
-            this.UtcOffset.TextBoxWidth = Int32.Parse(Constant.ControlDefault.UtcOffsetWidth);
+            this.UtcOffset.TextBoxWidth = Constant.ControlDefault.UtcOffsetWidth;
             this.UtcOffset.Tooltip = Constant.ControlDefault.UtcOffsetTooltip;
             this.UtcOffset.Type = Constant.DatabaseColumn.UtcOffset;
             this.UtcOffset.Visible = false;
@@ -51,7 +51,7 @@ namespace Carnassial.UnitTests
             this.ImageQuality.Copyable = false;
             this.ImageQuality.DefaultValue = Constant.ControlDefault.Value;
             this.ImageQuality.List = Constant.ImageQuality.ListOfValues;
-            this.ImageQuality.TextBoxWidth = Int32.Parse(Constant.ControlDefault.ImageQualityWidth);
+            this.ImageQuality.TextBoxWidth = Constant.ControlDefault.ImageQualityWidth;
             this.ImageQuality.Tooltip = Constant.ControlDefault.ImageQualityTooltip;
             this.ImageQuality.Type = Constant.DatabaseColumn.ImageQuality;
             this.DeleteFlag = ControlExpectations.CreateFlag(Constant.DatabaseColumn.DeleteFlag, id++);

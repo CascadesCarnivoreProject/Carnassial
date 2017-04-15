@@ -1,4 +1,4 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
 using Carnassial.Images;
 using Carnassial.Util;
 using System;
@@ -54,7 +54,7 @@ namespace Carnassial.Controls
         }
 
         /// <summary>
-        /// Copy the last non-empty value in this control preceding this file up to the current file
+        /// Copy the closest, non-empty value in a file preceding this one to all intervening files plus the current file
         /// </summary>
         public string CopyFromLastNonEmptyValue(DataEntryControl control)
         {
@@ -195,7 +195,7 @@ namespace Carnassial.Controls
             // - propagate context menu to copyable controls
             foreach (KeyValuePair<string, DataEntryControl> pair in controlsByDataLabel)
             {
-                string controlType = this.FileDatabase.FileTableColumnsByDataLabel[pair.Key].ControlType;
+                string controlType = this.FileDatabase.ControlsByDataLabel[pair.Key].Type;
                 switch (controlType)
                 {
                     case Constant.Control.Note:
@@ -439,8 +439,7 @@ namespace Carnassial.Controls
             this.ImageCache.Current.SetDateTimeOffset(newDateTime);
             dateTimePicker.ToolTip = newDateTime.ToString(dateTimePicker.Format);
 
-            List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
-            this.FileDatabase.UpdateFiles(imageToUpdate);
+            this.FileDatabase.UpdateFiles(this.ImageCache.Current.CreateDateTimeUpdate());
         }
 
         // when a flag changes checked state, update the flag's field in the database
@@ -530,8 +529,7 @@ namespace Carnassial.Controls
             this.ImageCache.Current.SetDateTimeOffset(newImageDateTime);
             utcOffsetPicker.ToolTip = DateTimeHandler.ToDisplayUtcOffsetString(utcOffsetPicker.Value);
 
-            List<ColumnTuplesWithWhere> imageToUpdate = new List<ColumnTuplesWithWhere>() { this.ImageCache.Current.GetDateTimeColumnTuples() };
-            this.FileDatabase.UpdateFiles(imageToUpdate);  // write the new UtcOffset to the database
+            this.FileDatabase.UpdateFiles(this.ImageCache.Current.CreateDateTimeUpdate());  // write the new UtcOffset to the database
         }
     }
 }

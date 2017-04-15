@@ -1,4 +1,4 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
 using System;
 
 namespace Carnassial.UnitTests
@@ -25,7 +25,7 @@ namespace Carnassial.UnitTests
         public DefaultTemplateTableExpectation(Version version)
             : base(version)
         {
-            long id = Constant.Control.StandardTypes.Count + 1;
+            long id = Constant.Control.StandardControls.Count + 1;
             this.Counter0 = ControlExpectations.CreateCounter(TestConstant.DefaultDatabaseColumn.Counter0, id++);
             this.Counter0.List = Constant.ControlDefault.Value;
             this.Choice0 = ControlExpectations.CreateChoice(TestConstant.DefaultDatabaseColumn.Choice0, id++);
@@ -118,7 +118,7 @@ namespace Carnassial.UnitTests
         {
             base.Verify(templateDatabase);
 
-            int rowIndex = Constant.Control.StandardTypes.Count;
+            int rowIndex = Constant.Control.StandardControls.Count;
             this.Counter0.Verify(templateDatabase.Controls[rowIndex++]);
             this.Choice0.Verify(templateDatabase.Controls[rowIndex++]);
             this.Note0.Verify(templateDatabase.Controls[rowIndex++]);

@@ -9,7 +9,7 @@ namespace Carnassial.Util
     {
         public bool AudioFeedback { get; set; }
         public Rect CarnassialWindowPosition { get; set; }
-        public CustomSelectionOperator CustomSelectionTermCombiningOperator { get; set; }
+        public LogicalOperator CustomSelectionTermCombiningOperator { get; set; }
         public byte DarkPixelThreshold { get; set; }
         public double DarkPixelRatioThreshold { get; set; }
         public DateTime MostRecentCheckForUpdates { get; set; }
@@ -40,7 +40,7 @@ namespace Carnassial.Util
             {
                 this.AudioFeedback = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.AudioFeedback, false);
                 this.CarnassialWindowPosition = registryKey.ReadRect(Constant.Registry.CarnassialKey.CarnassialWindowPosition, new Rect(0.0, 0.0, 1350.0, 900.0));
-                this.CustomSelectionTermCombiningOperator = registryKey.ReadEnum<CustomSelectionOperator>(Constant.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, CustomSelectionOperator.And);
+                this.CustomSelectionTermCombiningOperator = registryKey.ReadEnum<LogicalOperator>(Constant.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, LogicalOperator.And);
                 this.DarkPixelRatioThreshold = registryKey.ReadDouble(Constant.Registry.CarnassialKey.DarkPixelRatio, Constant.Images.DarkPixelRatioThresholdDefault);
                 this.DarkPixelThreshold = registryKey.ReadByte(Constant.Registry.CarnassialKey.DarkPixelThreshold, Constant.Images.DarkPixelThresholdDefault);
                 this.MostRecentCheckForUpdates = registryKey.ReadDateTime(Constant.Registry.CarnassialKey.MostRecentCheckForUpdates, DateTime.UtcNow);

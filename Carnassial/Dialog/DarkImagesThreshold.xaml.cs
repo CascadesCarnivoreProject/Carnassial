@@ -1,4 +1,5 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
+using Carnassial.Database;
 using Carnassial.Images;
 using Carnassial.Native;
 using Carnassial.Util;
@@ -221,7 +222,7 @@ namespace Carnassial.Dialog
                 object renderLock = new object();
 
                 this.filesProcessed = 0;
-                List<ColumnTuplesWithWhere> filesToUpdate = new List<ColumnTuplesWithWhere>();
+                FileTuplesWithID filesToUpdate = new FileTuplesWithID(Constant.DatabaseColumn.ImageQuality);
                 Parallel.ForEach(
                     new SequentialPartitioner<ImageRow>(selectedFiles),
                     Utilities.GetParallelOptions(Environment.ProcessorCount),
@@ -251,7 +252,7 @@ namespace Carnassial.Dialog
                         imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
                         if (imageQuality.NewImageQuality.HasValue && (imageQuality.OldImageQuality != imageQuality.NewImageQuality.Value))
                         {
-                            filesToUpdate.Add(new ColumnTuplesWithWhere(new List<ColumnTuple> { new ColumnTuple(Constant.DatabaseColumn.ImageQuality, imageQuality.NewImageQuality.Value.ToString()) }, file.ID));
+                            filesToUpdate.Add(file.ID, imageQuality.NewImageQuality.Value.ToString());
                         }
 
                         DateTime utcNow = DateTime.UtcNow;

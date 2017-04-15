@@ -9,7 +9,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace Carnassial.Database
+namespace Carnassial.Data
 {
     public class VideoRow : ImageRow
     {

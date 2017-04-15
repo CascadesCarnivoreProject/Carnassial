@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Carnassial.Database
+namespace Carnassial.Data
 {
     /// <summary>
     /// A SearchTerm stores the search criteria for each column

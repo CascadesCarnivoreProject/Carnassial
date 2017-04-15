@@ -1,4 +1,5 @@
 ﻿using Carnassial.Controls;
+using Carnassial.Data;
 using Carnassial.Database;
 using System;
 using System.Windows;
@@ -80,7 +81,7 @@ namespace Carnassial.Editor.Controls
 
         public static bool IsStandardControlType(string controlType)
         {
-            return Constant.Control.StandardTypes.Contains(controlType);
+            return Constant.Control.StandardControls.Contains(controlType);
         }
 
         private DateTimeOffsetPicker CreateDateTimePicker(ControlRow control)

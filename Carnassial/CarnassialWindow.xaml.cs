@@ -1,4 +1,5 @@
 ﻿using Carnassial.Controls;
+using Carnassial.Data;
 using Carnassial.Database;
 using Carnassial.Dialog;
 using Carnassial.Github;
@@ -473,7 +474,7 @@ namespace Carnassial
             string templateDatabaseFilePath;
             if (Utilities.IsSingleTemplateFileDrag(dropEvent, out templateDatabaseFilePath))
             {
-                dropEvent.Handled = await this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
+                dropEvent.Handled = await this.TryOpenTemplateAndLoadFoldersAsync(templateDatabaseFilePath);
             }
         }
 
@@ -751,7 +752,7 @@ namespace Carnassial
                 long currentFileID = this.dataHandler.ImageCache.Current.ID;
 
                 Mouse.OverrideCursor = Cursors.Wait;
-                List<ColumnTuplesWithWhere> imagesToUpdate = new List<ColumnTuplesWithWhere>();
+                FileTuplesWithID filesToUpdate = new FileTuplesWithID(Constant.DatabaseColumn.DeleteFlag, Constant.DatabaseColumn.ImageQuality);
                 List<long> imageIDsToDropFromDatabase = new List<long>();
                 foreach (ImageRow image in imagesToDelete)
                 {
@@ -774,12 +775,7 @@ namespace Carnassial
                         // as only the file was deleted, change image quality to FileNoLongerAvailable and clear the delete flag
                         image.DeleteFlag = false;
                         image.ImageQuality = FileSelection.NoLongerAvailable;
-                        List<ColumnTuple> columnTuples = new List<ColumnTuple>()
-                        {
-                            new ColumnTuple(Constant.DatabaseColumn.DeleteFlag, Boolean.FalseString),
-                            new ColumnTuple(Constant.DatabaseColumn.ImageQuality, FileSelection.NoLongerAvailable.ToString())
-                        };
-                        imagesToUpdate.Add(new ColumnTuplesWithWhere(columnTuples, image.ID));
+                        filesToUpdate.Add(image.ID, Boolean.FalseString, FileSelection.NoLongerAvailable.ToString());
                     }
                 }
 
@@ -800,8 +796,8 @@ namespace Carnassial
                 }
                 else
                 {
-                    // update image properties
-                    this.dataHandler.FileDatabase.UpdateFiles(imagesToUpdate);
+                    // update file properties
+                    this.dataHandler.FileDatabase.UpdateFiles(filesToUpdate);
 
                     // display the updated properties on the current file or, if data for the current file was dropped, the next one
                     await this.ShowFileAsync(this.dataHandler.FileDatabase.GetFileOrNextFileIndex(currentFileID));
@@ -906,7 +902,7 @@ namespace Carnassial
             foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
             {
                 DataEntryControl control = pair.Value;
-                if (this.dataHandler.FileDatabase.IsControlCopyable(control.DataLabel))
+                if (control.Copyable)
                 {
                     control.SetContentAndTooltip(control.DefaultValue);
                 }
@@ -956,7 +952,7 @@ namespace Carnassial
             {
                 FolderLoad folderLoad = new FolderLoad();
                 folderLoad.FolderPaths.AddRange(folderPaths);
-                await this.TryBeginFolderLoadAsync(folderLoad);
+                await this.TryLoadFolderAsync(folderLoad);
             }
         }
 
@@ -1018,7 +1014,7 @@ namespace Carnassial
             string templateDatabaseFilePath;
             if (this.TryGetTemplatePath(out templateDatabaseFilePath))
             {
-                await this.TryOpenTemplateAndBeginLoadFoldersAsync(templateDatabaseFilePath);
+                await this.TryOpenTemplateAndLoadFoldersAsync(templateDatabaseFilePath);
             }     
         }
 
@@ -1222,7 +1218,7 @@ namespace Carnassial
 
         private async void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs e)
         {
-            await this.TryOpenTemplateAndBeginLoadFoldersAsync((string)((MenuItem)sender).ToolTip);
+            await this.TryOpenTemplateAndLoadFoldersAsync((string)((MenuItem)sender).ToolTip);
         }
 
         /// <summary>
@@ -1752,7 +1748,7 @@ namespace Carnassial
             {
                 DataEntryControl control = pair.Value;
                 object value;
-                if (this.dataHandler.FileDatabase.IsControlCopyable(control.DataLabel) && values.TryGetValue(control.DataLabel, out value))
+                if (control.Copyable && values.TryGetValue(control.DataLabel, out value))
                 {
                     control.SetValue(value);
                 }
@@ -1945,7 +1941,7 @@ namespace Carnassial
             // the callback updates the matching field for that image in the database.
             foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
             {
-                string controlType = this.dataHandler.FileDatabase.FileTableColumnsByDataLabel[pair.Key].ControlType;
+                string controlType = this.dataHandler.FileDatabase.ControlsByDataLabel[pair.Key].Type;
                 switch (controlType)
                 {
                     case Constant.Control.Counter:
@@ -2043,10 +2039,10 @@ namespace Carnassial
             foreach (KeyValuePair<string, DataEntryControl> control in this.DataEntryControls.ControlsByDataLabel)
             {
                 // update value
-                string controlType = this.dataHandler.FileDatabase.FileTableColumnsByDataLabel[control.Key].ControlType;
                 control.Value.SetValue(this.dataHandler.ImageCache.Current.GetValue(control.Value.DataLabel));
 
                 // for note controls, update the autocomplete list if an edit occurred
+                string controlType = this.dataHandler.FileDatabase.ControlsByDataLabel[control.Key].Type;
                 if (controlType == Constant.Control.Note)
                 {
                     DataEntryNote noteControl = (DataEntryNote)control.Value;
@@ -2218,7 +2214,7 @@ namespace Carnassial
         }
 
         // out parameters can't be used in anonymous methods, so a separate pointer to backgroundWorker is required for return to the caller
-        private async Task<bool> TryBeginFolderLoadAsync(FolderLoad folderLoad)
+        private async Task<bool> TryLoadFolderAsync(FolderLoad folderLoad)
         {
             List<FileInfo> filesToAdd = folderLoad.GetFiles();
             if (filesToAdd.Count == 0)
@@ -2242,7 +2238,7 @@ namespace Carnassial
                 {
                     folderLoad.FolderPaths.Clear();
                     folderLoad.FolderPaths.AddRange(folderPaths);
-                    return await this.TryBeginFolderLoadAsync(folderLoad);
+                    return await this.TryLoadFolderAsync(folderLoad);
                 }
 
                 // exit if user changed their mind about trying again
@@ -2389,7 +2385,7 @@ namespace Carnassial
 
             // Second pass: Update database
             // Parallel execution above produces out of order results.  Put them back in order so the user sees images in file name order when
-            // reviewing the image set.
+            // reviewing the image set.  See https://blogs.msdn.microsoft.com/ptorr/2014/12/10/async-exceptions-in-c/ for exception flow details.
             folderLoadProgress.DatabaseInsert = true;
             await Task.Run(() =>
                 {
@@ -2509,10 +2505,10 @@ namespace Carnassial
         /// Load the specified database template and then the associated file database.
         /// </summary>
         /// <param name="templateDatabasePath">Fully qualified path to the template database file.</param>
-        /// <returns>true only if both the template and image database file are loaded (regardless of whether any images were loaded), false otherwise</returns>
+        /// <returns>true only if both the template and file database are loaded (regardless of whether any files were loaded), false otherwise</returns>
         /// <remarks>This method doesn't particularly need to be public. But making it private imposes substantial complexity in invoking it via PrivateObject
         /// in unit tests.</remarks>
-        public async Task<bool> TryOpenTemplateAndBeginLoadFoldersAsync(string templateDatabasePath)
+        public async Task<bool> TryOpenTemplateAndLoadFoldersAsync(string templateDatabasePath)
         {
             // Try to create or open the template database
             TemplateDatabase templateDatabase;
@@ -2590,12 +2586,12 @@ namespace Carnassial
             this.state.MostRecentImageSets.SetMostRecent(templateDatabasePath);
             this.Title = Path.GetFileName(fileDatabase.FilePath) + " - " + Constant.MainWindowBaseTitle;
 
-            // If this is a new file database, try to load files (if any) from the folder...  
+            // if this is a new file database, try to load files (if any) from the folder...  
             if (addFiles)
             {
                 FolderLoad folderLoad = new FolderLoad();
                 folderLoad.FolderPaths.Add(this.FolderPath);
-                await this.TryBeginFolderLoadAsync(folderLoad);
+                await this.TryLoadFolderAsync(folderLoad);
             }
 
             await this.OnFolderLoadingCompleteAsync(false);
@@ -2850,14 +2846,14 @@ namespace Carnassial
                 string fileExtension = Path.GetExtension(filePath);
                 if (String.Equals(fileExtension, Constant.File.TemplateFileExtension, StringComparison.OrdinalIgnoreCase))
                 {
-                    await this.TryOpenTemplateAndBeginLoadFoldersAsync(filePath);
+                    await this.TryOpenTemplateAndLoadFoldersAsync(filePath);
                 }
                 else if (String.Equals(fileExtension, Constant.File.FileDatabaseFileExtension, StringComparison.OrdinalIgnoreCase))
                 {
                     string[] templatePaths = Directory.GetFiles(Path.GetDirectoryName(filePath), "*" + Constant.File.TemplateFileExtension);
                     if (templatePaths != null && templatePaths.Length == 1)
                     {
-                        await this.TryOpenTemplateAndBeginLoadFoldersAsync(templatePaths[0]);
+                        await this.TryOpenTemplateAndLoadFoldersAsync(templatePaths[0]);
                     }
                 }
             }
