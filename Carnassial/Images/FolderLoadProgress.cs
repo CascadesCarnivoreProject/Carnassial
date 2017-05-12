@@ -4,8 +4,10 @@ using System;
 
 namespace Carnassial.Images
 {
-    internal class FolderLoadProgress
+    internal class FolderLoadProgress : IDisposable
     {
+        private bool disposed;
+
         public ImageRow CurrentFile { get; set; }
         public int CurrentFileIndex { get; set; }
         public bool DatabaseInsert { get; set; }
@@ -21,10 +23,31 @@ namespace Carnassial.Images
             this.CurrentFileIndex = 0;
             this.DatabaseInsert = false;
             this.DisplayImage = false;
+            this.disposed = false;
             this.Image = null;
             this.ImageRenderWidth = Math.Max(imageRenderWidth, Constant.Images.MinimumRenderWidth);
             this.MostRecentStatusDispatch = DateTime.MinValue.ToUniversalTime();
             this.TotalFiles = totalFiles;
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing && this.Image != null)
+            {
+                this.Image.Dispose();
+            }
+            this.disposed = true;
         }
 
         public string GetMessage()

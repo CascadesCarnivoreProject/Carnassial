@@ -160,6 +160,7 @@ namespace Carnassial.UnitTests
 
         public static class FileExpectation
         {
+            public static readonly FileExpectations CorruptFieldScan;
             public static readonly FileExpectations DaylightBobcat;
             public static readonly FileExpectations DaylightCoyote;
             public static readonly FileExpectations DaylightMartenPair;
@@ -170,6 +171,13 @@ namespace Carnassial.UnitTests
             static FileExpectation()
             {
                 TimeZoneInfo pacificTime = TimeZoneInfo.FindSystemTimeZoneById(TestConstant.TimeZone.Pacific);
+
+                FileExpectation.CorruptFieldScan = new FileExpectations(pacificTime)
+                {
+                    FileName = "BushnellTrophyHD-119677C-20170403-179.JPG",
+                    IsColor = false,
+                    Quality = FileSelection.Corrupt
+                };
 
                 FileExpectation.DaylightBobcat = new FileExpectations(pacificTime)
                 {

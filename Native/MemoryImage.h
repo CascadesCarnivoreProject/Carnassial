@@ -18,6 +18,7 @@ namespace Carnassial
 		private:
 			static const __int32 DefaultDpi = 96;
 
+			bool decodeError;
 			PixelFormat format;
 			NativeImage* nativeImage;
 
@@ -34,6 +35,11 @@ namespace Carnassial
 			MemoryImage(array<unsigned __int8>^ jpeg, Nullable<__int32>^ requestedWidth);
 			!MemoryImage();
 			~MemoryImage();
+
+			property bool DecodeError
+			{
+				bool get() { return this->decodeError; }
+			}
 
 			property PixelFormat Format
 			{

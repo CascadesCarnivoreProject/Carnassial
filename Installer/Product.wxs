@@ -38,7 +38,7 @@
         <File Id="$(var.Carnassial.TargetFileName)" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\$(var.Carnassial.TargetFileName)">
           <netfx:NativeImage Id="ngen_$(var.Carnassial.TargetFileName)" Platform="64bit" Priority="0" AppBaseDirectory="INSTALLFOLDER"/>
           <Shortcut Id="$(var.Carnassial.TargetName).shortcut"
-                    Name="$(var.Carnassial.TargetFileName)"
+                    Name="Carnassial"
                     Advertise="yes"
                     Description="Starts $(var.Carnassial.TargetFileName)"
                     Directory="ProgramMenuFolder"
@@ -61,7 +61,7 @@
         <File Id="$(var.TemplateEditor.TargetFileName)" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)\$(var.TemplateEditor.TargetFileName)">
           <netfx:NativeImage Id="ngen_$(var.TemplateEditor.TargetFileName)" Platform="64bit" Priority="0" AppBaseDirectory="INSTALLFOLDER"/>
           <Shortcut Id="$(var.TemplateEditor.TargetName).shortcut"
-                    Name="$(var.TemplateEditor.TargetFileName)"
+                    Name="Carnassial Template Editor"
                     Advertise="yes"
                     Description="Starts $(var.TemplateEditor.TargetFileName)"
                     Directory="ProgramMenuFolder"

@@ -21,7 +21,7 @@ namespace Carnassial
             this->AllocatePixels();
         }
 
-        NativeImage::NativeImage(unsigned __int8* jpeg, __int32 jpegLength, __int32 requestedWidth)
+        NativeImage::NativeImage(unsigned __int8* jpeg, __int32 jpegLength, __int32 requestedWidth, bool* decodeError)
         {
             tjhandle decompressor = tjInitDecompress();
             __int32 colorspace, height, subsampling, width;
@@ -29,7 +29,7 @@ namespace Carnassial
             __int32 result = tjDecompressHeader3(decompressor, jpeg, jpegLength, &width, &height, &subsampling, &colorspace);
             if (result != 0)
             {
-                throw std::invalid_argument(tjGetErrorStr());
+                throw std::runtime_error(tjGetErrorStr());
             }
 
             if (requestedWidth != -1)
@@ -72,12 +72,8 @@ namespace Carnassial
             this->AllocatePixels();
 
             result = tjDecompress2(decompressor, jpeg, jpegLength, this->pixels, width, this->StrideInBytes(), height, NativeImage::PreferredPixelFormat, 0);
-            if (result != 0)
-            {
-                throw std::invalid_argument(tjGetErrorStr());
-            }
-
-            tjDestroy(decompressor);
+			tjDestroy(decompressor);			
+			*(decodeError) = result != 0;
         }
 
         NativeImage::~NativeImage()

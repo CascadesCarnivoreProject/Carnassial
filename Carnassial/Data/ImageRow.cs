@@ -235,10 +235,17 @@ namespace Carnassial.Data
                 await fileStream.ReadAsync(jpegBuffer, 0, jpegBuffer.Length);
             }
 
-            MemoryImage image = new MemoryImage(jpegBuffer, expectedDisplayWidth);
-            // stopwatch.Stop();
-            // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
-            return image;
+            try
+            {
+                MemoryImage image = new MemoryImage(jpegBuffer, expectedDisplayWidth);
+                // stopwatch.Stop();
+                // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
+                return image;
+            }
+            catch (ArgumentException)
+            {
+                return Constant.Images.CorruptFile.Value;
+            }
         }
 
         public void SetDateTimeOffset(DateTimeOffset dateTime)

@@ -40,8 +40,10 @@ namespace Carnassial.Dialog
             Utilities.TryFitWindowInWorkingArea(this);
 
             // display the image
-            MemoryImage image = await this.fileToDisplay.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width);
-            image.SetSource(this.Image);
+            using (MemoryImage image = await this.fileToDisplay.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width))
+            {
+                image.SetSource(this.Image);
+            }
         }
 
         private void PreviewDateTimeChanges()

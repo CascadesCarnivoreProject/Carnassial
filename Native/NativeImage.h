@@ -61,7 +61,7 @@ namespace Carnassial
 			static const TJPF PreferredPixelFormat = TJPF_BGRA;
 
 			NativeImage(__int32 width, __int32 height, TJPF format, __int32 pixelSizeInBytes);
-			NativeImage(unsigned __int8* jpeg, __int32 jpegLength, __int32 requestedWidth);
+			NativeImage(unsigned __int8* jpeg, __int32 jpegLength, __int32 requestedWidth, bool* decodeError);
 			~NativeImage();
 
 			TJPF Format()

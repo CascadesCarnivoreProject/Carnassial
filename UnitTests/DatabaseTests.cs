@@ -657,12 +657,14 @@ namespace Carnassial.UnitTests
                 ImageRow file;
                 Assert.IsFalse(fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file));
 
-                MemoryImage image = await file.LoadAsync(fileDatabase.FolderPath);
-                Assert.IsFalse(image.IsBlack());
-                DateTime darkStart = DateTime.UtcNow;
-                file.ImageQuality = image.IsDark(Constant.Images.DarkPixelThresholdDefault, Constant.Images.DarkPixelRatioThresholdDefault) ? FileSelection.Dark : FileSelection.Ok;
-                this.TestContext.WriteLine("IsDark({0}, {1:0.00}MP): {2}ms", file.FileName, 1E-6 * image.TotalPixels, (DateTime.UtcNow - darkStart).ToString(TestConstant.PerformanceIntervalFormat));
-                Assert.IsTrue(file.ImageQuality == FileSelection.Ok);
+                using (MemoryImage image = await file.LoadAsync(fileDatabase.FolderPath))
+                {
+                    Assert.IsFalse(image.IsBlack());
+                    DateTime darkStart = DateTime.UtcNow;
+                    file.ImageQuality = image.IsDark(Constant.Images.DarkPixelThresholdDefault, Constant.Images.DarkPixelRatioThresholdDefault) ? FileSelection.Dark : FileSelection.Ok;
+                    this.TestContext.WriteLine("IsDark({0}, {1:0.00}MP): {2}ms", file.FileName, 1E-6 * image.TotalPixels, (DateTime.UtcNow - darkStart).ToString(TestConstant.PerformanceIntervalFormat));
+                    Assert.IsTrue(file.ImageQuality == FileSelection.Ok);
+                }
 
                 // for images, verify the date can be found in metadata
                 // for videos, verify the date is found in the previous image's metadata or not found if there's no previous image

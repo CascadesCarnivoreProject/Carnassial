@@ -11,6 +11,7 @@ namespace Carnassial.Images
     public class ImageCache : FileTableEnumerator
     {
         private Dictionary<ImageDifference, MemoryImage> differenceCache;
+        private bool disposed;
         private MostRecentlyUsedList<long> mostRecentlyUsedIDs;
         private ConcurrentDictionary<long, Task> prefetechesByID;
         private ConcurrentDictionary<long, MemoryImage> unalteredImagesByID;
@@ -22,9 +23,45 @@ namespace Carnassial.Images
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
             this.differenceCache = new Dictionary<ImageDifference, MemoryImage>();
+            this.disposed = false;
             this.mostRecentlyUsedIDs = new MostRecentlyUsedList<long>(Constant.Images.ImageCacheSize);
             this.prefetechesByID = new ConcurrentDictionary<long, Task>();
             this.unalteredImagesByID = new ConcurrentDictionary<long, MemoryImage>();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.ResetDifferenceState(null);
+                foreach (MemoryImage image in this.unalteredImagesByID.Values)
+                {
+                    Debug.Assert(image != null, "Unaltered image unexpectedly null in image cache.");
+                    this.DisposeImageIfNeeded(image);
+                }
+            }
+
+            base.Dispose(disposing);
+            this.disposed = true;
+        }
+
+        private void DisposeImageIfNeeded(MemoryImage image)
+        {
+            // don't dispose resource backed images as doing so makes them unusable
+            if ((image == null) ||
+                (Constant.Images.CorruptFile.IsValueCreated && (image == Constant.Images.CorruptFile.Value)) ||
+                (Constant.Images.FileNoLongerAvailable.IsValueCreated && (image == Constant.Images.FileNoLongerAvailable.Value)) ||
+                (Constant.Images.NoSelectableFile.IsValueCreated && (image == Constant.Images.NoSelectableFile.Value)))
+            {
+                return;
+            }
+
+            image.Dispose();
         }
 
         public MemoryImage GetCurrentImage()
@@ -195,7 +232,11 @@ namespace Carnassial.Images
             }
 
             MemoryImage imageForID;
-            this.unalteredImagesByID.TryRemove(id, out imageForID);
+            if (this.unalteredImagesByID.TryRemove(id, out imageForID))
+            {
+                Debug.Assert(imageForID != null, "Unaltered image unexpectedly null in image cache.");
+                this.DisposeImageIfNeeded(imageForID);
+            }
             lock (this.mostRecentlyUsedIDs)
             {
                 return this.mostRecentlyUsedIDs.TryRemove(id);
@@ -255,8 +296,12 @@ namespace Carnassial.Images
                             long fileIDToRemove;
                             if (this.mostRecentlyUsedIDs.TryGetLeastRecent(out fileIDToRemove))
                             {
-                                MemoryImage ignored;
-                                this.unalteredImagesByID.TryRemove(fileIDToRemove, out ignored);
+                                MemoryImage imageForID;
+                                if (this.unalteredImagesByID.TryRemove(fileIDToRemove, out imageForID))
+                                {
+                                    Debug.Assert(imageForID != null, "Unaltered image unexpectedly null in image cache.");
+                                    this.DisposeImageIfNeeded(imageForID);
+                                }
                             }
                         }
 
@@ -276,9 +321,19 @@ namespace Carnassial.Images
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
             this.differenceCache[ImageDifference.Unaltered] = unaltered;
-            this.differenceCache[ImageDifference.Previous] = null;
-            this.differenceCache[ImageDifference.Next] = null;
-            this.differenceCache[ImageDifference.Combined] = null;
+
+            foreach (ImageDifference difference in new ImageDifference[] { ImageDifference.Previous, ImageDifference.Next, ImageDifference.Combined })
+            {
+                MemoryImage differenceImage;
+                if (this.differenceCache.TryGetValue(difference, out differenceImage))
+                {
+                    if (differenceImage != null)
+                    {
+                        differenceImage.Dispose();
+                        this.differenceCache[difference] = null;
+                    }
+                }
+            }
         }
 
         private async Task<MemoryImage> TryGetImageAsync(int fileRow)

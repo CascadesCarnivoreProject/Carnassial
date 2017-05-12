@@ -120,6 +120,9 @@
     <Content Include="BushnellTrophyHD-119677C-20160805-926.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="BushnellTrophyHD-119677C-20170403-179.JPG">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="CarnivoreTestImages\BushnellTrophyHDAggressor-119777C-20160421-112.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -221,10 +221,14 @@ namespace Carnassial.Dialog
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            MemoryImage earliestImage = await this.earliestFile.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width / 2);
-            earliestImage.SetSource(this.EarliestImage);
-            MemoryImage latestImage = await this.latestFile.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width / 2);
-            latestImage.SetSource(this.LatestImage);
+            using (MemoryImage earliestImage = await this.earliestFile.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width / 2))
+            {
+                earliestImage.SetSource(this.EarliestImage);
+            }
+            using (MemoryImage latestImage = await this.latestFile.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width / 2))
+            {
+                latestImage.SetSource(this.LatestImage);
+            }
             this.ClockDrift.TimeSpanDisplay.Focus();
         }
     }

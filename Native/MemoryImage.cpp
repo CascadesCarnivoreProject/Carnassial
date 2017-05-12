@@ -14,6 +14,7 @@ namespace Carnassial
 		{
 			this->nativeImage = new NativeImage(bitmap->PixelWidth, bitmap->PixelHeight, MemoryImage::GetTurboJpegPixelFormat(bitmap->Format), bitmap->Format.BitsPerPixel / 8);
 			this->format = this->GetPixelFormat();
+			this->decodeError = false;
 
 			// it appears the IntPtr in bitmap->CopyPixels(Int32Rect, IntPtr, int, int) must point to managed memory; work around via managed buffer
 			// Inefficient, but this code path is used only on demand by a few members of Constant.Images in Carnassial's managed assembly which aren't
@@ -27,15 +28,17 @@ namespace Carnassial
 		MemoryImage::MemoryImage(array<unsigned __int8>^ jpeg, Nullable<__int32>^ requestedWidth)
 		{
 			__int32 requestedWidthNative = (requestedWidth != nullptr) && requestedWidth->HasValue ? requestedWidth->Value : -1;
+			bool decodeErrorNative;
 			pin_ptr<unsigned __int8> jpegBytes = &jpeg[0];
 			try
 			{
-				this->nativeImage = new NativeImage(jpegBytes, jpeg->Length, requestedWidthNative);
+				this->nativeImage = new NativeImage(jpegBytes, jpeg->Length, requestedWidthNative, &decodeErrorNative);
 			}
-			catch (const std::invalid_argument& turboJpegError)
+			catch (const std::runtime_error& turboJpegError)
 			{
 				throw gcnew ArgumentException(gcnew String(turboJpegError.what()), "jpeg");
 			}
+			this->decodeError = decodeErrorNative;
 			this->format = this->GetPixelFormat();
 		}
 

@@ -703,38 +703,38 @@ namespace Carnassial
 
             // this callback is invoked by DeleteCurrentFile and DeleteFiles
             // The logic therefore branches for removing a single file versus all selected files marked for deletion.
-            List<ImageRow> imagesToDelete;
-            bool deleteCurrentImageOnly;
+            List<ImageRow> filesToDelete;
+            bool deleteCurrentFileOnly;
             bool deleteFilesAndData;
             if (menuItem.Name.Equals(this.MenuEditDeleteFiles.Name) || menuItem.Name.Equals(this.MenuEditDeleteFilesAndData.Name))
             {
-                deleteCurrentImageOnly = false;
+                deleteCurrentFileOnly = false;
                 deleteFilesAndData = menuItem.Name.Equals(this.MenuEditDeleteFilesAndData.Name);
                 // get files marked for deletion in the current seletion
-                imagesToDelete = this.dataHandler.FileDatabase.GetFilesMarkedForDeletion().ToList();
-                for (int index = imagesToDelete.Count - 1; index >= 0; index--)
+                filesToDelete = this.dataHandler.FileDatabase.GetFilesMarkedForDeletion().ToList();
+                for (int index = filesToDelete.Count - 1; index >= 0; index--)
                 {
-                    if (this.dataHandler.FileDatabase.Files.Find(imagesToDelete[index].ID) == null)
+                    if (this.dataHandler.FileDatabase.Files.Find(filesToDelete[index].ID) == null)
                     {
-                        imagesToDelete.Remove(imagesToDelete[index]);
+                        filesToDelete.Remove(filesToDelete[index]);
                     }
                 }
             }
             else
             {
                 // delete current file
-                deleteCurrentImageOnly = true;
+                deleteCurrentFileOnly = true;
                 deleteFilesAndData = menuItem.Name.Equals(this.MenuEditDeleteCurrentFileAndData.Name);
-                imagesToDelete = new List<ImageRow>();
+                filesToDelete = new List<ImageRow>();
                 if (this.dataHandler.ImageCache.Current != null)
                 {
-                    imagesToDelete.Add(this.dataHandler.ImageCache.Current);
+                    filesToDelete.Add(this.dataHandler.ImageCache.Current);
                 }
             }
 
             // notify the user if no files are selected for deletion
             // This should be unreachable as the invoking menu item should be disabled.
-            if (imagesToDelete == null || imagesToDelete.Count < 1)
+            if (filesToDelete == null || filesToDelete.Count < 1)
             {
                 MessageBox messageBox = new MessageBox("No files are marked for deletion.", this);
                 messageBox.Message.Problem = "You are trying to delete files marked for deletion, but no files have thier 'Delete?' box checked.";
@@ -744,8 +744,8 @@ namespace Carnassial
                 return;
             }
 
-            DeleteFiles deleteImagesDialog = new DeleteFiles(this.dataHandler.FileDatabase, imagesToDelete, deleteFilesAndData, deleteCurrentImageOnly, this);
-            bool? result = deleteImagesDialog.ShowDialog();
+            DeleteFiles deleteFilesDialog = new DeleteFiles(this.dataHandler.FileDatabase, filesToDelete, deleteFilesAndData, deleteCurrentFileOnly, this);
+            bool? result = deleteFilesDialog.ShowDialog();
             if (result == true)
             {
                 // cache the current ID as the current image may be invalidated
@@ -753,38 +753,38 @@ namespace Carnassial
 
                 Mouse.OverrideCursor = Cursors.Wait;
                 FileTuplesWithID filesToUpdate = new FileTuplesWithID(Constant.DatabaseColumn.DeleteFlag, Constant.DatabaseColumn.ImageQuality);
-                List<long> imageIDsToDropFromDatabase = new List<long>();
-                foreach (ImageRow image in imagesToDelete)
+                List<long> fileIDsToDropFromDatabase = new List<long>();
+                foreach (ImageRow file in filesToDelete)
                 {
                     // invalidate cache so FileNoLongerAvailable placeholder will be displayed
                     // release any handle open on the file so it can be moved
-                    this.dataHandler.ImageCache.TryInvalidate(image.ID);
-                    if (image.TryMoveFileToDeletedFilesFolder(this.FolderPath) == false)
+                    this.dataHandler.ImageCache.TryInvalidate(file.ID);
+                    if (file.TryMoveFileToDeletedFilesFolder(this.FolderPath) == false)
                     {
-                        // attempt to soft delete file failed so leave the image as marked for deletion
+                        // attempt to soft delete file failed so leave the file as marked for deletion
                         continue;
                     }
 
                     if (deleteFilesAndData)
                     {
-                        // mark the image row for dropping
-                        imageIDsToDropFromDatabase.Add(image.ID);
+                        // mark the file row for dropping
+                        fileIDsToDropFromDatabase.Add(file.ID);
                     }
                     else
                     {
                         // as only the file was deleted, change image quality to FileNoLongerAvailable and clear the delete flag
-                        image.DeleteFlag = false;
-                        image.ImageQuality = FileSelection.NoLongerAvailable;
-                        filesToUpdate.Add(image.ID, Boolean.FalseString, FileSelection.NoLongerAvailable.ToString());
+                        file.DeleteFlag = false;
+                        file.ImageQuality = FileSelection.NoLongerAvailable;
+                        filesToUpdate.Add(file.ID, Boolean.FalseString, FileSelection.NoLongerAvailable.ToString());
                     }
                 }
 
                 if (deleteFilesAndData)
                 {
-                    // drop images
-                    this.dataHandler.FileDatabase.DeleteFilesAndMarkers(imageIDsToDropFromDatabase);
+                    // drop files
+                    this.dataHandler.FileDatabase.DeleteFilesAndMarkers(fileIDsToDropFromDatabase);
 
-                    // Reload the file data table. Then find and show the file closest to the last one shown
+                    // reload the file data table and find and show the file closest to the last one shown
                     if (this.dataHandler.FileDatabase.CurrentlySelectedFileCount > 0)
                     {
                         await this.SelectFilesAndShowFileAsync(currentFileID, this.dataHandler.FileDatabase.ImageSet.FileSelection);
@@ -2311,45 +2311,38 @@ namespace Carnassial
                         return;
                     }
 
+                    bool disposeMemoryImage = false;
                     MemoryImage memoryImage = null;
-                    try
+                    if (this.state.SkipDarkImagesCheck)
                     {
-                        if (this.state.SkipDarkImagesCheck)
+                        file.ImageQuality = FileSelection.Ok;
+                    }
+                    else
+                    {
+                        // load image and determine its quality
+                        // As noted above, folder loading is jpeg decoding bound.  Lowering the resolution it's loaded at lowers CPU requirements and is
+                        // acceptable here because dark calculation is an estimate based on using a subset of the pixels, the image is displayed only 
+                        // briefly as a status update, and the user has no opportunity to zoom into it.  Downsizing too much results in a poor quality 
+                        // preview and downsizing below the markable canvas's display size is somewhat self defeating but dark estimation is not too
+                        // sensitive.  So image load size here is driven by the size of the window with a floor applied in FolderLoadProgress..ctor() so
+                        // that it doesn't become too small.
+                        // Parallel doesn't await async bodies so awaiting the load results in Parallel prematurely concluding the body task completed and
+                        // dispatching another, resulting in system overload.  The simplest solution is to block this worker thread, which is OK as there
+                        // are many workers and they're decoupled from the UI thread.
+                        memoryImage = file.LoadAsync(this.FolderPath, folderLoadProgress.ImageRenderWidth).GetAwaiter().GetResult();
+                        if (memoryImage.DecodeError || (memoryImage == Constant.Images.CorruptFile.Value))
                         {
-                            file.ImageQuality = FileSelection.Ok;
+                            file.ImageQuality = FileSelection.Corrupt;
                         }
                         else
                         {
-                            // load image and determine its quality
-                            // As noted above, folder loading is jpeg decoding bound.  Lowering the resolution it's loaded at lowers CPU requirements and is
-                            // acceptable here because dark calculation is an estimate based on using a subset of the pixels, the image is displayed only 
-                            // briefly as a status update, and the user has no opportunity to zoom into it.  Downsizing too much results in a poor quality 
-                            // preview and downsizing below the markable canvas's display size is somewhat self defeating but dark estimation is not too
-                            // sensitive.  So image load size here is driven by the size of the window with a floor applied in FolderLoadProgress..ctor() so
-                            // that it doesn't become too small.
-                            // Parallel doesn't await async bodies so awaiting the load results in Parallel prematurely concluding the body task completed and
-                            // dispatching another, resulting in system overload.  The simplest solution is to block this worker thread, which is OK as there
-                            // are many workers and they're decoupled from the UI thread.
-                            memoryImage = file.LoadAsync(this.FolderPath, folderLoadProgress.ImageRenderWidth).GetAwaiter().GetResult();
-                            if (memoryImage == Constant.Images.CorruptFile.Value)
-                            {
-                                file.ImageQuality = FileSelection.Corrupt;
-                            }
-                            else
-                            {
-                                file.ImageQuality = memoryImage.IsDark(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold) ? FileSelection.Dark : FileSelection.Ok;
-                            }
+                            file.ImageQuality = memoryImage.IsDark(this.state.DarkPixelThreshold, this.state.DarkPixelRatioThreshold) ? FileSelection.Dark : FileSelection.Ok;
+                            disposeMemoryImage = true;
                         }
+                    }
 
-                        // see if the datetime can be updated from the metadata
-                        file.TryReadDateTimeOriginalFromMetadata(this.FolderPath, imageSetTimeZone);
-                    }
-                    catch (Exception exception)
-                    {
-                        Debug.Fail(String.Format("Load of {0} failed as it's likely corrupted.", file.FileName), exception.ToString());
-                        memoryImage = Constant.Images.CorruptFile.Value;
-                        file.ImageQuality = FileSelection.Corrupt;
-                    }
+                    // see if the datetime can be updated from the metadata
+                    file.TryReadDateTimeOriginalFromMetadata(this.FolderPath, imageSetTimeZone);
 
                     lock (filesToInsert)
                     {
@@ -2367,7 +2360,12 @@ namespace Carnassial
                                 // otherwise, load the file for display
                                 if (memoryImage != null)
                                 {
+                                    if (folderLoadProgress.Image != null)
+                                    {
+                                        folderLoadProgress.Image.Dispose();
+                                    }
                                     folderLoadProgress.Image = memoryImage;
+                                    disposeMemoryImage = false;
                                 }
                                 else
                                 {
@@ -2380,6 +2378,10 @@ namespace Carnassial
                                 folderLoadStatus.Report(folderLoadProgress);
                             }
                         }
+                    }
+                    if (disposeMemoryImage)
+                    {
+                        memoryImage.Dispose();
                     }
                 }));
 

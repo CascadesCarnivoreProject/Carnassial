@@ -34,8 +34,10 @@ namespace Carnassial.Dialog
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            MemoryImage image = await this.fileToDisplay.LoadAsync(this.database.FolderPath, (int)this.Width);
-            image.SetSource(this.Image);
+            using (MemoryImage image = await this.fileToDisplay.LoadAsync(this.database.FolderPath, (int)this.Width))
+            {
+                image.SetSource(this.Image);
+            }
         }
 
         // When the user clicks ok, add/subtract an hour propagated forwards/backwards as specified

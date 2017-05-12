@@ -135,10 +135,8 @@ namespace Carnassial.Controls
 
             if (disposing)
             {
-                if (this.FileDatabase != null)
-                {
-                    this.FileDatabase.Dispose();
-                }
+                this.FileDatabase.Dispose();
+                this.ImageCache.Dispose();
             }
 
             this.disposed = true;

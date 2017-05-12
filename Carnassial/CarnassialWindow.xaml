@@ -55,7 +55,7 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="MenuFileCloneCurrent" Header="Make a copy of the current _file..." Click="MenuFileCloneCurrent_Click" IsEnabled="False" ToolTip="Make a copy of the current file in a location of your choosing.  The copy is not added to the image set." />
+                <MenuItem Name="MenuFileCloneCurrent" Header="Make a _copy of the current file..." Click="MenuFileCloneCurrent_Click" IsEnabled="False" ToolTip="Make a copy of the current file in a location of your choosing.  The copy is not added to the image set." />
                 <MenuItem Name="MenuFileMoveFiles" Header="Mo_ve selected files..." Click="MenuFileMoveFiles_Click" IsEnabled="False" ToolTip="Move all currently selected file to a location of your choosing.">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/MoveToSubmodule_16x.png" />
@@ -64,7 +64,7 @@
                 <Separator />
                 <MenuItem Name="MenuFileRenameFileDatabase" Header="Rename the _data file..." Click="MenuFileRenameFileDatabase_Click" IsEnabled="False" ToolTip="Renames the data file to a name of your choosing." />
                 <Separator />
-                <MenuItem Name="MenuFileCloseImageSet" Header="_Close image set" Click="MenuFileCloseImageSet_Click" IsEnabled="False" ToolTip="Asks for a template and then opens an existing database or creates a new database.">
+                <MenuItem Name="MenuFileCloseImageSet" Header="C_lose image set" Click="MenuFileCloseImageSet_Click" IsEnabled="False" ToolTip="Asks for a template and then opens an existing database or creates a new database.">
                     <MenuItem.Icon>
                         <Image Source="Resources/Menu/CloseSolution_16x.png" />
                     </MenuItem.Icon>
