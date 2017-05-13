@@ -12,6 +12,7 @@ namespace Carnassial.UnitTests
         public const double DarkPixelFractionTolerance = 0.00000001;
         public const string DataHandlerFieldName = "dataHandler";
         public const string DateTimeWithOffsetFormat = "yyyy-MM-ddTHH:mm:ss.fffK";
+        public const string EditorTemplateDatabaseFieldName = "templateDatabase";
         public const string FileCountsAutomationID = "FileCountsByQuality";
         public const string InitializeDataGridMethodName = "InitializeDataGrid";
         public const string MessageBoxAutomationID = "CarnassialMessageBox";
@@ -150,7 +151,7 @@ namespace Carnassial.UnitTests
 
             // template databases for backwards compatibility testing
             // version is the editor version used for creation
-            public const string DefaultTemplateDatabaseFileName = "DefaultTemplate 2.2.0.0.tdb";
+            public const string DefaultTemplateDatabaseFileName = "DefaultTemplate 2.2.0.2.tdb";
 
             // databases generated dynamically by tests
             // see also use of Constants.File.Default*DatabaseFileName

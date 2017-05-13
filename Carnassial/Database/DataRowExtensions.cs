@@ -77,7 +77,7 @@ namespace Carnassial.Database
         {
             if (value.Kind != DateTimeKind.Utc)
             {
-                throw new ArgumentOutOfRangeException("value");
+                throw new ArgumentOutOfRangeException(nameof(value), "DateTime must be UTC.");
             }
             row[column] = value;
         }

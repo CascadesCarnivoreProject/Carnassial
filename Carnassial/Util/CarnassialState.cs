@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Carnassial.Controls;
+using System;
 using System.Collections.Generic;
 using System.Windows.Input;
 
@@ -15,6 +16,7 @@ namespace Carnassial.Util
         public bool FileNavigatorSliderDragging { get; set; }
         public DateTime MostRecentDragEvent { get; set; }
         public string MostRecentFileAddFolderPath { get; set; }
+        public int MostRecentlFocusedControlIndex { get; set; }
         public string MouseOverCounter { get; set; }
         public UndoRedoChain UndoRedoChain { get; private set; }
 
@@ -32,6 +34,7 @@ namespace Carnassial.Util
             this.FileNavigatorSliderDragging = false;
             this.MostRecentDragEvent = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;
             this.MostRecentFileAddFolderPath = null;
+            this.MostRecentlFocusedControlIndex = -1;
             this.MouseOverCounter = null;
             this.UndoRedoChain = new UndoRedoChain();
         }
@@ -59,6 +62,7 @@ namespace Carnassial.Util
                 this.Analysis[analysisSlot] = null;
             }
             this.FileNavigatorSliderDragging = false;
+            this.MostRecentlFocusedControlIndex = -1;
             this.MouseOverCounter = null;
             this.UndoRedoChain.Clear();
         }

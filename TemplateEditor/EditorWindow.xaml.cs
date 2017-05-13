@@ -1,6 +1,7 @@
-﻿using Carnassial.Data;
+﻿using Carnassial.Controls;
+using Carnassial.Data;
 using Carnassial.Database;
-using Carnassial.Editor.Controls;
+using Carnassial.Dialog;
 using Carnassial.Editor.Dialog;
 using Carnassial.Editor.Util;
 using Carnassial.Github;
@@ -14,7 +15,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions; // For debugging
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -28,7 +29,6 @@ namespace Carnassial.Editor
     public partial class EditorWindow : Window
     {
         // state tracking
-        private EditorControls controls;
         private bool templateDataGridBeingUpdatedByCode;
         private bool templateDataGridCellEditForcedByCode;
         private EditorUserRegistrySettings userSettings;
@@ -38,7 +38,6 @@ namespace Carnassial.Editor
         private bool isMouseDown;
         private bool isMouseDragging;
         private Point mouseDownStartPosition;
-        private UIElement realMouseDragSource;
 
         // database where the template is stored
         private TemplateDatabase templateDatabase;
@@ -60,12 +59,11 @@ namespace Carnassial.Editor
                 Application.Current.Shutdown();
             }
 
-            this.controls = new EditorControls();
             this.dummyMouseDragSource = new UIElement();
             this.templateDataGridBeingUpdatedByCode = false;
             this.templateDataGridCellEditForcedByCode = false;
 
-            this.MenuViewShowAllColumns_Click(this.MenuViewShowAllColumns, null);
+            this.MenuOptionsShowAllColumns_Click(this.MenuOptionsShowAllColumns, null);
 
             // Recall state from prior sessions
             this.userSettings = new EditorUserRegistrySettings();
@@ -92,90 +90,74 @@ namespace Carnassial.Editor
             this.TemplateDataGrid.DataContext = this.templateDatabase.Controls;
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
 
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-            this.GenerateSpreadsheetOrderPreview();
-            this.OnControlOrderChanged();
+            this.RebuildControlPreview();
+            this.SynchronizeSpreadsheetOrderPreview();
 
             this.templateDataGridBeingUpdatedByCode = false;
         }
 
         private void ControlsPanel_DragDrop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent("UIElement"))
+            DataEntryControl controlBeingDragged;
+            if (this.DataEntryControls.TryFindDataEntryControl(this.mouseDownStartPosition, out controlBeingDragged))
             {
-                UIElement dropTarget = e.Source as UIElement;
-                int control = 0;
-                int dropTargetIndex = -1;
-                foreach (UIElement element in this.ControlsPanel.Children)
+                DataEntryControl dropTarget;
+                if (this.DataEntryControls.TryFindDataEntryControl(e.GetPosition(this.DataEntryControls), out dropTarget))
                 {
-                    if (element.Equals(dropTarget))
+                    Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
+                    long controlOrder = 1;
+                    foreach (ControlRow control in this.templateDatabase.Controls)
                     {
-                        dropTargetIndex = control;
-                        break;
-                    }
-                    else
-                    {
-                        // Check if its a stack panel, and if so check to see if its children are the drop target
-                        StackPanel stackPanel = element as StackPanel;
-                        if (stackPanel != null)
+                        if (control.DataLabel == controlBeingDragged.DataLabel)
                         {
-                            // Check the children...
-                            foreach (UIElement subelement in stackPanel.Children)
-                            {
-                                if (subelement.Equals(dropTarget))
-                                {
-                                    dropTargetIndex = control;
-                                    break;
-                                }
-                            }
+                            continue;
                         }
+                        if (control.DataLabel == dropTarget.DataLabel)
+                        {
+                            newControlOrderByDataLabel.Add(controlBeingDragged.DataLabel, controlOrder);
+                            ++controlOrder;
+                        }
+                        newControlOrderByDataLabel.Add(control.DataLabel, controlOrder);
+                        ++controlOrder;
                     }
-                    control++;
-                }
-                if (dropTargetIndex != -1)
-                {
-                    StackPanel tsp = this.realMouseDragSource as StackPanel;
-                    if (tsp == null)
-                    {
-                        StackPanel parent = FindVisualParent<StackPanel>(this.realMouseDragSource);
-                        this.realMouseDragSource = parent;
-                    }
-                    this.ControlsPanel.Children.Remove(this.realMouseDragSource);
-                    this.ControlsPanel.Children.Insert(dropTargetIndex, this.realMouseDragSource);
-                    this.OnControlOrderChanged();
-                }
 
-                this.isMouseDown = false;
-                this.isMouseDragging = false;
-                this.realMouseDragSource.ReleaseMouseCapture();
+                    this.templateDatabase.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
+                    this.RebuildControlPreview();
+                }
             }
+
+            this.isMouseDown = false;
+            this.isMouseDragging = false;
+            this.ControlsPanel.ReleaseMouseCapture();
         }
 
-        private void ControlsPanel_DragEnter(object sender, DragEventArgs e)
+        private void ControlsPanel_OnPreviewMouseMove(object sender, MouseEventArgs e)
         {
-            if (e.Data.GetDataPresent("UIElement"))
+            if (this.isMouseDown)
             {
-                e.Effects = DragDropEffects.Move;
+                Point currentMousePosition = e.GetPosition(this.ControlsPanel);
+                if ((this.isMouseDragging == false) &&
+                    ((Math.Abs(currentMousePosition.X - this.mouseDownStartPosition.X) > SystemParameters.MinimumHorizontalDragDistance) ||
+                     (Math.Abs(currentMousePosition.Y - this.mouseDownStartPosition.Y) > SystemParameters.MinimumVerticalDragDistance)))
+                {
+                    this.isMouseDragging = true;
+                    this.ControlsPanel.CaptureMouse();
+                    DragDrop.DoDragDrop(this.dummyMouseDragSource, new DataObject("UIElement", e.Source, true), DragDropEffects.Move);
+                }
             }
         }
 
         private void ControlsPanel_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.Source != this.ControlsPanel)
-            {
-                this.isMouseDown = true;
-                this.mouseDownStartPosition = e.GetPosition(this.ControlsPanel);
-            }
+            this.isMouseDown = true;
+            this.mouseDownStartPosition = e.GetPosition(this.ControlsPanel);
         }
 
         private void ControlsPanel_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             this.isMouseDown = false;
             this.isMouseDragging = false;
-            if (!(this.realMouseDragSource == null))
-            {
-                this.realMouseDragSource.ReleaseMouseCapture();
-            }
+            this.ControlsPanel.ReleaseMouseCapture();
         }
 
         // raise a dialog box that lets the user edit the list of choices or note control default autocompletions
@@ -183,15 +165,15 @@ namespace Carnassial.Editor
         {
             // the button's tag is the ControlOrder of the row the button is in; find the control with the same control order
             Button button = (Button)sender;
-            ControlRow choiceControl = this.templateDatabase.Controls.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
-            Debug.Assert(choiceControl != null, String.Format("Control named {0} not found.", button.Tag));
+            ControlRow choiceOrNote = this.templateDatabase.Controls.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
+            Debug.Assert(choiceOrNote != null, String.Format("Control named {0} not found.", button.Tag));
 
-            EditChoiceList choiceListDialog = new EditChoiceList(button, choiceControl.GetChoices(), this);
+            EditChoiceList choiceListDialog = new EditChoiceList(button, choiceOrNote.GetChoices(), this);
             bool? result = choiceListDialog.ShowDialog();
             if (result == true)
             {
-                choiceControl.SetChoices(choiceListDialog.Choices);
-                this.SyncControlToDatabaseAndRedraw(choiceControl);
+                choiceOrNote.SetChoices(choiceListDialog.Choices);
+                this.SyncControlToDatabaseAndPreviews(choiceOrNote);
             }
         }
 
@@ -208,26 +190,6 @@ namespace Carnassial.Editor
                 parent = VisualTreeHelper.GetParent(parent) as UIElement;
             }
             return null;
-        }
-
-        private void GenerateSpreadsheetOrderPreview()
-        {
-            List<ControlRow> controlsInSpreadsheetOrder = this.templateDatabase.Controls.OrderBy(control => control.SpreadsheetOrder).ToList();
-            this.SpreadsheetOrderPreview.Columns.Clear();
-            foreach (ControlRow control in controlsInSpreadsheetOrder)
-            {
-                DataGridTextColumn column = new DataGridTextColumn();
-                string dataLabel = control.DataLabel;
-                if (String.IsNullOrEmpty(dataLabel))
-                {
-                    Debug.Assert(false, "Database constructors should guarantee data labels are not null.");
-                }
-                else
-                {
-                    column.Header = dataLabel;
-                    this.SpreadsheetOrderPreview.Columns.Add(column);
-                }
-            }
         }
 
         /// <summary>
@@ -264,8 +226,8 @@ namespace Carnassial.Editor
                 this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateDataGrid_RowChanged);
 
                 // populate controls interface in UX
-                this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-                this.GenerateSpreadsheetOrderPreview();
+                this.RebuildControlPreview();
+                this.SynchronizeSpreadsheetOrderPreview();
                 this.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
 
                 this.userSettings.MostRecentTemplates.SetMostRecent(templateDatabasePath);
@@ -295,10 +257,10 @@ namespace Carnassial.Editor
             this.MenuFileNewTemplate.IsEnabled = templateLoaded;
             this.MenuFileOpenTemplate.IsEnabled = !templateLoaded;
             this.MenuFileRecentTemplates.IsEnabled = !templateLoaded;
+            this.MenuOptions.IsEnabled = templateLoaded;
             this.MenuView.IsEnabled = templateLoaded;
 
-            this.InstructionPane.IsActive = !templateLoaded;
-            this.TemplatePane.IsActive = templateLoaded;
+            this.Tabs.SelectedIndex = templateLoaded ? 1 : 0;
         }
 
         private void Instructions_Drop(object sender, DragEventArgs dropEvent)
@@ -452,19 +414,16 @@ namespace Carnassial.Editor
             }
         }
 
-        /// <summary>
-        /// Show the dialog that allows a user to inspect image metadata
-        /// </summary>
-        private void MenuViewInspectMetadata_Click(object sender, RoutedEventArgs e)
+        private void MenuOptionsAdvancedImageSetOptions_Click(object sender, RoutedEventArgs e)
         {
-            InspectMetadata inspectMetadata = new InspectMetadata(this.templateDatabase.FilePath, this);
-            inspectMetadata.ShowDialog();
+            AdvancedImageSetOptions advancedImageSetOptions = new AdvancedImageSetOptions(this.templateDatabase, this);
+            advancedImageSetOptions.ShowDialog();
         }
 
         /// <summary>
         /// Depending on the menu's checkbox state, show all columns or hide selected columns
         /// </summary>
-        private void MenuViewShowAllColumns_Click(object sender, RoutedEventArgs e)
+        private void MenuOptionsShowAllColumns_Click(object sender, RoutedEventArgs e)
         {
             MenuItem mi = sender as MenuItem;
             if (mi == null)
@@ -475,8 +434,8 @@ namespace Carnassial.Editor
             Visibility visibility = mi.IsChecked ? Visibility.Visible : Visibility.Collapsed;
             foreach (DataGridColumn column in this.TemplateDataGrid.Columns)
             {
-                if (column.Header.Equals(EditorConstant.ColumnHeader.ID) || 
-                    column.Header.Equals(EditorConstant.ColumnHeader.ControlOrder) || 
+                if (column.Header.Equals(EditorConstant.ColumnHeader.ID) ||
+                    column.Header.Equals(EditorConstant.ColumnHeader.ControlOrder) ||
                     column.Header.Equals(EditorConstant.ColumnHeader.SpreadsheetOrder))
                 {
                     column.Visibility = visibility;
@@ -484,23 +443,13 @@ namespace Carnassial.Editor
             }
         }
 
-        private void OnControlOrderChanged()
+        /// <summary>
+        /// Show the dialog that allows a user to inspect image metadata
+        /// </summary>
+        private void MenuViewInspectMetadata_Click(object sender, RoutedEventArgs e)
         {
-            Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
-            long controlOrder = 1;
-            foreach (UIElement element in this.ControlsPanel.Children)
-            {
-                StackPanel stackPanel = element as StackPanel;
-                if (stackPanel == null)
-                {
-                    continue;
-                }
-                newControlOrderByDataLabel.Add((string)stackPanel.Tag, controlOrder);
-                controlOrder++;
-            }
-
-            this.templateDatabase.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls); // A contorted to make sure the controls panel updates itself
+            InspectMetadata inspectMetadata = new InspectMetadata(this.templateDatabase.FilePath, this);
+            inspectMetadata.ShowDialog();
         }
 
         private void OnSpreadsheetOrderChanged(object sender, DataGridColumnEventArgs e)
@@ -517,26 +466,14 @@ namespace Carnassial.Editor
             this.templateDatabase.UpdateDisplayOrder(Constant.Control.SpreadsheetOrder, spreadsheetOrderByDataLabel);
         }
 
-        private void OnPreviewMouseMove(object sender, MouseEventArgs e)
-        {
-            if (this.isMouseDown)
-            {
-                Point currentMousePosition = e.GetPosition(this.ControlsPanel);
-                if ((this.isMouseDragging == false) &&
-                    ((Math.Abs(currentMousePosition.X - this.mouseDownStartPosition.X) > SystemParameters.MinimumHorizontalDragDistance) ||
-                     (Math.Abs(currentMousePosition.Y - this.mouseDownStartPosition.Y) > SystemParameters.MinimumVerticalDragDistance)))
-                {
-                    this.isMouseDragging = true;
-                    this.realMouseDragSource = e.Source as UIElement;
-                    this.realMouseDragSource.CaptureMouse();
-                    DragDrop.DoDragDrop(this.dummyMouseDragSource, new DataObject("UIElement", e.Source, true), DragDropEffects.Move);
-                }
-            }
-        }
-
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Utilities.ShowExceptionReportingDialog("The template editor needs to close.", e, this);
+        }
+
+        private void RebuildControlPreview()
+        {
+            this.DataEntryControls.CreateControls(this.templateDatabase, null, (string dataLabel) => { return this.templateDatabase.FindControl(dataLabel).GetChoices(); });
         }
 
         private void ShowDataLabelRequirementsDialog()
@@ -549,15 +486,96 @@ namespace Carnassial.Editor
             messageBox.ShowDialog();
         }
 
-        private void SyncControlToDatabaseAndRedraw(ControlRow control)
+        private void SyncControlToDatabaseAndPreviews(ControlRow control)
         {
             this.templateDataGridBeingUpdatedByCode = true;
-
             this.templateDatabase.SyncControlToDatabase(control);
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-            this.GenerateSpreadsheetOrderPreview();
-
             this.templateDataGridBeingUpdatedByCode = false;
+
+            DataEntryControl controlPreview;
+            if ((this.DataEntryControls.ControlsByDataLabel.TryGetValue(control.DataLabel, out controlPreview) == false) ||
+                (control.Visible == false))
+            {
+                // rebuild the controls preview if data label or visibility changed
+                // DataEntryControls does not create UI objects for controls which aren't visible, so the TryGetValue() check above triggers when a control is
+                // becoming visible.  The Visible == false check handles the case where the control is becoming invisible.
+                // Control order is not checked here as the basic comparison
+                //   this.DataEntryControls.Controls.IndexOf(controlPreview) != control.ControlOrder
+                // has to be adjusted for controls which aren't visible and for the DateTime and UtcOffset ControlRows often mapping to the same DataEntryDateTime.
+                // This is complex and not needed as drop events call RebuildControlPreview() rather than this function.
+                this.RebuildControlPreview();
+            }
+            else
+            {
+                // if the control's data label isn't changing just update preview for control
+                // This is a UX responsiveness optimization for simple changes.
+                // control.ControlOrder changes are handled elsewhere
+                // changes to control.Copyable have no effect on the preview
+                // control.DataLabel changes are handled above
+                // control.DefaultValue is used to initialize the preview but changes not propagated as the user may have configured the preview differently
+                // Default value changes are included in choice updates.
+                // control.ID is immutable
+                if (control.Label != controlPreview.Label)
+                {
+                    controlPreview.Label = control.Label;
+                }
+                // control.List is handled via choice comparison
+                List<string> controlChoices = control.GetChoices();
+                List<string> previewChoices = controlPreview.GetChoices();
+                bool choicesNeedSynchronization = controlChoices.Count != previewChoices.Count;
+                if (choicesNeedSynchronization == false)
+                {
+                    List<string> allChoices = controlChoices.Union(previewChoices).ToList();
+                    choicesNeedSynchronization = allChoices.Count != previewChoices.Count;
+                }
+                if (choicesNeedSynchronization)
+                {
+                    controlPreview.SetChoices(controlChoices);
+                }
+                // control.SpreadsheetOrder is handled below
+                if (control.Tooltip != controlPreview.LabelTooltip)
+                {
+                    controlPreview.LabelTooltip = control.Tooltip;
+                }
+                // control.Type is immutable
+                // control.Visible changes are handled above
+                if (control.Width != controlPreview.ContentWidth)
+                {
+                    controlPreview.ContentWidth = control.Width;
+                }
+            }
+
+            this.SynchronizeSpreadsheetOrderPreview();
+        }
+
+        // incrementally update spreadsheet order preview
+        // Incremental updates are used to limit WPF UI tree rebuilds and improve responsiveness.
+        private void SynchronizeSpreadsheetOrderPreview()
+        {
+            List<ControlRow> controlsInSpreadsheetOrder = this.templateDatabase.Controls.OrderBy(control => control.SpreadsheetOrder).ToList();
+
+            // synchronize number of preview columns if number of controls changed
+            while (this.SpreadsheetOrderPreview.Columns.Count < controlsInSpreadsheetOrder.Count)
+            {
+                this.SpreadsheetOrderPreview.Columns.Add(new DataGridTextColumn());
+            }
+            while (this.SpreadsheetOrderPreview.Columns.Count > controlsInSpreadsheetOrder.Count)
+            {
+                this.SpreadsheetOrderPreview.Columns.RemoveAt(this.SpreadsheetOrderPreview.Columns.Count - 1);
+            }
+
+            // update existing column headers if needed
+            for (int controlIndex = 0; controlIndex < controlsInSpreadsheetOrder.Count; ++controlIndex)
+            {
+                ControlRow control = controlsInSpreadsheetOrder[controlIndex];
+                Debug.Assert(String.IsNullOrEmpty(control.DataLabel) == false, "Database constructors should guarantee data labels are not null.");
+
+                DataGridColumn column = this.SpreadsheetOrderPreview.Columns[controlIndex];
+                if ((column.Header == null) || (String.Equals((string)column.Header, control.DataLabel, StringComparison.Ordinal) == false))
+                {
+                    column.Header = control.DataLabel;
+                }
+            }
         }
 
         /// <summary>
@@ -574,7 +592,7 @@ namespace Carnassial.Editor
             }
 
             ControlRow control = new ControlRow(selectedRowView.Row);
-            if (EditorControls.IsStandardControlType(control.Type))
+            if (Constant.Control.StandardControls.Contains(control.Type))
             {
                 // standard controls cannot be removed
                 return;
@@ -584,8 +602,8 @@ namespace Carnassial.Editor
             this.templateDatabase.RemoveUserDefinedControl(new ControlRow(selectedRowView.Row));
 
             // update the control panel so it reflects the current values in the database
-            this.controls.Generate(this, this.ControlsPanel, this.templateDatabase.Controls);
-            this.GenerateSpreadsheetOrderPreview();
+            this.RebuildControlPreview();
+            this.SynchronizeSpreadsheetOrderPreview();
 
             this.templateDataGridBeingUpdatedByCode = false;
         }
@@ -701,15 +719,17 @@ namespace Carnassial.Editor
                              (controlType == Constant.DatabaseColumn.File) ||
                              (controlType == Constant.DatabaseColumn.RelativePath))
                     {
-                        // these standard controls have no editable properties
-                        disableCell = true;
+                        // these standard controls have no editable properties other than width
+                        disableCell = columnHeader != Constant.Control.Width;
                     }
                     else if ((controlType == Constant.DatabaseColumn.DeleteFlag) ||
                              (controlType == Constant.DatabaseColumn.ImageQuality) ||
                              (controlType == Constant.DatabaseColumn.UtcOffset))
                     {
-                        // standard controls whose copyable and visible can be changed
-                        disableCell = (columnHeader != Constant.Control.Copyable) && (columnHeader != Constant.Control.Visible);
+                        // standard controls whose copyable, visible, and width can be changed
+                        disableCell = (columnHeader != Constant.Control.Copyable) && 
+                                      (columnHeader != Constant.Control.Visible) && 
+                                      (columnHeader != Constant.Control.Width);
                     }
                     else if ((controlType == Constant.Control.Counter) ||
                              (controlType == Constant.Control.Flag))
@@ -803,16 +823,16 @@ namespace Carnassial.Editor
                             e.Handled = !Utilities.IsDigits(e.Text);
                             break;
                         case Constant.Control.Flag:
-                            // Only allow t/f and translate to true/false
+                            // only allow t/f and translate to true/false
                             if (e.Text == "t" || e.Text == "T")
                             {
                                 control.DefaultValue = Boolean.TrueString;
-                                this.SyncControlToDatabaseAndRedraw(control);
+                                this.SyncControlToDatabaseAndPreviews(control);
                             }
                             else if (e.Text == "f" || e.Text == "F")
                             {
                                 control.DefaultValue = Boolean.FalseString;
-                                this.SyncControlToDatabaseAndRedraw(control);
+                                this.SyncControlToDatabaseAndPreviews(control);
                             }
                             e.Handled = true;
                             break;
@@ -845,7 +865,7 @@ namespace Carnassial.Editor
         {
             if (!this.templateDataGridBeingUpdatedByCode)
             {
-                this.SyncControlToDatabaseAndRedraw(new ControlRow(e.Row));
+                this.SyncControlToDatabaseAndPreviews(new ControlRow(e.Row));
             }
         }
 

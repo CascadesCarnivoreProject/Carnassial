@@ -165,7 +165,7 @@ namespace Carnassial.Database
                 }
                 if (columnToRemove == -1)
                 {
-                    throw new ArgumentOutOfRangeException(String.Format("Column '{0}' not found in table '{1}'.", column, table));
+                    throw new ArgumentOutOfRangeException(nameof(column), String.Format("Column '{0}' not found in table '{1}'.", column, table));
                 }
                 columnDefinitions.RemoveAt(columnToRemove);
 
@@ -270,11 +270,11 @@ namespace Carnassial.Database
         {
             if (String.IsNullOrWhiteSpace(currentColumnName))
             {
-                throw new ArgumentOutOfRangeException("currentColumnName");
+                throw new ArgumentOutOfRangeException(nameof(currentColumnName));
             }
             if (String.IsNullOrWhiteSpace(newColumnName))
             {
-                throw new ArgumentOutOfRangeException("newColumnName");
+                throw new ArgumentOutOfRangeException(nameof(newColumnName));
             }
 
             using (SQLiteConnection connection = this.CreateConnection())

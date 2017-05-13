@@ -47,7 +47,7 @@ Also helpful are
 * John Skeet's discussion of [DateTime, DateTimeOffset, and TimeZoneInfo limitations](http://blog.nodatime.org/2011/08/what-wrong-with-datetime-anyway.html).
 
 ### Dependencies
-* Carnassial and the template editor are supported and tested on Windows 10 Anniversary Update.  They should also run without issue on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10.  Support is, however, limited.
+* Carnassial and the template editor are supported and tested on current releases of Windows 10.  They should also run without issue on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10.  Support is, however, limited.
 * Windows Vista SP2 and earlier and 32 bit versions of Windows are not supported.  Windows 7 users will need to [install .NET 4.6 or newer](https://msdn.microsoft.com/en-us/library/bb822049.aspx) if it's not already present.
 * Visual Studio 2015 Community Update 3 or higher is required for development.
 

@@ -27,8 +27,7 @@ namespace Carnassial.Util
             "System.Data.SQLite.dll",
             "System.Data.SQLite.xml",
             "x64/SQLite.Interop.dll",
-            "x86/SQLite.Interop.dll",
-            "Xceed.Wpf.AvalonDock.dll"
+            "x86/SQLite.Interop.dll"
         };
 
         private static readonly List<string> EditorRequiredBinaries = new List<string>()

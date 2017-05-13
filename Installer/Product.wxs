@@ -41,7 +41,7 @@
                     Name="Carnassial"
                     Advertise="yes"
                     Description="Starts $(var.Carnassial.TargetFileName)"
-                    Directory="ProgramMenuFolder"
+                    Directory="ApplicationProgramsFolder"
                     Icon="Carnassial.ico" />
         </File>
       </Component>
@@ -113,63 +113,12 @@
       <Component Id="System.Data.SQLite.xml" Guid="*" Win64="yes">
         <File Id="System.Data.SQLite.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\System.Data.SQLite.xml" />
       </Component>
-      <Component Id="Xceed.Wpf.AvalonDock.dll" Guid="*" Win64="yes">
-        <File Id="Xceed.Wpf.AvalonDock.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Xceed.Wpf.AvalonDock.dll" />
-      </Component>
-      <Component Id="Xceed.Wpf.AvalonDock.xml" Guid="*" Win64="yes">
-        <File Id="Xceed.Wpf.AvalonDock.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Xceed.Wpf.AvalonDock.xml" />
-      </Component>
       <Component Id="XmpCore.dll" Guid="*" Win64="yes">
         <File Id="XmpCore.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\XmpCore.dll" />
       </Component>
       <Component Id="XmpCore.xml" Guid="*" Win64="yes">
         <File Id="XmpCore.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\XmpCore.xml" />
       </Component>
-      <Directory Id="de" Name="de">
-        <Component Id="de.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
-          <File Id="de.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\de\Xceed.Wpf.AvalonDock.resources.dll" />
-        </Component>
-      </Directory>
-      <Directory Id="es" Name="es">
-        <Component Id="es.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
-          <File Id="es.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\es\Xceed.Wpf.AvalonDock.resources.dll" />
-        </Component>
-      </Directory>
-      <Directory Id="fr" Name="fr">
-        <Component Id="fr.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
-          <File Id="fr.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\fr\Xceed.Wpf.AvalonDock.resources.dll" />
-        </Component>
-      </Directory>
-      <Directory Id="hu" Name="hu">
-        <Component Id="hu.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
-          <File Id="hu.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\hu\Xceed.Wpf.AvalonDock.resources.dll" />
-        </Component>
-      </Directory>
-      <Directory Id="it" Name="it">
-        <Component Id="it.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
-          <File Id="it.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\it\Xceed.Wpf.AvalonDock.resources.dll" />
-        </Component>
-      </Directory>
-      <Directory Id="ptBR" Name="pt-BR">
-        <Component Id="ptBR.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
-          <File Id="ptBR.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\pt-BR\Xceed.Wpf.AvalonDock.resources.dll" />
-        </Component>
-      </Directory>
-      <Directory Id="ro" Name="ro">
-        <Component Id="ro.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
-          <File Id="ro.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\ro\Xceed.Wpf.AvalonDock.resources.dll" />
-        </Component>
-      </Directory>
-      <Directory Id="ru" Name="ru">
-        <Component Id="ru.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
-          <File Id="ru.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\ru\Xceed.Wpf.AvalonDock.resources.dll" />
-        </Component>
-      </Directory>
-      <Directory Id="sv" Name="sv">
-        <Component Id="sv.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
-          <File Id="sv.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\sv\Xceed.Wpf.AvalonDock.resources.dll" />
-        </Component>
-      </Directory>
       <Directory Id="x64.Interop" Name="x64">
         <Component Id="x64.SQLite.Interop.dll" Guid="*" Win64="yes">
           <File Id="x64.SQLite.Interop.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\x64\SQLite.Interop.dll" />
@@ -178,11 +127,6 @@
       <Directory Id="x86.Interop" Name="x86">
         <Component Id="x86.SQLite.Interop.dll" Guid="*" Win64="yes">
           <File Id="x86.SQLite.Interop.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\x86\SQLite.Interop.dll" />
-        </Component>
-      </Directory>
-      <Directory Id="zhHans" Name="zh-Hans">
-        <Component Id="zhHans.Xceed.Wpf.AvalonDock.resources.dll" Guid="*" Win64="yes">
-          <File Id="zhHans.Xceed.Wpf.AvalonDock.resources.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\zh-Hans\Xceed.Wpf.AvalonDock.resources.dll" />
         </Component>
       </Directory>
       <Directory Id="ProgramMenuFolder">
@@ -228,22 +172,10 @@
       <ComponentRef Id="Newtonsoft.Json.xml" />
       <ComponentRef Id="System.Data.SQLite.dll" />
       <ComponentRef Id="System.Data.SQLite.xml" />
-      <ComponentRef Id="Xceed.Wpf.AvalonDock.dll" />
-      <ComponentRef Id="Xceed.Wpf.AvalonDock.xml" />
       <ComponentRef Id="XmpCore.dll" />
       <ComponentRef Id="XmpCore.xml" />
-      <ComponentRef Id="de.Xceed.Wpf.AvalonDock.resources.dll" />
-      <ComponentRef Id="es.Xceed.Wpf.AvalonDock.resources.dll" />
-      <ComponentRef Id="fr.Xceed.Wpf.AvalonDock.resources.dll" />
-      <ComponentRef Id="hu.Xceed.Wpf.AvalonDock.resources.dll" />
-      <ComponentRef Id="it.Xceed.Wpf.AvalonDock.resources.dll" />
-      <ComponentRef Id="ptBR.Xceed.Wpf.AvalonDock.resources.dll" />
-      <ComponentRef Id="ro.Xceed.Wpf.AvalonDock.resources.dll" />
-      <ComponentRef Id="ru.Xceed.Wpf.AvalonDock.resources.dll" />
-      <ComponentRef Id="sv.Xceed.Wpf.AvalonDock.resources.dll" />
       <ComponentRef Id="x64.SQLite.Interop.dll" />
       <ComponentRef Id="x86.SQLite.Interop.dll" />
-      <ComponentRef Id="zhHans.Xceed.Wpf.AvalonDock.resources.dll" />
       <ComponentRef Id="ApplicationComponent" />
     </ComponentGroup>
   </Fragment>

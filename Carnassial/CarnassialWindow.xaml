@@ -7,11 +7,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:s="clr-namespace:System;assembly=mscorlib"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
-        AutomationProperties.AutomationId="Carnassial"
-        Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown" 
-        Height="900" Width="1350"
-        WindowState="Normal" Icon="Carnassial.ico">
+        AutomationProperties.AutomationId="Carnassial" Icon="Carnassial.ico"
+        Closing="Window_Closing" KeyDown="Window_KeyDown" Loaded="Window_Loaded"
+        Height="900" Width="1350">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -19,9 +17,8 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         
-        <!-- Menu Bar -->
-        <Menu Grid.Row="0">
-            <!-- File Menu -->
+        <Menu Name="Menu" Grid.Row="0">
+            <!-- file menu -->
             <MenuItem Header="_File" SubmenuOpened="MenuFile_SubmenuOpened">
                 <MenuItem Name="MenuFileLoadImageSet" Header="_Load template, images, and videos..." Click="MenuFileLoadImageSet_Click" ToolTip="Asks for a template and then opens an existing database or creates a new database.">
                     <MenuItem.Icon>
@@ -77,7 +74,7 @@
             </MenuItem>
             </MenuItem>
 
-            <!-- Edit Menu -->
+            <!-- edit menu -->
             <MenuItem Name="MenuEdit" Header="_Edit" IsEnabled="False" SubmenuOpened="MenuEdit_SubmenuOpened">
                 <MenuItem Name="MenuEditUndo" Header="_Undo last paste" Click="MenuEditUndo_Click" ToolTip="Undo application of values to the current file." InputGestureText="Ctrl+Z" IsEnabled="False">
                     <MenuItem.Icon>
@@ -143,7 +140,7 @@
                 <MenuItem Name="MenuEditDeleteFilesAndData" Header="D_elete all files in the current selection marked for deletion and their data..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files." />
             </MenuItem>
             
-            <!-- Options Menu -->
+            <!-- options menu -->
             <MenuItem Name="MenuOptions" Header="_Options" IsEnabled="False">
                 <MenuItem Name="MenuOptionsOrderFilesByDateTime" IsCheckable="True" IsChecked="False" Header="_Order files by date/time" Click="MenuOptionsOrderFilesByDateTime_Click" ToolTip="Sort files by their date/time rather than the order in which they were added to the image set." />
                 <MenuItem Name="MenuOptionsAudioFeedback" IsCheckable="True" IsChecked="False" IsEnabled="False" Header="_Audio feedback" Click="MenuOptionsAudioFeedback_Click" ToolTip="Toggles the audio that speaks the count whenever you add a counting mark to the image." />
@@ -240,14 +237,13 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Header="View _window">
-                    <MenuItem Header="i_nstructions" Click="MenuViewShowInstructions_Click" ToolTip="View the instructions tab." />
-                    <MenuItem Header="_image set" Click="MenuViewShowImageSet_Click" ToolTip="View the image set tab." />
-                    <MenuItem Header="_data grid" Click="MenuViewShowDataGrid_Click" ToolTip="View the data grid tab." />
+                <MenuItem Header="View _tab">
+                    <MenuItem Header="_instructions" Click="MenuViewShowInstructions_Click" ToolTip="View the instructions tab." />
+                    <MenuItem Header="_files" Click="MenuViewShowFiles_Click" ToolTip="View the image set tab." />
                 </MenuItem>
             </MenuItem>
 
-            <!-- Select menu -->
+            <!-- select menu -->
             <MenuItem Name="MenuSelect" Header="_Select" IsEnabled="False" SubmenuOpened="MenuSelect_SubmenuOpening" ToolTip="Select a subset of files.">
                 <MenuItem Name="MenuSelectAllFiles" IsCheckable="True" IsChecked="True" Header="_All files" Click="MenuSelectFiles_Click" ToolTip="Shows all files, including corrupted and dark ones." />
                 <MenuItem Name="MenuSelectOkFiles" IsCheckable="True" IsChecked="False" Header="_Ok files" Click="MenuSelectFiles_Click" ToolTip="Exlcudes dark, corrupted, or missing files." />
@@ -260,88 +256,74 @@
                 <MenuItem Name="MenuItemImageCounts" Header="Show _file counts..." Click="MenuSelectFileCounts_Click" ToolTip="Displays statistics on the number of files and their types." />
             </MenuItem>
 
-            <!-- Help Menu -->
+            <!-- help menu -->
             <MenuItem Name="MenuItemHelp" Header="_Help">
                 <MenuItem Name="MenuHelpAbout" Header="_About..." Click="MenuHelpAbout_Click" ToolTip="Displays version information about this program and how to contact the development team." />
             </MenuItem>
         </Menu>
 
-        <xcad:DockingManager AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="1" Grid.Row="1">
-            <xcad:DockingManager.DocumentHeaderTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="{Binding IconSource}" Margin="0,0,4,0"/>
-                        <TextBlock Text="{Binding Title}" />
-                    </StackPanel>
-                </DataTemplate>
-            </xcad:DockingManager.DocumentHeaderTemplate>
-            <xcad:LayoutRoot x:Name="LayoutRoot">
-                <xcad:LayoutPanel Orientation="Horizontal">
-                    <xcad:LayoutDocumentPaneGroup>
-                        <xcad:LayoutDocumentPane>
-                            <!-- AvalonDock uses a fixed zero margin after uncloseable tab titles; fake a margin with some trailing spaces -->
-                            <xcad:LayoutDocument x:Name="InstructionPane" Title="Instructions  " CanClose="False">
-                                <controls:HelpUserControl AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" Height="Auto" />
-                            </xcad:LayoutDocument>
-                            <xcad:LayoutDocument x:Name="FileViewPane" Title="File view  " CanClose="False" >
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="*" />
-                                    </Grid.RowDefinitions>
-                                    <controls:FeedbackControl x:Name="FeedbackControl" Grid.Row="0" Visibility="Collapsed" />
-                                    <Slider Name="FileNavigatorSlider" Grid.Row="1" Minimum="1" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" LargeChange="1" TickPlacement="BottomRight" ToolTip="Scroll through all selected files." Margin="5,0,5,0"
-                                            PreviewKeyDown="FileNavigatorSlider_PreviewKeyDown"
+        <controls:TabControlWithoutHomeAndEnd x:Name="Tabs" Grid.Row="1">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="Padding" Value="10,2,10,0" />
+                </Style>
+            </TabControl.Resources>
+            <TabItem Header="Instructions">
+                <controls:HelpUserControl x:Name="Instructions" AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" Height="Auto" />
+            </TabItem>
+            <TabItem Header="Files">
+                <Grid Name="FileView">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="300" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <controls:FeedbackControl x:Name="FeedbackControl" Grid.Row="0" Visibility="Collapsed" />
+                        <Slider Name="FileNavigatorSlider" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" GotKeyboardFocus="FileNavigatorSlider_GotKeyboardFocus" LargeChange="1" Minimum="1" TickPlacement="BottomRight" ToolTip="Scroll through all selected files." Grid.Row="1" Margin="5,0,5,0"
                                             Thumb.DragStarted="FileNavigatorSlider_DragStarted" 
                                             Thumb.DragCompleted="FileNavigatorSlider_DragCompleted"
                                             ValueChanged="FileNavigatorSlider_ValueChanged" />
-                                    <images:MarkableCanvas x:Name="MarkableCanvas" Grid.Row="2" />
-                                </Grid>
-                            </xcad:LayoutDocument>
-                            <xcad:LayoutDocument x:Name="FileDataPane" Title="File data  " CanClose="False" IsActiveChanged="FileDataPane_IsActiveChanged">
-                                <DataGrid Name="DataGrid" MinHeight="100" MinWidth="100" HorizontalAlignment="Stretch" VerticalScrollBarVisibility="Auto"/>
-                            </xcad:LayoutDocument>
-                        </xcad:LayoutDocumentPane>
-                    </xcad:LayoutDocumentPaneGroup>
-                    <xcad:LayoutAnchorablePaneGroup DockWidth="300">
-                        <xcad:LayoutAnchorablePane>
-                            <xcad:LayoutAnchorable Title="Data Entry" CanClose="False">
-                                <Grid Name="ControlGrid">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                        <images:MarkableCanvas x:Name="MarkableCanvas" MarkerEvent="MarkableCanvas_RaiseMarkerEvent" Grid.Row="2" />
+                    </Grid>
+                    <GridSplitter Grid.Column="0" Width="5" />
+                    <Grid Name="ControlGrid" Grid.Column="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                                    <!-- Controls Tray panel (to hold controls) -->
-                                    <ScrollViewer Grid.Column="0" Grid.Row="0" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                                        <StackPanel Name="ControlsPanel">
-                                            <controls:DataEntryControls x:Name="DataEntryControls" />
-                                        </StackPanel>
-                                    </ScrollViewer>
-                                    <StackPanel Orientation="Horizontal" Grid.Column="0" Grid.Row="1">
-                                    <Button Name="PastePreviousValues" Click="PastePreviousValues_Click" Margin="10,10,10,10" Padding="5,5,5,5" Content="_Paste previous" IsEnabled="False"
+                        <!-- data entry controls -->
+                        <ScrollViewer Grid.Column="0" Grid.Row="0" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Name="ControlsPanel">
+                                <controls:DataEntryControls x:Name="DataEntryControls" />
+                            </StackPanel>
+                        </ScrollViewer>
+                        <StackPanel Orientation="Horizontal" Grid.Column="0" Grid.Row="1">
+                            <Button Name="PastePreviousValues" Click="PastePreviousValues_Click" Margin="10,10,10,10" Padding="5,5,5,5" Content="_Paste previous" IsEnabled="False"
                                         MouseEnter="PasteButton_MouseEnter" MouseLeave="PasteButton_MouseLeave"
                                         ToolTip="Copy the highlighted data (fields marked 'Copyable' in the template) from the previous file." />
-                                    <Button Name="PasteAnalysis1" Click="PasteAnalysis1_Click" Margin="10,10,10,10" Padding="5,5,5,5" Content="Analysis _1" IsEnabled="False"
+                            <Button Name="PasteAnalysis1" Click="PasteAnalysis1_Click" Margin="10,10,10,10" Padding="5,5,5,5" Content="Analysis _1" IsEnabled="False"
                                         MouseEnter="PasteButton_MouseEnter" MouseLeave="PasteButton_MouseLeave"
                                         ToolTip="Apply data in analysis 1." />
-                                    <Button Name="PasteAnalysis2" Click="PasteAnalysis2_Click" Margin="10,10,10,10" Padding="5,5,5,5" Content="Analysis _2" IsEnabled="False"
+                            <Button Name="PasteAnalysis2" Click="PasteAnalysis2_Click" Margin="10,10,10,10" Padding="5,5,5,5" Content="Analysis _2" IsEnabled="False"
                                         MouseEnter="PasteButton_MouseEnter" MouseLeave="PasteButton_MouseLeave"
                                         ToolTip="Apply data in analysis 2." />
-                                    </StackPanel>
-                                </Grid>
-                            </xcad:LayoutAnchorable>
-                        </xcad:LayoutAnchorablePane>
-                    </xcad:LayoutAnchorablePaneGroup>
-                </xcad:LayoutPanel>
-            </xcad:LayoutRoot>
-        </xcad:DockingManager>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </TabItem>
+        </controls:TabControlWithoutHomeAndEnd>
 
-        <!-- Status bar -->
+        <!-- status bar -->
         <StatusBar Name="statusBar" ItemsSource="{Binding}" Grid.Row="2" Height="22">
             <StatusBarItem Content="File:" FontWeight="Bold" />
             <StatusBarItem Content="0"/>

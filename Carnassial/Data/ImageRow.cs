@@ -90,7 +90,7 @@ namespace Carnassial.Data
             foreach (DataColumn column in this.Row.Table.Columns)
             {
                 string dataLabel = column.ColumnName;
-                values.Add(dataLabel, this.GetValue(dataLabel));
+                values.Add(dataLabel, this.GetDisplayValue(dataLabel));
             }
             return values;
         }
@@ -106,12 +106,34 @@ namespace Carnassial.Data
             foreach (ImageRow file in files)
             {
                 Debug.Assert(file != null, "files contains null.");
-                Debug.Assert(file.ID != Constant.Database.InvalidID, "GetDateTimeColumnTuples() should only be called on ImageRows which are database backed.");
+                Debug.Assert(file.ID != Constant.Database.InvalidID, "CreateDateTimeUpdate() should only be called on ImageRows which are database backed.");
 
-                dateTimeTuples.Add(file.ID, file.DateTime, file.UtcOffset);
+                dateTimeTuples.Add(file.ID, file.DateTime, DateTimeHandler.ToDatabaseUtcOffset(file.UtcOffset));
             }
 
             return dateTimeTuples;
+        }
+
+        public FileTuplesWithID CreateUpdate()
+        {
+            List<string> columnsToUpdate = new List<string>(this.Row.Table.Columns.Count - 1);
+            foreach (DataColumn column in this.Row.Table.Columns)
+            {
+                if (column.ColumnName == Constant.DatabaseColumn.ID)
+                {
+                    continue;
+                }
+                columnsToUpdate.Add(column.ColumnName);
+            }
+
+            FileTuplesWithID tuples = new FileTuplesWithID(columnsToUpdate);
+            List<object> values = new List<object>(columnsToUpdate.Count);
+            foreach (string datalabel in columnsToUpdate)
+            {
+                values.Add(this.GetDatabaseValue(datalabel));
+            }
+            tuples.Add(this.ID, values);
+            return tuples;
         }
 
         public DateTimeOffset GetDateTime()
@@ -122,6 +144,44 @@ namespace Carnassial.Data
         public string GetDisplayDateTime()
         {
             return DateTimeHandler.ToDisplayDateTimeString(this.GetDateTime());
+        }
+
+        public object GetDatabaseValue(string dataLabel)
+        {
+            switch (dataLabel)
+            {
+                case Constant.DatabaseColumn.DateTime:
+                    return this.DateTime;
+                case Constant.DatabaseColumn.DeleteFlag:
+                    return this.DeleteFlag.ToString();
+                case Constant.DatabaseColumn.ID:
+                    return this.ID;
+                case Constant.DatabaseColumn.ImageQuality:
+                    return this.ImageQuality.ToString();
+                case Constant.DatabaseColumn.UtcOffset:
+                    return DateTimeHandler.ToDatabaseUtcOffset(this.UtcOffset);
+                default:
+                    return this.Row.GetStringField(dataLabel);
+            }
+        }
+
+        public object GetDisplayValue(string dataLabel)
+        {
+            switch (dataLabel)
+            {
+                case Constant.DatabaseColumn.DateTime:
+                    return this.GetDateTime();
+                case Constant.DatabaseColumn.DeleteFlag:
+                    return this.DeleteFlag;
+                case Constant.DatabaseColumn.ID:
+                    return this.ID;
+                case Constant.DatabaseColumn.ImageQuality:
+                    return this.ImageQuality;
+                case Constant.DatabaseColumn.UtcOffset:
+                    return this.UtcOffset;
+                default:
+                    return this.Row.GetStringField(dataLabel);
+            }
         }
 
         public FileInfo GetFileInfo(string rootFolderPath)
@@ -146,25 +206,6 @@ namespace Carnassial.Data
                 return this.FileName;
             }
             return Path.Combine(this.RelativePath, this.FileName);
-        }
-
-        public object GetValue(string dataLabel)
-        {
-            switch (dataLabel)
-            {
-                case Constant.DatabaseColumn.DateTime:
-                    return this.GetDateTime();
-                case Constant.DatabaseColumn.DeleteFlag:
-                    return this.DeleteFlag;
-                case Constant.DatabaseColumn.ID:
-                    return this.ID;
-                case Constant.DatabaseColumn.ImageQuality:
-                    return this.ImageQuality;
-                case Constant.DatabaseColumn.UtcOffset:
-                    return this.UtcOffset;
-                default:
-                    return this.Row.GetStringField(dataLabel);
-            }
         }
 
         public string GetValueDatabaseString(string dataLabel)
@@ -265,6 +306,25 @@ namespace Carnassial.Data
             FileInfo fileInfo = this.GetFileInfo(folderPath);
             DateTime earliestTimeLocal = fileInfo.CreationTime < fileInfo.LastWriteTime ? fileInfo.CreationTime : fileInfo.LastWriteTime;
             this.SetDateTimeOffset(new DateTimeOffset(earliestTimeLocal));
+        }
+
+        public void SetValue(string dataLabel, object value)
+        {
+            switch (dataLabel)
+            {
+                case Constant.DatabaseColumn.DateTime:
+                    this.DateTime = (DateTime)value;
+                    break;
+                case Constant.DatabaseColumn.UtcOffset:
+                    this.UtcOffset = (TimeSpan)value;
+                    break;
+                case Constant.DatabaseColumn.ImageQuality:
+                    this.ImageQuality = (FileSelection)value;
+                    break;
+                default:
+                    this.Row.SetField(dataLabel, (string)value);
+                    break;
+            }
         }
 
         public void SetValueFromDatabaseString(string dataLabel, string value)

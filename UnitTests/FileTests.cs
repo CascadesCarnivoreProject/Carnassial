@@ -86,6 +86,12 @@ namespace Carnassial.UnitTests
 
                     ImageDifferenceResult combinedDifferenceResult = await cache.TryCalculateCombinedDifferenceAsync(Constant.Images.DifferenceThresholdDefault - 2);
                     await this.CheckDifferenceResult(combinedDifferenceResult, cache, fileDatabase);
+
+                    MemoryImage differenceImage = cache.GetCurrentImage();
+                    if (combinedDifferenceResult == ImageDifferenceResult.Success)
+                    {
+                        Assert.IsNotNull(differenceImage);
+                    }
                 }
 
                 Assert.IsTrue(cache.TryMoveToFile(0));
@@ -98,6 +104,12 @@ namespace Carnassial.UnitTests
 
                     ImageDifferenceResult differenceResult = await cache.TryCalculateDifferenceAsync(Constant.Images.DifferenceThresholdDefault + 2);
                     await this.CheckDifferenceResult(differenceResult, cache, fileDatabase);
+
+                    MemoryImage differenceImage = cache.GetCurrentImage();
+                    if (differenceResult == ImageDifferenceResult.Success)
+                    {
+                        Assert.IsNotNull(differenceImage);
+                    }
                 }
 
                 cache.Reset();

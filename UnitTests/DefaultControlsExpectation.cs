@@ -3,7 +3,7 @@ using System;
 
 namespace Carnassial.UnitTests
 {
-    internal class DefaultTemplateTableExpectation : TemplateTableExpectation
+    internal class DefaultControlsExpectation : ControlsExpectation
     {
         public ControlExpectations Counter0 { get; private set; }
         public ControlExpectations Choice0 { get; private set; }
@@ -22,7 +22,7 @@ namespace Carnassial.UnitTests
         public ControlExpectations Note3 { get; private set; }
         public ControlExpectations Flag3 { get; private set; }
 
-        public DefaultTemplateTableExpectation(Version version)
+        public DefaultControlsExpectation(Version version)
             : base(version)
         {
             long id = Constant.Control.StandardControls.Count + 1;

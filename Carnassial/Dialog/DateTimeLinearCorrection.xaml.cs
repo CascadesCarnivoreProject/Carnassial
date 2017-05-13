@@ -139,18 +139,14 @@ namespace Carnassial.Dialog
 
         private void PreviewDateTimeChanges()
         {
-            this.AdjustmentEntryPanel.Visibility = Visibility.Collapsed;
-            this.FeedbackPanel.Visibility = Visibility.Visible;
-
-            // Preview the changes
             TimeSpan intervalFromCorrectToMeasured = this.GetInterval();
             TimeZoneInfo imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZone();
-            foreach (ImageRow image in this.fileDatabase.Files)
+            foreach (ImageRow file in this.fileDatabase.Files)
             {
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
                 string difference = String.Empty;
-                DateTimeOffset imageDateTime = image.GetDateTime();
+                DateTimeOffset imageDateTime = file.GetDateTime();
 
                 TimeSpan adjustment = this.GetAdjustment(intervalFromCorrectToMeasured, imageDateTime);
                 if (adjustment.Duration() >= Constant.Time.DateTimeDatabaseResolution)
@@ -164,8 +160,11 @@ namespace Carnassial.Dialog
                     status = "Unchanged";
                 }
 
-                this.DateTimeChangeFeedback.AddFeedbackRow(image.FileName, status, image.GetDisplayDateTime(), newDateTime, difference);
+                this.DateTimeChangeFeedback.AddFeedbackRow(file.FileName, status, file.GetDisplayDateTime(), newDateTime, difference);
             }
+
+            this.AdjustmentEntryPanel.Visibility = Visibility.Collapsed;
+            this.FeedbackPanel.Visibility = Visibility.Visible;
         }
 
         private void RefreshImageTimes()

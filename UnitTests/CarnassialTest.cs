@@ -283,12 +283,13 @@ namespace Carnassial.UnitTests
                 }, fileEnumerator.Current.ID);
             fileDatabase.UpdateFiles(bobcatUpdate);
 
-            long martenImageID = fileDatabase.Files[0].ID;
-            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
-            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
-            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.FlagNotVisible, Boolean.TrueString);
-            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");
-            fileDatabase.UpdateFile(martenImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
+            ImageRow martenFile = fileDatabase.Files[0];
+            martenFile.SetValue(TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
+            martenFile.SetValue(TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
+            martenFile.SetValue(TestConstant.DefaultDatabaseColumn.FlagNotVisible, Boolean.TrueString);
+            martenFile.SetValue(TestConstant.DefaultDatabaseColumn.Note3, "American marten");
+            martenFile.SetValue(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
+            fileDatabase.UpdateFile(martenFile);
 
             // generate expectations
             List<FileExpectations> fileExpectations = new List<FileExpectations>()
@@ -313,21 +314,22 @@ namespace Carnassial.UnitTests
                 fileDatabase.AddFiles(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
                 fileDatabase.SelectFiles(FileSelection.All);
 
-                FileTuplesWithID coyoteImageUpdate = new FileTuplesWithID(new List<ColumnTuple>()
+                coyoteImage = fileEnumerator.Current;
+                coyoteImage.SetValue(TestConstant.DefaultDatabaseColumn.Note3, "coyote");
+                coyoteImage.SetValue(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
+                coyoteImage.SetValue(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
+                coyoteImage.SetValue(TestConstant.DefaultDatabaseColumn.Note0, "escaped field, because a comma is present");
+                fileDatabase.UpdateFile(coyoteImage);
+
+                FileTuplesWithID martenPairImageUpdate = new FileTuplesWithID(new List<ColumnTuple>()
                     {
-                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "coyote"),
+                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "American marten"),
                         new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult"),
                         new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty),
-                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note0, "escaped field, because a comma is present")
+                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note0, "escaped field due to presence of \",\"")
                     },
-                    fileEnumerator.Current.ID);
-                fileDatabase.UpdateFiles(coyoteImageUpdate);
-
-                long martenPairImageID = fileDatabase.Files[3].ID;
-                fileDatabase.UpdateFile(martenPairImageID, TestConstant.DefaultDatabaseColumn.Note3, "American marten");
-                fileDatabase.UpdateFile(martenPairImageID, TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
-                fileDatabase.UpdateFile(martenPairImageID, TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
-                fileDatabase.UpdateFile(martenPairImageID, TestConstant.DefaultDatabaseColumn.Note0, "escaped field due to presence of \",\"");
+                    fileDatabase.Files[3].ID);
+                fileDatabase.UpdateFiles(martenPairImageUpdate);
 
                 fileExpectations.Add(new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair));
                 fileExpectations.Add(new FileExpectations(TestConstant.FileExpectation.DaylightCoyote));

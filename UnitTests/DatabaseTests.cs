@@ -179,7 +179,7 @@ namespace Carnassial.UnitTests
             adjustment = new TimeSpan(-1, -2, -3, -4, 0);
             int startRow = 1;
             int endRow = fileDatabase.CurrentlySelectedFileCount - 1;
-            fileDatabase.AdjustFileDateTimes(adjustment, startRow, endRow);
+            fileDatabase.AdjustFileTimes(adjustment, startRow, endRow);
             this.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, fileDatabase.GetFileTimes().ToList(), startRow, endRow, adjustment);
             fileDatabase.SelectFiles(FileSelection.All);
             this.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, fileDatabase.GetFileTimes().ToList(), startRow, endRow, adjustment);
@@ -705,9 +705,9 @@ namespace Carnassial.UnitTests
             for (int rowIndex = 0; rowIndex < fileDatabase.Files.RowCount; ++rowIndex)
             {
                 FileInfo imageFile = imagesAndVideos[rowIndex];
-                ImageRow imageRow = fileDatabase.Files[rowIndex];
+                ImageRow file = fileDatabase.Files[rowIndex];
                 bool expectedIsVideo = String.Equals(Path.GetExtension(imageFile.Name), Constant.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase) ? false : true;
-                Assert.IsTrue(imageRow.IsVideo == expectedIsVideo);
+                Assert.IsTrue(file.IsVideo == expectedIsVideo);
             }
         }
 
@@ -724,7 +724,7 @@ namespace Carnassial.UnitTests
 
             // verify template portion
             this.VerifyTemplateDatabase(fileDatabase, fileDatabaseBaseFileName);
-            DefaultTemplateTableExpectation templateTableExpectation = new DefaultTemplateTableExpectation(new Version(2, 2, 0, 0));
+            DefaultControlsExpectation templateTableExpectation = new DefaultControlsExpectation(new Version(2, 2, 0, 0));
             templateTableExpectation.Verify(fileDatabase);
 
             // verify image set table

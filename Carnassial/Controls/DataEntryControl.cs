@@ -1,5 +1,6 @@
 ﻿using Carnassial.Data;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Controls;
@@ -21,6 +22,8 @@ namespace Carnassial.Controls
         /// <summary>Gets the container that holds the control.</summary>
         public StackPanel Container { get; private set; }
 
+        public abstract long ContentWidth { get; set; }
+
         /// <summary>Gets the context menu associated with the control.</summary>
         public ContextMenu ContextMenu
         {
@@ -33,6 +36,10 @@ namespace Carnassial.Controls
         public string DefaultValue { get; private set; }
 
         public abstract void Focus(DependencyObject focusScope);
+
+        public abstract string Label { get; set; }
+
+        public abstract string LabelTooltip { get; set; }
 
         protected DataEntryControl(ControlRow control, DataEntryControls styleProvider)
         {
@@ -51,9 +58,6 @@ namespace Carnassial.Controls
             // this is needed by callbacks such as DataEntryHandler.Container_PreviewMouseRightButtonDown() and CarnassialWindow.CounterControl_MouseLeave()
             this.Container.Tag = this;
         }
-
-        public abstract void SetContentAndTooltip(string valueAsString);
-        public abstract void SetValue(object valueAsObject);
 
         public void AppendToContextMenu(params MenuItem[] menuItems)
         {
@@ -86,6 +90,19 @@ namespace Carnassial.Controls
                 menu.Items.Add(menuItem);
             }
         }
+
+        public virtual List<string> GetChoices()
+        {
+            // return empty set as flags and counters don't have choices
+            return new List<string>();
+        }
+
+        public virtual void SetChoices(List<string> choices)
+        {
+            // do nothing as flags and counters don't have choices
+        }
+
+        public abstract void SetValue(object valueAsObject);
     }
 
     // A generic control comprises a stack panel containing 
@@ -98,22 +115,33 @@ namespace Carnassial.Controls
     {
         public TContent ContentControl { get; private set; }
 
-        /// <summary>Gets the control label's value</summary>
-        public string Label
-        {
-            get { return (string)this.LabelControl.Content; }
-        }
-
-        public TLabel LabelControl { get; private set; }
-
-        /// <summary>Gets or sets the width of the content control</summary>
-        public long Width
+        public override long ContentWidth
         {
             get { return (long)this.ContentControl.Width; }
             set { this.ContentControl.Width = value; }
         }
 
-        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, Nullable<ControlContentStyle> contentStyleName, ControlLabelStyle labelStyleName) : 
+        /// <summary>Gets the control label's value</summary>
+        public override string Label
+        {
+            get { return (string)this.LabelControl.Content; }
+            set { this.LabelControl.Content = value; }
+        }
+
+        public TLabel LabelControl { get; private set; }
+
+        public override string LabelTooltip
+        {
+            get { return (string)this.LabelControl.ToolTip; }
+            set { this.LabelControl.ToolTip = value; }
+        }
+
+        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, Nullable<ControlContentStyle> contentStyleName, ControlLabelStyle labelStyleName) :
+            this(control, styleProvider, contentStyleName, labelStyleName, false)
+        {
+        }
+
+        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, Nullable<ControlContentStyle> contentStyleName, ControlLabelStyle labelStyleName, bool readOnly) : 
             base(control, styleProvider)
         {
             this.ContentControl = new TContent();
@@ -124,19 +152,51 @@ namespace Carnassial.Controls
             {
                 this.ContentControl.Style = (Style)styleProvider.FindResource(contentStyleName.Value.ToString());
             }
-            this.ContentReadOnly = false;
-            this.SetContentAndTooltip(control.DefaultValue);
-            this.Width = control.Width;
+            this.ContentReadOnly = readOnly;
+            this.SetValue(control.DefaultValue);
+            this.ContentWidth = control.Width;
 
             // use the content's tag to point back to this so event handlers can access the DataEntryControl as well as just ContentControl
             // the data update callback for each control type in CarnassialWindow, such as NoteControl_TextChanged(), relies on this
             this.ContentControl.Tag = this;
 
+            // find a hotkey to assign to the control, if possible
+            int hotkeyIndex = -1;
+            if ((readOnly == false) && (control.Label != null))
+            {
+                for (int labelIndex = 0; labelIndex < control.Label.Length; ++labelIndex)
+                {
+                    if (Constant.Control.ReservedHotKeys.IndexOf(control.Label[labelIndex]) == -1)
+                    {
+                        hotkeyIndex = labelIndex;
+                        break;
+                    }
+                }
+            }
+
             // create the label
             this.LabelControl = new TLabel();
-            this.LabelControl.Content = control.Label;
+            if (hotkeyIndex == -1)
+            {
+                // control doesn't need a hotkey as it's not editable or a hotkey cannot be assigned
+                this.LabelControl.Content = control.Label;
+            }
+            else
+            {
+                // control can be assigned a hotkey
+                this.LabelControl.Content = control.Label.Substring(0, hotkeyIndex) + "_" + control.Label.Substring(hotkeyIndex, control.Label.Length - hotkeyIndex);
+            }
             this.LabelControl.Style = (Style)styleProvider.FindResource(labelStyleName.ToString());
-            this.LabelControl.ToolTip = control.Tooltip;
+            this.LabelTooltip = control.Tooltip;
+
+            if (typeof(TLabel) == typeof(Label))
+            {
+                // if the label control is a Label there's no action which can be taken with it
+                // In this case, set the hotkey to the first letter in the control's name and bind the label's target to the content control so that the 
+                // hotkey moves focus to the content control rather than the label.
+                Label labelControlAsLabel = this.LabelControl as Label;
+                labelControlAsLabel.Target = this.ContentControl;
+            }
 
             // add the label and content to the stack panel
             this.Container.Children.Add(this.LabelControl);

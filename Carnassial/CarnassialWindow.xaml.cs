@@ -36,11 +36,7 @@ namespace Carnassial
         private DataEntryHandler dataHandler;
         private bool disposed;
         private List<MarkersForCounter> markersOnCurrentFile;
-
-        // speech feedback
         private SpeechSynthesizer speechSynthesizer;
-
-        // Status information concerning the state of the UI
         private CarnassialState state;
 
         // timer for flushing FileeNavigatorSlider drag events
@@ -50,10 +46,6 @@ namespace Carnassial
         {
             AppDomain.CurrentDomain.UnhandledException += this.OnUnhandledException;
             this.InitializeComponent();
-
-            this.MarkableCanvas.MouseEnter += new MouseEventHandler(this.MarkableCanvas_MouseEnter);
-            this.MarkableCanvas.PreviewMouseDown += new MouseButtonEventHandler(this.MarkableCanvas_PreviewMouseDown);
-            this.MarkableCanvas.MarkerEvent += new EventHandler<MarkerEventArgs>(this.MarkableCanvas_RaiseMarkerEvent);
 
             this.speechSynthesizer = new SpeechSynthesizer();
             this.state = new CarnassialState();
@@ -197,29 +189,16 @@ namespace Carnassial
             this.MenuEditUndo.IsEnabled = this.state.UndoRedoChain.CanUndo;
         }
 
-        /// <summary>
-        /// This preview callback is used by all controls to reset the focus.
-        /// Whenever the user hits enter over the control, set the focus back to the top-level
-        /// </summary>
-        private void ContentControl_PreviewKeyDown(object sender, KeyEventArgs eventArgs)
-        {
-            if (eventArgs.Key == Key.Enter)
-            {
-                this.TrySetKeyboardFocusToMarkableCanvas(false, eventArgs);
-                eventArgs.Handled = true;
-            }
-        }
-
         /// <summary>Click callback: When the user selects a counter, refresh the markers, which will also readjust the colors and emphasis</summary>
         /// <param name="sender">the event source</param>
         /// <param name="e">event information</param>
-        private void CounterControl_Click(object sender, RoutedEventArgs e)
+        private void DataEntryCounter_Click(object sender, RoutedEventArgs e)
         {
             this.MarkableCanvas_UpdateMarkers();
         }
 
         /// <summary>Highlight the markers associated with a counter when the mouse enters it</summary>
-        private void CounterControl_MouseEnter(object sender, MouseEventArgs e)
+        private void DataEntryCounter_MouseEnter(object sender, MouseEventArgs e)
         {
             Panel panel = (Panel)sender;
             this.state.MouseOverCounter = ((DataEntryCounter)panel.Tag).DataLabel;
@@ -227,17 +206,10 @@ namespace Carnassial
         }
 
         /// <summary>Remove marker highlighting</summary>
-        private void CounterControl_MouseLeave(object sender, MouseEventArgs e)
+        private void DataEntryCounter_MouseLeave(object sender, MouseEventArgs e)
         {
             this.state.MouseOverCounter = null;
             this.MarkableCanvas_UpdateMarkers();
-        }
-
-        /// <summary>Ensures only numbers are entered for counters.</summary>
-        private void CounterControl_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            e.Handled = (Utilities.IsDigits(e.Text) || String.IsNullOrWhiteSpace(e.Text)) ? false : true;
-            this.OnPreviewTextInput(e);
         }
 
         public void Dispose()
@@ -318,30 +290,6 @@ namespace Carnassial
             }
         }
 
-        // lazily defer binding of data grid until user selects the data gind tab
-        // This reduces startup and scrolling lag as filling and updating the grid is fairly expensive.
-        private void FileDataPane_IsActiveChanged(object sender, EventArgs e)
-        {
-            if (this.IsFileDatabaseAvailable() == false)
-            {
-                return;
-            }
-
-            if (this.FileDataPane.IsActive)
-            {
-                this.dataHandler.FileDatabase.BindToDataGrid(this.DataGrid, null);
-                if ((this.dataHandler.ImageCache != null) && (this.dataHandler.ImageCache.CurrentRow != Constant.Database.InvalidRow))
-                {
-                    // both UpdateLayout() calls are needed to get the data grid to highlight the selected row
-                    // This seems related to initial population as the selection highlight updates without calling UpdateLayout() on subsequent calls
-                    // to SelectAndScrollIntoView().
-                    this.DataGrid.UpdateLayout();
-                    this.DataGrid.SelectAndScrollIntoView(this.dataHandler.ImageCache.CurrentRow);
-                    this.DataGrid.UpdateLayout();
-                }
-            }
-        }
-
         private async void FileNavigatorSlider_DragCompleted(object sender, DragCompletedEventArgs args)
         {
             this.state.FileNavigatorSliderDragging = false;
@@ -367,15 +315,6 @@ namespace Carnassial
             }
         }
 
-        private void FileNavigatorSlider_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            // mark all key events as handled so that they're not processed
-            // This works around a WPF async bug where pressing the up and down keys when focus is on the slider results in the key being handled by
-            // both Window_PreviewKeyDown and the slider, triggering a slider value change event which moves to the next or previous image under the 
-            // differenced view.  Without this block this WPF routing fail results in loss of image cache coherency and further problems.
-            e.Handled = true;
-        }
-
         // Timer callback that forces image update to the current slider position. Invoked as the user pauses dragging the image slider 
         private async void FileNavigatorSlider_TimerTick(object sender, EventArgs e)
         {
@@ -399,6 +338,11 @@ namespace Carnassial
                 this.state.MostRecentDragEvent = utcNow;
                 args.Handled = true;
             }
+        }
+
+        private void FocusMarkableCanvas()
+        {
+            this.MarkableCanvas.Focus();
         }
 
         private void FolderSelectionDialog_FolderChanging(object sender, CommonFileDialogFolderChangeEventArgs e)
@@ -437,7 +381,7 @@ namespace Carnassial
                 }
 
                 // Update the emphasise for each tag to reflect how the user is interacting with tags
-                DataEntryCounter currentCounter = (DataEntryCounter)this.DataEntryControls.ControlsByDataLabel[markersForCounter.DataLabel];
+                DataEntryCounter currentCounter = (DataEntryCounter)control;
                 bool emphasize = markersForCounter.DataLabel == this.state.MouseOverCounter;
                 foreach (Marker marker in markersForCounter.Markers)
                 {
@@ -528,22 +472,6 @@ namespace Carnassial
             }
         }
 
-        private void MarkableCanvas_MouseEnter(object sender, MouseEventArgs eventArgs)
-        {
-            // change focus to the canvas if the mouse enters the canvas and the user isn't in the midst of typing into a text field
-            IInputElement focusedElement = FocusManager.GetFocusedElement(this);
-            if ((focusedElement == null) || (focusedElement is TextBox == false))
-            {
-                this.TrySetKeyboardFocusToMarkableCanvas(true, eventArgs);
-            }
-        }
-
-        // Whenever the user clicks on the image, reset the image focus to the image control 
-        private void MarkableCanvas_PreviewMouseDown(object sender, MouseButtonEventArgs eventArgs)
-        {
-            this.TrySetKeyboardFocusToMarkableCanvas(true, eventArgs);
-        }
-
         // Event handler: A marker, as defined in e.Marker, has been either added (if e.IsNew is true) or deleted (if it is false)
         // Depending on which it is, add or delete the tag from the current counter control's list of tags 
         // If its deleted, remove the tag from the current counter control's list of tags
@@ -565,7 +493,7 @@ namespace Carnassial
             // a new marker has been added
             if (e.IsNew)
             {
-                Debug.Assert(e.Marker.DataLabel != null, "Markable canvas unexpectedly sent new marker with data label set.");
+                Debug.Assert(e.Marker.DataLabel == null, "Markable canvas unexpectedly sent new marker with data label set.");
                 this.AddMarkerToCounter(selectedCounter, e.Marker);
                 return;
             }
@@ -899,12 +827,11 @@ namespace Carnassial
             }
 
             this.state.UndoRedoChain.AddStateIfDifferent(this.dataHandler.ImageCache.Current);
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
+            foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
-                DataEntryControl control = pair.Value;
                 if (control.Copyable)
                 {
-                    control.SetContentAndTooltip(control.DefaultValue);
+                    control.SetValue(control.DefaultValue);
                 }
             }
             this.state.UndoRedoChain.AddStateIfDifferent(this.dataHandler.ImageCache.Current);
@@ -1006,7 +933,7 @@ namespace Carnassial
         private async void MenuFileCloseImageSet_Click(object sender, RoutedEventArgs e)
         {
             await this.CloseImageSetAsync();
-            this.InstructionPane.IsActive = true;
+            this.MenuViewShowInstructions_Click(null, null);
         }
 
         private async void MenuFileLoadImageSet_Click(object sender, RoutedEventArgs e)
@@ -1494,24 +1421,20 @@ namespace Carnassial
             this.MarkableCanvas.SetBookmark();
         }
 
-        private void MenuViewShowDataGrid_Click(object sender, RoutedEventArgs e)
-        {
-            this.FileDataPane.IsActive = true;
-        }
-
         private async void MenuViewShowFirstFile_Click(object sender, RoutedEventArgs e)
         {
             await this.ShowFileWithoutSliderCallbackAsync(0);
         }
 
-        private void MenuViewShowImageSet_Click(object sender, RoutedEventArgs e)
+        private void MenuViewShowFiles_Click(object sender, RoutedEventArgs e)
         {
-            this.FileViewPane.IsActive = true;
+            this.Tabs.SelectedIndex = 1;
+            this.FocusMarkableCanvas();
         }
 
         private void MenuViewShowInstructions_Click(object sender, RoutedEventArgs e)
         {
-            this.InstructionPane.IsActive = true;
+            this.Tabs.SelectedItem = 0;
         }
 
         private async void MenuViewShowLastFile_Click(object sender, RoutedEventArgs e)
@@ -1599,37 +1522,32 @@ namespace Carnassial
             this.MarkableCanvas.ZoomToFit();
         }
 
-        private void MoveFocusToNextOrPreviousControlOrImageSlider(bool moveToPreviousControl)
+        private void MoveFocusToNextOrPreviousTabPosition(bool moveToPrevious)
         {
-            // identify the currently selected control
-            // if focus is currently set to the canvas this defaults to the first or last control, as appropriate
-            int currentControl = moveToPreviousControl ? this.DataEntryControls.Controls.Count : -1;
-
-            IInputElement focusedElement = FocusManager.GetFocusedElement(this);
+            // identify the currently selected control with the most recently selected control as a default if no control is selected
+            // The defaulting causes tabbing to resume from the last control the user tabbed to.  This is desirable as pressing enter on a control
+            // sets focus to the markable canvas, meaning if defaulting weren't used a user entering data and tabbing through controls would have
+            // to tab through controls they've already entered for after each press of enter.  Defaulting lets tabbing pick up seamlessly instead.
+            int currentControlIndex = this.state.MostRecentlFocusedControlIndex;
+            IInputElement focusedElement = Keyboard.FocusedElement;
             if (focusedElement != null)
             {
-                Type type = focusedElement.GetType();
-                if (Constant.Control.KeyboardInputTypes.Contains(type))
+                DataEntryControl focusedControl;
+                if (DataEntryHandler.TryFindFocusedControl(focusedElement, out focusedControl))
                 {
-                    DataEntryControl focusedControl;
-                    if (DataEntryHandler.TryFindFocusedControl(focusedElement, out focusedControl))
-                    {
-                        int index = 0;
-                        foreach (DataEntryControl control in this.DataEntryControls.Controls)
-                        {
-                            if (Object.ReferenceEquals(focusedControl, control))
-                            {
-                                currentControl = index;
-                            }
-                            ++index;
-                        }
-                    }
+                    currentControlIndex = this.DataEntryControls.Controls.IndexOf(focusedControl);
                 }
+            }
+
+            // if no control is selected and no default from previous tabbing is available then set up the loop below to move to the last control
+            if ((currentControlIndex == -1) && moveToPrevious)
+            {
+                currentControlIndex = this.DataEntryControls.Controls.Count;
             }
 
             // move to the next or previous control as available
             Func<int, int> incrementOrDecrement;
-            if (moveToPreviousControl)
+            if (moveToPrevious)
             {
                 incrementOrDecrement = (int index) => { return --index; };
             }
@@ -1638,14 +1556,15 @@ namespace Carnassial
                 incrementOrDecrement = (int index) => { return ++index; };
             }
 
-            for (currentControl = incrementOrDecrement(currentControl);
-                 currentControl > -1 && currentControl < this.DataEntryControls.Controls.Count;
-                 currentControl = incrementOrDecrement(currentControl))
+            for (currentControlIndex = incrementOrDecrement(currentControlIndex);
+                 currentControlIndex > -1 && currentControlIndex < this.DataEntryControls.Controls.Count;
+                 currentControlIndex = incrementOrDecrement(currentControlIndex))
             {
-                DataEntryControl control = this.DataEntryControls.Controls[currentControl];
+                DataEntryControl control = this.DataEntryControls.Controls[currentControlIndex];
                 if (control.ContentReadOnly == false)
                 {
                     control.Focus(this);
+                    this.state.MostRecentlFocusedControlIndex = currentControlIndex;
                     return;
                 }
             }
@@ -1653,7 +1572,8 @@ namespace Carnassial
             // no control was found so set focus to the slider
             // this has also the desirable side effect of binding the controls into both next and previous loops so that keys can be used to cycle
             // continuously through them
-            this.FileNavigatorSlider.Focus();
+            this.FocusMarkableCanvas();
+            this.state.MostRecentlFocusedControlIndex = -1;
         }
 
         /// <summary>
@@ -1661,11 +1581,6 @@ namespace Carnassial
         /// </summary>
         private async Task OnFolderLoadingCompleteAsync(bool filesJustAdded)
         {
-            // Show the image, hide the load button, and make the feedback panels visible
-            this.FileViewPane.IsActive = true;
-            // Set focus to the markable canvas by default so it can interpret keys. 
-            this.MarkableCanvas.Focus();
-
             // if this is completion of an existing .ddb open set the current selection and the image index to the ones from the previous session with the image set
             // also if this is completion of import to a new .ddb
             long mostRecentFileID = this.dataHandler.FileDatabase.ImageSet.MostRecentFileID;
@@ -1679,6 +1594,9 @@ namespace Carnassial
                 this.dataHandler.ImageCache.TryInvalidate(mostRecentFileID);
             }
             await this.SelectFilesAndShowFileAsync(mostRecentFileID, fileSelection);
+
+            // change to the image set tab
+            this.MenuViewShowFiles_Click(null, null);
 
             // match UX availability to file availability
             await this.EnableOrDisableMenusAndControlsAsync();
@@ -1706,9 +1624,8 @@ namespace Carnassial
         {
             this.PastePreviousValues.Background = Constant.Control.CopyableFieldHighlightBrush;
 
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
+            foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
-                DataEntryControl control = (DataEntryControl)pair.Value;
                 if (control.Copyable)
                 {
                     control.Container.Background = Constant.Control.CopyableFieldHighlightBrush;
@@ -1722,9 +1639,8 @@ namespace Carnassial
         private void PasteButton_MouseLeave(object sender, MouseEventArgs e)
         {
             this.PastePreviousValues.ClearValue(Control.BackgroundProperty);
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
+            foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
-                DataEntryControl control = (DataEntryControl)pair.Value;
                 control.Container.ClearValue(Control.BackgroundProperty);
             }
         }
@@ -1744,9 +1660,8 @@ namespace Carnassial
 
         private void PasteValuesToCurrentFile(Dictionary<string, object> values)
         {
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
+            foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
-                DataEntryControl control = pair.Value;
                 object value;
                 if (control.Copyable && values.TryGetValue(control.DataLabel, out value))
                 {
@@ -1895,94 +1810,6 @@ namespace Carnassial
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
         }
 
-        private bool SendKeyToDataEntryControlOrMenu(KeyEventArgs eventData)
-        {
-            // check if a menu is open
-            // it is sufficient to check one always visible item from each top level menu (file, edit, etc.)
-            // NOTE: this must be kept in sync with the menu definitions in XAML
-            if (this.MenuFileExit.IsVisible || // file menu
-                this.MenuEditCopy.IsVisible || // edit menu
-                this.MenuOptionsSkipDarkFileCheck.IsVisible || // options menu
-                this.MenuViewShowNextFile.IsVisible || // view menu
-                this.MenuSelectAllFiles.IsVisible || // select menu, and then the help menu...
-                this.MenuHelpAbout.IsVisible)
-            {
-                return true;
-            }
-
-            // by default focus will be on the MarkableCanvas
-            // opening a menu doesn't change the focus
-            IInputElement focusedElement = FocusManager.GetFocusedElement(this);
-            if (focusedElement == null)
-            {
-                return false;
-            }
-
-            // check if focus is on a control
-            // NOTE: this list must be kept in sync with the System.Windows classes used by the classes in Carnassial\Util\DataEntry*.cs
-            Type type = focusedElement.GetType();
-            if (Constant.Control.KeyboardInputTypes.Contains(type))
-            {
-                // send all keys to controls by default except
-                // - escape as that's a natural way to back out of a control (the user can also hit enter)
-                // - tab as that's the Windows keyboard navigation standard for moving between controls
-                return eventData.Key != Key.Escape && eventData.Key != Key.Tab;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Add user interface event handler callbacks for (possibly invisible) controls
-        /// </summary>
-        private void SetUserInterfaceCallbacks()
-        {
-            // Add data entry callbacks to all editable controls. When the user changes an image's attribute using a particular control,
-            // the callback updates the matching field for that image in the database.
-            foreach (KeyValuePair<string, DataEntryControl> pair in this.DataEntryControls.ControlsByDataLabel)
-            {
-                string controlType = this.dataHandler.FileDatabase.ControlsByDataLabel[pair.Key].Type;
-                switch (controlType)
-                {
-                    case Constant.Control.Counter:
-                        DataEntryCounter counter = (DataEntryCounter)pair.Value;
-                        counter.ContentControl.PreviewKeyDown += this.ContentControl_PreviewKeyDown;
-                        counter.ContentControl.PreviewTextInput += this.CounterControl_PreviewTextInput;
-                        counter.Container.MouseEnter += this.CounterControl_MouseEnter;
-                        counter.Container.MouseLeave += this.CounterControl_MouseLeave;
-                        counter.LabelControl.Click += this.CounterControl_Click;
-                        break;
-                    case Constant.Control.Flag:
-                    case Constant.DatabaseColumn.DeleteFlag:
-                        DataEntryFlag flag = (DataEntryFlag)pair.Value;
-                        flag.ContentControl.PreviewKeyDown += this.ContentControl_PreviewKeyDown;
-                        break;
-                    case Constant.Control.FixedChoice:
-                    case Constant.DatabaseColumn.ImageQuality:
-                        DataEntryChoice choice = (DataEntryChoice)pair.Value;
-                        choice.ContentControl.PreviewKeyDown += this.ContentControl_PreviewKeyDown;
-                        break;
-                    case Constant.Control.Note:
-                    case Constant.DatabaseColumn.File:
-                    case Constant.DatabaseColumn.RelativePath:
-                        DataEntryNote note = (DataEntryNote)pair.Value;
-                        note.ContentControl.PreviewKeyDown += this.ContentControl_PreviewKeyDown;
-                        break;
-                    case Constant.DatabaseColumn.DateTime:
-                        DataEntryDateTime dateTime = (DataEntryDateTime)pair.Value;
-                        dateTime.ContentControl.PreviewKeyDown += this.ContentControl_PreviewKeyDown;
-                        break;
-                    case Constant.DatabaseColumn.UtcOffset:
-                        DataEntryUtcOffset utcOffset = (DataEntryUtcOffset)pair.Value;
-                        utcOffset.ContentControl.PreviewKeyDown += this.ContentControl_PreviewKeyDown;
-                        break;
-                    default:
-                        Debug.Fail(String.Format("Unhandled control type '{0}'.", controlType));
-                        break;
-                }
-            }
-        }
-
         // Various dialogs perform a bulk edit, after which the current file's data needs to be refreshed.
         private async Task ShowBulkFileEditDialogAsync(Window dialog)
         {
@@ -2020,7 +1847,10 @@ namespace Carnassial
                 return;
             }
 
+            // for minimum database traffic this should be the only place where code in CarnassialWindow moves the file enumerator
             // for the image caching logic below to work this should be the only place where code in CarnassialWindow moves the file enumerator
+            this.dataHandler.TrySyncCurrentFileToDatabase();
+            
             int prefetchStride = 1;
             if (this.state.FileNavigatorSliderDragging)
             {
@@ -2036,19 +1866,19 @@ namespace Carnassial
             // This is always done as it's assumed either the file being displayed changed or that a control refresh is required due to database changes
             // the call to TryMoveToFile() above refreshes the data stored under this.dataHandler.ImageCache.Current.
             this.dataHandler.IsProgrammaticControlUpdate = true;
-            foreach (KeyValuePair<string, DataEntryControl> control in this.DataEntryControls.ControlsByDataLabel)
+            foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
                 // update value
-                control.Value.SetValue(this.dataHandler.ImageCache.Current.GetValue(control.Value.DataLabel));
+                control.SetValue(this.dataHandler.ImageCache.Current.GetDisplayValue(control.DataLabel));
 
                 // for note controls, update the autocomplete list if an edit occurred
-                string controlType = this.dataHandler.FileDatabase.ControlsByDataLabel[control.Key].Type;
+                string controlType = this.dataHandler.FileDatabase.ControlsByDataLabel[control.DataLabel].Type;
                 if (controlType == Constant.Control.Note)
                 {
-                    DataEntryNote noteControl = (DataEntryNote)control.Value;
+                    DataEntryNote noteControl = (DataEntryNote)control;
                     if (noteControl.ContentChanged)
                     {
-                        noteControl.SetAutocompletions(this.dataHandler.FileDatabase.GetDistinctValuesInFileDataColumn(control.Value.DataLabel));
+                        noteControl.MergeAutocompletions(this.dataHandler.FileDatabase.GetDistinctValuesInFileDataColumn(control.DataLabel));
                         noteControl.ContentChanged = false;
                     }
                 }
@@ -2104,14 +1934,6 @@ namespace Carnassial
                 this.MenuEditRedo.IsEnabled = false;
                 this.MenuEditUndo.IsEnabled = false;
                 this.state.UndoRedoChain.Clear();
-            }
-
-            // if the data grid has been bound, set the selected row to the current file and scroll so it's visible
-            if (this.DataGrid.Items != null &&
-                this.DataGrid.Items.Count > fileIndex &&
-                this.DataGrid.SelectedIndex != fileIndex)
-            {
-                this.DataGrid.SelectAndScrollIntoView(fileIndex);
             }
         }
 
@@ -2260,7 +2082,9 @@ namespace Carnassial
             {
                 this.statusBar.SetMessage("Loading folders (if this is slower than you like and dark image detection isn't needed you can select Skip dark check in the Options menu right now)...");
             }
-            this.FileViewPane.IsActive = true;
+
+            // change to the files tab
+            this.MenuViewShowFiles_Click(null, null);
 
             // ensure all files are selected
             // This prevents files which are in the DB but not selected from being added a second time.
@@ -2282,7 +2106,7 @@ namespace Carnassial
             // Profiling of a 1000 image load on quad core, single 80+MB/s capable SSD with half size decoding finds:
             //   two threads:   34s, 60% CPU, 56MB/s disk
             //   three threads: 34s, 91% CPU, 60MB/s disk
-            // So threads for half the available cores are dispatched by by default.
+            // So threads for half the available cores are dispatched by default.
             //
             // With dark calculations disabled:
             // The bottleneck's the SQL insert though using more than four threads (or possibly more threads than the number of physical processors as the 
@@ -2580,8 +2404,19 @@ namespace Carnassial
             // valid template and file database loaded
             // generate and render the data entry controls regardless of whether there are actually any files in the file database.
             this.dataHandler = new DataEntryHandler(fileDatabase);
-            this.DataEntryControls.CreateControls(fileDatabase, this.dataHandler);
-            this.SetUserInterfaceCallbacks();
+            this.DataEntryControls.CreateControls(fileDatabase, this.dataHandler, (string dataLabel) => { return fileDatabase.GetDistinctValuesInFileDataColumn(dataLabel); });
+
+            // add event handlers for marker effects which can't be handled by DataEntryHandler
+            foreach (DataEntryControl control in this.DataEntryControls.Controls)
+            {
+                if (control is DataEntryCounter)
+                {
+                    DataEntryCounter counter = (DataEntryCounter)control;
+                    counter.Container.MouseEnter += this.DataEntryCounter_MouseEnter;
+                    counter.Container.MouseLeave += this.DataEntryCounter_MouseLeave;
+                    counter.LabelControl.Click += this.DataEntryCounter_Click;
+                }
+            }
 
             this.MenuFileRecentImageSets_Refresh();
             this.state.MostRecentFileAddFolderPath = fileDatabase.FolderPath;
@@ -2659,25 +2494,6 @@ namespace Carnassial
             }
 
             databaseFilePath = Path.Combine(directoryPath, databaseFileName);
-            return true;
-        }
-
-        private bool TrySetKeyboardFocusToMarkableCanvas(bool checkForControlFocus, InputEventArgs eventArgs)
-        {
-            // if a data entry control has focus typically focus should remain on the control
-            // However, there are a few instances (mainly after enter or escape) where focus should go back to the markable canvas.  Among other things,
-            // this lets arrow keys be used to move to the next file after data entry's completed.
-            if (checkForControlFocus && eventArgs is KeyEventArgs)
-            {
-                if (this.SendKeyToDataEntryControlOrMenu((KeyEventArgs)eventArgs))
-                {
-                    return false;
-                }
-            }
-
-            // don't raise the control on receiving keyboard focus
-            Keyboard.DefaultRestoreFocusMode = RestoreFocusMode.None;
-            Keyboard.Focus(this.MarkableCanvas);
             return true;
         }
 
@@ -2813,66 +2629,27 @@ namespace Carnassial
             this.state.WriteToRegistry();
         }
 
-        private async void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            // abort if required dependencies are missing
-            if (Dependencies.AreRequiredBinariesPresent(Constant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
-            {
-                Dependencies.ShowMissingBinariesDialog(Constant.ApplicationName);
-                if (Application.Current != null)
-                {
-                    Application.Current.Shutdown();
-                }
-            }
-
-            // check for updates
-            if (DateTime.UtcNow - this.state.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
-            {
-                Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
-                if (latestVersionAddress == null)
-                {
-                    return;
-                }
-
-                GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, latestVersionAddress);
-                updater.TryGetAndParseRelease(false);
-                this.state.MostRecentCheckForUpdates = DateTime.UtcNow;
-            }
-
-            // if a file was passed on the command line, try to open it
-            // args[0] is the .exe
-            string[] args = Environment.GetCommandLineArgs();
-            if (args != null && args.Length > 1)
-            {
-                string filePath = args[1];
-                string fileExtension = Path.GetExtension(filePath);
-                if (String.Equals(fileExtension, Constant.File.TemplateFileExtension, StringComparison.OrdinalIgnoreCase))
-                {
-                    await this.TryOpenTemplateAndLoadFoldersAsync(filePath);
-                }
-                else if (String.Equals(fileExtension, Constant.File.FileDatabaseFileExtension, StringComparison.OrdinalIgnoreCase))
-                {
-                    string[] templatePaths = Directory.GetFiles(Path.GetDirectoryName(filePath), "*" + Constant.File.TemplateFileExtension);
-                    if (templatePaths != null && templatePaths.Length == 1)
-                    {
-                        await this.TryOpenTemplateAndLoadFoldersAsync(templatePaths[0]);
-                    }
-                }
-            }
-        }
-
-        private async void Window_PreviewKeyDown(object sender, KeyEventArgs currentKey)
+        private async void Window_KeyDown(object sender, KeyEventArgs currentKey)
         {
             if (this.IsFileAvailable() == false)
             {
-                // no file loaded so nothing to do
+                // no file loaded so no special processing to do; let WPF drive menus as needed
                 return;
             }
 
-            // if the focus is on a control in the control grid send keys to the control
-            if (this.SendKeyToDataEntryControlOrMenu(currentKey))
+            // pass all keys to menus
+            if (this.Menu.IsKeyboardFocusWithin)
             {
                 return;
+            }
+
+            // pass all keys except navigation to data entry controls
+            if (this.DataEntryControls.IsKeyboardFocusWithin)
+            {
+                if ((currentKey.Key != Key.Escape) && (currentKey.Key != Key.Enter) && (currentKey.Key != Key.Tab))
+                {
+                    return;
+                }
             }
 
             // check if input key or chord is a shortcut key and dispatch appropriately if so
@@ -2971,8 +2748,9 @@ namespace Carnassial
                     currentKey.Handled = true;
                     await this.ToggleCurrentFileDeleteFlagAsync();
                     break;
-                case Key.Escape:            // exit current control, if any
-                    this.TrySetKeyboardFocusToMarkableCanvas(false, currentKey);
+                case Key.Enter:            // exit current control, if any
+                case Key.Escape:
+                    this.FocusMarkableCanvas();
                     currentKey.Handled = true;
                     break;
                 case Key.G:
@@ -3042,7 +2820,7 @@ namespace Carnassial
                         await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.FileDatabase.CurrentlySelectedFileCount - 1);
                     }
                     break;
-                case Key.Left:              // previous image
+                case Key.Left:              // previous file
                     currentKey.Handled = true;
                     if (keyRepeatCount % this.state.Throttles.RepeatedKeyAcceptanceInterval == 0)
                     {
@@ -3067,7 +2845,7 @@ namespace Carnassial
                         await this.ShowFileWithoutSliderCallbackAsync(this.dataHandler.ImageCache.CurrentRow - (int)(Constant.PageUpDownNavigationFraction * this.dataHandler.FileDatabase.CurrentlySelectedFileCount));
                     }
                     break;
-                case Key.Right:             // next image
+                case Key.Right:             // next file
                     currentKey.Handled = true;
                     if (keyRepeatCount % this.state.Throttles.RepeatedKeyAcceptanceInterval == 0)
                     {
@@ -3075,7 +2853,7 @@ namespace Carnassial
                     }
                     break;
                 case Key.Tab:               // next or previous control
-                    this.MoveFocusToNextOrPreviousControlOrImageSlider(Keyboard.Modifiers == ModifierKeys.Shift);
+                    this.MoveFocusToNextOrPreviousTabPosition(Keyboard.Modifiers == ModifierKeys.Shift);
                     currentKey.Handled = true;
                     break;
                 case Key.Up:                // show visual difference to next image
@@ -3089,6 +2867,59 @@ namespace Carnassial
                 default:
                     return;
             }
+        }
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            // abort if required dependencies are missing
+            if (Dependencies.AreRequiredBinariesPresent(Constant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
+            {
+                Dependencies.ShowMissingBinariesDialog(Constant.ApplicationName);
+                if (Application.Current != null)
+                {
+                    Application.Current.Shutdown();
+                }
+            }
+
+            // check for updates
+            if (DateTime.UtcNow - this.state.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
+            {
+                Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
+                if (latestVersionAddress == null)
+                {
+                    return;
+                }
+
+                GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, latestVersionAddress);
+                updater.TryGetAndParseRelease(false);
+                this.state.MostRecentCheckForUpdates = DateTime.UtcNow;
+            }
+
+            // if a file was passed on the command line, try to open it
+            // args[0] is the .exe
+            string[] args = Environment.GetCommandLineArgs();
+            if (args != null && args.Length > 1)
+            {
+                string filePath = args[1];
+                string fileExtension = Path.GetExtension(filePath);
+                if (String.Equals(fileExtension, Constant.File.TemplateFileExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    await this.TryOpenTemplateAndLoadFoldersAsync(filePath);
+                }
+                else if (String.Equals(fileExtension, Constant.File.FileDatabaseFileExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    string[] templatePaths = Directory.GetFiles(Path.GetDirectoryName(filePath), "*" + Constant.File.TemplateFileExtension);
+                    if (templatePaths != null && templatePaths.Length == 1)
+                    {
+                        await this.TryOpenTemplateAndLoadFoldersAsync(templatePaths[0]);
+                    }
+                }
+            }
+        }
+
+        private void FileNavigatorSlider_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            this.FocusMarkableCanvas();
         }
     }
 }

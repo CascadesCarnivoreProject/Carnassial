@@ -28,28 +28,27 @@ namespace Carnassial.Controls
         {
         }
 
-        public override void SetContentAndTooltip(string valueAsString)
-        {
-            this.ContentControl.IsChecked = Boolean.Parse(valueAsString);
-            this.ContentControl.ToolTip = valueAsString;
-        }
-
         public override void SetValue(object valueAsObject)
         {
-            if (valueAsObject is bool)
+            if (valueAsObject is string)
+            {
+                string valueAsString = (string)valueAsObject;
+                Debug.Assert(String.Equals(valueAsString, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) || String.Equals(valueAsString, Boolean.TrueString, StringComparison.OrdinalIgnoreCase), String.Format("Unexpected value '{0}'.", valueAsString));
+                this.ContentControl.IsChecked = Boolean.Parse(valueAsString);
+                this.ContentControl.ToolTip = valueAsString;
+            }
+            else if (valueAsObject is bool)
             {
                 bool value = (bool)valueAsObject;
                 this.ContentControl.IsChecked = value;
                 this.ContentControl.ToolTip = value ? Boolean.TrueString : Boolean.FalseString;
             }
-            else if (valueAsObject is string)
-            {
-                string valueAsString = (string)valueAsObject;
-                Debug.Assert(String.Equals(valueAsString, Boolean.FalseString, StringComparison.Ordinal) || String.Equals(valueAsString, Boolean.TrueString, StringComparison.Ordinal), String.Format("Unexpected value '{0}'.", valueAsString));
-                this.SetContentAndTooltip(valueAsString);
-            }
             else
             {
+                if (valueAsObject == null)
+                {
+                    throw new ArgumentNullException(nameof(valueAsObject));
+                }
                 throw new ArgumentOutOfRangeException("valueAsObject", String.Format("Unexpected value type {0}.", valueAsObject.GetType()));
             }
         }

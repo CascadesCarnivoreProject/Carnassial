@@ -157,23 +157,22 @@ namespace Carnassial.Dialog
                 return false;
             }
 
-            ImageRow imageProperties;
             this.ambiguousDatesListIndex = index;
 
             // found an ambiguous date; provide appropriate feedback
-            imageProperties = this.database.Files[this.ambiguousDatesList[index].StartRange];
-            this.OriginalDateLabel.Content = imageProperties.GetDateTime().Date;
+            ImageRow file = this.database.Files[this.ambiguousDatesList[index].StartRange];
+            this.OriginalDateLabel.Content = file.GetDateTime().Date;
 
             DateTimeOffset swappedDate;
-            this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.GetDateTime());
+            this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(file.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(file.GetDateTime());
 
             this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
-            using (MemoryImage image = await imageProperties.LoadAsync(this.database.FolderPath, (int)this.Width))
+            using (MemoryImage image = await file.LoadAsync(this.database.FolderPath, (int)this.Width))
             {
                 image.SetSource(this.Image);
             }
-            this.FileName.Content = imageProperties.FileName;
+            this.FileName.Content = file.FileName;
             this.FileName.ToolTip = this.FileName.Content;
 
             return true;
@@ -230,25 +229,24 @@ namespace Carnassial.Dialog
 
         private void PreviewDateTimeChanges()
         {
-            this.DateChangeFeedback.ShowDifferenceColumn = false;
-            this.PrimaryPanel.Visibility = Visibility.Collapsed;
-            this.FeedbackPanel.Visibility = Visibility.Visible;
             foreach (AmbiguousDate ambiguousDate in this.ambiguousDatesList)
             {
-                ImageRow imageProperties;
-                imageProperties = this.database.Files[ambiguousDate.StartRange];
+                ImageRow file = this.database.Files[ambiguousDate.StartRange];
                 string newDate = String.Empty;
                 if (ambiguousDate.Swapped)
                 {
                     DateTimeOffset swappedDate;
-                    DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate);
+                    DateTimeHandler.TrySwapDayMonth(file.DateTime, out swappedDate);
                     newDate = DateTimeHandler.ToDisplayDateTimeString(swappedDate);
                 }
 
                 string status = ambiguousDate.Swapped ? "Swapped: " : "Unchanged: ";
                 status += ambiguousDate.Count.ToString() + " images with same date";
-                this.DateChangeFeedback.AddFeedbackRow(imageProperties.FileName, status, DateTimeHandler.ToDisplayDateString(imageProperties.GetDateTime()), newDate, "--");
+                this.DateChangeFeedback.AddFeedbackRow(file.FileName, status, DateTimeHandler.ToDisplayDateString(file.GetDateTime()), newDate, null);
             }
+
+            this.PrimaryPanel.Visibility = Visibility.Collapsed;
+            this.FeedbackPanel.Visibility = Visibility.Visible;
         }
 
         // Actually update the dates as needed

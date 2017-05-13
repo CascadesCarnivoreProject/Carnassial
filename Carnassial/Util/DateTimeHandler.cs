@@ -50,9 +50,14 @@ namespace Carnassial.Util
             return dateTime.UtcDateTime.ToString(Constant.Time.DateTimeDatabaseFormat);
         }
 
+        public static double ToDatabaseUtcOffset(TimeSpan timeSpan)
+        {
+            return timeSpan.TotalHours;
+        }
+
         public static string ToDatabaseUtcOffsetString(TimeSpan timeSpan)
         {
-            return timeSpan.TotalHours.ToString(Constant.Time.UtcOffsetDatabaseFormat);
+            return DateTimeHandler.ToDatabaseUtcOffset(timeSpan).ToString(Constant.Time.UtcOffsetDatabaseFormat);
         }
 
         /// <summary>
@@ -107,6 +112,11 @@ namespace Carnassial.Util
             return DateTime.TryParseExact(dateTimeAsString, Constant.Time.DateTimeDatabaseFormat, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out dateTime);
         }
 
+        public static bool TryParseDatabaseDateTime(string dateTimeOffsetAsString, out DateTimeOffset dateTimeOffset)
+        {
+            return DateTimeOffset.TryParseExact(dateTimeOffsetAsString, Constant.Time.DateTimeDatabaseFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOffset);
+        }
+
         /// <summary>
         /// Converts a display string to a DateTime of DateTimeKind.Unspecified.
         /// </summary>
@@ -116,6 +126,11 @@ namespace Carnassial.Util
         public static bool TryParseDisplayDateTime(string dateTimeAsString, out DateTime dateTime)
         {
             return DateTime.TryParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime);
+        }
+
+        public static bool TryParseDisplayDateTime(string dateTimeAsString, out DateTimeOffset dateTimeOffset)
+        {
+            return DateTimeOffset.TryParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOffset);
         }
 
         public static bool TryParseDatabaseUtcOffsetString(string utcOffsetAsString, out TimeSpan utcOffset)

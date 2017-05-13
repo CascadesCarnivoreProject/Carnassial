@@ -162,10 +162,6 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="Xceed.Wpf.AvalonDock, Version=3.3.17121.18230, Culture=neutral, PublicKeyToken=ba83ff368b7563c6, processorArchitecture=MSIL">
-      <HintPath>..\packages\Xceed.Wpf.AvalonDock.3.3.17121.18230\lib\net40\Xceed.Wpf.AvalonDock.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="XmpCore, Version=5.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\XmpCore.2.0.1\lib\net35\XmpCore.dll</HintPath>
       <Private>True</Private>
@@ -183,6 +179,7 @@
     <Compile Include="Controls\DataEntryControlContextMenuItemType.cs" />
     <Compile Include="Controls\DataEntryDateTime.cs" />
     <Compile Include="Controls\DataEntryUtcOffset.cs" />
+    <Compile Include="Controls\TabControlWithoutHomeAndEnd.cs" />
     <Compile Include="Controls\TimeSpanPicker.xaml.cs">
       <DependentUpon>TimeSpanPicker.xaml</DependentUpon>
     </Compile>

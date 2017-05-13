@@ -30,7 +30,7 @@ namespace Carnassial.UnitTests
                 DataEntryHandler dataHandler = new DataEntryHandler(fileDatabase);
 
                 DataEntryControls controls = new DataEntryControls();
-                controls.CreateControls(fileDatabase, dataHandler);
+                controls.CreateControls(fileDatabase, dataHandler, (string dataLabel) => { return fileDatabase.GetDistinctValuesInFileDataColumn(dataLabel); });
                 Assert.IsTrue(controls.ControlsByDataLabel.Count == databaseExpectation.ExpectedControls, "Expected {0} controls to be generated but {1} were.", databaseExpectation.ExpectedControls, controls.ControlsByDataLabel.Count);
 
                 // check copies aren't possible when the image enumerator's not pointing to an image
@@ -108,10 +108,10 @@ namespace Carnassial.UnitTests
                 firstFileExpectations.Verify(firstFile, imageSetTimeZone);
 
                 // verify roundtrip of fields via display string
-                foreach (KeyValuePair<string, DataEntryControl> control in controls.ControlsByDataLabel)
+                foreach (DataEntryControl control in controls.Controls)
                 {
-                    string displayString = firstFile.GetValueDisplayString(control.Value);
-                    control.Value.SetContentAndTooltip(displayString);
+                    string displayString = firstFile.GetValueDisplayString(control);
+                    control.SetValue(displayString);
                 }
 
                 firstFileExpectations.Verify(firstFile, imageSetTimeZone);

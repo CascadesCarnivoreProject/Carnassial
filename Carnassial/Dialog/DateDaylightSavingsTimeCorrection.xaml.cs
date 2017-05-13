@@ -59,7 +59,7 @@ namespace Carnassial.Dialog
                 // Update the database
                 int hours = (bool)this.AddHour.IsChecked ? 1 : -1;
                 TimeSpan daylightSavingsAdjustment = new TimeSpan(hours, 0, 0);
-                this.database.AdjustFileDateTimes(daylightSavingsAdjustment, startRow, endRow); // For all rows...
+                this.database.AdjustFileTimes(daylightSavingsAdjustment, startRow, endRow); // For all rows...
                 this.DialogResult = true;
             }
             catch (Exception exception)

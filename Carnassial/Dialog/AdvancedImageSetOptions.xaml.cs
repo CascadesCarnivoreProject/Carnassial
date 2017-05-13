@@ -7,9 +7,9 @@ namespace Carnassial.Dialog
     public partial class AdvancedImageSetOptions : Window
     {
         private TimeZoneInfo currentImageSetTimeZone;
-        private FileDatabase database;
+        private TemplateDatabase database;
 
-        public AdvancedImageSetOptions(FileDatabase database, Window owner)
+        public AdvancedImageSetOptions(TemplateDatabase database, Window owner)
         {
             this.InitializeComponent();
             this.Owner = owner;
@@ -35,6 +35,13 @@ namespace Carnassial.Dialog
         private void ResetTimeZone_Click(object sender, RoutedEventArgs e)
         {
             this.TimeZones.SelectTimeZone(this.currentImageSetTimeZone);
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            // marking the OK button IsDefault to associate it with dialog completion also gives it initial focus
+            // It's more helpful to put focus on the time zone list as this saves having to tab to the list as a first step.
+            this.TimeZones.Focus();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using Carnassial.Native;
 using Carnassial.Util;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,7 +23,11 @@ namespace Carnassial.Images
             base(fileDatabase)
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
-            this.differenceCache = new Dictionary<ImageDifference, MemoryImage>();
+            this.differenceCache = new Dictionary<ImageDifference, MemoryImage>(4);
+            foreach (ImageDifference differenceState in Enum.GetValues(typeof(ImageDifference)))
+            {
+                this.differenceCache.Add(differenceState, null);
+            }
             this.disposed = false;
             this.mostRecentlyUsedIDs = new MostRecentlyUsedList<long>(Constant.Images.ImageCacheSize);
             this.prefetechesByID = new ConcurrentDictionary<long, Task>();
@@ -324,14 +329,11 @@ namespace Carnassial.Images
 
             foreach (ImageDifference difference in new ImageDifference[] { ImageDifference.Previous, ImageDifference.Next, ImageDifference.Combined })
             {
-                MemoryImage differenceImage;
-                if (this.differenceCache.TryGetValue(difference, out differenceImage))
+                MemoryImage differenceImage = this.differenceCache[difference];
+                if (differenceImage != null)
                 {
-                    if (differenceImage != null)
-                    {
-                        differenceImage.Dispose();
-                        this.differenceCache[difference] = null;
-                    }
+                    differenceImage.Dispose();
+                    this.differenceCache[difference] = null;
                 }
             }
         }

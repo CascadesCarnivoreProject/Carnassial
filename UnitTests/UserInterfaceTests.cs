@@ -42,9 +42,9 @@ namespace Carnassial.UnitTests
                 File.Delete(templateDatabaseFilePath);
             }
             editor = new EditorWindow();
-            PrivateObject editorAccessor = new PrivateObject(editor);
             editor.Show();
             this.WaitForRenderingComplete();
+            PrivateObject editorAccessor = new PrivateObject(editor);
             editorAccessor.Invoke(TestConstant.InitializeDataGridMethodName, templateDatabaseFilePath);
             this.WaitForRenderingComplete();
             editor.Close();
@@ -55,13 +55,16 @@ namespace Carnassial.UnitTests
             editor = new EditorWindow();
             editor.Show();
             this.WaitForRenderingComplete();
+            editorAccessor = new PrivateObject(editor);
             editorAccessor.Invoke(TestConstant.InitializeDataGridMethodName, templateDatabaseFilePath);
             this.WaitForRenderingComplete();
 
-            editor.TemplatePane.IsActive = true;
+            editor.Tabs.SelectedIndex = 1;
             this.WaitForRenderingComplete();
 
             this.ShowDialog(new AboutEditor(editor));
+            TemplateDatabase templateDatabase = (TemplateDatabase)editorAccessor.GetField(TestConstant.EditorTemplateDatabaseFieldName);
+            this.ShowDialog(new AdvancedImageSetOptions(templateDatabase, editor));
             this.ShowDialog(new EditChoiceList(editor.TemplateDataGrid, new List<string>() { "Choice0", "Choice1", "Choice2", "Choice3" }, editor));
 
             editor.Close();

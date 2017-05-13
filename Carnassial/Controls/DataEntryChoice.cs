@@ -1,5 +1,6 @@
 ﻿using Carnassial.Data;
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -27,44 +28,21 @@ namespace Carnassial.Controls
         public DataEntryChoice(ControlRow control, DataEntryControls styleProvider)
             : base(control, styleProvider, ControlContentStyle.ChoiceComboBox, ControlLabelStyle.DefaultLabel)
         {
-            // The look of the combobox
+            this.ContentControl.Focusable = true;
             this.ContentControl.Height = 25;
+            this.ContentControl.IsEditable = false;
+            this.ContentControl.IsTextSearchEnabled = true;
             this.ContentControl.HorizontalAlignment = HorizontalAlignment.Left;
             this.ContentControl.VerticalAlignment = VerticalAlignment.Center;
             this.ContentControl.VerticalContentAlignment = VerticalAlignment.Center;
             this.ContentControl.BorderThickness = new Thickness(1);
             this.ContentControl.BorderBrush = Brushes.LightBlue;
 
-            // The behaviour of the combobox
-            this.ContentControl.Focusable = true;
-            this.ContentControl.IsEditable = false;
-            this.ContentControl.IsTextSearchEnabled = true;
-
-            // Callback used to allow Enter to select the highlit item
+            // callback used to allow Enter to select the highlit item
             this.ContentControl.PreviewKeyDown += this.ContentCtl_PreviewKeyDown;
 
-            // Add items to the combo box
-            bool emptyChoiceAllowed = false;
-            foreach (string choice in control.GetChoices())
-            {
-                if (choice == String.Empty)
-                {
-                    emptyChoiceAllowed = true;
-                }
-                else
-                {
-                    this.ContentControl.Items.Add(choice);
-                }
-            }
-
-            if (emptyChoiceAllowed)
-            {
-                // put empty choices at the end below a separator for visual clarity
-                this.ContentControl.Items.Add(new Separator());
-                this.ContentControl.Items.Add(String.Empty);
-            }
-
-            this.ContentControl.SelectedIndex = 0;
+            // add items to the combo box
+            this.SetChoices(control.GetChoices());
         }
 
         // Users may want to use the text search facility on the combobox, where they type the first letter and then enter
@@ -87,26 +65,64 @@ namespace Carnassial.Controls
             }
         }
 
-        public override void SetContentAndTooltip(string value)
+        public override List<string> GetChoices()
         {
-            this.ContentControl.SelectedValue = value;
-            this.ContentControl.ToolTip = value;
+            List<string> choices = new List<string>();
+            foreach (object item in this.ContentControl.Items)
+            {
+                if (item is string)
+                {
+                    choices.Add((string)item);
+                }
+            }
+            return choices;
+        }
+
+        public override void SetChoices(List<string> choices)
+        {
+            this.ContentControl.Items.Clear();
+
+            bool emptyChoiceAllowed = false;
+            foreach (string choice in choices)
+            {
+                if (choice == String.Empty)
+                {
+                    emptyChoiceAllowed = true;
+                }
+                else
+                {
+                    this.ContentControl.Items.Add(choice);
+                }
+            }
+
+            if (emptyChoiceAllowed)
+            {
+                // put empty choices at the end below a separator for visual clarity
+                this.ContentControl.Items.Add(new Separator());
+                this.ContentControl.Items.Add(String.Empty);
+            }
+
+            this.ContentControl.SelectedIndex = 0;
         }
 
         public override void SetValue(object valueAsObject)
         {
-            if (valueAsObject is FileSelection)
+            string valueAsString;
+            if ((valueAsObject is string) || (valueAsObject == null))
             {
-                this.SetContentAndTooltip(valueAsObject.ToString());
+                valueAsString = (string)valueAsObject;
             }
-            else if ((valueAsObject is string) || (valueAsObject == null))
+            else if (valueAsObject is FileSelection)
             {
-                this.SetContentAndTooltip((string)valueAsObject);
+                valueAsString = valueAsObject.ToString();
             }
             else
             {
-                throw new ArgumentOutOfRangeException("valueAsObject", String.Format("Unexpected value type {0}.", valueAsObject.GetType()));
+                throw new ArgumentOutOfRangeException("valueAsObject", String.Format("Unsupported value type {0}.", valueAsObject.GetType()));
             }
+
+            this.ContentControl.SelectedValue = valueAsString;
+            this.ContentControl.ToolTip = valueAsString;
         }
     }
 }

@@ -5,7 +5,7 @@ using System;
 
 namespace Carnassial.UnitTests
 {
-    internal class TemplateTableExpectation
+    internal class ControlsExpectation
     {
         public ControlExpectations File { get; private set; }
         public ControlExpectations RelativePath { get; private set; }
@@ -14,7 +14,7 @@ namespace Carnassial.UnitTests
         public ControlExpectations ImageQuality { get; private set; }
         public ControlExpectations DeleteFlag { get; private set; }
 
-        protected TemplateTableExpectation(Version version)
+        protected ControlsExpectation(Version version)
         {
             long id = 1;
             this.File = ControlExpectations.CreateNote(Constant.DatabaseColumn.File, id++);

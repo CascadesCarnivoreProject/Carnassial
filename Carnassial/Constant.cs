@@ -48,27 +48,18 @@ namespace Carnassial
 
             // control types
             public const string Counter = "Counter";       // a counter
-            public const string FixedChoice = "FixedChoice";  // a fixed choice
-            public const string Flag = "Flag";             // A boolean
-            public const string Note = "Note";             // A note
+            public const string FixedChoice = "FixedChoice"; // a fixed choice
+            public const string Flag = "Flag";             // a boolean
+            public const string Note = "Note";             // a note
 
-            // default data labels
-            public const string Choice = "Choice";         // Label for a fixed choice
+            // default control labels
+            public const string Choice = "Choice";         // label for a fixed choice
 
-            // a minty green
-            public static readonly SolidColorBrush CopyableFieldHighlightBrush = new SolidColorBrush(Color.FromArgb(255, 200, 251, 200));
-
-            public static readonly ReadOnlyCollection<Type> KeyboardInputTypes = new List<Type>()
-            {
-                typeof(AutocompleteTextBox),  // note controls
-                typeof(Calendar),             // date time control
-                typeof(CheckBox),             // flag controls
-                typeof(ComboBox),             // choice controls
-                typeof(ComboBoxItem),         // choice controls
-                typeof(DateTimeOffsetPicker), // date time control
-                typeof(TextBox),              // counter controls
-                typeof(UtcOffsetPicker)       // UTC offset
-            }.AsReadOnly();
+            // hotkey characters in use by the top level of Carnassial's main menu or the three data entry buttons and therefore unavailable as control 
+            // shortcuts in either upper or lower case
+            public const string ReservedHotKeys = "FfEeOoVvSsHhPp12";
+            
+            public static readonly SolidColorBrush CopyableFieldHighlightBrush = new SolidColorBrush(Color.FromArgb(255, 200, 251, 200)); // a minty green
 
             public static readonly ReadOnlyCollection<string> StandardControls = new List<string>()
             {
@@ -107,23 +98,21 @@ namespace Carnassial
 
             // standard controls
             public const string DateTimeTooltip = "Date and time taken";
-            public const int DateTimeWidth = 188;
+            public const int DateTimeWidth = 220;
 
             public const string FileTooltip = "The file name";
-            public const int FileWidth = 221;
+            public const int FileWidth = 254;
             public const string RelativePathTooltip = "Path from the folder containing the template and image data files to the file";
-            public const int RelativePathWidth = 172;
-            public const string FolderTooltip = "Name of the folder originally containing the template and image data files";
-            public const int FolderWidth = 206;
+            public const int RelativePathWidth = 204;
 
             public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
-            public const int ImageQualityWidth = 166;
+            public const int ImageQualityWidth = 198;
 
             public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
             public const string DeleteFlagTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
 
             public const string UtcOffsetTooltip = "Universal Time offset of the time zone for date and time taken";
-            public const int UtcOffsetWidth = 188;
+            public const int UtcOffsetWidth = 220;
 
             public static readonly DateTimeOffset DateTimeValue = new DateTimeOffset(1900, 1, 1, 12, 0, 0, 0, TimeSpan.Zero);
         }
@@ -346,11 +335,15 @@ namespace Carnassial
         public static class Sql
         {
             public const string CreationStringPrimaryKey = "INTEGER PRIMARY KEY AUTOINCREMENT";
-            public const string Integer = "INTEGER";
             public const string Where = " WHERE ";
-            public const string Text = "TEXT";
+        }
 
-            public const int MaximumStatementCount = 500;
+        public static class SqlColumnType
+        {
+            public const string DateTime = "DATETIME";
+            public const string Integer = "INTEGER";
+            public const string Real = "REAL";
+            public const string Text = "TEXT";
         }
 
         public static class SqlOperator
@@ -382,6 +375,7 @@ namespace Carnassial
             public const string DateFormat = "dd-MMM-yyyy";
             public const string DateTimeDatabaseFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
             public const string DateTimeDisplayFormat = "dd-MMM-yyyy HH:mm:ss";
+            public const string DateTimeOffsetFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
             public const string DateTimeOffsetDisplayFormat = "dd-MMM-yyyy HH:mm:ss K";
             public const char DateTimeOffsetPart = 'K';
             public const int MonthsInYear = 12;

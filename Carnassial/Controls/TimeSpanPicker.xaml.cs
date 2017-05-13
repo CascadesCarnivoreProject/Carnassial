@@ -323,6 +323,7 @@ namespace Carnassial.Controls
                 case Key.NumPad9:
                 case Key.OemPeriod:
                 case Key.OemSemicolon:
+                case Key.System:
                 case Key.Tab:
                     // leave event unhandled so key is accepted as input
                     return;

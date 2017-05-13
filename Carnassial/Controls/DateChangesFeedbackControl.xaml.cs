@@ -33,7 +33,6 @@ namespace Carnassial.Controls
         {
             FeedbackRowTuple row = new FeedbackRowTuple(fileName, status, oldDateTime, newDateTime, difference);
             this.feedbackRows.Add((FeedbackRowTuple)row);
-            this.feedbackGrid.ScrollIntoView(this.feedbackGrid.Items[feedbackGrid.Items.Count - 1]);
         }
 
         // Label the datagrid feedback columns with the appropriate headers

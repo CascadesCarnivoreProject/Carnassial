@@ -13,13 +13,13 @@ namespace Carnassial.Images
         public Nullable<FileSelection> NewImageQuality { get; set; }
         public FileSelection OldImageQuality { get; set; }
 
-        public ImageQuality(ImageRow image)
+        public ImageQuality(ImageRow file)
         {
             this.DarkPixelRatioFound = 0;
-            this.FileName = image.FileName;
+            this.FileName = file.FileName;
             this.Image = null;
             this.IsColor = false;
-            this.OldImageQuality = image.ImageQuality;
+            this.OldImageQuality = file.ImageQuality;
             this.NewImageQuality = null;
         }
     }

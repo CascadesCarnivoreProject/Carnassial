@@ -1,4 +1,5 @@
 ﻿using Carnassial.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Controls;
@@ -26,19 +27,25 @@ namespace Carnassial.Controls
             set { this.ContentControl.IsReadOnly = value; }
         }
 
-        public DataEntryNote(ControlRow control, List<string> autocompletionsFromDatabase, DataEntryControls styleProvider) : 
-            base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.DefaultLabel)
+        public DataEntryNote(ControlRow control, List<string> autocompletionsFromDatabase, bool readOnly, DataEntryControls styleProvider) : 
+            base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.DefaultLabel, readOnly)
         {
+            this.SetChoices(control.GetChoices());
             this.autocompletionsFromList = control.GetChoices();
             if (this.autocompletionsFromList.Contains(control.DefaultValue) == false)
             {
                 this.autocompletionsFromList.Add(control.DefaultValue);
             }
-            this.SetAutocompletions(autocompletionsFromDatabase);
+            this.MergeAutocompletions(autocompletionsFromDatabase);
             this.ContentChanged = false;
         }
 
-        public void SetAutocompletions(List<string> autocompletionsFromDatabase)
+        public override List<string> GetChoices()
+        {
+            return this.ContentControl.Autocompletions;
+        }
+
+        public void MergeAutocompletions(List<string> autocompletionsFromDatabase)
         {
             if (autocompletionsFromDatabase == null)
             {
@@ -50,16 +57,31 @@ namespace Carnassial.Controls
             }
         }
 
-        public override void SetContentAndTooltip(string valueAsString)
+        public override void SetChoices(List<string> choices)
         {
-            this.ContentChanged = this.ContentControl.Text != valueAsString;
-            this.ContentControl.Text = valueAsString;
-            this.ContentControl.ToolTip = valueAsString;
+            this.autocompletionsFromList = choices;
+            this.MergeAutocompletions(null);
         }
 
         public override void SetValue(object valueAsObject)
         {
-            this.SetContentAndTooltip((string)valueAsObject);
+            string valueAsString;
+            if ((valueAsObject is string) || (valueAsObject == null))
+            {
+                valueAsString = (string)valueAsObject;
+            }
+            else
+            {
+                if (valueAsObject == null)
+                {
+                    throw new ArgumentNullException(nameof(valueAsObject));
+                }
+                throw new ArgumentOutOfRangeException("valueAsObject", String.Format("Unsupported value type {0}.", valueAsObject.GetType()));
+            }
+
+            this.ContentChanged = this.ContentControl.Text != valueAsString;
+            this.ContentControl.Text = valueAsString;
+            this.ContentControl.ToolTip = valueAsString;
         }
     }
 }

@@ -82,8 +82,8 @@ namespace Carnassial.UnitTests
             }
 
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
-            ImageRow imageProperties;
-            fileDatabase.GetOrCreateFile(new FileInfo(imageFilePath), imageSetTimeZone, out imageProperties);
+            ImageRow file;
+            fileDatabase.GetOrCreateFile(new FileInfo(imageFilePath), imageSetTimeZone, out file);
             // imageProperties.Date is defaulted by constructor
             // imageProperties.DateTime is defaulted by constructor
             // imageProperties.FileName is set by constructor
@@ -93,7 +93,7 @@ namespace Carnassial.UnitTests
             // imageProperties.InitialRootFolderName is set by constructor
             // imageProperties.RelativePath is set by constructor
             // imageProperties.Time is defaulted by constructor
-            return imageProperties;
+            return file;
         }
 
         public static DateTimeOffset ParseDateTimeOffsetString(string dateTimeAsString)

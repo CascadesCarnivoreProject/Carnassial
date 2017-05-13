@@ -50,6 +50,9 @@ namespace Carnassial.Controls
             this.DateTimeDisplay.TextChanged += this.DateTimeDisplay_TextChanged;
 
             DateTimeOffsetPicker.SetFormat(this, new DependencyPropertyChangedEventArgs(DateTimeOffsetPicker.FormatProperty, Constant.Time.DateTimeDisplayFormat, Constant.Time.DateTimeDisplayFormat));
+
+            this.GotFocus += this.DateTimeOffsetPicker_GotFocus;
+            this.Focusable = true;
         }
 
         public string Format
@@ -235,6 +238,7 @@ namespace Carnassial.Controls
                 case Key.OemPeriod:
                 case Key.OemSemicolon:
                 case Key.Space:
+                case Key.System:
                 case Key.T:
                 case Key.Tab:
                 case Key.Z:
@@ -271,6 +275,13 @@ namespace Carnassial.Controls
                 this.CalendarButton.Visibility = Visibility.Hidden;
                 this.ErrorIcon.Visibility = Visibility.Visible;
             }
+        }
+
+        private void DateTimeOffsetPicker_GotFocus(object sender, RoutedEventArgs e)
+        {
+            // forward focus requests on this control to its date time display
+            this.DateTimeDisplay.Focus();
+            e.Handled = true;
         }
 
         // get location of next or previous date time field

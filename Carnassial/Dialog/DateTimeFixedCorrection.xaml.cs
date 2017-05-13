@@ -78,12 +78,7 @@ namespace Carnassial.Dialog
 
         private void PreviewDateTimeChanges()
         {
-            this.PrimaryPanel.Visibility = Visibility.Collapsed;
-            this.FeedbackPanel.Visibility = Visibility.Visible;
-
             TimeSpan adjustment = this.DateTimePicker.Value - this.initialDateTime;
-
-            // Preview the changes
             foreach (ImageRow file in this.fileDatabase.Files)
             {
                 string newDateTime = String.Empty;
@@ -104,6 +99,9 @@ namespace Carnassial.Dialog
                 }
                 this.DateTimeChangeFeedback.AddFeedbackRow(file.FileName, status, file.GetDisplayDateTime(), newDateTime, difference);
             }
+
+            this.PrimaryPanel.Visibility = Visibility.Collapsed;
+            this.FeedbackPanel.Visibility = Visibility.Visible;
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)

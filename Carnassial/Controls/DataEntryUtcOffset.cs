@@ -23,21 +23,27 @@ namespace Carnassial.Controls
         {
         }
 
-        public override void SetContentAndTooltip(string value)
-        {
-            // persist selection through value changes
-            int selectionStart = this.ContentControl.TimeSpanDisplay.SelectionStart;
-            int selectionLength = this.ContentControl.TimeSpanDisplay.SelectionLength;
-            this.ContentControl.Value = DateTimeHandler.ParseDatabaseUtcOffsetString(value);
-            this.ContentControl.ToolTip = value;
-            this.ContentControl.TimeSpanDisplay.SelectionStart = selectionStart;
-            this.ContentControl.TimeSpanDisplay.SelectionLength = selectionLength;
-        }
-
         public override void SetValue(object valueAsObject)
         {
-            TimeSpan value = (TimeSpan)valueAsObject;
+            TimeSpan value;
+            if (valueAsObject is string)
+            {
+                value = DateTimeHandler.ParseDatabaseUtcOffsetString((string)valueAsObject);
+            }
+            else if (valueAsObject is TimeSpan)
+            {
+                value = (TimeSpan)valueAsObject;
+            }
+            else
+            {
+                if (valueAsObject == null)
+                {
+                    throw new ArgumentNullException(nameof(valueAsObject));
+                }
+                throw new ArgumentOutOfRangeException("valueAsObject", String.Format("Unsupported value type {0}.", valueAsObject.GetType()));
+            }
 
+            // persist selection through value changes
             int selectionStart = this.ContentControl.TimeSpanDisplay.SelectionStart;
             int selectionLength = this.ContentControl.TimeSpanDisplay.SelectionLength;
             this.ContentControl.Value = value;

@@ -58,6 +58,7 @@ namespace Carnassial.Controls
                         return;
                     }
                     this.Text = this.Autocompletions[indexOfCurrentAutocompletion + 1];
+                    e.Handled = true;
                     break;
                 case Key.Up:
                     indexOfCurrentAutocompletion = this.GetIndexOfCurrentAutocompletion();
@@ -66,12 +67,11 @@ namespace Carnassial.Controls
                         return;
                     }
                     this.Text = this.Autocompletions[indexOfCurrentAutocompletion - 1];
+                    e.Handled = true;
                     break;
                 default:
                     return;
             }
-
-            e.Handled = true;
         }
 
         private void OnTextChanged(object sender, TextChangedEventArgs eventArgs)

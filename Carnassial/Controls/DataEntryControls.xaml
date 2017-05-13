@@ -5,7 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="300">
+             d:DesignHeight="600" d:DesignWidth="300">
     <Control.Resources>
         <!-- Focus Style for checkbox https://ramontebar.wordpress.com/2010/02/26/wpf-custom-check-box-template/-->
         <SolidColorBrush x:Key="InputBackgroundFocused" Color="Orange"></SolidColorBrush>
@@ -111,10 +111,11 @@
             <Setter Property="Focusable" Value="True" />
             <Setter Property="IsEditable" Value="False" />
         </Style>
-        <Style x:Key="FlagCheckBox" TargetType="{x:Type CheckBox}">
+        <Style x:Key="DateTimeOffsetPicker" TargetType="controls:DateTimeOffsetPicker" />
+        <Style x:Key="FlagCheckBox" TargetType="CheckBox">
             <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="OverridesDefaultStyle" Value="True"/>
-            <Setter Property="FocusVisualStyle" Value="{DynamicResource CheckBoxFocusVisualStyle}" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource CheckBoxFocusVisualStyle}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
@@ -200,7 +201,5 @@
             <Setter Property="Height" Value="35"/>
         </Style>
     </Control.Resources>
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Name="ControlGrid" />
-    </ScrollViewer>
+    <StackPanel Name="ControlStack" />
 </UserControl>

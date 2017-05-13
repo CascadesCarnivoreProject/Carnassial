@@ -19,11 +19,11 @@ namespace Carnassial.Github
         {
             if (String.IsNullOrWhiteSpace(applicationName))
             {
-                throw new ArgumentOutOfRangeException("applicationName");
+                throw new ArgumentOutOfRangeException(nameof(applicationName));
             }
             if (latestRelease == null)
             {
-                throw new ArgumentNullException("latestRelease");
+                throw new ArgumentNullException(nameof(latestRelease));
             }
 
             this.applicationName = applicationName;

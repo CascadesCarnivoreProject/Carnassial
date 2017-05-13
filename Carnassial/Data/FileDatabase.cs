@@ -195,7 +195,7 @@ namespace Carnassial.Data
                                 fileName.Value = fileToInsert.FileName;
                                 imageQuality.Value = fileToInsert.ImageQuality.ToString();
                                 relativePath.Value = fileToInsert.RelativePath;
-                                utcOffset.Value = fileToInsert.UtcOffset;
+                                utcOffset.Value = DateTimeHandler.ToDatabaseUtcOffset(fileToInsert.UtcOffset);
 
                                 addFiles.ExecuteNonQuery();
                             }
@@ -243,10 +243,10 @@ namespace Carnassial.Data
 
         public void AdjustFileTimes(TimeSpan adjustment)
         {
-            this.AdjustFileDateTimes(adjustment, 0, this.CurrentlySelectedFileCount - 1);
+            this.AdjustFileTimes(adjustment, 0, this.CurrentlySelectedFileCount - 1);
         }
 
-        public void AdjustFileDateTimes(TimeSpan adjustment, int startIndex, int endIndex)
+        public void AdjustFileTimes(TimeSpan adjustment, int startIndex, int endIndex)
         {
             if (adjustment.Milliseconds != 0)
             {
@@ -261,11 +261,11 @@ namespace Carnassial.Data
         {
             if (this.IsFileRowInRange(startIndex) == false)
             {
-                throw new ArgumentOutOfRangeException("startIndex");
+                throw new ArgumentOutOfRangeException(nameof(startIndex));
             }
             if (this.IsFileRowInRange(endIndex) == false)
             {
-                throw new ArgumentOutOfRangeException("endIndex");
+                throw new ArgumentOutOfRangeException(nameof(endIndex));
             }
             if (endIndex < startIndex)
             {
@@ -401,15 +401,15 @@ namespace Carnassial.Data
         {
             if (this.IsFileRowInRange(startRow) == false)
             {
-                throw new ArgumentOutOfRangeException("startRow");
+                throw new ArgumentOutOfRangeException(nameof(startRow));
             }
             if (this.IsFileRowInRange(endRow) == false)
             {
-                throw new ArgumentOutOfRangeException("endRow");
+                throw new ArgumentOutOfRangeException(nameof(endRow));
             }
             if (endRow < startRow)
             {
-                throw new ArgumentOutOfRangeException("endRow", "endRow must be greater than or equal to startRow.");
+                throw new ArgumentOutOfRangeException(nameof(endRow), "endRow must be greater than or equal to startRow.");
             }
             if (this.CurrentlySelectedFileCount == 0)
             {
@@ -702,8 +702,7 @@ namespace Carnassial.Data
             base.OnDatabaseCreated(templateDatabase);
 
             // derive FileData schema from the controls defined
-            List<ColumnDefinition> fileDataColumns = new List<ColumnDefinition>();
-            fileDataColumns.Add(new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.Sql.CreationStringPrimaryKey));
+            List<ColumnDefinition> fileDataColumns = new List<ColumnDefinition>() { ColumnDefinition.CreatePrimaryKey() };
             foreach (ControlRow control in this.Controls)
             {
                 fileDataColumns.Add(this.CreateFileDataColumnDefinition(control));
@@ -723,16 +722,13 @@ namespace Carnassial.Data
                     }
 
                     // create the Markers table
-                    List<ColumnDefinition> markerColumns = new List<ColumnDefinition>()
-                    {
-                        new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.Sql.CreationStringPrimaryKey)
-                    };
+                    List<ColumnDefinition> markerColumns = new List<ColumnDefinition>() { ColumnDefinition.CreatePrimaryKey() };
                     string type = String.Empty;
                     foreach (ControlRow control in this.Controls)
                     {
                         if (control.Type == Constant.Control.Counter)
                         {
-                            markerColumns.Add(new ColumnDefinition(control.DataLabel, Constant.Sql.Text, String.Empty));
+                            markerColumns.Add(new ColumnDefinition(control.DataLabel, Constant.SqlColumnType.Text, String.Empty));
                         }
                     }
                     this.Database.CreateTable(connection, transaction, Constant.DatabaseTable.Markers, markerColumns);
@@ -830,12 +826,19 @@ namespace Carnassial.Data
         /// <summary> 
         /// Rebuild the file table with all files in the database table which match the specified selection.
         /// </summary>
+        // performance of    time to load 10k files
+        // DataTable.Load()  326ms
+        // List<object>      200ms
         public void SelectFiles(FileSelection selection)
         {
+            // Stopwatch stopwatch = new Stopwatch();
+            // stopwatch.Start();
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
                 this.SelectFiles(connection, selection);
             }
+            // stopwatch.Stop();
+            // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
         }
 
         private void SelectFiles(SQLiteConnection connection, FileSelection selection)
@@ -870,21 +873,9 @@ namespace Carnassial.Data
             throw new ArgumentOutOfRangeException(nameof(relativePath) + ", " + nameof(fileName), String.Format("{0} files have {1}='{2}' and {3}='{4}'.", files.Count, Constant.DatabaseColumn.RelativePath, relativePath, Constant.DatabaseColumn.File, fileName));
         }
 
-        /// <summary>
-        /// Update a column's value (identified by its data label) in the row of an existing file (identified by its ID) 
-        /// </summary>
-        public void UpdateFile(long fileID, string dataLabel, string value)
+        public void UpdateFile(ImageRow file)
         {
-            // update the data table
-            ImageRow file = this.Files.Find(fileID);
-            file.SetValueFromDatabaseString(dataLabel, value);
-
-            // update the row in the database
-            this.CreateBackupIfNeeded();
-
-            FileTuplesWithID columnToUpdate = new FileTuplesWithID(dataLabel);
-            columnToUpdate.Add(fileID, value);
-            this.UpdateFiles(columnToUpdate);
+            this.UpdateFiles(file.CreateUpdate());
         }
 
         public void UpdateFiles(FileTuplesWithID update)
@@ -925,20 +916,20 @@ namespace Carnassial.Data
         {
             if (fromIndex < 0)
             {
-                throw new ArgumentOutOfRangeException("fromIndex");
+                throw new ArgumentOutOfRangeException(nameof(fromIndex));
             }
             if (toIndex < fromIndex || toIndex > this.CurrentlySelectedFileCount - 1)
             {
-                throw new ArgumentOutOfRangeException("toIndex");
+                throw new ArgumentOutOfRangeException(nameof(toIndex));
             }
 
-            string value = valueSource.GetValueDatabaseString(control.DataLabel);
+            object value = valueSource.GetDatabaseValue(control.DataLabel);
             FileTuplesWithID filesToUpdate = new FileTuplesWithID(control.DataLabel);
             for (int index = fromIndex; index <= toIndex; index++)
             {
                 // update data table
                 ImageRow file = this.Files[index];
-                file.SetValueFromDatabaseString(control.DataLabel, value);
+                file.SetValue(control.DataLabel, value);
 
                 // update database
                 filesToUpdate.Add(file.ID, value);
@@ -970,17 +961,6 @@ namespace Carnassial.Data
             }
         }
 
-        public void SyncImageSetToDatabase()
-        {
-            // don't trigger backups on image set updates as none of the properties in the image set table is particularly important
-            // For example, this avoids creating a backup when a custom selection is reverted to all when Carnassial exits.
-            ColumnTuplesWithID imageSetUpdate = this.ImageSet.CreateUpdate();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                imageSetUpdate.Update(connection);
-            }
-        }
-
         protected override void Dispose(bool disposing)
         {
             if (this.disposed)
@@ -1008,7 +988,7 @@ namespace Carnassial.Data
         {
             if (control.DataLabel == Constant.DatabaseColumn.DateTime)
             {
-                return new ColumnDefinition(control.DataLabel, "DATETIME", DateTimeHandler.ToDatabaseDateTimeString(Constant.ControlDefault.DateTimeValue));
+                return new ColumnDefinition(control.DataLabel, Constant.ControlDefault.DateTimeValue.DateTime);
             }
             if (control.DataLabel == Constant.DatabaseColumn.UtcOffset)
             {
@@ -1024,13 +1004,13 @@ namespace Carnassial.Data
                 // implementation choice but testing shows no roundoff errors at single tick precision (100 nanoseconds) when using hours.  Even with TimeSpans 
                 // near the upper bound of 256M hours, well beyond the plausible range of time zone calculations.  So there does not appear to be any reason to 
                 // avoid using hours for readability when working with the database directly.
-                return new ColumnDefinition(control.DataLabel, "REAL", DateTimeHandler.ToDatabaseUtcOffsetString(Constant.ControlDefault.DateTimeValue.Offset));
+                return new ColumnDefinition(control.DataLabel, Constant.ControlDefault.DateTimeValue.Offset);
             }
             if (String.IsNullOrWhiteSpace(control.DefaultValue))
             { 
-                 return new ColumnDefinition(control.DataLabel, Constant.Sql.Text);
+                 return new ColumnDefinition(control.DataLabel, Constant.SqlColumnType.Text);
             }
-            return new ColumnDefinition(control.DataLabel, Constant.Sql.Text, control.DefaultValue);
+            return new ColumnDefinition(control.DataLabel, Constant.SqlColumnType.Text, control.DefaultValue);
         }
     }
 }

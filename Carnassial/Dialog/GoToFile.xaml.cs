@@ -72,6 +72,7 @@ namespace Carnassial.Dialog
                     case Key.NumPad8:
                     case Key.NumPad9:
                     case Key.Right:
+                    case Key.System:
                     case Key.Tab:
                         // leave event unhandled so key is accepted as input
                         return;

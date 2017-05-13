@@ -13,7 +13,7 @@ using ColumnDefinition = Carnassial.Database.ColumnDefinition;
 namespace Carnassial.Data
 {
     /// <summary>
-    /// Carnassial Template Database.
+    /// Carnassial template database
     /// </summary>
     public class TemplateDatabase : IDisposable
     {
@@ -143,13 +143,13 @@ namespace Carnassial.Data
         {
             List<ColumnDefinition> imageSetColumns = new List<ColumnDefinition>()
             {
-                new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.Sql.CreationStringPrimaryKey),
-                new ColumnDefinition(Constant.DatabaseColumn.FileSelection, Constant.Sql.Text),
-                new ColumnDefinition(Constant.DatabaseColumn.InitialFolderName, Constant.Sql.Text),
-                new ColumnDefinition(Constant.DatabaseColumn.Log, Constant.Sql.Text),
-                new ColumnDefinition(Constant.DatabaseColumn.Options, Constant.Sql.Text),
-                new ColumnDefinition(Constant.DatabaseColumn.MostRecentFileID, Constant.Sql.Integer),
-                new ColumnDefinition(Constant.DatabaseColumn.TimeZone, Constant.Sql.Text)
+                ColumnDefinition.CreatePrimaryKey(),
+                new ColumnDefinition(Constant.DatabaseColumn.FileSelection, Constant.SqlColumnType.Text),
+                new ColumnDefinition(Constant.DatabaseColumn.InitialFolderName, Constant.SqlColumnType.Text),
+                new ColumnDefinition(Constant.DatabaseColumn.Log, Constant.SqlColumnType.Text),
+                new ColumnDefinition(Constant.DatabaseColumn.Options, Constant.SqlColumnType.Text),
+                new ColumnDefinition(Constant.DatabaseColumn.MostRecentFileID, Constant.SqlColumnType.Integer),
+                new ColumnDefinition(Constant.DatabaseColumn.TimeZone, Constant.SqlColumnType.Text)
             };
             this.Database.CreateTable(connection, transaction, Constant.DatabaseTable.ImageSet, imageSetColumns);
 
@@ -268,6 +268,17 @@ namespace Carnassial.Data
             }
         }
 
+        public void SyncImageSetToDatabase()
+        {
+            // don't trigger backups on image set updates as none of the properties in the image set table is particularly important
+            // For example, this avoids creating a backup when a custom selection is reverted to all when Carnassial exits.
+            ColumnTuplesWithID imageSetUpdate = this.ImageSet.CreateUpdate();
+            using (SQLiteConnection connection = this.Database.CreateConnection())
+            {
+                imageSetUpdate.Update(connection);
+            }
+        }
+
         public static bool TryCreateOrOpen(string filePath, out TemplateDatabase templateDatabase)
         {
             // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
@@ -358,6 +369,12 @@ namespace Carnassial.Data
                 controlsToUpdate.Update(connection, transaction);
                 transaction.Commit();
             }
+
+            // if the control order changed rebuild the in memory table to sort it in the new order
+            if (orderColumnName == Constant.Control.ControlOrder)
+            {
+                this.GetControlsSortedByControlOrder(connection);
+            }
         }
 
         protected virtual void Dispose(bool disposing)
@@ -413,18 +430,18 @@ namespace Carnassial.Data
                     // create Controls table
                     List<ColumnDefinition> templateTableColumns = new List<ColumnDefinition>()
                     {
-                        new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.Sql.CreationStringPrimaryKey),
-                        new ColumnDefinition(Constant.Control.ControlOrder, Constant.Sql.Integer),
-                        new ColumnDefinition(Constant.Control.SpreadsheetOrder, Constant.Sql.Integer),
-                        new ColumnDefinition(Constant.Control.Type, Constant.Sql.Text),
-                        new ColumnDefinition(Constant.Control.DefaultValue, Constant.Sql.Text),
-                        new ColumnDefinition(Constant.Control.Label, Constant.Sql.Text),
-                        new ColumnDefinition(Constant.Control.DataLabel, Constant.Sql.Text),
-                        new ColumnDefinition(Constant.Control.Tooltip, Constant.Sql.Text),
-                        new ColumnDefinition(Constant.Control.Width, Constant.Sql.Integer),
-                        new ColumnDefinition(Constant.Control.Copyable, Constant.Sql.Text),
-                        new ColumnDefinition(Constant.Control.Visible, Constant.Sql.Text),
-                        new ColumnDefinition(Constant.Control.List, Constant.Sql.Text)
+                        ColumnDefinition.CreatePrimaryKey(),
+                        new ColumnDefinition(Constant.Control.ControlOrder, Constant.SqlColumnType.Integer),
+                        new ColumnDefinition(Constant.Control.SpreadsheetOrder, Constant.SqlColumnType.Integer),
+                        new ColumnDefinition(Constant.Control.Type, Constant.SqlColumnType.Text),
+                        new ColumnDefinition(Constant.Control.DefaultValue, Constant.SqlColumnType.Text),
+                        new ColumnDefinition(Constant.Control.Label, Constant.SqlColumnType.Text),
+                        new ColumnDefinition(Constant.Control.DataLabel, Constant.SqlColumnType.Text),
+                        new ColumnDefinition(Constant.Control.Tooltip, Constant.SqlColumnType.Text),
+                        new ColumnDefinition(Constant.Control.Width, Constant.SqlColumnType.Integer),
+                        new ColumnDefinition(Constant.Control.Copyable, Constant.SqlColumnType.Text),
+                        new ColumnDefinition(Constant.Control.Visible, Constant.SqlColumnType.Text),
+                        new ColumnDefinition(Constant.Control.List, Constant.SqlColumnType.Text)
                     };
                     this.Database.CreateTable(connection, transaction, Constant.DatabaseTable.Controls, templateTableColumns);
 

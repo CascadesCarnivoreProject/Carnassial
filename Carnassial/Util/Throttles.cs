@@ -24,7 +24,7 @@ namespace Carnassial.Util
             if (rendersPerSecond < Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondLowerBound ||
                 rendersPerSecond > Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound)
             {
-                throw new ArgumentOutOfRangeException("rendersPerSecond");
+                throw new ArgumentOutOfRangeException(nameof(rendersPerSecond));
             }
 
             this.DesiredImageRendersPerSecond = rendersPerSecond;

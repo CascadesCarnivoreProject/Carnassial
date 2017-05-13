@@ -2,12 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace Carnassial.Controls
 {
     /// <summary>
-    /// This class generates controls based upon the information passed into it from the data grid templateTable
+    /// This class generates data entry controls based upon the controls table.
     /// </summary>
     public partial class DataEntryControls : UserControl
     {
@@ -21,13 +24,13 @@ namespace Carnassial.Controls
             this.ControlsByDataLabel = new Dictionary<string, DataEntryControl>();
         }
 
-        public void CreateControls(FileDatabase database, DataEntryHandler dataEntryPropagator)
+        public void CreateControls(TemplateDatabase database, DataEntryHandler dataEntryPropagator, Func<string, List<string>> getNoteAutocompletions)
         {
             // Depending on how the user interacts with the file import process image set loading can be aborted after controls are generated and then
             // another image set loaded.  Any existing controls therefore need to be cleared.
-            this.ControlGrid.Children.Clear();
             this.Controls.Clear();
             this.ControlsByDataLabel.Clear();
+            this.ControlStack.Children.Clear();
 
             DataEntryDateTime dateTimeControl = null;
             DataEntryUtcOffset utcOffsetControl = null;
@@ -54,10 +57,9 @@ namespace Carnassial.Controls
                     bool readOnly = control.Type != Constant.Control.Note;
                     if (readOnly == false)
                     {
-                        autocompletions = new List<string>(database.GetDistinctValuesInFileDataColumn(control.DataLabel));
+                        autocompletions = new List<string>(getNoteAutocompletions.Invoke(control.DataLabel));
                     }
-                    DataEntryNote noteControl = new DataEntryNote(control, autocompletions, this);
-                    noteControl.ContentReadOnly = readOnly;
+                    DataEntryNote noteControl = new DataEntryNote(control, autocompletions, readOnly, this);
                     visibleControls.Add(noteControl);
                 }
                 else if (control.Type == Constant.Control.Flag || control.Type == Constant.DatabaseColumn.DeleteFlag)
@@ -95,12 +97,52 @@ namespace Carnassial.Controls
 
             foreach (DataEntryControl control in visibleControls)
             {
-                this.ControlGrid.Children.Add(control.Container);
                 this.Controls.Add(control);
                 this.ControlsByDataLabel.Add(control.DataLabel, control);
+                this.ControlStack.Children.Add(control.Container);
             }
 
-            dataEntryPropagator.SetDataEntryCallbacks(this.ControlsByDataLabel);
+            if (dataEntryPropagator != null)
+            {
+                dataEntryPropagator.SetDataEntryCallbacks(this.Controls);
+            }
+        }
+
+        public bool TryFindDataEntryControl(Point hitLocation, out DataEntryControl control)
+        {
+            control = null;
+            HitTestResult hitTest = VisualTreeHelper.HitTest(this, hitLocation);
+            if (hitTest == null)
+            {
+                return false;
+            }
+
+            DependencyObject hitObject = hitTest.VisualHit;
+            while (hitObject is StackPanel == false)
+            {
+                if (hitObject == null)
+                {
+                    return false;
+                }
+
+                FrameworkElement parent = (FrameworkElement)((FrameworkElement)hitObject).Parent;
+                FrameworkElement templatedParent = (FrameworkElement)((FrameworkElement)hitObject).TemplatedParent;
+                if (parent != null)
+                {
+                    hitObject = parent;
+                }
+                else if (templatedParent != null)
+                {
+                    hitObject = templatedParent;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            control = this.Controls.SingleOrDefault(dataEntryControl => dataEntryControl.Container == hitObject);
+            return control != null;
         }
     }
 }

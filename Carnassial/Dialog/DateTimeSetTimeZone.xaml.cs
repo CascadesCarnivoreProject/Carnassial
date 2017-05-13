@@ -48,10 +48,6 @@ namespace Carnassial.Dialog
 
         private void PreviewDateTimeChanges()
         {
-            this.PrimaryPanel.Visibility = Visibility.Collapsed;
-            this.FeedbackPanel.Visibility = Visibility.Visible;
-
-            // Preview the changes
             TimeZoneInfo newTimeZone = this.TimeZones.TimeZonesByDisplayIdentifier[(string)this.TimeZones.SelectedItem];
             foreach (ImageRow file in this.fileDatabase.Files)
             {
@@ -74,6 +70,9 @@ namespace Carnassial.Dialog
 
                 this.TimeZoneUpdateFeedback.AddFeedbackRow(file.FileName, status, DateTimeHandler.ToDisplayDateTimeUtcOffsetString(currentFileDateTime), newDateTime, String.Empty);
             }
+
+            this.PrimaryPanel.Visibility = Visibility.Collapsed;
+            this.FeedbackPanel.Visibility = Visibility.Visible;
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

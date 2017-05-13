@@ -3,13 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 
 namespace Carnassial.Data
 {
     public class FileTable : DataTableBackedList<ImageRow>
     {
-        public FileTable(DataTable imageDataTable)
-            : base(imageDataTable, FileTable.CreateRow)
+        public FileTable(DataTable fileDataTable)
+            : base(fileDataTable, FileTable.CreateRow)
         {
         }
 

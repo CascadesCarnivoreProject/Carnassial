@@ -1,6 +1,7 @@
 ﻿<Window x:Class="Carnassial.Editor.EditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Carnassial.Controls;assembly=Carnassial"
         xmlns:local="clr-namespace:Carnassial.Editor"
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         AutomationProperties.AutomationId="CarnassialTemplateEditor"
@@ -101,10 +102,14 @@
 
             <!-- View Menu -->
             <MenuItem Name="MenuView" Header="_View" IsEnabled="False">
-                <MenuItem Name="MenuViewShowAllColumns" IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="MenuViewShowAllColumns_Click" ToolTip="Show the ordering used when displaying controls and for .csv file columns.">
-                </MenuItem>
-                <MenuItem Header="Inspect file _metadata..." ToolTip="See what metadata is available in an image or video of your choosing." Click="MenuViewInspectMetadata_Click">
-                </MenuItem>
+                <MenuItem Header="Inspect file _metadata..." ToolTip="See what metadata is available in an image or video of your choosing." Click="MenuViewInspectMetadata_Click" />
+            </MenuItem>
+
+            <!-- Options Menu -->
+            <MenuItem Name="MenuOptions" Header="_Options" IsEnabled="False">
+                <MenuItem Name="MenuOptionsShowAllColumns" IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="MenuOptionsShowAllColumns_Click" ToolTip="Show the ordering used when displaying controls and for .csv file columns." />
+                <Separator/>
+                <MenuItem Name="MenuOptionsAdvancedImageSetOptions" Header="Advanced _image set options..." Click="MenuOptionsAdvancedImageSetOptions_Click" ToolTip="Image set configuration options that should only be used by advanced users."/>
             </MenuItem>
 
             <!-- Help Menu -->
@@ -113,353 +118,343 @@
             </MenuItem>
         </Menu>
 
-        <xcad:DockingManager AllowMixedOrientation="True" BorderBrush="Black" BorderThickness="1" Grid.Row="1">
-            <xcad:DockingManager.DocumentHeaderTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="{Binding IconSource}" Margin="0,0,4,0"/>
-                        <TextBlock Text="{Binding Title}" />
-                    </StackPanel>
-                </DataTemplate>
-            </xcad:DockingManager.DocumentHeaderTemplate>
-            <xcad:LayoutRoot x:Name="LayoutRoot">
-                <xcad:LayoutPanel Orientation="Horizontal">
-                    <xcad:LayoutDocumentPaneGroup>
-                        <xcad:LayoutDocumentPane>
-                            <xcad:LayoutDocument x:Name="InstructionPane" Title="Instructions">
-                                <FlowDocumentScrollViewer AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" VerticalScrollBarVisibility="Auto">
-                                    <FlowDocument FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
-                                        <Paragraph FontWeight="Bold" FontSize="20">What the Template Editor does</Paragraph>
-                                        <Paragraph>
-                                            Information recorded for each image or video from a camera is specific to the kinds of files you want to analyze, your data needs, and how that data will be processed.  This differs between organizations and possibly between different kinds of image sets.  You define your needs through this template editor which saves them in template (.tdb file) named
-                                            <Bold>CarnassialTemplate.tdb</Bold> by default.  This template file is then included in each image set folder.  Carnassial looks the template and uses it to create the user interface and manage the data you enter.
-                                        </Paragraph>
-                                        <Paragraph FontWeight="Bold" FontSize="20">Working with templates</Paragraph>
-                                        <List>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>File -> New</Bold> Creates a new template with required fields which you can then add new fields to.
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>File -> Open</Bold> Opens an existing template so you can further modify its contents.
-                                                </Paragraph>
-                                            </ListItem>
-                                        </List>
-                                        <Paragraph>Each template includes several required fields:
-                                            <Bold>RelativePath, File, DateTime, UtcOffset, ImageQuality,</Bold> and
-                                            <Bold>DeleteFlag</Bold> .  
+        <TabControl Name="Tabs" Grid.Row="1">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="Padding" Value="10,2,10,0" />
+                </Style>
+            </TabControl.Resources>
+            <TabItem Header="Instructions">
+                <FlowDocumentScrollViewer AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" VerticalScrollBarVisibility="Auto">
+                    <FlowDocument FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
+                        <Paragraph FontWeight="Bold" FontSize="20">What the Template Editor does</Paragraph>
+                        <Paragraph>
+                            Information recorded for each image or video from a camera is specific to the kinds of files you want to analyze, your data needs, and how that data will be processed.  This differs between organizations and possibly between different kinds of image sets.  You define your needs through this template editor which saves them in template (.tdb file) named
+                            <Bold>CarnassialTemplate.tdb</Bold> by default.  This template file is then included in each image set folder.  Carnassial looks the template and uses it to create the user interface and manage the data you enter.
+                        </Paragraph>
+                        <Paragraph FontWeight="Bold" FontSize="20">Working with templates</Paragraph>
+                        <List>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>File -> New</Bold> Creates a new template with required fields which you can then add new fields to.
+                                </Paragraph>
+                            </ListItem>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>File -> Open</Bold> Opens an existing template so you can further modify its contents.
+                                </Paragraph>
+                            </ListItem>
+                        </List>
+                        <Paragraph>Each template includes several required fields:
+                            <Bold>RelativePath, File, DateTime, UtcOffset, ImageQuality,</Bold> and
+                            <Bold>DeleteFlag</Bold> .  
                                             Carnassial fills these in automatically.  The template editor gives you the option of making these (and other) fields invisible in the user interface.  RelativePath and File locate files on disk and DateTime and UtcOffset completely describe when a file was captured.  ImageQuality powers much of Carnassial's select menu and DeleteFlag enables one selection option as well as delete options under Carnassial's edit menu.
-                                        </Paragraph>
-                                        <Paragraph>You can add new data fields specific to your project. Each will be one of the following types.</Paragraph>
-                                        <List>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>Counter</Bold> Numeric data (integers).  Normally used to count specific entities found in an image.
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>Choice</Bold> A list of values selected from a menu.
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>Note</Bold> General purpose textual data usable for any purpose (comments, camera station names, study sites, survey name,
-                                                    <Italic>etc</Italic> .)
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>Flag</Bold> Boolean data; true or false.
-                                                </Paragraph>
-                                            </ListItem>
-                                        </List>
-                                        <Paragraph>You can specify various attributes for each field.</Paragraph>
-                                        <List>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>Default value</Bold>  The field's initial value.  For example, if a survey name field is present it's often quite convenient to have it default to something like "Our Spiffy Project" rather than requiring this be typed in for every file in the image set.
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>Label</Bold>  The name displayed for the field in Carnassial's user interface.
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>Data label</Bold>  The field's column name in Carnassial's database file (.ddb).  Much more restricted than the label.
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>Tooltip</Bold>  Help text displayed when a Carnassial user hovers the mouse cursor over the field's name.
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>Copyable</Bold>  Whether or not Carnassial's copy from previous button and context menus can be used to populate data in the field.  In most cases it's desirable to have fields be copyable.
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>Visible</Bold>  Whether or not a field is displayed in the Carnassial user interface.  Fields should generally be visible.
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>Width</Bold>  How wide the field appears in the Carnassial user interface.  The editor shows a preview of the layout.
-                                                </Paragraph>
-                                            </ListItem>
-                                            <ListItem>
-                                                <Paragraph>
-                                                    <Bold>List</Bold> The choices available for a choice field, entered one per line.  Including an empty line allows the field to be set to empty.  Each choice must be unique.
-                                                </Paragraph>
-                                            </ListItem>
-                                        </List>
-                                        <Paragraph>You can also drag and drop the fields in the preview windows to set their order in the Carnassial user interface and the column order in .csv spreadsheet files.</Paragraph>
-                                        <Paragraph>If you're new to Carnassial <Hyperlink Name="TutorialLink" RequestNavigate="TutorialLink_RequestNavigate">check out the tutorial</Hyperlink> for more help.</Paragraph>
-                                    </FlowDocument>
-                                </FlowDocumentScrollViewer>
-                            </xcad:LayoutDocument>
-                            <!-- AvalonDock uses a fixed zero margin after uncloseable tab titles; fake a margin with some trailing spaces -->
-                            <xcad:LayoutDocument x:Name="TemplatePane" Title="Template  " CanClose="False" AutomationProperties.AutomationId="TemplatePane">
-                                <Grid Margin="10,5,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition />
-                                        <ColumnDefinition Width="100" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                        </Paragraph>
+                        <Paragraph>You can add new data fields specific to your project. Each will be one of the following types.</Paragraph>
+                        <List>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>Counter</Bold> Numeric data (integers).  Normally used to count specific entities found in an image.
+                                </Paragraph>
+                            </ListItem>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>Choice</Bold> A list of values selected from a menu.
+                                </Paragraph>
+                            </ListItem>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>Note</Bold> General purpose textual data usable for any purpose (comments, camera station names, study sites, survey name,
+                                    <Italic>etc</Italic> .)
+                                </Paragraph>
+                            </ListItem>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>Flag</Bold> Boolean data; true or false.
+                                </Paragraph>
+                            </ListItem>
+                        </List>
+                        <Paragraph>You can specify various attributes for each field.</Paragraph>
+                        <List>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>Default value</Bold> The field's initial value.  For example, if a survey name field is present it's often quite convenient to have it default to something like "Our Spiffy Project" rather than requiring this be typed in for every file in the image set.
+                                </Paragraph>
+                            </ListItem>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>Label</Bold> The name displayed for the field in Carnassial's user interface.
+                                </Paragraph>
+                            </ListItem>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>Data label</Bold> The field's column name in Carnassial's database file (.ddb).  Much more restricted than the label.
+                                </Paragraph>
+                            </ListItem>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>Tooltip</Bold> Help text displayed when a Carnassial user hovers the mouse cursor over the field's name.
+                                </Paragraph>
+                            </ListItem>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>Copyable</Bold> Whether or not Carnassial's copy from previous button and context menus can be used to populate data in the field.  In most cases it's desirable to have fields be copyable.
+                                </Paragraph>
+                            </ListItem>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>Visible</Bold> Whether or not a field is displayed in the Carnassial user interface.  Fields should generally be visible.
+                                </Paragraph>
+                            </ListItem>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>Width</Bold> How wide the field appears in the Carnassial user interface.  The editor shows a preview of the layout.
+                                </Paragraph>
+                            </ListItem>
+                            <ListItem>
+                                <Paragraph>
+                                    <Bold>List</Bold> The choices available for a choice field, entered one per line.  Including an empty line allows the field to be set to empty.  Each choice must be unique.
+                                </Paragraph>
+                            </ListItem>
+                        </List>
+                        <Paragraph>You can also drag and drop the fields in the preview windows to set their order in the Carnassial user interface and the column order in .csv spreadsheet files.</Paragraph>
+                        <Paragraph>If you're new to Carnassial
+                            <Hyperlink Name="TutorialLink" RequestNavigate="TutorialLink_RequestNavigate">check out the tutorial</Hyperlink> for more help.
+                        </Paragraph>
+                    </FlowDocument>
+                </FlowDocumentScrollViewer>
+            </TabItem>
+            <TabItem Header="Template">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="300" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0" Margin="10,5,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="100" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                                    <!-- If you change the visible rows or header names, please check UpdateCellColors() constants to ensure they match new conventions -->
-                                    <DataGrid Name="TemplateDataGrid" MinHeight="250" VerticalAlignment="Top" Grid.Row="0" RowHeight="25" VirtualizingStackPanel.IsVirtualizing="False"
-                                              AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" 
-                                              BeginningEdit="TemplateDataGrid_BeginningEdit"
-                                              CellEditEnding="TemplateDataGrid_CellEditEnding"
-                                              CurrentCellChanged="TemplateDataGrid_CurrentCellChanged" 
-                                              PreviewTextInput="TemplateDataGrid_PreviewTextInput" 
-                                              LayoutUpdated="TemplateDataGrid_LayoutUpdated"
-                                              SelectionChanged="TemplateDataGrid_SelectionChanged" 
-                                              Margin="0,0,10,0" SelectionMode="Single"
-                                              ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}">
-                                        <DataGrid.Resources>
-                                            <Style x:Key="VerticalGridHeaderStyle" TargetType="DataGridColumnHeader">
-                                                <Setter Property="VerticalContentAlignment" Value="Bottom"/>
-                                                <Setter Property="FontWeight" Value="Bold"/>
-                                            </Style>
-                                        </DataGrid.Resources>
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header="ID" IsReadOnly="True" Binding="{Binding Path=Id, Converter={StaticResource TrimmingConverter}}" Visibility="Collapsed" CanUserSort="False" />
-                                            <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder, Converter={StaticResource TrimmingConverter}}" IsReadOnly="True" Visibility="Collapsed" CanUserSort="False" />
-                                            <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder, Converter={StaticResource TrimmingConverter}}" IsReadOnly="True" Visibility="Collapsed" CanUserSort="False" />
-                                            <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
-                                                <DataGridTextColumn.ElementStyle>
-                                                    <Style TargetType="{x:Type TextBlock}">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Type}" Value="Note">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeNoteToolTip}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Type}" Value="Counter">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeCounterToolTip}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeFixedChoiceToolTip}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Type}" Value="Flag">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeFlagToolTip}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Type}" Value="File">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeFileToolTip}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Type}" Value="Folder">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeFolderToolTip}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Type}" Value="DateTime">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeDateTimeToolTip}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Type}" Value="ImageQuality">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeImageQualityToolTip}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
-                                                                <Setter Property="ToolTip" Value="{StaticResource TypeDeleteFlagToolTip}"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </DataGridTextColumn.ElementStyle>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn MinWidth="40" Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
-                                                <DataGridTextColumn.ElementStyle>
-                                                    <Style TargetType="{x:Type TextBlock}">
-                                                        <Setter Property="ToolTip" Value="{StaticResource DefaultValueToolTip}"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Type}" Value="Counter">
-                                                                <Setter Property="TextAlignment" Value="Right"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </DataGridTextColumn.ElementStyle>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn MinWidth="40" Header="Label" Binding="{Binding Path=Label, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
-                                                <DataGridTextColumn.ElementStyle>
-                                                    <Style TargetType="{x:Type TextBlock}">
-                                                        <Setter Property="ToolTip" Value="{StaticResource LabelToolTip}"/>
-                                                    </Style>
-                                                </DataGridTextColumn.ElementStyle>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn MinWidth="40" Header="Data Label" Binding="{Binding Path=DataLabel, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
-                                                <DataGridTextColumn.ElementStyle>
-                                                    <Style TargetType="{x:Type TextBlock}">
-                                                        <Setter Property="ToolTip" Value="{StaticResource DataLabelToolTip}"/>
-                                                    </Style>
-                                                </DataGridTextColumn.ElementStyle>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn MinWidth="50" Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource TrimmingConverter}}" Width="*" CanUserSort="False">
-                                                <DataGridTextColumn.ElementStyle>
-                                                    <Style TargetType="{x:Type TextBlock}">
-                                                        <Setter Property="ToolTip" Value="{StaticResource TooltipToolTip}"/>
-                                                    </Style>
-                                                </DataGridTextColumn.ElementStyle>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn MinWidth="40" Header="Width" Binding="{Binding Path=Width, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
-                                                <DataGridTextColumn.ElementStyle>
-                                                    <Style TargetType="{x:Type TextBlock}">
-                                                        <Setter Property="ToolTip" Value="{StaticResource WidthToolTip}"/>
-                                                    </Style>
-                                                </DataGridTextColumn.ElementStyle>
-                                            </DataGridTextColumn>
-                                            <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" Binding="{Binding Path=Copyable}" CanUserSort="False">
-                                                <DataGridCheckBoxColumn.CellStyle>
-                                                    <Style TargetType="{x:Type DataGridCell}">
-                                                        <Setter Property="ToolTip" Value="{StaticResource CopyableToolTip}"/>
-                                                    </Style>
-                                                </DataGridCheckBoxColumn.CellStyle>
-                                            </DataGridCheckBoxColumn>
-                                            <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" Binding="{Binding Path=Visible}" CanUserSort="False">
-                                                <DataGridCheckBoxColumn.CellStyle>
-                                                    <Style TargetType="{x:Type DataGridCell}">
-                                                        <Setter Property="ToolTip" Value="{StaticResource VisibleToolTip}"/>
-                                                    </Style>
-                                                </DataGridCheckBoxColumn.CellStyle>
-                                            </DataGridCheckBoxColumn>
+                        <!-- If you change the visible rows or header names, please check UpdateCellColors() constants to ensure they match new conventions -->
+                        <DataGrid Name="TemplateDataGrid" MinHeight="250" VerticalAlignment="Top" Grid.Row="0" RowHeight="25" VirtualizingStackPanel.IsVirtualizing="False"
+                                                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" 
+                                                  BeginningEdit="TemplateDataGrid_BeginningEdit"
+                                                  CellEditEnding="TemplateDataGrid_CellEditEnding"
+                                                  CurrentCellChanged="TemplateDataGrid_CurrentCellChanged" 
+                                                  PreviewTextInput="TemplateDataGrid_PreviewTextInput" 
+                                                  LayoutUpdated="TemplateDataGrid_LayoutUpdated"
+                                                  SelectionChanged="TemplateDataGrid_SelectionChanged" 
+                                                  Margin="0,0,10,0" SelectionMode="Single"
+                                                  ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}">
+                            <DataGrid.Resources>
+                                <Style x:Key="VerticalGridHeaderStyle" TargetType="DataGridColumnHeader">
+                                    <Setter Property="VerticalContentAlignment" Value="Bottom"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </Style>
+                            </DataGrid.Resources>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" IsReadOnly="True" Binding="{Binding Path=Id, Converter={StaticResource TrimmingConverter}}" Visibility="Collapsed" CanUserSort="False" />
+                                <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder, Converter={StaticResource TrimmingConverter}}" IsReadOnly="True" Visibility="Collapsed" CanUserSort="False" />
+                                <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder, Converter={StaticResource TrimmingConverter}}" IsReadOnly="True" Visibility="Collapsed" CanUserSort="False" />
+                                <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="{x:Type TextBlock}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Type}" Value="Note">
+                                                    <Setter Property="ToolTip" Value="{StaticResource TypeNoteToolTip}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}" Value="Counter">
+                                                    <Setter Property="ToolTip" Value="{StaticResource TypeCounterToolTip}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
+                                                    <Setter Property="ToolTip" Value="{StaticResource TypeFixedChoiceToolTip}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}" Value="Flag">
+                                                    <Setter Property="ToolTip" Value="{StaticResource TypeFlagToolTip}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}" Value="File">
+                                                    <Setter Property="ToolTip" Value="{StaticResource TypeFileToolTip}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}" Value="Folder">
+                                                    <Setter Property="ToolTip" Value="{StaticResource TypeFolderToolTip}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}" Value="DateTime">
+                                                    <Setter Property="ToolTip" Value="{StaticResource TypeDateTimeToolTip}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}" Value="ImageQuality">
+                                                    <Setter Property="ToolTip" Value="{StaticResource TypeImageQualityToolTip}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
+                                                    <Setter Property="ToolTip" Value="{StaticResource TypeDeleteFlagToolTip}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn MinWidth="40" Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="{x:Type TextBlock}">
+                                            <Setter Property="ToolTip" Value="{StaticResource DefaultValueToolTip}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Type}" Value="Counter">
+                                                    <Setter Property="TextAlignment" Value="Right"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn MinWidth="40" Header="Label" Binding="{Binding Path=Label, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="{x:Type TextBlock}">
+                                            <Setter Property="ToolTip" Value="{StaticResource LabelToolTip}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn MinWidth="40" Header="Data Label" Binding="{Binding Path=DataLabel, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="{x:Type TextBlock}">
+                                            <Setter Property="ToolTip" Value="{StaticResource DataLabelToolTip}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn MinWidth="50" Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource TrimmingConverter}}" Width="*" CanUserSort="False">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="{x:Type TextBlock}">
+                                            <Setter Property="ToolTip" Value="{StaticResource TooltipToolTip}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn MinWidth="40" Header="Width" Binding="{Binding Path=Width, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="{x:Type TextBlock}">
+                                            <Setter Property="ToolTip" Value="{StaticResource WidthToolTip}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" Binding="{Binding Path=Copyable}" CanUserSort="False">
+                                    <DataGridCheckBoxColumn.CellStyle>
+                                        <Style TargetType="{x:Type DataGridCell}">
+                                            <Setter Property="ToolTip" Value="{StaticResource CopyableToolTip}"/>
+                                        </Style>
+                                    </DataGridCheckBoxColumn.CellStyle>
+                                </DataGridCheckBoxColumn>
+                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" Binding="{Binding Path=Visible}" CanUserSort="False">
+                                    <DataGridCheckBoxColumn.CellStyle>
+                                        <Style TargetType="{x:Type DataGridCell}">
+                                            <Setter Property="ToolTip" Value="{StaticResource VisibleToolTip}"/>
+                                        </Style>
+                                    </DataGridCheckBoxColumn.CellStyle>
+                                </DataGridCheckBoxColumn>
 
-                                            <DataGridTemplateColumn MinWidth="40" Header="List" Width="80" CanUserSort="False">
-                                                <DataGridTemplateColumn.CellTemplate>
-                                                    <DataTemplate>
-                                                        <StackPanel>
-                                                            <Button Tag="{Binding Path=ControlOrder}" Click="DefineList_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Margin="1" Content="Define List">
-                                                                <Button.Style>
-                                                                    <Style TargetType="{x:Type Button}">
-                                                                        <Style.Triggers>
-                                                                            <!--Triggers for disabling lists for some types-->
-                                                                            <DataTrigger Binding="{Binding Type}" Value="File">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Type}" Value="RelativePath">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Type}" Value="Folder">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Type}" Value="DateTime">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Type}" Value="UtcOffset">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Type}" Value="Date">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Type}" Value="Time">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Type}" Value="Counter">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Type}" Value="Flag">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
-                                                                                <Setter Property="ToolTip" Value="{StaticResource ListFixedChoiceToolTip}"/>
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </Button.Style>
-                                                            </Button>
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </DataGridTemplateColumn.CellTemplate>
-                                            </DataGridTemplateColumn>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                    <DockPanel Name="RowControls" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,0,10,0">
-                                        <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="1" Margin="0">
-                                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,-1">
-                                                <TextBlock Margin="0,0,0,5" DockPanel.Dock="Top" FontSize="14" HorizontalAlignment="Center"><Run Text="Add:"/></TextBlock>
-                                                <UniformGrid Margin="0,0,0,0" Rows="4" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
-                                                    <Button Content="Count"  Margin="0,0,0,2.5" Tag="Counter" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton"/>
-                                                    <Button Content="Choice" Margin="0,0,0,2.5" Tag="FixedChoice" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFixedChoiceButton"/>
-                                                    <Button Content="Note" Margin="0,0,0,2.5" Tag="Note" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddNoteButton"/>
-                                                    <Button Content="Flag" Margin="0,0,0,0" Tag="Flag" DockPanel.Dock="Bottom"  HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFlagButton"/>
-                                                </UniformGrid>
-                                            </DockPanel>
-                                        </Border>
-                                        <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center" DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveControlButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveControlButton_Click" Margin="0,30,0,0"/>
-                                    </DockPanel>
-                                    <GridSplitter Grid.Row="1" Grid.ColumnSpan="2"
-                                                  Height="2" Background="DarkGray" Margin="-10,10,0,0"
-                                                  VerticalAlignment="Top" 
-                                                  HorizontalAlignment="Stretch" />
+                                <DataGridTemplateColumn MinWidth="40" Header="List" Width="80" CanUserSort="False">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel>
+                                                <Button Tag="{Binding Path=ControlOrder}" Click="DefineList_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Margin="1" Content="Define List">
+                                                    <Button.Style>
+                                                        <Style TargetType="{x:Type Button}">
+                                                            <Style.Triggers>
+                                                                <!--Triggers for disabling lists for some types-->
+                                                                <DataTrigger Binding="{Binding Type}" Value="File">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Type}" Value="RelativePath">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Type}" Value="Folder">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Type}" Value="DateTime">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Type}" Value="UtcOffset">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Type}" Value="Date">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Type}" Value="Time">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Type}" Value="Counter">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Type}" Value="Flag">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
+                                                                    <Setter Property="ToolTip" Value="{StaticResource ListFixedChoiceToolTip}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DockPanel Name="RowControls" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,0,10,0">
+                            <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="1" Margin="0">
+                                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,-1">
+                                    <TextBlock Margin="0,0,0,5" DockPanel.Dock="Top" FontSize="14" HorizontalAlignment="Center"><Run Text="Add:"/></TextBlock>
+                                    <UniformGrid Margin="0,0,0,0" Rows="4" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
+                                        <Button Content="Count"  Margin="0,0,0,2.5" Tag="Counter" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton"/>
+                                        <Button Content="Choice" Margin="0,0,0,2.5" Tag="FixedChoice" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFixedChoiceButton"/>
+                                        <Button Content="Note" Margin="0,0,0,2.5" Tag="Note" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddNoteButton"/>
+                                        <Button Content="Flag" Margin="0,0,0,0" Tag="Flag" DockPanel.Dock="Bottom"  HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFlagButton"/>
+                                    </UniformGrid>
+                                </DockPanel>
+                            </Border>
+                            <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center" DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveControlButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveControlButton_Click" Margin="0,30,0,0"/>
+                        </DockPanel>
+                        <GridSplitter Grid.Row="1" Grid.ColumnSpan="2"
+                                                      Height="2" Background="DarkGray" Margin="-10,10,0,0"
+                                                      VerticalAlignment="Top" 
+                                                      HorizontalAlignment="Stretch" />
 
-                                    <!-- spreadsheet order -->
-                                    <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,7,0,0">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="*"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Grid.Row="0" Margin="0,5,10,0" Text="The spreadsheet column order.  Drag and drop columns to re-arrange their order to your preference"></TextBlock>
-                                        <Border Grid.Row="1" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10">
-                                            <ScrollViewer MinHeight="50" Height="50" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" VerticalAlignment="Top">
-                                                <DataGrid x:Name="SpreadsheetOrderPreview" Margin="0,10,0,0"  MinHeight="25" Height="25" ColumnReordered="OnSpreadsheetOrderChanged" VerticalAlignment="Top"/>
-                                            </ScrollViewer>
-                                        </Border>
-                                    </Grid>
-                                </Grid>
-                            </xcad:LayoutDocument>
-                        </xcad:LayoutDocumentPane>
-                    </xcad:LayoutDocumentPaneGroup>
-                    <xcad:LayoutAnchorablePaneGroup DockWidth="300">
-                        <xcad:LayoutAnchorablePane>
-                            <xcad:LayoutAnchorable Title="Control layout" CanClose="False">
-                                <Grid Name="ControlGrid">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-
-                                    <Border Grid.Row="0" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10">
-                                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                                            <WrapPanel x:Name="ControlsPanel" Margin="10,10,10,0" Orientation="Horizontal" Tag="DROPTARGET" AllowDrop="True" PreviewMouseLeftButtonDown="ControlsPanel_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="ControlsPanel_PreviewMouseLeftButtonUp" PreviewMouseMove="OnPreviewMouseMove"
-                                                       DragEnter="ControlsPanel_DragEnter" Drop="ControlsPanel_DragDrop" />
-                                        </ScrollViewer>
-                                    </Border>
-                                    <TextBlock Grid.Row="1" Text="Drag and drop these controls (by their labels) to re-arrange their order to your preference" TextWrapping="Wrap" />
-                                </Grid>
-                            </xcad:LayoutAnchorable>
-                        </xcad:LayoutAnchorablePane>
-                    </xcad:LayoutAnchorablePaneGroup>
-                </xcad:LayoutPanel>
-            </xcad:LayoutRoot>
-        </xcad:DockingManager>
+                        <!-- spreadsheet order -->
+                        <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,7,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Margin="0,5,10,0" Text="The spreadsheet column order.  Drag and drop columns to re-arrange their order to your preference"></TextBlock>
+                            <Border Grid.Row="1" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10">
+                                <ScrollViewer MinHeight="50" Height="50" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" VerticalAlignment="Top">
+                                    <DataGrid x:Name="SpreadsheetOrderPreview" Margin="0,10,0,0"  MinHeight="25" Height="25" ColumnReordered="OnSpreadsheetOrderChanged" VerticalAlignment="Top"/>
+                                </ScrollViewer>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                    <GridSplitter Grid.Column="0" Width="5" />
+                    <Grid Grid.Column="1" Name="ControlGrid">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Grid.Row="0">
+                            <StackPanel x:Name="ControlsPanel" AllowDrop="True" PreviewMouseLeftButtonDown="ControlsPanel_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="ControlsPanel_PreviewMouseLeftButtonUp" PreviewMouseMove="ControlsPanel_OnPreviewMouseMove"
+                                                        Drop="ControlsPanel_DragDrop">
+                                <controls:DataEntryControls x:Name="DataEntryControls" VerticalAlignment="Stretch" />
+                            </StackPanel>
+                        </ScrollViewer>
+                        <TextBlock Grid.Row="1" Text="Drag and drop these controls (by their labels) to re-arrange their order to your preference" TextWrapping="Wrap" />
+                    </Grid>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>

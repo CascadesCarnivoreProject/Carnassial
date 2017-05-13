@@ -30,96 +30,6 @@ namespace Carnassial.Controls
             this.IsProgrammaticControlUpdate = false;
         }
 
-        /// <summary>Propagate the current value of this control forward from this point across the current selection.</summary>
-        public void CopyForward(DataEntryControl control, bool checkForZeroValue)
-        {
-            int filesAffected = this.FileDatabase.CurrentlySelectedFileCount - this.ImageCache.CurrentRow - 1;
-            if (filesAffected == 0)
-            {
-                // should be unreachable as the menu shouldn't be be enabled on the last file
-                MessageBox messageBox = new MessageBox("Nothing to copy forward.", Application.Current.MainWindow);
-                messageBox.Message.Reason = "As you are on the last file, there are no files after this.";
-                messageBox.ShowDialog();
-                return;
-            }
-
-            string valueToCopy = this.ImageCache.Current.GetValueDisplayString(control);
-            if (this.ConfirmCopyForward(valueToCopy, filesAffected, checkForZeroValue) != true)
-            {
-                return;
-            }
-
-            // update starts on the next row since copying from the current row
-            this.FileDatabase.UpdateFiles(this.ImageCache.Current, control, this.ImageCache.CurrentRow + 1, this.FileDatabase.CurrentlySelectedFileCount - 1);
-        }
-
-        /// <summary>
-        /// Copy the closest, non-empty value in a file preceding this one to all intervening files plus the current file
-        /// </summary>
-        public string CopyFromLastNonEmptyValue(DataEntryControl control)
-        {
-            bool isCounter = control is DataEntryCounter;
-            bool isFlag = control is DataEntryFlag;
-
-            ImageRow fileWithLastNonEmptyValue = null;
-            int indexToCopyFrom = Constant.Database.InvalidRow;
-            string valueToCopy = isCounter ? "0" : String.Empty;
-            for (int previousIndex = this.ImageCache.CurrentRow - 1; previousIndex >= 0; previousIndex--)
-            {
-                // Search for the row with some value in it, starting from the previous row
-                ImageRow file = this.FileDatabase.Files[previousIndex];
-                valueToCopy = file.GetValueDatabaseString(control.DataLabel);
-                if (valueToCopy == null)
-                {
-                    continue;
-                }
-
-                valueToCopy = valueToCopy.Trim();
-                if (valueToCopy.Length > 0)
-                {
-                    if ((isCounter && !valueToCopy.Equals("0")) ||                                               // skip zero values for counters
-                        (isFlag && !valueToCopy.Equals(Boolean.FalseString, StringComparison.OrdinalIgnoreCase)) || // false values for flags are considered empty
-                        (!isCounter && !isFlag))
-                    {
-                        indexToCopyFrom = previousIndex;
-                        fileWithLastNonEmptyValue = file;
-                        break;
-                    }
-                }
-            }
-
-            if (indexToCopyFrom == Constant.Database.InvalidRow)
-            {
-                // Nothing to propagate.  If the menu item is deactivated as expected this shouldn't be reachable.
-                MessageBox messageBox = new MessageBox("Nothing to propagate to here.", Application.Current.MainWindow);
-                messageBox.Message.Reason = "None of the earlier files have anything in this field, so there are no values to propagate.";
-                messageBox.ShowDialog();
-                return this.FileDatabase.Files[this.ImageCache.CurrentRow].GetValueDisplayString(control); // No change, so return the current value
-            }
-
-            int imagesAffected = this.ImageCache.CurrentRow - indexToCopyFrom;
-            if (this.ConfirmPropagateFromLastValue(valueToCopy, imagesAffected) != true)
-            {
-                return this.FileDatabase.Files[this.ImageCache.CurrentRow].GetValueDisplayString(control); // No change, so return the current value
-            }
-
-            this.FileDatabase.UpdateFiles(fileWithLastNonEmptyValue, control, indexToCopyFrom + 1, this.ImageCache.CurrentRow);
-            return valueToCopy;
-        }
-
-        /// <summary>Copy the current value of this control to all images</summary>
-        public void CopyToAll(DataEntryControl control)
-        {
-            bool checkForZero = control is DataEntryCounter;
-            int imagesAffected = this.FileDatabase.CurrentlySelectedFileCount;
-            string displayValueToCopy = this.ImageCache.Current.GetValueDisplayString(control);
-            if (this.ConfirmCopyCurrentValueToAll(displayValueToCopy, imagesAffected, checkForZero) != true)
-            {
-                return;
-            }
-            this.FileDatabase.UpdateFiles(this.ImageCache.Current, control);
-        }
-
         public void Dispose()
         {
             this.Dispose(true);
@@ -135,6 +45,7 @@ namespace Carnassial.Controls
 
             if (disposing)
             {
+                this.TrySyncCurrentFileToDatabase();
                 this.FileDatabase.Dispose();
                 this.ImageCache.Dispose();
             }
@@ -144,10 +55,8 @@ namespace Carnassial.Controls
 
         public void IncrementOrResetCounter(DataEntryCounter counter)
         {
-            this.IsProgrammaticControlUpdate = true;
             counter.IncrementOrReset();
-            this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, counter.DataLabel, counter.Content);
-            this.IsProgrammaticControlUpdate = false;
+            this.ImageCache.Current.SetValueFromDatabaseString(counter.DataLabel, counter.Content);
         }
 
         public bool IsCopyForwardPossible(DataEntryControl control)
@@ -168,11 +77,11 @@ namespace Carnassial.Controls
             int nearestRowWithCopyableValue = -1;
             for (int fileIndex = this.ImageCache.CurrentRow - 1; fileIndex >= 0; --fileIndex)
             {
-                // Search for the row with some value in it, starting from the previous row
-                string valueToCopy = this.FileDatabase.Files[fileIndex].GetValueDatabaseString(control.DataLabel);
-                if (String.IsNullOrWhiteSpace(valueToCopy) == false)
+                // search for a file with a value assigned for this field, starting from the previous file
+                string valueToTest = this.FileDatabase.Files[fileIndex].GetValueDatabaseString(control.DataLabel);
+                if (String.IsNullOrWhiteSpace(valueToTest) == false)
                 {
-                    if ((checkForZero && !valueToCopy.Equals("0")) || !checkForZero)
+                    if ((checkForZero && !valueToTest.Equals("0")) || !checkForZero)
                     {
                         nearestRowWithCopyableValue = fileIndex;    // found a non-empty value
                         break;
@@ -185,24 +94,24 @@ namespace Carnassial.Controls
         /// <summary>
         /// Add data event handler callbacks for (possibly invisible) controls
         /// </summary>
-        public void SetDataEntryCallbacks(Dictionary<string, DataEntryControl> controlsByDataLabel)
+        public void SetDataEntryCallbacks(List<DataEntryControl> dataEntryControl)
         {
             // Adds
             // - copy file path option to file and relative path controls
             // - data entry callbacks to editable controls
             // - propagate context menu to copyable controls
-            foreach (KeyValuePair<string, DataEntryControl> pair in controlsByDataLabel)
+            foreach (DataEntryControl control in dataEntryControl)
             {
-                string controlType = this.FileDatabase.ControlsByDataLabel[pair.Key].Type;
+                string controlType = this.FileDatabase.ControlsByDataLabel[control.DataLabel].Type;
                 switch (controlType)
                 {
                     case Constant.Control.Note:
-                        DataEntryNote note = (DataEntryNote)pair.Value;
+                        DataEntryNote note = (DataEntryNote)control;
                         note.ContentControl.TextAutocompleted += this.NoteControl_TextAutocompleted;
                         break;
                     case Constant.DatabaseColumn.File:
                     case Constant.DatabaseColumn.RelativePath:
-                        note = (DataEntryNote)pair.Value;
+                        note = (DataEntryNote)control;
                         Debug.Assert(note.ContentReadOnly, "File name and relative path are expected to be read only fields.");
                         Debug.Assert(note.Copyable == false, "File name and relative path are not expected to be copyable fields.");
                         MenuItem filePathItem = new MenuItem() { Header = "Copy file's path" };
@@ -210,26 +119,26 @@ namespace Carnassial.Controls
                         note.AppendToContextMenu(filePathItem);
                         break;
                     case Constant.DatabaseColumn.DateTime:
-                        DataEntryDateTime dateTime = (DataEntryDateTime)pair.Value;
+                        DataEntryDateTime dateTime = (DataEntryDateTime)control;
                         dateTime.ContentControl.ValueChanged += this.DateTimeControl_ValueChanged;
                         break;
                     case Constant.DatabaseColumn.UtcOffset:
-                        DataEntryUtcOffset utcOffset = (DataEntryUtcOffset)pair.Value;
+                        DataEntryUtcOffset utcOffset = (DataEntryUtcOffset)control;
                         utcOffset.ContentControl.ValueChanged += this.UtcOffsetControl_ValueChanged;
                         break;
                     case Constant.DatabaseColumn.DeleteFlag:
                     case Constant.Control.Flag:
-                        DataEntryFlag flag = (DataEntryFlag)pair.Value;
+                        DataEntryFlag flag = (DataEntryFlag)control;
                         flag.ContentControl.Checked += this.FlagControl_CheckedChanged;
                         flag.ContentControl.Unchecked += this.FlagControl_CheckedChanged;
                         break;
                     case Constant.DatabaseColumn.ImageQuality:
                     case Constant.Control.FixedChoice:
-                        DataEntryChoice choice = (DataEntryChoice)pair.Value;
+                        DataEntryChoice choice = (DataEntryChoice)control;
                         choice.ContentControl.SelectionChanged += this.ChoiceControl_SelectionChanged;
                         break;
                     case Constant.Control.Counter:
-                        DataEntryCounter counter = (DataEntryCounter)pair.Value;
+                        DataEntryCounter counter = (DataEntryCounter)control;
                         counter.ContentControl.TextChanged += this.CounterControl_TextChanged;
                         break;
                     default:
@@ -237,10 +146,8 @@ namespace Carnassial.Controls
                 }
 
                 // add the propagate context menu to copyable fields
-                if (pair.Value.Copyable)
+                if (control.Copyable)
                 {
-                    DataEntryControl control = pair.Value;
-
                     MenuItem menuItemPropagateFromLastValue = new MenuItem();
                     menuItemPropagateFromLastValue.Header = "Propagate from the _last non-empty value to here...";
                     if (control is DataEntryCounter)
@@ -265,6 +172,23 @@ namespace Carnassial.Controls
                     control.AppendToContextMenu(menuItemPropagateFromLastValue, menuItemCopyForward, menuItemCopyToAll);
                 }
             }
+        }
+
+        public bool TrySyncCurrentFileToDatabase()
+        {
+            if (this.ImageCache.Current == null)
+            {
+                return false;
+            }
+            if (this.ImageCache.Current.HasChanges == false)
+            {
+                // database is already in sync 
+                return true;
+            }
+
+            this.FileDatabase.UpdateFile(this.ImageCache.Current);
+            this.ImageCache.Current.AcceptChanges();
+            return true;
         }
 
         public static bool TryFindFocusedControl(IInputElement focusedElement, out DataEntryControl focusedControl)
@@ -344,16 +268,16 @@ namespace Carnassial.Controls
         }
 
         // ask the user to confirm value propagation from the last value
-        private bool? ConfirmPropagateFromLastValue(String text, int imagesAffected)
+        private bool? ConfirmCopyFromLastNonEmptyValue(String text, int filesAffected)
         {
             text = text.Trim();
             MessageBox messageBox = new MessageBox("Please confirm 'Propagate to Here' for this field.", Application.Current.MainWindow, MessageBoxButton.YesNo);
             messageBox.Message.StatusImage = MessageBoxImage.Question;
             messageBox.Message.What = "Propagate to here is not undoable and can overwrite existing values.";
-            messageBox.Message.Reason = "\u2022 The last non-empty value '" + text + "' was seen " + imagesAffected.ToString() + " files back." + Environment.NewLine;
+            messageBox.Message.Reason = "\u2022 The last non-empty value '" + text + "' was seen " + filesAffected.ToString() + " files back." + Environment.NewLine;
             messageBox.Message.Reason += "\u2022 That field's value will be copied to all files between that file and this one in the selection";
             messageBox.Message.Result = "If you select yes: " + Environment.NewLine;
-            messageBox.Message.Result = "\u2022 " + imagesAffected.ToString() + " files will be affected.";
+            messageBox.Message.Result = "\u2022 " + filesAffected.ToString() + " files will be affected.";
             return messageBox.ShowDialog();
         }
 
@@ -401,9 +325,8 @@ namespace Carnassial.Controls
 
             TextBox textBox = (TextBox)sender;
             DataEntryControl control = (DataEntryControl)textBox.Tag;
-            control.SetContentAndTooltip(textBox.Text);
-            this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
-            return;
+            control.SetValue(textBox.Text);
+            this.ImageCache.Current.SetValueFromDatabaseString(control.DataLabel, control.Content);
         }
 
         // when a choice changes, update the choice's field in the database
@@ -422,8 +345,8 @@ namespace Carnassial.Controls
             }
 
             DataEntryControl control = (DataEntryControl)comboBox.Tag;
-            control.SetContentAndTooltip(comboBox.SelectedItem.ToString());
-            this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
+            control.SetValue(comboBox.SelectedItem.ToString());
+            this.ImageCache.Current.SetValueFromDatabaseString(control.DataLabel, control.Content);
         }
 
         private void DateTimeControl_ValueChanged(DateTimeOffsetPicker dateTimePicker, DateTimeOffset newDateTime)
@@ -433,11 +356,8 @@ namespace Carnassial.Controls
                 return;
             }
 
-            // update file data table and write the new DateTime to the database
             this.ImageCache.Current.SetDateTimeOffset(newDateTime);
             dateTimePicker.ToolTip = newDateTime.ToString(dateTimePicker.Format);
-
-            this.FileDatabase.UpdateFiles(this.ImageCache.Current.CreateDateTimeUpdate());
         }
 
         // when a flag changes checked state, update the flag's field in the database
@@ -451,9 +371,8 @@ namespace Carnassial.Controls
             CheckBox checkBox = (CheckBox)sender;
             string value = ((bool)checkBox.IsChecked) ? Boolean.TrueString : Boolean.FalseString;
             DataEntryControl control = (DataEntryControl)checkBox.Tag;
-            control.SetContentAndTooltip(value);
-            this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
-            return;
+            control.SetValue(value);
+            this.ImageCache.Current.SetValueFromDatabaseString(control.DataLabel, control.Content);
         }
 
         private void MenuContextFilePath_Click(object sender, RoutedEventArgs e)
@@ -467,20 +386,24 @@ namespace Carnassial.Controls
         private void MenuContextCopyToAll_Click(object sender, RoutedEventArgs e)
         {
             DataEntryControl control = (DataEntryControl)((ContextMenu)((MenuItem)sender).Parent).Tag;
-            this.CopyToAll(control);
+            this.TryCopyToAll(control);
         }
 
         // propagate the current value of this control forward from this point across the current selection
         private void MenuContextPropagateForward_Click(object sender, RoutedEventArgs e)
         {
             DataEntryControl control = (DataEntryControl)((ContextMenu)((MenuItem)sender).Parent).Tag;
-            this.CopyForward(control, control is DataEntryCounter);
+            this.TryCopyForward(control, control is DataEntryCounter);
         }
 
         private void MenuContextPropagateFromLastValue_Click(object sender, RoutedEventArgs e)
         {
             DataEntryControl control = (DataEntryControl)((ContextMenu)((MenuItem)sender).Parent).Tag;
-            control.SetContentAndTooltip(this.CopyFromLastNonEmptyValue(control));
+            string valueToCopy;
+            if (this.TryCopyFromLastNonEmptyValue(control, out valueToCopy))
+            {
+                control.SetValue(valueToCopy);
+            }
         }
 
         // update database whenever text in a note control changes and mark the field for autocomplete recalculation
@@ -491,27 +414,111 @@ namespace Carnassial.Controls
                 return;
             }
 
-            // update control state and write current value to the database
             DataEntryNote control = (DataEntryNote)((TextBox)sender).Tag;
             control.ContentChanged = true;
+            this.ImageCache.Current.SetValueFromDatabaseString(control.DataLabel, control.Content);
+        }
 
-            this.IsProgrammaticControlUpdate = true;
-            this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, control.DataLabel, control.Content);
-            this.IsProgrammaticControlUpdate = false;
+        /// <summary>Propagate the current value of this control forward from this point across the current selection.</summary>
+        private bool TryCopyForward(DataEntryControl control, bool checkForZeroValue)
+        {
+            int filesAffected = this.FileDatabase.CurrentlySelectedFileCount - this.ImageCache.CurrentRow - 1;
+            if (filesAffected == 0)
+            {
+                // should be unreachable as the menu shouldn't be be enabled on the last file
+                MessageBox messageBox = new MessageBox("Nothing to copy forward.", Application.Current.MainWindow);
+                messageBox.Message.Reason = "As you are on the last file, there are no files after this.";
+                messageBox.ShowDialog();
+                return false;
+            }
+
+            string displayValueForConfirm = this.ImageCache.Current.GetValueDisplayString(control);
+            if (this.ConfirmCopyForward(displayValueForConfirm, filesAffected, checkForZeroValue) != true)
+            {
+                return false;
+            }
+
+            // update starts on the next row since copying from the current row
+            this.FileDatabase.UpdateFiles(this.ImageCache.Current, control, this.ImageCache.CurrentRow + 1, this.FileDatabase.CurrentlySelectedFileCount - 1);
+            return true;
+        }
+
+        /// <summary>
+        /// Copy the closest, non-empty value in a file preceding this one to all intervening files plus the current file
+        /// </summary>
+        private bool TryCopyFromLastNonEmptyValue(DataEntryControl control, out string valueToCopy)
+        {
+            bool isCounter = control is DataEntryCounter;
+            bool isFlag = control is DataEntryFlag;
+
+            // search for a previous file with a value assigned for this field, starting from the previous row
+            ImageRow fileWithLastNonEmptyValue = null;
+            int indexToCopyFrom = Constant.Database.InvalidRow;
+            valueToCopy = isCounter ? "0" : String.Empty;
+            for (int previousIndex = this.ImageCache.CurrentRow - 1; previousIndex >= 0; previousIndex--)
+            {
+                ImageRow file = this.FileDatabase.Files[previousIndex];
+                valueToCopy = file.GetValueDatabaseString(control.DataLabel);
+                if (valueToCopy == null)
+                {
+                    continue;
+                }
+
+                valueToCopy = valueToCopy.Trim();
+                if (valueToCopy.Length > 0)
+                {
+                    // skip zero values for counters and false values for flags
+                    if ((isCounter && !valueToCopy.Equals("0")) ||
+                        (isFlag && !valueToCopy.Equals(Boolean.FalseString, StringComparison.OrdinalIgnoreCase)) ||
+                        (!isCounter && !isFlag))
+                    {
+                        indexToCopyFrom = previousIndex;
+                        fileWithLastNonEmptyValue = file;
+                        break;
+                    }
+                }
+            }
+
+            if (indexToCopyFrom == Constant.Database.InvalidRow)
+            {
+                // Nothing to propagate.  If the menu item is deactivated as expected this shouldn't be reachable.
+                MessageBox messageBox = new MessageBox("Nothing to propagate to here.", Application.Current.MainWindow);
+                messageBox.Message.Reason = "None of the earlier files have a value specified for this field, so there is no value to propagate.";
+                messageBox.ShowDialog();
+                return false;
+            }
+
+            int imagesAffected = this.ImageCache.CurrentRow - indexToCopyFrom;
+            if (this.ConfirmCopyFromLastNonEmptyValue(valueToCopy, imagesAffected) != true)
+            {
+                return false;
+            }
+
+            this.FileDatabase.UpdateFiles(fileWithLastNonEmptyValue, control, indexToCopyFrom + 1, this.ImageCache.CurrentRow);
+            return true;
+        }
+
+        /// <summary>Copy the current value of this control to all images</summary>
+        public bool TryCopyToAll(DataEntryControl control)
+        {
+            bool checkForZero = control is DataEntryCounter;
+            int imagesAffected = this.FileDatabase.CurrentlySelectedFileCount;
+            string displayValueForConfirm = this.ImageCache.Current.GetValueDisplayString(control);
+            if (this.ConfirmCopyCurrentValueToAll(displayValueForConfirm, imagesAffected, checkForZero) != true)
+            {
+                return false;
+            }
+            this.FileDatabase.UpdateFiles(this.ImageCache.Current, control);
+            return true;
         }
 
         public bool TryDecrementOrResetCounter(DataEntryCounter counter)
         {
-            this.IsProgrammaticControlUpdate = true;
             bool counterValueChanged = counter.TryDecrementOrReset();
             if (counterValueChanged)
             {
-                // don't bother updating if the counter hasn't changed
-                // Update the datatable and database with the new counter values.
-                this.FileDatabase.UpdateFile(this.ImageCache.Current.ID, counter.DataLabel, counter.Content);
+                this.ImageCache.Current.SetValueFromDatabaseString(counter.DataLabel, counter.Content);
             }
-            this.IsProgrammaticControlUpdate = false;
-
             return counterValueChanged;
         }
 
@@ -526,8 +533,6 @@ namespace Carnassial.Controls
             DateTimeOffset newImageDateTime = currentImageDateTime.SetOffset(utcOffsetPicker.Value);
             this.ImageCache.Current.SetDateTimeOffset(newImageDateTime);
             utcOffsetPicker.ToolTip = DateTimeHandler.ToDisplayUtcOffsetString(utcOffsetPicker.Value);
-
-            this.FileDatabase.UpdateFiles(this.ImageCache.Current.CreateDateTimeUpdate());  // write the new UtcOffset to the database
         }
     }
 }
