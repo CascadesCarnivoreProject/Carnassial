@@ -39,9 +39,16 @@ namespace Carnassial.Database
             List<SQLiteParameter> whereParameters = new List<SQLiteParameter>();
             if (this.Where.Count > 0)
             {
+                Dictionary<string, int> numberOfClausesByColumn = new Dictionary<string, int>();
                 List<string> whereClauses = new List<string>(this.Where.Count);
                 foreach (WhereClause clause in this.Where)
                 {
+                    int clausesEncounteredForThisColumn;
+                    if (numberOfClausesByColumn.TryGetValue(clause.Name, out clausesEncounteredForThisColumn) == false)
+                    {
+                        clausesEncounteredForThisColumn = 0;
+                    }
+
                     // check to see if the search should match an empty string
                     // If so, nulls need also to be matched as NULL and empty are considered interchangeable.
                     if (String.IsNullOrEmpty(clause.Value) && clause.Operator == Constant.SearchTermOperator.Equal)
@@ -50,9 +57,12 @@ namespace Carnassial.Database
                     }
                     else
                     {
-                        whereClauses.Add(clause.Name + " " + clause.Operator + " @" + clause.Name);
-                        whereParameters.Add(new SQLiteParameter("@" + clause.Name, clause.Value));
+                        string parameterName = "@" + clause.Name + clausesEncounteredForThisColumn.ToString();
+                        whereClauses.Add(clause.Name + " " + clause.Operator + " " + parameterName);
+                        whereParameters.Add(new SQLiteParameter(parameterName, clause.Value));
                     }
+
+                    numberOfClausesByColumn[clause.Name] = ++clausesEncounteredForThisColumn;
                 }
 
                 string whereCombiningTerm;

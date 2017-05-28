@@ -22,10 +22,9 @@
         <controls:StockMessageControl x:Name="Message" StatusImage="Question"
                             Title="Create a custom selection."
                             What="You may want to view only a subset of your images and videos which fit some criteria of interest to you."
-                            Solution="Specify some search terms which describe your criteria.&#10;1. Each row below reflects one of your data fields.&#10;2. Select one or more data fields that you want to use as part of your search.
-                            &#10;3. Select the expresson you want to use.&#10;4. Select or enter the value you want to use to compare against the data field's contents."
-                            Result="Only those images and videos matching your search criteria will be displayed."
-                            Hint="Glob expressions are case sensitive and allow wildcards as follows:&#10;&#x2022; * matches any number of characters and ? matches any single character&#10;&#x2022; [abc] matches one of the indicated characters; [a-z] matches one character in the range of indicated characters. "
+                            Solution="Specify the search terms which describe your criteria. Each row below reflects one of your data fields.  Select one or more data fields that you want to use as part of your search, select the expresson you want to use, and select or enter the value you want to use to compare against the data field's contents."
+                            Result="Only those files matching your search criteria will be displayed."
+                            Hint="Glob expressions are case sensitive and allow wildcards as follows:&#10;&#x2022; * matches any number of characters and ? matches any single character&#10;&#x2022; [abc] matches one of the indicated characters; [a-z] matches one character in the range of indicated characters.&#10;More complex queries can be created by right clicking on a label and duplicating the term."
                             HideExplanationCheckboxIsVisible="True" Grid.Row="0"/>
         <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Grid.Row="1">
             <Rectangle Fill="#FF868686" Height="1" />
@@ -50,8 +49,7 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" MinWidth="300"/>
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -63,7 +61,7 @@
             </Grid>
         </ScrollViewer>
         <DockPanel Grid.Row="3">
-            <Button Name="Reset" Content="_Reset" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,0,0" Padding="10" Click="ResetButton_Click" IsEnabled="False"/>
+            <Button Name="Reset" Content="_Reset" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,0,0" Padding="10" Click="Reset_Click" IsEnabled="False"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <TextBlock Name="QueryMatches" HorizontalAlignment="Left"  Margin="10,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" FontWeight="DemiBold"><Run Text="0  "/></TextBlock>
                 <TextBlock HorizontalAlignment="Left"  Margin="0,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"><Run Text=" files match your query "/></TextBlock>
