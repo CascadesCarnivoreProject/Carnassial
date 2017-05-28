@@ -232,7 +232,7 @@ namespace Carnassial.UnitTests
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == 2);
 
-            SearchTerm markedForDeletion = fileDatabase.CustomSelection.SearchTerms.Single(term => term.ControlType == Constant.DatabaseColumn.DeleteFlag);
+            SearchTerm markedForDeletion = fileDatabase.CustomSelection.SearchTerms.Single(term => term.DataLabel == Constant.DatabaseColumn.DeleteFlag);
             markedForDeletion.UseForSearching = true;
             markedForDeletion.Operator = Constant.SearchTermOperator.Equal;
             markedForDeletion.DatabaseValue = Boolean.FalseString;
@@ -339,19 +339,19 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls);
                 this.VerifyControls(templateDatabase);
 
-                ControlRow newControl = templateDatabase.AddUserDefinedControl(Constant.Control.Counter);
+                ControlRow newControl = templateDatabase.AddUserDefinedControl(ControlType.Counter);
                 Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 1);
                 this.VerifyControl(newControl);
 
-                newControl = templateDatabase.AddUserDefinedControl(Constant.Control.FixedChoice);
+                newControl = templateDatabase.AddUserDefinedControl(ControlType.FixedChoice);
                 Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 2);
                 this.VerifyControl(newControl);
 
-                newControl = templateDatabase.AddUserDefinedControl(Constant.Control.Flag);
+                newControl = templateDatabase.AddUserDefinedControl(ControlType.Flag);
                 Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 3);
                 this.VerifyControl(newControl);
 
-                newControl = templateDatabase.AddUserDefinedControl(Constant.Control.Note);
+                newControl = templateDatabase.AddUserDefinedControl(ControlType.Note);
                 Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 4);
                 this.VerifyControl(newControl);
                 this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
@@ -369,15 +369,15 @@ namespace Carnassial.UnitTests
                 int iterations = 10;
                 for (int iteration = 0; iteration < iterations; ++iteration)
                 {
-                    ControlRow noteControl = templateDatabase.AddUserDefinedControl(Constant.Control.Note);
+                    ControlRow noteControl = templateDatabase.AddUserDefinedControl(ControlType.Note);
                     this.VerifyControl(noteControl);
-                    ControlRow flagControl = templateDatabase.AddUserDefinedControl(Constant.Control.Flag);
+                    ControlRow flagControl = templateDatabase.AddUserDefinedControl(ControlType.Flag);
                     this.VerifyControl(flagControl);
-                    ControlRow choiceControl = templateDatabase.AddUserDefinedControl(Constant.Control.FixedChoice);
+                    ControlRow choiceControl = templateDatabase.AddUserDefinedControl(ControlType.FixedChoice);
                     choiceControl.List = "DefaultChoice|OtherChoice";
                     templateDatabase.SyncControlToDatabase(choiceControl);
                     this.VerifyControl(choiceControl);
-                    ControlRow counterControl = templateDatabase.AddUserDefinedControl(Constant.Control.Counter);
+                    ControlRow counterControl = templateDatabase.AddUserDefinedControl(ControlType.Counter);
                     this.VerifyControl(counterControl);
                 }
 
@@ -833,11 +833,11 @@ namespace Carnassial.UnitTests
                 choiceControl.List = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
                 templateDatabase.SyncControlToDatabase(choiceControl);
                 ControlRow noteControl = templateDatabase.FindControl(TestConstant.DefaultDatabaseColumn.Note0);
-                noteControl.Type = Constant.Control.FixedChoice;
+                noteControl.Type = ControlType.FixedChoice;
                 templateDatabase.SyncControlToDatabase(noteControl);
 
                 Assert.IsFalse(FileDatabase.TryCreateOrOpen(fileDatabase.FileName, templateDatabase, false, LogicalOperator.And, out fileDatabase));
-                Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 1);
+                Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 5);
             }
             finally
             {
@@ -1079,7 +1079,7 @@ namespace Carnassial.UnitTests
         private void VerifyControl(ControlRow control)
         {
             Assert.IsTrue(control.ControlOrder > 0);
-            // nothing to sanity check for control.Copyable
+            Assert.IsTrue((control.Copyable == true) || (control.Copyable == false));
             Assert.IsFalse(String.IsNullOrWhiteSpace(control.DataLabel));
             // nothing to sanity check for control.DefaultValue
             Assert.IsTrue(control.ID >= 0);
@@ -1088,8 +1088,8 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(control.SpreadsheetOrder > 0);
             Assert.IsTrue(control.Width > 0);
             Assert.IsFalse(String.IsNullOrWhiteSpace(control.Tooltip));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(control.Type));
-            // nothing to sanity check for control.Visible
+            Assert.IsTrue(Enum.IsDefined(typeof(ControlType), control.Type));
+            Assert.IsTrue((control.Visible == true) || (control.Visible == false));
         }
 
         private void VerifyControls(TemplateDatabase database)
@@ -1214,7 +1214,7 @@ namespace Carnassial.UnitTests
             List<string> expectedColumns = new List<string>() { Constant.DatabaseColumn.ID };
             foreach (ControlRow control in fileDatabase.Controls)
             {
-                if (control.Type == Constant.Control.Counter)
+                if (control.Type == ControlType.Counter)
                 {
                     expectedColumns.Add(control.DataLabel);
                 }

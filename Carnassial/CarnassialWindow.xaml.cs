@@ -1872,8 +1872,8 @@ namespace Carnassial
                 control.SetValue(this.dataHandler.ImageCache.Current.GetDisplayValue(control.DataLabel));
 
                 // for note controls, update the autocomplete list if an edit occurred
-                string controlType = this.dataHandler.FileDatabase.ControlsByDataLabel[control.DataLabel].Type;
-                if (controlType == Constant.Control.Note)
+                ControlType controlType = this.dataHandler.FileDatabase.ControlsByDataLabel[control.DataLabel].Type;
+                if (controlType == ControlType.Note)
                 {
                     DataEntryNote noteControl = (DataEntryNote)control;
                     if (noteControl.ContentChanged)

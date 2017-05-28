@@ -9,7 +9,7 @@ namespace Carnassial.Data
     /// </summary>
     public class SearchTerm
     {
-        public string ControlType { get; set; }
+        public ControlType ControlType { get; set; }
         public string DatabaseValue { get; set; }
         public string DataLabel { get; set; }
         public string Label { get; set; }
@@ -19,7 +19,7 @@ namespace Carnassial.Data
 
         public SearchTerm()
         {
-            this.ControlType = String.Empty;
+            this.ControlType = default(ControlType);
             this.DatabaseValue = String.Empty;
             this.DataLabel = String.Empty;
             this.Label = String.Empty;

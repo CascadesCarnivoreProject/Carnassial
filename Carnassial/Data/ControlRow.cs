@@ -65,9 +65,9 @@ namespace Carnassial.Data
             set { this.Row.SetField(Constant.Control.Tooltip, value); }
         }
 
-        public string Type
+        public ControlType Type
         {
-            get { return this.Row.GetStringField(Constant.Control.Type); }
+            get { return this.Row.GetEnumField<ControlType>(Constant.Control.Type); }
             set { this.Row.SetField(Constant.Control.Type, value); }
         }
 
@@ -109,7 +109,7 @@ namespace Carnassial.Data
                                   control.SpreadsheetOrder,
                                   control.Width,
                                   control.Tooltip,
-                                  control.Type,
+                                  control.Type.ToString(),
                                   control.Visible ? Boolean.TrueString : Boolean.FalseString);
             }
 
@@ -128,7 +128,7 @@ namespace Carnassial.Data
             columnTuples.Add(new ColumnTuple(Constant.Control.SpreadsheetOrder, this.SpreadsheetOrder));
             columnTuples.Add(new ColumnTuple(Constant.Control.Width, this.Width));
             columnTuples.Add(new ColumnTuple(Constant.Control.Tooltip, this.Tooltip));
-            columnTuples.Add(new ColumnTuple(Constant.Control.Type, this.Type));
+            columnTuples.Add(new ColumnTuple(Constant.Control.Type, this.Type.ToString()));
             columnTuples.Add(new ColumnTuple(Constant.Control.Visible, this.Visible));
             return new ColumnTuplesWithID(Constant.DatabaseTable.Controls, columnTuples, this.ID);
         }
@@ -138,38 +138,34 @@ namespace Carnassial.Data
             return this.List.Split(ControlRow.BarDelimiter).ToList();
         }
 
+        public bool IsFilePathComponent()
+        {
+            return String.Equals(this.DataLabel, Constant.DatabaseColumn.File, StringComparison.OrdinalIgnoreCase) || String.Equals(this.DataLabel, Constant.DatabaseColumn.RelativePath, StringComparison.OrdinalIgnoreCase);
+        }
+
         public bool IsValidData(string value)
         {
             switch (this.Type)
             {
-                // choices
-                case Constant.Control.FixedChoice:
-                case Constant.DatabaseColumn.ImageQuality:
+                case ControlType.Counter:
+                    long result;
+                    return Int64.TryParse(value, out result);
+                case ControlType.DateTime:
+                    DateTime dateTime;
+                    return DateTimeHandler.TryParseDatabaseDateTime(value, out dateTime);
+                case ControlType.Flag:
+                    return String.Equals(value, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ||
+                           String.Equals(value, Boolean.TrueString, StringComparison.OrdinalIgnoreCase);
+                case ControlType.FixedChoice:
                     // the editor doesn't currently enforce the default value is one of the choices, so accept it as valid independently
                     if (value == this.DefaultValue)
                     {
                         return true;
                     }
                     return this.GetChoices().Contains(value);
-                // counters
-                case Constant.Control.Counter:
-                    long result;
-                    return Int64.TryParse(value, out result);
-                // flags
-                case Constant.DatabaseColumn.DeleteFlag:
-                case Constant.Control.Flag:
-                    return String.Equals(value, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ||
-                           String.Equals(value, Boolean.TrueString, StringComparison.OrdinalIgnoreCase);
-                // notes
-                case Constant.Control.Note:
-                case Constant.DatabaseColumn.File:
-                case Constant.DatabaseColumn.RelativePath:
+                case ControlType.Note:
                     return true;
-                // datetime and offset
-                case Constant.DatabaseColumn.DateTime:
-                    DateTime dateTime;
-                    return DateTimeHandler.TryParseDatabaseDateTime(value, out dateTime);
-                case Constant.DatabaseColumn.UtcOffset:
+                case ControlType.UtcOffset:
                     double utcOffset;
                     return double.TryParse(value, out utcOffset);
                 default:

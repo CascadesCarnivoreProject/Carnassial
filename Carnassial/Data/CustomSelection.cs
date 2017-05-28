@@ -42,11 +42,11 @@ namespace Carnassial.Data
 
                 switch (searchTerm.ControlType)
                 {
-                    case Constant.Control.Counter:
+                    case ControlType.Counter:
                         searchTerm.DatabaseValue = "0";
                         searchTerm.Operator = Constant.SearchTermOperator.GreaterThan;  // Makes more sense that people will test for > as the default rather than counters
                         break;
-                    case Constant.DatabaseColumn.DateTime:
+                    case ControlType.DateTime:
                         // the first time the CustomViewSelection dialog is popped CarnassialWindow calls SetDateTime() to changes the default date time to the date time 
                         // of the current image
                         searchTerm.DatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(Constant.ControlDefault.DateTimeValue);
@@ -58,16 +58,19 @@ namespace Carnassial.Data
                         dateTimeLessThanOrEqual.Operator = Constant.SearchTermOperator.LessThanOrEqual;
                         this.SearchTerms.Add(dateTimeLessThanOrEqual);
                         break;
-                    case Constant.Control.Flag:
+                    case ControlType.Flag:
                         searchTerm.DatabaseValue = Boolean.FalseString;
                         break;
-                    case Constant.DatabaseColumn.UtcOffset:
+                    case ControlType.FixedChoice:
+                    case ControlType.Note:
+                        // default values as above
+                        break;
+                    case ControlType.UtcOffset:
                         // the first time it's popped CustomViewSelection dialog changes this default to the date time of the current image
                         searchTerm.SetDatabaseValue(Constant.ControlDefault.DateTimeValue.Offset);
                         break;
                     default:
-                        // default values above
-                        break;
+                        throw new NotSupportedException(String.Format("Unhandled control type {0}.", searchTerm.ControlType));
                 }
             }
         }

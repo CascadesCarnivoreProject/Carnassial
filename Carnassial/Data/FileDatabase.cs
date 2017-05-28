@@ -117,7 +117,7 @@ namespace Carnassial.Data
             string deleteFlagDefaultValue = null;
             foreach (KeyValuePair<string, ControlRow> column in this.ControlsByDataLabel)
             {
-                if (column.Value.Type == Constant.Control.Counter)
+                if (column.Value.Type == ControlType.Counter)
                 {
                     counterPresent = true;
                 }
@@ -726,7 +726,7 @@ namespace Carnassial.Data
                     string type = String.Empty;
                     foreach (ControlRow control in this.Controls)
                     {
-                        if (control.Type == Constant.Control.Counter)
+                        if (control.Type == ControlType.Counter)
                         {
                             markerColumns.Add(new ColumnDefinition(control.DataLabel, Constant.SqlColumnType.Text, String.Empty));
                         }
@@ -775,7 +775,7 @@ namespace Carnassial.Data
                         this.ControlSynchronizationIssues.Add(String.Format("- Field with data label '{0}' is of type '{1}' in the file database but of type '{2}' in the template.{3}", dataLabel, fileDatabaseControl.Type, templateControl.Type, Environment.NewLine));
                     }
 
-                    if (fileDatabaseControl.Type == Constant.Control.Choice)
+                    if (fileDatabaseControl.Type == ControlType.FixedChoice)
                     {
                         List<string> fileDatabaseChoices = fileDatabaseControl.GetChoices();
                         List<string> templateChoices = templateControl.GetChoices();

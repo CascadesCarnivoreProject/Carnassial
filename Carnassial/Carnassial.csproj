@@ -177,6 +177,7 @@
     <Compile Include="Controls\AutocompleteTextBox.cs" />
     <Compile Include="Controls\BooleanInverter.cs" />
     <Compile Include="Controls\DataEntryControlContextMenuItemType.cs" />
+    <Compile Include="Data\ControlType.cs" />
     <Compile Include="Controls\DataEntryDateTime.cs" />
     <Compile Include="Controls\DataEntryUtcOffset.cs" />
     <Compile Include="Controls\TabControlWithoutHomeAndEnd.cs" />

@@ -49,6 +49,10 @@ namespace Carnassial.Editor
         {
             AppDomain.CurrentDomain.UnhandledException += this.OnUnhandledException;
             this.InitializeComponent();
+            this.AddCounterButton.Tag = ControlType.Counter;
+            this.AddFixedChoiceButton.Tag = ControlType.FixedChoice;
+            this.AddFlagButton.Tag = ControlType.Flag;
+            this.AddNoteButton.Tag = ControlType.Note;
             this.Title = EditorConstant.MainWindowBaseTitle;
             Utilities.TryFitWindowInWorkingArea(this);
 
@@ -82,7 +86,7 @@ namespace Carnassial.Editor
         private void AddControlButton_Click(object sender, RoutedEventArgs e)
         {
             Button button = sender as Button;
-            string controlType = button.Tag.ToString();
+            ControlType controlType = (ControlType)button.Tag;
 
             this.templateDataGridBeingUpdatedByCode = true;
 
@@ -592,7 +596,7 @@ namespace Carnassial.Editor
             }
 
             ControlRow control = new ControlRow(selectedRowView.Row);
-            if (Constant.Control.StandardControls.Contains(control.Type))
+            if (Constant.Control.StandardControls.Contains(control.DataLabel))
             {
                 // standard controls cannot be removed
                 return;
@@ -700,7 +704,7 @@ namespace Carnassial.Editor
 
                     string columnHeader = (string)this.TemplateDataGrid.Columns[column].Header;
                     ControlRow control = new ControlRow(((DataRowView)this.TemplateDataGrid.Items[rowIndex]).Row);
-                    string controlType = control.Type;
+                    ControlType controlType = control.Type;
                     bool disableCell = false;
                     if ((columnHeader == Constant.DatabaseColumn.ID) ||
                         (columnHeader == Constant.Control.ControlOrder) ||
@@ -715,24 +719,24 @@ namespace Carnassial.Editor
                         //   Constant.Control.Visible
                         //   EditorConstant.ColumnHeader.Width
                     }
-                    else if ((controlType == Constant.DatabaseColumn.DateTime) ||
-                             (controlType == Constant.DatabaseColumn.File) ||
-                             (controlType == Constant.DatabaseColumn.RelativePath))
+                    else if ((controlType == ControlType.DateTime) ||
+                             (control.DataLabel == Constant.DatabaseColumn.File) ||
+                             (control.DataLabel == Constant.DatabaseColumn.RelativePath))
                     {
                         // these standard controls have no editable properties other than width
                         disableCell = columnHeader != Constant.Control.Width;
                     }
-                    else if ((controlType == Constant.DatabaseColumn.DeleteFlag) ||
-                             (controlType == Constant.DatabaseColumn.ImageQuality) ||
-                             (controlType == Constant.DatabaseColumn.UtcOffset))
+                    else if ((control.DataLabel == Constant.DatabaseColumn.DeleteFlag) ||
+                             (control.DataLabel == Constant.DatabaseColumn.ImageQuality) ||
+                             (control.DataLabel == Constant.DatabaseColumn.UtcOffset))
                     {
                         // standard controls whose copyable, visible, and width can be changed
                         disableCell = (columnHeader != Constant.Control.Copyable) && 
                                       (columnHeader != Constant.Control.Visible) && 
                                       (columnHeader != Constant.Control.Width);
                     }
-                    else if ((controlType == Constant.Control.Counter) ||
-                             (controlType == Constant.Control.Flag))
+                    else if ((controlType == ControlType.Counter) ||
+                             (controlType == ControlType.Flag))
                     {
                         // all properties are editable except list
                         disableCell = columnHeader == Constant.Control.List;
@@ -819,10 +823,10 @@ namespace Carnassial.Editor
                     ControlRow control = new ControlRow((currentRow.Item as DataRowView).Row);
                     switch (control.Type)
                     {
-                        case Constant.Control.Counter:
+                        case ControlType.Counter:
                             e.Handled = !Utilities.IsDigits(e.Text);
                             break;
-                        case Constant.Control.Flag:
+                        case ControlType.Flag:
                             // only allow t/f and translate to true/false
                             if (e.Text == "t" || e.Text == "T")
                             {
@@ -836,13 +840,17 @@ namespace Carnassial.Editor
                             }
                             e.Handled = true;
                             break;
-                        case Constant.Control.FixedChoice:
+                        case ControlType.FixedChoice:
                             // no restrictions for now
                             // the default value should be limited to one of the choices defined, however
                             break;
-                        default:
-                            // no restrictions on note controls
+                        case ControlType.DateTime:
+                        case ControlType.Note:
+                        case ControlType.UtcOffset:
+                            // no restrictions on note or time controls
                             break;
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
                     }
                     break;
                 // EditorConstant.Control.ID is not editable
@@ -905,7 +913,7 @@ namespace Carnassial.Editor
             }
 
             ControlRow control = new ControlRow(selectedRowView.Row);
-            this.RemoveControlButton.IsEnabled = !Constant.Control.StandardControls.Contains(control.Type);
+            this.RemoveControlButton.IsEnabled = !Constant.Control.StandardControls.Contains(control.DataLabel);
         }
 
         private void TutorialLink_RequestNavigate(object sender, RequestNavigateEventArgs e)

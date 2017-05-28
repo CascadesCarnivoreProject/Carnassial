@@ -94,63 +94,60 @@ namespace Carnassial.Controls
         /// <summary>
         /// Add data event handler callbacks for (possibly invisible) controls
         /// </summary>
-        public void SetDataEntryCallbacks(List<DataEntryControl> dataEntryControl)
+        public void SetDataEntryCallbacks(List<DataEntryControl> dataEntryControls)
         {
             // Adds
             // - copy file path option to file and relative path controls
             // - data entry callbacks to editable controls
             // - propagate context menu to copyable controls
-            foreach (DataEntryControl control in dataEntryControl)
+            foreach (DataEntryControl dataEntyControl in dataEntryControls)
             {
-                string controlType = this.FileDatabase.ControlsByDataLabel[control.DataLabel].Type;
-                switch (controlType)
+                ControlRow control = this.FileDatabase.ControlsByDataLabel[dataEntyControl.DataLabel];
+                switch (control.Type)
                 {
-                    case Constant.Control.Note:
-                        DataEntryNote note = (DataEntryNote)control;
-                        note.ContentControl.TextAutocompleted += this.NoteControl_TextAutocompleted;
+                    case ControlType.Counter:
+                        DataEntryCounter counter = (DataEntryCounter)dataEntyControl;
+                        counter.ContentControl.TextChanged += this.CounterControl_TextChanged;
                         break;
-                    case Constant.DatabaseColumn.File:
-                    case Constant.DatabaseColumn.RelativePath:
-                        note = (DataEntryNote)control;
-                        Debug.Assert(note.ContentReadOnly, "File name and relative path are expected to be read only fields.");
-                        Debug.Assert(note.Copyable == false, "File name and relative path are not expected to be copyable fields.");
-                        MenuItem filePathItem = new MenuItem() { Header = "Copy file's path" };
-                        filePathItem.Click += this.MenuContextFilePath_Click;
-                        note.AppendToContextMenu(filePathItem);
-                        break;
-                    case Constant.DatabaseColumn.DateTime:
-                        DataEntryDateTime dateTime = (DataEntryDateTime)control;
+                    case ControlType.DateTime:
+                        DataEntryDateTime dateTime = (DataEntryDateTime)dataEntyControl;
                         dateTime.ContentControl.ValueChanged += this.DateTimeControl_ValueChanged;
                         break;
-                    case Constant.DatabaseColumn.UtcOffset:
-                        DataEntryUtcOffset utcOffset = (DataEntryUtcOffset)control;
-                        utcOffset.ContentControl.ValueChanged += this.UtcOffsetControl_ValueChanged;
+                    case ControlType.FixedChoice:
+                        DataEntryChoice choice = (DataEntryChoice)dataEntyControl;
+                        choice.ContentControl.SelectionChanged += this.ChoiceControl_SelectionChanged;
                         break;
-                    case Constant.DatabaseColumn.DeleteFlag:
-                    case Constant.Control.Flag:
-                        DataEntryFlag flag = (DataEntryFlag)control;
+                    case ControlType.Flag:
+                        DataEntryFlag flag = (DataEntryFlag)dataEntyControl;
                         flag.ContentControl.Checked += this.FlagControl_CheckedChanged;
                         flag.ContentControl.Unchecked += this.FlagControl_CheckedChanged;
                         break;
-                    case Constant.DatabaseColumn.ImageQuality:
-                    case Constant.Control.FixedChoice:
-                        DataEntryChoice choice = (DataEntryChoice)control;
-                        choice.ContentControl.SelectionChanged += this.ChoiceControl_SelectionChanged;
+                    case ControlType.Note:
+                        DataEntryNote note = (DataEntryNote)dataEntyControl;
+                        note.ContentControl.TextAutocompleted += this.NoteControl_TextAutocompleted;
+                        if (control.IsFilePathComponent())
+                        {
+                            Debug.Assert(note.ContentReadOnly, "File name and relative path are expected to be read only fields.");
+                            Debug.Assert(note.Copyable == false, "File name and relative path are not expected to be copyable fields.");
+                            MenuItem filePathItem = new MenuItem() { Header = "Copy file's path" };
+                            filePathItem.Click += this.MenuContextFilePath_Click;
+                            note.AppendToContextMenu(filePathItem);
+                        }
                         break;
-                    case Constant.Control.Counter:
-                        DataEntryCounter counter = (DataEntryCounter)control;
-                        counter.ContentControl.TextChanged += this.CounterControl_TextChanged;
+                    case ControlType.UtcOffset:
+                        DataEntryUtcOffset utcOffset = (DataEntryUtcOffset)dataEntyControl;
+                        utcOffset.ContentControl.ValueChanged += this.UtcOffsetControl_ValueChanged;
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled control type '{0}'.", controlType));
+                        throw new NotSupportedException(String.Format("Unhandled control type '{0}'.", control.Type));
                 }
 
                 // add the propagate context menu to copyable fields
-                if (control.Copyable)
+                if (dataEntyControl.Copyable)
                 {
                     MenuItem menuItemPropagateFromLastValue = new MenuItem();
                     menuItemPropagateFromLastValue.Header = "Propagate from the _last non-empty value to here...";
-                    if (control is DataEntryCounter)
+                    if (dataEntyControl is DataEntryCounter)
                     {
                         menuItemPropagateFromLastValue.Header = "Propagate from the _last non-zero value to here...";
                     }
@@ -169,7 +166,7 @@ namespace Carnassial.Controls
                     menuItemCopyToAll.Click += this.MenuContextCopyToAll_Click;
                     menuItemCopyToAll.Tag = DataEntryControlContextMenuItemType.CopyToAll;
 
-                    control.AppendToContextMenu(menuItemPropagateFromLastValue, menuItemCopyForward, menuItemCopyToAll);
+                    dataEntyControl.AppendToContextMenu(menuItemPropagateFromLastValue, menuItemCopyForward, menuItemCopyToAll);
                 }
             }
         }

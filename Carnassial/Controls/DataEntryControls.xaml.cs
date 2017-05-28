@@ -43,18 +43,16 @@ namespace Carnassial.Controls
                     continue;
                 }
 
-                if (control.Type == Constant.DatabaseColumn.DateTime)
+                if (control.Type == ControlType.DateTime)
                 {
                     dateTimeControl = new DataEntryDateTime(control, this);
                     visibleControls.Add(dateTimeControl);
                 }
-                else if (control.Type == Constant.DatabaseColumn.File ||
-                         control.Type == Constant.DatabaseColumn.RelativePath ||
-                         control.Type == Constant.Control.Note)
+                else if (control.Type == ControlType.Note)
                 {
                     // standard controls rendering as notes aren't editable by the user 
                     List<string> autocompletions = null;
-                    bool readOnly = control.Type != Constant.Control.Note;
+                    bool readOnly = control.IsFilePathComponent();
                     if (readOnly == false)
                     {
                         autocompletions = new List<string>(getNoteAutocompletions.Invoke(control.DataLabel));
@@ -62,22 +60,22 @@ namespace Carnassial.Controls
                     DataEntryNote noteControl = new DataEntryNote(control, autocompletions, readOnly, this);
                     visibleControls.Add(noteControl);
                 }
-                else if (control.Type == Constant.Control.Flag || control.Type == Constant.DatabaseColumn.DeleteFlag)
+                else if (control.Type == ControlType.Flag)
                 {
                     DataEntryFlag flagControl = new DataEntryFlag(control, this);
                     visibleControls.Add(flagControl);
                 }
-                else if (control.Type == Constant.Control.Counter)
+                else if (control.Type == ControlType.Counter)
                 {
                     DataEntryCounter counterControl = new DataEntryCounter(control, this);
                     visibleControls.Add(counterControl);
                 }
-                else if (control.Type == Constant.Control.FixedChoice || control.Type == Constant.DatabaseColumn.ImageQuality)
+                else if (control.Type == ControlType.FixedChoice)
                 {
                     DataEntryChoice choiceControl = new DataEntryChoice(control, this);
                     visibleControls.Add(choiceControl);
                 }
-                else if (control.Type == Constant.DatabaseColumn.UtcOffset)
+                else if (control.Type == ControlType.UtcOffset)
                 {
                     utcOffsetControl = new DataEntryUtcOffset(control, this);
                     visibleControls.Add(utcOffsetControl);

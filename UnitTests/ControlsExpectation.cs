@@ -23,14 +23,14 @@ namespace Carnassial.UnitTests
             this.File.List = Constant.ControlDefault.Value;
             this.File.TextBoxWidth = Constant.ControlDefault.FileWidth;
             this.File.Tooltip = Constant.ControlDefault.FileTooltip;
-            this.File.Type = Constant.DatabaseColumn.File;
+            this.File.Type = ControlType.Note;
             this.RelativePath = ControlExpectations.CreateNote(Constant.DatabaseColumn.RelativePath, id++);
             this.RelativePath.Copyable = false;
             this.RelativePath.DefaultValue = Constant.ControlDefault.Value;
             this.RelativePath.List = Constant.ControlDefault.Value;
             this.RelativePath.TextBoxWidth = Constant.ControlDefault.RelativePathWidth;
             this.RelativePath.Tooltip = Constant.ControlDefault.RelativePathTooltip;
-            this.RelativePath.Type = Constant.DatabaseColumn.RelativePath;
+            this.RelativePath.Type = ControlType.Note;
             this.RelativePath.Visible = true;
             this.DateTime = ControlExpectations.CreateNote(Constant.DatabaseColumn.DateTime, id++);
             this.DateTime.Copyable = false;
@@ -38,14 +38,14 @@ namespace Carnassial.UnitTests
             this.DateTime.List = Constant.ControlDefault.Value;
             this.DateTime.TextBoxWidth = Constant.ControlDefault.DateTimeWidth;
             this.DateTime.Tooltip = Constant.ControlDefault.DateTimeTooltip;
-            this.DateTime.Type = Constant.DatabaseColumn.DateTime;
+            this.DateTime.Type = ControlType.DateTime;
             this.UtcOffset = ControlExpectations.CreateNote(Constant.DatabaseColumn.UtcOffset, id++);
             this.UtcOffset.Copyable = false;
             this.UtcOffset.DefaultValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constant.ControlDefault.DateTimeValue.Offset);
             this.UtcOffset.List = Constant.ControlDefault.Value;
             this.UtcOffset.TextBoxWidth = Constant.ControlDefault.UtcOffsetWidth;
             this.UtcOffset.Tooltip = Constant.ControlDefault.UtcOffsetTooltip;
-            this.UtcOffset.Type = Constant.DatabaseColumn.UtcOffset;
+            this.UtcOffset.Type = ControlType.UtcOffset;
             this.UtcOffset.Visible = false;
             this.ImageQuality = ControlExpectations.CreateChoice(Constant.DatabaseColumn.ImageQuality, id++);
             this.ImageQuality.Copyable = false;
@@ -53,13 +53,13 @@ namespace Carnassial.UnitTests
             this.ImageQuality.List = Constant.ImageQuality.ListOfValues;
             this.ImageQuality.TextBoxWidth = Constant.ControlDefault.ImageQualityWidth;
             this.ImageQuality.Tooltip = Constant.ControlDefault.ImageQualityTooltip;
-            this.ImageQuality.Type = Constant.DatabaseColumn.ImageQuality;
+            this.ImageQuality.Type = ControlType.ImageQuality;
             this.DeleteFlag = ControlExpectations.CreateFlag(Constant.DatabaseColumn.DeleteFlag, id++);
             this.DeleteFlag.Copyable = false;
             this.DeleteFlag.Label = Constant.ControlDefault.DeleteFlagLabel;
             this.DeleteFlag.List = String.Empty;
             this.DeleteFlag.Tooltip = Constant.ControlDefault.DeleteFlagTooltip;
-            this.DeleteFlag.Type = Constant.DatabaseColumn.DeleteFlag;
+            this.DeleteFlag.Type = ControlType.Flag;
         }
 
         public virtual void Verify(TemplateDatabase templateDatabase)

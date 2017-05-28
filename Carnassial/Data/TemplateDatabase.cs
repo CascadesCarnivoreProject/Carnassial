@@ -45,63 +45,52 @@ namespace Carnassial.Data
             this.FolderPath = Path.GetDirectoryName(filePath);
         }
 
-        public ControlRow AddUserDefinedControl(string controlType)
+        public ControlRow AddUserDefinedControl(ControlType controlType)
         {
             this.CreateBackupIfNeeded();
 
             // create the row for the new control in the data table
             ControlRow newControl = this.Controls.CreateRow();
-            string dataLabelPrefix;
             switch (controlType)
             {
-                case Constant.Control.Counter:
-                    dataLabelPrefix = Constant.Control.Counter;
+                case ControlType.Counter:
                     newControl.DefaultValue = Constant.ControlDefault.CounterValue;
-                    newControl.Type = Constant.Control.Counter;
+                    newControl.Type = ControlType.Counter;
                     newControl.Width = Constant.ControlDefault.CounterWidth;
                     newControl.Copyable = false;
                     newControl.Visible = true;
                     newControl.Tooltip = Constant.ControlDefault.CounterTooltip;
-                    newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
-                    newControl.Label = newControl.DataLabel;
                     break;
-                case Constant.Control.Note:
-                    dataLabelPrefix = Constant.Control.Note;
+                case ControlType.Note:
                     newControl.DefaultValue = Constant.ControlDefault.Value;
-                    newControl.Type = Constant.Control.Note;
+                    newControl.Type = ControlType.Note;
                     newControl.Width = Constant.ControlDefault.NoteWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constant.ControlDefault.NoteTooltip;
-                    newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
-                    newControl.Label = newControl.DataLabel;
                     break;
-                case Constant.Control.FixedChoice:
-                    dataLabelPrefix = Constant.Control.Choice;
+                case ControlType.FixedChoice:
                     newControl.DefaultValue = Constant.ControlDefault.Value;
-                    newControl.Type = Constant.Control.FixedChoice;
+                    newControl.Type = ControlType.FixedChoice;
                     newControl.Width = Constant.ControlDefault.FixedChoiceWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constant.ControlDefault.FixedChoiceTooltip;
-                    newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
-                    newControl.Label = newControl.DataLabel;
                     break;
-                case Constant.Control.Flag:
-                    dataLabelPrefix = Constant.Control.Flag;
+                case ControlType.Flag:
                     newControl.DefaultValue = Constant.ControlDefault.FlagValue;
-                    newControl.Type = Constant.Control.Flag;
+                    newControl.Type = ControlType.Flag;
                     newControl.Width = Constant.ControlDefault.FlagWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constant.ControlDefault.FlagTooltip;
-                    newControl.DataLabel = this.GetNextUniqueDataLabel(dataLabelPrefix);
-                    newControl.Label = newControl.DataLabel;
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", controlType));
             }
             newControl.ControlOrder = this.Controls.RowCount;
+            newControl.DataLabel = this.GetNextUniqueDataLabel(newControl.Type.ToString());
+            newControl.Label = newControl.DataLabel;
             newControl.List = Constant.ControlDefault.Value;
             newControl.SpreadsheetOrder = newControl.ControlOrder;
 
@@ -203,10 +192,9 @@ namespace Carnassial.Data
         {
             this.CreateBackupIfNeeded();
 
-            string controlType = controlToRemove.Type;
-            if (Constant.Control.StandardControls.Contains(controlType))
+            if (Constant.Control.StandardControls.Contains(controlToRemove.DataLabel))
             {
-                throw new NotSupportedException(String.Format("Standard control of type {0} cannot be removed.", controlType));
+                throw new NotSupportedException(String.Format("Standard control {0} cannot be removed.", controlToRemove.DataLabel));
             }
 
             // capture state
@@ -479,7 +467,7 @@ namespace Carnassial.Data
                 ControlRow file = this.Controls.CreateRow();
                 file.ControlOrder = ++controlOrder;
                 file.SpreadsheetOrder = ++spreadsheetOrder;
-                file.Type = Constant.DatabaseColumn.File;
+                file.Type = ControlType.Note;
                 file.DefaultValue = Constant.ControlDefault.Value;
                 file.Label = Constant.DatabaseColumn.File;
                 file.DataLabel = Constant.DatabaseColumn.File;
@@ -493,7 +481,7 @@ namespace Carnassial.Data
                 ControlRow relativePath = this.Controls.CreateRow();
                 relativePath.ControlOrder = ++controlOrder;
                 relativePath.SpreadsheetOrder = ++spreadsheetOrder;
-                relativePath.Type = Constant.DatabaseColumn.RelativePath;
+                relativePath.Type = ControlType.Note;
                 relativePath.DefaultValue = Constant.ControlDefault.Value;
                 relativePath.Label = Constant.DatabaseColumn.RelativePath;
                 relativePath.DataLabel = Constant.DatabaseColumn.RelativePath;
@@ -507,7 +495,7 @@ namespace Carnassial.Data
                 ControlRow dateTime = this.Controls.CreateRow();
                 dateTime.ControlOrder = ++controlOrder;
                 dateTime.SpreadsheetOrder = ++spreadsheetOrder;
-                dateTime.Type = Constant.DatabaseColumn.DateTime;
+                dateTime.Type = ControlType.DateTime;
                 dateTime.DefaultValue = DateTimeHandler.ToDatabaseDateTimeString(Constant.ControlDefault.DateTimeValue.UtcDateTime);
                 dateTime.Label = Constant.DatabaseColumn.DateTime;
                 dateTime.DataLabel = Constant.DatabaseColumn.DateTime;
@@ -521,7 +509,7 @@ namespace Carnassial.Data
                 ControlRow utcOffset = this.Controls.CreateRow();
                 utcOffset.ControlOrder = ++controlOrder;
                 utcOffset.SpreadsheetOrder = ++spreadsheetOrder;
-                utcOffset.Type = Constant.DatabaseColumn.UtcOffset;
+                utcOffset.Type = ControlType.UtcOffset;
                 utcOffset.DefaultValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constant.ControlDefault.DateTimeValue.Offset);
                 utcOffset.Label = Constant.DatabaseColumn.UtcOffset;
                 utcOffset.DataLabel = Constant.DatabaseColumn.UtcOffset;
@@ -535,7 +523,7 @@ namespace Carnassial.Data
                 ControlRow imageQuality = this.Controls.CreateRow();
                 imageQuality.ControlOrder = ++controlOrder;
                 imageQuality.SpreadsheetOrder = ++spreadsheetOrder;
-                imageQuality.Type = Constant.DatabaseColumn.ImageQuality;
+                imageQuality.Type = ControlType.FixedChoice;
                 imageQuality.DefaultValue = Constant.ControlDefault.Value;
                 imageQuality.Label = Constant.DatabaseColumn.ImageQuality;
                 imageQuality.DataLabel = Constant.DatabaseColumn.ImageQuality;
@@ -549,7 +537,7 @@ namespace Carnassial.Data
                 ControlRow deleteFlag = this.Controls.CreateRow();
                 deleteFlag.ControlOrder = ++controlOrder;
                 deleteFlag.SpreadsheetOrder = ++spreadsheetOrder;
-                deleteFlag.Type = Constant.DatabaseColumn.DeleteFlag;
+                deleteFlag.Type = ControlType.Flag;
                 deleteFlag.DefaultValue = Constant.ControlDefault.FlagValue;
                 deleteFlag.Label = Constant.ControlDefault.DeleteFlagLabel;
                 deleteFlag.DataLabel = Constant.DatabaseColumn.DeleteFlag;

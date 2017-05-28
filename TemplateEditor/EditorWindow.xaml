@@ -408,10 +408,10 @@
                                 <DockPanel DockPanel.Dock="Top" Margin="0,0,0,-1">
                                     <TextBlock Margin="0,0,0,5" DockPanel.Dock="Top" FontSize="14" HorizontalAlignment="Center"><Run Text="Add:"/></TextBlock>
                                     <UniformGrid Margin="0,0,0,0" Rows="4" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
-                                        <Button Content="Count"  Margin="0,0,0,2.5" Tag="Counter" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton"/>
-                                        <Button Content="Choice" Margin="0,0,0,2.5" Tag="FixedChoice" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFixedChoiceButton"/>
-                                        <Button Content="Note" Margin="0,0,0,2.5" Tag="Note" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddNoteButton"/>
-                                        <Button Content="Flag" Margin="0,0,0,0" Tag="Flag" DockPanel.Dock="Bottom"  HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFlagButton"/>
+                                        <Button Content="Count"  Margin="0,0,0,2.5" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton"/>
+                                        <Button Content="Choice" Margin="0,0,0,2.5" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFixedChoiceButton"/>
+                                        <Button Content="Note" Margin="0,0,0,2.5" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddNoteButton"/>
+                                        <Button Content="Flag" Margin="0,0,0,0" DockPanel.Dock="Bottom"  HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFlagButton"/>
                                     </UniformGrid>
                                 </DockPanel>
                             </Border>

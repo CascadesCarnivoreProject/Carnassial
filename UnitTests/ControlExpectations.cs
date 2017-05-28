@@ -16,7 +16,7 @@ namespace Carnassial.UnitTests
         public long SpreadsheetOrder { get; set; }
         public int TextBoxWidth { get; set; }
         public string Tooltip { get; set; }
-        public string Type { get; set; }
+        public ControlType Type { get; set; }
         public bool Visible { get; set; }
 
         public static ControlExpectations CreateCounter(string dataLabel, long id)
@@ -38,7 +38,7 @@ namespace Carnassial.UnitTests
                 SpreadsheetOrder = spreadsheetOrder,
                 TextBoxWidth = Constant.ControlDefault.CounterWidth,
                 Tooltip = Constant.ControlDefault.CounterTooltip,
-                Type = Constant.Control.Counter,
+                Type = ControlType.Counter,
                 Visible = true
             };
         }
@@ -62,7 +62,7 @@ namespace Carnassial.UnitTests
                 SpreadsheetOrder = spreadsheetOrder,
                 TextBoxWidth = Constant.ControlDefault.FixedChoiceWidth,
                 Tooltip = Constant.ControlDefault.FixedChoiceTooltip,
-                Type = Constant.Control.FixedChoice,
+                Type = ControlType.FixedChoice,
                 Visible = true
             };
         }
@@ -86,7 +86,7 @@ namespace Carnassial.UnitTests
                 SpreadsheetOrder = spreadsheetOrder,
                 TextBoxWidth = Constant.ControlDefault.FlagWidth,
                 Tooltip = Constant.ControlDefault.FlagTooltip,
-                Type = Constant.Control.Flag,
+                Type = ControlType.Flag,
                 Visible = true
             };
         }
@@ -110,7 +110,7 @@ namespace Carnassial.UnitTests
                 SpreadsheetOrder = spreadsheetOrder,
                 TextBoxWidth = Constant.ControlDefault.NoteWidth,
                 Tooltip = Constant.ControlDefault.NoteTooltip,
-                Type = Constant.Control.Note,
+                Type = ControlType.Note,
                 Visible = true
             };
         }

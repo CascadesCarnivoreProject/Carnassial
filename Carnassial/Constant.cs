@@ -1,10 +1,8 @@
-﻿using Carnassial.Controls;
-using Carnassial.Native;
+﻿using Carnassial.Native;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -45,15 +43,6 @@ namespace Carnassial
             public const string Type = "Type";             // the data type
             public const string Visible = "Visible";       // whether an item should be visible (used by standard items)
             public const string Width = "Width";           // the width of the textbox
-
-            // control types
-            public const string Counter = "Counter";       // a counter
-            public const string FixedChoice = "FixedChoice"; // a fixed choice
-            public const string Flag = "Flag";             // a boolean
-            public const string Note = "Note";             // a note
-
-            // default control labels
-            public const string Choice = "Choice";         // label for a fixed choice
 
             // hotkey characters in use by the top level of Carnassial's main menu or the three data entry buttons and therefore unavailable as control 
             // shortcuts in either upper or lower case
@@ -132,7 +121,6 @@ namespace Carnassial
             public const char MarkerBar = '|';
         }
 
-        // Names of standard database columns, always included but not always made visible in the user controls
         public static class DatabaseColumn
         {
             public const string ID = "Id";
