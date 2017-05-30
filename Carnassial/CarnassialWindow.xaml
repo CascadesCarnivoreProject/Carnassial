@@ -8,7 +8,7 @@
         xmlns:s="clr-namespace:System;assembly=mscorlib"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         AutomationProperties.AutomationId="Carnassial" Icon="Carnassial.ico"
-        Closing="Window_Closing" KeyDown="Window_KeyDown" Loaded="Window_Loaded"
+        Closing="Window_Closing" KeyDown="Window_KeyDown" Loaded="Window_Loaded" SourceInitialized="Window_SourceInitialized"
         Height="900" Width="1350">
     <Grid>
         <Grid.RowDefinitions>

@@ -14,9 +14,10 @@ namespace Carnassial.Util
         public List<Dictionary<string, object>> Analysis { get; private set; }
         public byte DifferenceThreshold { get; set; } // The threshold used for calculating combined differences
         public bool FileNavigatorSliderDragging { get; set; }
-        public DateTime MostRecentDragEvent { get; set; }
+        public DateTime MostRecentRender { get; set; }
         public string MostRecentFileAddFolderPath { get; set; }
-        public int MostRecentlFocusedControlIndex { get; set; }
+        public int MostRecentlyFocusedControlIndex { get; set; }
+        public long MouseHorizontalScrollDelta { get; set; }
         public string MouseOverCounter { get; set; }
         public UndoRedoChain UndoRedoChain { get; private set; }
 
@@ -32,9 +33,10 @@ namespace Carnassial.Util
             }
             this.DifferenceThreshold = Constant.Images.DifferenceThresholdDefault;
             this.FileNavigatorSliderDragging = false;
-            this.MostRecentDragEvent = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;
+            this.MostRecentRender = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;
             this.MostRecentFileAddFolderPath = null;
-            this.MostRecentlFocusedControlIndex = -1;
+            this.MostRecentlyFocusedControlIndex = -1;
+            this.MouseHorizontalScrollDelta = 0;
             this.MouseOverCounter = null;
             this.UndoRedoChain = new UndoRedoChain();
         }
@@ -62,7 +64,7 @@ namespace Carnassial.Util
                 this.Analysis[analysisSlot] = null;
             }
             this.FileNavigatorSliderDragging = false;
-            this.MostRecentlFocusedControlIndex = -1;
+            this.MostRecentlyFocusedControlIndex = -1;
             this.MouseOverCounter = null;
             this.UndoRedoChain.Clear();
         }

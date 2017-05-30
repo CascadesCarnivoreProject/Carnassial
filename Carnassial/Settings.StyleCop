@@ -191,7 +191,9 @@
       <AnalyzerSettings>
         <CollectionProperty Name="Hungarian">
           <Value>go</Value>
+          <Value>l</Value>
           <Value>up</Value>
+          <Value>w</Value>
         </CollectionProperty>
       </AnalyzerSettings>
     </Analyzer>

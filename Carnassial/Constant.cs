@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -174,6 +175,12 @@ namespace Carnassial
             public const string TemplateFileExtension = ".tdb";
 
             public static readonly TimeSpan BackupInterval = TimeSpan.FromMinutes(10);
+        }
+
+        public static class Gestures
+        {
+            public const long MaximumMouseHWheelIncrement = 16000;
+            public const long MouseHWheelStep = 3 * 120;
         }
 
         public static class GitHub
@@ -406,6 +413,12 @@ namespace Carnassial
                 // File.File Modified Date
                 "ddd MMM dd HH:mm:ss K yyyy"
             };
+        }
+
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:FieldNamesMustNotContainUnderscore", Justification = "Win32 naming.")]
+        public static class Win32Messages
+        {
+            public const int WM_MOUSEHWHEEL = 0x20e;
         }
     }
 }

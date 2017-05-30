@@ -20,6 +20,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using DialogResult = System.Windows.Forms.DialogResult;
@@ -40,7 +41,7 @@ namespace Carnassial
         private CarnassialState state;
 
         // timer for flushing FileeNavigatorSlider drag events
-        private DispatcherTimer timerFileNavigatorSlider;
+        private DispatcherTimer fileNavigatorSliderTimer;
 
         public CarnassialWindow()
         {
@@ -60,9 +61,9 @@ namespace Carnassial
             this.MenuOptionsSkipDarkFileCheck.IsChecked = this.state.SkipDarkImagesCheck;
 
             // timer callback so the display will update to the current slider position when the user pauses whilst dragging the slider 
-            this.timerFileNavigatorSlider = new DispatcherTimer();
-            this.timerFileNavigatorSlider.Interval = TimeSpan.FromSeconds(1.0 / Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
-            this.timerFileNavigatorSlider.Tick += this.FileNavigatorSlider_TimerTick;
+            this.fileNavigatorSliderTimer = new DispatcherTimer();
+            this.fileNavigatorSliderTimer.Interval = TimeSpan.FromSeconds(1.0 / Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
+            this.fileNavigatorSliderTimer.Tick += this.FileNavigatorSlider_TimerTick;
 
             // populate lists of menu items
             for (int analysisSlot = 0; analysisSlot < Constant.AnalysisSlots; ++analysisSlot)
@@ -294,12 +295,12 @@ namespace Carnassial
         {
             this.state.FileNavigatorSliderDragging = false;
             await this.ShowFileAsync(this.FileNavigatorSlider);
-            this.timerFileNavigatorSlider.Stop();
+            this.fileNavigatorSliderTimer.Stop();
         }
 
         private void FileNavigatorSlider_DragStarted(object sender, DragStartedEventArgs args)
         {
-            this.timerFileNavigatorSlider.Start(); // The timer forces an image display update to the current slider position if the user pauses longer than the timer's interval. 
+            this.fileNavigatorSliderTimer.Start(); // The timer forces an image display update to the current slider position if the user pauses longer than the timer's interval. 
             this.state.FileNavigatorSliderDragging = true;
         }
 
@@ -319,7 +320,7 @@ namespace Carnassial
         private async void FileNavigatorSlider_TimerTick(object sender, EventArgs e)
         {
             await this.ShowFileAsync(this.FileNavigatorSlider);
-            this.timerFileNavigatorSlider.Stop();
+            this.fileNavigatorSliderTimer.Stop();
         }
 
         private async void FileNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> args)
@@ -332,10 +333,10 @@ namespace Carnassial
             }
 
             DateTime utcNow = DateTime.UtcNow;
-            if ((this.state.FileNavigatorSliderDragging == false) || (utcNow - this.state.MostRecentDragEvent > this.timerFileNavigatorSlider.Interval))
+            if ((this.state.FileNavigatorSliderDragging == false) || (utcNow - this.state.MostRecentRender > this.fileNavigatorSliderTimer.Interval))
             {
                 await this.ShowFileAsync(this.FileNavigatorSlider);
-                this.state.MostRecentDragEvent = utcNow;
+                this.state.MostRecentRender = utcNow;
                 args.Handled = true;
             }
         }
@@ -1220,7 +1221,7 @@ namespace Carnassial
             if (advancedCarnassialOptions.ShowDialog() == true)
             {
                 // throttle may have changed; update rendering rate
-                this.timerFileNavigatorSlider.Interval = this.state.Throttles.DesiredIntervalBetweenRenders;
+                this.fileNavigatorSliderTimer.Interval = this.state.Throttles.DesiredIntervalBetweenRenders;
             }
         }
 
@@ -1528,7 +1529,7 @@ namespace Carnassial
             // The defaulting causes tabbing to resume from the last control the user tabbed to.  This is desirable as pressing enter on a control
             // sets focus to the markable canvas, meaning if defaulting weren't used a user entering data and tabbing through controls would have
             // to tab through controls they've already entered for after each press of enter.  Defaulting lets tabbing pick up seamlessly instead.
-            int currentControlIndex = this.state.MostRecentlFocusedControlIndex;
+            int currentControlIndex = this.state.MostRecentlyFocusedControlIndex;
             IInputElement focusedElement = Keyboard.FocusedElement;
             if (focusedElement != null)
             {
@@ -1564,7 +1565,7 @@ namespace Carnassial
                 if (control.ContentReadOnly == false)
                 {
                     control.Focus(this);
-                    this.state.MostRecentlFocusedControlIndex = currentControlIndex;
+                    this.state.MostRecentlyFocusedControlIndex = currentControlIndex;
                     return;
                 }
             }
@@ -1573,7 +1574,7 @@ namespace Carnassial
             // this has also the desirable side effect of binding the controls into both next and previous loops so that keys can be used to cycle
             // continuously through them
             this.FocusMarkableCanvas();
-            this.state.MostRecentlFocusedControlIndex = -1;
+            this.state.MostRecentlyFocusedControlIndex = -1;
         }
 
         /// <summary>
@@ -2621,6 +2622,8 @@ namespace Carnassial
         {
             await this.CloseImageSetAsync();
 
+            HwndSource.FromHwnd((new WindowInteropHelper(this)).Handle).RemoveHook(new HwndSourceHook(this.WndProc));
+
             // persist user specific state to the registry
             if (this.Top > -10 && this.Left > -10)
             {
@@ -2920,6 +2923,51 @@ namespace Carnassial
         private void FileNavigatorSlider_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
             this.FocusMarkableCanvas();
+        }
+
+        private void Window_SourceInitialized(object sender, EventArgs e)
+        {
+            // hook touchpad swipes
+            HwndSource.FromHwnd((new WindowInteropHelper(this)).Handle).AddHook(new HwndSourceHook(this.WndProc));
+        }
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            // handle left and right swipes
+            // The maximum size of the horizontal scrolling increment accepted is limited as, particularly when swiping left, wParam can carry large
+            // positive increments rather than the negative increment which is correct for the motion.  As it sometimes jumps large for swipe rights
+            // as well the simplest solution is to declare the event out of range and drop it.  Some combining of drag events is done (MouseHWheelStep)
+            // as moving to a new file is a relatively chunky operation and actioning every increment makes the user interface rather hyper.
+            if (msg == Constant.Win32Messages.WM_MOUSEHWHEEL && this.MarkableCanvas.IsFocused)
+            {
+                long wheelIncrement = wParam.ToInt64() >> 16;
+                if (Math.Abs(wheelIncrement) < Constant.Gestures.MaximumMouseHWheelIncrement)
+                {
+                    this.state.MouseHorizontalScrollDelta += wheelIncrement;
+                    if (Math.Abs(this.state.MouseHorizontalScrollDelta) >= Constant.Gestures.MouseHWheelStep)
+                    {
+                        // if enough swipe distance has accumulated reset the accumulator
+                        // This resembles a slider drag in that the rendering needs not to be spammed with events but differs as the touchpad driver
+                        // likely keeps firing intertial events for quite some time if the user is doing swipe and throw.  For best responsiveness,
+                        // the accumulator is allowed to build until the next render and the number of files traversed incremented (or decremented)
+                        // accordingly.
+                        DateTime utcNow = DateTime.UtcNow;
+                        if (utcNow - this.state.MostRecentRender > this.fileNavigatorSliderTimer.Interval)
+                        {
+                            // awaiting an async function within WndProc() bricks the UI, so fire it asynchronously
+                            int increment = (int)(this.state.MouseHorizontalScrollDelta / Constant.Gestures.MouseHWheelStep);
+                            int newFileIndex = this.dataHandler.ImageCache.CurrentRow + increment;
+                            #pragma warning disable CS4014
+                            this.ShowFileWithoutSliderCallbackAsync(newFileIndex, increment);
+                            #pragma warning restore CS4014
+                            this.state.MostRecentRender = utcNow;
+                            this.state.MouseHorizontalScrollDelta = 0;
+                        }
+                    }
+                }
+                handled = true;
+            }
+            return IntPtr.Zero;
         }
     }
 }
