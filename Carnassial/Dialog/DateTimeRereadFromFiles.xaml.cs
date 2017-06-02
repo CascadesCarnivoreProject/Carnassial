@@ -72,11 +72,11 @@ namespace Carnassial.Dialog
                 for (int fileIndex = 0; fileIndex < count; ++fileIndex)
                 {
                     ImageRow file = this.database.Files[fileIndex];
-                    DateTimeOffset originalDateTime = file.GetDateTime();
+                    DateTimeOffset originalDateTime = file.DateTimeOffset;
                     string feedbackMessage = String.Empty;
                     try
                     {
-                        DateTimeAdjustment dateTimeAdjustment = file.TryReadDateTimeOriginalFromMetadata(this.database.FolderPath, imageSetTimeZone);
+                        DateTimeAdjustment dateTimeAdjustment = file.TryReadDateTimeFromMetadata(this.database.FolderPath, imageSetTimeZone);
                         if (dateTimeAdjustment == DateTimeAdjustment.None)
                         {
                             // couldn't read metadata, so get a candidate date/time from the file
@@ -92,7 +92,7 @@ namespace Carnassial.Dialog
                             feedbackMessage = "Using metadata date/time: ";
                         }
 
-                        DateTimeOffset rescannedDateTime = file.GetDateTime();
+                        DateTimeOffset rescannedDateTime = file.DateTimeOffset;
                         bool updateNeeded = false;
                         if (rescannedDateTime.Date == originalDateTime.Date)
                         {

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace Carnassial
@@ -15,12 +14,11 @@ namespace Carnassial
         public const int AnalysisSlots = 9;
 
         public const string ApplicationName = "Carnassial";
+        public const int LargeNumberOfFilesToDelete = 100;
         public const string MainWindowBaseTitle = "Carnassial: Simplifying Remote Camera Data";
-        public const int MaximumUndoRedoStates = 25;
+        public const int MaximumUndoableCommands = 100;
         public const int NumberOfMostRecentDatabasesToTrack = 9;
         public const double PageUpDownNavigationFraction = 0.1;
-        public const string StandardColour = "Gold";
-        public const string SelectionColour = "MediumBlue";
 
         public static readonly TimeSpan CheckForUpdateInterval = TimeSpan.FromDays(1.25);
 
@@ -49,8 +47,6 @@ namespace Carnassial
             // shortcuts in either upper or lower case
             public const string ReservedHotKeys = "FfEeOoVvSsHhPp12";
             
-            public static readonly SolidColorBrush CopyableFieldHighlightBrush = new SolidColorBrush(Color.FromArgb(255, 200, 251, 200)); // a minty green
-
             public static readonly ReadOnlyCollection<string> StandardControls = new List<string>()
             {
                 Constant.DatabaseColumn.DateTime,
@@ -211,7 +207,6 @@ namespace Carnassial
             public const byte DifferenceThresholdMin = 0;
 
             public const int ImageCacheSize = 9;
-            public const int LargeNumberOfDeletedImages = 100;
             public const int MinimumRenderWidth = 800;
 
             public static readonly TimeSpan MagnifierRotationTime = TimeSpan.FromMilliseconds(450);
@@ -415,6 +410,13 @@ namespace Carnassial
                 // File.File Modified Date
                 "ddd MMM dd HH:mm:ss K yyyy"
             };
+        }
+
+        public static class UndoRedo
+        {
+            public const string CustomSelection = "CustomSelection";
+            public const string FileIndex = "FileIndex";
+            public const string FileOrdering = "FileOrdering";
         }
 
         [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:FieldNamesMustNotContainUnderscore", Justification = "Win32 naming.")]

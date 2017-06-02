@@ -116,7 +116,7 @@ namespace Carnassial.UnitTests
             // bypass checking of Date and Time properties if requested, for example if the camera didn't generate image taken metadata
             if (this.SkipDateTimeVerification == false)
             {
-                DateTimeOffset imageDateTime = file.GetDateTime();
+                DateTimeOffset imageDateTime = file.DateTimeOffset;
                 DateTimeOffset expectedDateTime = this.ConvertDateTimeToTimeZone(timeZone);
                 Assert.IsTrue(imageDateTime.UtcDateTime == expectedDateTime.UtcDateTime, "{0}: Expected date time '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(imageDateTime.UtcDateTime));
                 Assert.IsTrue(imageDateTime.Offset == expectedDateTime.Offset, "{0}: Expected date time offset '{1}' but found '{2}'.", this.FileName, expectedDateTime.Offset, imageDateTime.Offset);

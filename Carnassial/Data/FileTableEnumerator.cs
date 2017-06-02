@@ -26,6 +26,11 @@ namespace Carnassial.Data
             this.TryMoveToFile(startingPosition);
         }
 
+        public bool IsFileAvailable
+        {
+            get { return this.Current != null; }
+        }
+
         public void Dispose()
         {
             this.Dispose(true);
@@ -40,6 +45,11 @@ namespace Carnassial.Data
         object IEnumerator.Current
         {
             get { return this.Current; }
+        }
+
+        public long GetCurrentFileID()
+        {
+            return this.IsFileAvailable ? this.Current.ID : Constant.Database.InvalidID;
         }
 
         public bool MoveNext()

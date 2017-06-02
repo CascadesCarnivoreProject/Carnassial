@@ -75,7 +75,7 @@ namespace Carnassial.UnitTests
             FileInfo fileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, fileExpectation.RelativePath, fileExpectation.FileName));
             ImageRow file;
             Assert.IsFalse(fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file));
-            dateTimeAdjustment = file.TryReadDateTimeOriginalFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
+            dateTimeAdjustment = file.TryReadDateTimeFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
             return file;
         }
 
@@ -284,12 +284,15 @@ namespace Carnassial.UnitTests
             fileDatabase.UpdateFiles(bobcatUpdate);
 
             ImageRow martenFile = fileDatabase.Files[0];
-            martenFile.SetValue(TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
-            martenFile.SetValue(TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
-            martenFile.SetValue(TestConstant.DefaultDatabaseColumn.FlagNotVisible, Boolean.TrueString);
-            martenFile.SetValue(TestConstant.DefaultDatabaseColumn.Note3, "American marten");
-            martenFile.SetValue(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
-            fileDatabase.UpdateFile(martenFile);
+            martenFile[TestConstant.DefaultDatabaseColumn.Choice0] = "choice b";
+            martenFile[TestConstant.DefaultDatabaseColumn.Counter0] = 1.ToString();
+            martenFile[TestConstant.DefaultDatabaseColumn.FlagNotVisible] = Boolean.TrueString;
+            martenFile[TestConstant.DefaultDatabaseColumn.Note3] = "American marten";
+            martenFile[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
+            Assert.IsTrue(martenFile.HasChanges);
+            fileDatabase.SyncFileToDatabase(martenFile);
+            martenFile.AcceptChanges();
+            Assert.IsFalse(martenFile.HasChanges);
 
             // generate expectations
             List<FileExpectations> fileExpectations = new List<FileExpectations>()
@@ -315,11 +318,12 @@ namespace Carnassial.UnitTests
                 fileDatabase.SelectFiles(FileSelection.All);
 
                 coyoteImage = fileEnumerator.Current;
-                coyoteImage.SetValue(TestConstant.DefaultDatabaseColumn.Note3, "coyote");
-                coyoteImage.SetValue(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
-                coyoteImage.SetValue(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
-                coyoteImage.SetValue(TestConstant.DefaultDatabaseColumn.Note0, "escaped field, because a comma is present");
-                fileDatabase.UpdateFile(coyoteImage);
+                coyoteImage[TestConstant.DefaultDatabaseColumn.Note3] = "coyote";
+                coyoteImage[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
+                coyoteImage[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] = String.Empty;
+                coyoteImage[TestConstant.DefaultDatabaseColumn.Note0] = "escaped field, because a comma is present";
+                fileDatabase.SyncFileToDatabase(coyoteImage);
+                coyoteImage.AcceptChanges();
 
                 FileTuplesWithID martenPairImageUpdate = new FileTuplesWithID(new List<ColumnTuple>()
                     {

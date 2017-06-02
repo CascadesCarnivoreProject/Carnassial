@@ -165,7 +165,7 @@ namespace Carnassial.Dialog
                         DateTimeOffset metadataDateTime;
                         if (DateTimeHandler.TryParseMetadataDateTaken(metadataValue, imageSetTimeZone, out metadataDateTime))
                         {
-                            file.SetDateTimeOffset(metadataDateTime);
+                            file.DateTimeOffset = metadataDateTime;
                             filesForDateTimeUpdate.Add(file);
                             backgroundWorker.ReportProgress(0, new FeedbackMessage(file.FileName, metadataValue));
                         }

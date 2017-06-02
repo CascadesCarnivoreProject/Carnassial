@@ -1,8 +1,9 @@
-﻿using Carnassial.Controls;
+﻿using Carnassial.Command;
 using Carnassial.Data;
 using Carnassial.Dialog;
 using Carnassial.Editor;
 using Carnassial.Editor.Dialog;
+using Carnassial.Images;
 using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -84,7 +85,7 @@ namespace Carnassial.UnitTests
 
             // create template database and remove any image database from previous test executions
             string templateDatabaseFilePath;
-            using (TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName))
+            using (TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName))
             {
                 templateDatabaseFilePath = templateDatabase.FilePath;
             }
@@ -134,10 +135,8 @@ namespace Carnassial.UnitTests
                 this.WaitForFolderLoadComplete(loadFolder);
 
                 // verify import succeeded
-                PrivateObject carnassialAccessor = new PrivateObject(carnassial);
-                DataEntryHandler dataHandler = (DataEntryHandler)carnassialAccessor.GetField(TestConstant.DataHandlerFieldName);
-                Assert.IsTrue(dataHandler.FileDatabase.CurrentlySelectedFileCount == 2);
-                Assert.IsNotNull(dataHandler.ImageCache.Current);
+                Assert.IsTrue(carnassial.DataHandler.FileDatabase.CurrentlySelectedFileCount == 2);
+                Assert.IsNotNull(carnassial.DataHandler.ImageCache.Current);
 
                 // verify forward and backward moves of the displayed image
                 DispatcherOperation<Task> moveForward = carnassial.Dispatcher.InvokeAsync(async () =>
@@ -153,11 +152,223 @@ namespace Carnassial.UnitTests
                 });
                 this.WaitForRenderingComplete();
 
+                // verify undo/redo of navigation
+                Assert.IsFalse(carnassial.MenuEditRedo.IsEnabled);
+                Assert.IsTrue(carnassial.MenuEditUndo.IsEnabled);
+                carnassial.Dispatcher.Invoke(() => { carnassial.MenuEditUndo_Click(null, null); });
+                this.WaitForRenderingComplete();
+                Assert.IsTrue(carnassial.DataHandler.ImageCache.CurrentRow == 1);
+
+                Assert.IsTrue(carnassial.MenuEditRedo.IsEnabled);
+                Assert.IsTrue(carnassial.MenuEditUndo.IsEnabled);
+                carnassial.Dispatcher.Invoke(() => { carnassial.MenuEditRedo_Click(null, null); });
+                this.WaitForRenderingComplete();
+                Assert.IsTrue(carnassial.DataHandler.ImageCache.CurrentRow == 0);
+
+                // file ordering
+                bool originalOrderFilesByDateTime = carnassial.State.OrderFilesByDateTime;
+                FileOrdering orderingCommand = new FileOrdering(carnassial.DataHandler.ImageCache);
+                Assert.IsTrue(orderingCommand.CanExecute(carnassial));
+                Assert.IsFalse(orderingCommand.CanUndo(carnassial));
+                Assert.IsTrue(orderingCommand.IsAsync);
+                Assert.IsFalse(orderingCommand.IsExecuted);
+                DispatcherOperation<Task> changeOrdering = carnassial.Dispatcher.InvokeAsync(async () =>
+                {
+                    await orderingCommand.ExecuteAsync(carnassial);
+                });
+                this.WaitForRenderingComplete();
+                Assert.IsTrue(carnassial.DataHandler.FileDatabase.OrderFilesByDateTime != originalOrderFilesByDateTime);
+                Assert.IsTrue(carnassial.State.OrderFilesByDateTime != originalOrderFilesByDateTime);
+                Assert.IsFalse(orderingCommand.CanExecute(carnassial));
+                Assert.IsTrue(orderingCommand.CanUndo(carnassial));
+
+                DispatcherOperation<Task> undoOrdering = carnassial.Dispatcher.InvokeAsync(async () =>
+                {
+                    await orderingCommand.UndoAsync(carnassial);
+                });
+                this.WaitForRenderingComplete();
+                Assert.IsTrue(carnassial.DataHandler.FileDatabase.OrderFilesByDateTime == originalOrderFilesByDateTime);
+                Assert.IsTrue(carnassial.State.OrderFilesByDateTime == originalOrderFilesByDateTime);
+                Assert.IsTrue(orderingCommand.CanExecute(carnassial));
+                Assert.IsFalse(orderingCommand.CanUndo(carnassial));
+
+                // sanity check file selection
+                DispatcherOperation<Task> selectAll = carnassial.Dispatcher.InvokeAsync(async () =>
+                {
+                    await carnassial.SelectFilesAndShowFileAsync(FileSelection.All);
+                });
+                this.WaitForRenderingComplete();
+                Assert.IsTrue(carnassial.DataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.All);
+                Assert.IsFalse(carnassial.MenuEditRedo.IsEnabled);
+                Assert.IsTrue(carnassial.MenuEditUndo.IsEnabled);
+
+                carnassial.Dispatcher.Invoke(() => { carnassial.MenuEditUndo_Click(null, null); });
+                this.WaitForRenderingComplete();
+                Assert.IsTrue(carnassial.DataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.All);
+
+                carnassial.Dispatcher.Invoke(() => { carnassial.MenuEditRedo_Click(null, null); });
+                this.WaitForRenderingComplete();
+                Assert.IsTrue(carnassial.DataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.All);
+
+                // file edit commands on notes
+                Assert.IsTrue(carnassial.State.CurrentFileSnapshot.Count == TestConstant.DefaultFileDataColumns.Count - 1);
+                string originalNote0Value = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note0];
+                string newNote0Value = "note 0 new value";
+                string originalNote3Value = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note3];
+                string newNote3Value = "note 3 new value";
+                Dictionary<string, object> multipleChanges = carnassial.DataHandler.ImageCache.Current.AsDictionary();
+                multipleChanges[TestConstant.DefaultDatabaseColumn.Note0] = newNote0Value;
+                multipleChanges[TestConstant.DefaultDatabaseColumn.Note3] = newNote3Value;
+                Assert.IsTrue(multipleChanges.Count == TestConstant.DefaultFileDataColumns.Count - 1);
+                FileMultipleFieldChange multipleEdit = new FileMultipleFieldChange(carnassial.DataHandler.ImageCache, multipleChanges);
+                Assert.IsTrue(multipleEdit.CanExecute(carnassial));
+                Assert.IsFalse(multipleEdit.CanUndo(carnassial));
+                Assert.IsTrue(multipleEdit.Changes == 2);
+                Assert.IsFalse(multipleEdit.IsAsync);
+                Assert.IsFalse(multipleEdit.IsExecuted);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note0] == originalNote0Value);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note3] == originalNote3Value);
+                Assert.IsTrue(carnassial.State.CurrentFileSnapshot.Count == TestConstant.DefaultFileDataColumns.Count - 1);
+                Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.Note0] == originalNote0Value);
+                Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.Note3] == originalNote3Value);
+
+                multipleEdit.Execute(carnassial);
+                Assert.IsFalse(multipleEdit.CanExecute(carnassial));
+                Assert.IsTrue(multipleEdit.CanUndo(carnassial));
+                Assert.IsTrue(multipleEdit.Changes == 2);
+                Assert.IsTrue(multipleEdit.IsExecuted);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note0] == newNote0Value);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note3] == newNote3Value);
+                Assert.IsTrue(carnassial.State.CurrentFileSnapshot.Count == TestConstant.DefaultFileDataColumns.Count - 1);
+                Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.Note0] == newNote0Value);
+                Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.Note3] == newNote3Value);
+                this.WaitForRenderingComplete();
+
+                multipleEdit.Undo(carnassial);
+                Assert.IsTrue(multipleEdit.CanExecute(carnassial));
+                Assert.IsFalse(multipleEdit.CanUndo(carnassial));
+                Assert.IsTrue(multipleEdit.Changes == 2);
+                Assert.IsFalse(multipleEdit.IsExecuted);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note0] == originalNote0Value);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note3] == originalNote3Value);
+                Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.Note0] == originalNote0Value);
+                Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.Note3] == originalNote3Value);
+                this.WaitForRenderingComplete();
+
+                DispatcherOperation<Task> showFile = carnassial.Dispatcher.InvokeAsync(async () =>
+                {
+                    // move to next file so change no longer matches current file and can't be exected or undone
+                    await carnassial.ShowFileAsync(carnassial.DataHandler.ImageCache.CurrentRow + 1, true);
+                });
+                this.WaitForRenderingComplete();
+                Assert.IsFalse(multipleEdit.CanExecute(carnassial));
+                Assert.IsFalse(multipleEdit.CanUndo(carnassial));
+
+                string previousNoteValue = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel];
+                string newNoteValue = "note single change value";
+                Dictionary<string, object> singleChangeAsMultipleChanges = carnassial.DataHandler.ImageCache.Current.AsDictionary();
+                singleChangeAsMultipleChanges[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] = newNoteValue;
+                FileMultipleFieldChange singleEditAsMultiple = new FileMultipleFieldChange(carnassial.DataHandler.ImageCache, singleChangeAsMultipleChanges);
+                Assert.IsTrue(singleEditAsMultiple.Changes == 1);
+                FileSingleFieldChange singleEdit = singleEditAsMultiple.AsSingleChange();
+                Assert.IsTrue(singleEdit.CanExecute(carnassial));
+                Assert.IsFalse(singleEdit.CanUndo(carnassial));
+                Assert.IsTrue(singleEdit.DataLabel == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel);
+                Assert.IsFalse(singleEdit.IsAsync);
+                Assert.IsFalse(singleEdit.IsExecuted);
+                Assert.IsTrue((string)singleEdit.NewValue == newNoteValue);
+                Assert.IsTrue((string)singleEdit.PreviousValue == previousNoteValue);
+                Assert.IsTrue(singleEdit.PropertyName == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel);
+                this.WaitForRenderingComplete();
+
+                singleEdit.Execute(carnassial);
+                Assert.IsFalse(singleEdit.CanExecute(carnassial));
+                Assert.IsTrue(singleEdit.CanUndo(carnassial));
+                Assert.IsTrue(singleEdit.DataLabel == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel);
+                Assert.IsFalse(singleEdit.IsAsync);
+                Assert.IsTrue(singleEdit.IsExecuted);
+                Assert.IsTrue((string)singleEdit.NewValue == newNoteValue);
+                Assert.IsTrue((string)singleEdit.PreviousValue == previousNoteValue);
+                Assert.IsTrue(singleEdit.PropertyName == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] == newNoteValue);
+                Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] == newNoteValue);
+                this.WaitForRenderingComplete();
+
+                singleEdit.Undo(carnassial);
+                Assert.IsTrue(singleEdit.CanExecute(carnassial));
+                Assert.IsFalse(singleEdit.CanUndo(carnassial));
+                Assert.IsTrue(singleEdit.DataLabel == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel);
+                Assert.IsFalse(singleEdit.IsAsync);
+                Assert.IsFalse(singleEdit.IsExecuted);
+                Assert.IsTrue((string)singleEdit.NewValue == newNoteValue);
+                Assert.IsTrue((string)singleEdit.PreviousValue == previousNoteValue);
+                Assert.IsTrue(singleEdit.PropertyName == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] == previousNoteValue);
+                Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] == previousNoteValue);
+                this.WaitForRenderingComplete();
+
+                // choice change
+                string previousChoiceValue = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel];
+                string newChoiceValue = "choice changed value";
+                FileSingleFieldChange choiceEdit = new FileSingleFieldChange(carnassial.DataHandler.ImageCache.Current.ID, TestConstant.DefaultDatabaseColumn.Choice0, TestConstant.DefaultDatabaseColumn.Choice0, previousChoiceValue, newChoiceValue, false);
+                choiceEdit.Execute(carnassial);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Choice0] == newChoiceValue);
+                choiceEdit.Undo(carnassial);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Choice0] == previousChoiceValue);
+
+                // flag change
+                string previousFlagValue = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Flag0];
+                string newFlagValue = String.Equals(previousFlagValue, Boolean.TrueString) ? Boolean.TrueString : Boolean.FalseString;
+                FileSingleFieldChange flagEdit = new FileSingleFieldChange(carnassial.DataHandler.ImageCache.Current.ID, TestConstant.DefaultDatabaseColumn.Flag0, TestConstant.DefaultDatabaseColumn.Flag0, previousFlagValue, newFlagValue, false);
+                flagEdit.Execute(carnassial);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Flag0] == newFlagValue.ToString());
+                flagEdit.Undo(carnassial);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Flag0] == previousFlagValue.ToString());
+
+                // marker insertion and removal
+                string previousCounterValue = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0];
+                string newCounterValue = (Int32.Parse(previousCounterValue) + 1).ToString();
+                Marker newMarker = new Marker(TestConstant.DefaultDatabaseColumn.Counter0, new Point()) { LabelShownPreviously = false, ShowLabel = true };
+                MarkerCreatedOrDeletedEventArgs markerEvent = new MarkerCreatedOrDeletedEventArgs(newMarker, true);
+                FileMarkerChange counterEdit = new FileMarkerChange(carnassial.DataHandler.ImageCache.Current.ID, markerEvent);
+                counterEdit.Execute(carnassial);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == newCounterValue.ToString());
+                counterEdit.Undo(carnassial);
+                Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == previousCounterValue.ToString());
+
+                // custom selection edit
+                Data.CustomSelection currentSelection = carnassial.DataHandler.FileDatabase.CustomSelection;
+                Data.CustomSelection undoSelection = new Data.CustomSelection(currentSelection);
+                CustomSelectionChange customSelectionEdit = new CustomSelectionChange(undoSelection, currentSelection);
+                Assert.IsFalse(customSelectionEdit.CanExecute(carnassial));
+                Assert.IsTrue(customSelectionEdit.CanUndo(carnassial));
+                Assert.IsFalse(customSelectionEdit.IsAsync);
+                Assert.IsTrue(customSelectionEdit.IsExecuted);
+
+                Assert.IsFalse(customSelectionEdit.HasChanges());
+                undoSelection.SearchTerms[0].UseForSearching = !undoSelection.SearchTerms[0].UseForSearching;
+                Assert.IsTrue(customSelectionEdit.HasChanges());
+
+                customSelectionEdit.Undo(carnassial);
+                Assert.IsTrue(Object.ReferenceEquals(undoSelection, carnassial.DataHandler.FileDatabase.CustomSelection));
+                Assert.IsTrue(customSelectionEdit.CanExecute(carnassial));
+                Assert.IsFalse(customSelectionEdit.CanUndo(carnassial));
+                Assert.IsFalse(customSelectionEdit.IsExecuted);
+
+                customSelectionEdit.Execute(carnassial);
+                // CustomSelectionChange..ctor() clones the current selection, so the clone should be in place after execution
+                Assert.IsFalse(Object.ReferenceEquals(currentSelection, carnassial.DataHandler.FileDatabase.CustomSelection));
+                Assert.IsFalse(Object.ReferenceEquals(undoSelection, carnassial.DataHandler.FileDatabase.CustomSelection));
+                Assert.IsFalse(customSelectionEdit.CanExecute(carnassial));
+                Assert.IsTrue(customSelectionEdit.CanUndo(carnassial));
+                Assert.IsTrue(customSelectionEdit.IsExecuted);
+
+                // verify application exit
+                carnassial.Close();
                 if (cancellationTokenSource.Token.CanBeCanceled)
                 {
                     cancellationTokenSource.Cancel();
                 }
-                carnassial.Close();
             }
 
             // open, load existing database, pop dialogs, close
@@ -173,40 +384,37 @@ namespace Carnassial.UnitTests
                 });
                 this.WaitForFolderLoadComplete(loadFolder);
 
-                PrivateObject carnassialAccessor = new PrivateObject(carnassial);
-                DataEntryHandler dataHandler = (DataEntryHandler)carnassialAccessor.GetField(TestConstant.DataHandlerFieldName);
-                Assert.IsTrue(dataHandler.FileDatabase.CurrentlySelectedFileCount > 0);
-                Assert.IsNotNull(dataHandler.ImageCache.Current);
+                Assert.IsTrue(carnassial.DataHandler.FileDatabase.CurrentlySelectedFileCount > 0);
+                Assert.IsNotNull(carnassial.DataHandler.ImageCache.Current);
 
                 this.ShowDialog(new About(carnassial));
-                CarnassialState state = (CarnassialState)carnassialAccessor.GetField("state");
-                this.ShowDialog(new AdvancedCarnassialOptions(state, carnassial.MarkableCanvas, carnassial));
+                this.ShowDialog(new AdvancedCarnassialOptions(carnassial.State, carnassial.MarkableCanvas, carnassial));
                 this.ShowDialog(new ChooseFileDatabase(new string[] { TestConstant.File.DefaultNewFileDatabaseFileName }, TestConstant.File.DefaultTemplateDatabaseFileName, carnassial));
 
-                this.ShowDialog(new Dialog.CustomSelection(dataHandler.FileDatabase, carnassial));
-                using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(dataHandler.FileDatabase, dataHandler.ImageCache.CurrentRow, new CarnassialState(), carnassial))
+                this.ShowDialog(new Dialog.CustomSelection(carnassial.DataHandler.FileDatabase, carnassial));
+                using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.CurrentRow, new CarnassialState(), carnassial))
                 {
                     this.ShowDialog(darkThreshold);
                 }
 
-                this.ShowDialog(new DateCorrectAmbiguous(dataHandler.FileDatabase, carnassial));
-                this.ShowDialog(new DateDaylightSavingsTimeCorrection(dataHandler.FileDatabase, dataHandler.ImageCache, carnassial));
+                this.ShowDialog(new DateCorrectAmbiguous(carnassial.DataHandler.FileDatabase, carnassial));
+                this.ShowDialog(new DateDaylightSavingsTimeCorrection(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache, carnassial));
 
-                DateTimeFixedCorrection clockSetCorrection = new DateTimeFixedCorrection(dataHandler.FileDatabase, dataHandler.ImageCache.Current, carnassial);
+                DateTimeFixedCorrection clockSetCorrection = new DateTimeFixedCorrection(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current, carnassial);
                 this.ShowDialog(clockSetCorrection);
 
-                DateTimeLinearCorrection clockDriftCorrection = new DateTimeLinearCorrection(dataHandler.FileDatabase, carnassial);
-                Assert.IsTrue(clockDriftCorrection.Abort == (dataHandler.ImageCache.Current == null));
+                DateTimeLinearCorrection clockDriftCorrection = new DateTimeLinearCorrection(carnassial.DataHandler.FileDatabase, carnassial);
+                Assert.IsTrue(clockDriftCorrection.Abort == (carnassial.DataHandler.ImageCache.Current == null));
                 this.ShowDialog(clockDriftCorrection);
 
-                this.ShowDialog(new DateTimeRereadFromFiles(dataHandler.FileDatabase, carnassial));
-                this.ShowDialog(new DateTimeSetTimeZone(dataHandler.FileDatabase, dataHandler.ImageCache.Current, carnassial));
-                this.ShowDialog(new FileCountsByQuality(dataHandler.FileDatabase.GetFileCountsBySelection(), carnassial));
-                this.ShowDialog(new EditLog(dataHandler.FileDatabase.ImageSet.Log, carnassial));
+                this.ShowDialog(new DateTimeRereadFromFiles(carnassial.DataHandler.FileDatabase, carnassial));
+                this.ShowDialog(new DateTimeSetTimeZone(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current, carnassial));
+                this.ShowDialog(new FileCountsByQuality(carnassial.DataHandler.FileDatabase.GetFileCountsBySelection(), carnassial));
+                this.ShowDialog(new EditLog(carnassial.DataHandler.FileDatabase.ImageSet.Log, carnassial));
 
-                this.ShowDialog(new PopulateFieldWithMetadata(dataHandler.FileDatabase, dataHandler.ImageCache.Current.GetFilePath(dataHandler.FileDatabase.FolderPath), carnassial));
-                this.ShowDialog(new RenameFileDatabaseFile(dataHandler.FileDatabase.FileName, carnassial));
-                this.ShowDialog(new TemplateSynchronization(dataHandler.FileDatabase.ControlSynchronizationIssues, carnassial));
+                this.ShowDialog(new PopulateFieldWithMetadata(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current.GetFilePath(carnassial.DataHandler.FileDatabase.FolderPath), carnassial));
+                this.ShowDialog(new RenameFileDatabaseFile(carnassial.DataHandler.FileDatabase.FileName, carnassial));
+                this.ShowDialog(new TemplateSynchronization(carnassial.DataHandler.FileDatabase.ControlSynchronizationIssues, carnassial));
 
                 MessageBox okMessageBox = this.CreateMessageBox(carnassial, MessageBoxButton.OK, MessageBoxImage.Error);
                 this.ShowDialog(okMessageBox);
@@ -233,6 +441,12 @@ namespace Carnassial.UnitTests
 
         private bool TryFindDialogOkButton(AutomationElement parent, CancellationToken cancellationToken, string automationID, out InvokePattern okButtonInvoke)
         {
+            okButtonInvoke = null;
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return false;
+            }
+
             AutomationElement dialog = null;
             DateTime startTime = DateTime.UtcNow;
             while ((dialog == null) && (DateTime.UtcNow - startTime < TestConstant.UIElementSearchTimeout))
@@ -240,10 +454,13 @@ namespace Carnassial.UnitTests
                 Thread.Sleep(TimeSpan.FromMilliseconds(100));
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    okButtonInvoke = null;
                     return false;
                 }
                 dialog = parent.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, automationID));
+            }
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return false;
             }
             Assert.IsNotNull(dialog);
 

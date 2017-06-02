@@ -10,7 +10,6 @@ namespace Carnassial.UnitTests
         public const string CarnassialAutomationID = "Carnassial";
         public const string CarnassialTemplateEditorAutomationID = "CarnassialTemplateEditor";
         public const double DarkPixelFractionTolerance = 0.00000001;
-        public const string DataHandlerFieldName = "dataHandler";
         public const string DateTimeWithOffsetFormat = "yyyy-MM-ddTHH:mm:ss.fffK";
         public const string EditorTemplateDatabaseFieldName = "templateDatabase";
         public const string FileCountsAutomationID = "FileCountsByQuality";

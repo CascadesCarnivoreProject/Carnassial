@@ -307,7 +307,7 @@ namespace Carnassial.Data
             // argument validation
             if (orderColumnName != Constant.Control.ControlOrder && orderColumnName != Constant.Control.SpreadsheetOrder)
             {
-                throw new ArgumentOutOfRangeException("column", String.Format("'{0}' is not a control order column.  Only '{1}' and '{2}' are order columns.", orderColumnName, Constant.Control.ControlOrder, Constant.Control.SpreadsheetOrder));
+                throw new ArgumentOutOfRangeException(nameof(orderColumnName), String.Format("'{0}' is not a control order column.  Only '{1}' and '{2}' are order columns.", orderColumnName, Constant.Control.ControlOrder, Constant.Control.SpreadsheetOrder));
             }
 
             if (newOrderByDataLabel.Count != this.Controls.RowCount)
@@ -327,7 +327,7 @@ namespace Carnassial.Data
                 int expectedOrder = control + 1;
                 if (uniqueOrderValues[control] != expectedOrder)
                 {
-                    throw new ArgumentOutOfRangeException(String.Format("Control order must be a ones based count.  An order of {0} was passed instead of the expected order {1} for '{2}'.", uniqueOrderValues[0], expectedOrder, orderColumnName), nameof(newOrderByDataLabel));
+                    throw new ArgumentOutOfRangeException(nameof(newOrderByDataLabel), String.Format("Control order must be a ones based count.  An order of {0} was passed instead of the expected order {1} for '{2}'.", uniqueOrderValues[0], expectedOrder, orderColumnName), nameof(newOrderByDataLabel));
                 }
             }
 
@@ -591,7 +591,7 @@ namespace Carnassial.Data
         {
             if ((order < 1) || (order > this.Controls.RowCount))
             {
-                throw new ArgumentOutOfRangeException("order", "Control and spreadsheet orders must be contiguous ones based values.");
+                throw new ArgumentOutOfRangeException(nameof(order), "Control and spreadsheet orders must be contiguous ones based values.");
             }
 
             Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();

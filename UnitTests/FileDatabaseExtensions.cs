@@ -10,7 +10,7 @@ namespace Carnassial.UnitTests
         {
             foreach (ImageRow file in fileDatabase.Files)
             {
-                yield return file.GetDateTime();
+                yield return file.DateTimeOffset;
             }
         }
     }

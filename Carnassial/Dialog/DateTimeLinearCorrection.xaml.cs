@@ -1,4 +1,4 @@
-﻿using Carnassial.Controls;
+﻿using Carnassial.Control;
 using Carnassial.Data;
 using Carnassial.Native;
 using Carnassial.Util;
@@ -41,7 +41,7 @@ namespace Carnassial.Dialog
             bool foundLatest = false;
             foreach (ImageRow file in fileDatabase.Files)
             {
-                DateTimeOffset fileDateTime = file.GetDateTime();
+                DateTimeOffset fileDateTime = file.DateTimeOffset;
 
                 if (fileDateTime >= this.latestFileDateTimeUncorrected)
                 {
@@ -146,7 +146,7 @@ namespace Carnassial.Dialog
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
                 string difference = String.Empty;
-                DateTimeOffset imageDateTime = file.GetDateTime();
+                DateTimeOffset imageDateTime = file.DateTimeOffset;
 
                 TimeSpan adjustment = this.GetAdjustment(intervalFromCorrectToMeasured, imageDateTime);
                 if (adjustment.Duration() >= Constant.Time.DateTimeDatabaseResolution)

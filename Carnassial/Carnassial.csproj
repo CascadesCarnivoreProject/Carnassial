@@ -174,24 +174,34 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Controls\AutocompleteTextBox.cs" />
-    <Compile Include="Controls\BooleanInverter.cs" />
-    <Compile Include="Controls\DataEntryControlContextMenuItemType.cs" />
+    <Compile Include="Command\CustomSelectionChange.cs" />
+    <Compile Include="Command\FileChange.cs" />
+    <Compile Include="Command\FileMarkerChange.cs" />
+    <Compile Include="Command\FileMultipleFieldChange.cs" />
+    <Compile Include="Command\FileOrdering.cs" />
+    <Compile Include="Command\FileSelectionChange.cs" />
+    <Compile Include="Command\FileNavigation.cs" />
+    <Compile Include="Command\FileSingleFieldChange.cs" />
+    <Compile Include="Command\UndoableCommandAsync.cs" />
+    <Compile Include="Command\UndoableCommand.cs" />
+    <Compile Include="Control\AutocompleteTextBox.cs" />
+    <Compile Include="Control\BooleanInverter.cs" />
+    <Compile Include="Control\DataEntryControlContextMenuItemType.cs" />
+    <Compile Include="Control\UtcOffsetPicker.cs" />
+    <Compile Include="Database\IndexedPropertyChangedEventArgs.cs" />
     <Compile Include="Data\ControlType.cs" />
-    <Compile Include="Controls\DataEntryDateTime.cs" />
-    <Compile Include="Controls\DataEntryUtcOffset.cs" />
-    <Compile Include="Controls\TabControlWithoutHomeAndEnd.cs" />
-    <Compile Include="Controls\TimeSpanPicker.xaml.cs">
+    <Compile Include="Control\DataEntryDateTimeOffset.cs" />
+    <Compile Include="Control\TabControlWithoutHomeAndEnd.cs" />
+    <Compile Include="Control\TimeSpanPicker.xaml.cs">
       <DependentUpon>TimeSpanPicker.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\DateTimeOffsetPicker.xaml.cs">
+    <Compile Include="Control\DateTimeOffsetPicker.xaml.cs">
       <DependentUpon>DateTimeOffsetPicker.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\Direction.cs" />
-    <Compile Include="Controls\IndexedDateTimePart.cs" />
-    <Compile Include="Controls\TextBoxUpDownAdorner.cs" />
-    <Compile Include="Controls\TimeZonePicker.cs" />
-    <Compile Include="Controls\UtcOffsetPicker.cs" />
+    <Compile Include="Control\Direction.cs" />
+    <Compile Include="Control\IndexedDateTimePart.cs" />
+    <Compile Include="Control\TextBoxUpDownAdorner.cs" />
+    <Compile Include="Control\TimeZonePicker.cs" />
     <Compile Include="Database\ColumnDefinition.cs" />
     <Compile Include="Database\ColumnTuplesForUpdate.cs" />
     <Compile Include="Database\ColumnTuplesForInsert.cs" />
@@ -203,6 +213,7 @@
     <Compile Include="Database\DataTableBackedList.cs" />
     <Compile Include="Database\DataRowExtensions.cs" />
     <Compile Include="Data\FileTable.cs" />
+    <Compile Include="Data\ImageRowDateTimeOffsetConverter.cs" />
     <Compile Include="Data\ImageSetOptions.cs" />
     <Compile Include="Data\ImageSetRow.cs" />
     <Compile Include="Data\MarkerRow.cs" />
@@ -215,7 +226,7 @@
     <Compile Include="Dialog\DateCorrectAmbiguous.xaml.cs">
       <DependentUpon>DateCorrectAmbiguous.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\DateChangesFeedbackControl.xaml.cs">
+    <Compile Include="Control\DateChangesFeedbackControl.xaml.cs">
       <DependentUpon>DateChangesFeedbackControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Dialog\DateTimeSetTimeZone.xaml.cs">
@@ -243,7 +254,7 @@
     <Compile Include="Util\SequentialPartitioner.cs" />
     <Compile Include="Util\RegistryKeyExtensions.cs" />
     <Compile Include="Util\Throttles.cs" />
-    <Compile Include="Controls\VideoPlayer.xaml.cs">
+    <Compile Include="Control\VideoPlayer.xaml.cs">
       <DependentUpon>VideoPlayer.xaml</DependentUpon>
     </Compile>
     <Compile Include="GlobalSuppressions.cs" />
@@ -255,8 +266,8 @@
     <Compile Include="Images\ImageDifference.cs" />
     <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
-    <Compile Include="Images\MarkerEventArgs.cs" />
-    <Compile Include="Controls\StockMessageControl.xaml.cs">
+    <Compile Include="Images\MarkerCreatedOrDeletedEventArgs.cs" />
+    <Compile Include="Control\StockMessageControl.xaml.cs">
       <DependentUpon>StockMessageControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Database\DataRowBackedObject.cs" />
@@ -283,11 +294,11 @@
     <Compile Include="Dialog\DeleteFiles.xaml.cs">
       <DependentUpon>DeleteFiles.xaml</DependentUpon>
     </Compile>
-    <Page Include="Controls\TimeSpanPicker.xaml">
+    <Page Include="Control\TimeSpanPicker.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Controls\DateTimeOffsetPicker.xaml">
+    <Page Include="Control\DateTimeOffsetPicker.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
       <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
@@ -300,7 +311,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls\DateChangesFeedbackControl.xaml">
+    <Page Include="Control\DateChangesFeedbackControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -372,19 +383,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls\VideoPlayer.xaml">
+    <Page Include="Control\VideoPlayer.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Controls\FeedbackControl.xaml">
+    <Page Include="Control\FeedbackControl.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Controls\HelpUserControl.xaml">
+    <Page Include="Control\HelpUserControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls\DataEntryControls.xaml">
+    <Page Include="Control\DataEntryControls.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -392,7 +403,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls\StockMessageControl.xaml">
+    <Page Include="Control\StockMessageControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -406,7 +417,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Images\Marker.cs" />
+    <Compile Include="Data\Marker.cs" />
     <Compile Include="Dialog\MessageBox.xaml.cs">
       <DependentUpon>MessageBox.xaml</DependentUpon>
     </Compile>
@@ -422,21 +433,21 @@
     <Compile Include="Dialog\TemplateSynchronization.xaml.cs">
       <DependentUpon>TemplateSynchronization.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\FeedbackControl.xaml.cs">
+    <Compile Include="Control\FeedbackControl.xaml.cs">
       <DependentUpon>FeedbackControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Database\FileBackup.cs" />
     <Compile Include="Data\ImageRow.cs" />
     <Compile Include="Data\FileSelection.cs" />
-    <Compile Include="Images\MarkersForCounter.cs" />
-    <Compile Include="Controls\ControlLabelStyle.cs" />
-    <Compile Include="Controls\ControlContentStyle.cs" />
+    <Compile Include="Data\MarkersForCounter.cs" />
+    <Compile Include="Control\ControlLabelStyle.cs" />
+    <Compile Include="Control\ControlContentStyle.cs" />
     <Compile Include="Util\MostRecentlyUsedList.cs" />
-    <Compile Include="Controls\DataEntryControl.cs" />
-    <Compile Include="Controls\DataEntryCounter.cs" />
-    <Compile Include="Controls\DataEntryChoice.cs" />
-    <Compile Include="Controls\DataEntryFlag.cs" />
-    <Compile Include="Controls\DataEntryNote.cs" />
+    <Compile Include="Control\DataEntryControl.cs" />
+    <Compile Include="Control\DataEntryCounter.cs" />
+    <Compile Include="Control\DataEntryChoice.cs" />
+    <Compile Include="Control\DataEntryFlag.cs" />
+    <Compile Include="Control\DataEntryNote.cs" />
     <Compile Include="Util\NativeMethods.cs" />
     <Compile Include="Data\SpreadsheetReaderWriter.cs" />
     <Compile Include="Dialog\DateTimeFixedCorrection.xaml.cs">
@@ -451,28 +462,26 @@
     <Compile Include="Dialog\DateDaylightSavingsTimeCorrection.xaml.cs">
       <DependentUpon>DateDaylightSavingsTimeCorrection.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\HelpUserControl.xaml.cs">
+    <Compile Include="Control\HelpUserControl.xaml.cs">
       <DependentUpon>HelpUserControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Images\MarkableCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
-    <Compile Include="Util\UndoRedoChain.cs" />
-    <Compile Include="Util\UndoRedoState.cs" />
-    <Compile Include="Util\UndoRedoType.cs" />
+    <Compile Include="Command\UndoRedoChain.cs" />
     <Compile Include="Util\UriExtensions.cs" />
     <Compile Include="Util\UserRegistrySettings.cs" />
-    <Compile Include="Controls\DataEntryControls.xaml.cs">
+    <Compile Include="Control\DataEntryControls.xaml.cs">
       <DependentUpon>DataEntryControls.xaml</DependentUpon>
     </Compile>
     <Compile Include="Dialog\AdvancedCarnassialOptions.xaml.cs">
       <DependentUpon>AdvancedCarnassialOptions.xaml</DependentUpon>
     </Compile>
     <Compile Include="Util\CarnassialUserRegistrySettings.cs" />
-    <Compile Include="Controls\DataEntryHandler.cs">
+    <Compile Include="Control\DataEntryHandler.cs">
       <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
     </Compile>
     <Compile Include="Database\SQLiteDatabase.cs" />
-    <Compile Include="Controls\StatusBarExtensions.cs" />
+    <Compile Include="Control\StatusBarExtensions.cs" />
     <Compile Include="Data\TemplateDatabase.cs" />
     <Compile Include="Util\CarnassialState.cs" />
     <Compile Include="Util\Utilities.cs" />

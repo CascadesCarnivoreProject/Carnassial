@@ -109,7 +109,7 @@ namespace Carnassial.Github
                 MessageBox messageBox = new MessageBox(String.Format("No updates to {0} are available.", this.applicationName), Application.Current.MainWindow);
                 messageBox.Message.Reason = String.Format("You're running the latest release, {0} {1}.", this.applicationName, currentVersion);
                 messageBox.Message.StatusImage = MessageBoxImage.Information;
-                bool? messageBoxResult = messageBox.ShowDialog();
+                messageBox.ShowDialog();
             }
 
             return true;

@@ -1,4 +1,4 @@
-﻿using Carnassial.Controls;
+﻿using Carnassial.Control;
 using Carnassial.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -34,7 +34,8 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(controls.ControlsByDataLabel.Count == databaseExpectation.ExpectedControls, "Expected {0} controls to be generated but {1} were.", databaseExpectation.ExpectedControls, controls.ControlsByDataLabel.Count);
 
                 // check copies aren't possible when the image enumerator's not pointing to an image
-                foreach (DataEntryControl control in controls.Controls)
+                List<DataEntryControl> copyableControls = controls.Controls.Where(control => control.Copyable).ToList();
+                foreach (DataEntryControl control in copyableControls)
                 {
                     Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
                     Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
@@ -44,17 +45,9 @@ namespace Carnassial.UnitTests
                 List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
                 Assert.IsTrue(dataHandler.ImageCache.MoveNext());
 
-                List<DataEntryControl> copyableControls = controls.Controls.Where(control => control.Copyable).ToList();
                 foreach (DataEntryControl control in copyableControls)
                 {
                     Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
-                    Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
-                }
-
-                List<DataEntryControl> notCopyableControls = controls.Controls.Where(control => control.Copyable == false).ToList();
-                foreach (DataEntryControl control in notCopyableControls)
-                {
-                    Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
                     Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
                 }
 
@@ -73,13 +66,14 @@ namespace Carnassial.UnitTests
                         control.DataLabel == TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel ||
                         control.DataLabel == TestConstant.DefaultDatabaseColumn.Choice3 ||
                         control.DataLabel == TestConstant.DefaultDatabaseColumn.Counter3 ||
+                        control.DataLabel == TestConstant.DefaultDatabaseColumn.Flag0 ||
                         control.DataLabel == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel)
                     {
-                        Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
+                        Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control), control.DataLabel);
                     }
                     else
                     {
-                        Assert.IsTrue(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
+                        Assert.IsTrue(dataHandler.IsCopyFromLastNonEmptyValuePossible(control), control.DataLabel);
                     }
                 }
 
@@ -89,19 +83,20 @@ namespace Carnassial.UnitTests
                 // dataHandler.CopyToAll(control);
 
                 // verify roundtrip of fields subject to copy/paste and analysis assignment
+                // AsDictionary() returns a dictionary with one fewer values than there are columns as the DateTime and UtcOffset columns are merged to DateTimeOffset.
                 Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(0));
                 ImageRow firstFile = fileDatabase.Files[0];
                 FileExpectations firstFileExpectations = fileExpectations[0];
 
-                Dictionary<string, object> firstFileValuesByDataLabel = firstFile.AsDictionary();
-                Assert.IsTrue(firstFileValuesByDataLabel.Count == databaseExpectation.ExpectedColumns.Count);
-                foreach (KeyValuePair<string, object> fileValue in firstFileValuesByDataLabel)
+                Dictionary<string, object> firstFileValuesByPropertyName = firstFile.AsDictionary();
+                Assert.IsTrue(firstFileValuesByPropertyName.Count == databaseExpectation.ExpectedColumns.Count - 1);
+                foreach (KeyValuePair<string, object> singlePropertyEdit in firstFileValuesByPropertyName)
                 {
-                    DataEntryControl control;
-                    if (controls.ControlsByDataLabel.TryGetValue(fileValue.Key, out control))
+                    if (singlePropertyEdit.Key == Constant.DatabaseColumn.ID)
                     {
-                        control.SetValue(firstFileValuesByDataLabel[fileValue.Key]);
+                        continue;
                     }
+                    firstFile[singlePropertyEdit.Key] = singlePropertyEdit.Value;
                 }
 
                 TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
@@ -110,7 +105,7 @@ namespace Carnassial.UnitTests
                 // verify roundtrip of fields via display string
                 foreach (DataEntryControl control in controls.Controls)
                 {
-                    string displayString = firstFile.GetValueDisplayString(control);
+                    string displayString = firstFile.GetDisplayString(control);
                     control.SetValue(displayString);
                 }
 
@@ -119,46 +114,49 @@ namespace Carnassial.UnitTests
                 // verify availability of database strings
                 foreach (string dataLabel in databaseExpectation.ExpectedColumns)
                 {
-                    string databaseString = firstFile.GetValueDatabaseString(dataLabel);
+                    string databaseString = firstFile.GetDatabaseString(dataLabel);
                 }
 
                 // verify counter increment and decrement
+                // UI thread isn't running to perform data binding (and controls aren't visible) so most checks are against the underlying ImageRow.
                 DataEntryCounter counter0 = (DataEntryCounter)controls.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Counter0];
+                counter0.DataContext = dataHandler.ImageCache.Current;
                 Assert.IsTrue(counter0.Content == "1");
-                Assert.IsTrue(dataHandler.TryDecrementOrResetCounter(counter0));
-                Assert.IsTrue(counter0.Content == "0");
-                Assert.IsFalse(dataHandler.TryDecrementOrResetCounter(counter0));
-                Assert.IsTrue(counter0.Content == "0");
+                dataHandler.DecrementOrResetCounter(counter0);
+                Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "0");
+                dataHandler.DecrementOrResetCounter(counter0);
+                Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "0");
 
                 dataHandler.IncrementOrResetCounter(counter0);
-                Assert.IsTrue(counter0.Content == "1");
-                Assert.IsTrue(dataHandler.TryDecrementOrResetCounter(counter0));
-                Assert.IsTrue(counter0.Content == "0");
+                Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "1");
+                dataHandler.DecrementOrResetCounter(counter0);
+                Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "0");
 
                 dataHandler.IncrementOrResetCounter(counter0);
-                Assert.IsTrue(counter0.Content == "1");
-                Assert.IsTrue(dataHandler.TryDecrementOrResetCounter(counter0));
-                Assert.IsTrue(counter0.Content == "0");
+                Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "1");
+                dataHandler.DecrementOrResetCounter(counter0);
+                Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "0");
 
                 DataEntryCounter counter3 = (DataEntryCounter)controls.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Counter3];
+                counter3.DataContext = dataHandler.ImageCache.Current;
                 Assert.IsTrue(counter3.Content == "0");
                 dataHandler.IncrementOrResetCounter(counter0);
                 dataHandler.IncrementOrResetCounter(counter3);
                 dataHandler.IncrementOrResetCounter(counter3);
                 dataHandler.IncrementOrResetCounter(counter0);
-                Assert.IsTrue(counter0.Content == "2");
-                Assert.IsTrue(counter3.Content == "2");
-                Assert.IsTrue(dataHandler.TryDecrementOrResetCounter(counter0));
-                Assert.IsTrue(dataHandler.TryDecrementOrResetCounter(counter3));
-                Assert.IsTrue(dataHandler.TryDecrementOrResetCounter(counter0));
-                Assert.IsTrue(dataHandler.TryDecrementOrResetCounter(counter3));
+                Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "2");
+                Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter3] == "2");
+                dataHandler.DecrementOrResetCounter(counter0);
+                dataHandler.DecrementOrResetCounter(counter3);
+                dataHandler.DecrementOrResetCounter(counter0);
+                dataHandler.DecrementOrResetCounter(counter3);
                 dataHandler.IncrementOrResetCounter(counter3);
                 dataHandler.IncrementOrResetCounter(counter3);
                 dataHandler.IncrementOrResetCounter(counter3);
                 dataHandler.IncrementOrResetCounter(counter3);
-                Assert.IsTrue(dataHandler.TryDecrementOrResetCounter(counter3));
-                Assert.IsTrue(counter0.Content == "0");
-                Assert.IsTrue(counter3.Content == "3");
+                dataHandler.DecrementOrResetCounter(counter3);
+                Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "0");
+                Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter3] == "3");
             }
         }
     }

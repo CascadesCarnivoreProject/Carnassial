@@ -1,4 +1,4 @@
-﻿using Carnassial.Controls;
+﻿using Carnassial.Control;
 using Carnassial.Data;
 using Carnassial.Database;
 using Carnassial.Util;
@@ -93,31 +93,31 @@ namespace Carnassial.Dialog
                     // no globs in Fixed Choices as choice entries are constrained by menu selection
                     termOperators = new string[]
                     {
-                            Constant.SearchTermOperator.Equal,
-                            Constant.SearchTermOperator.NotEqual,
-                            Constant.SearchTermOperator.LessThan,
-                            Constant.SearchTermOperator.GreaterThan,
-                            Constant.SearchTermOperator.LessThanOrEqual,
-                            Constant.SearchTermOperator.GreaterThanOrEqual
+                        Constant.SearchTermOperator.Equal,
+                        Constant.SearchTermOperator.NotEqual,
+                        Constant.SearchTermOperator.LessThan,
+                        Constant.SearchTermOperator.GreaterThan,
+                        Constant.SearchTermOperator.LessThanOrEqual,
+                        Constant.SearchTermOperator.GreaterThanOrEqual
                     };
                     break;
                 case ControlType.Flag:
                     termOperators = new string[]
                     {
-                            Constant.SearchTermOperator.Equal,
-                            Constant.SearchTermOperator.NotEqual
+                        Constant.SearchTermOperator.Equal,
+                        Constant.SearchTermOperator.NotEqual
                     };
                     break;
                 default:
                     termOperators = new string[]
                     {
-                            Constant.SearchTermOperator.Equal,
-                            Constant.SearchTermOperator.NotEqual,
-                            Constant.SearchTermOperator.LessThan,
-                            Constant.SearchTermOperator.GreaterThan,
-                            Constant.SearchTermOperator.LessThanOrEqual,
-                            Constant.SearchTermOperator.GreaterThanOrEqual,
-                            Constant.SearchTermOperator.Glob
+                        Constant.SearchTermOperator.Equal,
+                        Constant.SearchTermOperator.NotEqual,
+                        Constant.SearchTermOperator.LessThan,
+                        Constant.SearchTermOperator.GreaterThan,
+                        Constant.SearchTermOperator.LessThanOrEqual,
+                        Constant.SearchTermOperator.GreaterThanOrEqual,
+                        Constant.SearchTermOperator.Glob
                     };
                     break;
             }
@@ -225,7 +225,7 @@ namespace Carnassial.Dialog
             }
 
             // search criteria
-            // Initially as an empty textblock. Indicates the constructed query expression for this row
+            // Indicates the query expression for this term.
             TextBlock searchCriteria = new TextBlock();
             searchCriteria.HorizontalAlignment = HorizontalAlignment.Left;
             searchCriteria.Margin = CustomSelection.GridCellMargin;
@@ -309,7 +309,7 @@ namespace Carnassial.Dialog
         private void MenuItemDuplicateSearchTerm_Click(object sender, RoutedEventArgs e)
         {
             // duplicate search term
-            SearchTerm searchTerm = (SearchTerm)((Control)sender).Tag;
+            SearchTerm searchTerm = (SearchTerm)((FrameworkElement)sender).Tag;
             int insertionIndex = this.fileDatabase.CustomSelection.SearchTerms.IndexOf(searchTerm) + 1;
             SearchTerm termClone = new SearchTerm(searchTerm);
             this.fileDatabase.CustomSelection.SearchTerms.Insert(insertionIndex, termClone);
@@ -334,7 +334,6 @@ namespace Carnassial.Dialog
 
         private void OkButton_Click(object sender, RoutedEventArgs args)
         {
-            this.fileDatabase.SelectFiles(FileSelection.Custom);
             this.DialogResult = true;
         }
 

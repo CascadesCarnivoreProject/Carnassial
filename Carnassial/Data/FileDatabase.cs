@@ -1,4 +1,4 @@
-﻿using Carnassial.Controls;
+﻿using Carnassial.Control;
 using Carnassial.Database;
 using Carnassial.Images;
 using Carnassial.Util;
@@ -23,7 +23,7 @@ namespace Carnassial.Data
 
         public List<string> ControlSynchronizationIssues { get; private set; }
 
-        public CustomSelection CustomSelection { get; private set; }
+        public CustomSelection CustomSelection { get; set; }
 
         /// <summary>Gets the file name of the database on disk.</summary>
         public string FileName { get; private set; }
@@ -46,44 +46,6 @@ namespace Carnassial.Data
             this.FileName = Path.GetFileName(filePath);
             this.ControlsByDataLabel = new Dictionary<string, ControlRow>();
             this.OrderFilesByDateTime = false;
-        }
-
-        public static bool TryCreateOrOpen(string filePath, TemplateDatabase templateDatabase, bool orderFilesByDate, LogicalOperator customSelectionTermCombiningOperator, out FileDatabase fileDatabase)
-        {
-            // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
-            bool populateDatabase = !File.Exists(filePath);
-
-            fileDatabase = new FileDatabase(filePath);
-            if (populateDatabase)
-            {
-                // initialize the database if it's newly created
-                fileDatabase.OnDatabaseCreated(templateDatabase);
-            }
-            else
-            {
-                // if it's an existing database check if it needs updating to current structure and load data tables
-                if (fileDatabase.OnExistingDatabaseOpened(templateDatabase) == false)
-                {
-                    return false;
-                }
-            }
-
-            // check all tables have been loaded from the database
-            Debug.Assert(fileDatabase.Controls != null, "Controls wasn't loaded.");
-            Debug.Assert(fileDatabase.Files != null, "Files wasn't loaded.");
-            Debug.Assert(fileDatabase.ImageSet != null, "ImageSet wasn't loaded.");
-            Debug.Assert(fileDatabase.Markers != null, "Markers wasn't loaded.");
-
-            fileDatabase.CustomSelection = new CustomSelection(fileDatabase.Controls, customSelectionTermCombiningOperator);
-            fileDatabase.OrderFilesByDateTime = orderFilesByDate;
-            foreach (ControlRow control in fileDatabase.Controls)
-            {
-                fileDatabase.ControlsByDataLabel.Add(control.DataLabel, control);
-            }
-
-            // indicate failure if there are synchronization issues as the caller needs to determine if the database can be used anyway
-            // This is different semantics from OnExistingDatabaseOpened().
-            return fileDatabase.ControlSynchronizationIssues.Count == 0;
         }
 
         /// <summary>Gets the number of files currently in the files table.</summary>
@@ -198,6 +160,7 @@ namespace Carnassial.Data
                                 utcOffset.Value = DateTimeHandler.ToDatabaseUtcOffset(fileToInsert.UtcOffset);
 
                                 addFiles.ExecuteNonQuery();
+                                // a call to AcceptChanges() is not needed as the file hasn't been added to a table
                             }
                             int filesInTransaction = fileIndex - transactionStartIndex;
 
@@ -248,15 +211,10 @@ namespace Carnassial.Data
 
         public void AdjustFileTimes(TimeSpan adjustment, int startIndex, int endIndex)
         {
-            if (adjustment.Milliseconds != 0)
-            {
-                throw new ArgumentOutOfRangeException("adjustment", "The current format of the time column does not support milliseconds.");
-            }
             this.AdjustFileTimes((DateTimeOffset imageTime) => { return imageTime + adjustment; }, startIndex, endIndex);
         }
 
         // invoke the passed function to modify the DateTime field over the specified range of files
-        // Does NOT update the dataTable.  That has to be done by the caller.
         public void AdjustFileTimes(Func<DateTimeOffset, DateTimeOffset> adjustment, int startIndex, int endIndex)
         {
             if (this.IsFileRowInRange(startIndex) == false)
@@ -269,7 +227,7 @@ namespace Carnassial.Data
             }
             if (endIndex < startIndex)
             {
-                throw new ArgumentOutOfRangeException("endIndex", "endIndex must be greater than or equal to startIndex.");
+                throw new ArgumentOutOfRangeException(nameof(endIndex), "End must be greater than or equal to start index.");
             }
             if (this.CurrentlySelectedFileCount == 0)
             {
@@ -282,7 +240,8 @@ namespace Carnassial.Data
             for (int row = startIndex; row <= endIndex; ++row)
             {
                 ImageRow file = this.Files[row];
-                DateTimeOffset currentImageDateTime = file.GetDateTime();
+                Debug.Assert(file.HasChanges == false, "File has unexpected pending changes.");
+                DateTimeOffset currentImageDateTime = file.DateTimeOffset;
 
                 // adjust the date/time
                 DateTimeOffset newFileDateTime = adjustment.Invoke(currentImageDateTime);
@@ -292,8 +251,9 @@ namespace Carnassial.Data
                 }
 
                 mostRecentAdjustment = newFileDateTime - currentImageDateTime;
-                file.SetDateTimeOffset(newFileDateTime);
+                file.DateTimeOffset = newFileDateTime;
                 filesToAdjust.Add(file);
+                file.AcceptChanges();
             }
 
             // update the database with the new date/times
@@ -321,6 +281,35 @@ namespace Carnassial.Data
             this.boundDataGrid = dataGrid;
             this.onFileDataTableRowChanged = onRowChanged;
             this.Files.BindDataGrid(dataGrid, onRowChanged);
+        }
+
+        private ColumnDefinition CreateFileDataColumnDefinition(ControlRow control)
+        {
+            if (control.DataLabel == Constant.DatabaseColumn.DateTime)
+            {
+                return new ColumnDefinition(control.DataLabel, Constant.ControlDefault.DateTimeValue.DateTime);
+            }
+            if (control.DataLabel == Constant.DatabaseColumn.UtcOffset)
+            {
+                // UTC offsets are typically represented as TimeSpans but the least awkward way to store them in SQLite is as a real column containing the offset in
+                // hours.  This is because SQLite
+                // - handles TIME columns as DateTime rather than TimeSpan, requiring the associated DataTable column also be of type DateTime
+                // - doesn't support negative values in time formats, requiring offsets for time zones west of Greenwich be represented as positive values
+                // - imposes an upper bound of 24 hours on time formats, meaning the 26 hour range of UTC offsets (UTC-12 to UTC+14) cannot be accomodated
+                // - lacks support for DateTimeOffset, so whilst offset information can be written to the database it cannot be read from the database as .NET
+                //   supports only DateTimes whose offset matches the current system time zone
+                // Storing offsets as ticks, milliseconds, seconds, minutes, or days offers equivalent functionality.  Potential for rounding error in roundtrip 
+                // calculations on offsets is similar to hours for all formats other than an INTEGER (long) column containing ticks.  Ticks are a common 
+                // implementation choice but testing shows no roundoff errors at single tick precision (100 nanoseconds) when using hours.  Even with TimeSpans 
+                // near the upper bound of 256M hours, well beyond the plausible range of time zone calculations.  So there does not appear to be any reason to 
+                // avoid using hours for readability when working with the database directly.
+                return new ColumnDefinition(control.DataLabel, Constant.ControlDefault.DateTimeValue.Offset);
+            }
+            if (String.IsNullOrWhiteSpace(control.DefaultValue))
+            {
+                return new ColumnDefinition(control.DataLabel, Constant.SqlColumnType.Text);
+            }
+            return new ColumnDefinition(control.DataLabel, Constant.SqlColumnType.Text, control.DefaultValue);
         }
 
         private Select CreateSelect(FileSelection selection)
@@ -387,6 +376,29 @@ namespace Carnassial.Data
             }
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                if (this.Files != null)
+                {
+                    this.Files.Dispose();
+                }
+                if (this.Markers != null)
+                {
+                    this.Markers.Dispose();
+                }
+            }
+
+            base.Dispose(disposing);
+            this.disposed = true;
+        }
+
         // Update all the date fields by swapping the days and months.
         // This should ONLY be called if such swapping across all dates (excepting corrupt ones) is possible
         // as otherwise it will only swap those dates it can
@@ -425,7 +437,7 @@ namespace Carnassial.Data
             for (int row = startRow; row <= endRow; row++)
             {
                 ImageRow file = this.Files[row];
-                DateTimeOffset originalDateTime = file.GetDateTime();
+                DateTimeOffset originalDateTime = file.DateTimeOffset;
                 DateTimeOffset reversedDateTime;
                 if (DateTimeHandler.TrySwapDayMonth(originalDateTime, out reversedDateTime) == false)
                 {
@@ -433,7 +445,7 @@ namespace Carnassial.Data
                 }
 
                 // update in memory table with the new datetime
-                file.SetDateTimeOffset(reversedDateTime);
+                file.DateTimeOffset = reversedDateTime;
                 filesToUpdate.Add(file);
                 lastFile = file;
                 mostRecentOriginalDateTime = originalDateTime;
@@ -593,42 +605,6 @@ namespace Carnassial.Data
         }
 
         /// <summary>
-        /// Get all markers for the specified file.
-        /// </summary>
-        /// <returns>list of counters having an entry for each counter even if there are no markers </returns>
-        public List<MarkersForCounter> GetMarkersOnFile(long fileID)
-        {
-            List<MarkersForCounter> markersForAllCounters = new List<MarkersForCounter>();
-            MarkerRow markersForImage = this.Markers.Find(fileID);
-            if (markersForImage == null)
-            {
-                // if no counter controls are defined no rows are added to the marker table
-                return markersForAllCounters;
-            }
-
-            foreach (string dataLabel in markersForImage.DataLabels)
-            {
-                // create a marker for each point and add it to the counter's markers
-                MarkersForCounter markersForCounter = new MarkersForCounter(dataLabel);
-                string pointList;
-                try
-                {
-                    pointList = markersForImage[dataLabel];
-                }
-                catch (Exception exception)
-                {
-                    Debug.Fail(String.Format("Read of marker failed for dataLabel '{0}'.", dataLabel), exception.ToString());
-                    pointList = String.Empty;
-                }
-
-                markersForCounter.Parse(pointList);
-                markersForAllCounters.Add(markersForCounter);
-            }
-
-            return markersForAllCounters;
-        }
-
-        /// <summary>
         /// Get the row matching the specified image or create a new image.  The caller is responsible to add newly created images the database and data table.
         /// </summary>
         /// <returns>true if the image is already in the database</returns>
@@ -654,22 +630,22 @@ namespace Carnassial.Data
         }
 
         /// <summary>A convenience routine for checking to see if the image in the given row is displayable (i.e., not corrupted or missing)</summary>
-        public bool IsFileDisplayable(int rowIndex)
+        public bool IsFileDisplayable(int fileIndex)
         {
-            if (this.IsFileRowInRange(rowIndex) == false)
+            if (this.IsFileRowInRange(fileIndex) == false)
             {
                 return false;
             }
 
-            return this.Files[rowIndex].IsDisplayable();
+            return this.Files[fileIndex].IsDisplayable();
         }
 
-        public bool IsFileRowInRange(int imageRowIndex)
+        public bool IsFileRowInRange(int fileIndex)
         {
-            return (imageRowIndex >= 0) && (imageRowIndex < this.CurrentlySelectedFileCount) ? true : false;
+            return (fileIndex >= 0) && (fileIndex < this.CurrentlySelectedFileCount) ? true : false;
         }
 
-        public List<string> MoveFilesToFolder(string destinationFolderPath)
+        public List<string> MoveSelectedFilesToFolder(string destinationFolderPath)
         {
             Debug.Assert(destinationFolderPath.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase), String.Format("Destination path '{0}' is not under '{1}'.", destinationFolderPath, this.FolderPath));
 
@@ -677,9 +653,11 @@ namespace Carnassial.Data
             List<string> immovableFiles = new List<string>();
             foreach (ImageRow file in this.Files)
             {
+                Debug.Assert(file.HasChanges == false, "File has unexpected pending changes.");
                 if (file.TryMoveToFolder(this.FolderPath, destinationFolderPath, false))
                 {
                     filesToUpdate.Add(file.ID, file.RelativePath);
+                    file.AcceptChanges();
                 }
                 else
                 {
@@ -856,6 +834,63 @@ namespace Carnassial.Data
             this.ImageSet.FileSelection = selection;
         }
 
+        public void SyncFileToDatabase(ImageRow file)
+        {
+            this.UpdateFiles(file.CreateUpdate());
+        }
+
+        /// <summary>
+        /// Set the list of markers in the marker table. 
+        /// </summary>
+        public void SyncMarkersToDatabase(MarkerRow markers)
+        {
+            // update the database
+            this.CreateBackupIfNeeded();
+            ColumnTuplesWithID markerUpdate = markers.CreateUpdate();
+            using (SQLiteConnection connection = this.Database.CreateConnection())
+            {
+                markerUpdate.Update(connection);
+            }
+        }
+
+        public static bool TryCreateOrOpen(string filePath, TemplateDatabase templateDatabase, bool orderFilesByDate, LogicalOperator customSelectionTermCombiningOperator, out FileDatabase fileDatabase)
+        {
+            // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
+            bool populateDatabase = !File.Exists(filePath);
+
+            fileDatabase = new FileDatabase(filePath);
+            if (populateDatabase)
+            {
+                // initialize the database if it's newly created
+                fileDatabase.OnDatabaseCreated(templateDatabase);
+            }
+            else
+            {
+                // if it's an existing database check if it needs updating to current structure and load data tables
+                if (fileDatabase.OnExistingDatabaseOpened(templateDatabase) == false)
+                {
+                    return false;
+                }
+            }
+
+            // check all tables have been loaded from the database
+            Debug.Assert(fileDatabase.Controls != null, "Controls wasn't loaded.");
+            Debug.Assert(fileDatabase.Files != null, "Files wasn't loaded.");
+            Debug.Assert(fileDatabase.ImageSet != null, "ImageSet wasn't loaded.");
+            Debug.Assert(fileDatabase.Markers != null, "Markers wasn't loaded.");
+
+            fileDatabase.CustomSelection = new CustomSelection(fileDatabase.Controls, customSelectionTermCombiningOperator);
+            fileDatabase.OrderFilesByDateTime = orderFilesByDate;
+            foreach (ControlRow control in fileDatabase.Controls)
+            {
+                fileDatabase.ControlsByDataLabel.Add(control.DataLabel, control);
+            }
+
+            // indicate failure if there are synchronization issues as the caller needs to determine if the database can be used anyway
+            // This is different semantics from OnExistingDatabaseOpened().
+            return fileDatabase.ControlSynchronizationIssues.Count == 0;
+        }
+
         private bool TryGetFile(string relativePath, string fileName, out ImageRow file)
         {
             List<ImageRow> files = this.Files.Select(relativePath, fileName);
@@ -871,11 +906,6 @@ namespace Carnassial.Data
             }
 
             throw new ArgumentOutOfRangeException(nameof(relativePath) + ", " + nameof(fileName), String.Format("{0} files have {1}='{2}' and {3}='{4}'.", files.Count, Constant.DatabaseColumn.RelativePath, relativePath, Constant.DatabaseColumn.File, fileName));
-        }
-
-        public void UpdateFile(ImageRow file)
-        {
-            this.UpdateFiles(file.CreateUpdate());
         }
 
         public void UpdateFiles(FileTuplesWithID update)
@@ -902,6 +932,8 @@ namespace Carnassial.Data
                 {
                     updateExisting.Update(connection, transaction);
                     updateJustAdded.Update(connection, transaction);
+
+                    transaction.Commit();
                 }
             }
         }
@@ -923,94 +955,22 @@ namespace Carnassial.Data
                 throw new ArgumentOutOfRangeException(nameof(toIndex));
             }
 
-            object value = valueSource.GetDatabaseValue(control.DataLabel);
+            object value = valueSource.GetValue(control.DataLabel);
             FileTuplesWithID filesToUpdate = new FileTuplesWithID(control.DataLabel);
             for (int index = fromIndex; index <= toIndex; index++)
             {
                 // update data table
                 ImageRow file = this.Files[index];
-                file.SetValue(control.DataLabel, value);
+                Debug.Assert(file.HasChanges == false, "File has unexpected pending changes.");
+                file[control.PropertyName] = value;
 
-                // update database
+                // capture change for database update
                 filesToUpdate.Add(file.ID, value);
+                file.AcceptChanges();
             }
 
             this.CreateBackupIfNeeded();
             this.UpdateFiles(filesToUpdate);
-        }
-
-        /// <summary>
-        /// Set the list of markers in the marker table. 
-        /// </summary>
-        public void SetMarkerPositions(long fileID, MarkersForCounter markersForCounter)
-        {
-            MarkerRow marker = this.Markers.Find(fileID);
-            if (marker == null)
-            {
-                Debug.Fail(String.Format("File ID {0} missing in markers table.", fileID));
-                return;
-            }
-
-            // update the database
-            marker[markersForCounter.DataLabel] = markersForCounter.GetPointList();
-            this.CreateBackupIfNeeded();
-            ColumnTuplesWithID markerUpdate = marker.CreateUpdate();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                markerUpdate.Update(connection);
-            }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                if (this.Files != null)
-                {
-                    this.Files.Dispose();
-                }
-                if (this.Markers != null)
-                {
-                    this.Markers.Dispose();
-                }
-            }
-
-            base.Dispose(disposing);
-            this.disposed = true;
-        }
-
-        private ColumnDefinition CreateFileDataColumnDefinition(ControlRow control)
-        {
-            if (control.DataLabel == Constant.DatabaseColumn.DateTime)
-            {
-                return new ColumnDefinition(control.DataLabel, Constant.ControlDefault.DateTimeValue.DateTime);
-            }
-            if (control.DataLabel == Constant.DatabaseColumn.UtcOffset)
-            {
-                // UTC offsets are typically represented as TimeSpans but the least awkward way to store them in SQLite is as a real column containing the offset in
-                // hours.  This is because SQLite
-                // - handles TIME columns as DateTime rather than TimeSpan, requiring the associated DataTable column also be of type DateTime
-                // - doesn't support negative values in time formats, requiring offsets for time zones west of Greenwich be represented as positive values
-                // - imposes an upper bound of 24 hours on time formats, meaning the 26 hour range of UTC offsets (UTC-12 to UTC+14) cannot be accomodated
-                // - lacks support for DateTimeOffset, so whilst offset information can be written to the database it cannot be read from the database as .NET
-                //   supports only DateTimes whose offset matches the current system time zone
-                // Storing offsets as ticks, milliseconds, seconds, minutes, or days offers equivalent functionality.  Potential for rounding error in roundtrip 
-                // calculations on offsets is similar to hours for all formats other than an INTEGER (long) column containing ticks.  Ticks are a common 
-                // implementation choice but testing shows no roundoff errors at single tick precision (100 nanoseconds) when using hours.  Even with TimeSpans 
-                // near the upper bound of 256M hours, well beyond the plausible range of time zone calculations.  So there does not appear to be any reason to 
-                // avoid using hours for readability when working with the database directly.
-                return new ColumnDefinition(control.DataLabel, Constant.ControlDefault.DateTimeValue.Offset);
-            }
-            if (String.IsNullOrWhiteSpace(control.DefaultValue))
-            { 
-                 return new ColumnDefinition(control.DataLabel, Constant.SqlColumnType.Text);
-            }
-            return new ColumnDefinition(control.DataLabel, Constant.SqlColumnType.Text, control.DefaultValue);
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Carnassial.Editor.EditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:Carnassial.Controls;assembly=Carnassial"
+        xmlns:controls="clr-namespace:Carnassial.Control;assembly=Carnassial"
         xmlns:local="clr-namespace:Carnassial.Editor"
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         AutomationProperties.AutomationId="CarnassialTemplateEditor"

@@ -23,7 +23,7 @@ namespace Carnassial.Dialog
             this.Owner = owner;
 
             // get the file's current time
-            DateTimeOffset currentDateTime = fileToDisplay.GetDateTime();
+            DateTimeOffset currentDateTime = fileToDisplay.DateTimeOffset;
             this.OriginalDate.Content = DateTimeHandler.ToDisplayDateTimeUtcOffsetString(currentDateTime);
 
             // get the filename and display it
@@ -53,7 +53,7 @@ namespace Carnassial.Dialog
             {
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
-                DateTimeOffset currentFileDateTime = file.GetDateTime();
+                DateTimeOffset currentFileDateTime = file.DateTimeOffset;
                 TimeSpan utcOffset = newTimeZone.GetUtcOffset(currentFileDateTime);
                 DateTimeOffset previewFileDateTime = currentFileDateTime.SetOffset(utcOffset);
 

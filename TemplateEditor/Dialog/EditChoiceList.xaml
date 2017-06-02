@@ -16,7 +16,7 @@
         <TextBox Name="ChoiceList" MinHeight="100" TextWrapping="NoWrap" AcceptsTab="True" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextChanged="ItemList_TextChanged" ToolTip="Define the choice menu by editing 1 choice item per line" Grid.Row="2" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
             <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" Padding="10" Margin="10,5,5,5" Click="OkButton_Click" IsEnabled="False">_Okay</Button>
-            <Button Name="CancelButton" IsCancel="True" Padding="10" Margin="5,5,5,5" Click="CancelButton_Click">_Cancel</Button>
+            <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="5,5,5,5" Click="CancelButton_Click">_Cancel</Button>
         </StackPanel>
     </Grid>
 </Window>

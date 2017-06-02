@@ -25,6 +25,23 @@ namespace Carnassial.Util
     /// </summary>
     public class Utilities
     {
+        // Tuple.Create().GetHashCode() without the instantiation overhead, see Tuple.cs at https://github.com/dotnet/coreclr/
+        public static int CombineHashCodes(object obj1, object obj2)
+        {
+            int hash = obj1.GetHashCode();
+            return (hash << 5) + hash ^ obj2.GetHashCode();
+        }
+
+        public static int CombineHashCodes(params object[] objects)
+        {
+            int hash = objects[0].GetHashCode();
+            for (int index = 1; index < objects.Length; ++index)
+            {
+                hash = (hash << 5) + hash ^ objects[index].GetHashCode();
+            }
+            return hash;
+        }
+
         public static void ConfigureNavigatorSliderTick(Slider slider)
         {
             if (slider.Maximum <= 50)

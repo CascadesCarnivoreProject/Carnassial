@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Carnassial.Data
 {
     /// <summary>
-    /// A SearchTerm stores the search criteria for each column
+    /// A SearchTerm stores the search criteria for a field.
     /// </summary>
     public class SearchTerm
     {
@@ -46,6 +46,55 @@ namespace Carnassial.Data
             this.UseForSearching = other.UseForSearching;
         }
 
+        public override bool Equals(object obj)
+        {
+            if (obj is SearchTerm)
+            {
+                return this.Equals((SearchTerm)obj);
+            }
+            return false;
+        }
+
+        public bool Equals(SearchTerm other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+            if (Object.ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (this.ControlType != other.ControlType)
+            {
+                return false;
+            }
+            if (this.DatabaseValue != other.DatabaseValue)
+            {
+                return false;
+            }
+            if (this.DataLabel != other.DataLabel)
+            {
+                return false;
+            }
+            if (this.Label != other.Label)
+            {
+                return false;
+            }
+            // this.List is excluded as doesn't affect the query fragment the term generates
+            if (this.Operator != other.Operator)
+            {
+                return false;
+            }
+            if (this.UseForSearching != other.UseForSearching)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public DateTime GetDateTime()
         {
             if (this.DataLabel != Constant.DatabaseColumn.DateTime)
@@ -53,6 +102,12 @@ namespace Carnassial.Data
                 throw new NotSupportedException(String.Format("Attempt to retrieve date/time from a SearchTerm with data label {0}.", this.DataLabel));
             }
             return DateTimeHandler.ParseDatabaseDateTimeString(this.DatabaseValue);
+        }
+
+        public override int GetHashCode()
+        {
+            // this.List is excluded as doesn't affect the query fragment the term generates
+            return Utilities.CombineHashCodes(this.ControlType, this.DatabaseValue, this.DataLabel, this.Label, this.Operator, this.UseForSearching);
         }
 
         public TimeSpan GetUtcOffset()

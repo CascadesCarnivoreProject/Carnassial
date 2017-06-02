@@ -1,0 +1,87 @@
+﻿<UserControl x:Class="Carnassial.Control.HelpUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignWidth="1000">
+    <FlowDocumentScrollViewer VerticalScrollBarVisibility="Auto">
+        <FlowDocument FontSize="12" TextAlignment="Left" FontFamily="Verdana">
+            <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">What you need</Paragraph>
+            <Paragraph>Carnassial assumes you have a folder containing:</Paragraph>
+            <List MarkerStyle="Decimal">
+                <ListItem>
+                    <Paragraph>The <Bold>Template</Bold> (.tdb) file which defines your analysis. It is normally supplied by the managing biologist.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph><Bold>Image</Bold> (.jpg) and/or <Bold>video</Bold> (.avi or .mp4>) files located in subfolders or directly in the main folder.</Paragraph>
+                </ListItem>
+            </List>
+            <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">Getting Started</Paragraph>
+            <List>
+                <ListItem>
+                    <Paragraph><Bold>Load the template and files</Bold>  Select the <Italic>File -> Load template, images, and videos...</Italic> menu item and follow the instructions to locate and load the above folders and their contents.</Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Analyze your files</Bold> Examine each file and enter the appropriate data.  There are four kinds of controls for entering data.
+                    </Paragraph>
+                    <List>
+                        <ListItem>
+                            <Paragraph><Bold>Notes</Bold> are fields you can type into.</Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph><Bold>Choices</Bold> let you select from a menu of specific values.</Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph><Bold>Counters</Bold> let you count things. Click on the counter name, then click on the things you are counting within the image.</Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph><Bold>Flag</Bold> can be set to true or false.</Paragraph>
+                        </ListItem>
+                    </List>
+                    <Paragraph>Pressing Ctrl+1, Ctrl+2, <Italic>etc.</Italic> <Bold>copies the current values</Bold> to an analysis slot.  Pressing 1, 2, <Italic>etc.</Italic> or an Analysis button <Bold>applies the values</Bold> in that analysis slot.  The <Bold>Copy previous values</Bold> button (or pressing Ctrl+P) copies available values from the previous file to the fields of the current file.  The fields copyable are defined in the template (.tdb); hover the mouse over the button to see which fields are copyable.  <Bold>Right click menus</Bold> for copying values are available on all controls whose values are copyable; each lets you copy existing or previous data in different ways.</Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Navigation</Bold>  Use the left and right arrow keys or the slider to move between files.  Tip: shift+left/right moves 5 files, control+left/right moves 10, control+shift moves 50, home and end go to the first and last files, and page up and page down jump 10% of the way through the files.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Zooming</Bold>  Use two finger zoom gestures, the &lt; and &gt; keys, or the scroll wheel of your mouse to zoom in and out.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph><Bold>Counting</Bold> If you want to count something in an image click the name of the desired counter. Then click on the things you are counting on the image.  A marker will appear and the count will go up by one.  If you want to remove that count just right click on the marker. It will disappear and the count will go down by one.</Paragraph>
+                </ListItem>
+            </List>
+            <Paragraph>If you're new to Carnassial <Hyperlink Name="TutorialLink" RequestNavigate="TutorialLink_RequestNavigate">check out the tutorial</Hyperlink> for more help.</Paragraph>
+
+            <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">Commonly used features</Paragraph>
+            <List>
+                <ListItem>
+                    <Paragraph><Bold>Date/time correction</Bold>  Use the date/time options in the edit menu to correct for errors in camera clocks or adjust for Daylight Savings time.</Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph><Bold>Selection</Bold> Use the select menu view only certain files.  Custom selections picking out a specific camera are particularly useful when making date/time corrections.</Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph><Bold>Magnifying glass</Bold>  Use the m key or select the magnifier in the view menu to closely inspect parts of an image.  Use the u and d keys to change the magnifier's zoom.</Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph><Bold>Differencing</Bold> Use the up and down arrow keys to show differences between the current image and the ones before and after it. The things you are looking for may pop up in these views. </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph><Bold>Export data</Bold> Use the File menu to export data to a comma separated value (.csv) file and, optionally, automatically open it in Excel or other spreadsheet program (if available).</Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph><Bold>Import data</Bold> Use the File menu to import a previously exported and edited .csv file to pick up the changes.
+                    </Paragraph>
+                </ListItem>
+            </List>
+            <Paragraph><Bold>Note:</Bold>  Exporting overwrites the .csv file.  Edits made to an existing .csv will be lost.</Paragraph>
+        </FlowDocument>
+    </FlowDocumentScrollViewer>
+</UserControl>

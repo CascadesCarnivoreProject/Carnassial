@@ -1,4 +1,4 @@
-﻿using Carnassial.Controls;
+﻿using Carnassial.Control;
 using Carnassial.Data;
 using Carnassial.Native;
 using Carnassial.Util;
@@ -33,7 +33,7 @@ namespace Carnassial.Dialog
             this.FileName.ToolTip = this.FileName.Content;
 
             // configure datetime picker
-            this.initialDateTime = fileToDisplay.GetDateTime();
+            this.initialDateTime = fileToDisplay.DateTimeOffset;
             this.OriginalDate.Content = DateTimeHandler.ToDisplayDateTimeString(this.initialDateTime);
             this.DateTimePicker.Value = this.initialDateTime;
             this.DateTimePicker.ValueChanged += this.DateTimePicker_ValueChanged;
@@ -84,7 +84,7 @@ namespace Carnassial.Dialog
                 string newDateTime = String.Empty;
                 string status = "Skipped: invalid date/time";
                 string difference = String.Empty;
-                DateTimeOffset imageDateTime = file.GetDateTime();
+                DateTimeOffset imageDateTime = file.DateTimeOffset;
 
                 // Pretty print the adjustment time
                 if (adjustment.Duration() >= Constant.Time.DateTimeDatabaseResolution)

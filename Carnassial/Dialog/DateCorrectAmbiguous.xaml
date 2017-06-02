@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:controls="clr-namespace:Carnassial.Controls"
+        xmlns:controls="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
         Title="Date - Check and modify ambiguous dates." 
@@ -22,18 +22,9 @@
     <controls:StockMessageControl Grid.Row="0" x:Name="Message"
                             Title="Correct for ambiguous dates."
                             StatusImage="Question"
-                            Problem="Carnassial may have interpretted the Day/Month as Month/Day for days of the month that are 12 or less."
-                            Reason="Some  cameras record dates ambiguously, e.g. a date recorded as 01-02-2015 could be either 2-Jan-2015 or 01-Feb-2015.
-&#10;Carnassial relies on your computer's  Windows Control Panel date format to interpret these ambiguous dates. 
-&#10;If that differ from your camera's date format, the month could read as the day and vice-versa."           
-                            Solution="Check each ambiguous date below. You can swap them one by one, or swap them all.
-&#10;&#x2022; Click 'Preview Changes' to see a summary of what dates will be changed. 
-&#10;&#x2022; Click 'Apply' to actually do the changes: all images/videos with those dates will be swapped.
-&#10;&#10;Alternately,
-&#10;&#x2022; Change the short date format in the Windows Control Panel to match the date format seen in your images 
-&#10;   e.g., from dd/MM/yyyy to yyyy-MM-dd
-&#10;&#x2022; Reload your image set from scratch, or Select 'Edit/DateCorrection/Reread Dates from files...'. Check the result."
-                            Result="Date corrections will be applied to all images and videos taken on those days."
+                            Problem="Days of the month that are 12 or less are interchangeable with the month.  For example, a date recorded as 01-02-2017 could be either 02-Jan-2017 or 01-Feb-2017."
+                            Solution="For each day choose whether to keep the original date or change to the swapped date and press next.  After all days have been reviewed press 'Preview Changes' to see a summary of what dates will be changed and, if satisfied, click 'Apply' to make the changes."
+                            Result="The month and day will be interchanged for all dates selected for swapping.  The changes can be undone by swapping the dates a second time."
                             HideExplanationCheckboxIsVisible="True"/>
         <Rectangle Grid.Row="1" Fill="#FF868686" Height="2" />
         <Grid Name="PrimaryPanel" Grid.Row="2">
@@ -78,8 +69,8 @@
             <controls:DateChangesFeedbackControl x:Name="DateChangeFeedback" ShowDifferenceColumn="False" Grid.Row="1" />
         </Grid>
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Name="PreviewChangesButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10" Click="PreviewChangesButton_Click" IsEnabled="True">Preview _Changes</Button>
-            <Button Name="CancelButton" IsDefault="True" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click" IsEnabled="True">_Cancel</Button>
+            <Button Name="PreviewChangesButton" IsDefault="True" Click="PreviewChangesButton_Click" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10">_Preview Changes</Button>
+            <Button Name="CancelButton" IsCancel="True" Click="CancelButton_Click" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10">_Cancel</Button>
         </StackPanel>
     </Grid>
 </Window>

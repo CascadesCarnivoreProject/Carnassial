@@ -1,4 +1,4 @@
-﻿using Carnassial.Data;
+﻿using Carnassial.Command;
 using Carnassial.Editor;
 using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -126,74 +126,92 @@ namespace Carnassial.UnitTests
         /// Basic functional validation of <see cref="UndoRedoChain" />.
         /// </summary>
         [TestMethod]
-        public void UndoRedo()
+        public void UndoRedoChain()
         {
             // zero states
-            UndoRedoChain undoRedoChain = new UndoRedoChain();
+            UndoRedoChain<int> undoRedoChain = new UndoRedoChain<int>();
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsFalse(undoRedoChain.CanUndo);
-            UndoRedoState state;
-            Assert.IsFalse(undoRedoChain.TryGetRedo(out state));
-            Assert.IsFalse(undoRedoChain.TryGetUndo(out state));
+            UndoableCommand<int> state;
+            Assert.IsFalse(undoRedoChain.TryMoveToNextRedo(out state));
+            Assert.IsFalse(undoRedoChain.TryMoveToNextUndo(out state));
 
             // basic lifecycle with two different states
-            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
-            this.PopulateDefaultDatabase(fileDatabase);
-            ImageRow firstFile = fileDatabase.Files[0];
-            ImageRow secondFile = fileDatabase.Files[1];
-            undoRedoChain.AddStateIfDifferent(firstFile);
-            undoRedoChain.AddStateIfDifferent(secondFile);
+            undoRedoChain.AddCommand(new TestCommand(0, true));
+            undoRedoChain.AddCommand(new TestCommand(1, true));
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsTrue(undoRedoChain.CanUndo);
 
-            Assert.IsTrue(undoRedoChain.TryGetUndo(out state));
+            Assert.IsTrue(undoRedoChain.TryMoveToNextUndo(out state));
+            state.Undo(0);
             Assert.IsTrue(undoRedoChain.CanRedo);
-            Assert.IsFalse(undoRedoChain.CanUndo);
+            Assert.IsTrue(undoRedoChain.CanUndo);
 
-            Assert.IsTrue(undoRedoChain.TryGetRedo(out state));
+            Assert.IsTrue(undoRedoChain.TryMoveToNextRedo(out state));
+            state.Execute(0);
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsTrue(undoRedoChain.CanUndo);
 
-            Assert.IsTrue(undoRedoChain.TryGetUndo(out state));
+            Assert.IsTrue(undoRedoChain.TryMoveToNextUndo(out state));
+            state.Undo(0);
             Assert.IsTrue(undoRedoChain.CanRedo);
-            Assert.IsFalse(undoRedoChain.CanUndo);
+            Assert.IsTrue(undoRedoChain.CanUndo);
 
-            Assert.IsTrue(undoRedoChain.TryGetRedo(out state));
+            Assert.IsTrue(undoRedoChain.TryMoveToNextRedo(out state));
+            state.Execute(0);
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsTrue(undoRedoChain.CanUndo);
 
-            Assert.IsFalse(undoRedoChain.TryGetRedo(out state));
+            Assert.IsFalse(undoRedoChain.TryMoveToNextRedo(out state));
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsTrue(undoRedoChain.CanUndo);
 
-            Assert.IsTrue(undoRedoChain.TryGetUndo(out state));
+            Assert.IsTrue(undoRedoChain.TryMoveToNextUndo(out state));
+            state.Undo(0);
             Assert.IsTrue(undoRedoChain.CanRedo);
-            Assert.IsFalse(undoRedoChain.CanUndo);
+            Assert.IsTrue(undoRedoChain.CanUndo);
 
-            Assert.IsFalse(undoRedoChain.TryGetUndo(out state));
+            Assert.IsTrue(undoRedoChain.TryMoveToNextUndo(out state));
+            state.Undo(0);
             Assert.IsTrue(undoRedoChain.CanRedo);
             Assert.IsFalse(undoRedoChain.CanUndo);
 
             undoRedoChain.Clear();
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsFalse(undoRedoChain.CanUndo);
-            Assert.IsFalse(undoRedoChain.TryGetRedo(out state));
-            Assert.IsFalse(undoRedoChain.TryGetUndo(out state));
+            Assert.IsFalse(undoRedoChain.TryMoveToNextRedo(out state));
+            Assert.IsFalse(undoRedoChain.TryMoveToNextUndo(out state));
 
             // one state
-            UndoRedoState firstState = new UndoRedoState(firstFile);
-            undoRedoChain.AddStateIfDifferent(firstFile);
+            TestCommand firstState = new TestCommand(3, true);
+            undoRedoChain.AddCommand(firstState);
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsTrue(undoRedoChain.CanUndo);
-            Assert.IsFalse(undoRedoChain.TryGetRedo(out state));
-            Assert.IsTrue(undoRedoChain.TryGetUndo(out state));
+            Assert.IsFalse(undoRedoChain.TryMoveToNextRedo(out state));
+            Assert.IsTrue(undoRedoChain.TryMoveToNextUndo(out state));
+            state.Undo(0);
             Assert.IsTrue(firstState.Equals(state));
+        }
 
-            undoRedoChain.AddStateIfDifferent(firstFile);
-            Assert.IsFalse(undoRedoChain.CanRedo);
-            Assert.IsFalse(undoRedoChain.TryGetRedo(out state));
-            Assert.IsTrue(undoRedoChain.TryGetUndo(out state));
-            Assert.IsTrue(firstState.Equals(state));
+        internal class TestCommand : UndoableCommand<int>
+        {
+            public int ID { get; private set; }
+
+            public TestCommand(int id, bool executed)
+            {
+                this.ID = id;
+                this.IsExecuted = true;
+            }
+
+            public override void Execute(int parameter)
+            {
+                this.IsExecuted = true;
+            }
+
+            public override void Undo(int parameter)
+            {
+                this.IsExecuted = false;
+            }
         }
     }
 }

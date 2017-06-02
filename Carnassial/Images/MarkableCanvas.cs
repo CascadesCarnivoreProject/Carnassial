@@ -1,4 +1,5 @@
-﻿using Carnassial.Controls;
+﻿using Carnassial.Control;
+using Carnassial.Data;
 using Carnassial.Native;
 using System;
 using System.Collections.Generic;
@@ -51,6 +52,8 @@ namespace Carnassial.Images
         /// Gets the image displayed in the magnifying glass
         /// </summary>
         public Image ImageToMagnify { get; private set; }
+
+        public event EventHandler<MarkerCreatedOrDeletedEventArgs> MarkerCreatedOrDeleted;
 
         /// <summary>
         /// Gets the video displayed across the MarkableCanvas for video files
@@ -138,16 +141,6 @@ namespace Carnassial.Images
             }
         }
 
-        public event EventHandler<MarkerEventArgs> MarkerEvent;
-
-        private void SendMarkerEvent(MarkerEventArgs e)
-        {
-            if (this.MarkerEvent != null)
-            {
-                this.MarkerEvent(this, e);
-            }
-        }
-
         public MarkableCanvas()
         {
             // configure self
@@ -219,7 +212,7 @@ namespace Carnassial.Images
             this.MouseMove += this.MarkableCanvas_MouseMove;
         }
 
-        // Return to the zoom / pan levels saved as a bookmark
+        // return to the zoom / pan levels saved as a bookmark
         public void ApplyBookmark()
         {
             this.bookmark.Apply(this.imageToDisplayScale, this.imageToDisplayTranslation);
@@ -248,16 +241,16 @@ namespace Carnassial.Images
             }
             markerCanvas.Tag = marker;
 
-            // Create a marker
+            // create a marker
             Ellipse mark = new Ellipse();
             mark.Width = Constant.MarkableCanvas.MarkerDiameter;
             mark.Height = Constant.MarkableCanvas.MarkerDiameter;
-            mark.Stroke = marker.Brush;
+            mark.Stroke = marker.Highlight ? Brushes.MediumBlue : Brushes.Gold;
             mark.StrokeThickness = Constant.MarkableCanvas.MarkerStrokeThickness;
             mark.Fill = MarkableCanvas.MarkerFillBrush;
             markerCanvas.Children.Add(mark);
 
-            // Draw another Ellipse as a black outline around it
+            // draw another ellipse as a black outline around it
             Ellipse blackOutline = new Ellipse();
             blackOutline.Stroke = Brushes.Black;
             blackOutline.Width = mark.Width + 1;
@@ -265,7 +258,7 @@ namespace Carnassial.Images
             blackOutline.StrokeThickness = 1;
             markerCanvas.Children.Add(blackOutline);
 
-            // And another Ellipse as a white outline around it
+            // and another ellipse as a white outline around it
             Ellipse whiteOutline = new Ellipse();
             whiteOutline.Stroke = Brushes.White;
             whiteOutline.Width = blackOutline.Width + 1;
@@ -276,7 +269,7 @@ namespace Carnassial.Images
             // maybe add emphasis
             double outerDiameter = whiteOutline.Width;
             Ellipse glow = null;
-            if (marker.Emphasise)
+            if (marker.Emphasize)
             {
                 glow = new Ellipse();
                 glow.Width = whiteOutline.Width + Constant.MarkableCanvas.MarkerGlowDiameterIncrease;
@@ -304,7 +297,7 @@ namespace Carnassial.Images
             Canvas.SetLeft(whiteOutline, position);
             Canvas.SetTop(whiteOutline, position);
 
-            if (marker.Emphasise)
+            if (marker.Emphasize)
             {
                 position = (markerCanvas.Width - glow.Width) / 2.0;
                 Canvas.SetLeft(glow, position);
@@ -326,7 +319,7 @@ namespace Carnassial.Images
                 Canvas.SetTop(label, markerCanvas.Height / 2);
             }
 
-            // Get the point from the marker, and convert it so that the marker will be in the right place
+            // get the point from the marker, and convert it so that the marker will be in the right place
             Point screenPosition = Marker.ConvertRatioToPoint(marker.Position, canvasRenderSize.Width, canvasRenderSize.Height);
             if (imageToDisplayMarkers)
             {
@@ -369,7 +362,7 @@ namespace Carnassial.Images
             }
         }
 
-        // Hide the magnifying glass when the mouse cursor leaves the image
+        // hide the magnifying glass when the mouse cursor leaves the image
         private void ImageOrCanvas_MouseLeave(object sender, MouseEventArgs e)
         {
             this.magnifyingGlass.Hide();
@@ -377,13 +370,13 @@ namespace Carnassial.Images
 
         private void ImageOrCanvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            // Make sure the cursor reverts to the normal arrow cursor
+            // make sure the cursor reverts to the normal arrow cursor
             this.Cursor = Cursors.Arrow;
 
-            // Get the current position
+            // get the current position
             Point mousePosition = e.GetPosition(this.ImageToDisplay);
 
-            // Is this the end of a translate operation or of placing a maker?
+            // is this the end of a translate operation or of placing a maker?
             // Create a marker if the left button has been released, the mouse movement is below threshold, and less than 200 ms have passed since the original
             // mouse down.
             if ((e.LeftButton == MouseButtonState.Released) &&
@@ -393,14 +386,15 @@ namespace Carnassial.Images
                 TimeSpan timeSinceDown = DateTime.UtcNow - this.mouseDownTime;
                 if (timeSinceDown.TotalMilliseconds < 200)
                 {
-                    // Get the current point, and create a marker on it.
+                    // get the current point, and create a marker on it.
                     Point position = e.GetPosition(this.ImageToDisplay);
                     position = Marker.ConvertPointToRatio(position, this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight);
                     Marker marker = new Marker(null, position);
+                    marker.ShowLabel = true; // show label on creation, cleared on next refresh
+                    marker.LabelShownPreviously = false;
 
-                    // don't add marker to the marker list
-                    // CarnassialWindow is responsible for filling in remaining properties and adding it.
-                    this.SendMarkerEvent(new MarkerEventArgs(marker, true));
+                    // don't add the new marker to the marker list as CarnassialWindow is responsible for filling in remaining properties and then adding it
+                    this.MarkerCreatedOrDeleted?.Invoke(this, new MarkerCreatedOrDeletedEventArgs(marker, true));
                 }
             }
 
@@ -507,13 +501,13 @@ namespace Carnassial.Images
             this.bookmark.Reset();
         }
 
-        // Remove a marker on a right mouse button up event
+        // remove a marker on a right mouse button up event
         private void Marker_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
             Canvas canvas = (Canvas)sender;
             Marker marker = (Marker)canvas.Tag;
             this.Markers.Remove(marker);
-            this.SendMarkerEvent(new MarkerEventArgs(marker, false));
+            this.MarkerCreatedOrDeleted?.Invoke(this, new MarkerCreatedOrDeletedEventArgs(marker, false));
             this.RedrawMarkers();
         }
 
@@ -549,7 +543,7 @@ namespace Carnassial.Images
         }
 
         /// <summary>
-        /// Remove all and then draw all the markers
+        /// Remove all currently drawn markers and then redraw all markers in the current list.
         /// </summary>
         private void RedrawMarkers()
         {
@@ -717,14 +711,14 @@ namespace Carnassial.Images
             // leave the magnifying glass's enabled state unchanged so user doesn't have to constantly keep re-enabling it in hybrid image sets
         }
 
-        // Given the mouse location on the image, translate the image
-        // This is normally called from a left mouse move event
+        // given the mouse location on the image, translate the image
+        // This is normally called from a left mouse drag event.
         private void TranslateImage(Point mousePosition)
         {
-            // Get the center point on the image
+            // get the center point on the image
             Point center = this.PointFromScreen(this.ImageToDisplay.PointToScreen(new Point(this.ImageToDisplay.Width / 2.0, this.ImageToDisplay.Height / 2.0)));
 
-            // Calculate the delta position from the last location relative to the center
+            // calculate the delta position from the last location relative to the center
             double newX = center.X + mousePosition.X - this.previousMousePosition.X;
             double newY = center.Y + mousePosition.Y - this.previousMousePosition.Y;
 
@@ -732,7 +726,7 @@ namespace Carnassial.Images
             double imageWidth = this.ImageToDisplay.Width * this.imageToDisplayScale.ScaleX;
             double imageHeight = this.ImageToDisplay.Height * this.imageToDisplayScale.ScaleY;
 
-            // Limit the delta position so that the image stays on the screen
+            // limit the delta position so that the image stays on the screen
             if (newX - imageWidth / 2.0 >= 0.0)
             {
                 newX = imageWidth / 2.0;
@@ -751,7 +745,7 @@ namespace Carnassial.Images
                 newY = this.ActualHeight - imageHeight / 2.0;
             }
 
-            // Translate the canvas and redraw the markers
+            // translate the canvas and redraw the markers
             this.imageToDisplayTranslation.X += newX - center.X;
             this.imageToDisplayTranslation.Y += newY - center.Y;
 
@@ -763,7 +757,7 @@ namespace Carnassial.Images
             return this.VideoToDisplay.TryPlayOrPause();
         }
 
-        // Whenever the image size changes, refresh the markers so they appear in the correct place
+        // whenever the image size changes, refresh the markers so they appear in the correct place
         private void VideoToDisplay_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             this.RedrawMarkers();
@@ -779,7 +773,7 @@ namespace Carnassial.Images
             this.ScaleImage(false);
         }
 
-        // Return to the zoomed out level, with no panning
+        // return to the zoomed out level, with no panning
         public void ZoomToFit()
         {
             this.imageToDisplayScale.ScaleX = 1.0;

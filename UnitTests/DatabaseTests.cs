@@ -71,7 +71,7 @@ namespace Carnassial.UnitTests
                     fileExpectation.Verify(file, imageSetTimeZone);
 
                     // verify no markers associated with file
-                    List<MarkersForCounter> markersOnImage = fileDatabase.GetMarkersOnFile(file.ID);
+                    List<MarkersForCounter> markersOnImage = fileDatabase.Markers.Find(file.ID).ToList();
                     Assert.IsTrue(markersOnImage.Count == counterControls);
                     foreach (MarkersForCounter markerForCounter in markersOnImage)
                     {
@@ -257,33 +257,32 @@ namespace Carnassial.UnitTests
             fileDatabase.SelectFiles(FileSelection.All);
 
             int martenImageID = 1;
-            List<MarkersForCounter> markersForMartenImage = fileDatabase.GetMarkersOnFile(martenImageID);
-            Assert.IsTrue(markersForMartenImage.Count == counterControls);
-            foreach (MarkersForCounter markerForCounter in markersForMartenImage)
+            MarkerRow markersForMartenImage = fileDatabase.Markers.Find(martenImageID);
+            List<MarkersForCounter> markersForMartenImageList = markersForMartenImage.ToList();
+            Assert.IsTrue(markersForMartenImageList.Count == counterControls);
+            foreach (MarkersForCounter markerForCounter in markersForMartenImageList)
             {
                 Assert.IsFalse(String.IsNullOrWhiteSpace(markerForCounter.DataLabel));
                 Assert.IsTrue(markerForCounter.Markers.Count == 0);
             }
 
             // no op - write empty
-            foreach (MarkersForCounter markersForCounter in markersForMartenImage)
-            {
-                fileDatabase.SetMarkerPositions(martenImageID, markersForCounter);
-            }
+            fileDatabase.SyncMarkersToDatabase(markersForMartenImage);
 
             // add
-            markersForMartenImage = fileDatabase.GetMarkersOnFile(martenImageID);
-            Assert.IsTrue(markersForMartenImage.Count == counterControls);
-            foreach (MarkersForCounter markerForCounter in markersForMartenImage)
+            markersForMartenImage = fileDatabase.Markers.Find(martenImageID);
+            markersForMartenImageList = markersForMartenImage.ToList();
+            Assert.IsTrue(markersForMartenImageList.Count == counterControls);
+            foreach (MarkersForCounter markerForCounter in markersForMartenImageList)
             {
                 Assert.IsFalse(String.IsNullOrWhiteSpace(markerForCounter.DataLabel));
                 Assert.IsTrue(markerForCounter.Markers.Count == 0);
             }
 
             List<List<Point>> expectedMarkerPositions = new List<List<Point>>();
-            for (int counterIndex = 0; counterIndex < markersForMartenImage.Count; ++counterIndex)
+            for (int counterIndex = 0; counterIndex < markersForMartenImageList.Count; ++counterIndex)
             {
-                MarkersForCounter markersForCounter = markersForMartenImage[counterIndex];
+                MarkersForCounter markersForCounter = markersForMartenImageList[counterIndex];
                 List<Point> expectedPositions = new List<Point>();
                 for (int markerIndex = 0; markerIndex < counterIndex; ++markerIndex)
                 {
@@ -294,33 +293,34 @@ namespace Carnassial.UnitTests
                     expectedPositions.Add(expectedPosition);
                 }
 
-                fileDatabase.SetMarkerPositions(martenImageID, markersForCounter);
                 expectedMarkerPositions.Add(expectedPositions);
             }
+            fileDatabase.SyncMarkersToDatabase(markersForMartenImage);
 
             // roundtrip
-            markersForMartenImage = fileDatabase.GetMarkersOnFile(martenImageID);
-            this.VerifyMarkers(markersForMartenImage, expectedMarkerPositions);
+            markersForMartenImage = fileDatabase.Markers.Find(martenImageID);
+            markersForMartenImageList = markersForMartenImage.ToList();
+            this.VerifyMarkers(markersForMartenImageList, expectedMarkerPositions);
 
             // remove
-            for (int counterIndex = 0; counterIndex < markersForMartenImage.Count; ++counterIndex)
+            for (int counterIndex = 0; counterIndex < markersForMartenImageList.Count; ++counterIndex)
             {
-                MarkersForCounter markersForCounter = markersForMartenImage[counterIndex];
+                MarkersForCounter markersForCounter = markersForMartenImageList[counterIndex];
                 List<Point> expectedPositions = expectedMarkerPositions[counterIndex];
 
                 Assert.IsTrue(markersForCounter.Markers.Count == expectedPositions.Count);
                 if (expectedPositions.Count > 0)
                 {
                     markersForCounter.RemoveMarker(markersForCounter.Markers[expectedPositions.Count - 1]);
-                    fileDatabase.SetMarkerPositions(martenImageID, markersForCounter);
-
                     expectedPositions.RemoveAt(expectedPositions.Count - 1);
                 }
             }
+            fileDatabase.SyncMarkersToDatabase(markersForMartenImage);
 
             // roundtrip
-            markersForMartenImage = fileDatabase.GetMarkersOnFile(martenImageID);
-            this.VerifyMarkers(markersForMartenImage, expectedMarkerPositions);
+            markersForMartenImage = fileDatabase.Markers.Find(martenImageID);
+            markersForMartenImageList = markersForMartenImage.ToList();
+            this.VerifyMarkers(markersForMartenImageList, expectedMarkerPositions);
         }
 
         [TestMethod]
@@ -670,7 +670,7 @@ namespace Carnassial.UnitTests
                 // for videos, verify the date is found in the previous image's metadata or not found if there's no previous image
                 // don't check DateTimeAdjustment.ImageSetOffset as its value varies depending on when the underlying file on disk was created
                 // during syncing or test deployment and therefore may or may not match the daylight savings status of the metadata date taken
-                DateTimeAdjustment dateTimeAdjustment = file.TryReadDateTimeOriginalFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
+                DateTimeAdjustment dateTimeAdjustment = file.TryReadDateTimeFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
                 if (Path.GetFileNameWithoutExtension(file.FileName) == "06260048")
                 {
                     Assert.IsTrue(dateTimeAdjustment == DateTimeAdjustment.None);
@@ -682,7 +682,7 @@ namespace Carnassial.UnitTests
                                    dateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime) &&
                                    dateTimeAdjustment.HasFlag(DateTimeAdjustment.NoChange) == false && 
                                    dateTimeAdjustment.HasFlag(DateTimeAdjustment.PreviousMetadata) == false));
-                    DateTimeOffset fileDateTime = file.GetDateTime();
+                    DateTimeOffset fileDateTime = file.DateTimeOffset;
                     Assert.IsTrue(fileDateTime.Date == TestConstant.FileExpectation.HybridVideoFileDate);
                 }
                 else
@@ -691,7 +691,7 @@ namespace Carnassial.UnitTests
                     Assert.IsTrue(dateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
                     Assert.IsFalse(dateTimeAdjustment.HasFlag(DateTimeAdjustment.NoChange));
                     Assert.IsTrue(dateTimeAdjustment.HasFlag(DateTimeAdjustment.PreviousMetadata));
-                    DateTimeOffset fileDateTime = file.GetDateTime();
+                    DateTimeOffset fileDateTime = file.DateTimeOffset;
                     Assert.IsTrue(fileDateTime.Date == TestConstant.FileExpectation.HybridVideoFileDate);
                 }
 
@@ -883,7 +883,7 @@ namespace Carnassial.UnitTests
             ImageRow file;
             fileDatabase.GetOrCreateFile(fileInfo, fileDatabase.ImageSet.GetTimeZone(), out file);
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
-            file.TryReadDateTimeOriginalFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
+            file.TryReadDateTimeFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
 
             fileExpectation.FileName = Path.GetFileName(sourceFilePath);
             fileExpectation.Verify(file, imageSetTimeZone);
@@ -1153,9 +1153,9 @@ namespace Carnassial.UnitTests
                     // only Point is persisted to the database so other Marker fields should have default values on read
                     Assert.IsFalse(marker.ShowLabel);
                     Assert.IsTrue(marker.LabelShownPreviously);
-                    Assert.IsNotNull(marker.Brush);
                     Assert.IsTrue(marker.DataLabel == markersForCounter.DataLabel);
-                    Assert.IsFalse(marker.Emphasise);
+                    Assert.IsFalse(marker.Emphasize);
+                    Assert.IsFalse(marker.Highlight);
                     Assert.IsTrue(marker.Position == expectedPositions[markerIndex]);
                     Assert.IsNull(marker.Tooltip);
                 }

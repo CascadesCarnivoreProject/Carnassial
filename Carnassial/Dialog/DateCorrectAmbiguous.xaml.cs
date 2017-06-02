@@ -80,7 +80,7 @@ namespace Carnassial.Dialog
             for (int index = startIndex; index < this.database.CurrentlySelectedFileCount; index++)
             {
                 ImageRow file = this.database.Files[index];
-                DateTimeOffset imageDateTime = file.GetDateTime();
+                DateTimeOffset imageDateTime = file.DateTimeOffset;
                 if (imageDateTime.Day <= Constant.Time.MonthsInYear)
                 {
                     return index; // If the date is ambiguous, return the row index. 
@@ -104,13 +104,13 @@ namespace Carnassial.Dialog
             }
 
             ImageRow file = this.database.Files[startIndex];
-            DateTimeOffset desiredDateTime = file.GetDateTime();
+            DateTimeOffset desiredDateTime = file.DateTimeOffset;
 
             int lastMatchingDateIndex = startIndex;
             for (int index = startIndex + 1; index < this.database.CurrentlySelectedFileCount; index++)
             {
                 file = this.database.Files[index];
-                DateTimeOffset imageDateTime = file.GetDateTime();
+                DateTimeOffset imageDateTime = file.DateTimeOffset;
                 if (desiredDateTime.Date == imageDateTime.Date)
                 {
                     lastMatchingDateIndex = index;
@@ -161,10 +161,10 @@ namespace Carnassial.Dialog
 
             // found an ambiguous date; provide appropriate feedback
             ImageRow file = this.database.Files[this.ambiguousDatesList[index].StartRange];
-            this.OriginalDateLabel.Content = file.GetDateTime().Date;
+            this.OriginalDateLabel.Content = file.DateTimeOffset.Date;
 
             DateTimeOffset swappedDate;
-            this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(file.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(file.GetDateTime());
+            this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(file.DateTimeOffset, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(file.DateTimeOffset);
 
             this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
@@ -188,10 +188,10 @@ namespace Carnassial.Dialog
             {
                 ImageRow imageProperties;
                 imageProperties = this.database.Files[this.ambiguousDatesList[this.ambiguousDatesListIndex].StartRange];
-                this.OriginalDateLabel.Content = imageProperties.GetDateTime().Date;
+                this.OriginalDateLabel.Content = imageProperties.DateTimeOffset.Date;
 
                 DateTimeOffset swappedDate;
-                this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTime, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.GetDateTime());
+                this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTimeOffset, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.DateTimeOffset);
 
                 this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
@@ -236,13 +236,13 @@ namespace Carnassial.Dialog
                 if (ambiguousDate.Swapped)
                 {
                     DateTimeOffset swappedDate;
-                    DateTimeHandler.TrySwapDayMonth(file.DateTime, out swappedDate);
+                    DateTimeHandler.TrySwapDayMonth(file.DateTimeOffset, out swappedDate);
                     newDate = DateTimeHandler.ToDisplayDateTimeString(swappedDate);
                 }
 
                 string status = ambiguousDate.Swapped ? "Swapped: " : "Unchanged: ";
                 status += ambiguousDate.Count.ToString() + " images with same date";
-                this.DateChangeFeedback.AddFeedbackRow(file.FileName, status, DateTimeHandler.ToDisplayDateString(file.GetDateTime()), newDate, null);
+                this.DateChangeFeedback.AddFeedbackRow(file.FileName, status, DateTimeHandler.ToDisplayDateString(file.DateTimeOffset), newDate, null);
             }
 
             this.PrimaryPanel.Visibility = Visibility.Collapsed;

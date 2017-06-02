@@ -37,7 +37,7 @@ namespace Carnassial.Data
                     StringBuilder csvRow = new StringBuilder();
                     foreach (string dataLabel in dataLabels)
                     {
-                        csvRow.Append(this.AddColumnValue(file.GetValueDatabaseString(dataLabel)));
+                        csvRow.Append(this.AddColumnValue(file.GetDatabaseString(dataLabel)));
                     }
                     fileWriter.WriteLine(csvRow.ToString());
                 }
@@ -61,7 +61,7 @@ namespace Carnassial.Data
                     ++row;
                     foreach (string dataLabel in dataLabels)
                     {
-                        worksheet.Cells[row, ++column].Value = file.GetValueDatabaseString(dataLabel);
+                        worksheet.Cells[row, ++column].Value = file.GetDatabaseString(dataLabel);
                     }
                 }
 

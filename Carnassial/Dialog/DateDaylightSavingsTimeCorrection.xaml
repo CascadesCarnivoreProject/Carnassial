@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Carnassial.Dialog.DateDaylightSavingsTimeCorrection"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:Carnassial.Controls"
+        xmlns:controls="clr-namespace:Carnassial.Control"
         Title="Date/time - Correct for changes to or from daylight savings time." 
 		Name="DaylightSavingsTimeCorrection"
 		MinHeight="826" MinWidth="768"
@@ -20,9 +20,10 @@
         <controls:StockMessageControl x:Name="Message"
                             StatusImage="Question"
                             Title="Correct for Standard and Daylight Savings Time changes"
-                            Problem="The camera did not account for daylight savings or standard time changes, which means some images or videos are off by an hour."
-                            Solution="1. IMPORTANT.The image or video below should be where the time change occurred. &#10;    If it isn't, click Cancel, navigate to that file in the main window, then come back here.&#10;2. Correct the time + / - one hour in the Time Correction checkbox.&#10;3. Use the Propagate Correction checkbox to propagate changes forwards or backwards from this point.&#10;4. The Okay button will be selectable once you've done the above. Click Okay to confirm, Cancel to abort."
-                            Result="The dates and times will be adjusted forwards or backwards from this file by +/- one hour (except corrupted ones)."
+                            Problem="The camera did not account for daylight savings time changes so the times of some files are off by an hour."
+                            Solution="1. The file below must be where the time change occurred.  If it isn't, click 'Cancel', navigate to that file in the main window, and restart this dialog.&#10;2. If needed, choose to subtract an hour or apply the change to previous files.&#10;3. Press 'Okay' to apply the changes."
+                            Result="An hour will be added or subtracted to the time of all selected files coming after this file (forwards) or before this file (backwards).  The changes can be undone by applying an equal and opposite correction."
+                            Hint="It may be helpful to choose to sort files by date under the Options menu before starting this dialog."
                             HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
         <Rectangle Fill="#FF868686" Height="1" Grid.Row="1" />
         <Grid Grid.Row="2">
@@ -55,21 +56,21 @@
             </Grid>
             <GroupBox Header="Time change" FontWeight="Bold" Grid.Column="2" Grid.Row="0" Margin="10,0,2,0">
                 <StackPanel>
-                    <RadioButton Name="AddHour" Content="_Add an hour" GroupName="Hour" Checked="RadioButton_Checked" Margin="2,4,2,1" FontWeight="Normal" />
-                    <RadioButton Name="SubtractHour" Content="_Subtract an hour" GroupName="Hour" Checked="RadioButton_Checked" Margin="2,2,2,0" FontWeight="Normal" />
+                    <RadioButton Name="AddHour" Content="_add an hour" GroupName="Hour" IsChecked="True" Margin="2,4,2,1" FontWeight="Normal" />
+                    <RadioButton Name="SubtractHour" Content="_subtract an hour" GroupName="Hour" Margin="2,2,2,0" FontWeight="Normal" />
                 </StackPanel>
             </GroupBox>
             <GroupBox Header="Apply change" FontWeight="Bold" Grid.Column="3" Grid.Row="0" Margin="2,0,5,0">
                 <StackPanel>
-                    <RadioButton Name="PropagateForward" Content="_Forward" GroupName="Propagate" Checked="RadioButton_Checked" Margin="2,4,2,1" FontWeight="Normal" />
-                    <RadioButton Name="PropagateBackwards" Content="_Backwards" GroupName="Propagate" Checked="RadioButton_Checked" Margin="2,2,2,0" FontWeight="Normal" />
+                    <RadioButton Name="PropagateForward" Content="_forward" GroupName="Propagate" IsChecked="True" Margin="2,4,2,1" FontWeight="Normal" />
+                    <RadioButton Name="PropagateBackwards" Content="_backwards" GroupName="Propagate" Margin="2,2,2,0" FontWeight="Normal" />
                 </StackPanel>
             </GroupBox>
         </Grid>
         <Image Name="Image" MinHeight="100" MinWidth="100" Stretch="Uniform" StretchDirection="Both" Grid.Row="3" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="4">
-            <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">_Okay</Button>
-            <Button Name="CancelButton" IsCancel="True" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+            <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
+            <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
         </StackPanel>
     </Grid>
 </Window>

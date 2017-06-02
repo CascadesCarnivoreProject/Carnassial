@@ -1,4 +1,4 @@
-﻿using Carnassial.Controls;
+﻿using Carnassial.Control;
 using Carnassial.Data;
 using Carnassial.Database;
 using Carnassial.Dialog;
@@ -173,8 +173,7 @@ namespace Carnassial.Editor
             Debug.Assert(choiceOrNote != null, String.Format("Control named {0} not found.", button.Tag));
 
             EditChoiceList choiceListDialog = new EditChoiceList(button, choiceOrNote.GetChoices(), this);
-            bool? result = choiceListDialog.ShowDialog();
-            if (result == true)
+            if (choiceListDialog.ShowDialog() == true)
             {
                 choiceOrNote.SetChoices(choiceListDialog.Choices);
                 this.SyncControlToDatabaseAndPreviews(choiceOrNote);

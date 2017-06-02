@@ -1,25 +1,28 @@
-﻿using Carnassial.Controls;
+﻿using Carnassial.Command;
+using Carnassial.Control;
+using Carnassial.Images;
 using System;
 using System.Collections.Generic;
 using System.Windows.Input;
 
 namespace Carnassial.Util
 {
-    // A class that tracks various states and flags.
     public class CarnassialState : CarnassialUserRegistrySettings
     {
         private int keyRepeatCount;
         private KeyEventArgs mostRecentKey;
 
         public List<Dictionary<string, object>> Analysis { get; private set; }
-        public byte DifferenceThreshold { get; set; } // The threshold used for calculating combined differences
+        public Dictionary<string, object> CurrentFileSnapshot { get; set; }
+        public byte DifferenceThreshold { get; set; }
         public bool FileNavigatorSliderDragging { get; set; }
         public DateTime MostRecentRender { get; set; }
         public string MostRecentFileAddFolderPath { get; set; }
         public int MostRecentlyFocusedControlIndex { get; set; }
         public long MouseHorizontalScrollDelta { get; set; }
         public string MouseOverCounter { get; set; }
-        public UndoRedoChain UndoRedoChain { get; private set; }
+        public List<DataEntryNote> NoteControlsWithNewValues { get; private set; }
+        public UndoRedoChain<CarnassialWindow> UndoRedoChain { get; private set; }
 
         public CarnassialState()
         {
@@ -31,6 +34,7 @@ namespace Carnassial.Util
             {
                 this.Analysis.Add(null);
             }
+            this.CurrentFileSnapshot = new Dictionary<string, object>();
             this.DifferenceThreshold = Constant.Images.DifferenceThresholdDefault;
             this.FileNavigatorSliderDragging = false;
             this.MostRecentRender = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;
@@ -38,13 +42,14 @@ namespace Carnassial.Util
             this.MostRecentlyFocusedControlIndex = -1;
             this.MouseHorizontalScrollDelta = 0;
             this.MouseOverCounter = null;
-            this.UndoRedoChain = new UndoRedoChain();
+            this.NoteControlsWithNewValues = new List<DataEntryNote>();
+            this.UndoRedoChain = new UndoRedoChain<CarnassialWindow>();
         }
 
         public int GetKeyRepeatCount(KeyEventArgs key)
         {
             // check mostRecentKey for null as key delivery is not entirely deterministic
-            // it's possible WPF will send the first key as a repeat if the user holds a key down or starts typing while the main window is opening
+            // It's possible WPF will send the first key as a repeat if the user holds a key down or starts typing while the main window is opening.
             if (key.IsRepeat && this.mostRecentKey != null && this.mostRecentKey.IsRepeat && (key.Key == this.mostRecentKey.Key))
             {
                 ++this.keyRepeatCount;
@@ -57,15 +62,24 @@ namespace Carnassial.Util
             return this.keyRepeatCount;
         }
 
-        public void Reset()
+        public void ResetImageSetRelatedState()
         {
+            // fields with Carnassial scope which therefore aren't reset here
+            // this.keyRepeatCount
+            // this.mostRecentKey
+            // this.DifferenceThreshold
+            // this.FileNavigatorSliderDragging
+            // this.MostRecentFileAddFolderPath
+
             for (int analysisSlot = 0; analysisSlot < this.Analysis.Count; ++analysisSlot)
             {
                 this.Analysis[analysisSlot] = null;
             }
-            this.FileNavigatorSliderDragging = false;
+            this.CurrentFileSnapshot.Clear();
             this.MostRecentlyFocusedControlIndex = -1;
+            this.MouseHorizontalScrollDelta = 0;
             this.MouseOverCounter = null;
+            this.NoteControlsWithNewValues.Clear();
             this.UndoRedoChain.Clear();
         }
     }

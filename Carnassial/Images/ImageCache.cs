@@ -18,11 +18,13 @@ namespace Carnassial.Images
         private ConcurrentDictionary<long, MemoryImage> unalteredImagesByID;
 
         public ImageDifference CurrentDifferenceState { get; private set; }
+        public MarkerRow CurrentMarkers { get; set; }
 
         public ImageCache(FileDatabase fileDatabase) :
             base(fileDatabase)
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
+            this.CurrentMarkers = null;
             this.differenceCache = new Dictionary<ImageDifference, MemoryImage>(4);
             foreach (ImageDifference differenceState in Enum.GetValues(typeof(ImageDifference)))
             {
@@ -145,6 +147,8 @@ namespace Carnassial.Images
         public override void Reset()
         {
             base.Reset();
+
+            this.CurrentMarkers = null;
             this.ResetDifferenceState(null);
         }
 
