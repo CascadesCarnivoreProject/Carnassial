@@ -214,6 +214,8 @@ namespace Carnassial
             public const int LargeNumberOfDeletedImages = 100;
             public const int MinimumRenderWidth = 800;
 
+            public static readonly TimeSpan MagnifierRotationTime = TimeSpan.FromMilliseconds(450);
+
             public static readonly Lazy<BitmapImage> Copy = Images.LoadBitmap("Menu/Copy_16x.png");
             public static readonly Lazy<BitmapImage> Paste = Images.LoadBitmap("Menu/Paste_16x.png");
 

@@ -135,20 +135,6 @@ namespace Carnassial.Images
             this.RenderTransform = transformGroup;
         }
 
-        // return the current angle if it matches one of the desired angle, or the desired angle closest to the current angle in degrees
-        private double AdjustAngle(double currentAngle, double newAngleOption1, double newAngleOption2)
-        {
-            if (currentAngle == newAngleOption2)
-            {
-                return currentAngle;
-            }
-            else if (Math.Abs(currentAngle - newAngleOption1) > 180.0)
-            {
-                return newAngleOption2;
-            }
-            return newAngleOption1;
-        }
-
         public void Hide()
         {
             this.Visibility = Visibility.Collapsed;
@@ -187,73 +173,83 @@ namespace Carnassial.Images
             double newMagnifyingGlassAngle;
             if ((mousePosition.X < leftEdge) && (mousePosition.Y < topEdge))
             {
-                newMagnifyingGlassAngle = 180.0;                                                     // upper left corner
+                newMagnifyingGlassAngle = 180.0;                                              // upper left corner
             }
             else if ((mousePosition.X < leftEdge) && (mousePosition.Y > bottomEdge))
             {
-                newMagnifyingGlassAngle = 90.0;                                                      // lower left corner
+                newMagnifyingGlassAngle = 90.0;                                               // lower left corner
             }
             else if (mousePosition.X < leftEdge)
             {
-                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 90.0, 180.0);  // middle left edge
+                newMagnifyingGlassAngle = this.magnifyingGlassAngle == 180.0 ? 180.0 : 90.0;  // middle of left edge
             }
             else if ((mousePosition.X > rightEdge) && (mousePosition.Y < topEdge))
             {
-                newMagnifyingGlassAngle = 270.0;                                                     // upper right corner
+                newMagnifyingGlassAngle = -90.0;                                              // upper right corner
             }
             else if ((mousePosition.X > rightEdge) && (mousePosition.Y > bottomEdge))
             {
-                newMagnifyingGlassAngle = 0.0;                                                       // lower right corner
+                newMagnifyingGlassAngle = 0.0;                                                // lower right corner
             }
             else if (mousePosition.X > rightEdge)
             {
-                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 270.0, 0.0);   // middle right edge
+                newMagnifyingGlassAngle = this.magnifyingGlassAngle == 0.0 ? 0.0 : -90.0;     // middle of right edge
             }
             else if (mousePosition.Y < topEdge)
             {
-                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 270.0, 180.0); // top edge, middle
+                newMagnifyingGlassAngle = this.magnifyingGlassAngle == 180.0 ? 180.0 : -90.0; // middle of top edge
             }
             else if (mousePosition.Y > bottomEdge)
             {
-                newMagnifyingGlassAngle = this.AdjustAngle(this.magnifyingGlassAngle, 0.0, 90.0);    // bottom edge, middle
+                newMagnifyingGlassAngle = this.magnifyingGlassAngle == 90.0 ? 90.0 : 0.0;     // middle of bottom edge
             }
             else
             {
-                newMagnifyingGlassAngle = this.magnifyingGlassAngle; // far enough from edges the magnifer stays on the display image at any angle
+                newMagnifyingGlassAngle = this.magnifyingGlassAngle; // far enough from edges the magnifer can be displayed at any angle
             }
 
             // If the angle has changed, animate the magnifying glass and its contained image to the new angle
             if (this.magnifyingGlassAngle != newMagnifyingGlassAngle)
             {
-                Debug.Assert(newMagnifyingGlassAngle == 0.0 || newMagnifyingGlassAngle == 90.0 || newMagnifyingGlassAngle == 180.0 || newMagnifyingGlassAngle == 270.0, String.Format("Unexpected magnifying glass angle {0}.", newMagnifyingGlassAngle));
+                Debug.Assert((newMagnifyingGlassAngle == -90.0) || (newMagnifyingGlassAngle == 0.0) || (newMagnifyingGlassAngle == 90.0) || (newMagnifyingGlassAngle == 180.0), String.Format("Unexpected magnifying glass angle {0}.", newMagnifyingGlassAngle));
 
-                double newLensAngle = -newMagnifyingGlassAngle;
-                // minimize the lens rotation in those cases where it would turn the long way around. 
-                if (this.magnifyingGlassAngle == 270.0 && newMagnifyingGlassAngle == 0.0)
+                // RotateTransform rotates between the start and stop angle specified in the DoubleAnimation passed to it.  The greater the rotation, the
+                // more intrusive it is, so 270 degree rotations are converted to 90 degree rotations in the opposite direction.
+                double endMangifyingGlassRotationAngle = newMagnifyingGlassAngle;
+                if (this.magnifyingGlassAngle - endMangifyingGlassRotationAngle >= 270.0)
                 {
-                    newLensAngle = 0.0; // subtract the rotation of the magnifying glass to counter that rotational effect
+                    endMangifyingGlassRotationAngle += 360.0;
                 }
-                else if (this.magnifyingGlassAngle == 0.0 && newMagnifyingGlassAngle == 270.0)
+                else if (this.magnifyingGlassAngle - endMangifyingGlassRotationAngle <= -270.0)
                 {
-                    newLensAngle = 90.0;
+                    endMangifyingGlassRotationAngle -= 360.0;
                 }
-                Debug.Assert(newLensAngle == 90.0 || newLensAngle == 0.0 || newLensAngle == -90.0 || newLensAngle == -180.0 || newLensAngle == -270.0, String.Format("Unexpected lens angle {0}.", newLensAngle));
 
-                // rotate the lens within the magnifying glass to compensate for its overall rotation
-                Duration animationDuration = new Duration(new TimeSpan(0, 0, 0, 0, 500));
-                DoubleAnimation lensAnimation = new DoubleAnimation(this.lensAngle, newLensAngle, animationDuration);
+                double endLensAngle = -newMagnifyingGlassAngle;
+                if (this.lensAngle - endLensAngle >= 270.0)
+                {
+                    endLensAngle += 360.0;
+                }
+                else if (this.lensAngle - endLensAngle <= -270.0)
+                {
+                    endLensAngle -= 360.0;
+                }
+
+                // rotate the entire magnifying glass to its new angle
+                this.rotation.Angle = this.magnifyingGlassAngle;
+                Duration animationDuration = new Duration(Constant.Images.MagnifierRotationTime);
+                DoubleAnimation rotateAnimation = new DoubleAnimation(this.magnifyingGlassAngle, endMangifyingGlassRotationAngle, animationDuration);
+                this.rotation.BeginAnimation(RotateTransform.AngleProperty, rotateAnimation);
+
+                // rotate the lens within the magnifying glass to compensate for the magnifier's rotation
+                DoubleAnimation lensAnimation = new DoubleAnimation(this.lensAngle, endLensAngle, animationDuration);
                 RotateTransform rotateTransformLens = new RotateTransform(this.magnifyingGlassAngle, Constant.MarkableCanvas.MagnifyingGlassDiameter / 2.0, Constant.MarkableCanvas.MagnifyingGlassDiameter / 2.0);
                 rotateTransformLens.BeginAnimation(RotateTransform.AngleProperty, lensAnimation);
                 this.lensCanvas.RenderTransform = rotateTransformLens;
 
-                // rotate the entire magnifying glass to its new angle
-                this.rotation.Angle = this.magnifyingGlassAngle;
-                DoubleAnimation rotateAnimation = new DoubleAnimation(this.magnifyingGlassAngle, newMagnifyingGlassAngle, animationDuration);
-                this.rotation.BeginAnimation(RotateTransform.AngleProperty, rotateAnimation);
-
-                // Save angles for the next iteration.
+                // update state on the assumption the animation completes before the user moves the pointer far enough to trigger another rotation
                 this.magnifyingGlassAngle = newMagnifyingGlassAngle;
-                this.lensAngle = newLensAngle;
+                this.lensAngle = endLensAngle;
             }
 
             // set translation for current mouse location
