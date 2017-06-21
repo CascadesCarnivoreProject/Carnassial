@@ -201,13 +201,14 @@ namespace Carnassial
             // default level where a pixel should be considered as dark when checking image quality, the range is 0 (black) - 255 (white)
             public const byte DarkPixelThresholdDefault = 60;
 
-            // The threshold to determine differences between images
+            // difference threshold for masking differences between images, per RGB component per pixel
             public const byte DifferenceThresholdDefault = 20;
             public const byte DifferenceThresholdMax = 255;
             public const byte DifferenceThresholdMin = 0;
 
             public const int ImageCacheSize = 9;
             public const int MinimumRenderWidth = 800;
+            public const int SmallestValidJpegSizeInBytes = 107; // with creative encoding; single pixel jpegs are usually somewhat larger
 
             public static readonly TimeSpan MagnifierRotationTime = TimeSpan.FromMilliseconds(450);
 

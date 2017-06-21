@@ -150,29 +150,31 @@ namespace Carnassial.UnitTests
         }
 
         [TestMethod]
-        public void ExifReconyx()
+        public void ExifReconyxHyperfire()
         {
             FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName);
             Dictionary<string, string> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.DaylightMartenPair);
 
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ExposureTime]));
 
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.AmbientTemperature]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.AmbientTemperatureFarenheit]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.BatteryVoltage]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Brightness]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Contrast]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.AmbientTemperature]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.AmbientTemperatureFarenheit]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.BatteryVoltage]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.Brightness]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.Contrast]));
             DateTime dateTimeOriginal;
-            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.Reconyx.DateTimeOriginal], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOriginal));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.FirmwareVersion]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.InfraredIlluminator]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.MoonPhase]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Saturation]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Sequence]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.SerialNumber]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.Sharpness]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.TriggerMode]));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Reconyx.UserLabel]));
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.ReconyxHyperfire.DateTimeOriginal], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOriginal));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.EventNumber]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.FirmwareVersion]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.InfraredIlluminator]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.MakernoteVersion]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.MoonPhase]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.Saturation]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.Sequence]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.SerialNumber]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.Sharpness]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.TriggerMode]));
+            Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.UserLabel]));
         }
 
         [TestMethod]

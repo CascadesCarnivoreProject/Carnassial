@@ -422,12 +422,18 @@ namespace Carnassial.Data
             byte[] jpegBuffer;
             using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1024 * 1024, FileOptions.SequentialScan))
             {
+                if (fileStream.Length < Constant.Images.SmallestValidJpegSizeInBytes)
+                {
+                    return Constant.Images.CorruptFile.Value;
+                }
                 jpegBuffer = new byte[fileStream.Length];
                 await fileStream.ReadAsync(jpegBuffer, 0, jpegBuffer.Length);
             }
 
             try
             {
+                // MemoryImage assumes the buffer is not empty
+                Debug.Assert(jpegBuffer.Length >= Constant.Images.SmallestValidJpegSizeInBytes, "Unexpectedly small JPEG buffer.");
                 MemoryImage image = new MemoryImage(jpegBuffer, expectedDisplayWidth);
                 // stopwatch.Stop();
                 // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
@@ -563,8 +569,22 @@ namespace Carnassial.Data
             {
                 // camera doesn't conform to EXIF standard
                 // check for a Reconyx makernote
-                ReconyxMakernoteDirectory reconyxMakernote = metadataDirectories.OfType<ReconyxMakernoteDirectory>().FirstOrDefault();
-                if ((reconyxMakernote == null) || (reconyxMakernote.TryGetDateTime(ReconyxMakernoteDirectory.TagDateTimeOriginal, out dateTimeOriginal) == false))
+                bool reconyxDateTimeOriginalFound = false;
+                ReconyxHyperFireMakernoteDirectory hyperfireMakernote = metadataDirectories.OfType<ReconyxHyperFireMakernoteDirectory>().FirstOrDefault();
+                if (hyperfireMakernote != null)
+                {
+                    reconyxDateTimeOriginalFound = hyperfireMakernote.TryGetDateTime(ReconyxHyperFireMakernoteDirectory.TagDateTimeOriginal, out dateTimeOriginal);
+                }
+                else
+                {
+                    ReconyxUltraFireMakernoteDirectory ultrafireMakernote = metadataDirectories.OfType<ReconyxUltraFireMakernoteDirectory>().FirstOrDefault();
+                    if (ultrafireMakernote != null)
+                    {
+                        reconyxDateTimeOriginalFound = ultrafireMakernote.TryGetDateTime(ReconyxUltraFireMakernoteDirectory.TagDateTimeOriginal, out dateTimeOriginal);
+                    }
+                }
+
+                if (reconyxDateTimeOriginalFound == false)
                 {
                     return DateTimeAdjustment.None;
                 }

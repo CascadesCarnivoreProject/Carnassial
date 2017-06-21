@@ -113,29 +113,26 @@ namespace Carnassial.UnitTests
             public const string ShutterSpeed = "Exif SubIFD.Shutter Speed Value";
             public const string Software = "Exif IFD0.Software";
 
-            public static class Reconyx
+            public static class ReconyxHyperfire
             {
-                public const string AmbientTemperature = "Reconyx Makernote.Ambient Temperature";
-                public const string AmbientTemperatureFarenheit = "Reconyx Makernote.Ambient Temperature Farenheit";
-                public const string BatteryVoltage = "Reconyx Makernote.Battery Voltage";
-                public const string Brightness = "Reconyx Makernote.Brightness";
-                public const string Contrast = "Reconyx Makernote.Contrast";
-                public const string DateTimeOriginal = "Reconyx Makernote.Date/Time Original";
-                public const string FirmwareVersion = "Reconyx Makernote.Firmware Version";
-                public const string InfraredIlluminator = "Reconyx Makernote.Infrared Illuminator";
-                public const string MoonPhase = "Reconyx Makernote.Moon Phase";
-                public const string MotionSensitivity = "Reconyx Makernote.Motion Sensitivity";
-                public const string Saturation = "Reconyx Makernote.Saturation";
-                public const string Sequence = "Reconyx Makernote.Sequence";
-                public const string SerialNumber = "Reconyx Makernote.Serial Number";
-                public const string Sharpness = "Reconyx Makernote.Sharpness";
-                public const string TriggerMode = "Reconyx Makernote.Trigger Mode";
-                public const string UserLabel = "Reconyx Makernote.UserLabel";
-
-                // pending more information from Reconyx
-                // public const string EventNumber = "Reconyx Makernote.Event Number";
-                // public const string FirmwareDate = "Reconyx Makernote.Firmware Date";
-                // public const string MakernoteVersion = "Reconyx Makernote.Makernote Version";
+                public const string AmbientTemperature = "Reconyx HyperFire Makernote.Ambient Temperature";
+                public const string AmbientTemperatureFarenheit = "Reconyx HyperFire Makernote.Ambient Temperature Fahrenheit";
+                public const string BatteryVoltage = "Reconyx HyperFire Makernote.Battery Voltage";
+                public const string Brightness = "Reconyx HyperFire Makernote.Brightness";
+                public const string Contrast = "Reconyx HyperFire Makernote.Contrast";
+                public const string DateTimeOriginal = "Reconyx HyperFire Makernote.Date/Time Original";
+                public const string EventNumber = "Reconyx HyperFire Makernote.Event Number";
+                public const string FirmwareVersion = "Reconyx HyperFire Makernote.Firmware Version";
+                public const string InfraredIlluminator = "Reconyx HyperFire Makernote.Infrared Illuminator";
+                public const string MakernoteVersion = "Reconyx HyperFire Makernote.Makernote Version";
+                public const string MoonPhase = "Reconyx HyperFire Makernote.Moon Phase";
+                public const string MotionSensitivity = "Reconyx HyperFire Makernote.Motion Sensitivity";
+                public const string Saturation = "Reconyx HyperFire Makernote.Saturation";
+                public const string Sequence = "Reconyx HyperFire Makernote.Sequence";
+                public const string SerialNumber = "Reconyx HyperFire Makernote.Serial Number";
+                public const string Sharpness = "Reconyx HyperFire Makernote.Sharpness";
+                public const string TriggerMode = "Reconyx HyperFire Makernote.Trigger Mode";
+                public const string UserLabel = "Reconyx HyperFire Makernote.User Label";
             }
         }
 
