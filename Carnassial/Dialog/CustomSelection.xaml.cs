@@ -145,7 +145,7 @@ namespace Carnassial.Dialog
                     textBoxValue.AllowLeadingWhitespace = true;
                     textBoxValue.Autocompletions = this.fileDatabase.GetDistinctValuesInFileDataColumn(searchTerm.DataLabel);
                     textBoxValue.IsEnabled = searchTerm.UseForSearching;
-                    textBoxValue.Text = searchTerm.DatabaseValue;
+                    textBoxValue.Text = (string)searchTerm.DatabaseValue;
                     textBoxValue.Margin = CustomSelection.GridCellMargin;
                     textBoxValue.Width = CustomSelection.DefaultControlWidth;
                     textBoxValue.Height = CustomSelection.ValueTextBoxHeight;
@@ -166,7 +166,7 @@ namespace Carnassial.Dialog
                     this.SearchTerms.Children.Add(textBoxValue);
                     break;
                 case ControlType.DateTime:
-                    DateTimeOffset dateTime = this.fileDatabase.CustomSelection.GetDateTime(gridRowIndex - 1, this.imageSetTimeZone);
+                    DateTimeOffset dateTime = (DateTimeOffset)this.fileDatabase.CustomSelection.SearchTerms[gridRowIndex - 1].DatabaseValue;
 
                     DateTimeOffsetPicker dateValue = new DateTimeOffsetPicker();
                     dateValue.IsEnabled = searchTerm.UseForSearching;
@@ -197,7 +197,7 @@ namespace Carnassial.Dialog
                     flagCheckBox.Margin = CustomSelection.GridCellMargin;
                     flagCheckBox.VerticalAlignment = VerticalAlignment.Center;
                     flagCheckBox.HorizontalAlignment = HorizontalAlignment.Left;
-                    flagCheckBox.IsChecked = String.Equals(searchTerm.DatabaseValue, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ? false : true;
+                    flagCheckBox.IsChecked = String.Equals((string)searchTerm.DatabaseValue, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ? false : true;
                     flagCheckBox.IsEnabled = searchTerm.UseForSearching;
                     flagCheckBox.Checked += this.Flag_CheckedOrUnchecked;
                     flagCheckBox.Unchecked += this.Flag_CheckedOrUnchecked;
@@ -212,7 +212,7 @@ namespace Carnassial.Dialog
                     UtcOffsetPicker utcOffsetValue = new UtcOffsetPicker();
                     utcOffsetValue.IsEnabled = searchTerm.UseForSearching;
                     utcOffsetValue.IsTabStop = true;
-                    utcOffsetValue.Value = searchTerm.GetUtcOffset();
+                    utcOffsetValue.Value = (TimeSpan)searchTerm.DatabaseValue;
                     utcOffsetValue.ValueChanged += this.UtcOffset_ValueChanged;
                     utcOffsetValue.Width = CustomSelection.DefaultControlWidth;
 
@@ -275,7 +275,7 @@ namespace Carnassial.Dialog
         private void DateTime_ValueChanged(DateTimeOffsetPicker datePicker, DateTimeOffset newDateTime)
         {
             int row = Grid.GetRow(datePicker);
-            this.fileDatabase.CustomSelection.SetDateTime(row - 1, datePicker.Value, this.imageSetTimeZone);
+            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = datePicker.Value;
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -396,7 +396,7 @@ namespace Carnassial.Dialog
         private void UtcOffset_ValueChanged(TimeSpanPicker utcOffsetPicker, TimeSpan newTimeSpan)
         {
             int row = Grid.GetRow(utcOffsetPicker);
-            this.fileDatabase.CustomSelection.SearchTerms[row - 1].SetDatabaseValue(utcOffsetPicker.Value);
+            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = utcOffsetPicker.Value;
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -419,16 +419,8 @@ namespace Carnassial.Dialog
                     continue;
                 }
 
-                // construct the search term 
-                string searchCriteriaText = searchTerm.DataLabel + " " + searchTerm.Operator + " ";
-                string value = searchTerm.DatabaseValue.Trim();
-                if (value.Length == 0)
-                {
-                    value = "\"\"";  // an empty string, display it as ""
-                }
-                searchCriteriaText += value;
-
-                // include term combining operator
+                // display search term's contribution to the query
+                string searchCriteriaText = searchTerm.ToString();
                 if (!lastExpression)
                 {
                     searchCriteriaText += " " + this.fileDatabase.CustomSelection.TermCombiningOperator.ToString();

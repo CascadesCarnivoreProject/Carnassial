@@ -20,5 +20,10 @@
             this.SelectionLength = 1;
             this.SelectionStart = selectionStart;
         }
+
+        public bool IsMonthName
+        {
+            get { return (this.Format == 'M') && (this.FormatLength > 2); }
+        }
     }
 }

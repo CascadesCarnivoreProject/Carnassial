@@ -209,32 +209,12 @@ namespace Carnassial.Control
                             break;
                     }
                     break;
-                // editing, focus changes
+                // editing, focus changes, date separators, hotkeys
                 case Key.Back:
-                case Key.D0:
-                case Key.D1:
-                case Key.D2:
-                case Key.D3:
-                case Key.D4:
-                case Key.D5:
-                case Key.D6:
-                case Key.D7:
-                case Key.D8:
-                case Key.D9:
                 case Key.Decimal:
                 case Key.Delete:
                 case Key.Enter:
                 case Key.Escape:
-                case Key.NumPad0:
-                case Key.NumPad1:
-                case Key.NumPad2:
-                case Key.NumPad3:
-                case Key.NumPad4:
-                case Key.NumPad5:
-                case Key.NumPad6:
-                case Key.NumPad7:
-                case Key.NumPad8:
-                case Key.NumPad9:
                 case Key.OemMinus:
                 case Key.OemPeriod:
                 case Key.OemSemicolon:
@@ -246,8 +226,27 @@ namespace Carnassial.Control
                     // leave event unhandled so key is accepted as input
                     return;
                 default:
+                    if (this.parts[this.currentPartIndex].IsMonthName)
+                    {
+                        // allow characters in names of months
+                        if (e.Key >= Key.A && e.Key <= Key.Z)
+                        {
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        // digits are allowed in all other fields
+                        if ((e.Key >= Key.D0) && (e.Key <= Key.D9))
+                        {
+                            return;
+                        }
+                        if ((e.Key >= Key.NumPad0) && (e.Key <= Key.NumPad9))
+                        {
+                            return;
+                        }
+                    }
                     // block all other keys as they're neither navigation, editing, or digits
-                    // This also blocks typing in MMM fields and can be relaxed if needed.
                     break;
             }
 
@@ -283,53 +282,6 @@ namespace Carnassial.Control
             // forward focus requests on this control to its date time display
             this.DateTimeDisplay.Focus();
             e.Handled = true;
-        }
-
-        // get location of next or previous date time field
-        // returns -1 if there is no next/previous field
-        private int GetIndexOfNextDateTimePart(int selectionStart, Direction direction)
-        {
-            if (selectionStart < 0 || selectionStart > this.Format.Length - 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(selectionStart));
-            }
-
-            string dateTimeFormat = this.Format;
-            if (selectionStart >= dateTimeFormat.Length)
-            {
-                selectionStart = dateTimeFormat.Length - 1;
-            }
-            char startChar = dateTimeFormat[selectionStart];
-
-            // seek to next field
-            // This finds the beginning of the next field for Direction.Next and the end of the previous field for Direction.Previous.
-            int index = selectionStart + (int)direction;
-            for (; index > 0; index += (int)direction)
-            {
-                if (index >= dateTimeFormat.Length)
-                {
-                    return -1;
-                }
-                if (dateTimeFormat[index] == startChar)
-                {
-                    continue;
-                }
-                if (Constant.Time.DateTimeFieldCharacters.Contains(dateTimeFormat[index]))
-                {
-                    break;
-                }
-                startChar = '\0'; // to handle cases like "yyyy-MM-dd (ddd)" correctly
-            }
-
-            if (direction == Direction.Previous)
-            {
-                // move to the beginning of the field
-                while (index > 0 && dateTimeFormat[index - 1] == dateTimeFormat[index])
-                {
-                    --index;
-                }
-            }
-            return index;
         }
 
         private void IncrementOrDecrement(int increment)

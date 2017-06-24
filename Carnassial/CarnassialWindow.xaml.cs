@@ -32,7 +32,7 @@ namespace Carnassial
     /// <summary>
     /// main window for Carnassial
     /// </summary>
-    public partial class CarnassialWindow : Window, IDisposable
+    public partial class CarnassialWindow : WindowWithSystemMenu, IDisposable
     {
         private bool disposed;
         private SpeechSynthesizer speechSynthesizer;
@@ -153,12 +153,15 @@ namespace Carnassial
                 this.EnableOrDisableMenusAndControls();
                 await this.ShowFileAsync(Constant.Database.InvalidRow, false);
                 this.DataEntryControls.Clear();
+
+                // return to instuction tab
+                this.MenuViewShowInstructions_Click(this, null);
             }
 
             this.State.ResetImageSetRelatedState();
             // reset undo/redo after reset of main state object as it touches some of the same state but also updates the enable state of undo/rendo menu items
             this.ResetUndoRedoState();
-            this.statusBar.SetMessage("No image set is open.");
+            this.StatusBar.SetMessage("No image set is open.");
         }
 
         /// <summary>When the user selects a counter update the color and emphasis of its markers.</summary>
@@ -253,8 +256,8 @@ namespace Carnassial
 
             if (filesSelected == false)
             {
-                this.statusBar.SetMessage("Image set is empty.");
-                this.statusBar.SetFileCount(0);
+                this.StatusBar.SetMessage("Image set is empty.");
+                this.StatusBar.SetFileCount(0);
             }
         }
 
@@ -283,7 +286,12 @@ namespace Carnassial
             }
         }
 
-        // Timer callback that forces image update to the current slider position. Invoked as the user pauses dragging the image slider 
+        private void FileNavigatorSlider_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            this.FocusMarkableCanvas();
+        }
+
+        // timer callback that forces image update to the current slider position. Invoked as the user pauses dragging the image slider 
         private async void FileNavigatorSlider_TimerTick(object sender, EventArgs e)
         {
             await this.ShowFileAsync(this.FileNavigatorSlider);
@@ -809,7 +817,7 @@ namespace Carnassial
 
                 this.MenuEditRedo.IsEnabled = this.State.UndoRedoChain.CanRedo;
                 this.MenuEditUndo.IsEnabled = this.State.UndoRedoChain.CanUndo;
-                this.statusBar.SetMessage("Redid " + stateToRedo.ToString() + ".");
+                this.StatusBar.SetMessage("Redid " + stateToRedo.ToString() + ".");
             }
         }
 
@@ -875,7 +883,7 @@ namespace Carnassial
 
                 this.MenuEditRedo.IsEnabled = this.State.UndoRedoChain.CanRedo;
                 this.MenuEditUndo.IsEnabled = this.State.UndoRedoChain.CanUndo;
-                this.statusBar.SetMessage("Undid " + stateToUndo.ToString() + ".");
+                this.StatusBar.SetMessage("Undid " + stateToUndo.ToString() + ".");
             }
         }
 
@@ -931,12 +939,12 @@ namespace Carnassial
                 try
                 {
                     File.Copy(sourcePath, destinationPath, true);
-                    this.statusBar.SetMessage(sourceFileName + " copied to " + destinationPath);
+                    this.StatusBar.SetMessage(sourceFileName + " copied to " + destinationPath);
                 }
                 catch (Exception exception)
                 {
                     Debug.Fail(String.Format("Copy of '{0}' to '{1}' failed.", sourceFileName, destinationPath), exception.ToString());
-                    this.statusBar.SetMessage("Copy failed with {0}.", exception.GetType().Name);
+                    this.StatusBar.SetMessage("Copy failed with {0}.", exception.GetType().Name);
                 }
             }
         }
@@ -944,7 +952,7 @@ namespace Carnassial
         private async void MenuFileCloseImageSet_Click(object sender, RoutedEventArgs e)
         {
             await this.CloseImageSetAsync();
-            this.MenuViewShowInstructions_Click(null, null);
+            this.MenuViewShowInstructions_Click(this, null);
         }
 
         private async void MenuFileLoadImageSet_Click(object sender, RoutedEventArgs e)
@@ -971,7 +979,7 @@ namespace Carnassial
 
                 // move files
                 List<string> immovableFiles = this.DataHandler.FileDatabase.MoveSelectedFilesToFolder(folderSelectionDialog.FileName);
-                this.statusBar.SetMessage("Moved {0} of {1} files to {2}.", this.DataHandler.FileDatabase.CurrentlySelectedFileCount - immovableFiles.Count, this.DataHandler.FileDatabase.CurrentlySelectedFileCount, Path.GetFileName(folderSelectionDialog.FileName));
+                this.StatusBar.SetMessage("Moved {0} of {1} files to {2}.", this.DataHandler.FileDatabase.CurrentlySelectedFileCount - immovableFiles.Count, this.DataHandler.FileDatabase.CurrentlySelectedFileCount, Path.GetFileName(folderSelectionDialog.FileName));
                 if (immovableFiles.Count > 0)
                 {
                     MessageBox messageBox = new MessageBox("Not all files could be moved.", this);
@@ -1009,7 +1017,7 @@ namespace Carnassial
             string spreadsheetFilePath = Path.Combine(this.FolderPath, spreadsheetFileName);
             if (FileBackup.TryCreateBackup(this.FolderPath, spreadsheetFileName))
             {
-                this.statusBar.SetMessage("Backup of {0} made.", spreadsheetFileName);
+                this.StatusBar.SetMessage("Backup of {0} made.", spreadsheetFileName);
             }
 
             SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter();
@@ -1023,7 +1031,7 @@ namespace Carnassial
                 {
                     spreadsheetWriter.ExportFileDataToCsv(this.DataHandler.FileDatabase, spreadsheetFilePath);
                 }
-                this.statusBar.SetMessage("Data exported to " + spreadsheetFileName);
+                this.StatusBar.SetMessage("Data exported to " + spreadsheetFileName);
 
                 if (openFile)
                 {
@@ -1100,27 +1108,26 @@ namespace Carnassial
             // create a backup database file
             if (FileBackup.TryCreateBackup(this.DataHandler.FileDatabase.FilePath))
             {
-                this.statusBar.SetMessage("Backup of data file made.");
+                this.StatusBar.SetMessage("Backup of data file made.");
             }
             else
             {
-                this.statusBar.SetMessage("No data file backup was made.");
+                this.StatusBar.SetMessage("No data file backup was made.");
             }
 
             SpreadsheetReaderWriter spreadsheetReader = new SpreadsheetReaderWriter();
+            FileImportResult importResult;
             try
             {
-                List<string> importErrors;
-                bool importFullySuccessful;
                 if (String.Equals(Path.GetExtension(spreadsheetFilePath), Constant.File.ExcelFileExtension, StringComparison.OrdinalIgnoreCase))
                 {
-                    importFullySuccessful = spreadsheetReader.TryImportFileDataFromXlsx(spreadsheetFilePath, this.DataHandler.FileDatabase, out importErrors);
+                    importResult = spreadsheetReader.TryImportFileDataFromXlsx(spreadsheetFilePath, this.DataHandler.FileDatabase);
                 }
                 else
                 {
-                    importFullySuccessful = spreadsheetReader.TryImportFileDataFromCsv(spreadsheetFilePath, this.DataHandler.FileDatabase, out importErrors);
+                    importResult = spreadsheetReader.TryImportFileDataFromCsv(spreadsheetFilePath, this.DataHandler.FileDatabase);
                 }
-                if (importFullySuccessful == false)
+                if (importResult.Errors.Count > 0)
                 {
                     MessageBox messageBox = new MessageBox("Spreadsheet import incomplete.", this);
                     messageBox.Message.StatusImage = MessageBoxImage.Error;
@@ -1134,29 +1141,30 @@ namespace Carnassial
                     messageBox.Message.Solution += "\u2022 Flag values are either 'true' or 'false'.";
                     messageBox.Message.Result = "Either no data was imported or invalid parts of the spreadsheet were skipped.";
                     messageBox.Message.Hint = "The errors encountered were:";
-                    foreach (string importError in importErrors)
+                    foreach (string importError in importResult.Errors)
                     {
                         messageBox.Message.Hint += "\u2022 " + importError;
                     }
                     messageBox.ShowDialog();
                 }
             }
-            catch (Exception exception)
+            catch (IOException ioException)
             {
                 MessageBox messageBox = new MessageBox("Can't import the .csv file.", this);
                 messageBox.Message.StatusImage = MessageBoxImage.Error;
-                messageBox.Message.Problem = String.Format("The file {0} could not be opened.", spreadsheetFilePath);
+                messageBox.Message.Problem = String.Format("The file {0} either could not be opened or could not be read.", spreadsheetFilePath);
                 messageBox.Message.Reason = "Most likely the file is open in another program.";
                 messageBox.Message.Solution = "If the file is open in another program, close it.";
-                messageBox.Message.Result = String.Format("{0}: {1}", exception.GetType().FullName, exception.Message);
+                messageBox.Message.Result = String.Format("{0}: {1}", ioException.GetType().FullName, ioException.Message);
                 messageBox.Message.Hint = "Is the file open in Excel?";
                 messageBox.ShowDialog();
+                return;
             }
 
             // reload the file data table and update the enable/disable state of the user interface to match
             await this.SelectFilesAndShowFileAsync();
             this.EnableOrDisableMenusAndControls();
-            this.statusBar.SetMessage(".csv file imported.");
+            this.StatusBar.SetMessage("{0} imported: {1} files added, {2} files updated.", Path.GetFileName(spreadsheetFilePath), importResult.FilesAdded, importResult.FilesUpdated);
 
             // clear undo/redo state as bulk edits aren't undoable
             this.OnBulkEdit(this, null);
@@ -1276,7 +1284,7 @@ namespace Carnassial
 
         internal async void MenuOptionsOrderFilesByDateTime_Click(object sender, RoutedEventArgs e)
         {
-            if (this.IsFileDatabaseAvailable())
+            if (this.IsFileDatabaseAvailable() == false)
             {
                 return;
             }
@@ -1297,7 +1305,7 @@ namespace Carnassial
             // the first time the custom selection dialog is launched update the DateTime and UtcOffset search terms to the time of the current file
             // Don't need to check CustomSelectionChange.HasChanges() as a change is guaranteed.
             SearchTerm firstDateTimeSearchTerm = this.DataHandler.FileDatabase.CustomSelection.SearchTerms.First(searchTerm => searchTerm.DataLabel == Constant.DatabaseColumn.DateTime);
-            if (firstDateTimeSearchTerm.GetDateTime() == Constant.ControlDefault.DateTimeValue.DateTime)
+            if ((DateTimeOffset)firstDateTimeSearchTerm.DatabaseValue == Constant.ControlDefault.DateTimeValue)
             {
                 Data.CustomSelection customSelectionInitialSnapshot = new Data.CustomSelection(this.DataHandler.FileDatabase.CustomSelection);
                 DateTimeOffset defaultDate = this.DataHandler.ImageCache.Current.DateTimeOffset;
@@ -1670,7 +1678,7 @@ namespace Carnassial
             await this.SelectFilesAndShowFileAsync(mostRecentFileID, fileSelection, false);
 
             // change to the image set tab
-            this.MenuViewShowFiles_Click(null, null);
+            this.MenuViewShowFiles_Click(this, null);
 
             // clear undo/redo chain as folder loading is not an undoable operation
             this.OnBulkEdit(this, null);
@@ -1778,7 +1786,7 @@ namespace Carnassial
                 // These cases are reached when 
                 // 1) datetime modifications result in no files matching a custom selection
                 // 2) all files which match the selection get deleted
-                this.statusBar.SetMessage("Resetting selection to 'All files'.");
+                this.StatusBar.SetMessage("Resetting selection to 'All files'.");
 
                 MessageBox messageBox = new MessageBox("Resetting selection to 'All files' (no files match the current selection)", this);
                 messageBox.Message.StatusImage = MessageBoxImage.Information;
@@ -1853,8 +1861,8 @@ namespace Carnassial
                     throw new NotSupportedException(String.Format("Unhandled file selection {0}.", selection));
             }
 
-            this.statusBar.SetFileCount(this.DataHandler.FileDatabase.CurrentlySelectedFileCount);
-            this.statusBar.SetView(status);
+            this.StatusBar.SetFileCount(this.DataHandler.FileDatabase.CurrentlySelectedFileCount);
+            this.StatusBar.SetView(status);
 
             this.EnableOrDisableMenusAndControls();
             this.MenuSelectAllFiles.IsChecked = selection == FileSelection.All;
@@ -1929,7 +1937,7 @@ namespace Carnassial
             {
                 this.MarkableCanvas.SetNewImage(Constant.Images.NoSelectableFile.Value, null);
                 this.RefreshDisplayedMarkers();
-                this.statusBar.SetCurrentFile(Constant.Database.InvalidRow);
+                this.StatusBar.SetCurrentFile(Constant.Database.InvalidRow);
 
                 // clear data context
                 this.DataEntryControls.SetDataContext(null);
@@ -1992,8 +2000,8 @@ namespace Carnassial
             this.DataHandler.ImageCache.Current.PropertyChanged += this.OnFileFieldEdit;
 
             // update status bar
-            this.statusBar.SetCurrentFile(fileIndex);
-            this.statusBar.ClearMessage();
+            this.StatusBar.SetCurrentFile(fileIndex);
+            this.StatusBar.ClearMessage();
 
             // update nav slider thumb's position to the current file
             this.FileNavigatorSlider.Value = Utilities.ToDisplayIndex(fileIndex);
@@ -2173,15 +2181,15 @@ namespace Carnassial
             folderLoadStatus.Report(folderLoadProgress);
             if (this.State.SkipDarkImagesCheck)
             {
-                this.statusBar.SetMessage("Loading folders...");
+                this.StatusBar.SetMessage("Loading folders...");
             }
             else
             {
-                this.statusBar.SetMessage("Loading folders (if this is slower than you like and dark image detection isn't needed you can select Skip dark check in the Options menu right now)...");
+                this.StatusBar.SetMessage("Loading folders (if this is slower than you like and dark image detection isn't needed you can select Skip dark check in the Options menu right now)...");
             }
 
             // change to the files tab
-            this.MenuViewShowFiles_Click(null, null);
+            this.MenuViewShowFiles_Click(this, null);
 
             // ensure all files are selected
             // This prevents files which are in the DB but not selected from being added a second time.
@@ -2591,7 +2599,7 @@ namespace Carnassial
                 MemoryImage unalteredImage = this.DataHandler.ImageCache.GetCurrentImage();
                 Debug.Assert(unalteredImage != null, "Unaltered image not available from image cache.");
                 this.MarkableCanvas.SetDisplayImage(unalteredImage);
-                this.statusBar.ClearMessage();
+                this.StatusBar.ClearMessage();
                 return;
             }
 
@@ -2602,16 +2610,16 @@ namespace Carnassial
                 switch (result)
                 {
                     case ImageDifferenceResult.CurrentImageNotAvailable:
-                        this.statusBar.SetMessage("Combined differences can't be shown since the current file is not a loadable image (typically it's a video, missing, or corrupt).");
+                        this.StatusBar.SetMessage("Combined differences can't be shown since the current file is not a loadable image (typically it's a video, missing, or corrupt).");
                         return;
                     case ImageDifferenceResult.NextImageNotAvailable:
-                        this.statusBar.SetMessage("Combined differences can't be shown since the next file is not available.");
+                        this.StatusBar.SetMessage("Combined differences can't be shown since the next file is not available.");
                         return;
                     case ImageDifferenceResult.NotCalculable:
-                        this.statusBar.SetMessage("Previous or next file is not compatible with {0}, most likely because it's a different size.", this.DataHandler.ImageCache.Current.FileName);
+                        this.StatusBar.SetMessage("Previous or next file is not compatible with {0}, most likely because it's a different size.", this.DataHandler.ImageCache.Current.FileName);
                         return;
                     case ImageDifferenceResult.PreviousImageNotAvailable:
-                        this.statusBar.SetMessage("Combined differences can't be shown since the next file is not available.");
+                        this.StatusBar.SetMessage("Combined differences can't be shown since the next file is not available.");
                         return;
                     case ImageDifferenceResult.Success:
                         // set status below so that it's displayed when a cached difference is used
@@ -2624,7 +2632,7 @@ namespace Carnassial
             // display differenced image
             // see above remarks about not modifying ImageToMagnify
             this.MarkableCanvas.SetDisplayImage(this.DataHandler.ImageCache.GetCurrentImage());
-            this.statusBar.SetMessage("Viewing differences from both next and previous files.");
+            this.StatusBar.SetMessage("Viewing differences from both next and previous files.");
         }
 
         // Cycle through difference images in the order current, then previous and next differenced images.
@@ -2643,7 +2651,7 @@ namespace Carnassial
                 MemoryImage unaltered = this.DataHandler.ImageCache.GetCurrentImage();
                 Debug.Assert(unaltered != null, "Unaltered image not available from image cache.");
                 this.MarkableCanvas.SetDisplayImage(unaltered);
-                this.statusBar.ClearMessage();
+                this.StatusBar.ClearMessage();
                 return;
             }
 
@@ -2654,14 +2662,14 @@ namespace Carnassial
                 switch (result)
                 {
                     case ImageDifferenceResult.CurrentImageNotAvailable:
-                        this.statusBar.SetMessage("Difference can't be shown as the current file is not a displayable image (typically it's a video, missing, or corrupt).");
+                        this.StatusBar.SetMessage("Difference can't be shown as the current file is not a displayable image (typically it's a video, missing, or corrupt).");
                         return;
                     case ImageDifferenceResult.NextImageNotAvailable:
                     case ImageDifferenceResult.PreviousImageNotAvailable:
-                        this.statusBar.SetMessage("View of difference from {0} file unavailable as it is not a displayable image (typically it's a video, missing, or corrupt).", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next");
+                        this.StatusBar.SetMessage("View of difference from {0} file unavailable as it is not a displayable image (typically it's a video, missing, or corrupt).", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next");
                         return;
                     case ImageDifferenceResult.NotCalculable:
-                        this.statusBar.SetMessage("{0} file is not compatible with {1}, most likely because it's a different size.", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.DataHandler.ImageCache.Current.FileName);
+                        this.StatusBar.SetMessage("{0} file is not compatible with {1}, most likely because it's a different size.", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.DataHandler.ImageCache.Current.FileName);
                         return;
                     case ImageDifferenceResult.Success:
                         // set status below so that it's displayed when a cached difference is used
@@ -2675,7 +2683,7 @@ namespace Carnassial
             // the magnifying glass always displays the original non-diferenced image so ImageToDisplay is updated and ImageToMagnify left unchnaged
             // this allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
             this.MarkableCanvas.SetDisplayImage(this.DataHandler.ImageCache.GetCurrentImage());
-            this.statusBar.SetMessage("Viewing difference from {0} file.", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next");
+            this.StatusBar.SetMessage("Viewing difference from {0} file.", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next");
         }
 
         private async void UpdateFolderLoadProgress(FolderLoadProgress progress)
@@ -2709,6 +2717,54 @@ namespace Carnassial
                 this.State.CarnassialWindowPosition = new Rect(new Point(this.Left, this.Top), new Size(this.Width, this.Height));
             }
             this.State.WriteToRegistry();
+        }
+
+        private async void Window_ContentRendered(object sender, EventArgs e)
+        {
+            // abort if required dependencies are missing
+            if (Dependencies.AreRequiredBinariesPresent(Constant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
+            {
+                Dependencies.ShowMissingBinariesDialog(Constant.ApplicationName);
+                if (Application.Current != null)
+                {
+                    Application.Current.Shutdown();
+                }
+            }
+
+            // check for updates
+            if (DateTime.UtcNow - this.State.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
+            {
+                Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
+                if (latestVersionAddress == null)
+                {
+                    return;
+                }
+
+                GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, latestVersionAddress);
+                updater.TryGetAndParseRelease(false);
+                this.State.MostRecentCheckForUpdates = DateTime.UtcNow;
+            }
+
+            // if a file was passed on the command line, try to open it
+            // args[0] is the .exe
+            string[] args = Environment.GetCommandLineArgs();
+            if (args != null && args.Length > 1)
+            {
+                string filePath = args[1];
+                string fileExtension = Path.GetExtension(filePath);
+                if (String.Equals(fileExtension, Constant.File.TemplateFileExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    await this.TryOpenTemplateAndLoadFoldersAsync(filePath);
+                }
+                else if (String.Equals(fileExtension, Constant.File.FileDatabaseFileExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    string[] templatePaths = Directory.GetFiles(Path.GetDirectoryName(filePath), "*" + Constant.File.TemplateFileExtension);
+                    if (templatePaths != null && templatePaths.Length == 1)
+                    {
+                        await this.TryOpenTemplateAndLoadFoldersAsync(templatePaths[0]);
+                    }
+                }
+            }
         }
 
         private async void Window_KeyDown(object sender, KeyEventArgs currentKey)
@@ -2949,59 +3005,6 @@ namespace Carnassial
                 default:
                     return;
             }
-        }
-
-        private async void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            // abort if required dependencies are missing
-            if (Dependencies.AreRequiredBinariesPresent(Constant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
-            {
-                Dependencies.ShowMissingBinariesDialog(Constant.ApplicationName);
-                if (Application.Current != null)
-                {
-                    Application.Current.Shutdown();
-                }
-            }
-
-            // check for updates
-            if (DateTime.UtcNow - this.State.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
-            {
-                Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
-                if (latestVersionAddress == null)
-                {
-                    return;
-                }
-
-                GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, latestVersionAddress);
-                updater.TryGetAndParseRelease(false);
-                this.State.MostRecentCheckForUpdates = DateTime.UtcNow;
-            }
-
-            // if a file was passed on the command line, try to open it
-            // args[0] is the .exe
-            string[] args = Environment.GetCommandLineArgs();
-            if (args != null && args.Length > 1)
-            {
-                string filePath = args[1];
-                string fileExtension = Path.GetExtension(filePath);
-                if (String.Equals(fileExtension, Constant.File.TemplateFileExtension, StringComparison.OrdinalIgnoreCase))
-                {
-                    await this.TryOpenTemplateAndLoadFoldersAsync(filePath);
-                }
-                else if (String.Equals(fileExtension, Constant.File.FileDatabaseFileExtension, StringComparison.OrdinalIgnoreCase))
-                {
-                    string[] templatePaths = Directory.GetFiles(Path.GetDirectoryName(filePath), "*" + Constant.File.TemplateFileExtension);
-                    if (templatePaths != null && templatePaths.Length == 1)
-                    {
-                        await this.TryOpenTemplateAndLoadFoldersAsync(templatePaths[0]);
-                    }
-                }
-            }
-        }
-
-        private void FileNavigatorSlider_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
-        {
-            this.FocusMarkableCanvas();
         }
 
         private void Window_SourceInitialized(object sender, EventArgs e)

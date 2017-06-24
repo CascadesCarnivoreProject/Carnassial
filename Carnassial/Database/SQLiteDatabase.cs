@@ -266,6 +266,21 @@ namespace Carnassial.Database
             }
         }
 
+        /// <summary>
+        /// SQLite doesn't support parameters for default values when defining table schemas so escaping has to be done by its caller.
+        /// </summary>
+        public static string QuoteForSql(string value)
+        {
+            // promote null values to empty strings
+            if (value == null)
+            {
+                return "''";
+            }
+
+            // for an input of "foo's bar" the output is "'foo''s bar'"
+            return "'" + value.Replace("'", "''") + "'";
+        }
+
         public void RenameColumn(string table, string currentColumnName, string newColumnName)
         {
             if (String.IsNullOrWhiteSpace(currentColumnName))

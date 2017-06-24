@@ -195,7 +195,7 @@ namespace Carnassial.UnitTests
 
             SearchTerm dateTime = fileDatabase.CustomSelection.SearchTerms.First(term => term.DataLabel == Constant.DatabaseColumn.DateTime);
             dateTime.UseForSearching = true;
-            dateTime.DatabaseValue = DateTimeHandler.ToDatabaseDateTimeString(new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero));
+            dateTime.DatabaseValue = new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero);
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
@@ -450,9 +450,9 @@ namespace Carnassial.UnitTests
                 int widthIndex = numberOfStandardControls + (3 * iterations) - 2;
                 ControlRow widthControl = templateDatabase.Controls[widthIndex];
                 int modifiedWidth = 1000;
-                widthControl.Width = modifiedWidth;
+                widthControl.MaxWidth = modifiedWidth;
                 templateDatabase.SyncControlToDatabase(widthControl);
-                Assert.IsTrue(templateDatabase.Controls[widthIndex].Width == modifiedWidth);
+                Assert.IsTrue(templateDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
 
                 int visibleIndex = numberOfStandardControls + (3 * iterations) - 3;
                 ControlRow visibleControl = templateDatabase.Controls[visibleIndex];
@@ -475,7 +475,7 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(templateDatabase.Controls[listIndex].List == modifiedList);
                 Assert.IsTrue(templateDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
                 Assert.IsTrue(templateDatabase.Controls[visibleIndex].Visible == modifiedVisible);
-                Assert.IsTrue(templateDatabase.Controls[widthIndex].Width == modifiedWidth);
+                Assert.IsTrue(templateDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
 
                 // reopen the file database to synchronize its template table with the modified table in the current template
                 Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabase.FilePath, templateDatabase, false, LogicalOperator.And, out fileDatabase));
@@ -491,7 +491,7 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(fileDatabase.Controls[listIndex].List == modifiedList);
                 Assert.IsTrue(fileDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
                 Assert.IsTrue(fileDatabase.Controls[visibleIndex].Visible == modifiedVisible);
-                Assert.IsTrue(fileDatabase.Controls[widthIndex].Width == modifiedWidth);
+                Assert.IsTrue(fileDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
             }
             finally
             {
@@ -922,16 +922,16 @@ namespace Carnassial.UnitTests
                     readerWriter.ExportFileDataToCsv(fileDatabase, initialFilePath);
                 }
 
-                List<string> importErrors;
+                FileImportResult importResult;
                 if (xlsx)
                 {
-                    Assert.IsTrue(readerWriter.TryImportFileDataFromXlsx(initialFilePath, fileDatabase, out importErrors));
+                    importResult = readerWriter.TryImportFileDataFromXlsx(initialFilePath, fileDatabase);
                 }
                 else
                 {
-                    Assert.IsTrue(readerWriter.TryImportFileDataFromCsv(initialFilePath, fileDatabase, out importErrors));
+                    importResult = readerWriter.TryImportFileDataFromCsv(initialFilePath, fileDatabase);
                 }
-                Assert.IsTrue(importErrors.Count == 0);
+                Assert.IsTrue(importResult.Errors.Count == 0);
 
                 // verify File table content hasn't changed
                 TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
@@ -967,13 +967,13 @@ namespace Carnassial.UnitTests
                 string mergeFilePath = Path.Combine(Path.GetDirectoryName(initialFilePath), Path.GetFileNameWithoutExtension(initialFilePath) + ".FilesToMerge" + spreadsheetFileExtension);
                 if (xlsx)
                 {
-                    Assert.IsTrue(readerWriter.TryImportFileDataFromXlsx(mergeFilePath, fileDatabase, out importErrors));
+                    importResult = readerWriter.TryImportFileDataFromXlsx(mergeFilePath, fileDatabase);
                 }
                 else
                 {
-                    Assert.IsTrue(readerWriter.TryImportFileDataFromCsv(mergeFilePath, fileDatabase, out importErrors));
+                    importResult = readerWriter.TryImportFileDataFromCsv(mergeFilePath, fileDatabase);
                 }
-                Assert.IsTrue(importErrors.Count == 0);
+                Assert.IsTrue(importResult.Errors.Count == 0);
 
                 fileDatabase.SelectFiles(FileSelection.All);
                 Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount - filesBeforeMerge == 2);
@@ -1086,7 +1086,7 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(String.IsNullOrWhiteSpace(control.Label));
             // nothing to sanity check for control.List
             Assert.IsTrue(control.SpreadsheetOrder > 0);
-            Assert.IsTrue(control.Width > 0);
+            Assert.IsTrue(control.MaxWidth > 0);
             Assert.IsFalse(String.IsNullOrWhiteSpace(control.Tooltip));
             Assert.IsTrue(Enum.IsDefined(typeof(ControlType), control.Type));
             Assert.IsTrue((control.Visible == true) || (control.Visible == false));

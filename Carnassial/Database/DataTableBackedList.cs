@@ -45,7 +45,6 @@ namespace Carnassial.Database
         {
             if (dataGrid != null)
             {
-                dataGrid.DataContext = this.DataTable;
                 dataGrid.ItemsSource = this.DataTable.DefaultView;
             }
             // refresh data grid binding

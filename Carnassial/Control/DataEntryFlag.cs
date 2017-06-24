@@ -11,7 +11,7 @@ namespace Carnassial.Control
     public class DataEntryFlag : DataEntryControl<CheckBox, Label>
     {
         public DataEntryFlag(ControlRow control, DataEntryControls styleProvider)
-            : base(control, styleProvider, ControlContentStyle.FlagCheckBox, ControlLabelStyle.DefaultLabel)
+            : base(control, styleProvider, ControlContentStyle.FlagCheckBox, ControlLabelStyle.Label)
         {
             this.ContentControl.SetBinding(CheckBox.IsCheckedProperty, ImageRow.GetDataBindingPath(control.DataLabel));
         }

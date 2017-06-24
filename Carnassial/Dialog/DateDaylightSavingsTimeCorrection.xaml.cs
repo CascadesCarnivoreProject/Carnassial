@@ -31,7 +31,7 @@ namespace Carnassial.Dialog
             this.OriginalDate.Content = this.fileToDisplay.GetDisplayDateTime();
             MemoryImage image = imageCache.GetCurrentImage();
             image.SetSource(this.Image);
-            this.HourButton_Checked(null, null);
+            this.HourButton_Checked(this, null);
 
             // hook event handlers
             this.AddHour.Checked += this.HourButton_Checked;

@@ -29,6 +29,7 @@ namespace Carnassial.Control
             this.Controls.Clear();
             this.ControlsByDataLabel.Clear();
             this.ControlStack.Children.Clear();
+            this.ControlStack.RowDefinitions.Clear();
         }
 
         public void CreateControls(TemplateDatabase database, DataEntryHandler dataEntryPropagator, Func<string, List<string>> getNoteAutocompletions)
@@ -96,10 +97,15 @@ namespace Carnassial.Control
                 dateTimeControl.ShowUtcOffset();
             }
 
-            foreach (DataEntryControl control in visibleControls)
+            for (int controlIndex = 0; controlIndex < visibleControls.Count; ++controlIndex)
             {
+                DataEntryControl control = visibleControls[controlIndex];
+                control.Container.SetValue(Grid.RowProperty, controlIndex);
+
                 this.Controls.Add(control);
                 this.ControlsByDataLabel.Add(control.DataLabel, control);
+
+                this.ControlStack.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
                 this.ControlStack.Children.Add(control.Container);
             }
 

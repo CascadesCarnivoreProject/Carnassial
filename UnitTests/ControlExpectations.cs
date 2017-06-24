@@ -13,8 +13,8 @@ namespace Carnassial.UnitTests
         public long ID { get; set; }
         public string Label { get; set; }
         public string List { get; set; }
+        public int MaxWidth { get; set; }
         public long SpreadsheetOrder { get; set; }
-        public int TextBoxWidth { get; set; }
         public string Tooltip { get; set; }
         public ControlType Type { get; set; }
         public bool Visible { get; set; }
@@ -35,8 +35,8 @@ namespace Carnassial.UnitTests
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
+                MaxWidth = Constant.ControlDefault.MaxWidth,
                 SpreadsheetOrder = spreadsheetOrder,
-                TextBoxWidth = Constant.ControlDefault.CounterWidth,
                 Tooltip = Constant.ControlDefault.CounterTooltip,
                 Type = ControlType.Counter,
                 Visible = true
@@ -59,8 +59,8 @@ namespace Carnassial.UnitTests
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
+                MaxWidth = Constant.ControlDefault.MaxWidth,
                 SpreadsheetOrder = spreadsheetOrder,
-                TextBoxWidth = Constant.ControlDefault.FixedChoiceWidth,
                 Tooltip = Constant.ControlDefault.FixedChoiceTooltip,
                 Type = ControlType.FixedChoice,
                 Visible = true
@@ -83,8 +83,8 @@ namespace Carnassial.UnitTests
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
+                MaxWidth = Constant.ControlDefault.MaxWidth,
                 SpreadsheetOrder = spreadsheetOrder,
-                TextBoxWidth = Constant.ControlDefault.FlagWidth,
                 Tooltip = Constant.ControlDefault.FlagTooltip,
                 Type = ControlType.Flag,
                 Visible = true
@@ -107,8 +107,8 @@ namespace Carnassial.UnitTests
                 ID = id,
                 Label = dataLabel,
                 List = String.Empty,
+                MaxWidth = Constant.ControlDefault.MaxWidth,
                 SpreadsheetOrder = spreadsheetOrder,
-                TextBoxWidth = Constant.ControlDefault.NoteWidth,
                 Tooltip = Constant.ControlDefault.NoteTooltip,
                 Type = ControlType.Note,
                 Visible = true
@@ -124,8 +124,8 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(control.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.DataLabel, this.ID, control.ID);
             Assert.IsTrue(control.Label == this.Label, "{0}: Expected Label '{1}' but found '{2}'.", this.DataLabel, this.Label, control.Label);
             Assert.IsTrue(control.List == this.List, "{0}: Expected List '{1}' but found '{2}'.", this.DataLabel, this.List, control.List);
+            Assert.IsTrue(control.MaxWidth == this.MaxWidth, "{0}: Expected TextBoxWidth '{1}' but found '{2}'.", this.DataLabel, this.MaxWidth, control.MaxWidth);
             Assert.IsTrue(control.SpreadsheetOrder == this.SpreadsheetOrder, "{0}: Expected SpreadsheetOrder '{1}' but found '{2}'.", this.DataLabel, this.SpreadsheetOrder, control.SpreadsheetOrder);
-            Assert.IsTrue(control.Width == this.TextBoxWidth, "{0}: Expected TextBoxWidth '{1}' but found '{2}'.", this.DataLabel, this.TextBoxWidth, control.Width);
             Assert.IsTrue(control.Tooltip == this.Tooltip, "{0}: Expected Tooltip '{1}' but found '{2}'.", this.DataLabel, this.Tooltip, control.Tooltip);
             Assert.IsTrue(control.Type == this.Type, "{0}: Expected Type '{1}' but found '{2}'.", this.DataLabel, this.Type, control.Type);
             Assert.IsTrue(control.Visible == this.Visible, "{0}: Expected Visible '{1}' but found '{2}'.", this.DataLabel, this.Visible, control.Visible);

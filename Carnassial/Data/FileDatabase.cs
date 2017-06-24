@@ -1,6 +1,5 @@
 ﻿using Carnassial.Control;
 using Carnassial.Database;
-using Carnassial.Images;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -10,16 +9,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Windows.Controls;
 using ColumnDefinition = Carnassial.Database.ColumnDefinition;
 
 namespace Carnassial.Data
 {
     public class FileDatabase : TemplateDatabase
     {
-        private DataGrid boundDataGrid;
         private bool disposed;
-        private DataRowChangeEventHandler onFileDataTableRowChanged;
 
         public List<string> ControlSynchronizationIssues { get; private set; }
 
@@ -90,7 +86,7 @@ namespace Carnassial.Data
                 {
                     if (dataLabel == Constant.DatabaseColumn.DeleteFlag)
                     {
-                        deleteFlagDefaultValue = ColumnDefinition.QuoteForSql(this.FindControl(dataLabel).DefaultValue);
+                        deleteFlagDefaultValue = SQLiteDatabase.QuoteForSql(this.FindControl(dataLabel).DefaultValue);
                     }
                     // don't specify ID in the insert statement as it's an autoincrement primary key
                     // don't generate parameters for standard controls they're coded explicitly
@@ -98,7 +94,7 @@ namespace Carnassial.Data
                 }
 
                 dataLabels.Add(dataLabel);
-                defaultValues.Add(ColumnDefinition.QuoteForSql(this.FindControl(dataLabel).DefaultValue));
+                defaultValues.Add(SQLiteDatabase.QuoteForSql(this.FindControl(dataLabel).DefaultValue));
             }
 
             string dataLabelsConcatenated = null;
@@ -274,13 +270,6 @@ namespace Carnassial.Data
         {
             this.ImageSet.Log += logEntry;
             this.SyncImageSetToDatabase();
-        }
-
-        public void BindToDataGrid(DataGrid dataGrid, DataRowChangeEventHandler onRowChanged)
-        {
-            this.boundDataGrid = dataGrid;
-            this.onFileDataTableRowChanged = onRowChanged;
-            this.Files.BindDataGrid(dataGrid, onRowChanged);
         }
 
         private ColumnDefinition CreateFileDataColumnDefinition(ControlRow control)
@@ -605,16 +594,15 @@ namespace Carnassial.Data
         }
 
         /// <summary>
-        /// Get the row matching the specified image or create a new image.  The caller is responsible to add newly created images the database and data table.
+        /// Get the row matching the specified file or create a new file.  The caller is responsible to add newly created files the database and data table.
         /// </summary>
-        /// <returns>true if the image is already in the database</returns>
+        /// <returns>true if the file is already in the database</returns>
         public bool GetOrCreateFile(FileInfo fileInfo, TimeZoneInfo imageSetTimeZone, out ImageRow file)
         {
-            // GetRelativePath() includes the image's file name; remove that from the relative path as it's stored separately
-            // GetDirectoryName() returns String.Empty if there's no relative path; the SQL layer treats this inconsistently, resulting in 
-            // DataRows returning with RelativePath = String.Empty even if null is passed despite setting String.Empty as a column default
-            // resulting in RelativePath = null.  As a result, String.IsNullOrEmpty() is the appropriate test for lack of a RelativePath.
-            string relativePath = NativeMethods.GetRelativePath(this.FolderPath, fileInfo.FullName);
+            // GetRelativePath() includes the file's name; remove that from the relative path as it's stored separately
+            // GetDirectoryName() returns String.Empty if there's no relative path; the SQL layer treats this inconsistently, resulting in DataRows with 
+            // RelativePath = String.Empty even if null is passed.  As a result, String.IsNullOrEmpty() is the appropriate test for lack of a RelativePath.
+            string relativePath = NativeMethods.GetRelativePathFromDirectoryToFile(this.FolderPath, fileInfo.FullName);
             relativePath = Path.GetDirectoryName(relativePath);
 
             if (this.TryGetFile(relativePath, fileInfo.Name, out file))
@@ -624,7 +612,7 @@ namespace Carnassial.Data
 
             file = this.Files.NewRow(fileInfo);
             file.RelativePath = relativePath;
-            Debug.Assert(File.Exists(file.GetFilePath(this.FolderPath)), "Failure in ImageRow formation.");
+            Debug.Assert(File.Exists(file.GetFilePath(this.FolderPath)), "ImageRow created for file not found on disk.");
             file.SetDateTimeOffsetFromFileInfo(this.FolderPath, imageSetTimeZone);
             return false;
         }
@@ -828,7 +816,6 @@ namespace Carnassial.Data
             }
             DataTable files = this.Database.GetDataTableFromSelect(connection, select);
             this.Files = new FileTable(files);
-            this.Files.BindDataGrid(this.boundDataGrid, this.onFileDataTableRowChanged);
 
             // persist the current selection
             this.ImageSet.FileSelection = selection;

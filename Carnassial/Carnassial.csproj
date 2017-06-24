@@ -212,6 +212,7 @@
     <Compile Include="Database\LogicalOperator.cs" />
     <Compile Include="Database\DataTableBackedList.cs" />
     <Compile Include="Database\DataRowExtensions.cs" />
+    <Compile Include="Data\FileImportResult.cs" />
     <Compile Include="Data\FileTable.cs" />
     <Compile Include="Data\ImageRowDateTimeOffsetConverter.cs" />
     <Compile Include="Data\ImageSetOptions.cs" />
@@ -294,6 +295,7 @@
     <Compile Include="Dialog\DeleteFiles.xaml.cs">
       <DependentUpon>DeleteFiles.xaml</DependentUpon>
     </Compile>
+    <Compile Include="WindowWithSystemMenu.cs" />
     <Page Include="Control\TimeSpanPicker.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -490,6 +492,10 @@
       <SubType>Code</SubType>
       <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
     </Compile>
+    <Page Include="CarnassialWindowStyle.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -545,8 +551,6 @@
     <Resource Include="Resources\NoSelectableFile_480x.png" />
     <Resource Include="Resources\CorruptFile_480x.png" />
     <Resource Include="Resources\FileNoLongerAvailable_480x.png" />
-    <Resource Include="Resources\VideoPlayIcon.png" />
-    <Resource Include="Resources\VideoPauseIcon.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\StatusCriticalError_64x.png" />

@@ -51,7 +51,12 @@ namespace Carnassial.Database
 
                     // check to see if the search should match an empty string
                     // If so, nulls need also to be matched as NULL and empty are considered interchangeable.
-                    if (String.IsNullOrEmpty(clause.Value) && clause.Operator == Constant.SearchTermOperator.Equal)
+                    bool valueIsNullOrEmpty = clause.Value == null;
+                    if (clause.Value is string)
+                    {
+                        valueIsNullOrEmpty = String.IsNullOrEmpty((string)clause.Value);
+                    }
+                    if (valueIsNullOrEmpty && clause.Operator == Constant.SearchTermOperator.Equal)
                     {
                         whereClauses.Add("(" + clause.Name + " IS NULL OR " + clause.Name + " = '')");
                     }

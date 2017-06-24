@@ -67,38 +67,30 @@ namespace Carnassial
         public static class ControlDefault
         {
             // general defaults
+            public const int MaxWidth = 500;
             public const string Value = "";
 
             // user defined controls
             public const string CounterTooltip = "Click the counter button, then click on the image to count the entity. Or just type in a count";
             public const string CounterValue = "0";              // Default for: counters
-            public const int CounterWidth = 80;
             public const string FixedChoiceTooltip = "Choose an item from the menu";
-            public const int FixedChoiceWidth = 100;
 
             public const string FlagTooltip = "Toggle between true and false";
             public const string FlagValue = "False"; // can't use Boolean.FalseString as it's not const
-            public const int FlagWidth = 20;
             public const string NoteTooltip = "Write a textual note";
-            public const int NoteWidth = 100;
 
             // standard controls
             public const string DateTimeTooltip = "Date and time taken";
-            public const int DateTimeWidth = 220;
 
             public const string FileTooltip = "The file name";
-            public const int FileWidth = 254;
             public const string RelativePathTooltip = "Path from the folder containing the template and image data files to the file";
-            public const int RelativePathWidth = 204;
 
             public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
-            public const int ImageQualityWidth = 198;
 
             public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
             public const string DeleteFlagTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
 
             public const string UtcOffsetTooltip = "Universal Time offset of the time zone for date and time taken";
-            public const int UtcOffsetWidth = 220;
 
             public static readonly DateTimeOffset DateTimeValue = new DateTimeOffset(1900, 1, 1, 12, 0, 0, 0, TimeSpan.Zero);
         }

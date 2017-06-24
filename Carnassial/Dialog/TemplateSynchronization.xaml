@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Carnassial.Dialog.TemplateSynchronization"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:Carnassial.Control"
+        xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         Title="Sorry, this template isn't compatible with this data file." 
 		Height="500" Width="700"
@@ -15,7 +15,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <controls:StockMessageControl x:Name="Message"
+        <control:StockMessageControl x:Name="Message"
                             StatusImage="Warning"
                             Title="Template and data file aren't compatible."
                             Problem="The data file can't be updated with the data field definitions in the current template."

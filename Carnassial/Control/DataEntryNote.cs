@@ -40,7 +40,7 @@ namespace Carnassial.Control
         }
 
         public DataEntryNote(ControlRow control, List<string> autocompletionsFromDatabase, bool readOnly, DataEntryControls styleProvider) :
-            base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.DefaultLabel, readOnly)
+            base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.Label, readOnly)
         {
             this.SetChoices(control.GetChoices());
             this.autocompletionsFromList = control.GetChoices();

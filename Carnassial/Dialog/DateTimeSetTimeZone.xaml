@@ -1,6 +1,6 @@
 ﻿<Window x:Class="Carnassial.Dialog.DateTimeSetTimeZone"
 		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:controls="clr-namespace:Carnassial.Control"
+        xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		Title="Date/time - Set the time zone of all files selected."
@@ -16,7 +16,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <controls:StockMessageControl x:Name="Message" StatusImage="Question"
+        <control:StockMessageControl x:Name="Message" StatusImage="Question"
                             Title="Set the time zone of all files selected."
                             Problem="The UTC offset needs to be changed.  This could be because the camera is located in a different time zone from the image set's time zone, no metadata was available from the files (meaning local file times were used), or the wrong time zone was set when the files were added to the image set."
                             Solution="Your currently selected file is shown below.
@@ -45,7 +45,7 @@
                 <Label Grid.Column="1" Grid.Row="0" Content="Original date/time and offset:" Margin="5,0,0,0" HorizontalContentAlignment="Left" FontWeight="Bold" />
                 <Label Grid.Column="1" Grid.Row="0" Name="OriginalDate" MinWidth="140" Margin="180,0,0,0" Content="dd-MMM-yyyy HH:mm:ss -HH:mm" FontWeight="Normal" HorizontalAlignment="Stretch" />
                 <Label Grid.Column="1" Grid.Row="1" Content="New time zone: " Margin="5,0,0,0" FontWeight="Bold" />
-                <controls:TimeZonePicker Grid.Column="1" Grid.Row="1" x:Name="TimeZones" Margin="115,0,0,0" Width="375" />
+                <control:TimeZonePicker Grid.Column="1" Grid.Row="1" x:Name="TimeZones" Margin="115,0,0,0" Width="375" />
             </Grid>
             <Image Name="Image" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" HorizontalAlignment="Left" Grid.Row="1" />
         </Grid>
@@ -55,7 +55,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Label FontWeight="Bold" Content="The following changes to dates and times will occur if you select Apply Changes." Grid.Row="0" />
-            <controls:DateChangesFeedbackControl x:Name="TimeZoneUpdateFeedback" Grid.Row="1" />
+            <control:DateChangesFeedbackControl x:Name="TimeZoneUpdateFeedback" Grid.Row="1" />
         </Grid>
         <!-- Ok/Cancel buttons-->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">

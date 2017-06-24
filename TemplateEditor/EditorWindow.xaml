@@ -1,73 +1,32 @@
-﻿<Window x:Class="Carnassial.Editor.EditorWindow"
+﻿<carnassial:WindowWithSystemMenu x:Class="Carnassial.Editor.EditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:Carnassial.Control;assembly=Carnassial"
+        xmlns:carnassial="clr-namespace:Carnassial;assembly=Carnassial"
+        xmlns:control="clr-namespace:Carnassial.Control;assembly=Carnassial"
         xmlns:local="clr-namespace:Carnassial.Editor"
+        xmlns:util="clr-namespace:Carnassial.Editor.Util"
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
-        AutomationProperties.AutomationId="CarnassialTemplateEditor"
-        Height="900" Width="1350" MinHeight="560" MinWidth="800" Icon="Editor.ico" Loaded="Window_Loaded" Closing="Window_Closing">
+        AutomationProperties.AutomationId="CarnassialTemplateEditor" Icon="Editor.ico" 
+        Closing="Window_Closing" Loaded="Window_Loaded" Style="{StaticResource MainWindow}"
+        Height="900" Width="1350" MinHeight="560" MinWidth="800">
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MaximizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MaximizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MinimizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MinimizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.RestoreWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="RestoreWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.ShowSystemMenuCommand}" CanExecute="CommandBinding_CanExecute" Executed="ShowSystemMenu_Execute" />
+    </Window.CommandBindings>
     <Window.Resources>
         <ResourceDictionary>
-            <ToolTip x:Key="DefaultValueToolTip">
-                <TextBlock>The value the field will be set to by default.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="LabelToolTip">
-                <TextBlock>The text describing this field as shown in the user interface.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="DataLabelToolTip">
-                <TextBlock>The text describing this field as written in the output file. Will be the same as the Label if its left empty.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="TooltipToolTip">
-                <TextBlock>The help text describing this field as shown in the user interface.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="WidthToolTip">
-                <TextBlock>The width of the data entry field as shown in the user interface.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="CopyableToolTip">
-                <TextBlock>Whether the data value from the previous will be copied to the current file if the user selects the ‘Copy’ button in Carnassial.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="VisibleToolTip">
-                <TextBlock>Whether this item will be displayed in the user interface.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="TypeNoteToolTip">
-                <TextBlock>A note field accepts free-form text.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="TypeCounterToolTip">
-                <TextBlock>A count field provides a point and click interface for counting entities in an image or video.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="TypeFixedChoiceToolTip">
-                <TextBlock>A choice field provides a drop down menu of possible choices that can be entered. Edit the list to create these choices.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="TypeFlagToolTip">
-                <TextBlock>A flag field can be toggled between true and false.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="TypeFileToolTip">
-                <TextBlock>File is filled in automatically by the system with the file name of the image or video.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="TypeFolderToolTip">
-                <TextBlock>Folder is filled in automatically by the system.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="TypeDateTimeToolTip">
-                <TextBlock>Date and time are filled in automatically by the system but will still be editable if changes are required.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="TypeImageQualityToolTip">
-                <TextBlock>Image quality is filled in automatically by the system.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="TypeDeleteFlagToolTip">
-                <TextBlock>The deleted flag is a standard control used to mark files for deletion.</TextBlock>
-            </ToolTip>
-            <ToolTip x:Key="ListFixedChoiceToolTip">
-                <TextBlock>A list of items displayed as a menu of choices. Type in new items; right click on an item to edit, move or delete it.</TextBlock>
-            </ToolTip>
-            <local:TrimmingConverter x:Key="TrimmingConverter" />
+            <util:TrimmingConverter x:Key="TrimmingConverter" />
         </ResourceDictionary>
     </Window.Resources>
-    <Grid>
+    <Grid Style="{StaticResource ApplicationGrid}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="{Binding Source={x:Static SystemParameters.WindowCaptionHeight}}" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.Resources>
@@ -76,49 +35,63 @@
             </Style>
         </Grid.Resources>
 
-        <!-- Menus -->
-        <Menu Grid.Row="0">
-            <!-- File Menu -->
-            <MenuItem Name="FileMenu" Header="_File">
-                <MenuItem Name="MenuFileNewTemplate" Header="_New..." Click="MenuFileNewTemplate_Click" ToolTip="Create a new data template file.">
-                    <MenuItem.Icon>
-                        <Image Source="Resources/Menu/NewFile_16x.png" />
-                    </MenuItem.Icon>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="307" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Style="{StaticResource ApplicationIcon}" />
+            <Menu Style="{StaticResource ApplicationMenu}">
+                <!-- file menu -->
+                <MenuItem Name="FileMenu" Header="_File">
+                    <MenuItem Name="MenuFileNewTemplate" Header="_New..." Click="MenuFileNewTemplate_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Create a new data template file.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/NewFile_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Name="MenuFileOpenTemplate" Header="_Open..." Click="MenuFileOpenTemplate_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Open an existing data template file.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/OpenFolder_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator />
+                    <MenuItem Name="MenuFileRecentTemplates" Header="_Recent templates" IsEnabled="false" Style="{StaticResource ApplicationMenuItem}" ToolTip="Recently used templates."/>
+                    <Separator />
+                    <MenuItem Header="E_xit" Click="MenuFileExit_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Quit the template editor.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/Exit_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
                 </MenuItem>
-                <MenuItem Name="MenuFileOpenTemplate" Header="_Open..." Click="MenuFileOpenTemplate_Click" ToolTip="Open an existing data template file.">
-                    <MenuItem.Icon>
-                        <Image Source="Resources/Menu/OpenFolder_16x.png" />
-                    </MenuItem.Icon>
+
+                <!-- view menu -->
+                <MenuItem Name="MenuView" Header="_View" IsEnabled="False">
+                    <MenuItem Header="Inspect file _metadata..." Click="MenuViewInspectMetadata_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="See what metadata is available in an image or video of your choosing." />
                 </MenuItem>
-                <Separator />
-                <MenuItem Name="MenuFileRecentTemplates" Header="_Recent templates" IsEnabled="false" ToolTip="Recently used templates."/>
-                <Separator />
-                <MenuItem Header="E_xit" Click="MenuFileExit_Click" ToolTip="Quit the template editor.">
-                    <MenuItem.Icon>
-                        <Image Source="Resources/Menu/Exit_16x.png" />
-                    </MenuItem.Icon>
+
+                <!-- options menu -->
+                <MenuItem Name="MenuOptions" Header="_Options" IsEnabled="False">
+                    <MenuItem Name="MenuOptionsShowAllColumns" Header="Show all _columns" Click="MenuOptionsShowAllColumns_Click" IsCheckable="True" IsChecked="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show the ordering used when displaying controls and for .csv file columns." />
+                    <Separator/>
+                    <MenuItem Name="MenuOptionsAdvancedImageSetOptions" Header="Advanced _image set options..." Click="MenuOptionsAdvancedImageSetOptions_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Image set configuration options that should only be used by advanced users."/>
                 </MenuItem>
-            </MenuItem>
 
-            <!-- View Menu -->
-            <MenuItem Name="MenuView" Header="_View" IsEnabled="False">
-                <MenuItem Header="Inspect file _metadata..." ToolTip="See what metadata is available in an image or video of your choosing." Click="MenuViewInspectMetadata_Click" />
-            </MenuItem>
-
-            <!-- Options Menu -->
-            <MenuItem Name="MenuOptions" Header="_Options" IsEnabled="False">
-                <MenuItem Name="MenuOptionsShowAllColumns" IsCheckable="True" IsChecked="False" Header="Show all _columns" Click="MenuOptionsShowAllColumns_Click" ToolTip="Show the ordering used when displaying controls and for .csv file columns." />
-                <Separator/>
-                <MenuItem Name="MenuOptionsAdvancedImageSetOptions" Header="Advanced _image set options..." Click="MenuOptionsAdvancedImageSetOptions_Click" ToolTip="Image set configuration options that should only be used by advanced users."/>
-            </MenuItem>
-
-            <!-- Help Menu -->
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About..." Click="MenuHelpAbout_Click" ToolTip="Displays version information about this program and how to contact the developers."/>
-            </MenuItem>
-        </Menu>
-
-        <TabControl Name="Tabs" Grid.Row="1">
+                <!-- help menu -->
+                <MenuItem Header="_Help">
+                    <MenuItem Header="_About..." Click="MenuHelpAbout_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Displays version information about this program and how to contact the developers."/>
+                </MenuItem>
+            </Menu>
+            <TextBlock Style="{StaticResource ApplicationTitle}" />
+            <Button Style="{StaticResource SystemCloseButton}" />
+            <Button Style="{StaticResource SystemMaximizeRestoreButton}" />
+            <Button Style="{StaticResource SystemMinimizeButton}" />
+        </Grid>
+        <control:TabControlWithoutHomeAndEnd x:Name="Tabs" Margin="4,4,4,4">
             <TabControl.Resources>
                 <Style TargetType="TabItem">
                     <Setter Property="Padding" Value="10,2,10,0" />
@@ -228,29 +201,28 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="300" />
                     </Grid.ColumnDefinitions>
-                    <Grid Grid.Column="0" Margin="10,5,0,0">
+                    <Grid Grid.Column="0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition />
-                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="110" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" MinHeight="125" />
                         </Grid.RowDefinitions>
 
                         <!-- If you change the visible rows or header names, please check UpdateCellColors() constants to ensure they match new conventions -->
-                        <DataGrid Name="TemplateDataGrid" MinHeight="250" VerticalAlignment="Top" Grid.Row="0" RowHeight="25" VirtualizingStackPanel.IsVirtualizing="False"
-                                                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" 
-                                                  BeginningEdit="TemplateDataGrid_BeginningEdit"
-                                                  CellEditEnding="TemplateDataGrid_CellEditEnding"
-                                                  CurrentCellChanged="TemplateDataGrid_CurrentCellChanged" 
-                                                  PreviewTextInput="TemplateDataGrid_PreviewTextInput" 
-                                                  LayoutUpdated="TemplateDataGrid_LayoutUpdated"
-                                                  SelectionChanged="TemplateDataGrid_SelectionChanged" 
-                                                  Margin="0,0,10,0" SelectionMode="Single"
-                                                  ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}">
+                        <DataGrid Name="TemplateDataGrid" Grid.Row="0" RowHeight="25" VirtualizingStackPanel.IsVirtualizing="False"
+                                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" 
+                                  CellEditEnding="TemplateDataGrid_CellEditEnding"
+                                  ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}"
+                                  LayoutUpdated="TemplateDataGrid_LayoutUpdated"
+                                  PreviewTextInput="TemplateDataGrid_PreviewTextInput" 
+                                  SelectionChanged="TemplateDataGrid_SelectionChanged" SelectionMode="Single">
                             <DataGrid.Resources>
                                 <Style x:Key="VerticalGridHeaderStyle" TargetType="DataGridColumnHeader">
                                     <Setter Property="VerticalContentAlignment" Value="Bottom"/>
@@ -258,39 +230,40 @@
                                 </Style>
                             </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="ID" IsReadOnly="True" Binding="{Binding Path=Id, Converter={StaticResource TrimmingConverter}}" Visibility="Collapsed" CanUserSort="False" />
-                                <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder, Converter={StaticResource TrimmingConverter}}" IsReadOnly="True" Visibility="Collapsed" CanUserSort="False" />
-                                <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder, Converter={StaticResource TrimmingConverter}}" IsReadOnly="True" Visibility="Collapsed" CanUserSort="False" />
-                                <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                <DataGridTextColumn Header="ID" Binding="{Binding Path=Id}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                                <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                                <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                                <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type}" CanUserSort="False" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Type}" Value="Note">
-                                                    <Setter Property="ToolTip" Value="{StaticResource TypeNoteToolTip}"/>
+                                                    <Setter Property="ToolTip" Value="A note field accepts free-form text.  Edit its list to define common values which will be available for autocomplete." />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="Counter">
-                                                    <Setter Property="ToolTip" Value="{StaticResource TypeCounterToolTip}"/>
+                                                    <Setter Property="ToolTip" Value="A counter field provides a point and click interface for counting entities in an image or video." />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
-                                                    <Setter Property="ToolTip" Value="{StaticResource TypeFixedChoiceToolTip}"/>
+                                                    <Setter Property="ToolTip" Value="A choice field provides a drop down menu of choices.  Edit its list to create these choices." />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="Flag">
-                                                    <Setter Property="ToolTip" Value="{StaticResource TypeFlagToolTip}"/>
+                                                    <Setter Property="ToolTip" Value="A flag field can be toggled between true and false." />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="File">
-                                                    <Setter Property="ToolTip" Value="{StaticResource TypeFileToolTip}"/>
+                                                    <Setter Property="ToolTip" Value="Carnassial automatically sets File to the file name of the image or video." />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Type}" Value="Folder">
-                                                    <Setter Property="ToolTip" Value="{StaticResource TypeFolderToolTip}"/>
+                                                <DataTrigger Binding="{Binding Type}" Value="RelativePath">
+                                                    <Setter Property="ToolTip" Value="Carnassial automatically sets RelativePath to the folder path from the template to the file." />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="DateTime">
-                                                    <Setter Property="ToolTip" Value="{StaticResource TypeDateTimeToolTip}"/>
+                                                    <Setter Property="ToolTip" Value="Carnassial automatically sets a file's date and time.  They can be edited if changes are required." />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="ImageQuality">
-                                                    <Setter Property="ToolTip" Value="{StaticResource TypeImageQualityToolTip}"/>
+                                                    <Setter Property="ToolTip" Value="By default, Carnassial sets a file's image quality.  It can be edited or recalculated later if needed." />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
-                                                    <Setter Property="ToolTip" Value="{StaticResource TypeDeleteFlagToolTip}"/>
+                                                    <Setter Property="ToolTip" Value="The delete flag indicates whether a file is marked deletion.  Marked files can be removed from disk and from the image set using Carnassial's edit menu." />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -299,10 +272,11 @@
                                 <DataGridTextColumn MinWidth="40" Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="{StaticResource DefaultValueToolTip}"/>
+                                            <Setter Property="ToolTip" Value="The value the field will be set to by default."/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Type}" Value="Counter">
                                                     <Setter Property="TextAlignment" Value="Right"/>
+                                                    <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -311,42 +285,48 @@
                                 <DataGridTextColumn MinWidth="40" Header="Label" Binding="{Binding Path=Label, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="{StaticResource LabelToolTip}"/>
+                                            <Setter Property="ToolTip" Value="The text describing this field as shown on on a mouse hover over it in Carnassial's data entry panel."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
                                 <DataGridTextColumn MinWidth="40" Header="Data Label" Binding="{Binding Path=DataLabel, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="{StaticResource DataLabelToolTip}"/>
+                                            <Setter Property="ToolTip" Value="The text describing this field as written in the output file. Will be the same as the Label if its left empty."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
                                 <DataGridTextColumn MinWidth="50" Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource TrimmingConverter}}" Width="*" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="{StaticResource TooltipToolTip}"/>
+                                            <Setter Property="ToolTip" Value="The help text describing this field as shown in the user interface."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn MinWidth="40" Header="Width" Binding="{Binding Path=Width, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                <DataGridTextColumn MinWidth="40" Header="Max Width" Binding="{Binding Path=Width, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="{StaticResource WidthToolTip}"/>
+                                            <Setter Property="ToolTip" Value="The width of the data entry field as shown in the user interface."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
                                 <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" Binding="{Binding Path=Copyable}" CanUserSort="False">
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
-                                            <Setter Property="ToolTip" Value="{StaticResource CopyableToolTip}"/>
+                                            <Setter Property="ToolTip" Value="Whether the data value from the previous will be copied to the current file if the user selects the 'Copy' button in Carnassial."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridCheckBoxColumn.CellStyle>
                                 </DataGridCheckBoxColumn>
                                 <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" Binding="{Binding Path=Visible}" CanUserSort="False">
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
-                                            <Setter Property="ToolTip" Value="{StaticResource VisibleToolTip}"/>
+                                            <Setter Property="ToolTip" Value="Whether this item will be displayed in the user interface."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridCheckBoxColumn.CellStyle>
                                 </DataGridCheckBoxColumn>
@@ -354,107 +334,89 @@
                                 <DataGridTemplateColumn MinWidth="40" Header="List" Width="80" CanUserSort="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel>
-                                                <Button Tag="{Binding Path=ControlOrder}" Click="DefineList_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Margin="1" Content="Define List">
-                                                    <Button.Style>
-                                                        <Style TargetType="{x:Type Button}">
-                                                            <Style.Triggers>
-                                                                <!--Triggers for disabling lists for some types-->
-                                                                <DataTrigger Binding="{Binding Type}" Value="File">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="RelativePath">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="Folder">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="DateTime">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="UtcOffset">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="Date">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="Time">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="Counter">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="Flag">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
-                                                                    <Setter Property="ToolTip" Value="{StaticResource ListFixedChoiceToolTip}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
-                                            </StackPanel>
+                                            <Button Click="DefineList_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Content="Define List" Margin="1" Tag="{Binding Path=ControlOrder}">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Style.Triggers>
+                                                            <!-- hide define list button for most controls as they apply only to counters and user defined notes -->
+                                                            <DataTrigger Binding="{Binding DataLabel}" Value="File">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding DataLabel}" Value="RelativePath">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding DataLabel}" Value="ImageQuality">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="DateTime">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Counter">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding DataLabel}" Value="DeleteFlag">
+                                                                <!-- back compat with older templates where DeleteFlag has Type=DeleteFlag rather than Flag -->
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Flag">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="UtcOffset">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
-                        <DockPanel Name="RowControls" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,0,10,0">
-                            <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="1" Margin="0">
-                                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,-1">
-                                    <TextBlock Margin="0,0,0,5" DockPanel.Dock="Top" FontSize="14" HorizontalAlignment="Center"><Run Text="Add:"/></TextBlock>
-                                    <UniformGrid Margin="0,0,0,0" Rows="4" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
-                                        <Button Content="Count"  Margin="0,0,0,2.5" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton"/>
-                                        <Button Content="Choice" Margin="0,0,0,2.5" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFixedChoiceButton"/>
-                                        <Button Content="Note" Margin="0,0,0,2.5" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddNoteButton"/>
-                                        <Button Content="Flag" Margin="0,0,0,0" DockPanel.Dock="Bottom"  HorizontalAlignment="Stretch" Height="30" IsEnabled="False" Click="AddControlButton_Click" Name="AddFlagButton"/>
-                                    </UniformGrid>
-                                </DockPanel>
-                            </Border>
-                            <Button Content="Remove" FontSize="12" HorizontalContentAlignment="Center" DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Name="RemoveControlButton" IsEnabled="False" Height="Auto" MinHeight="30" VerticalAlignment="Top"  Click="RemoveControlButton_Click" Margin="0,30,0,0"/>
+                        <DockPanel Name="RowControls" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="10,10,10,10">
+                            <UniformGrid DockPanel.Dock="Top" Height="160" Rows="4">
+                                <Button Content="Add _counter"  Margin="0,0,0,10" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton" ToolTip="Add a new counter control." />
+                                <Button Content="Add c_hoice" Margin="0,0,0,10" IsEnabled="False" Click="AddControlButton_Click" Name="AddFixedChoiceButton" ToolTip="Add a new choice control." />
+                                <Button Content="Add _note" Margin="0,0,0,10" IsEnabled="False" Click="AddControlButton_Click" Name="AddNoteButton" ToolTip="Add a new note control." />
+                                <Button Content="Add fla_g" Margin="0,0,0,10" IsEnabled="False" Click="AddControlButton_Click" Name="AddFlagButton" ToolTip="Add a new flag control." />
+                            </UniformGrid>
+                            <Button Content="_Remove" Name="RemoveControlButton" Height="30" IsEnabled="False" VerticalAlignment="Top" Click="RemoveControlButton_Click" Margin="0,30,0,0" ToolTip="Remove the currently selected control." />
                         </DockPanel>
-                        <GridSplitter Grid.Row="1" Grid.ColumnSpan="2"
-                                                      Height="2" Background="DarkGray" Margin="-10,10,0,0"
-                                                      VerticalAlignment="Top" 
-                                                      HorizontalAlignment="Stretch" />
+                        <GridSplitter Grid.Row="1" Grid.ColumnSpan="2" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
 
                         <!-- spreadsheet order -->
-                        <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,7,0,0">
+                        <Grid Grid.Row="2" Grid.ColumnSpan="2">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Margin="0,5,10,0" Text="The spreadsheet column order.  Drag and drop columns to re-arrange their order to your preference"></TextBlock>
-                            <Border Grid.Row="1" BorderBrush="Gray" Background="White" BorderThickness="1" Margin="0,0,10,10">
-                                <ScrollViewer MinHeight="50" Height="50" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" VerticalAlignment="Top">
-                                    <DataGrid x:Name="SpreadsheetOrderPreview" Margin="0,10,0,0"  MinHeight="25" Height="25" ColumnReordered="OnSpreadsheetOrderChanged" VerticalAlignment="Top"/>
+                            <TextBlock Grid.Row="0" Margin="10,10,10,0" Text="The columns in spreadsheets exported from Carnassial while using this template are dislayed below.  Drag and drop columns to rearrange their order to your preference." TextWrapping="Wrap" />
+                            <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1" Margin="10,0,10,10">
+                                <ScrollViewer MinHeight="50" Height="50" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" VerticalAlignment="Top">
+                                    <DataGrid x:Name="SpreadsheetOrderPreview" Margin="0,10,0,0" ColumnReordered="OnSpreadsheetOrderChanged" Height="25" MinHeight="25" VerticalAlignment="Top"/>
                                 </ScrollViewer>
                             </Border>
                         </Grid>
                     </Grid>
-                    <GridSplitter Grid.Column="0" Width="5" />
-                    <Grid Grid.Column="1" Name="ControlGrid">
+                    <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="4" />
+                    <Grid Grid.Column="2" Name="ControlGrid">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Grid.Row="0">
+                        <TextBlock Text="Drag and drop the controls below by their labels to order them to your preference" Grid.Row="0" Margin="4,2,4,4" TextWrapping="Wrap" />
+                        <ScrollViewer Background="{StaticResource ApplicationBackgroundBrush}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Grid.Row="1">
                             <StackPanel x:Name="ControlsPanel" AllowDrop="True" PreviewMouseLeftButtonDown="ControlsPanel_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="ControlsPanel_PreviewMouseLeftButtonUp" PreviewMouseMove="ControlsPanel_OnPreviewMouseMove"
-                                                        Drop="ControlsPanel_DragDrop">
-                                <controls:DataEntryControls x:Name="DataEntryControls" VerticalAlignment="Stretch" />
+                                        Drop="ControlsPanel_DragDrop" Margin="0,10,0,0">
+                                <control:DataEntryControls x:Name="DataEntryControls" VerticalAlignment="Stretch" />
                             </StackPanel>
                         </ScrollViewer>
-                        <TextBlock Grid.Row="1" Text="Drag and drop these controls (by their labels) to re-arrange their order to your preference" TextWrapping="Wrap" />
                     </Grid>
                 </Grid>
             </TabItem>
-        </TabControl>
+        </control:TabControlWithoutHomeAndEnd>
     </Grid>
-</Window>
+</carnassial:WindowWithSystemMenu>

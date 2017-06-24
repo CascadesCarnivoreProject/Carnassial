@@ -62,18 +62,28 @@ namespace Carnassial.Control
                     int indexOfCurrentAutocompletion = this.GetIndexOfCurrentAutocompletion();
                     if (indexOfCurrentAutocompletion > this.Autocompletions.Count - 2)
                     {
-                        return;
+                        this.Text = this.Autocompletions[0];
                     }
-                    this.Text = this.Autocompletions[indexOfCurrentAutocompletion + 1];
+                    else
+                    {
+                        this.Text = this.Autocompletions[indexOfCurrentAutocompletion + 1];
+                    }
                     e.Handled = true;
                     break;
                 case Key.Up:
-                    indexOfCurrentAutocompletion = this.GetIndexOfCurrentAutocompletion();
-                    if (indexOfCurrentAutocompletion < 1)
+                    if (this.Autocompletions == null)
                     {
                         return;
                     }
-                    this.Text = this.Autocompletions[indexOfCurrentAutocompletion - 1];
+                    indexOfCurrentAutocompletion = this.GetIndexOfCurrentAutocompletion();
+                    if (indexOfCurrentAutocompletion < 1)
+                    {
+                        this.Text = this.Autocompletions[this.Autocompletions.Count - 1];
+                    }
+                    else
+                    {
+                        this.Text = this.Autocompletions[indexOfCurrentAutocompletion - 1];
+                    }
                     e.Handled = true;
                     break;
                 default:

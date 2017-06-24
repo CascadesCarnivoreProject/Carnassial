@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:controls="clr-namespace:Carnassial.Control"
+        xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
         Title="(Re)classify dark files."
@@ -21,7 +21,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <controls:StockMessageControl x:Name="Message"
+        <control:StockMessageControl x:Name="Message"
                             StatusImage="Question"
                             Title="Identify dark images and videos."
                             What="You can perform dark classification of new files as well as tune how classification is done and reclassify files."

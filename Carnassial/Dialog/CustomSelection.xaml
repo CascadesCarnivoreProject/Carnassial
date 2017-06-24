@@ -1,6 +1,6 @@
 <Window x:Class="Carnassial.Dialog.CustomSelection"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:controls="clr-namespace:Carnassial.Control"
+        xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -19,7 +19,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <controls:StockMessageControl x:Name="Message" StatusImage="Question"
+        <control:StockMessageControl x:Name="Message" StatusImage="Question"
                             Title="Create a custom selection."
                             What="You may want to view only a subset of your images and videos which fit some criteria of interest to you."
                             Solution="Specify the search terms which describe your criteria. Each row below reflects one of your data fields.  Select one or more data fields that you want to use as part of your search, select the expresson you want to use, and select or enter the value you want to use to compare against the data field's contents."

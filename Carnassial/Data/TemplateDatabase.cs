@@ -56,7 +56,7 @@ namespace Carnassial.Data
                 case ControlType.Counter:
                     newControl.DefaultValue = Constant.ControlDefault.CounterValue;
                     newControl.Type = ControlType.Counter;
-                    newControl.Width = Constant.ControlDefault.CounterWidth;
+                    newControl.MaxWidth = Constant.ControlDefault.MaxWidth;
                     newControl.Copyable = false;
                     newControl.Visible = true;
                     newControl.Tooltip = Constant.ControlDefault.CounterTooltip;
@@ -64,7 +64,7 @@ namespace Carnassial.Data
                 case ControlType.Note:
                     newControl.DefaultValue = Constant.ControlDefault.Value;
                     newControl.Type = ControlType.Note;
-                    newControl.Width = Constant.ControlDefault.NoteWidth;
+                    newControl.MaxWidth = Constant.ControlDefault.MaxWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constant.ControlDefault.NoteTooltip;
@@ -72,7 +72,7 @@ namespace Carnassial.Data
                 case ControlType.FixedChoice:
                     newControl.DefaultValue = Constant.ControlDefault.Value;
                     newControl.Type = ControlType.FixedChoice;
-                    newControl.Width = Constant.ControlDefault.FixedChoiceWidth;
+                    newControl.MaxWidth = Constant.ControlDefault.MaxWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constant.ControlDefault.FixedChoiceTooltip;
@@ -80,7 +80,7 @@ namespace Carnassial.Data
                 case ControlType.Flag:
                     newControl.DefaultValue = Constant.ControlDefault.FlagValue;
                     newControl.Type = ControlType.Flag;
-                    newControl.Width = Constant.ControlDefault.FlagWidth;
+                    newControl.MaxWidth = Constant.ControlDefault.MaxWidth;
                     newControl.Copyable = true;
                     newControl.Visible = true;
                     newControl.Tooltip = Constant.ControlDefault.FlagTooltip;
@@ -472,7 +472,7 @@ namespace Carnassial.Data
                 file.Label = Constant.DatabaseColumn.File;
                 file.DataLabel = Constant.DatabaseColumn.File;
                 file.Tooltip = Constant.ControlDefault.FileTooltip;
-                file.Width = Constant.ControlDefault.FileWidth;
+                file.MaxWidth = Constant.ControlDefault.MaxWidth;
                 file.Copyable = false;
                 file.Visible = true;
                 file.List = Constant.ControlDefault.Value;
@@ -486,7 +486,7 @@ namespace Carnassial.Data
                 relativePath.Label = Constant.DatabaseColumn.RelativePath;
                 relativePath.DataLabel = Constant.DatabaseColumn.RelativePath;
                 relativePath.Tooltip = Constant.ControlDefault.RelativePathTooltip;
-                relativePath.Width = Constant.ControlDefault.RelativePathWidth;
+                relativePath.MaxWidth = Constant.ControlDefault.MaxWidth;
                 relativePath.Copyable = false;
                 relativePath.Visible = true;
                 relativePath.List = Constant.ControlDefault.Value;
@@ -500,7 +500,7 @@ namespace Carnassial.Data
                 dateTime.Label = Constant.DatabaseColumn.DateTime;
                 dateTime.DataLabel = Constant.DatabaseColumn.DateTime;
                 dateTime.Tooltip = Constant.ControlDefault.DateTimeTooltip;
-                dateTime.Width = Constant.ControlDefault.DateTimeWidth;
+                dateTime.MaxWidth = Constant.ControlDefault.MaxWidth;
                 dateTime.Copyable = false;
                 dateTime.Visible = true;
                 dateTime.List = Constant.ControlDefault.Value;
@@ -514,7 +514,7 @@ namespace Carnassial.Data
                 utcOffset.Label = Constant.DatabaseColumn.UtcOffset;
                 utcOffset.DataLabel = Constant.DatabaseColumn.UtcOffset;
                 utcOffset.Tooltip = Constant.ControlDefault.UtcOffsetTooltip;
-                utcOffset.Width = Constant.ControlDefault.UtcOffsetWidth;
+                utcOffset.MaxWidth = Constant.ControlDefault.MaxWidth;
                 utcOffset.Copyable = false;
                 utcOffset.Visible = false;
                 utcOffset.List = Constant.ControlDefault.Value;
@@ -528,7 +528,7 @@ namespace Carnassial.Data
                 imageQuality.Label = Constant.DatabaseColumn.ImageQuality;
                 imageQuality.DataLabel = Constant.DatabaseColumn.ImageQuality;
                 imageQuality.Tooltip = Constant.ControlDefault.ImageQualityTooltip;
-                imageQuality.Width = Constant.ControlDefault.ImageQualityWidth;
+                imageQuality.MaxWidth = Constant.ControlDefault.MaxWidth;
                 imageQuality.Copyable = false;
                 imageQuality.Visible = true;
                 imageQuality.List = Constant.ImageQuality.ListOfValues;
@@ -542,7 +542,7 @@ namespace Carnassial.Data
                 deleteFlag.Label = Constant.ControlDefault.DeleteFlagLabel;
                 deleteFlag.DataLabel = Constant.DatabaseColumn.DeleteFlag;
                 deleteFlag.Tooltip = Constant.ControlDefault.DeleteFlagTooltip;
-                deleteFlag.Width = Constant.ControlDefault.FlagWidth;
+                deleteFlag.MaxWidth = Constant.ControlDefault.MaxWidth;
                 deleteFlag.Copyable = false;
                 deleteFlag.Visible = true;
                 deleteFlag.List = Constant.ControlDefault.Value;

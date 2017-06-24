@@ -9,7 +9,7 @@ namespace Carnassial.Database
     public class ColumnTuple
     {
         public string Name { get; private set; }
-        public string Value { get; private set; }
+        public object Value { get; private set; }
 
         public ColumnTuple(string column, bool value)
             : this(column, value ? Boolean.TrueString : Boolean.FalseString)
@@ -17,22 +17,26 @@ namespace Carnassial.Database
         }
 
         public ColumnTuple(string column, DateTime value)
-            : this(column, DateTimeHandler.ToDatabaseDateTimeString(value))
         {
             if (value.Kind != DateTimeKind.Utc)
             {
                 throw new ArgumentOutOfRangeException(nameof(value));
             }
-        }
 
-        public ColumnTuple(string column, int value)
-            : this(column, value.ToString())
-        {
+            this.Name = column;
+            this.Value = value;
         }
 
         public ColumnTuple(string column, long value)
-            : this(column, value.ToString())
         {
+            this.Name = column;
+            this.Value = value;
+        }
+
+        protected ColumnTuple(string column, object value)
+        {
+            this.Name = column;
+            this.Value = value;
         }
 
         public ColumnTuple(string column, string value)
@@ -54,7 +58,7 @@ namespace Carnassial.Database
             }
 
             this.Name = column;
-            this.Value = DateTimeHandler.ToDatabaseUtcOffsetString(utcOffset);
+            this.Value = DateTimeHandler.ToDatabaseUtcOffset(utcOffset);
         }
     }
 }

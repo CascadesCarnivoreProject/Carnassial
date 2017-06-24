@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:controls="clr-namespace:Carnassial.Control"
+        xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
         Title="Date - Check and modify ambiguous dates." 
@@ -19,7 +19,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-    <controls:StockMessageControl Grid.Row="0" x:Name="Message"
+    <control:StockMessageControl Grid.Row="0" x:Name="Message"
                             Title="Correct for ambiguous dates."
                             StatusImage="Question"
                             Problem="Days of the month that are 12 or less are interchangeable with the month.  For example, a date recorded as 01-02-2017 could be either 02-Jan-2017 or 01-Feb-2017."
@@ -66,7 +66,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Label FontWeight="Bold" Content="The following changes to dates and times will occur if you select Apply Changes." Grid.Row="0" />
-            <controls:DateChangesFeedbackControl x:Name="DateChangeFeedback" ShowDifferenceColumn="False" Grid.Row="1" />
+            <control:DateChangesFeedbackControl x:Name="DateChangeFeedback" ShowDifferenceColumn="False" Grid.Row="1" />
         </Grid>
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Name="PreviewChangesButton" IsDefault="True" Click="PreviewChangesButton_Click" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10">_Preview Changes</Button>

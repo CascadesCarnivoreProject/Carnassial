@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Carnassial.Dialog.FileCountsByQuality"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:Carnassial.Control"
+        xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         AutomationProperties.AutomationId="FileCountsByQuality"
         Title="Files by image quality." Height="425" Width="600"
@@ -14,7 +14,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <controls:StockMessageControl x:Name="Message" 
+        <control:StockMessageControl x:Name="Message" 
                             StatusImage="Information"
                             Title="Summary counts of files."
                             What="Carnassial automatically categorizes the 'Image Quality' of your images and videos."

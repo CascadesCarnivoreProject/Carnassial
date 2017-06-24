@@ -4,7 +4,7 @@
     {
         public string Operator { get; set; }
 
-        public WhereClause(string column, string op, string value)
+        public WhereClause(string column, string op, object value)
             : base(column, value)
         {
             this.Operator = op;

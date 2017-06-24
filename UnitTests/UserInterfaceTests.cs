@@ -22,9 +22,34 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class UserInterfaceTests : CarnassialTest
     {
+        private static App App;
+
         public UserInterfaceTests()
         {
             this.EnsureTestClassSubdirectory();
+        }
+
+        [ClassCleanup]
+        public static void ClassCleanup()
+        {
+            UserInterfaceTests.App.Shutdown();
+        }
+        
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext testContext)
+        {
+            // Carnassial and the editor need an application instance to be created to load resources from
+            // WPF allows only one Application per app domain, so make instance persistent so it can be reused across multiple Carnassial and editor window
+            // lifetimes.  This works because Carnassial and the editor use virtually identical styling, allowing the editor to consume Carnassial styles
+            // with negligible effect on test coverage.
+            UserInterfaceTests.App = new App();
+            UserInterfaceTests.App.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+            ResourceDictionary resourceDictionary = (ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/CarnassialWindowStyle.xaml", UriKind.Relative));
+            foreach (object key in resourceDictionary.Keys)
+            {
+                Application.Current.Resources.Add(key, resourceDictionary[key]);
+            }
         }
 
         [TestMethod]
@@ -138,17 +163,22 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(carnassial.DataHandler.FileDatabase.CurrentlySelectedFileCount == 2);
                 Assert.IsNotNull(carnassial.DataHandler.ImageCache.Current);
 
-                // verify forward and backward moves of the displayed image
-                DispatcherOperation<Task> moveForward = carnassial.Dispatcher.InvokeAsync(async () =>
+                // verify forward and backward moves of the displayed file
+                // The template is set for defaulting to file ID 1.  With two files in the image set ID 1 can be either the first or last image in the set depending
+                // on whether files are sorted by date.  Set the direction to move so that both move invocations change the displayed file.
+                bool moveDirection = carnassial.DataHandler.ImageCache.CurrentRow == 0;
+                DispatcherOperation<Task> initialMove = carnassial.Dispatcher.InvokeAsync(async () =>
                 {
-                    await carnassial.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.None);
-                    await carnassial.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.None);
+                    await carnassial.ShowFileWithoutSliderCallbackAsync(moveDirection, ModifierKeys.None);
+                    await carnassial.ShowFileWithoutSliderCallbackAsync(moveDirection, ModifierKeys.None);
                 });
                 this.WaitForRenderingComplete();
-                DispatcherOperation<Task> moveBackwards = carnassial.Dispatcher.InvokeAsync(async () =>
+
+                moveDirection = !moveDirection;
+                DispatcherOperation<Task> returnMove = carnassial.Dispatcher.InvokeAsync(async () =>
                 {
-                    await carnassial.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.None);
-                    await carnassial.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.None);
+                    await carnassial.ShowFileWithoutSliderCallbackAsync(moveDirection, ModifierKeys.None);
+                    await carnassial.ShowFileWithoutSliderCallbackAsync(moveDirection, ModifierKeys.None);
                 });
                 this.WaitForRenderingComplete();
 
@@ -157,13 +187,13 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(carnassial.MenuEditUndo.IsEnabled);
                 carnassial.Dispatcher.Invoke(() => { carnassial.MenuEditUndo_Click(null, null); });
                 this.WaitForRenderingComplete();
-                Assert.IsTrue(carnassial.DataHandler.ImageCache.CurrentRow == 1);
+                Assert.IsTrue(carnassial.DataHandler.ImageCache.CurrentRow == (moveDirection ? 0 : 1));
 
                 Assert.IsTrue(carnassial.MenuEditRedo.IsEnabled);
                 Assert.IsTrue(carnassial.MenuEditUndo.IsEnabled);
                 carnassial.Dispatcher.Invoke(() => { carnassial.MenuEditRedo_Click(null, null); });
                 this.WaitForRenderingComplete();
-                Assert.IsTrue(carnassial.DataHandler.ImageCache.CurrentRow == 0);
+                Assert.IsTrue(carnassial.DataHandler.ImageCache.CurrentRow == (moveDirection ? 1 : 0));
 
                 // file ordering
                 bool originalOrderFilesByDateTime = carnassial.State.OrderFilesByDateTime;
@@ -257,8 +287,9 @@ namespace Carnassial.UnitTests
 
                 DispatcherOperation<Task> showFile = carnassial.Dispatcher.InvokeAsync(async () =>
                 {
-                    // move to next file so change no longer matches current file and can't be exected or undone
-                    await carnassial.ShowFileAsync(carnassial.DataHandler.ImageCache.CurrentRow + 1, true);
+                    // move to the other file so change no longer matches current file and can't be exected or undone
+                    int otherFileIndex = carnassial.DataHandler.ImageCache.CurrentRow == 0 ? 1 : 0;
+                    await carnassial.ShowFileAsync(otherFileIndex, true);
                 });
                 this.WaitForRenderingComplete();
                 Assert.IsFalse(multipleEdit.CanExecute(carnassial));
@@ -439,6 +470,16 @@ namespace Carnassial.UnitTests
             return messageBox;
         }
 
+        private void ShowDialog(Window dialog)
+        {
+            dialog.Loaded += (object sender, RoutedEventArgs eventArgs) => { dialog.Close(); };
+            Dispatcher.CurrentDispatcher.InvokeAsync(() =>
+            {
+                dialog.ShowDialog();
+            });
+            this.WaitForRenderingComplete();
+        }
+
         private bool TryFindDialogOkButton(AutomationElement parent, CancellationToken cancellationToken, string automationID, out InvokePattern okButtonInvoke)
         {
             okButtonInvoke = null;
@@ -468,16 +509,6 @@ namespace Carnassial.UnitTests
             Assert.IsNotNull(okButton);
             okButtonInvoke = (InvokePattern)okButton.GetCurrentPattern(InvokePattern.Pattern);
             return true;
-        }
-
-        private void ShowDialog(Window dialog)
-        {
-            dialog.Loaded += (object sender, RoutedEventArgs eventArgs) => { dialog.Close(); };
-            Dispatcher.CurrentDispatcher.InvokeAsync(() =>
-            {
-                dialog.ShowDialog();
-            });
-            this.WaitForRenderingComplete();
         }
 
         private void WaitForFolderLoadComplete(Task<bool> loadFolder)

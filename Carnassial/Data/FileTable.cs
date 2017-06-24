@@ -46,10 +46,10 @@ namespace Carnassial.Data
 
         public List<ImageRow> Select(string relativePath, string fileName)
         {
-            string where = String.Format("{0} = '{1}'", Constant.DatabaseColumn.File, fileName);
+            string where = String.Format("{0} = {1}", Constant.DatabaseColumn.File, SQLiteDatabase.QuoteForSql(fileName));
             if (String.IsNullOrEmpty(relativePath) == false)
             {
-                where += String.Format(" AND {0} = '{1}'", Constant.DatabaseColumn.RelativePath, relativePath);
+                where += String.Format(" AND {0} = {1}", Constant.DatabaseColumn.RelativePath, SQLiteDatabase.QuoteForSql(relativePath));
             }
 
             DataRow[] matchingRows = this.DataTable.Select(where);

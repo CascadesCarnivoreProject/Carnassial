@@ -72,32 +72,32 @@ namespace Carnassial.Data
             }
         }
 
-        private bool TryImportFileData(FileDatabase fileDatabase, Func<List<string>> readLine, string spreadsheetFilePath, out List<string> importErrors)
+        private FileImportResult TryImportFileData(FileDatabase fileDatabase, Func<List<string>> readLine, string spreadsheetFilePath)
         {
             List<string> dataLabels = fileDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
             string spreadsheetFileFolderPath = Path.GetDirectoryName(spreadsheetFilePath);
-            importErrors = new List<string>();
+            FileImportResult result = new FileImportResult();
 
             // validate file header against the database
             List<string> dataLabelsFromHeader = readLine.Invoke();
             List<string> dataLabelsInFileDatabaseButNotInHeader = dataLabels.Except(dataLabelsFromHeader).ToList();
             foreach (string dataLabel in dataLabelsInFileDatabaseButNotInHeader)
             {
-                importErrors.Add("- A column with the data label '" + dataLabel + "' is present in the image set but not in the file." + Environment.NewLine);
+                result.Errors.Add("- A column with the data label '" + dataLabel + "' is present in the image set but not in the file." + Environment.NewLine);
             }
             List<string> dataLabelsInHeaderButNotFileDatabase = dataLabelsFromHeader.Except(dataLabels).ToList();
             foreach (string dataLabel in dataLabelsInHeaderButNotFileDatabase)
             {
-                importErrors.Add("- A column with the data label '" + dataLabel + "' is present in the file but not in the image set." + Environment.NewLine);
+                result.Errors.Add("- A column with the data label '" + dataLabel + "' is present in the file but not in the image set." + Environment.NewLine);
             }
 
-            if (importErrors.Count > 0)
+            if (result.Errors.Count > 0)
             {
-                return false;
+                return result;
             }
 
-            // read data for file from the .csv file
+            // read data for file from the .csv or .xlsx file
             List<string> dataLabelsExceptFileNameAndRelativePath = new List<string>(dataLabels);
             dataLabelsExceptFileNameAndRelativePath.Remove(Constant.DatabaseColumn.File);
             dataLabelsExceptFileNameAndRelativePath.Remove(Constant.DatabaseColumn.RelativePath);
@@ -158,14 +158,14 @@ namespace Carnassial.Data
                     else
                     {
                         // if value wasn't processed by a previous clause it's invalid (or there's a parsing bug)
-                        importErrors.Add(String.Format("Value '{0}' is not valid for the column {1}.", value, dataLabel));
+                        result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", value, dataLabel));
                         values.Add(null);
                     }
                 }
 
                 if (String.IsNullOrWhiteSpace(fileName))
                 {
-                    importErrors.Add(String.Format("No file name found in row {0}.", row));
+                    result.Errors.Add(String.Format("No file name found in row {0}.", row));
                     continue;
                 }
 
@@ -190,32 +190,45 @@ namespace Carnassial.Data
             // Inserts need to be done first so newly added files can be updated.
             fileDatabase.AddFiles(newFilesToInsert, null);
             fileDatabase.UpdateFiles(existingFilesToUpdate, newFilesToUpdate);
-            return true;
+
+            result.FilesAdded = newFilesToInsert.Count;
+            result.FilesUpdated = existingFilesToUpdate.RowCount;
+            return result;
         }
 
-        public bool TryImportFileDataFromCsv(string csvFilePath, FileDatabase fileDatabase, out List<string> importErrors)
+        public FileImportResult TryImportFileDataFromCsv(string csvFilePath, FileDatabase fileDatabase)
         {
             using (FileStream stream = new FileStream(csvFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 using (StreamReader csvReader = new StreamReader(stream))
                 {
-                    return this.TryImportFileData(fileDatabase, () => { return this.ReadAndParseCsvLine(csvReader); }, csvFilePath, out importErrors);
+                    return this.TryImportFileData(fileDatabase, () => { return this.ReadAndParseCsvLine(csvReader); }, csvFilePath);
                 }
             }
         }
 
-        public bool TryImportFileDataFromXlsx(string xlsxFilePath, FileDatabase fileDatabase, out List<string> importErrors)
+        public FileImportResult TryImportFileDataFromXlsx(string xlsxFilePath, FileDatabase fileDatabase)
         {
-            using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
+            try
             {
-                ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets.FirstOrDefault(sheet => sheet.Name == Constant.Excel.FileDataWorksheetName);
-                if (worksheet == null)
+                using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
                 {
-                    importErrors = new List<string>() { String.Format("Worksheet {0} not found.", Constant.Excel.FileDataWorksheetName) };
-                    return false;
+                    ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets.FirstOrDefault(sheet => sheet.Name == Constant.Excel.FileDataWorksheetName);
+                    if (worksheet == null)
+                    {
+                        FileImportResult result = new FileImportResult();
+                        result.Errors.Add(String.Format("Worksheet {0} not found.", Constant.Excel.FileDataWorksheetName));
+                        return result;
+                    }
+                    int row = 0;
+                    return this.TryImportFileData(fileDatabase, () => { return this.ReadXlsxRow(worksheet, ++row); }, xlsxFilePath);
                 }
-                int row = 0;
-                return this.TryImportFileData(fileDatabase, () => { return this.ReadXlsxRow(worksheet, ++row); }, xlsxFilePath, out importErrors);
+            }
+            catch (IOException ioException)
+            {
+                FileImportResult result = new FileImportResult();
+                result.Errors.Add(ioException.ToString());
+                return result;
             }
         }
 

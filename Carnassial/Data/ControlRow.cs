@@ -53,6 +53,12 @@ namespace Carnassial.Data
             set { this.Row.SetField(Constant.Control.List, value); }
         }
 
+        public long MaxWidth
+        {
+            get { return this.Row.GetLongField(Constant.Control.Width); }
+            set { this.Row.SetField(Constant.Control.Width, value); }
+        }
+
         public long SpreadsheetOrder
         {
             get { return this.Row.GetLongField(Constant.Control.SpreadsheetOrder); }
@@ -75,12 +81,6 @@ namespace Carnassial.Data
         {
             get { return this.Row.GetBooleanField(Constant.Control.Visible); }
             set { this.Row.SetField(Constant.Control.Visible, value); }
-        }
-
-        public long Width
-        {
-            get { return this.Row.GetLongField(Constant.Control.Width); }
-            set { this.Row.SetField(Constant.Control.Width, value); }
         }
 
         public static ColumnTuplesForInsert CreateInsert(IEnumerable<ControlRow> controls)
@@ -107,9 +107,9 @@ namespace Carnassial.Data
                                   control.Label,
                                   control.List,
                                   control.SpreadsheetOrder,
-                                  control.Width,
+                                  control.MaxWidth,
                                   control.Tooltip,
-                                  control.Type.ToString(),
+                                  ControlRow.TypeToString(control.Type),
                                   control.Visible ? Boolean.TrueString : Boolean.FalseString);
             }
 
@@ -126,9 +126,9 @@ namespace Carnassial.Data
             columnTuples.Add(new ColumnTuple(Constant.Control.Label, this.Label));
             columnTuples.Add(new ColumnTuple(Constant.Control.List, this.List));
             columnTuples.Add(new ColumnTuple(Constant.Control.SpreadsheetOrder, this.SpreadsheetOrder));
-            columnTuples.Add(new ColumnTuple(Constant.Control.Width, this.Width));
+            columnTuples.Add(new ColumnTuple(Constant.Control.Width, this.MaxWidth));
             columnTuples.Add(new ColumnTuple(Constant.Control.Tooltip, this.Tooltip));
-            columnTuples.Add(new ColumnTuple(Constant.Control.Type, this.Type.ToString()));
+            columnTuples.Add(new ColumnTuple(Constant.Control.Type, ControlRow.TypeToString(this.Type)));
             columnTuples.Add(new ColumnTuple(Constant.Control.Visible, this.Visible));
             return new ColumnTuplesWithID(Constant.DatabaseTable.Controls, columnTuples, this.ID);
         }
@@ -221,13 +221,35 @@ namespace Carnassial.Data
                 this.Visible = other.Visible;
                 synchronizationMadeChanges = true;
             }
-            if (this.Width != other.Width)
+            if (this.MaxWidth != other.MaxWidth)
             {
-                this.Width = other.Width;
+                this.MaxWidth = other.MaxWidth;
                 synchronizationMadeChanges = true;
             }
 
             return synchronizationMadeChanges;
+        }
+
+        private static string TypeToString(ControlType type)
+        {
+            // Enum.ToString() is indeterminate as to which string is returned for equivalent values
+            switch (type)
+            {
+                case ControlType.Counter:
+                    return "Counter";
+                case ControlType.DateTime:
+                    return "DateTime";
+                case ControlType.FixedChoice:
+                    return "FixedChoice";
+                case ControlType.Flag:
+                    return "Flag";
+                case ControlType.Note:
+                    return "Note";
+                case ControlType.UtcOffset:
+                    return "UtcOffset";
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", type));
+            }
         }
     }
 }

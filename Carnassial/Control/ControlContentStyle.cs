@@ -5,7 +5,6 @@
         ChoiceComboBox,
         DateTimeOffsetPicker,
         FlagCheckBox,
-        NoteCounterTextBox,
-        UtcOffsetPicker
+        NoteCounterTextBox
     }
 }

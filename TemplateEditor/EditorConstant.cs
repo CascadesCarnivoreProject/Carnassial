@@ -34,7 +34,7 @@ namespace Carnassial.Editor
             public const string DataLabel = "Data Label";
             public const string DefaultValue = "Default Value";
             public const string ID = "ID";
-            public const string Width = "Width";
+            public const string MaxWidth = "Max Width";
             public const string SpreadsheetOrder = "Spreadsheet\nOrder";
         }
 

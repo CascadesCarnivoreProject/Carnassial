@@ -26,7 +26,7 @@ using MessageBox = Carnassial.Dialog.MessageBox;
 
 namespace Carnassial.Editor
 {
-    public partial class EditorWindow : Window
+    public partial class EditorWindow : WindowWithSystemMenu
     {
         // state tracking
         private bool templateDataGridBeingUpdatedByCode;
@@ -222,6 +222,9 @@ namespace Carnassial.Editor
 
         private void InitializeDataGrid(string templateDatabasePath)
         {
+            // flush any pending edit which might exist
+            this.TemplateDataGrid.CommitEdit();
+
             // create a new template file if one does not exist or load a DB file if there is one.
             bool templateLoaded = TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out this.templateDatabase);
             if (templateLoaded)
@@ -330,29 +333,21 @@ namespace Carnassial.Editor
         /// </summary>
         private void MenuFileNewTemplate_Click(object sender, RoutedEventArgs e)
         {
-            this.TemplateDataGrid.CommitEdit(); // to apply edits that the enter key was not pressed
-
-            // Configure save file dialog box
             SaveFileDialog newTemplateFilePathDialog = new SaveFileDialog();
+            newTemplateFilePathDialog.CheckFileExists = true;
             newTemplateFilePathDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
             newTemplateFilePathDialog.DefaultExt = Constant.File.TemplateFileExtension; // Default file extension
             newTemplateFilePathDialog.Filter = "Database Files (" + Constant.File.TemplateFileExtension + ")|*" + Constant.File.TemplateFileExtension; // Filter files by extension 
             newTemplateFilePathDialog.Title = "Select Location to Save New Template File";
-
-            // Show save file dialog box
-            Nullable<bool> result = newTemplateFilePathDialog.ShowDialog();
-
-            // Process save file dialog box results 
-            if (result == true)
+            if (newTemplateFilePathDialog.ShowDialog() == true)
             {
-                // Overwrite the file if it exists
+                // overwrite the file if it exists
                 if (File.Exists(newTemplateFilePathDialog.FileName))
                 {
                     FileBackup.TryCreateBackup(newTemplateFilePathDialog.FileName);
                     File.Delete(newTemplateFilePathDialog.FileName);
                 }
 
-                // Open document 
                 this.InitializeDataGrid(newTemplateFilePathDialog.FileName);
             }
         }
@@ -362,26 +357,18 @@ namespace Carnassial.Editor
         /// </summary>
         private void MenuFileOpenTemplate_Click(object sender, RoutedEventArgs e)
         {
-            this.TemplateDataGrid.CommitEdit(); // to save any edits that the enter key was not pressed
-
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
             openFileDialog.DefaultExt = Constant.File.TemplateFileExtension; // Default file extension
             openFileDialog.Filter = "Database Files (" + Constant.File.TemplateFileExtension + ")|*" + Constant.File.TemplateFileExtension; // Filter files by extension 
             openFileDialog.Title = "Select an Existing Template File to Open";
-
-            // Show open file dialog box
-            Nullable<bool> result = openFileDialog.ShowDialog();
-
-            // Process open file dialog box results 
-            if (result == true)
+            if (openFileDialog.ShowDialog() == true)
             {
-                // Open document 
                 this.InitializeDataGrid(openFileDialog.FileName);
             }
         }
 
-        // Opern a recently used template
+        // open a recently used template
         private void MenuFileRecentTemplate_Click(object sender, RoutedEventArgs e)
         {
             string recentTemplatePath = (string)((MenuItem)sender).ToolTip;
@@ -542,9 +529,9 @@ namespace Carnassial.Editor
                 }
                 // control.Type is immutable
                 // control.Visible changes are handled above
-                if (control.Width != controlPreview.ContentWidth)
+                if (control.MaxWidth != controlPreview.ContentMaxWidth)
                 {
-                    controlPreview.ContentWidth = control.Width;
+                    controlPreview.ContentMaxWidth = control.MaxWidth;
                 }
             }
 
@@ -583,7 +570,7 @@ namespace Carnassial.Editor
 
         /// <summary>
         /// Removes a row from the table and shifts up the ids on the remaining rows.
-        /// The required rows are unable to be deleted.
+        /// Standard controls can't be deleted.
         /// </summary>
         private void RemoveControlButton_Click(object sender, RoutedEventArgs e)
         {
@@ -609,46 +596,6 @@ namespace Carnassial.Editor
             this.SynchronizeSpreadsheetOrderPreview();
 
             this.templateDataGridBeingUpdatedByCode = false;
-        }
-
-        /// <summary>
-        /// Before cell editing begins on a cell click, the cell is disabled if it is grey (meaning cannot be edited).
-        /// Another method re-enables the cell immediately afterwards.
-        /// The reason for this implementation is because disabled cells cannot be single clicked, which is needed for row actions.
-        /// </summary>
-        private void TemplateDataGrid_BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
-        {
-            DataGridCell currentCell;
-            DataGridRow currentRow;
-            if (this.TryGetCurrentCell(out currentCell, out currentRow) == false)
-            {
-                return;
-            }
-
-            if (currentCell.Background.Equals(EditorConstant.NotEditableCellColor))
-            {
-                currentCell.IsEnabled = false;
-                this.TemplateDataGrid.CancelEdit();
-            }
-        }
-
-        /// <summary>
-        /// After cell editing ends (prematurely or no), re-enable disabled cells.
-        /// See TemplateDataGrid_BeginningEdit for full explanation.
-        /// </summary>
-        private void TemplateDataGrid_CurrentCellChanged(object sender, EventArgs e)
-        {
-            DataGridCell currentCell;
-            DataGridRow currentRow;
-            if (this.TryGetCurrentCell(out currentCell, out currentRow) == false)
-            {
-                return;
-            }
-
-            if (currentCell.Background.Equals(EditorConstant.NotEditableCellColor))
-            {
-                currentCell.IsEnabled = true;
-            }
         }
 
         private void TemplateDataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
@@ -710,29 +657,33 @@ namespace Carnassial.Editor
                         (columnHeader == Constant.Control.SpreadsheetOrder) ||
                         (columnHeader == Constant.Control.Type))
                     {
-                        // these columns are never editable
+                        // these columns are marked read only in the data grid's style but still need to be greyed out
                         disableCell = true;
                         // these columns are always editable
                         //   Constant.Control.Label
                         //   Constant.Control.Tooltip
                         //   Constant.Control.Visible
-                        //   EditorConstant.ColumnHeader.Width
+                        //   EditorConstant.ColumnHeader.MaxWidth
                     }
                     else if ((controlType == ControlType.DateTime) ||
-                             (control.DataLabel == Constant.DatabaseColumn.File) ||
-                             (control.DataLabel == Constant.DatabaseColumn.RelativePath))
+                             (control.DataLabel == Constant.DatabaseColumn.File))
                     {
                         // these standard controls have no editable properties other than width
-                        disableCell = columnHeader != Constant.Control.Width;
+                        disableCell = columnHeader != EditorConstant.ColumnHeader.MaxWidth;
                     }
-                    else if ((control.DataLabel == Constant.DatabaseColumn.DeleteFlag) ||
-                             (control.DataLabel == Constant.DatabaseColumn.ImageQuality) ||
+                    else if ((control.DataLabel == Constant.DatabaseColumn.ImageQuality) ||
+                             (control.DataLabel == Constant.DatabaseColumn.RelativePath) ||
                              (control.DataLabel == Constant.DatabaseColumn.UtcOffset))
+                    {
+                        // standard controls whose visible and width can be changed
+                        disableCell = (columnHeader != Constant.Control.Visible) && (columnHeader != EditorConstant.ColumnHeader.MaxWidth);
+                    }
+                    else if (control.DataLabel == Constant.DatabaseColumn.DeleteFlag)
                     {
                         // standard controls whose copyable, visible, and width can be changed
                         disableCell = (columnHeader != Constant.Control.Copyable) && 
                                       (columnHeader != Constant.Control.Visible) && 
-                                      (columnHeader != Constant.Control.Width);
+                                      (columnHeader != EditorConstant.ColumnHeader.MaxWidth);
                     }
                     else if ((controlType == ControlType.Counter) ||
                              (controlType == ControlType.Flag))
@@ -748,9 +699,9 @@ namespace Carnassial.Editor
                         cell.Foreground = Brushes.Gray;
                         cell.IsEnabled = false;
 
-                        // if cell has a checkbox disable it
+                        // if cell has a checkbox disable it too
                         CheckBox checkBox;
-                        if (cell.TryGetCheckBox(out checkBox))
+                        if (cell.TryGetControl(out checkBox))
                         {
                             checkBox.IsEnabled = false;
                         }
@@ -760,7 +711,7 @@ namespace Carnassial.Editor
                         // set up check boxes in the visible column for immediate data binding so user sees the control preview update promptly
                         // The LayoutUpdated event fires many times so a guard is required to set the callbacks only once.
                         CheckBox checkBox;
-                        if (cell.TryGetCheckBox(out checkBox))
+                        if (cell.TryGetControl(out checkBox))
                         {
                             if (checkBox.Tag == null)
                             {
@@ -774,13 +725,13 @@ namespace Carnassial.Editor
                             Debug.Fail("Could not find check box associated with Visible column for immediate data binding.");
                         }
                     }
-                    else if (columnHeader == Constant.Control.Width)
+                    else if (columnHeader == EditorConstant.ColumnHeader.MaxWidth)
                     {
                         // set up text boxes in the width column for immediate data binding so user sees the control preview update promptly
                         // A guard is required as above.  When the DataGrid is first instantiated TextBlocks are used for the cell content; these are
                         // changed to TextBoxes when the user initiates an edit.
                         TextBox textBox;
-                        if (cell.TryGetTextBox(out textBox))
+                        if (cell.TryGetControl(out textBox))
                         {
                             if (textBox.Tag == null)
                             {
@@ -855,7 +806,7 @@ namespace Carnassial.Editor
                 // EditorConstant.Control.ID is not editable
                 // EditorConstant.Control.SpreadsheetOrder is not editable
                 // Type is not editable
-                case EditorConstant.ColumnHeader.Width:
+                case EditorConstant.ColumnHeader.MaxWidth:
                     // only allow digits in widths as they must be parseable as integers
                     e.Handled = !Utilities.IsDigits(e.Text);
                     break;
@@ -895,7 +846,7 @@ namespace Carnassial.Editor
             int newWidth;
             if (Int32.TryParse(textBox.Text, out newWidth))
             {
-                this.templateDatabase.Controls[rowIndex].Width = newWidth;
+                this.templateDatabase.Controls[rowIndex].MaxWidth = newWidth;
             }
         }
 

@@ -20,7 +20,7 @@ namespace Carnassial.Control
         }
 
         public DataEntryDateTimeOffset(ControlRow control, DataEntryControls styleProvider) : 
-            base(control, styleProvider, ControlContentStyle.DateTimeOffsetPicker, ControlLabelStyle.DefaultLabel)
+            base(control, styleProvider, ControlContentStyle.DateTimeOffsetPicker, ControlLabelStyle.Label)
         {
             this.Container.ToolTip = "Enter a date/time";
 

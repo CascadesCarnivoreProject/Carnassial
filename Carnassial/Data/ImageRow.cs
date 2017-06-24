@@ -515,7 +515,7 @@ namespace Carnassial.Data
                 File.Move(sourceFilePath, destinationFilePath);
                 if (isSoftDelete == false)
                 {
-                    string relativePath = NativeMethods.GetRelativePath(folderPath, destinationFolderPath);
+                    string relativePath = NativeMethods.GetRelativePathFromDirectoryToDirectory(folderPath, destinationFolderPath);
                     if (relativePath == String.Empty || relativePath == ".")
                     {
                         relativePath = null;

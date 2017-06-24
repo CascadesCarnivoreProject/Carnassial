@@ -26,7 +26,7 @@ namespace Carnassial.Control
         }
 
         public DataEntryChoice(ControlRow control, DataEntryControls styleProvider)
-            : base(control, styleProvider, ControlContentStyle.ChoiceComboBox, ControlLabelStyle.DefaultLabel)
+            : base(control, styleProvider, ControlContentStyle.ChoiceComboBox, ControlLabelStyle.Label)
         {
             // callback used to allow enter to select the highlit item
             this.ContentControl.PreviewKeyDown += this.ContentControl_PreviewKeyDown;

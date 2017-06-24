@@ -7,7 +7,6 @@
              mc:Ignorable="d">
     <UserControl.Resources>
         <Style x:Key="PlayPauseButtonStyle" TargetType="ToggleButton">
-            <Setter Property="Margin" Value="0,5,0,0" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
@@ -21,14 +20,45 @@
                 <Trigger Property="IsChecked" Value="True">
                     <Setter Property="Content">
                         <Setter.Value>
-                            <Image Source="pack://application:,,/Resources/VideoPauseIcon.png" />
+                            <!-- pause icon -->
+                            <Viewbox Margin="6,9,6,9" Width="12" Height="20">
+                                <Rectangle Width="12" Height="20">
+                                    <Rectangle.Fill>
+                                        <DrawingBrush>
+                                            <DrawingBrush.Drawing>
+                                                <DrawingGroup>
+                                                    <DrawingGroup.Children>
+                                                        <GeometryDrawing Brush="{StaticResource ApplicationBorderForegroundBrush}" Geometry="F1M21.5,7L19,7 19,25 21.5,25z M14,25L11.5,25 11.5,7 14,7z" />
+                                                    </DrawingGroup.Children>
+                                                </DrawingGroup>
+                                            </DrawingBrush.Drawing>
+                                        </DrawingBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                            </Viewbox>
                         </Setter.Value>
                     </Setter>
                 </Trigger>
                 <Trigger Property="IsChecked" Value="False">
                     <Setter Property="Content">
                         <Setter.Value>
-                            <Image Source="pack://application:,,/Resources/VideoPlayIcon.png" />
+                            <!-- play icon -->
+                            <Viewbox Margin="0,5,0,5" Width="24" Height="28">
+                                <Rectangle Width="24" Height="28">
+                                    <Rectangle.Fill>
+                                        <DrawingBrush>
+                                            <DrawingBrush.Drawing>
+                                                <DrawingGroup>
+                                                    <DrawingGroup.Children>
+                                                        <GeometryDrawing Brush="{StaticResource ApplicationBorderForegroundBrush}" Geometry="F1M6.0003,-0.000399999999999068L6.0003,31.9996 27.0003,16.2506 27.0003,15.7496z" />
+                                                        <GeometryDrawing Brush="{StaticResource NavigationSliderBackgroundBrush}" Geometry="F1M8,4L8,28 24,16z" />
+                                                    </DrawingGroup.Children>
+                                                </DrawingGroup>
+                                            </DrawingBrush.Drawing>
+                                        </DrawingBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                            </Viewbox>
                         </Setter.Value>
                     </Setter>
                 </Trigger>
@@ -37,33 +67,30 @@
         <Style x:Key="TimeTextBoxStyle" TargetType="TextBox">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource ApplicationBorderForegroundBrush}" />
             <Setter Property="IsReadOnly" Value="True" />
         </Style>
     </UserControl.Resources>
-    <Grid Margin="10">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <MediaElement Name="Video" LoadedBehavior="Manual" ScrubbingEnabled="True" MediaEnded="Video_MediaEnded" MediaOpened="Video_MediaOpened" Unloaded="Video_Unloaded" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
-        <StackPanel Grid.Row="1">
-            <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                <Slider Name="VideoPosition" ValueChanged="VideoPosition_ValueChanged" PreviewMouseDown="VideoPosition_PreviewMouseDown" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="3" IsMoveToPointEnabled="True" MinWidth="400" HorizontalContentAlignment="Stretch" VerticalAlignment="Center" TickPlacement="BottomRight" />
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <TextBox Name="TimeFromStart" Grid.Column="0" Grid.Row="0" Style="{StaticResource TimeTextBoxStyle}">00:00</TextBox>
-                    <ToggleButton Name="PlayOrPause" Click="PlayOrPause_Click" Style="{StaticResource PlayPauseButtonStyle}" Background="Transparent" BorderThickness="0" Width="35" Height="35"  Grid.Column="1" Grid.Row="0" />
-                    <TextBox Name="TimeFromEnd" Grid.Column="2" Grid.Row="0" Style="{StaticResource TimeTextBoxStyle}">00:00</TextBox>
-                </Grid>
-            </StackPanel>
-        </StackPanel>
+        <Slider Name="VideoPosition" ValueChanged="VideoPosition_ValueChanged" PreviewMouseDown="VideoPosition_PreviewMouseDown" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="3" Background="{StaticResource NavigationSliderBackgroundBrush}" Grid.Row="1" IsMoveToPointEnabled="True" MinWidth="400" HorizontalContentAlignment="Stretch" VerticalAlignment="Center" TickPlacement="BottomRight" />
+        <Grid Background="{StaticResource NavigationSliderBackgroundBrush}" Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBox Name="TimeFromStart" Grid.Column="0" Grid.Row="0" Style="{StaticResource TimeTextBoxStyle}">00:00</TextBox>
+            <ToggleButton Name="PlayOrPause" Click="PlayOrPause_Click" Style="{StaticResource PlayPauseButtonStyle}" Background="Transparent" BorderThickness="0" Grid.Column="1" Grid.Row="0" />
+            <TextBox Name="TimeFromEnd" Grid.Column="2" Grid.Row="0" Style="{StaticResource TimeTextBoxStyle}">00:00</TextBox>
+        </Grid>
     </Grid>
 </UserControl>

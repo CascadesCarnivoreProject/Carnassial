@@ -332,7 +332,7 @@ namespace Carnassial.Dialog
             this.FileNavigatorSlider.Maximum = this.database.CurrentlySelectedFileCount - 1;
             Utilities.ConfigureNavigatorSliderTick(this.FileNavigatorSlider);
             this.FileNavigatorSlider.Value = this.fileEnumerator.CurrentRow;
-            this.FileNavigatorSlider_ValueChanged(null, null);
+            this.FileNavigatorSlider_ValueChanged(this, null);
             this.FileNavigatorSlider.ValueChanged += this.FileNavigatorSlider_ValueChanged;
 
             this.Focus();               // necessary for the left/right arrow keys to work

@@ -3,10 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="EditorWindow.xaml">
     <Application.Resources>
-        <!-- register Carnassial resource files so Visual Studio's XAML design window makes them available when calling into user controls such as StockMessageControl -->
-        <BitmapImage x:Key="StatusCriticalError_64x.png" UriSource="pack://application:,,/Resources/StatusCriticalError_64x.png" />
-        <BitmapImage x:Key="StatusHelp_64x.png" UriSource="pack://application:,,/Resources/StatusHelp_64x.png" />
-        <BitmapImage x:Key="StatusInformation_64x.png" UriSource="pack://application:,,/Resources/StatusInformation_64x.png" />
-        <BitmapImage x:Key="StatusWarning_64x.png" UriSource="pack://application:,,/Resources/StatusWarning_64x.png" />
+        <ResourceDictionary>
+            <!-- register Carnassial resource files so Visual Studio's XAML design window makes them available when calling into user controls such as StockMessageControl -->
+            <BitmapImage x:Key="StatusCriticalError_64x.png" UriSource="pack://application:,,/Resources/StatusCriticalError_64x.png" />
+            <BitmapImage x:Key="StatusHelp_64x.png" UriSource="pack://application:,,/Resources/StatusHelp_64x.png" />
+            <BitmapImage x:Key="StatusInformation_64x.png" UriSource="pack://application:,,/Resources/StatusInformation_64x.png" />
+            <BitmapImage x:Key="StatusWarning_64x.png" UriSource="pack://application:,,/Resources/StatusWarning_64x.png" />
+
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="EditorWindowStyle.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

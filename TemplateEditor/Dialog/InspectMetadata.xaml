@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:controls="clr-namespace:Carnassial.Control;assembly=Carnassial"
+        xmlns:control="clr-namespace:Carnassial.Control;assembly=Carnassial"
         mc:Ignorable="d"
         Title="Inspect metadata available in files" 
 		MinHeight="600" MinWidth="768"
@@ -21,7 +21,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <controls:StockMessageControl x:Name="Message"
+        <control:StockMessageControl x:Name="Message"
                         StatusImage="Question"
                         Title="See what metadata is available in a file of your choosing."
                         What="Cameras typically embed metadata in image files, some of which may be useful to capture as data. 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Carnassial.Util;
+using System;
 using System.Data;
 using System.Diagnostics;
 
@@ -105,7 +106,7 @@ namespace Carnassial.Database
         public static void SetUtcOffsetField(this DataRow row, string column, TimeSpan value)
         {
             Debug.Assert(value.Ticks % Constant.Time.UtcOffsetGranularity.Ticks == 0, "Unexpected rounding error: UTC offset is not an exact multiple of 15 minutes.");
-            row[column] = value.TotalHours;
+            row[column] = DateTimeHandler.ToDatabaseUtcOffset(value);
         }
     }
 }

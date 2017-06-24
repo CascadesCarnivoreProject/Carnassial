@@ -21,9 +21,13 @@ namespace Carnassial.Control
         public bool Copyable { get; set; }
 
         /// <summary>Gets the container that holds the control.</summary>
-        public StackPanel Container { get; private set; }
+        public Grid Container { get; private set; }
 
-        public abstract long ContentWidth { get; set; }
+        public long ContentMaxWidth
+        {
+            get { return (long)this.Container.ColumnDefinitions[1].MaxWidth; }
+            set { this.Container.ColumnDefinitions[1].MaxWidth = value; }
+        }
 
         /// <summary>Gets the context menu associated with the control.</summary>
         public ContextMenu ContextMenu
@@ -46,7 +50,7 @@ namespace Carnassial.Control
 
         public ControlType Type { get; private set; }
 
-        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider)
+        protected DataEntryControl(ControlRow control, DataEntryControls dataEntryControls)
         {
             // populate properties from database definition of control
             // this.Content and Tooltip can't be set, however, as the caller hasn't instantiated the content control yet
@@ -55,10 +59,13 @@ namespace Carnassial.Control
             this.PropertyName = ImageRow.GetPropertyName(control.DataLabel);
             this.Type = control.Type;
 
-            // create the stack panel which will contain the label and ontent
-            this.Container = new StackPanel();
-            Style style = styleProvider.FindResource(Constant.ControlStyle.ContainerStyle) as Style;
-            this.Container.Style = style;
+            // create the grid which will contain the label and ontent
+            this.Container = new Grid();
+            this.Container.ColumnDefinitions.Add(new ColumnDefinition() { Width = GridLength.Auto });
+            this.Container.ColumnDefinitions.Add(new ColumnDefinition() { MaxWidth = control.MaxWidth, Width = new GridLength(1.0, GridUnitType.Star) });
+            this.Container.Height = 35;
+            this.Container.Margin = new Thickness(0, 0, 10, 0);
+            this.Container.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
 
             // use the containers's tag to point back to this so event handlers can access the DataEntryControl
             // this is needed by callbacks such as DataEntryHandler.Container_PreviewMouseRightButtonDown() and CarnassialWindow.CounterControl_MouseLeave()
@@ -126,12 +133,6 @@ namespace Carnassial.Control
 
         public TContent ContentControl { get; private set; }
 
-        public override long ContentWidth
-        {
-            get { return (long)this.ContentControl.Width; }
-            set { this.ContentControl.Width = value; }
-        }
-
         public override ImageRow DataContext
         {
             get { return (ImageRow)this.ContentControl.DataContext; }
@@ -153,28 +154,23 @@ namespace Carnassial.Control
             set { this.LabelControl.ToolTip = value; }
         }
 
-        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, Nullable<ControlContentStyle> contentStyleName, ControlLabelStyle labelStyleName) :
+        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, ControlContentStyle contentStyleName, ControlLabelStyle labelStyleName) :
             this(control, styleProvider, contentStyleName, labelStyleName, false)
         {
         }
 
-        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, Nullable<ControlContentStyle> contentStyleName, ControlLabelStyle labelStyleName, bool readOnly) : 
+        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, ControlContentStyle contentStyleName, ControlLabelStyle labelStyleName, bool readOnly) : 
             base(control, styleProvider)
         {
             this.ContentControl = new TContent();
 
             // configure the content
             this.ContentControl.IsTabStop = true;
-            if (contentStyleName.HasValue)
-            {
-                this.ContentControl.Style = (Style)styleProvider.FindResource(contentStyleName.Value.ToString());
-            }
+            this.ContentControl.Style = (Style)styleProvider.FindResource(contentStyleName.ToString());
             this.ContentReadOnly = readOnly;
             this.SetValue(control.DefaultValue);
-            this.ContentWidth = control.Width;
 
-            // use the content's tag to point back to this so event handlers can access the DataEntryControl as well as just ContentControl
-            // the data update callback for each control type in CarnassialWindow, such as NoteControl_TextChanged(), relies on this
+            // use the content's tag to point back to this so event handlers can access the DataEntryControl as well as just the content control
             this.ContentControl.Tag = this;
 
             // find a hotkey to assign to the control, if possible

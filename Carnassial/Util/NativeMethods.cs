@@ -2,23 +2,29 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows;
-using System.Windows.Media;
 
 namespace Carnassial.Util
 {
     internal class NativeMethods
     {
-        public static string GetRelativePath(string fromPath, string toPath)
+        public static string GetRelativePathFromDirectoryToDirectory(string fromDirectoryPath, string toFilePath)
         {
-            int fromAttr = NativeMethods.GetPathAttribute(fromPath);
-            int toAttr = NativeMethods.GetPathAttribute(toPath);
+            return NativeMethods.GetRelativePathFromDirectory(fromDirectoryPath, toFilePath, true);
+        }
+
+        public static string GetRelativePathFromDirectoryToFile(string fromDirectoryPath, string toFilePath)
+        {
+            return NativeMethods.GetRelativePathFromDirectory(fromDirectoryPath, toFilePath, false);
+        }
+
+        private static string GetRelativePathFromDirectory(string fromDirectoryPath, string toPath, bool toIsDirectory)
+        {
             StringBuilder relativePathBuilder = new StringBuilder(260); // MAX_PATH
             if (NativeMethods.PathRelativePathTo(relativePathBuilder,
-                                                 fromPath,
-                                                 fromAttr,
+                                                 fromDirectoryPath,
+                                                 NativeMethods.FILE_ATTRIBUTE_DIRECTORY,
                                                  toPath,
-                                                 toAttr) == 0)
+                                                 toIsDirectory ? NativeMethods.FILE_ATTRIBUTE_DIRECTORY : NativeMethods.FILE_ATTRIBUTE_NORMAL) == 0)
             {
                 throw new ArgumentException("Paths must have a common prefix");
             }
@@ -29,23 +35,6 @@ namespace Carnassial.Util
                 relativePath = relativePath.Substring(2);
             }
             return relativePath;
-        }
-
-        private static int GetPathAttribute(string path)
-        {
-            DirectoryInfo di = new DirectoryInfo(path);
-            if (di.Exists)
-            {
-                return NativeMethods.FILE_ATTRIBUTE_DIRECTORY;
-            }
-
-            FileInfo fi = new FileInfo(path);
-            if (fi.Exists)
-            {
-                return NativeMethods.FILE_ATTRIBUTE_NORMAL;
-            }
-
-            throw new FileNotFoundException(path);
         }
 
         private const int FILE_ATTRIBUTE_DIRECTORY = 0x10;

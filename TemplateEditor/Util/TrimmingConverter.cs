@@ -2,10 +2,10 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Carnassial.Editor
+namespace Carnassial.Editor.Util
 {
     /// <summary>
-    /// Converter for CellTextBlock. Removes whitespace from beginning and end of string.
+    /// Converter for control grid text. Removes whitespace from beginning and end of string.
     /// </summary>
     public class TrimmingConverter : IValueConverter
     {
