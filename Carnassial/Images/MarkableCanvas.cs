@@ -164,33 +164,39 @@ namespace Carnassial.Images
             transformGroup.Children.Add(this.imageToDisplayTranslation);
 
             // set up display image
-            this.ImageToDisplay = new Image();
-            this.ImageToDisplay.HorizontalAlignment = HorizontalAlignment.Left;
+            this.ImageToDisplay = new Image()
+            {
+                HorizontalAlignment = HorizontalAlignment.Left,
+                RenderTransform = transformGroup,
+                VerticalAlignment = VerticalAlignment.Top
+            };
             this.ImageToDisplay.MouseDown += this.ImageOrCanvas_MouseDown;
             this.ImageToDisplay.MouseUp += this.ImageOrCanvas_MouseUp;
             this.ImageToDisplay.MouseWheel += this.ImageOrCanvas_MouseWheel;
-            this.ImageToDisplay.RenderTransform = transformGroup;
             this.ImageToDisplay.SizeChanged += this.ImageToDisplay_SizeChanged;
-            this.ImageToDisplay.VerticalAlignment = VerticalAlignment.Top;
             Canvas.SetLeft(this.ImageToDisplay, 0);
             Canvas.SetTop(this.ImageToDisplay, 0);
             this.Children.Add(this.ImageToDisplay);
 
             // set up display video
-            this.VideoToDisplay = new VideoPlayer();
-            this.VideoToDisplay.HorizontalAlignment = HorizontalAlignment.Left;
+            this.VideoToDisplay = new VideoPlayer()
+            {
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                Visibility = Visibility.Collapsed
+            };
             this.VideoToDisplay.SizeChanged += this.VideoToDisplay_SizeChanged;
-            this.VideoToDisplay.VerticalAlignment = VerticalAlignment.Top;
-            this.VideoToDisplay.Visibility = Visibility.Collapsed;
             Canvas.SetLeft(this.VideoToDisplay, 0);
             Canvas.SetTop(this.VideoToDisplay, 0);
             this.Children.Add(this.VideoToDisplay);
 
             // set up image to magnify
-            this.ImageToMagnify = new Image();
-            this.ImageToMagnify.HorizontalAlignment = HorizontalAlignment.Left;
+            this.ImageToMagnify = new Image()
+            {
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top
+            };
             this.ImageToMagnify.SizeChanged += this.ImageToMagnify_SizeChanged;
-            this.ImageToMagnify.VerticalAlignment = VerticalAlignment.Top;
             Canvas.SetLeft(this.ImageToMagnify, 0);
             Canvas.SetTop(this.ImageToMagnify, 0);
 
@@ -242,28 +248,34 @@ namespace Carnassial.Images
             markerCanvas.Tag = marker;
 
             // create a marker
-            Ellipse mark = new Ellipse();
-            mark.Width = Constant.MarkableCanvas.MarkerDiameter;
-            mark.Height = Constant.MarkableCanvas.MarkerDiameter;
-            mark.Stroke = marker.Highlight ? Brushes.MediumBlue : Brushes.Gold;
-            mark.StrokeThickness = Constant.MarkableCanvas.MarkerStrokeThickness;
-            mark.Fill = MarkableCanvas.MarkerFillBrush;
+            Ellipse mark = new Ellipse()
+            {
+                Width = Constant.MarkableCanvas.MarkerDiameter,
+                Height = Constant.MarkableCanvas.MarkerDiameter,
+                Stroke = marker.Highlight ? Brushes.MediumBlue : Brushes.Gold,
+                StrokeThickness = Constant.MarkableCanvas.MarkerStrokeThickness,
+                Fill = MarkableCanvas.MarkerFillBrush
+            };
             markerCanvas.Children.Add(mark);
 
             // draw another ellipse as a black outline around it
-            Ellipse blackOutline = new Ellipse();
-            blackOutline.Stroke = Brushes.Black;
-            blackOutline.Width = mark.Width + 1;
-            blackOutline.Height = mark.Height + 1;
-            blackOutline.StrokeThickness = 1;
+            Ellipse blackOutline = new Ellipse()
+            {
+                Stroke = Brushes.Black,
+                Width = mark.Width + 1,
+                Height = mark.Height + 1,
+                StrokeThickness = 1
+            };
             markerCanvas.Children.Add(blackOutline);
 
             // and another ellipse as a white outline around it
-            Ellipse whiteOutline = new Ellipse();
-            whiteOutline.Stroke = Brushes.White;
-            whiteOutline.Width = blackOutline.Width + 1;
-            whiteOutline.Height = blackOutline.Height + 1;
-            whiteOutline.StrokeThickness = 1;
+            Ellipse whiteOutline = new Ellipse()
+            {
+                Stroke = Brushes.White,
+                Width = blackOutline.Width + 1,
+                Height = blackOutline.Height + 1,
+                StrokeThickness = 1
+            };
             markerCanvas.Children.Add(whiteOutline);
 
             // maybe add emphasis
@@ -271,12 +283,14 @@ namespace Carnassial.Images
             Ellipse glow = null;
             if (marker.Emphasize)
             {
-                glow = new Ellipse();
-                glow.Width = whiteOutline.Width + Constant.MarkableCanvas.MarkerGlowDiameterIncrease;
-                glow.Height = whiteOutline.Height + Constant.MarkableCanvas.MarkerGlowDiameterIncrease;
-                glow.StrokeThickness = Constant.MarkableCanvas.MarkerGlowStrokeThickness;
-                glow.Stroke = mark.Stroke;
-                glow.Opacity = Constant.MarkableCanvas.MarkerGlowOpacity;
+                glow = new Ellipse()
+                {
+                    Width = whiteOutline.Width + Constant.MarkableCanvas.MarkerGlowDiameterIncrease,
+                    Height = whiteOutline.Height + Constant.MarkableCanvas.MarkerGlowDiameterIncrease,
+                    StrokeThickness = Constant.MarkableCanvas.MarkerGlowStrokeThickness,
+                    Stroke = mark.Stroke,
+                    Opacity = Constant.MarkableCanvas.MarkerGlowOpacity
+                };
                 markerCanvas.Children.Add(glow);
 
                 outerDiameter = glow.Width;
@@ -306,12 +320,14 @@ namespace Carnassial.Images
 
             if (marker.ShowLabel)
             {
-                Label label = new Label();
-                label.Content = marker.Tooltip;
-                label.Opacity = 0.6;
-                label.Background = Brushes.White;
-                label.Padding = new Thickness(0, 0, 0, 0);
-                label.Margin = new Thickness(0, 0, 0, 0);
+                Label label = new Label()
+                {
+                    Content = marker.Tooltip,
+                    Opacity = 0.6,
+                    Background = Brushes.White,
+                    Padding = new Thickness(0, 0, 0, 0),
+                    Margin = new Thickness(0, 0, 0, 0)
+                };
                 markerCanvas.Children.Add(label);
 
                 position = (markerCanvas.Width / 2.0) + (whiteOutline.Width / 2.0);
@@ -389,9 +405,11 @@ namespace Carnassial.Images
                     // get the current point, and create a marker on it.
                     Point position = e.GetPosition(this.ImageToDisplay);
                     position = Marker.ConvertPointToRatio(position, this.ImageToDisplay.ActualWidth, this.ImageToDisplay.ActualHeight);
-                    Marker marker = new Marker(null, position);
-                    marker.ShowLabel = true; // show label on creation, cleared on next refresh
-                    marker.LabelShownPreviously = false;
+                    Marker marker = new Marker(null, position)
+                    {
+                        ShowLabel = true, // show label on creation, cleared on next refresh
+                        LabelShownPreviously = false
+                    };
 
                     // don't add the new marker to the marker list as CarnassialWindow is responsible for filling in remaining properties and then adding it
                     this.MarkerCreatedOrDeleted?.Invoke(this, new MarkerCreatedOrDeletedEventArgs(marker, true));

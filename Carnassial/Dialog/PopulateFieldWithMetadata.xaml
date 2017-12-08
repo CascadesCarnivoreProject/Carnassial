@@ -7,11 +7,8 @@
         xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
         Title="Populate a data field with metadata." 
-		MinHeight="600" MinWidth="768"
-		Height="856" Width="840"
-		ResizeMode="CanResizeWithGrip"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
+        Loaded="Window_Loaded"
+		MinHeight="600" MinWidth="768" Height="856" Width="840" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

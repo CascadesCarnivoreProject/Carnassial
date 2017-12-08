@@ -427,8 +427,7 @@ namespace Carnassial.Data
             {
                 ImageRow file = this.Files[row];
                 DateTimeOffset originalDateTime = file.DateTimeOffset;
-                DateTimeOffset reversedDateTime;
-                if (DateTimeHandler.TrySwapDayMonth(originalDateTime, out reversedDateTime) == false)
+                if (DateTimeHandler.TrySwapDayMonth(originalDateTime, out DateTimeOffset reversedDateTime) == false)
                 {
                     continue;
                 }

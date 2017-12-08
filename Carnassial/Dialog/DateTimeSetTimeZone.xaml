@@ -4,11 +4,8 @@
         xmlns:local="clr-namespace:Carnassial"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		Title="Date/time - Set the time zone of all files selected."
-		MinHeight="826" MinWidth="768"
-		Height="856" Width="768"
-		ResizeMode="CanResizeWithGrip"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
+        Loaded="Window_Loaded"
+		MinHeight="826" MinWidth="768" Height="856" Width="768" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

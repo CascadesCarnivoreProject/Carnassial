@@ -160,5 +160,11 @@ namespace Carnassial.Dialog
 
             this.StartDoneButton.IsEnabled = true;
         }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
+        }
     }
 }

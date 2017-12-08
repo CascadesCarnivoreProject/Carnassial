@@ -120,9 +120,11 @@ namespace Carnassial.Dialog
             GridView gridView = new GridView();
             foreach (string dataLabel in dataLabels)
             {
-                GridViewColumn column = new GridViewColumn();
-                column.DisplayMemberBinding = new Binding(ImageRow.GetDataBindingPath(dataLabel));
-                column.Header = ImageRow.GetPropertyName(dataLabel);
+                GridViewColumn column = new GridViewColumn()
+                {
+                    DisplayMemberBinding = new Binding(ImageRow.GetDataBindingPath(dataLabel)),
+                    Header = ImageRow.GetPropertyName(dataLabel)
+                };
                 gridView.Columns.Add(column);
             }
             return gridView;

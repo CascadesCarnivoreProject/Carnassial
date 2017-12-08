@@ -64,7 +64,7 @@ namespace Carnassial.Control
             this.Container.ColumnDefinitions.Add(new ColumnDefinition() { Width = GridLength.Auto });
             this.Container.ColumnDefinitions.Add(new ColumnDefinition() { MaxWidth = control.MaxWidth, Width = new GridLength(1.0, GridUnitType.Star) });
             this.Container.Height = 35;
-            this.Container.Margin = new Thickness(0, 0, 10, 0);
+            this.Container.Margin = new Thickness(0, 0, 8, 0);
             this.Container.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
 
             // use the containers's tag to point back to this so event handlers can access the DataEntryControl
@@ -159,14 +159,14 @@ namespace Carnassial.Control
         {
         }
 
-        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, ControlContentStyle contentStyleName, ControlLabelStyle labelStyleName, bool readOnly) : 
+        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, ControlContentStyle contentStyleName, ControlLabelStyle labelStyleName, bool readOnly) :
             base(control, styleProvider)
         {
-            this.ContentControl = new TContent();
-
-            // configure the content
-            this.ContentControl.IsTabStop = true;
-            this.ContentControl.Style = (Style)styleProvider.FindResource(contentStyleName.ToString());
+            this.ContentControl = new TContent()
+            {
+                IsTabStop = true,
+                Style = (Style)styleProvider.FindResource(contentStyleName.ToString())
+            };
             this.ContentReadOnly = readOnly;
             this.SetValue(control.DefaultValue);
 

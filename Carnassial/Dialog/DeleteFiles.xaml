@@ -4,10 +4,8 @@
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         Title="Delete ..." 
-        Height="780" Width="1000"
-		ResizeMode="CanResizeWithGrip"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
+        Loaded="Window_Loaded"
+        Height="780" Width="1000" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

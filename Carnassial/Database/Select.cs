@@ -43,8 +43,7 @@ namespace Carnassial.Database
                 List<string> whereClauses = new List<string>(this.Where.Count);
                 foreach (WhereClause clause in this.Where)
                 {
-                    int clausesEncounteredForThisColumn;
-                    if (numberOfClausesByColumn.TryGetValue(clause.Name, out clausesEncounteredForThisColumn) == false)
+                    if (numberOfClausesByColumn.TryGetValue(clause.Name, out int clausesEncounteredForThisColumn) == false)
                     {
                         clausesEncounteredForThisColumn = 0;
                     }

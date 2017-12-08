@@ -65,8 +65,7 @@ namespace Carnassial.Dialog
             int start = this.SearchForNextAmbiguousDateInSelectedFiles(0);
             while (start != -1)
             {
-                int count;
-                int end = this.GetLastFileOnSameDay(start, out count);
+                int end = this.GetLastFileOnSameDay(start, out int count);
                 this.ambiguousDatesList.Add(new AmbiguousDate(start, end, count, false));
                 start = this.SearchForNextAmbiguousDateInSelectedFiles(end + 1);
             }
@@ -163,8 +162,7 @@ namespace Carnassial.Dialog
             ImageRow file = this.database.Files[this.ambiguousDatesList[index].StartRange];
             this.OriginalDateLabel.Content = file.DateTimeOffset.Date;
 
-            DateTimeOffset swappedDate;
-            this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(file.DateTimeOffset, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(file.DateTimeOffset);
+            this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(file.DateTimeOffset, out DateTimeOffset swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(file.DateTimeOffset);
 
             this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
@@ -190,8 +188,7 @@ namespace Carnassial.Dialog
                 imageProperties = this.database.Files[this.ambiguousDatesList[this.ambiguousDatesListIndex].StartRange];
                 this.OriginalDateLabel.Content = imageProperties.DateTimeOffset.Date;
 
-                DateTimeOffset swappedDate;
-                this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTimeOffset, out swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.DateTimeOffset);
+                this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTimeOffset, out DateTimeOffset swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.DateTimeOffset);
 
                 this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
@@ -235,8 +232,7 @@ namespace Carnassial.Dialog
                 string newDate = String.Empty;
                 if (ambiguousDate.Swapped)
                 {
-                    DateTimeOffset swappedDate;
-                    DateTimeHandler.TrySwapDayMonth(file.DateTimeOffset, out swappedDate);
+                    DateTimeHandler.TrySwapDayMonth(file.DateTimeOffset, out DateTimeOffset swappedDate);
                     newDate = DateTimeHandler.ToDisplayDateTimeString(swappedDate);
                 }
 

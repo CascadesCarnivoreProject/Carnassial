@@ -7,11 +7,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         mc:Ignorable="d"
         Title="Create a custom selection."
-        MinHeight="500" MinWidth="700"
-		Height="900" Width="768"
-		ResizeMode="CanResizeWithGrip"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner"  Loaded="Window_Loaded" >
+        Loaded="Window_Loaded"
+        MinHeight="500" MinWidth="700" Height="900" Width="768" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

@@ -37,8 +37,7 @@ namespace Carnassial.Control
             // decrement the counter only if it has a positive count
             int newCount = 0;
             string previousCountAsString = (string)this.ImageCache.Current[counter.PropertyName];
-            int previousCount;
-            if (Int32.TryParse(previousCountAsString, out previousCount) && previousCount > 0)
+            if (Int32.TryParse(previousCountAsString, out int previousCount) && previousCount > 0)
             {
                 newCount = previousCount - 1;
             }
@@ -92,8 +91,7 @@ namespace Carnassial.Control
             // if the current value's not parseable assume it's due to the default value being non-integer in the template and revert to zero
             int newCount = 0;
             string previousCountAsString = (string)this.ImageCache.Current[counter.PropertyName];
-            int previousCount;
-            if (Int32.TryParse(previousCountAsString, out previousCount))
+            if (Int32.TryParse(previousCountAsString, out int previousCount))
             {
                 newCount = previousCount + 1;
             }
@@ -188,26 +186,32 @@ namespace Carnassial.Control
                     Debug.Assert(control.Type != ControlType.DateTime, "Propagate context menu unexpectedly enabled on DateTime control.");
                     Debug.Assert(control.Type != ControlType.UtcOffset, "Propagate context menu unexpectedly enabled on UTC offset control.");
 
-                    MenuItem menuItemPropagateFromLastValue = new MenuItem();
-                    menuItemPropagateFromLastValue.Header = "Propagate from the _last non-empty value to here...";
+                    MenuItem menuItemPropagateFromLastValue = new MenuItem()
+                    {
+                        Header = "Propagate from the _last non-empty value to here...",
+                        Tag = DataEntryControlContextMenuItemType.PropagateFromLastValue
+                    };
+                    menuItemPropagateFromLastValue.Click += this.MenuContextPropagateFromLastValue_Click;
                     if (dataEntryControl is DataEntryCounter)
                     {
                         menuItemPropagateFromLastValue.Header = "Propagate from the _last non-zero value to here...";
                     }
-                    menuItemPropagateFromLastValue.Click += this.MenuContextPropagateFromLastValue_Click;
-                    menuItemPropagateFromLastValue.Tag = DataEntryControlContextMenuItemType.PropagateFromLastValue;
 
-                    MenuItem menuItemCopyForward = new MenuItem();
-                    menuItemCopyForward.Header = "Copy forward to _end...";
-                    menuItemCopyForward.ToolTip = "The value of this field will be copied forward from this file to the last file in this set.";
+                    MenuItem menuItemCopyForward = new MenuItem()
+                    {
+                        Header = "Copy forward to _end...",
+                        ToolTip = "The value of this field will be copied forward from this file to the last file in this set.",
+                        Tag = DataEntryControlContextMenuItemType.CopyForward
+                    };
                     menuItemCopyForward.Click += this.MenuContextPropagateForward_Click;
-                    menuItemCopyForward.Tag = DataEntryControlContextMenuItemType.CopyForward;
 
-                    MenuItem menuItemCopyToAll = new MenuItem();
-                    menuItemCopyToAll.Header = "Copy to _all...";
-                    menuItemCopyToAll.ToolTip = "Copy the value of this field to all selected files.";
+                    MenuItem menuItemCopyToAll = new MenuItem()
+                    {
+                        Header = "Copy to _all...",
+                        ToolTip = "Copy the value of this field to all selected files.",
+                        Tag = DataEntryControlContextMenuItemType.CopyToAll
+                    };
                     menuItemCopyToAll.Click += this.MenuContextCopyToAll_Click;
-                    menuItemCopyToAll.Tag = DataEntryControlContextMenuItemType.CopyToAll;
 
                     dataEntryControl.AppendToContextMenu(menuItemPropagateFromLastValue, menuItemCopyForward, menuItemCopyToAll);
                 }
@@ -242,9 +246,8 @@ namespace Carnassial.Control
 
         public static bool TryFindFocusedControl(IInputElement focusedElement, out DataEntryControl focusedControl)
         {
-            if (focusedElement is FrameworkElement)
+            if (focusedElement is FrameworkElement focusedFrameworkElement)
             {
-                FrameworkElement focusedFrameworkElement = (FrameworkElement)focusedElement;
                 focusedControl = (DataEntryControl)focusedFrameworkElement.Tag;
                 if (focusedControl != null)
                 {
@@ -383,8 +386,7 @@ namespace Carnassial.Control
         private void MenuContextPropagateFromLastValue_Click(object sender, RoutedEventArgs e)
         {
             DataEntryControl control = (DataEntryControl)((ContextMenu)((MenuItem)sender).Parent).Tag;
-            object valueToCopy;
-            if (this.TryCopyFromLastNonEmptyValue(control, out valueToCopy))
+            if (this.TryCopyFromLastNonEmptyValue(control, out object valueToCopy))
             {
                 this.ImageCache.Current[control.PropertyName] = valueToCopy;
             }

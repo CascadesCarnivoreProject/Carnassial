@@ -61,8 +61,10 @@ namespace Carnassial
             this.MenuOptionsSkipDarkFileCheck.IsChecked = this.State.SkipDarkImagesCheck;
 
             // timer callback so the display will update to the current slider position when the user pauses whilst dragging the slider 
-            this.fileNavigatorSliderTimer = new DispatcherTimer();
-            this.fileNavigatorSliderTimer.Interval = TimeSpan.FromSeconds(1.0 / Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
+            this.fileNavigatorSliderTimer = new DispatcherTimer()
+            {
+                Interval = TimeSpan.FromSeconds(1.0 / Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound)
+            };
             this.fileNavigatorSliderTimer.Tick += this.FileNavigatorSlider_TimerTick;
 
             // populate lists of menu items
@@ -246,7 +248,7 @@ namespace Carnassial
             this.MenuOptionsAdvancedCarnassialOptions.IsEnabled = filesSelected;
 
             // other UI components
-            this.ControlsPanel.IsEnabled = filesSelected;  // no files are selected there's nothing for the user to do with data entry
+            this.DataEntryControls.IsEnabled = filesSelected;  // no files are selected there's nothing for the user to do with data entry
             this.PastePreviousValues.IsEnabled = filesSelected;
             this.FileNavigatorSlider.IsEnabled = filesSelected;
             this.MarkableCanvas.IsEnabled = filesSelected;
@@ -342,12 +344,10 @@ namespace Carnassial
             }
 
             // if no counter is selected that just indicates no markers need to be highlighted at this time
-            DataEntryCounter selectedCounter;
-            this.TryGetSelectedCounter(out selectedCounter);
+            this.TryGetSelectedCounter(out DataEntryCounter selectedCounter);
             foreach (MarkersForCounter markersForCounter in this.DataHandler.ImageCache.CurrentMarkers)
             {
-                DataEntryControl control;
-                if (this.DataEntryControls.ControlsByDataLabel.TryGetValue(markersForCounter.DataLabel, out control) == false)
+                if (this.DataEntryControls.ControlsByDataLabel.TryGetValue(markersForCounter.DataLabel, out DataEntryControl control) == false)
                 {
                     // if the counter can't be found it's likely because the control was made invisible in the template
                     // This means there is no user visible control associated with the marker.  For consistency, don't show those markers.
@@ -383,8 +383,7 @@ namespace Carnassial
 
         private async void Instructions_Drop(object sender, DragEventArgs dropEvent)
         {
-            string templateDatabaseFilePath;
-            if (Utilities.IsSingleTemplateFileDrag(dropEvent, out templateDatabaseFilePath))
+            if (Utilities.IsSingleTemplateFileDrag(dropEvent, out string templateDatabaseFilePath))
             {
                 dropEvent.Handled = await this.TryOpenTemplateAndLoadFoldersAsync(templateDatabaseFilePath);
             }
@@ -476,8 +475,7 @@ namespace Carnassial
         // - regenerate the list of markers used by the markableCanvas
         private void MarkableCanvas_MarkerCreatedOrDeleted(object sender, MarkerCreatedOrDeletedEventArgs e)
         {
-            DataEntryCounter selectedCounter;
-            if (this.TryGetSelectedCounter(out selectedCounter) == false)
+            if (this.TryGetSelectedCounter(out DataEntryCounter selectedCounter) == false)
             {
                 // mouse logic in MarkableCanvas sends marker create events based on mouse action and has no way of knowing if a counter is selected
                 // If no counter's selected there's no marker to create and the event can be ignored.
@@ -797,8 +795,7 @@ namespace Carnassial
                 return;
             }
 
-            UndoableCommand<CarnassialWindow> stateToRedo;
-            if (this.State.UndoRedoChain.TryMoveToNextRedo(out stateToRedo))
+            if (this.State.UndoRedoChain.TryMoveToNextRedo(out UndoableCommand<CarnassialWindow> stateToRedo))
             {
                 if (stateToRedo.CanExecute(this) == false)
                 {
@@ -863,8 +860,7 @@ namespace Carnassial
                 return;
             }
 
-            UndoableCommand<CarnassialWindow> stateToUndo;
-            if (this.State.UndoRedoChain.TryMoveToNextUndo(out stateToUndo))
+            if (this.State.UndoRedoChain.TryMoveToNextUndo(out UndoableCommand<CarnassialWindow> stateToUndo))
             {
                 if (stateToUndo.CanUndo(this) == false)
                 {
@@ -894,8 +890,7 @@ namespace Carnassial
 
         private async void MenuFileAddFilesToImageSet_Click(object sender, RoutedEventArgs e)
         {
-            IEnumerable<string> folderPaths;
-            if (this.ShowFolderSelectionDialog(out folderPaths))
+            if (this.ShowFolderSelectionDialog(out IEnumerable<string> folderPaths))
             {
                 FolderLoad folderLoad = new FolderLoad();
                 folderLoad.FolderPaths.AddRange(folderPaths);
@@ -922,11 +917,13 @@ namespace Carnassial
 
             string sourceFileName = this.DataHandler.ImageCache.Current.FileName;
 
-            SaveFileDialog dialog = new SaveFileDialog();
-            dialog.Title = "Make a copy of the currently displayed file";
-            dialog.Filter = String.Format("*{0}|*{0}", Path.GetExtension(this.DataHandler.ImageCache.Current.FileName));
-            dialog.FileName = sourceFileName;
-            dialog.OverwritePrompt = true;
+            SaveFileDialog dialog = new SaveFileDialog()
+            {
+                Title = "Make a copy of the currently displayed file",
+                Filter = String.Format("*{0}|*{0}", Path.GetExtension(this.DataHandler.ImageCache.Current.FileName)),
+                FileName = sourceFileName,
+                OverwritePrompt = true
+            };
 
             DialogResult result = dialog.ShowDialog();
             if (result == System.Windows.Forms.DialogResult.OK)
@@ -957,8 +954,7 @@ namespace Carnassial
 
         private async void MenuFileLoadImageSet_Click(object sender, RoutedEventArgs e)
         {
-            string templateDatabaseFilePath;
-            if (this.TryGetTemplatePath(out templateDatabaseFilePath))
+            if (this.TryGetTemplatePath(out string templateDatabaseFilePath))
             {
                 await this.TryOpenTemplateAndLoadFoldersAsync(templateDatabaseFilePath);
             }     
@@ -966,12 +962,15 @@ namespace Carnassial
 
         private async void MenuFileMoveFiles_Click(object sender, RoutedEventArgs e)
         {
-            CommonOpenFileDialog folderSelectionDialog = new CommonOpenFileDialog();
-            folderSelectionDialog.Title = "Select the folder to move files to...";
-            folderSelectionDialog.DefaultDirectory = this.FolderPath;
-            folderSelectionDialog.InitialDirectory = folderSelectionDialog.DefaultDirectory;
-            folderSelectionDialog.IsFolderPicker = true;
+            CommonOpenFileDialog folderSelectionDialog = new CommonOpenFileDialog()
+            {
+                Title = "Select the folder to move files to...",
+                DefaultDirectory = this.FolderPath,
+                InitialDirectory = this.FolderPath,
+                IsFolderPicker = true
+            };
             folderSelectionDialog.FolderChanging += this.FolderSelectionDialog_FolderChanging;
+
             if (folderSelectionDialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 // flush any pending changes so MoveFilesToFolder() has clean state
@@ -1096,11 +1095,10 @@ namespace Carnassial
             }
 
             string defaultSpreadsheetFileName = Path.GetFileNameWithoutExtension(this.DataHandler.FileDatabase.FileName) + Constant.File.ExcelFileExtension;
-            string spreadsheetFilePath;
             if (Utilities.TryGetFileFromUser("Select a file to merge into the current image set",
                                              Path.Combine(this.DataHandler.FileDatabase.FolderPath, defaultSpreadsheetFileName),
                                              String.Format("Spreadsheet files (*{0};*{1})|*{0};*{1}", Constant.File.CsvFileExtension, Constant.File.ExcelFileExtension),
-                                             out spreadsheetFilePath) == false)
+                                             out string spreadsheetFilePath) == false)
             {
                 return;
             }
@@ -1567,8 +1565,7 @@ namespace Carnassial
             IInputElement focusedElement = Keyboard.FocusedElement;
             if (focusedElement != null)
             {
-                DataEntryControl focusedControl;
-                if (DataEntryHandler.TryFindFocusedControl(focusedElement, out focusedControl))
+                if (DataEntryHandler.TryFindFocusedControl(focusedElement, out DataEntryControl focusedControl))
                 {
                     currentControlIndex = this.DataEntryControls.Controls.IndexOf(focusedControl);
                 }
@@ -1625,9 +1622,8 @@ namespace Carnassial
             }
 
             string propertyName = fileChange.PropertyName;
-            if (fileChange is IndexedPropertyChangedEventArgs<string>)
+            if (fileChange is IndexedPropertyChangedEventArgs<string> indexedChange)
             {
-                IndexedPropertyChangedEventArgs<string> indexedChange = (IndexedPropertyChangedEventArgs<string>)fileChange;
                 propertyName = indexedChange.Index;
             }
 
@@ -2094,13 +2090,16 @@ namespace Carnassial
 
         private bool ShowFolderSelectionDialog(out IEnumerable<string> folderPaths)
         {
-            CommonOpenFileDialog folderSelectionDialog = new CommonOpenFileDialog();
-            folderSelectionDialog.Title = "Select one or more folders...";
-            folderSelectionDialog.DefaultDirectory = this.State.MostRecentFileAddFolderPath;
-            folderSelectionDialog.InitialDirectory = folderSelectionDialog.DefaultDirectory;
-            folderSelectionDialog.IsFolderPicker = true;
-            folderSelectionDialog.Multiselect = true;
+            CommonOpenFileDialog folderSelectionDialog = new CommonOpenFileDialog()
+            {
+                Title = "Select one or more folders...",
+                DefaultDirectory = this.State.MostRecentFileAddFolderPath,
+                InitialDirectory = this.State.MostRecentFileAddFolderPath,
+                IsFolderPicker = true,
+                Multiselect = true
+            };
             folderSelectionDialog.FolderChanging += this.FolderSelectionDialog_FolderChanging;
+
             if (folderSelectionDialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 folderPaths = folderSelectionDialog.FileNames;
@@ -2160,8 +2159,7 @@ namespace Carnassial
                     return false;
                 }
 
-                IEnumerable<string> folderPaths;
-                if (this.ShowFolderSelectionDialog(out folderPaths))
+                if (this.ShowFolderSelectionDialog(out IEnumerable<string> folderPaths))
                 {
                     folderLoad.FolderPaths.Clear();
                     folderLoad.FolderPaths.AddRange(folderPaths);
@@ -2232,8 +2230,7 @@ namespace Carnassial
                 Utilities.GetParallelOptions(this.State.SkipDarkImagesCheck ? Environment.ProcessorCount : Environment.ProcessorCount / 2),
                 (FileInfo fileInfo) =>
                 {
-                    ImageRow file;
-                    if (this.DataHandler.FileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file))
+                    if (this.DataHandler.FileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out ImageRow file))
                     {
                         // the database already has an entry for this file so skip it
                         // if needed, a separate list of files to update could be generated
@@ -2378,9 +2375,8 @@ namespace Carnassial
         {
             foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
-                if (control is DataEntryCounter)
+                if (control is DataEntryCounter counter)
                 {
-                    DataEntryCounter counter = (DataEntryCounter)control;
                     if (counter.IsSelected)
                     {
                         selectedCounter = counter;
@@ -2396,8 +2392,7 @@ namespace Carnassial
         {
             // prompt user to select a template
             // default the template selection dialog to the most recently opened database
-            string defaultTemplateDatabasePath;
-            this.State.MostRecentImageSets.TryGetMostRecent(out defaultTemplateDatabasePath);
+            this.State.MostRecentImageSets.TryGetMostRecent(out string defaultTemplateDatabasePath);
             if (Utilities.TryGetFileFromUser("Select a template file, which should be located in the root folder containing your images and videos",
                                              defaultTemplateDatabasePath,
                                              String.Format("Template files (*{0})|*{0}", Constant.File.TemplateFileExtension),
@@ -2425,8 +2420,7 @@ namespace Carnassial
         public async Task<bool> TryOpenTemplateAndLoadFoldersAsync(string templateDatabasePath)
         {
             // Try to create or open the template database
-            TemplateDatabase templateDatabase;
-            if (TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out templateDatabase) == false)
+            if (TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out TemplateDatabase templateDatabase) == false)
             {
                 // notify the user the template couldn't be loaded
                 MessageBox messageBox = new MessageBox("Carnassial could not load the template.", this);
@@ -2445,10 +2439,8 @@ namespace Carnassial
             }
 
             // Try to get the file database file path
-            // importImages will be true if it's a new image database file (meaning the user will be prompted import some images)
-            string fileDatabaseFilePath;
-            bool addFiles;
-            if (this.TrySelectDatabaseFile(templateDatabasePath, out fileDatabaseFilePath, out addFiles) == false)
+            // addFiles will be true if it's a new image database file (meaning the user will be prompted import some images)
+            if (this.TrySelectDatabaseFile(templateDatabasePath, out string fileDatabaseFilePath, out bool addFiles) == false)
             {
                 // No image database file was selected
                 templateDatabase.Dispose();
@@ -2457,8 +2449,7 @@ namespace Carnassial
 
             // Before running from an existing file database, check the controls in the template database are compatible with those
             // of the file database.
-            FileDatabase fileDatabase;
-            if (FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, this.State.OrderFilesByDateTime, this.State.CustomSelectionTermCombiningOperator, out fileDatabase) == false)
+            if (FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, this.State.OrderFilesByDateTime, this.State.CustomSelectionTermCombiningOperator, out FileDatabase fileDatabase) == false)
             {
                 if (fileDatabase.ControlSynchronizationIssues.Count > 0)
                 {
@@ -2498,9 +2489,8 @@ namespace Carnassial
             // add event handlers for marker effects which can't be handled by DataEntryHandler
             foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
-                if (control is DataEntryCounter)
+                if (control is DataEntryCounter counter)
                 {
-                    DataEntryCounter counter = (DataEntryCounter)control;
                     counter.Container.MouseEnter += this.DataEntryCounter_MouseEnter;
                     counter.Container.MouseLeave += this.DataEntryCounter_MouseLeave;
                     counter.LabelControl.Click += this.DataEntryCounter_Click;
@@ -2741,7 +2731,7 @@ namespace Carnassial
                 }
 
                 GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, latestVersionAddress);
-                updater.TryGetAndParseRelease(false);
+                updater.TryGetAndParseRelease(false, out Version publiclyAvailableVersion);
                 this.State.MostRecentCheckForUpdates = DateTime.UtcNow;
             }
 

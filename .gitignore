@@ -11,6 +11,7 @@ x64/
 x86/
 *.opendb
 *.sdf
+*.tmp_proj
 *.VC.db
 **/StyleCop.Cache
 

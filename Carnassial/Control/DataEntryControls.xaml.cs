@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace Carnassial.Control
@@ -14,28 +14,112 @@ namespace Carnassial.Control
     /// </summary>
     public partial class DataEntryControls : UserControl
     {
+        private HorizontalLineAdorner dragAdorner;
+
         public List<DataEntryControl> Controls { get; private set; }
         public Dictionary<string, DataEntryControl> ControlsByDataLabel { get; private set; }
+
+        public event Action<DataEntryControl, DataEntryControl> ControlOrderChangedByDragDrop;
 
         public DataEntryControls()
         {
             this.InitializeComponent();
             this.Controls = new List<DataEntryControl>();
             this.ControlsByDataLabel = new Dictionary<string, DataEntryControl>();
+            this.dragAdorner = null;
         }
 
         public void Clear()
         {
             this.Controls.Clear();
             this.ControlsByDataLabel.Clear();
-            this.ControlStack.Children.Clear();
-            this.ControlStack.RowDefinitions.Clear();
+            this.ControlsView.Items.Clear();
+        }
+
+        private void ControlsView_DragOver(object sender, DragEventArgs dragEvent)
+        {
+            if (this.dragAdorner == null)
+            {
+                this.dragAdorner = new HorizontalLineAdorner(this) { Margin = new Thickness(5.0, 0.0, 5.0, 0.0) };
+            }
+            this.dragAdorner.UpdatePosition(dragEvent);
+        }
+
+        private void ControlsView_Drop(object sender, DragEventArgs dropEvent)
+        {
+            if (this.TryFindDataEntryControl(dropEvent.GetPosition(this.ControlsView), out DataEntryControl dropTargetControl))
+            {
+                if (this.dragAdorner != null)
+                {
+                    this.dragAdorner.Remove();
+                    this.dragAdorner = null;
+                }
+
+                int dropTargetIndex = -1;
+                for (int index = 0; index < this.ControlsView.Items.Count; ++index)
+                {
+                    FrameworkElement control = (FrameworkElement)this.ControlsView.Items[index];
+                    if (control.Tag == dropTargetControl)
+                    {
+                        dropTargetIndex = index;
+                        break;
+                    }
+                }
+                Debug.Assert(dropTargetIndex >= 0, "Couldn't find index of drop target in controls list.");
+
+                object draggedControlContainer = this.ControlsView.SelectedItem;
+                int draggedControlIndex = this.ControlsView.SelectedIndex;
+                if (draggedControlIndex == dropTargetIndex)
+                {
+                    // nothing to do since control was dropped in its current location
+                    return;
+                }
+
+                this.ControlsView.Items.RemoveAt(draggedControlIndex);
+                this.ControlsView.Items.Insert(dropTargetIndex, draggedControlContainer);
+                this.ControlsView.SelectedIndex = dropTargetIndex;
+
+                DataEntryControl draggedControl = this.Controls[draggedControlIndex];
+                this.Controls.RemoveAt(draggedControlIndex);
+                this.Controls.Insert(dropTargetIndex, draggedControl);
+
+                this.ControlOrderChangedByDragDrop?.Invoke(draggedControl, dropTargetControl);
+
+                dropEvent.Handled = true;
+            }
+        }
+
+        private void ControlsView_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (this.AllowDrop && (e.LeftButton == MouseButtonState.Pressed))
+            {
+                FrameworkElement controlContainer = (FrameworkElement)this.ControlsView.SelectedItem;
+                if (controlContainer == null)
+                {
+                    if (this.TryFindDataEntryControl(e.GetPosition(this.ControlsView), out DataEntryControl control) == false)
+                    {
+                        return;
+                    }
+                    controlContainer = control.Container;
+                }
+
+                // calling DoDragDrop() suppresses mouse move events until drag completes or cancels
+                DragDrop.DoDragDrop((DependencyObject)sender, controlContainer, DragDropEffects.Move);
+            }
+        }
+
+        private void ControlsViewItem_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            // select a data entry control when its contents receive keyboard focus
+            // By default, ListView selections are driven by the mouse but not the keyboard.  Without an equivalent of this event
+            // handler pressing a hotkey therefore bypasses selection, resulting in an inconsistent user experience.
+            ((ListViewItem)sender).IsSelected = true;
         }
 
         public void CreateControls(TemplateDatabase database, DataEntryHandler dataEntryPropagator, Func<string, List<string>> getNoteAutocompletions)
         {
-            // Depending on how the user interacts with the file import process image set loading can be aborted after controls are generated and then
-            // another image set loaded.  Any existing controls therefore need to be cleared.
+            // Depending on how the user interacts with the file import process image set loading can be aborted after controls are 
+            // generated and then another image set loaded.  Any existing controls therefore need to be cleared.
             this.Clear();
 
             DataEntryDateTimeOffset dateTimeControl = null;
@@ -105,8 +189,7 @@ namespace Carnassial.Control
                 this.Controls.Add(control);
                 this.ControlsByDataLabel.Add(control.DataLabel, control);
 
-                this.ControlStack.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
-                this.ControlStack.Children.Add(control.Container);
+                this.ControlsView.Items.Add(control.Container);
             }
 
             if (dataEntryPropagator != null)
@@ -123,40 +206,47 @@ namespace Carnassial.Control
             }
         }
 
-        public bool TryFindDataEntryControl(Point hitLocation, out DataEntryControl control)
+        public bool TryFindDataEntryControl(Point mousePositionRelativeToControlsView, out DataEntryControl control)
         {
             control = null;
-            HitTestResult hitTest = VisualTreeHelper.HitTest(this, hitLocation);
+
+            HitTestResult hitTest = VisualTreeHelper.HitTest(this.ControlsView, mousePositionRelativeToControlsView);
             if (hitTest == null)
             {
                 return false;
             }
 
-            DependencyObject hitObject = hitTest.VisualHit;
-            while (hitObject is StackPanel == false)
+            FrameworkElement hitElement = (FrameworkElement)hitTest.VisualHit;
+            if (hitElement == null)
             {
-                if (hitObject == null)
-                {
-                    return false;
-                }
+                return false;
+            }
 
-                FrameworkElement parent = (FrameworkElement)((FrameworkElement)hitObject).Parent;
-                FrameworkElement templatedParent = (FrameworkElement)((FrameworkElement)hitObject).TemplatedParent;
+            while (hitElement.Tag is DataEntryControl == false)
+            {
+                FrameworkElement parent = (FrameworkElement)((FrameworkElement)hitElement).Parent;
+                FrameworkElement templatedParent = (FrameworkElement)((FrameworkElement)hitElement).TemplatedParent;
                 if (parent != null)
                 {
-                    hitObject = parent;
+                    hitElement = parent;
                 }
                 else if (templatedParent != null)
                 {
-                    hitObject = templatedParent;
+                    hitElement = templatedParent;
                 }
                 else
                 {
-                    return false;
+                    // fall back to visual search if no parent property is available
+                    // As of .NET 4.6.1 WPF inserts TextBlocks under some labels but doesn't set their parent links.
+                    hitElement = (FrameworkElement)VisualTreeHelper.GetParent(hitElement);
+                    if (hitElement == null)
+                    {
+                        return false;
+                    }
                 }
             }
 
-            control = this.Controls.SingleOrDefault(dataEntryControl => dataEntryControl.Container == hitObject);
+            control = (DataEntryControl)hitElement.Tag;
             return control != null;
         }
     }

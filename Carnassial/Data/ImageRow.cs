@@ -648,8 +648,7 @@ namespace Carnassial.Data
             }
             else
             {
-                int fileNumber;
-                if (Int32.TryParse(fileNameWithoutExtension, out fileNumber) == false)
+                if (Int32.TryParse(fileNameWithoutExtension, out int fileNumber) == false)
                 {
                     return false;
                 }

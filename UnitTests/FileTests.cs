@@ -125,8 +125,7 @@ namespace Carnassial.UnitTests
             using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultFileDatabaseFileName))
             {
                 TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
-                DateTimeAdjustment corruptDateTimeAdjustment;
-                ImageRow corruptFile = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.CorruptFieldScan, out corruptDateTimeAdjustment);
+                ImageRow corruptFile = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.CorruptFieldScan, out DateTimeAdjustment corruptDateTimeAdjustment);
                 using (MemoryImage corruptImage = await corruptFile.LoadAsync(fileDatabase.FolderPath))
                 {
                     Assert.IsTrue(corruptImage.DecodeError);
@@ -140,12 +139,9 @@ namespace Carnassial.UnitTests
             FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName);
             Dictionary<string, string> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.InfraredMarten);
 
-            DateTime dateTime;
-            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTime], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime));
-            DateTime dateTimeDigitized;
-            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTimeDigitized], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeDigitized));
-            DateTime dateTimeOriginal;
-            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTimeOriginal], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOriginal));
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTime], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTime));
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTimeDigitized], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeDigitized));
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.DateTimeOriginal], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.Software]));
         }
 
@@ -162,8 +158,7 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.BatteryVoltage]));
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.Brightness]));
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.Contrast]));
-            DateTime dateTimeOriginal;
-            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.ReconyxHyperfire.DateTimeOriginal], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOriginal));
+            Assert.IsTrue(DateTime.TryParseExact(metadata[TestConstant.Exif.ReconyxHyperfire.DateTimeOriginal], TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.EventNumber]));
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.FirmwareVersion]));
             Assert.IsFalse(String.IsNullOrWhiteSpace(metadata[TestConstant.Exif.ReconyxHyperfire.InfraredIlluminator]));
@@ -199,9 +194,7 @@ namespace Carnassial.UnitTests
                         ImageRow file = fileExpectation.GetFileData(fileDatabase);
                         using (MemoryImage image = await file.LoadAsync(this.WorkingDirectory))
                         {
-                            double darkPixelFraction;
-                            bool isColor;
-                            FileSelection imageQuality = image.IsDark(Constant.Images.DarkPixelThresholdDefault, Constant.Images.DarkPixelRatioThresholdDefault, out darkPixelFraction, out isColor) ? FileSelection.Dark : FileSelection.Ok;
+                            FileSelection imageQuality = image.IsDark(Constant.Images.DarkPixelThresholdDefault, Constant.Images.DarkPixelRatioThresholdDefault, out double darkPixelFraction, out bool isColor) ? FileSelection.Dark : FileSelection.Ok;
                             if (Math.Abs(darkPixelFraction - fileExpectation.DarkPixelFraction) > TestConstant.DarkPixelFractionTolerance)
                             {
                                 this.TestContext.WriteLine("{0}: Expected dark pixel fraction to be {1}, but was {2}.", fileExpectation.FileName, fileExpectation.DarkPixelFraction, darkPixelFraction);

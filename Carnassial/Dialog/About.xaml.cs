@@ -41,7 +41,7 @@ namespace Carnassial.Dialog
         private void CheckForUpdate_Click(object sender, RoutedEventArgs e)
         {
             GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, this.latestReleaseAddress);
-            if (updater.TryGetAndParseRelease(true))
+            if (updater.TryGetAndParseRelease(true, out Version publiclyAvailableVersion))
             {
                 this.MostRecentCheckForUpdate = DateTime.UtcNow;
             }
@@ -65,6 +65,12 @@ namespace Carnassial.Dialog
         {
             Process.Start(this.releasesAddress.AbsoluteUri);
             e.Handled = true;
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Utilities.SetDefaultDialogPosition(this);
+            Utilities.TryFitWindowInWorkingArea(this);
         }
     }
 }

@@ -75,8 +75,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.DarkPixelThreshold == modifiedDarkPixelThreshold);
             Assert.IsNotNull(userSettings.MostRecentImageSets);
             Assert.IsTrue(userSettings.MostRecentImageSets.Count == 1);
-            string mostRecentDatabasePath;
-            Assert.IsTrue(userSettings.MostRecentImageSets.TryGetMostRecent(out mostRecentDatabasePath));
+            Assert.IsTrue(userSettings.MostRecentImageSets.TryGetMostRecent(out string mostRecentDatabasePath));
             Assert.IsTrue(mostRecentDatabasePath == databasePath);
             Assert.IsTrue(userSettings.OrderFilesByDateTime);
             Assert.IsTrue(userSettings.SkipDarkImagesCheck);
@@ -120,8 +119,7 @@ namespace Carnassial.UnitTests
             editorRegistry.ReadFromRegistry();
             Assert.IsNotNull(editorRegistry.MostRecentTemplates);
             Assert.IsTrue(editorRegistry.MostRecentTemplates.Count == 0);
-            string mostRecentTemplatePath;
-            Assert.IsFalse(editorRegistry.MostRecentTemplates.TryGetMostRecent(out mostRecentTemplatePath));
+            Assert.IsFalse(editorRegistry.MostRecentTemplates.TryGetMostRecent(out string mostRecentTemplatePath));
 
             // overwrite
             editorRegistry.WriteToRegistry();
@@ -150,8 +148,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
             Assert.IsNotNull(userSettings.MostRecentImageSets);
             Assert.IsTrue(userSettings.MostRecentImageSets.Count == 0);
-            string mostRecentDatabasePath;
-            Assert.IsFalse(userSettings.MostRecentImageSets.TryGetMostRecent(out mostRecentDatabasePath));
+            Assert.IsFalse(userSettings.MostRecentImageSets.TryGetMostRecent(out string mostRecentDatabasePath));
             Assert.IsNull(mostRecentDatabasePath);
             Assert.IsFalse(userSettings.OrderFilesByDateTime);
             Assert.IsFalse(userSettings.SkipDarkImagesCheck);

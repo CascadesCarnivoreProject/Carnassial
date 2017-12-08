@@ -7,11 +7,8 @@
         xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
         Title="Date - Check and modify ambiguous dates." 
-		MinHeight="600" MinWidth="768"
-		Height="856" Width="768"
-		ResizeMode="CanResizeWithGrip"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
+        Loaded="Window_Loaded"
+		MinHeight="600" MinWidth="768" Height="856" Width="768" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

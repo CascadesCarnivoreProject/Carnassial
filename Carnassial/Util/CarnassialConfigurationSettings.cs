@@ -7,8 +7,10 @@ namespace Carnassial.Util
     {
         public static Uri GetDevTeamEmailLink()
         {
-            UriBuilder mailto = new UriBuilder(Uri.UriSchemeMailto + ":" + ConfigurationManager.AppSettings[Constant.ApplicationSettings.DevTeamEmail]);
-            mailto.Query = String.Format("subject={0} {1}: feedback", Constant.ApplicationName, typeof(CarnassialConfigurationSettings).Assembly.GetName().Version);
+            UriBuilder mailto = new UriBuilder(Uri.UriSchemeMailto + ":" + ConfigurationManager.AppSettings[Constant.ApplicationSettings.DevTeamEmail])
+            {
+                Query = String.Format("subject={0} {1}: feedback", Constant.ApplicationName, typeof(CarnassialConfigurationSettings).Assembly.GetName().Version)
+            };
             return mailto.Uri;
         }
 

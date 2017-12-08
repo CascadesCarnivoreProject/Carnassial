@@ -166,5 +166,13 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
     </Control.Resources>
-    <Grid Name="ControlStack" />
+    <ListView Name="ControlsView" Background="{StaticResource ApplicationBackgroundBrush}" BorderThickness="0"
+              DragOver="ControlsView_DragOver" Drop="ControlsView_Drop" MouseMove="ControlsView_MouseMove"
+              HorizontalContentAlignment="Stretch" SelectionMode="Single">
+        <ListView.ItemContainerStyle>
+            <Style TargetType="ListViewItem">
+                <EventSetter Event="GotKeyboardFocus" Handler="ControlsViewItem_GotKeyboardFocus" />
+            </Style>
+        </ListView.ItemContainerStyle>
+    </ListView>
 </UserControl>

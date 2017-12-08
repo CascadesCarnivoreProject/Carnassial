@@ -35,8 +35,10 @@ namespace Carnassial.Data
             {
                 for (int renderAttempt = 0; renderAttempt < Constant.ThrottleValues.MaximumRenderAttempts; ++renderAttempt)
                 {
-                    MediaPlayer mediaPlayer = new MediaPlayer();
-                    mediaPlayer.Volume = 0.0;
+                    MediaPlayer mediaPlayer = new MediaPlayer()
+                    {
+                        Volume = 0.0
+                    };
                     try
                     {
                         mediaPlayer.Open(new Uri(path));

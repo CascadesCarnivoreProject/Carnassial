@@ -37,8 +37,10 @@ namespace Carnassial.Data
                 {
                     // provide turnkey support for querying on a range of datetimes by giving the user two search terms, one configured for the start of 
                     // an interval and one for the end
-                    SearchTerm dateTimeLessThanOrEqual = new SearchTerm(searchTerm);
-                    dateTimeLessThanOrEqual.Operator = Constant.SearchTermOperator.LessThanOrEqual;
+                    SearchTerm dateTimeLessThanOrEqual = new SearchTerm(searchTerm)
+                    {
+                        Operator = Constant.SearchTermOperator.LessThanOrEqual
+                    };
                     this.SearchTerms.Add(dateTimeLessThanOrEqual);
                 }
             }
@@ -58,8 +60,10 @@ namespace Carnassial.Data
         // create and return the query formed by the search term list
         public Select CreateSelect()
         {
-            Select select = new Select(Constant.DatabaseTable.FileData);
-            select.WhereCombiningOperator = this.TermCombiningOperator;
+            Select select = new Select(Constant.DatabaseTable.FileData)
+            {
+                WhereCombiningOperator = this.TermCombiningOperator
+            };
             foreach (SearchTerm searchTerm in this.SearchTerms.Where(term => term.UseForSearching))
             {
                 select.Where.Add(searchTerm.GetWhereClause());

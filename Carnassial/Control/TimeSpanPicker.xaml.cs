@@ -136,8 +136,7 @@ namespace Carnassial.Control
 
         private void IncrementOrDecrement(int incrementOrDecrement)
         {
-            TimeSpan timeSpan;
-            if (this.TryParseTimeSpan(out timeSpan) == false)
+            if (this.TryParseTimeSpan(out TimeSpan timeSpan) == false)
             {
                 timeSpan = this.Value;
             }
@@ -345,8 +344,7 @@ namespace Carnassial.Control
 
         private void TimeSpanPicker_TextChanged(object sender, TextChangedEventArgs e)
         {
-            TimeSpan timeSpan;
-            if (this.TryParseTimeSpan(out timeSpan))
+            if (this.TryParseTimeSpan(out TimeSpan timeSpan))
             {
                 this.ErrorIcon.Visibility = Visibility.Hidden;
                 this.Value = timeSpan;
@@ -380,8 +378,7 @@ namespace Carnassial.Control
 
             IndexedDateTimePart partToSelect = this.parts[this.currentPartIndex];
             int selectionStart = partToSelect.SelectionStart;
-            TimeSpan timeSpan;
-            if (this.TryParseTimeSpan(out timeSpan) == false)
+            if (this.TryParseTimeSpan(out TimeSpan timeSpan) == false)
             {
                 timeSpan = this.Value;
             }

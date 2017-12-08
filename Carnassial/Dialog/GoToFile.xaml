@@ -4,17 +4,15 @@
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         Title="Go to file"
-		SizeToContent="Height"
-		ShowInTaskbar="False"
-        Width="250"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
+        Loaded="Window_Loaded"
+        SizeToContent="Height" Width="250" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock Name="FileNumberRange" Margin="10,10,10,1" Grid.Row="0">File number (1 - 1000):</TextBlock>
+        <TextBlock Name="FileNumberRange" Margin="10,10,10,1" Grid.Row="0">File number (1 - nnnnn):</TextBlock>
         <TextBox Name="FileIndexAsText" Margin="10,1,10,10" PreviewKeyDown="FileIndexAsText_PreviewKeyDown" Grid.Row="1" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2">
             <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>

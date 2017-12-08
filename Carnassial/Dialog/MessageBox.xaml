@@ -4,12 +4,9 @@
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         AutomationProperties.AutomationId="CarnassialMessageBox"
-        Width="Auto" Height="Auto" MaxWidth="800" MaxHeight="860" MinWidth="640" MinHeight="200"
-        SizeToContent="WidthAndHeight"
-		ResizeMode="CanResizeWithGrip"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner"
-        Loaded="Window_Loaded">
+        Loaded="Window_Loaded"
+        MaxWidth="800" MaxHeight="860" MinWidth="640" MinHeight="200" SizeToContent="WidthAndHeight"
+        ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

@@ -162,8 +162,7 @@ namespace Carnassial.Dialog
                     string metadataValue = metadata[this.metadataFieldName];
                     if (dataLabelToUpdate == Constant.DatabaseColumn.DateTime)
                     {
-                        DateTimeOffset metadataDateTime;
-                        if (DateTimeHandler.TryParseMetadataDateTaken(metadataValue, imageSetTimeZone, out metadataDateTime))
+                        if (DateTimeHandler.TryParseMetadataDateTaken(metadataValue, imageSetTimeZone, out DateTimeOffset metadataDateTime))
                         {
                             file.DateTimeOffset = metadataDateTime;
                             filesForDateTimeUpdate.Add(file);

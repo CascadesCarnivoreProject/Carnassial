@@ -116,8 +116,10 @@ namespace Carnassial.Util
 
         public static ParallelOptions GetParallelOptions(int maximumDegreeOfParallelism)
         {
-            ParallelOptions parallelOptions = new ParallelOptions();
-            parallelOptions.MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, maximumDegreeOfParallelism);
+            ParallelOptions parallelOptions = new ParallelOptions()
+            {
+                MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, maximumDegreeOfParallelism)
+            };
             return parallelOptions;
         }
 
@@ -180,8 +182,7 @@ namespace Carnassial.Util
 
         public static void OnInstructionsPreviewDrag(DragEventArgs dragEvent)
         {
-            string templateDatabaseFilePath;
-            if (Utilities.IsSingleTemplateFileDrag(dragEvent, out templateDatabaseFilePath))
+            if (Utilities.IsSingleTemplateFileDrag(dragEvent, out string templateDatabaseFilePath))
             {
                 dragEvent.Effects = DragDropEffects.All;
             }
@@ -195,8 +196,8 @@ namespace Carnassial.Util
         public static void SetDefaultDialogPosition(Window window)
         {
             Debug.Assert(window.Owner != null, "Window's owner property is null.  Is a set of it prior to calling ShowDialog() missing?");
-            window.Left = window.Owner.Left + (window.Owner.Width - window.ActualWidth) / 2; // Center it horizontally
-            window.Top = window.Owner.Top + 20; // Offset it from the windows'top by 20 pixels downwards
+            window.Left = window.Owner.Left + (window.Owner.Width - window.ActualWidth) / 2;
+            window.Top = window.Owner.Top + 20;
         }
 
         public static void ShowExceptionReportingDialog(string title, UnhandledExceptionEventArgs e, Window owner)
@@ -283,14 +284,17 @@ namespace Carnassial.Util
 
         public static bool TryGetFileFromUser(string title, string defaultFilePath, string filter, out string selectedFilePath)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.AutoUpgradeEnabled = true;
-            openFileDialog.CheckFileExists = true;
-            openFileDialog.CheckPathExists = true;
-            openFileDialog.DefaultExt = Constant.File.TemplateFileExtension;
-            openFileDialog.Filter = filter;
-            openFileDialog.Multiselect = false;
-            openFileDialog.Title = title;
+            OpenFileDialog openFileDialog = new OpenFileDialog()
+            {
+                AutoUpgradeEnabled = true,
+                CheckFileExists = true,
+                CheckPathExists = true,
+                DefaultExt = Constant.File.TemplateFileExtension,
+                Filter = filter,
+                Multiselect = false,
+                Title = title
+            };
+
             if (String.IsNullOrWhiteSpace(defaultFilePath))
             {
                 openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);

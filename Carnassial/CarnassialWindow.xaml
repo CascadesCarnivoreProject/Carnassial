@@ -316,22 +316,25 @@
                         <images:MarkableCanvas x:Name="MarkableCanvas" Background="{StaticResource ApplicationBackgroundBrush}" MarkerCreatedOrDeleted="MarkableCanvas_MarkerCreatedOrDeleted" Grid.Row="2" />
                     </Grid>
                     <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="4" />
-                    <Grid Name="ControlGrid" Grid.Column="2">
+                    <Grid Name="ControlGrid" Background="{StaticResource ApplicationBackgroundBrush}" Grid.Column="2">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <!-- data entry controls -->
                         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Background="{StaticResource ApplicationBackgroundBrush}" Grid.Column="0" Grid.Row="0">
-                            <StackPanel Name="ControlsPanel" Margin="0,10,0,0">
-                                <control:DataEntryControls x:Name="DataEntryControls" />
-                            </StackPanel>
+                            <control:DataEntryControls x:Name="DataEntryControls" Margin="0,10,0,0" />
                         </ScrollViewer>
-                        <StackPanel Orientation="Horizontal" Background="{StaticResource ApplicationBackgroundBrush}" Grid.Column="0" Grid.Row="1">
+                        <!-- grid row 1 is unpopulated as no control is needed to avoid DataEntryControls taking keyboard focus
+                             Having this dead space prevents focus unexpectedly going to the data entry controls in the case where
+                             1) the controls don't fill the whole height of this grid
+                             2) input focus switched to another application
+                             3) the user clicks empty space near the controls to return input focus to Carnassial -->
+                        <StackPanel Orientation="Horizontal" Background="{StaticResource ApplicationBackgroundBrush}" Grid.Column="0" Grid.Row="2">
                             <Button Name="PastePreviousValues" Click="PastePreviousValues_Click" Margin="10,10,10,10" Padding="5,5,5,5" Content="_Paste previous" IsEnabled="False"
                                         MouseEnter="PasteButton_MouseEnter" MouseLeave="PasteButton_MouseLeave"
                                         ToolTip="Copy the highlighted data (fields marked 'Copyable' in the template) from the previous file." />

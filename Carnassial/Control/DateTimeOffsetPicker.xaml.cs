@@ -263,8 +263,7 @@ namespace Carnassial.Control
 
         private void DateTimeDisplay_TextChanged(object sender, TextChangedEventArgs e)
         {
-            DateTimeOffset dateTimeOffset;
-            if (this.TryParseDateTimeOffset(out dateTimeOffset))
+            if (this.TryParseDateTimeOffset(out DateTimeOffset dateTimeOffset))
             {
                 this.CalendarButton.Visibility = Visibility.Visible;
                 this.ErrorIcon.Visibility = Visibility.Hidden;
@@ -286,8 +285,7 @@ namespace Carnassial.Control
 
         private void IncrementOrDecrement(int increment)
         {
-            DateTimeOffset newValue;
-            if (this.TryParseDateTimeOffset(out newValue) == false)
+            if (this.TryParseDateTimeOffset(out DateTimeOffset newValue) == false)
             {
                 newValue = this.Value;
             }
@@ -482,8 +480,7 @@ namespace Carnassial.Control
                 selectionStart += CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedMonthNames[this.Value.Month - 1].Length - this.parts[this.monthPartIndex].SelectionLength;
             }
 
-            DateTimeOffset dateTimeOffset;
-            if (this.TryParseDateTimeOffset(out dateTimeOffset) == false)
+            if (this.TryParseDateTimeOffset(out DateTimeOffset dateTimeOffset) == false)
             {
                 dateTimeOffset = this.Value;
             }

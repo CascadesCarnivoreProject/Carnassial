@@ -1,6 +1,7 @@
 #include "Stdafx.h"
 #include <array>  
-#include <bitset>  
+#include <bitset>
+#include <intrin.h>
 #include <vector>  
 #include "InstructionSet.h"
 

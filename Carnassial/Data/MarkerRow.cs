@@ -21,8 +21,7 @@ namespace Carnassial.Data
         {
             get
             {
-                MarkersForCounter markersForCounter;
-                if (this.markersByDataLabel.TryGetValue(dataLabel, out markersForCounter) == false)
+                if (this.markersByDataLabel.TryGetValue(dataLabel, out MarkersForCounter markersForCounter) == false)
                 {
                     markersForCounter = MarkersForCounter.Parse(dataLabel, this.Row.GetStringField(dataLabel));
                     markersForCounter.PropertyChanged += this.MarkersForCounter_PropertyChanged;

@@ -47,8 +47,7 @@ namespace Carnassial.UnitTests
             string fileDatabaseCloneFilePath = this.GetUniqueFilePathForTest(fileDatabaseFileName);
             File.Copy(fileDatabaseSourceFilePath, fileDatabaseCloneFilePath, true);
 
-            FileDatabase fileDatabase;
-            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseCloneFilePath, templateDatabase, false, LogicalOperator.And, out fileDatabase));
+            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseCloneFilePath, templateDatabase, false, LogicalOperator.And, out FileDatabase fileDatabase));
             return fileDatabase;
         }
 
@@ -61,8 +60,7 @@ namespace Carnassial.UnitTests
             string templateDatabaseCloneFilePath = this.GetUniqueFilePathForTest(templateDatabaseFileName);
             File.Copy(templateDatabaseSourceFilePath, templateDatabaseCloneFilePath, true);
 
-            TemplateDatabase clone;
-            bool result = TemplateDatabase.TryCreateOrOpen(templateDatabaseCloneFilePath, out clone);
+            bool result = TemplateDatabase.TryCreateOrOpen(templateDatabaseCloneFilePath, out TemplateDatabase clone);
             Assert.IsTrue(result, "Open of template database '{0}' failed.", templateDatabaseCloneFilePath);
             return clone;
         }
@@ -73,8 +71,7 @@ namespace Carnassial.UnitTests
         protected ImageRow CreateFile(FileDatabase fileDatabase, TimeZoneInfo imageSetTimeZone, FileExpectations fileExpectation, out DateTimeAdjustment dateTimeAdjustment)
         {
             FileInfo fileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, fileExpectation.RelativePath, fileExpectation.FileName));
-            ImageRow file;
-            Assert.IsFalse(fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file));
+            Assert.IsFalse(fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out ImageRow file));
             dateTimeAdjustment = file.TryReadDateTimeFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
             return file;
         }
@@ -99,8 +96,7 @@ namespace Carnassial.UnitTests
                 File.Delete(fileDatabaseFilePath);
             }
 
-            FileDatabase fileDatabase;
-            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, false, LogicalOperator.And, out fileDatabase));
+            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, false, LogicalOperator.And, out FileDatabase fileDatabase));
             return fileDatabase;
         }
 
@@ -117,8 +113,7 @@ namespace Carnassial.UnitTests
             }
 
             // create the new database
-            TemplateDatabase templateDatabase;
-            Assert.IsTrue(TemplateDatabase.TryCreateOrOpen(templateDatabaseFilePath, out templateDatabase));
+            Assert.IsTrue(TemplateDatabase.TryCreateOrOpen(templateDatabaseFilePath, out TemplateDatabase templateDatabase));
             return templateDatabase;
         }
 
@@ -256,13 +251,11 @@ namespace Carnassial.UnitTests
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
 
             // files in same folder as .tdb and .ddb
-            DateTimeAdjustment martenDateTimeAdjustment;
-            ImageRow martenImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.InfraredMarten, out martenDateTimeAdjustment);
+            ImageRow martenImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.InfraredMarten, out DateTimeAdjustment martenDateTimeAdjustment);
             Assert.IsTrue(martenDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
                           martenDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
 
-            DateTimeAdjustment bobcatDatetimeAdjustment;
-            ImageRow bobcatImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightBobcat, out bobcatDatetimeAdjustment);
+            ImageRow bobcatImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightBobcat, out DateTimeAdjustment bobcatDatetimeAdjustment);
             Assert.IsTrue(bobcatDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
                           bobcatDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
 
@@ -304,13 +297,11 @@ namespace Carnassial.UnitTests
             // files in subfolder
             if (excludeSubfolderFiles == false)
             {
-                DateTimeAdjustment martenPairDateTimeAdjustment;
-                ImageRow martenPairImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out martenPairDateTimeAdjustment);
+                ImageRow martenPairImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out DateTimeAdjustment martenPairDateTimeAdjustment);
                 Assert.IsTrue(martenPairDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
                               martenPairDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
 
-                DateTimeAdjustment coyoteDatetimeAdjustment;
-                ImageRow coyoteImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out coyoteDatetimeAdjustment);
+                ImageRow coyoteImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out DateTimeAdjustment coyoteDatetimeAdjustment);
                 Assert.IsTrue(coyoteDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
                               coyoteDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
 

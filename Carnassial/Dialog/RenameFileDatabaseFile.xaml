@@ -6,10 +6,9 @@
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
-        Title="Rename the data file." Height="Auto" Width="600" SizeToContent="Height"
-        ResizeMode="CanResizeWithGrip"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
+        Title="Rename the data file."
+        Loaded="Window_Loaded"
+        Width="600" SizeToContent="Height" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

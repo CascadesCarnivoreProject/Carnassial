@@ -3,11 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
-        Title="Date/time - Reread dates and times from image and video files." MinHeight="600" MinWidth="768"
-		Height="856" Width="768"
-		ResizeMode="CanResizeWithGrip"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black">
+        Title="Date/time - Reread dates and times from image and video files."
+        Loaded="Window_Loaded"
+        MinHeight="600" MinWidth="768" Height="856" Width="768" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

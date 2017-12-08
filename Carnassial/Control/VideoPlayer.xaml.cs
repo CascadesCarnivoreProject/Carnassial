@@ -16,8 +16,10 @@ namespace Carnassial.Control
         {
             this.InitializeComponent();
             this.isProgrammaticUpdate = false;
-            this.positionUpdateTimer = new DispatcherTimer();
-            this.positionUpdateTimer.Interval = TimeSpan.FromMilliseconds(250.0);
+            this.positionUpdateTimer = new DispatcherTimer()
+            {
+                Interval = TimeSpan.FromMilliseconds(250.0)
+            };
             this.positionUpdateTimer.Tick += this.Timer_Tick;
         }
 

@@ -21,21 +21,17 @@ namespace Carnassial.Github
             {
                 throw new ArgumentOutOfRangeException(nameof(applicationName));
             }
-            if (latestRelease == null)
-            {
-                throw new ArgumentNullException(nameof(latestRelease));
-            }
 
             this.applicationName = applicationName;
-            this.latestReleaseAddress = latestRelease;
+            this.latestReleaseAddress = latestRelease ?? throw new ArgumentNullException(nameof(latestRelease));
         }
 
         // Checks for updates by comparing the current version number with a version stored on the Carnassial website in an xml file.
-        public bool TryGetAndParseRelease(bool showNoUpdatesMessage)
+        public bool TryGetAndParseRelease(bool showNoUpdatesMessage, out Version publiclyAvailableVersion)
         {
-            Version publicallyAvailableVersion = null;
-            string description = null;
+            publiclyAvailableVersion = null;
 
+            string description = null;
             using (WebClient webClient = new WebClient())
             {
                 webClient.Headers.Add(HttpRequestHeader.UserAgent, "Carnassial-GithubReleaseClient");
@@ -58,7 +54,7 @@ namespace Carnassial.Github
                                 return false;
                             }
                             // Version's parse implementation requires the leading v of Github convention be removed
-                            if (Version.TryParse(latestRelease.TagName.Substring(1), out publicallyAvailableVersion) == false)
+                            if (Version.TryParse(latestRelease.TagName.Substring(1), out publiclyAvailableVersion) == false)
                             {
                                 return false;
                             }
@@ -86,14 +82,14 @@ namespace Carnassial.Github
             Version currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
 
             // compare the versions  
-            if (currentVersion < publicallyAvailableVersion)
+            if (currentVersion < publiclyAvailableVersion)
             {
                 // ask the user if they would like to download the new version  
                 string title = String.Format("Get the new version of {0}?", this.applicationName);
                 MessageBox messageBox = new MessageBox(title, Application.Current.MainWindow, MessageBoxButton.YesNo);
                 messageBox.Message.StatusImage = MessageBoxImage.Question;
                 messageBox.Message.What = String.Format("You're running an old release, {0} {1}.", this.applicationName, currentVersion);
-                messageBox.Message.Reason = String.Format("A new version is available, {0} {1}", this.applicationName, publicallyAvailableVersion);
+                messageBox.Message.Reason = String.Format("A new version is available, {0} {1}", this.applicationName, publiclyAvailableVersion);
                 messageBox.Message.Solution = "Select 'Yes' to go to the website and download it.";
                 messageBox.Message.Result = description;
                 messageBox.Message.Hint = "\u2022 We recommend downloading the latest release." + Environment.NewLine;

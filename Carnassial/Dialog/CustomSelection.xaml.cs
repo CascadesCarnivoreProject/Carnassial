@@ -62,21 +62,25 @@ namespace Carnassial.Dialog
 
             // label
             // A checkbox to indicate whether the current search row should be used as part of the search
-            CheckBox controlLabel = new CheckBox();
-            controlLabel.Content = "_" + searchTerm.Label;
-            controlLabel.ContextMenu = new ContextMenu();
+            CheckBox controlLabel = new CheckBox()
+            {
+                Content = "_" + searchTerm.Label,
+                ContextMenu = new ContextMenu(),
+                Margin = CustomSelection.GridCellMargin,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                IsChecked = searchTerm.UseForSearching
+            };
+            controlLabel.Checked += this.Select_CheckedOrUnchecked;
+            controlLabel.Unchecked += this.Select_CheckedOrUnchecked;
+
             MenuItem menuItemDuplicateSearchTerm = new MenuItem();
             menuItemDuplicateSearchTerm.Click += this.MenuItemDuplicateSearchTerm_Click;
             menuItemDuplicateSearchTerm.Header = "_Duplicate this search term";
             menuItemDuplicateSearchTerm.Tag = searchTerm;
             menuItemDuplicateSearchTerm.ToolTip = "Add a copy of this search term to the custom filter to allow more complex filtering.";
             controlLabel.ContextMenu.Items.Add(menuItemDuplicateSearchTerm);
-            controlLabel.Margin = CustomSelection.GridCellMargin;
-            controlLabel.VerticalAlignment = VerticalAlignment.Center;
-            controlLabel.HorizontalAlignment = HorizontalAlignment.Left;
-            controlLabel.IsChecked = searchTerm.UseForSearching;
-            controlLabel.Checked += this.Select_CheckedOrUnchecked;
-            controlLabel.Unchecked += this.Select_CheckedOrUnchecked;
+
             Grid.SetRow(controlLabel, gridRowIndex);
             Grid.SetColumn(controlLabel, CustomSelection.LabelColumn);
             this.SearchTerms.Children.Add(controlLabel);
@@ -123,13 +127,15 @@ namespace Carnassial.Dialog
             }
 
             // term operator combo box
-            ComboBox operatorsComboBox = new ComboBox();
-            operatorsComboBox.IsEnabled = searchTerm.UseForSearching;
-            operatorsComboBox.ItemsSource = termOperators;
-            operatorsComboBox.Margin = CustomSelection.GridCellMargin;
-            operatorsComboBox.SelectedValue = searchTerm.Operator;
+            ComboBox operatorsComboBox = new ComboBox()
+            {
+                IsEnabled = searchTerm.UseForSearching,
+                ItemsSource = termOperators,
+                Margin = CustomSelection.GridCellMargin,
+                SelectedValue = searchTerm.Operator,
+                Width = 60
+            };
             operatorsComboBox.SelectionChanged += this.Operator_SelectionChanged; // Create the callback that is invoked whenever the user changes the expresison
-            operatorsComboBox.Width = 60;
 
             Grid.SetRow(operatorsComboBox, gridRowIndex);
             Grid.SetColumn(operatorsComboBox, CustomSelection.OperatorColumn);
@@ -141,17 +147,19 @@ namespace Carnassial.Dialog
             {
                 case ControlType.Counter:
                 case ControlType.Note:
-                    AutocompleteTextBox textBoxValue = new AutocompleteTextBox();
-                    textBoxValue.AllowLeadingWhitespace = true;
-                    textBoxValue.Autocompletions = this.fileDatabase.GetDistinctValuesInFileDataColumn(searchTerm.DataLabel);
-                    textBoxValue.IsEnabled = searchTerm.UseForSearching;
-                    textBoxValue.Text = (string)searchTerm.DatabaseValue;
-                    textBoxValue.Margin = CustomSelection.GridCellMargin;
-                    textBoxValue.Width = CustomSelection.DefaultControlWidth;
-                    textBoxValue.Height = CustomSelection.ValueTextBoxHeight;
-                    textBoxValue.TextWrapping = TextWrapping.NoWrap;
-                    textBoxValue.VerticalAlignment = VerticalAlignment.Center;
-                    textBoxValue.VerticalContentAlignment = VerticalAlignment.Center;
+                    AutocompleteTextBox textBoxValue = new AutocompleteTextBox()
+                    {
+                        AllowLeadingWhitespace = true,
+                        Autocompletions = this.fileDatabase.GetDistinctValuesInFileDataColumn(searchTerm.DataLabel),
+                        IsEnabled = searchTerm.UseForSearching,
+                        Text = (string)searchTerm.DatabaseValue,
+                        Margin = CustomSelection.GridCellMargin,
+                        Width = CustomSelection.DefaultControlWidth,
+                        Height = CustomSelection.ValueTextBoxHeight,
+                        TextWrapping = TextWrapping.NoWrap,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        VerticalContentAlignment = VerticalAlignment.Center
+                    };
 
                     textBoxValue.TextAutocompleted += this.SearchTermDatabaseValue_TextAutocompleted;
                     if (controlType == ControlType.Counter)
@@ -168,21 +176,25 @@ namespace Carnassial.Dialog
                 case ControlType.DateTime:
                     DateTimeOffset dateTime = (DateTimeOffset)this.fileDatabase.CustomSelection.SearchTerms[gridRowIndex - 1].DatabaseValue;
 
-                    DateTimeOffsetPicker dateValue = new DateTimeOffsetPicker();
-                    dateValue.IsEnabled = searchTerm.UseForSearching;
-                    dateValue.Value = dateTime;
+                    DateTimeOffsetPicker dateValue = new DateTimeOffsetPicker()
+                    {
+                        IsEnabled = searchTerm.UseForSearching,
+                        Value = dateTime,
+                        Width = CustomSelection.DefaultControlWidth
+                    };
                     dateValue.ValueChanged += this.DateTime_ValueChanged;
-                    dateValue.Width = CustomSelection.DefaultControlWidth;
 
                     Grid.SetRow(dateValue, gridRowIndex);
                     Grid.SetColumn(dateValue, CustomSelection.ValueColumn);
                     this.SearchTerms.Children.Add(dateValue);
                     break;
                 case ControlType.FixedChoice:
-                    ComboBox comboBoxValue = new ComboBox();
-                    comboBoxValue.IsEnabled = searchTerm.UseForSearching;
-                    comboBoxValue.Width = CustomSelection.DefaultControlWidth;
-                    comboBoxValue.Margin = CustomSelection.GridCellMargin;
+                    ComboBox comboBoxValue = new ComboBox()
+                    {
+                        IsEnabled = searchTerm.UseForSearching,
+                        Width = CustomSelection.DefaultControlWidth,
+                        Margin = CustomSelection.GridCellMargin
+                    };
 
                     // create the dropdown menu 
                     comboBoxValue.ItemsSource = searchTerm.List;
@@ -193,12 +205,14 @@ namespace Carnassial.Dialog
                     this.SearchTerms.Children.Add(comboBoxValue);
                     break;
                 case ControlType.Flag:
-                    CheckBox flagCheckBox = new CheckBox();
-                    flagCheckBox.Margin = CustomSelection.GridCellMargin;
-                    flagCheckBox.VerticalAlignment = VerticalAlignment.Center;
-                    flagCheckBox.HorizontalAlignment = HorizontalAlignment.Left;
-                    flagCheckBox.IsChecked = String.Equals((string)searchTerm.DatabaseValue, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ? false : true;
-                    flagCheckBox.IsEnabled = searchTerm.UseForSearching;
+                    CheckBox flagCheckBox = new CheckBox()
+                    {
+                        Margin = CustomSelection.GridCellMargin,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        IsChecked = String.Equals((string)searchTerm.DatabaseValue, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ? false : true,
+                        IsEnabled = searchTerm.UseForSearching
+                    };
                     flagCheckBox.Checked += this.Flag_CheckedOrUnchecked;
                     flagCheckBox.Unchecked += this.Flag_CheckedOrUnchecked;
 
@@ -209,12 +223,14 @@ namespace Carnassial.Dialog
                     this.SearchTerms.Children.Add(flagCheckBox);
                     break;
                 case ControlType.UtcOffset:
-                    UtcOffsetPicker utcOffsetValue = new UtcOffsetPicker();
-                    utcOffsetValue.IsEnabled = searchTerm.UseForSearching;
-                    utcOffsetValue.IsTabStop = true;
-                    utcOffsetValue.Value = (TimeSpan)searchTerm.DatabaseValue;
+                    UtcOffsetPicker utcOffsetValue = new UtcOffsetPicker()
+                    {
+                        IsEnabled = searchTerm.UseForSearching,
+                        IsTabStop = true,
+                        Value = (TimeSpan)searchTerm.DatabaseValue,
+                        Width = CustomSelection.DefaultControlWidth
+                    };
                     utcOffsetValue.ValueChanged += this.UtcOffset_ValueChanged;
-                    utcOffsetValue.Width = CustomSelection.DefaultControlWidth;
 
                     Grid.SetRow(utcOffsetValue, gridRowIndex);
                     Grid.SetColumn(utcOffsetValue, CustomSelection.ValueColumn);
@@ -226,11 +242,13 @@ namespace Carnassial.Dialog
 
             // search criteria
             // Indicates the query expression for this term.
-            TextBlock searchCriteria = new TextBlock();
-            searchCriteria.HorizontalAlignment = HorizontalAlignment.Left;
-            searchCriteria.Margin = CustomSelection.GridCellMargin;
-            searchCriteria.VerticalAlignment = VerticalAlignment.Center;
-            searchCriteria.Width = CustomSelection.DefaultSearchCriteriaWidth;
+            TextBlock searchCriteria = new TextBlock()
+            {
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = CustomSelection.GridCellMargin,
+                VerticalAlignment = VerticalAlignment.Center,
+                Width = CustomSelection.DefaultSearchCriteriaWidth
+            };
 
             Grid.SetRow(searchCriteria, gridRowIndex);
             Grid.SetColumn(searchCriteria, CustomSelection.SearchCriteriaColumn);

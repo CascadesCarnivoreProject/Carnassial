@@ -5,13 +5,30 @@ namespace Carnassial.Command
 {
     public abstract class UndoableCommand<TParameter> : ICommand
     {
-        public event EventHandler CanExecuteChanged;
+        private bool isExecuted;
 
-        public bool IsExecuted { get; protected set; }
+        public event EventHandler CanExecuteChanged;
 
         public UndoableCommand()
         {
-            this.IsExecuted = false;
+            this.isExecuted = false;
+        }
+
+        public bool IsExecuted
+        {
+            get
+            {
+                return this.isExecuted;
+            }
+
+            protected set
+            {
+                if (value != this.isExecuted)
+                {
+                    this.isExecuted = value;
+                    this.CanExecuteChanged?.Invoke(this, null);
+                }
+            }
         }
 
         public virtual bool IsAsync

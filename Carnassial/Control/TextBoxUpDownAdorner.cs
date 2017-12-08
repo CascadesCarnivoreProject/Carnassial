@@ -20,8 +20,11 @@ namespace Carnassial.Control
         public TextBoxUpDownAdorner(TextBox adornedTextBox) :
             base(adornedTextBox)
         {
-            this.triangle = new StreamGeometry();
-            this.triangle.FillRule = FillRule.Nonzero;
+            this.triangle = new StreamGeometry()
+            {
+                FillRule = FillRule.Nonzero
+            };
+
             using (StreamGeometryContext geometryContext = this.triangle.Open())
             {
                 geometryContext.BeginFigure(new Point(-6, 0), true /* filled */, true /* closed */);

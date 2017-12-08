@@ -7,12 +7,8 @@
         xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
         Title="(Re)classify dark files."
-        Loaded="Window_Loaded"
-        MinHeight="500" MinWidth="700"
-		Height="856" Width="768"
-		ResizeMode="CanResizeWithGrip"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black" PreviewKeyDown="Window_PreviewKeyDown">
+        Loaded="Window_Loaded" PreviewKeyDown="Window_PreviewKeyDown"
+        MinHeight="500" MinWidth="700" Height="856" Width="768" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -92,7 +88,7 @@
                     <Slider Name="DarkPixelThreshold" Minimum="1" Maximum="255" SmallChange="1" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" Value="20" HorizontalAlignment="Center" Orientation="Vertical" Grid.Column="3" />
                 </Grid>
                 <Menu Grid.Row="1" Margin="0,5,0,0" Width="78">
-                    <MenuItem Header="_Reset sliders" Name="MenuReset" BorderBrush="Black" BorderThickness="1" Padding="5,5,5,5">
+                    <MenuItem Header="_Reset sliders" Name="MenuReset" BorderBrush="{x:Static SystemColors.ControlDarkDarkBrush}" BorderThickness="1" Padding="5,5,5,5">
                         <MenuItem Header="to your previous settings" ToolTip="Reset thresholds to those configured when this dialog was launched." Click="MenuResetCurrent_Click"/>
                         <MenuItem Header="to Carnassial defaults"  ToolTip="Reset thresholds to the default values Carnassial ships with." Click="MenuResetDefault_Click"/>
                     </MenuItem>

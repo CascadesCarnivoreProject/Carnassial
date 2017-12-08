@@ -12,8 +12,7 @@ namespace Carnassial.Util
             string valueAsString = registryKey.ReadString(subKeyPath);
             if (valueAsString != null)
             {
-                bool value;
-                if (Boolean.TryParse(valueAsString, out value))
+                if (Boolean.TryParse(valueAsString, out bool value))
                 {
                     return value;
                 }
@@ -60,8 +59,7 @@ namespace Carnassial.Util
             string valueAsString = registryKey.ReadString(subKeyPath);
             if (valueAsString != null)
             {
-                double value;
-                if (Double.TryParse(valueAsString, out value))
+                if (Double.TryParse(valueAsString, out double value))
                 {
                     return value;
                 }

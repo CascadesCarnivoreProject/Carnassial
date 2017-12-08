@@ -31,16 +31,14 @@ namespace Carnassial.Control
 
         public override void SetValue(object valueAsObject)
         {
-            if (valueAsObject is string)
+            if (valueAsObject is string valueAsString)
             {
-                string valueAsString = (string)valueAsObject;
                 Debug.Assert(String.Equals(valueAsString, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) || String.Equals(valueAsString, Boolean.TrueString, StringComparison.OrdinalIgnoreCase), String.Format("Unexpected value '{0}'.", valueAsString));
                 this.ContentControl.IsChecked = Boolean.Parse(valueAsString);
                 this.ContentControl.ToolTip = valueAsString;
             }
-            else if (valueAsObject is bool)
+            else if (valueAsObject is bool value)
             {
-                bool value = (bool)valueAsObject;
                 this.ContentControl.IsChecked = value;
                 this.ContentControl.ToolTip = value ? Boolean.TrueString : Boolean.FalseString;
             }

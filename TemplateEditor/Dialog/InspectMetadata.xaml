@@ -5,12 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:control="clr-namespace:Carnassial.Control;assembly=Carnassial"
         mc:Ignorable="d"
-        Title="Inspect metadata available in files" 
-		MinHeight="600" MinWidth="768"
-		Height="856" Width="840"
-		ResizeMode="CanResizeWithGrip"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
+        Title="Inspect metadata available in files"
+        Loaded="Window_Loaded"
+		MinHeight="600" MinWidth="768" Height="856" Width="840" ShowInTaskbar="False">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>

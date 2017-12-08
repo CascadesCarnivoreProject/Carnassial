@@ -29,6 +29,8 @@ namespace Carnassial
             __int32 result = tjDecompressHeader3(decompressor, jpeg, jpegLength, &width, &height, &subsampling, &colorspace);
             if (result != 0)
             {
+				// update to tjGetErrorStr2() once libjpeg-turbo 1.6 is available
+				// See https://github.com/libjpeg-turbo/libjpeg-turbo/issues/151.
                 throw std::runtime_error(tjGetErrorStr());
             }
 
@@ -360,11 +362,11 @@ namespace Carnassial
 			{
 				return this->IsBlackAvx2();
 			}
-			else if (InstructionSet::Avx())
+			if (InstructionSet::Avx())
 			{
 				return this->IsBlackSse41Vex();
 			}
-			else if (InstructionSet::Sse41())
+			if (InstructionSet::Sse41())
 			{
 				return this->IsBlackSse41();
 			}
@@ -508,7 +510,7 @@ namespace Carnassial
             // Loop notionally uses 10 xmm registers
             //   xmm0 + dark count + luminosity coeffs + dark threshold + pixel data + luminosity/is dark/coloration/is grey
             //   shuffle + grba + grey threshold + grey counts
-            // but VC 2015.3 is able to fit it eight so spilling does not occur.
+            // but VC 2015.3 is able to fit it eight.
             for (__int32 pixel = 0; pixel < maxPixel; pixel += 4 * NativeImage::DarkPixelSkipSimd)
             {
                 // get next quad of pixels

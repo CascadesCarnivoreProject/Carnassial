@@ -2,9 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:control="clr-namespace:Carnassial.Control;assembly=Carnassial"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="About the Carnassial Template Editor" Height="Auto" MaxHeight="860" MinHeight="450" SizeToContent="Height" Width="550"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black">
+        Title="About the Carnassial Template Editor"
+        Loaded="Window_Loaded"
+        MaxHeight="860" MinHeight="450" SizeToContent="Height" Width="550" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

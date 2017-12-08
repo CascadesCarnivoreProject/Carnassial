@@ -565,16 +565,14 @@ namespace Carnassial.UnitTests
             foreach (string format in new List<string>() { "yyyy:MM:dd HH:mm:ss", "ddd MMM dd HH:mm:ss K yyyy" })
             {
                 string metadataDateAsString = now.ToString(format);
-                DateTimeOffset metadataDateParsed;
-                Assert.IsTrue(DateTimeHandler.TryParseMetadataDateTaken(metadataDateAsString, TimeZoneInfo.Local, out metadataDateParsed));
+                Assert.IsTrue(DateTimeHandler.TryParseMetadataDateTaken(metadataDateAsString, TimeZoneInfo.Local, out DateTimeOffset metadataDateParsed));
                 Assert.IsTrue((metadataDateParsed.Date == nowWithoutMilliseconds.Date) &&
                               (metadataDateParsed.TimeOfDay == nowWithoutMilliseconds.TimeOfDay) &&
                               (metadataDateParsed.Offset == TimeZoneInfo.Local.GetUtcOffset(nowWithoutMilliseconds)));
             }
 
             DateTimeOffset swappable = new DateTimeOffset(new DateTime(now.Year, 1, 12, now.Hour, now.Minute, now.Second, now.Millisecond), TimeZoneInfo.Local.BaseUtcOffset);
-            DateTimeOffset swapped;
-            Assert.IsTrue(DateTimeHandler.TrySwapDayMonth(swappable, out swapped));
+            Assert.IsTrue(DateTimeHandler.TrySwapDayMonth(swappable, out DateTimeOffset swapped));
             DateTimeOffset notSwappable = new DateTimeOffset(new DateTime(now.Year, 1, 13, now.Hour, now.Minute, now.Second, now.Millisecond), TimeZoneInfo.Local.BaseUtcOffset);
             Assert.IsFalse(DateTimeHandler.TrySwapDayMonth(notSwappable, out swapped));
 
@@ -591,16 +589,14 @@ namespace Carnassial.UnitTests
             // database format roundtrips
             string dateTimeAsDatabaseString = DateTimeHandler.ToDatabaseDateTimeString(dateTimeOffset);
             DateTime dateTimeParse = DateTimeHandler.ParseDatabaseDateTimeString(dateTimeAsDatabaseString);
-            DateTime dateTimeTryParse;
-            Assert.IsTrue(DateTimeHandler.TryParseDatabaseDateTime(dateTimeAsDatabaseString, out dateTimeTryParse));
+            Assert.IsTrue(DateTimeHandler.TryParseDatabaseDateTime(dateTimeAsDatabaseString, out DateTime dateTimeTryParse));
 
             Assert.IsTrue(dateTimeParse == dateTimeOffset.UtcDateTime);
             Assert.IsTrue(dateTimeTryParse == dateTimeOffset.UtcDateTime);
 
             string utcOffsetAsDatabaseString = DateTimeHandler.ToDatabaseUtcOffsetString(dateTimeOffset.Offset);
             TimeSpan utcOffsetParse = DateTimeHandler.ParseDatabaseUtcOffsetString(utcOffsetAsDatabaseString);
-            TimeSpan utcOffsetTryParse;
-            Assert.IsTrue(DateTimeHandler.TryParseDatabaseUtcOffsetString(utcOffsetAsDatabaseString, out utcOffsetTryParse));
+            Assert.IsTrue(DateTimeHandler.TryParseDatabaseUtcOffsetString(utcOffsetAsDatabaseString, out TimeSpan utcOffsetTryParse));
 
             Assert.IsTrue(utcOffsetParse == dateTimeOffset.Offset);
             Assert.IsTrue(utcOffsetTryParse == dateTimeOffset.Offset);
@@ -654,8 +650,7 @@ namespace Carnassial.UnitTests
             FileInfo[] imagesAndVideos = new DirectoryInfo(Path.Combine(this.WorkingDirectory, TestConstant.File.HybridVideoDirectoryName)).GetFiles();
             foreach (FileInfo fileInfo in imagesAndVideos)
             {
-                ImageRow file;
-                Assert.IsFalse(fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file));
+                Assert.IsFalse(fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out ImageRow file));
 
                 using (MemoryImage image = await file.LoadAsync(fileDatabase.FolderPath))
                 {
@@ -734,16 +729,14 @@ namespace Carnassial.UnitTests
             int filesExpected = 2;
             this.VerifyDefaultMarkerTableContent(fileDatabase, filesExpected);
 
-            MarkerExpectation martenMarkerExpectation = new MarkerExpectation();
-            martenMarkerExpectation.ID = 1;
+            MarkerExpectation martenMarkerExpectation = new MarkerExpectation() { ID = 1 };
             martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, "0.498,0.575|0.550,0.566|0.584,0.555");
             martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, String.Empty);
             martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, String.Empty);
             martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, String.Empty);
             martenMarkerExpectation.Verify(fileDatabase.Markers[0]);
 
-            MarkerExpectation bobcatMarkerExpectation = new MarkerExpectation();
-            bobcatMarkerExpectation.ID = 2;
+            MarkerExpectation bobcatMarkerExpectation = new MarkerExpectation() { ID = 2 };
             bobcatMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, String.Empty);
             bobcatMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, String.Empty);
             bobcatMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, String.Empty);
@@ -755,8 +748,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileDatabase.Files.RowCount == filesExpected);
 
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
-            FileExpectations martenExpectation = new FileExpectations(TestConstant.FileExpectation.InfraredMarten);
-            martenExpectation.ID = 1;
+            FileExpectations martenExpectation = new FileExpectations(TestConstant.FileExpectation.InfraredMarten) { ID = 1 };
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, "3");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice c");
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "0");
@@ -775,8 +767,7 @@ namespace Carnassial.UnitTests
             martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Boolean.TrueString);
             martenExpectation.Verify(fileDatabase.Files[0], imageSetTimeZone);
 
-            FileExpectations bobcatExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightBobcat);
-            bobcatExpectation.ID = 2;
+            FileExpectations bobcatExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightBobcat) { ID = 2 };
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, templateTableExpectation.Counter0.DefaultValue);
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice a");
             bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "1");
@@ -872,16 +863,17 @@ namespace Carnassial.UnitTests
                 File.Delete(destinationFilePath);
             }
 
-            FileExpectations fileExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightBobcat);
-            fileExpectation.ID = Constant.Database.InvalidID;
+            FileExpectations fileExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightBobcat)
+            {
+                ID = Constant.Database.InvalidID
+            };
 
             // create ImageRow object for file
             File.Copy(fileExpectation.FileName, sourceFilePath);
             FileInfo fileInfo = new FileInfo(sourceFilePath);
 
             FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
-            ImageRow file;
-            fileDatabase.GetOrCreateFile(fileInfo, fileDatabase.ImageSet.GetTimeZone(), out file);
+            fileDatabase.GetOrCreateFile(fileInfo, fileDatabase.ImageSet.GetTimeZone(), out ImageRow file);
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
             file.TryReadDateTimeFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
 
@@ -1056,20 +1048,17 @@ namespace Carnassial.UnitTests
             this.VerifyFiles(fileDatabase, fileExpectations, initialImageSetTimeZone, initialFileCount, secondImageSetTimeZone);
 
             // add more images
-            DateTimeAdjustment timeAdjustment;
-            ImageRow martenPairImage = this.CreateFile(fileDatabase, secondImageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out timeAdjustment);
+            ImageRow martenPairImage = this.CreateFile(fileDatabase, secondImageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out DateTimeAdjustment timeAdjustment);
             ImageRow coyoteImage = this.CreateFile(fileDatabase, secondImageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out timeAdjustment);
 
             fileDatabase.AddFiles(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
             fileDatabase.SelectFiles(FileSelection.All);
 
             // generate expectations for new images
-            FileExpectations martenPairExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair);
-            martenPairExpectation.ID = fileExpectations.Count + 1;
+            FileExpectations martenPairExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair) { ID = fileExpectations.Count + 1 };
             fileExpectations.Add(martenPairExpectation);
 
-            FileExpectations daylightCoyoteExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightCoyote);
-            daylightCoyoteExpectation.ID = fileExpectations.Count + 1;
+            FileExpectations daylightCoyoteExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightCoyote) { ID = fileExpectations.Count + 1 };
             fileExpectations.Add(daylightCoyoteExpectation);
 
             // verify new images pick up the current timezone

@@ -130,8 +130,6 @@ namespace Carnassial.Data
                     // capture components of file's unique identifier for constructing where clause
                     // at least for now, it's assumed all renames or moves are done through Carnassial and hence relative path + file name form 
                     // an immutable (and unique) ID
-                    DateTime dateTime;
-                    TimeSpan utcOffset;
                     if (dataLabel == Constant.DatabaseColumn.File)
                     {
                         fileName = value;
@@ -140,12 +138,12 @@ namespace Carnassial.Data
                     {
                         relativePath = value;
                     }
-                    else if (dataLabel == Constant.DatabaseColumn.DateTime && DateTimeHandler.TryParseDatabaseDateTime(value, out dateTime))
+                    else if (dataLabel == Constant.DatabaseColumn.DateTime && DateTimeHandler.TryParseDatabaseDateTime(value, out DateTime dateTime))
                     {
                         // pass DateTime to ColumnTuple rather than the string as ColumnTuple owns validation and formatting
                         values.Add(dateTime);
                     }
-                    else if (dataLabel == Constant.DatabaseColumn.UtcOffset && DateTimeHandler.TryParseDatabaseUtcOffsetString(value, out utcOffset))
+                    else if (dataLabel == Constant.DatabaseColumn.UtcOffset && DateTimeHandler.TryParseDatabaseUtcOffsetString(value, out TimeSpan utcOffset))
                     {
                         // as with DateTime, pass parsed UTC offset to ColumnTuple rather than the string as ColumnTuple owns validation and formatting
                         values.Add(utcOffset);
@@ -172,8 +170,7 @@ namespace Carnassial.Data
                 // if file's already in the image set prepare to set its fields to those in the .csv
                 // if file's not in the image set prepare to add it to the image set
                 FileInfo fileInfo = new FileInfo(Path.Combine(spreadsheetFileFolderPath, relativePath, fileName));
-                ImageRow file;
-                if (fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out file))
+                if (fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out ImageRow file))
                 {
                     existingFilesToUpdate.Add(file.ID, values);
                 }
@@ -380,9 +377,8 @@ namespace Carnassial.Data
             for (int column = 1; column <= worksheet.Dimension.Columns; ++column)
             {
                 ExcelRange cell = worksheet.Cells[row, column];
-                if (cell.Value is bool)
+                if (cell.Value is bool cellValue)
                 {
-                    bool cellValue = (bool)cell.Value;
                     rowContent.Add(cellValue ? Boolean.TrueString : Boolean.FalseString);
                 }
                 else

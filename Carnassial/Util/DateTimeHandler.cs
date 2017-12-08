@@ -135,8 +135,7 @@ namespace Carnassial.Util
 
         public static bool TryParseDatabaseUtcOffsetString(string utcOffsetAsString, out TimeSpan utcOffset)
         {
-            double utcOffsetAsDouble;
-            if (double.TryParse(utcOffsetAsString, out utcOffsetAsDouble))
+            if (double.TryParse(utcOffsetAsString, out double utcOffsetAsDouble))
             {
                 utcOffset = TimeSpan.FromHours(utcOffsetAsDouble);
                 return (utcOffset >= Constant.Time.MinimumUtcOffset) &&
@@ -151,8 +150,7 @@ namespace Carnassial.Util
         public static bool TryParseDateTaken(string dateTimeAsString, TimeZoneInfo imageSetTimeZone, out DateTimeOffset dateTimeOffset)
         {
             // use current culture as BitmapMetadata.DateTaken is not invariant
-            DateTime dateTime;
-            if (DateTime.TryParse(dateTimeAsString, CultureInfo.CurrentCulture, DateTimeStyles.None, out dateTime) == false)
+            if (DateTime.TryParse(dateTimeAsString, CultureInfo.CurrentCulture, DateTimeStyles.None, out DateTime dateTime) == false)
             {
                 dateTimeOffset = DateTimeOffset.MinValue;
                 return false;
@@ -164,8 +162,7 @@ namespace Carnassial.Util
 
         public static bool TryParseMetadataDateTaken(string dateTimeAsString, TimeZoneInfo imageSetTimeZone, out DateTimeOffset dateTimeOffset)
         {
-            DateTime dateTime;
-            if (DateTime.TryParseExact(dateTimeAsString, Constant.Time.DateTimeMetadataFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime) == false)
+            if (DateTime.TryParseExact(dateTimeAsString, Constant.Time.DateTimeMetadataFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTime) == false)
             {
                 dateTimeOffset = DateTimeOffset.MinValue;
                 return false;

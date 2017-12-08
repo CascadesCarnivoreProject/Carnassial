@@ -20,8 +20,7 @@ namespace Carnassial.UnitTests
 
             mruList.SetMostRecent(0);
             Assert.IsFalse(mruList.IsFull());
-            int mostRecent;
-            Assert.IsTrue(mruList.TryGetMostRecent(out mostRecent));
+            Assert.IsTrue(mruList.TryGetMostRecent(out int mostRecent));
             Assert.IsTrue(mostRecent == 0);
             List<int> list = mruList.ToList();
             Assert.IsTrue(list.Count == 1);
@@ -110,8 +109,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(list[2] == 7);
             Assert.IsTrue(list[3] == 4);
 
-            int leastRecent;
-            Assert.IsTrue(mruList.TryGetLeastRecent(out leastRecent));
+            Assert.IsTrue(mruList.TryGetLeastRecent(out int leastRecent));
             Assert.IsTrue(leastRecent == 4);
         }
 
@@ -132,8 +130,7 @@ namespace Carnassial.UnitTests
             UndoRedoChain<int> undoRedoChain = new UndoRedoChain<int>();
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsFalse(undoRedoChain.CanUndo);
-            UndoableCommand<int> state;
-            Assert.IsFalse(undoRedoChain.TryMoveToNextRedo(out state));
+            Assert.IsFalse(undoRedoChain.TryMoveToNextRedo(out UndoableCommand<int> state));
             Assert.IsFalse(undoRedoChain.TryMoveToNextUndo(out state));
 
             // basic lifecycle with two different states

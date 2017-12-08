@@ -154,8 +154,11 @@ namespace Carnassial.Data
 
         private void GetControlsSortedByControlOrder(SQLiteConnection connection)
         {
-            Select select = new Select(Constant.DatabaseTable.Controls);
-            select.OrderBy = Constant.Control.ControlOrder;
+            Select select = new Select(Constant.DatabaseTable.Controls)
+            {
+                OrderBy = Constant.Control.ControlOrder
+            };
+
             DataTable templateTable = this.Database.GetDataTableFromSelect(connection, select);
             this.Controls = new DataTableBackedList<ControlRow>(templateTable, (DataRow row) => { return new ControlRow(row); });
             this.Controls.BindDataGrid(this.editorDataGrid, this.onTemplateTableRowChanged);

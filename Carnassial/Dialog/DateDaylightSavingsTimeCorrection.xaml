@@ -4,11 +4,8 @@
         xmlns:control="clr-namespace:Carnassial.Control"
         Title="Date/time - Correct for changes to or from daylight savings time." 
 		Name="DaylightSavingsTimeCorrection"
-		MinHeight="826" MinWidth="768"
-		Height="856" Width="768"
-		ResizeMode="CanResizeWithGrip"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black" Loaded="Window_Loaded">
+        Loaded="Window_Loaded"
+		MinHeight="826" MinWidth="768" Height="856" Width="768" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

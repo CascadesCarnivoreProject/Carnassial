@@ -4,9 +4,9 @@
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         AutomationProperties.AutomationId="FileCountsByQuality"
-        Title="Files by image quality." Height="425" Width="600"
-		ShowInTaskbar="False"
-		WindowStartupLocation="CenterOwner" BorderBrush="Black">
+        Title="Files by image quality."
+        Loaded="Window_Loaded"
+        Height="425" Width="600" ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

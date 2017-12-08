@@ -33,12 +33,6 @@ namespace Carnassial.Editor
         private bool templateDataGridCellEditForcedByCode;
         private EditorUserRegistrySettings userSettings;
 
-        // These variables support the drag/drop of controls
-        private UIElement dummyMouseDragSource;
-        private bool isMouseDown;
-        private bool isMouseDragging;
-        private Point mouseDownStartPosition;
-
         // database where the template is stored
         private TemplateDatabase templateDatabase;
 
@@ -53,6 +47,7 @@ namespace Carnassial.Editor
             this.AddFixedChoiceButton.Tag = ControlType.FixedChoice;
             this.AddFlagButton.Tag = ControlType.Flag;
             this.AddNoteButton.Tag = ControlType.Note;
+            this.DataEntryControls.AllowDrop = true;
             this.Title = EditorConstant.MainWindowBaseTitle;
             Utilities.TryFitWindowInWorkingArea(this);
 
@@ -63,7 +58,6 @@ namespace Carnassial.Editor
                 Application.Current.Shutdown();
             }
 
-            this.dummyMouseDragSource = new UIElement();
             this.templateDataGridBeingUpdatedByCode = false;
             this.templateDataGridCellEditForcedByCode = false;
 
@@ -100,68 +94,28 @@ namespace Carnassial.Editor
             this.templateDataGridBeingUpdatedByCode = false;
         }
 
-        private void ControlsPanel_DragDrop(object sender, DragEventArgs e)
+        private void DataEntryControls_ControlOrderChangedByDragDrop(DataEntryControl controlBeingDragged, DataEntryControl dropTarget)
         {
-            DataEntryControl controlBeingDragged;
-            if (this.DataEntryControls.TryFindDataEntryControl(this.mouseDownStartPosition, out controlBeingDragged))
+            Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
+            long controlOrder = 1;
+            foreach (ControlRow control in this.templateDatabase.Controls)
             {
-                DataEntryControl dropTarget;
-                if (this.DataEntryControls.TryFindDataEntryControl(e.GetPosition(this.DataEntryControls), out dropTarget))
+                if (control.DataLabel == controlBeingDragged.DataLabel)
                 {
-                    Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
-                    long controlOrder = 1;
-                    foreach (ControlRow control in this.templateDatabase.Controls)
-                    {
-                        if (control.DataLabel == controlBeingDragged.DataLabel)
-                        {
-                            continue;
-                        }
-                        if (control.DataLabel == dropTarget.DataLabel)
-                        {
-                            newControlOrderByDataLabel.Add(controlBeingDragged.DataLabel, controlOrder);
-                            ++controlOrder;
-                        }
-                        newControlOrderByDataLabel.Add(control.DataLabel, controlOrder);
-                        ++controlOrder;
-                    }
+                    continue;
+                }
 
-                    this.templateDatabase.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
-                    this.RebuildControlPreview();
+                newControlOrderByDataLabel.Add(control.DataLabel, controlOrder);
+                ++controlOrder;
+                if (control.DataLabel == dropTarget.DataLabel)
+                {
+                    newControlOrderByDataLabel.Add(controlBeingDragged.DataLabel, controlOrder);
+                    ++controlOrder;
                 }
             }
 
-            this.isMouseDown = false;
-            this.isMouseDragging = false;
-            this.ControlsPanel.ReleaseMouseCapture();
-        }
-
-        private void ControlsPanel_OnPreviewMouseMove(object sender, MouseEventArgs e)
-        {
-            if (this.isMouseDown)
-            {
-                Point currentMousePosition = e.GetPosition(this.ControlsPanel);
-                if ((this.isMouseDragging == false) &&
-                    ((Math.Abs(currentMousePosition.X - this.mouseDownStartPosition.X) > SystemParameters.MinimumHorizontalDragDistance) ||
-                     (Math.Abs(currentMousePosition.Y - this.mouseDownStartPosition.Y) > SystemParameters.MinimumVerticalDragDistance)))
-                {
-                    this.isMouseDragging = true;
-                    this.ControlsPanel.CaptureMouse();
-                    DragDrop.DoDragDrop(this.dummyMouseDragSource, new DataObject("UIElement", e.Source, true), DragDropEffects.Move);
-                }
-            }
-        }
-
-        private void ControlsPanel_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            this.isMouseDown = true;
-            this.mouseDownStartPosition = e.GetPosition(this.ControlsPanel);
-        }
-
-        private void ControlsPanel_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            this.isMouseDown = false;
-            this.isMouseDragging = false;
-            this.ControlsPanel.ReleaseMouseCapture();
+            this.templateDatabase.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
+            this.RebuildControlPreview();
         }
 
         // raise a dialog box that lets the user edit the list of choices or note control default autocompletions
@@ -178,21 +132,6 @@ namespace Carnassial.Editor
                 choiceOrNote.SetChoices(choiceListDialog.Choices);
                 this.SyncControlToDatabaseAndPreviews(choiceOrNote);
             }
-        }
-
-        private static T FindVisualParent<T>(UIElement element) where T : UIElement
-        {
-            UIElement parent = element;
-            while (parent != null)
-            {
-                T correctlyTyped = parent as T;
-                if (correctlyTyped != null)
-                {
-                    return correctlyTyped;
-                }
-                parent = VisualTreeHelper.GetParent(parent) as UIElement;
-            }
-            return null;
         }
 
         /// <summary>
@@ -271,8 +210,7 @@ namespace Carnassial.Editor
 
         private void Instructions_Drop(object sender, DragEventArgs dropEvent)
         {
-            string templateDatabaseFilePath;
-            if (Utilities.IsSingleTemplateFileDrag(dropEvent, out templateDatabaseFilePath))
+            if (Utilities.IsSingleTemplateFileDrag(dropEvent, out string templateDatabaseFilePath))
             {
                 this.InitializeDataGrid(templateDatabaseFilePath);
             }
@@ -333,12 +271,15 @@ namespace Carnassial.Editor
         /// </summary>
         private void MenuFileNewTemplate_Click(object sender, RoutedEventArgs e)
         {
-            SaveFileDialog newTemplateFilePathDialog = new SaveFileDialog();
-            newTemplateFilePathDialog.CheckFileExists = true;
-            newTemplateFilePathDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            newTemplateFilePathDialog.DefaultExt = Constant.File.TemplateFileExtension; // Default file extension
-            newTemplateFilePathDialog.Filter = "Database Files (" + Constant.File.TemplateFileExtension + ")|*" + Constant.File.TemplateFileExtension; // Filter files by extension 
-            newTemplateFilePathDialog.Title = "Select Location to Save New Template File";
+            SaveFileDialog newTemplateFilePathDialog = new SaveFileDialog()
+            {
+                CheckFileExists = true,
+                FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName), // Default file name without the extension
+                DefaultExt = Constant.File.TemplateFileExtension, // Default file extension
+                Filter = "Database Files (" + Constant.File.TemplateFileExtension + ")|*" + Constant.File.TemplateFileExtension, // Filter files by extension 
+                Title = "Select Location to Save New Template File"
+            };
+
             if (newTemplateFilePathDialog.ShowDialog() == true)
             {
                 // overwrite the file if it exists
@@ -357,11 +298,14 @@ namespace Carnassial.Editor
         /// </summary>
         private void MenuFileOpenTemplate_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName); // Default file name without the extension
-            openFileDialog.DefaultExt = Constant.File.TemplateFileExtension; // Default file extension
-            openFileDialog.Filter = "Database Files (" + Constant.File.TemplateFileExtension + ")|*" + Constant.File.TemplateFileExtension; // Filter files by extension 
-            openFileDialog.Title = "Select an Existing Template File to Open";
+            OpenFileDialog openFileDialog = new OpenFileDialog()
+            {
+                FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName), // Default file name without the extension
+                DefaultExt = Constant.File.TemplateFileExtension, // Default file extension
+                Filter = "Database Files (" + Constant.File.TemplateFileExtension + ")|*" + Constant.File.TemplateFileExtension, // Filter files by extension 
+                Title = "Select an Existing Template File to Open"
+            };
+
             if (openFileDialog.ShowDialog() == true)
             {
                 this.InitializeDataGrid(openFileDialog.FileName);
@@ -482,8 +426,7 @@ namespace Carnassial.Editor
             this.templateDatabase.SyncControlToDatabase(control);
             this.templateDataGridBeingUpdatedByCode = false;
 
-            DataEntryControl controlPreview;
-            if ((this.DataEntryControls.ControlsByDataLabel.TryGetValue(control.DataLabel, out controlPreview) == false) ||
+            if ((this.DataEntryControls.ControlsByDataLabel.TryGetValue(control.DataLabel, out DataEntryControl controlPreview) == false) ||
                 (control.Visible == false))
             {
                 // rebuild the controls preview if data label or visibility changed
@@ -700,8 +643,7 @@ namespace Carnassial.Editor
                         cell.IsEnabled = false;
 
                         // if cell has a checkbox disable it too
-                        CheckBox checkBox;
-                        if (cell.TryGetControl(out checkBox))
+                        if (cell.TryGetControl(out CheckBox checkBox))
                         {
                             checkBox.IsEnabled = false;
                         }
@@ -710,8 +652,7 @@ namespace Carnassial.Editor
                     {
                         // set up check boxes in the visible column for immediate data binding so user sees the control preview update promptly
                         // The LayoutUpdated event fires many times so a guard is required to set the callbacks only once.
-                        CheckBox checkBox;
-                        if (cell.TryGetControl(out checkBox))
+                        if (cell.TryGetControl(out CheckBox checkBox))
                         {
                             if (checkBox.Tag == null)
                             {
@@ -730,8 +671,7 @@ namespace Carnassial.Editor
                         // set up text boxes in the width column for immediate data binding so user sees the control preview update promptly
                         // A guard is required as above.  When the DataGrid is first instantiated TextBlocks are used for the cell content; these are
                         // changed to TextBoxes when the user initiates an edit.
-                        TextBox textBox;
-                        if (cell.TryGetControl(out textBox))
+                        if (cell.TryGetControl(out TextBox textBox))
                         {
                             if (textBox.Tag == null)
                             {
@@ -746,9 +686,7 @@ namespace Carnassial.Editor
 
         private void TemplateDataGrid_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            DataGridCell currentCell;
-            DataGridRow currentRow;
-            if ((this.TryGetCurrentCell(out currentCell, out currentRow) == false) || currentCell.Background.Equals(EditorConstant.NotEditableCellColor))
+            if ((this.TryGetCurrentCell(out DataGridCell currentCell, out DataGridRow currentRow) == false) || currentCell.Background.Equals(EditorConstant.NotEditableCellColor))
             {
                 e.Handled = true;
                 return;
@@ -843,8 +781,7 @@ namespace Carnassial.Editor
         {
             TextBox textBox = (TextBox)sender;
             int rowIndex = (int)textBox.Tag;
-            int newWidth;
-            if (Int32.TryParse(textBox.Text, out newWidth))
+            if (Int32.TryParse(textBox.Text, out int newWidth))
             {
                 this.templateDatabase.Controls[rowIndex].MaxWidth = newWidth;
             }
@@ -994,7 +931,7 @@ namespace Carnassial.Editor
                 }
 
                 GithubReleaseClient updater = new GithubReleaseClient(EditorConstant.ApplicationName, latestVersionAddress);
-                updater.TryGetAndParseRelease(false);
+                updater.TryGetAndParseRelease(false, out Version publiclyAvailableVersion);
                 this.userSettings.MostRecentCheckForUpdates = DateTime.UtcNow;
             }
 

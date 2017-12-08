@@ -240,8 +240,7 @@ namespace Carnassial.Images
                 this.Reset();
             }
 
-            MemoryImage imageForID;
-            if (this.unalteredImagesByID.TryRemove(id, out imageForID))
+            if (this.unalteredImagesByID.TryRemove(id, out MemoryImage imageForID))
             {
                 Debug.Assert(imageForID != null, "Unaltered image unexpectedly null in image cache.");
                 this.DisposeImageIfNeeded(imageForID);
@@ -302,11 +301,9 @@ namespace Carnassial.Images
                         // if the image cache is full make room for the incoming image
                         if (this.mostRecentlyUsedIDs.IsFull())
                         {
-                            long fileIDToRemove;
-                            if (this.mostRecentlyUsedIDs.TryGetLeastRecent(out fileIDToRemove))
+                            if (this.mostRecentlyUsedIDs.TryGetLeastRecent(out long fileIDToRemove))
                             {
-                                MemoryImage imageForID;
-                                if (this.unalteredImagesByID.TryRemove(fileIDToRemove, out imageForID))
+                                if (this.unalteredImagesByID.TryRemove(fileIDToRemove, out MemoryImage imageForID))
                                 {
                                     Debug.Assert(imageForID != null, "Unaltered image unexpectedly null in image cache.");
                                     this.DisposeImageIfNeeded(imageForID);
@@ -344,8 +341,7 @@ namespace Carnassial.Images
 
         private async Task<MemoryImage> TryGetImageAsync(int fileRow)
         {
-            ImageRow file;
-            if (this.TryGetFile(fileRow, out file) == false || file.IsVideo)
+            if (this.TryGetFile(fileRow, out ImageRow file) == false || file.IsVideo)
             {
                 return null;
             }
@@ -363,11 +359,9 @@ namespace Carnassial.Images
         private async Task<MemoryImage> TryGetImageAsync(ImageRow file, int prefetchStride)
         {
             // locate the requested image
-            MemoryImage image;
-            if (this.unalteredImagesByID.TryGetValue(file.ID, out image) == false)
+            if (this.unalteredImagesByID.TryGetValue(file.ID, out MemoryImage image) == false)
             {
-                Task prefetch;
-                if (this.prefetechesByID.TryGetValue(file.ID, out prefetch))
+                if (this.prefetechesByID.TryGetValue(file.ID, out Task prefetch))
                 {
                     // image retrieval's already in progress, so wait for it to complete
                     await prefetch;
@@ -434,8 +428,7 @@ namespace Carnassial.Images
             {
                 MemoryImage nextImage = await nextFile.LoadAsync(this.Database.FolderPath);
                 this.CacheImage(nextFile.ID, nextImage);
-                Task ignored;
-                this.prefetechesByID.TryRemove(nextFile.ID, out ignored);
+                this.prefetechesByID.TryRemove(nextFile.ID, out Task ignored);
             });
             this.prefetechesByID.AddOrUpdate(nextFile.ID, prefetch, (long id, Task newPrefetch) => { return newPrefetch; });
             return true;
