@@ -14,6 +14,7 @@ namespace Carnassial
         public const int AnalysisSlots = 9;
 
         public const string ApplicationName = "Carnassial";
+        public const string Debug = "DEBUG";
         public const int LargeNumberOfFilesToDelete = 100;
         public const string MainWindowBaseTitle = "Carnassial: Simplifying Remote Camera Data";
         public const int MaximumUndoableCommands = 100;
@@ -21,11 +22,21 @@ namespace Carnassial
         public const double PageUpDownNavigationFraction = 0.1;
 
         public static readonly TimeSpan CheckForUpdateInterval = TimeSpan.FromDays(1.25);
+        public static readonly Version Windows8MinimumVersion = new Version(6, 2, 0, 0);
 
         public static class ApplicationSettings
         {
             public const string DevTeamEmail = "devTeamEmail";
             public const string GithubOrganizationAndRepo = "githubOrganizationAndRepo";
+        }
+
+        public static class ComGuid
+        {
+            public const string IFileOperation = "947aab5f-0a5c-4c13-b4d6-4bf7836fc9f8";
+            public const string IFileOperationProgressSink = "04b0f1a7-9490-44bc-96e1-4296a31252e2";
+            public const string IShellItem = "43826d1e-e718-42ee-bc55-a1e261c37bfe";
+
+            public static readonly Guid IFileOperationClsid = new Guid("3ad05575-8857-4850-9277-11b85bdb8e09");
         }
 
         public static class Control
@@ -150,12 +161,13 @@ namespace Carnassial
         public static class File
         {
             public const string AviFileExtension = ".avi";
+            public const string BackupFileSuffixFormat = "yyyy-MM-ddTHH-mm-ss.fffK";
+            public const string BackupFileSuffixPattern = ".????-??-??T??-??-??.??????_??";
             public const string BackupFolder = "Backups"; // Sub-folder that will contain database and csv file backups  
             public const int NumberOfBackupFilesToKeep = 9; // Maximum number of backup files to keep
             public const string CsvFileExtension = ".csv";
             public const string DefaultFileDatabaseFileName = "CarnassialData.ddb";
             public const string DefaultTemplateDatabaseFileName = "CarnassialTemplate.tdb";
-            public const string DeletedFilesFolder = "DeletedFiles"; // Sub-folder that will contain backups of deleted files
             public const string ExcelFileExtension = ".xlsx";
             public const string FileDatabaseFileExtension = ".ddb";
             public const string JpgFileExtension = ".jpg";

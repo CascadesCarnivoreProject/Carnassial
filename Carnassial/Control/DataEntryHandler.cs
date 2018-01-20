@@ -1,10 +1,11 @@
-﻿using Carnassial.Command;
-using Carnassial.Data;
+﻿using Carnassial.Data;
+using Carnassial.Database;
 using Carnassial.Images;
-using Carnassial.Util;
+using Carnassial.Interop;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -42,6 +43,60 @@ namespace Carnassial.Control
                 newCount = previousCount - 1;
             }
             this.ImageCache.Current[counter.PropertyName] = newCount.ToString();
+        }
+
+        public void DeleteFiles(IEnumerable<ImageRow> filesToDelete, bool deleteFilesAndData)
+        {
+            this.IsProgrammaticUpdate = true;
+
+            FileTuplesWithID filesToUpdate = new FileTuplesWithID(Constant.DatabaseColumn.DeleteFlag, Constant.DatabaseColumn.ImageQuality);
+            List<long> fileIDsToDropFromDatabase = new List<long>();
+            using (Recycler fileOperation = new Recycler())
+            {
+                foreach (ImageRow file in filesToDelete)
+                {
+                    string filePath = file.GetFilePath(this.FileDatabase.FolderPath);
+                    if (File.Exists(filePath))
+                    {
+                        fileOperation.MoveToRecycleBin(filePath);
+                    }
+
+                    // if this file is cached, invalidate it so FileNoLongerAvailable placeholder will be displayed instead of the
+                    // cached image
+                    this.ImageCache.TryInvalidate(file.ID);
+
+                    if (deleteFilesAndData)
+                    {
+                        // mark the file row for dropping
+                        fileIDsToDropFromDatabase.Add(file.ID);
+                    }
+                    else
+                    {
+                        // as only the file was deleted, change image quality to FileNoLongerAvailable and clear the delete flag
+                        file.DeleteFlag = false;
+                        file.ImageQuality = FileSelection.NoLongerAvailable;
+                        filesToUpdate.Add(file.ID, Boolean.FalseString, FileSelection.NoLongerAvailable.ToString());
+                    }
+                }
+            }
+
+            if (deleteFilesAndData)
+            {
+                // drop files
+                Debug.Assert(fileIDsToDropFromDatabase.Count > 0, "No files are being deleted.");
+                Debug.Assert(filesToUpdate.RowCount == 0, "Files to update unexpectedly present.");
+                this.FileDatabase.DeleteFilesAndMarkers(fileIDsToDropFromDatabase);
+            }
+            else
+            {
+                // update file properties
+                Debug.Assert(fileIDsToDropFromDatabase.Count > 0, "Files to drop from database unexpectedly present.");
+                Debug.Assert(filesToUpdate.RowCount > 0, "No files are being to be deleted.");
+                this.FileDatabase.UpdateFiles(filesToUpdate);
+            }
+
+            this.BulkEdit?.Invoke(this, null);
+            this.IsProgrammaticUpdate = false;
         }
 
         public void Dispose()

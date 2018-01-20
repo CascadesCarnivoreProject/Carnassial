@@ -244,6 +244,13 @@
     <Compile Include="Images\FrameworkElementExtensions.cs" />
     <Compile Include="Images\MoveToFileResult.cs" />
     <Compile Include="Images\ZoomBookmark.cs" />
+    <Compile Include="Interop\IFileOperationProgressSink.cs" />
+    <Compile Include="Interop\SafeComHandle.cs" />
+    <Compile Include="Interop\Recycler.cs" />
+    <Compile Include="Interop\FileOperationFlags.cs" />
+    <Compile Include="Interop\IFileOperation.cs" />
+    <Compile Include="Interop\IShellItem.cs" />
+    <Compile Include="Interop\SIGDN.cs" />
     <Compile Include="Util\CarnassialConfigurationSettings.cs" />
     <Compile Include="Util\DataGridExtensions.cs" />
     <Compile Include="Util\DateTimeExtensions.cs" />
@@ -449,7 +456,7 @@
     <Compile Include="Control\DataEntryChoice.cs" />
     <Compile Include="Control\DataEntryFlag.cs" />
     <Compile Include="Control\DataEntryNote.cs" />
-    <Compile Include="Util\NativeMethods.cs" />
+    <Compile Include="Interop\NativeMethods.cs" />
     <Compile Include="Data\SpreadsheetReaderWriter.cs" />
     <Compile Include="Dialog\DateTimeFixedCorrection.xaml.cs">
       <DependentUpon>DateTimeFixedCorrection.xaml</DependentUpon>

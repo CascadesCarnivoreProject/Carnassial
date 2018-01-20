@@ -27,6 +27,7 @@
       <Value>metatags</Value>
       <Value>MMddnnnn</Value>
       <Value>nnnn</Value>
+      <Value>recurse</Value>
       <Value>rgb</Value>
       <Value>ss</Value>
       <Value>tt</Value>
@@ -63,6 +64,11 @@
           </RuleSettings>
         </Rule>
         <Rule Name="StaticElementsMustAppearBeforeInstanceElements">
+          <RuleSettings>
+            <BooleanProperty Name="Enabled">False</BooleanProperty>
+          </RuleSettings>
+        </Rule>
+        <Rule Name="InstanceReadonlyElementsMustAppearBeforeInstanceNonReadonlyElements">
           <RuleSettings>
             <BooleanProperty Name="Enabled">False</BooleanProperty>
           </RuleSettings>
@@ -200,9 +206,13 @@
       </Rules>
       <AnalyzerSettings>
         <CollectionProperty Name="Hungarian">
+          <Value>dw</Value>
           <Value>go</Value>
+          <Value>hr</Value>
+          <Value>i</Value>
           <Value>io</Value>
           <Value>l</Value>
+          <Value>p</Value>
           <Value>up</Value>
           <Value>w</Value>
         </CollectionProperty>

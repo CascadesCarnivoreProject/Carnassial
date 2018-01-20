@@ -1,5 +1,6 @@
 ﻿using Carnassial.Control;
 using Carnassial.Database;
+using Carnassial.Interop;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -601,7 +602,7 @@ namespace Carnassial.Data
             // GetRelativePath() includes the file's name; remove that from the relative path as it's stored separately
             // GetDirectoryName() returns String.Empty if there's no relative path; the SQL layer treats this inconsistently, resulting in DataRows with 
             // RelativePath = String.Empty even if null is passed.  As a result, String.IsNullOrEmpty() is the appropriate test for lack of a RelativePath.
-            string relativePath = NativeMethods.GetRelativePathFromDirectoryToFile(this.FolderPath, fileInfo.FullName);
+            string relativePath = NativeMethods.GetRelativePathFromDirectoryToFile(this.FolderPath, fileInfo);
             relativePath = Path.GetDirectoryName(relativePath);
 
             if (this.TryGetFile(relativePath, fileInfo.Name, out file))
@@ -641,7 +642,7 @@ namespace Carnassial.Data
             foreach (ImageRow file in this.Files)
             {
                 Debug.Assert(file.HasChanges == false, "File has unexpected pending changes.");
-                if (file.TryMoveToFolder(this.FolderPath, destinationFolderPath, false))
+                if (file.TryMoveFileToFolder(this.FolderPath, destinationFolderPath))
                 {
                     filesToUpdate.Add(file.ID, file.RelativePath);
                     file.AcceptChanges();

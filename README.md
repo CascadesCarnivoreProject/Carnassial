@@ -49,14 +49,19 @@ Also helpful are
 
 ### Dependencies
 * Carnassial and the template editor are supported and tested on current releases of Windows 10.
-* Carnassial and the template editor should also run without issue on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10.  This isn't offically supported, though.  Windows 7 users will need to [install .NET 4.6.1 or newer](https://msdn.microsoft.com/en-us/library/bb822049.aspx) if it's not already present using, for example, the [.NET 4.7.1 web installer](https://www.microsoft.com/en-us/download/details.aspx?id=56115).
+* Carnassial and the template editor should also run on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10.  This isn't offically supported, though.
 * Windows Vista SP2 and earlier and all 32 bit versions of Windows are not supported.  Carnassial is 64 bit only and has minor reliance on Windows 7 common dialogs.
 * Visual Studio 2017 or newer is required for development.
 * nuget packages, as referenced by the solution, and libjpeg-turbo, which is managed manually (see below)
 
-Screen sizes of 1600 x 900 or larger are recommended.
-
 A nuget package for libjpeg-turbo exists but is not being maintained so the library is comitted to the Carnassial repro.  To update, download the [libjpeg-turbo](https://libjpeg-turbo.org/) VC and VC64 installers, copy the new bits to Native\libjpeg-turbo\include and lib, and update additional dependencies in Native.vcxproj's linker input settings to point to the new .lib.
+
+Screen sizes of 1600 x 900 or larger are recommended.  Carnassial should run on any x64 processor but optimization effort generally targets hardware from the last five years.
+
+Known limitations with Windows 7:
+
+* The Recycle Bin part of age out of automatic .tdb and .ddb backups and deletion of files is untested.
+* Users may need to [install .NET 4.6.1 or newer](https://msdn.microsoft.com/en-us/library/bb822049.aspx) if it's not already present using, for example, the [.NET 4.7.1 web installer](https://www.microsoft.com/en-us/download/details.aspx?id=56115).
 
 ### History
 Carnassial is named for [carnassials](https://en.wikipedia.org/wiki/Carnassial) as its function is analogous (though unfortunately it lacks the teeth's self-sharpening properties).

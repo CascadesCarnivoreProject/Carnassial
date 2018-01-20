@@ -672,56 +672,17 @@ namespace Carnassial
                 this.DataHandler.ImageCache.Current.PropertyChanged -= this.OnFileFieldEdit;
 
                 Mouse.OverrideCursor = Cursors.Wait;
-                this.DataHandler.IsProgrammaticUpdate = true;
-                FileTuplesWithID filesToUpdate = new FileTuplesWithID(Constant.DatabaseColumn.DeleteFlag, Constant.DatabaseColumn.ImageQuality);
-                List<long> fileIDsToDropFromDatabase = new List<long>();
-                foreach (ImageRow file in filesToDelete)
-                {
-                    // invalidate cache so FileNoLongerAvailable placeholder will be displayed
-                    this.DataHandler.ImageCache.TryInvalidate(file.ID);
-                    if (file.TryMoveFileToDeletedFilesFolder(this.FolderPath) == false)
-                    {
-                        // attempt to soft delete file failed so leave the file as marked for deletion
-                        continue;
-                    }
-
-                    if (deleteFilesAndData)
-                    {
-                        // mark the file row for dropping
-                        fileIDsToDropFromDatabase.Add(file.ID);
-                    }
-                    else
-                    {
-                        // as only the file was deleted, change image quality to FileNoLongerAvailable and clear the delete flag
-                        file.DeleteFlag = false;
-                        file.ImageQuality = FileSelection.NoLongerAvailable;
-                        filesToUpdate.Add(file.ID, Boolean.FalseString, FileSelection.NoLongerAvailable.ToString());
-                    }
-                }
-
+                this.DataHandler.DeleteFiles(filesToDelete, deleteFilesAndData);
                 if (deleteFilesAndData)
                 {
-                    // drop files
-                    Debug.Assert(fileIDsToDropFromDatabase.Count > 0, "No files are being deleted.");
-                    Debug.Assert(filesToUpdate.RowCount == 0, "Files to update unexpectedly present.");
-                    this.DataHandler.FileDatabase.DeleteFilesAndMarkers(fileIDsToDropFromDatabase);
-
                     // reload the file data table and find and show the file closest to the last one shown
                     await this.SelectFilesAndShowFileAsync(currentFileID, this.DataHandler.FileDatabase.ImageSet.FileSelection);
                 }
                 else
                 {
-                    // update file properties
-                    Debug.Assert(fileIDsToDropFromDatabase.Count > 0, "Files to drop from database unexpectedly present.");
-                    Debug.Assert(filesToUpdate.RowCount > 0, "No files are being to be deleted.");
-                    this.DataHandler.FileDatabase.UpdateFiles(filesToUpdate);
-
                     // display the updated properties on the current file or, if data for the current file was dropped, the next one
                     await this.ShowFileAsync(this.DataHandler.FileDatabase.GetFileOrNextFileIndex(currentFileID));
                 }
-
-                this.OnBulkEdit(this, null);
-                this.DataHandler.IsProgrammaticUpdate = false;
                 Mouse.OverrideCursor = null;
             }
         }

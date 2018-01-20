@@ -881,12 +881,12 @@ namespace Carnassial.UnitTests
             fileExpectation.Verify(file, imageSetTimeZone);
 
             // move file
-            Assert.IsTrue(file.TryMoveToFolder(fileDatabase.FolderPath, subfolderPath, false));
+            Assert.IsTrue(file.TryMoveFileToFolder(fileDatabase.FolderPath, subfolderPath));
             fileExpectation.RelativePath = Path.GetFileName(subfolderPath);
             fileExpectation.Verify(file, imageSetTimeZone);
 
             // move file back
-            Assert.IsTrue(file.TryMoveToFolder(fileDatabase.FolderPath, fileDatabase.FolderPath, false));
+            Assert.IsTrue(file.TryMoveFileToFolder(fileDatabase.FolderPath, fileDatabase.FolderPath));
             fileExpectation.RelativePath = null;
             fileExpectation.Verify(file, imageSetTimeZone);
         }

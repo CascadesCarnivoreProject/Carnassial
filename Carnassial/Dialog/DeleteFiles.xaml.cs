@@ -47,25 +47,23 @@ namespace Carnassial.Dialog
             if (deleteCurrentFileOnly)
             {
                 string imageOrVideo = filesToDelete[0].IsVideo ? "video" : "image";
+
+                this.Message.Result = String.Format("\u2022 The deleted {0} will be moved to the Recycle Bin.{1}", imageOrVideo, Environment.NewLine);
                 if (deleteFileAndData == false)
                 {
                     // delete the current file, but not its data
                     this.Message.Title = String.Format("Delete the current {0} but not its data?", imageOrVideo);
                     this.Message.What = String.Format("Deletes the current {0} (shown below) but not its data.", imageOrVideo);
-                    this.Message.Result = String.Format("\u2022 The deleted {0} will be backed up in a subfolder named {1}.{2}", imageOrVideo, Constant.File.DeletedFilesFolder, Environment.NewLine);
-                    this.Message.Result += String.Format("\u2022 A placeholder {0} will be shown when you try to view a deleted {0}.", imageOrVideo);
-                    this.Message.Hint = String.Format("\u2022 Restore the deleted {0} by manually moving it back to its original location, or{1}", imageOrVideo, Environment.NewLine);
-                    this.Message.Hint += String.Format("\u2022 Permanently delete the {0} by deleting it from the {1} folder.", imageOrVideo, Constant.File.DeletedFilesFolder);
+                    this.Message.Result += String.Format("\u2022 Data for the {0} will be retained and a placeholder image shown when viewing the deleted {0}.", imageOrVideo);
                 }
                 else
                 {
                     // delete the current file and its data
-                    this.Message.Title = String.Format("Delete the current {0} and its data", imageOrVideo);
+                    this.Message.Title = String.Format("Delete the current {0} and its data?", imageOrVideo);
                     this.Message.What = String.Format("Deletes the current {0} (shown below) and the data associated with that {0}.", imageOrVideo);
-                    this.Message.Result = String.Format("\u2022 The deleted {0} will be backed up in a subfolder named {1}.{2}", imageOrVideo, Constant.File.DeletedFilesFolder, Environment.NewLine);
-                    this.Message.Result += String.Format("\u2022 However, the data associated with that {0} will be permanently deleted.", imageOrVideo);
-                    this.Message.Hint = String.Format("You can permanently delete the {0} by deleting it from the {1} folder.", imageOrVideo, Constant.File.DeletedFilesFolder);
+                    this.Message.Result += String.Format("\u2022 The data associated with that {0} will be permanently deleted.", imageOrVideo);
                 }
+                this.Message.Hint = String.Format("\u2022 The deleted {0} can be restored from the recyle bin.", imageOrVideo);
             }
             else
             {
@@ -76,15 +74,13 @@ namespace Carnassial.Dialog
                 {
                     this.Message.Result += "\u2022 Deleting " + numberOfFilesToDelete.ToString() + " files will take a few moments. Please be patient." + Environment.NewLine;
                 }
-                this.Message.Result += String.Format("\u2022 The deleted files will be backed up in a subfolder named {0}.{1}", Constant.File.DeletedFilesFolder, Environment.NewLine);
+                this.Message.Result += String.Format("\u2022 The deleted files will be moved to the Recycle Bin.{0}", Environment.NewLine);
 
                 if (deleteFileAndData == false)
                 {
                     // delete files which the delete flag set but not their data
                     this.Message.What = "Deletes the " + numberOfFilesToDelete.ToString() + " files marked for deletion (shown below) in this selection, but not the data entered for them.";
                     this.Message.Result += "\u2022 A placeholder image will be shown when you view a deleted file.";
-                    this.Message.Hint = "\u2022 Restore deleted files by manually copying or moving them back to their original location, or" + Environment.NewLine;
-                    this.Message.Hint += String.Format("\u2022 Permanently delete the files by deleting them from the {0} folder", Constant.File.DeletedFilesFolder);
                 }
                 else
                 {
@@ -92,8 +88,8 @@ namespace Carnassial.Dialog
                     this.Message.Title = "Delete " + numberOfFilesToDelete.ToString() + " images and videos marked for deletion";
                     this.Message.What = "Deletes images and videos marked for deletion (shown below), along with the data entered for them.";
                     this.Message.Result += "\u2022 The data for these files will be permanently deleted.";
-                    this.Message.Hint = String.Format("You can permanently delete the files by deleting the {0} folder.", Constant.File.DeletedFilesFolder);
                 }
+                this.Message.Hint = "\u2022 The deleted files can be restored from the recyle bin.";
             }
             this.Message.Result += "\u2022 The changes cannot be undone.";
             this.Title = this.Message.Title;

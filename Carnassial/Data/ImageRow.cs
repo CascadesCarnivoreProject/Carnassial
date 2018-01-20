@@ -1,5 +1,6 @@
 ﻿using Carnassial.Control;
 using Carnassial.Database;
+using Carnassial.Interop;
 using Carnassial.Native;
 using Carnassial.Util;
 using MetadataExtractor;
@@ -14,7 +15,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Directory = System.IO.Directory;
 using MetadataDirectory = MetadataExtractor.Directory;
 
 namespace Carnassial.Data
@@ -335,15 +335,15 @@ namespace Carnassial.Data
             }
         }
 
-        public FileInfo GetFileInfo(string rootFolderPath)
+        public FileInfo GetFileInfo(string imageSetFolderPath)
         {
-            return new FileInfo(this.GetFilePath(rootFolderPath));
+            return new FileInfo(this.GetFilePath(imageSetFolderPath));
         }
 
-        public string GetFilePath(string rootFolderPath)
+        public string GetFilePath(string imageSetFolderPath)
         {
             // see RelativePath remarks in constructor
-            return Path.Combine(rootFolderPath, this.GetRelativePath());
+            return Path.Combine(imageSetFolderPath, this.GetRelativePath());
         }
 
         public static string GetPropertyName(string dataLabel)
@@ -401,19 +401,19 @@ namespace Carnassial.Data
             return true;
         }
 
-        public async Task<MemoryImage> LoadAsync(string baseFolderPath)
+        public async Task<MemoryImage> LoadAsync(string imageSetFolderPath)
         {
-            return await this.LoadAsync(baseFolderPath, null);
+            return await this.LoadAsync(imageSetFolderPath, null);
         }
 
         // 8MP average performance (n ~= 200), milliseconds
         // scale factor  1.0  1/2   1/4    1/8
         //               110  76.3  55.9   46.1
-        public async virtual Task<MemoryImage> LoadAsync(string baseFolderPath, Nullable<int> expectedDisplayWidth)
+        public async virtual Task<MemoryImage> LoadAsync(string imageSetFolderPath, Nullable<int> expectedDisplayWidth)
         {
             // Stopwatch stopwatch = new Stopwatch();
             // stopwatch.Start();
-            string path = this.GetFilePath(baseFolderPath);
+            string path = this.GetFilePath(imageSetFolderPath);
             if (!File.Exists(path))
             {
                 return Constant.Images.FileNoLongerAvailable.Value;
@@ -445,7 +445,7 @@ namespace Carnassial.Data
             }
         }
 
-        public void SetDateTimeOffsetFromFileInfo(string folderPath, TimeZoneInfo imageSetTimeZone)
+        public void SetDateTimeOffsetFromFileInfo(string imageSetFolderPath, TimeZoneInfo imageSetTimeZone)
         {
             // populate new image's default date and time
             // Typically the creation time is the time a file was created in the local file system and the last write time when it was
@@ -453,29 +453,14 @@ namespace Carnassial.Data
             // in the image file on the computer having a write time which is before its creation time.  Check both and take the lesser 
             // of the two to provide a best effort default.  In most cases it's desirable to see if a more accurate time can be obtained
             // from the image's EXIF metadata.
-            FileInfo fileInfo = this.GetFileInfo(folderPath);
+            FileInfo fileInfo = this.GetFileInfo(imageSetFolderPath);
             DateTime earliestTimeLocal = fileInfo.CreationTime < fileInfo.LastWriteTime ? fileInfo.CreationTime : fileInfo.LastWriteTime;
             this.DateTimeOffset = new DateTimeOffset(earliestTimeLocal);
         }
 
-        /// <summary>
-        /// Move corresponding file to the deleted files folder.
-        /// </summary>
-        public bool TryMoveFileToDeletedFilesFolder(string folderPath)
+        public bool TryMoveFileToFolder(string imageSetFolderPath, string destinationFolderPath)
         {
-           // create the deleted files folder if necessary
-            string deletedFilesFolderPath = Path.Combine(folderPath, Constant.File.DeletedFilesFolder);
-            if (!Directory.Exists(deletedFilesFolderPath))
-            {
-                Directory.CreateDirectory(deletedFilesFolderPath);
-            }
-
-            return this.TryMoveToFolder(folderPath, deletedFilesFolderPath, true);
-        }
-
-        public bool TryMoveToFolder(string folderPath, string destinationFolderPath, bool isSoftDelete)
-        {
-            string sourceFilePath = this.GetFilePath(folderPath);
+            string sourceFilePath = this.GetFilePath(imageSetFolderPath);
             if (!File.Exists(sourceFilePath))
             {
                 // nothing to do if the source file doesn't exist
@@ -485,56 +470,39 @@ namespace Carnassial.Data
             string destinationFilePath = Path.Combine(destinationFolderPath, this.FileName);
             if (String.Equals(sourceFilePath, destinationFilePath, StringComparison.OrdinalIgnoreCase))
             {
-                // nothing to do if the file is already at the desired location
+                // nothing to do if the source and destination locations are the same
                 return true;
             }
 
             if (File.Exists(destinationFilePath))
             {
                 // can't move file since one with the same name already exists at the destination
-                if (isSoftDelete == false)
-                {
-                    return false;
-                }
-
-                // delete the destination file if it already exists since File.Move() doesn't allow overwriting
-                try
-                {
-                    File.Delete(sourceFilePath);
-                    return true;
-                }
-                catch (IOException exception)
-                {
-                    Debug.Fail(exception.ToString());
-                    return false;
-                }
+                return false;
             }
 
             try
             {
                 File.Move(sourceFilePath, destinationFilePath);
-                if (isSoftDelete == false)
-                {
-                    string relativePath = NativeMethods.GetRelativePathFromDirectoryToDirectory(folderPath, destinationFolderPath);
-                    if (relativePath == String.Empty || relativePath == ".")
-                    {
-                        relativePath = null;
-                    }
-                    this.RelativePath = relativePath;
-                }
-                return true;
             }
             catch (IOException exception)
             {
                 Debug.Fail(exception.ToString());
                 return false;
             }
+
+            string relativePath = NativeMethods.GetRelativePathFromDirectoryToDirectory(imageSetFolderPath, destinationFolderPath);
+            if (relativePath == String.Empty || relativePath == ".")
+            {
+                relativePath = null;
+            }
+            this.RelativePath = relativePath;
+            return true;
         }
 
-        public DateTimeAdjustment TryReadDateTimeFromMetadata(string folderPath, TimeZoneInfo imageSetTimeZone)
+        public DateTimeAdjustment TryReadDateTimeFromMetadata(string imageSetFolderPath, TimeZoneInfo imageSetTimeZone)
         {
             IReadOnlyList<MetadataDirectory> metadataDirectories;
-            string filePath = this.GetFilePath(folderPath);
+            string filePath = this.GetFilePath(imageSetFolderPath);
             try
             {
                 metadataDirectories = ImageMetadataReader.ReadMetadata(filePath);
@@ -559,7 +527,7 @@ namespace Carnassial.Data
                 }
 
                 // if this is a video file try to fall back to an associated image file if one's available due to the camera operating in hybrid mode
-                if (this.TryReadDateTimeFromPreviousJpeg(folderPath, out dateTimeOriginal) == false)
+                if (this.TryReadDateTimeFromPreviousJpeg(imageSetFolderPath, out dateTimeOriginal) == false)
                 {
                     return DateTimeAdjustment.None;
                 }
@@ -636,7 +604,7 @@ namespace Carnassial.Data
         /// <remarks>
         /// This algorithm works for file numbering on Bushnell Trophy HD cameras using hybrid video, possibly others.
         /// </remarks>
-        private bool TryReadDateTimeFromPreviousJpeg(string folderPath, out DateTime dateTimeOriginal)
+        private bool TryReadDateTimeFromPreviousJpeg(string imageSetFolderPath, out DateTime dateTimeOriginal)
         {
             dateTimeOriginal = Constant.ControlDefault.DateTimeValue.UtcDateTime;
 
@@ -655,7 +623,7 @@ namespace Carnassial.Data
                 previousFileNameWithoutExtension = (fileNumber - 1).ToString("00000000");
             }
             
-            string previousFilePath = Path.Combine(folderPath, this.RelativePath, previousFileNameWithoutExtension + Constant.File.JpgFileExtension);
+            string previousFilePath = Path.Combine(imageSetFolderPath, this.RelativePath, previousFileNameWithoutExtension + Constant.File.JpgFileExtension);
             if (File.Exists(previousFilePath) == false)
             {
                 if (fileNameWithoutExtension.EndsWith("0001") == false)
@@ -674,7 +642,7 @@ namespace Carnassial.Data
 
                 // retry previous image check as day did roll over
                 previousFileNameWithoutExtension = maybePreviousDay.DateTime.ToString("MMdd") + "0999";
-                previousFilePath = Path.Combine(folderPath, this.RelativePath, previousFileNameWithoutExtension + Constant.File.JpgFileExtension);
+                previousFilePath = Path.Combine(imageSetFolderPath, this.RelativePath, previousFileNameWithoutExtension + Constant.File.JpgFileExtension);
                 if (File.Exists(previousFilePath) == false)
                 {
                     return false;
