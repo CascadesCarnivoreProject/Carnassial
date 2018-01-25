@@ -12,7 +12,6 @@ namespace Carnassial.Dialog
     /// </summary>
     public partial class ChooseFileDatabase : Window
     {
-        // This will contain the file selected by the user
         public string SelectedFile { get; set; }
 
         public ChooseFileDatabase(string[] fileDatabasePaths, string templateDatabasePath, Window owner)

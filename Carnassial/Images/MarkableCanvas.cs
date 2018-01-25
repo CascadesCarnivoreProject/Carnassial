@@ -620,7 +620,7 @@ namespace Carnassial.Images
                 Point constrainedMousePosition = Mouse.GetPosition(this.ImageToDisplay);
                 constrainedMousePosition.X = Math.Max(0, Math.Min(constrainedMousePosition.X, this.ImageToDisplay.ActualWidth));
                 constrainedMousePosition.Y = Math.Max(0, Math.Min(constrainedMousePosition.Y, this.ImageToDisplay.ActualHeight));
-                
+
                 this.imageToDisplayScale.CenterX = constrainedMousePosition.X;
                 this.imageToDisplayScale.CenterY = constrainedMousePosition.Y;
 
@@ -715,7 +715,10 @@ namespace Carnassial.Images
         {
             if (videoFile.Exists == false)
             {
-                this.SetNewImage(Constant.Images.FileNoLongerAvailable.Value, markers);
+                using (MemoryImage fileNoLongerAvailable = new MemoryImage(Constant.Images.FileNoLongerAvailable.Value))
+                {
+                    this.SetNewImage(fileNoLongerAvailable, markers);
+                }
                 return;
             }
 

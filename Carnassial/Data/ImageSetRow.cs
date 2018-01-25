@@ -77,7 +77,7 @@ namespace Carnassial.Data
                 this.ID);
         }
 
-        public TimeZoneInfo GetTimeZone()
+        public TimeZoneInfo GetTimeZoneInfo()
         {
             return TimeZoneInfo.FindSystemTimeZoneById(this.TimeZone);
         }

@@ -1,5 +1,6 @@
 ﻿using Carnassial.Control;
 using Carnassial.Database;
+using Carnassial.Images;
 using Carnassial.Interop;
 using Carnassial.Native;
 using Carnassial.Util;
@@ -9,7 +10,6 @@ using MetadataExtractor.Formats.Exif.Makernotes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -22,28 +22,40 @@ namespace Carnassial.Data
     /// <summary>
     /// A row in the file database representing a single image (see also <seealso cref="VideoRow"/>).
     /// </summary>
-    public class ImageRow : DataRowBackedObject, INotifyPropertyChanged
+    public class ImageRow : INotifyPropertyChanged
     {
-        public ImageRow(DataRow row)
-            : base(row)
-        {
-        }
+        private DateTimeOffset dateTimeOffset;
+        private bool deleteFlag;
+        private string fileName;
+        private FileSelection imageQuality;
+        private string relativePath;
+        private Dictionary<string, string> valuesByDataLabel;
 
-        public DateTime DateTime
+        public bool HasChanges { get; private set; }
+        public long ID { get; set; }
+
+        public ImageRow(string fileName, string relativePath)
         {
-            get { return this.Row.GetDateTimeField(Constant.DatabaseColumn.DateTime); }
+            this.dateTimeOffset = Constant.ControlDefault.DateTimeValue;
+            this.deleteFlag = false;
+            this.fileName = fileName;
+            this.HasChanges = false;
+            this.ID = Constant.Database.InvalidID;
+            this.imageQuality = FileSelection.Ok;
+            this.relativePath = relativePath;
+            this.valuesByDataLabel = new Dictionary<string, string>();
         }
 
         public DateTimeOffset DateTimeOffset
         {
             get
             {
-                return DateTimeHandler.FromDatabaseDateTimeOffset(this.DateTime, this.UtcOffset);
+                return this.dateTimeOffset;
             }
             set
             {
-                this.Row.SetField(Constant.DatabaseColumn.DateTime, value.UtcDateTime);
-                this.Row.SetUtcOffsetField(Constant.DatabaseColumn.UtcOffset, value.Offset);
+                this.HasChanges |= this.dateTimeOffset != value;
+                this.dateTimeOffset = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DateTimeOffset)));
             }
         }
@@ -52,11 +64,12 @@ namespace Carnassial.Data
         {
             get
             {
-                return this.Row.GetBooleanField(Constant.DatabaseColumn.DeleteFlag);
+                return this.deleteFlag;
             }
             set
             {
-                this.Row.SetField(Constant.DatabaseColumn.DeleteFlag, value);
+                this.HasChanges |= this.deleteFlag != value;
+                this.deleteFlag = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DeleteFlag)));
             }
         }
@@ -65,11 +78,12 @@ namespace Carnassial.Data
         {
             get
             {
-                return this.Row.GetStringField(Constant.DatabaseColumn.File);
+                return this.fileName;
             }
             set
             {
-                this.Row.SetField(Constant.DatabaseColumn.File, value);
+                this.HasChanges |= this.fileName != value;
+                this.fileName = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.FileName)));
             }
         }
@@ -78,7 +92,7 @@ namespace Carnassial.Data
         {
             get
             {
-                return this.Row.GetEnumField<FileSelection>(Constant.DatabaseColumn.ImageQuality);
+                return this.imageQuality;
             }
             set
             {
@@ -88,10 +102,12 @@ namespace Carnassial.Data
                     case FileSelection.Dark:
                     case FileSelection.NoLongerAvailable:
                     case FileSelection.Ok:
-                        this.Row.SetField<FileSelection>(Constant.DatabaseColumn.ImageQuality, value);
+                    case FileSelection.Video:
+                        this.HasChanges |= this.imageQuality != value;
+                        this.imageQuality = value;
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException(nameof(value), String.Format("{0} is not an ImageQuality.  ImageQuality must be one of CorruptFile, Dark, FileNoLongerAvailable, or Ok.", value));
+                        throw new ArgumentOutOfRangeException(nameof(value), String.Format("{0} is not a valid {1}.  {1} must be one of {2}, {3}, {4}, {5}, or {6}.", value, nameof(FileSelection), FileSelection.Corrupt, FileSelection.Dark, FileSelection.NoLongerAvailable, FileSelection.Ok, FileSelection.Video));
                 }
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.ImageQuality)));
             }
@@ -108,11 +124,12 @@ namespace Carnassial.Data
         {
             get
             {
-                return this.Row.GetStringField(Constant.DatabaseColumn.RelativePath);
+                return this.relativePath;
             }
             set
             {
-                this.Row.SetField(Constant.DatabaseColumn.RelativePath, value);
+                this.HasChanges |= this.relativePath != value;
+                this.relativePath = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.RelativePath)));
             }
         }
@@ -142,7 +159,7 @@ namespace Carnassial.Data
                     case Constant.DatabaseColumn.UtcOffset:
                         throw new NotSupportedException("Access UtcOffset through DateTimeOffset.");
                     default:
-                        return this.Row.GetStringField(propertyName);
+                        return this.valuesByDataLabel[propertyName];
                 }
             }
             set
@@ -176,37 +193,31 @@ namespace Carnassial.Data
                         throw new NotSupportedException("UtcOffset must be set through DateTimeOffset.");
                     // user defined controls
                     default:
-                        this.Row.SetField(propertyName, (string)value);
+                        string stringValue = (string)value;
+                        if (this.valuesByDataLabel.TryGetValue(propertyName, out string currentValue))
+                        {
+                            this.HasChanges |= currentValue != stringValue;
+                        }
+                        this.valuesByDataLabel[propertyName] = stringValue;
                         this.PropertyChanged?.Invoke(this, new IndexedPropertyChangedEventArgs<string>(propertyName));
                         break;
                 }
             }
         }
 
+        public DateTime UtcDateTime
+        {
+            get { return this.dateTimeOffset.UtcDateTime; }
+        }
+
         public TimeSpan UtcOffset
         {
-            get { return this.Row.GetUtcOffsetField(Constant.DatabaseColumn.UtcOffset); }
+            get { return this.dateTimeOffset.Offset; }
         }
 
-        public Dictionary<string, object> AsDictionary()
+        public void AcceptChanges()
         {
-            Dictionary<string, object> values = new Dictionary<string, object>();
-            foreach (DataColumn column in this.Row.Table.Columns)
-            {
-                if (column.ColumnName == Constant.DatabaseColumn.UtcOffset)
-                {
-                    // UTC offset is included in the DateTimeOffset returned for DateTime
-                    continue;
-                }
-                string propertyName = ImageRow.GetPropertyName(column.ColumnName);
-                values.Add(propertyName, this[propertyName]);
-            }
-            return values;
-        }
-
-        public FileTuplesWithID CreateDateTimeUpdate()
-        {
-            return ImageRow.CreateDateTimeUpdate(new List<ImageRow>() { this });
+            this.HasChanges = false;
         }
 
         public static FileTuplesWithID CreateDateTimeUpdate(IEnumerable<ImageRow> files)
@@ -217,7 +228,7 @@ namespace Carnassial.Data
                 Debug.Assert(file != null, "files contains null.");
                 Debug.Assert(file.ID != Constant.Database.InvalidID, "CreateDateTimeUpdate() should only be called on ImageRows which are database backed.");
 
-                dateTimeTuples.Add(file.ID, file.DateTime, DateTimeHandler.ToDatabaseUtcOffset(file.UtcOffset));
+                dateTimeTuples.Add(file.ID, file.UtcDateTime, DateTimeHandler.ToDatabaseUtcOffset(file.UtcOffset));
             }
 
             return dateTimeTuples;
@@ -225,15 +236,16 @@ namespace Carnassial.Data
 
         public FileTuplesWithID CreateUpdate()
         {
-            List<string> columnsToUpdate = new List<string>(this.Row.Table.Columns.Count - 1);
-            foreach (DataColumn column in this.Row.Table.Columns)
+            List<string> columnsToUpdate = new List<string>(Constant.Control.StandardControls.Count + this.valuesByDataLabel.Count)
             {
-                if (column.ColumnName == Constant.DatabaseColumn.ID)
-                {
-                    continue;
-                }
-                columnsToUpdate.Add(column.ColumnName);
-            }
+                Constant.DatabaseColumn.DateTime,
+                Constant.DatabaseColumn.DeleteFlag,
+                Constant.DatabaseColumn.File,
+                Constant.DatabaseColumn.ImageQuality,
+                Constant.DatabaseColumn.RelativePath,
+                Constant.DatabaseColumn.UtcOffset
+            };
+            columnsToUpdate.AddRange(this.valuesByDataLabel.Keys);
 
             FileTuplesWithID tuples = new FileTuplesWithID(columnsToUpdate);
             List<object> values = new List<object>(columnsToUpdate.Count);
@@ -250,7 +262,7 @@ namespace Carnassial.Data
             switch (dataLabel)
             {
                 case Constant.DatabaseColumn.DateTime:
-                    return DateTimeHandler.ToDatabaseDateTimeString(this.DateTime);
+                    return DateTimeHandler.ToDatabaseDateTimeString(this.UtcDateTime);
                 case Constant.DatabaseColumn.DeleteFlag:
                     return this.DeleteFlag ? Boolean.TrueString : Boolean.FalseString;
                 case nameof(this.DateTimeOffset):
@@ -266,7 +278,7 @@ namespace Carnassial.Data
                 case Constant.DatabaseColumn.UtcOffset:
                     return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
                 default:
-                    return this.Row.GetStringField(dataLabel);
+                    return this.valuesByDataLabel[dataLabel];
             }
         }
 
@@ -320,7 +332,7 @@ namespace Carnassial.Data
                     return this.GetDisplayDateTime();
                 case Constant.DatabaseColumn.DeleteFlag:
                     return this.DeleteFlag ? Boolean.TrueString : Boolean.FalseString;
-                case Constant.DatabaseColumn.File:
+                case nameof(this.FileName):
                     return this.FileName;
                 case Constant.DatabaseColumn.ID:
                     return this.ID.ToString();
@@ -331,7 +343,7 @@ namespace Carnassial.Data
                 case Constant.DatabaseColumn.UtcOffset:
                     return DateTimeHandler.ToDisplayUtcOffsetString(this.UtcOffset);
                 default:
-                    return this.Row.GetStringField(control.DataLabel);
+                    return this.valuesByDataLabel[control.DataLabel];
             }
         }
 
@@ -376,20 +388,43 @@ namespace Carnassial.Data
             switch (dataLabel)
             {
                 case Constant.DatabaseColumn.DateTime:
-                    return this.DateTime;
+                    return this.UtcDateTime;
                 case nameof(this.DateTimeOffset):
-                    throw new NotSupportedException(String.Format("Database values for {0} and {1} must be accessed through {2}.", nameof(this.DateTime), nameof(this.UtcOffset), nameof(this.DateTimeOffset)));
+                    throw new NotSupportedException(String.Format("Database values for {0} and {1} must be accessed through {2}.", nameof(this.UtcDateTime), nameof(this.UtcOffset), nameof(this.DateTimeOffset)));
                 case Constant.DatabaseColumn.DeleteFlag:
                     return this.DeleteFlag.ToString();
+                case Constant.DatabaseColumn.File:
+                    return this.FileName;
                 case Constant.DatabaseColumn.ID:
                     return this.ID;
                 case Constant.DatabaseColumn.ImageQuality:
                     return this.ImageQuality.ToString();
+                case Constant.DatabaseColumn.RelativePath:
+                    return this.RelativePath;
                 case Constant.DatabaseColumn.UtcOffset:
                     return DateTimeHandler.ToDatabaseUtcOffset(this.UtcOffset);
                 default:
-                    return this.Row.GetStringField(dataLabel);
+                    return this.valuesByDataLabel[dataLabel];
             }
+        }
+
+        public Dictionary<string, object> GetValues()
+        {
+            // UtcDateTime and UtcOffset aren't included as they're portions of DateTimeOffset
+            Dictionary<string, object> values = new Dictionary<string, object>()
+            {
+                { nameof(this.DateTimeOffset), this.DateTimeOffset },
+                { Constant.DatabaseColumn.DeleteFlag, this.DeleteFlag },
+                { nameof(this.FileName), this.FileName },
+                { Constant.DatabaseColumn.ID, this.ID },
+                { Constant.DatabaseColumn.ImageQuality, this.ImageQuality },
+                { Constant.DatabaseColumn.RelativePath, this.RelativePath },
+            };
+            foreach (KeyValuePair<string, string> value in this.valuesByDataLabel)
+            {
+                values[value.Key] = value.Value;
+            }
+            return values;
         }
 
         public bool IsDisplayable()
@@ -401,51 +436,69 @@ namespace Carnassial.Data
             return true;
         }
 
+        /// <summary>
+        /// Assuming this file's name in the format MMddnnnn, where nnnn is the image number, make a best effort to find MMddnnnn - 1.jpg
+        /// and pull its EXIF date time field if it does.  It's assumed nnnn is ones based, rolls over at 0999, and the previous file
+        /// is in the same directory.
+        /// </summary>
+        /// <remarks>
+        /// This algorithm works for file numbering on Bushnell Trophy HD cameras using hybrid video, possibly others.
+        /// </remarks>
+        public bool IsPreviousJpegName(string fileName)
+        {
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(this.FileName);
+            string previousFileNameWithoutExtension;
+            if (fileNameWithoutExtension.EndsWith("0001"))
+            {
+                previousFileNameWithoutExtension = fileNameWithoutExtension.Substring(0, 4) + "0999";
+            }
+            else
+            {
+                if (Int32.TryParse(fileNameWithoutExtension, out int fileNumber) == false)
+                {
+                    return false;
+                }
+                previousFileNameWithoutExtension = (fileNumber - 1).ToString("00000000");
+            }
+
+            string previousJpegName = previousFileNameWithoutExtension + Constant.File.JpgFileExtension;
+            return String.Equals(previousJpegName, fileName, StringComparison.OrdinalIgnoreCase);
+        }
+
         public async Task<MemoryImage> LoadAsync(string imageSetFolderPath)
         {
             return await this.LoadAsync(imageSetFolderPath, null);
         }
 
-        // 8MP average performance (n ~= 200), milliseconds
-        // scale factor  1.0  1/2   1/4    1/8
-        //               110  76.3  55.9   46.1
         public async virtual Task<MemoryImage> LoadAsync(string imageSetFolderPath, Nullable<int> expectedDisplayWidth)
         {
+            string jpegPath = this.GetFilePath(imageSetFolderPath);
+            if (File.Exists(jpegPath) == false)
+            {
+                return new MemoryImage(Constant.Images.FileNoLongerAvailable.Value);
+            }
+
+            // 8MP average performance (n ~= 200), milliseconds
+            // scale factor  1.0  1/2   1/4    1/8
+            //               110  76.3  55.9   46.1
             // Stopwatch stopwatch = new Stopwatch();
             // stopwatch.Start();
-            string path = this.GetFilePath(imageSetFolderPath);
-            if (!File.Exists(path))
+            using (FileStream stream = new FileStream(jpegPath, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
             {
-                return Constant.Images.FileNoLongerAvailable.Value;
-            }
-
-            byte[] jpegBuffer;
-            using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1024 * 1024, FileOptions.SequentialScan))
-            {
-                if (fileStream.Length < Constant.Images.SmallestValidJpegSizeInBytes)
+                if (stream.Length < Constant.Images.SmallestValidJpegSizeInBytes)
                 {
-                    return Constant.Images.CorruptFile.Value;
+                    return new MemoryImage(Constant.Images.CorruptFile.Value);
                 }
-                jpegBuffer = new byte[fileStream.Length];
-                await fileStream.ReadAsync(jpegBuffer, 0, jpegBuffer.Length);
-            }
-
-            try
-            {
-                // MemoryImage assumes the buffer is not empty
-                Debug.Assert(jpegBuffer.Length >= Constant.Images.SmallestValidJpegSizeInBytes, "Unexpectedly small JPEG buffer.");
-                MemoryImage image = new MemoryImage(jpegBuffer, expectedDisplayWidth);
+                byte[] buffer = new byte[stream.Length];
+                await stream.ReadAsync(buffer, 0, buffer.Length);
+                MemoryImage image = new MemoryImage(buffer, expectedDisplayWidth);
                 // stopwatch.Stop();
                 // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
                 return image;
             }
-            catch (ArgumentException)
-            {
-                return Constant.Images.CorruptFile.Value;
-            }
         }
 
-        public void SetDateTimeOffsetFromFileInfo(string imageSetFolderPath, TimeZoneInfo imageSetTimeZone)
+        public void SetDateTimeOffsetFromFileInfo(FileInfo fileInfo)
         {
             // populate new image's default date and time
             // Typically the creation time is the time a file was created in the local file system and the last write time when it was
@@ -453,9 +506,22 @@ namespace Carnassial.Data
             // in the image file on the computer having a write time which is before its creation time.  Check both and take the lesser 
             // of the two to provide a best effort default.  In most cases it's desirable to see if a more accurate time can be obtained
             // from the image's EXIF metadata.
-            FileInfo fileInfo = this.GetFileInfo(imageSetFolderPath);
+            Debug.Assert(fileInfo.Exists, "Attempt to read DateTimeOffset from nonexistent file.");
             DateTime earliestTimeLocal = fileInfo.CreationTime < fileInfo.LastWriteTime ? fileInfo.CreationTime : fileInfo.LastWriteTime;
             this.DateTimeOffset = new DateTimeOffset(earliestTimeLocal);
+        }
+
+        public ImageProperties TryGetThumbnailProperties(string imageSetFolderPath)
+        {
+            using (JpegImage jpeg = new JpegImage(this.GetFilePath(imageSetFolderPath)))
+            {
+                if (jpeg.TryGetMetadata())
+                {
+                    MemoryImage preallocatedThumbnail = null;
+                    return jpeg.GetThumbnailProperties(ref preallocatedThumbnail);
+                }
+                return new ImageProperties(MetadataReadResult.Failed);
+            }
         }
 
         public bool TryMoveFileToFolder(string imageSetFolderPath, string destinationFolderPath)
@@ -480,6 +546,7 @@ namespace Carnassial.Data
                 return false;
             }
 
+            // the file can't be moved if there's an open FileStream on it, so close any such stream
             try
             {
                 File.Move(sourceFilePath, destinationFilePath);
@@ -499,43 +566,18 @@ namespace Carnassial.Data
             return true;
         }
 
-        public DateTimeAdjustment TryReadDateTimeFromMetadata(string imageSetFolderPath, TimeZoneInfo imageSetTimeZone)
+        public MetadataReadResult TryReadDateTimeFromMetadata(IReadOnlyList<MetadataDirectory> metadataDirectories, TimeZoneInfo imageSetTimeZone)
         {
-            IReadOnlyList<MetadataDirectory> metadataDirectories;
-            string filePath = this.GetFilePath(imageSetFolderPath);
-            try
-            {
-                metadataDirectories = ImageMetadataReader.ReadMetadata(filePath);
-            }
-            catch (ImageProcessingException)
-            {
-                // typically this indicates a corrupt file
-                // Most commonly this is last file in the add as opening cameras to turn them off triggers them, resulting in a race condition between writing
-                // the file and the camera being turned off.
-                return DateTimeAdjustment.None;
-            }
             ExifSubIfdDirectory exifSubIfd = metadataDirectories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-
-            bool previousImageUsed = false;
-            DateTime dateTimeOriginal;
             if (exifSubIfd == null)
             {
                 // no EXIF information and no other plausible source of metadata
-                if (this.IsVideo == false)
-                {
-                    return DateTimeAdjustment.None;
-                }
-
-                // if this is a video file try to fall back to an associated image file if one's available due to the camera operating in hybrid mode
-                if (this.TryReadDateTimeFromPreviousJpeg(imageSetFolderPath, out dateTimeOriginal) == false)
-                {
-                    return DateTimeAdjustment.None;
-                }
-                previousImageUsed = true;
+                return MetadataReadResult.None;
             }
-            else if (exifSubIfd.TryGetDateTime(ExifSubIfdDirectory.TagDateTimeOriginal, out dateTimeOriginal) == false)
+
+            if (exifSubIfd.TryGetDateTime(ExifSubIfdDirectory.TagDateTimeOriginal, out DateTime dateTimeOriginal) == false)
             {
-                // camera doesn't conform to EXIF standard
+                // camera doesn't provide an EXIF standard DateTimeOriginal
                 // check for a Reconyx makernote
                 bool reconyxDateTimeOriginalFound = false;
                 ReconyxHyperFireMakernoteDirectory hyperfireMakernote = metadataDirectories.OfType<ReconyxHyperFireMakernoteDirectory>().FirstOrDefault();
@@ -554,127 +596,13 @@ namespace Carnassial.Data
 
                 if (reconyxDateTimeOriginalFound == false)
                 {
-                    return DateTimeAdjustment.None;
+                    return MetadataReadResult.None;
                 }
             }
 
             // measure the extent to which the file's current date time offset and image taken metadata are consistent
-            DateTimeOffset currentDateTime = this.DateTimeOffset;
-            DateTimeOffset exifDateTime = DateTimeHandler.CreateDateTimeOffset(dateTimeOriginal, imageSetTimeZone);
-            bool dateAdjusted = currentDateTime.Date != exifDateTime.Date;
-            bool timeAdjusted = currentDateTime.TimeOfDay != exifDateTime.TimeOfDay;
-            bool offsetAdjusted = currentDateTime.Offset != exifDateTime.Offset;
-            if (dateAdjusted || timeAdjusted || offsetAdjusted)
-            {
-                this.DateTimeOffset = exifDateTime;
-            }
-
-            // return extent of the time adjustment
-            DateTimeAdjustment dateTimeAdjustment = DateTimeAdjustment.None;
-            if (dateAdjusted)
-            {
-                dateTimeAdjustment |= DateTimeAdjustment.MetadataDate;
-            }
-            if (timeAdjusted)
-            {
-                dateTimeAdjustment |= DateTimeAdjustment.MetadataTime;
-            }
-            if (offsetAdjusted)
-            {
-                dateTimeAdjustment |= DateTimeAdjustment.ImageSetOffset;
-            }
-
-            if (dateAdjusted == false && timeAdjusted == false && offsetAdjusted == false)
-            {
-                dateTimeAdjustment |= DateTimeAdjustment.NoChange;
-            }
-            if (previousImageUsed)
-            {
-                dateTimeAdjustment |= DateTimeAdjustment.PreviousMetadata;
-            }
-
-            return dateTimeAdjustment;
-        }
-
-        /// <summary>
-        /// Assuming this file's name in the format MMddnnnn, where nnnn is the image number, make a best effort to find MMddnnnn - 1.jpg and pull 
-        /// its EXIF date time field if it does.  It's assumed nnnn is ones based, rolls over at 0999, and the previous file
-        /// is in the same directory.  If matching across directories is needed this logic can be hoisted to have database access.
-        /// </summary>
-        /// <remarks>
-        /// This algorithm works for file numbering on Bushnell Trophy HD cameras using hybrid video, possibly others.
-        /// </remarks>
-        private bool TryReadDateTimeFromPreviousJpeg(string imageSetFolderPath, out DateTime dateTimeOriginal)
-        {
-            dateTimeOriginal = Constant.ControlDefault.DateTimeValue.UtcDateTime;
-
-            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(this.FileName);
-            string previousFileNameWithoutExtension;
-            if (fileNameWithoutExtension.EndsWith("0001"))
-            {
-                previousFileNameWithoutExtension = fileNameWithoutExtension.Substring(0, 4) + "0999";
-            }
-            else
-            {
-                if (Int32.TryParse(fileNameWithoutExtension, out int fileNumber) == false)
-                {
-                    return false;
-                }
-                previousFileNameWithoutExtension = (fileNumber - 1).ToString("00000000");
-            }
-            
-            string previousFilePath = Path.Combine(imageSetFolderPath, this.RelativePath, previousFileNameWithoutExtension + Constant.File.JpgFileExtension);
-            if (File.Exists(previousFilePath) == false)
-            {
-                if (fileNameWithoutExtension.EndsWith("0001") == false)
-                {
-                    return false;
-                }
-
-                // check to see if the day rolled as well as the
-                // This requires image 999 to be producded just before midnight, which is unlikely but will happen sooner or later.
-                DateTimeOffset dateTime = this.DateTimeOffset;
-                DateTimeOffset maybePreviousDay = dateTime - Constant.Manufacturer.BushnellHybridVideoLag;
-                if (dateTime.Date == maybePreviousDay.Date)
-                {
-                    return false;
-                }
-
-                // retry previous image check as day did roll over
-                previousFileNameWithoutExtension = maybePreviousDay.DateTime.ToString("MMdd") + "0999";
-                previousFilePath = Path.Combine(imageSetFolderPath, this.RelativePath, previousFileNameWithoutExtension + Constant.File.JpgFileExtension);
-                if (File.Exists(previousFilePath) == false)
-                {
-                    return false;
-                }
-            }
-
-            IReadOnlyList<MetadataDirectory> metadataDirectories = ImageMetadataReader.ReadMetadata(previousFilePath);
-            ExifSubIfdDirectory exifSubIfd = metadataDirectories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-            if (exifSubIfd == null)
-            {
-                // previous image exists but doesn't have EXIF information
-                return false;
-            }
-
-            if (exifSubIfd.TryGetDateTime(ExifSubIfdDirectory.TagDateTimeOriginal, out dateTimeOriginal) == false)
-            {
-                // previous image EXIF doesn't have datetime information
-                return false;
-            }
-
-            // include an estimate of the trigger to video start lag if manufacturer information is available
-            ExifIfd0Directory exifIfd0 = metadataDirectories.OfType<ExifIfd0Directory>().FirstOrDefault();
-            if (exifIfd0 != null)
-            {
-                string make = exifIfd0.GetString(ExifSubIfdDirectory.TagMake);
-                if (String.Equals(make, Constant.Manufacturer.Bushnell, StringComparison.OrdinalIgnoreCase))
-                {
-                    dateTimeOriginal += Constant.Manufacturer.BushnellHybridVideoLag;
-                }
-            }
-
-            return true;
+            this.DateTimeOffset = DateTimeHandler.CreateDateTimeOffset(dateTimeOriginal, imageSetTimeZone);
+            return MetadataReadResult.DateTime;
         }
     }
 }

@@ -254,6 +254,19 @@ namespace Carnassial.Database
             }
         }
 
+        public TTable GetDataTableFromSelect<TTable>(SQLiteConnection connection, Select select) where TTable : ISQLiteTable, new()
+        {
+            using (SQLiteCommand command = select.CreateSelect(connection))
+            {
+                using (SQLiteDataReader reader = command.ExecuteReader())
+                {
+                    TTable table = new TTable();
+                    table.Load(reader);
+                    return table;
+                }
+            }
+        }
+
         public List<string> GetTableNames(SQLiteConnection connection)
         {
             using (SQLiteCommand command = new SQLiteCommand("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name", connection))

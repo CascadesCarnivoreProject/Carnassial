@@ -58,7 +58,7 @@ namespace Carnassial.Util
 
         private static string GetDotNetVersion()
         {
-            // adapted from https://msdn.microsoft.com/en-us/library/hh925568.aspx.
+            // adapted from https://msdn.microsoft.com/en-us/library/hh925568.aspx
             int release = 0;
             using (RegistryKey ndpKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(@"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\"))
             {
@@ -72,9 +72,17 @@ namespace Carnassial.Util
                 }
             }
 
+            if (release >= 461308)
+            {
+                return "4.7.1 or later";
+            }
+            if (release >= 460798)
+            {
+                return "4.7";
+            }
             if (release >= 394802)
             {
-                return "4.6.2 or later";
+                return "4.6.2";
             }
             if (release >= 394254)
             {
@@ -114,15 +122,6 @@ namespace Carnassial.Util
             return increment;
         }
 
-        public static ParallelOptions GetParallelOptions(int maximumDegreeOfParallelism)
-        {
-            ParallelOptions parallelOptions = new ParallelOptions()
-            {
-                MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, maximumDegreeOfParallelism)
-            };
-            return parallelOptions;
-        }
-
         public static TimeSpan Limit(TimeSpan value, TimeSpan minimum, TimeSpan maximum)
         {
             if (value > maximum)
@@ -134,19 +133,6 @@ namespace Carnassial.Util
                 value = minimum;
             }
             return value;
-        }
-
-        public static Dictionary<string, string> LoadMetadata(string filePath)
-        {
-            Dictionary<string, string> metadata = new Dictionary<string, string>();
-            foreach (MetadataDirectory metadataDirectory in ImageMetadataReader.ReadMetadata(filePath))
-            {
-                foreach (Tag metadataTag in metadataDirectory.Tags)
-                {
-                    metadata.Add(metadataDirectory.Name + "." + metadataTag.Name, metadataTag.Description);
-                }
-            }
-            return metadata;
         }
 
         public static bool IsDigits(string value)
@@ -169,7 +155,7 @@ namespace Carnassial.Util
                 if (droppedFiles != null && droppedFiles.Length == 1)
                 {
                     templateDatabasePath = droppedFiles[0];
-                    if (Path.GetExtension(templateDatabasePath) == Constant.File.TemplateFileExtension)
+                    if (templateDatabasePath.EndsWith(Constant.File.TemplateFileExtension, StringComparison.OrdinalIgnoreCase))
                     {
                         return true;
                     }

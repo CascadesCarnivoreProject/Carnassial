@@ -108,7 +108,7 @@ namespace Carnassial.UnitTests
                     Task<bool> loadFolder = null;
                     Dispatcher.CurrentDispatcher.Invoke(() =>
                     {
-                        loadFolder = carnassial.TryOpenTemplateAndLoadFoldersAsync(templateDatabaseFilePath);
+                        loadFolder = carnassial.TryOpenTemplateAndFileDatabaseAsync(templateDatabaseFilePath);
                     });
                     this.WaitForFolderLoadComplete(loadFolder);
 
@@ -200,7 +200,7 @@ namespace Carnassial.UnitTests
                     string newNote0Value = "note 0 new value";
                     string originalNote3Value = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note3];
                     string newNote3Value = "note 3 new value";
-                    Dictionary<string, object> multipleChanges = carnassial.DataHandler.ImageCache.Current.AsDictionary();
+                    Dictionary<string, object> multipleChanges = carnassial.DataHandler.ImageCache.Current.GetValues();
                     multipleChanges[TestConstant.DefaultDatabaseColumn.Note0] = newNote0Value;
                     multipleChanges[TestConstant.DefaultDatabaseColumn.Note3] = newNote3Value;
                     Assert.IsTrue(multipleChanges.Count == TestConstant.DefaultFileDataColumns.Count - 1);
@@ -251,7 +251,7 @@ namespace Carnassial.UnitTests
 
                     string previousNoteValue = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel];
                     string newNoteValue = "note single change value";
-                    Dictionary<string, object> singleChangeAsMultipleChanges = carnassial.DataHandler.ImageCache.Current.AsDictionary();
+                    Dictionary<string, object> singleChangeAsMultipleChanges = carnassial.DataHandler.ImageCache.Current.GetValues();
                     singleChangeAsMultipleChanges[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] = newNoteValue;
                     FileMultipleFieldChange singleEditAsMultiple = new FileMultipleFieldChange(carnassial.DataHandler.ImageCache, singleChangeAsMultipleChanges);
                     Assert.IsTrue(singleEditAsMultiple.Changes == 1);
@@ -365,7 +365,7 @@ namespace Carnassial.UnitTests
                     Task<bool> loadFolder = null;
                     Dispatcher.CurrentDispatcher.Invoke(() =>
                     {
-                        loadFolder = carnassial.TryOpenTemplateAndLoadFoldersAsync(templateDatabaseFilePath);
+                        loadFolder = carnassial.TryOpenTemplateAndFileDatabaseAsync(templateDatabaseFilePath);
                     });
                     this.WaitForFolderLoadComplete(loadFolder);
 
@@ -392,12 +392,12 @@ namespace Carnassial.UnitTests
                     Assert.IsTrue(clockDriftCorrection.Abort == (carnassial.DataHandler.ImageCache.Current == null));
                     this.ShowDialog(clockDriftCorrection);
 
-                    this.ShowDialog(new DateTimeRereadFromFiles(carnassial.DataHandler.FileDatabase, carnassial));
+                    this.ShowDialog(new DateTimeRereadFromFiles(carnassial.DataHandler.FileDatabase, carnassial.State.Throttles.GetDesiredIntervalBetweenFileLoadProgress(), carnassial));
                     this.ShowDialog(new DateTimeSetTimeZone(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current, carnassial));
                     this.ShowDialog(new FileCountsByQuality(carnassial.DataHandler.FileDatabase.GetFileCountsBySelection(), carnassial));
                     this.ShowDialog(new EditLog(carnassial.DataHandler.FileDatabase.ImageSet.Log, carnassial));
 
-                    this.ShowDialog(new PopulateFieldWithMetadata(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current.GetFilePath(carnassial.DataHandler.FileDatabase.FolderPath), carnassial));
+                    this.ShowDialog(new PopulateFieldWithMetadata(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current.GetFilePath(carnassial.DataHandler.FileDatabase.FolderPath), carnassial.State.Throttles.GetDesiredIntervalBetweenFileLoadProgress(), carnassial));
                     this.ShowDialog(new RenameFileDatabaseFile(carnassial.DataHandler.FileDatabase.FileName, carnassial));
                     this.ShowDialog(new TemplateSynchronization(carnassial.DataHandler.FileDatabase.ControlSynchronizationIssues, carnassial));
 
@@ -507,12 +507,15 @@ namespace Carnassial.UnitTests
                     // dataHandler.CopyToAll(control);
 
                     // verify roundtrip of fields subject to copy/paste and analysis assignment
-                    // AsDictionary() returns a dictionary with one fewer values than there are columns as the DateTime and UtcOffset columns are merged to DateTimeOffset.
+                    // AsDictionary() returns a dictionary with one fewer values than there are columns as the DateTime and UtcOffset
+                    // columns are merged to DateTimeOffset.
                     Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(0));
                     ImageRow firstFile = fileDatabase.Files[0];
                     FileExpectations firstFileExpectations = fileExpectations[0];
 
-                    Dictionary<string, object> firstFileValuesByPropertyName = firstFile.AsDictionary();
+                    // DateTime and UtcOffset are merged into DateTime, so there should be one fewer value than there are columns
+                    // in the file table
+                    Dictionary<string, object> firstFileValuesByPropertyName = firstFile.GetValues();
                     Assert.IsTrue(firstFileValuesByPropertyName.Count == databaseExpectation.ExpectedColumns.Count - 1);
                     foreach (KeyValuePair<string, object> singlePropertyEdit in firstFileValuesByPropertyName)
                     {
@@ -523,7 +526,7 @@ namespace Carnassial.UnitTests
                         firstFile[singlePropertyEdit.Key] = singlePropertyEdit.Value;
                     }
 
-                    TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
+                    TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
                     firstFileExpectations.Verify(firstFile, imageSetTimeZone);
 
                     // verify roundtrip of fields via display string
@@ -680,7 +683,10 @@ namespace Carnassial.UnitTests
                 this.WaitForRenderingComplete();
             }
             Assert.IsFalse(loadFolder.IsCanceled);
-            Assert.IsFalse(loadFolder.IsFaulted);
+            if (loadFolder.IsFaulted)
+            {
+                throw loadFolder.Exception;
+            }
             Assert.IsTrue(loadFolder.Result);
             this.WaitForRenderingComplete();
         }

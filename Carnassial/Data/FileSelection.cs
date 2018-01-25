@@ -7,6 +7,7 @@
         Corrupt,
         Dark,
         NoLongerAvailable,
+        Video,
 
         // file selections only
         All,

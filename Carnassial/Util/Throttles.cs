@@ -14,6 +14,15 @@ namespace Carnassial.Util
             this.ResetToDefaults();
         }
 
+        public TimeSpan GetDesiredIntervalBetweenFileLoadProgress()
+        {
+            if (this.DesiredIntervalBetweenRenders > Constant.ThrottleValues.DesiredIntervalBetweenStatusUpdates)
+            {
+                return this.DesiredIntervalBetweenRenders;
+            }
+            return Constant.ThrottleValues.DesiredIntervalBetweenStatusUpdates;
+        }
+
         public void ResetToDefaults()
         {
             this.DesiredImageRendersPerSecond = Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault;

@@ -51,10 +51,8 @@ namespace Carnassial.UnitTests
             int windowSize = 1000;
             userSettings.CarnassialWindowPosition = new Rect(windowLocation, windowLocation, windowSize, windowSize);
             userSettings.CustomSelectionTermCombiningOperator = Database.LogicalOperator.Or;
-            double modifiedDarkPixelRatioThreshold = userSettings.DarkPixelRatioThreshold + 1.0;
-            userSettings.DarkPixelRatioThreshold = modifiedDarkPixelRatioThreshold;
-            byte modifiedDarkPixelThreshold = (byte)(userSettings.DarkPixelThreshold + 1);
-            userSettings.DarkPixelThreshold = modifiedDarkPixelThreshold;
+            double modifiedDarkPixelRatioThreshold = userSettings.DarkLuminosityThreshold + 1.0;
+            userSettings.DarkLuminosityThreshold = modifiedDarkPixelRatioThreshold;
             string databasePath = Path.Combine(this.WorkingDirectory, Constant.File.DefaultFileDatabaseFileName);
             userSettings.MostRecentImageSets.SetMostRecent(databasePath);
             userSettings.OrderFilesByDateTime = true;
@@ -71,8 +69,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.CarnassialWindowPosition.X == windowLocation && userSettings.CarnassialWindowPosition.Y == windowLocation);
             Assert.IsTrue(userSettings.CarnassialWindowPosition.Width == windowSize && userSettings.CarnassialWindowPosition.Height == windowSize);
             Assert.IsTrue(userSettings.CustomSelectionTermCombiningOperator == Database.LogicalOperator.Or);
-            Assert.IsTrue(userSettings.DarkPixelRatioThreshold == modifiedDarkPixelRatioThreshold);
-            Assert.IsTrue(userSettings.DarkPixelThreshold == modifiedDarkPixelThreshold);
+            Assert.IsTrue(userSettings.DarkLuminosityThreshold == modifiedDarkPixelRatioThreshold);
             Assert.IsNotNull(userSettings.MostRecentImageSets);
             Assert.IsTrue(userSettings.MostRecentImageSets.Count == 1);
             Assert.IsTrue(userSettings.MostRecentImageSets.TryGetMostRecent(out string mostRecentDatabasePath));
@@ -143,8 +140,7 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(userSettings.AudioFeedback);
             Assert.IsTrue(userSettings.CarnassialWindowPosition.X == 0 && userSettings.CarnassialWindowPosition.Y == 0);
             Assert.IsTrue(userSettings.CarnassialWindowPosition.Width == 1350 && userSettings.CarnassialWindowPosition.Height == 900);
-            Assert.IsTrue(userSettings.DarkPixelRatioThreshold == Constant.Images.DarkPixelRatioThresholdDefault);
-            Assert.IsTrue(userSettings.DarkPixelThreshold == Constant.Images.DarkPixelThresholdDefault);
+            Assert.IsTrue(userSettings.DarkLuminosityThreshold == Constant.Images.DarkLuminosityThresholdDefault);
             Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
             Assert.IsNotNull(userSettings.MostRecentImageSets);
             Assert.IsTrue(userSettings.MostRecentImageSets.Count == 0);

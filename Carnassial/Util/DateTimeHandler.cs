@@ -20,6 +20,11 @@ namespace Carnassial.Util
             return new DateTimeOffset((dateTime + utcOffset).AsUnspecifed(), utcOffset);
         }
 
+        public static TimeSpan FromDatabaseUtcOffset(double hours)
+        {
+            return TimeSpan.FromHours(hours);
+        }
+
         public static DateTime ParseDatabaseDateTimeString(string dateTimeAsString)
         {
             return DateTime.ParseExact(dateTimeAsString, Constant.Time.DateTimeDatabaseFormat, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);

@@ -4,7 +4,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 
 namespace Carnassial.UnitTests
 {
@@ -12,12 +11,12 @@ namespace Carnassial.UnitTests
     {
         private TimeZoneInfo timeZoneForDateTime;
 
+        public double Coloration { get; set; }
         public DateTimeOffset DateTime { get; set; }
-        public double DarkPixelFraction { get; set; }
         public bool DeleteFlag { get; set; }
         public string FileName { get; set; }
         public long ID { get; set; }
-        public bool IsColor { get; set; }
+        public double Luminosity { get; set; }
         public FileSelection Quality { get; set; }
         public string RelativePath { get; set; }
         public bool SkipDateTimeVerification { get; set; }
@@ -33,12 +32,12 @@ namespace Carnassial.UnitTests
         public FileExpectations(FileExpectations other)
             : this(other.timeZoneForDateTime)
         {
+            this.Coloration = other.Coloration;
             this.DateTime = other.DateTime;
-            this.DarkPixelFraction = other.DarkPixelFraction;
             this.DeleteFlag = other.DeleteFlag;
             this.FileName = other.FileName;
             this.ID = other.ID;
-            this.IsColor = other.IsColor;
+            this.Luminosity = other.Luminosity;
             this.Quality = other.Quality;
             this.RelativePath = other.RelativePath;
             this.SkipDateTimeVerification = other.SkipDateTimeVerification;
@@ -69,32 +68,6 @@ namespace Carnassial.UnitTests
             return expectedDateTime;
         }
 
-        public ImageRow GetFileData(FileDatabase fileDatabase)
-        {
-            string imageFilePath;
-            if (String.IsNullOrEmpty(this.RelativePath))
-            {
-                imageFilePath = Path.Combine(fileDatabase.FolderPath, this.FileName);
-            }
-            else
-            {
-                imageFilePath = Path.Combine(fileDatabase.FolderPath, this.RelativePath, this.FileName);
-            }
-
-            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
-            fileDatabase.GetOrCreateFile(new FileInfo(imageFilePath), imageSetTimeZone, out ImageRow file);
-            // imageProperties.Date is defaulted by constructor
-            // imageProperties.DateTime is defaulted by constructor
-            // imageProperties.FileName is set by constructor
-            // imageProperties.ID is set when images are refreshed after being added to the database
-            // imageProperties.ImageQuality is defaulted by constructor
-            // imageProperties.ImageTaken is set by constructor
-            // imageProperties.InitialRootFolderName is set by constructor
-            // imageProperties.RelativePath is set by constructor
-            // imageProperties.Time is defaulted by constructor
-            return file;
-        }
-
         public static DateTimeOffset ParseDateTimeOffsetString(string dateTimeAsString)
         {
             return DateTimeOffset.ParseExact(dateTimeAsString, TestConstant.DateTimeWithOffsetFormat, CultureInfo.InvariantCulture);
@@ -103,7 +76,7 @@ namespace Carnassial.UnitTests
         public void Verify(ImageRow file, TimeZoneInfo timeZone)
         {
             // this.DarkPixelFraction isn't applicable
-            Assert.IsTrue(file.DateTime.Kind == DateTimeKind.Utc);
+            Assert.IsTrue(file.UtcDateTime.Kind == DateTimeKind.Utc);
             Assert.IsTrue(file.DeleteFlag == this.DeleteFlag);
             Assert.IsTrue(file.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, file.FileName);
             Assert.IsTrue(file.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, file.ID);
@@ -115,11 +88,11 @@ namespace Carnassial.UnitTests
             // bypass checking of Date and Time properties if requested, for example if the camera didn't generate image taken metadata
             if (this.SkipDateTimeVerification == false)
             {
-                DateTimeOffset imageDateTime = file.DateTimeOffset;
+                DateTimeOffset fileDateTime = file.DateTimeOffset;
                 DateTimeOffset expectedDateTime = this.ConvertDateTimeToTimeZone(timeZone);
-                Assert.IsTrue(imageDateTime.UtcDateTime == expectedDateTime.UtcDateTime, "{0}: Expected date time '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(imageDateTime.UtcDateTime));
-                Assert.IsTrue(imageDateTime.Offset == expectedDateTime.Offset, "{0}: Expected date time offset '{1}' but found '{2}'.", this.FileName, expectedDateTime.Offset, imageDateTime.Offset);
-                Assert.IsTrue(file.DateTime == expectedDateTime.UtcDateTime, "{0}: Expected DateTime '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(file.DateTime));
+                Assert.IsTrue(fileDateTime.UtcDateTime == expectedDateTime.UtcDateTime, "{0}: Expected date time '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(fileDateTime.UtcDateTime));
+                Assert.IsTrue(fileDateTime.Offset == expectedDateTime.Offset, "{0}: Expected date time offset '{1}' but found '{2}'.", this.FileName, expectedDateTime.Offset, fileDateTime.Offset);
+                Assert.IsTrue(file.UtcDateTime == expectedDateTime.UtcDateTime, "{0}: Expected DateTime '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(file.UtcDateTime));
                 Assert.IsTrue(file.UtcOffset == expectedDateTime.Offset, "{0}: Expected UtcOffset '{1}' but found '{2}'.", this.FileName, expectedDateTime.Offset, file.UtcOffset);
             }
         }

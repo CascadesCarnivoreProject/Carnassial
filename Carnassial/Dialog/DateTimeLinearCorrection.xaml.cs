@@ -140,7 +140,7 @@ namespace Carnassial.Dialog
         private void PreviewDateTimeChanges()
         {
             TimeSpan intervalFromCorrectToMeasured = this.GetInterval();
-            TimeZoneInfo imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZone();
+            TimeZoneInfo imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZoneInfo();
             foreach (ImageRow file in this.fileDatabase.Files)
             {
                 string newDateTime = String.Empty;

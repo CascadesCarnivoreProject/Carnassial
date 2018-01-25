@@ -22,6 +22,7 @@ namespace Carnassial
 			PixelFormat format;
 			NativeImage* nativeImage;
 
+			static MemoryImage();
 			MemoryImage(__int32 width, __int32 height, PixelFormat^ format);
 
 			PixelFormat GetPixelFormat();
@@ -33,6 +34,7 @@ namespace Carnassial
 
 			MemoryImage(BitmapSource^ bitmap);
 			MemoryImage(array<unsigned __int8>^ jpeg, Nullable<__int32>^ requestedWidth);
+			MemoryImage(array<unsigned __int8>^ jpeg, __int32 offset, __int32 length, Nullable<__int32>^ requestedWidth);
 			!MemoryImage();
 			~MemoryImage();
 
@@ -61,11 +63,10 @@ namespace Carnassial
 				__int32 get() { return this->nativeImage->TotalPixels(); }
 			}
 
-			bool IsBlack();
-			bool IsDark(unsigned __int8 darkPixelThreshold, double darkPixelRatio);
-			bool IsDark(unsigned __int8 darkPixelThreshold, double darkPixelRatio, [Out] double% darkPixelFraction, [Out] bool% isColor);
+			double GetLuminosityAndColoration(__int32 bottomRowsToSkip, [Out] double% coloration);
 			bool MismatchedOrNot32BitBgra(MemoryImage^ other);
 			void SetSource(Image^ image);
+			bool TryDecode(array<unsigned __int8>^ jpeg, __int32 offset, __int32 length, Nullable<__int32>^ requestedWidth);
 			bool TryDifference(MemoryImage^ other, unsigned __int8 threshold, [Out] MemoryImage^% difference);
 			bool TryDifference(MemoryImage^ previous, MemoryImage^ next, unsigned __int8 threshold, [Out] MemoryImage^% difference);
 		};

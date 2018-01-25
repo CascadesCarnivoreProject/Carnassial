@@ -1,6 +1,5 @@
 ﻿using Carnassial.Command;
 using Carnassial.Control;
-using Carnassial.Images;
 using System;
 using System.Collections.Generic;
 using System.Windows.Input;

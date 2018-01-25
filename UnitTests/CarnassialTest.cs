@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using Carnassial.Database;
-using Carnassial.Util;
+using Carnassial.Images;
+using Carnassial.Interop;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -66,13 +67,19 @@ namespace Carnassial.UnitTests
         }
 
         /// <summary>
-        /// Creates a data row from the specified FileExpectation.  Verifies the file isn't already in the database and does not add it to the database.
+        /// Creates a file data table row from the specified FileExpectation.  Verifies the file isn't already in the database and does not add it to the database.
         /// </summary>
-        protected ImageRow CreateFile(FileDatabase fileDatabase, TimeZoneInfo imageSetTimeZone, FileExpectations fileExpectation, out DateTimeAdjustment dateTimeAdjustment)
+        protected ImageRow CreateFile(FileDatabase fileDatabase, TimeZoneInfo imageSetTimeZone, FileExpectations fileExpectation, out MetadataReadResult metadataReadResult)
         {
             FileInfo fileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, fileExpectation.RelativePath, fileExpectation.FileName));
-            Assert.IsFalse(fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out ImageRow file));
-            dateTimeAdjustment = file.TryReadDateTimeFromMetadata(fileDatabase.FolderPath, imageSetTimeZone);
+            string relativePath = Path.GetDirectoryName(NativeMethods.GetRelativePathFromDirectoryToFile(fileDatabase.FolderPath, fileInfo));
+            ImageRow file = fileDatabase.Files.CreateFile(fileInfo.Name, relativePath);
+            using (FileLoadAtom loadAtom = new FileLoadAtom(file.RelativePath, new FileLoad(file), new FileLoad((string)null), 0))
+            {
+                loadAtom.CreateJpegs(fileDatabase.FolderPath);
+                loadAtom.ReadDateTimeOffsets(fileDatabase.FolderPath, imageSetTimeZone);
+                metadataReadResult = loadAtom.First.MetadataReadResult;
+            }
             return file;
         }
 
@@ -145,102 +152,6 @@ namespace Carnassial.UnitTests
             }
         }
 
-        protected Dictionary<string, string> LoadMetadata(FileDatabase fileDatabase, FileExpectations fileExpectation)
-        {
-            string filePath = Path.Combine(this.WorkingDirectory, fileExpectation.RelativePath, fileExpectation.FileName);
-            Dictionary<string, string> metadata = Utilities.LoadMetadata(filePath);
-            Assert.IsTrue(metadata.Count > 40, "Expected at least 40 metadata fields to be retrieved from {0}", filePath);
-            // example information returned from ExifTool
-            // field name                   Bushnell                                    Reconyx
-            // --- fields of likely interest for image analysis ---
-            // Create Date                  2016.02.24 04:59:46                         [Bushnell only]
-            // Date/Time Original           2016.02.24 04:59:46                         2015.01.28 11:17:34 [but located in Makernote rather than the standard EXIF field!]
-            // Modify Date                  2016.02.24 04:59:46                         [Bushnell only]
-            // --- fields possibly of interest interest for image analysis ---
-            // Exposure Time                0                                           1/84
-            // Shutter Speed                0                                           1/84
-            // Software                     BS683BWYx05209                              [Bushnell only]
-            // Firmware Version             [Reconyx only]                              3.3.0
-            // Trigger Mode                 [Reconyx only]                              Motion Detection
-            // Sequence                     [Reconyx only]                              1 of 5
-            // Ambient Temperature          [Reconyx only]                              0 C
-            // Serial Number                [Reconyx only]                              H500DE01120343
-            // Infrared Illuminator         [Reconyx only]                              Off
-            // User Label                   [Reconyx only]                              CCPF DS02
-            // --- fields of little interest (Bushnell often uses placeholder values which don't change) ---
-            // ExifTool Version Number      10.14                                       10.14
-            // File Name                    BushnellTrophyHD-119677C-20160224-056.JPG   Reconyx-HC500-20150128-201.JPG
-            // Directory                    Carnassial/UnitTests/bin/Debug               Carnassial/UnitTests/bin/Debug/CarnivoreTestImages
-            // File Size                    731 kB                                      336 kB
-            // File Modification Date/Time  <file time from last build>                 <file time from last build>
-            // File Access Date/Time        <file time from last build>                 <file time from last build>
-            // File Creation Date/Time      <file time from last build>                 <file time from last build>
-            // File Permissions             rw-rw-rw-                                   rw-rw-rw-
-            // File Type                    JPEG                                        JPEG
-            // File Type Extension          jpg                                         jpg
-            // MIME Type                    image/jpeg                                  image/jpeg
-            // Exif Byte Order              Little-endian(Intel, II)                    Little-endian(Intel, II)
-            // Image Description            M2E6L0-0R350B362                            [Bushnell only]
-            // Make                         [blank]                                     [Bushnell only]
-            // Camera Model Name            [blank]                                     [Bushnell only]
-            // Orientation                  Horizontal(normal)                          [Bushnell only]
-            // X Resolution                 96                                          72
-            // Y Resolution                 96                                          72
-            // Resolution Unit              inches                                      inches
-            // Y Cb Cr Positioning          Co-sited                                    Co-sited
-            // Copyright                    Copyright 2002                              [Bushnell only]
-            // F Number                     2.8                                         [Bushnell only]
-            // Exposure Program             Aperture-priority AE                        [Bushnell only]
-            // ISO                          100                                         50
-            // Exif Version                 0210                                        0220
-            // Components Configuration     Y, Cb, Cr, -                                Y, Cb, Cr, -
-            // Compressed Bits Per Pixel    0.7419992711                                [Bushnell only]
-            // Shutter Speed Value          1                                           [Bushnell only]
-            // Aperture Value               2.6                                         [Bushnell only]
-            // Exposure Compensation        +2                                          [Bushnell only]
-            // Max Aperture Value           2.6                                         [Bushnell only]
-            // Metering Mode                Average                                     [Bushnell only]
-            // Light Source                 Daylight                                    [Bushnell only]
-            // Flash                        No Flash                                    [Bushnell only]
-            // Warning                      [minor]Unrecognized MakerNotes              [Bushnell only]
-            // Flashpix Version             0100                                        0100
-            // Color Space                  sRGB                                        sRGB
-            // Exif Image Width             3264                                        2048
-            // Exif Image Height            2448                                        1536
-            // Related Sound File           RelatedSound                                [Bushnell only]
-            // Interoperability Index       R98 - DCF basic file(sRGB)                  [Bushnell only]
-            // Interoperability Version     0100                                        [Bushnell only]
-            // Exposure Index               1                                           [Bushnell only]
-            // Sensing Method               One-chip color area                         [Bushnell only]
-            // File Source                  Digital Camera                              [Bushnell only]
-            // Scene Type                   Directly photographed                       [Bushnell only]
-            // Compression                  JPEG(old - style)                           [Bushnell only]
-            // Thumbnail Offset             1312                                        [Bushnell only]
-            // Thumbnail Length             5768                                        [Bushnell only]
-            // Image Width                  3264                                        2048
-            // Image Height                 2448                                        1536
-            // Encoding Process             Baseline DCT, Huffman coding                Baseline DCT, Huffman coding
-            // Bits Per Sample              8                                           8
-            // Color Components             3                                           3
-            // Y Cb Cr Sub Sampling         YCbCr4:2:2 (2 1)                            YCbCr4:2:2 (2 1)
-            // Aperture                     2.8                                         [Bushnell only]
-            // Image Size                   3264x2448                                   2048x1536
-            // Megapixels                   8.0                                         3.1
-            // Thumbnail Image              <binary data>                               [Bushnell only]
-            // Ambient Temperature Fahrenheit [Reconyx only]                            31 F
-            // Battery Voltage              [Reconyx only]                              8.65 V
-            // Contrast                     [Reconyx only]                              142
-            // Brightness                   [Reconyx only]                              238
-            // Event Number                 [Reconyx only]                              39
-            // Firmware Date                [Reconyx only]                              2011:01:10
-            // Maker Note Version           [Reconyx only]                              0xf101
-            // Moon Phase                   [Reconyx only]                              First Quarter
-            // Motion Sensitivity           [Reconyx only]                              100
-            // Sharpness                    [Reconyx only]                              64
-            // Saturation                   [Reconyx only]                              144
-            return metadata;
-        }
-
         protected List<FileExpectations> PopulateDefaultDatabase(FileDatabase fileDatabase)
         {
             return this.PopulateDefaultDatabase(fileDatabase, false);
@@ -248,18 +159,20 @@ namespace Carnassial.UnitTests
 
         protected List<FileExpectations> PopulateDefaultDatabase(FileDatabase fileDatabase, bool excludeSubfolderFiles)
         {
-            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
+            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
 
             // files in same folder as .tdb and .ddb
-            ImageRow martenImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.InfraredMarten, out DateTimeAdjustment martenDateTimeAdjustment);
-            Assert.IsTrue(martenDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
-                          martenDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
+            ImageRow martenImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.InfraredMarten, out MetadataReadResult martenMetadataRead);
+            Assert.IsTrue(martenMetadataRead.HasFlag(MetadataReadResult.DateTime));
 
-            ImageRow bobcatImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightBobcat, out DateTimeAdjustment bobcatDatetimeAdjustment);
-            Assert.IsTrue(bobcatDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
-                          bobcatDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
+            ImageRow bobcatImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightBobcat, out MetadataReadResult bobcatMetadataRead);
+            Assert.IsTrue(bobcatMetadataRead.HasFlag(MetadataReadResult.DateTime));
 
-            fileDatabase.AddFiles(new List<ImageRow>() { martenImage, bobcatImage }, null);
+            using (AddFilesTransaction addFiles = fileDatabase.CreateAddFilesTransaction())
+            {
+                addFiles.AddFiles(new List<FileLoad>() { new FileLoad(martenImage), new FileLoad(bobcatImage) });
+                addFiles.Commit();
+            }
             fileDatabase.SelectFiles(FileSelection.All);
 
             FileTableEnumerator fileEnumerator = new FileTableEnumerator(fileDatabase);
@@ -297,15 +210,17 @@ namespace Carnassial.UnitTests
             // files in subfolder
             if (excludeSubfolderFiles == false)
             {
-                ImageRow martenPairImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out DateTimeAdjustment martenPairDateTimeAdjustment);
-                Assert.IsTrue(martenPairDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
-                              martenPairDateTimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
+                ImageRow martenPairImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out MetadataReadResult martenPairMetadataRead);
+                Assert.IsTrue(martenPairMetadataRead.HasFlag(MetadataReadResult.DateTime));
 
-                ImageRow coyoteImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out DateTimeAdjustment coyoteDatetimeAdjustment);
-                Assert.IsTrue(coyoteDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataDate) &&
-                              coyoteDatetimeAdjustment.HasFlag(DateTimeAdjustment.MetadataTime));
+                ImageRow coyoteImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out MetadataReadResult coyoteMetadataRead);
+                Assert.IsTrue(coyoteMetadataRead.HasFlag(MetadataReadResult.DateTime));
 
-                fileDatabase.AddFiles(new List<ImageRow>() { martenPairImage, coyoteImage }, null);
+                using (AddFilesTransaction addFiles = fileDatabase.CreateAddFilesTransaction())
+                {
+                    addFiles.AddFiles(new List<FileLoad>() { new FileLoad(martenPairImage), new FileLoad(coyoteImage) });
+                    addFiles.Commit();
+                }
                 fileDatabase.SelectFiles(FileSelection.All);
 
                 coyoteImage = fileEnumerator.Current;

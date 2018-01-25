@@ -6,23 +6,29 @@ namespace Carnassial
 {
 	namespace Native
 	{
-		class InstructionSet
+		class NativeProcessor
 		{
 		private:
-			class CpuInfo
+			class ProcessorProperties
 			{
+			private:
+				std::runtime_error GetWindowsError();
+				std::runtime_error GetWindowsError(unsigned long errorCode);
+
 			public:
-				CpuInfo();
+				ProcessorProperties();
 
 				std::bitset<32> function1_Ecx;
 				std::bitset<32> function7_Ebx;
+				__int32 physicalCores;
 			};
 
-			static const CpuInfo Cpu;
+			static const ProcessorProperties CpuInfo;
 
 		public:
 			static bool Avx();
 			static bool Avx2();
+			static __int32 PhysicalCores();
 			static bool Sse41();
 		};
 	}

@@ -18,7 +18,7 @@ namespace Carnassial.Command
             Debug.Assert(fileEnumerator.IsFileAvailable, "File enumerator is not positioned on a file.");
             this.newValuesByPropertyName = newValuesByPropertyName;
             this.newValuesByPropertyName[Constant.DatabaseColumn.ID] = fileEnumerator.Current.ID;
-            this.previousValuesByPropertyName = fileEnumerator.Current.AsDictionary();
+            this.previousValuesByPropertyName = fileEnumerator.Current.GetValues();
             this.RemoveUnchangedFields();
         }
 
@@ -33,7 +33,7 @@ namespace Carnassial.Command
             }
 
             this.IsExecuted = true;
-            this.newValuesByPropertyName = fileEnumerator.Current.AsDictionary();
+            this.newValuesByPropertyName = fileEnumerator.Current.GetValues();
             this.previousValuesByPropertyName = previousValuesByPropertyName;
             this.RemoveUnchangedFields();
         }

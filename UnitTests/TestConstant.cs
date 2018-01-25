@@ -9,14 +9,13 @@ namespace Carnassial.UnitTests
     {
         public const string CarnassialAutomationID = "Carnassial";
         public const string CarnassialTemplateEditorAutomationID = "CarnassialTemplateEditor";
-        public const double DarkPixelFractionTolerance = 0.00000001;
+        public const double LuminosityAndColorationTolerance = 0.00000001;
         public const string DateTimeWithOffsetFormat = "yyyy-MM-ddTHH:mm:ss.fffK";
         public const string EditorTemplateDatabaseFieldName = "templateDatabase";
         public const string FileCountsAutomationID = "FileCountsByQuality";
         public const string InitializeDataGridMethodName = "InitializeDataGrid";
         public const string MessageBoxAutomationID = "CarnassialMessageBox";
         public const string OkButtonAutomationID = "OkButton";
-        public const string PerformanceIntervalFormat = @"s\.fff";
         public const string TemplatePaneAutomationID = "TemplatePane";
 
         public static readonly TimeSpan UIElementSearchTimeout = TimeSpan.FromSeconds(15.0);
@@ -105,35 +104,7 @@ namespace Carnassial.UnitTests
 
         public static class Exif
         {
-            public const string DateTime = "Exif IFD0.Date/Time";
-            public const string DateTimeDigitized = "Exif SubIFD.Date/Time Digitized";
             public const string DateTimeFormat = "yyyy:MM:dd HH:mm:ss";
-            public const string DateTimeOriginal = "Exif SubIFD.Date/Time Original";
-            public const string ExposureTime = "Exif SubIFD.Exposure Time";
-            public const string ShutterSpeed = "Exif SubIFD.Shutter Speed Value";
-            public const string Software = "Exif IFD0.Software";
-
-            public static class ReconyxHyperfire
-            {
-                public const string AmbientTemperature = "Reconyx HyperFire Makernote.Ambient Temperature";
-                public const string AmbientTemperatureFarenheit = "Reconyx HyperFire Makernote.Ambient Temperature Fahrenheit";
-                public const string BatteryVoltage = "Reconyx HyperFire Makernote.Battery Voltage";
-                public const string Brightness = "Reconyx HyperFire Makernote.Brightness";
-                public const string Contrast = "Reconyx HyperFire Makernote.Contrast";
-                public const string DateTimeOriginal = "Reconyx HyperFire Makernote.Date/Time Original";
-                public const string EventNumber = "Reconyx HyperFire Makernote.Event Number";
-                public const string FirmwareVersion = "Reconyx HyperFire Makernote.Firmware Version";
-                public const string InfraredIlluminator = "Reconyx HyperFire Makernote.Infrared Illuminator";
-                public const string MakernoteVersion = "Reconyx HyperFire Makernote.Makernote Version";
-                public const string MoonPhase = "Reconyx HyperFire Makernote.Moon Phase";
-                public const string MotionSensitivity = "Reconyx HyperFire Makernote.Motion Sensitivity";
-                public const string Saturation = "Reconyx HyperFire Makernote.Saturation";
-                public const string Sequence = "Reconyx HyperFire Makernote.Sequence";
-                public const string SerialNumber = "Reconyx HyperFire Makernote.Serial Number";
-                public const string Sharpness = "Reconyx HyperFire Makernote.Sharpness";
-                public const string TriggerMode = "Reconyx HyperFire Makernote.Trigger Mode";
-                public const string UserLabel = "Reconyx HyperFire Makernote.User Label";
-            }
         }
 
         public static class File
@@ -172,46 +143,46 @@ namespace Carnassial.UnitTests
                 FileExpectation.CorruptFieldScan = new FileExpectations(pacificTime)
                 {
                     FileName = "BushnellTrophyHD-119677C-20170403-179.JPG",
-                    IsColor = false,
+                    Coloration = 0.5,
                     Quality = FileSelection.Corrupt
                 };
 
                 FileExpectation.DaylightBobcat = new FileExpectations(pacificTime)
                 {
-                    DarkPixelFraction = 0.243754514928039,
+                    Luminosity = 0.22963220152779396,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-08-05T08:06:23.000-07:00"),
                     FileName = "BushnellTrophyHD-119677C-20160805-926.JPG",
-                    IsColor = true,
+                    Coloration = 0.072226041956181958,
                     Quality = FileSelection.Ok
                 };
 
                 FileExpectation.DaylightCoyote = new FileExpectations(pacificTime)
                 {
-                    DarkPixelFraction = 0.608317365996393,
+                    Coloration = 0.10284907771379409,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-04-21T06:31:13.000-07:00"),
                     FileName = "BushnellTrophyHDAggressor-119777C-20160421-112.JPG",
-                    IsColor = true,
+                    Luminosity = 0.2765857055787681,
                     Quality = FileSelection.Ok,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName
                 };
 
                 FileExpectation.DaylightMartenPair = new FileExpectations(pacificTime)
                 {
-                    DarkPixelFraction = 0.702360667828033,
+                    Coloration = 0.11669914145874821,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-01-28T11:17:34.000-08:00"),
                     FileName = "Reconyx-HC500-20150128-201.JPG",
-                    IsColor = true,
+                    Luminosity = 0.20386141575831992,
                     Quality = FileSelection.Ok,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName,
                 };
 
                 FileExpectation.InfraredMarten = new FileExpectations(pacificTime)
                 {
-                    DarkPixelFraction = 0.0742653252017767,
+                    Coloration = 0.002260494349364121,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-02-24T04:59:46.000-08:00"),
                     FileName = "BushnellTrophyHD-119677C-20160224-056.JPG",
-                    IsColor = false,
-                    Quality = FileSelection.Ok
+                    Luminosity = 0.3138861038100762,
+                        Quality = FileSelection.Ok
                 };
             }
         }

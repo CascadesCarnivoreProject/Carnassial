@@ -16,11 +16,12 @@ x86/
 **/StyleCop.Cache
 
 # Profiling results
+*.psess
 *.vsp
 *.vspx
 
 # Timelapse output
 Backups/
 
-# Visual Studio 2015 cache/options directory 
+# Visual Studio cache/options directory 
 .vs/

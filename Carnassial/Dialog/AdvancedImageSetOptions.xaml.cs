@@ -15,7 +15,7 @@ namespace Carnassial.Dialog
             this.Owner = owner;
             this.database = database;
 
-            this.currentImageSetTimeZone = database.ImageSet.GetTimeZone();
+            this.currentImageSetTimeZone = database.ImageSet.GetTimeZoneInfo();
             this.TimeZones.SelectTimeZone(this.currentImageSetTimeZone);
         }
 

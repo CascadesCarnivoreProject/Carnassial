@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Microsoft.Win32.SafeHandles;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text;
+using System.Threading;
+using IBindCtx = System.Runtime.InteropServices.ComTypes.IBindCtx;
 
 namespace Carnassial.Interop
 {
@@ -12,21 +14,52 @@ namespace Carnassial.Interop
         private const int FILE_ATTRIBUTE_DIRECTORY = 0x10;
         private const int FILE_ATTRIBUTE_NORMAL = 0x80;
 
+        public static SafeFileHandle CreateFileUnbuffered(string path, bool overlapped)
+        {
+            FileAttributesNative fileAttributes = FileAttributesNative.NoBuffering;
+            if (overlapped)
+            {
+                fileAttributes |= FileAttributesNative.Overlapped;
+            }
+            SafeFileHandle fileHandle = NativeMethods.CreateFile(path, FileAccess.Read, FileShare.Read, IntPtr.Zero, FileMode.Open, fileAttributes, IntPtr.Zero);
+            if (fileHandle.IsInvalid)
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
+            
+            return fileHandle;
+        }
+
+        [DllImport(Constant.Assembly.Kernel32, BestFitMapping = false, CharSet = CharSet.Unicode, EntryPoint = "CreateFileW", SetLastError = true)]
+        private static extern SafeFileHandle CreateFile(string lpFileName,
+                                                        FileAccess dwDesiredAccess,
+                                                        FileShare dwShareMode,
+                                                        IntPtr lpSecurityAttributes,
+                                                        FileMode dwCreationDisposition,
+                                                        FileAttributesNative dwFlagsAndAttributes,
+                                                        IntPtr hTemplateFile);
+
         public static ComReleaser<IShellItem> CreateShellItem(string path)
         {
             Guid shellItemGuid = new Guid(Constant.ComGuid.IShellItem);
             return new ComReleaser<IShellItem>((IShellItem)NativeMethods.SHCreateItemFromParsingName(path, null, ref shellItemGuid));
         }
 
-        public static string GetRelativePathFromDirectoryToDirectory(string fromDirectoryPath, string toDirectoryPath)
+        [DllImport(Constant.Assembly.Kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool GetDiskFreeSpace(string lpRootPathName, out uint lpSectorsPerCluster, out uint lpBytesPerSector, out uint lpNumberOfFreeClusters, out uint lpTotalNumberOfClusters);
+
+        public static long GetFileSizeEx(SafeFileHandle file)
         {
-            return NativeMethods.GetRelativePathFromDirectory(fromDirectoryPath, toDirectoryPath, NativeMethods.FILE_ATTRIBUTE_DIRECTORY);
+            bool success = NativeMethods.GetFileSizeEx(file, out long fileSize);
+            if (success == false)
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
+            return fileSize;
         }
 
-        public static string GetRelativePathFromDirectoryToFile(string fromDirectoryPath, FileInfo toFile)
-        {
-            return NativeMethods.GetRelativePathFromDirectory(fromDirectoryPath, toFile.FullName, NativeMethods.FILE_ATTRIBUTE_NORMAL);
-        }
+        [DllImport(Constant.Assembly.Kernel32)]
+        private static extern bool GetFileSizeEx(SafeFileHandle hFile, out long lpFileSize);
 
         private static string GetRelativePathFromDirectory(string fromDirectoryPath, string toPath, int toType)
         {
@@ -47,6 +80,32 @@ namespace Carnassial.Interop
             }
             return relativePath;
         }
+
+        public static string GetRelativePathFromDirectoryToDirectory(string fromDirectoryPath, string toDirectoryPath)
+        {
+            return NativeMethods.GetRelativePathFromDirectory(fromDirectoryPath, toDirectoryPath, NativeMethods.FILE_ATTRIBUTE_DIRECTORY);
+        }
+
+        public static string GetRelativePathFromDirectoryToFile(string fromDirectoryPath, FileInfo toFile)
+        {
+            return NativeMethods.GetRelativePathFromDirectory(fromDirectoryPath, toFile.FullName, NativeMethods.FILE_ATTRIBUTE_NORMAL);
+        }
+
+        public static int GetSectorSizeInBytes(string driveLetter)
+        {
+            bool success = NativeMethods.GetDiskFreeSpace(driveLetter, out uint sectorsPerCluster, out uint bytesPerSector, out uint freeClusters, out uint clusters);
+            if (success == false)
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
+            return (int)bytesPerSector;
+        }
+
+        [DllImport(Constant.Assembly.Kernel32)]
+        public static extern SafeAccessTokenHandle GetCurrentThread();
+
+        [DllImport(Constant.Assembly.Kernel32)]
+        public static extern UInt64 GetTickCount64();
 
         public static void MoveToRecycleBin(string filePath)
         {
@@ -80,18 +139,68 @@ namespace Carnassial.Interop
             }
         }
 
-        [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [DllImport(Constant.Assembly.Shlwapi, CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern int PathRelativePathTo(StringBuilder pszPath, string pszFrom, int dwAttrFrom, string pszTo, int dwAttrTo);
 
-        [DllImport("shell32.dll", SetLastError = true, CharSet = CharSet.Unicode, PreserveSig = false)]
+        [DllImport(Constant.Assembly.Kernel32, SetLastError = true)]
+        public static extern unsafe int ReadFile(SafeFileHandle file,
+                                                 byte* buffer,
+                                                 int bytesToRead,
+                                                 ref int bytesRead,
+                                                 NativeOverlapped* overlapped);
+
+        public static UInt64 SetThreadAffinityMask(SafeHandle unmanagedThread, UInt64 mask)
+        {
+            UIntPtr previousAffinity = NativeMethods.SetThreadAffinityMask(unmanagedThread, new UIntPtr(mask));
+            if (previousAffinity == UIntPtr.Zero)
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
+            return previousAffinity.ToUInt64();
+        }
+
+        [DllImport(Constant.Assembly.Kernel32, SetLastError = true)]
+        private static extern UIntPtr SetThreadAffinityMask(SafeHandle hThread, UIntPtr dwThreadAffinityMask);
+
+        [DllImport(Constant.Assembly.Shell32, SetLastError = true, PreserveSig = false)]
         [return: MarshalAs(UnmanagedType.Interface)]
         private static extern object SHCreateItemFromParsingName([MarshalAs(UnmanagedType.LPWStr)] string pszPath, IBindCtx pbc, ref Guid riid);
 
-        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        [DllImport(Constant.Assembly.Shell32, CharSet = CharSet.Unicode)]
         private static extern int SHFileOperation([In] ref SHFILEOPSTRUCT lpFileOp);
 
         [Flags]
-        public enum FILEOP_FLAGS : ushort
+        private enum FileAttributesNative : uint
+        {
+            Readonly = 0x00000001,
+            Hidden = 0x00000002,
+            System = 0x00000004,
+            Directory = 0x00000010,
+            Archive = 0x00000020,
+            Device = 0x00000040,
+            Normal = 0x00000080,
+            Temporary = 0x00000100,
+            SparseFile = 0x00000200,
+            ReparsePoint = 0x00000400,
+            Compressed = 0x00000800,
+            Offline = 0x00001000,
+            NotContentIndexed = 0x00002000,
+            Encrypted = 0x00004000,
+            FirstPipeInstance = 0x00080000,
+            OpenNoRecall = 0x00100000,
+            OpenReparsePoint = 0x00200000,
+            SequentialScan = 0x08000000,
+            PosixSemantics = 0x01000000,
+            BackupSemantics = 0x02000000,
+            DeleteOnClose = 0x04000000,
+            RandomAccess = 0x10000000,
+            NoBuffering = 0x20000000,
+            Overlapped = 0x40000000,
+            WriteThrough = 0x80000000
+        }
+
+        [Flags]
+        private enum FILEOP_FLAGS : ushort
         {
             FOF_MULTIDESTFILES = 0x1,
             FOF_CONFIRMMOUSE = 0x2,
@@ -101,67 +210,67 @@ namespace Carnassial.Interop
             /// </summary>
             FOF_SILENT = 0x4,
             FOF_RENAMEONCOLLISION = 0x8,
-            
+
             /// <summary>
             /// Don't prompt the user.
             /// </summary>
             FOF_NOCONFIRMATION = 0x10,
-            
+
             /// <summary>
             /// Fill in SHFILEOPSTRUCT.hNameMappings.
             /// Must be freed using SHFreeNameMappings
             /// </summary>
             FOF_WANTMAPPINGHANDLE = 0x20,
             FOF_ALLOWUNDO = 0x40,
-            
+
             /// <summary>
             /// On *.*, do only files
             /// </summary>
             FOF_FILESONLY = 0x80,
-            
+
             /// <summary>
             /// Don't show names of files
             /// </summary>
             FOF_SIMPLEPROGRESS = 0x100,
-            
+
             /// <summary>
             /// Don't confirm directory creation
             /// </summary>
             FOF_NOCONFIRMMKDIR = 0x200,
-            
+
             /// <summary>
             /// Don't put up error UI
             /// </summary>
             FOF_NOERRORUI = 0x400,
-            
+
             /// <summary>
             /// Don't copy NT file Security Attributes
             /// </summary>
             FOF_NOCOPYSECURITYATTRIBS = 0x800,
-            
+
             /// <summary>
             /// Don't recurse into directories.
             /// </summary>
             FOF_NORECURSION = 0x1000,
-            
+
             /// <summary>
             /// Don't operate on connected elements.
             /// </summary>
             FOF_NO_CONNECTED_ELEMENTS = 0x2000,
-            
+
             /// <summary>
             /// During delete operation, 
             /// warn if nuking instead of recycling (partially overrides FOF_NOCONFIRMATION)
             /// </summary>
             FOF_WANTNUKEWARNING = 0x4000,
-            
+
             /// <summary>
             /// Treat reparse points as objects, not containers
             /// </summary>
             FOF_NORECURSEREPARSE = 0x8000
         }
 
-        public enum SHFileOpFunc : uint
+        private enum SHFileOpFunc : uint
         {
             FO_MOVE = 0x1,
             FO_COPY = 0x2,

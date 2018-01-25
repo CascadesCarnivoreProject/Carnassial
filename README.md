@@ -58,6 +58,11 @@ A nuget package for libjpeg-turbo exists but is not being maintained so the libr
 
 Screen sizes of 1600 x 900 or larger are recommended.  Carnassial should run on any x64 processor but optimization effort generally targets hardware from the last five years.
 
+Known limitations:
+
+* Carnassial is developed primarily for midrange processors with the ability to execute four threads concurrently.  Its algorithms also support two concurrent threads (most Celerons, some Pentiums) and scale to six or more cores but may not perform optimally.
+* Microsoft Windows does not report file times consistently at sub-millisecond precision.  While it's not been observed, it's possible rounding within the operating system may cause rereading date times from files without metadata to change the millisecond component of timestamps.
+
 Known limitations with Windows 7:
 
 * The Recycle Bin part of age out of automatic .tdb and .ddb backups and deletion of files is untested.

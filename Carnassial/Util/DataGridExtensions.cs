@@ -24,15 +24,17 @@ namespace Carnassial.Util
             dataGrid.ScrollIntoView(dataGrid.Items[scrollIndex]);
         }
 
-        public static void SortByFirstColumnAscending(this DataGrid dataGrid)
+        public static void SortByFirstTwoColumnsAscending(this DataGrid dataGrid)
         {
             // Clear current sort descriptions
             dataGrid.Items.SortDescriptions.Clear();
 
             // Add the new sort description
             DataGridColumn firstColumn = dataGrid.Columns[0];
+            DataGridColumn secondColumn = dataGrid.Columns[1];
             ListSortDirection sortDirection = ListSortDirection.Ascending;
             dataGrid.Items.SortDescriptions.Add(new SortDescription(firstColumn.SortMemberPath, sortDirection));
+            dataGrid.Items.SortDescriptions.Add(new SortDescription(secondColumn.SortMemberPath, sortDirection));
 
             // Apply sort
             foreach (DataGridColumn column in dataGrid.Columns)
@@ -40,9 +42,7 @@ namespace Carnassial.Util
                 column.SortDirection = null;
             }
             firstColumn.SortDirection = sortDirection;
-
-            // Refresh items to display sort
-            dataGrid.Items.Refresh();
+            secondColumn.SortDirection = sortDirection;
         }
     }
 }

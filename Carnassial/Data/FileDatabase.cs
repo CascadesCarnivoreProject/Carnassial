@@ -1,6 +1,5 @@
 ﻿using Carnassial.Control;
 using Carnassial.Database;
-using Carnassial.Interop;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -51,156 +50,6 @@ namespace Carnassial.Data
             get { return this.Files.RowCount; }
         }
 
-        /// <summary>
-        /// Inserts files in the file table with default values for most columns.  However, a file's name, relative path, date time offset, and image quality
-        /// are populated.
-        /// </summary>
-        public void AddFiles(List<ImageRow> files, Action<ImageRow, int> onTransactionComitted)
-        {
-            if (files.Count < 1)
-            {
-                // nothing to do
-                return;
-            }
-
-            // setup
-            SQLiteParameter dateTime = new SQLiteParameter("@dateTime");
-            SQLiteParameter fileName = new SQLiteParameter("@fileName");
-            SQLiteParameter imageQuality = new SQLiteParameter("@imageQuality");
-            SQLiteParameter relativePath = new SQLiteParameter("@relativePath");
-            SQLiteParameter utcOffset = new SQLiteParameter("@utcOffset");
-
-            bool counterPresent = false;
-            List<string> dataLabels = new List<string>();
-            List<string> defaultValues = new List<string>();
-            string deleteFlagDefaultValue = null;
-            foreach (KeyValuePair<string, ControlRow> column in this.ControlsByDataLabel)
-            {
-                if (column.Value.Type == ControlType.Counter)
-                {
-                    counterPresent = true;
-                }
-
-                string dataLabel = column.Key;
-                if ((dataLabel == Constant.DatabaseColumn.ID) ||
-                    Constant.Control.StandardControls.Contains(dataLabel))
-                {
-                    if (dataLabel == Constant.DatabaseColumn.DeleteFlag)
-                    {
-                        deleteFlagDefaultValue = SQLiteDatabase.QuoteForSql(this.FindControl(dataLabel).DefaultValue);
-                    }
-                    // don't specify ID in the insert statement as it's an autoincrement primary key
-                    // don't generate parameters for standard controls they're coded explicitly
-                    continue;
-                }
-
-                dataLabels.Add(dataLabel);
-                defaultValues.Add(SQLiteDatabase.QuoteForSql(this.FindControl(dataLabel).DefaultValue));
-            }
-
-            string dataLabelsConcatenated = null;
-            string defaultValuesConcatenated = null;
-            if (dataLabels.Count > 0)
-            {
-                dataLabelsConcatenated = ", " + String.Join(", ", dataLabels);
-                defaultValuesConcatenated = ", " + String.Join(", ", defaultValues);
-            }
-            string fileInsertText = String.Format("INSERT INTO {0} ({1}, {2}, {3}, {4}, {5}, {6}{7}) VALUES (@dateTime, {8}, @fileName, @imageQuality, @relativePath, @utcOffset{9})",
-                                                  Constant.DatabaseTable.FileData,
-                                                  Constant.DatabaseColumn.DateTime,
-                                                  Constant.DatabaseColumn.DeleteFlag,
-                                                  Constant.DatabaseColumn.File,
-                                                  Constant.DatabaseColumn.ImageQuality,
-                                                  Constant.DatabaseColumn.RelativePath,
-                                                  Constant.DatabaseColumn.UtcOffset,
-                                                  dataLabelsConcatenated,
-                                                  deleteFlagDefaultValue,
-                                                  defaultValuesConcatenated);
-            string markerInsertText = String.Format("INSERT INTO {0} DEFAULT VALUES", Constant.DatabaseTable.Markers);
-
-            this.CreateBackupIfNeeded();
-
-            // insert performance
-            //                                   column defaults   specified defaults
-            //                  unparameterized  parameterized     parameterized
-            // 100 rows/call    245us/row        
-            // 1000 rows/call   76us/row                           29us/row
-            // single call      75us/row         27us/row          25us/row (40k rows/s)
-            // Stopwatch stopwatch = new Stopwatch();
-            // stopwatch.Start();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                int fileIndex = 0;
-                while (fileIndex < files.Count)
-                {
-                    using (SQLiteTransaction transaction = connection.BeginTransaction())
-                    {
-                        SQLiteCommand addFiles = new SQLiteCommand(fileInsertText, connection, transaction);
-                        SQLiteCommand addMarkers = null;
-                        try
-                        {
-                            addFiles.Parameters.Add(dateTime);
-                            addFiles.Parameters.Add(fileName);
-                            addFiles.Parameters.Add(imageQuality);
-                            addFiles.Parameters.Add(relativePath);
-                            addFiles.Parameters.Add(utcOffset);
-
-                            int transactionStartIndex = fileIndex;
-                            int maxIndex = Math.Min(files.Count, transactionStartIndex + Constant.Database.RowsPerTransaction);
-                            for (; fileIndex < maxIndex; ++fileIndex)
-                            {
-                                ImageRow fileToInsert = files[fileIndex];
-                                dateTime.Value = fileToInsert.DateTime;
-                                fileName.Value = fileToInsert.FileName;
-                                imageQuality.Value = fileToInsert.ImageQuality.ToString();
-                                relativePath.Value = fileToInsert.RelativePath;
-                                utcOffset.Value = DateTimeHandler.ToDatabaseUtcOffset(fileToInsert.UtcOffset);
-
-                                addFiles.ExecuteNonQuery();
-                                // a call to AcceptChanges() is not needed as the file hasn't been added to a table
-                            }
-                            int filesInTransaction = fileIndex - transactionStartIndex;
-
-                            // add matching rows to markers to table if needed
-                            if (counterPresent)
-                            {
-                                addMarkers = new SQLiteCommand(markerInsertText, connection, transaction);
-                                for (int markerIndex = 0; markerIndex < filesInTransaction; ++markerIndex)
-                                {
-                                    addMarkers.ExecuteNonQuery();
-                                }
-                            }
-
-                            transaction.Commit();
-
-                            if (onTransactionComitted != null)
-                            {
-                                int lastFileComitted = fileIndex - 1;
-                                onTransactionComitted.Invoke(files[lastFileComitted], lastFileComitted);
-                            }
-                        }
-                        finally
-                        {
-                            addFiles.Dispose();
-                            if (addMarkers != null)
-                            {
-                                addMarkers.Dispose();
-                            }
-                        }
-                    }
-                }
-                // stopwatch.Stop();
-                // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
-
-                if (counterPresent)
-                {
-                    // refresh the marker table to keep it in sync
-                    // Files table doesn't need refresh as its contents were just flushed to the database.
-                    this.GetMarkers(connection);
-                }
-            }
-        }
-
         public void AdjustFileTimes(TimeSpan adjustment)
         {
             this.AdjustFileTimes(adjustment, 0, this.CurrentlySelectedFileCount - 1);
@@ -208,7 +57,7 @@ namespace Carnassial.Data
 
         public void AdjustFileTimes(TimeSpan adjustment, int startIndex, int endIndex)
         {
-            this.AdjustFileTimes((DateTimeOffset imageTime) => { return imageTime + adjustment; }, startIndex, endIndex);
+            this.AdjustFileTimes((DateTimeOffset fileTime) => { return fileTime + adjustment; }, startIndex, endIndex);
         }
 
         // invoke the passed function to modify the DateTime field over the specified range of files
@@ -273,6 +122,12 @@ namespace Carnassial.Data
             this.SyncImageSetToDatabase();
         }
 
+        public AddFilesTransaction CreateAddFilesTransaction()
+        {
+            this.CreateBackupIfNeeded();
+            return new AddFilesTransaction(this, this.Database.CreateConnection());
+        }
+
         private ColumnDefinition CreateFileDataColumnDefinition(ControlRow control)
         {
             if (control.DataLabel == Constant.DatabaseColumn.DateTime)
@@ -300,6 +155,18 @@ namespace Carnassial.Data
                 return new ColumnDefinition(control.DataLabel, Constant.SqlColumnType.Text);
             }
             return new ColumnDefinition(control.DataLabel, Constant.SqlColumnType.Text, control.DefaultValue);
+        }
+
+        public UpdateFileDateTimeOffsetTransaction CreateUpdateDateTimeTransaction()
+        {
+            this.CreateBackupIfNeeded();
+            return new UpdateFileDateTimeOffsetTransaction(this.Database.CreateConnection());
+        }
+
+        public UpdateFileColumnTransaction CreateUpdateSingleColumnTransaction(string dataLabel)
+        {
+            this.CreateBackupIfNeeded();
+            return new UpdateFileColumnTransaction(dataLabel, this.Database.CreateConnection());
         }
 
         private Select CreateSelect(FileSelection selection)
@@ -375,10 +242,6 @@ namespace Carnassial.Data
 
             if (disposing)
             {
-                if (this.Files != null)
-                {
-                    this.Files.Dispose();
-                }
                 if (this.Markers != null)
                 {
                     this.Markers.Dispose();
@@ -387,15 +250,6 @@ namespace Carnassial.Data
 
             base.Dispose(disposing);
             this.disposed = true;
-        }
-
-        // Update all the date fields by swapping the days and months.
-        // This should ONLY be called if such swapping across all dates (excepting corrupt ones) is possible
-        // as otherwise it will only swap those dates it can
-        // It also assumes that the data table is showing All images
-        public void ExchangeDayAndMonthInFileDates()
-        {
-            this.ExchangeDayAndMonthInFileDates(0, this.CurrentlySelectedFileCount - 1);
         }
 
         // Update all the date fields between the start and end index by swapping the days and months.
@@ -489,10 +343,9 @@ namespace Carnassial.Data
         {
             // try primary key lookup first as typically the requested ID will be present in the data table
             // (ideally the caller could use the ImageRow found directly, but this doesn't compose with index based navigation)
-            ImageRow file = this.Files.Find(fileID);
-            if (file != null)
+            if (this.Files.TryFind(fileID, out ImageRow file, out int fileIndex))
             {
-                return this.Files.IndexOf(file);
+                return fileIndex;
             }
 
             // when sorted by ID ascending so an inexact binary search works
@@ -540,8 +393,7 @@ namespace Carnassial.Data
             Select select = new Select(Constant.DatabaseTable.FileData, new WhereClause(Constant.DatabaseColumn.DeleteFlag, Constant.SqlOperator.Equal, Boolean.TrueString));
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
-                DataTable files = this.Database.GetDataTableFromSelect(connection, select);
-                return new FileTable(files);
+                return this.Files = this.Database.GetDataTableFromSelect<FileTable>(connection, select);
             }
         }
 
@@ -568,10 +420,10 @@ namespace Carnassial.Data
             Select select = this.CreateSelect(selection);
             if ((select.Where.Count < 1) && (selection == FileSelection.Custom))
             {
-                // if no search terms are active the image count is undefined as no filtering is in operation
+                // if no search terms are active the file count is undefined as no filtering is in operation
                 return -1;
             }
-            // otherwise, the query is for all images as no where clause is present
+            // otherwise, the query is for all files as no where clause is present
             return (int)select.Count(connection);
         }
 
@@ -588,36 +440,12 @@ namespace Carnassial.Data
             return counts;
         }
 
-        private void GetMarkers(SQLiteConnection connection)
+        public void GetMarkers(SQLiteConnection connection)
         {
             this.Markers = new DataTableBackedList<MarkerRow>(this.Database.GetDataTableFromSelect(connection, new Select(Constant.DatabaseTable.Markers)), (DataRow row) => { return new MarkerRow(row); });
         }
 
-        /// <summary>
-        /// Get the row matching the specified file or create a new file.  The caller is responsible to add newly created files the database and data table.
-        /// </summary>
-        /// <returns>true if the file is already in the database</returns>
-        public bool GetOrCreateFile(FileInfo fileInfo, TimeZoneInfo imageSetTimeZone, out ImageRow file)
-        {
-            // GetRelativePath() includes the file's name; remove that from the relative path as it's stored separately
-            // GetDirectoryName() returns String.Empty if there's no relative path; the SQL layer treats this inconsistently, resulting in DataRows with 
-            // RelativePath = String.Empty even if null is passed.  As a result, String.IsNullOrEmpty() is the appropriate test for lack of a RelativePath.
-            string relativePath = NativeMethods.GetRelativePathFromDirectoryToFile(this.FolderPath, fileInfo);
-            relativePath = Path.GetDirectoryName(relativePath);
-
-            if (this.TryGetFile(relativePath, fileInfo.Name, out file))
-            {
-                return true;
-            }
-
-            file = this.Files.NewRow(fileInfo);
-            file.RelativePath = relativePath;
-            Debug.Assert(File.Exists(file.GetFilePath(this.FolderPath)), "ImageRow created for file not found on disk.");
-            file.SetDateTimeOffsetFromFileInfo(this.FolderPath, imageSetTimeZone);
-            return false;
-        }
-
-        /// <summary>A convenience routine for checking to see if the image in the given row is displayable (i.e., not corrupted or missing)</summary>
+        /// <summary>A convenience routine for checking to see if the file in the given row is displayable (i.e., not corrupted or missing)</summary>
         public bool IsFileDisplayable(int fileIndex)
         {
             if (this.IsFileRowInRange(fileIndex) == false)
@@ -710,7 +538,7 @@ namespace Carnassial.Data
 
         protected override bool OnExistingDatabaseOpened(TemplateDatabase templateDatabase)
         {
-            // perform TemplateTable initializations and migrations, then check for synchronization issues
+            // perform Controls and ImageSet initializations and migrations, then check for synchronization issues
             if (base.OnExistingDatabaseOpened(templateDatabase) == false)
             {
                 return false;
@@ -754,7 +582,7 @@ namespace Carnassial.Data
                 }
             }
 
-            // if there are no synchronization difficulties synchronize the image database's TemplateTable with the template's TemplateTable
+            // if there are no synchronization difficulties synchronize the file database's TemplateTable with the template's TemplateTable
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
                 if (this.ControlSynchronizationIssues.Count == 0)
@@ -770,9 +598,9 @@ namespace Carnassial.Data
                     }
                 }
 
-                // load in memory ImageSet, Files, and Markers tables
-                this.GetMarkers(connection);
+                // load in memory Files and Markers tables
                 this.SelectFiles(connection, this.ImageSet.FileSelection);
+                this.GetMarkers(connection);
             }
 
             // return true if there are synchronization issues as the database was still opened successfully
@@ -814,8 +642,7 @@ namespace Carnassial.Data
             {
                 select.OrderBy = Constant.DatabaseColumn.DateTime;
             }
-            DataTable files = this.Database.GetDataTableFromSelect(connection, select);
-            this.Files = new FileTable(files);
+            this.Files = this.Database.GetDataTableFromSelect<FileTable>(connection, select);
 
             // persist the current selection
             this.ImageSet.FileSelection = selection;
@@ -876,23 +703,6 @@ namespace Carnassial.Data
             // indicate failure if there are synchronization issues as the caller needs to determine if the database can be used anyway
             // This is different semantics from OnExistingDatabaseOpened().
             return fileDatabase.ControlSynchronizationIssues.Count == 0;
-        }
-
-        private bool TryGetFile(string relativePath, string fileName, out ImageRow file)
-        {
-            List<ImageRow> files = this.Files.Select(relativePath, fileName);
-            if (files.Count == 0)
-            {
-                file = null;
-                return false;
-            }
-            if (files.Count == 1)
-            {
-                file = files[0];
-                return true;
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(relativePath) + ", " + nameof(fileName), String.Format("{0} files have {1}='{2}' and {3}='{4}'.", files.Count, Constant.DatabaseColumn.RelativePath, relativePath, Constant.DatabaseColumn.File, fileName));
         }
 
         public void UpdateFiles(FileTuplesWithID update)

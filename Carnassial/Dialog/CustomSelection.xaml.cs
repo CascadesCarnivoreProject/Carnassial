@@ -35,7 +35,7 @@ namespace Carnassial.Dialog
             this.InitializeComponent();
 
             this.fileDatabase = database;
-            this.imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZone();
+            this.imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZoneInfo();
             this.Owner = owner;
             this.TermCombiningAnd.IsChecked = this.fileDatabase.CustomSelection.TermCombiningOperator == LogicalOperator.And;
             this.TermCombiningOr.IsChecked = !this.TermCombiningAnd.IsChecked;

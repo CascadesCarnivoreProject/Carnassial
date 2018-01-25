@@ -150,6 +150,7 @@
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Speech" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq">
@@ -188,6 +189,7 @@
     <Compile Include="Control\HorizontalLineAdorner.cs" />
     <Compile Include="Control\UtcOffsetPicker.cs" />
     <Compile Include="Database\IndexedPropertyChangedEventArgs.cs" />
+    <Compile Include="Data\AddFilesTransaction.cs" />
     <Compile Include="Data\ControlType.cs" />
     <Compile Include="Control\DataEntryDateTimeOffset.cs" />
     <Compile Include="Control\TabControlWithoutHomeAndEnd.cs" />
@@ -213,22 +215,27 @@
     <Compile Include="Database\DataRowExtensions.cs" />
     <Compile Include="Data\FileImportResult.cs" />
     <Compile Include="Data\FileTable.cs" />
-    <Compile Include="Data\ImageRowDateTimeOffsetConverter.cs" />
+    <Compile Include="Data\FileTransaction.cs" />
     <Compile Include="Data\ImageSetOptions.cs" />
     <Compile Include="Data\ImageSetRow.cs" />
+    <Compile Include="Database\ISQLiteTable.cs" />
     <Compile Include="Data\MarkerRow.cs" />
     <Compile Include="Database\Select.cs" />
+    <Compile Include="Data\UpdateFileDateTimeOffsetTransaction.cs" />
+    <Compile Include="Data\UpdateFileColumnTransaction.cs" />
     <Compile Include="Data\VideoRow.cs" />
     <Compile Include="Database\WhereClause.cs" />
     <Compile Include="Dialog\AdvancedImageSetOptions.xaml.cs">
       <DependentUpon>AdvancedImageSetOptions.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Dialog\DarkImagesIOComputeTransaction.cs" />
     <Compile Include="Dialog\DateCorrectAmbiguous.xaml.cs">
       <DependentUpon>DateCorrectAmbiguous.xaml</DependentUpon>
     </Compile>
     <Compile Include="Control\DateChangesFeedbackControl.xaml.cs">
       <DependentUpon>DateChangesFeedbackControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Dialog\MetadataIOComputeTransactionManager.cs" />
     <Compile Include="Dialog\DateTimeSetTimeZone.xaml.cs">
       <DependentUpon>DateTimeSetTimeZone.xaml</DependentUpon>
     </Compile>
@@ -238,10 +245,26 @@
     <Compile Include="Dialog\GoToFile.xaml.cs">
       <DependentUpon>GoToFile.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Dialog\MetadataFieldResult.cs" />
+    <Compile Include="Dialog\ObservableStatus.cs" />
+    <Compile Include="Dialog\ObservableArray.cs" />
     <Compile Include="Github\GithubAsset.cs" />
-    <Compile Include="Images\FolderLoad.cs" />
-    <Compile Include="Images\FolderLoadProgress.cs" />
+    <Compile Include="Dialog\DateTimeRereadIOComputeTransactionManager.cs" />
+    <Compile Include="Images\FileIOComputeTransactionStatus.cs" />
+    <Compile Include="Images\IReadOnlyListExtensions.cs" />
+    <Compile Include="Interop\HyperthreadSiblingAffinity.cs" />
+    <Compile Include="Interop\IEnumerableExtensions.cs" />
+    <Compile Include="Interop\UnbufferedSequentialReader.cs" />
+    <Compile Include="Images\FileLoad.cs" />
+    <Compile Include="Images\FileLoadAtom.cs" />
+    <Compile Include="Images\AddFilesIOComputeTransactionManager.cs" />
+    <Compile Include="Images\FileIOComputeTransactionManager.cs" />
+    <Compile Include="Images\FileLoadStatus.cs" />
     <Compile Include="Images\FrameworkElementExtensions.cs" />
+    <Compile Include="Images\ImageProperties.cs" />
+    <Compile Include="Images\JpegImage.cs" />
+    <Compile Include="Images\MetadataReadResult.cs" />
+    <Compile Include="Dialog\ReclassifyStatus.cs" />
     <Compile Include="Images\MoveToFileResult.cs" />
     <Compile Include="Images\ZoomBookmark.cs" />
     <Compile Include="Interop\IFileOperationProgressSink.cs" />
@@ -268,10 +291,8 @@
     <Compile Include="Images\ImageDifferenceResult.cs" />
     <Compile Include="Images\ImageCache.cs" />
     <Compile Include="Data\FileTableEnumerator.cs" />
-    <Compile Include="Dialog\DateTimeRereadFeedbackTuple.cs" />
-    <Compile Include="Data\DateTimeAdjustment.cs" />
+    <Compile Include="Dialog\DateTimeRereadResult.cs" />
     <Compile Include="Images\ImageDifference.cs" />
-    <Compile Include="Images\ImageQuality.cs" />
     <Compile Include="Images\MagnifyingGlass.cs" />
     <Compile Include="Images\MarkerCreatedOrDeletedEventArgs.cs" />
     <Compile Include="Control\StockMessageControl.xaml.cs">

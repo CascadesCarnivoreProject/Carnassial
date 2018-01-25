@@ -16,7 +16,7 @@ namespace Carnassial.Database
             this.relativePaths = new List<string>();
         }
 
-        public void Add(string relativePath, string fileName, List<object> values)
+        public void Add(string fileName, string relativePath, List<object> values)
         {
             if (this.Columns.Count != values.Count)
             {

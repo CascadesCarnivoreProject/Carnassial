@@ -37,7 +37,7 @@ namespace Carnassial
         private bool disposed;
         private SpeechSynthesizer speechSynthesizer;
 
-        // timer for flushing FileeNavigatorSlider drag events
+        // timer for flushing FileNavigatorSlider drag events
         private DispatcherTimer fileNavigatorSliderTimer;
 
         public DataEntryHandler DataHandler { get; private set; }
@@ -385,7 +385,7 @@ namespace Carnassial
         {
             if (Utilities.IsSingleTemplateFileDrag(dropEvent, out string templateDatabaseFilePath))
             {
-                dropEvent.Handled = await this.TryOpenTemplateAndLoadFoldersAsync(templateDatabaseFilePath);
+                dropEvent.Handled = await this.TryOpenTemplateAndFileDatabaseAsync(templateDatabaseFilePath);
             }
         }
 
@@ -560,14 +560,11 @@ namespace Carnassial
             await this.ShowBulkFileEditDialogAsync(ambiguousDateCorrection);
         }
 
-        private void MenuEditDarkImages_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditDarkImages_Click(object sender, RoutedEventArgs e)
         {
             using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(this.DataHandler.FileDatabase, this.DataHandler.ImageCache.CurrentRow, this.State, this))
             {
-                if (darkThreshold.ShowDialog() == true)
-                {
-                    this.OnBulkEdit(this, null);
-                }
+                await this.ShowBulkFileEditDialogAsync(darkThreshold);
             }
         }
 
@@ -745,7 +742,7 @@ namespace Carnassial
                 }
             }
 
-            PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.DataHandler.FileDatabase, this.DataHandler.ImageCache.Current.GetFilePath(this.FolderPath), this);
+            PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.DataHandler.FileDatabase, this.DataHandler.ImageCache.Current.GetFilePath(this.FolderPath), this.State.Throttles.GetDesiredIntervalBetweenFileLoadProgress(), this);
             await this.ShowBulkFileEditDialogAsync(populateField);
         }
 
@@ -781,7 +778,7 @@ namespace Carnassial
 
         private async void MenuEditRereadDateTimesFromFiles_Click(object sender, RoutedEventArgs e)
         {
-            DateTimeRereadFromFiles rereadDates = new DateTimeRereadFromFiles(this.DataHandler.FileDatabase, this);
+            DateTimeRereadFromFiles rereadDates = new DateTimeRereadFromFiles(this.DataHandler.FileDatabase, this.State.Throttles.GetDesiredIntervalBetweenFileLoadProgress(), this);
             await this.ShowBulkFileEditDialogAsync(rereadDates);
         }
 
@@ -853,9 +850,7 @@ namespace Carnassial
         {
             if (this.ShowFolderSelectionDialog(out IEnumerable<string> folderPaths))
             {
-                FolderLoad folderLoad = new FolderLoad();
-                folderLoad.FolderPaths.AddRange(folderPaths);
-                await this.TryLoadFolderAsync(folderLoad);
+                await this.TryAddFilesAsync(folderPaths);
             }
         }
 
@@ -917,8 +912,8 @@ namespace Carnassial
         {
             if (this.TryGetTemplatePath(out string templateDatabaseFilePath))
             {
-                await this.TryOpenTemplateAndLoadFoldersAsync(templateDatabaseFilePath);
-            }     
+                await this.TryOpenTemplateAndFileDatabaseAsync(templateDatabaseFilePath);
+            }
         }
 
         private async void MenuFileMoveFiles_Click(object sender, RoutedEventArgs e)
@@ -1074,11 +1069,19 @@ namespace Carnassial
                 this.StatusBar.SetMessage("No data file backup was made.");
             }
 
+            // ensure all files are selected
+            // This prevents files which are in the database but not selected from being added a second time.
+            FileSelection originalSelection = this.DataHandler.FileDatabase.ImageSet.FileSelection;
+            if (originalSelection != FileSelection.All)
+            {
+                this.DataHandler.FileDatabase.SelectFiles(FileSelection.All);
+            }
+
             SpreadsheetReaderWriter spreadsheetReader = new SpreadsheetReaderWriter();
             FileImportResult importResult;
             try
             {
-                if (String.Equals(Path.GetExtension(spreadsheetFilePath), Constant.File.ExcelFileExtension, StringComparison.OrdinalIgnoreCase))
+                if (spreadsheetFilePath.EndsWith(Constant.File.ExcelFileExtension, StringComparison.OrdinalIgnoreCase))
                 {
                     importResult = spreadsheetReader.TryImportFileDataFromXlsx(spreadsheetFilePath, this.DataHandler.FileDatabase);
                 }
@@ -1094,7 +1097,7 @@ namespace Carnassial
                     messageBox.Message.Reason = "The spreadsheet is not fully compatible with the current image set.";
                     messageBox.Message.Solution = "Check that:" + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 The first row of the file is a header line." + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 The column names in the header line match the database." + Environment.NewLine; 
+                    messageBox.Message.Solution += "\u2022 The column names in the header line match the database." + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 Choice values use the correct case." + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 Counter values are numbers." + Environment.NewLine;
                     messageBox.Message.Solution += "\u2022 Flag values are either 'true' or 'false'.";
@@ -1121,7 +1124,7 @@ namespace Carnassial
             }
 
             // reload the file data table and update the enable/disable state of the user interface to match
-            await this.SelectFilesAndShowFileAsync();
+            await this.SelectFilesAndShowFileAsync(originalSelection);
             this.EnableOrDisableMenusAndControls();
             this.StatusBar.SetMessage("{0} imported: {1} files added, {2} files updated.", Path.GetFileName(spreadsheetFilePath), importResult.FilesAdded, importResult.FilesUpdated);
 
@@ -1131,7 +1134,7 @@ namespace Carnassial
 
         private async void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs e)
         {
-            await this.TryOpenTemplateAndLoadFoldersAsync((string)((MenuItem)sender).ToolTip);
+            await this.TryOpenTemplateAndFileDatabaseAsync((string)((MenuItem)sender).ToolTip);
         }
 
         /// <summary>
@@ -1333,7 +1336,6 @@ namespace Carnassial
                 throw new ArgumentOutOfRangeException(nameof(sender), String.Format("Unknown sender {0}.", sender));
             }
 
-            // Go to the first result (i.e., index 0) in the selection
             await this.SelectFilesAndShowFileAsync(selection);
         }
 
@@ -1428,7 +1430,7 @@ namespace Carnassial
 
         private void MenuViewShowInstructions_Click(object sender, RoutedEventArgs e)
         {
-            this.Tabs.SelectedItem = 0;
+            this.Tabs.SelectedIndex = 0;
         }
 
         private async void MenuViewShowLastFile_Click(object sender, RoutedEventArgs e)
@@ -1575,6 +1577,42 @@ namespace Carnassial
             this.ResetUndoRedoState();
         }
 
+        private async Task OnFileDatabaseOpenedOrFilesAddedAsync(bool filesJustAdded)
+        {
+            // set the file displayed to the one 
+            // - from the previous session with the image set if the .ddb was just opened
+            // - displayed prior to adding files to an image set
+            long mostRecentFileID = this.DataHandler.FileDatabase.ImageSet.MostRecentFileID;
+            if (filesJustAdded)
+            {
+                if (this.IsFileAvailable())
+                {
+                    // if this is completion of an add to an existing image set stay on the file, ideally, shown before the import
+                    mostRecentFileID = this.DataHandler.ImageCache.Current.ID;
+                    // however, the cache doesn't know file loading changed the display image so invalidate to force a redraw
+                    // This is heavier weight than desirable, but it's a one off.
+                    this.DataHandler.ImageCache.TryInvalidate(mostRecentFileID);
+                }
+
+                // reload the in memory copy of the files table
+                // Adding files appends them in memory, which is consistent with FileSelection.All and sort by insertion order, but
+                // for any other selection and sort the table needs to be rebuilt. For now, always reload all. It may eventually be
+                // desirable to move this logic into AddFilesTransaction.Commit().
+                await this.SelectFilesAndShowFileAsync(mostRecentFileID, this.DataHandler.FileDatabase.ImageSet.FileSelection, false);
+            }
+            else
+            {
+                await this.ShowFileAsync(this.DataHandler.FileDatabase.GetFileOrNextFileIndex(mostRecentFileID), false);
+                this.OnFileSelectionChanged();
+            }
+
+            // if needed, change to the image set tab
+            this.MenuViewShowFiles_Click(this, null);
+
+            // clear undo/redo chain as opening a .ddb or adding files is not an undoable operation
+            this.OnBulkEdit(this, null);
+        }
+
         private void OnFileFieldEdit(object sender, PropertyChangedEventArgs fileChange)
         {
             if ((this.DataHandler != null) && this.DataHandler.IsProgrammaticUpdate)
@@ -1613,32 +1651,56 @@ namespace Carnassial
             }
         }
 
-        /// <summary>
-        /// When folder loading has completed add callbacks, prepare the UI, set up the image set, and show the file.
-        /// </summary>
-        private async Task OnFolderLoadingCompleteAsync(bool filesJustAdded)
+        private void OnFileSelectionChanged()
         {
-            // if this is completion of an existing .ddb open set the current selection and the image index to the ones from the previous session with the image set
-            // also if this is completion of import to a new .ddb
-            long mostRecentFileID = this.DataHandler.FileDatabase.ImageSet.MostRecentFileID;
-            FileSelection fileSelection = this.DataHandler.FileDatabase.ImageSet.FileSelection;
-            if (filesJustAdded && this.IsFileAvailable())
+            // update status and menu state to reflect what ended up being selected
+            FileSelection selection = this.DataHandler.FileDatabase.ImageSet.FileSelection;
+            string status;
+            switch (selection)
             {
-                // if this is completion of an add to an existing image set stay on the file, ideally, shown before the import
-                mostRecentFileID = this.DataHandler.ImageCache.Current.ID;
-                // however, the cache doesn't know file loading changed the display image so invalidate to force a redraw
-                // This is heavier weight than desirable, but it's a one off.
-                this.DataHandler.ImageCache.TryInvalidate(mostRecentFileID);
+                case FileSelection.All:
+                    status = "(all files selected)";
+                    break;
+                case FileSelection.Corrupt:
+                    status = "corrupted files";
+                    break;
+                case FileSelection.Custom:
+                    status = "files matching your custom selection";
+                    break;
+                case FileSelection.Dark:
+                    status = "dark files";
+                    break;
+                case FileSelection.MarkedForDeletion:
+                    status = "files marked for deletion";
+                    break;
+                case FileSelection.NoLongerAvailable:
+                    status = "files no longer available";
+                    break;
+                case FileSelection.Ok:
+                    status = "Ok files";
+                    break;
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled file selection {0}.", selection));
             }
 
-            // match UX availability to file availability
-            await this.SelectFilesAndShowFileAsync(mostRecentFileID, fileSelection, false);
+            this.StatusBar.SetFileCount(this.DataHandler.FileDatabase.CurrentlySelectedFileCount);
+            this.StatusBar.SetView(status);
 
-            // change to the image set tab
-            this.MenuViewShowFiles_Click(this, null);
+            this.EnableOrDisableMenusAndControls();
+            this.MenuSelectAllFiles.IsChecked = selection == FileSelection.All;
+            this.MenuSelectCorruptedFiles.IsChecked = selection == FileSelection.Corrupt;
+            this.MenuSelectDarkFiles.IsChecked = selection == FileSelection.Dark;
+            this.MenuSelectOkFiles.IsChecked = selection == FileSelection.Ok;
+            this.MenuSelectFilesNoLongerAvailable.IsChecked = selection == FileSelection.NoLongerAvailable;
+            this.MenuSelectFilesMarkedForDeletion.IsChecked = selection == FileSelection.MarkedForDeletion;
+            this.MenuSelectCustom.IsChecked = selection == FileSelection.Custom;
 
-            // clear undo/redo chain as folder loading is not an undoable operation
-            this.OnBulkEdit(this, null);
+            // after a selection change update the file navigatior slider's range and tick space
+            this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
+            this.FileNavigatorSlider.Maximum = this.DataHandler.FileDatabase.CurrentlySelectedFileCount;  // slider is one based so no - 1 on the count
+            Utilities.ConfigureNavigatorSliderTick(this.FileNavigatorSlider);
+
+            this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
         }
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -1700,7 +1762,7 @@ namespace Carnassial
         {
             if (this.IsFileAvailable())
             {
-                this.State.CurrentFileSnapshot = this.DataHandler.ImageCache.Current.AsDictionary();
+                this.State.CurrentFileSnapshot = this.DataHandler.ImageCache.Current.GetValues();
             }
             else
             {
@@ -1789,52 +1851,6 @@ namespace Carnassial
                 this.DataHandler.FileDatabase.SelectFiles(selection);
             }
 
-            // update status and menu state to reflect what ended up being selected
-            string status;
-            switch (selection)
-            {
-                case FileSelection.All:
-                    status = "(all files selected)";
-                    break;
-                case FileSelection.Corrupt:
-                    status = "corrupted files";
-                    break;
-                case FileSelection.Custom:
-                    status = "files matching your custom selection";
-                    break;
-                case FileSelection.Dark:
-                    status = "dark files";
-                    break;
-                case FileSelection.MarkedForDeletion:
-                    status = "files marked for deletion";
-                    break;
-                case FileSelection.NoLongerAvailable:
-                    status = "files no longer available";
-                    break;
-                case FileSelection.Ok:
-                    status = "Ok files";
-                    break;
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled file selection {0}.", selection));
-            }
-
-            this.StatusBar.SetFileCount(this.DataHandler.FileDatabase.CurrentlySelectedFileCount);
-            this.StatusBar.SetView(status);
-
-            this.EnableOrDisableMenusAndControls();
-            this.MenuSelectAllFiles.IsChecked = selection == FileSelection.All;
-            this.MenuSelectCorruptedFiles.IsChecked = selection == FileSelection.Corrupt;
-            this.MenuSelectDarkFiles.IsChecked = selection == FileSelection.Dark;
-            this.MenuSelectOkFiles.IsChecked = selection == FileSelection.Ok;
-            this.MenuSelectFilesNoLongerAvailable.IsChecked = selection == FileSelection.NoLongerAvailable;
-            this.MenuSelectFilesMarkedForDeletion.IsChecked = selection == FileSelection.MarkedForDeletion;
-            this.MenuSelectCustom.IsChecked = selection == FileSelection.Custom;
-
-            // after a selection change update the file navigatior slider's range and tick space
-            this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-            this.FileNavigatorSlider.Maximum = this.DataHandler.FileDatabase.CurrentlySelectedFileCount;  // slider is one based so no - 1 on the count
-            Utilities.ConfigureNavigatorSliderTick(this.FileNavigatorSlider);
-
             // display the specified file or, if it's no longer selected, the next closest one
             // ShowFileAsync() handles empty image sets, so those don't need to be checked for here.
             // Undo/redo is handled in this function so that navigation triggered by selection changes is part of the selection undo/redo step.  Therefore, 
@@ -1849,7 +1865,7 @@ namespace Carnassial
                 }
             }
 
-            this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
+            this.OnFileSelectionChanged();
         }
 
         // various dialogs cam perform a bulk edit, after which the current file's data needs to be refreshed
@@ -1861,25 +1877,31 @@ namespace Carnassial
                          (dialog.GetType() == typeof(DateTimeLinearCorrection)) ||
                          (dialog.GetType() == typeof(DateTimeRereadFromFiles)) ||
                          (dialog.GetType() == typeof(DateTimeSetTimeZone)) ||
+                         (dialog.GetType() == typeof(DarkImagesThreshold)) ||
                          (dialog.GetType() == typeof(PopulateFieldWithMetadata)),
                          String.Format("Unexpected dialog {0}.", dialog.GetType()));
 
             this.DataHandler.TrySyncCurrentFileToDatabase();
+            this.DataHandler.IsProgrammaticUpdate = true;
             if (dialog.ShowDialog() == true)
             {
                 // load the changes made through the current dialog
+                // Often this won't be needed but it's nontrivial to determine if a bulk edit would affect which files are selected
+                // or change files' sort order.
                 long currentFileID = this.DataHandler.ImageCache.Current.ID;
                 this.DataHandler.FileDatabase.SelectFiles(this.DataHandler.FileDatabase.ImageSet.FileSelection);
 
                 // show updated data for file
-                // Delete isn't considered a bulk edit so none of the bulk edit dialogs can result in a change in the file which needs to be displayed.
-                // Hence the image cache doesn't need to be invalidated.  However, the SelectFiles() call above might mean the currently displayed file is no 
-                // longer part of the selection and hence GetFileOrNextFileIndex() needs to be called for a fully safe flow.
+                // Delete doesn't go through this code path so none of the bulk edit dialogs can result in a change in the file which 
+                // needs to be displayed.  Hence the image cache doesn't need to be invalidated.  However, the SelectFiles() call above 
+                // might mean the currently displayed file is no longer part of the selection and hence GetFileOrNextFileIndex() needs 
+                // to be called for a fully safe flow.
                 await this.ShowFileAsync(this.DataHandler.FileDatabase.GetFileOrNextFileIndex(currentFileID));
 
                 // clear undo/redo state as bulk edits aren't undoable
                 this.OnBulkEdit(this, null);
             }
+            this.DataHandler.IsProgrammaticUpdate = false;
         }
 
         private async Task ShowFileAsync(int fileIndex)
@@ -1892,7 +1914,10 @@ namespace Carnassial
             // if there is no file to show, then show an image indicating no image set or an empty image set
             if ((this.IsFileDatabaseAvailable() == false) || (this.DataHandler.FileDatabase.CurrentlySelectedFileCount < 1))
             {
-                this.MarkableCanvas.SetNewImage(Constant.Images.NoSelectableFile.Value, null);
+                using (MemoryImage noSelectableFile = new MemoryImage(Constant.Images.NoSelectableFile.Value))
+                {
+                    this.MarkableCanvas.SetNewImage(noSelectableFile, null);
+                }
                 this.RefreshDisplayedMarkers();
                 this.StatusBar.SetCurrentFile(Constant.Database.InvalidRow);
 
@@ -1950,7 +1975,7 @@ namespace Carnassial
             // the call to TryMoveToFile() above refreshes the data stored under this.dataHandler.ImageCache.Current.
             // Note: The refresh here covers only the file table as there's no scenario for edits to the markers table which don't route through
             // MarkableCanvas.MarkerCreatedOrDeleted.
-            this.State.CurrentFileSnapshot = this.DataHandler.ImageCache.Current.AsDictionary();
+            this.State.CurrentFileSnapshot = this.DataHandler.ImageCache.Current.GetValues();
             this.DataHandler.IsProgrammaticUpdate = true;
             this.DataEntryControls.SetDataContext(this.DataHandler.ImageCache.Current);
             this.DataHandler.IsProgrammaticUpdate = false;
@@ -2101,10 +2126,12 @@ namespace Carnassial
         }
 
         // out parameters can't be used in anonymous methods, so a separate pointer to backgroundWorker is required for return to the caller
-        private async Task<bool> TryLoadFolderAsync(FolderLoad folderLoad)
+        private async Task<bool> TryAddFilesAsync(IEnumerable<string> folderPaths)
         {
-            List<FileInfo> filesToAdd = folderLoad.GetFiles();
-            if (filesToAdd.Count == 0)
+            AddFilesIOComputeTransactionManager folderLoad = new AddFilesIOComputeTransactionManager(this.UpdateFolderLoadProgress, this.State.Throttles.GetDesiredIntervalBetweenFileLoadProgress());
+            folderLoad.FolderPaths.AddRange(folderPaths);
+            folderLoad.FindFilesToLoad(this.FolderPath);
+            if (folderLoad.FilesToLoad == 0)
             {
                 // no images were found in folder; see if user wants to try again
                 MessageBox messageBox = new MessageBox("Select a folder containing images or videos?", this, MessageBoxButton.YesNo);
@@ -2120,11 +2147,9 @@ namespace Carnassial
                     return false;
                 }
 
-                if (this.ShowFolderSelectionDialog(out IEnumerable<string> folderPaths))
+                if (this.ShowFolderSelectionDialog(out folderPaths))
                 {
-                    folderLoad.FolderPaths.Clear();
-                    folderLoad.FolderPaths.AddRange(folderPaths);
-                    return await this.TryLoadFolderAsync(folderLoad);
+                    return await this.TryAddFilesAsync(folderPaths);
                 }
 
                 // exit if user changed their mind about trying again
@@ -2132,12 +2157,10 @@ namespace Carnassial
             }
 
             // update UI for import (visibility is inverse of RunWorkerCompleted)
-            this.FeedbackControl.Visibility = Visibility.Visible;
+            this.FolderLoadProgress.Visibility = Visibility.Visible;
             this.FileNavigatorSlider.Visibility = Visibility.Collapsed;
             this.MenuOptions.IsEnabled = true;
-            IProgress<FolderLoadProgress> folderLoadStatus = new Progress<FolderLoadProgress>(this.UpdateFolderLoadProgress);
-            FolderLoadProgress folderLoadProgress = new FolderLoadProgress(filesToAdd.Count, (int)this.Width);
-            folderLoadStatus.Report(folderLoadProgress);
+            folderLoad.ReportStatus();
             if (this.State.SkipDarkImagesCheck)
             {
                 this.StatusBar.SetMessage("Loading folders...");
@@ -2151,145 +2174,20 @@ namespace Carnassial
             this.MenuViewShowFiles_Click(this, null);
 
             // ensure all files are selected
-            // This prevents files which are in the DB but not selected from being added a second time.
+            // This prevents files which are in the database but not selected from being added a second time.
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             FileSelection originalSelection = this.DataHandler.FileDatabase.ImageSet.FileSelection;
             if (originalSelection != FileSelection.All)
             {
                 this.DataHandler.FileDatabase.SelectFiles(FileSelection.All);
             }
 
-            // Load all files found
-            // First pass: Examine files to extract their basic properties and build a list of files not already in the database
-            //
-            // With 8MP images and dark calculations enabled:
-            // Profiling of a 1000 image load on quad core, single 80+MB/s capable SSD with full size decoding finds:
-            //   two threads:   55s, 66% CPU, 33MB/s disk
-            //   three threads: 56s, 90% CPU, 22MB/s disk - worse!
-            // CPU utilization is 90% jpeg decode and 10% IsDark(C++/CLI scalar).
-            // 
-            // Profiling of a 1000 image load on quad core, single 80+MB/s capable SSD with half size decoding finds:
-            //   two threads:   34s, 60% CPU, 56MB/s disk
-            //   three threads: 34s, 91% CPU, 60MB/s disk
-            // So threads for half the available cores are dispatched by default.
-            //
-            // With dark calculations disabled:
-            // The bottleneck's the SQL insert though using more than four threads (or possibly more threads than the number of physical processors as the 
-            // test machine was quad core) results in slow progress on the first 20 files or so, making the optimum number of loading threads complex as it
-            // depends on amortizing startup lag across faster progress on the remaining import.  As this is comparatively minor relative to SQL (at least
-            // for O(10,000) files for now just default to four threads in the disabled case.
-            //
-            // Note: the UI thread is free during loading.  So if loading's going slow the user can switch off dark checking asynchronously to speed up 
-            // loading.
-            //
-            // A sequential partitioner is used as this keeps the preview images displayed to the user in pretty much the same order as they're named,
-            // which is less confusing than TPL's default partitioning where the displayed image jumps back and forth through the image set.  Pulling files
-            // nearly sequentially may also offer some minor disk performance benefit.
-            List<ImageRow> filesToInsert = new List<ImageRow>();
-            TimeZoneInfo imageSetTimeZone = this.DataHandler.FileDatabase.ImageSet.GetTimeZone();
-            await Task.Run(() => Parallel.ForEach(
-                new SequentialPartitioner<FileInfo>(filesToAdd),
-                Utilities.GetParallelOptions(this.State.SkipDarkImagesCheck ? Environment.ProcessorCount : Environment.ProcessorCount / 2),
-                (FileInfo fileInfo) =>
-                {
-                    if (this.DataHandler.FileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out ImageRow file))
-                    {
-                        // the database already has an entry for this file so skip it
-                        // if needed, a separate list of files to update could be generated
-                        return;
-                    }
-
-                    bool disposeMemoryImage = false;
-                    MemoryImage memoryImage = null;
-                    if (this.State.SkipDarkImagesCheck)
-                    {
-                        file.ImageQuality = FileSelection.Ok;
-                    }
-                    else
-                    {
-                        // load image and determine its quality
-                        // As noted above, folder loading is jpeg decoding bound.  Lowering the resolution it's loaded at lowers CPU requirements and is
-                        // acceptable here because dark calculation is an estimate based on using a subset of the pixels, the image is displayed only 
-                        // briefly as a status update, and the user has no opportunity to zoom into it.  Downsizing too much results in a poor quality 
-                        // preview and downsizing below the markable canvas's display size is somewhat self defeating but dark estimation is not too
-                        // sensitive.  So image load size here is driven by the size of the window with a floor applied in FolderLoadProgress..ctor() so
-                        // that it doesn't become too small.
-                        // Parallel doesn't await async bodies so awaiting the load results in Parallel prematurely concluding the body task completed and
-                        // dispatching another, resulting in system overload.  The simplest solution is to block this worker thread, which is OK as there
-                        // are many workers and they're decoupled from the UI thread.
-                        memoryImage = file.LoadAsync(this.FolderPath, folderLoadProgress.ImageRenderWidth).GetAwaiter().GetResult();
-                        if (memoryImage.DecodeError || (memoryImage == Constant.Images.CorruptFile.Value))
-                        {
-                            file.ImageQuality = FileSelection.Corrupt;
-                        }
-                        else
-                        {
-                            file.ImageQuality = memoryImage.IsDark(this.State.DarkPixelThreshold, this.State.DarkPixelRatioThreshold) ? FileSelection.Dark : FileSelection.Ok;
-                            disposeMemoryImage = true;
-                        }
-                    }
-
-                    // see if the datetime can be updated from the metadata
-                    file.TryReadDateTimeFromMetadata(this.FolderPath, imageSetTimeZone);
-
-                    lock (filesToInsert)
-                    {
-                        filesToInsert.Add(file);
-                    }
-
-                    DateTime utcNow = DateTime.UtcNow;
-                    if (utcNow - folderLoadProgress.MostRecentStatusDispatch > this.State.Throttles.DesiredIntervalBetweenRenders)
-                    {
-                        lock (folderLoadProgress)
-                        {
-                            if (utcNow - folderLoadProgress.MostRecentStatusDispatch > this.State.Throttles.DesiredIntervalBetweenRenders)
-                            {
-                                // if file was already loaded for dark checking use the resulting image
-                                // otherwise, load the file for display
-                                if (memoryImage != null)
-                                {
-                                    if (folderLoadProgress.Image != null)
-                                    {
-                                        folderLoadProgress.Image.Dispose();
-                                    }
-                                    folderLoadProgress.Image = memoryImage;
-                                    disposeMemoryImage = false;
-                                }
-                                else
-                                {
-                                    folderLoadProgress.Image = null;
-                                }
-                                folderLoadProgress.CurrentFile = file;
-                                folderLoadProgress.CurrentFileIndex = filesToInsert.Count;
-                                folderLoadProgress.DisplayImage = true;
-                                folderLoadProgress.MostRecentStatusDispatch = utcNow;
-                                folderLoadStatus.Report(folderLoadProgress);
-                            }
-                        }
-                    }
-                    if (disposeMemoryImage)
-                    {
-                        memoryImage.Dispose();
-                    }
-                }));
-
-            // update database
-            // Parallel execution above produces out of order results.  Put them back in order so the user sees images in file name order when
-            // reviewing the image set.  See https://blogs.msdn.microsoft.com/ptorr/2014/12/10/async-exceptions-in-c/ for exception flow details.
-            folderLoadProgress.DatabaseInsert = true;
-            await Task.Run(() =>
-                {
-                    filesToInsert = filesToInsert.OrderBy(file => Path.Combine(file.RelativePath, file.FileName)).ToList();
-                    Debug.Assert(filesToInsert.Select(file => Path.Combine(file.RelativePath, file.FileName)).Distinct().ToList().Count == filesToInsert.Count, "Insert of files multiple times.");
-                    this.DataHandler.FileDatabase.AddFiles(filesToInsert, (ImageRow file, int fileIndex) =>
-                    {
-                        // skip reloading images to display as the user's already seen them import
-                        folderLoadProgress.Image = null;
-                        folderLoadProgress.CurrentFile = file;
-                        folderLoadProgress.CurrentFileIndex = fileIndex;
-                        folderLoadProgress.DisplayImage = false;
-                        folderLoadStatus.Report(folderLoadProgress);
-                    });
-                });
+            // load all files found
+            // Note: the UI thread is free during loading.  So if loading's going slow the user can switch off dark checking 
+            // asynchronously in the middle of the load to speed it up.            
+            int filesAddedToDatabase = await folderLoad.AddFilesAsync(this.DataHandler.FileDatabase, this.State, (int)this.Width);
+            folderLoad.Dispose();
 
             // if needed, revert to original selection
             if (originalSelection != this.DataHandler.FileDatabase.ImageSet.FileSelection)
@@ -2297,13 +2195,16 @@ namespace Carnassial
                 this.DataHandler.FileDatabase.SelectFiles(originalSelection);
             }
 
-            // hide the feedback bar, show the file slider
-            this.FeedbackControl.Visibility = Visibility.Collapsed;
+            // shift UI to normal, non-loading state
+            // Stopwatch is stopped before OnFolderLoadingCompleteAsync() to exclude load and render time of the first image.
+            // Status message is updated after OnFolderLoadingCompleteAsync() because loading an image clears the status message.
+            this.FolderLoadProgress.Visibility = Visibility.Collapsed;
             this.FileNavigatorSlider.Visibility = Visibility.Visible;
+            stopwatch.Stop();
+            await this.OnFileDatabaseOpenedOrFilesAddedAsync(true);
+            this.StatusBar.SetMessage("{0} of {1} files added to image set in {2:0.000}s ({3:0.0} files/second, {4:0.000}s IO, {5:0.000}s compute, {6:0.000}s database).", filesAddedToDatabase, folderLoad.FilesToLoad, stopwatch.Elapsed.TotalSeconds, folderLoad.FilesToLoad / stopwatch.Elapsed.TotalSeconds, folderLoad.IODuration.TotalSeconds, folderLoad.ComputeDuration.TotalSeconds, folderLoad.DatabaseDuration.TotalSeconds);
 
-            await this.OnFolderLoadingCompleteAsync(true);
-
-            // tell the user how many files were loaded
+            // update the user as to what files in the database
             this.MaybeShowFileCountsDialog(true);
             return true;
         }
@@ -2378,7 +2279,7 @@ namespace Carnassial
         /// <returns>true only if both the template and file database are loaded (regardless of whether any files were loaded), false otherwise</returns>
         /// <remarks>This method doesn't particularly need to be public. But making it private imposes substantial complexity in invoking it via PrivateObject
         /// in unit tests.</remarks>
-        public async Task<bool> TryOpenTemplateAndLoadFoldersAsync(string templateDatabasePath)
+        public async Task<bool> TryOpenTemplateAndFileDatabaseAsync(string templateDatabasePath)
         {
             // Try to create or open the template database
             if (TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out TemplateDatabase templateDatabase) == false)
@@ -2463,15 +2364,15 @@ namespace Carnassial
             this.State.MostRecentImageSets.SetMostRecent(templateDatabasePath);
             this.Title = Path.GetFileName(fileDatabase.FilePath) + " - " + Constant.MainWindowBaseTitle;
 
-            // if this is a new file database, try to load files (if any) from the folder...  
             if (addFiles)
             {
-                FolderLoad folderLoad = new FolderLoad();
-                folderLoad.FolderPaths.Add(this.FolderPath);
-                await this.TryLoadFolderAsync(folderLoad);
+                // if this is a new file database, try to load files (if any) from the same folder
+                await this.TryAddFilesAsync(new string[] { this.FolderPath });
             }
-
-            await this.OnFolderLoadingCompleteAsync(false);
+            else
+            {
+                await this.OnFileDatabaseOpenedOrFilesAddedAsync(false);
+            }
             return true;
         }
 
@@ -2491,17 +2392,17 @@ namespace Carnassial
         // Given the location path of the template, return:
         // - true if a database file was specified
         // - databaseFilePath: the path to the data database file (or null if none was specified).
-        // - importImages: true when the database file has just been created, which means images still have to be imported.
+        // - addFiles: true when the database file has just been created, which means images still have to be imported.
         private bool TrySelectDatabaseFile(string templateDatabasePath, out string databaseFilePath, out bool addFiles)
         {
             addFiles = false;
 
             string databaseFileName;
             string directoryPath = Path.GetDirectoryName(templateDatabasePath);
-            string[] fileDatabasePaths = Directory.GetFiles(directoryPath, "*.ddb");
+            string[] fileDatabasePaths = Directory.GetFiles(directoryPath, "*" + Constant.File.FileDatabaseFileExtension);
             if (fileDatabasePaths.Length == 1)
             {
-                databaseFileName = Path.GetFileName(fileDatabasePaths[0]); // Get the file name, excluding the path
+                databaseFileName = Path.GetFileName(fileDatabasePaths[0]);
             }
             else if (fileDatabasePaths.Length > 1)
             {
@@ -2583,7 +2484,7 @@ namespace Carnassial
             // display differenced image
             // see above remarks about not modifying ImageToMagnify
             this.MarkableCanvas.SetDisplayImage(this.DataHandler.ImageCache.GetCurrentImage());
-            this.StatusBar.SetMessage("Viewing differences from both next and previous files.");
+            this.StatusBar.SetMessage("Viewing differences from both next and previous files ({0:0.0}ms).", 1000.0 * this.DataHandler.ImageCache.AverageCombinedDifferenceTimeInSeconds);
         }
 
         // Cycle through difference images in the order current, then previous and next differenced images.
@@ -2634,25 +2535,19 @@ namespace Carnassial
             // the magnifying glass always displays the original non-diferenced image so ImageToDisplay is updated and ImageToMagnify left unchnaged
             // this allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
             this.MarkableCanvas.SetDisplayImage(this.DataHandler.ImageCache.GetCurrentImage());
-            this.StatusBar.SetMessage("Viewing difference from {0} file.", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next");
+            this.StatusBar.SetMessage("Viewing difference from {0} file ({1:0.0}ms).", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next", 1000.0 * this.DataHandler.ImageCache.AverageDifferenceTimeInSeconds);
         }
 
-        private async void UpdateFolderLoadProgress(FolderLoadProgress progress)
+        private void UpdateFolderLoadProgress(FileLoadStatus progress)
         {
-            this.FeedbackControl.Message.Content = progress.GetMessage();
-            this.FeedbackControl.ProgressBar.Value = progress.GetPercentage();
-            if (progress.DisplayImage)
+            this.FolderLoadProgress.Message.Content = progress.GetMessage();
+            this.FolderLoadProgress.ProgressBar.Value = progress.GetPercentage();
+
+            if (progress.TryDetachImage(out MemoryImage image))
             {
-                MemoryImage image;
-                if (progress.Image != null)
-                {
-                    image = progress.Image;
-                }
-                else
-                {
-                    image = await progress.CurrentFile.LoadAsync(this.FolderPath, progress.ImageRenderWidth);
-                }
+                progress.MaybeUpdateImageRenderWidth((int)this.Width);
                 this.MarkableCanvas.SetNewImage(image, null);
+                image.Dispose();
             }
         }
 
@@ -2702,17 +2597,16 @@ namespace Carnassial
             if (args != null && args.Length > 1)
             {
                 string filePath = args[1];
-                string fileExtension = Path.GetExtension(filePath);
-                if (String.Equals(fileExtension, Constant.File.TemplateFileExtension, StringComparison.OrdinalIgnoreCase))
+                if (filePath.EndsWith(Constant.File.TemplateFileExtension, StringComparison.OrdinalIgnoreCase))
                 {
-                    await this.TryOpenTemplateAndLoadFoldersAsync(filePath);
+                    await this.TryOpenTemplateAndFileDatabaseAsync(filePath);
                 }
-                else if (String.Equals(fileExtension, Constant.File.FileDatabaseFileExtension, StringComparison.OrdinalIgnoreCase))
+                else if (filePath.EndsWith(Constant.File.FileDatabaseFileExtension, StringComparison.OrdinalIgnoreCase))
                 {
                     string[] templatePaths = Directory.GetFiles(Path.GetDirectoryName(filePath), "*" + Constant.File.TemplateFileExtension);
                     if (templatePaths != null && templatePaths.Length == 1)
                     {
-                        await this.TryOpenTemplateAndLoadFoldersAsync(templatePaths[0]);
+                        await this.TryOpenTemplateAndFileDatabaseAsync(templatePaths[0]);
                     }
                 }
             }
@@ -2990,9 +2884,9 @@ namespace Carnassial
                             // awaiting an async function within WndProc() bricks the UI, so fire it asynchronously
                             int increment = (int)(this.State.MouseHorizontalScrollDelta / Constant.Gestures.MouseHWheelStep);
                             int newFileIndex = this.DataHandler.ImageCache.CurrentRow + increment;
-                            #pragma warning disable CS4014
+#pragma warning disable CS4014
                             this.ShowFileWithoutSliderCallbackAsync(newFileIndex, increment);
-                            #pragma warning restore CS4014
+#pragma warning restore CS4014
                             this.State.MostRecentRender = utcNow;
                             this.State.MouseHorizontalScrollDelta = 0;
                         }

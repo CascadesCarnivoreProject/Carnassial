@@ -1,5 +1,4 @@
-﻿using Carnassial.Native;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
@@ -30,6 +29,13 @@ namespace Carnassial
             public const string GithubOrganizationAndRepo = "githubOrganizationAndRepo";
         }
 
+        public static class Assembly
+        {
+            public const string Kernel32 = "kernel32.dll";
+            public const string Shell32 = "shell32.dll";
+            public const string Shlwapi = "shlwapi.dll";
+        }
+
         public static class ComGuid
         {
             public const string IFileOperation = "947aab5f-0a5c-4c13-b4d6-4bf7836fc9f8";
@@ -57,7 +63,7 @@ namespace Carnassial
             // hotkey characters in use by the top level of Carnassial's main menu or the three data entry buttons and therefore unavailable as control 
             // shortcuts in either upper or lower case
             public const string ReservedHotKeys = "FfEeOoVvSsHhPp12";
-            
+
             public static readonly ReadOnlyCollection<string> StandardControls = new List<string>()
             {
                 Constant.DatabaseColumn.DateTime,
@@ -113,7 +119,9 @@ namespace Carnassial
             public const string ImageSetDefaultLog = "Add text here";
             public const long InvalidID = -1;
             public const int InvalidRow = -1;
-            // chosen to yield a reasonable progress update frequency when adding large numbers of files; see performance remarks in FileDatabase.AddFiles()
+
+            // see performance remarks in FileDatabase.AddFiles()
+            public const int NominalRowsPerTransactionFill = 2500;
             public const int RowsPerTransaction = 5000;
 
             // special characters
@@ -156,6 +164,12 @@ namespace Carnassial
             public const string FileDataWorksheetName = "file data";
             public const double MinimumColumnWidth = 5.0;
             public const double MaximumColumnWidth = 40.0;
+        }
+
+        public static class Exif
+        {
+            public const int MaxMetadataExtractorIssue35Offset = 12;
+            public const string JpegCompression = "JPEG";
         }
 
         public static class File
@@ -201,27 +215,29 @@ namespace Carnassial
         public static class Images
         {
             // default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
-            public const double DarkPixelRatioThresholdDefault = 0.9;
-            // default level where a pixel should be considered as dark when checking image quality, the range is 0 (black) - 255 (white)
-            public const byte DarkPixelThresholdDefault = 60;
-
+            public const double DarkLuminosityThresholdDefault = 0.1;
             // difference threshold for masking differences between images, per RGB component per pixel
             public const byte DifferenceThresholdDefault = 20;
             public const byte DifferenceThresholdMax = 255;
             public const byte DifferenceThresholdMin = 0;
 
+            public const double GreyscaleColorationThreshold = 0.005;
             public const int ImageCacheSize = 9;
+            public const int JpegInitialBufferSize = 2 * 4096;
             public const int MinimumRenderWidth = 800;
+            public const int NoThumbnailClassificationRequestedWidthInPixels = 200;
             public const int SmallestValidJpegSizeInBytes = 107; // with creative encoding; single pixel jpegs are usually somewhat larger
+            public const int ThumbnailFallbackWidthInPixels = 200;
 
+            public static readonly TimeSpan DefaultHybridVideoLag = TimeSpan.FromSeconds(2.0);
             public static readonly TimeSpan MagnifierRotationTime = TimeSpan.FromMilliseconds(450);
 
             public static readonly Lazy<BitmapImage> Copy = Images.LoadBitmap("Menu/Copy_16x.png");
             public static readonly Lazy<BitmapImage> Paste = Images.LoadBitmap("Menu/Paste_16x.png");
 
-            public static readonly Lazy<MemoryImage> CorruptFile = Images.LoadImage("CorruptFile_480x.png");
-            public static readonly Lazy<MemoryImage> FileNoLongerAvailable = Images.LoadImage("FileNoLongerAvailable_480x.png");
-            public static readonly Lazy<MemoryImage> NoSelectableFile = Images.LoadImage("NoSelectableFile_480x.png");
+            public static readonly Lazy<BitmapImage> CorruptFile = Images.LoadBitmap("CorruptFile_480x.png");
+            public static readonly Lazy<BitmapImage> FileNoLongerAvailable = Images.LoadBitmap("FileNoLongerAvailable_480x.png");
+            public static readonly Lazy<BitmapImage> NoSelectableFile = Images.LoadBitmap("NoSelectableFile_480x.png");
 
             public static readonly Lazy<BitmapImage> StatusError = Images.LoadBitmap("StatusCriticalError_64x.png");
             public static readonly Lazy<BitmapImage> StatusHelp = Images.LoadBitmap("StatusHelp_64x.png");
@@ -245,15 +261,6 @@ namespace Carnassial
                     image.EndInit();
                     image.Freeze();
                     return image;
-                });
-            }
-
-            private static Lazy<MemoryImage> LoadImage(string fileName)
-            {
-                return new Lazy<MemoryImage>(() =>
-                {
-                    Lazy<BitmapImage> loadBitmap = Images.LoadBitmap(fileName);
-                    return new MemoryImage(loadBitmap.Value);
                 });
             }
         }
@@ -284,7 +291,9 @@ namespace Carnassial
         public static class Manufacturer
         {
             public const string Bushnell = "Bushnell";
-            public static readonly TimeSpan BushnellHybridVideoLag = TimeSpan.FromSeconds(2.0);
+            public const int BushnellInfoBarHeight = 100;
+            public const string Reconyx = "Reconyx";
+            public const int ReconyxInfoBarHeight = 32;
         }
 
         public static class Registry
@@ -296,10 +305,7 @@ namespace Carnassial
 
                 // most recently used operator for custom selections
                 public const string CustomSelectionTermCombiningOperator = "CustomSelectionTermCombiningOperator";
-                // the DarkPixelThreshold
-                public const string DarkPixelThreshold = "DarkPixelThreshold";
-                // the DarkPixelRatio
-                public const string DarkPixelRatio = "DarkPixelRatio";
+                public const string DarkLuminosityThreshold = "DarkLuminosityThreshold";
                 // the value for rendering
                 public const string DesiredImageRendersPerSecond = "DesiredImageRendersPerSecond";
                 public const string MostRecentCheckForUpdates = "MostRecentCheckForUpdates";
@@ -363,6 +369,8 @@ namespace Carnassial
             public const int MaximumRenderAttempts = 10;
             public const int SleepForImageRenderInterval = 100;
 
+            public static readonly TimeSpan DesiredIntervalBetweenImageUpdates = TimeSpan.FromSeconds(5.0);
+            public static readonly TimeSpan DesiredIntervalBetweenStatusUpdates = TimeSpan.FromMilliseconds(500);
             public static readonly TimeSpan PollIntervalForVideoLoad = TimeSpan.FromMilliseconds(1.0);
             public static readonly TimeSpan RenderingBackoffTime = TimeSpan.FromMilliseconds(25.0);
         }

@@ -11,7 +11,11 @@ namespace Carnassial.Images
 {
     public class ImageCache : FileTableEnumerator
     {
+        private int combinedDifferencesCalculated;
+        private TimeSpan combinedDifferenceTime;
         private Dictionary<ImageDifference, MemoryImage> differenceCache;
+        private int differencesCalculated;
+        private TimeSpan differenceTime;
         private bool disposed;
         private MostRecentlyUsedList<long> mostRecentlyUsedIDs;
         private ConcurrentDictionary<long, Task> prefetechesByID;
@@ -30,10 +34,22 @@ namespace Carnassial.Images
             {
                 this.differenceCache.Add(differenceState, null);
             }
+            this.differencesCalculated = 0;
+            this.differenceTime = TimeSpan.Zero;
             this.disposed = false;
             this.mostRecentlyUsedIDs = new MostRecentlyUsedList<long>(Constant.Images.ImageCacheSize);
             this.prefetechesByID = new ConcurrentDictionary<long, Task>();
             this.unalteredImagesByID = new ConcurrentDictionary<long, MemoryImage>();
+        }
+
+        public double AverageCombinedDifferenceTimeInSeconds
+        {
+            get { return this.combinedDifferencesCalculated == 0 ? 0.0 : this.combinedDifferenceTime.TotalSeconds / this.combinedDifferencesCalculated; }
+        }
+
+        public double AverageDifferenceTimeInSeconds
+        {
+            get { return this.differencesCalculated == 0 ? 0.0 : this.differenceTime.TotalSeconds / this.differencesCalculated; }
         }
 
         protected override void Dispose(bool disposing)
@@ -60,15 +76,10 @@ namespace Carnassial.Images
         private void DisposeImageIfNeeded(MemoryImage image)
         {
             // don't dispose resource backed images as doing so makes them unusable
-            if ((image == null) ||
-                (Constant.Images.CorruptFile.IsValueCreated && (image == Constant.Images.CorruptFile.Value)) ||
-                (Constant.Images.FileNoLongerAvailable.IsValueCreated && (image == Constant.Images.FileNoLongerAvailable.Value)) ||
-                (Constant.Images.NoSelectableFile.IsValueCreated && (image == Constant.Images.NoSelectableFile.Value)))
+            if (image != null)
             {
-                return;
+                image.Dispose();
             }
-
-            image.Dispose();
         }
 
         public MemoryImage GetCurrentImage()
@@ -187,7 +198,18 @@ namespace Carnassial.Images
             Debug.Assert(unaltered != null, "Difference cache coherency error: unaltered image is null.");
 
             MemoryImage difference = null;
-            bool differenceComputed = await Task.Run(() => { return unaltered.TryDifference(comparisonImage, differenceThreshold, out difference); });
+            bool differenceComputed = await Task.Run(() =>
+            {
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                bool success = unaltered.TryDifference(comparisonImage, differenceThreshold, out difference);
+                if (success)
+                {
+                    ++this.differencesCalculated;
+                    this.differenceTime += stopwatch.Elapsed;
+                }
+                return success;
+            });
             this.differenceCache[this.CurrentDifferenceState] = difference;
             return differenceComputed ? ImageDifferenceResult.Success : ImageDifferenceResult.NotCalculable;
         }
@@ -223,7 +245,19 @@ namespace Carnassial.Images
 
             // all three images are available, so calculate and cache difference
             MemoryImage difference = null;
-            bool differenceComputed = await Task.Run(() => { return unaltered.TryDifference(previous, next, differenceThreshold, out difference); });
+            bool differenceComputed = await Task.Run((Func<bool>)(() => 
+            {
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                bool success = unaltered.TryDifference(previous, next, differenceThreshold, out difference);
+                stopwatch.Stop();
+                if (success)
+                {
+                    ++this.combinedDifferencesCalculated;
+                    this.combinedDifferenceTime += stopwatch.Elapsed;
+                }
+                return success;
+            }));
             this.differenceCache[ImageDifference.Combined] = difference;
             return difference != null ? ImageDifferenceResult.Success : ImageDifferenceResult.NotCalculable;
         }
@@ -369,7 +403,8 @@ namespace Carnassial.Images
                 }
                 else
                 {
-                    // load the requested image from disk as it isn't cached, doesn't have a prefetch running, and is needed right now by the caller
+                    // load the requested image from disk as it isn't cached, doesn't have a prefetch running, and is needed right now 
+                    // by the caller
                     image = await file.LoadAsync(this.Database.FolderPath);
                     this.CacheImage(file.ID, image);
                 }
@@ -424,12 +459,12 @@ namespace Carnassial.Images
                 return false;
             }
 
-            Task prefetch = Task.Run(async () =>
+            Task prefetch = Task.Run((Func<Task>)(async () =>
             {
-                MemoryImage nextImage = await nextFile.LoadAsync(this.Database.FolderPath);
+                MemoryImage nextImage = await nextFile.LoadAsync((string)this.Database.FolderPath);
                 this.CacheImage(nextFile.ID, nextImage);
                 this.prefetechesByID.TryRemove(nextFile.ID, out Task ignored);
-            });
+            }));
             this.prefetechesByID.AddOrUpdate(nextFile.ID, prefetch, (long id, Task newPrefetch) => { return newPrefetch; });
             return true;
         }

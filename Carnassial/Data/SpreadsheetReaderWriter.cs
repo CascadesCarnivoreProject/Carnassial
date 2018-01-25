@@ -1,4 +1,5 @@
 ﻿using Carnassial.Database;
+using Carnassial.Images;
 using Carnassial.Util;
 using OfficeOpenXml;
 using System;
@@ -74,8 +75,10 @@ namespace Carnassial.Data
 
         private FileImportResult TryImportFileData(FileDatabase fileDatabase, Func<List<string>> readLine, string spreadsheetFilePath)
         {
+            Debug.Assert(fileDatabase.ImageSet.FileSelection == FileSelection.All, "Database doesn't have all files selected.  Checking for files already added to the image set would fail.");
+
             List<string> dataLabels = fileDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
-            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZone();
+            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
             string spreadsheetFileFolderPath = Path.GetDirectoryName(spreadsheetFilePath);
             FileImportResult result = new FileImportResult();
 
@@ -102,7 +105,8 @@ namespace Carnassial.Data
             dataLabelsExceptFileNameAndRelativePath.Remove(Constant.DatabaseColumn.File);
             dataLabelsExceptFileNameAndRelativePath.Remove(Constant.DatabaseColumn.RelativePath);
             FileTuplesWithID existingFilesToUpdate = new FileTuplesWithID(dataLabelsExceptFileNameAndRelativePath);
-            List<ImageRow> newFilesToInsert = new List<ImageRow>();
+            Dictionary<string, HashSet<string>> filesAlreadyInDatabaseByRelativePath = fileDatabase.Files.HashFileNamesByRelativePath();
+            List<FileLoad> newFilesToInsert = new List<FileLoad>();
             FileTuplesWithPath newFilesToUpdate = new FileTuplesWithPath(dataLabelsExceptFileNameAndRelativePath);
             for (List<string> row = readLine.Invoke(); row != null; row = readLine.Invoke())
             {
@@ -140,17 +144,16 @@ namespace Carnassial.Data
                     }
                     else if (dataLabel == Constant.DatabaseColumn.DateTime && DateTimeHandler.TryParseDatabaseDateTime(value, out DateTime dateTime))
                     {
-                        // pass DateTime to ColumnTuple rather than the string as ColumnTuple owns validation and formatting
                         values.Add(dateTime);
                     }
                     else if (dataLabel == Constant.DatabaseColumn.UtcOffset && DateTimeHandler.TryParseDatabaseUtcOffsetString(value, out TimeSpan utcOffset))
                     {
-                        // as with DateTime, pass parsed UTC offset to ColumnTuple rather than the string as ColumnTuple owns validation and formatting
-                        values.Add(utcOffset);
+                        // offset needs to be converted to a double for database insert or update
+                        values.Add(DateTimeHandler.ToDatabaseUtcOffset(utcOffset));
                     }
                     else if (fileDatabase.ControlsByDataLabel[dataLabel].IsValidData(value))
                     {
-                        // include column in update query if value is valid
+                        // for all other columns (user controls), include a string value in update query if value is valid
                         values.Add(value);
                     }
                     else
@@ -169,23 +172,35 @@ namespace Carnassial.Data
 
                 // if file's already in the image set prepare to set its fields to those in the .csv
                 // if file's not in the image set prepare to add it to the image set
-                FileInfo fileInfo = new FileInfo(Path.Combine(spreadsheetFileFolderPath, relativePath, fileName));
-                if (fileDatabase.GetOrCreateFile(fileInfo, imageSetTimeZone, out ImageRow file))
+                ImageRow file = null;
+                if (filesAlreadyInDatabaseByRelativePath.TryGetValue(relativePath, out HashSet<string> filesInFolder))
                 {
-                    existingFilesToUpdate.Add(file.ID, values);
+                    if (filesInFolder.Contains(fileName))
+                    {
+                        file = fileDatabase.Files.Single(fileName, relativePath);
+                    }
+                }
+                if (file == null)
+                {
+                    file = fileDatabase.Files.CreateFile(fileName, relativePath);
+                    // newly created files have only their name and relative path set; populate all other fields with .csv data
+                    // Population is done via update as insertion is done with default values.
+                    newFilesToInsert.Add(new FileLoad(file));
+                    newFilesToUpdate.Add(file.FileName, file.RelativePath, values);
                 }
                 else
                 {
-                    // newly created files have only their name and relative path set; populate all other fields with the data from the .csv
-                    // Population is done via update as insertion is done with default values.
-                    newFilesToInsert.Add(file);
-                    newFilesToUpdate.Add(file.RelativePath, file.FileName, values);
+                    existingFilesToUpdate.Add(file.ID, values);
                 }
             }
 
             // perform inserts and updates
             // Inserts need to be done first so newly added files can be updated.
-            fileDatabase.AddFiles(newFilesToInsert, null);
+            using (AddFilesTransaction addFiles = fileDatabase.CreateAddFilesTransaction())
+            {
+                addFiles.AddFiles(newFilesToInsert);
+                addFiles.Commit();
+            }
             fileDatabase.UpdateFiles(existingFilesToUpdate, newFilesToUpdate);
 
             result.FilesAdded = newFilesToInsert.Count;

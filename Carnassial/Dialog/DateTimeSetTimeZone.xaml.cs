@@ -30,7 +30,7 @@ namespace Carnassial.Dialog
             this.FileName.Content = fileToDisplay.FileName;
 
             // configure timezone picker
-            this.TimeZones.SelectTimeZone(this.fileDatabase.ImageSet.GetTimeZone());
+            this.TimeZones.SelectTimeZone(this.fileDatabase.ImageSet.GetTimeZoneInfo());
             this.TimeZones.SelectionChanged += this.TimeZones_SelectionChanged;
         }
 

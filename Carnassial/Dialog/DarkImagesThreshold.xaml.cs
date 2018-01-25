@@ -1,12 +1,8 @@
 ﻿using Carnassial.Data;
-using Carnassial.Database;
 using Carnassial.Images;
 using Carnassial.Native;
 using Carnassial.Util;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -17,16 +13,13 @@ namespace Carnassial.Dialog
     {
         private const int MinimumDarkColorRectangleHeight = 10;
 
-        private double darkPixelRatioFound;
-        private FileDatabase database;
         private bool disposed;
-        private int filesProcessed;
-        private MemoryImage image;
+        private FileDatabase fileDatabase;
         private FileTableEnumerator fileEnumerator;
-        private bool isColor;
+        private ImageProperties imageProperties;
         private bool isProgramaticNavigatiorSliderUpdate;
-        private bool recalculateSelectedFilesStarted;
-        private bool stop;
+        private ImageRow previousFile;
+        private DarkImagesIOComputeTransaction reclassification;
         private CarnassialUserRegistrySettings userSettings;
 
         public DarkImagesThreshold(FileDatabase database, int currentFileIndex, CarnassialUserRegistrySettings state, Window owner)
@@ -34,27 +27,59 @@ namespace Carnassial.Dialog
             this.InitializeComponent();
             this.Owner = owner;
 
-            this.database = database;
-            this.darkPixelRatioFound = 0;
+            this.fileDatabase = database;
             this.disposed = false;
-            this.filesProcessed = 0;
             this.fileEnumerator = new FileTableEnumerator(database, currentFileIndex);
-            this.isColor = false;
+            this.imageProperties = null;
             this.isProgramaticNavigatiorSliderUpdate = false;
-            this.recalculateSelectedFilesStarted = false;
-            this.stop = false;
+            this.previousFile = null;
+            this.reclassification = null;
             this.userSettings = state;
         }
 
-        private async Task DisplayFileAndDetailsAsync()
+        /// <summary>
+        /// Display classification of current file with the current threshold settings. Does not update the database.
+        /// </summary>
+        private void ClassifyCurrentFile()
         {
-            this.image = await this.fileEnumerator.Current.LoadAsync(this.database.FolderPath, (int)this.Width);
-            this.image.SetSource(this.Image);
+            FileSelection newClassification = this.imageProperties.EvaluateNewClassification(0.01 * this.DarkLuminosityThresholdPercent.Value);
+            this.DisplayClassification(this.fileEnumerator.Current, this.imageProperties, newClassification);
+        }
+
+        private void DisplayClassification(ImageRow file, ImageProperties imageProperties, FileSelection newClassificationToDisplay)
+        {
+            this.OriginalClassification.Content = file.ImageQuality;
+            this.NewClassification.Content = newClassificationToDisplay;
+
+            if ((file.ImageQuality == FileSelection.Corrupt) ||
+                (file.ImageQuality == FileSelection.NoLongerAvailable))
+            {
+                this.ClassificationInformation.Text = "File could not be loaded.  Classification skipped.";
+            }
+            else
+            {
+                this.ClassificationInformation.Text = imageProperties.GetClassificationDescription();
+            }
+        }
+
+        private async Task DisplayFileAndClassificationAsync()
+        {
+            if (Object.ReferenceEquals(this.fileEnumerator.Current, this.previousFile))
+            {
+                // no change in the file displayed, so nothing to do
+                return;
+            }
+
+            using (MemoryImage image = await this.fileEnumerator.Current.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width))
+            {
+                image.SetSource(this.Image);
+            }
             this.FileName.Content = this.fileEnumerator.Current.FileName;
             this.FileName.ToolTip = this.FileName.Content;
-            this.OriginalClassification.Content = this.fileEnumerator.Current.ImageQuality; // The original image classification
+            this.imageProperties = this.fileEnumerator.Current.TryGetThumbnailProperties(this.fileDatabase.FolderPath);
 
-            this.RecalculateCurrentFile();
+            this.ClassifyCurrentFile();
+            this.previousFile = this.fileEnumerator.Current;
         }
 
         public void Dispose()
@@ -83,82 +108,67 @@ namespace Carnassial.Dialog
 
         private async void ApplyDoneButton_Click(object sender, RoutedEventArgs e)
         {
-            // second click - exit
-            if (this.recalculateSelectedFilesStarted)
+            // second click - done
+            if (this.reclassification != null)
             {
                 this.DialogResult = true;
                 return;
             }
 
-            // first click - do update
-            // update the Carnassial variables to the current settings
-            this.userSettings.DarkPixelThreshold = (byte)this.DarkPixelThreshold.Value;
-            this.userSettings.DarkPixelRatioThreshold = 0.01 * this.DarkPixelPercentageThreshold.Value;
-
+            // first click - apply new threshold to selected files
+            this.ApplyDoneButton.Content = "_Done";
+            this.ApplyDoneButton.IsEnabled = false;
             this.CancelStopButton.Content = "_Stop";
+            this.DarkLuminosityThresholdPercent.IsEnabled = false;
+            this.FileNavigatorSlider.IsEnabled = false;
+            this.MenuReset.IsEnabled = false;
+            this.userSettings.DarkLuminosityThreshold = 0.01 * this.DarkLuminosityThresholdPercent.Value;
 
-            this.recalculateSelectedFilesStarted = true;
-            await this.UpdateClassificationForAllSelectedFilesAsync();
+            using (this.reclassification = new DarkImagesIOComputeTransaction(this.UpdateClassificationStatus, this.userSettings.Throttles.GetDesiredIntervalBetweenFileLoadProgress()))
+            {
+                await reclassification.ReclassifyFilesAsync(this.fileDatabase, 0.01 * this.userSettings.DarkLuminosityThreshold, (int)this.ActualWidth);
+            }
+
+            await this.DisplayFileAndClassificationAsync();
+            this.ApplyDoneButton.IsEnabled = true;
+            this.CancelStopButton.IsEnabled = false;
         }
 
         // Cancel or Stop - exit the dialog
         private void CancelStopButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.recalculateSelectedFilesStarted)
+            if (this.reclassification != null)
             {
-                this.stop = true;
+                this.reclassification.ShouldExitCurrentIteration = true;
             }
             this.DialogResult = false;
         }
 
-        // set a new value for the dark pixel threshold and update the UI
-        private void DarkPixel_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            this.RecalculateCurrentFile();
-        }
-
         private async void FileNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (this.isProgramaticNavigatiorSliderUpdate || this.recalculateSelectedFilesStarted)
+            if (this.isProgramaticNavigatiorSliderUpdate)
             {
                 return;
             }
 
             this.fileEnumerator.TryMoveToFile((int)this.FileNavigatorSlider.Value);
-            await this.DisplayFileAndDetailsAsync();
+            await this.DisplayFileAndClassificationAsync();
         }
 
         private void MenuResetCurrent_Click(object sender, RoutedEventArgs e)
         {
-            this.ResetThresholds(this.userSettings.DarkPixelRatioThreshold, this.userSettings.DarkPixelThreshold);
+            this.ResetDarkLuminosityThreshold(this.userSettings.DarkLuminosityThreshold);
         }
 
         private void MenuResetDefault_Click(object sender, RoutedEventArgs e)
         {
-            this.ResetThresholds(Constant.Images.DarkPixelRatioThresholdDefault, Constant.Images.DarkPixelThresholdDefault);
+            this.ResetDarkLuminosityThreshold(Constant.Images.DarkLuminosityThresholdDefault);
         }
 
-        /// <summary>
-        /// Redo image quality calculations with current thresholds and return the ratio of pixels at least as dark as the threshold for the current file.
-        /// Does not update the database.
-        /// </summary>
-        private void RecalculateCurrentFile()
+        private void ResetDarkLuminosityThreshold(double darkLuminosityThreshold)
         {
-            this.image.IsDark((byte)this.DarkPixelThreshold.Value, 0.01 * this.DarkPixelPercentageThreshold.Value, out this.darkPixelRatioFound, out this.isColor);
-
-            FileSelection newClassification = FileSelection.Ok;
-            if ((this.isColor == false) && (this.DarkPixelPercentageThreshold.Value <= 100.0 * this.darkPixelRatioFound))
-            {
-                newClassification = FileSelection.Dark;
-            }
-            this.UpdateClassificationFeedback((FileSelection)this.OriginalClassification.Content, newClassification, this.darkPixelRatioFound, this.isColor);
-        }
-
-        private void ResetThresholds(double darkPixelRatioThreshold, byte darkPixelThreshold)
-        {
-            this.DarkPixelPercentageThreshold.Value = 100.0 * darkPixelRatioThreshold;
-            this.DarkPixelThreshold.Value = darkPixelThreshold;
-            this.RecalculateCurrentFile();
+            this.DarkLuminosityThresholdPercent.Value = 100.0 * darkLuminosityThreshold;
+            this.ClassifyCurrentFile();
         }
 
         private async Task ShowFileWithoutSliderCallbackAsync(bool forward, ModifierKeys modifiers)
@@ -179,9 +189,9 @@ namespace Carnassial.Dialog
             {
                 return;
             }
-            if (newFileIndex >= this.database.CurrentlySelectedFileCount)
+            if (newFileIndex >= this.fileDatabase.CurrentlySelectedFileCount)
             {
-                newFileIndex = this.database.CurrentlySelectedFileCount - 1;
+                newFileIndex = this.fileDatabase.CurrentlySelectedFileCount - 1;
             }
             else if (newFileIndex < 0)
             {
@@ -195,125 +205,25 @@ namespace Carnassial.Dialog
                 this.FileNavigatorSlider.Value = this.fileEnumerator.CurrentRow;
                 this.isProgramaticNavigatiorSliderUpdate = false;
             }
-            await this.DisplayFileAndDetailsAsync();
+            await this.DisplayFileAndClassificationAsync();
         }
 
-        /// <summary>
-        /// Redo image quality calculations with current thresholds for all files selected.  Updates the database.
-        /// </summary>
-        private async Task UpdateClassificationForAllSelectedFilesAsync()
+        private void UpdateClassificationStatus(ReclassifyStatus status)
         {
-            List<ImageRow> selectedFiles = this.database.Files.ToList();
-            this.ApplyDoneButton.Content = "_Done";
-            this.ApplyDoneButton.IsEnabled = false;
-            this.DarkPixelPercentageThreshold.IsEnabled = false;
-            this.DarkPixelThreshold.IsEnabled = false;
-            this.FileNavigatorSlider.IsEnabled = false;
-            this.MenuReset.IsEnabled = false;
-
-            // cache properties for access by non-UI threads
-            double darkPixelRatioThreshold = 0.01 * this.DarkPixelPercentageThreshold.Value;
-            byte darkPixelThreshold = (byte)this.DarkPixelThreshold.Value;
-            IProgress<ImageQuality> updateStatus = new Progress<ImageQuality>(this.UpdateClassificationProgress);
-            await Task.Run(() =>
+            if (status.File != null)
             {
-                TimeSpan desiredRenderInterval = TimeSpan.FromSeconds(1.0 / Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
-                DateTime mostRecentStatusDispatch = DateTime.UtcNow - desiredRenderInterval;
-                object renderLock = new object();
-
-                this.filesProcessed = 0;
-                FileTuplesWithID filesToUpdate = new FileTuplesWithID(Constant.DatabaseColumn.ImageQuality);
-                Parallel.ForEach(
-                    new SequentialPartitioner<ImageRow>(selectedFiles),
-                    Utilities.GetParallelOptions(Environment.ProcessorCount),
-                    (ImageRow file, ParallelLoopState loopState) =>
-                    {
-                        if (this.stop)
-                        {
-                            loopState.Break();
-                        }
-
-                        // if it's not a valid image, say so and go onto the next one.
-                        Interlocked.Increment(ref this.filesProcessed);
-                        ImageQuality imageQuality = new ImageQuality(file);
-                        if ((imageQuality.OldImageQuality != FileSelection.Ok) && (imageQuality.OldImageQuality != FileSelection.Dark))
-                        {
-                            imageQuality.NewImageQuality = null;
-                            updateStatus.Report(imageQuality);
-                            return;
-                        }
-
-                        // find the new image quality and add file to the update list
-                        // For consistency full size loading is always used in dark recalculations.
-                        // See also remarks in CarnassialWindow.xaml.cs about synchronous loading.  
-                        imageQuality.Image = file.LoadAsync(this.database.FolderPath).GetAwaiter().GetResult();
-                        imageQuality.NewImageQuality = imageQuality.Image.IsDark(darkPixelThreshold, darkPixelRatioThreshold, out this.darkPixelRatioFound, out this.isColor) ? FileSelection.Dark : FileSelection.Ok;
-                        imageQuality.IsColor = this.isColor;
-                        imageQuality.DarkPixelRatioFound = this.darkPixelRatioFound;
-                        if (imageQuality.NewImageQuality.HasValue && (imageQuality.OldImageQuality != imageQuality.NewImageQuality.Value))
-                        {
-                            filesToUpdate.Add(file.ID, imageQuality.NewImageQuality.Value.ToString());
-                        }
-
-                        DateTime utcNow = DateTime.UtcNow;
-                        if (utcNow - mostRecentStatusDispatch > desiredRenderInterval)
-                        {
-                            lock (renderLock)
-                            {
-                                if (utcNow - mostRecentStatusDispatch > desiredRenderInterval)
-                                {
-                                    mostRecentStatusDispatch = utcNow;
-                                    updateStatus.Report(imageQuality);
-                                }
-                            }
-                        }
-                    });
-
-                    this.database.UpdateFiles(filesToUpdate);
-                });
-
-            await this.DisplayFileAndDetailsAsync();
-            this.ApplyDoneButton.IsEnabled = true;
-            this.CancelStopButton.IsEnabled = false;
-        }
-
-        public void UpdateClassificationFeedback(FileSelection originalClassification, Nullable<FileSelection> newClassification, double darkPixelRatioFound, bool isColor)
-        {
-            this.OriginalClassification.Content = originalClassification;
-            if (newClassification.HasValue)
-            {
-                this.NewClassification.Content = newClassification;
+                this.FileName.Content = status.File.FileName;
+                this.FileName.ToolTip = this.FileName.Content;
+                this.DisplayClassification(status.File, status.ImageProperties, status.ClassificationToDisplay);
             }
-            else
+            if (status.Image != null)
             {
-                this.NewClassification.Content = null;
+                status.Image.SetSource(this.Image);
             }
 
-            if ((originalClassification != FileSelection.Ok) && (originalClassification != FileSelection.Dark))
-            {
-                this.ClassificationInformation.Text = "Classification skipped.";
-                return;
-            }
-
-            if (isColor)
-            {
-                this.ClassificationInformation.Text = "File is in color and therefore not dark.";
-                return;
-            }
-
-            this.ClassificationInformation.Text = String.Format("{0:##0.0}% of pixels are darker than the threshold.", 100.0 * darkPixelRatioFound);
-        }
-
-        private void UpdateClassificationProgress(ImageQuality imageQuality)
-        {
-            imageQuality.Image.SetSource(this.Image);
-            this.FileName.Content = imageQuality.FileName;
-            this.FileName.ToolTip = this.FileName.Content;
-
-            this.UpdateClassificationFeedback(imageQuality.OldImageQuality, imageQuality.NewImageQuality, imageQuality.DarkPixelRatioFound, imageQuality.IsColor);
-            this.NewClassification.Content = imageQuality.NewImageQuality;
-
-            this.FileNavigatorSlider.Value = this.filesProcessed - 1;
+            this.isProgramaticNavigatiorSliderUpdate = true;
+            this.FileNavigatorSlider.Value = status.CurrentFileIndex - 1;
+            this.isProgramaticNavigatiorSliderUpdate = false;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -322,40 +232,35 @@ namespace Carnassial.Dialog
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            this.DarkPixelPercentageThreshold.Value = 100.0 * this.userSettings.DarkPixelRatioThreshold;
-            this.DarkPixelPercentageThreshold.ValueChanged += this.DarkPixel_ValueChanged;
-
-            this.DarkPixelThreshold.Value = this.userSettings.DarkPixelThreshold;
-            this.DarkPixelThreshold.ValueChanged += this.DarkPixel_ValueChanged;
+            this.DarkLuminosityThresholdPercent.Value = 100.0 * this.userSettings.DarkLuminosityThreshold;
 
             this.FileNavigatorSlider.Minimum = 0;
-            this.FileNavigatorSlider.Maximum = this.database.CurrentlySelectedFileCount - 1;
+            this.FileNavigatorSlider.Maximum = this.fileDatabase.CurrentlySelectedFileCount - 1;
             Utilities.ConfigureNavigatorSliderTick(this.FileNavigatorSlider);
             this.FileNavigatorSlider.Value = this.fileEnumerator.CurrentRow;
             this.FileNavigatorSlider_ValueChanged(this, null);
             this.FileNavigatorSlider.ValueChanged += this.FileNavigatorSlider_ValueChanged;
 
-            this.Focus();               // necessary for the left/right arrow keys to work
+            this.Focus(); // necessary for the left/right arrow keys to work
         }
 
         private async void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            // if its an arrow key and the textbox doesn't have the focus navigate left/right to the next/previous file
             switch (e.Key)
             {
                 case Key.End:
                     e.Handled = true;
-                    await this.ShowFileWithoutSliderCallbackAsync(this.database.CurrentlySelectedFileCount - 1);
+                    await this.ShowFileWithoutSliderCallbackAsync(this.fileDatabase.CurrentlySelectedFileCount - 1);
                     break;
                 case Key.Home:
                     e.Handled = true;
                     await this.ShowFileWithoutSliderCallbackAsync(0);
                     break;
-                case Key.Left:              // previous file
+                case Key.Left:  // previous file
                     e.Handled = true;
                     await this.ShowFileWithoutSliderCallbackAsync(false, Keyboard.Modifiers);
                     break;
-                case Key.Right:             // next file
+                case Key.Right: // next file
                     e.Handled = true;
                     await this.ShowFileWithoutSliderCallbackAsync(true, Keyboard.Modifiers);
                     break;
