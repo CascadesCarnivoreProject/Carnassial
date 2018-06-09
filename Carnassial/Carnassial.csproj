@@ -218,7 +218,6 @@
     <Compile Include="Data\ImageSetOptions.cs" />
     <Compile Include="Data\ImageSetRow.cs" />
     <Compile Include="Database\ISQLiteTable.cs" />
-    <Compile Include="Data\MarkerRow.cs" />
     <Compile Include="Database\Select.cs" />
     <Compile Include="Data\UpdateFileDateTimeOffsetTransaction.cs" />
     <Compile Include="Data\UpdateFileColumnTransaction.cs" />

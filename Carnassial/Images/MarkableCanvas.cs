@@ -520,6 +520,8 @@ namespace Carnassial.Images
         }
 
         // remove a marker on a right mouse button up event
+        // Note: There is currently no filter on this callback, so markers can be removed by any right mouse click even if they're
+        // not associated with the selected counter or no counter is selected.
         private void Marker_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
             Canvas canvas = (Canvas)sender;
@@ -676,7 +678,8 @@ namespace Carnassial.Images
         public void SetNewImage(MemoryImage image, List<Marker> markers)
         {
             // change to new markers
-            this.markers = markers;
+            // Assign property so any existing markers are cleared.
+            this.Markers = markers;
 
             // initate render of new image for display
             this.SetDisplayImage(image);

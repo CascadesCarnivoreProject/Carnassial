@@ -67,7 +67,7 @@ namespace Carnassial.Images
             {
                 for (FileLoadAtom loadAtom = this.GetNextIOAtom(ioTaskNumber); loadAtom != null; loadAtom = this.GetNextIOAtom(ioTaskNumber))
                 {
-                    if (loadAtom.CreateFiles(filesAlreadyInFileTableByRelativePath, fileDatabase.Files))
+                    if (loadAtom.CreateAndAppendFiles(filesAlreadyInFileTableByRelativePath, fileDatabase.Files))
                     {
                         loadAtom.CreateJpegs(fileDatabase.FolderPath);
                     }

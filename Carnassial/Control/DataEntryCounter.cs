@@ -1,8 +1,10 @@
 ﻿using Carnassial.Data;
 using Carnassial.Util;
 using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace Carnassial.Control
@@ -14,7 +16,7 @@ namespace Carnassial.Control
     {
         private bool labelControlIsChecked;
 
-        /// <summary>Gets or sets the content of the counter.</summary>
+        /// <summary>Gets the content of the counter.</summary>
         public override string Content
         {
             get { return this.ContentControl.Text; }
@@ -41,7 +43,11 @@ namespace Carnassial.Control
             this.LabelControl.Click += this.LabelControl_Click;
             this.labelControlIsChecked = false;
 
-            this.ContentControl.SetBinding(TextBox.TextProperty, ImageRow.GetDataBindingPath(control.DataLabel));
+            Binding binding = new Binding(ImageRow.GetDataBindingPath(control.DataLabel))
+            {
+                Converter = new CounterDataBindingValueConverter()
+            };
+            this.ContentControl.SetBinding(TextBox.TextProperty, binding);
         }
 
         /// <summary>Ensures only numbers are entered for counters.</summary>
@@ -74,6 +80,45 @@ namespace Carnassial.Control
 
             this.ContentControl.Text = valueAsString;
             this.ContentControl.ToolTip = valueAsString;
+        }
+
+        private class CounterDataBindingValueConverter : IValueConverter
+        {
+            private string markers;
+
+            public CounterDataBindingValueConverter()
+            {
+                this.markers = null;
+            }
+
+            public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                if (value == null)
+                {
+                    return null;
+                }
+
+                string valueAsString = (string)value;
+                int barIndex = valueAsString.IndexOf(Constant.Database.MarkerBar);
+                if ((barIndex < 1) || (barIndex >= valueAsString.Length))
+                {
+                    this.markers = null;
+                    return value;
+                }
+
+                this.markers = valueAsString.Substring(barIndex, valueAsString.Length - barIndex);
+                return valueAsString.Substring(0, barIndex);
+            }
+
+            public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                if (String.IsNullOrEmpty(this.markers))
+                {
+                    return value;
+                }
+
+                return String.Concat(value, this.markers);
+            }
         }
     }
 }

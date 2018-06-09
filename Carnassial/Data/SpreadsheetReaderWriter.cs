@@ -182,7 +182,7 @@ namespace Carnassial.Data
                 }
                 if (file == null)
                 {
-                    file = fileDatabase.Files.CreateFile(fileName, relativePath);
+                    file = fileDatabase.Files.CreateAndAppendFile(fileName, relativePath);
                     // newly created files have only their name and relative path set; populate all other fields with .csv data
                     // Population is done via update as insertion is done with default values.
                     newFilesToInsert.Add(new FileLoad(file));

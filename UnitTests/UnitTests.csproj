@@ -83,7 +83,6 @@
     <Compile Include="FileDatabaseExtensions.cs" />
     <Compile Include="FileExpectations.cs" />
     <Compile Include="FileTests.cs" />
-    <Compile Include="MarkerExpectation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegistryTests.cs" />
     <Compile Include="ControlsExpectation.cs" />
@@ -126,7 +125,7 @@
     <Content Include="DefaultTemplate 2.2.0.2.tdb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="DefaultData 2.2.0.0.ddb">
+    <Content Include="DefaultData 2.2.0.3.ddb">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="App.config" />

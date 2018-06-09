@@ -33,18 +33,6 @@ namespace Carnassial.Control
             this.IsProgrammaticUpdate = false;
         }
 
-        public void DecrementOrResetCounter(DataEntryCounter counter)
-        {
-            // decrement the counter only if it has a positive count
-            int newCount = 0;
-            string previousCountAsString = (string)this.ImageCache.Current[counter.PropertyName];
-            if (Int32.TryParse(previousCountAsString, out int previousCount) && previousCount > 0)
-            {
-                newCount = previousCount - 1;
-            }
-            this.ImageCache.Current[counter.PropertyName] = newCount.ToString();
-        }
-
         public void DeleteFiles(IEnumerable<ImageRow> filesToDelete, bool deleteFilesAndData)
         {
             this.IsProgrammaticUpdate = true;
@@ -85,7 +73,7 @@ namespace Carnassial.Control
                 // drop files
                 Debug.Assert(fileIDsToDropFromDatabase.Count > 0, "No files are being deleted.");
                 Debug.Assert(filesToUpdate.RowCount == 0, "Files to update unexpectedly present.");
-                this.FileDatabase.DeleteFilesAndMarkers(fileIDsToDropFromDatabase);
+                this.FileDatabase.DeleteFiles(fileIDsToDropFromDatabase);
             }
             else
             {
@@ -139,19 +127,6 @@ namespace Carnassial.Control
         {
             Debug.Assert(this.ImageCache.IsFileAvailable, "Attempt to copy from nonexistent file");
             return this.GetCopyableFields(this.ImageCache.Current, controls);
-        }
-
-        public void IncrementOrResetCounter(DataEntryCounter counter)
-        {
-            // if the current value's not parseable assume it's due to the default value being non-integer in the template and revert to zero
-            int newCount = 0;
-            string previousCountAsString = (string)this.ImageCache.Current[counter.PropertyName];
-            if (Int32.TryParse(previousCountAsString, out int previousCount))
-            {
-                newCount = previousCount + 1;
-            }
-
-            this.ImageCache.Current[counter.PropertyName] = newCount.ToString();
         }
 
         public bool IsCopyForwardPossible(DataEntryControl control)
@@ -288,13 +263,6 @@ namespace Carnassial.Control
             // update row in file table
             this.FileDatabase.SyncFileToDatabase(this.ImageCache.Current);
             this.ImageCache.Current.AcceptChanges();
-
-            // update markers table if markers also changed
-            if ((this.ImageCache.CurrentMarkers != null) && this.ImageCache.CurrentMarkers.HasChanges)
-            {
-                this.FileDatabase.SyncMarkersToDatabase(this.ImageCache.CurrentMarkers);
-                this.ImageCache.CurrentMarkers.AcceptChanges();
-            }
 
             return true;
         }

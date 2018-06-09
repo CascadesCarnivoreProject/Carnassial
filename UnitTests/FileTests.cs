@@ -232,7 +232,7 @@ namespace Carnassial.UnitTests
                     {
                         // load the image
                         FileInfo fileInfo = new FileInfo(Path.Combine(fileExpectation.RelativePath, fileExpectation.FileName));
-                        ImageRow file = fileDatabase.Files.CreateFile(fileInfo.Name, fileExpectation.RelativePath);
+                        ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, fileExpectation.RelativePath);
                         using (MemoryImage image = await file.LoadAsync(this.WorkingDirectory))
                         {
                             double luminosity = image.GetLuminosityAndColoration(0, out double coloration);

@@ -1,5 +1,4 @@
-﻿using Carnassial.Images;
-using Carnassial.Native;
+﻿using Carnassial.Native;
 using System;
 using System.Threading.Tasks;
 
@@ -7,8 +6,8 @@ namespace Carnassial.Data
 {
     public class VideoRow : ImageRow
     {
-        public VideoRow(string fileName, string relativePath)
-            : base(fileName, relativePath)
+        public VideoRow(string fileName, string relativePath, FileTable table)
+            : base(fileName, relativePath, table)
         {
             this.ImageQuality = FileSelection.Video;
         }

@@ -161,19 +161,19 @@ namespace Carnassial.Images
             }
         }
 
-        public bool CreateFiles(Dictionary<string, HashSet<string>> fileNamesByRelativePath, FileTable files)
+        public bool CreateAndAppendFiles(Dictionary<string, HashSet<string>> fileNamesByRelativePath, FileTable files)
         {
             bool databaseHasFilesInFolder = fileNamesByRelativePath.TryGetValue(this.RelativePath, out HashSet<string> filesInFolder);
             if ((databaseHasFilesInFolder == false) || (filesInFolder.Contains(this.First.FileName) == false))
             {
-                this.First.File = files.CreateFile(this.First.FileName, this.RelativePath);
+                this.First.File = files.CreateAndAppendFile(this.First.FileName, this.RelativePath);
             }
 
             if (this.Second.FileName != null)
             {
                 if ((databaseHasFilesInFolder == false) || (filesInFolder.Contains(this.Second.FileName) == false))
                 {
-                    this.Second.File = files.CreateFile(this.Second.FileName, this.RelativePath);
+                    this.Second.File = files.CreateAndAppendFile(this.Second.FileName, this.RelativePath);
                 }
             }
 

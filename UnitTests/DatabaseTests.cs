@@ -55,7 +55,8 @@ namespace Carnassial.UnitTests
 
             // check images after initial add and again after reopen and application of selection
             // checks are not performed after last selection in list is applied
-            int counterControls = 4;
+            List<ControlRow> counterControls = fileDatabase.Controls.Where(control => control.Type == ControlType.Counter).ToList();
+            Assert.IsTrue(counterControls.Count == 4);
             string currentDirectoryName = Path.GetFileName(fileDatabase.FolderPath);
             fileDatabase.SelectFiles(FileSelection.All);
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
@@ -75,22 +76,20 @@ namespace Carnassial.UnitTests
                     fileExpectation.Verify(file, imageSetTimeZone);
 
                     // verify no markers associated with file
-                    List<MarkersForCounter> markersOnImage = fileDatabase.Markers.Find(file.ID).ToList();
-                    Assert.IsTrue(markersOnImage.Count == counterControls);
-                    foreach (MarkersForCounter markerForCounter in markersOnImage)
+                    foreach (ControlRow control in counterControls)
                     {
+                        MarkersForCounter markerForCounter = file.GetMarkersForCounter(control.DataLabel);
                         Assert.IsFalse(String.IsNullOrWhiteSpace(markerForCounter.DataLabel));
                         Assert.IsTrue(markerForCounter.Markers.Count == 0);
                     }
 
                     // retrieval by specific method
-                    // fileDatabase.GetImageValue();
                     Assert.IsTrue(fileDatabase.IsFileDisplayable(fileIndex));
                     Assert.IsTrue(fileDatabase.IsFileRowInRange(fileIndex));
 
                     // retrieval by table
                     fileExpectation.Verify(fileDatabase.Files[fileIndex], imageSetTimeZone);
-                }
+                 }
 
                 // reopen database for test and refresh images so next iteration of the loop checks state after reload
                 Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabase.FilePath, fileDatabase, false, LogicalOperator.And, out fileDatabase));
@@ -127,12 +126,12 @@ namespace Carnassial.UnitTests
                     case TestConstant.DefaultDatabaseColumn.Flag3:
                     case TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel:
                     case TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel:
+                    case TestConstant.DefaultDatabaseColumn.NoteNotVisible:
                         expectedValues = 1;
                         break;
                     case TestConstant.DefaultDatabaseColumn.Choice0:
                     case TestConstant.DefaultDatabaseColumn.Counter0:
                     case TestConstant.DefaultDatabaseColumn.FlagNotVisible:
-                    case TestConstant.DefaultDatabaseColumn.NoteNotVisible:
                         expectedValues = 2;
                         break;
                     case TestConstant.DefaultDatabaseColumn.Note0:
@@ -165,15 +164,19 @@ namespace Carnassial.UnitTests
 
             fileDatabase.ImageSet.TimeZone = originalTimeZoneID;
 
-            // date manipulation
+            // time and date manipulation
             fileDatabase.SelectFiles(FileSelection.All);
-            Assert.IsTrue(fileDatabase.Files.RowCount > 0);
+            Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
             List<DateTimeOffset> fileTimesBeforeAdjustment = fileDatabase.GetFileTimes().ToList();
             TimeSpan adjustment = new TimeSpan(0, 1, 2, 3, 0);
             fileDatabase.AdjustFileTimes(adjustment);
-            this.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, fileDatabase.GetFileTimes().ToList(), adjustment);
+            foreach (FileExpectations fileExpectation in fileExpectations)
+            {
+                fileExpectation.DateTime += adjustment;
+            }
+            this.VerifyFiles(fileDatabase, fileExpectations, imageSetTimeZone);
             fileDatabase.SelectFiles(FileSelection.All);
-            this.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, fileDatabase.GetFileTimes().ToList(), adjustment);
+            this.VerifyFiles(fileDatabase, fileExpectations, imageSetTimeZone);
 
             fileTimesBeforeAdjustment = fileDatabase.GetFileTimes().ToList();
             adjustment = new TimeSpan(-1, -2, -3, -4, 0);
@@ -249,77 +252,72 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.NoLongerAvailable) == 0);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Ok) == fileExpectations.Count);
 
-            // markers
-            this.VerifyDefaultMarkerTableContent(fileDatabase, fileExpectations.Count);
-
             // reread
             fileDatabase.SelectFiles(FileSelection.All);
 
+            // get file for marker testing
             int martenImageID = 1;
-            MarkerRow markersForMartenImage = fileDatabase.Markers.Find(martenImageID);
-            List<MarkersForCounter> markersForMartenImageList = markersForMartenImage.ToList();
-            Assert.IsTrue(markersForMartenImageList.Count == counterControls);
-            foreach (MarkersForCounter markerForCounter in markersForMartenImageList)
-            {
-                Assert.IsFalse(String.IsNullOrWhiteSpace(markerForCounter.DataLabel));
-                Assert.IsTrue(markerForCounter.Markers.Count == 0);
-            }
+            FileExpectations martenExpectations = fileExpectations.Single(expectation => expectation.ID == martenImageID);
+            ImageRow martenImage = fileDatabase.Files.Single(file => file.ID == martenImageID);
+            martenExpectations.Verify(martenImage, imageSetTimeZone);
 
-            // no op - write empty
-            fileDatabase.SyncMarkersToDatabase(markersForMartenImage);
-
-            // add
-            markersForMartenImage = fileDatabase.Markers.Find(martenImageID);
-            markersForMartenImageList = markersForMartenImage.ToList();
-            Assert.IsTrue(markersForMartenImageList.Count == counterControls);
-            foreach (MarkersForCounter markerForCounter in markersForMartenImageList)
+            // add markers
+            for (int counterIndex = 0; counterIndex < counterControls.Count; ++counterIndex)
             {
-                Assert.IsFalse(String.IsNullOrWhiteSpace(markerForCounter.DataLabel));
-                Assert.IsTrue(markerForCounter.Markers.Count == 0);
-            }
+                ControlRow counter = counterControls[counterIndex];
+                MarkersForCounter markersForCounter = martenImage.GetMarkersForCounter(counter.DataLabel);
 
-            List<List<Point>> expectedMarkerPositions = new List<List<Point>>();
-            for (int counterIndex = 0; counterIndex < markersForMartenImageList.Count; ++counterIndex)
-            {
-                MarkersForCounter markersForCounter = markersForMartenImageList[counterIndex];
                 List<Point> expectedPositions = new List<Point>();
                 for (int markerIndex = 0; markerIndex < counterIndex; ++markerIndex)
                 {
+                    int initialCounterCount = markersForCounter.Count;
+                    int initialMarkers = markersForCounter.Markers.Count;
+
                     Point markerPosition = new Point((0.1 * counterIndex) + (0.1 * markerIndex), (0.05 * counterIndex) + (0.1 * markerIndex));
                     markersForCounter.AddMarker(markerPosition);
+
+                    Assert.IsTrue(markersForCounter.Count == initialCounterCount + 1);
+                    Assert.IsTrue(markersForCounter.Markers.Count == initialMarkers + 1);
 
                     Point expectedPosition = new Point(Math.Round(markerPosition.X, 3), Math.Round(markerPosition.Y, 3));
                     expectedPositions.Add(expectedPosition);
                 }
 
-                expectedMarkerPositions.Add(expectedPositions);
+                martenExpectations.UserControlsByDataLabel[counter.DataLabel] = markersForCounter.ToDatabaseString();
             }
-            fileDatabase.SyncMarkersToDatabase(markersForMartenImage);
+            martenExpectations.Verify(martenImage, imageSetTimeZone);
+            fileDatabase.SyncFileToDatabase(martenImage);
+            martenExpectations.Verify(martenImage, imageSetTimeZone);
 
             // roundtrip
-            markersForMartenImage = fileDatabase.Markers.Find(martenImageID);
-            markersForMartenImageList = markersForMartenImage.ToList();
-            this.VerifyMarkers(markersForMartenImageList, expectedMarkerPositions);
+            fileDatabase.SelectFiles(FileSelection.All);
+            martenImage = fileDatabase.Files.Single(file => file.ID == martenImageID);
+            martenExpectations.Verify(martenImage, imageSetTimeZone);
 
-            // remove
-            for (int counterIndex = 0; counterIndex < markersForMartenImageList.Count; ++counterIndex)
+            // remove last marker
+            for (int counterIndex = 0; counterIndex < counterControls.Count; ++counterIndex)
             {
-                MarkersForCounter markersForCounter = markersForMartenImageList[counterIndex];
-                List<Point> expectedPositions = expectedMarkerPositions[counterIndex];
-
-                Assert.IsTrue(markersForCounter.Markers.Count == expectedPositions.Count);
-                if (expectedPositions.Count > 0)
+                MarkersForCounter markersForCounter = martenImage.GetMarkersForCounter(counterControls[counterIndex].DataLabel);
+                if (markersForCounter.Markers.Count > 0)
                 {
-                    markersForCounter.RemoveMarker(markersForCounter.Markers[expectedPositions.Count - 1]);
-                    expectedPositions.RemoveAt(expectedPositions.Count - 1);
+                    int initialCounterCount = markersForCounter.Count;
+                    int initialMarkers = markersForCounter.Markers.Count;
+
+                    markersForCounter.RemoveMarker(markersForCounter.Markers[markersForCounter.Markers.Count - 1]);
+
+                    Assert.IsTrue(markersForCounter.Count == initialCounterCount - 1);
+                    Assert.IsTrue(markersForCounter.Markers.Count == initialMarkers - 1);
+                    martenExpectations.UserControlsByDataLabel[markersForCounter.DataLabel] = markersForCounter.ToDatabaseString();
                 }
             }
-            fileDatabase.SyncMarkersToDatabase(markersForMartenImage);
+            martenExpectations.Verify(martenImage, imageSetTimeZone);
+            fileDatabase.SyncFileToDatabase(martenImage);
+            martenExpectations.Verify(martenImage, imageSetTimeZone);
 
             // roundtrip
-            markersForMartenImage = fileDatabase.Markers.Find(martenImageID);
-            markersForMartenImageList = markersForMartenImage.ToList();
-            this.VerifyMarkers(markersForMartenImageList, expectedMarkerPositions);
+            fileDatabase.SelectFiles(FileSelection.All);
+            martenImage = fileDatabase.Files.Single(file => file.ID == martenImageID);
+            martenExpectations.Verify(martenImage, imageSetTimeZone);
         }
 
         [TestMethod]
@@ -638,86 +636,6 @@ namespace Carnassial.UnitTests
         }
 
         [TestMethod]
-        public void FileDatabaseVerfication()
-        {
-            // load database
-            string fileDatabaseBaseFileName = TestConstant.File.DefaultFileDatabaseFileName;
-            FileDatabase fileDatabase = this.CloneFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, fileDatabaseBaseFileName);
-            Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 0);
-
-            fileDatabase.SelectFiles(FileSelection.All);
-            Assert.IsTrue(fileDatabase.Files.RowCount > 0);
-
-            // verify template portion
-            this.VerifyTemplateDatabase(fileDatabase, fileDatabaseBaseFileName);
-            DefaultControlsExpectation templateTableExpectation = new DefaultControlsExpectation(new Version(2, 2, 0, 0));
-            templateTableExpectation.Verify(fileDatabase);
-
-            // verify image set table
-            this.VerifyDefaultImageSet(fileDatabase);
-
-            // verify markers table
-            int filesExpected = 2;
-            this.VerifyDefaultMarkerTableContent(fileDatabase, filesExpected);
-
-            MarkerExpectation martenMarkerExpectation = new MarkerExpectation() { ID = 1 };
-            martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, "0.498,0.575|0.550,0.566|0.584,0.555");
-            martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, String.Empty);
-            martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, String.Empty);
-            martenMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, String.Empty);
-            martenMarkerExpectation.Verify(fileDatabase.Markers[0]);
-
-            MarkerExpectation bobcatMarkerExpectation = new MarkerExpectation() { ID = 2 };
-            bobcatMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, String.Empty);
-            bobcatMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, String.Empty);
-            bobcatMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, String.Empty);
-            bobcatMarkerExpectation.UserDefinedCountersByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, String.Empty);
-            bobcatMarkerExpectation.Verify(fileDatabase.Markers[1]);
-
-            // verify Files
-            Assert.IsTrue(fileDatabase.Files.RowCount == filesExpected);
-
-            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-            FileExpectations martenExpectation = new FileExpectations(TestConstant.FileExpectation.InfraredMarten) { ID = 1 };
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, "3");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice c");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "0");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, Boolean.TrueString);
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, "100");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, "Genus species");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, "custom label");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, Boolean.FalseString);
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, templateTableExpectation.CounterNotVisible.DefaultValue);
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, Constant.ControlDefault.Value);
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, Constant.ControlDefault.Value);
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constant.ControlDefault.FlagValue);
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, "1");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, Constant.ControlDefault.Value);
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "note");
-            martenExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Boolean.TrueString);
-            martenExpectation.Verify(fileDatabase.Files[0], imageSetTimeZone);
-
-            FileExpectations bobcatExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightBobcat) { ID = 2 };
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, templateTableExpectation.Counter0.DefaultValue);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice a");
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "1");
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, Boolean.TrueString);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, "3");
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, "with , comma");
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, Constant.ControlDefault.Value);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, Boolean.TrueString);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, templateTableExpectation.CounterNotVisible.DefaultValue);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, Constant.ControlDefault.Value);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, Constant.ControlDefault.Value);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, Constant.ControlDefault.FlagValue);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, templateTableExpectation.Counter3.DefaultValue);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, Constant.ControlDefault.Value);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, Constant.ControlDefault.Value);
-            bobcatExpectation.UserDefinedColumnsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, Boolean.TrueString);
-            bobcatExpectation.Verify(fileDatabase.Files[1], imageSetTimeZone);
-        }
-
-        [TestMethod]
         public void FileDatabaseNegative()
         {
             TemplateDatabase templateDatabase = null;
@@ -794,7 +712,7 @@ namespace Carnassial.UnitTests
 
                 int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, state, Constant.Images.MinimumRenderWidth);
                 Assert.IsTrue(filesLoaded == imagesAndVideos.Length);
-                Assert.IsTrue(fileDatabase.Files.RowCount == 0);
+                Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
                 fileDatabase.SelectFiles(FileSelection.All);
                 Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
                 this.TestContext.WriteLine("AddFilesAsync({0}): {1:0.000}s", filesLoaded, stopwatch.Elapsed.TotalSeconds);
@@ -994,7 +912,8 @@ namespace Carnassial.UnitTests
 
             FileExpectations fileExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightBobcat)
             {
-                ID = Constant.Database.InvalidID
+                ID = Constant.Database.InvalidID,
+                SkipUserControlVerification = true
             };
 
             // create ImageRow object for file
@@ -1002,7 +921,7 @@ namespace Carnassial.UnitTests
             FileInfo fileInfo = new FileInfo(sourceFilePath);
 
             FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
-            ImageRow file = fileDatabase.Files.CreateFile(fileInfo.Name, String.Empty);
+            ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, String.Empty);
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
             using (FileLoadAtom loadAtom = new FileLoadAtom(file.RelativePath, new FileLoad(file), new FileLoad((string)null), 0))
             {
@@ -1194,10 +1113,18 @@ namespace Carnassial.UnitTests
             fileDatabase.SelectFiles(FileSelection.All);
 
             // generate expectations for new images
-            FileExpectations martenPairExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair) { ID = fileExpectations.Count + 1 };
+            FileExpectations martenPairExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair)
+            {
+                ID = fileExpectations.Count + 1,
+                SkipUserControlVerification = true
+            };
             fileExpectations.Add(martenPairExpectation);
 
-            FileExpectations daylightCoyoteExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightCoyote) { ID = fileExpectations.Count + 1 };
+            FileExpectations daylightCoyoteExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightCoyote)
+            {
+                ID = fileExpectations.Count + 1,
+                SkipUserControlVerification = true
+            };
             fileExpectations.Add(daylightCoyoteExpectation);
 
             // verify new images pick up the current timezone
@@ -1263,6 +1190,15 @@ namespace Carnassial.UnitTests
             }
         }
 
+        private void VerifyFiles(FileDatabase fileDatabase, List<FileExpectations> fileExpectations, TimeZoneInfo imageSetTimeZone)
+        {
+            for (int file = 0; file < fileExpectations.Count; ++file)
+            {
+                FileExpectations fileExpectation = fileExpectations[file];
+                fileExpectation.Verify(fileDatabase.Files[file], imageSetTimeZone);
+            }
+        }
+
         private void VerifyFiles(FileDatabase fileDatabase, List<FileExpectations> fileExpectations, TimeZoneInfo initialImageSetTimeZone, int initialImageCount, TimeZoneInfo secondImageSetTimeZone)
         {
             for (int file = 0; file < fileExpectations.Count; ++file)
@@ -1297,12 +1233,12 @@ namespace Carnassial.UnitTests
             }
         }
 
-        private void VerifyMarkers(List<MarkersForCounter> markersOnImage, List<List<Point>> expectedMarkerPositions)
+        private void VerifyMarkers(ImageRow file, List<ControlRow> counterControls, List<List<Point>> expectedMarkerPositions)
         {
-            Assert.IsTrue(markersOnImage.Count == expectedMarkerPositions.Count);
-            for (int counterIndex = 0; counterIndex < markersOnImage.Count; ++counterIndex)
+            Assert.IsTrue(counterControls.Count == expectedMarkerPositions.Count);
+            for (int counterIndex = 0; counterIndex < counterControls.Count; ++counterIndex)
             {
-                MarkersForCounter markersForCounter = markersOnImage[counterIndex];
+                MarkersForCounter markersForCounter = file.GetMarkersForCounter(counterControls[counterIndex].DataLabel);
                 List<Point> expectedPositions = expectedMarkerPositions[counterIndex];
                 Assert.IsTrue(markersForCounter.Markers.Count == expectedPositions.Count);
                 for (int markerIndex = 0; markerIndex < expectedPositions.Count; ++markerIndex)
@@ -1363,43 +1299,6 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileDatabase.ImageSet.Log == Constant.Database.ImageSetDefaultLog);
             Assert.IsFalse(fileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier));
             Assert.IsTrue(fileDatabase.ImageSet.TimeZone == TimeZoneInfo.Local.Id);
-        }
-
-        private void VerifyDefaultMarkerTableContent(FileDatabase fileDatabase, int filesExpected)
-        {
-            DataTable markers = fileDatabase.Markers.ExtractDataTable();
-
-            List<string> expectedColumns = new List<string>() { Constant.DatabaseColumn.ID };
-            foreach (ControlRow control in fileDatabase.Controls)
-            {
-                if (control.Type == ControlType.Counter)
-                {
-                    expectedColumns.Add(control.DataLabel);
-                }
-            }
-
-            Assert.IsTrue(markers.Columns.Count == expectedColumns.Count);
-            for (int column = 0; column < expectedColumns.Count; ++column)
-            {
-                Assert.IsTrue(expectedColumns[column] == markers.Columns[column].ColumnName, "Expected column named '{0}' but found '{1}'.", expectedColumns[column], markers.Columns[column].ColumnName);
-            }
-            if (expectedColumns.Count == TestConstant.DefaultMarkerColumns.Count)
-            {
-                for (int column = 0; column < expectedColumns.Count; ++column)
-                {
-                    Assert.IsTrue(expectedColumns[column] == TestConstant.DefaultMarkerColumns[column], "Expected column named '{0}' but found '{1}'.", expectedColumns[column], TestConstant.DefaultMarkerColumns[column]);
-                }
-            }
-
-            // marker rows aren't populated if no counters are present in the database
-            if (expectedColumns.Count == 1)
-            {
-                Assert.IsTrue(fileDatabase.Markers.RowCount == 0);
-            }
-            else
-            {
-                Assert.IsTrue(fileDatabase.Markers.RowCount == filesExpected);
-            }
         }
     }
 }

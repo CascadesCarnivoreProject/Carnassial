@@ -3,7 +3,6 @@ using Carnassial.Database;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
@@ -15,8 +14,6 @@ namespace Carnassial.Data
 {
     public class FileDatabase : TemplateDatabase
     {
-        private bool disposed;
-
         public List<string> ControlSynchronizationIssues { get; private set; }
 
         public CustomSelection CustomSelection { get; set; }
@@ -29,16 +26,12 @@ namespace Carnassial.Data
         // contains the results of the data query
         public FileTable Files { get; private set; }
 
-        // contains the markers
-        public DataTableBackedList<MarkerRow> Markers { get; private set; }
-
         public bool OrderFilesByDateTime { get; set; }
 
         private FileDatabase(string filePath)
             : base(filePath)
         {
             this.ControlSynchronizationIssues = new List<string>();
-            this.disposed = false;
             this.FileName = Path.GetFileName(filePath);
             this.ControlsByDataLabel = new Dictionary<string, ControlRow>();
             this.OrderFilesByDateTime = false;
@@ -194,7 +187,7 @@ namespace Carnassial.Data
         }
 
         // Delete the data (including markers) associated with the files identified by the list of IDs.
-        public void DeleteFilesAndMarkers(List<long> fileIDs)
+        public void DeleteFiles(List<long> fileIDs)
         {
             if (fileIDs.Count < 1)
             {
@@ -208,18 +201,15 @@ namespace Carnassial.Data
                 using (SQLiteTransaction transaction = connection.BeginTransaction())
                 {
                     SQLiteCommand deleteFiles = new SQLiteCommand(String.Format("DELETE FROM {0} WHERE {1} = @Id", Constant.DatabaseTable.FileData, Constant.DatabaseColumn.ID), connection, transaction);
-                    SQLiteCommand deleteMarkers = new SQLiteCommand(String.Format("DELETE FROM {0} WHERE {1} = @Id", Constant.DatabaseTable.Markers, Constant.DatabaseColumn.ID), connection, transaction);
                     try
                     {
                         SQLiteParameter id = new SQLiteParameter("@Id");
                         deleteFiles.Parameters.Add(id);
-                        deleteMarkers.Parameters.Add(id);
 
                         foreach (long fileID in fileIDs)
                         {
                             id.Value = fileID;
                             deleteFiles.ExecuteNonQuery();
-                            deleteMarkers.ExecuteNonQuery();
                         }
 
                         transaction.Commit();
@@ -227,29 +217,9 @@ namespace Carnassial.Data
                     finally
                     {
                         deleteFiles.Dispose();
-                        deleteMarkers.Dispose();
                     }
                 }
             }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                if (this.Markers != null)
-                {
-                    this.Markers.Dispose();
-                }
-            }
-
-            base.Dispose(disposing);
-            this.disposed = true;
         }
 
         // Update all the date fields between the start and end index by swapping the days and months.
@@ -440,11 +410,6 @@ namespace Carnassial.Data
             return counts;
         }
 
-        public void GetMarkers(SQLiteConnection connection)
-        {
-            this.Markers = new DataTableBackedList<MarkerRow>(this.Database.GetDataTableFromSelect(connection, new Select(Constant.DatabaseTable.Markers)), (DataRow row) => { return new MarkerRow(row); });
-        }
-
         /// <summary>A convenience routine for checking to see if the file in the given row is displayable (i.e., not corrupted or missing)</summary>
         public bool IsFileDisplayable(int fileIndex)
         {
@@ -486,9 +451,7 @@ namespace Carnassial.Data
         }
 
         /// <summary>
-        /// Make an empty Data Table based on the information in the Template Table.
-        /// Assumes that the database has already been opened and that the Template Table is loaded, where the data label always has a valid value.
-        /// Then create both the ImageSet table and the Markers table
+        /// Make an empty file table based on the information in the template and create the ImageSet table.
         /// </summary>
         protected override void OnDatabaseCreated(TemplateDatabase templateDatabase)
         {
@@ -515,23 +478,10 @@ namespace Carnassial.Data
                         command.ExecuteNonQuery();
                     }
 
-                    // create the Markers table
-                    List<ColumnDefinition> markerColumns = new List<ColumnDefinition>() { ColumnDefinition.CreatePrimaryKey() };
-                    string type = String.Empty;
-                    foreach (ControlRow control in this.Controls)
-                    {
-                        if (control.Type == ControlType.Counter)
-                        {
-                            markerColumns.Add(new ColumnDefinition(control.DataLabel, Constant.SqlColumnType.Text, String.Empty));
-                        }
-                    }
-                    this.Database.CreateTable(connection, transaction, Constant.DatabaseTable.Markers, markerColumns);
-
                     transaction.Commit();
                 }
 
-                // load in memory Files and Markers tables
-                this.GetMarkers(connection);
+                // load in memory File table
                 this.SelectFiles(connection, this.ImageSet.FileSelection);
             }
         }
@@ -598,9 +548,8 @@ namespace Carnassial.Data
                     }
                 }
 
-                // load in memory Files and Markers tables
+                // load in memory File table
                 this.SelectFiles(connection, this.ImageSet.FileSelection);
-                this.GetMarkers(connection);
             }
 
             // return true if there are synchronization issues as the database was still opened successfully
@@ -653,20 +602,6 @@ namespace Carnassial.Data
             this.UpdateFiles(file.CreateUpdate());
         }
 
-        /// <summary>
-        /// Set the list of markers in the marker table. 
-        /// </summary>
-        public void SyncMarkersToDatabase(MarkerRow markers)
-        {
-            // update the database
-            this.CreateBackupIfNeeded();
-            ColumnTuplesWithID markerUpdate = markers.CreateUpdate();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                markerUpdate.Update(connection);
-            }
-        }
-
         public static bool TryCreateOrOpen(string filePath, TemplateDatabase templateDatabase, bool orderFilesByDate, LogicalOperator customSelectionTermCombiningOperator, out FileDatabase fileDatabase)
         {
             // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
@@ -691,7 +626,6 @@ namespace Carnassial.Data
             Debug.Assert(fileDatabase.Controls != null, "Controls wasn't loaded.");
             Debug.Assert(fileDatabase.Files != null, "Files wasn't loaded.");
             Debug.Assert(fileDatabase.ImageSet != null, "ImageSet wasn't loaded.");
-            Debug.Assert(fileDatabase.Markers != null, "Markers wasn't loaded.");
 
             fileDatabase.CustomSelection = new CustomSelection(fileDatabase.Controls, customSelectionTermCombiningOperator);
             fileDatabase.OrderFilesByDateTime = orderFilesByDate;

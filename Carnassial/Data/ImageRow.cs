@@ -29,12 +29,13 @@ namespace Carnassial.Data
         private string fileName;
         private FileSelection imageQuality;
         private string relativePath;
-        private Dictionary<string, string> valuesByDataLabel;
+        private FileTable table;
 
         public bool HasChanges { get; private set; }
         public long ID { get; set; }
+        public string[] UserControlValues { get; private set; }
 
-        public ImageRow(string fileName, string relativePath)
+        public ImageRow(string fileName, string relativePath, FileTable table)
         {
             this.dateTimeOffset = Constant.ControlDefault.DateTimeValue;
             this.deleteFlag = false;
@@ -43,7 +44,8 @@ namespace Carnassial.Data
             this.ID = Constant.Database.InvalidID;
             this.imageQuality = FileSelection.Ok;
             this.relativePath = relativePath;
-            this.valuesByDataLabel = new Dictionary<string, string>();
+            this.table = table;
+            this.UserControlValues = new string[table.UserControlIndicesByDataLabel.Count];
         }
 
         public DateTimeOffset DateTimeOffset
@@ -118,6 +120,12 @@ namespace Carnassial.Data
             get { return false; }
         }
 
+        private void MarkersForCounter_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            MarkersForCounter markers = (MarkersForCounter)sender;
+            this[markers.DataLabel] = markers.ToDatabaseString();
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string RelativePath
@@ -159,7 +167,7 @@ namespace Carnassial.Data
                     case Constant.DatabaseColumn.UtcOffset:
                         throw new NotSupportedException("Access UtcOffset through DateTimeOffset.");
                     default:
-                        return this.valuesByDataLabel[propertyName];
+                        return this.UserControlValues[this.table.UserControlIndicesByDataLabel[propertyName]];
                 }
             }
             set
@@ -193,12 +201,10 @@ namespace Carnassial.Data
                         throw new NotSupportedException("UtcOffset must be set through DateTimeOffset.");
                     // user defined controls
                     default:
-                        string stringValue = (string)value;
-                        if (this.valuesByDataLabel.TryGetValue(propertyName, out string currentValue))
-                        {
-                            this.HasChanges |= currentValue != stringValue;
-                        }
-                        this.valuesByDataLabel[propertyName] = stringValue;
+                        int userControlIndex = this.table.UserControlIndicesByDataLabel[propertyName];
+                        string newValueAsString = (string)value;
+                        this.HasChanges |= !String.Equals(this.UserControlValues[userControlIndex], newValueAsString, StringComparison.Ordinal);
+                        this.UserControlValues[userControlIndex] = newValueAsString;
                         this.PropertyChanged?.Invoke(this, new IndexedPropertyChangedEventArgs<string>(propertyName));
                         break;
                 }
@@ -236,7 +242,7 @@ namespace Carnassial.Data
 
         public FileTuplesWithID CreateUpdate()
         {
-            List<string> columnsToUpdate = new List<string>(Constant.Control.StandardControls.Count + this.valuesByDataLabel.Count)
+            List<string> columnsToUpdate = new List<string>(Constant.Control.StandardControls.Count + this.table.UserControlIndicesByDataLabel.Count)
             {
                 Constant.DatabaseColumn.DateTime,
                 Constant.DatabaseColumn.DeleteFlag,
@@ -245,7 +251,7 @@ namespace Carnassial.Data
                 Constant.DatabaseColumn.RelativePath,
                 Constant.DatabaseColumn.UtcOffset
             };
-            columnsToUpdate.AddRange(this.valuesByDataLabel.Keys);
+            columnsToUpdate.AddRange(this.table.UserControlIndicesByDataLabel.Keys);
 
             FileTuplesWithID tuples = new FileTuplesWithID(columnsToUpdate);
             List<object> values = new List<object>(columnsToUpdate.Count);
@@ -278,7 +284,7 @@ namespace Carnassial.Data
                 case Constant.DatabaseColumn.UtcOffset:
                     return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
                 default:
-                    return this.valuesByDataLabel[dataLabel];
+                    return this.UserControlValues[this.table.UserControlIndicesByDataLabel[dataLabel]];
             }
         }
 
@@ -343,7 +349,7 @@ namespace Carnassial.Data
                 case Constant.DatabaseColumn.UtcOffset:
                     return DateTimeHandler.ToDisplayUtcOffsetString(this.UtcOffset);
                 default:
-                    return this.valuesByDataLabel[control.DataLabel];
+                    return this.UserControlValues[this.table.UserControlIndicesByDataLabel[control.DataLabel]];
             }
         }
 
@@ -356,6 +362,13 @@ namespace Carnassial.Data
         {
             // see RelativePath remarks in constructor
             return Path.Combine(imageSetFolderPath, this.GetRelativePath());
+        }
+
+        public MarkersForCounter GetMarkersForCounter(string dataLabel)
+        {
+            MarkersForCounter markersForCounter = MarkersForCounter.Parse(dataLabel, this.GetDatabaseString(dataLabel));
+            markersForCounter.PropertyChanged += this.MarkersForCounter_PropertyChanged;
+            return markersForCounter;
         }
 
         public static string GetPropertyName(string dataLabel)
@@ -404,7 +417,7 @@ namespace Carnassial.Data
                 case Constant.DatabaseColumn.UtcOffset:
                     return DateTimeHandler.ToDatabaseUtcOffset(this.UtcOffset);
                 default:
-                    return this.valuesByDataLabel[dataLabel];
+                    return this.UserControlValues[this.table.UserControlIndicesByDataLabel[dataLabel]];
             }
         }
 
@@ -420,9 +433,9 @@ namespace Carnassial.Data
                 { Constant.DatabaseColumn.ImageQuality, this.ImageQuality },
                 { Constant.DatabaseColumn.RelativePath, this.RelativePath },
             };
-            foreach (KeyValuePair<string, string> value in this.valuesByDataLabel)
+            foreach (KeyValuePair<string, int> userControl in this.table.UserControlIndicesByDataLabel)
             {
-                values[value.Key] = value.Value;
+                values[userControl.Key] = this.UserControlValues[userControl.Value];
             }
             return values;
         }

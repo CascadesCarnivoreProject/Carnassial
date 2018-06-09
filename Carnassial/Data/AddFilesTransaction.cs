@@ -11,7 +11,6 @@ namespace Carnassial.Data
     public class AddFilesTransaction : FileTransaction
     {
         private SQLiteCommand addFiles;
-        private SQLiteCommand addMarkers;
         private bool disposed;
         private FileDatabase fileDatabase;
 
@@ -27,17 +26,11 @@ namespace Carnassial.Data
             SQLiteParameter relativePath = new SQLiteParameter("@relativePath");
             SQLiteParameter utcOffset = new SQLiteParameter("@utcOffset");
 
-            bool counterPresent = false;
             List<string> dataLabels = new List<string>();
             List<string> defaultValues = new List<string>();
             string deleteFlagDefaultValue = null;
             foreach (KeyValuePair<string, ControlRow> column in fileDatabase.ControlsByDataLabel)
             {
-                if (column.Value.Type == ControlType.Counter)
-                {
-                    counterPresent = true;
-                }
-
                 string dataLabel = column.Key;
                 if ((dataLabel == Constant.DatabaseColumn.ID) ||
                     Constant.Control.StandardControls.Contains(dataLabel))
@@ -82,12 +75,6 @@ namespace Carnassial.Data
             this.addFiles.Parameters.Add(imageQuality);
             this.addFiles.Parameters.Add(relativePath);
             this.addFiles.Parameters.Add(utcOffset);
-
-            if (counterPresent)
-            {
-                string markerInsertText = String.Format("INSERT INTO {0} DEFAULT VALUES", Constant.DatabaseTable.Markers);
-                this.addMarkers = new SQLiteCommand(markerInsertText, this.Connection, this.Transaction);
-            }
         }
 
         /// <summary>
@@ -130,10 +117,6 @@ namespace Carnassial.Data
                 this.addFiles.Parameters[4].Value = DateTimeHandler.ToDatabaseUtcOffset(fileToInsert.UtcOffset);
 
                 this.addFiles.ExecuteNonQuery();
-                if (this.addMarkers != null)
-                {
-                    this.addMarkers.ExecuteNonQuery();
-                }
                 fileToInsert.AcceptChanges();
                 ++filesAdded;
 
@@ -141,27 +124,12 @@ namespace Carnassial.Data
                 if (this.FilesInTransaction >= Constant.Database.RowsPerTransaction)
                 {
                     this.addFiles = this.CommitAndBeginNew(this.addFiles);
-                    if (this.addMarkers != null)
-                    {
-                        SQLiteCommand previousAddMarkers = this.addMarkers;
-                        this.addMarkers = new SQLiteCommand(previousAddMarkers.CommandText, this.Connection, this.Transaction);
-                        previousAddMarkers.Dispose();
-                    }
                 }
             }
 
             // stopwatch.Stop();
             // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
             return filesAdded;
-        }
-
-        public override void Commit()
-        {
-            base.Commit();
-
-            // refresh the marker table to keep it in sync
-            // Files table doesn't need refresh as its contents were just flushed to the database.
-            this.fileDatabase.GetMarkers(this.Connection);
         }
 
         protected override void Dispose(bool disposing)
@@ -175,10 +143,6 @@ namespace Carnassial.Data
             if (disposing)
             {
                 this.addFiles.Dispose();
-                if (this.addMarkers != null)
-                {
-                    this.addMarkers.Dispose();
-                }
             }
 
             this.disposed = true;

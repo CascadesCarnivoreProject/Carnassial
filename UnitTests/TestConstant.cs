@@ -114,7 +114,7 @@ namespace Carnassial.UnitTests
 
             // file databases for backwards compatibility testing
             // version is the Carnassial version used for creation
-            public const string DefaultFileDatabaseFileName = "DefaultData 2.2.0.0.ddb";
+            public const string DefaultFileDatabaseFileName = "DefaultData 2.2.0.3.ddb";
 
             // template databases for backwards compatibility testing
             // version is the editor version used for creation
@@ -182,7 +182,7 @@ namespace Carnassial.UnitTests
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-02-24T04:59:46.000-08:00"),
                     FileName = "BushnellTrophyHD-119677C-20160224-056.JPG",
                     Luminosity = 0.3138861038100762,
-                        Quality = FileSelection.Ok
+                    Quality = FileSelection.Ok
                 };
             }
         }

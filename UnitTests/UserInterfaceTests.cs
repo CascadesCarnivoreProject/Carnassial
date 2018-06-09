@@ -311,15 +311,16 @@ namespace Carnassial.UnitTests
                     Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Flag0] == previousFlagValue.ToString());
 
                     // marker insertion and removal
-                    string previousCounterValue = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0];
-                    string newCounterValue = (Int32.Parse(previousCounterValue) + 1).ToString();
+                    MarkersForCounter previousMarkers = carnassial.DataHandler.ImageCache.Current.GetMarkersForCounter(TestConstant.DefaultDatabaseColumn.Counter0);
                     Marker newMarker = new Marker(TestConstant.DefaultDatabaseColumn.Counter0, new Point()) { LabelShownPreviously = false, ShowLabel = true };
                     MarkerCreatedOrDeletedEventArgs markerEvent = new MarkerCreatedOrDeletedEventArgs(newMarker, true);
                     FileMarkerChange counterEdit = new FileMarkerChange(carnassial.DataHandler.ImageCache.Current.ID, markerEvent);
                     counterEdit.Execute(carnassial);
-                    Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == newCounterValue.ToString());
+                    MarkersForCounter newMarkers = carnassial.DataHandler.ImageCache.Current.GetMarkersForCounter(TestConstant.DefaultDatabaseColumn.Counter0);
+                    Assert.IsTrue(newMarkers.Count == previousMarkers.Count + 1);
                     counterEdit.Undo(carnassial);
-                    Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == previousCounterValue.ToString());
+                    MarkersForCounter currentMarkers = carnassial.DataHandler.ImageCache.Current.GetMarkersForCounter(TestConstant.DefaultDatabaseColumn.Counter0);
+                    Assert.IsTrue(currentMarkers.Count == previousMarkers.Count);
 
                     // custom selection edit
                     Data.CustomSelection currentSelection = carnassial.DataHandler.FileDatabase.CustomSelection;
@@ -543,47 +544,6 @@ namespace Carnassial.UnitTests
                     {
                         string databaseString = firstFile.GetDatabaseString(dataLabel);
                     }
-
-                    // verify counter increment and decrement
-                    // UI thread isn't running to perform data binding (and controls aren't visible) so most checks are against the underlying ImageRow.
-                    DataEntryCounter counter0 = (DataEntryCounter)controls.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Counter0];
-                    counter0.DataContext = dataHandler.ImageCache.Current;
-                    Assert.IsTrue(counter0.Content == "1");
-                    dataHandler.DecrementOrResetCounter(counter0);
-                    Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "0");
-                    dataHandler.DecrementOrResetCounter(counter0);
-                    Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "0");
-
-                    dataHandler.IncrementOrResetCounter(counter0);
-                    Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "1");
-                    dataHandler.DecrementOrResetCounter(counter0);
-                    Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "0");
-
-                    dataHandler.IncrementOrResetCounter(counter0);
-                    Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "1");
-                    dataHandler.DecrementOrResetCounter(counter0);
-                    Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "0");
-
-                    DataEntryCounter counter3 = (DataEntryCounter)controls.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Counter3];
-                    counter3.DataContext = dataHandler.ImageCache.Current;
-                    Assert.IsTrue(counter3.Content == "0");
-                    dataHandler.IncrementOrResetCounter(counter0);
-                    dataHandler.IncrementOrResetCounter(counter3);
-                    dataHandler.IncrementOrResetCounter(counter3);
-                    dataHandler.IncrementOrResetCounter(counter0);
-                    Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "2");
-                    Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter3] == "2");
-                    dataHandler.DecrementOrResetCounter(counter0);
-                    dataHandler.DecrementOrResetCounter(counter3);
-                    dataHandler.DecrementOrResetCounter(counter0);
-                    dataHandler.DecrementOrResetCounter(counter3);
-                    dataHandler.IncrementOrResetCounter(counter3);
-                    dataHandler.IncrementOrResetCounter(counter3);
-                    dataHandler.IncrementOrResetCounter(counter3);
-                    dataHandler.IncrementOrResetCounter(counter3);
-                    dataHandler.DecrementOrResetCounter(counter3);
-                    Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter0] == "0");
-                    Assert.IsTrue((string)dataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Counter3] == "3");
 
                     fileDatabase.Dispose();
                     File.Delete(fileDatabase.FilePath);

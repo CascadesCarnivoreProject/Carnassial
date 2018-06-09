@@ -6,8 +6,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 
 namespace Carnassial.Data
@@ -19,6 +17,7 @@ namespace Carnassial.Data
         public FileTable()
         {
             this.files = new List<ImageRow>();
+            this.UserControlIndicesByDataLabel = new Dictionary<string, int>();
         }
 
         public int RowCount
@@ -31,17 +30,26 @@ namespace Carnassial.Data
             get { return this.files[index]; }
         }
 
-        public ImageRow CreateFile(string fileName, string relativePath)
+        public Dictionary<string, int> UserControlIndicesByDataLabel { get; private set; }
+
+        public ImageRow CreateAndAppendFile(string fileName, string relativePath)
         {
+            ImageRow file;
             if (FileTable.IsVideo(fileName))
             {
-                return new VideoRow(fileName, relativePath);
+                file = new VideoRow(fileName, relativePath, this);
             }
-            if (JpegImage.IsJpeg(fileName))
+            else if (JpegImage.IsJpeg(fileName))
             {
-                return new ImageRow(fileName, relativePath);
+                file = new ImageRow(fileName, relativePath, this);
             }
-            throw new NotSupportedException(String.Format("Unhandled extension for file '{0}'.", fileName));
+            else
+            {
+                throw new NotSupportedException(String.Format("Unhandled extension for file '{0}'.", fileName));
+            }
+
+            this.files.Add(file);
+            return file;
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -94,10 +102,13 @@ namespace Carnassial.Data
 
         public void Load(SQLiteDataReader reader)
         {
+            this.UserControlIndicesByDataLabel.Clear();
+
             if (reader.FieldCount < 1)
             {
                 throw new SQLiteException(SQLiteErrorCode.Schema, "Table has no columns.");
             }
+            int standardColumnCount = Constant.Control.StandardControls.Count + 1; // standard controls + ID
             int dateTimeIndex = -1;
             int deleteFlagIndex = -1;
             int fileNameIndex = -1;
@@ -105,7 +116,6 @@ namespace Carnassial.Data
             int imageQualityIndex = -1;
             int relativePathIndex = -1;
             int utcOffsetIndex = -1;
-            List<KeyValuePair<int, string>> userControls = new List<KeyValuePair<int, string>>();
             for (int column = 0; column < reader.FieldCount; ++column)
             {
                 string columnName = reader.GetName(column);
@@ -133,18 +143,19 @@ namespace Carnassial.Data
                         utcOffsetIndex = column;
                         break;
                     default:
-                        userControls.Add(new KeyValuePair<int, string>(column, columnName));
+                        int userControlIndex = column - standardColumnCount;
+                        this.UserControlIndicesByDataLabel.Add(columnName, userControlIndex);
                         break;
                 }
             }
-            bool standardColumnsPresent = (dateTimeIndex != -1) &&
-                                          (deleteFlagIndex != -1) &&
-                                          (fileNameIndex != -1) &&
-                                          (idIndex != -1) &&
-                                          (imageQualityIndex != -1) &&
-                                          (relativePathIndex != -1) &&
-                                          (utcOffsetIndex != -1);
-            if (standardColumnsPresent == false)
+            bool allStandardColumnsPresent = (dateTimeIndex != -1) &&
+                                             (deleteFlagIndex != -1) &&
+                                             (fileNameIndex != -1) &&
+                                             (idIndex != -1) &&
+                                             (imageQualityIndex != -1) &&
+                                             (relativePathIndex != -1) &&
+                                             (utcOffsetIndex != -1);
+            if (allStandardColumnsPresent == false)
             {
                 throw new SQLiteException(SQLiteErrorCode.Schema, "At least one standard column is missing from table " + reader.GetTableName(0));
             }
@@ -154,24 +165,24 @@ namespace Carnassial.Data
                 IDataRecord row = (IDataRecord)reader;
                 string fileName = row.GetString(fileNameIndex);
                 string relativePath = row.GetString(relativePathIndex);
-                ImageRow file = this.CreateFile(fileName, relativePath);
+                ImageRow file = this.CreateAndAppendFile(fileName, relativePath);
 
                 // read file values
                 // Carnassial versions prior to 2.2.0.3 had a bug where UTC offsets where written as TimeSpans rather than doubles
                 // which, combined with column type real, produces an odd situation where IDataRecord.GetValue() returns a correct
-                // double but GetDouble() throws.  As a workaround for backwards compatibility, GetValue() is called and cast to double.
+                // double but GetDouble() throws on System.Data.SQLite 1.0.107.  As a workaround for backwards compatibility, 
+                // GetValue() is called and cast to double.
                 double utcOffset = (double)row.GetValue(utcOffsetIndex);
                 file.DateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(row.GetDateTime(dateTimeIndex), DateTimeHandler.FromDatabaseUtcOffset(utcOffset));
                 file.DeleteFlag = Boolean.Parse(row.GetString(deleteFlagIndex));
                 file.ID = row.GetInt64(idIndex);
                 file.ImageQuality = (FileSelection)Enum.Parse(typeof(FileSelection), row.GetString(imageQualityIndex));
-                foreach (KeyValuePair<int, string> userControl in userControls)
+                foreach (KeyValuePair<string, int> userControl in this.UserControlIndicesByDataLabel)
                 {
-                    file[userControl.Value] = row.GetString(userControl.Key);
+                    int columnIndex = userControl.Value + standardColumnCount;
+                    file.UserControlValues[userControl.Value] = row.GetString(columnIndex);
                 }
                 file.AcceptChanges();
-
-                this.files.Add(file);
             }
         }
 

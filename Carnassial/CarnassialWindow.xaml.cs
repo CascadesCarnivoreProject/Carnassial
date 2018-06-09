@@ -338,22 +338,20 @@ namespace Carnassial
         private List<Marker> GetDisplayMarkers()
         {
             List<Marker> markers = new List<Marker>();
-            if ((this.IsFileAvailable() == false) || (this.DataHandler.ImageCache.CurrentMarkers == null))
+            if (this.IsFileAvailable() == false)
             {
                 return markers;
             }
 
             // if no counter is selected that just indicates no markers need to be highlighted at this time
             this.TryGetSelectedCounter(out DataEntryCounter selectedCounter);
-            foreach (MarkersForCounter markersForCounter in this.DataHandler.ImageCache.CurrentMarkers)
+            foreach (DataEntryControl control in this.DataEntryControls.ControlsByDataLabel.Values)
             {
-                if (this.DataEntryControls.ControlsByDataLabel.TryGetValue(markersForCounter.DataLabel, out DataEntryControl control) == false)
+                if (control.Type != ControlType.Counter)
                 {
-                    // if the counter can't be found it's likely because the control was made invisible in the template
-                    // This means there is no user visible control associated with the marker.  For consistency, don't show those markers.
-                    // If the control is later made visible in the template the markers will again be shown. 
                     continue;
                 }
+                MarkersForCounter markersForCounter = this.DataHandler.ImageCache.Current.GetMarkersForCounter(control.DataLabel);
 
                 // on mouse hover over a counter, emphasize markers associated with it
                 DataEntryCounter currentCounter = (DataEntryCounter)control;
@@ -1590,7 +1588,7 @@ namespace Carnassial
                     // if this is completion of an add to an existing image set stay on the file, ideally, shown before the import
                     mostRecentFileID = this.DataHandler.ImageCache.Current.ID;
                     // however, the cache doesn't know file loading changed the display image so invalidate to force a redraw
-                    // This is heavier weight than desirable, but it's a one off.
+                    // This is heavier weight than desirable, but it occurs infrequently.
                     this.DataHandler.ImageCache.TryInvalidate(mostRecentFileID);
                 }
 
@@ -1993,7 +1991,6 @@ namespace Carnassial
             if (moveToFile.NewFileToDisplay)
             {
                 // show the file
-                this.DataHandler.ImageCache.CurrentMarkers = this.DataHandler.FileDatabase.Markers.Find(this.DataHandler.ImageCache.Current.ID);
                 List<Marker> displayMarkers = this.GetDisplayMarkers();
 
                 bool isVideo = this.DataHandler.ImageCache.Current.IsVideo;

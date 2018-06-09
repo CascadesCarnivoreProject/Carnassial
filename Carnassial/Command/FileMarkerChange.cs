@@ -21,14 +21,11 @@ namespace Carnassial.Command
         {
             // insert the new marker and include it in the display list
             DataEntryCounter counter = (DataEntryCounter)carnassial.DataEntryControls.ControlsByDataLabel[this.marker.DataLabel];
-            MarkersForCounter markersForCounter = carnassial.DataHandler.ImageCache.CurrentMarkers[this.marker.DataLabel];
-            markersForCounter.AddMarker(this.marker);
-            carnassial.RefreshDisplayedMarkers();
-
-            // increment the counter to reflect the new marker
+            MarkersForCounter markersForCounter = carnassial.DataHandler.ImageCache.Current.GetMarkersForCounter(this.marker.DataLabel);
             carnassial.DataHandler.IsProgrammaticUpdate = true;
-            carnassial.DataHandler.IncrementOrResetCounter(counter);
+            markersForCounter.AddMarker(this.marker);
             carnassial.DataHandler.IsProgrammaticUpdate = false;
+            carnassial.RefreshDisplayedMarkers();
         }
 
         public override void Execute(CarnassialWindow carnassial)
@@ -51,15 +48,11 @@ namespace Carnassial.Command
         private void RemoveMarker(CarnassialWindow carnassial)
         {
             // remove the marker from in memory data and from the display list
-            MarkersForCounter markersForCounter = carnassial.DataHandler.ImageCache.CurrentMarkers[this.marker.DataLabel];
-            markersForCounter.RemoveMarker(this.marker);
-            carnassial.RefreshDisplayedMarkers();
-
-            // decrement the counter to reflect the new marker
-            DataEntryCounter counter = (DataEntryCounter)carnassial.DataEntryControls.ControlsByDataLabel[this.marker.DataLabel];
+            MarkersForCounter markersForCounter = carnassial.DataHandler.ImageCache.Current.GetMarkersForCounter(this.marker.DataLabel);
             carnassial.DataHandler.IsProgrammaticUpdate = true;
-            carnassial.DataHandler.DecrementOrResetCounter(counter);
+            markersForCounter.RemoveMarker(this.marker);
             carnassial.DataHandler.IsProgrammaticUpdate = false;
+            carnassial.RefreshDisplayedMarkers();
         }
 
         public override string ToString()

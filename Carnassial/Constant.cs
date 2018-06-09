@@ -155,7 +155,6 @@ namespace Carnassial
             public const string Controls = "Controls"; // table containing controls
             public const string FileData = "FileData";     // table containing image and video data
             public const string ImageSet = "ImageSet"; // table containing information common to the entire image set
-            public const string Markers = "Markers";   // table containing counter markers
         }
 
         public static class Excel
