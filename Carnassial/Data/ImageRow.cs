@@ -22,7 +22,7 @@ namespace Carnassial.Data
     /// <summary>
     /// A row in the file database representing a single image (see also <seealso cref="VideoRow"/>).
     /// </summary>
-    public class ImageRow : INotifyPropertyChanged
+    public class ImageRow : SQLiteRow, INotifyPropertyChanged
     {
         private DateTimeOffset dateTimeOffset;
         private bool deleteFlag;
@@ -31,8 +31,6 @@ namespace Carnassial.Data
         private string relativePath;
         private FileTable table;
 
-        public bool HasChanges { get; private set; }
-        public long ID { get; set; }
         public string[] UserControlValues { get; private set; }
 
         public ImageRow(string fileName, string relativePath, FileTable table)
@@ -40,8 +38,6 @@ namespace Carnassial.Data
             this.dateTimeOffset = Constant.ControlDefault.DateTimeValue;
             this.deleteFlag = false;
             this.fileName = fileName;
-            this.HasChanges = false;
-            this.ID = Constant.Database.InvalidID;
             this.imageQuality = FileSelection.Ok;
             this.relativePath = relativePath;
             this.table = table;
@@ -219,11 +215,6 @@ namespace Carnassial.Data
         public TimeSpan UtcOffset
         {
             get { return this.dateTimeOffset.Offset; }
-        }
-
-        public void AcceptChanges()
-        {
-            this.HasChanges = false;
         }
 
         public static FileTuplesWithID CreateDateTimeUpdate(IEnumerable<ImageRow> files)

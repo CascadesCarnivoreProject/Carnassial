@@ -47,7 +47,8 @@ namespace Carnassial.Control
 
         private void ControlsView_Drop(object sender, DragEventArgs dropEvent)
         {
-            if (this.TryFindDataEntryControl(dropEvent.GetPosition(this.ControlsView), out DataEntryControl dropTargetControl))
+            if ((this.ControlsView.SelectedItem != null) &&
+                this.TryFindDataEntryControl(dropEvent.GetPosition(this.ControlsView), out DataEntryControl dropTargetControl))
             {
                 if (this.dragAdorner != null)
                 {

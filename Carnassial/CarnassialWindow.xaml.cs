@@ -2297,16 +2297,15 @@ namespace Carnassial
                 return false;
             }
 
-            // Try to get the file database file path
-            // addFiles will be true if it's a new image database file (meaning the user will be prompted import some images)
+            // try to get the file database file path
+            // addFiles will be true if it's a new file database (meaning the user will be prompted import some files)
             if (this.TrySelectDatabaseFile(templateDatabasePath, out string fileDatabaseFilePath, out bool addFiles) == false)
             {
-                // No image database file was selected
-                templateDatabase.Dispose();
+                // no file database was selected
                 return false;
             }
 
-            // Before running from an existing file database, check the controls in the template database are compatible with those
+            // before running from an existing file database verify the controls in the template database are compatible with those
             // of the file database.
             if (FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, this.State.OrderFilesByDateTime, this.State.CustomSelectionTermCombiningOperator, out FileDatabase fileDatabase) == false)
             {
@@ -2337,7 +2336,6 @@ namespace Carnassial
                     return false;
                 }
             }
-            templateDatabase.Dispose();
 
             // valid template and file database loaded
             // generate and render the data entry controls regardless of whether there are actually any files in the file database.

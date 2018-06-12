@@ -76,7 +76,6 @@
     <Compile Include="ControlExpectations.cs" />
     <Compile Include="DatabaseExpectations.cs" />
     <Compile Include="DatabaseTests.cs" />
-    <Compile Include="DataTableBackedListExtensions.cs" />
     <Compile Include="DateTimeOffsetExtensions.cs" />
     <Compile Include="DefaultControlsExpectation.cs" />
     <Compile Include="LowLevelTests.cs" />

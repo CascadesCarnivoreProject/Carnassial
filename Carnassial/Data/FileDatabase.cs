@@ -32,8 +32,9 @@ namespace Carnassial.Data
             : base(filePath)
         {
             this.ControlSynchronizationIssues = new List<string>();
-            this.FileName = Path.GetFileName(filePath);
             this.ControlsByDataLabel = new Dictionary<string, ControlRow>();
+            this.FileName = Path.GetFileName(filePath);
+            this.Files = new FileTable();
             this.OrderFilesByDateTime = false;
         }
 
@@ -363,7 +364,9 @@ namespace Carnassial.Data
             Select select = new Select(Constant.DatabaseTable.FileData, new WhereClause(Constant.DatabaseColumn.DeleteFlag, Constant.SqlOperator.Equal, Boolean.TrueString));
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
-                return this.Files = this.Database.GetDataTableFromSelect<FileTable>(connection, select);
+                FileTable filesToDelete = new FileTable();
+                this.Database.LoadDataTableFromSelect(filesToDelete, connection, select);
+                return filesToDelete;
             }
         }
 
@@ -571,7 +574,7 @@ namespace Carnassial.Data
         /// </summary>
         // performance of    time to load 10k files
         // DataTable.Load()  326ms
-        // List<object>      200ms
+        // List<ImageRow>    200ms
         public void SelectFiles(FileSelection selection)
         {
             // Stopwatch stopwatch = new Stopwatch();
@@ -591,7 +594,7 @@ namespace Carnassial.Data
             {
                 select.OrderBy = Constant.DatabaseColumn.DateTime;
             }
-            this.Files = this.Database.GetDataTableFromSelect<FileTable>(connection, select);
+            this.Database.LoadDataTableFromSelect<ImageRow>(this.Files, connection, select);
 
             // persist the current selection
             this.ImageSet.FileSelection = selection;

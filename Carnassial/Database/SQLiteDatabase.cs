@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
@@ -127,18 +125,6 @@ namespace Carnassial.Database
             }
         }
 
-        private void DataTableColumns_Changed(object sender, CollectionChangeEventArgs columnChange)
-        {
-            // DateTime columns default to DataSetDateTime.UnspecifiedLocal, which converts fully qualified DateTimes returned from SQLite to DateTimeKind.Unspecified
-            // Since the DateTime column in Carnassial is UTC change this to DataSetDateTime.Utc to get DateTimeKind.Utc.  This must be done before any rows 
-            // are added to the table.  This callback is the only way to access the column schema from within DataTable.Load() to make the change.
-            DataColumn columnChanged = (DataColumn)columnChange.Element;
-            if (columnChanged.DataType == typeof(DateTime))
-            {
-                columnChanged.DateTimeMode = DataSetDateTime.Utc;
-            }
-        }
-
         public void DeleteColumn(string table, string column)
         {
             if (String.IsNullOrWhiteSpace(column))
@@ -221,20 +207,6 @@ namespace Carnassial.Database
             }
         }
 
-        public DataTable GetDataTableFromSelect(SQLiteConnection connection, Select select)
-        {
-            using (SQLiteCommand command = select.CreateSelect(connection))
-            {
-                using (SQLiteDataReader reader = command.ExecuteReader())
-                {
-                    DataTable dataTable = new DataTable();
-                    dataTable.Columns.CollectionChanged += this.DataTableColumns_Changed;
-                    dataTable.Load(reader);
-                    return dataTable;
-                }
-            }
-        }
-
         public List<object> GetDistinctValuesInColumn(string table, string column)
         {
             using (SQLiteConnection connection = this.CreateConnection())
@@ -254,15 +226,13 @@ namespace Carnassial.Database
             }
         }
 
-        public TTable GetDataTableFromSelect<TTable>(SQLiteConnection connection, Select select) where TTable : ISQLiteTable, new()
+        public void LoadDataTableFromSelect<TRow>(SQLiteTable<TRow> table, SQLiteConnection connection, Select select)
         {
             using (SQLiteCommand command = select.CreateSelect(connection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
-                    TTable table = new TTable();
                     table.Load(reader);
-                    return table;
                 }
             }
         }

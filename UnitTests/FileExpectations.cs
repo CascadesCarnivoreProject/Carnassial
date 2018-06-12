@@ -128,9 +128,9 @@ namespace Carnassial.UnitTests
         private void Verify(string dataLabel, MarkersForCounter markersForCounter)
         {
             // basic checks
-            string[] actualTokens = markersForCounter.ToDatabaseString().Split(Constant.Database.MarkerBar);
+            string[] actualTokens = markersForCounter.ToDatabaseString().Split(Constant.Database.BarDelimiter);
             Assert.IsTrue(actualTokens.Length > 0);
-            string[] expectedTokens = this.UserControlsByDataLabel[dataLabel].Split(Constant.Database.MarkerBar);
+            string[] expectedTokens = this.UserControlsByDataLabel[dataLabel].Split(Constant.Database.BarDelimiter);
             Assert.IsTrue(expectedTokens.Length == actualTokens.Length);
             Assert.IsTrue(String.Equals(actualTokens[0], expectedTokens[0], StringComparison.Ordinal));
             Assert.IsTrue(markersForCounter.Count == Int32.Parse(expectedTokens[0]));

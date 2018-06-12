@@ -103,7 +103,6 @@ namespace Carnassial.Control
             if (disposing)
             {
                 this.TrySyncCurrentFileToDatabase();
-                this.FileDatabase.Dispose();
                 this.ImageCache.Dispose();
             }
 

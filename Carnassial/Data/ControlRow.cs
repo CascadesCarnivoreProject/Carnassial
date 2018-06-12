@@ -2,85 +2,242 @@
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
-using System.Data;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 
 namespace Carnassial.Data
 {
-    public class ControlRow : DataRowBackedObject
+    public class ControlRow : SQLiteRow, INotifyPropertyChanged
     {
-        private static readonly char[] BarDelimiter = { '|' };
+        private long controlOrder;
+        private bool copyable;
+        private string dataLabel;
+        private string defaultValue;
+        private string label;
+        private string list;
+        private long maxWidth;
+        private long spreadSheetOrder;
+        private string tooltip;
+        private ControlType type;
+        private bool visible;
 
-        public ControlRow(DataRow row)
-            : base(row)
+        public ControlRow()
         {
+            this.controlOrder = -1;
+            this.copyable = false;
+            this.dataLabel = null;
+            this.defaultValue = null;
+            this.label = null;
+            this.list = null;
+            this.maxWidth = -1;
+            this.spreadSheetOrder = -1;
+            this.tooltip = null;
+            this.type = (ControlType)(-1);
+            this.visible = false;
+        }
+
+        public ControlRow(ControlType controlType, string dataLabel, long controlOrder)
+        {
+            this.controlOrder = controlOrder;
+            this.copyable = true;
+            this.dataLabel = dataLabel;
+            this.defaultValue = Constant.ControlDefault.Value;
+            this.label = dataLabel;
+            this.list = Constant.ControlDefault.Value;
+            this.maxWidth = Constant.ControlDefault.MaxWidth;
+            this.spreadSheetOrder = controlOrder;
+            this.tooltip = null;
+            this.type = controlType;
+            this.visible = true;
+
+            switch (controlType)
+            {
+                case ControlType.Counter:
+                    this.DefaultValue = Constant.ControlDefault.CounterValue;
+                    this.Copyable = false;
+                    this.Tooltip = Constant.ControlDefault.CounterTooltip;
+                    break;
+                case ControlType.DateTime:
+                    this.Copyable = false;
+                    this.DefaultValue = DateTimeHandler.ToDatabaseDateTimeString(Constant.ControlDefault.DateTimeValue.UtcDateTime);
+                    this.Tooltip = Constant.ControlDefault.DateTimeTooltip;
+                    break;
+                case ControlType.Note:
+                    this.Tooltip = Constant.ControlDefault.NoteTooltip;
+                    break;
+                case ControlType.FixedChoice:
+                    this.Tooltip = Constant.ControlDefault.FixedChoiceTooltip;
+                    break;
+                case ControlType.Flag:
+                    this.DefaultValue = Constant.ControlDefault.FlagValue;
+                    this.Tooltip = Constant.ControlDefault.FlagTooltip;
+                    break;
+                case ControlType.UtcOffset:
+                    this.Copyable = false;
+                    this.DefaultValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constant.ControlDefault.DateTimeValue.Offset);
+                    this.Tooltip = Constant.ControlDefault.UtcOffsetTooltip;
+                    this.Visible = false;
+                    break;
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", controlType));
+            }
         }
 
         public long ControlOrder
         {
-            get { return this.Row.GetLongField(Constant.Control.ControlOrder); }
-            set { this.Row.SetField(Constant.Control.ControlOrder, value); }
+            get
+            {
+                return this.controlOrder;
+            }
+            set
+            {
+                this.HasChanges |= this.controlOrder != value;
+                this.controlOrder = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.ControlOrder)));
+            }
         }
 
         public bool Copyable
         {
-            get { return this.Row.GetBooleanField(Constant.Control.Copyable); }
-            set { this.Row.SetField(Constant.Control.Copyable, value); }
+            get
+            {
+                return this.copyable;
+            }
+            set
+            {
+                this.HasChanges |= this.copyable != value;
+                this.copyable = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Copyable)));
+            }
         }
 
         public string DataLabel
         {
-            get { return this.Row.GetStringField(Constant.Control.DataLabel); }
-            set { this.Row.SetField(Constant.Control.DataLabel, value); }
+            get
+            {
+                return this.dataLabel;
+            }
+            set
+            {
+                this.HasChanges |= this.dataLabel != value;
+                this.dataLabel = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DataLabel)));
+            }
         }
 
         public string DefaultValue
         {
-            get { return this.Row.GetStringField(Constant.Control.DefaultValue); }
-            set { this.Row.SetField(Constant.Control.DefaultValue, value); }
+            get
+            {
+                return this.defaultValue;
+            }
+            set
+            {
+                this.HasChanges |= this.defaultValue != value;
+                this.defaultValue = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DefaultValue)));
+            }
         }
 
         public string Label
         {
-            get { return this.Row.GetStringField(Constant.Control.Label); }
-            set { this.Row.SetField(Constant.Control.Label, value); }
+            get
+            {
+                return this.label;
+            }
+            set
+            {
+                this.HasChanges |= this.label != value;
+                this.label = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Label)));
+            }
         }
 
         public string List
         {
-            get { return this.Row.GetStringField(Constant.Control.List); }
-            set { this.Row.SetField(Constant.Control.List, value); }
+            get
+            {
+                return this.list;
+            }
+            set
+            {
+                this.HasChanges |= this.list != value;
+                this.list = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.List)));
+            }
         }
 
         public long MaxWidth
         {
-            get { return this.Row.GetLongField(Constant.Control.Width); }
-            set { this.Row.SetField(Constant.Control.Width, value); }
+            get
+            {
+                return this.maxWidth;
+            }
+            set
+            {
+                this.HasChanges |= this.maxWidth != value;
+                this.maxWidth = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.MaxWidth)));
+            }
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public long SpreadsheetOrder
         {
-            get { return this.Row.GetLongField(Constant.Control.SpreadsheetOrder); }
-            set { this.Row.SetField(Constant.Control.SpreadsheetOrder, value); }
+            get
+            {
+                return this.spreadSheetOrder;
+            }
+            set
+            {
+                this.HasChanges |= this.spreadSheetOrder != value;
+                this.spreadSheetOrder = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.SpreadsheetOrder)));
+            }
         }
 
         public string Tooltip
         {
-            get { return this.Row.GetStringField(Constant.Control.Tooltip); }
-            set { this.Row.SetField(Constant.Control.Tooltip, value); }
+            get
+            {
+                return this.tooltip;
+            }
+            set
+            {
+                this.HasChanges |= this.tooltip != value;
+                this.tooltip = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Tooltip)));
+            }
         }
 
         public ControlType Type
         {
-            get { return this.Row.GetEnumField<ControlType>(Constant.Control.Type); }
-            set { this.Row.SetField(Constant.Control.Type, value); }
+            get
+            {
+                return this.type;
+            }
+            set
+            {
+                this.HasChanges |= this.type != value;
+                this.type = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Type)));
+            }
         }
 
         public bool Visible
         {
-            get { return this.Row.GetBooleanField(Constant.Control.Visible); }
-            set { this.Row.SetField(Constant.Control.Visible, value); }
+            get
+            {
+                return this.visible;
+            }
+            set
+            {
+                this.HasChanges |= this.visible != value;
+                this.visible = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Visible)));
+            }
         }
 
         public static ColumnTuplesForInsert CreateInsert(IEnumerable<ControlRow> controls)
@@ -137,7 +294,7 @@ namespace Carnassial.Data
 
         public List<string> GetChoices()
         {
-            return this.List.Split(ControlRow.BarDelimiter).ToList();
+            return this.List.Split(Constant.Database.BarDelimiter).ToList();
         }
 
         public bool IsFilePathComponent()

@@ -8,7 +8,6 @@ using MetadataExtractor.Formats.Exif;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -323,184 +322,164 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void CreateUpdateReuseTemplateDatabase()
         {
-            FileDatabase fileDatabase = null;
-            TemplateDatabase templateDatabase = null;
-            try
+            string templateDatabaseBaseFileName = TestConstant.File.DefaultNewTemplateDatabaseFileName;
+            TemplateDatabase templateDatabase = this.CreateTemplateDatabase(templateDatabaseBaseFileName);
+
+            // populate template database
+            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+            int numberOfStandardControls = Constant.Control.StandardControls.Count;
+            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls);
+            this.VerifyControls(templateDatabase);
+
+            ControlRow newControl = templateDatabase.AppendUserDefinedControl(ControlType.Counter);
+            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 1);
+            this.VerifyControl(newControl);
+
+            newControl = templateDatabase.AppendUserDefinedControl(ControlType.FixedChoice);
+            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 2);
+            this.VerifyControl(newControl);
+
+            newControl = templateDatabase.AppendUserDefinedControl(ControlType.Flag);
+            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 3);
+            this.VerifyControl(newControl);
+
+            newControl = templateDatabase.AppendUserDefinedControl(ControlType.Note);
+            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 4);
+            this.VerifyControl(newControl);
+            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 2]);
+            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 3);
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 2]);
+            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 2);
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 0]);
+            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 1);
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 0]);
+            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls);
+            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+
+            int iterations = 10;
+            for (int iteration = 0; iteration < iterations; ++iteration)
             {
-                string templateDatabaseBaseFileName = TestConstant.File.DefaultNewTemplateDatabaseFileName;
-                templateDatabase = this.CreateTemplateDatabase(templateDatabaseBaseFileName);
-
-                // populate template database
-                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
-                int numberOfStandardControls = Constant.Control.StandardControls.Count;
-                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls);
-                this.VerifyControls(templateDatabase);
-
-                ControlRow newControl = templateDatabase.AddUserDefinedControl(ControlType.Counter);
-                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 1);
-                this.VerifyControl(newControl);
-
-                newControl = templateDatabase.AddUserDefinedControl(ControlType.FixedChoice);
-                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 2);
-                this.VerifyControl(newControl);
-
-                newControl = templateDatabase.AddUserDefinedControl(ControlType.Flag);
-                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 3);
-                this.VerifyControl(newControl);
-
-                newControl = templateDatabase.AddUserDefinedControl(ControlType.Note);
-                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 4);
-                this.VerifyControl(newControl);
-                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
-
-                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 2]);
-                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 3);
-                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 2]);
-                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 2);
-                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 0]);
-                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 1);
-                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 0]);
-                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls);
-                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
-
-                int iterations = 10;
-                for (int iteration = 0; iteration < iterations; ++iteration)
-                {
-                    ControlRow noteControl = templateDatabase.AddUserDefinedControl(ControlType.Note);
-                    this.VerifyControl(noteControl);
-                    ControlRow flagControl = templateDatabase.AddUserDefinedControl(ControlType.Flag);
-                    this.VerifyControl(flagControl);
-                    ControlRow choiceControl = templateDatabase.AddUserDefinedControl(ControlType.FixedChoice);
-                    choiceControl.List = "DefaultChoice|OtherChoice";
-                    templateDatabase.SyncControlToDatabase(choiceControl);
-                    this.VerifyControl(choiceControl);
-                    ControlRow counterControl = templateDatabase.AddUserDefinedControl(ControlType.Counter);
-                    this.VerifyControl(counterControl);
-                }
-
-                // modify control and spreadsheet orders
-                // control order ends up reverse order from ID, spreadsheet order is alphabetical
-                Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
-                long controlOrder = templateDatabase.Controls.RowCount;
-                for (int row = 0; row < templateDatabase.Controls.RowCount; --controlOrder, ++row)
-                {
-                    string dataLabel = templateDatabase.Controls[row].DataLabel;
-                    newControlOrderByDataLabel.Add(dataLabel, controlOrder);
-                }
-                templateDatabase.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
-
-                List<string> alphabeticalDataLabels = newControlOrderByDataLabel.Keys.ToList();
-                alphabeticalDataLabels.Sort();
-                Dictionary<string, long> newSpreadsheetOrderByDataLabel = new Dictionary<string, long>();
-                long spreadsheetOrder = 0;
-                foreach (string dataLabel in alphabeticalDataLabels)
-                {
-                    newSpreadsheetOrderByDataLabel.Add(dataLabel, ++spreadsheetOrder);
-                }
-                templateDatabase.UpdateDisplayOrder(Constant.Control.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
-                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
-
-                // remove some controls and verify the control and spreadsheet orders are properly updated
-                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 22]);
-                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 16]);
-                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
-
-                // create a database to capture the current template into its template table
-                fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName);
-
-                // modify UX properties of some controls by data row manipulation
-                int copyableIndex = numberOfStandardControls + (3 * iterations) - 1;
-                ControlRow copyableControl = templateDatabase.Controls[copyableIndex];
-                bool modifiedCopyable = !copyableControl.Copyable;
-                copyableControl.Copyable = modifiedCopyable;
-                templateDatabase.SyncControlToDatabase(copyableControl);
-                Assert.IsTrue(templateDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
-
-                int defaultValueIndex = numberOfStandardControls + (3 * iterations) - 4;
-                ControlRow defaultValueControl = templateDatabase.Controls[defaultValueIndex];
-                string modifiedDefaultValue = "Default value modification roundtrip.";
-                defaultValueControl.DefaultValue = modifiedDefaultValue;
-                templateDatabase.SyncControlToDatabase(defaultValueControl);
-                Assert.IsTrue(templateDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
-
-                int labelIndex = numberOfStandardControls + (3 * iterations) - 3;
-                ControlRow labelControl = templateDatabase.Controls[labelIndex];
-                string modifiedLabel = "Label modification roundtrip.";
-                labelControl.Label = modifiedLabel;
-                templateDatabase.SyncControlToDatabase(labelControl);
-                Assert.IsTrue(templateDatabase.Controls[labelIndex].Label == modifiedLabel);
-
-                int listIndex = numberOfStandardControls + (3 * iterations) - 2;
-                ControlRow listControl = templateDatabase.Controls[listIndex];
-                string modifiedList = listControl.List + "|NewChoice0|NewChoice1";
-                listControl.List = modifiedList;
-                templateDatabase.SyncControlToDatabase(listControl);
-                Assert.IsTrue(templateDatabase.Controls[listIndex].List == modifiedList);
-
-                int tooltipIndex = numberOfStandardControls + (3 * iterations) - 3;
-                ControlRow tooltipControl = templateDatabase.Controls[tooltipIndex];
-                string modifiedTooltip = "Tooltip modification roundtrip.";
-                tooltipControl.Tooltip = modifiedTooltip;
-                templateDatabase.SyncControlToDatabase(tooltipControl);
-                Assert.IsTrue(templateDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
-
-                int widthIndex = numberOfStandardControls + (3 * iterations) - 2;
-                ControlRow widthControl = templateDatabase.Controls[widthIndex];
-                int modifiedWidth = 1000;
-                widthControl.MaxWidth = modifiedWidth;
-                templateDatabase.SyncControlToDatabase(widthControl);
-                Assert.IsTrue(templateDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
-
-                int visibleIndex = numberOfStandardControls + (3 * iterations) - 3;
-                ControlRow visibleControl = templateDatabase.Controls[visibleIndex];
-                bool modifiedVisible = !visibleControl.Visible;
-                visibleControl.Visible = modifiedVisible;
-                templateDatabase.SyncControlToDatabase(visibleControl);
-                Assert.IsTrue(templateDatabase.Controls[visibleIndex].Visible == modifiedVisible);
-
-                // reopen the template database and check again
-                string templateDatabaseFilePath = templateDatabase.FilePath;
-                Assert.IsTrue(TemplateDatabase.TryCreateOrOpen(templateDatabaseFilePath, out templateDatabase));
-                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseFilePath);
-                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + (4 * iterations) - 2);
-                DataTable templateDataTable = templateDatabase.Controls.ExtractDataTable();
-                Assert.IsTrue(templateDataTable.Columns.Count == TestConstant.ControlsColumns.Count);
-                this.VerifyControls(templateDatabase);
-                Assert.IsTrue(templateDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
-                Assert.IsTrue(templateDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
-                Assert.IsTrue(templateDatabase.Controls[labelIndex].Label == modifiedLabel);
-                Assert.IsTrue(templateDatabase.Controls[listIndex].List == modifiedList);
-                Assert.IsTrue(templateDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
-                Assert.IsTrue(templateDatabase.Controls[visibleIndex].Visible == modifiedVisible);
-                Assert.IsTrue(templateDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
-
-                // reopen the file database to synchronize its template table with the modified table in the current template
-                Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabase.FilePath, templateDatabase, false, LogicalOperator.And, out fileDatabase));
-                Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 0);
-                this.VerifyTemplateDatabase(fileDatabase, fileDatabase.FilePath);
-                Assert.IsTrue(fileDatabase.Controls.RowCount == numberOfStandardControls + (4 * iterations) - 2);
-                DataTable templateTable = fileDatabase.Controls.ExtractDataTable();
-                Assert.IsTrue(templateTable.Columns.Count == TestConstant.ControlsColumns.Count);
-                this.VerifyControls(fileDatabase);
-                Assert.IsTrue(fileDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
-                Assert.IsTrue(fileDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
-                Assert.IsTrue(fileDatabase.Controls[labelIndex].Label == modifiedLabel);
-                Assert.IsTrue(fileDatabase.Controls[listIndex].List == modifiedList);
-                Assert.IsTrue(fileDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
-                Assert.IsTrue(fileDatabase.Controls[visibleIndex].Visible == modifiedVisible);
-                Assert.IsTrue(fileDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
+                ControlRow noteControl = templateDatabase.AppendUserDefinedControl(ControlType.Note);
+                this.VerifyControl(noteControl);
+                ControlRow flagControl = templateDatabase.AppendUserDefinedControl(ControlType.Flag);
+                this.VerifyControl(flagControl);
+                ControlRow choiceControl = templateDatabase.AppendUserDefinedControl(ControlType.FixedChoice);
+                choiceControl.List = "DefaultChoice|OtherChoice";
+                templateDatabase.SyncControlToDatabase(choiceControl);
+                this.VerifyControl(choiceControl);
+                ControlRow counterControl = templateDatabase.AppendUserDefinedControl(ControlType.Counter);
+                this.VerifyControl(counterControl);
             }
-            finally
+
+            // modify control and spreadsheet orders
+            // control order ends up reverse order from ID, spreadsheet order is alphabetical
+            Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
+            long controlOrder = templateDatabase.Controls.RowCount;
+            for (int row = 0; row < templateDatabase.Controls.RowCount; --controlOrder, ++row)
             {
-                if (fileDatabase != null)
-                {
-                    fileDatabase.Dispose();
-                }
-                if (templateDatabase != null)
-                {
-                    templateDatabase.Dispose();
-                }
+                string dataLabel = templateDatabase.Controls[row].DataLabel;
+                newControlOrderByDataLabel.Add(dataLabel, controlOrder);
             }
+            templateDatabase.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
+
+            List<string> alphabeticalDataLabels = newControlOrderByDataLabel.Keys.ToList();
+            alphabeticalDataLabels.Sort();
+            Dictionary<string, long> newSpreadsheetOrderByDataLabel = new Dictionary<string, long>();
+            long spreadsheetOrder = 0;
+            foreach (string dataLabel in alphabeticalDataLabels)
+            {
+                newSpreadsheetOrderByDataLabel.Add(dataLabel, ++spreadsheetOrder);
+            }
+            templateDatabase.UpdateDisplayOrder(Constant.Control.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
+            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+
+            // remove some controls and verify the control and spreadsheet orders are properly updated
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 22]);
+            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 16]);
+            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+
+            // create a database to capture the current template into its template table
+            FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName);
+
+            // modify UX properties of some controls by data row manipulation
+            int copyableIndex = numberOfStandardControls + (3 * iterations) - 1;
+            ControlRow copyableControl = templateDatabase.Controls[copyableIndex];
+            bool modifiedCopyable = !copyableControl.Copyable;
+            copyableControl.Copyable = modifiedCopyable;
+            templateDatabase.SyncControlToDatabase(copyableControl);
+            Assert.IsTrue(templateDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
+
+            int defaultValueIndex = numberOfStandardControls + (3 * iterations) - 4;
+            ControlRow defaultValueControl = templateDatabase.Controls[defaultValueIndex];
+            string modifiedDefaultValue = "Default value modification roundtrip.";
+            defaultValueControl.DefaultValue = modifiedDefaultValue;
+            templateDatabase.SyncControlToDatabase(defaultValueControl);
+            Assert.IsTrue(templateDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
+
+            int labelIndex = numberOfStandardControls + (3 * iterations) - 3;
+            ControlRow labelControl = templateDatabase.Controls[labelIndex];
+            string modifiedLabel = "Label modification roundtrip.";
+            labelControl.Label = modifiedLabel;
+            templateDatabase.SyncControlToDatabase(labelControl);
+            Assert.IsTrue(templateDatabase.Controls[labelIndex].Label == modifiedLabel);
+
+            int listIndex = numberOfStandardControls + (3 * iterations) - 2;
+            ControlRow listControl = templateDatabase.Controls[listIndex];
+            string modifiedList = listControl.List + "|NewChoice0|NewChoice1";
+            listControl.List = modifiedList;
+            templateDatabase.SyncControlToDatabase(listControl);
+            Assert.IsTrue(templateDatabase.Controls[listIndex].List == modifiedList);
+
+            int tooltipIndex = numberOfStandardControls + (3 * iterations) - 3;
+            ControlRow tooltipControl = templateDatabase.Controls[tooltipIndex];
+            string modifiedTooltip = "Tooltip modification roundtrip.";
+            tooltipControl.Tooltip = modifiedTooltip;
+            templateDatabase.SyncControlToDatabase(tooltipControl);
+            Assert.IsTrue(templateDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
+
+            int widthIndex = numberOfStandardControls + (3 * iterations) - 2;
+            ControlRow widthControl = templateDatabase.Controls[widthIndex];
+            int modifiedWidth = 1000;
+            widthControl.MaxWidth = modifiedWidth;
+            templateDatabase.SyncControlToDatabase(widthControl);
+            Assert.IsTrue(templateDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
+
+            int visibleIndex = numberOfStandardControls + (3 * iterations) - 3;
+            ControlRow visibleControl = templateDatabase.Controls[visibleIndex];
+            bool modifiedVisible = !visibleControl.Visible;
+            visibleControl.Visible = modifiedVisible;
+            templateDatabase.SyncControlToDatabase(visibleControl);
+            Assert.IsTrue(templateDatabase.Controls[visibleIndex].Visible == modifiedVisible);
+
+            // reopen the template database and check again
+            string templateDatabaseFilePath = templateDatabase.FilePath;
+            Assert.IsTrue(TemplateDatabase.TryCreateOrOpen(templateDatabaseFilePath, out templateDatabase));
+            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseFilePath);
+            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + (4 * iterations) - 2);
+            this.VerifyControls(templateDatabase);
+            Assert.IsTrue(templateDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
+            Assert.IsTrue(templateDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
+            Assert.IsTrue(templateDatabase.Controls[labelIndex].Label == modifiedLabel);
+            Assert.IsTrue(templateDatabase.Controls[listIndex].List == modifiedList);
+            Assert.IsTrue(templateDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
+            Assert.IsTrue(templateDatabase.Controls[visibleIndex].Visible == modifiedVisible);
+            Assert.IsTrue(templateDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
+
+            // reopen the file database to synchronize its template table with the modified table in the current template
+            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabase.FilePath, templateDatabase, false, LogicalOperator.And, out fileDatabase));
+            Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 0);
+            this.VerifyTemplateDatabase(fileDatabase, fileDatabase.FilePath);
+            Assert.IsTrue(fileDatabase.Controls.RowCount == numberOfStandardControls + (4 * iterations) - 2);
+            this.VerifyControls(fileDatabase);
+            Assert.IsTrue(fileDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
+            Assert.IsTrue(fileDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
+            Assert.IsTrue(fileDatabase.Controls[labelIndex].Label == modifiedLabel);
+            Assert.IsTrue(fileDatabase.Controls[listIndex].List == modifiedList);
+            Assert.IsTrue(fileDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
+            Assert.IsTrue(fileDatabase.Controls[visibleIndex].Visible == modifiedVisible);
+            Assert.IsTrue(fileDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
         }
 
         [TestMethod]
@@ -638,55 +617,39 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void FileDatabaseNegative()
         {
-            TemplateDatabase templateDatabase = null;
-            FileDatabase fileDatabase = null;
-            try
-            {
-                templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName);
-                fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultFileDatabaseFileName);
-                this.PopulateDefaultDatabase(fileDatabase);
+            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName);
+            FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultFileDatabaseFileName);
+            this.PopulateDefaultDatabase(fileDatabase);
 
-                // FileDatabase methods
-                int firstDisplayableFile = fileDatabase.GetCurrentOrNextDisplayableFile(fileDatabase.CurrentlySelectedFileCount);
-                Assert.IsTrue(firstDisplayableFile == fileDatabase.CurrentlySelectedFileCount - 1);
+            // FileDatabase methods
+            int firstDisplayableFile = fileDatabase.GetCurrentOrNextDisplayableFile(fileDatabase.CurrentlySelectedFileCount);
+            Assert.IsTrue(firstDisplayableFile == fileDatabase.CurrentlySelectedFileCount - 1);
 
-                int closestDisplayableFile = fileDatabase.GetFileOrNextFileIndex(Int64.MinValue);
-                Assert.IsTrue(closestDisplayableFile == 0);
-                closestDisplayableFile = fileDatabase.GetFileOrNextFileIndex(Int64.MaxValue);
-                Assert.IsTrue(closestDisplayableFile == fileDatabase.CurrentlySelectedFileCount - 1);
+            int closestDisplayableFile = fileDatabase.GetFileOrNextFileIndex(Int64.MinValue);
+            Assert.IsTrue(closestDisplayableFile == 0);
+            closestDisplayableFile = fileDatabase.GetFileOrNextFileIndex(Int64.MaxValue);
+            Assert.IsTrue(closestDisplayableFile == fileDatabase.CurrentlySelectedFileCount - 1);
 
-                Assert.IsFalse(fileDatabase.IsFileDisplayable(-1));
-                Assert.IsFalse(fileDatabase.IsFileDisplayable(fileDatabase.CurrentlySelectedFileCount));
+            Assert.IsFalse(fileDatabase.IsFileDisplayable(-1));
+            Assert.IsFalse(fileDatabase.IsFileDisplayable(fileDatabase.CurrentlySelectedFileCount));
 
-                Assert.IsFalse(fileDatabase.IsFileRowInRange(-1));
-                Assert.IsFalse(fileDatabase.IsFileRowInRange(fileDatabase.CurrentlySelectedFileCount));
+            Assert.IsFalse(fileDatabase.IsFileRowInRange(-1));
+            Assert.IsFalse(fileDatabase.IsFileRowInRange(fileDatabase.CurrentlySelectedFileCount));
 
-                ImageRow file = fileDatabase.Files[0];
-                FileInfo fileInfo = file.GetFileInfo(fileDatabase.FolderPath);
+            ImageRow file = fileDatabase.Files[0];
+            FileInfo fileInfo = file.GetFileInfo(fileDatabase.FolderPath);
 
-                // template table synchronization
-                // remove choices and change a note to a choice to produce a type failure
-                ControlRow choiceControl = templateDatabase.FindControl(TestConstant.DefaultDatabaseColumn.Choice0);
-                choiceControl.List = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
-                templateDatabase.SyncControlToDatabase(choiceControl);
-                ControlRow noteControl = templateDatabase.FindControl(TestConstant.DefaultDatabaseColumn.Note0);
-                noteControl.Type = ControlType.FixedChoice;
-                templateDatabase.SyncControlToDatabase(noteControl);
+            // template table synchronization
+            // remove choices and change a note to a choice to produce a type failure
+            ControlRow choiceControl = templateDatabase.FindControl(TestConstant.DefaultDatabaseColumn.Choice0);
+            choiceControl.List = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
+            templateDatabase.SyncControlToDatabase(choiceControl);
+            ControlRow noteControl = templateDatabase.FindControl(TestConstant.DefaultDatabaseColumn.Note0);
+            noteControl.Type = ControlType.FixedChoice;
+            templateDatabase.SyncControlToDatabase(noteControl);
 
-                Assert.IsFalse(FileDatabase.TryCreateOrOpen(fileDatabase.FileName, templateDatabase, false, LogicalOperator.And, out fileDatabase));
-                Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 5);
-            }
-            finally
-            {
-                if (fileDatabase != null)
-                {
-                    fileDatabase.Dispose();
-                }
-                if (templateDatabase != null)
-                {
-                    templateDatabase.Dispose();
-                }
-            }
+            Assert.IsFalse(FileDatabase.TryCreateOrOpen(fileDatabase.FileName, templateDatabase, false, LogicalOperator.And, out fileDatabase));
+            Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 5);
         }
 
         [TestMethod]
@@ -1270,8 +1233,6 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(File.Exists(templateDatabase.FilePath));
 
             // TemplateTable checks
-            DataTable templateDataTable = templateDatabase.Controls.ExtractDataTable();
-            Assert.IsTrue(templateDataTable.Columns.Count == TestConstant.ControlsColumns.Count);
             List<long> ids = new List<long>();
             List<long> controlOrders = new List<long>();
             List<long> spreadsheetOrders = new List<long>();

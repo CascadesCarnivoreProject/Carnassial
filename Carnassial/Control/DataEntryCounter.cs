@@ -99,7 +99,7 @@ namespace Carnassial.Control
                 }
 
                 string valueAsString = (string)value;
-                int barIndex = valueAsString.IndexOf(Constant.Database.MarkerBar);
+                int barIndex = valueAsString.IndexOf(Constant.Database.BarDelimiter);
                 if ((barIndex < 1) || (barIndex >= valueAsString.Length))
                 {
                     this.markers = null;

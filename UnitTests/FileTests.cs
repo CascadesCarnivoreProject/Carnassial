@@ -158,14 +158,12 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public async Task CorruptFileAsync()
         {
-            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultFileDatabaseFileName))
+            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultFileDatabaseFileName);
+            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
+            ImageRow corruptFile = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.CorruptFieldScan, out MetadataReadResult corruptMetadataRead);
+            using (MemoryImage corruptImage = await corruptFile.LoadAsync(fileDatabase.FolderPath))
             {
-                TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-                ImageRow corruptFile = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.CorruptFieldScan, out MetadataReadResult corruptMetadataRead);
-                using (MemoryImage corruptImage = await corruptFile.LoadAsync(fileDatabase.FolderPath))
-                {
-                    Assert.IsTrue(corruptImage.DecodeError);
-                }
+                Assert.IsTrue(corruptImage.DecodeError);
             }
         }
 
@@ -224,29 +222,27 @@ namespace Carnassial.UnitTests
                 new FileExpectations(TestConstant.FileExpectation.InfraredMarten)
             };
 
-            using (TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName))
+            TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName);
+            FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName);
             {
-                using (FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName))
+                foreach (FileExpectations fileExpectation in fileExpectations)
                 {
-                    foreach (FileExpectations fileExpectation in fileExpectations)
+                    // load the image
+                    FileInfo fileInfo = new FileInfo(Path.Combine(fileExpectation.RelativePath, fileExpectation.FileName));
+                    ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, fileExpectation.RelativePath);
+                    using (MemoryImage image = await file.LoadAsync(this.WorkingDirectory))
                     {
-                        // load the image
-                        FileInfo fileInfo = new FileInfo(Path.Combine(fileExpectation.RelativePath, fileExpectation.FileName));
-                        ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, fileExpectation.RelativePath);
-                        using (MemoryImage image = await file.LoadAsync(this.WorkingDirectory))
+                        double luminosity = image.GetLuminosityAndColoration(0, out double coloration);
+                        FileSelection imageQuality = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
+                        if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
                         {
-                            double luminosity = image.GetLuminosityAndColoration(0, out double coloration);
-                            FileSelection imageQuality = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
-                            if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
-                            {
-                                Assert.Fail("{0}: Expected luminosity to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Luminosity, luminosity);
-                            }
-                            if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
-                            {
-                                Assert.Fail("{0}: Expected coloration to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Coloration, coloration);
-                            }
-                            Assert.IsTrue(imageQuality == fileExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Quality, imageQuality);
+                            Assert.Fail("{0}: Expected luminosity to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Luminosity, luminosity);
                         }
+                        if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
+                        {
+                            Assert.Fail("{0}: Expected coloration to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Coloration, coloration);
+                        }
+                        Assert.IsTrue(imageQuality == fileExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Quality, imageQuality);
                     }
                 }
             }

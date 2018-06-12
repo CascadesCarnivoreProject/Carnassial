@@ -84,7 +84,7 @@ namespace Carnassial.Editor
 
             this.templateDataGridBeingUpdatedByCode = true;
 
-            this.templateDatabase.AddUserDefinedControl(controlType);
+            this.templateDatabase.AppendUserDefinedControl(controlType);
             this.TemplateDataGrid.DataContext = this.templateDatabase.Controls;
             this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
 
@@ -168,7 +168,11 @@ namespace Carnassial.Editor
             bool templateLoaded = TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out this.templateDatabase);
             if (templateLoaded)
             {
-                this.templateDatabase.BindToEditorDataGrid(this.TemplateDataGrid, this.TemplateDataGrid_RowChanged);
+                this.TemplateDataGrid.ItemsSource = this.templateDatabase.Controls;
+                foreach (ControlRow control in this.templateDatabase.Controls)
+                {
+                    control.PropertyChanged += this.TemplateDataGrid_RowChanged;
+                }
 
                 // populate controls interface in UX
                 this.RebuildControlPreview();
@@ -517,14 +521,13 @@ namespace Carnassial.Editor
         /// </summary>
         private void RemoveControlButton_Click(object sender, RoutedEventArgs e)
         {
-            DataRowView selectedRowView = this.TemplateDataGrid.SelectedItem as DataRowView;
-            if (selectedRowView == null || selectedRowView.Row == null)
+            ControlRow control = (ControlRow)this.TemplateDataGrid.SelectedItem;
+            if (control == null)
             {
                 // nothing to do
                 return;
             }
 
-            ControlRow control = new ControlRow(selectedRowView.Row);
             if (Constant.Control.StandardControls.Contains(control.DataLabel))
             {
                 // standard controls cannot be removed
@@ -532,7 +535,7 @@ namespace Carnassial.Editor
             }
 
             this.templateDataGridBeingUpdatedByCode = true;
-            this.templateDatabase.RemoveUserDefinedControl(new ControlRow(selectedRowView.Row));
+            this.templateDatabase.RemoveUserDefinedControl(control);
 
             // update the control panel so it reflects the current values in the database
             this.RebuildControlPreview();
@@ -592,7 +595,7 @@ namespace Carnassial.Editor
                     }
 
                     string columnHeader = (string)this.TemplateDataGrid.Columns[column].Header;
-                    ControlRow control = new ControlRow(((DataRowView)this.TemplateDataGrid.Items[rowIndex]).Row);
+                    ControlRow control = this.templateDatabase.Controls[rowIndex];
                     ControlType controlType = control.Type;
                     bool disableCell = false;
                     if ((columnHeader == Constant.DatabaseColumn.ID) ||
@@ -708,7 +711,7 @@ namespace Carnassial.Editor
                     }
                     break;
                 case EditorConstant.ColumnHeader.DefaultValue:
-                    ControlRow control = new ControlRow((currentRow.Item as DataRowView).Row);
+                    ControlRow control = (ControlRow)currentRow.Item;
                     switch (control.Type)
                     {
                         case ControlType.Counter:
@@ -757,11 +760,11 @@ namespace Carnassial.Editor
         /// <summary>
         /// Whenever a row changes save the database, which also updates the grid colors.
         /// </summary>
-        private void TemplateDataGrid_RowChanged(object sender, DataRowChangeEventArgs e)
+        private void TemplateDataGrid_RowChanged(object sender, PropertyChangedEventArgs e)
         {
             if (!this.templateDataGridBeingUpdatedByCode)
             {
-                this.SyncControlToDatabaseAndPreviews(new ControlRow(e.Row));
+                this.SyncControlToDatabaseAndPreviews((ControlRow)sender);
             }
         }
 
@@ -792,14 +795,13 @@ namespace Carnassial.Editor
         /// </summary>
         private void TemplateDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            DataRowView selectedRowView = this.TemplateDataGrid.SelectedItem as DataRowView;
-            if (selectedRowView == null)
+            ControlRow control = (ControlRow)this.TemplateDataGrid.SelectedItem;
+            if (control == null)
             {
                 this.RemoveControlButton.IsEnabled = false;
                 return;
             }
 
-            ControlRow control = new ControlRow(selectedRowView.Row);
             this.RemoveControlButton.IsEnabled = !Constant.Control.StandardControls.Contains(control.DataLabel);
         }
 

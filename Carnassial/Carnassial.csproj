@@ -188,7 +188,9 @@
     <Compile Include="Control\HorizontalLineAdorner.cs" />
     <Compile Include="Control\UtcOffsetPicker.cs" />
     <Compile Include="Database\IndexedPropertyChangedEventArgs.cs" />
+    <Compile Include="Database\SQLiteRow.cs" />
     <Compile Include="Data\AddFilesTransaction.cs" />
+    <Compile Include="Data\ControlTable.cs" />
     <Compile Include="Data\ControlType.cs" />
     <Compile Include="Control\DataEntryDateTimeOffset.cs" />
     <Compile Include="Control\TabControlWithoutHomeAndEnd.cs" />
@@ -210,15 +212,14 @@
     <Compile Include="Database\FileTuplesWithPath.cs" />
     <Compile Include="Data\ControlRow.cs" />
     <Compile Include="Database\LogicalOperator.cs" />
-    <Compile Include="Database\DataTableBackedList.cs" />
-    <Compile Include="Database\DataRowExtensions.cs" />
     <Compile Include="Data\FileImportResult.cs" />
     <Compile Include="Data\FileTable.cs" />
     <Compile Include="Data\FileTransaction.cs" />
     <Compile Include="Data\ImageSetOptions.cs" />
     <Compile Include="Data\ImageSetRow.cs" />
-    <Compile Include="Database\ISQLiteTable.cs" />
+    <Compile Include="Database\SQLiteTable.cs" />
     <Compile Include="Database\Select.cs" />
+    <Compile Include="Data\ImageSetTable.cs" />
     <Compile Include="Data\UpdateFileDateTimeOffsetTransaction.cs" />
     <Compile Include="Data\UpdateFileColumnTransaction.cs" />
     <Compile Include="Data\VideoRow.cs" />
@@ -296,7 +297,6 @@
     <Compile Include="Control\StockMessageControl.xaml.cs">
       <DependentUpon>StockMessageControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Database\DataRowBackedObject.cs" />
     <Compile Include="Util\Dependencies.cs" />
     <Compile Include="Github\GithubReleaseClient.cs" />
     <Compile Include="Constant.cs" />

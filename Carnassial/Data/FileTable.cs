@@ -2,7 +2,6 @@
 using Carnassial.Images;
 using Carnassial.Util;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
@@ -10,24 +9,11 @@ using System.Linq;
 
 namespace Carnassial.Data
 {
-    public class FileTable : IEnumerable<ImageRow>, ISQLiteTable
+    public class FileTable : SQLiteTable<ImageRow>
     {
-        private List<ImageRow> files;
-
         public FileTable()
         {
-            this.files = new List<ImageRow>();
             this.UserControlIndicesByDataLabel = new Dictionary<string, int>();
-        }
-
-        public int RowCount
-        {
-            get { return this.files.Count; }
-        }
-
-        public ImageRow this[int index]
-        {
-            get { return this.files[index]; }
         }
 
         public Dictionary<string, int> UserControlIndicesByDataLabel { get; private set; }
@@ -48,24 +34,14 @@ namespace Carnassial.Data
                 throw new NotSupportedException(String.Format("Unhandled extension for file '{0}'.", fileName));
             }
 
-            this.files.Add(file);
+            this.Rows.Add(file);
             return file;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
-        }
-
-        public IEnumerator<ImageRow> GetEnumerator()
-        {
-            return this.files.GetEnumerator();
         }
 
         public SortedDictionary<string, List<string>> GetFileNamesByRelativePath()
         {
             SortedDictionary<string, List<string>> filesByRelativePath = new SortedDictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            foreach (ImageRow file in this.files)
+            foreach (ImageRow file in this.Rows)
             {
                 if (filesByRelativePath.TryGetValue(file.RelativePath, out List<string> filesInFolder) == false)
                 {
@@ -82,7 +58,7 @@ namespace Carnassial.Data
             // for now, the primary purpose of this function is allow the caller to quickly check if a file is in the database
             // Therefore, assemble a Dictionary<, HashSet<>> as both these collection types have O(1) Contains().
             Dictionary<string, HashSet<string>> filesByRelativePath = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-            foreach (ImageRow file in this.files)
+            foreach (ImageRow file in this.Rows)
             {
                 if (filesByRelativePath.TryGetValue(file.RelativePath, out HashSet<string> filesInFolder) == false)
                 {
@@ -100,14 +76,16 @@ namespace Carnassial.Data
                    fileName.EndsWith(Constant.File.Mp4FileExtension, StringComparison.OrdinalIgnoreCase);
         }
 
-        public void Load(SQLiteDataReader reader)
+        public override void Load(SQLiteDataReader reader)
         {
-            this.UserControlIndicesByDataLabel.Clear();
-
             if (reader.FieldCount < 1)
             {
                 throw new SQLiteException(SQLiteErrorCode.Schema, "Table has no columns.");
             }
+
+            this.Rows.Clear();
+            this.UserControlIndicesByDataLabel.Clear();
+
             int standardColumnCount = Constant.Control.StandardControls.Count + 1; // standard controls + ID
             int dateTimeIndex = -1;
             int deleteFlagIndex = -1;
@@ -188,7 +166,7 @@ namespace Carnassial.Data
 
         public ImageRow Single(string fileName, string relativePath)
         {
-            return this.files.Single(file =>
+            return this.Rows.Single(file =>
             {
                 return (String.Compare(file.RelativePath, relativePath, StringComparison.OrdinalIgnoreCase) == 0) &&
                        (String.Compare(file.FileName, fileName, StringComparison.OrdinalIgnoreCase) == 0);
@@ -197,9 +175,9 @@ namespace Carnassial.Data
 
         public bool TryFind(long id, out ImageRow file, out int fileIndex)
         {
-            for (fileIndex = 0; fileIndex < this.files.Count; ++fileIndex)
+            for (fileIndex = 0; fileIndex < this.Rows.Count; ++fileIndex)
             {
-                file = this.files[fileIndex];
+                file = this.Rows[fileIndex];
                 if (file.ID == id)
                 {
                     return true;

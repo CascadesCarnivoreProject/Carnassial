@@ -1,51 +1,113 @@
 ﻿using Carnassial.Database;
 using System;
 using System.Collections.Generic;
-using System.Data;
+using System.ComponentModel;
 
 namespace Carnassial.Data
 {
-    public class ImageSetRow : DataRowBackedObject
+    public class ImageSetRow : SQLiteRow, INotifyPropertyChanged
     {
-        public ImageSetRow(DataRow row)
-            : base(row)
+        private FileSelection fileSelection;
+        private string initialFolderName;
+        private long mostRecentFileID;
+        private string log;
+        private ImageSetOptions options;
+        private string timeZone;
+
+        public ImageSetRow()
         {
+            this.fileSelection = FileSelection.All;
+            this.initialFolderName = null;
+            this.mostRecentFileID = Constant.Database.InvalidID;
+            this.log = null;
+            this.options = ImageSetOptions.None;
+            this.timeZone = null;
         }
 
         public FileSelection FileSelection
         {
-            get { return this.Row.GetEnumField<FileSelection>(Constant.DatabaseColumn.FileSelection); }
-            set { this.Row.SetField(Constant.DatabaseColumn.FileSelection, value); }
+            get
+            {
+                return this.fileSelection;
+            }
+            set
+            {
+                this.HasChanges |= this.fileSelection != value;
+                this.fileSelection = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.FileSelection)));
+            }
         }
 
         public string InitialFolderName
         {
-            get { return this.Row.GetStringField(Constant.DatabaseColumn.InitialFolderName); }
-            set { this.Row.SetField(Constant.DatabaseColumn.InitialFolderName, value); }
+            get
+            {
+                return this.initialFolderName;
+            }
+            set
+            {
+                this.HasChanges |= this.initialFolderName != value;
+                this.initialFolderName = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.InitialFolderName)));
+            }
         }
 
         public long MostRecentFileID
         {
-            get { return this.Row.GetLongField(Constant.DatabaseColumn.MostRecentFileID); }
-            set { this.Row.SetField(Constant.DatabaseColumn.MostRecentFileID, value); }
+            get
+            {
+                return this.mostRecentFileID;
+            }
+            set
+            {
+                this.HasChanges |= this.mostRecentFileID != value;
+                this.mostRecentFileID = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.MostRecentFileID)));
+            }
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public string Log
         {
-            get { return this.Row.GetStringField(Constant.DatabaseColumn.Log); }
-            set { this.Row.SetField(Constant.DatabaseColumn.Log, value); }
+            get
+            {
+                return this.log;
+            }
+            set
+            {
+                this.HasChanges |= String.Equals(this.log, value, StringComparison.Ordinal) == false;
+                this.log = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.MostRecentFileID)));
+            }
         }
 
         public ImageSetOptions Options
         {
-            get { return this.Row.GetEnumField<ImageSetOptions>(Constant.DatabaseColumn.Options); }
-            set { this.Row.SetField(Constant.DatabaseColumn.Options, value); }
+            get
+            {
+                return this.options;
+            }
+            set
+            {
+                this.HasChanges |= this.options != value;
+                this.options = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Options)));
+            }
         }
 
         public string TimeZone
         {
-            get { return this.Row.GetStringField(Constant.DatabaseColumn.TimeZone); }
-            set { this.Row.SetField(Constant.DatabaseColumn.TimeZone, value); }
+            get
+            {
+                return this.timeZone;
+            }
+            set
+            {
+                this.HasChanges |= String.Equals(this.timeZone, value, StringComparison.Ordinal) == false;
+                this.timeZone = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.TimeZone)));
+            }
         }
 
         public static ColumnTuplesForInsert CreateInsert(string folderPath)

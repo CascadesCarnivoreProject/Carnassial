@@ -66,11 +66,8 @@ namespace Carnassial.UnitTests
             }
 
             // create template database and remove any image database from previous test executions
-            string templateDatabaseFilePath;
-            using (TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName))
-            {
-                templateDatabaseFilePath = templateDatabase.FilePath;
-            }
+            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName);
+            string templateDatabaseFilePath = templateDatabase.FilePath;
 
             string fileDatabaseFilePath = Path.Combine(Path.GetDirectoryName(templateDatabaseFilePath), Path.GetFileNameWithoutExtension(templateDatabaseFilePath) + Constant.File.FileDatabaseFileExtension);
             if (File.Exists(fileDatabaseFilePath))
@@ -545,7 +542,6 @@ namespace Carnassial.UnitTests
                         string databaseString = firstFile.GetDatabaseString(dataLabel);
                     }
 
-                    fileDatabase.Dispose();
                     File.Delete(fileDatabase.FilePath);
                 }
             }

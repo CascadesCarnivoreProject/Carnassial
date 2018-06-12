@@ -1,13 +1,10 @@
 ﻿using Carnassial.Database;
-using Carnassial.Util;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows.Controls;
 using ColumnDefinition = Carnassial.Database.ColumnDefinition;
 
 namespace Carnassial.Data
@@ -15,14 +12,11 @@ namespace Carnassial.Data
     /// <summary>
     /// Carnassial template database
     /// </summary>
-    public class TemplateDatabase : IDisposable
+    public class TemplateDatabase
     {
-        private bool disposed;
-        private DataGrid editorDataGrid;
         private DateTime mostRecentBackup;
-        private DataRowChangeEventHandler onTemplateTableRowChanged;
 
-        public DataTableBackedList<ControlRow> Controls { get; private set; }
+        public ControlTable Controls { get; private set; }
 
         protected SQLiteDatabase Database { get; set; }
 
@@ -36,84 +30,30 @@ namespace Carnassial.Data
 
         protected TemplateDatabase(string filePath)
         {
-            this.disposed = false;
             this.mostRecentBackup = FileBackup.GetMostRecentBackup(filePath);
 
+            this.Controls = new ControlTable();
             // open or create database
             this.Database = new SQLiteDatabase(filePath);
             this.FilePath = filePath;
             this.FolderPath = Path.GetDirectoryName(filePath);
         }
 
-        public ControlRow AddUserDefinedControl(ControlType controlType)
+        public ControlRow AppendUserDefinedControl(ControlType controlType)
         {
             this.CreateBackupIfNeeded();
 
             // create the row for the new control in the data table
-            ControlRow newControl = this.Controls.CreateRow();
-            switch (controlType)
-            {
-                case ControlType.Counter:
-                    newControl.DefaultValue = Constant.ControlDefault.CounterValue;
-                    newControl.Type = ControlType.Counter;
-                    newControl.MaxWidth = Constant.ControlDefault.MaxWidth;
-                    newControl.Copyable = false;
-                    newControl.Visible = true;
-                    newControl.Tooltip = Constant.ControlDefault.CounterTooltip;
-                    break;
-                case ControlType.Note:
-                    newControl.DefaultValue = Constant.ControlDefault.Value;
-                    newControl.Type = ControlType.Note;
-                    newControl.MaxWidth = Constant.ControlDefault.MaxWidth;
-                    newControl.Copyable = true;
-                    newControl.Visible = true;
-                    newControl.Tooltip = Constant.ControlDefault.NoteTooltip;
-                    break;
-                case ControlType.FixedChoice:
-                    newControl.DefaultValue = Constant.ControlDefault.Value;
-                    newControl.Type = ControlType.FixedChoice;
-                    newControl.MaxWidth = Constant.ControlDefault.MaxWidth;
-                    newControl.Copyable = true;
-                    newControl.Visible = true;
-                    newControl.Tooltip = Constant.ControlDefault.FixedChoiceTooltip;
-                    break;
-                case ControlType.Flag:
-                    newControl.DefaultValue = Constant.ControlDefault.FlagValue;
-                    newControl.Type = ControlType.Flag;
-                    newControl.MaxWidth = Constant.ControlDefault.MaxWidth;
-                    newControl.Copyable = true;
-                    newControl.Visible = true;
-                    newControl.Tooltip = Constant.ControlDefault.FlagTooltip;
-                    break;
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", controlType));
-            }
-            newControl.ControlOrder = this.Controls.RowCount;
-            newControl.DataLabel = this.GetNextUniqueDataLabel(newControl.Type.ToString());
-            newControl.Label = newControl.DataLabel;
-            newControl.List = Constant.ControlDefault.Value;
-            newControl.SpreadsheetOrder = newControl.ControlOrder;
-
+            ControlRow newControl = new ControlRow(controlType, this.GetNextUniqueDataLabel(controlType.ToString()), this.Controls.RowCount + 1);
             ColumnTuplesForInsert newControlInsert = ControlRow.CreateInsert(new ControlRow[] { newControl });
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
                 newControlInsert.Insert(connection);
 
                 // refresh in memory table in order to get the new control's ID
-                // CreateRow() appends the new control, consistent with its control order, but doesn't set its ID.
                 this.GetControlsSortedByControlOrder(connection);
             }
             return this.Controls[this.Controls.RowCount - 1];
-        }
-
-        public void BindToEditorDataGrid(DataGrid dataGrid, DataRowChangeEventHandler onRowChanged)
-        {
-            this.editorDataGrid = dataGrid;
-            this.onTemplateTableRowChanged = onRowChanged;
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                this.GetControlsSortedByControlOrder(connection);
-            }
         }
 
         protected void CreateBackupIfNeeded()
@@ -146,12 +86,6 @@ namespace Carnassial.Data
             imageSetRow.Insert(connection, transaction);
         }
 
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         private void GetControlsSortedByControlOrder(SQLiteConnection connection)
         {
             Select select = new Select(Constant.DatabaseTable.Controls)
@@ -159,9 +93,7 @@ namespace Carnassial.Data
                 OrderBy = Constant.Control.ControlOrder
             };
 
-            DataTable templateTable = this.Database.GetDataTableFromSelect(connection, select);
-            this.Controls = new DataTableBackedList<ControlRow>(templateTable, (DataRow row) => { return new ControlRow(row); });
-            this.Controls.BindDataGrid(this.editorDataGrid, this.onTemplateTableRowChanged);
+            this.Database.LoadDataTableFromSelect(this.Controls, connection, select);
         }
 
         public List<string> GetDataLabelsExceptIDInSpreadsheetOrder()
@@ -185,10 +117,11 @@ namespace Carnassial.Data
             return dataLabels;
         }
 
-        private void GetImageSet(SQLiteConnection connection)
+        private void LoadImageSet(SQLiteConnection connection)
         {
-            DataTable imageSetTable = this.Database.GetDataTableFromSelect(connection, new Select(Constant.DatabaseTable.ImageSet));
-            this.ImageSet = new ImageSetRow(imageSetTable.Rows[0]);
+            ImageSetTable imageSetTable = new ImageSetTable();
+            this.Database.LoadDataTableFromSelect(imageSetTable, connection, new Select(Constant.DatabaseTable.ImageSet));
+            this.ImageSet = imageSetTable[0];
         }
 
         public void RemoveUserDefinedControl(ControlRow controlToRemove)
@@ -239,7 +172,7 @@ namespace Carnassial.Data
                 }
 
                 // refresh in memory table
-                // Using DataTable.Remove() rather than rebuilding the table would be desirable but doing so changes row ordering and requires a resort.
+                // Using Remove() rather than rebuilding the table would be desirable but doing so changes row ordering and requires a resort.
                 // This path is seldom used and isn't performance sensitive so simplicity is favored instead.
                 this.GetControlsSortedByControlOrder(connection);
             }
@@ -368,24 +301,6 @@ namespace Carnassial.Data
             }
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                if (this.Controls != null)
-                {
-                    this.Controls.Dispose();
-                }
-            }
-
-            this.disposed = true;
-        }
-
         /// <summary>Given a data label, get the corresponding data entry control</summary>
         public ControlRow FindControl(string dataLabel)
         {
@@ -457,107 +372,56 @@ namespace Carnassial.Data
                     }
 
                     this.GetControlsSortedByControlOrder(connection);
-                    this.GetImageSet(connection);
+                    this.LoadImageSet(connection);
                     return;
                 }
 
                 // no existing table to clone, so add standard controls to template table
                 this.GetControlsSortedByControlOrder(connection);
-                long controlOrder = 0; // one based count incremented for every new entry
-                long spreadsheetOrder = 0; // one based count incremented for every new entry
+                long controlOrder = 0; // one based count incremented for every new control
 
-                // file
-                ControlRow file = this.Controls.CreateRow();
-                file.ControlOrder = ++controlOrder;
-                file.SpreadsheetOrder = ++spreadsheetOrder;
-                file.Type = ControlType.Note;
-                file.DefaultValue = Constant.ControlDefault.Value;
-                file.Label = Constant.DatabaseColumn.File;
-                file.DataLabel = Constant.DatabaseColumn.File;
-                file.Tooltip = Constant.ControlDefault.FileTooltip;
-                file.MaxWidth = Constant.ControlDefault.MaxWidth;
-                file.Copyable = false;
-                file.Visible = true;
-                file.List = Constant.ControlDefault.Value;
-
-                // relative path
-                ControlRow relativePath = this.Controls.CreateRow();
-                relativePath.ControlOrder = ++controlOrder;
-                relativePath.SpreadsheetOrder = ++spreadsheetOrder;
-                relativePath.Type = ControlType.Note;
-                relativePath.DefaultValue = Constant.ControlDefault.Value;
-                relativePath.Label = Constant.DatabaseColumn.RelativePath;
-                relativePath.DataLabel = Constant.DatabaseColumn.RelativePath;
-                relativePath.Tooltip = Constant.ControlDefault.RelativePathTooltip;
-                relativePath.MaxWidth = Constant.ControlDefault.MaxWidth;
-                relativePath.Copyable = false;
-                relativePath.Visible = true;
-                relativePath.List = Constant.ControlDefault.Value;
-
-                // datetime
-                ControlRow dateTime = this.Controls.CreateRow();
-                dateTime.ControlOrder = ++controlOrder;
-                dateTime.SpreadsheetOrder = ++spreadsheetOrder;
-                dateTime.Type = ControlType.DateTime;
-                dateTime.DefaultValue = DateTimeHandler.ToDatabaseDateTimeString(Constant.ControlDefault.DateTimeValue.UtcDateTime);
-                dateTime.Label = Constant.DatabaseColumn.DateTime;
-                dateTime.DataLabel = Constant.DatabaseColumn.DateTime;
-                dateTime.Tooltip = Constant.ControlDefault.DateTimeTooltip;
-                dateTime.MaxWidth = Constant.ControlDefault.MaxWidth;
-                dateTime.Copyable = false;
-                dateTime.Visible = true;
-                dateTime.List = Constant.ControlDefault.Value;
-
-                // utcOffset
-                ControlRow utcOffset = this.Controls.CreateRow();
-                utcOffset.ControlOrder = ++controlOrder;
-                utcOffset.SpreadsheetOrder = ++spreadsheetOrder;
-                utcOffset.Type = ControlType.UtcOffset;
-                utcOffset.DefaultValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constant.ControlDefault.DateTimeValue.Offset);
-                utcOffset.Label = Constant.DatabaseColumn.UtcOffset;
-                utcOffset.DataLabel = Constant.DatabaseColumn.UtcOffset;
-                utcOffset.Tooltip = Constant.ControlDefault.UtcOffsetTooltip;
-                utcOffset.MaxWidth = Constant.ControlDefault.MaxWidth;
-                utcOffset.Copyable = false;
-                utcOffset.Visible = false;
-                utcOffset.List = Constant.ControlDefault.Value;
-
-                // image quality
-                ControlRow imageQuality = this.Controls.CreateRow();
-                imageQuality.ControlOrder = ++controlOrder;
-                imageQuality.SpreadsheetOrder = ++spreadsheetOrder;
-                imageQuality.Type = ControlType.FixedChoice;
-                imageQuality.DefaultValue = Constant.ControlDefault.Value;
-                imageQuality.Label = Constant.DatabaseColumn.ImageQuality;
-                imageQuality.DataLabel = Constant.DatabaseColumn.ImageQuality;
-                imageQuality.Tooltip = Constant.ControlDefault.ImageQualityTooltip;
-                imageQuality.MaxWidth = Constant.ControlDefault.MaxWidth;
-                imageQuality.Copyable = false;
-                imageQuality.Visible = true;
-                imageQuality.List = Constant.ImageQuality.ListOfValues;
-
-                // delete flag
-                ControlRow deleteFlag = this.Controls.CreateRow();
-                deleteFlag.ControlOrder = ++controlOrder;
-                deleteFlag.SpreadsheetOrder = ++spreadsheetOrder;
-                deleteFlag.Type = ControlType.Flag;
-                deleteFlag.DefaultValue = Constant.ControlDefault.FlagValue;
-                deleteFlag.Label = Constant.ControlDefault.DeleteFlagLabel;
-                deleteFlag.DataLabel = Constant.DatabaseColumn.DeleteFlag;
-                deleteFlag.Tooltip = Constant.ControlDefault.DeleteFlagTooltip;
-                deleteFlag.MaxWidth = Constant.ControlDefault.MaxWidth;
-                deleteFlag.Copyable = false;
-                deleteFlag.Visible = true;
-                deleteFlag.List = Constant.ControlDefault.Value;
+                // standard controls
+                ControlRow file = new ControlRow(ControlType.Note, Constant.DatabaseColumn.File, ++controlOrder)
+                {
+                    Label = Constant.DatabaseColumn.File,
+                    Tooltip = Constant.ControlDefault.FileTooltip,
+                    Copyable = false,
+                };
+                ControlRow relativePath = new ControlRow(ControlType.Note, Constant.DatabaseColumn.RelativePath, ++controlOrder)
+                {
+                    Tooltip = Constant.ControlDefault.RelativePathTooltip,
+                    Copyable = false,
+                };
+                ControlRow dateTime = new ControlRow(ControlType.DateTime, Constant.DatabaseColumn.DateTime, ++controlOrder);
+                ControlRow utcOffset = new ControlRow(ControlType.UtcOffset, Constant.DatabaseColumn.UtcOffset, ++controlOrder);
+                ControlRow imageQuality = new ControlRow(ControlType.FixedChoice, Constant.DatabaseColumn.ImageQuality, ++controlOrder)
+                {
+                    Tooltip = Constant.ControlDefault.ImageQualityTooltip,
+                    Copyable = false,
+                };
+                ControlRow deleteFlag = new ControlRow(ControlType.Flag, Constant.DatabaseColumn.DeleteFlag, ++controlOrder)
+                {
+                    Label = Constant.ControlDefault.DeleteFlagLabel,
+                    Tooltip = Constant.ControlDefault.DeleteFlagTooltip,
+                    Copyable = false,
+                };
 
                 // insert standard controls into the database
-                ColumnTuplesForInsert controls = ControlRow.CreateInsert(this.Controls);
+                ColumnTuplesForInsert controls = ControlRow.CreateInsert(new List<ControlRow>()
+                {
+                    file,
+                    relativePath,
+                    dateTime,
+                    utcOffset,
+                    imageQuality,
+                    deleteFlag
+                });
                 controls.Insert(connection);
 
                 // reload controls table to get updated IDs
                 this.GetControlsSortedByControlOrder(connection);
                 // ensure image set is available
-                this.GetImageSet(connection);
+                this.LoadImageSet(connection);
             }
         }
 
@@ -582,7 +446,7 @@ namespace Carnassial.Data
                 }
 
                 this.GetControlsSortedByControlOrder(connection);
-                this.GetImageSet(connection);
+                this.LoadImageSet(connection);
             }
             return true;
         }

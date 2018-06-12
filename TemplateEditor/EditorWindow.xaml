@@ -230,7 +230,7 @@
                                 </Style>
                             </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="ID" Binding="{Binding Path=Id}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                                <DataGridTextColumn Header="ID" Binding="{Binding Path=ID}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
                                 <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
                                 <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
                                 <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type}" CanUserSort="False" IsReadOnly="True">
@@ -306,7 +306,7 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn MinWidth="40" Header="Max Width" Binding="{Binding Path=Width, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                <DataGridTextColumn MinWidth="40" Header="Max Width" Binding="{Binding Path=MaxWidth}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
                                             <Setter Property="ToolTip" Value="The width of the data entry field as shown in the user interface."/>

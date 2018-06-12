@@ -126,7 +126,7 @@ namespace Carnassial
 
             // special characters
             // separator used to separate marker points in the database i.e. "2.3,5.6 | 7.1, 3.3"
-            public const char MarkerBar = '|';
+            public const char BarDelimiter = '|';
         }
 
         public static class DatabaseColumn

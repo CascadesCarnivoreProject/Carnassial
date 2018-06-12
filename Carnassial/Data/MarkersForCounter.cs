@@ -43,7 +43,7 @@ namespace Carnassial.Data
                 throw new ArgumentOutOfRangeException(nameof(databaseString));
             }
 
-            string[] tokens = databaseString.Split(Constant.Database.MarkerBar);
+            string[] tokens = databaseString.Split(Constant.Database.BarDelimiter);
             if ((tokens == null) || (tokens.Length < 1))
             {
                 throw new ArgumentOutOfRangeException(nameof(databaseString));
@@ -83,7 +83,7 @@ namespace Carnassial.Data
             StringBuilder pointList = new StringBuilder(this.Count.ToString());
             foreach (Marker marker in this.Markers)
             {
-                pointList.Append(Constant.Database.MarkerBar);
+                pointList.Append(Constant.Database.BarDelimiter);
                 pointList.AppendFormat("{0:0.000},{1:0.000}", marker.Position.X, marker.Position.Y);
             }
             return pointList.ToString();
