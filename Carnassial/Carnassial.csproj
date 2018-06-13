@@ -212,6 +212,7 @@
     <Compile Include="Database\FileTuplesWithPath.cs" />
     <Compile Include="Data\ControlRow.cs" />
     <Compile Include="Database\LogicalOperator.cs" />
+    <Compile Include="Data\FileClassification.cs" />
     <Compile Include="Data\FileImportResult.cs" />
     <Compile Include="Data\FileTable.cs" />
     <Compile Include="Data\FileTransaction.cs" />

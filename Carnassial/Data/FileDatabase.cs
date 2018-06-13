@@ -170,10 +170,12 @@ namespace Carnassial.Data
             {
                 case FileSelection.All:
                     break;
+                case FileSelection.Color:                    
                 case FileSelection.Corrupt:
                 case FileSelection.Dark:
+                case FileSelection.Greyscale:
                 case FileSelection.NoLongerAvailable:
-                case FileSelection.Ok:
+                case FileSelection.Video:
                     select.Where.Add(new WhereClause(Constant.DatabaseColumn.ImageQuality, Constant.SqlOperator.Equal, selection.ToString()));
                     break;
                 case FileSelection.MarkedForDeletion:
@@ -380,15 +382,7 @@ namespace Carnassial.Data
             return distinctValues;
         }
 
-        public int GetFileCount(FileSelection fileSelection)
-        {
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                return this.GetFileCount(connection, fileSelection);
-            }
-        }
-
-        private int GetFileCount(SQLiteConnection connection, FileSelection selection)
+        public int GetFileCount(FileSelection selection)
         {
             Select select = this.CreateSelect(selection);
             if ((select.Where.Count < 1) && (selection == FileSelection.Custom))
@@ -396,19 +390,49 @@ namespace Carnassial.Data
                 // if no search terms are active the file count is undefined as no filtering is in operation
                 return -1;
             }
-            // otherwise, the query is for all files as no where clause is present
+
+            using (SQLiteConnection connection = this.Database.CreateConnection())
+            {
+                return (int)select.Count(connection);
+            }
+        }
+
+        private int GetFileCount(SQLiteConnection connection, FileClassification classification)
+        {
+            Select select = new Select(Constant.DatabaseTable.FileData);
+            switch (classification)
+            {
+                case FileClassification.Color:
+                    select.Where.Add(new WhereClause(Constant.DatabaseColumn.ImageQuality, Constant.SqlOperator.Equal, classification.ToString()));
+                    #pragma warning disable CS0618 // Type or member is obsolete
+                    select.Where.Add(new WhereClause(Constant.DatabaseColumn.ImageQuality, Constant.SqlOperator.Equal, FileSelection.Ok.ToString()));
+                    #pragma warning restore CS0618 // Type or member is obsolete
+                    select.WhereCombiningOperator = LogicalOperator.Or;
+                    break;
+                case FileClassification.Corrupt:
+                case FileClassification.Dark:
+                case FileClassification.Greyscale:
+                case FileClassification.NoLongerAvailable:
+                case FileClassification.Video:
+                    select.Where.Add(new WhereClause(Constant.DatabaseColumn.ImageQuality, Constant.SqlOperator.Equal, classification.ToString()));
+                    break;
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled selection {0}.", classification));
+            }
             return (int)select.Count(connection);
         }
 
-        public Dictionary<FileSelection, int> GetFileCountsBySelection()
+        public Dictionary<FileClassification, int> GetFileCountsByClassification()
         {
-            Dictionary<FileSelection, int> counts = new Dictionary<FileSelection, int>(4);
+            Dictionary<FileClassification, int> counts = new Dictionary<FileClassification, int>(4);
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
-                counts[FileSelection.Dark] = this.GetFileCount(connection, FileSelection.Dark);
-                counts[FileSelection.Corrupt] = this.GetFileCount(connection, FileSelection.Corrupt);
-                counts[FileSelection.NoLongerAvailable] = this.GetFileCount(connection, FileSelection.NoLongerAvailable);
-                counts[FileSelection.Ok] = this.GetFileCount(connection, FileSelection.Ok);
+                counts[FileClassification.Color] = this.GetFileCount(connection, FileClassification.Color);
+                counts[FileClassification.Corrupt] = this.GetFileCount(connection, FileClassification.Corrupt);
+                counts[FileClassification.Dark] = this.GetFileCount(connection, FileClassification.Dark);
+                counts[FileClassification.Greyscale] = this.GetFileCount(connection, FileClassification.Greyscale);
+                counts[FileClassification.NoLongerAvailable] = this.GetFileCount(connection, FileClassification.NoLongerAvailable);
+                counts[FileClassification.Video] = this.GetFileCount(connection, FileClassification.Video);
             }
             return counts;
         }

@@ -24,10 +24,10 @@ namespace Carnassial.Data
     /// </summary>
     public class ImageRow : SQLiteRow, INotifyPropertyChanged
     {
+        private FileClassification classification;
         private DateTimeOffset dateTimeOffset;
         private bool deleteFlag;
         private string fileName;
-        private FileSelection imageQuality;
         private string relativePath;
         private FileTable table;
 
@@ -35,13 +35,27 @@ namespace Carnassial.Data
 
         public ImageRow(string fileName, string relativePath, FileTable table)
         {
+            this.classification = FileClassification.Color;
             this.dateTimeOffset = Constant.ControlDefault.DateTimeValue;
             this.deleteFlag = false;
             this.fileName = fileName;
-            this.imageQuality = FileSelection.Ok;
             this.relativePath = relativePath;
             this.table = table;
             this.UserControlValues = new string[table.UserControlIndicesByDataLabel.Count];
+        }
+
+        public FileClassification Classification
+        {
+            get
+            {
+                return this.classification;
+            }
+            set
+            {
+                this.HasChanges |= this.classification != value;
+                this.classification = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Classification)));
+            }
         }
 
         public DateTimeOffset DateTimeOffset
@@ -86,34 +100,13 @@ namespace Carnassial.Data
             }
         }
 
-        public FileSelection ImageQuality
+        public virtual bool IsVideo
         {
             get
             {
-                return this.imageQuality;
+                Debug.Assert(this.classification != FileClassification.Video, "Image unexpectedly classified as video.");
+                return false;
             }
-            set
-            {
-                switch (value)
-                {
-                    case FileSelection.Corrupt:
-                    case FileSelection.Dark:
-                    case FileSelection.NoLongerAvailable:
-                    case FileSelection.Ok:
-                    case FileSelection.Video:
-                        this.HasChanges |= this.imageQuality != value;
-                        this.imageQuality = value;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(value), String.Format("{0} is not a valid {1}.  {1} must be one of {2}, {3}, {4}, {5}, or {6}.", value, nameof(FileSelection), FileSelection.Corrupt, FileSelection.Dark, FileSelection.NoLongerAvailable, FileSelection.Ok, FileSelection.Video));
-                }
-                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.ImageQuality)));
-            }
-        }
-
-        public virtual bool IsVideo
-        {
-            get { return false; }
         }
 
         private void MarkersForCounter_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -157,7 +150,7 @@ namespace Carnassial.Data
                     case Constant.DatabaseColumn.ID:
                         return this.ID;
                     case Constant.DatabaseColumn.ImageQuality:
-                        return this.ImageQuality;
+                        return this.Classification;
                     case Constant.DatabaseColumn.RelativePath:
                         return this.RelativePath;
                     case Constant.DatabaseColumn.UtcOffset:
@@ -188,7 +181,7 @@ namespace Carnassial.Data
                     case Constant.DatabaseColumn.ID:
                         throw new NotSupportedException("ID is immutable.");
                     case Constant.DatabaseColumn.ImageQuality:
-                        this.ImageQuality = (FileSelection)value;
+                        this.Classification = (FileClassification)value;
                         break;
                     case Constant.DatabaseColumn.RelativePath:
                         this.RelativePath = (string)value;
@@ -269,7 +262,7 @@ namespace Carnassial.Data
                 case Constant.DatabaseColumn.ID:
                     return this.ID.ToString();
                 case Constant.DatabaseColumn.ImageQuality:
-                    return this.ImageQuality.ToString();
+                    return this.Classification.ToString();
                 case Constant.DatabaseColumn.RelativePath:
                     return this.RelativePath;
                 case Constant.DatabaseColumn.UtcOffset:
@@ -334,7 +327,7 @@ namespace Carnassial.Data
                 case Constant.DatabaseColumn.ID:
                     return this.ID.ToString();
                 case Constant.DatabaseColumn.ImageQuality:
-                    return this.ImageQuality.ToString();
+                    return this.Classification.ToString();
                 case Constant.DatabaseColumn.RelativePath:
                     return this.RelativePath;
                 case Constant.DatabaseColumn.UtcOffset:
@@ -402,7 +395,7 @@ namespace Carnassial.Data
                 case Constant.DatabaseColumn.ID:
                     return this.ID;
                 case Constant.DatabaseColumn.ImageQuality:
-                    return this.ImageQuality.ToString();
+                    return this.Classification.ToString();
                 case Constant.DatabaseColumn.RelativePath:
                     return this.RelativePath;
                 case Constant.DatabaseColumn.UtcOffset:
@@ -421,7 +414,7 @@ namespace Carnassial.Data
                 { Constant.DatabaseColumn.DeleteFlag, this.DeleteFlag },
                 { nameof(this.FileName), this.FileName },
                 { Constant.DatabaseColumn.ID, this.ID },
-                { Constant.DatabaseColumn.ImageQuality, this.ImageQuality },
+                { Constant.DatabaseColumn.ImageQuality, this.Classification },
                 { Constant.DatabaseColumn.RelativePath, this.RelativePath },
             };
             foreach (KeyValuePair<string, int> userControl in this.table.UserControlIndicesByDataLabel)
@@ -433,7 +426,7 @@ namespace Carnassial.Data
 
         public bool IsDisplayable()
         {
-            if (this.ImageQuality == FileSelection.Corrupt || this.ImageQuality == FileSelection.NoLongerAvailable)
+            if ((this.Classification == FileClassification.Corrupt) || (this.Classification == FileClassification.NoLongerAvailable))
             {
                 return false;
             }
@@ -519,7 +512,7 @@ namespace Carnassial.Data
         {
             using (JpegImage jpeg = new JpegImage(this.GetFilePath(imageSetFolderPath)))
             {
-                if (jpeg.TryGetMetadata())
+                if ((jpeg.Metadata != null) || jpeg.TryGetMetadata())
                 {
                     MemoryImage preallocatedThumbnail = null;
                     return jpeg.GetThumbnailProperties(ref preallocatedThumbnail);

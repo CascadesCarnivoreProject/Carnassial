@@ -27,17 +27,17 @@ namespace Carnassial.Dialog
                     Debug.Assert(loadAtom.HasAtLeastOneFile, "Load atom unexpectedly empty.");
                     Debug.Assert(loadAtom.First.File != null, "Load atom unexpectedly missing first file.");
 
-                    FileSelection firstClassification = loadAtom.First.File.ImageQuality;
-                    FileSelection secondClassification = loadAtom.HasSecondFile ? loadAtom.Second.File.ImageQuality : default(FileSelection);
+                    FileClassification firstClassification = loadAtom.First.File.Classification;
+                    FileClassification secondClassification = loadAtom.HasSecondFile ? loadAtom.Second.File.Classification : default(FileClassification);
                     ImageProperties firstProperties = loadAtom.Classify(darkLuminosityThreshold, ref preallocatedImage);
 
                     // remove files from update list if their classification did not change
                     ImageRow firstFile = loadAtom.First.File;
-                    if (firstClassification == loadAtom.First.File.ImageQuality)
+                    if (firstClassification == loadAtom.First.File.Classification)
                     {
                         loadAtom.First.File = null;
                     }
-                    if (loadAtom.HasSecondFile && (secondClassification == loadAtom.Second.File.ImageQuality))
+                    if (loadAtom.HasSecondFile && (secondClassification == loadAtom.Second.File.Classification))
                     {
                         loadAtom.Second.File = null;
                     }
@@ -68,7 +68,7 @@ namespace Carnassial.Dialog
 
                     if (updateStatus)
                     {
-                        this.Status.ClassificationToDisplay = firstFile.ImageQuality;
+                        this.Status.ClassificationToDisplay = firstFile.Classification;
                         this.Status.CurrentFileIndex = this.FilesCompleted;
                         this.Status.File = firstFile;
                         if (((tickNow - this.Status.MostRecentImageUpdate) > Constant.ThrottleValues.DesiredIntervalBetweenImageUpdates.TotalMilliseconds) && (loadAtom.First.File != null) && (loadAtom.First.File.IsVideo == false))

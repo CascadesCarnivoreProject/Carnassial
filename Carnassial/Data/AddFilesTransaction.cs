@@ -112,7 +112,7 @@ namespace Carnassial.Data
                 }
                 this.addFiles.Parameters[0].Value = fileToInsert.UtcDateTime;
                 this.addFiles.Parameters[1].Value = fileToInsert.FileName;
-                this.addFiles.Parameters[2].Value = fileToInsert.ImageQuality.ToString();
+                this.addFiles.Parameters[2].Value = fileToInsert.Classification.ToString();
                 this.addFiles.Parameters[3].Value = fileToInsert.RelativePath;
                 this.addFiles.Parameters[4].Value = DateTimeHandler.ToDatabaseUtcOffset(fileToInsert.UtcOffset);
 

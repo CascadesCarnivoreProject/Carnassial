@@ -18,7 +18,7 @@ namespace Carnassial.UnitTests
         public string FileName { get; set; }
         public long ID { get; set; }
         public double Luminosity { get; set; }
-        public FileSelection Quality { get; set; }
+        public FileClassification Quality { get; set; }
         public string RelativePath { get; set; }
         public bool SkipDateTimeVerification { get; set; }
         public bool SkipUserControlVerification { get; set; }
@@ -32,7 +32,7 @@ namespace Carnassial.UnitTests
             this.FileName = null;
             this.ID = Constant.Database.InvalidID;
             this.Luminosity = -1.0;
-            this.Quality = (FileSelection)(-1);
+            this.Quality = (FileClassification)(-1);
             this.RelativePath = String.Empty;
             this.SkipDateTimeVerification = false;
             this.SkipUserControlVerification = false;
@@ -90,8 +90,8 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(file.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, file.FileName);
             // Assert.IsFalse(file.HasChanges);
             Assert.IsTrue(file.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, file.ID);
-            Assert.IsTrue(file.ImageQuality == this.Quality, "{0}: Expected ImageQuality '{1}' but found '{2}'.", this.FileName, this.Quality, file.ImageQuality);
-            Assert.IsTrue((file.IsVideo == file is VideoRow) && (file.IsVideo == (file.ImageQuality == FileSelection.Video)));
+            Assert.IsTrue(file.Classification == this.Quality, "{0}: Expected ImageQuality '{1}' but found '{2}'.", this.FileName, this.Quality, file.Classification);
+            Assert.IsTrue((file.IsVideo == file is VideoRow) && (file.IsVideo == (file.Classification == FileClassification.Video)));
             Assert.IsTrue(file.RelativePath == this.RelativePath, "{0}: Expected RelativePath '{1}' but found '{2}'.", this.FileName, this.RelativePath, file.RelativePath);
             Assert.IsTrue(file.UtcDateTime.Kind == DateTimeKind.Utc, "{0}: Expected UtcDateTime.Kind '{1}' but found '{2}'.", this.FileName, DateTimeKind.Utc, file.UtcDateTime.Kind);
 

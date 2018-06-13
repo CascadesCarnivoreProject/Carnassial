@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Carnassial.Data
@@ -86,7 +87,8 @@ namespace Carnassial.Data
             this.Rows.Clear();
             this.UserControlIndicesByDataLabel.Clear();
 
-            int standardColumnCount = Constant.Control.StandardControls.Count + 1; // standard controls + ID
+            // locate columns in schema
+            // Standard columns usually appear first but, depending on the table's evolution, this may not always be the case.
             int dateTimeIndex = -1;
             int deleteFlagIndex = -1;
             int fileNameIndex = -1;
@@ -94,6 +96,8 @@ namespace Carnassial.Data
             int imageQualityIndex = -1;
             int relativePathIndex = -1;
             int utcOffsetIndex = -1;
+            int standardColumnCount = 0;
+            int[] userControlSqlIndicies = new int[reader.FieldCount - Constant.Control.StandardControls.Count - 1]; // standard controls and ID
             for (int column = 0; column < reader.FieldCount; ++column)
             {
                 string columnName = reader.GetName(column);
@@ -101,31 +105,41 @@ namespace Carnassial.Data
                 {
                     case Constant.DatabaseColumn.DateTime:
                         dateTimeIndex = column;
+                        ++standardColumnCount;
                         break;
                     case Constant.DatabaseColumn.DeleteFlag:
                         deleteFlagIndex = column;
+                        ++standardColumnCount;
                         break;
                     case Constant.DatabaseColumn.File:
                         fileNameIndex = column;
+                        ++standardColumnCount;
                         break;
                     case Constant.DatabaseColumn.ID:
                         idIndex = column;
+                        ++standardColumnCount;
                         break;
                     case Constant.DatabaseColumn.ImageQuality:
                         imageQualityIndex = column;
+                        ++standardColumnCount;
                         break;
                     case Constant.DatabaseColumn.RelativePath:
                         relativePathIndex = column;
+                        ++standardColumnCount;
                         break;
                     case Constant.DatabaseColumn.UtcOffset:
                         utcOffsetIndex = column;
+                        ++standardColumnCount;
                         break;
                     default:
                         int userControlIndex = column - standardColumnCount;
                         this.UserControlIndicesByDataLabel.Add(columnName, userControlIndex);
+                        userControlSqlIndicies[userControlIndex] = column;
                         break;
                 }
             }
+            Debug.Assert(standardColumnCount == Constant.Control.StandardControls.Count + 1, "Mismatch in locating standard controls and ID columns.");
+
             bool allStandardColumnsPresent = (dateTimeIndex != -1) &&
                                              (deleteFlagIndex != -1) &&
                                              (fileNameIndex != -1) &&
@@ -154,11 +168,23 @@ namespace Carnassial.Data
                 file.DateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(row.GetDateTime(dateTimeIndex), DateTimeHandler.FromDatabaseUtcOffset(utcOffset));
                 file.DeleteFlag = Boolean.Parse(row.GetString(deleteFlagIndex));
                 file.ID = row.GetInt64(idIndex);
-                file.ImageQuality = (FileSelection)Enum.Parse(typeof(FileSelection), row.GetString(imageQualityIndex));
+                string classificationAsString = row.GetString(imageQualityIndex);
+                #pragma warning disable CS0618 // Type or member is obsolete
+                if (String.Equals(classificationAsString, FileSelection.Ok.ToString(), StringComparison.Ordinal))
+                #pragma warning restore CS0618 // Type or member is obsolete
+                {
+                    // legacy case for backwards compatibility with Carnassial 2.2.0.2 and earlier, where FileSelection was also
+                    // used as FileClassification
+                    file.Classification = FileClassification.Color;
+                }
+                else
+                {
+                    file.Classification = (FileClassification)Enum.Parse(typeof(FileClassification), classificationAsString);
+                }
                 foreach (KeyValuePair<string, int> userControl in this.UserControlIndicesByDataLabel)
                 {
-                    int columnIndex = userControl.Value + standardColumnCount;
-                    file.UserControlValues[userControl.Value] = row.GetString(columnIndex);
+                    int sqlIndex = userControlSqlIndicies[userControl.Value];
+                    file.UserControlValues[userControl.Value] = row.GetString(sqlIndex);
                 }
                 file.AcceptChanges();
             }
@@ -185,6 +211,18 @@ namespace Carnassial.Data
             }
             file = null;
             return false;
+        }
+
+        private class UserControlIndices
+        {
+            public int SqlColumnIndex { get; private set; }
+            public int UserControlArrayIndex { get; private set; }
+
+            public UserControlIndices(int sqlColumnIndex, int userControlArrayIndex)
+            {
+                this.SqlColumnIndex = sqlColumnIndex;
+                this.UserControlArrayIndex = userControlArrayIndex;
+            }
         }
     }
 }

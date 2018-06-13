@@ -42,17 +42,17 @@ namespace Carnassial.Dialog
         /// </summary>
         private void ClassifyCurrentFile()
         {
-            FileSelection newClassification = this.imageProperties.EvaluateNewClassification(0.01 * this.DarkLuminosityThresholdPercent.Value);
+            FileClassification newClassification = this.imageProperties.EvaluateNewClassification(0.01 * this.DarkLuminosityThresholdPercent.Value);
             this.DisplayClassification(this.fileEnumerator.Current, this.imageProperties, newClassification);
         }
 
-        private void DisplayClassification(ImageRow file, ImageProperties imageProperties, FileSelection newClassificationToDisplay)
+        private void DisplayClassification(ImageRow file, ImageProperties imageProperties, FileClassification newClassificationToDisplay)
         {
-            this.OriginalClassification.Content = file.ImageQuality;
+            this.OriginalClassification.Content = file.Classification;
             this.NewClassification.Content = newClassificationToDisplay;
 
-            if ((file.ImageQuality == FileSelection.Corrupt) ||
-                (file.ImageQuality == FileSelection.NoLongerAvailable))
+            if ((file.Classification == FileClassification.Corrupt) ||
+                (file.Classification == FileClassification.NoLongerAvailable))
             {
                 this.ClassificationInformation.Text = "File could not be loaded.  Classification skipped.";
             }

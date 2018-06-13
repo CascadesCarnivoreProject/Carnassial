@@ -9,7 +9,7 @@ namespace Carnassial.Dialog
     {
         private bool disposed;
 
-        public FileSelection ClassificationToDisplay { get; set; }
+        public FileClassification ClassificationToDisplay { get; set; }
         public ImageRow File { get; set; }
         public MemoryImage Image { get; set; }
         public ImageProperties ImageProperties { get; set; }
@@ -19,7 +19,7 @@ namespace Carnassial.Dialog
 
         public ReclassifyStatus()
         {
-            this.ClassificationToDisplay = default(FileSelection);
+            this.ClassificationToDisplay = default(FileClassification);
             this.File = null;
             this.Image = null;
             this.ImageProperties = null;

@@ -42,12 +42,16 @@ namespace Carnassial.UnitTests
 
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.All) == fileExpectations.Count);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.MarkedForDeletion) == 0);
-            Dictionary<FileSelection, int> fileCounts = fileDatabase.GetFileCountsBySelection();
-            Assert.IsTrue(fileCounts.Count == 4);
-            Assert.IsTrue(fileCounts[FileSelection.Corrupt] == 0);
-            Assert.IsTrue(fileCounts[FileSelection.Dark] == 0);
-            Assert.IsTrue(fileCounts[FileSelection.NoLongerAvailable] == 0);
-            Assert.IsTrue(fileCounts[FileSelection.Ok] == fileExpectations.Count);
+            Dictionary<FileClassification, int> fileCounts = fileDatabase.GetFileCountsByClassification();
+            Assert.IsTrue(fileCounts.Count == 6);
+            int expectedColorImageCount = fileExpectations.Count(expectation => expectation.Quality == FileClassification.Color);
+            int expectedGreyscaleImageCount = fileExpectations.Count(expectation => expectation.Quality == FileClassification.Greyscale);
+            Assert.IsTrue(fileCounts[FileClassification.Color] == expectedColorImageCount);
+            Assert.IsTrue(fileCounts[FileClassification.Corrupt] == 0);
+            Assert.IsTrue(fileCounts[FileClassification.Dark] == 0);
+            Assert.IsTrue(fileCounts[FileClassification.Greyscale] == expectedGreyscaleImageCount);
+            Assert.IsTrue(fileCounts[FileClassification.NoLongerAvailable] == 0);
+            Assert.IsTrue(fileCounts[FileClassification.Video] == 0);
 
             FileTable filesToDelete = fileDatabase.GetFilesMarkedForDeletion();
             Assert.IsTrue(filesToDelete.RowCount == 0);
@@ -59,7 +63,7 @@ namespace Carnassial.UnitTests
             string currentDirectoryName = Path.GetFileName(fileDatabase.FolderPath);
             fileDatabase.SelectFiles(FileSelection.All);
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-            foreach (FileSelection nextSelection in new List<FileSelection>() { FileSelection.All, FileSelection.Ok, FileSelection.All })
+            foreach (FileSelection nextSelection in new List<FileSelection>() { FileSelection.All, FileSelection.All })
             {
                 Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount == fileExpectations.Count);
                 fileDatabase.SelectFiles(FileSelection.All);
@@ -114,7 +118,6 @@ namespace Carnassial.UnitTests
                         expectedValues = fileExpectations.Select(expectation => expectation.DateTime.Offset).Distinct().Count();
                         break;
                     case Constant.DatabaseColumn.DeleteFlag:
-                    case Constant.DatabaseColumn.ImageQuality:
                     case TestConstant.DefaultDatabaseColumn.Choice3:
                     case TestConstant.DefaultDatabaseColumn.ChoiceNotVisible:
                     case TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel:
@@ -131,6 +134,7 @@ namespace Carnassial.UnitTests
                     case TestConstant.DefaultDatabaseColumn.Choice0:
                     case TestConstant.DefaultDatabaseColumn.Counter0:
                     case TestConstant.DefaultDatabaseColumn.FlagNotVisible:
+                    case Constant.DatabaseColumn.ImageQuality:
                         expectedValues = 2;
                         break;
                     case TestConstant.DefaultDatabaseColumn.Note0:
@@ -220,18 +224,24 @@ namespace Carnassial.UnitTests
             SearchTerm fileQuality = fileDatabase.CustomSelection.SearchTerms.Single(term => term.DataLabel == Constant.DatabaseColumn.ImageQuality);
             fileQuality.UseForSearching = true;
             fileQuality.Operator = Constant.SearchTermOperator.Equal;
-            fileQuality.DatabaseValue = FileSelection.Ok.ToString();
+            fileQuality.DatabaseValue = FileSelection.Color.ToString();
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 2);
             fileDatabase.SelectFiles(FileSelection.Custom);
-            Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
+            Assert.IsTrue(fileDatabase.Files.RowCount == expectedColorImageCount);
 
+            fileQuality.DatabaseValue = FileSelection.Greyscale.ToString();
+            Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 2);
+            fileDatabase.SelectFiles(FileSelection.Custom);
+            Assert.IsTrue(fileDatabase.Files.RowCount == expectedGreyscaleImageCount);
+
+            fileQuality.DatabaseValue = FileSelection.Color.ToString();
             SearchTerm relativePath = fileDatabase.CustomSelection.SearchTerms.Single(term => term.DataLabel == Constant.DatabaseColumn.RelativePath);
             relativePath.UseForSearching = true;
             relativePath.Operator = Constant.SearchTermOperator.Equal;
             relativePath.DatabaseValue = fileExpectations[0].RelativePath;
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 3);
             fileDatabase.SelectFiles(FileSelection.Custom);
-            Assert.IsTrue(fileDatabase.Files.RowCount == 2);
+            Assert.IsTrue(fileDatabase.Files.RowCount == 1);
 
             SearchTerm markedForDeletion = fileDatabase.CustomSelection.SearchTerms.Single(term => term.DataLabel == Constant.DatabaseColumn.DeleteFlag);
             markedForDeletion.UseForSearching = true;
@@ -239,17 +249,19 @@ namespace Carnassial.UnitTests
             markedForDeletion.DatabaseValue = Boolean.FalseString;
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
             fileDatabase.SelectFiles(FileSelection.Custom);
-            Assert.IsTrue(fileDatabase.Files.RowCount == 2);
+            Assert.IsTrue(fileDatabase.Files.RowCount == 1);
 
             fileQuality.DatabaseValue = FileSelection.Dark.ToString();
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.All) == fileExpectations.Count);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Color) == expectedColorImageCount);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Corrupt) == 0);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Custom) == 0);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Dark) == 0);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Greyscale) == expectedGreyscaleImageCount);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.MarkedForDeletion) == 0);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.NoLongerAvailable) == 0);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Ok) == fileExpectations.Count);
+            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Video) == 0);
 
             // reread
             fileDatabase.SelectFiles(FileSelection.All);
@@ -698,8 +710,8 @@ namespace Carnassial.UnitTests
                 DateTimeOffset dateTimeOffsetAsAdded = file.DateTimeOffset;
                 bool expectedIsVideo = !fileInfo.Name.EndsWith(Constant.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase);
                 Assert.IsTrue(file.IsVideo == expectedIsVideo);
-                FileSelection expectedClassification = expectedIsVideo ? FileSelection.Video : FileSelection.Ok;
-                Assert.IsTrue(file.ImageQuality == expectedClassification);
+                FileClassification expectedClassification = expectedIsVideo ? FileClassification.Video : FileClassification.Color;
+                Assert.IsTrue(file.Classification == expectedClassification);
 
                 if (expectedIsVideo == false)
                 {
@@ -707,15 +719,15 @@ namespace Carnassial.UnitTests
                     {
                         stopwatch.Restart();
                         double luminosity = image.GetLuminosityAndColoration(0, out double coloration);
-                        file.ImageQuality = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
+                        file.Classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
                         stopwatch.Stop();
                         this.TestContext.WriteLine("Classify({0}, {1:0.00}MP): {2}ms", file.FileName, 1E-6 * image.TotalPixels, stopwatch.ElapsedMilliseconds);
-                        Assert.IsTrue(file.ImageQuality == FileSelection.Ok);
+                        Assert.IsTrue(file.Classification == FileClassification.Color);
                     }
                 }
                 else
                 {
-                    Assert.IsTrue(file.ImageQuality == FileSelection.Video);
+                    Assert.IsTrue(file.Classification == FileClassification.Video);
                 }
 
                 // for images, verify the date can be found in metadata
@@ -808,11 +820,11 @@ namespace Carnassial.UnitTests
                 ImageRow file = fileDatabase.Files.Single(fileInfo.Name, TestConstant.File.HybridVideoDirectoryName);
                 if (file.IsVideo)
                 {
-                    Assert.IsTrue(file.ImageQuality == FileSelection.Video);
+                    Assert.IsTrue(file.Classification == FileClassification.Video);
                 }
                 else
                 {
-                    Assert.IsTrue(file.ImageQuality == FileSelection.Ok);
+                    Assert.IsTrue(file.Classification == FileClassification.Color);
                 }
             }
 

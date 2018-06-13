@@ -69,7 +69,6 @@ namespace Carnassial.Images
             MetadataReadResult thumbnailReadResult = this.TryGetThumbnail(ref preallocatedThumbnail);
             if (thumbnailReadResult != MetadataReadResult.Thumbnail)
             {
-                Debugger.Launch();
                 return new ImageProperties(thumbnailReadResult);
             }
 

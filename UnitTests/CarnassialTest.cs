@@ -2,6 +2,7 @@
 using Carnassial.Database;
 using Carnassial.Images;
 using Carnassial.Interop;
+using Carnassial.Native;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -77,6 +78,8 @@ namespace Carnassial.UnitTests
             using (FileLoadAtom loadAtom = new FileLoadAtom(file.RelativePath, new FileLoad(file), new FileLoad((string)null), 0))
             {
                 loadAtom.CreateJpegs(fileDatabase.FolderPath);
+                MemoryImage thumbnail = null;
+                loadAtom.ClassifyFromThumbnails(Constant.Images.DarkLuminosityThresholdDefault, false, ref thumbnail);
                 loadAtom.ReadDateTimeOffsets(fileDatabase.FolderPath, imageSetTimeZone);
                 metadataReadResult = loadAtom.First.MetadataReadResult;
             }

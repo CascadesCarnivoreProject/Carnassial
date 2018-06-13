@@ -233,7 +233,7 @@ namespace Carnassial.UnitTests
                     using (MemoryImage image = await file.LoadAsync(this.WorkingDirectory))
                     {
                         double luminosity = image.GetLuminosityAndColoration(0, out double coloration);
-                        FileSelection imageQuality = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
+                        FileClassification classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
                         if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
                         {
                             Assert.Fail("{0}: Expected luminosity to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Luminosity, luminosity);
@@ -242,7 +242,7 @@ namespace Carnassial.UnitTests
                         {
                             Assert.Fail("{0}: Expected coloration to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Coloration, coloration);
                         }
-                        Assert.IsTrue(imageQuality == fileExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Quality, imageQuality);
+                        Assert.IsTrue(classification == fileExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Quality, classification);
                     }
                 }
             }

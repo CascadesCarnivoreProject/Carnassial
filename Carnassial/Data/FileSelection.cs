@@ -1,17 +1,20 @@
-﻿namespace Carnassial.Data
+﻿using System;
+
+namespace Carnassial.Data
 {
     public enum FileSelection
     {
-        // file selections also used as image qualities
-        Ok,
+        All,
+        Color,
         Corrupt,
+        Custom,
         Dark,
+        Greyscale,
+        MarkedForDeletion,
         NoLongerAvailable,
         Video,
 
-        // file selections only
-        All,
-        MarkedForDeletion,
-        Custom
+        [Obsolete("Legacy value for backwards compatibility with Carnassial 2.2.0.2 and earlier.")]
+        Ok
     }
 }

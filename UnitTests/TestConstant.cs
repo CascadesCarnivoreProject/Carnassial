@@ -144,7 +144,7 @@ namespace Carnassial.UnitTests
                 {
                     FileName = "BushnellTrophyHD-119677C-20170403-179.JPG",
                     Coloration = 0.5,
-                    Quality = FileSelection.Corrupt
+                    Quality = FileClassification.Corrupt
                 };
 
                 FileExpectation.DaylightBobcat = new FileExpectations(pacificTime)
@@ -153,7 +153,7 @@ namespace Carnassial.UnitTests
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-08-05T08:06:23.000-07:00"),
                     FileName = "BushnellTrophyHD-119677C-20160805-926.JPG",
                     Coloration = 0.072226041956181958,
-                    Quality = FileSelection.Ok
+                    Quality = FileClassification.Color
                 };
 
                 FileExpectation.DaylightCoyote = new FileExpectations(pacificTime)
@@ -162,7 +162,7 @@ namespace Carnassial.UnitTests
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-04-21T06:31:13.000-07:00"),
                     FileName = "BushnellTrophyHDAggressor-119777C-20160421-112.JPG",
                     Luminosity = 0.2765857055787681,
-                    Quality = FileSelection.Ok,
+                    Quality = FileClassification.Color,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName
                 };
 
@@ -172,7 +172,7 @@ namespace Carnassial.UnitTests
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-01-28T11:17:34.000-08:00"),
                     FileName = "Reconyx-HC500-20150128-201.JPG",
                     Luminosity = 0.20386141575831992,
-                    Quality = FileSelection.Ok,
+                    Quality = FileClassification.Color,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName,
                 };
 
@@ -182,7 +182,7 @@ namespace Carnassial.UnitTests
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-02-24T04:59:46.000-08:00"),
                     FileName = "BushnellTrophyHD-119677C-20160224-056.JPG",
                     Luminosity = 0.3138861038100762,
-                    Quality = FileSelection.Ok
+                    Quality = FileClassification.Greyscale
                 };
             }
         }

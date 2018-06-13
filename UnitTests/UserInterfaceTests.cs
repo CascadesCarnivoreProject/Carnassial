@@ -392,7 +392,7 @@ namespace Carnassial.UnitTests
 
                     this.ShowDialog(new DateTimeRereadFromFiles(carnassial.DataHandler.FileDatabase, carnassial.State.Throttles.GetDesiredIntervalBetweenFileLoadProgress(), carnassial));
                     this.ShowDialog(new DateTimeSetTimeZone(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current, carnassial));
-                    this.ShowDialog(new FileCountsByQuality(carnassial.DataHandler.FileDatabase.GetFileCountsBySelection(), carnassial));
+                    this.ShowDialog(new FileCountsByClassification(carnassial.DataHandler.FileDatabase.GetFileCountsByClassification(), carnassial));
                     this.ShowDialog(new EditLog(carnassial.DataHandler.FileDatabase.ImageSet.Log, carnassial));
 
                     this.ShowDialog(new PopulateFieldWithMetadata(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current.GetFilePath(carnassial.DataHandler.FileDatabase.FolderPath), carnassial.State.Throttles.GetDesiredIntervalBetweenFileLoadProgress(), carnassial));

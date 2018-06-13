@@ -62,7 +62,7 @@ namespace Carnassial.Control
                     {
                         // as only the file was deleted, change image quality to FileNoLongerAvailable and clear the delete flag
                         file.DeleteFlag = false;
-                        file.ImageQuality = FileSelection.NoLongerAvailable;
+                        file.Classification = FileClassification.NoLongerAvailable;
                         filesToUpdate.Add(file.ID, Boolean.FalseString, FileSelection.NoLongerAvailable.ToString());
                     }
                 }

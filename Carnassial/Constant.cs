@@ -97,11 +97,13 @@ namespace Carnassial
             public const string NoteTooltip = "Write a textual note";
 
             // standard controls
+            // ImageQuality list contains Ok for backwards compatibility. See remarks for FileSelection.Ok.
             public const string DateTimeTooltip = "Date and time taken";
 
             public const string FileTooltip = "The file name";
             public const string RelativePathTooltip = "Path from the folder containing the template and image data files to the file";
 
+            public const string ImageQualityList = "Color|Ok|Corrupt|Dark|Greyscale|NoLongerAvailable|Video";
             public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
 
             public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
@@ -202,19 +204,10 @@ namespace Carnassial
             public static readonly Uri BaseAddress = new Uri("https://github.com/");
         }
 
-        // shorthands for FileSelection.<value>.ToString()
-        public static class ImageQuality
-        {
-            public const string Dark = "Dark";
-            public const string Ok = "Ok";
-
-            public const string ListOfValues = "Ok|Dark|Corrupt|NoLongerAvailable";
-        }
-
         public static class Images
         {
-            // default threshold where the ratio of pixels below a given darkness in an image is used to determine whether the image is classified as 'dark'
-            public const double DarkLuminosityThresholdDefault = 0.1;
+            // default threshold below which the mean luminosity of pixels in an image is considerd to be dark rather than greyscale
+            public const double DarkLuminosityThresholdDefault = 0.0;
             // difference threshold for masking differences between images, per RGB component per pixel
             public const byte DifferenceThresholdDefault = 20;
             public const byte DifferenceThresholdMax = 255;
@@ -271,14 +264,11 @@ namespace Carnassial
             public const double ImageZoomMaximumRangeMinimum = 2.0;
             public const double ImageZoomMinimum = 1.0;       // minimum amount of zoom
 
-            public const double MagnifyingGlassDefaultFieldOfView = 150.0;
+            public const double MagnifyingGlassDefaultFieldOfView = 300.0;
+            public const int MagnifyingGlassDiameter = 275;
             public const double MagnifyingGlassFieldOfViewIncrement = 1.2;
-            public const double MagnifyingGlassMaximumFieldOfView = 300.0;
-            public const double MagnifyingGlassMinimumFieldOfView = 15.0;
-
-            public const int MagnifyingGlassDiameter = 250;
-            public const int MagnifyingGlassHandleStart = 200;
-            public const int MagnifyingGlassHandleEnd = 250;
+            public const double MagnifyingGlassMaximumFieldOfView = 350.0;
+            public const double MagnifyingGlassMinimumFieldOfView = 20.0;
 
             public const int MarkerDiameter = 10;
             public const int MarkerGlowDiameterIncrease = 14;

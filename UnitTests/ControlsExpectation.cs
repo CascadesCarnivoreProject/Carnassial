@@ -50,7 +50,7 @@ namespace Carnassial.UnitTests
             this.ImageQuality = ControlExpectations.CreateChoice(Constant.DatabaseColumn.ImageQuality, id++);
             this.ImageQuality.Copyable = false;
             this.ImageQuality.DefaultValue = Constant.ControlDefault.Value;
-            this.ImageQuality.List = Constant.ImageQuality.ListOfValues;
+            this.ImageQuality.List = Constant.ControlDefault.ImageQualityList;
             this.ImageQuality.MaxWidth = Constant.ControlDefault.MaxWidth;
             this.ImageQuality.Tooltip = Constant.ControlDefault.ImageQualityTooltip;
             this.ImageQuality.Type = ControlType.ImageQuality;

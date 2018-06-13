@@ -438,8 +438,8 @@ namespace Carnassial
                 return;
             }
 
-            Dictionary<FileSelection, int> counts = this.DataHandler.FileDatabase.GetFileCountsBySelection();
-            FileCountsByQuality imageStats = new FileCountsByQuality(counts, this);
+            Dictionary<FileClassification, int> counts = this.DataHandler.FileDatabase.GetFileCountsByClassification();
+            FileCountsByClassification imageStats = new FileCountsByClassification(counts, this);
             if (onFileLoading)
             {
                 imageStats.Message.Hint = "\u2022 " + imageStats.Message.Hint + Environment.NewLine + "\u2022 If you check don't show this message again this dialog can be turned back on via the Options menu.";
@@ -513,7 +513,7 @@ namespace Carnassial
         {
             if (this.IsFileAvailable())
             {
-                this.MenuEditDeleteCurrentFile.IsEnabled = this.DataHandler.ImageCache.Current.ImageQuality != FileSelection.NoLongerAvailable;
+                this.MenuEditDeleteCurrentFile.IsEnabled = this.DataHandler.ImageCache.Current.Classification != FileClassification.NoLongerAvailable;
                 this.MenuEditDeleteCurrentFileAndData.IsEnabled = true;
             }
             else
@@ -1309,9 +1309,9 @@ namespace Carnassial
             {
                 selection = FileSelection.All;
             }
-            else if (sender == this.MenuSelectOkFiles)
+            else if (sender == this.MenuSelectColorFiles)
             {
-                selection = FileSelection.Ok;
+                selection = FileSelection.Color;
             }
             else if (sender == this.MenuSelectCorruptedFiles)
             {
@@ -1321,13 +1321,21 @@ namespace Carnassial
             {
                 selection = FileSelection.Dark;
             }
+            else if (sender == this.MenuSelectFilesMarkedForDeletion)
+            {
+                selection = FileSelection.MarkedForDeletion;
+            }
             else if (sender == this.MenuSelectFilesNoLongerAvailable)
             {
                 selection = FileSelection.NoLongerAvailable;
             }
-            else if (sender == this.MenuSelectFilesMarkedForDeletion)
+            else if (sender == this.MenuSelectGreyscaleFiles)
             {
-                selection = FileSelection.MarkedForDeletion;
+                selection = FileSelection.Greyscale;
+            }
+            else if (sender == this.MenuSelectVideoFiles)
+            {
+                selection = FileSelection.Video;
             }
             else
             {
@@ -1339,13 +1347,15 @@ namespace Carnassial
 
         private void MenuSelect_SubmenuOpening(object sender, RoutedEventArgs e)
         {
-            Dictionary<FileSelection, int> counts = this.DataHandler.FileDatabase.GetFileCountsBySelection();
+            Dictionary<FileClassification, int> counts = this.DataHandler.FileDatabase.GetFileCountsByClassification();
 
-            this.MenuSelectOkFiles.IsEnabled = counts[FileSelection.Ok] > 0;
-            this.MenuSelectDarkFiles.IsEnabled = counts[FileSelection.Dark] > 0;
-            this.MenuSelectCorruptedFiles.IsEnabled = counts[FileSelection.Corrupt] > 0;
-            this.MenuSelectFilesNoLongerAvailable.IsEnabled = counts[FileSelection.NoLongerAvailable] > 0;
+            this.MenuSelectColorFiles.IsEnabled = counts[FileClassification.Color] > 0;
+            this.MenuSelectCorruptedFiles.IsEnabled = counts[FileClassification.Corrupt] > 0;
+            this.MenuSelectDarkFiles.IsEnabled = counts[FileClassification.Dark] > 0;
+            this.MenuSelectGreyscaleFiles.IsEnabled = counts[FileClassification.Greyscale] > 0;
+            this.MenuSelectFilesNoLongerAvailable.IsEnabled = counts[FileClassification.NoLongerAvailable] > 0;
             this.MenuSelectFilesMarkedForDeletion.IsEnabled = this.DataHandler.FileDatabase.GetFileCount(FileSelection.MarkedForDeletion) > 0;
+            this.MenuSelectVideoFiles.IsEnabled = counts[FileClassification.Video] > 0;
         }
 
         private void MenuViewApplyBookmark_Click(object sender, RoutedEventArgs e)
@@ -1600,8 +1610,8 @@ namespace Carnassial
             }
             else
             {
-                await this.ShowFileAsync(this.DataHandler.FileDatabase.GetFileOrNextFileIndex(mostRecentFileID), false);
                 this.OnFileSelectionChanged();
+                await this.ShowFileAsync(this.DataHandler.FileDatabase.GetFileOrNextFileIndex(mostRecentFileID), false);
             }
 
             // if needed, change to the image set tab
@@ -1659,6 +1669,9 @@ namespace Carnassial
                 case FileSelection.All:
                     status = "(all files selected)";
                     break;
+                case FileSelection.Color:
+                    status = "color images";
+                    break;
                 case FileSelection.Corrupt:
                     status = "corrupted files";
                     break;
@@ -1666,7 +1679,10 @@ namespace Carnassial
                     status = "files matching your custom selection";
                     break;
                 case FileSelection.Dark:
-                    status = "dark files";
+                    status = "dark images";
+                    break;
+                case FileSelection.Greyscale:
+                    status = "greyscale images";
                     break;
                 case FileSelection.MarkedForDeletion:
                     status = "files marked for deletion";
@@ -1674,8 +1690,8 @@ namespace Carnassial
                 case FileSelection.NoLongerAvailable:
                     status = "files no longer available";
                     break;
-                case FileSelection.Ok:
-                    status = "Ok files";
+                case FileSelection.Video:
+                    status = "videos";
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled file selection {0}.", selection));
@@ -1686,12 +1702,14 @@ namespace Carnassial
 
             this.EnableOrDisableMenusAndControls();
             this.MenuSelectAllFiles.IsChecked = selection == FileSelection.All;
+            this.MenuSelectColorFiles.IsChecked = selection == FileSelection.Color;
             this.MenuSelectCorruptedFiles.IsChecked = selection == FileSelection.Corrupt;
+            this.MenuSelectCustom.IsChecked = selection == FileSelection.Custom;
             this.MenuSelectDarkFiles.IsChecked = selection == FileSelection.Dark;
-            this.MenuSelectOkFiles.IsChecked = selection == FileSelection.Ok;
+            this.MenuSelectGreyscaleFiles.IsChecked = selection == FileSelection.Greyscale;
             this.MenuSelectFilesNoLongerAvailable.IsChecked = selection == FileSelection.NoLongerAvailable;
             this.MenuSelectFilesMarkedForDeletion.IsChecked = selection == FileSelection.MarkedForDeletion;
-            this.MenuSelectCustom.IsChecked = selection == FileSelection.Custom;
+            this.MenuSelectVideoFiles.IsChecked = selection == FileSelection.Video;
 
             // after a selection change update the file navigatior slider's range and tick space
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
@@ -1809,6 +1827,11 @@ namespace Carnassial
                 messageBox.Message.StatusImage = MessageBoxImage.Information;
                 switch (selection)
                 {
+                    case FileSelection.Color:
+                        messageBox.Message.Problem = "Color images were previously selected but no files are currently classified as color so nothing can be shown.";
+                        messageBox.Message.Reason = "No files are classified as color images.";
+                        messageBox.Message.Hint = "If you have files you think should be marked as color, set their ImageQuality field to Color and then reselect color files.";
+                        break;
                     case FileSelection.Corrupt:
                         messageBox.Message.Problem = "Corrupted files were previously selected but no files are currently corrupted, so nothing can be shown.";
                         messageBox.Message.Reason = "No files have their ImageQuality set to Corrupted.";
@@ -1824,6 +1847,11 @@ namespace Carnassial
                         messageBox.Message.Reason = "No files have their ImageQuality set to Dark.";
                         messageBox.Message.Hint = "If you have files you think should be marked as Dark, set their ImageQuality to Dark and then reselect dark files.";
                         break;
+                    case FileSelection.Greyscale:
+                        messageBox.Message.Problem = "Greyscale images were previously selected but no files are currently classified as greyscale so nothing can be shown.";
+                        messageBox.Message.Reason = "No files are classified as greyscale images.";
+                        messageBox.Message.Hint = "If you have files you think should be marked as greyscale, set their ImageQuality field to Greyscale and then reselect greyscale files.";
+                        break;
                     case FileSelection.NoLongerAvailable:
                         messageBox.Message.Problem = "Files no londer available were previously selected but all files are availale so nothing can be shown.";
                         messageBox.Message.Reason = "No files have their ImageQuality field set to FilesNoLongerAvailable.";
@@ -1834,10 +1862,10 @@ namespace Carnassial
                         messageBox.Message.Reason = "No files have their Delete? box checked.";
                         messageBox.Message.Hint = "If you have files you think should be marked for deletion, check their Delete? box and then reselect files marked for deletion.";
                         break;
-                    case FileSelection.Ok:
-                        messageBox.Message.Problem = "Ok files were previously selected but no files are currently OK so nothing can be shown.";
-                        messageBox.Message.Reason = "No files have their ImageQuality field set to Ok.";
-                        messageBox.Message.Hint = "If you have files you think should be marked as Ok, set their ImageQuality field to Ok and then reselect Ok files.";
+                    case FileSelection.Video:
+                        messageBox.Message.Problem = "Videos were previously selected but no files are currently classified as videos so nothing can be shown.";
+                        messageBox.Message.Reason = "No files are classified as videos.";
+                        messageBox.Message.Hint = "If you have files you think should be marked as videos, set their ImageQuality field to Video and then reselect video files.";
                         break;
                     default:
                         throw new NotSupportedException(String.Format("Unhandled selection {0}.", selection));
@@ -1848,6 +1876,9 @@ namespace Carnassial
                 selection = FileSelection.All;
                 this.DataHandler.FileDatabase.SelectFiles(selection);
             }
+
+            // update UI for current selection
+            this.OnFileSelectionChanged();
 
             // display the specified file or, if it's no longer selected, the next closest one
             // ShowFileAsync() handles empty image sets, so those don't need to be checked for here.
@@ -1862,8 +1893,6 @@ namespace Carnassial
                     this.AddCommand(selectionChange);
                 }
             }
-
-            this.OnFileSelectionChanged();
         }
 
         // various dialogs cam perform a bulk edit, after which the current file's data needs to be refreshed

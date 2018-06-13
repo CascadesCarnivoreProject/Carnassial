@@ -46,7 +46,7 @@ namespace Carnassial.Images
             ImageProperties firstProperties = null;
             if (this.First.File.IsVideo)
             {
-                this.First.File.ImageQuality = FileSelection.Video;
+                this.First.File.Classification = FileClassification.Video;
             }
             else
             {
@@ -66,7 +66,7 @@ namespace Carnassial.Images
                 }
                 if (firstProperties.CanClassify)
                 {
-                    this.First.File.ImageQuality = firstProperties.EvaluateNewClassification(darkLuminosityThreshold);
+                    this.First.File.Classification = firstProperties.EvaluateNewClassification(darkLuminosityThreshold);
                     this.First.MetadataReadResult |= MetadataReadResult.Classification;
                 }
             }
@@ -75,7 +75,7 @@ namespace Carnassial.Images
             {
                 if (this.Second.File.IsVideo)
                 {
-                    this.Second.File.ImageQuality = FileSelection.Video;
+                    this.Second.File.Classification = FileClassification.Video;
                 }
                 else
                 {
@@ -90,7 +90,7 @@ namespace Carnassial.Images
                         this.Second.MetadataReadResult |= MetadataReadResult.Thumbnail;
                         if (thumbnailProperties.CanClassify)
                         {
-                            this.Second.File.ImageQuality = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
+                            this.Second.File.Classification = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
                             this.Second.MetadataReadResult |= MetadataReadResult.Classification;
                         }
                     }
@@ -105,11 +105,11 @@ namespace Carnassial.Images
             Debug.Assert(this.First.File != null, "First file unexpectedly null.");
             if (this.First.File.IsVideo)
             {
-                this.First.File.ImageQuality = FileSelection.Video;
+                this.First.File.Classification = FileClassification.Video;
             }
             else if (skipDarkCheck)
             {
-                this.First.File.ImageQuality = FileSelection.Ok;
+                this.First.File.Classification = FileClassification.Color;
             }
             else
             {
@@ -124,7 +124,7 @@ namespace Carnassial.Images
                     this.First.MetadataReadResult |= MetadataReadResult.Thumbnail;
                     if (thumbnailProperties.CanClassify)
                     {
-                        this.First.File.ImageQuality = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
+                        this.First.File.Classification = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
                         this.First.MetadataReadResult |= MetadataReadResult.Classification;
                     }
                 }
@@ -134,11 +134,11 @@ namespace Carnassial.Images
             {
                 if (this.Second.File.IsVideo)
                 {
-                    this.Second.File.ImageQuality = FileSelection.Video;
+                    this.Second.File.Classification = FileClassification.Video;
                 }
                 else if (skipDarkCheck)
                 {
-                    this.Second.File.ImageQuality = FileSelection.Ok;
+                    this.Second.File.Classification = FileClassification.Color;
                 }
                 else
                 {
@@ -153,7 +153,7 @@ namespace Carnassial.Images
                         this.Second.MetadataReadResult |= MetadataReadResult.Thumbnail;
                         if (thumbnailProperties.CanClassify)
                         {
-                            this.Second.File.ImageQuality = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
+                            this.Second.File.Classification = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
                             this.Second.MetadataReadResult |= MetadataReadResult.Classification;
                         }
                     }
@@ -237,7 +237,7 @@ namespace Carnassial.Images
             if (this.First.File.IsVideo == false)
             {
                 Debug.Assert(this.First.Jpeg != null, "First jpeg unexpectedly null.");
-                if (this.First.Jpeg.TryGetMetadata())
+                if ((this.First.Jpeg.Metadata != null) || this.First.Jpeg.TryGetMetadata())
                 {
                     this.First.MetadataReadResult = this.First.File.TryReadDateTimeFromMetadata(this.First.Jpeg.Metadata, imageSetTimeZone);
                 }
@@ -264,7 +264,7 @@ namespace Carnassial.Images
                 else
                 {
                     Debug.Assert(this.Second.Jpeg != null, "Second jpeg unexpectedly null.");
-                    if (this.Second.Jpeg.TryGetMetadata())
+                    if ((this.Second.Jpeg.Metadata != null) || this.Second.Jpeg.TryGetMetadata())
                     {
                         this.Second.MetadataReadResult = this.Second.File.TryReadDateTimeFromMetadata(this.Second.Jpeg.Metadata, imageSetTimeZone);
                     }

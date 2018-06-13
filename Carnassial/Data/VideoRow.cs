@@ -1,5 +1,6 @@
 ﻿using Carnassial.Native;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Carnassial.Data
@@ -9,12 +10,16 @@ namespace Carnassial.Data
         public VideoRow(string fileName, string relativePath, FileTable table)
             : base(fileName, relativePath, table)
         {
-            this.ImageQuality = FileSelection.Video;
+            this.Classification = FileClassification.Video;
         }
 
         public override bool IsVideo
         {
-            get { return true; }
+            get
+            {
+                Debug.Assert((this.Classification != FileClassification.Dark) && (this.Classification != FileClassification.Color), "Video unexpectedly classified as image.");
+                return true;
+            }
         }
 
         #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously

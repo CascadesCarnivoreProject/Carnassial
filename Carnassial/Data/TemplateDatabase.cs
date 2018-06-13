@@ -316,17 +316,6 @@ namespace Carnassial.Data
             return null;
         }
 
-        /// <summary>Given a data label, get the id of the corresponding data entry control</summary>
-        protected long GetControlID(string dataLabel)
-        {
-            ControlRow control = this.FindControl(dataLabel);
-            if (control == null)
-            {
-                return -1;
-            }
-            return control.ID;
-        }
-
         protected virtual void OnDatabaseCreated(TemplateDatabase other)
         {
             using (SQLiteConnection connection = this.Database.CreateConnection())
@@ -396,6 +385,7 @@ namespace Carnassial.Data
                 ControlRow utcOffset = new ControlRow(ControlType.UtcOffset, Constant.DatabaseColumn.UtcOffset, ++controlOrder);
                 ControlRow imageQuality = new ControlRow(ControlType.FixedChoice, Constant.DatabaseColumn.ImageQuality, ++controlOrder)
                 {
+                    List = Constant.ControlDefault.ImageQualityList,
                     Tooltip = Constant.ControlDefault.ImageQualityTooltip,
                     Copyable = false,
                 };
@@ -447,6 +437,13 @@ namespace Carnassial.Data
 
                 this.GetControlsSortedByControlOrder(connection);
                 this.LoadImageSet(connection);
+
+                ControlRow classification = this.FindControl(Constant.DatabaseColumn.ImageQuality);
+                if (String.Equals(classification.List, Constant.ControlDefault.ImageQualityList, StringComparison.Ordinal) == false)
+                {
+                    classification.List = Constant.ControlDefault.ImageQualityList;
+                    this.SyncControlToDatabase(classification);
+                }
             }
             return true;
         }

@@ -7,30 +7,31 @@ using System.Windows;
 namespace Carnassial.Dialog
 {
     /// <summary>
-    /// Dialog to show the user some statistics about the images
+    /// Displays breakdown of file classifications.
     /// </summary>
-    public partial class FileCountsByQuality : Window
+    public partial class FileCountsByClassification : Window
     {
-        /// <summary>
-        /// Show the user some statistics about the images in a dialog box
-        /// </summary>
-        public FileCountsByQuality(Dictionary<FileSelection, int> counts, Window owner)
+        public FileCountsByClassification(Dictionary<FileClassification, int> fileCountByClassification, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
             this.Owner = owner;
 
-            // Fill in the counts
-            int ok = counts[FileSelection.Ok];
-            this.Ok.Text = String.Format("{0,5}", ok);
-            int fileNoLongerAvailable = counts[FileSelection.NoLongerAvailable];
+            // fill in the counts
+            int color = fileCountByClassification[FileClassification.Color];
+            this.Color.Text = String.Format("{0,5}", color);
+            int greyscale = fileCountByClassification[FileClassification.Greyscale];
+            this.Greyscale.Text = String.Format("{0,5}", greyscale);
+            int video = fileCountByClassification[FileClassification.Video];
+            this.Video.Text = String.Format("{0,5}", video);
+            int fileNoLongerAvailable = fileCountByClassification[FileClassification.NoLongerAvailable];
             this.FileNoLongerAvailable.Text = String.Format("{0,5}", fileNoLongerAvailable);
-            int dark = counts[FileSelection.Dark];
+            int dark = fileCountByClassification[FileClassification.Dark];
             this.Dark.Text = String.Format("{0,5}", dark);
-            int corrupted = counts[FileSelection.Corrupt];
+            int corrupted = fileCountByClassification[FileClassification.Corrupt];
             this.Corrupted.Text = String.Format("{0,5}", corrupted);
 
-            int total = ok + dark + corrupted + fileNoLongerAvailable;
+            int total = color + greyscale + dark + video + corrupted + fileNoLongerAvailable;
             this.Total.Text = String.Format("{0,5}", total);
         }
 

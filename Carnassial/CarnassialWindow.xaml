@@ -263,15 +263,20 @@
 
                 <!-- select menu -->
                 <MenuItem Name="MenuSelect" Header="_Select" IsEnabled="False" SubmenuOpened="MenuSelect_SubmenuOpening" ToolTip="Select a subset of files.">
-                    <MenuItem Name="MenuSelectAllFiles" IsCheckable="True" IsChecked="True" Header="_All files" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Shows all files, including corrupted and dark ones." />
-                    <MenuItem Name="MenuSelectOkFiles" IsCheckable="True" IsChecked="False" Header="_Ok files" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Exlcudes dark, corrupted, or missing files." />
-                    <MenuItem Name="MenuSelectDarkFiles" IsCheckable="True" IsChecked="False" Header="_Dark files" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only dark images." />
-                    <MenuItem Name="MenuSelectCorruptedFiles" IsCheckable="True" IsChecked="False" Header="_Corrupted files" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only corrupted images." />
-                    <MenuItem Name="MenuSelectFilesNoLongerAvailable" IsCheckable="True" IsChecked="False" Header="_Missing files" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show records for files no longer available." />
-                    <MenuItem Name="MenuSelectFilesMarkedForDeletion" IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only those marked for deletion." />
+                    <MenuItem Name="MenuSelectAllFiles" IsCheckable="True" IsChecked="True" Header="_All files" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Shows all files, including videos corrupted and dark ones." />
                     <MenuItem Name="MenuSelectCustom" IsCheckable="True" IsChecked="False" Header="_Custom..." Click="MenuSelectCustom_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Create a custom selection." />
                     <Separator />
-                    <MenuItem Name="MenuItemImageCounts" Header="Show _file counts..." Click="MenuSelectFileCounts_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Displays statistics on the number of files and their types." />
+                    <MenuItem Name="MenuSelectColorFiles" IsCheckable="True" IsChecked="False" Header="Colo_r images" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Shows only color images." />
+                    <MenuItem Name="MenuSelectGreyscaleFiles" IsCheckable="True" IsChecked="False" Header="_Greyscale images" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Shows only greyscale images." />
+                    <MenuItem Name="MenuSelectDarkFiles" IsCheckable="True" IsChecked="False" Header="_Dark images" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only dark images." />
+                    <Separator />
+                    <MenuItem Name="MenuSelectVideoFiles" IsCheckable="True" IsChecked="False" Header="_Videos" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only dark images." />
+                    <Separator />
+                    <MenuItem Name="MenuSelectCorruptedFiles" IsCheckable="True" IsChecked="False" Header="Corrup_ted files" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only corrupted files." />
+                    <MenuItem Name="MenuSelectFilesNoLongerAvailable" IsCheckable="True" IsChecked="False" Header="_Missing files" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show records for files no longer available." />
+                    <MenuItem Name="MenuSelectFilesMarkedForDeletion" IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only those marked for deletion." />
+                    <Separator />
+                    <MenuItem Name="MenuItemImageCounts" Header="Show _file counts..." Click="MenuSelectFileCounts_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Displays statistics on the number of files by their classifications." />
                 </MenuItem>
 
                 <!-- help menu -->

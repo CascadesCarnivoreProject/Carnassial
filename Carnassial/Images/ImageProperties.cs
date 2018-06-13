@@ -28,16 +28,16 @@ namespace Carnassial.Images
             get { return (this.Coloration >= 0.0) && (this.Luminosity >= 0.0); }
         }
 
-        public FileSelection EvaluateNewClassification(double darkLuminosityThreshold)
+        public FileClassification EvaluateNewClassification(double darkLuminosityThreshold)
         {
             if (this.CanClassify == false)
             {
                 switch (this.MetadataResult)
                 {
                     case MetadataReadResult.Failed:
-                        return FileSelection.Corrupt;
+                        return FileClassification.Corrupt;
                     case MetadataReadResult.None:
-                        return FileSelection.NoLongerAvailable;
+                        return FileClassification.NoLongerAvailable;
                     default:
                         throw new NotSupportedException("Unhandled metadata result " + this.MetadataResult.ToString());
                 }
@@ -48,13 +48,16 @@ namespace Carnassial.Images
             // - pick up of manufacturer logos or info bar color not excluded in the skip above
             // - jpeg quantization
             // - not quite greyscale output from the camera
-            if ((this.Coloration < Constant.Images.GreyscaleColorationThreshold) &&
-                (this.Luminosity < darkLuminosityThreshold))
+            if (this.Coloration < Constant.Images.GreyscaleColorationThreshold)
             {
-                // color images are never considered to be dark
-                return FileSelection.Dark;
+                if (this.Luminosity < darkLuminosityThreshold)
+                {
+                    // color images are never considered to be dark
+                    return FileClassification.Dark;
+                }
+                return FileClassification.Greyscale;
             }
-            return FileSelection.Ok;
+            return FileClassification.Color;
         }
 
         public string GetClassificationDescription()

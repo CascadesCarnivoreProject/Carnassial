@@ -45,24 +45,30 @@ namespace Carnassial.Images
             this.lensAngle = 0.0;
             this.magnifyingGlassAngle = 0.0;
 
-            // Create the handle of the magnifying glass
+            LinearGradientBrush linearGradientBrush = new LinearGradientBrush()
+            {
+                StartPoint = new Point(0, 0),
+                EndPoint = new Point(0, 1),
+            };
+            Color gray67percent = (Color)ColorConverter.ConvertFromString("#aaaaaa");
+            linearGradientBrush.GradientStops.Add(new GradientStop(gray67percent, 0.0));
+            Color gray07percent = (Color)ColorConverter.ConvertFromString("#111111");
+            linearGradientBrush.GradientStops.Add(new GradientStop(gray07percent, 1.0));
+
+            // create the handle of the magnifying glass
+            // In this sense, the magnifying glass is a square area with the handle extending along the first quadrant's diagonal 
+            // from the edge of the lens to the corner of the square. Its coordinates are therefore [ sqrt(2)/2 D, sqrt(2)/2 D, D, D]
+            // where D is the magnifying glass's diameter. sqrt(2)/2 is rounded down to 0.7 below to ensure the inner end of the 
+            // handle isn't visible.
             Line handle = new Line()
             {
                 StrokeThickness = 5,
-                X1 = Constant.MarkableCanvas.MagnifyingGlassHandleStart,
-                Y1 = Constant.MarkableCanvas.MagnifyingGlassHandleStart,
-                X2 = Constant.MarkableCanvas.MagnifyingGlassHandleEnd,
-                Y2 = Constant.MarkableCanvas.MagnifyingGlassHandleEnd
+                X1 = 0.7 * Constant.MarkableCanvas.MagnifyingGlassDiameter,
+                Y1 = 0.7 * Constant.MarkableCanvas.MagnifyingGlassDiameter,
+                X2 = Constant.MarkableCanvas.MagnifyingGlassDiameter,
+                Y2 = Constant.MarkableCanvas.MagnifyingGlassDiameter
             };
-            LinearGradientBrush handleBrush = new LinearGradientBrush()
-            {
-                StartPoint = new Point(0.78786, 1),
-                EndPoint = new Point(1, 0.78786),
-            };
-            handleBrush.GradientStops.Add(new GradientStop(Colors.DarkGreen, 0));
-            handleBrush.GradientStops.Add(new GradientStop(Colors.LightGreen, 0.9));
-            handleBrush.GradientStops.Add(new GradientStop(Colors.Green, 1));
-            handle.Stroke = handleBrush;
+            handle.Stroke = linearGradientBrush;
             this.Children.Add(handle);
 
             // Create the lens of the magnifying glass
@@ -85,7 +91,7 @@ namespace Carnassial.Images
                 StrokeThickness = 3
             };
 
-            // fill the lens
+            // fill and outline the lens
             VisualBrush lensFill = new VisualBrush()
             {
                 ViewboxUnits = BrushMappingMode.Absolute,
@@ -94,17 +100,7 @@ namespace Carnassial.Images
                 Viewport = new Rect(0, 0, 1, 1)
             };
             this.magnifierLens.Fill = lensFill;
-
-            // outline the lens
-            LinearGradientBrush outlineBrush = new LinearGradientBrush()
-            {
-                StartPoint = new Point(0, 0),
-                EndPoint = new Point(0, 1)
-            };
-            ColorConverter cc = new ColorConverter();
-            outlineBrush.GradientStops.Add(new GradientStop((Color)cc.ConvertFrom("#AAA"), 0));
-            outlineBrush.GradientStops.Add(new GradientStop((Color)cc.ConvertFrom("#111"), 1));
-            this.magnifierLens.Stroke = outlineBrush;
+            this.magnifierLens.Stroke = linearGradientBrush;
             this.lensCanvas.Children.Add(this.magnifierLens);
 
             Ellipse lensImage = new Ellipse();
