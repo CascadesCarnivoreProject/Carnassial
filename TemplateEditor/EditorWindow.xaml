@@ -5,10 +5,9 @@
         xmlns:control="clr-namespace:Carnassial.Control;assembly=Carnassial"
         xmlns:local="clr-namespace:Carnassial.Editor"
         xmlns:util="clr-namespace:Carnassial.Editor.Util"
-        xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         AutomationProperties.AutomationId="CarnassialTemplateEditor" Icon="Editor.ico" 
         Closing="Window_Closing" Loaded="Window_Loaded" Style="{StaticResource MainWindow}"
-        Height="900" Width="1350" MinHeight="560" MinWidth="800">
+        Height="860" Width="1388" MinHeight="560" MinWidth="800">
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
         <CommandBinding Command="{x:Static SystemCommands.MaximizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MaximizeWindow_Execute" />
@@ -215,24 +214,37 @@
                             <RowDefinition Height="Auto" MinHeight="125" />
                         </Grid.RowDefinitions>
 
-                        <!-- If you change the visible rows or header names, please check UpdateCellColors() constants to ensure they match new conventions -->
-                        <DataGrid Name="TemplateDataGrid" Grid.Row="0" RowHeight="25" VirtualizingStackPanel.IsVirtualizing="False"
+                        <DataGrid Name="ControlDataGrid" Grid.Row="0" RowHeight="25" VirtualizingStackPanel.IsVirtualizing="False"
                                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" 
-                                  CellEditEnding="TemplateDataGrid_CellEditEnding"
-                                  ColumnHeaderStyle="{DynamicResource VerticalGridHeaderStyle}"
-                                  LayoutUpdated="TemplateDataGrid_LayoutUpdated"
-                                  PreviewTextInput="TemplateDataGrid_PreviewTextInput" 
-                                  SelectionChanged="TemplateDataGrid_SelectionChanged" SelectionMode="Single">
+                                  CellEditEnding="ControlDataGrid_CellEditEnding"
+                                  ColumnHeaderStyle="{DynamicResource HeaderStyle}"
+                                  LayoutUpdated="ControlDataGrid_LayoutUpdated"
+                                  PreviewTextInput="ControlDataGrid_PreviewTextInput" 
+                                  RowEditEnding="ControlDataGrid_RowEditEnding"
+                                  SelectionChanged="ControlDataGrid_SelectionChanged"
+                                  SelectionMode="Single">
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="Background" Value="{StaticResource ControlGridDisabledCellBackground}" />
+                                            <Setter Property="Foreground" Value="{StaticResource ControlGridDisabledCellForeground}" />
+                                        </Trigger>
+                                        <Trigger Property="IsReadOnly" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource ControlGridDisabledCellBackground}" />
+                                            <Setter Property="Foreground" Value="{StaticResource ControlGridDisabledCellForeground}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
                             <DataGrid.Resources>
-                                <Style x:Key="VerticalGridHeaderStyle" TargetType="DataGridColumnHeader">
-                                    <Setter Property="VerticalContentAlignment" Value="Bottom"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
+                                <Style x:Key="HeaderStyle" TargetType="DataGridColumnHeader">
+                                    <Setter Property="VerticalContentAlignment" Value="Bottom" />
+                                    <Setter Property="FontWeight" Value="Bold" />
                                 </Style>
                             </DataGrid.Resources>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID" Binding="{Binding Path=ID}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
-                                <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
-                                <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
                                 <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type}" CanUserSort="False" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
@@ -269,16 +281,11 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn MinWidth="40" Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                <DataGridTextColumn MinWidth="40" Header="Data Label" Binding="{Binding Path=DataLabel, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The value the field will be set to by default."/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Type}" Value="Counter">
-                                                    <Setter Property="TextAlignment" Value="Right"/>
-                                                    <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
+                                            <Setter Property="ToolTip" Value="The text describing this field as written in the output file. Will be the same as the Label if its left empty."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
@@ -290,55 +297,14 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn MinWidth="40" Header="Data Label" Binding="{Binding Path=DataLabel, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The text describing this field as written in the output file. Will be the same as the Label if its left empty."/>
-                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn MinWidth="50" Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource TrimmingConverter}}" Width="*" CanUserSort="False">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The help text describing this field as shown in the user interface."/>
-                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn MinWidth="40" Header="Max Width" Binding="{Binding Path=MaxWidth}" CanUserSort="False">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The width of the data entry field as shown in the user interface."/>
-                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" Binding="{Binding Path=Copyable}" CanUserSort="False">
-                                    <DataGridCheckBoxColumn.CellStyle>
-                                        <Style TargetType="{x:Type DataGridCell}">
-                                            <Setter Property="ToolTip" Value="Whether the data value from the previous will be copied to the current file if the user selects the 'Copy' button in Carnassial."/>
-                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
-                                        </Style>
-                                    </DataGridCheckBoxColumn.CellStyle>
-                                </DataGridCheckBoxColumn>
-                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" Binding="{Binding Path=Visible}" CanUserSort="False">
-                                    <DataGridCheckBoxColumn.CellStyle>
-                                        <Style TargetType="{x:Type DataGridCell}">
-                                            <Setter Property="ToolTip" Value="Whether this item will be displayed in the user interface."/>
-                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
-                                        </Style>
-                                    </DataGridCheckBoxColumn.CellStyle>
-                                </DataGridCheckBoxColumn>
-
-                                <DataGridTemplateColumn MinWidth="40" Header="List" Width="80" CanUserSort="False">
+                                <DataGridTemplateColumn MinWidth="40" Header="Values" Width="80" CanUserSort="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Button Click="DefineList_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Content="Define List" Margin="1" Tag="{Binding Path=ControlOrder}">
                                                 <Button.Style>
                                                     <Style TargetType="Button">
                                                         <Style.Triggers>
-                                                            <!-- hide define list button for most controls as they apply only to counters and user defined notes -->
+                                                            <!-- hide define list button for most standard controls it applies to counters and user defined notes -->
                                                             <DataTrigger Binding="{Binding DataLabel}" Value="File">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                             </DataTrigger>
@@ -354,12 +320,18 @@
                                                             <DataTrigger Binding="{Binding Type}" Value="Counter">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                             </DataTrigger>
+                                                            <!-- legacy back compat with older templates where DeleteFlag has Type=DeleteFlag rather than Flag -->
                                                             <DataTrigger Binding="{Binding DataLabel}" Value="DeleteFlag">
-                                                                <!-- back compat with older templates where DeleteFlag has Type=DeleteFlag rather than Flag -->
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
+                                                                <Setter Property="ToolTip" Value="Define the values which can be chosen for this field."/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Type}" Value="Flag">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Note">
+                                                                <Setter Property="ToolTip" Value="Define the initial list of autocompletions for this field."/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Type}" Value="UtcOffset">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -371,6 +343,74 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
+                                <DataGridTextColumn MinWidth="40" Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="{x:Type TextBlock}">
+                                            <Setter Property="ToolTip" Value="The value the field will be set to by default."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                                <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                                <DataGridTextColumn MinWidth="50" Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource TrimmingConverter}}" Width="*" CanUserSort="False">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="{x:Type TextBlock}">
+                                            <Setter Property="ToolTip" Value="The help text describing this field as shown in the user interface."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridCheckBoxColumn MinWidth="25" Header="Analysis Label" Binding="{Binding Path=AnalysisLabel, Converter={StaticResource TrimmingConverter}}" Width="Auto" CanUserSort="False">
+                                    <DataGridCheckBoxColumn.CellStyle>
+                                        <Style TargetType="{x:Type DataGridCell}">
+                                            <Setter Property="ToolTip" Value="Whether the value of this field is shown as a reminder on analysis buttons."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Background" Value="{StaticResource ControlGridDisabledCellBackground}" />
+                                                    <Setter Property="Foreground" Value="{StaticResource ControlGridDisabledCellForeground}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridCheckBoxColumn.CellStyle>
+                                </DataGridCheckBoxColumn>
+                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" Binding="{Binding Path=Copyable}" CanUserSort="False">
+                                    <DataGridCheckBoxColumn.CellStyle>
+                                        <Style TargetType="{x:Type DataGridCell}">
+                                            <Setter Property="ToolTip" Value="Whether the data value from the previous file will be copied to the current file if the user selects the 'Copy' button in Carnassial."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Background" Value="{StaticResource ControlGridDisabledCellBackground}" />
+                                                    <Setter Property="Foreground" Value="{StaticResource ControlGridDisabledCellForeground}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridCheckBoxColumn.CellStyle>
+                                </DataGridCheckBoxColumn>
+                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" Binding="{Binding Path=Visible}" CanUserSort="False">
+                                    <DataGridCheckBoxColumn.CellStyle>
+                                        <Style TargetType="{x:Type DataGridCell}">
+                                            <Setter Property="ToolTip" Value="Whether this item will be displayed in the user interface."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Background" Value="{StaticResource ControlGridDisabledCellBackground}" />
+                                                    <Setter Property="Foreground" Value="{StaticResource ControlGridDisabledCellForeground}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridCheckBoxColumn.CellStyle>
+                                </DataGridCheckBoxColumn>
+                                <DataGridTextColumn MinWidth="40" Header="Max Width" Binding="{Binding Path=MaxWidth}" CanUserSort="False">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="{x:Type TextBlock}">
+                                            <Setter Property="ToolTip" Value="The width of the data entry field as shown in the user interface."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                         <DockPanel Name="RowControls" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="10,10,10,10">
@@ -407,12 +447,16 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Text="Drag and drop the controls below by their labels to order them to your preference." Grid.Row="0" Margin="4,2,4,4" TextWrapping="Wrap" />
                         <ScrollViewer Background="{StaticResource ApplicationBackgroundBrush}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Grid.Row="1">
                             <control:DataEntryControls x:Name="DataEntryControls" ControlOrderChangedByDragDrop="DataEntryControls_ControlOrderChangedByDragDrop" />
                         </ScrollViewer>
                         <!-- grid row 2 unused for layout consistency with CarnassialWindow; see remarks in CarnassialWindow.xaml -->
+                        <control:AnalysisButtons x:Name="AnalysisButtons" Grid.Column="0" Grid.Row="3" />
+                        <TextBlock Name="MessageBar" Background="{StaticResource ApplicationBorderBackgroundBrush}"  Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="0" Grid.Row="4" MinHeight="60" Padding="10,5,2,5" TextWrapping="Wrap" />
                     </Grid>
                 </Grid>
             </TabItem>

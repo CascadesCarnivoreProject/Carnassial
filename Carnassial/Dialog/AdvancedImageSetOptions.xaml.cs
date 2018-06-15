@@ -27,7 +27,7 @@ namespace Carnassial.Dialog
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             this.database.ImageSet.TimeZone = this.TimeZones.TimeZonesByDisplayIdentifier[(string)this.TimeZones.SelectedItem].Id;
-            this.database.SyncImageSetToDatabase();
+            this.database.TrySyncImageSetToDatabase();
 
             this.DialogResult = true;
         }

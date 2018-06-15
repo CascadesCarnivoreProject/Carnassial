@@ -113,7 +113,7 @@ namespace Carnassial.Data
         public void AppendToImageSetLog(StringBuilder logEntry)
         {
             this.ImageSet.Log += logEntry;
-            this.SyncImageSetToDatabase();
+            this.TrySyncImageSetToDatabase();
         }
 
         public AddFilesTransaction CreateAddFilesTransaction()
@@ -521,58 +521,80 @@ namespace Carnassial.Data
                 return false;
             }
 
-            List<string> templateDataLabels = templateDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
-            List<string> dataLabels = this.GetDataLabelsExceptIDInSpreadsheetOrder();
-            List<string> dataLabelsInTemplateButNotFileDatabase = templateDataLabels.Except(dataLabels).ToList();
-            foreach (string dataLabel in dataLabelsInTemplateButNotFileDatabase)
+            // check if any controls present in the file database were removed from the template
+            List<string> fileDataLabels = this.Controls.Select(control => control.DataLabel).ToList();
+            List<string> templateDataLabels = templateDatabase.Controls.Select(control => control.DataLabel).ToList();
+            List<string> dataLabelsInFileButNotTemplateDatabase = fileDataLabels.Except(templateDataLabels).ToList();
+            foreach (string dataLabel in dataLabelsInFileButNotTemplateDatabase)
             {
-                this.ControlSynchronizationIssues.Add("- A field with data label '" + dataLabel + "' was found in the template, but nothing matches that in the file database." + Environment.NewLine);
-            }
-            List<string> dataLabelsInIFileButNotTemplateDatabase = dataLabels.Except(templateDataLabels).ToList();
-            foreach (string dataLabel in dataLabelsInIFileButNotTemplateDatabase)
-            {
+                // columns dropped from the template
                 this.ControlSynchronizationIssues.Add("- A field with data label '" + dataLabel + "' was found in the file database, but nothing matches that in the template." + Environment.NewLine);
             }
 
-            if (this.ControlSynchronizationIssues.Count == 0)
+            // check existing controls for compatibility
+            foreach (string dataLabel in fileDataLabels)
             {
-                foreach (string dataLabel in dataLabels)
+                ControlRow fileDatabaseControl = this.FindControl(dataLabel);
+                ControlRow templateControl = templateDatabase.FindControl(dataLabel);
+
+                if (fileDatabaseControl.Type != templateControl.Type)
                 {
-                    ControlRow fileDatabaseControl = this.FindControl(dataLabel);
-                    ControlRow templateControl = templateDatabase.FindControl(dataLabel);
+                    this.ControlSynchronizationIssues.Add(String.Format("- Field with data label '{0}' is of type '{1}' in the file database but of type '{2}' in the template.{3}", dataLabel, fileDatabaseControl.Type, templateControl.Type, Environment.NewLine));
+                }
 
-                    if (fileDatabaseControl.Type != templateControl.Type)
+                if (fileDatabaseControl.Type == ControlType.FixedChoice)
+                {
+                    List<string> fileDatabaseChoices = fileDatabaseControl.GetChoices();
+                    List<string> templateChoices = templateControl.GetChoices();
+                    List<string> choiceValuesRemovedInTemplate = fileDatabaseChoices.Except(templateChoices).ToList();
+                    foreach (string removedValue in choiceValuesRemovedInTemplate)
                     {
-                        this.ControlSynchronizationIssues.Add(String.Format("- Field with data label '{0}' is of type '{1}' in the file database but of type '{2}' in the template.{3}", dataLabel, fileDatabaseControl.Type, templateControl.Type, Environment.NewLine));
-                    }
-
-                    if (fileDatabaseControl.Type == ControlType.FixedChoice)
-                    {
-                        List<string> fileDatabaseChoices = fileDatabaseControl.GetChoices();
-                        List<string> templateChoices = templateControl.GetChoices();
-                        List<string> choiceValuesRemovedInTemplate = fileDatabaseChoices.Except(templateChoices).ToList();
-                        foreach (string removedValue in choiceValuesRemovedInTemplate)
-                        {
-                            this.ControlSynchronizationIssues.Add(String.Format("- Choice with data label '{0}' allows the value '{1}' in the file database but not in the template.{2}", dataLabel, removedValue, Environment.NewLine));
-                        }
+                        this.ControlSynchronizationIssues.Add(String.Format("- Choice with data label '{0}' allows the value '{1}' in the file database but not in the template.{2}", dataLabel, removedValue, Environment.NewLine));
                     }
                 }
             }
 
-            // if there are no synchronization difficulties synchronize the file database's TemplateTable with the template's TemplateTable
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
+                // if there are no synchronization difficulties synchronize existing controls in the file database's 
+                // Control table to those in the template's Control table
                 if (this.ControlSynchronizationIssues.Count == 0)
                 {
-                    foreach (string dataLabel in dataLabels)
+                    using (SQLiteTransaction transaction = connection.BeginTransaction())
                     {
-                        ControlRow fileDatabaseControl = this.FindControl(dataLabel);
-                        ControlRow templateControl = templateDatabase.FindControl(dataLabel);
-                        if (fileDatabaseControl.Synchronize(templateControl))
+                        // synchronize any changes in existing controls
+                        foreach (string dataLabel in fileDataLabels)
                         {
-                            this.SyncControlToDatabase(fileDatabaseControl);
+                            ControlRow thisControl = this.FindControl(dataLabel);
+                            ControlRow otherControl = templateDatabase.FindControl(dataLabel);
+                            if (thisControl.Synchronize(otherControl))
+                            {
+                                ColumnTuplesWithID controlUpdate = thisControl.CreateUpdate();
+                                controlUpdate.Update(connection, transaction);
+                            }
                         }
+
+                        // add any new controls to the file database's Control and File tables
+                        foreach (string dataLabelToAdd in templateDataLabels.Except(fileDataLabels))
+                        {
+                            ControlRow templateControl = templateDatabase.FindControl(dataLabelToAdd);
+                            ColumnTuplesForInsert controlTableInsert = ControlRow.CreateInsert(templateControl);
+                            controlTableInsert.Insert(connection);
+
+                            ColumnDefinition fileTableInsert = this.CreateFileDataColumnDefinition(templateControl);
+                            int columnNumber = templateDataLabels.IndexOf(dataLabelToAdd);
+                            if (columnNumber < 0)
+                            {
+                                throw new SQLiteException(SQLiteErrorCode.Constraint, String.Format("Internal consistency failure: could not add file table column for data label '{0}' because it could not be found in the template table's control definitions.", dataLabelToAdd));
+                            }
+                            this.Database.AddColumnToTable(connection, transaction, Constant.DatabaseTable.FileData, columnNumber, fileTableInsert);
+                        }
+
+                        transaction.Commit();
                     }
+
+                    // load the updated controls table
+                    this.GetControlsSortedByControlOrder(connection);
                 }
 
                 // load in memory File table

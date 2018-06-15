@@ -182,6 +182,9 @@
     <Compile Include="Command\FileSingleFieldChange.cs" />
     <Compile Include="Command\UndoableCommandAsync.cs" />
     <Compile Include="Command\UndoableCommand.cs" />
+    <Compile Include="Control\AnalysisButtons.xaml.cs">
+      <DependentUpon>AnalysisButtons.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Control\AutocompleteTextBox.cs" />
     <Compile Include="Control\BooleanInverter.cs" />
     <Compile Include="Control\DataEntryControlContextMenuItemType.cs" />
@@ -322,6 +325,10 @@
       <DependentUpon>DeleteFiles.xaml</DependentUpon>
     </Compile>
     <Compile Include="WindowWithSystemMenu.cs" />
+    <Page Include="Control\AnalysisButtons.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Control\TimeSpanPicker.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -509,7 +516,6 @@
       <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
     </Compile>
     <Compile Include="Database\SQLiteDatabase.cs" />
-    <Compile Include="Control\StatusBarExtensions.cs" />
     <Compile Include="Data\TemplateDatabase.cs" />
     <Compile Include="Util\CarnassialState.cs" />
     <Compile Include="Util\Utilities.cs" />

@@ -26,8 +26,8 @@ namespace Carnassial.Data
                 // write the header as defined by the data labels in the template file
                 // The append sequence results in a trailing comma which is retained when writing the line.
                 StringBuilder header = new StringBuilder();
-                List<string> dataLabels = database.GetDataLabelsExceptIDInSpreadsheetOrder();
-                foreach (string dataLabel in dataLabels)
+                List<string> dataLabelsExceptID = database.GetDataLabelsExceptIDInSpreadsheetOrder();
+                foreach (string dataLabel in dataLabelsExceptID)
                 {
                     header.Append(this.AddColumnValue(dataLabel));
                 }
@@ -36,7 +36,7 @@ namespace Carnassial.Data
                 foreach (ImageRow file in database.Files)
                 {
                     StringBuilder csvRow = new StringBuilder();
-                    foreach (string dataLabel in dataLabels)
+                    foreach (string dataLabel in dataLabelsExceptID)
                     {
                         csvRow.Append(this.AddColumnValue(file.GetDatabaseString(dataLabel)));
                     }
@@ -52,15 +52,15 @@ namespace Carnassial.Data
         {
             using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
             {
-                List<string> dataLabels = database.GetDataLabelsExceptIDInSpreadsheetOrder();
-                ExcelWorksheet worksheet = this.GetOrCreateBlankWorksheet(xlsxFile, Constant.Excel.FileDataWorksheetName, dataLabels);
+                List<string> dataLabelsExceptID = database.GetDataLabelsExceptIDInSpreadsheetOrder();
+                ExcelWorksheet worksheet = this.GetOrCreateBlankWorksheet(xlsxFile, Constant.Excel.FileDataWorksheetName, dataLabelsExceptID);
 
                 int row = 1;
                 foreach (ImageRow file in database.Files)
                 {
                     int column = 0;
                     ++row;
-                    foreach (string dataLabel in dataLabels)
+                    foreach (string dataLabel in dataLabelsExceptID)
                     {
                         worksheet.Cells[row, ++column].Value = file.GetDatabaseString(dataLabel);
                     }

@@ -249,20 +249,13 @@ namespace Carnassial.Control
 
         public bool TrySyncCurrentFileToDatabase()
         {
-            if (this.ImageCache.Current == null)
+            if (this.ImageCache.IsFileAvailable == false)
             {
                 return false;
-            }
-            if (this.ImageCache.Current.HasChanges == false)
-            {
-                // database is already in sync 
-                return true;
             }
 
             // update row in file table
             this.FileDatabase.SyncFileToDatabase(this.ImageCache.Current);
-            this.ImageCache.Current.AcceptChanges();
-
             return true;
         }
 

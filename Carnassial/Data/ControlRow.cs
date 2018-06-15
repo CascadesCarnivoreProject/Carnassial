@@ -10,6 +10,7 @@ namespace Carnassial.Data
 {
     public class ControlRow : SQLiteRow, INotifyPropertyChanged
     {
+        private bool analysisLabel;
         private long controlOrder;
         private bool copyable;
         private string dataLabel;
@@ -24,6 +25,7 @@ namespace Carnassial.Data
 
         public ControlRow()
         {
+            this.analysisLabel = false;
             this.controlOrder = -1;
             this.copyable = false;
             this.dataLabel = null;
@@ -38,7 +40,9 @@ namespace Carnassial.Data
         }
 
         public ControlRow(ControlType controlType, string dataLabel, long controlOrder)
+            : this()
         {
+            this.analysisLabel = false;
             this.controlOrder = controlOrder;
             this.copyable = true;
             this.dataLabel = dataLabel;
@@ -81,6 +85,20 @@ namespace Carnassial.Data
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", controlType));
+            }
+        }
+
+        public bool AnalysisLabel
+        {
+            get
+            {
+                return this.analysisLabel;
+            }
+            set
+            {
+                this.HasChanges |= this.analysisLabel != value;
+                this.analysisLabel = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.AnalysisLabel)));
             }
         }
 
@@ -240,9 +258,15 @@ namespace Carnassial.Data
             }
         }
 
+        public static ColumnTuplesForInsert CreateInsert(params ControlRow[] controls)
+        {
+            return ControlRow.CreateInsert((IEnumerable<ControlRow>)controls);
+        }
+
         public static ColumnTuplesForInsert CreateInsert(IEnumerable<ControlRow> controls)
         {
             ColumnTuplesForInsert controlTuples = new ColumnTuplesForInsert(Constant.DatabaseTable.Controls,
+                                                                            Constant.Control.AnalysisLabel,
                                                                             Constant.Control.ControlOrder,
                                                                             Constant.Control.Copyable,
                                                                             Constant.Control.DataLabel,
@@ -257,7 +281,8 @@ namespace Carnassial.Data
             foreach (ControlRow control in controls)
             {
                 Debug.Assert(control != null, "controls contains null.");
-                controlTuples.Add(control.ControlOrder,
+                controlTuples.Add(control.AnalysisLabel ? 1.ToString() : 0.ToString(),
+                                  control.ControlOrder,
                                   control.Copyable ? Boolean.TrueString : Boolean.FalseString,
                                   control.DataLabel,
                                   control.DefaultValue,
@@ -277,6 +302,7 @@ namespace Carnassial.Data
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>()
             {
+                new ColumnTuple(Constant.Control.AnalysisLabel, this.AnalysisLabel ? 1 : 0),
                 new ColumnTuple(Constant.Control.ControlOrder, this.ControlOrder),
                 new ColumnTuple(Constant.Control.Copyable, this.Copyable),
                 new ColumnTuple(Constant.Control.DataLabel, this.DataLabel),
@@ -340,6 +366,11 @@ namespace Carnassial.Data
         public bool Synchronize(ControlRow other)
         {
             bool synchronizationMadeChanges = false;
+            if (this.AnalysisLabel != other.AnalysisLabel)
+            {
+                this.AnalysisLabel = other.AnalysisLabel;
+                synchronizationMadeChanges = true;
+            }
             if (this.Copyable != other.Copyable)
             {
                 this.Copyable = other.Copyable;
@@ -365,6 +396,11 @@ namespace Carnassial.Data
                 this.List = other.List;
                 synchronizationMadeChanges = true;
             }
+            if (this.MaxWidth != other.MaxWidth)
+            {
+                this.MaxWidth = other.MaxWidth;
+                synchronizationMadeChanges = true;
+            }
             if (this.SpreadsheetOrder != other.SpreadsheetOrder)
             {
                 this.SpreadsheetOrder = other.SpreadsheetOrder;
@@ -378,11 +414,6 @@ namespace Carnassial.Data
             if (this.Visible != other.Visible)
             {
                 this.Visible = other.Visible;
-                synchronizationMadeChanges = true;
-            }
-            if (this.MaxWidth != other.MaxWidth)
-            {
-                this.MaxWidth = other.MaxWidth;
                 synchronizationMadeChanges = true;
             }
 

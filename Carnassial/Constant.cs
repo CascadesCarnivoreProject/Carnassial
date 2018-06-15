@@ -9,7 +9,7 @@ namespace Carnassial
 {
     public static class Constant
     {
-        // cases in CarnassialWindow.Window_PreviewKeyDown must be kept in sync with the number of analysis slots
+        // cases in CarnassialWindow.Window_KeyDown must be kept in sync with the number of analysis slots
         public const int AnalysisSlots = 9;
 
         public const string ApplicationName = "Carnassial";
@@ -47,22 +47,23 @@ namespace Carnassial
 
         public static class Control
         {
-            // columns unique to the template table
+            // columns unique to the controls table
+            public const string AnalysisLabel = "AnalysisLabel";
             public const string ControlOrder = "ControlOrder";
-            public const string Copyable = "Copyable";     // whether the content of this item should be copied from previous values
-            public const string DataLabel = "DataLabel";   // if not empty, its used instead of the label as the header for the column when writing the spreadsheet
-            public const string DefaultValue = "DefaultValue"; // a default value for that code
-            public const string Label = "Label";           // a label used to describe that code
-            public const string List = "List";             // a fixed list of choices
+            public const string Copyable = "Copyable";
+            public const string DataLabel = "DataLabel";
+            public const string DefaultValue = "DefaultValue";
+            public const string Label = "Label";
+            public const string List = "List";
             public const string SpreadsheetOrder = "SpreadsheetOrder";
-            public const string Tooltip = "Tooltip";       // the tooltip text that describes the code
-            public const string Type = "Type";             // the data type
-            public const string Visible = "Visible";       // whether an item should be visible (used by standard items)
-            public const string Width = "Width";           // the width of the textbox
+            public const string Tooltip = "Tooltip";
+            public const string Type = "Type";
+            public const string Visible = "Visible";
+            public const string Width = "Width";
 
             // hotkey characters in use by the top level of Carnassial's main menu or the three data entry buttons and therefore unavailable as control 
             // shortcuts in either upper or lower case
-            public const string ReservedHotKeys = "FfEeOoVvSsHhPp12";
+            public const string ReservedHotKeys = "FfEeOoVvSsHhPp123456789";
 
             public static readonly ReadOnlyCollection<string> StandardControls = new List<string>()
             {

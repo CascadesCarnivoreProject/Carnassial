@@ -41,15 +41,26 @@ namespace Carnassial.UnitTests
         public static void ClassInitialize(TestContext testContext)
         {
             // Carnassial and the editor need an application instance to be created to load resources from
-            // WPF allows only one Application per app domain, so make instance persistent so it can be reused across multiple Carnassial and editor window
-            // lifetimes.  This works because Carnassial and the editor use virtually identical styling, allowing the editor to consume Carnassial styles
-            // with negligible effect on test coverage.
-            UserInterfaceTests.App = new App() { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-
-            ResourceDictionary resourceDictionary = (ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/CarnassialWindowStyle.xaml", UriKind.Relative));
-            foreach (object key in resourceDictionary.Keys)
+            // WPF allows only one Application per app domain, so make instance persistent so it can be reused across multiple Carnassial
+            // and editor window lifetimes.  This works because Carnassial and the editor use very similar styling, allowing the editor 
+            // to consume Carnassial styles with negligible effect on test coverage.
+            UserInterfaceTests.App = new App()
             {
-                Application.Current.Resources.Add(key, resourceDictionary[key]);
+                ShutdownMode = ShutdownMode.OnExplicitShutdown
+            };
+
+            ResourceDictionary carnassialResourceDictionary = (ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/CarnassialWindowStyle.xaml", UriKind.Relative));
+            foreach (object key in carnassialResourceDictionary.Keys)
+            {
+                Application.Current.Resources.Add(key, carnassialResourceDictionary[key]);
+            }
+            ResourceDictionary editorResourceDictionary = (ResourceDictionary)Application.LoadComponent(new Uri("/CarnassialTemplateEditor;component/EditorWindowStyle.xaml", UriKind.Relative));
+            foreach (object key in editorResourceDictionary.Keys)
+            {
+                if (Application.Current.Resources.Contains(key) == false)
+                {
+                    Application.Current.Resources.Add(key, editorResourceDictionary[key]);
+                }
             }
         }
 
@@ -586,7 +597,7 @@ namespace Carnassial.UnitTests
             this.ShowDialog(new AboutEditor(editor));
             TemplateDatabase templateDatabase = (TemplateDatabase)editorAccessor.GetField(TestConstant.EditorTemplateDatabaseFieldName);
             this.ShowDialog(new AdvancedImageSetOptions(templateDatabase, editor));
-            this.ShowDialog(new EditChoiceList(editor.TemplateDataGrid, new List<string>() { "Choice0", "Choice1", "Choice2", "Choice3" }, editor));
+            this.ShowDialog(new EditChoiceList(editor.ControlDataGrid, new List<string>() { "Choice0", "Choice1", "Choice2", "Choice3" }, editor));
 
             editor.Close();
         }

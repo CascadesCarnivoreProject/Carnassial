@@ -58,7 +58,11 @@ namespace Carnassial.Database
 
         public static ColumnDefinition CreatePrimaryKey()
         {
-            return new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.SqlColumnType.Integer) { Autoincrement = true, PrimaryKey = true };
+            return new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.SqlColumnType.Integer)
+            {
+                Autoincrement = true,
+                PrimaryKey = true
+            };
         }
 
         public override string ToString()

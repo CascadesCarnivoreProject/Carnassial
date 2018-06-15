@@ -29,11 +29,11 @@ namespace Carnassial.Editor
     public partial class EditorWindow : WindowWithSystemMenu
     {
         // state tracking
-        private bool templateDataGridBeingUpdatedByCode;
-        private bool templateDataGridCellEditForcedByCode;
+        private bool controlDataGridBeingUpdatedByCode;
+        private bool controlDataGridCellEditForcedByCode;
         private EditorUserRegistrySettings userSettings;
 
-        // database where the template is stored
+        // database where the controls and image set defaults are stored
         private TemplateDatabase templateDatabase;
 
         /// <summary>
@@ -58,8 +58,8 @@ namespace Carnassial.Editor
                 Application.Current.Shutdown();
             }
 
-            this.templateDataGridBeingUpdatedByCode = false;
-            this.templateDataGridCellEditForcedByCode = false;
+            this.controlDataGridBeingUpdatedByCode = false;
+            this.controlDataGridCellEditForcedByCode = false;
 
             this.MenuOptionsShowAllColumns_Click(this.MenuOptionsShowAllColumns, null);
 
@@ -82,16 +82,283 @@ namespace Carnassial.Editor
             Button button = sender as Button;
             ControlType controlType = (ControlType)button.Tag;
 
-            this.templateDataGridBeingUpdatedByCode = true;
+            this.controlDataGridBeingUpdatedByCode = true;
 
             this.templateDatabase.AppendUserDefinedControl(controlType);
-            this.TemplateDataGrid.DataContext = this.templateDatabase.Controls;
-            this.TemplateDataGrid.ScrollIntoView(this.TemplateDataGrid.Items[this.TemplateDataGrid.Items.Count - 1]);
+            this.ControlDataGrid.DataContext = this.templateDatabase.Controls;
+            this.ControlDataGrid.ScrollIntoView(this.ControlDataGrid.Items[this.ControlDataGrid.Items.Count - 1]);
 
             this.RebuildControlPreview();
             this.SynchronizeSpreadsheetOrderPreview();
 
-            this.templateDataGridBeingUpdatedByCode = false;
+            this.controlDataGridBeingUpdatedByCode = false;
+        }
+
+        private void ControlDataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+            if (e.Column.Header.Equals(EditorConstant.ColumnHeader.DataLabel))
+            {
+                this.ValidateDataLabel(e);
+            }
+            if ((e.EditAction == DataGridEditAction.Commit) && (this.controlDataGridCellEditForcedByCode == false))
+            {
+                // flush changes in each cell as user exits it to database and trigger a redraw to update control visibility
+                // Generating a call to TemplateDataGrid_RowChanged() here isn't the most elegant approach but it avoids creating separate commit pathways
+                // for cell and row edits.  Data grids don't particularly support immediate data binding (though they can be coerced into it by providing
+                // unknown template cell types at the expense of other state management issues) so a change in cell focus is, within their model, needed to
+                // trigger an update of the control layout preview for Width and Visible at the data grid level.
+                this.controlDataGridCellEditForcedByCode = true;
+                this.ControlDataGrid.CommitEdit(DataGridEditingUnit.Row, true);
+                this.controlDataGridCellEditForcedByCode = false;
+            }
+        }
+
+        private void ControlDataGridCopyable_Changed(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            int rowIndex = (int)checkBox.Tag;
+            if (checkBox.IsChecked.HasValue)
+            {
+                int analysisLabelIndex = -1;
+                for (int column = 0; column < this.ControlDataGrid.Columns.Count; ++column)
+                {
+                    string columnHeader = (string)this.ControlDataGrid.Columns[column].Header;
+                    if (String.Equals(columnHeader, EditorConstant.ColumnHeader.AnalysisLabel, StringComparison.Ordinal))
+                    {
+                        analysisLabelIndex = column;
+                        break;
+                    }
+                }
+                Debug.Assert(analysisLabelIndex != -1, "Failed to find analysis label column.");
+
+                DataGridRow row = (DataGridRow)this.ControlDataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex);
+                DataGridCellsPresenter presenter = EditorWindow.GetVisualChild<DataGridCellsPresenter>(row);
+                DataGridCell analysisLabelCell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(analysisLabelIndex);
+
+                // immediately update enable/disable state of analysis label cell
+                ControlRow control = this.templateDatabase.Controls[rowIndex];
+                if (checkBox.IsChecked.Value)
+                {
+                    analysisLabelCell.IsEnabled = true;
+                }
+                else
+                {
+                    analysisLabelCell.IsEnabled = false;
+                    control.AnalysisLabel = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sets cell enable/disable and colors when rows are added, moved, or deleted.
+        /// </summary>
+        private void ControlDataGrid_LayoutUpdated(object sender, EventArgs e)
+        {
+            for (int rowIndex = 0; rowIndex < this.ControlDataGrid.Items.Count; rowIndex++)
+            {
+                // for ItemContainerGenerator to work the DataGrid must have VirtualizingStackPanel.IsVirtualizing="False"
+                // the following may be more efficient for large grids but are not used as more than dozen or so controls is unlikely
+                // this.TemplateDataGrid.UpdateLayout();
+                // this.TemplateDataGrid.ScrollIntoView(rowIndex + 1);
+                DataGridRow row = (DataGridRow)this.ControlDataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex);
+                if (row == null)
+                {
+                    continue;
+                }
+
+                // grid cells are editable by default
+                // disable cells which should not be editable
+                ControlRow control = this.templateDatabase.Controls[rowIndex];
+                DataGridCellsPresenter presenter = EditorWindow.GetVisualChild<DataGridCellsPresenter>(row);
+                for (int column = 0; column < this.ControlDataGrid.Columns.Count; column++)
+                {
+                    DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
+                    if (cell == null)
+                    {
+                        // cell will be null for columns with Visibility = Hidden
+                        continue;
+                    }
+
+                    string columnHeader = (string)this.ControlDataGrid.Columns[column].Header;
+                    bool disableCell = cell.ShouldDisable(control, columnHeader);
+                    if (disableCell)
+                    {
+                        cell.IsEnabled = false;
+                    }
+                    else
+                    {
+                        cell.IsEnabled = true;
+
+                        if (String.Equals(columnHeader, EditorConstant.ColumnHeader.MaxWidth, StringComparison.Ordinal))
+                        {
+                            // set up text boxes in the width column for immediate data binding so user sees the control preview 
+                            // update promptly
+                            // A guard is required as above.  When the DataGrid is first instantiated TextBlocks are used for the 
+                            // cell content; these are changed to TextBoxes when the user initiates an edit. Therefore, it's OK if
+                            // TryGetControl() returns false.
+                            if (cell.TryGetControl(out TextBox textBox))
+                            {
+                                if (textBox.Tag == null)
+                                {
+                                    textBox.TextChanged += this.ControlDataGrid_WidthChanged;
+                                    textBox.Tag = rowIndex;
+                                }
+                            }
+                        }
+                        else if (String.Equals(columnHeader, Constant.Control.Visible, StringComparison.Ordinal))
+                        {
+                            // set up check boxes in the visible column for immediate data binding so user sees the control preview
+                            // update promptly
+                            // The LayoutUpdated event fires many times so a guard is required to set the callbacks only once.
+                            if (cell.TryGetControl(out CheckBox checkBox))
+                            {
+                                if (checkBox.Tag == null)
+                                {
+                                    checkBox.Checked += this.ControlDataGrid_VisibleChanged;
+                                    checkBox.Unchecked += this.ControlDataGrid_VisibleChanged;
+                                    checkBox.Tag = rowIndex;
+                                }
+                            }
+                            else
+                            {
+                                Debug.Fail("Could not find check box associated with Visible column for immediate data binding.");
+                            }
+                        }
+                    }
+
+                    if (String.Equals(columnHeader, Constant.Control.Copyable, StringComparison.Ordinal))
+                    {
+                        if (cell.TryGetControl(out CheckBox checkBox))
+                        {
+                            if (checkBox.Tag == null)
+                            {
+                                checkBox.Checked += this.ControlDataGridCopyable_Changed;
+                                checkBox.Unchecked += this.ControlDataGridCopyable_Changed;
+                                checkBox.Tag = rowIndex;
+                            }
+                        }
+                        else
+                        {
+                            Debug.Fail("Could not find check box associated with Copyable column for immediate data binding.");
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ControlDataGrid_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            switch ((string)this.ControlDataGrid.CurrentColumn.Header)
+            {
+                // EditorConstant.Control.ControlOrder is not editable
+                case EditorConstant.ColumnHeader.DataLabel:
+                    if (String.IsNullOrEmpty(e.Text) == false)
+                    {
+                        // one key is provided by the event at a time during typing, multiple keys can be pasted in a single event
+                        // it's not known where in the data label the input occurs, so full validation is postponed to ValidateDataLabel()
+                        if (this.IsValidDataLabelCharacters(e.Text) == false)
+                        {
+                            this.ShowDataLabelRequirementsDialog();
+                            e.Handled = true;
+                        }
+                    }
+                    break;
+                case EditorConstant.ColumnHeader.DefaultValue:
+                    if (this.ControlDataGrid.SelectedIndex < 0)
+                    {
+                        e.Handled = true;
+                        return;
+                    }
+                    DataGridRow currentRow = (DataGridRow)this.ControlDataGrid.ItemContainerGenerator.ContainerFromIndex(this.ControlDataGrid.SelectedIndex);
+                    ControlRow control = (ControlRow)currentRow.Item;
+                    switch (control.Type)
+                    {
+                        case ControlType.Counter:
+                            e.Handled = !Utilities.IsDigits(e.Text);
+                            break;
+                        case ControlType.Flag:
+                            // only allow t/f and translate to true/false
+                            if (e.Text == "t" || e.Text == "T")
+                            {
+                                control.DefaultValue = Boolean.TrueString;
+                                this.SyncControlToDatabaseAndPreviews(control);
+                            }
+                            else if (e.Text == "f" || e.Text == "F")
+                            {
+                                control.DefaultValue = Boolean.FalseString;
+                                this.SyncControlToDatabaseAndPreviews(control);
+                            }
+                            e.Handled = true;
+                            break;
+                        case ControlType.FixedChoice:
+                            // no restrictions for now
+                            // the default value should be limited to one of the choices defined, however
+                            break;
+                        case ControlType.DateTime:
+                        case ControlType.Note:
+                        case ControlType.UtcOffset:
+                            // no restrictions on note or time controls
+                            break;
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
+                    }
+                    break;
+                // EditorConstant.Control.ID is not editable
+                // EditorConstant.Control.SpreadsheetOrder is not editable
+                // Type is not editable
+                case EditorConstant.ColumnHeader.MaxWidth:
+                    // only allow digits in widths as they must be parseable as integers
+                    e.Handled = !Utilities.IsDigits(e.Text);
+                    break;
+                default:
+                    // no restrictions on analysis label, copyable, label, tooltip, or visible columns
+                    break;
+            }
+        }
+
+        private void ControlDataGrid_RowEditEnding(object sender, DataGridRowEditEndingEventArgs e)
+        {
+            if (!this.controlDataGridBeingUpdatedByCode)
+            {
+                this.SyncControlToDatabaseAndPreviews((ControlRow)e.Row.Item);
+            }
+        }
+
+        /// <summary>
+        /// enable or disable the remove control button as appropriate
+        /// </summary>
+        private void ControlDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ControlRow control = (ControlRow)this.ControlDataGrid.SelectedItem;
+            if (control == null)
+            {
+                this.RemoveControlButton.IsEnabled = false;
+                return;
+            }
+
+            this.RemoveControlButton.IsEnabled = !Constant.Control.StandardControls.Contains(control.DataLabel);
+        }
+
+        private void ControlDataGrid_VisibleChanged(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            int rowIndex = (int)checkBox.Tag;
+            if (checkBox.IsChecked.HasValue)
+            {
+                // immediately propagate change in check to underlying data table; this triggers a call to TemplateDataGrid_RowChanged() so the user
+                // sees the control layout preview update in response to their click on the check box
+                this.templateDatabase.Controls[rowIndex].Visible = checkBox.IsChecked.Value;
+            }
+        }
+
+        private void ControlDataGrid_WidthChanged(object sender, RoutedEventArgs e)
+        {
+            TextBox textBox = (TextBox)sender;
+            int rowIndex = (int)textBox.Tag;
+            if (Int32.TryParse(textBox.Text, out int newWidth))
+            {
+                this.templateDatabase.Controls[rowIndex].MaxWidth = newWidth;
+            }
         }
 
         private void DataEntryControls_ControlOrderChangedByDragDrop(DataEntryControl controlBeingDragged, DataEntryControl dropTarget)
@@ -162,17 +429,13 @@ namespace Carnassial.Editor
         private void InitializeDataGrid(string templateDatabasePath)
         {
             // flush any pending edit which might exist
-            this.TemplateDataGrid.CommitEdit();
+            this.ControlDataGrid.CommitEdit();
 
             // create a new template file if one does not exist or load a DB file if there is one.
             bool templateLoaded = TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out this.templateDatabase);
             if (templateLoaded)
             {
-                this.TemplateDataGrid.ItemsSource = this.templateDatabase.Controls;
-                foreach (ControlRow control in this.templateDatabase.Controls)
-                {
-                    control.PropertyChanged += this.TemplateDataGrid_RowChanged;
-                }
+                this.ControlDataGrid.ItemsSource = this.templateDatabase.Controls;
 
                 // populate controls interface in UX
                 this.RebuildControlPreview();
@@ -266,7 +529,7 @@ namespace Carnassial.Editor
         private void MenuFileExit_Click(object sender, RoutedEventArgs e)
         {
             // flush any pending edits to the currently selected row
-            this.TemplateDataGrid.CommitEdit();
+            this.ControlDataGrid.CommitEdit();
             Application.Current.Shutdown();
         }
 
@@ -370,7 +633,7 @@ namespace Carnassial.Editor
             }
 
             Visibility visibility = mi.IsChecked ? Visibility.Visible : Visibility.Collapsed;
-            foreach (DataGridColumn column in this.TemplateDataGrid.Columns)
+            foreach (DataGridColumn column in this.ControlDataGrid.Columns)
             {
                 if (column.Header.Equals(EditorConstant.ColumnHeader.ID) ||
                     column.Header.Equals(EditorConstant.ColumnHeader.ControlOrder) ||
@@ -426,9 +689,9 @@ namespace Carnassial.Editor
 
         private void SyncControlToDatabaseAndPreviews(ControlRow control)
         {
-            this.templateDataGridBeingUpdatedByCode = true;
-            this.templateDatabase.SyncControlToDatabase(control);
-            this.templateDataGridBeingUpdatedByCode = false;
+            this.controlDataGridBeingUpdatedByCode = true;
+            this.templateDatabase.TrySyncControlToDatabase(control);
+            this.controlDataGridBeingUpdatedByCode = false;
 
             if ((this.DataEntryControls.ControlsByDataLabel.TryGetValue(control.DataLabel, out DataEntryControl controlPreview) == false) ||
                 (control.Visible == false))
@@ -447,6 +710,7 @@ namespace Carnassial.Editor
                 // if the control's data label isn't changing just update preview for control
                 // This is a UX responsiveness optimization for simple changes.
                 // control.ControlOrder changes are handled elsewhere
+                // changes to control.AnalysisLabel have no effect on the preview
                 // changes to control.Copyable have no effect on the preview
                 // control.DataLabel changes are handled above
                 // control.DefaultValue is used to initialize the preview but changes not propagated as the user may have configured the preview differently
@@ -521,7 +785,7 @@ namespace Carnassial.Editor
         /// </summary>
         private void RemoveControlButton_Click(object sender, RoutedEventArgs e)
         {
-            ControlRow control = (ControlRow)this.TemplateDataGrid.SelectedItem;
+            ControlRow control = (ControlRow)this.ControlDataGrid.SelectedItem;
             if (control == null)
             {
                 // nothing to do
@@ -534,275 +798,14 @@ namespace Carnassial.Editor
                 return;
             }
 
-            this.templateDataGridBeingUpdatedByCode = true;
+            this.controlDataGridBeingUpdatedByCode = true;
             this.templateDatabase.RemoveUserDefinedControl(control);
 
             // update the control panel so it reflects the current values in the database
             this.RebuildControlPreview();
             this.SynchronizeSpreadsheetOrderPreview();
 
-            this.templateDataGridBeingUpdatedByCode = false;
-        }
-
-        private void TemplateDataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
-        {
-            if (e.Column.Header.Equals(EditorConstant.ColumnHeader.DataLabel))
-            {
-                this.ValidateDataLabel(e);
-            }
-            if ((e.EditAction == DataGridEditAction.Commit) && (this.templateDataGridCellEditForcedByCode == false))
-            {
-                // flush changes in each cell as user exits it to database and trigger a redraw to update control visibility
-                // Generating a call to TemplateDataGrid_RowChanged() here isn't the most elegant approach but it avoids creating separate commit pathways
-                // for cell and row edits.  Data grids don't particularly support immediate data binding (though they can be coerced into it by providing
-                // unknown template cell types at the expense of other state management issues) so a change in cell focus is, within their model, needed to
-                // trigger an update of the control layout preview for Width and Visible at the data grid level.
-                this.templateDataGridCellEditForcedByCode = true;
-                this.TemplateDataGrid.CommitEdit(DataGridEditingUnit.Row, true);
-                this.templateDataGridCellEditForcedByCode = false;
-            }
-        }
-
-        /// <summary>
-        /// Updates colors when rows are added, moved, or deleted.
-        /// </summary>
-        private void TemplateDataGrid_LayoutUpdated(object sender, EventArgs e)
-        {
-            // Greys out cells as defined by logic and also disables checkboxes which cannot be edited.
-            // This is to show the user uneditable cells.
-            for (int rowIndex = 0; rowIndex < this.TemplateDataGrid.Items.Count; rowIndex++)
-            {
-                // for ItemContainerGenerator to work the DataGrid must have VirtualizingStackPanel.IsVirtualizing="False"
-                // the following may be more efficient for large grids but is not used as more than dozen or so controls is unlikely
-                // this.TemplateDataGrid.UpdateLayout();
-                // this.TemplateDataGrid.ScrollIntoView(rowIndex + 1);
-                DataGridRow row = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex);
-                if (row == null)
-                {
-                    return;
-                }
-
-                // grid cells are editable by default
-                // disable cells which should not be editable
-                DataGridCellsPresenter presenter = GetVisualChild<DataGridCellsPresenter>(row);
-                for (int column = 0; column < this.TemplateDataGrid.Columns.Count; column++)
-                {
-                    DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
-                    if (cell == null)
-                    {
-                        // cell will be null for columns with Visibility = Hidden
-                        continue;
-                    }
-
-                    string columnHeader = (string)this.TemplateDataGrid.Columns[column].Header;
-                    ControlRow control = this.templateDatabase.Controls[rowIndex];
-                    ControlType controlType = control.Type;
-                    bool disableCell = false;
-                    if ((columnHeader == Constant.DatabaseColumn.ID) ||
-                        (columnHeader == Constant.Control.ControlOrder) ||
-                        (columnHeader == Constant.Control.SpreadsheetOrder) ||
-                        (columnHeader == Constant.Control.Type))
-                    {
-                        // these columns are marked read only in the data grid's style but still need to be greyed out
-                        disableCell = true;
-                        // these columns are always editable
-                        //   Constant.Control.Label
-                        //   Constant.Control.Tooltip
-                        //   Constant.Control.Visible
-                        //   EditorConstant.ColumnHeader.MaxWidth
-                    }
-                    else if ((controlType == ControlType.DateTime) ||
-                             (control.DataLabel == Constant.DatabaseColumn.File))
-                    {
-                        // these standard controls have no editable properties other than width
-                        disableCell = columnHeader != EditorConstant.ColumnHeader.MaxWidth;
-                    }
-                    else if ((control.DataLabel == Constant.DatabaseColumn.ImageQuality) ||
-                             (control.DataLabel == Constant.DatabaseColumn.RelativePath) ||
-                             (control.DataLabel == Constant.DatabaseColumn.UtcOffset))
-                    {
-                        // standard controls whose visible and width can be changed
-                        disableCell = (columnHeader != Constant.Control.Visible) && (columnHeader != EditorConstant.ColumnHeader.MaxWidth);
-                    }
-                    else if (control.DataLabel == Constant.DatabaseColumn.DeleteFlag)
-                    {
-                        // standard controls whose copyable, visible, and width can be changed
-                        disableCell = (columnHeader != Constant.Control.Copyable) && 
-                                      (columnHeader != Constant.Control.Visible) && 
-                                      (columnHeader != EditorConstant.ColumnHeader.MaxWidth);
-                    }
-                    else if ((controlType == ControlType.Counter) ||
-                             (controlType == ControlType.Flag))
-                    {
-                        // all properties are editable except list
-                        disableCell = columnHeader == Constant.Control.List;
-                        // for notes and choices all properties including list are editable
-                    }
-
-                    if (disableCell)
-                    {
-                        cell.Background = EditorConstant.NotEditableCellColor;
-                        cell.Foreground = Brushes.Gray;
-                        cell.IsEnabled = false;
-
-                        // if cell has a checkbox disable it too
-                        if (cell.TryGetControl(out CheckBox checkBox))
-                        {
-                            checkBox.IsEnabled = false;
-                        }
-                    }
-                    else if (columnHeader == Constant.Control.Visible)
-                    {
-                        // set up check boxes in the visible column for immediate data binding so user sees the control preview update promptly
-                        // The LayoutUpdated event fires many times so a guard is required to set the callbacks only once.
-                        if (cell.TryGetControl(out CheckBox checkBox))
-                        {
-                            if (checkBox.Tag == null)
-                            {
-                                checkBox.Checked += this.TemplateDataGridVisible_Changed;
-                                checkBox.Unchecked += this.TemplateDataGridVisible_Changed;
-                                checkBox.Tag = rowIndex;
-                            }
-                        }
-                        else
-                        {
-                            Debug.Fail("Could not find check box associated with Visible column for immediate data binding.");
-                        }
-                    }
-                    else if (columnHeader == EditorConstant.ColumnHeader.MaxWidth)
-                    {
-                        // set up text boxes in the width column for immediate data binding so user sees the control preview update promptly
-                        // A guard is required as above.  When the DataGrid is first instantiated TextBlocks are used for the cell content; these are
-                        // changed to TextBoxes when the user initiates an edit.
-                        if (cell.TryGetControl(out TextBox textBox))
-                        {
-                            if (textBox.Tag == null)
-                            {
-                                textBox.TextChanged += this.TemplateDataGridWidth_Changed;
-                                textBox.Tag = rowIndex;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private void TemplateDataGrid_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            if ((this.TryGetCurrentCell(out DataGridCell currentCell, out DataGridRow currentRow) == false) || currentCell.Background.Equals(EditorConstant.NotEditableCellColor))
-            {
-                e.Handled = true;
-                return;
-            }
-
-            switch ((string)this.TemplateDataGrid.CurrentColumn.Header)
-            {
-                // EditorConstant.Control.ControlOrder is not editable
-                case EditorConstant.ColumnHeader.DataLabel:
-                    if (String.IsNullOrEmpty(e.Text) == false)
-                    {
-                        // one key is provided by the event at a time during typing, multiple keys can be pasted in a single event
-                        // it's not known where in the data label the input occurs, so full validation is postponed to ValidateDataLabel()
-                        if (this.IsValidDataLabelCharacters(e.Text) == false)
-                        {
-                            this.ShowDataLabelRequirementsDialog();
-                            e.Handled = true;
-                        }
-                    }
-                    break;
-                case EditorConstant.ColumnHeader.DefaultValue:
-                    ControlRow control = (ControlRow)currentRow.Item;
-                    switch (control.Type)
-                    {
-                        case ControlType.Counter:
-                            e.Handled = !Utilities.IsDigits(e.Text);
-                            break;
-                        case ControlType.Flag:
-                            // only allow t/f and translate to true/false
-                            if (e.Text == "t" || e.Text == "T")
-                            {
-                                control.DefaultValue = Boolean.TrueString;
-                                this.SyncControlToDatabaseAndPreviews(control);
-                            }
-                            else if (e.Text == "f" || e.Text == "F")
-                            {
-                                control.DefaultValue = Boolean.FalseString;
-                                this.SyncControlToDatabaseAndPreviews(control);
-                            }
-                            e.Handled = true;
-                            break;
-                        case ControlType.FixedChoice:
-                            // no restrictions for now
-                            // the default value should be limited to one of the choices defined, however
-                            break;
-                        case ControlType.DateTime:
-                        case ControlType.Note:
-                        case ControlType.UtcOffset:
-                            // no restrictions on note or time controls
-                            break;
-                        default:
-                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
-                    }
-                    break;
-                // EditorConstant.Control.ID is not editable
-                // EditorConstant.Control.SpreadsheetOrder is not editable
-                // Type is not editable
-                case EditorConstant.ColumnHeader.MaxWidth:
-                    // only allow digits in widths as they must be parseable as integers
-                    e.Handled = !Utilities.IsDigits(e.Text);
-                    break;
-                default:
-                    // no restrictions on copyable, label, tooltip, or visibile columns
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Whenever a row changes save the database, which also updates the grid colors.
-        /// </summary>
-        private void TemplateDataGrid_RowChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (!this.templateDataGridBeingUpdatedByCode)
-            {
-                this.SyncControlToDatabaseAndPreviews((ControlRow)sender);
-            }
-        }
-
-        private void TemplateDataGridVisible_Changed(object sender, RoutedEventArgs e)
-        {
-            CheckBox checkBox = (CheckBox)sender;
-            int rowIndex = (int)checkBox.Tag;
-            if (checkBox.IsChecked.HasValue)
-            {
-                // immediately propagate change in check to underlying data table; this triggers a call to TemplateDataGrid_RowChanged() so the user
-                // sees the control layout preview update in response to their click on the check box
-                this.templateDatabase.Controls[rowIndex].Visible = checkBox.IsChecked.Value;
-            }
-        }
-
-        private void TemplateDataGridWidth_Changed(object sender, RoutedEventArgs e)
-        {
-            TextBox textBox = (TextBox)sender;
-            int rowIndex = (int)textBox.Tag;
-            if (Int32.TryParse(textBox.Text, out int newWidth))
-            {
-                this.templateDatabase.Controls[rowIndex].MaxWidth = newWidth;
-            }
-        }
-
-        /// <summary>
-        /// enable or disable the remove control button as appropriate
-        /// </summary>
-        private void TemplateDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            ControlRow control = (ControlRow)this.TemplateDataGrid.SelectedItem;
-            if (control == null)
-            {
-                this.RemoveControlButton.IsEnabled = false;
-                return;
-            }
-
-            this.RemoveControlButton.IsEnabled = !Constant.Control.StandardControls.Contains(control.DataLabel);
+            this.controlDataGridBeingUpdatedByCode = false;
         }
 
         private void TutorialLink_RequestNavigate(object sender, RequestNavigateEventArgs e)
@@ -812,21 +815,6 @@ namespace Carnassial.Editor
                 Process.Start(e.Uri.AbsoluteUri);
                 e.Handled = true;
             }
-        }
-
-        private bool TryGetCurrentCell(out DataGridCell currentCell, out DataGridRow currentRow)
-        {
-            if ((this.TemplateDataGrid.SelectedIndex == -1) || (this.TemplateDataGrid.CurrentColumn == null))
-            {
-                currentCell = null;
-                currentRow = null;
-                return false;
-            }
-
-            currentRow = (DataGridRow)this.TemplateDataGrid.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.SelectedIndex);
-            DataGridCellsPresenter presenter = EditorWindow.GetVisualChild<DataGridCellsPresenter>(currentRow);
-            currentCell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(this.TemplateDataGrid.CurrentColumn.DisplayIndex);
-            return currentCell != null;
         }
 
         private void ValidateDataLabel(DataGridCellEditEndingEventArgs e)
@@ -853,7 +841,7 @@ namespace Carnassial.Editor
                 ControlRow control = this.templateDatabase.Controls[row];
                 if (dataLabel.Equals(control.DataLabel))
                 {
-                    if (this.TemplateDataGrid.SelectedIndex == row)
+                    if (this.ControlDataGrid.SelectedIndex == row)
                     {
                         continue; // Its the same row, so its the same key, so skip it
                     }
@@ -954,7 +942,7 @@ namespace Carnassial.Editor
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             // apply any pending edits
-            this.TemplateDataGrid.CommitEdit();
+            this.ControlDataGrid.CommitEdit();
             // persist state to registry
             this.userSettings.WriteToRegistry();
         }

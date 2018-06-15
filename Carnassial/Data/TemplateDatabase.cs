@@ -45,7 +45,7 @@ namespace Carnassial.Data
 
             // create the row for the new control in the data table
             ControlRow newControl = new ControlRow(controlType, this.GetNextUniqueDataLabel(controlType.ToString()), this.Controls.RowCount + 1);
-            ColumnTuplesForInsert newControlInsert = ControlRow.CreateInsert(new ControlRow[] { newControl });
+            ColumnTuplesForInsert newControlInsert = ControlRow.CreateInsert(newControl);
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
                 newControlInsert.Insert(connection);
@@ -86,7 +86,7 @@ namespace Carnassial.Data
             imageSetRow.Insert(connection, transaction);
         }
 
-        private void GetControlsSortedByControlOrder(SQLiteConnection connection)
+        protected void GetControlsSortedByControlOrder(SQLiteConnection connection)
         {
             Select select = new Select(Constant.DatabaseTable.Controls)
             {
@@ -178,31 +178,6 @@ namespace Carnassial.Data
             }
         }
 
-        /// <summary>
-        /// Update the database row for the control to the current content of the template table.e  The caller is responsible for ensuring the data row wrapped
-        /// by the ControlRow object is present in both the data table and database versions of the template table.
-        /// </summary>
-        public void SyncControlToDatabase(ControlRow control)
-        {
-            this.CreateBackupIfNeeded();
-            ColumnTuplesWithID controlUpdate = control.CreateUpdate();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                controlUpdate.Update(connection);
-            }
-        }
-
-        public void SyncImageSetToDatabase()
-        {
-            // don't trigger backups on image set updates as none of the properties in the image set table is particularly important
-            // For example, this avoids creating a backup when a custom selection is reverted to all when Carnassial exits.
-            ColumnTuplesWithID imageSetUpdate = this.ImageSet.CreateUpdate();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                imageSetUpdate.Update(connection);
-            }
-        }
-
         public static bool TryCreateOrOpen(string filePath, out TemplateDatabase templateDatabase)
         {
             // check for an existing database before instantiating the databse as SQL wrapper instantiation creates the database file
@@ -227,6 +202,44 @@ namespace Carnassial.Data
             Debug.Assert(templateDatabase.Controls != null, "Controls wasn't loaded.");
             Debug.Assert(templateDatabase.ImageSet != null, "ImageSet wasn't loaded.");
 
+            return true;
+        }
+
+        /// <summary>
+        /// Update the database row for the control to the version currently in memory.
+        /// </summary>
+        public bool TrySyncControlToDatabase(ControlRow control)
+        {
+            if (control.HasChanges == false)
+            {
+                return false;
+            }
+
+            this.CreateBackupIfNeeded();
+            ColumnTuplesWithID controlUpdate = control.CreateUpdate();
+            using (SQLiteConnection connection = this.Database.CreateConnection())
+            {
+                controlUpdate.Update(connection);
+            }
+            control.AcceptChanges();
+            return true;
+        }
+
+        public bool TrySyncImageSetToDatabase()
+        {
+            if (this.ImageSet.HasChanges == false)
+            {
+                return false;
+            }
+
+            // don't trigger backups on image set updates as none of the properties in the image set table is particularly important
+            // For example, this avoids creating a backup when a custom selection is reverted to all when Carnassial exits.
+            ColumnTuplesWithID imageSetUpdate = this.ImageSet.CreateUpdate();
+            using (SQLiteConnection connection = this.Database.CreateConnection())
+            {
+                imageSetUpdate.Update(connection);
+            }
+            this.ImageSet.AcceptChanges();
             return true;
         }
 
@@ -326,16 +339,39 @@ namespace Carnassial.Data
                     List<ColumnDefinition> templateTableColumns = new List<ColumnDefinition>()
                     {
                         ColumnDefinition.CreatePrimaryKey(),
-                        new ColumnDefinition(Constant.Control.ControlOrder, Constant.SqlColumnType.Integer),
-                        new ColumnDefinition(Constant.Control.SpreadsheetOrder, Constant.SqlColumnType.Integer),
-                        new ColumnDefinition(Constant.Control.Type, Constant.SqlColumnType.Text),
+                        new ColumnDefinition(Constant.Control.ControlOrder, Constant.SqlColumnType.Integer)
+                        {
+                            NotNull = true
+                        },
+                        new ColumnDefinition(Constant.Control.SpreadsheetOrder, Constant.SqlColumnType.Integer)
+                        {
+                            NotNull = true
+                        },
+                        new ColumnDefinition(Constant.Control.Type, Constant.SqlColumnType.Text)
+                        {
+                            NotNull = true
+                        },
                         new ColumnDefinition(Constant.Control.DefaultValue, Constant.SqlColumnType.Text),
                         new ColumnDefinition(Constant.Control.Label, Constant.SqlColumnType.Text),
-                        new ColumnDefinition(Constant.Control.DataLabel, Constant.SqlColumnType.Text),
+                        new ColumnDefinition(Constant.Control.DataLabel, Constant.SqlColumnType.Text)
+                        {
+                            NotNull = true
+                        },
+                        new ColumnDefinition(Constant.Control.AnalysisLabel, Constant.SqlColumnType.Integer)
+                        {
+                            DefaultValue = 0.ToString(),
+                            NotNull = true
+                        },
                         new ColumnDefinition(Constant.Control.Tooltip, Constant.SqlColumnType.Text),
                         new ColumnDefinition(Constant.Control.Width, Constant.SqlColumnType.Integer),
-                        new ColumnDefinition(Constant.Control.Copyable, Constant.SqlColumnType.Text),
-                        new ColumnDefinition(Constant.Control.Visible, Constant.SqlColumnType.Text),
+                        new ColumnDefinition(Constant.Control.Copyable, Constant.SqlColumnType.Text)
+                        {
+                            NotNull = true
+                        },
+                        new ColumnDefinition(Constant.Control.Visible, Constant.SqlColumnType.Text)
+                        {
+                            NotNull = true
+                        },
                         new ColumnDefinition(Constant.Control.List, Constant.SqlColumnType.Text)
                     };
                     this.Database.CreateTable(connection, transaction, Constant.DatabaseTable.Controls, templateTableColumns);
@@ -425,7 +461,34 @@ namespace Carnassial.Data
                     return false;
                 }
 
-                // create ImageSet if this is a .tdb from Carnasial 2.2.0.1 or earlier
+                // insert AnalysisLabel column in controls table if this is a .tdb from Carnassial 2.2.0.2 or earlier
+                List<ColumnDefinition> controlColumns = this.Database.GetColumnDefinitions(connection, Constant.DatabaseTable.Controls);
+                if (controlColumns.SingleOrDefault(column => column.Name == Constant.Control.AnalysisLabel) == null)
+                {
+                    ColumnDefinition analysisLabel = new ColumnDefinition(Constant.Control.AnalysisLabel, Constant.SqlColumnType.Integer)
+                    {
+                        DefaultValue = 0.ToString(),
+                        NotNull = true
+                    };
+                    using (SQLiteTransaction transaction = connection.BeginTransaction())
+                    {
+                        this.Database.AddColumnToTable(connection, transaction, Constant.DatabaseTable.Controls, 6, analysisLabel);
+                        transaction.Commit();
+                    }
+                }
+
+                this.GetControlsSortedByControlOrder(connection);
+
+                // update choices for file classification to Carnassial 2.2.0.3 schema if they're not already set as such
+                ControlRow classification = this.FindControl(Constant.DatabaseColumn.ImageQuality);
+                if (String.Equals(classification.List, Constant.ControlDefault.ImageQualityList, StringComparison.Ordinal) == false)
+                {
+                    classification.List = Constant.ControlDefault.ImageQualityList;
+                    ColumnTuplesWithID classificationUpdate = classification.CreateUpdate();
+                    classificationUpdate.Update(connection);
+                }
+
+                // create ImageSet table if this is a .tdb from Carnassial 2.2.0.1 or earlier
                 if (tables.Contains(Constant.DatabaseTable.ImageSet) == false)
                 {
                     using (SQLiteTransaction transaction = connection.BeginTransaction())
@@ -435,15 +498,7 @@ namespace Carnassial.Data
                     }
                 }
 
-                this.GetControlsSortedByControlOrder(connection);
                 this.LoadImageSet(connection);
-
-                ControlRow classification = this.FindControl(Constant.DatabaseColumn.ImageQuality);
-                if (String.Equals(classification.List, Constant.ControlDefault.ImageQualityList, StringComparison.Ordinal) == false)
-                {
-                    classification.List = Constant.ControlDefault.ImageQualityList;
-                    this.SyncControlToDatabase(classification);
-                }
             }
             return true;
         }

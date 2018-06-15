@@ -106,6 +106,7 @@ namespace Carnassial.Data
         {
             this.Rows.Clear();
 
+            int analysisLabelIndex = -1;
             int controlOrderIndex = -1;
             int copyableIndex = -1;
             int dataLabelIndex = -1;
@@ -123,6 +124,9 @@ namespace Carnassial.Data
                 string columnName = reader.GetName(column);
                 switch (columnName)
                 {
+                    case Constant.Control.AnalysisLabel:
+                        analysisLabelIndex = column;
+                        break;
                     case Constant.Control.ControlOrder:
                         controlOrderIndex = column;
                         break;
@@ -164,7 +168,8 @@ namespace Carnassial.Data
                 }
             }
 
-            bool allStandardColumnsPresent = (controlOrderIndex != -1) &&
+            bool allStandardColumnsPresent = (analysisLabelIndex != -1) &&
+                                             (controlOrderIndex != -1) &&
                                              (copyableIndex != -1) &&
                                              (dataLabelIndex != -1) &&
                                              (defaultValueIndex != -1) &&
@@ -187,6 +192,7 @@ namespace Carnassial.Data
                 IDataRecord row = (IDataRecord)reader;
                 ControlRow control = new ControlRow()
                 {
+                    AnalysisLabel = row.GetBoolean(analysisLabelIndex),
                     ControlOrder = row.GetInt64(controlOrderIndex),
                     Copyable = Boolean.Parse(row.GetString(copyableIndex)),
                     DataLabel = row.GetString(dataLabelIndex),

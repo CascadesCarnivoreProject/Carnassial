@@ -6,6 +6,7 @@ namespace Carnassial.UnitTests
 {
     internal class ControlExpectations
     {
+        public bool AnalysisLabel { get; set; }
         public long ControlOrder { get; set; }
         public bool Copyable { get; set; }
         public string DataLabel { get; set; }
@@ -28,6 +29,7 @@ namespace Carnassial.UnitTests
         {
             return new ControlExpectations()
             {
+                AnalysisLabel = false,
                 ControlOrder = controlOrder,
                 Copyable = false,
                 DataLabel = dataLabel,
@@ -52,6 +54,7 @@ namespace Carnassial.UnitTests
         {
             return new ControlExpectations()
             {
+                AnalysisLabel = false,
                 ControlOrder = controlOrder,
                 Copyable = true,
                 DataLabel = dataLabel,
@@ -76,6 +79,7 @@ namespace Carnassial.UnitTests
         {
             return new ControlExpectations()
             {
+                AnalysisLabel = false,
                 ControlOrder = controlOrder,
                 Copyable = true,
                 DataLabel = dataLabel,
@@ -100,6 +104,7 @@ namespace Carnassial.UnitTests
         {
             return new ControlExpectations()
             {
+                AnalysisLabel = false,
                 ControlOrder = controlOrder,
                 Copyable = true,
                 DataLabel = dataLabel,
@@ -117,6 +122,7 @@ namespace Carnassial.UnitTests
 
         public void Verify(ControlRow control)
         {
+            Assert.IsTrue(control.AnalysisLabel == this.AnalysisLabel, "{0}: Expected ControlOrder '{1}' but found '{2}'.", this.DataLabel, this.AnalysisLabel, control.AnalysisLabel);
             Assert.IsTrue(control.ControlOrder == this.ControlOrder, "{0}: Expected ControlOrder '{1}' but found '{2}'.", this.DataLabel, this.ControlOrder, control.ControlOrder);
             Assert.IsTrue(control.Copyable == this.Copyable, "{0}: Expected Copyable '{1}' but found '{2}'.", this.DataLabel, this.Copyable, control.Copyable);
             Assert.IsTrue(control.DataLabel == this.DataLabel, "{0}: Expected DataLabel '{1}' but found '{2}'.", this.DataLabel, this.DataLabel, control.DataLabel);

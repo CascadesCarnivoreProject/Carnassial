@@ -157,7 +157,7 @@ namespace Carnassial.UnitTests
             fileDatabase.AppendToImageSetLog(new StringBuilder("Test log entry."));
             fileDatabase.ImageSet.Options = fileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, true);
             fileDatabase.ImageSet.TimeZone = "Test Time Zone";
-            fileDatabase.SyncImageSetToDatabase();
+            fileDatabase.TrySyncImageSetToDatabase();
             Assert.IsTrue(fileDatabase.ImageSet.ID == 1);
             Assert.IsTrue(fileDatabase.ImageSet.FileSelection == FileSelection.Custom);
             Assert.IsTrue(fileDatabase.ImageSet.MostRecentFileID == -1);
@@ -379,7 +379,7 @@ namespace Carnassial.UnitTests
                 this.VerifyControl(flagControl);
                 ControlRow choiceControl = templateDatabase.AppendUserDefinedControl(ControlType.FixedChoice);
                 choiceControl.List = "DefaultChoice|OtherChoice";
-                templateDatabase.SyncControlToDatabase(choiceControl);
+                templateDatabase.TrySyncControlToDatabase(choiceControl);
                 this.VerifyControl(choiceControl);
                 ControlRow counterControl = templateDatabase.AppendUserDefinedControl(ControlType.Counter);
                 this.VerifyControl(counterControl);
@@ -420,56 +420,61 @@ namespace Carnassial.UnitTests
             ControlRow copyableControl = templateDatabase.Controls[copyableIndex];
             bool modifiedCopyable = !copyableControl.Copyable;
             copyableControl.Copyable = modifiedCopyable;
-            templateDatabase.SyncControlToDatabase(copyableControl);
+            templateDatabase.TrySyncControlToDatabase(copyableControl);
             Assert.IsTrue(templateDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
 
             int defaultValueIndex = numberOfStandardControls + (3 * iterations) - 4;
             ControlRow defaultValueControl = templateDatabase.Controls[defaultValueIndex];
             string modifiedDefaultValue = "Default value modification roundtrip.";
             defaultValueControl.DefaultValue = modifiedDefaultValue;
-            templateDatabase.SyncControlToDatabase(defaultValueControl);
+            templateDatabase.TrySyncControlToDatabase(defaultValueControl);
             Assert.IsTrue(templateDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
 
             int labelIndex = numberOfStandardControls + (3 * iterations) - 3;
             ControlRow labelControl = templateDatabase.Controls[labelIndex];
             string modifiedLabel = "Label modification roundtrip.";
             labelControl.Label = modifiedLabel;
-            templateDatabase.SyncControlToDatabase(labelControl);
+            templateDatabase.TrySyncControlToDatabase(labelControl);
             Assert.IsTrue(templateDatabase.Controls[labelIndex].Label == modifiedLabel);
 
             int listIndex = numberOfStandardControls + (3 * iterations) - 2;
             ControlRow listControl = templateDatabase.Controls[listIndex];
             string modifiedList = listControl.List + "|NewChoice0|NewChoice1";
             listControl.List = modifiedList;
-            templateDatabase.SyncControlToDatabase(listControl);
+            templateDatabase.TrySyncControlToDatabase(listControl);
             Assert.IsTrue(templateDatabase.Controls[listIndex].List == modifiedList);
 
             int tooltipIndex = numberOfStandardControls + (3 * iterations) - 3;
             ControlRow tooltipControl = templateDatabase.Controls[tooltipIndex];
             string modifiedTooltip = "Tooltip modification roundtrip.";
             tooltipControl.Tooltip = modifiedTooltip;
-            templateDatabase.SyncControlToDatabase(tooltipControl);
+            templateDatabase.TrySyncControlToDatabase(tooltipControl);
             Assert.IsTrue(templateDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
 
             int widthIndex = numberOfStandardControls + (3 * iterations) - 2;
             ControlRow widthControl = templateDatabase.Controls[widthIndex];
             int modifiedWidth = 1000;
             widthControl.MaxWidth = modifiedWidth;
-            templateDatabase.SyncControlToDatabase(widthControl);
+            templateDatabase.TrySyncControlToDatabase(widthControl);
             Assert.IsTrue(templateDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
 
             int visibleIndex = numberOfStandardControls + (3 * iterations) - 3;
             ControlRow visibleControl = templateDatabase.Controls[visibleIndex];
             bool modifiedVisible = !visibleControl.Visible;
             visibleControl.Visible = modifiedVisible;
-            templateDatabase.SyncControlToDatabase(visibleControl);
+            templateDatabase.TrySyncControlToDatabase(visibleControl);
             Assert.IsTrue(templateDatabase.Controls[visibleIndex].Visible == modifiedVisible);
+
+            newControl = templateDatabase.AppendUserDefinedControl(ControlType.Note);
+            newControl.AnalysisLabel = true;
+            templateDatabase.TrySyncControlToDatabase(newControl);
 
             // reopen the template database and check again
             string templateDatabaseFilePath = templateDatabase.FilePath;
             Assert.IsTrue(TemplateDatabase.TryCreateOrOpen(templateDatabaseFilePath, out templateDatabase));
             this.VerifyTemplateDatabase(templateDatabase, templateDatabaseFilePath);
-            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + (4 * iterations) - 2);
+            int expectedControlCount = numberOfStandardControls + (4 * iterations) - 1;
+            Assert.IsTrue(templateDatabase.Controls.RowCount == expectedControlCount);
             this.VerifyControls(templateDatabase);
             Assert.IsTrue(templateDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
             Assert.IsTrue(templateDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
@@ -483,7 +488,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabase.FilePath, templateDatabase, false, LogicalOperator.And, out fileDatabase));
             Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 0);
             this.VerifyTemplateDatabase(fileDatabase, fileDatabase.FilePath);
-            Assert.IsTrue(fileDatabase.Controls.RowCount == numberOfStandardControls + (4 * iterations) - 2);
+            Assert.IsTrue(fileDatabase.Controls.RowCount == expectedControlCount);
             this.VerifyControls(fileDatabase);
             Assert.IsTrue(fileDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
             Assert.IsTrue(fileDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
@@ -492,6 +497,9 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
             Assert.IsTrue(fileDatabase.Controls[visibleIndex].Visible == modifiedVisible);
             Assert.IsTrue(fileDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
+
+            ControlRow newControlInFileDatabase = fileDatabase.Controls.Single(control => String.Equals(control.DataLabel, newControl.DataLabel, StringComparison.Ordinal));
+            Assert.IsTrue(fileDatabase.Files.UserControlIndicesByDataLabel.Count == expectedControlCount - numberOfStandardControls);
         }
 
         [TestMethod]
@@ -655,10 +663,10 @@ namespace Carnassial.UnitTests
             // remove choices and change a note to a choice to produce a type failure
             ControlRow choiceControl = templateDatabase.FindControl(TestConstant.DefaultDatabaseColumn.Choice0);
             choiceControl.List = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
-            templateDatabase.SyncControlToDatabase(choiceControl);
+            templateDatabase.TrySyncControlToDatabase(choiceControl);
             ControlRow noteControl = templateDatabase.FindControl(TestConstant.DefaultDatabaseColumn.Note0);
             noteControl.Type = ControlType.FixedChoice;
-            templateDatabase.SyncControlToDatabase(noteControl);
+            templateDatabase.TrySyncControlToDatabase(noteControl);
 
             Assert.IsFalse(FileDatabase.TryCreateOrOpen(fileDatabase.FileName, templateDatabase, false, LogicalOperator.And, out fileDatabase));
             Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 5);
@@ -1054,7 +1062,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(TimeZoneInfo.Local.Equals(fileDatabase.ImageSet.GetTimeZoneInfo()));
 
             fileDatabase.ImageSet.TimeZone = initialTimeZoneID;
-            fileDatabase.SyncImageSetToDatabase();
+            fileDatabase.TrySyncImageSetToDatabase();
 
             TimeZoneInfo initialImageSetTimeZone = TimeZoneInfo.FindSystemTimeZoneById(initialTimeZoneID);
             Assert.IsTrue(fileDatabase.ImageSet.TimeZone == initialTimeZoneID);
@@ -1064,7 +1072,7 @@ namespace Carnassial.UnitTests
 
             // change to second time zone
             fileDatabase.ImageSet.TimeZone = secondTimeZoneID;
-            fileDatabase.SyncImageSetToDatabase();
+            fileDatabase.TrySyncImageSetToDatabase();
 
             TimeZoneInfo secondImageSetTimeZone = TimeZoneInfo.FindSystemTimeZoneById(secondTimeZoneID);
             Assert.IsTrue(fileDatabase.ImageSet.TimeZone == secondTimeZoneID);
