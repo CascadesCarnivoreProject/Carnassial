@@ -7,7 +7,7 @@
         xmlns:util="clr-namespace:Carnassial.Editor.Util"
         AutomationProperties.AutomationId="CarnassialTemplateEditor" Icon="Editor.ico" 
         Closing="Window_Closing" Loaded="Window_Loaded" Style="{StaticResource MainWindow}"
-        Height="860" Width="1388" MinHeight="560" MinWidth="800">
+        Height="860" Width="1488" MinHeight="560" MinWidth="800">
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
         <CommandBinding Command="{x:Static SystemCommands.MaximizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MaximizeWindow_Execute" />
@@ -17,6 +17,7 @@
     </Window.CommandBindings>
     <Window.Resources>
         <ResourceDictionary>
+            <util:ControlTypeConverter x:Key="ControlTypeConverter" />
             <util:TrimmingConverter x:Key="TrimmingConverter" />
         </ResourceDictionary>
     </Window.Resources>
@@ -97,104 +98,119 @@
                 </Style>
             </TabControl.Resources>
             <TabItem Header="Instructions">
-                <FlowDocumentScrollViewer AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" VerticalScrollBarVisibility="Auto">
-                    <FlowDocument FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
-                        <Paragraph FontWeight="Bold" FontSize="20">What the Template Editor does</Paragraph>
-                        <Paragraph>
-                            Information recorded for each image or video from a camera is specific to the kinds of files you want to analyze, your data needs, and how that data will be processed.  This differs between organizations and possibly between different kinds of image sets.  You define your needs through this template editor which saves them in template (.tdb file) named
-                            <Bold>CarnassialTemplate.tdb</Bold> by default.  This template file is then included in each image set folder.  Carnassial looks the template and uses it to create the user interface and manage the data you enter.
-                        </Paragraph>
-                        <Paragraph FontWeight="Bold" FontSize="20">Working with templates</Paragraph>
-                        <List>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>File -> New</Bold> Creates a new template with required fields which you can then add new fields to.
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>File -> Open</Bold> Opens an existing template so you can further modify its contents.
-                                </Paragraph>
-                            </ListItem>
-                        </List>
-                        <Paragraph>Each template includes several required fields:
-                            <Bold>RelativePath, File, DateTime, UtcOffset, ImageQuality,</Bold> and
-                            <Bold>DeleteFlag</Bold> .  
-                                            Carnassial fills these in automatically.  The template editor gives you the option of making these (and other) fields invisible in the user interface.  RelativePath and File locate files on disk and DateTime and UtcOffset completely describe when a file was captured.  ImageQuality powers much of Carnassial's select menu and DeleteFlag enables one selection option as well as delete options under Carnassial's edit menu.
-                        </Paragraph>
-                        <Paragraph>You can add new data fields specific to your project. Each will be one of the following types.</Paragraph>
-                        <List>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>Counter</Bold> Numeric data (integers).  Normally used to count specific entities found in an image.
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>Choice</Bold> A list of values selected from a menu.
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>Note</Bold> General purpose textual data usable for any purpose (comments, camera station names, study sites, survey name,
-                                    <Italic>etc</Italic> .)
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>Flag</Bold> Boolean data; true or false.
-                                </Paragraph>
-                            </ListItem>
-                        </List>
-                        <Paragraph>You can specify various attributes for each field.</Paragraph>
-                        <List>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>Default value</Bold> The field's initial value.  For example, if a survey name field is present it's often quite convenient to have it default to something like "Our Spiffy Project" rather than requiring this be typed in for every file in the image set.
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>Label</Bold> The name displayed for the field in Carnassial's user interface.
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>Data label</Bold> The field's column name in Carnassial's database file (.ddb).  Much more restricted than the label.
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>Tooltip</Bold> Help text displayed when a Carnassial user hovers the mouse cursor over the field's name.
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>Copyable</Bold> Whether or not Carnassial's copy from previous button and context menus can be used to populate data in the field.  In most cases it's desirable to have fields be copyable.
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>Visible</Bold> Whether or not a field is displayed in the Carnassial user interface.  Fields should generally be visible.
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>Width</Bold> How wide the field appears in the Carnassial user interface.  The editor shows a preview of the layout.
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Bold>List</Bold> The choices available for a choice field, entered one per line.  Including an empty line allows the field to be set to empty.  Each choice must be unique.
-                                </Paragraph>
-                            </ListItem>
-                        </List>
-                        <Paragraph>You can also drag and drop the fields in the preview windows to set their order in the Carnassial user interface and the column order in .csv spreadsheet files.</Paragraph>
-                        <Paragraph>If you're new to Carnassial
-                            <Hyperlink Name="TutorialLink" RequestNavigate="TutorialLink_RequestNavigate">check out the tutorial</Hyperlink> for more help.
-                        </Paragraph>
-                    </FlowDocument>
-                </FlowDocumentScrollViewer>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="300" />
+                    </Grid.ColumnDefinitions>
+                    <FlowDocumentScrollViewer AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" VerticalScrollBarVisibility="Auto" Grid.Column="0">
+                        <FlowDocument FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
+                            <Paragraph FontWeight="Bold" FontSize="20">What the Template Editor does</Paragraph>
+                            <Paragraph>
+                                Information recorded for each image or video from a camera is specific to the kinds of files you want to analyze, your data needs, and how that data will be processed.  This differs between organizations and possibly between different kinds of image sets.  You define your needs through this template editor which saves them in template (.tdb file) named
+                                <Bold>CarnassialTemplate.tdb</Bold> by default.  This template file is then included in each image set folder.  Carnassial looks the template and uses it to create the user interface and manage the data you enter.
+                            </Paragraph>
+                            <Paragraph FontWeight="Bold" FontSize="20">Working with templates</Paragraph>
+                            <List>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>File -> New</Bold> Creates a new template with required fields which you can then add new fields to.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>File -> Open</Bold> Opens an existing template so you can further modify its contents.
+                                    </Paragraph>
+                                </ListItem>
+                            </List>
+                            <Paragraph>Each template includes several required fields:
+                                <Bold>RelativePath, File, DateTime, UtcOffset, ImageQuality,</Bold> and
+                                <Bold>DeleteFlag</Bold> .  Carnassial fills these in automatically.  The template editor gives you the option of making these (and other) fields invisible in the user interface.  RelativePath and File locate files on disk and DateTime and UtcOffset completely describe when a file was captured.  ImageQuality powers much of Carnassial's select menu and DeleteFlag enables one selection option as well as delete options under Carnassial's edit menu.
+                            </Paragraph>
+                            <Paragraph>You can add new data fields specific to your project. Each will be one of the following types.</Paragraph>
+                            <List>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Counter</Bold> Numeric data (integers).  Normally used to count specific entities found in an image.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Choice</Bold> A list of values selected from a menu.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Note</Bold> General purpose textual data usable for any purpose (comments, camera station names, study sites, survey name,
+                                        <Italic>etc</Italic> .)
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Flag</Bold> Boolean data; true or false.
+                                    </Paragraph>
+                                </ListItem>
+                            </List>
+                            <Paragraph>You can specify various attributes for each field.</Paragraph>
+                            <List>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Data label</Bold> The field's column name in Carnassial's database file (.ddb).  Much more restricted than the label.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Label</Bold> The name displayed for the field in Carnassial's user interface.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Values</Bold> The choices available for a choice field, entered one per line, or the default set of autocompletions for a note.  Including an empty line allows the field to be set to empty.  Each entry in the list should be unique.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Default Value</Bold> The field's initial value.  For example, if a survey name field is present it's often quite convenient to have it default to something like "Our Spiffy Project" rather than requiring this be typed in for every file in the image set.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Tooltip</Bold> Help text displayed when a Carnassial user hovers the mouse cursor over the field's name.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Analysis label</Bold> Whether the field is used to label a Carnassial analysis button when an analysis is assigned.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Copyable</Bold> Whether or not Carnassial's copy from previous button and context menus can be used to populate data in the field.  In most cases it's desirable to have fields be copyable.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Index</Bold> Whether an index is created for the field in Carnassial's database.  This should left unchecked unless custom selections using the field take too long.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Visible</Bold> Whether or not a field is displayed in the Carnassial user interface.  Fields should generally be visible.
+                                    </Paragraph>
+                                </ListItem>
+                                <ListItem>
+                                    <Paragraph>
+                                        <Bold>Width</Bold> How wide the field appears in the Carnassial user interface.  The editor shows a preview of the layout.
+                                    </Paragraph>
+                                </ListItem>
+                            </List>
+                            <Paragraph>You can also drag and drop the fields in the preview windows to set their order in the Carnassial user interface and the column order in .csv spreadsheet files.</Paragraph>
+                            <Paragraph>If you're new to Carnassial
+                                <Hyperlink Name="TutorialLink" RequestNavigate="TutorialLink_RequestNavigate">check out the tutorial</Hyperlink> for more help.
+                            </Paragraph>
+                        </FlowDocument>
+                    </FlowDocumentScrollViewer>
+                </Grid>
             </TabItem>
             <TabItem Header="Template">
                 <Grid>
@@ -206,7 +222,7 @@
                     <Grid Grid.Column="0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="110" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
@@ -245,19 +261,19 @@
                             </DataGrid.Resources>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID" Binding="{Binding Path=ID}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
-                                <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type}" CanUserSort="False" IsReadOnly="True">
+                                <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource ControlTypeConverter}}" CanUserSort="False" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Type}" Value="Note">
-                                                    <Setter Property="ToolTip" Value="A note field accepts free-form text.  Edit its list to define common values which will be available for autocomplete." />
+                                                    <Setter Property="ToolTip" Value="A note field accepts free-form text.  Edit its well known values to define common values which will be available for autocomplete." />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="Counter">
                                                     <Setter Property="ToolTip" Value="A counter field provides a point and click interface for counting entities in an image or video." />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
-                                                    <Setter Property="ToolTip" Value="A choice field provides a drop down menu of choices.  Edit its list to create these choices." />
+                                                    <Setter Property="ToolTip" Value="A choice field provides a drop down menu of choices.  Edit its well known values to create these choices." />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="Flag">
                                                     <Setter Property="ToolTip" Value="A flag field can be toggled between true and false." />
@@ -297,14 +313,14 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTemplateColumn MinWidth="40" Header="Values" Width="80" CanUserSort="False">
+                                <DataGridTemplateColumn MinWidth="40" Header="Well Known&#x0a;Values" Width="80" CanUserSort="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Button Click="DefineList_Click" local:EditorWindowExtensions.ChoiceList="{Binding Path=List, Mode=TwoWay}" Content="Define List" Margin="1" Tag="{Binding Path=ControlOrder}">
+                                            <Button Click="EditWellKnownValues_Click" Content="Edit..." Margin="1" Tag="{Binding Path=ControlOrder}">
                                                 <Button.Style>
                                                     <Style TargetType="Button">
                                                         <Style.Triggers>
-                                                            <!-- hide define list button for most standard controls it applies to counters and user defined notes -->
+                                                            <!-- hide define edit button for most standard controls it applies to counters and user defined notes -->
                                                             <DataTrigger Binding="{Binding DataLabel}" Value="File">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                             </DataTrigger>
@@ -343,7 +359,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn MinWidth="40" Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                <DataGridTextColumn Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}}" CanUserSort="False" MaxWidth="100" MinWidth="40">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
                                             <Setter Property="ToolTip" Value="The value the field will be set to by default."/>
@@ -361,7 +377,7 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridCheckBoxColumn MinWidth="25" Header="Analysis Label" Binding="{Binding Path=AnalysisLabel, Converter={StaticResource TrimmingConverter}}" Width="Auto" CanUserSort="False">
+                                <DataGridCheckBoxColumn MinWidth="25" Header="Analysis&#x0a;Label" Binding="{Binding Path=AnalysisLabel, Converter={StaticResource TrimmingConverter}}" Width="Auto" CanUserSort="False">
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
                                             <Setter Property="ToolTip" Value="Whether the value of this field is shown as a reminder on analysis buttons."/>
@@ -389,6 +405,20 @@
                                         </Style>
                                     </DataGridCheckBoxColumn.CellStyle>
                                 </DataGridCheckBoxColumn>
+                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Index" Binding="{Binding Path=IndexInFileTable}" CanUserSort="False">
+                                    <DataGridCheckBoxColumn.CellStyle>
+                                        <Style TargetType="{x:Type DataGridCell}">
+                                            <Setter Property="ToolTip" Value="Whether this field is indexed in Carnassial's database.  Leave this unchecked unless custom selections using the field take too long."/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Background" Value="{StaticResource ControlGridDisabledCellBackground}" />
+                                                    <Setter Property="Foreground" Value="{StaticResource ControlGridDisabledCellForeground}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridCheckBoxColumn.CellStyle>
+                                </DataGridCheckBoxColumn>
                                 <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" Binding="{Binding Path=Visible}" CanUserSort="False">
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
@@ -403,7 +433,7 @@
                                         </Style>
                                     </DataGridCheckBoxColumn.CellStyle>
                                 </DataGridCheckBoxColumn>
-                                <DataGridTextColumn MinWidth="40" Header="Max Width" Binding="{Binding Path=MaxWidth}" CanUserSort="False">
+                                <DataGridTextColumn MinWidth="40" Header="Max&#x0a;Width" Binding="{Binding Path=MaxWidth}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
                                             <Setter Property="ToolTip" Value="The width of the data entry field as shown in the user interface."/>
@@ -413,15 +443,20 @@
                                 </DataGridTextColumn>
                             </DataGrid.Columns>
                         </DataGrid>
-                        <DockPanel Name="RowControls" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="10,10,10,10">
-                            <UniformGrid DockPanel.Dock="Top" Height="160" Rows="4">
-                                <Button Content="Add _counter"  Margin="0,0,0,10" IsEnabled="False" Click="AddControlButton_Click" Name="AddCounterButton" ToolTip="Add a new counter control." />
-                                <Button Content="Add c_hoice" Margin="0,0,0,10" IsEnabled="False" Click="AddControlButton_Click" Name="AddFixedChoiceButton" ToolTip="Add a new choice control." />
-                                <Button Content="Add _note" Margin="0,0,0,10" IsEnabled="False" Click="AddControlButton_Click" Name="AddNoteButton" ToolTip="Add a new note control." />
-                                <Button Content="Add fla_g" Margin="0,0,0,10" IsEnabled="False" Click="AddControlButton_Click" Name="AddFlagButton" ToolTip="Add a new flag control." />
-                            </UniformGrid>
-                            <Button Content="_Remove" Name="RemoveControlButton" Height="30" IsEnabled="False" VerticalAlignment="Top" Click="RemoveControlButton_Click" Margin="0,30,0,0" ToolTip="Remove the currently selected control." />
-                        </DockPanel>
+                        <Grid Name="RowControls" Grid.Row="0" Grid.Column="1" Margin="10,10,10,10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Button Content="Add _counter" Click="AddControlButton_Click" IsEnabled="False" Margin="0,0,0,5" Name="AddCounterButton" Padding="5,5,5,5" ToolTip="Add a new counter control." Grid.Column="0" Grid.Row="0" />
+                            <Button Content="Add c_hoice" Click="AddControlButton_Click" IsEnabled="False" Margin="0,5,0,5" Name="AddFixedChoiceButton" Padding="5,5,5,5" ToolTip="Add a new choice control." Grid.Column="0" Grid.Row="1" />
+                            <Button Content="Add _note" Click="AddControlButton_Click" IsEnabled="False" Margin="0,5,0,5" Name="AddNoteButton" Padding="5,5,5,5" ToolTip="Add a new note control." Grid.Column="0" Grid.Row="2" />
+                            <Button Content="Add fla_g" Click="AddControlButton_Click" IsEnabled="False" Margin="0,5,0,5" Name="AddFlagButton" Padding="5,5,5,5" ToolTip="Add a new flag control." Grid.Column="0" Grid.Row="3" />
+                            <Button Content="_Remove" Click="RemoveControlButton_Click" IsEnabled="False" Margin="0,30,0,0" Name="RemoveControlButton" Padding="5,5,5,5" ToolTip="Remove the currently selected control." Grid.Column="0" Grid.Row="4" />
+                        </Grid>
                         <GridSplitter Grid.Row="1" Grid.ColumnSpan="2" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
 
                         <!-- spreadsheet order -->

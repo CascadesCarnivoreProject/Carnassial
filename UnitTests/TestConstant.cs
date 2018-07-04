@@ -11,6 +11,7 @@ namespace Carnassial.UnitTests
         public const string CarnassialTemplateEditorAutomationID = "CarnassialTemplateEditor";
         public const double LuminosityAndColorationTolerance = 0.00000001;
         public const string DateTimeWithOffsetFormat = "yyyy-MM-ddTHH:mm:ss.fffK";
+        public const byte[] DefaultMarkerPositions = null;
         public const string EditorTemplateDatabaseFieldName = "templateDatabase";
         public const string FileCountsAutomationID = "FileCountsByQuality";
         public const string InitializeDataGridMethodName = "InitializeDataGrid";
@@ -20,61 +21,35 @@ namespace Carnassial.UnitTests
 
         public static readonly TimeSpan UIElementSearchTimeout = TimeSpan.FromSeconds(15.0);
 
-        public static readonly ReadOnlyCollection<string> ControlsColumns = new List<string>()
-            {
-                Constant.Control.ControlOrder,
-                Constant.Control.SpreadsheetOrder,
-                Constant.Control.DefaultValue,
-                Constant.Control.Label,
-                Constant.Control.DataLabel,
-                Constant.Control.Tooltip,
-                Constant.Control.Width,
-                Constant.Control.Copyable,
-                Constant.Control.Visible,
-                Constant.Control.List,
-                Constant.DatabaseColumn.ID,
-                Constant.Control.Type
-            }.AsReadOnly();
-
-        public static readonly ReadOnlyCollection<string> DefaultFileDataColumns = new List<string>()
+        public static readonly ReadOnlyCollection<string> DefaultFileColumns = new List<string>()
         {
             Constant.DatabaseColumn.ID,
-            Constant.DatabaseColumn.File,
-            Constant.DatabaseColumn.RelativePath,
-            Constant.DatabaseColumn.DateTime,
-            Constant.DatabaseColumn.UtcOffset,
-            Constant.DatabaseColumn.ImageQuality,
-            Constant.DatabaseColumn.DeleteFlag,
+            Constant.FileColumn.File,
+            Constant.FileColumn.RelativePath,
+            Constant.FileColumn.DateTime,
+            Constant.FileColumn.UtcOffset,
+            Constant.FileColumn.Classification,
+            Constant.FileColumn.DeleteFlag,
             TestConstant.DefaultDatabaseColumn.Counter0,
+            TestConstant.DefaultDatabaseColumn.Counter0Markers,
             TestConstant.DefaultDatabaseColumn.Choice0,
             TestConstant.DefaultDatabaseColumn.Note0,
             TestConstant.DefaultDatabaseColumn.Flag0,
             TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel,
+            TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers,
             TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel,
             TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel,
             TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel,
             TestConstant.DefaultDatabaseColumn.CounterNotVisible,
+            TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers,
             TestConstant.DefaultDatabaseColumn.ChoiceNotVisible,
             TestConstant.DefaultDatabaseColumn.NoteNotVisible,
             TestConstant.DefaultDatabaseColumn.FlagNotVisible,
             TestConstant.DefaultDatabaseColumn.Counter3,
+            TestConstant.DefaultDatabaseColumn.Counter3Markers,
             TestConstant.DefaultDatabaseColumn.Choice3,
             TestConstant.DefaultDatabaseColumn.Note3,
             TestConstant.DefaultDatabaseColumn.Flag3
-        }.AsReadOnly();
-
-        public static readonly ReadOnlyCollection<string> DefaultMarkerColumns = new List<string>()
-        {
-            Constant.DatabaseColumn.ID,
-            TestConstant.DefaultDatabaseColumn.Counter0,
-            TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel,
-            TestConstant.DefaultDatabaseColumn.CounterNotVisible,
-            TestConstant.DefaultDatabaseColumn.Counter3
-        }.AsReadOnly();
-
-        public static readonly ReadOnlyCollection<string> ImageSetColumns = new List<string>()
-        {
-            Constant.DatabaseColumn.ID,
         }.AsReadOnly();
 
         public static class CarnivoreDatabaseColumn
@@ -85,18 +60,22 @@ namespace Carnassial.UnitTests
         public static class DefaultDatabaseColumn
         {
             public const string Counter0 = "Counter0";
+            public const string Counter0Markers = "Counter0Markers";
             public const string Choice0 = "Choice0";
             public const string Note0 = "Note0";
             public const string Flag0 = "Flag0";
             public const string CounterWithCustomDataLabel = "CounterWithCustomDataLabel";
+            public const string CounterWithCustomDataLabelMarkers = "CounterWithCustomDataLabelMarkers";
             public const string ChoiceWithCustomDataLabel = "ChoiceWithCustomDataLabel";
             public const string NoteWithCustomDataLabel = "NoteWithCustomDataLabel";
             public const string FlagWithCustomDataLabel = "FlagWithCustomDataLabel";
             public const string CounterNotVisible = "CounterNotVisible";
+            public const string CounterNotVisibleMarkers = "CounterNotVisibleMarkers";
             public const string ChoiceNotVisible = "ChoiceNotVisible";
             public const string NoteNotVisible = "NoteNotVisible";
             public const string FlagNotVisible = "FlagNotVisible";
             public const string Counter3 = "Counter3";
+            public const string Counter3Markers = "Counter3Markers";
             public const string Choice3 = "Choice3";
             public const string Note3 = "Note3";
             public const string Flag3 = "Flag3";
@@ -113,15 +92,15 @@ namespace Carnassial.UnitTests
             public const string HybridVideoDirectoryName = "HybridVideo";
 
             // file databases for backwards compatibility testing
-            // version is the Carnassial version used for creation
+            // Version is the Carnassial version used for creation.
             public const string DefaultFileDatabaseFileName = "DefaultData 2.2.0.3.ddb";
 
             // template databases for backwards compatibility testing
-            // version is the editor version used for creation
-            public const string DefaultTemplateDatabaseFileName = "DefaultTemplate 2.2.0.2.tdb";
+            // Version is the editor version used for creation.
+            public const string DefaultTemplateDatabaseFileName = "DefaultTemplate 2.2.0.3.tdb";
 
             // databases generated dynamically by tests
-            // see also use of Constants.File.Default*DatabaseFileName
+            // See also use of Constants.File.Default*DatabaseFileName.
             public const string DefaultNewFileDatabaseFileName = "DefaultUnitTest.ddb";
             public const string DefaultNewTemplateDatabaseFileName = "DefaultUnitTest.tdb";
         }
@@ -144,7 +123,7 @@ namespace Carnassial.UnitTests
                 {
                     FileName = "BushnellTrophyHD-119677C-20170403-179.JPG",
                     Coloration = 0.5,
-                    Quality = FileClassification.Corrupt
+                    Classification = FileClassification.Corrupt
                 };
 
                 FileExpectation.DaylightBobcat = new FileExpectations(pacificTime)
@@ -153,7 +132,7 @@ namespace Carnassial.UnitTests
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-08-05T08:06:23.000-07:00"),
                     FileName = "BushnellTrophyHD-119677C-20160805-926.JPG",
                     Coloration = 0.072226041956181958,
-                    Quality = FileClassification.Color
+                    Classification = FileClassification.Color
                 };
 
                 FileExpectation.DaylightCoyote = new FileExpectations(pacificTime)
@@ -162,7 +141,7 @@ namespace Carnassial.UnitTests
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-04-21T06:31:13.000-07:00"),
                     FileName = "BushnellTrophyHDAggressor-119777C-20160421-112.JPG",
                     Luminosity = 0.2765857055787681,
-                    Quality = FileClassification.Color,
+                    Classification = FileClassification.Color,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName
                 };
 
@@ -172,7 +151,7 @@ namespace Carnassial.UnitTests
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-01-28T11:17:34.000-08:00"),
                     FileName = "Reconyx-HC500-20150128-201.JPG",
                     Luminosity = 0.20386141575831992,
-                    Quality = FileClassification.Color,
+                    Classification = FileClassification.Color,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName,
                 };
 
@@ -182,7 +161,7 @@ namespace Carnassial.UnitTests
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-02-24T04:59:46.000-08:00"),
                     FileName = "BushnellTrophyHD-119677C-20160224-056.JPG",
                     Luminosity = 0.3138861038100762,
-                    Quality = FileClassification.Greyscale
+                    Classification = FileClassification.Greyscale
                 };
             }
         }

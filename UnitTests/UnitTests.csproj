@@ -121,7 +121,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="DefaultTemplate 2.2.0.2.tdb">
+    <Content Include="DefaultTemplate 2.2.0.3.tdb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="DefaultData 2.2.0.3.ddb">

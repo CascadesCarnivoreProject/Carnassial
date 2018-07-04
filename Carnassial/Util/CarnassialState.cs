@@ -33,7 +33,7 @@ namespace Carnassial.Util
             {
                 this.Analysis.Add(null);
             }
-            this.CurrentFileSnapshot = new Dictionary<string, object>();
+            this.CurrentFileSnapshot = new Dictionary<string, object>(StringComparer.Ordinal);
             this.DifferenceThreshold = Constant.Images.DifferenceThresholdDefault;
             this.FileNavigatorSliderDragging = false;
             this.MostRecentRender = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;

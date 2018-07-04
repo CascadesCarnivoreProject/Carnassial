@@ -354,7 +354,7 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Background="{StaticResource ApplicationBackgroundBrush}" Grid.Column="0" Grid.Row="0">
+                        <ScrollViewer Background="{StaticResource ApplicationBackgroundBrush}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Grid.Column="0" Grid.Row="0">
                             <control:DataEntryControls x:Name="DataEntryControls" Margin="0,10,0,0" />
                         </ScrollViewer>
                         <!-- grid row 1 is unpopulated as no control is needed to avoid DataEntryControls taking keyboard focus

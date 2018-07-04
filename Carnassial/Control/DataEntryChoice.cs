@@ -1,24 +1,16 @@
 ﻿using Carnassial.Data;
 using System;
 using System.Collections.Generic;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace Carnassial.Control
 {
-    // A choice comprises a stack panel containing
+    // A choice comprises
     // - a label containing the descriptive label) 
     // - a combobox (containing the content) at the given width
     public class DataEntryChoice : DataEntryControl<ComboBox, Label>
     {
-        /// <summary>Gets the current choice.</summary>
-        public override string Content
-        {
-            get { return (string)this.ContentControl.SelectedItem; }
-        }
-
         public override bool ContentReadOnly
         {
             get { return this.ContentControl.IsReadOnly; }
@@ -32,9 +24,9 @@ namespace Carnassial.Control
             this.ContentControl.PreviewKeyDown += this.ContentControl_PreviewKeyDown;
 
             // add items to the combo box
-            this.SetChoices(control.GetChoices());
+            this.SetWellKnownValues(control.GetWellKnownValues());
 
-            this.ContentControl.SetBinding(ComboBox.SelectedItemProperty, ImageRow.GetDataBindingPath(control.DataLabel));
+            this.ContentControl.SetBinding(ComboBox.SelectedItemProperty, ImageRow.GetDataBindingPath(control));
         }
 
         // Users may want to use the text search facility on the combobox, where they type the first letter and then enter
@@ -57,7 +49,7 @@ namespace Carnassial.Control
             }
         }
 
-        public override List<string> GetChoices()
+        public override List<string> GetWellKnownValues()
         {
             List<string> choices = new List<string>();
             foreach (object item in this.ContentControl.Items)
@@ -70,16 +62,32 @@ namespace Carnassial.Control
             return choices;
         }
 
-        public override void SetChoices(List<string> choices)
+        public override void SetWellKnownValues(List<string> wellKnownValues)
         {
             this.ContentControl.Items.Clear();
 
+            bool isClassification = String.Equals(this.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal);
             bool emptyChoiceAllowed = false;
-            foreach (string choice in choices)
+            foreach (string choice in wellKnownValues)
             {
                 if (choice == String.Empty)
                 {
                     emptyChoiceAllowed = true;
+                }
+                else if (isClassification)
+                {
+                    // Data binding of a combo box's selected item property requires the type of the combo box's items match the
+                    // type of the bound property.  For user defined choices in Carnassial (as of 2.2.0.3) both items and the
+                    // bound ImageRow values are always strings.  This is not the case, however, for ImageRow.Classification as
+                    // the property is an enum but well known values remain strings.  Either a converter has to be included in the
+                    // binding to change the enum to a string or the well known values have to be parsed back to enums from strings.
+                    // The latter is preferred as it's lower overhead.
+                    bool success = ImageRow.TryParseFileClassification(choice, out FileClassification classification);
+                    if (success == false)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(wellKnownValues), String.Format("'{0}' is not a valid FileClassification.", choice));
+                    }
+                    this.ContentControl.Items.Add(classification);
                 }
                 else
                 {

@@ -1,16 +1,44 @@
 ﻿using Carnassial.Database;
 using System;
-using System.Data;
 using System.Data.SQLite;
 
 namespace Carnassial.Data
 {
     internal class ImageSetTable : SQLiteTable<ImageSetRow>
     {
+        public static SQLiteTableSchema CreateSchema()
+        {
+            SQLiteTableSchema schema = new SQLiteTableSchema(Constant.DatabaseTable.ImageSet);
+            schema.ColumnDefinitions.Add(ColumnDefinition.CreatePrimaryKey());
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.FileSelection, Constant.SQLiteAffninity.Integer)
+            {
+                DefaultValue = ((int)default(FileSelection)).ToString(),
+                NotNull = true
+            });
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.InitialFolderName, Constant.SQLiteAffninity.Text)
+            {
+                NotNull = true
+            });
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.Log, Constant.SQLiteAffninity.Text));
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.Options, Constant.SQLiteAffninity.Integer)
+            {
+                DefaultValue = ((int)default(ImageSetOptions)).ToString(),
+                NotNull = true
+            });
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.MostRecentFileID, Constant.SQLiteAffninity.Integer)
+            {
+                DefaultValue = Constant.Database.DefaultFileID.ToString(),
+                NotNull = true
+            });
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.TimeZone, Constant.SQLiteAffninity.Text)
+            {
+                NotNull = true
+            });
+            return schema;
+        }
+
         public override void Load(SQLiteDataReader reader)
         {
-            this.Rows.Clear();
-
             int fileSelectionIndex = -1;
             int idIndex = -1;
             int initialFolderIndex = -1;
@@ -23,25 +51,25 @@ namespace Carnassial.Data
                 string columnName = reader.GetName(column);
                 switch (columnName)
                 {
-                    case Constant.DatabaseColumn.FileSelection:
+                    case Constant.ImageSetColumn.FileSelection:
                         fileSelectionIndex = column;
                         break;
                     case Constant.DatabaseColumn.ID:
                         idIndex = column;
                         break;
-                    case Constant.DatabaseColumn.InitialFolderName:
+                    case Constant.ImageSetColumn.InitialFolderName:
                         initialFolderIndex = column;
                         break;
-                    case Constant.DatabaseColumn.Log:
+                    case Constant.ImageSetColumn.Log:
                         logIndex = column;
                         break;
-                    case Constant.DatabaseColumn.MostRecentFileID:
+                    case Constant.ImageSetColumn.MostRecentFileID:
                         mostRecentFileIndex = column;
                         break;
-                    case Constant.DatabaseColumn.Options:
+                    case Constant.ImageSetColumn.Options:
                         optionsIndex = column;
                         break;
-                    case Constant.DatabaseColumn.TimeZone:
+                    case Constant.ImageSetColumn.TimeZone:
                         timeZoneIndex = column;
                         break;
                     default:
@@ -61,19 +89,20 @@ namespace Carnassial.Data
                 throw new SQLiteException(SQLiteErrorCode.Schema, "At least one standard column is missing from table " + reader.GetTableName(0));
             }
 
+            this.Rows.Clear();
+
             while (reader.Read())
             {
                 // read file values
-                IDataRecord row = (IDataRecord)reader;
                 ImageSetRow imageSet = new ImageSetRow()
                 {
-                    FileSelection = (FileSelection)Enum.Parse(typeof(FileSelection), row.GetString(fileSelectionIndex)),
-                    ID = row.GetInt64(idIndex),
-                    InitialFolderName = row.GetString(initialFolderIndex),
-                    Log = row.GetString(logIndex),
-                    MostRecentFileID = row.GetInt64(mostRecentFileIndex),
-                    Options = (ImageSetOptions)Enum.Parse(typeof(ImageSetOptions), row.GetString(optionsIndex)),
-                    TimeZone = row.GetString(timeZoneIndex)
+                    FileSelection = (FileSelection)reader.GetInt32(fileSelectionIndex),
+                    ID = reader.GetInt64(idIndex),
+                    InitialFolderName = reader.GetString(initialFolderIndex),
+                    Log = reader.GetString(logIndex),
+                    MostRecentFileID = reader.GetInt64(mostRecentFileIndex),
+                    Options = (ImageSetOptions)reader.GetInt32(optionsIndex),
+                    TimeZone = reader.GetString(timeZoneIndex)
                 };
                 imageSet.AcceptChanges();
 

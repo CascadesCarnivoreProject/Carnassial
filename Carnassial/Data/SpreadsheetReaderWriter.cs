@@ -26,19 +26,27 @@ namespace Carnassial.Data
                 // write the header as defined by the data labels in the template file
                 // The append sequence results in a trailing comma which is retained when writing the line.
                 StringBuilder header = new StringBuilder();
-                List<string> dataLabelsExceptID = database.GetDataLabelsExceptIDInSpreadsheetOrder();
-                foreach (string dataLabel in dataLabelsExceptID)
+                List<string> columns = new List<string>(database.Controls.RowCount);
+                foreach (ControlRow control in database.Controls.InSpreadsheetOrder())
                 {
-                    header.Append(this.AddColumnValue(dataLabel));
+                    columns.Add(control.DataLabel);
+                    header.Append(this.AddColumnValue(control.DataLabel));
+
+                    if (control.Type == ControlType.Counter)
+                    {
+                        string markerColumn = FileTable.GetMarkerPositionColumnName(control.DataLabel);
+                        columns.Add(markerColumn);
+                        header.Append(this.AddColumnValue(markerColumn));
+                    }
                 }
                 fileWriter.WriteLine(header.ToString());
 
                 foreach (ImageRow file in database.Files)
                 {
                     StringBuilder csvRow = new StringBuilder();
-                    foreach (string dataLabel in dataLabelsExceptID)
+                    foreach (string dataLabel in columns)
                     {
-                        csvRow.Append(this.AddColumnValue(file.GetDatabaseString(dataLabel)));
+                        csvRow.Append(this.AddColumnValue(file.GetExcelString(dataLabel)));
                     }
                     fileWriter.WriteLine(csvRow.ToString());
                 }
@@ -52,17 +60,26 @@ namespace Carnassial.Data
         {
             using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
             {
-                List<string> dataLabelsExceptID = database.GetDataLabelsExceptIDInSpreadsheetOrder();
-                ExcelWorksheet worksheet = this.GetOrCreateBlankWorksheet(xlsxFile, Constant.Excel.FileDataWorksheetName, dataLabelsExceptID);
+                List<string> columns = new List<string>(database.Controls.RowCount);
+                foreach (ControlRow control in database.Controls.InSpreadsheetOrder())
+                {
+                    columns.Add(control.DataLabel);
+                    if (control.Type == ControlType.Counter)
+                    {
+                        columns.Add(FileTable.GetMarkerPositionColumnName(control.DataLabel));
+                    }
+                }
+
+                ExcelWorksheet worksheet = this.GetOrCreateBlankWorksheet(xlsxFile, Constant.Excel.FileDataWorksheetName, columns);
 
                 int row = 1;
                 foreach (ImageRow file in database.Files)
                 {
-                    int column = 0;
+                    int columnIndex = 0;
                     ++row;
-                    foreach (string dataLabel in dataLabelsExceptID)
+                    foreach (string column in columns)
                     {
-                        worksheet.Cells[row, ++column].Value = file.GetDatabaseString(dataLabel);
+                        worksheet.Cells[row, ++columnIndex].Value = file.GetExcelString(column);
                     }
                 }
 
@@ -75,24 +92,39 @@ namespace Carnassial.Data
 
         private FileImportResult TryImportFileData(FileDatabase fileDatabase, Func<List<string>> readLine, string spreadsheetFilePath)
         {
-            Debug.Assert(fileDatabase.ImageSet.FileSelection == FileSelection.All, "Database doesn't have all files selected.  Checking for files already added to the image set would fail.");
-
-            List<string> dataLabels = fileDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
-            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-            string spreadsheetFileFolderPath = Path.GetDirectoryName(spreadsheetFilePath);
-            FileImportResult result = new FileImportResult();
+            if (fileDatabase.ImageSet.FileSelection != FileSelection.All)
+            {
+                throw new ArgumentOutOfRangeException(nameof(fileDatabase), "Database doesn't have all files selected.  Checking for files already added to the image set would fail.");
+            }
 
             // validate file header against the database
-            List<string> dataLabelsFromHeader = readLine.Invoke();
-            List<string> dataLabelsInFileDatabaseButNotInHeader = dataLabels.Except(dataLabelsFromHeader).ToList();
-            foreach (string dataLabel in dataLabelsInFileDatabaseButNotInHeader)
+            List<string> columnsFromFileHeader = readLine.Invoke();
+            List<string> columnsInDatabase = new List<string>(fileDatabase.Controls.RowCount);
+            Dictionary<string, ControlRow> controlsByColumn = new Dictionary<string, ControlRow>();
+            foreach (ControlRow control in fileDatabase.Controls)
             {
-                result.Errors.Add("- A column with the data label '" + dataLabel + "' is present in the image set but not in the file." + Environment.NewLine);
+                controlsByColumn.Add(control.DataLabel, control);
+                columnsInDatabase.Add(control.DataLabel);
+
+                if (control.Type == ControlType.Counter)
+                {
+                    string markerColumn = FileTable.GetMarkerPositionColumnName(control.DataLabel);
+                    controlsByColumn.Add(markerColumn, control);
+                    columnsInDatabase.Add(markerColumn);
+                }
             }
-            List<string> dataLabelsInHeaderButNotFileDatabase = dataLabelsFromHeader.Except(dataLabels).ToList();
-            foreach (string dataLabel in dataLabelsInHeaderButNotFileDatabase)
+
+            List<string> columnsInDatabaseButNotInHeader = columnsInDatabase.Except(columnsFromFileHeader).ToList();
+            FileImportResult result = new FileImportResult();
+            foreach (string column in columnsInDatabaseButNotInHeader)
             {
-                result.Errors.Add("- A column with the data label '" + dataLabel + "' is present in the file but not in the image set." + Environment.NewLine);
+                result.Errors.Add("- The column '" + column + "' is present in the image set but not in the file." + Environment.NewLine);
+            }
+
+            List<string> columnsInHeaderButNotDatabase = columnsFromFileHeader.Except(columnsInDatabase).ToList();
+            foreach (string column in columnsInHeaderButNotDatabase)
+            {
+                result.Errors.Add("- The column '" + column + "' is present in the file but not in the image set." + Environment.NewLine);
             }
 
             if (result.Errors.Count > 0)
@@ -101,25 +133,32 @@ namespace Carnassial.Data
             }
 
             // read data for file from the .csv or .xlsx file
-            List<string> dataLabelsExceptFileNameAndRelativePath = new List<string>(dataLabels);
-            dataLabelsExceptFileNameAndRelativePath.Remove(Constant.DatabaseColumn.File);
-            dataLabelsExceptFileNameAndRelativePath.Remove(Constant.DatabaseColumn.RelativePath);
-            FileTuplesWithID existingFilesToUpdate = new FileTuplesWithID(dataLabelsExceptFileNameAndRelativePath);
+            List<ControlRow> controlsInFileOrder = new List<ControlRow>(columnsFromFileHeader.Count);
+            foreach (string column in columnsFromFileHeader)
+            {
+                controlsInFileOrder.Add(controlsByColumn[column]);
+            }
+
+            List<string> dataLabelsToUpdate = new List<string>(columnsInDatabase.Count);
+            dataLabelsToUpdate.AddRange(columnsInDatabase.Where(dataLabel => (String.Equals(dataLabel, Constant.FileColumn.File, StringComparison.Ordinal) == false) &&
+                                                                             (String.Equals(dataLabel, Constant.FileColumn.RelativePath, StringComparison.Ordinal) == false)));
+
+            FileTuplesWithID existingFilesToUpdate = new FileTuplesWithID(dataLabelsToUpdate);
             Dictionary<string, HashSet<string>> filesAlreadyInDatabaseByRelativePath = fileDatabase.Files.HashFileNamesByRelativePath();
             List<FileLoad> newFilesToInsert = new List<FileLoad>();
-            FileTuplesWithPath newFilesToUpdate = new FileTuplesWithPath(dataLabelsExceptFileNameAndRelativePath);
+            FileTuplesWithPath newFilesToUpdate = new FileTuplesWithPath(dataLabelsToUpdate);
             for (List<string> row = readLine.Invoke(); row != null; row = readLine.Invoke())
             {
-                if (row.Count == dataLabels.Count - 1)
+                if (row.Count == columnsInDatabase.Count - 1)
                 {
                     // .csv files are ambiguous in the sense a trailing comma may or may not be present at the end of the line
                     // if the final field has a value this case isn't a concern, but if the final field has no value then there's
                     // no way for the parser to know the exact number of fields in the line
                     row.Add(String.Empty);
                 }
-                else if (row.Count != dataLabels.Count)
+                else if (row.Count != columnsInDatabase.Count)
                 {
-                    Debug.Fail(String.Format("Expected {0} fields in line {1} but found {2}.", dataLabels.Count, String.Join(",", row), row.Count));
+                    Debug.Fail(String.Format("Expected {0} fields in line {1} but found {2}.", columnsInDatabase.Count, String.Join(",", row), row.Count));
                 }
 
                 // assemble set of column values to update
@@ -128,39 +167,69 @@ namespace Carnassial.Data
                 List<object> values = new List<object>();
                 for (int field = 0; field < row.Count; ++field)
                 {
-                    string dataLabel = dataLabelsFromHeader[field];
+                    string dataLabel = columnsFromFileHeader[field];
                     string value = row[field];
 
                     // capture components of file's unique identifier for constructing where clause
                     // at least for now, it's assumed all renames or moves are done through Carnassial and hence relative path + file name form 
                     // an immutable (and unique) ID
-                    if (dataLabel == Constant.DatabaseColumn.File)
+                    if (String.Equals(dataLabel, Constant.FileColumn.File, StringComparison.Ordinal))
                     {
                         fileName = value;
                     }
-                    else if (dataLabel == Constant.DatabaseColumn.RelativePath)
+                    else if (String.Equals(dataLabel, Constant.FileColumn.RelativePath, StringComparison.Ordinal))
                     {
                         relativePath = value;
                     }
-                    else if (dataLabel == Constant.DatabaseColumn.DateTime && DateTimeHandler.TryParseDatabaseDateTime(value, out DateTime dateTime))
+                    else if (String.Equals(dataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal) && ImageRow.TryParseFileClassification(value, out FileClassification classification))
+                    {
+                        values.Add((int)classification);
+                    }
+                    else if (String.Equals(dataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal) && DateTimeHandler.TryParseDatabaseDateTime(value, out DateTime dateTime))
                     {
                         values.Add(dateTime);
                     }
-                    else if (dataLabel == Constant.DatabaseColumn.UtcOffset && DateTimeHandler.TryParseDatabaseUtcOffsetString(value, out TimeSpan utcOffset))
+                    else if (String.Equals(dataLabel, Constant.FileColumn.UtcOffset, StringComparison.Ordinal) && DateTimeHandler.TryParseDatabaseUtcOffsetString(value, out TimeSpan utcOffset))
                     {
                         // offset needs to be converted to a double for database insert or update
                         values.Add(DateTimeHandler.ToDatabaseUtcOffset(utcOffset));
                     }
-                    else if (fileDatabase.ControlsByDataLabel[dataLabel].IsValidData(value))
-                    {
-                        // for all other columns (user controls), include a string value in update query if value is valid
-                        values.Add(value);
-                    }
                     else
                     {
-                        // if value wasn't processed by a previous clause it's invalid (or there's a parsing bug)
-                        result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", value, dataLabel));
-                        values.Add(null);
+                        ControlRow control = controlsInFileOrder[field];
+                        if (control.IsValidExcelData(value))
+                        {
+                            if (control.Type == ControlType.Counter)
+                            {
+                                if (String.IsNullOrEmpty(value))
+                                {
+                                    values.Add(null);
+                                }
+                                else if (Int32.TryParse(value, out int valueAsInt))
+                                {
+                                    values.Add(valueAsInt);
+                                }
+                                else
+                                {
+                                    values.Add(MarkersForCounter.MarkerPositionsFromExcelString(value));
+                                }
+                            }
+                            else if (control.Type == ControlType.Flag)
+                            {
+                                values.Add(Boolean.Parse(value));
+                            }
+                            else
+                            {
+                                // for all other columns, include a string value in update query if value is valid
+                                values.Add(value);
+                            }
+                        }
+                        else
+                        {
+                            // if value wasn't processed by a previous clause it's invalid (or there's a parsing bug)
+                            result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", value, dataLabel));
+                            values.Add(null);
+                        }
                     }
                 }
 
@@ -225,7 +294,7 @@ namespace Carnassial.Data
             {
                 using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
                 {
-                    ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets.FirstOrDefault(sheet => sheet.Name == Constant.Excel.FileDataWorksheetName);
+                    ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets.FirstOrDefault(sheet => String.Equals(sheet.Name, Constant.Excel.FileDataWorksheetName, StringComparison.Ordinal));
                     if (worksheet == null)
                     {
                         FileImportResult result = new FileImportResult();

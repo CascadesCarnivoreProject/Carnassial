@@ -2,6 +2,7 @@
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -110,16 +111,14 @@ namespace Carnassial.Dialog
 
         private GridView CreateFileGridDataBindings()
         {
-            List<string> dataLabels = this.fileDatabase.GetDataLabelsExceptIDInSpreadsheetOrder();
-            dataLabels.Remove(Constant.DatabaseColumn.UtcOffset);
-
+            List<ControlRow> controlsExceptUtcOffset = this.fileDatabase.Controls.InSpreadsheetOrder().Where(control => String.Equals(control.DataLabel, Constant.FileColumn.UtcOffset, StringComparison.Ordinal) == false).ToList();
             GridView gridView = new GridView();
-            foreach (string dataLabel in dataLabels)
+            foreach (ControlRow control in controlsExceptUtcOffset)
             {
                 GridViewColumn column = new GridViewColumn()
                 {
-                    DisplayMemberBinding = new Binding(ImageRow.GetDataBindingPath(dataLabel)),
-                    Header = ImageRow.GetPropertyName(dataLabel)
+                    DisplayMemberBinding = new Binding(ImageRow.GetDataBindingPath(control)),
+                    Header = ImageRow.GetPropertyName(control.DataLabel)
                 };
                 gridView.Columns.Add(column);
             }

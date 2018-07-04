@@ -2,11 +2,12 @@
 {
     public enum FileClassification
     {
-        Color,
-        Corrupt,
-        Dark,
-        Greyscale,
-        NoLongerAvailable,
-        Video
+        // values are stored in file database as integers
+        Color = 0,
+        Corrupt = 5,
+        Dark = 2,
+        Greyscale = 1,
+        NoLongerAvailable = 4,
+        Video = 3
     }
 }

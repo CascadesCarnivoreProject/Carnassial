@@ -25,7 +25,7 @@ namespace Carnassial.Control
         {
             this.InitializeComponent();
             this.Controls = new List<DataEntryControl>();
-            this.ControlsByDataLabel = new Dictionary<string, DataEntryControl>();
+            this.ControlsByDataLabel = new Dictionary<string, DataEntryControl>(StringComparer.Ordinal);
             this.dragAdorner = null;
         }
 

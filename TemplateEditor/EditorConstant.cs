@@ -28,13 +28,14 @@ namespace Carnassial.Editor
             // data grid column headers
             // these are human friendly forms of data labels
             // these constants are duplicated in EditorWindow.xaml and must be kept in sync
-            public const string AnalysisLabel = "Analysis Label";
+            public const string AnalysisLabel = "Analysis\nLabel";
             public const string ControlOrder = "Control\nOrder";
             public const string DataLabel = "Data Label";
             public const string DefaultValue = "Default Value";
             public const string ID = "ID";
-            public const string MaxWidth = "Max Width";
+            public const string MaxWidth = "Max\nWidth";
             public const string SpreadsheetOrder = "Spreadsheet\nOrder";
+            public const string WellKnownValues = "Well Known\nValues";
         }
 
         public static class Registry

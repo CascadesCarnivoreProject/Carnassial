@@ -1,5 +1,6 @@
 ﻿using Carnassial.Util;
 using System;
+using System.Text;
 
 namespace Carnassial.Database
 {
@@ -8,43 +9,10 @@ namespace Carnassial.Database
         public bool Autoincrement { get; set; }
         public string DefaultValue { get; set; }
         public bool PrimaryKey { get; set; }
-        public string Name { get; private set; }
+        public string Name { get; set; }
         public bool NotNull { get; set; }
-        public string Type { get; private set; }
-
-        public ColumnDefinition(string name, DateTime defaultValue)
-            : this(name, Constant.SqlColumnType.DateTime, DateTimeHandler.ToDatabaseDateTimeString(defaultValue))
-        {
-        }
-
-        public ColumnDefinition(string name, string type)
-            : this(name, type, null)
-        {
-        }
-
-        public ColumnDefinition(string name, TimeSpan defaultValue)
-            : this(name, Constant.SqlColumnType.Real, DateTimeHandler.ToDatabaseUtcOffsetString(defaultValue))
-        {
-        }
-
-        public ColumnDefinition(string name, string type, string defaultValue)
-        {
-            if (String.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentOutOfRangeException(nameof(name));
-            }
-            if (String.IsNullOrWhiteSpace(type))
-            {
-                throw new ArgumentOutOfRangeException(nameof(type));
-            }
-
-            this.Autoincrement = false;
-            this.DefaultValue = defaultValue;
-            this.Name = name;
-            this.NotNull = false;
-            this.PrimaryKey = false;
-            this.Type = type;
-        }
+        public string Type { get; set; }
+        // support for Unique can be added if needed
 
         public ColumnDefinition(ColumnDefinition other)
         {
@@ -56,9 +24,51 @@ namespace Carnassial.Database
             this.Type = other.Type;
         }
 
+        public ColumnDefinition(string name, DateTime defaultValue)
+            : this(name, Constant.SQLiteAffninity.DateTime)
+        {
+            this.DefaultValue = DateTimeHandler.ToDatabaseDateTimeString(defaultValue);
+            this.NotNull = true;
+        }
+
+        public ColumnDefinition(string name, string type)
+        {
+            if (String.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentOutOfRangeException(nameof(name));
+            }
+            if (String.IsNullOrWhiteSpace(type))
+            {
+                throw new ArgumentOutOfRangeException(nameof(type));
+            }
+
+            this.Autoincrement = false;
+            this.DefaultValue = null;
+            this.Name = name;
+            this.NotNull = false;
+            this.PrimaryKey = false;
+            this.Type = type;
+        }
+
+        public ColumnDefinition(string name, TimeSpan defaultValue)
+            : this(name, Constant.SQLiteAffninity.Real)
+        {
+            this.DefaultValue = DateTimeHandler.ToDatabaseUtcOffsetString(defaultValue);
+            this.NotNull = true;
+        }
+
+        public static ColumnDefinition CreateBoolean(string name)
+        {
+            return new ColumnDefinition(name, Constant.SQLiteAffninity.Integer)
+            {
+                DefaultValue = 0.ToString(),
+                NotNull = true
+            };
+        }
+
         public static ColumnDefinition CreatePrimaryKey()
         {
-            return new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.SqlColumnType.Integer)
+            return new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.SQLiteAffninity.Integer)
             {
                 Autoincrement = true,
                 PrimaryKey = true
@@ -67,31 +77,33 @@ namespace Carnassial.Database
 
         public override string ToString()
         {
-            string columnDefinition = String.Format("{0} {1}", this.Name, this.Type);
+            StringBuilder columnDefinition = new StringBuilder(this.Name + " " + this.Type);
             if (this.DefaultValue != null)
             {
-                if ((this.Type == Constant.SqlColumnType.Integer) || (this.Type == Constant.SqlColumnType.Real))
+                if (String.Equals(this.Type, Constant.SQLiteAffninity.Text, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(this.Type, Constant.SQLiteAffninity.DateTime, StringComparison.OrdinalIgnoreCase))
                 {
-                    columnDefinition += " DEFAULT " + this.DefaultValue;
+                    columnDefinition.Append(" DEFAULT " + SQLiteDatabase.QuoteForSql(this.DefaultValue));
                 }
                 else
                 {
-                    columnDefinition += " DEFAULT " + SQLiteDatabase.QuoteForSql(this.DefaultValue);
+                    columnDefinition.Append(" DEFAULT " + this.DefaultValue);
                 }
             }
             if (this.NotNull)
             {
-                columnDefinition += " NOT NULL";
+                columnDefinition.Append(" NOT NULL");
             }
             if (this.PrimaryKey)
             {
-                columnDefinition += " PRIMARY KEY";
+                columnDefinition.Append(" PRIMARY KEY");
                 if (this.Autoincrement)
                 {
-                    columnDefinition += " AUTOINCREMENT";
+                    columnDefinition.Append(" AUTOINCREMENT");
                 }
             }
-            return columnDefinition;
+
+            return columnDefinition.ToString();
         }
     }
 }

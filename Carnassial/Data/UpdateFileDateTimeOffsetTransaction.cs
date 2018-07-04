@@ -17,16 +17,12 @@ namespace Carnassial.Data
         {
             this.disposed = false;
 
-            // UPDATE FileData SET DateTime = @dateTime, UtcOffset = @utcOffset WHERE Id = @Id
-            SQLiteParameter dateTime = new SQLiteParameter("@DateTime");
-            SQLiteParameter id = new SQLiteParameter("@Id");
-            SQLiteParameter utcOffset = new SQLiteParameter("@UtcOffset");
-            string fileUpdateText = String.Format("UPDATE {0} SET {1}={2}, {3}={4} WHERE {5}={6}", Constant.DatabaseTable.FileData, Constant.DatabaseColumn.DateTime, dateTime.ParameterName, Constant.DatabaseColumn.UtcOffset, utcOffset.ParameterName, Constant.DatabaseColumn.ID, id.ParameterName);
+            string fileUpdateText = String.Format("UPDATE {0} SET {1}=@{1}, {2}=@{2} WHERE {3}=@{3}", Constant.DatabaseTable.Files, Constant.FileColumn.DateTime, Constant.FileColumn.UtcOffset, Constant.DatabaseColumn.ID);
             this.Transaction = connection.BeginTransaction();
             this.updateFiles = new SQLiteCommand(fileUpdateText, this.Connection, this.Transaction);
-            this.updateFiles.Parameters.Add(dateTime);
-            this.updateFiles.Parameters.Add(id);
-            this.updateFiles.Parameters.Add(utcOffset);
+            this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.FileColumn.DateTime));
+            this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
+            this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.FileColumn.UtcOffset));
         }
 
         public override int AddFiles(IList<FileLoad> files, int offset, int length)

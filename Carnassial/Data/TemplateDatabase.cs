@@ -68,53 +68,35 @@ namespace Carnassial.Data
             this.mostRecentBackup = DateTime.UtcNow;
         }
 
-        private void CreateImageSet(SQLiteConnection connection, SQLiteTransaction transaction)
-        {
-            List<ColumnDefinition> imageSetColumns = new List<ColumnDefinition>()
-            {
-                ColumnDefinition.CreatePrimaryKey(),
-                new ColumnDefinition(Constant.DatabaseColumn.FileSelection, Constant.SqlColumnType.Text),
-                new ColumnDefinition(Constant.DatabaseColumn.InitialFolderName, Constant.SqlColumnType.Text),
-                new ColumnDefinition(Constant.DatabaseColumn.Log, Constant.SqlColumnType.Text),
-                new ColumnDefinition(Constant.DatabaseColumn.Options, Constant.SqlColumnType.Text),
-                new ColumnDefinition(Constant.DatabaseColumn.MostRecentFileID, Constant.SqlColumnType.Integer),
-                new ColumnDefinition(Constant.DatabaseColumn.TimeZone, Constant.SqlColumnType.Text)
-            };
-            this.Database.CreateTable(connection, transaction, Constant.DatabaseTable.ImageSet, imageSetColumns);
-
-            ColumnTuplesForInsert imageSetRow = ImageSetRow.CreateInsert(Path.GetFileName(this.FolderPath));
-            imageSetRow.Insert(connection, transaction);
-        }
-
         protected void GetControlsSortedByControlOrder(SQLiteConnection connection)
         {
             Select select = new Select(Constant.DatabaseTable.Controls)
             {
-                OrderBy = Constant.Control.ControlOrder
+                OrderBy = Constant.ControlColumn.ControlOrder
             };
 
             this.Database.LoadDataTableFromSelect(this.Controls, connection, select);
         }
 
-        public List<string> GetDataLabelsExceptIDInSpreadsheetOrder()
+        public string GetNextUniqueDataLabel(string dataLabelPrefix)
         {
+            // get all existing data labels
             List<string> dataLabels = new List<string>();
-            IEnumerable<ControlRow> controlsInSpreadsheetOrder = this.Controls.OrderBy(control => control.SpreadsheetOrder);
-            foreach (ControlRow control in controlsInSpreadsheetOrder)
+            foreach (ControlRow control in this.Controls)
             {
-                string dataLabel = control.DataLabel;
-                if (dataLabel == String.Empty)
-                {
-                    dataLabel = control.Label;
-                }
-                Debug.Assert(String.IsNullOrWhiteSpace(dataLabel) == false, String.Format("Encountered empty data label and label at ID {0} in template table.", control.ID));
-
-                if (Constant.DatabaseColumn.ID != dataLabel)
-                {
-                    dataLabels.Add(dataLabel);
-                }
+                dataLabels.Add(control.DataLabel);
             }
-            return dataLabels;
+
+            // if the candidate data label exists, increment the count until a unique data label is found
+            int dataLabelUniqueIdentifier = 0;
+            string nextDataLabel = dataLabelPrefix + dataLabelUniqueIdentifier.ToString();
+            while (dataLabels.Contains(nextDataLabel, StringComparer.Ordinal))
+            {
+                ++dataLabelUniqueIdentifier;
+                nextDataLabel = dataLabelPrefix + dataLabelUniqueIdentifier.ToString();
+            }
+
+            return nextDataLabel;
         }
 
         private void LoadImageSet(SQLiteConnection connection)
@@ -128,7 +110,7 @@ namespace Carnassial.Data
         {
             this.CreateBackupIfNeeded();
 
-            if (Constant.Control.StandardControls.Contains(controlToRemove.DataLabel))
+            if (controlToRemove.IsUserControl() == false)
             {
                 throw new NotSupportedException(String.Format("Standard control {0} cannot be removed.", controlToRemove.DataLabel));
             }
@@ -138,8 +120,8 @@ namespace Carnassial.Data
             long removedSpreadsheetOrder = controlToRemove.SpreadsheetOrder;
 
             // regenerate counter and spreadsheet orders; if they're greater than the one removed, decrement
-            ColumnTuplesWithID controlOrderUpdates = new ColumnTuplesWithID(Constant.DatabaseTable.Controls, Constant.Control.ControlOrder);
-            ColumnTuplesWithID spreadsheetOrderUpdates = new ColumnTuplesWithID(Constant.DatabaseTable.Controls, Constant.Control.SpreadsheetOrder);
+            ColumnTuplesWithID controlOrderUpdates = new ColumnTuplesWithID(Constant.DatabaseTable.Controls, Constant.ControlColumn.ControlOrder);
+            ColumnTuplesWithID spreadsheetOrderUpdates = new ColumnTuplesWithID(Constant.DatabaseTable.Controls, Constant.ControlColumn.SpreadsheetOrder);
             foreach (ControlRow control in this.Controls)
             {
                 if (control.ControlOrder > removedControlOrder)
@@ -216,13 +198,11 @@ namespace Carnassial.Data
             }
 
             this.CreateBackupIfNeeded();
-            ColumnTuplesWithID controlUpdate = control.CreateUpdate();
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
-                controlUpdate.Update(connection);
+                this.SyncControlToDatabase(connection, control);
+                return true;
             }
-            control.AcceptChanges();
-            return true;
         }
 
         public bool TrySyncImageSetToDatabase()
@@ -243,7 +223,7 @@ namespace Carnassial.Data
             return true;
         }
 
-        public void UpdateDisplayOrder(string orderColumnName, Dictionary<string, long> newOrderByDataLabel)
+        public void UpdateDisplayOrder(string orderColumnName, Dictionary<string, int> newOrderByDataLabel)
         {
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
@@ -251,12 +231,12 @@ namespace Carnassial.Data
             }
         }
 
-        private void UpdateDisplayOrder(SQLiteConnection connection, string orderColumnName, Dictionary<string, long> newOrderByDataLabel)
+        private void UpdateDisplayOrder(SQLiteConnection connection, string orderColumnName, Dictionary<string, int> newOrderByDataLabel)
         {
             // argument validation
-            if (orderColumnName != Constant.Control.ControlOrder && orderColumnName != Constant.Control.SpreadsheetOrder)
+            if (orderColumnName != Constant.ControlColumn.ControlOrder && orderColumnName != Constant.ControlColumn.SpreadsheetOrder)
             {
-                throw new ArgumentOutOfRangeException(nameof(orderColumnName), String.Format("'{0}' is not a control order column.  Only '{1}' and '{2}' are order columns.", orderColumnName, Constant.Control.ControlOrder, Constant.Control.SpreadsheetOrder));
+                throw new ArgumentOutOfRangeException(nameof(orderColumnName), String.Format("'{0}' is not a control order column.  Only '{1}' and '{2}' are order columns.", orderColumnName, Constant.ControlColumn.ControlOrder, Constant.ControlColumn.SpreadsheetOrder));
             }
 
             if (newOrderByDataLabel.Count != this.Controls.RowCount)
@@ -264,7 +244,7 @@ namespace Carnassial.Data
                 throw new NotSupportedException(String.Format("Partial order updates are not supported.  New ordering for {0} controls was passed but {1} controls are present for '{2}'.", newOrderByDataLabel.Count, this.Controls.RowCount, orderColumnName));
             }
 
-            List<long> uniqueOrderValues = newOrderByDataLabel.Values.Distinct().ToList();
+            List<int> uniqueOrderValues = newOrderByDataLabel.Values.Distinct().ToList();
             if (uniqueOrderValues.Count != newOrderByDataLabel.Count)
             {
                 throw new ArgumentException(String.Format("Each control must have a unique value for its order.  {0} duplicate values were passed for '{1}'.", newOrderByDataLabel.Count - uniqueOrderValues.Count, orderColumnName), nameof(newOrderByDataLabel));
@@ -285,13 +265,13 @@ namespace Carnassial.Data
             foreach (ControlRow control in this.Controls)
             {
                 string dataLabel = control.DataLabel;
-                long newOrder = newOrderByDataLabel[dataLabel];
+                int newOrder = newOrderByDataLabel[dataLabel];
                 switch (orderColumnName)
                 {
-                    case Constant.Control.ControlOrder:
+                    case Constant.ControlColumn.ControlOrder:
                         control.ControlOrder = newOrder;
                         break;
-                    case Constant.Control.SpreadsheetOrder:
+                    case Constant.ControlColumn.SpreadsheetOrder:
                         control.SpreadsheetOrder = newOrder;
                         break;
                     default:
@@ -308,76 +288,25 @@ namespace Carnassial.Data
             }
 
             // if the control order changed rebuild the in memory table to sort it in the new order
-            if (orderColumnName == Constant.Control.ControlOrder)
+            if (orderColumnName == Constant.ControlColumn.ControlOrder)
             {
                 this.GetControlsSortedByControlOrder(connection);
             }
         }
 
-        /// <summary>Given a data label, get the corresponding data entry control</summary>
-        public ControlRow FindControl(string dataLabel)
-        {
-            foreach (ControlRow control in this.Controls)
-            {
-                if (dataLabel.Equals(control.DataLabel))
-                {
-                    return control;
-                }
-            }
-
-            Debug.Fail(String.Format("Control for data label '{0}' not found.", dataLabel));
-            return null;
-        }
-
         protected virtual void OnDatabaseCreated(TemplateDatabase other)
         {
+            SQLiteTableSchema controlTableSchema = ControlTable.CreateSchema();
+            SQLiteTableSchema imageSetTableSchema = ImageSetTable.CreateSchema();
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
                 using (SQLiteTransaction transaction = connection.BeginTransaction())
                 {
-                    // create Controls table
-                    List<ColumnDefinition> templateTableColumns = new List<ColumnDefinition>()
-                    {
-                        ColumnDefinition.CreatePrimaryKey(),
-                        new ColumnDefinition(Constant.Control.ControlOrder, Constant.SqlColumnType.Integer)
-                        {
-                            NotNull = true
-                        },
-                        new ColumnDefinition(Constant.Control.SpreadsheetOrder, Constant.SqlColumnType.Integer)
-                        {
-                            NotNull = true
-                        },
-                        new ColumnDefinition(Constant.Control.Type, Constant.SqlColumnType.Text)
-                        {
-                            NotNull = true
-                        },
-                        new ColumnDefinition(Constant.Control.DefaultValue, Constant.SqlColumnType.Text),
-                        new ColumnDefinition(Constant.Control.Label, Constant.SqlColumnType.Text),
-                        new ColumnDefinition(Constant.Control.DataLabel, Constant.SqlColumnType.Text)
-                        {
-                            NotNull = true
-                        },
-                        new ColumnDefinition(Constant.Control.AnalysisLabel, Constant.SqlColumnType.Integer)
-                        {
-                            DefaultValue = 0.ToString(),
-                            NotNull = true
-                        },
-                        new ColumnDefinition(Constant.Control.Tooltip, Constant.SqlColumnType.Text),
-                        new ColumnDefinition(Constant.Control.Width, Constant.SqlColumnType.Integer),
-                        new ColumnDefinition(Constant.Control.Copyable, Constant.SqlColumnType.Text)
-                        {
-                            NotNull = true
-                        },
-                        new ColumnDefinition(Constant.Control.Visible, Constant.SqlColumnType.Text)
-                        {
-                            NotNull = true
-                        },
-                        new ColumnDefinition(Constant.Control.List, Constant.SqlColumnType.Text)
-                    };
-                    this.Database.CreateTable(connection, transaction, Constant.DatabaseTable.Controls, templateTableColumns);
+                    controlTableSchema.CreateTableAndIndicies(connection, transaction);
 
-                    // create ImageSet table and populate with default row
-                    this.CreateImageSet(connection, transaction);
+                    imageSetTableSchema.CreateTableAndIndicies(connection, transaction);
+                    ColumnTuplesForInsert imageSetRow = ImageSetRow.CreateInsert(Path.GetFileName(this.FolderPath));
+                    imageSetRow.Insert(connection, transaction);
 
                     transaction.Commit();
                 }
@@ -393,6 +322,13 @@ namespace Carnassial.Data
                         ColumnTuplesWithID imageSet = other.ImageSet.CreateUpdate();
                         imageSet.Update(connection, transaction);
 
+                        Version version;
+                        using (SQLiteConnection otherConnection = other.Database.CreateConnection())
+                        {
+                            version = other.Database.GetUserVersion(otherConnection);
+                        }
+                        this.Database.SetUserVersion(connection, transaction, version);
+
                         transaction.Commit();
                     }
 
@@ -403,46 +339,60 @@ namespace Carnassial.Data
 
                 // no existing table to clone, so add standard controls to template table
                 this.GetControlsSortedByControlOrder(connection);
-                long controlOrder = 0; // one based count incremented for every new control
+                int controlOrder = 0; // one based count incremented for every new control
 
                 // standard controls
-                ControlRow file = new ControlRow(ControlType.Note, Constant.DatabaseColumn.File, ++controlOrder)
+                ControlRow file = new ControlRow(ControlType.Note, Constant.FileColumn.File, ++controlOrder)
                 {
-                    Label = Constant.DatabaseColumn.File,
-                    Tooltip = Constant.ControlDefault.FileTooltip,
                     Copyable = false,
+                    Label = Constant.FileColumn.File,
+                    Tooltip = Constant.ControlDefault.FileTooltip
                 };
-                ControlRow relativePath = new ControlRow(ControlType.Note, Constant.DatabaseColumn.RelativePath, ++controlOrder)
+                ControlRow relativePath = new ControlRow(ControlType.Note, Constant.FileColumn.RelativePath, ++controlOrder)
                 {
-                    Tooltip = Constant.ControlDefault.RelativePathTooltip,
                     Copyable = false,
+                    Tooltip = Constant.ControlDefault.RelativePathTooltip
                 };
-                ControlRow dateTime = new ControlRow(ControlType.DateTime, Constant.DatabaseColumn.DateTime, ++controlOrder);
-                ControlRow utcOffset = new ControlRow(ControlType.UtcOffset, Constant.DatabaseColumn.UtcOffset, ++controlOrder);
-                ControlRow imageQuality = new ControlRow(ControlType.FixedChoice, Constant.DatabaseColumn.ImageQuality, ++controlOrder)
+                ControlRow dateTime = new ControlRow(ControlType.DateTime, Constant.FileColumn.DateTime, ++controlOrder)
                 {
-                    List = Constant.ControlDefault.ImageQualityList,
-                    Tooltip = Constant.ControlDefault.ImageQualityTooltip,
+                    IndexInFileTable = true,
+                    Tooltip = Constant.ControlDefault.DateTimeTooltip
+                };
+                ControlRow utcOffset = new ControlRow(ControlType.UtcOffset, Constant.FileColumn.UtcOffset, ++controlOrder)
+                {
+                    Tooltip = Constant.ControlDefault.UtcOffsetTooltip
+                };
+                ControlRow classification = new ControlRow(ControlType.FixedChoice, Constant.FileColumn.Classification, ++controlOrder)
+                {
                     Copyable = false,
+                    WellKnownValues = Constant.ControlDefault.ClassificationWellKnownValues,
+                    Tooltip = Constant.ControlDefault.ClassificationTooltip
                 };
-                ControlRow deleteFlag = new ControlRow(ControlType.Flag, Constant.DatabaseColumn.DeleteFlag, ++controlOrder)
+                ControlRow deleteFlag = new ControlRow(ControlType.Flag, Constant.FileColumn.DeleteFlag, ++controlOrder)
                 {
+                    Copyable = false,
                     Label = Constant.ControlDefault.DeleteFlagLabel,
-                    Tooltip = Constant.ControlDefault.DeleteFlagTooltip,
-                    Copyable = false,
+                    Tooltip = Constant.ControlDefault.DeleteFlagTooltip
                 };
 
-                // insert standard controls into the database
+                // insert standard controls into the controls table
                 ColumnTuplesForInsert controls = ControlRow.CreateInsert(new List<ControlRow>()
                 {
                     file,
                     relativePath,
                     dateTime,
                     utcOffset,
-                    imageQuality,
+                    classification,
                     deleteFlag
                 });
-                controls.Insert(connection);
+
+                using (SQLiteTransaction transaction = connection.BeginTransaction())
+                {
+                    controls.Insert(connection, transaction);
+                    this.Database.SetUserVersion(connection, transaction, Constant.Release.V2_2_0_3);
+
+                    transaction.Commit();
+                }
 
                 // reload controls table to get updated IDs
                 this.GetControlsSortedByControlOrder(connection);
@@ -456,46 +406,33 @@ namespace Carnassial.Data
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
                 List<string> tables = this.Database.GetTableNames(connection);
-                if (tables.Contains(Constant.DatabaseTable.Controls) == false)
+                if (tables.Contains(Constant.DatabaseTable.Controls, StringComparer.Ordinal) == false)
                 {
+                    // if no table named Controls, then this is a database from Timelapse rather than Carnassial
                     return false;
                 }
 
-                // insert AnalysisLabel column in controls table if this is a .tdb from Carnassial 2.2.0.2 or earlier
-                List<ColumnDefinition> controlColumns = this.Database.GetColumnDefinitions(connection, Constant.DatabaseTable.Controls);
-                if (controlColumns.SingleOrDefault(column => column.Name == Constant.Control.AnalysisLabel) == null)
+                if (this.Database.GetUserVersion(connection) < Constant.Release.V2_2_0_3)
                 {
-                    ColumnDefinition analysisLabel = new ColumnDefinition(Constant.Control.AnalysisLabel, Constant.SqlColumnType.Integer)
-                    {
-                        DefaultValue = 0.ToString(),
-                        NotNull = true
-                    };
+                    this.UpdateControlTableTo2203Schema(connection);
                     using (SQLiteTransaction transaction = connection.BeginTransaction())
                     {
-                        this.Database.AddColumnToTable(connection, transaction, Constant.DatabaseTable.Controls, 6, analysisLabel);
+                        this.UpdateImageSetTo2203Schema(connection, transaction, tables);
+
+                        if (other == null)
+                        {
+                            // if this is a template database being opened go ahead and update its version
+                            // If it's a file database, don't update the database as the caller also needs to perform updates to complete
+                            // version migration.
+                            this.Database.SetUserVersion(connection, transaction, Constant.Release.V2_2_0_3);
+                        }
+
                         transaction.Commit();
                     }
                 }
-
-                this.GetControlsSortedByControlOrder(connection);
-
-                // update choices for file classification to Carnassial 2.2.0.3 schema if they're not already set as such
-                ControlRow classification = this.FindControl(Constant.DatabaseColumn.ImageQuality);
-                if (String.Equals(classification.List, Constant.ControlDefault.ImageQualityList, StringComparison.Ordinal) == false)
+                else
                 {
-                    classification.List = Constant.ControlDefault.ImageQualityList;
-                    ColumnTuplesWithID classificationUpdate = classification.CreateUpdate();
-                    classificationUpdate.Update(connection);
-                }
-
-                // create ImageSet table if this is a .tdb from Carnassial 2.2.0.1 or earlier
-                if (tables.Contains(Constant.DatabaseTable.ImageSet) == false)
-                {
-                    using (SQLiteTransaction transaction = connection.BeginTransaction())
-                    {
-                        this.CreateImageSet(connection, transaction);
-                        transaction.Commit();
-                    }
+                    this.GetControlsSortedByControlOrder(connection);
                 }
 
                 this.LoadImageSet(connection);
@@ -513,25 +450,25 @@ namespace Carnassial.Data
                 throw new ArgumentOutOfRangeException(nameof(order), "Control and spreadsheet orders must be contiguous ones based values.");
             }
 
-            Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
-            Dictionary<string, long> newSpreadsheetOrderByDataLabel = new Dictionary<string, long>();
+            Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
+            Dictionary<string, int> newSpreadsheetOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (ControlRow control in this.Controls)
             {
-                if (control.DataLabel == dataLabel)
+                if (String.Equals(control.DataLabel, dataLabel, StringComparison.Ordinal))
                 {
                     newControlOrderByDataLabel.Add(dataLabel, order);
                     newSpreadsheetOrderByDataLabel.Add(dataLabel, order);
                 }
                 else
                 {
-                    long currentControlOrder = control.ControlOrder;
+                    int currentControlOrder = control.ControlOrder;
                     if (currentControlOrder >= order)
                     {
                         ++currentControlOrder;
                     }
                     newControlOrderByDataLabel.Add(control.DataLabel, currentControlOrder);
 
-                    long currentSpreadsheetOrder = control.SpreadsheetOrder;
+                    int currentSpreadsheetOrder = control.SpreadsheetOrder;
                     if (currentSpreadsheetOrder >= order)
                     {
                         ++currentSpreadsheetOrder;
@@ -542,31 +479,182 @@ namespace Carnassial.Data
 
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
-                this.UpdateDisplayOrder(connection, Constant.Control.ControlOrder, newControlOrderByDataLabel);
-                this.UpdateDisplayOrder(connection, Constant.Control.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
+                this.UpdateDisplayOrder(connection, Constant.ControlColumn.ControlOrder, newControlOrderByDataLabel);
+                this.UpdateDisplayOrder(connection, Constant.ControlColumn.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
                 this.GetControlsSortedByControlOrder(connection);
             }
         }
 
-        public string GetNextUniqueDataLabel(string dataLabelPrefix)
+        private void SyncControlToDatabase(SQLiteConnection connection, ControlRow control)
         {
-            // get all existing data labels
-            List<string> dataLabels = new List<string>();
-            foreach (ControlRow control in this.Controls)
+            Debug.Assert(control.HasChanges, "Unexpected call to sync control without changes.");
+
+            ColumnTuplesWithID controlUpdate = control.CreateUpdate();
+            controlUpdate.Update(connection);
+            control.AcceptChanges();
+        }
+
+        private void UpdateControlTableTo2203Schema(SQLiteConnection connection)
+        {
+            // if this is a .tdb from Carnassial 2.2.0.2 or earlier
+            // - insert AnalysisLabel column in controls table
+            // - convert Copyable and Visible columns from text to boolean integers
+            bool addAnalysisLabel = false;
+            bool addIndex = false;
+            bool convertCopyableAndVisibleToInteger = false;
+            bool convertTypeToInteger = false;
+            bool renameList = false;
+            bool renameWidth = false;
+            SQLiteTableSchema currentSchema = this.Database.GetTableSchema(connection, Constant.DatabaseTable.Controls);
+            if (currentSchema.ColumnDefinitions.SingleOrDefault(column => column.Name == Constant.ControlColumn.AnalysisLabel) == null)
             {
-                dataLabels.Add(control.DataLabel);
+                addAnalysisLabel = true;
+            }
+            if (currentSchema.ColumnDefinitions.SingleOrDefault(column => column.Name == Constant.ControlColumn.IndexInFileTable) == null)
+            {
+                addIndex = true;
             }
 
-            // if the candidate data label exists, increment the count until a unique data label is found
-            int dataLabelUniqueIdentifier = 0;
-            string nextDataLabel = dataLabelPrefix + dataLabelUniqueIdentifier.ToString();
-            while (dataLabels.Contains(nextDataLabel))
+            if (String.Equals(currentSchema.ColumnDefinitions.Single(column => String.Equals(column.Name, Constant.ControlColumn.Copyable, StringComparison.Ordinal)).Type, Constant.SQLiteAffninity.Text, StringComparison.OrdinalIgnoreCase))
             {
-                ++dataLabelUniqueIdentifier;
-                nextDataLabel = dataLabelPrefix + dataLabelUniqueIdentifier.ToString();
+                convertCopyableAndVisibleToInteger = true;
+            }
+            if (String.Equals(currentSchema.ColumnDefinitions.Single(column => String.Equals(column.Name, Constant.ControlColumn.Type, StringComparison.Ordinal)).Type, Constant.SQLiteAffninity.Text, StringComparison.OrdinalIgnoreCase))
+            {
+                convertTypeToInteger = true;
             }
 
-            return nextDataLabel;
+            #pragma warning disable CS0618 // Type or member is obsolete
+            if (currentSchema.ColumnDefinitions.SingleOrDefault(column => String.Equals(column.Name, Constant.ControlColumn.List, StringComparison.Ordinal)) != null)
+            #pragma warning restore CS0618 // Type or member is obsolete
+            {
+                renameList = true;
+            }
+            #pragma warning disable CS0618 // Type or member is obsolete
+            if (currentSchema.ColumnDefinitions.SingleOrDefault(column => String.Equals(column.Name, Constant.ControlColumn.Width, StringComparison.Ordinal)) != null)
+            #pragma warning restore CS0618 // Type or member is obsolete
+            {
+                renameWidth = true;
+            }
+
+            if (addAnalysisLabel || addIndex || convertCopyableAndVisibleToInteger || convertTypeToInteger || renameList || renameWidth)
+            {
+                using (SQLiteTransaction transaction = connection.BeginTransaction())
+                {
+                    if (addAnalysisLabel)
+                    {
+                        ColumnDefinition analysisLabel = new ColumnDefinition(Constant.ControlColumn.AnalysisLabel, Constant.SQLiteAffninity.Integer)
+                        {
+                            DefaultValue = 0.ToString(),
+                            NotNull = true
+                        };
+                        this.Database.AddColumnToTable(connection, transaction, Constant.DatabaseTable.Controls, 6, analysisLabel);
+                    }
+                    if (addIndex)
+                    {
+                        ColumnDefinition index = new ColumnDefinition(Constant.ControlColumn.IndexInFileTable, Constant.SQLiteAffninity.Integer)
+                        {
+                            DefaultValue = 0.ToString(),
+                            NotNull = true
+                        };
+                        this.Database.AddColumnToTable(connection, transaction, Constant.DatabaseTable.Controls, 11, index);
+                    }
+
+                    if (convertCopyableAndVisibleToInteger)
+                    {
+                        this.Database.ConvertBooleanStringColumnToInteger(connection, transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Copyable);
+                        this.Database.ConvertBooleanStringColumnToInteger(connection, transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Visible);
+                    }
+                    if (convertTypeToInteger)
+                    {
+                        this.Database.ConvertNonFlagEnumStringColumnToInteger<ControlType>(connection, transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Type);
+                    }
+
+                    if (renameList)
+                    {
+                        #pragma warning disable CS0618 // Type or member is obsolete
+                        this.Database.RenameColumn(connection, transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.List, Constant.ControlColumn.WellKnownValues, (ColumnDefinition columnWithNameChanged) => { });
+                    }
+                    if (renameWidth)
+                    {
+                        #pragma warning disable CS0618 // Type or member is obsolete
+                        this.Database.RenameColumn(connection, transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Width, Constant.ControlColumn.MaxWidth, (ColumnDefinition columnWithNameChanged) =>
+                        #pragma warning restore CS0618 // Type or member is obsolete
+                        {
+                            columnWithNameChanged.DefaultValue = Constant.ControlDefault.MaxWidth.ToString();
+                            columnWithNameChanged.NotNull = true;
+                        });
+                    }
+
+                    transaction.Commit();
+                }
+            }
+
+            this.GetControlsSortedByControlOrder(connection);
+
+            // rename image quality control to classification
+            #pragma warning disable CS0618 // Type or member is obsolete
+            ControlRow imageQuality = this.Controls.SingleOrDefault(control => String.Equals(control.DataLabel, Constant.FileColumn.ImageQuality, StringComparison.Ordinal));
+            #pragma warning restore CS0618 // Type or member is obsolete
+            if (imageQuality != null)
+            {
+                imageQuality.DataLabel = Constant.FileColumn.Classification;
+                this.SyncControlToDatabase(connection, imageQuality);
+            }
+
+            // update choices and tooltip for file classification to Carnassial 2.2.0.3 schema if they're not already set as such
+            ControlRow classification = this.Controls[Constant.FileColumn.Classification];
+            if (String.Equals(classification.WellKnownValues, Constant.ControlDefault.ClassificationWellKnownValues, StringComparison.Ordinal) == false)
+            {
+                imageQuality.Label = Constant.FileColumn.Classification;
+                classification.Tooltip = Constant.ControlDefault.ClassificationTooltip;
+                classification.WellKnownValues = Constant.ControlDefault.ClassificationWellKnownValues;
+                this.SyncControlToDatabase(connection, classification);
+            }
+
+            // set index flag on date time control if it's not already set
+            ControlRow dateTime = this.Controls[Constant.FileColumn.DateTime];
+            if (dateTime.IndexInFileTable == false)
+            {
+                dateTime.IndexInFileTable = true;
+                this.SyncControlToDatabase(connection, dateTime);
+            }
+
+            // update defaults for flags to Carnassial 2.2.0.3 schema if they're not already set as such
+            foreach (ControlRow flag in this.Controls.Where(control => control.Type == ControlType.Flag))
+            {
+                if (String.Equals(flag.DefaultValue, Boolean.FalseString, StringComparison.OrdinalIgnoreCase))
+                {
+                    flag.DefaultValue = Constant.Sql.FalseString;
+                }
+                else if (String.Equals(flag.DefaultValue, Boolean.TrueString, StringComparison.OrdinalIgnoreCase))
+                {
+                    flag.DefaultValue = Constant.Sql.TrueString;
+                }
+                if (flag.HasChanges)
+                {
+                    this.SyncControlToDatabase(connection, flag);
+                }
+            }
+        }
+
+        private void UpdateImageSetTo2203Schema(SQLiteConnection connection, SQLiteTransaction transaction, List<string> tables)
+        {
+            if (tables.Contains(Constant.DatabaseTable.ImageSet, StringComparer.Ordinal) == false)
+            {
+                // create default ImageSet table if this is a .tdb from Carnassial 2.2.0.1 or earlier
+                SQLiteTableSchema imageSetTableSchema = ImageSetTable.CreateSchema();
+                imageSetTableSchema.CreateTableAndIndicies(connection, transaction);
+                ColumnTuplesForInsert imageSetRow = ImageSetRow.CreateInsert(Path.GetFileName(this.FolderPath));
+                imageSetRow.Insert(connection, transaction);
+            }
+            else
+            {
+                // ImageSetOptions is a [Flags] enum but can be treated as a non-flag enum as of Carnassial 2.2.0.3 as
+                // its only values are None (0x0) and Magnifier (0x1).
+                this.Database.ConvertNonFlagEnumStringColumnToInteger<FileSelection>(connection, transaction, Constant.DatabaseTable.ImageSet, Constant.ImageSetColumn.FileSelection);
+                this.Database.ConvertNonFlagEnumStringColumnToInteger<ImageSetOptions>(connection, transaction, Constant.DatabaseTable.ImageSet, Constant.ImageSetColumn.Options);
+            }
         }
     }
 }

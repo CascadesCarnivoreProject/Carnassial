@@ -1,6 +1,4 @@
-﻿using System;
-using System.Windows;
-using Carnassial.Util;
+﻿using System.Windows;
 
 namespace Carnassial.Data
 {
@@ -24,7 +22,7 @@ namespace Carnassial.Data
         public bool LabelShownPreviously { get; set; }
 
         /// <summary>
-        /// Gets the marker's normalized location in the canvas, as a coordinate point on [0, 1], [0, 1].
+        /// Gets the marker's normalized location in the markable canvas, as a coordinate point on [0, 1], [0, 1].
         /// </summary>
         public Point Position { get; private set; }
 
@@ -43,16 +41,16 @@ namespace Carnassial.Data
             this.DataLabel = dataLabel;
             this.Emphasize = false;
             this.Highlight = false;
+            this.LabelShownPreviously = true;
             this.Position = point;
             this.ShowLabel = false;
-            this.LabelShownPreviously = true;
             this.Tooltip = null;
         }
 
         // find a point's relative location so it's size invariant
         public static Point ConvertPointToRatio(Point point, double width, double height)
         {
-            Point ratio = new Point((double)point.X / (double)width, (double)point.Y / (double)height);
+            Point ratio = new Point(point.X / width, point.Y / height);
             return ratio;
         }
 

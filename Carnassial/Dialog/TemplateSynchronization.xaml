@@ -21,7 +21,7 @@
                             Hint="When a template is edited Carnassial tries to automatically update the data file's copy of the template.  Many edits can be safely propagated but some types of changes aren't supported and applying certain other kinds of changes would result in data loss or an unusable data file.  The specific problems are listed below."
                             Grid.Row="0" />
         <Rectangle Fill="#FF868686" Height="2" Grid.Row="1" />
-        <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.Row="2">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Grid.Row="2">
             <TextBlock Name="TextBlockDetails" HorizontalAlignment="Left" Margin="10,10,10,0" VerticalAlignment="Top" TextWrapping="Wrap">
 				<Run FontWeight="Bold" Text="Details:" />
                 <LineBreak />

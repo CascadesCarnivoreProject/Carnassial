@@ -8,11 +8,6 @@ namespace Carnassial.Control
 {
     public class DataEntryDateTimeOffset : DataEntryControl<DateTimeOffsetPicker, Label>
     {
-        public override string Content
-        {
-            get { return DateTimeHandler.ToDatabaseDateTimeString(this.ContentControl.Value); }
-        }
-
         public override bool ContentReadOnly
         {
             get { return !this.ContentControl.IsEnabled; }
@@ -25,7 +20,7 @@ namespace Carnassial.Control
             this.Container.ToolTip = "Enter a date/time";
 
             this.ContentControl.DateTimeDisplay.Style = (Style)styleProvider.FindResource(ControlContentStyle.NoteCounterTextBox.ToString());
-            this.ContentControl.SetBinding(DateTimeOffsetPicker.ValueProperty, ImageRow.GetDataBindingPath(control.DataLabel));
+            this.ContentControl.SetBinding(DateTimeOffsetPicker.ValueProperty, ImageRow.GetDataBindingPath(control));
 
             // update label with direct target to get desired hotkey behavior
             // Since DateTimeOffsetPicker forwards focus to the date time display the base class code which sets the label's target to the picker results

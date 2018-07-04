@@ -11,17 +11,18 @@ namespace Carnassial.Data
     public class ControlRow : SQLiteRow, INotifyPropertyChanged
     {
         private bool analysisLabel;
-        private long controlOrder;
+        private int controlOrder;
         private bool copyable;
         private string dataLabel;
         private string defaultValue;
+        private bool indexInFileTable;
         private string label;
-        private string list;
-        private long maxWidth;
-        private long spreadSheetOrder;
+        private int maxWidth;
+        private int spreadSheetOrder;
         private string tooltip;
         private ControlType type;
         private bool visible;
+        private string wellKnownValues;
 
         public ControlRow()
         {
@@ -30,8 +31,9 @@ namespace Carnassial.Data
             this.copyable = false;
             this.dataLabel = null;
             this.defaultValue = null;
+            this.indexInFileTable = false;
             this.label = null;
-            this.list = null;
+            this.wellKnownValues = null;
             this.maxWidth = -1;
             this.spreadSheetOrder = -1;
             this.tooltip = null;
@@ -39,49 +41,48 @@ namespace Carnassial.Data
             this.visible = false;
         }
 
-        public ControlRow(ControlType controlType, string dataLabel, long controlOrder)
+        public ControlRow(ControlType controlType, string dataLabel, int controlOrder)
             : this()
         {
-            this.analysisLabel = false;
             this.controlOrder = controlOrder;
             this.copyable = true;
             this.dataLabel = dataLabel;
             this.defaultValue = Constant.ControlDefault.Value;
             this.label = dataLabel;
-            this.list = Constant.ControlDefault.Value;
+            this.wellKnownValues = Constant.ControlDefault.Value;
             this.maxWidth = Constant.ControlDefault.MaxWidth;
             this.spreadSheetOrder = controlOrder;
-            this.tooltip = null;
             this.type = controlType;
             this.visible = true;
 
             switch (controlType)
             {
                 case ControlType.Counter:
-                    this.DefaultValue = Constant.ControlDefault.CounterValue;
-                    this.Copyable = false;
-                    this.Tooltip = Constant.ControlDefault.CounterTooltip;
+                    this.copyable = false;
+                    this.defaultValue = Constant.ControlDefault.CounterValue;
+                    this.tooltip = Constant.ControlDefault.CounterTooltip;
                     break;
                 case ControlType.DateTime:
-                    this.Copyable = false;
-                    this.DefaultValue = DateTimeHandler.ToDatabaseDateTimeString(Constant.ControlDefault.DateTimeValue.UtcDateTime);
-                    this.Tooltip = Constant.ControlDefault.DateTimeTooltip;
+                    this.copyable = false;
+                    this.defaultValue = DateTimeHandler.ToDatabaseDateTimeString(Constant.ControlDefault.DateTimeValue.UtcDateTime);
+                    this.indexInFileTable = true;
+                    this.tooltip = Constant.ControlDefault.DateTimeTooltip;
                     break;
                 case ControlType.Note:
-                    this.Tooltip = Constant.ControlDefault.NoteTooltip;
+                    this.tooltip = Constant.ControlDefault.NoteTooltip;
                     break;
                 case ControlType.FixedChoice:
-                    this.Tooltip = Constant.ControlDefault.FixedChoiceTooltip;
+                    this.tooltip = Constant.ControlDefault.FixedChoiceTooltip;
                     break;
                 case ControlType.Flag:
-                    this.DefaultValue = Constant.ControlDefault.FlagValue;
-                    this.Tooltip = Constant.ControlDefault.FlagTooltip;
+                    this.defaultValue = Constant.ControlDefault.FlagValue;
+                    this.tooltip = Constant.ControlDefault.FlagTooltip;
                     break;
                 case ControlType.UtcOffset:
-                    this.Copyable = false;
-                    this.DefaultValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constant.ControlDefault.DateTimeValue.Offset);
-                    this.Tooltip = Constant.ControlDefault.UtcOffsetTooltip;
-                    this.Visible = false;
+                    this.copyable = false;
+                    this.defaultValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constant.ControlDefault.DateTimeValue.Offset);
+                    this.tooltip = Constant.ControlDefault.UtcOffsetTooltip;
+                    this.visible = false;
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", controlType));
@@ -102,7 +103,7 @@ namespace Carnassial.Data
             }
         }
 
-        public long ControlOrder
+        public int ControlOrder
         {
             get
             {
@@ -138,7 +139,7 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.dataLabel != value;
+                this.HasChanges |= String.Equals(this.dataLabel, value, StringComparison.Ordinal) == false;
                 this.dataLabel = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DataLabel)));
             }
@@ -152,9 +153,23 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.defaultValue != value;
+                this.HasChanges |= String.Equals(this.defaultValue, value, StringComparison.Ordinal) == false;
                 this.defaultValue = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DefaultValue)));
+            }
+        }
+
+        public bool IndexInFileTable
+        {
+            get
+            {
+                return this.indexInFileTable;
+            }
+            set
+            {
+                this.HasChanges |= this.indexInFileTable != value;
+                this.indexInFileTable = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.IndexInFileTable)));
             }
         }
 
@@ -166,27 +181,13 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.label != value;
+                this.HasChanges |= String.Equals(this.label, value, StringComparison.Ordinal) == false;
                 this.label = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Label)));
             }
         }
 
-        public string List
-        {
-            get
-            {
-                return this.list;
-            }
-            set
-            {
-                this.HasChanges |= this.list != value;
-                this.list = value;
-                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.List)));
-            }
-        }
-
-        public long MaxWidth
+        public int MaxWidth
         {
             get
             {
@@ -202,7 +203,7 @@ namespace Carnassial.Data
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public long SpreadsheetOrder
+        public int SpreadsheetOrder
         {
             get
             {
@@ -224,7 +225,7 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.tooltip != value;
+                this.HasChanges |= String.Equals(this.tooltip, value, StringComparison.Ordinal) == false;
                 this.tooltip = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Tooltip)));
             }
@@ -258,6 +259,20 @@ namespace Carnassial.Data
             }
         }
 
+        public string WellKnownValues
+        {
+            get
+            {
+                return this.wellKnownValues;
+            }
+            set
+            {
+                this.HasChanges |= String.Equals(this.wellKnownValues, value, StringComparison.Ordinal) == false;
+                this.wellKnownValues = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.WellKnownValues)));
+            }
+        }
+
         public static ColumnTuplesForInsert CreateInsert(params ControlRow[] controls)
         {
             return ControlRow.CreateInsert((IEnumerable<ControlRow>)controls);
@@ -266,33 +281,35 @@ namespace Carnassial.Data
         public static ColumnTuplesForInsert CreateInsert(IEnumerable<ControlRow> controls)
         {
             ColumnTuplesForInsert controlTuples = new ColumnTuplesForInsert(Constant.DatabaseTable.Controls,
-                                                                            Constant.Control.AnalysisLabel,
-                                                                            Constant.Control.ControlOrder,
-                                                                            Constant.Control.Copyable,
-                                                                            Constant.Control.DataLabel,
-                                                                            Constant.Control.DefaultValue,
-                                                                            Constant.Control.Label,
-                                                                            Constant.Control.List,
-                                                                            Constant.Control.SpreadsheetOrder,
-                                                                            Constant.Control.Width,
-                                                                            Constant.Control.Tooltip,
-                                                                            Constant.Control.Type,
-                                                                            Constant.Control.Visible);
+                                                                            Constant.ControlColumn.AnalysisLabel,
+                                                                            Constant.ControlColumn.ControlOrder,
+                                                                            Constant.ControlColumn.Copyable,
+                                                                            Constant.ControlColumn.DataLabel,
+                                                                            Constant.ControlColumn.DefaultValue,
+                                                                            Constant.ControlColumn.IndexInFileTable,
+                                                                            Constant.ControlColumn.Label,
+                                                                            Constant.ControlColumn.WellKnownValues,
+                                                                            Constant.ControlColumn.SpreadsheetOrder,
+                                                                            Constant.ControlColumn.MaxWidth,
+                                                                            Constant.ControlColumn.Tooltip,
+                                                                            Constant.ControlColumn.Type,
+                                                                            Constant.ControlColumn.Visible);
             foreach (ControlRow control in controls)
             {
                 Debug.Assert(control != null, "controls contains null.");
-                controlTuples.Add(control.AnalysisLabel ? 1.ToString() : 0.ToString(),
+                controlTuples.Add(control.AnalysisLabel,
                                   control.ControlOrder,
-                                  control.Copyable ? Boolean.TrueString : Boolean.FalseString,
+                                  control.Copyable,
                                   control.DataLabel,
                                   control.DefaultValue,
+                                  control.IndexInFileTable,
                                   control.Label,
-                                  control.List,
+                                  control.WellKnownValues,
                                   control.SpreadsheetOrder,
                                   control.MaxWidth,
                                   control.Tooltip,
-                                  ControlRow.TypeToString(control.Type),
-                                  control.Visible ? Boolean.TrueString : Boolean.FalseString);
+                                  (int)control.Type,
+                                  control.Visible);
             }
 
             return controlTuples;
@@ -302,39 +319,49 @@ namespace Carnassial.Data
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>()
             {
-                new ColumnTuple(Constant.Control.AnalysisLabel, this.AnalysisLabel ? 1 : 0),
-                new ColumnTuple(Constant.Control.ControlOrder, this.ControlOrder),
-                new ColumnTuple(Constant.Control.Copyable, this.Copyable),
-                new ColumnTuple(Constant.Control.DataLabel, this.DataLabel),
-                new ColumnTuple(Constant.Control.DefaultValue, this.DefaultValue),
-                new ColumnTuple(Constant.Control.Label, this.Label),
-                new ColumnTuple(Constant.Control.List, this.List),
-                new ColumnTuple(Constant.Control.SpreadsheetOrder, this.SpreadsheetOrder),
-                new ColumnTuple(Constant.Control.Width, this.MaxWidth),
-                new ColumnTuple(Constant.Control.Tooltip, this.Tooltip),
-                new ColumnTuple(Constant.Control.Type, ControlRow.TypeToString(this.Type)),
-                new ColumnTuple(Constant.Control.Visible, this.Visible)
+                new ColumnTuple(Constant.ControlColumn.AnalysisLabel, this.AnalysisLabel),
+                new ColumnTuple(Constant.ControlColumn.ControlOrder, this.ControlOrder),
+                new ColumnTuple(Constant.ControlColumn.Copyable, this.Copyable),
+                new ColumnTuple(Constant.ControlColumn.DataLabel, this.DataLabel),
+                new ColumnTuple(Constant.ControlColumn.DefaultValue, this.DefaultValue),
+                new ColumnTuple(Constant.ControlColumn.IndexInFileTable, this.IndexInFileTable),
+                new ColumnTuple(Constant.ControlColumn.Label, this.Label),
+                new ColumnTuple(Constant.ControlColumn.WellKnownValues, this.WellKnownValues),
+                new ColumnTuple(Constant.ControlColumn.SpreadsheetOrder, this.SpreadsheetOrder),
+                new ColumnTuple(Constant.ControlColumn.MaxWidth, this.MaxWidth),
+                new ColumnTuple(Constant.ControlColumn.Tooltip, this.Tooltip),
+                new ColumnTuple(Constant.ControlColumn.Type, (int)this.Type),
+                new ColumnTuple(Constant.ControlColumn.Visible, this.Visible)
             };
             return new ColumnTuplesWithID(Constant.DatabaseTable.Controls, columnTuples, this.ID);
         }
 
-        public List<string> GetChoices()
+        public List<string> GetWellKnownValues()
         {
-            return this.List.Split(Constant.Database.BarDelimiter).ToList();
+            return this.WellKnownValues.Split(Constant.Control.ListDelimiter).ToList();
         }
 
         public bool IsFilePathComponent()
         {
-            return String.Equals(this.DataLabel, Constant.DatabaseColumn.File, StringComparison.OrdinalIgnoreCase) || String.Equals(this.DataLabel, Constant.DatabaseColumn.RelativePath, StringComparison.OrdinalIgnoreCase);
+            return String.Equals(this.DataLabel, Constant.FileColumn.File, StringComparison.OrdinalIgnoreCase) || String.Equals(this.DataLabel, Constant.FileColumn.RelativePath, StringComparison.OrdinalIgnoreCase);
         }
 
-        public bool IsValidData(string value)
+        public bool IsUserControl()
+        {
+            if (String.Equals(this.DataLabel, Constant.DatabaseColumn.ID, StringComparison.Ordinal) ||
+                Constant.Control.StandardControls.Contains(this.DataLabel, StringComparer.Ordinal))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        public bool IsValidExcelData(string value)
         {
             switch (this.Type)
             {
                 case ControlType.Counter:
-                    long result;
-                    return Int64.TryParse(value, out result);
+                    return MarkersForCounter.IsValidExcelString(value);
                 case ControlType.DateTime:
                     DateTime dateTime;
                     return DateTimeHandler.TryParseDatabaseDateTime(value, out dateTime);
@@ -342,12 +369,13 @@ namespace Carnassial.Data
                     return String.Equals(value, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ||
                            String.Equals(value, Boolean.TrueString, StringComparison.OrdinalIgnoreCase);
                 case ControlType.FixedChoice:
-                    // the editor doesn't currently enforce the default value is one of the choices, so accept it as valid independently
-                    if (value == this.DefaultValue)
+                    // the editor doesn't currently enforce the default value is one of the well known values, so accept it as
+                    // valid independently
+                    if (String.Equals(value, this.DefaultValue, StringComparison.Ordinal))
                     {
                         return true;
                     }
-                    return this.GetChoices().Contains(value);
+                    return this.GetWellKnownValues().Contains(value, StringComparer.Ordinal);
                 case ControlType.Note:
                     return true;
                 case ControlType.UtcOffset:
@@ -358,13 +386,18 @@ namespace Carnassial.Data
             }
         }
 
-        public void SetChoices(List<string> choices)
+        public void SetWellKnownValues(List<string> wellKnownValues)
         {
-            this.List = String.Join("|", choices);
+            this.WellKnownValues = String.Join(Constant.Control.ListDelimiter.ToString(), wellKnownValues);
         }
 
         public bool Synchronize(ControlRow other)
         {
+            if (String.Equals(this.DataLabel, other.DataLabel, StringComparison.Ordinal) == false)
+            {
+                throw new ArgumentOutOfRangeException(nameof(other), "Can't synchronize controls with different data labels.");
+            }
+
             bool synchronizationMadeChanges = false;
             if (this.AnalysisLabel != other.AnalysisLabel)
             {
@@ -381,19 +414,24 @@ namespace Carnassial.Data
                 this.ControlOrder = other.ControlOrder;
                 synchronizationMadeChanges = true;
             }
-            if (this.DefaultValue != other.DefaultValue)
+            if (String.Equals(this.DefaultValue, other.DefaultValue, StringComparison.Ordinal) == false)
             {
                 this.DefaultValue = other.DefaultValue;
                 synchronizationMadeChanges = true;
             }
-            if (this.Label != other.Label)
+            if (this.IndexInFileTable != other.IndexInFileTable)
+            {
+                this.IndexInFileTable = other.IndexInFileTable;
+                synchronizationMadeChanges = true;
+            }
+            if (String.Equals(this.Label, other.Label, StringComparison.Ordinal) == false)
             {
                 this.Label = other.Label;
                 synchronizationMadeChanges = true;
             }
-            if (this.List != other.List)
+            if (String.Equals(this.WellKnownValues, other.WellKnownValues, StringComparison.Ordinal) == false)
             {
-                this.List = other.List;
+                this.WellKnownValues = other.WellKnownValues;
                 synchronizationMadeChanges = true;
             }
             if (this.MaxWidth != other.MaxWidth)
@@ -406,7 +444,7 @@ namespace Carnassial.Data
                 this.SpreadsheetOrder = other.SpreadsheetOrder;
                 synchronizationMadeChanges = true;
             }
-            if (this.Tooltip != other.Tooltip)
+            if (String.Equals(this.Tooltip, other.Tooltip, StringComparison.Ordinal) == false)
             {
                 this.Tooltip = other.Tooltip;
                 synchronizationMadeChanges = true;
@@ -418,28 +456,6 @@ namespace Carnassial.Data
             }
 
             return synchronizationMadeChanges;
-        }
-
-        private static string TypeToString(ControlType type)
-        {
-            // Enum.ToString() is indeterminate as to which string is returned for equivalent values
-            switch (type)
-            {
-                case ControlType.Counter:
-                    return "Counter";
-                case ControlType.DateTime:
-                    return "DateTime";
-                case ControlType.FixedChoice:
-                    return "FixedChoice";
-                case ControlType.Flag:
-                    return "Flag";
-                case ControlType.Note:
-                    return "Note";
-                case ControlType.UtcOffset:
-                    return "UtcOffset";
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", type));
-            }
         }
     }
 }

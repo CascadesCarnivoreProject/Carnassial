@@ -60,7 +60,7 @@ namespace Carnassial.Data
         // create and return the query formed by the search term list
         public Select CreateSelect()
         {
-            Select select = new Select(Constant.DatabaseTable.FileData)
+            Select select = new Select(Constant.DatabaseTable.Files)
             {
                 WhereCombiningOperator = this.TermCombiningOperator
             };
@@ -124,12 +124,12 @@ namespace Carnassial.Data
 
         public void SetDateTimesAndOffset(DateTimeOffset dateTimeOffset)
         {
-            foreach (SearchTerm dateTimeTerm in this.SearchTerms.Where(term => term.DataLabel == Constant.DatabaseColumn.DateTime))
+            foreach (SearchTerm dateTimeTerm in this.SearchTerms.Where(term => String.Equals(term.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal)))
             {
                 dateTimeTerm.DatabaseValue = dateTimeOffset;
             }
 
-            SearchTerm utcOffsetTerm = this.SearchTerms.FirstOrDefault(term => term.DataLabel == Constant.DatabaseColumn.UtcOffset);
+            SearchTerm utcOffsetTerm = this.SearchTerms.FirstOrDefault(term => String.Equals(term.DataLabel, Constant.FileColumn.UtcOffset, StringComparison.Ordinal));
             if (utcOffsetTerm != null)
             {
                 utcOffsetTerm.DatabaseValue = dateTimeOffset.Offset;

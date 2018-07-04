@@ -5,7 +5,7 @@ using System.Windows.Controls;
 
 namespace Carnassial.Control
 {
-    // A flag comprises a stack panel containing
+    // A flag comprises
     // - a label containing the descriptive label) 
     // - checkbobox (the content) at the given width
     public class DataEntryFlag : DataEntryControl<CheckBox, Label>
@@ -13,14 +13,7 @@ namespace Carnassial.Control
         public DataEntryFlag(ControlRow control, DataEntryControls styleProvider)
             : base(control, styleProvider, ControlContentStyle.FlagCheckBox, ControlLabelStyle.Label)
         {
-            this.ContentControl.SetBinding(CheckBox.IsCheckedProperty, ImageRow.GetDataBindingPath(control.DataLabel));
-        }
-
-        /// <summary>Gets the current state of the flag</summary>
-        /// <remarks>true if the flag is checked, false otherwise</remarks>
-        public override string Content
-        {
-            get { return (bool)this.ContentControl.IsChecked ? Boolean.TrueString : Boolean.FalseString; }
+            this.ContentControl.SetBinding(CheckBox.IsCheckedProperty, ImageRow.GetDataBindingPath(control));
         }
 
         public override bool ContentReadOnly
@@ -29,12 +22,17 @@ namespace Carnassial.Control
             set { this.ContentControl.IsEnabled = !value; }
         }
 
+        public override bool IsCopyableValue(object value)
+        {
+            return (bool)value;
+        }
+
         public override void SetValue(object valueAsObject)
         {
             if (valueAsObject is string valueAsString)
             {
-                Debug.Assert(String.Equals(valueAsString, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) || String.Equals(valueAsString, Boolean.TrueString, StringComparison.OrdinalIgnoreCase), String.Format("Unexpected value '{0}'.", valueAsString));
-                this.ContentControl.IsChecked = Boolean.Parse(valueAsString);
+                Debug.Assert(String.Equals(valueAsString, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) || String.Equals(valueAsString, "1", StringComparison.Ordinal), String.Format("Unknown boolean value '{0}'.", valueAsString));
+                this.ContentControl.IsChecked = String.Equals(valueAsString, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) == false;
                 this.ContentControl.ToolTip = valueAsString;
             }
             else if (valueAsObject is bool value)

@@ -11,9 +11,6 @@ namespace Carnassial.Control
 {
     public abstract class DataEntryControl
     {
-        /// <summary>Gets the value of the control</summary>
-        public abstract string Content { get; }
-
         /// <summary>Gets or sets a value indicating whether the control's content is user editable</summary>
         public abstract bool ContentReadOnly { get; set; }
 
@@ -61,11 +58,20 @@ namespace Carnassial.Control
 
             // create the grid which will contain the label and ontent
             this.Container = new Grid();
-            this.Container.ColumnDefinitions.Add(new ColumnDefinition() { Width = GridLength.Auto });
-            this.Container.ColumnDefinitions.Add(new ColumnDefinition() { MaxWidth = control.MaxWidth, Width = new GridLength(1.0, GridUnitType.Star) });
+            this.Container.ColumnDefinitions.Add(new ColumnDefinition()
+            {
+                Width = GridLength.Auto
+            });
+            this.Container.ColumnDefinitions.Add(new ColumnDefinition()
+            {
+                MaxWidth = control.MaxWidth, Width = new GridLength(1.0, GridUnitType.Star)
+            });
             this.Container.Height = 35;
             this.Container.Margin = new Thickness(0, 0, 8, 0);
-            this.Container.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
+            this.Container.RowDefinitions.Add(new RowDefinition()
+            {
+                Height = GridLength.Auto
+            });
 
             // use the containers's tag to point back to this so event handlers can access the DataEntryControl
             // this is needed by callbacks such as DataEntryHandler.Container_PreviewMouseRightButtonDown() and CarnassialWindow.CounterControl_MouseLeave()
@@ -104,16 +110,28 @@ namespace Carnassial.Control
             }
         }
 
-        public virtual List<string> GetChoices()
+        public virtual List<string> GetWellKnownValues()
         {
             // return empty set as flags and counters don't have choices
             return new List<string>();
         }
 
         public abstract void HighlightIfCopyable();
+
+        public virtual bool IsCopyableValue(object value)
+        {
+            string valueAsString = (string)value;
+            if (String.IsNullOrEmpty(valueAsString))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public abstract void RemoveHighlightIfCopyable();
 
-        public virtual void SetChoices(List<string> choices)
+        public virtual void SetWellKnownValues(List<string> choices)
         {
             // do nothing as flags and counters don't have choices
         }
@@ -211,7 +229,7 @@ namespace Carnassial.Control
                 labelControlAsLabel.Target = this.ContentControl;
             }
 
-            // add the label and content to the stack panel
+            // add the label and content to the control grid
             this.Container.Children.Add(this.LabelControl);
             this.Container.Children.Add(this.ContentControl);
         }

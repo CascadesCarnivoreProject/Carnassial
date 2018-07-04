@@ -16,7 +16,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Speech.Synthesis;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -360,8 +359,8 @@ namespace Carnassial
 
                 // on mouse hover over a counter, emphasize markers associated with it
                 DataEntryCounter currentCounter = (DataEntryCounter)control;
-                bool emphasize = markersForCounter.DataLabel == this.State.MouseOverCounter;
-                bool highlight = selectedCounter != null && currentCounter.DataLabel == selectedCounter.DataLabel;
+                bool emphasize = String.Equals(markersForCounter.DataLabel, this.State.MouseOverCounter, StringComparison.Ordinal);
+                bool highlight = (selectedCounter != null) && String.Equals(currentCounter.DataLabel, selectedCounter.DataLabel, StringComparison.Ordinal);
                 foreach (Marker marker in markersForCounter.Markers)
                 {
                     // label markers when they're first created, don't show a label afterwards
@@ -501,12 +500,10 @@ namespace Carnassial
             this.AddCommand(markerChange);
 
             this.RefreshDisplayedMarkers();
-            string speechFeedback = selectedCounter.Content;
             if (e.IsCreation)
             {
-                speechFeedback += " " + selectedCounter.Label;
+                this.MaybeSpeak(selectedCounter.Label);
             }
-            this.MaybeSpeak(speechFeedback);
         }
 
         public void RefreshDisplayedMarkers()
@@ -627,10 +624,10 @@ namespace Carnassial
             List<ImageRow> filesToDelete = new List<ImageRow>();
             bool deleteCurrentFileOnly;
             bool deleteFilesAndData;
-            if (menuItem.Name.Equals(this.MenuEditDeleteFiles.Name) || menuItem.Name.Equals(this.MenuEditDeleteFilesAndData.Name))
+            if (menuItem.Name.Equals(this.MenuEditDeleteFiles.Name, StringComparison.Ordinal) || menuItem.Name.Equals(this.MenuEditDeleteFilesAndData.Name, StringComparison.Ordinal))
             {
                 deleteCurrentFileOnly = false;
-                deleteFilesAndData = menuItem.Name.Equals(this.MenuEditDeleteFilesAndData.Name);
+                deleteFilesAndData = menuItem.Name.Equals(this.MenuEditDeleteFilesAndData.Name, StringComparison.Ordinal);
                 // get files marked for deletion in the current seletion
                 filesToDelete.AddRange(this.DataHandler.FileDatabase.Files.Where(file => file.DeleteFlag == true));
             }
@@ -638,7 +635,7 @@ namespace Carnassial
             {
                 // delete current file
                 deleteCurrentFileOnly = true;
-                deleteFilesAndData = menuItem.Name.Equals(this.MenuEditDeleteCurrentFileAndData.Name);
+                deleteFilesAndData = menuItem.Name.Equals(this.MenuEditDeleteCurrentFileAndData.Name, StringComparison.Ordinal);
                 if (this.IsFileAvailable())
                 {
                     filesToDelete.Add(this.DataHandler.ImageCache.Current);
@@ -669,7 +666,7 @@ namespace Carnassial
                 // .Current to null, meaning event unregistry should be done before the TryInvalidate() call below.  C# ignores attempts to remove unregistered 
                 // event callbacks, so there's no impact if the current file's not on the delete list; ShowFile() will repeat the remove without any effect and 
                 // then restore the handler.
-                this.DataHandler.ImageCache.Current.PropertyChanged -= this.OnFileFieldEdit;
+                this.DataHandler.ImageCache.Current.PropertyChanged -= this.OnFileFieldChanged;
 
                 Mouse.OverrideCursor = Cursors.Wait;
                 this.DataHandler.DeleteFiles(filesToDelete, deleteFilesAndData);
@@ -716,7 +713,7 @@ namespace Carnassial
                 return;
             }
 
-            this.PasteValuesToCurrentFileWithUndo(new Dictionary<string, object>(valuesFromClipboard));
+            this.PasteValuesToCurrentFileWithUndo(new Dictionary<string, object>(valuesFromClipboard, StringComparer.Ordinal));
         }
 
         private void MenuEditPasteFromAnalysis_Click(object sender, RoutedEventArgs e)
@@ -792,7 +789,7 @@ namespace Carnassial
                 return;
             }
 
-            Dictionary<string, object> defaultValues = new Dictionary<string, object>();
+            Dictionary<string, object> defaultValues = new Dictionary<string, object>(StringComparer.Ordinal);
             foreach (ControlRow control in this.DataHandler.FileDatabase.Controls)
             {
                 if (control.Copyable)
@@ -1269,7 +1266,7 @@ namespace Carnassial
         {
             // the first time the custom selection dialog is launched update the DateTime and UtcOffset search terms to the time of the current file
             // Don't need to check CustomSelectionChange.HasChanges() as a change is guaranteed.
-            SearchTerm firstDateTimeSearchTerm = this.DataHandler.FileDatabase.CustomSelection.SearchTerms.First(searchTerm => searchTerm.DataLabel == Constant.DatabaseColumn.DateTime);
+            SearchTerm firstDateTimeSearchTerm = this.DataHandler.FileDatabase.CustomSelection.SearchTerms.First(searchTerm => String.Equals(searchTerm.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal));
             if ((DateTimeOffset)firstDateTimeSearchTerm.DatabaseValue == Constant.ControlDefault.DateTimeValue)
             {
                 Data.CustomSelection customSelectionInitialSnapshot = new Data.CustomSelection(this.DataHandler.FileDatabase.CustomSelection);
@@ -1626,7 +1623,7 @@ namespace Carnassial
             this.OnBulkEdit(this, null);
         }
 
-        private void OnFileFieldEdit(object sender, PropertyChangedEventArgs fileChange)
+        private void OnFileFieldChanged(object sender, PropertyChangedEventArgs fileChange)
         {
             if ((this.DataHandler != null) && this.DataHandler.IsProgrammaticUpdate)
             {
@@ -1653,7 +1650,7 @@ namespace Carnassial
                 if (control.Type == ControlType.Note)
                 {
                     DataEntryNote noteControl = (DataEntryNote)control;
-                    if (noteControl.ContentControl.Autocompletions.Contains(fileEdit.NewValue) == false)
+                    if (noteControl.ContentControl.Autocompletions.Contains((string)fileEdit.NewValue, StringComparer.Ordinal) == false)
                     {
                         // if needed, controls could be removed from the list in cases where a correction returns the field's value to one which is already
                         // a known autocomplete
@@ -2015,7 +2012,7 @@ namespace Carnassial
                 }
 
                 // unlink current file from change tracking
-                this.DataHandler.ImageCache.Current.PropertyChanged -= this.OnFileFieldEdit;
+                this.DataHandler.ImageCache.Current.PropertyChanged -= this.OnFileFieldChanged;
                 this.State.NoteControlsWithNewValues.Clear();
             }
 
@@ -2045,7 +2042,7 @@ namespace Carnassial
             this.DataHandler.IsProgrammaticUpdate = true;
             this.DataEntryControls.SetDataContext(this.DataHandler.ImageCache.Current);
             this.DataHandler.IsProgrammaticUpdate = false;
-            this.DataHandler.ImageCache.Current.PropertyChanged += this.OnFileFieldEdit;
+            this.DataHandler.ImageCache.Current.PropertyChanged += this.OnFileFieldChanged;
 
             // update status bar
             this.SetCurrentFile(fileIndex);
@@ -2448,7 +2445,7 @@ namespace Carnassial
                 return false;
             }
 
-            this.PasteValuesToCurrentFileWithUndo(new Dictionary<string, object>(valuesFromAnalysis));
+            this.PasteValuesToCurrentFileWithUndo(new Dictionary<string, object>(valuesFromAnalysis, StringComparer.Ordinal));
             return true;
         }
 

@@ -39,7 +39,7 @@ namespace Carnassial.Dialog
             this.clearIfNoMetadata = false;
             this.dataFieldLabel = String.Empty;
             this.dataFieldSelected = false;
-            this.dataLabelByLabel = new Dictionary<string, string>();
+            this.dataLabelByLabel = new Dictionary<string, string>(StringComparer.Ordinal);
             this.desiredStatusInterval = desiredStatusInterval;
             this.fileDatabase = fileDatabase;
             this.filePath = filePath;

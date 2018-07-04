@@ -46,7 +46,7 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.initialFolderName != value;
+                this.HasChanges |= String.Equals(this.initialFolderName, value, StringComparison.Ordinal) == false;
                 this.initialFolderName = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.InitialFolderName)));
             }
@@ -115,12 +115,12 @@ namespace Carnassial.Data
             return new ColumnTuplesForInsert(Constant.DatabaseTable.ImageSet,
                 new List<ColumnTuple>()
                 {
-                    new ColumnTuple(Constant.DatabaseColumn.FileSelection, FileSelection.All.ToString()),
-                    new ColumnTuple(Constant.DatabaseColumn.InitialFolderName, folderPath),
-                    new ColumnTuple(Constant.DatabaseColumn.Log, Constant.Database.ImageSetDefaultLog),
-                    new ColumnTuple(Constant.DatabaseColumn.MostRecentFileID, Constant.Database.DefaultFileID),
-                    new ColumnTuple(Constant.DatabaseColumn.Options, ImageSetOptions.None.ToString()),
-                    new ColumnTuple(Constant.DatabaseColumn.TimeZone, TimeZoneInfo.Local.Id)
+                    new ColumnTuple(Constant.ImageSetColumn.FileSelection, (int)default(FileSelection)),
+                    new ColumnTuple(Constant.ImageSetColumn.InitialFolderName, folderPath),
+                    new ColumnTuple(Constant.ImageSetColumn.Log, Constant.Database.ImageSetDefaultLog),
+                    new ColumnTuple(Constant.ImageSetColumn.MostRecentFileID, Constant.Database.DefaultFileID),
+                    new ColumnTuple(Constant.ImageSetColumn.Options, (int)default(ImageSetOptions)),
+                    new ColumnTuple(Constant.ImageSetColumn.TimeZone, TimeZoneInfo.Local.Id)
                 });
         }
 
@@ -129,12 +129,12 @@ namespace Carnassial.Data
             return new ColumnTuplesWithID(Constant.DatabaseTable.ImageSet,
                 new List<ColumnTuple>()
                 {
-                    new ColumnTuple(Constant.DatabaseColumn.FileSelection, this.FileSelection.ToString()),
-                    new ColumnTuple(Constant.DatabaseColumn.InitialFolderName, this.InitialFolderName),
-                    new ColumnTuple(Constant.DatabaseColumn.Log, this.Log),
-                    new ColumnTuple(Constant.DatabaseColumn.Options, this.Options.ToString()),
-                    new ColumnTuple(Constant.DatabaseColumn.MostRecentFileID, this.MostRecentFileID),
-                    new ColumnTuple(Constant.DatabaseColumn.TimeZone, this.TimeZone),
+                    new ColumnTuple(Constant.ImageSetColumn.FileSelection, (int)this.FileSelection),
+                    new ColumnTuple(Constant.ImageSetColumn.InitialFolderName, this.InitialFolderName),
+                    new ColumnTuple(Constant.ImageSetColumn.Log, this.Log),
+                    new ColumnTuple(Constant.ImageSetColumn.Options, (int)this.Options),
+                    new ColumnTuple(Constant.ImageSetColumn.MostRecentFileID, this.MostRecentFileID),
+                    new ColumnTuple(Constant.ImageSetColumn.TimeZone, this.TimeZone),
                 },
                 this.ID);
         }

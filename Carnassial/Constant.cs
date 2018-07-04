@@ -47,39 +47,43 @@ namespace Carnassial
 
         public static class Control
         {
-            // columns unique to the controls table
-            public const string AnalysisLabel = "AnalysisLabel";
-            public const string ControlOrder = "ControlOrder";
-            public const string Copyable = "Copyable";
-            public const string DataLabel = "DataLabel";
-            public const string DefaultValue = "DefaultValue";
-            public const string Label = "Label";
-            public const string List = "List";
-            public const string SpreadsheetOrder = "SpreadsheetOrder";
-            public const string Tooltip = "Tooltip";
-            public const string Type = "Type";
-            public const string Visible = "Visible";
-            public const string Width = "Width";
-
+            public const char ListDelimiter = '|';
             // hotkey characters in use by the top level of Carnassial's main menu or the three data entry buttons and therefore unavailable as control 
             // shortcuts in either upper or lower case
             public const string ReservedHotKeys = "FfEeOoVvSsHhPp123456789";
 
             public static readonly ReadOnlyCollection<string> StandardControls = new List<string>()
             {
-                Constant.DatabaseColumn.DateTime,
-                Constant.DatabaseColumn.DeleteFlag,
-                Constant.DatabaseColumn.File,
-                Constant.DatabaseColumn.ImageQuality,
-                Constant.DatabaseColumn.RelativePath,
-                Constant.DatabaseColumn.UtcOffset
+                Constant.FileColumn.DateTime,
+                Constant.FileColumn.DeleteFlag,
+                Constant.FileColumn.File,
+                Constant.FileColumn.Classification,
+                Constant.FileColumn.RelativePath,
+                Constant.FileColumn.UtcOffset
             }.AsReadOnly();
         }
 
-        // see also ControlLabelStyle and ControlContentStyle
-        public static class ControlStyle
+        public static class ControlColumn
         {
-            public const string ContainerStyle = "ContainerStyle";
+            // columns unique to the controls table
+            public const string AnalysisLabel = "AnalysisLabel";
+            public const string ControlOrder = "ControlOrder";
+            public const string Copyable = "Copyable";
+            public const string DataLabel = "DataLabel";
+            public const string DefaultValue = "DefaultValue";
+            public const string IndexInFileTable = "IndexInFileTable";
+            public const string Label = "Label";
+            public const string MaxWidth = "MaxWidth";
+            public const string SpreadsheetOrder = "SpreadsheetOrder";
+            public const string Tooltip = "Tooltip";
+            public const string Type = "Type";
+            public const string Visible = "Visible";
+            public const string WellKnownValues = "WellKnownValues";
+
+            [Obsolete("Legacy value for backwards compatibility with Carnassial 2.2.0.2 and earlier.")]
+            public const string List = "List";
+            [Obsolete("Legacy value for backwards compatibility with Carnassial 2.2.0.2 and earlier.")]
+            public const string Width = "Width";
         }
 
         public static class ControlDefault
@@ -90,22 +94,22 @@ namespace Carnassial
 
             // user defined controls
             public const string CounterTooltip = "Click the counter button, then click on the image to count the entity. Or just type in a count";
-            public const string CounterValue = "0";              // Default for: counters
+            public const string CounterValue = "0";
             public const string FixedChoiceTooltip = "Choose an item from the menu";
 
             public const string FlagTooltip = "Toggle between true and false";
-            public const string FlagValue = "False"; // can't use Boolean.FalseString as it's not const
+            public const string FlagValue = "0";
             public const string NoteTooltip = "Write a textual note";
 
             // standard controls
-            // ImageQuality list contains Ok for backwards compatibility. See remarks for FileSelection.Ok.
+            // Classification list contains Ok for backwards compatibility. See remarks for FileSelection.Ok.
+            public const string ClassificationTooltip = "Color image, greyscale image, dark if mostly black image, video, corrupt if it can't be read, no longer available if the file is missing.";
+            public const string ClassificationWellKnownValues = "Color|Ok|Corrupt|Dark|Greyscale|NoLongerAvailable|Video";
+
             public const string DateTimeTooltip = "Date and time taken";
 
             public const string FileTooltip = "The file name";
             public const string RelativePathTooltip = "Path from the folder containing the template and image data files to the file";
-
-            public const string ImageQualityList = "Color|Ok|Corrupt|Dark|Greyscale|NoLongerAvailable|Video";
-            public const string ImageQualityTooltip = "System-determined image quality: Ok, dark if mostly black, corrupted if it can not be read, missing if the image/video file is missing";
 
             public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
             public const string DeleteFlagTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
@@ -113,6 +117,12 @@ namespace Carnassial
             public const string UtcOffsetTooltip = "Universal Time offset of the time zone for date and time taken";
 
             public static readonly DateTimeOffset DateTimeValue = new DateTimeOffset(1900, 1, 1, 12, 0, 0, 0, TimeSpan.Zero);
+        }
+
+        // see also ControlLabelStyle and ControlContentStyle
+        public static class ControlStyle
+        {
+            public const string ContainerStyle = "ContainerStyle";
         }
 
         public static class Database
@@ -126,37 +136,19 @@ namespace Carnassial
             // see performance remarks in FileDatabase.AddFiles()
             public const int NominalRowsPerTransactionFill = 2500;
             public const int RowsPerTransaction = 5000;
-
-            // special characters
-            // separator used to separate marker points in the database i.e. "2.3,5.6 | 7.1, 3.3"
-            public const char BarDelimiter = '|';
         }
 
         public static class DatabaseColumn
         {
             public const string ID = "Id";
-
-            // columns in FileData
-            public const string DateTime = "DateTime";
-            public const string File = "File";
-            public const string ImageQuality = "ImageQuality";
-            public const string DeleteFlag = "DeleteFlag";
-            public const string RelativePath = "RelativePath";
-            public const string UtcOffset = "UtcOffset";
-
-            // columns in ImageSet
-            public const string FileSelection = "FileSelection";
-            public const string InitialFolderName = "InitialFolderName";
-            public const string Log = "Log";
-            public const string MostRecentFileID = "MostRecentFileID";
-            public const string Options = "Options";
-            public const string TimeZone = "TimeZone";
         }
 
         public static class DatabaseTable
         {
             public const string Controls = "Controls"; // table containing controls
-            public const string FileData = "FileData";     // table containing image and video data
+            [Obsolete("Legacy value for backwards compatibility with Carnassial 2.2.0.2 and earlier.")]
+            public const string FileData = "FileData";
+            public const string Files = "Files";       // table containing image and video data
             public const string ImageSet = "ImageSet"; // table containing information common to the entire image set
         }
 
@@ -164,8 +156,11 @@ namespace Carnassial
         {
             public const string Extension = ".xlsx";
             public const string FileDataWorksheetName = "file data";
-            public const double MinimumColumnWidth = 5.0;
+            public const char MarkerCoordinateSeparator = ',';
+            public const string MarkerPositionFormat = "0.000000";
+            public const char MarkerPositionSeparator = '|';
             public const double MaximumColumnWidth = 40.0;
+            public const double MinimumColumnWidth = 5.0;
         }
 
         public static class Exif
@@ -191,6 +186,20 @@ namespace Carnassial
             public const string TemplateFileExtension = ".tdb";
 
             public static readonly TimeSpan BackupInterval = TimeSpan.FromMinutes(10);
+        }
+
+        public static class FileColumn
+        {
+            public const string Classification = "Classification";
+            public const string DateTime = "DateTime";
+            public const string File = "File";
+            [Obsolete("Legacy value for backwards compatibility with Carnassial 2.2.0.2 and earlier.")]
+            public const string ImageQuality = "ImageQuality";
+            public const string DeleteFlag = "DeleteFlag";
+            public const string RelativePath = "RelativePath";
+            public const string UtcOffset = "UtcOffset";
+
+            public const string MarkerPositionSuffix = "Markers";
         }
 
         public static class Gestures
@@ -258,6 +267,16 @@ namespace Carnassial
             }
         }
 
+        public static class ImageSetColumn
+        {
+            public const string FileSelection = "FileSelection";
+            public const string InitialFolderName = "InitialFolderName";
+            public const string Log = "Log";
+            public const string MostRecentFileID = "MostRecentFileID";
+            public const string Options = "Options";
+            public const string TimeZone = "TimeZone";
+        }
+
         public static class MarkableCanvas
         {
             public const double ImageZoomMaximum = 10.0;      // user configurable maximum amount of zoom in a display image
@@ -314,6 +333,12 @@ namespace Carnassial
             public const string RootKey = @"Software\Cascades Carnivore Project\Carnassial\2.0";
         }
 
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:FieldNamesMustNotContainUnderscore", Justification = "Readability")]
+        public static class Release
+        {
+            public static readonly Version V2_2_0_3 = new Version(2, 2, 0, 3);
+        }
+
         public static class SearchTermOperator
         {
             public const string Equal = "\u003D";
@@ -328,11 +353,14 @@ namespace Carnassial
         public static class Sql
         {
             public const string CreationStringPrimaryKey = "INTEGER PRIMARY KEY AUTOINCREMENT";
+            public const string FalseString = "0";
+            public const string TrueString = "1";
             public const string Where = " WHERE ";
         }
 
-        public static class SqlColumnType
+        public static class SQLiteAffninity
         {
+            public const string Blob = "BLOB";
             public const string DateTime = "DATETIME";
             public const string Integer = "INTEGER";
             public const string Real = "REAL";

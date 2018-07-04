@@ -1,10 +1,7 @@
-﻿using MetadataExtractor;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -14,7 +11,6 @@ using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;
 using MessageBox = Carnassial.Dialog.MessageBox;
-using MetadataDirectory = MetadataExtractor.Directory;
 using OpenFileDialog = System.Windows.Forms.OpenFileDialog;
 using Rectangle = System.Drawing.Rectangle;
 

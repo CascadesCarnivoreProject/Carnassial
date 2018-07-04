@@ -59,8 +59,7 @@ namespace Carnassial.Database
             {
                 foreach (string column in this.Columns)
                 {
-                    SQLiteParameter parameter = new SQLiteParameter("@" + column);
-                    command.Parameters.Add(parameter);
+                    command.Parameters.Add(new SQLiteParameter("@" + column));
                 }
                 SQLiteParameter idParameter = new SQLiteParameter("@" + Constant.DatabaseColumn.ID);
                 command.Parameters.Add(idParameter);

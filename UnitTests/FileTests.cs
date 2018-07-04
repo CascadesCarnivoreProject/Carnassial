@@ -242,7 +242,7 @@ namespace Carnassial.UnitTests
                         {
                             Assert.Fail("{0}: Expected coloration to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Coloration, coloration);
                         }
-                        Assert.IsTrue(classification == fileExpectation.Quality, "{0}: Expected image quality {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Quality, classification);
+                        Assert.IsTrue(classification == fileExpectation.Classification, "{0}: Expected classification {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Classification, classification);
                     }
                 }
             }

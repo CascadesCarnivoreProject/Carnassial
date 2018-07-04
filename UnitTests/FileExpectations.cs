@@ -12,48 +12,52 @@ namespace Carnassial.UnitTests
     {
         private TimeZoneInfo timeZoneForDateTime;
 
+        public FileClassification Classification { get; set; }
         public double Coloration { get; set; }
         public DateTimeOffset DateTime { get; set; }
         public bool DeleteFlag { get; set; }
         public string FileName { get; set; }
         public long ID { get; set; }
         public double Luminosity { get; set; }
-        public FileClassification Quality { get; set; }
         public string RelativePath { get; set; }
         public bool SkipDateTimeVerification { get; set; }
+        public bool SkipMarkerByteVerification { get; set; }
         public bool SkipUserControlVerification { get; set; }
-        public Dictionary<string, string> UserControlsByDataLabel { get; private set; }
+        public Dictionary<string, object> UserControlsByDataLabel { get; private set; }
 
         public FileExpectations(TimeZoneInfo timeZone)
         {
+            this.Classification = (FileClassification)(-1);
             this.Coloration = -1.0;
             this.DateTime = DateTimeOffset.MinValue;
             this.DeleteFlag = false;
             this.FileName = null;
             this.ID = Constant.Database.InvalidID;
             this.Luminosity = -1.0;
-            this.Quality = (FileClassification)(-1);
             this.RelativePath = String.Empty;
             this.SkipDateTimeVerification = false;
+            this.SkipMarkerByteVerification = false;
             this.SkipUserControlVerification = false;
-            this.UserControlsByDataLabel = new Dictionary<string, string>();
+            this.UserControlsByDataLabel = new Dictionary<string, object>(StringComparer.Ordinal);
             this.timeZoneForDateTime = timeZone;
         }
 
         public FileExpectations(FileExpectations other)
             : this(other.timeZoneForDateTime)
         {
+            this.Classification = other.Classification;
             this.Coloration = other.Coloration;
             this.DateTime = other.DateTime;
             this.DeleteFlag = other.DeleteFlag;
             this.FileName = other.FileName;
             this.ID = other.ID;
             this.Luminosity = other.Luminosity;
-            this.Quality = other.Quality;
             this.RelativePath = other.RelativePath;
             this.SkipDateTimeVerification = other.SkipDateTimeVerification;
+            this.SkipMarkerByteVerification = other.SkipMarkerByteVerification;
+            this.SkipUserControlVerification = other.SkipUserControlVerification;
 
-            foreach (KeyValuePair<string, string> columnExpectation in other.UserControlsByDataLabel)
+            foreach (KeyValuePair<string, object> columnExpectation in other.UserControlsByDataLabel)
             {
                 this.UserControlsByDataLabel.Add(columnExpectation.Key, columnExpectation.Value);
             }
@@ -86,11 +90,10 @@ namespace Carnassial.UnitTests
 
         public void Verify(ImageRow file, TimeZoneInfo timeZone)
         {
+            Assert.IsTrue(file.Classification == this.Classification, "{0}: Expected Classification '{1}' but found '{2}'.", this.FileName, this.Classification, file.Classification);
             Assert.IsTrue(file.DeleteFlag == this.DeleteFlag);
             Assert.IsTrue(file.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, file.FileName);
-            // Assert.IsFalse(file.HasChanges);
             Assert.IsTrue(file.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, file.ID);
-            Assert.IsTrue(file.Classification == this.Quality, "{0}: Expected ImageQuality '{1}' but found '{2}'.", this.FileName, this.Quality, file.Classification);
             Assert.IsTrue((file.IsVideo == file is VideoRow) && (file.IsVideo == (file.Classification == FileClassification.Video)));
             Assert.IsTrue(file.RelativePath == this.RelativePath, "{0}: Expected RelativePath '{1}' but found '{2}'.", this.FileName, this.RelativePath, file.RelativePath);
             Assert.IsTrue(file.UtcDateTime.Kind == DateTimeKind.Utc, "{0}: Expected UtcDateTime.Kind '{1}' but found '{2}'.", this.FileName, DateTimeKind.Utc, file.UtcDateTime.Kind);
@@ -108,18 +111,38 @@ namespace Carnassial.UnitTests
 
             if (this.SkipUserControlVerification == false)
             {
-                Assert.IsTrue(file.UserControlValues.Length == this.UserControlsByDataLabel.Count, "{0}: Expected '{1}' user control values but found '{2}'.", this.FileName, this.UserControlsByDataLabel.Count, file.UserControlValues.Length);
-                foreach (KeyValuePair<string, string> userControlExpectation in this.UserControlsByDataLabel)
+                int actualUserControlCount = file.UserCounters.Length + file.UserFlags.Length + file.UserMarkerPositions.Length + file.UserNotesAndChoices.Length;
+                Assert.IsTrue(actualUserControlCount == this.UserControlsByDataLabel.Count, "{0}: Expected '{1}' user control values but found '{2}'.", this.FileName, this.UserControlsByDataLabel.Count, actualUserControlCount);
+                foreach (KeyValuePair<string, object> userControlExpectation in this.UserControlsByDataLabel)
                 {
                     string dataLabel = userControlExpectation.Key;
-                    string actualDatabaseString = (string)file[dataLabel];
-                    string expectedDatabaseString = userControlExpectation.Value;
-                    Assert.IsTrue(String.Equals(actualDatabaseString, expectedDatabaseString, StringComparison.Ordinal), "{0}: Expected {1} to be '{2}' but found '{3}'.", this.ID, userControlExpectation.Key, userControlExpectation.Value, actualDatabaseString);
-
-                    if (dataLabel.Contains("Counter"))
+                    object actualValue = file[dataLabel];
+                    object expectedValue = userControlExpectation.Value;
+                    if (expectedValue is bool expectedBool)
                     {
+                        Assert.IsTrue((bool)actualValue == expectedBool, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.ID, userControlExpectation.Key, expectedBool, actualValue);
+                    }
+                    else if (expectedValue is byte[] expectedBytes)
+                    {
+                        byte[] actualBytes = (byte[])actualValue;
+                        Assert.IsTrue(actualBytes.Length == expectedBytes.Length);
+                        if (this.SkipMarkerByteVerification == false)
+                        {
+                            for (int byteIndex = 0; byteIndex < expectedBytes.Length; ++byteIndex)
+                            {
+                                Assert.IsTrue(actualBytes[byteIndex] == expectedBytes[byteIndex]);
+                            }
+                        }
+                    }
+                    else if (expectedValue is int expectedInt)
+                    {
+                        Assert.IsTrue((int)actualValue == expectedInt, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.ID, userControlExpectation.Key, expectedInt, actualValue);
                         MarkersForCounter markersForCounter = file.GetMarkersForCounter(dataLabel);
                         this.Verify(dataLabel, markersForCounter);
+                    }
+                    else
+                    {
+                        Assert.IsTrue(String.Equals((string)actualValue, (string)expectedValue, StringComparison.Ordinal), "{0}: Expected {1} to be '{2}' but found '{3}'.", this.ID, userControlExpectation.Key, expectedValue, actualValue);
                     }
                 }
             }
@@ -128,24 +151,31 @@ namespace Carnassial.UnitTests
         private void Verify(string dataLabel, MarkersForCounter markersForCounter)
         {
             // basic checks
-            string[] actualTokens = markersForCounter.ToDatabaseString().Split(Constant.Database.BarDelimiter);
-            Assert.IsTrue(actualTokens.Length > 0);
-            string[] expectedTokens = this.UserControlsByDataLabel[dataLabel].Split(Constant.Database.BarDelimiter);
-            Assert.IsTrue(expectedTokens.Length == actualTokens.Length);
-            Assert.IsTrue(String.Equals(actualTokens[0], expectedTokens[0], StringComparison.Ordinal));
-            Assert.IsTrue(markersForCounter.Count == Int32.Parse(expectedTokens[0]));
+            int expectedCount = (int)this.UserControlsByDataLabel[dataLabel];
+            Assert.IsTrue(markersForCounter.Count == expectedCount);
+
+            string actualPositions = markersForCounter.MarkerPositionsToExcelString();
+            string[] actualTokens = actualPositions == null ? new string[0] : actualPositions.Split(Constant.Excel.MarkerPositionSeparator);
+
+            string markerColummn = FileTable.GetMarkerPositionColumnName(dataLabel);
+            byte[] expectedPositions = (byte[])this.UserControlsByDataLabel[markerColummn];
+            MarkersForCounter expectedMarkersForCounter = new MarkersForCounter(dataLabel, expectedCount);
+            expectedMarkersForCounter.MarkerPositionsFromFloatArray(expectedPositions);
+
+            Assert.IsTrue(expectedMarkersForCounter.Markers.Count == markersForCounter.Markers.Count);
 
             // marker positions
-            for (int token = 1; token < expectedTokens.Length; ++token)
+            for (int markerIndex = 0; markerIndex < expectedMarkersForCounter.Markers.Count; ++markerIndex)
             {
-                Assert.IsTrue(String.Equals(actualTokens[token], expectedTokens[token], StringComparison.Ordinal));
-                Marker marker = markersForCounter.Markers[token - 1];
+                Marker expectedMarker = expectedMarkersForCounter.Markers[markerIndex];
+                Marker marker = markersForCounter.Markers[markerIndex];
+
                 Assert.IsTrue(String.Equals(marker.DataLabel, dataLabel, StringComparison.Ordinal));
                 Assert.IsFalse(marker.Emphasize);
                 Assert.IsFalse(marker.Highlight);
                 Assert.IsTrue(marker.LabelShownPreviously);
-                Point expectedPosition = Point.Parse(expectedTokens[token]);
-                Assert.IsTrue(marker.Position == expectedPosition);
+                Vector positionDifference = marker.Position - expectedMarker.Position;
+                Assert.IsTrue(positionDifference.Length < 0.5E-6);
                 Assert.IsFalse(marker.ShowLabel);
                 Assert.IsNull(marker.Tooltip);
             }

@@ -203,7 +203,7 @@ namespace Carnassial.UnitTests
                     Assert.IsTrue(carnassial.DataHandler.FileDatabase.ImageSet.FileSelection == FileSelection.All);
 
                     // file edit commands on notes
-                    Assert.IsTrue(carnassial.State.CurrentFileSnapshot.Count == TestConstant.DefaultFileDataColumns.Count - 1);
+                    Assert.IsTrue(carnassial.State.CurrentFileSnapshot.Count == TestConstant.DefaultFileColumns.Count - 1);
                     string originalNote0Value = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note0];
                     string newNote0Value = "note 0 new value";
                     string originalNote3Value = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note3];
@@ -211,7 +211,7 @@ namespace Carnassial.UnitTests
                     Dictionary<string, object> multipleChanges = carnassial.DataHandler.ImageCache.Current.GetValues();
                     multipleChanges[TestConstant.DefaultDatabaseColumn.Note0] = newNote0Value;
                     multipleChanges[TestConstant.DefaultDatabaseColumn.Note3] = newNote3Value;
-                    Assert.IsTrue(multipleChanges.Count == TestConstant.DefaultFileDataColumns.Count - 1);
+                    Assert.IsTrue(multipleChanges.Count == TestConstant.DefaultFileColumns.Count - 1);
                     FileMultipleFieldChange multipleEdit = new FileMultipleFieldChange(carnassial.DataHandler.ImageCache, multipleChanges);
                     Assert.IsTrue(multipleEdit.CanExecute(carnassial));
                     Assert.IsFalse(multipleEdit.CanUndo(carnassial));
@@ -220,7 +220,7 @@ namespace Carnassial.UnitTests
                     Assert.IsFalse(multipleEdit.IsExecuted);
                     Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note0] == originalNote0Value);
                     Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note3] == originalNote3Value);
-                    Assert.IsTrue(carnassial.State.CurrentFileSnapshot.Count == TestConstant.DefaultFileDataColumns.Count - 1);
+                    Assert.IsTrue(carnassial.State.CurrentFileSnapshot.Count == TestConstant.DefaultFileColumns.Count - 1);
                     Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.Note0] == originalNote0Value);
                     Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.Note3] == originalNote3Value);
 
@@ -231,7 +231,7 @@ namespace Carnassial.UnitTests
                     Assert.IsTrue(multipleEdit.IsExecuted);
                     Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note0] == newNote0Value);
                     Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Note3] == newNote3Value);
-                    Assert.IsTrue(carnassial.State.CurrentFileSnapshot.Count == TestConstant.DefaultFileDataColumns.Count - 1);
+                    Assert.IsTrue(carnassial.State.CurrentFileSnapshot.Count == TestConstant.DefaultFileColumns.Count - 1);
                     Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.Note0] == newNote0Value);
                     Assert.IsTrue((string)carnassial.State.CurrentFileSnapshot[TestConstant.DefaultDatabaseColumn.Note3] == newNote3Value);
                     this.WaitForRenderingComplete();
@@ -266,7 +266,7 @@ namespace Carnassial.UnitTests
                     FileSingleFieldChange singleEdit = singleEditAsMultiple.AsSingleChange();
                     Assert.IsTrue(singleEdit.CanExecute(carnassial));
                     Assert.IsFalse(singleEdit.CanUndo(carnassial));
-                    Assert.IsTrue(singleEdit.DataLabel == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel);
+                    Assert.IsTrue(String.Equals(singleEdit.DataLabel, TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, StringComparison.Ordinal));
                     Assert.IsFalse(singleEdit.IsAsync);
                     Assert.IsFalse(singleEdit.IsExecuted);
                     Assert.IsTrue((string)singleEdit.NewValue == newNoteValue);
@@ -277,7 +277,7 @@ namespace Carnassial.UnitTests
                     singleEdit.Execute(carnassial);
                     Assert.IsFalse(singleEdit.CanExecute(carnassial));
                     Assert.IsTrue(singleEdit.CanUndo(carnassial));
-                    Assert.IsTrue(singleEdit.DataLabel == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel);
+                    Assert.IsTrue(String.Equals(singleEdit.DataLabel, TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, StringComparison.Ordinal));
                     Assert.IsFalse(singleEdit.IsAsync);
                     Assert.IsTrue(singleEdit.IsExecuted);
                     Assert.IsTrue((string)singleEdit.NewValue == newNoteValue);
@@ -290,7 +290,7 @@ namespace Carnassial.UnitTests
                     singleEdit.Undo(carnassial);
                     Assert.IsTrue(singleEdit.CanExecute(carnassial));
                     Assert.IsFalse(singleEdit.CanUndo(carnassial));
-                    Assert.IsTrue(singleEdit.DataLabel == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel);
+                    Assert.IsTrue(String.Equals(singleEdit.DataLabel, TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, StringComparison.Ordinal));
                     Assert.IsFalse(singleEdit.IsAsync);
                     Assert.IsFalse(singleEdit.IsExecuted);
                     Assert.IsTrue((string)singleEdit.NewValue == newNoteValue);
@@ -310,13 +310,13 @@ namespace Carnassial.UnitTests
                     Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Choice0] == previousChoiceValue);
 
                     // flag change
-                    string previousFlagValue = (string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Flag0];
-                    string newFlagValue = String.Equals(previousFlagValue, Boolean.TrueString) ? Boolean.TrueString : Boolean.FalseString;
+                    bool previousFlagValue = (bool)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Flag0];
+                    bool newFlagValue = !previousFlagValue;
                     FileSingleFieldChange flagEdit = new FileSingleFieldChange(carnassial.DataHandler.ImageCache.Current.ID, TestConstant.DefaultDatabaseColumn.Flag0, TestConstant.DefaultDatabaseColumn.Flag0, previousFlagValue, newFlagValue, false);
                     flagEdit.Execute(carnassial);
-                    Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Flag0] == newFlagValue.ToString());
+                    Assert.IsTrue((bool)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Flag0] == newFlagValue);
                     flagEdit.Undo(carnassial);
-                    Assert.IsTrue((string)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Flag0] == previousFlagValue.ToString());
+                    Assert.IsTrue((bool)carnassial.DataHandler.ImageCache.Current[TestConstant.DefaultDatabaseColumn.Flag0] == previousFlagValue);
 
                     // marker insertion and removal
                     MarkersForCounter previousMarkers = carnassial.DataHandler.ImageCache.Current.GetMarkersForCounter(TestConstant.DefaultDatabaseColumn.Counter0);
@@ -443,8 +443,7 @@ namespace Carnassial.UnitTests
                 {
                     FileName = Constant.File.DefaultFileDatabaseFileName,
                     TemplateDatabaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName,
-                    ExpectedColumns = TestConstant.DefaultFileDataColumns,
-                    ExpectedControls = TestConstant.DefaultFileDataColumns.Count - 6
+                    ExpectedColumns = TestConstant.DefaultFileColumns,
                 }
             };
 
@@ -460,7 +459,10 @@ namespace Carnassial.UnitTests
 
                     DataEntryControls controls = new DataEntryControls();
                     controls.CreateControls(fileDatabase, dataHandler, (string dataLabel) => { return fileDatabase.GetDistinctValuesInFileDataColumn(dataLabel); });
-                    Assert.IsTrue(controls.ControlsByDataLabel.Count == databaseExpectation.ExpectedControls, "Expected {0} controls to be generated but {1} were.", databaseExpectation.ExpectedControls, controls.ControlsByDataLabel.Count);
+
+                    // 4 controls not visible in default database + 4 marker position columns + date time and utc offset as single control + no control for id column
+                    int expectedDataEntryControls = databaseExpectation.ExpectedColumns.Count - 4 - 4 - 1 - 1;
+                    Assert.IsTrue(controls.ControlsByDataLabel.Count == expectedDataEntryControls, "Expected {0} data entry controls to be generated but {1} were.", expectedDataEntryControls, controls.ControlsByDataLabel.Count);
 
                     // check copies aren't possible when the image enumerator's not pointing to an image
                     List<DataEntryControl> copyableControls = controls.Controls.Where(control => control.Copyable).ToList();
@@ -494,13 +496,13 @@ namespace Carnassial.UnitTests
                     foreach (DataEntryControl control in copyableControls)
                     {
                         Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
-                        if (control.DataLabel == TestConstant.CarnivoreDatabaseColumn.Pelage ||
-                            control.DataLabel == TestConstant.DefaultDatabaseColumn.ChoiceNotVisible ||
-                            control.DataLabel == TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel ||
-                            control.DataLabel == TestConstant.DefaultDatabaseColumn.Choice3 ||
-                            control.DataLabel == TestConstant.DefaultDatabaseColumn.Counter3 ||
-                            control.DataLabel == TestConstant.DefaultDatabaseColumn.Flag0 ||
-                            control.DataLabel == TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel)
+                        if (String.Equals(control.DataLabel, TestConstant.CarnivoreDatabaseColumn.Pelage, StringComparison.Ordinal) ||
+                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, StringComparison.Ordinal) ||
+                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, StringComparison.Ordinal) ||
+                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Choice3, StringComparison.Ordinal) ||
+                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Counter3, StringComparison.Ordinal) ||
+                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Flag0, StringComparison.Ordinal) ||
+                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, StringComparison.Ordinal))
                         {
                             Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control), control.DataLabel);
                         }
@@ -538,19 +540,10 @@ namespace Carnassial.UnitTests
                     TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
                     firstFileExpectations.Verify(firstFile, imageSetTimeZone);
 
-                    // verify roundtrip of fields via display string
-                    foreach (DataEntryControl control in controls.Controls)
-                    {
-                        string displayString = firstFile.GetDisplayString(control);
-                        control.SetValue(displayString);
-                    }
-
-                    firstFileExpectations.Verify(firstFile, imageSetTimeZone);
-
                     // verify availability of database strings
                     foreach (string dataLabel in databaseExpectation.ExpectedColumns)
                     {
-                        string databaseString = firstFile.GetDatabaseString(dataLabel);
+                        string databaseString = firstFile.GetExcelString(dataLabel);
                     }
 
                     File.Delete(fileDatabase.FilePath);
@@ -582,8 +575,6 @@ namespace Carnassial.UnitTests
             editor.Close();
 
             // open, load existing database, pop dialogs, close
-            // InitializeDataGrid() sets the template pane active but without the explicit set in test code the event gets dropped, resulting the EditChoiceList
-            // show failing because the UIElement its position is referenced to is not visible.
             editor = new EditorWindow();
             editor.Show();
             this.WaitForRenderingComplete();
@@ -597,7 +588,7 @@ namespace Carnassial.UnitTests
             this.ShowDialog(new AboutEditor(editor));
             TemplateDatabase templateDatabase = (TemplateDatabase)editorAccessor.GetField(TestConstant.EditorTemplateDatabaseFieldName);
             this.ShowDialog(new AdvancedImageSetOptions(templateDatabase, editor));
-            this.ShowDialog(new EditChoiceList(editor.ControlDataGrid, new List<string>() { "Choice0", "Choice1", "Choice2", "Choice3" }, editor));
+            this.ShowDialog(new EditWellKnownValues(editor.ControlDataGrid, new List<string>() { "Choice0", "Choice1", "Choice2", "Choice3" }, editor));
 
             editor.Close();
         }

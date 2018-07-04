@@ -39,7 +39,7 @@ namespace Carnassial.Database
             List<SQLiteParameter> whereParameters = new List<SQLiteParameter>();
             if (this.Where.Count > 0)
             {
-                Dictionary<string, int> numberOfClausesByColumn = new Dictionary<string, int>();
+                Dictionary<string, int> numberOfClausesByColumn = new Dictionary<string, int>(StringComparer.Ordinal);
                 List<string> whereClauses = new List<string>(this.Where.Count);
                 foreach (WhereClause clause in this.Where)
                 {

@@ -38,7 +38,7 @@ namespace Carnassial.Github
                 try
                 {
                     string releaseJson = webClient.DownloadString(this.latestReleaseAddress);
-                    if (String.IsNullOrWhiteSpace(releaseJson) || releaseJson.Contains("\"message\": \"Not Found\""))
+                    if (String.IsNullOrWhiteSpace(releaseJson) || (releaseJson.IndexOf("\"message\": \"Not Found\"", StringComparison.Ordinal) != -1))
                     {
                         // no releases, so nothing to do
                         return false;

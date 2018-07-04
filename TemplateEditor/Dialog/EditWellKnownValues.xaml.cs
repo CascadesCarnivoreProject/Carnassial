@@ -7,20 +7,20 @@ using System.Windows.Controls;
 
 namespace Carnassial.Editor.Dialog
 {
-    public partial class EditChoiceList : Window
+    public partial class EditWellKnownValues : Window
     {
         private static readonly string[] NewLineDelimiter = { Environment.NewLine };
 
         private UIElement positionReference;
 
-        public List<string> Choices { get; private set; }
+        public List<string> Values { get; private set; }
 
-        public EditChoiceList(UIElement positionReference, List<string> choices, Window owner)
+        public EditWellKnownValues(UIElement positionReference, List<string> wellKnownValues, Window owner)
         {
             this.InitializeComponent();
 
-            this.ChoiceList.Text = String.Join(Environment.NewLine, choices);
-            this.Choices = choices;
+            this.ValuesList.Text = String.Join(Environment.NewLine, wellKnownValues);
+            this.Values = wellKnownValues;
             this.OkButton.IsEnabled = false;
             this.Owner = owner;
             this.positionReference = positionReference;
@@ -58,9 +58,9 @@ namespace Carnassial.Editor.Dialog
 
         private void ItemList_TextChanged(object sender, TextChangedEventArgs e)
         {
-            this.Choices = new List<string>(this.ChoiceList.Text.Split(EditChoiceList.NewLineDelimiter, StringSplitOptions.None));
-            List<string> uniqueChoices = this.Choices.Distinct().ToList();
-            this.OkButton.IsEnabled = this.Choices.Count > 0 && (this.Choices.Count == uniqueChoices.Count);
+            this.Values = new List<string>(this.ValuesList.Text.Split(EditWellKnownValues.NewLineDelimiter, StringSplitOptions.None));
+            List<string> uniqueValues = this.Values.Distinct().ToList();
+            this.OkButton.IsEnabled = this.Values.Count > 0 && (this.Values.Count == uniqueValues.Count);
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

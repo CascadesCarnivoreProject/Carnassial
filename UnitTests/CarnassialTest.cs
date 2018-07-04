@@ -6,6 +6,7 @@ using Carnassial.Native;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 
@@ -155,6 +156,21 @@ namespace Carnassial.UnitTests
             }
         }
 
+        private byte[] HexStringToByteArray(string hex)
+        {
+            if ((hex.Length % 2) != 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(hex), "Hex string must have an even number of characters to fully represent each byte.");
+            }
+
+            byte[] bytes = new byte[hex.Length / 2];
+            for (int byteIndex = 0; byteIndex < bytes.Length; ++byteIndex)
+            {
+                bytes[byteIndex] = byte.Parse(hex.Substring(2 * byteIndex, 2), NumberStyles.HexNumber);
+            }
+            return bytes;
+        }
+
         protected List<FileExpectations> PopulateDefaultDatabase(FileDatabase fileDatabase)
         {
             return this.PopulateDefaultDatabase(fileDatabase, false);
@@ -187,60 +203,69 @@ namespace Carnassial.UnitTests
                 ID = 2
             };
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, Boolean.TrueString);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Note0].DefaultValue);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, 1);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue));
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue));
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue));
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note0].DefaultValue);
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "bobcat");
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel].DefaultValue);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel].DefaultValue);
             FileTuplesWithID bobcatUpdate = new FileTuplesWithID(new List<ColumnTuple>()
                 {
                     new ColumnTuple(TestConstant.DefaultDatabaseColumn.Choice0, "choice b"),
-                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString()),
+                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.Counter0, 1),
                     new ColumnTuple(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true),
                     new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "bobcat"),
                     new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult")
                 }, fileEnumerator.Current.ID);
             fileDatabase.UpdateFiles(bobcatUpdate);
 
+            byte[] counter0MarkerPositions = this.HexStringToByteArray("7d31fc3ebeaa103f72a80b3f1db70f3fbb2c153f9ae80b3f");
             FileExpectations martenExpectation = new FileExpectations(TestConstant.FileExpectation.InfraredMarten)
             {
                 ID = 1
             };
             martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, 1.ToString());
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, Boolean.TrueString);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Note0].DefaultValue);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, 3);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, counter0MarkerPositions);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue));
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue));
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue));
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note0].DefaultValue);
             martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "American marten");
             martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel].DefaultValue);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel].DefaultValue);
             ImageRow martenFile = fileDatabase.Files[0];
             martenFile[TestConstant.DefaultDatabaseColumn.Choice0] = "choice b";
-            martenFile[TestConstant.DefaultDatabaseColumn.Counter0] = 1.ToString();
-            martenFile[TestConstant.DefaultDatabaseColumn.FlagNotVisible] = Boolean.TrueString;
+            martenFile[TestConstant.DefaultDatabaseColumn.Counter0] = 3;
+            martenFile[TestConstant.DefaultDatabaseColumn.Counter0Markers] = counter0MarkerPositions;
+            martenFile[TestConstant.DefaultDatabaseColumn.FlagNotVisible] = true;
             martenFile[TestConstant.DefaultDatabaseColumn.Note3] = "American marten";
             martenFile[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
             Assert.IsTrue(martenFile.HasChanges);
-            fileDatabase.SyncFileToDatabase(martenFile);
-            martenFile.AcceptChanges();
+            fileDatabase.TrySyncFileToDatabase(martenFile);
             Assert.IsFalse(martenFile.HasChanges);
 
             // assemble expectations
@@ -285,21 +310,25 @@ namespace Carnassial.UnitTests
                 coyoteImage[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
                 coyoteImage[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] = String.Empty;
                 coyoteImage[TestConstant.DefaultDatabaseColumn.Note0] = "escaped field, because a comma is present";
-                fileDatabase.SyncFileToDatabase(coyoteImage);
+                fileDatabase.TrySyncFileToDatabase(coyoteImage);
                 coyoteImage.AcceptChanges();
 
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Choice0].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Counter0].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.FlagNotVisible].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0].DefaultValue);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter0].DefaultValue));
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue));
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue));
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue));
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagNotVisible].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "coyote");
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
@@ -316,18 +345,22 @@ namespace Carnassial.UnitTests
                     fileDatabase.Files[2].ID);
                 fileDatabase.UpdateFiles(martenPairImageUpdate);
 
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Choice0].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Counter0].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.FlagNotVisible].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, fileDatabase.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0].DefaultValue);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter0].DefaultValue));
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue));
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue));
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue));
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagNotVisible].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "American marten");
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);

@@ -192,7 +192,7 @@ namespace Carnassial.Control
                 }
             }
 
-            // the first part may have a minus sign and therefore has variable selection indicies
+            // the first part may have a minus sign and therefore has variable selection indices
             if (timeSpanPicker.parts.Count > 0)
             {
                 timeSpanPicker.parts[0].IsSelectionStartVariable = true;

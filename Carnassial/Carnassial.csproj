@@ -191,7 +191,9 @@
     <Compile Include="Control\HorizontalLineAdorner.cs" />
     <Compile Include="Control\UtcOffsetPicker.cs" />
     <Compile Include="Database\IndexedPropertyChangedEventArgs.cs" />
+    <Compile Include="Database\SecondaryIndex.cs" />
     <Compile Include="Database\SQLiteRow.cs" />
+    <Compile Include="Database\SQLiteTableSchema.cs" />
     <Compile Include="Data\AddFilesTransaction.cs" />
     <Compile Include="Data\ControlTable.cs" />
     <Compile Include="Data\ControlType.cs" />
@@ -216,6 +218,7 @@
     <Compile Include="Data\ControlRow.cs" />
     <Compile Include="Database\LogicalOperator.cs" />
     <Compile Include="Data\FileClassification.cs" />
+    <Compile Include="Data\FileDataType.cs" />
     <Compile Include="Data\FileImportResult.cs" />
     <Compile Include="Data\FileTable.cs" />
     <Compile Include="Data\FileTransaction.cs" />
@@ -226,6 +229,7 @@
     <Compile Include="Data\ImageSetTable.cs" />
     <Compile Include="Data\UpdateFileDateTimeOffsetTransaction.cs" />
     <Compile Include="Data\UpdateFileColumnTransaction.cs" />
+    <Compile Include="Data\FileTableUserColumn.cs" />
     <Compile Include="Data\VideoRow.cs" />
     <Compile Include="Database\WhereClause.cs" />
     <Compile Include="Dialog\AdvancedImageSetOptions.xaml.cs">

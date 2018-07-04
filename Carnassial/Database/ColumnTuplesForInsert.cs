@@ -42,19 +42,13 @@ namespace Carnassial.Database
         public void Insert(SQLiteConnection connection, SQLiteTransaction transaction)
         {
             // INSERT INTO tableName (column1, column2, ... columnN) VALUES (@column1, @column2, ... @columnN)
-            List<string> parameterNames = new List<string>();
-            foreach (string column in this.Columns)
-            {
-                parameterNames.Add("@" + column);
-            }
-            string commandText = String.Format("INSERT INTO {0} ({1}) VALUES ({2})", this.table, String.Join(", ", this.Columns), String.Join(", ", parameterNames));
+            string commandText = "INSERT INTO " + this.table + " (" + String.Join(", ", this.Columns) + ") VALUES (@" + String.Join(", @", this.Columns) + ")";
 
             using (SQLiteCommand command = new SQLiteCommand(commandText, connection, transaction))
             {
                 foreach (string column in this.Columns)
                 {
-                    SQLiteParameter parameter = new SQLiteParameter("@" + column);
-                    command.Parameters.Add(parameter);
+                    command.Parameters.Add(new SQLiteParameter("@" + column));
                 }
 
                 int parameters = this.Columns.Count;

@@ -102,13 +102,14 @@ namespace Carnassial.Editor
             }
             if ((e.EditAction == DataGridEditAction.Commit) && (this.controlDataGridCellEditForcedByCode == false))
             {
-                // flush changes in each cell as user exits it to database and trigger a redraw to update control visibility
-                // Generating a call to TemplateDataGrid_RowChanged() here isn't the most elegant approach but it avoids creating separate commit pathways
-                // for cell and row edits.  Data grids don't particularly support immediate data binding (though they can be coerced into it by providing
-                // unknown template cell types at the expense of other state management issues) so a change in cell focus is, within their model, needed to
-                // trigger an update of the control layout preview for Width and Visible at the data grid level.
+                // flush changes in each cell as user exits it to database and trigger a redraw to update control display
+                // Generating a call to ControlDataGrid_RowEditEnding() isn't the most elegant approach but it avoids separate commit 
+                // pathways for cell and row edits.  Since this is an ending event (rather than an ended devent, which DataGrid lacks)
+                // first comitting the cell edit is necessary to flush the change to the ControlRow so that it's visible to the row 
+                // edit ending handler.
                 this.controlDataGridCellEditForcedByCode = true;
-                this.ControlDataGrid.CommitEdit(DataGridEditingUnit.Row, true);
+                this.ControlDataGrid.CommitEdit(DataGridEditingUnit.Cell, false);
+                this.ControlDataGrid.CommitEdit(DataGridEditingUnit.Row, false);
                 this.controlDataGridCellEditForcedByCode = false;
             }
         }
@@ -158,8 +159,8 @@ namespace Carnassial.Editor
             {
                 // for ItemContainerGenerator to work the DataGrid must have VirtualizingStackPanel.IsVirtualizing="False"
                 // the following may be more efficient for large grids but are not used as more than dozen or so controls is unlikely
-                // this.TemplateDataGrid.UpdateLayout();
-                // this.TemplateDataGrid.ScrollIntoView(rowIndex + 1);
+                // this.ControlDataGrid.UpdateLayout();
+                // this.ControlDataGrid.ScrollIntoView(rowIndex + 1);
                 DataGridRow row = (DataGridRow)this.ControlDataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex);
                 if (row == null)
                 {
@@ -205,7 +206,7 @@ namespace Carnassial.Editor
                                 }
                             }
                         }
-                        else if (String.Equals(columnHeader, Constant.Control.Visible, StringComparison.Ordinal))
+                        else if (String.Equals(columnHeader, Constant.ControlColumn.Visible, StringComparison.Ordinal))
                         {
                             // set up check boxes in the visible column for immediate data binding so user sees the control preview
                             // update promptly
@@ -226,7 +227,7 @@ namespace Carnassial.Editor
                         }
                     }
 
-                    if (String.Equals(columnHeader, Constant.Control.Copyable, StringComparison.Ordinal))
+                    if (String.Equals(columnHeader, Constant.ControlColumn.Copyable, StringComparison.Ordinal))
                     {
                         if (cell.TryGetControl(out CheckBox checkBox))
                         {
@@ -277,22 +278,17 @@ namespace Carnassial.Editor
                             e.Handled = !Utilities.IsDigits(e.Text);
                             break;
                         case ControlType.Flag:
-                            // only allow t/f and translate to true/false
-                            if (e.Text == "t" || e.Text == "T")
+                            if (String.Equals(e.Text, Constant.Sql.FalseString, StringComparison.Ordinal) ||
+                                String.Equals(e.Text, Constant.Sql.TrueString, StringComparison.Ordinal))
                             {
-                                control.DefaultValue = Boolean.TrueString;
-                                this.SyncControlToDatabaseAndPreviews(control);
-                            }
-                            else if (e.Text == "f" || e.Text == "F")
-                            {
-                                control.DefaultValue = Boolean.FalseString;
+                                control.DefaultValue = e.Text;
                                 this.SyncControlToDatabaseAndPreviews(control);
                             }
                             e.Handled = true;
                             break;
                         case ControlType.FixedChoice:
                             // no restrictions for now
-                            // the default value should be limited to one of the choices defined, however
+                            // The default value should eventially be limited to one of the well known values defined, however.
                             break;
                         case ControlType.DateTime:
                         case ControlType.Note:
@@ -336,7 +332,7 @@ namespace Carnassial.Editor
                 return;
             }
 
-            this.RemoveControlButton.IsEnabled = !Constant.Control.StandardControls.Contains(control.DataLabel);
+            this.RemoveControlButton.IsEnabled = !Constant.Control.StandardControls.Contains(control.DataLabel, StringComparer.Ordinal);
         }
 
         private void ControlDataGrid_VisibleChanged(object sender, RoutedEventArgs e)
@@ -345,9 +341,14 @@ namespace Carnassial.Editor
             int rowIndex = (int)checkBox.Tag;
             if (checkBox.IsChecked.HasValue)
             {
-                // immediately propagate change in check to underlying data table; this triggers a call to TemplateDataGrid_RowChanged() so the user
-                // sees the control layout preview update in response to their click on the check box
-                this.templateDatabase.Controls[rowIndex].Visible = checkBox.IsChecked.Value;
+                // immediately propagate change in check to underlying data table so user sees control appear or disappear
+                // Data grids don't particularly support immediate data binding (though they can be coerced into it by providing 
+                // unknown template cell types at the expense of other state management issues) so a change in cell focus is,
+                // within their model, needed to trigger an update of the control layout preview for Width and Visible at the data 
+                // grid level.
+                ControlRow control = this.templateDatabase.Controls[rowIndex];
+                control.Visible = checkBox.IsChecked.Value;
+                this.SyncControlToDatabaseAndPreviews(control);
             }
         }
 
@@ -357,46 +358,50 @@ namespace Carnassial.Editor
             int rowIndex = (int)textBox.Tag;
             if (Int32.TryParse(textBox.Text, out int newWidth))
             {
-                this.templateDatabase.Controls[rowIndex].MaxWidth = newWidth;
+                // immediately propagate change in width to underlying data table so user sees control width adjust as they type
+                ControlRow control = this.templateDatabase.Controls[rowIndex];
+                control.MaxWidth = newWidth;
+                this.SyncControlToDatabaseAndPreviews(control);
             }
         }
 
         private void DataEntryControls_ControlOrderChangedByDragDrop(DataEntryControl controlBeingDragged, DataEntryControl dropTarget)
         {
-            Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
-            long controlOrder = 1;
+            Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
+            int controlOrder = 1;
             foreach (ControlRow control in this.templateDatabase.Controls)
             {
-                if (control.DataLabel == controlBeingDragged.DataLabel)
+                if (String.Equals(control.DataLabel, controlBeingDragged.DataLabel, StringComparison.Ordinal))
                 {
                     continue;
                 }
 
                 newControlOrderByDataLabel.Add(control.DataLabel, controlOrder);
                 ++controlOrder;
-                if (control.DataLabel == dropTarget.DataLabel)
+                if (String.Equals(control.DataLabel, dropTarget.DataLabel, StringComparison.Ordinal))
                 {
                     newControlOrderByDataLabel.Add(controlBeingDragged.DataLabel, controlOrder);
                     ++controlOrder;
                 }
             }
 
-            this.templateDatabase.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
+            this.templateDatabase.UpdateDisplayOrder(Constant.ControlColumn.ControlOrder, newControlOrderByDataLabel);
             this.RebuildControlPreview();
         }
 
         // raise a dialog box that lets the user edit the list of choices or note control default autocompletions
-        private void DefineList_Click(object sender, RoutedEventArgs e)
+        private void EditWellKnownValues_Click(object sender, RoutedEventArgs e)
         {
-            // the button's tag is the ControlOrder of the row the button is in; find the control with the same control order
+            // the button's tag is bound to the ControlOrder of the ControlRow the button is associated with in xaml; find the 
+            // control with the same control order
             Button button = (Button)sender;
-            ControlRow choiceOrNote = this.templateDatabase.Controls.FirstOrDefault(control => control.ControlOrder.ToString().Equals(button.Tag.ToString()));
-            Debug.Assert(choiceOrNote != null, String.Format("Control named {0} not found.", button.Tag));
+            ControlRow choiceOrNote = this.templateDatabase.Controls.FirstOrDefault(control => control.ControlOrder == (int)button.Tag);
+            Debug.Assert(choiceOrNote != null, String.Format("Control with tag {0} not found.", button.Tag));
 
-            EditChoiceList choiceListDialog = new EditChoiceList(button, choiceOrNote.GetChoices(), this);
-            if (choiceListDialog.ShowDialog() == true)
+            EditWellKnownValues wellKnownValuesDialog = new EditWellKnownValues(button, choiceOrNote.GetWellKnownValues(), this);
+            if (wellKnownValuesDialog.ShowDialog() == true)
             {
-                choiceOrNote.SetChoices(choiceListDialog.Choices);
+                choiceOrNote.SetWellKnownValues(wellKnownValuesDialog.Values);
                 this.SyncControlToDatabaseAndPreviews(choiceOrNote);
             }
         }
@@ -656,15 +661,15 @@ namespace Carnassial.Editor
         private void OnSpreadsheetOrderChanged(object sender, DataGridColumnEventArgs e)
         {
             DataGrid dataGrid = (DataGrid)sender;
-            Dictionary<string, long> spreadsheetOrderByDataLabel = new Dictionary<string, long>();
+            Dictionary<string, int> spreadsheetOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
             for (int control = 0; control < dataGrid.Columns.Count; control++)
             {
                 string dataLabelFromColumnHeader = dataGrid.Columns[control].Header.ToString();
-                long newSpreadsheetOrder = dataGrid.Columns[control].DisplayIndex + 1;
+                int newSpreadsheetOrder = dataGrid.Columns[control].DisplayIndex + 1;
                 spreadsheetOrderByDataLabel.Add(dataLabelFromColumnHeader, newSpreadsheetOrder);
             }
 
-            this.templateDatabase.UpdateDisplayOrder(Constant.Control.SpreadsheetOrder, spreadsheetOrderByDataLabel);
+            this.templateDatabase.UpdateDisplayOrder(Constant.ControlColumn.SpreadsheetOrder, spreadsheetOrderByDataLabel);
         }
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -674,7 +679,7 @@ namespace Carnassial.Editor
 
         private void RebuildControlPreview()
         {
-            this.DataEntryControls.CreateControls(this.templateDatabase, null, (string dataLabel) => { return this.templateDatabase.FindControl(dataLabel).GetChoices(); });
+            this.DataEntryControls.CreateControls(this.templateDatabase, null, (string dataLabel) => { return this.templateDatabase.Controls[dataLabel].GetWellKnownValues(); });
         }
 
         private void ShowDataLabelRequirementsDialog()
@@ -721,17 +726,17 @@ namespace Carnassial.Editor
                     controlPreview.Label = control.Label;
                 }
                 // control.List is handled via choice comparison
-                List<string> controlChoices = control.GetChoices();
-                List<string> previewChoices = controlPreview.GetChoices();
-                bool choicesNeedSynchronization = controlChoices.Count != previewChoices.Count;
-                if (choicesNeedSynchronization == false)
+                List<string> currentValues = control.GetWellKnownValues();
+                List<string> previewValues = controlPreview.GetWellKnownValues();
+                bool wellKnonwValuesNeedSynchronization = currentValues.Count != previewValues.Count;
+                if (wellKnonwValuesNeedSynchronization == false)
                 {
-                    List<string> allChoices = controlChoices.Union(previewChoices).ToList();
-                    choicesNeedSynchronization = allChoices.Count != previewChoices.Count;
+                    List<string> allValues = currentValues.Union(previewValues).ToList();
+                    wellKnonwValuesNeedSynchronization = allValues.Count != previewValues.Count;
                 }
-                if (choicesNeedSynchronization)
+                if (wellKnonwValuesNeedSynchronization)
                 {
-                    controlPreview.SetChoices(controlChoices);
+                    controlPreview.SetWellKnownValues(currentValues);
                 }
                 // control.SpreadsheetOrder is handled below
                 if (control.Tooltip != controlPreview.LabelTooltip)
@@ -792,7 +797,7 @@ namespace Carnassial.Editor
                 return;
             }
 
-            if (Constant.Control.StandardControls.Contains(control.DataLabel))
+            if (Constant.Control.StandardControls.Contains(control.DataLabel, StringComparer.Ordinal))
             {
                 // standard controls cannot be removed
                 return;

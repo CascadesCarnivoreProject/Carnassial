@@ -3,6 +3,7 @@ using Carnassial.Data;
 using Carnassial.Database;
 using Carnassial.Util;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -210,13 +211,14 @@ namespace Carnassial.Dialog
                         Margin = CustomSelection.GridCellMargin,
                         VerticalAlignment = VerticalAlignment.Center,
                         HorizontalAlignment = HorizontalAlignment.Left,
-                        IsChecked = String.Equals((string)searchTerm.DatabaseValue, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ? false : true,
+                        IsChecked = (bool)searchTerm.DatabaseValue,
                         IsEnabled = searchTerm.UseForSearching
                     };
                     flagCheckBox.Checked += this.Flag_CheckedOrUnchecked;
                     flagCheckBox.Unchecked += this.Flag_CheckedOrUnchecked;
 
-                    searchTerm.DatabaseValue = flagCheckBox.IsChecked.Value ? Boolean.TrueString : Boolean.FalseString;
+                    Debug.Assert(flagCheckBox.IsChecked.HasValue, "Expected check box to be either checked or unchecked but it doesn't have a value.");
+                    searchTerm.DatabaseValue = flagCheckBox.IsChecked.Value;
 
                     Grid.SetRow(flagCheckBox, gridRowIndex);
                     Grid.SetColumn(flagCheckBox, CustomSelection.ValueColumn);
@@ -314,7 +316,9 @@ namespace Carnassial.Dialog
         {
             CheckBox checkBox = sender as CheckBox;
             int row = Grid.GetRow(checkBox);
-            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = checkBox.IsChecked.ToString().ToLower();
+
+            Debug.Assert(checkBox.IsChecked.Value, "Expected check box to be either checked or unchecked but it doesn't have a value.");
+            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = checkBox.IsChecked.Value;
             this.UpdateSearchCriteriaFeedback();
         }
 

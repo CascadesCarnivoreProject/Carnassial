@@ -31,7 +31,10 @@ namespace Carnassial.Data
         private string relativePath;
         private FileTable table;
 
-        public string[] UserControlValues { get; private set; }
+        public int[] UserCounters { get; private set; }
+        public bool[] UserFlags { get; private set; }
+        public byte[][] UserMarkerPositions { get; private set; }
+        public string[] UserNotesAndChoices { get; private set; }
 
         public ImageRow(string fileName, string relativePath, FileTable table)
         {
@@ -41,7 +44,10 @@ namespace Carnassial.Data
             this.fileName = fileName;
             this.relativePath = relativePath;
             this.table = table;
-            this.UserControlValues = new string[table.UserControlIndicesByDataLabel.Count];
+            this.UserCounters = new int[table.UserCounters];
+            this.UserFlags = new bool[table.UserFlags];
+            this.UserMarkerPositions = new byte[table.UserFlags][];
+            this.UserNotesAndChoices = new string[table.UserNotesAndChoices];
         }
 
         public FileClassification Classification
@@ -94,7 +100,7 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.fileName != value;
+                this.HasChanges |= String.Equals(this.fileName, value, StringComparison.Ordinal) == false;
                 this.fileName = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.FileName)));
             }
@@ -112,7 +118,8 @@ namespace Carnassial.Data
         private void MarkersForCounter_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             MarkersForCounter markers = (MarkersForCounter)sender;
-            this[markers.DataLabel] = markers.ToDatabaseString();
+            this[markers.DataLabel] = markers.Count;
+            this[FileTable.GetMarkerPositionColumnName(markers.DataLabel)] = markers.MarkerPositionsToFloatArray();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -125,7 +132,7 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.relativePath != value;
+                this.HasChanges |= String.Equals(this.relativePath, value, StringComparison.Ordinal) == false;
                 this.relativePath = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.RelativePath)));
             }
@@ -137,26 +144,39 @@ namespace Carnassial.Data
             {
                 switch (propertyName)
                 {
-                    case Constant.DatabaseColumn.DateTime:
+                    case Constant.FileColumn.DateTime:
                         throw new NotSupportedException("Access DateTime through DateTimeOffset.");
                     case nameof(this.DateTimeOffset):
                         return this.DateTimeOffset;
-                    case Constant.DatabaseColumn.DeleteFlag:
+                    case Constant.FileColumn.DeleteFlag:
                         return this.DeleteFlag;
-                    case Constant.DatabaseColumn.File:
+                    case Constant.FileColumn.File:
                         throw new NotSupportedException("Access FileName through FileName.");
                     case nameof(ImageRow.FileName):
                         return this.FileName;
                     case Constant.DatabaseColumn.ID:
                         return this.ID;
-                    case Constant.DatabaseColumn.ImageQuality:
+                    case Constant.FileColumn.Classification:
                         return this.Classification;
-                    case Constant.DatabaseColumn.RelativePath:
+                    case Constant.FileColumn.RelativePath:
                         return this.RelativePath;
-                    case Constant.DatabaseColumn.UtcOffset:
+                    case Constant.FileColumn.UtcOffset:
                         throw new NotSupportedException("Access UtcOffset through DateTimeOffset.");
                     default:
-                        return this.UserControlValues[this.table.UserControlIndicesByDataLabel[propertyName]];
+                        FileTableUserColumn userColumn = this.table.UserColumnsByName[propertyName];
+                        switch (userColumn.DataType)
+                        {
+                            case FileDataType.Boolean:
+                                return this.UserFlags[userColumn.DataIndex];
+                            case FileDataType.ByteArray:
+                                return this.UserMarkerPositions[userColumn.DataIndex];
+                            case FileDataType.Integer:
+                                return this.UserCounters[userColumn.DataIndex];
+                            case FileDataType.String:
+                                return this.UserNotesAndChoices[userColumn.DataIndex];
+                            default:
+                                throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataIndex));
+                        }
                 }
             }
             set
@@ -165,36 +185,63 @@ namespace Carnassial.Data
                 {
                     // standard controls
                     // Property change notification is sent from the properties called.
-                    case Constant.DatabaseColumn.DateTime:
+                    case Constant.FileColumn.DateTime:
                         throw new NotSupportedException("DateTime must be set through DateTimeOffset.");
                     case nameof(this.DateTimeOffset):
                         this.DateTimeOffset = (DateTimeOffset)value;
                         break;
-                    case Constant.DatabaseColumn.DeleteFlag:
+                    case Constant.FileColumn.DeleteFlag:
                         this.DeleteFlag = (bool)value;
                         break;
-                    case Constant.DatabaseColumn.File:
+                    case Constant.FileColumn.File:
                         throw new NotSupportedException("FileName must be set through FileName.");
                     case nameof(this.FileName):
                         this.FileName = (string)value;
                         break;
                     case Constant.DatabaseColumn.ID:
                         throw new NotSupportedException("ID is immutable.");
-                    case Constant.DatabaseColumn.ImageQuality:
+                    case Constant.FileColumn.Classification:
                         this.Classification = (FileClassification)value;
                         break;
-                    case Constant.DatabaseColumn.RelativePath:
+                    case Constant.FileColumn.RelativePath:
                         this.RelativePath = (string)value;
                         break;
-                    case Constant.DatabaseColumn.UtcOffset:
+                    case Constant.FileColumn.UtcOffset:
                         throw new NotSupportedException("UtcOffset must be set through DateTimeOffset.");
                     // user defined controls
                     default:
-                        int userControlIndex = this.table.UserControlIndicesByDataLabel[propertyName];
-                        string newValueAsString = (string)value;
-                        this.HasChanges |= !String.Equals(this.UserControlValues[userControlIndex], newValueAsString, StringComparison.Ordinal);
-                        this.UserControlValues[userControlIndex] = newValueAsString;
-                        this.PropertyChanged?.Invoke(this, new IndexedPropertyChangedEventArgs<string>(propertyName));
+                        FileTableUserColumn userColumn = this.table.UserColumnsByName[propertyName];
+                        bool valueDifferent = false;
+                        switch (userColumn.DataType)
+                        {
+                            case FileDataType.Boolean:
+                                bool valueAsBool = (bool)value;
+                                valueDifferent = this.UserFlags[userColumn.DataIndex] != valueAsBool;
+                                this.UserFlags[userColumn.DataIndex] = valueAsBool;
+                                break;
+                            case FileDataType.ByteArray:
+                                byte[] valueAsByteArray = (byte[])value;
+                                valueDifferent = this.UserMarkerPositions[userColumn.DataIndex] != valueAsByteArray;
+                                this.UserMarkerPositions[userColumn.DataIndex] = valueAsByteArray;
+                                break;
+                            case FileDataType.Integer:
+                                int valueAsInt = (int)value;
+                                valueDifferent = this.UserCounters[userColumn.DataIndex] != valueAsInt;
+                                this.UserCounters[userColumn.DataIndex] = valueAsInt;
+                                break;
+                            case FileDataType.String:
+                                string valueAsString = (string)value;
+                                valueDifferent = String.Equals(this.UserNotesAndChoices[userColumn.DataIndex], valueAsString, StringComparison.Ordinal) == false;
+                                this.UserNotesAndChoices[userColumn.DataIndex] = valueAsString;
+                                break;
+                            default:
+                                throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataType));
+                        }
+                        if (valueDifferent)
+                        {
+                            this.HasChanges |= valueDifferent;
+                            this.PropertyChanged?.Invoke(this, new IndexedPropertyChangedEventArgs<string>(propertyName));
+                        }
                         break;
                 }
             }
@@ -212,7 +259,7 @@ namespace Carnassial.Data
 
         public static FileTuplesWithID CreateDateTimeUpdate(IEnumerable<ImageRow> files)
         {
-            FileTuplesWithID dateTimeTuples = new FileTuplesWithID(Constant.DatabaseColumn.DateTime, Constant.DatabaseColumn.UtcOffset);
+            FileTuplesWithID dateTimeTuples = new FileTuplesWithID(Constant.FileColumn.DateTime, Constant.FileColumn.UtcOffset);
             foreach (ImageRow file in files)
             {
                 Debug.Assert(file != null, "files contains null.");
@@ -226,82 +273,95 @@ namespace Carnassial.Data
 
         public FileTuplesWithID CreateUpdate()
         {
-            List<string> columnsToUpdate = new List<string>(Constant.Control.StandardControls.Count + this.table.UserControlIndicesByDataLabel.Count)
+            List<string> columnsToUpdate = new List<string>(Constant.Control.StandardControls.Count + this.table.UserColumnsByName.Count)
             {
-                Constant.DatabaseColumn.DateTime,
-                Constant.DatabaseColumn.DeleteFlag,
-                Constant.DatabaseColumn.File,
-                Constant.DatabaseColumn.ImageQuality,
-                Constant.DatabaseColumn.RelativePath,
-                Constant.DatabaseColumn.UtcOffset
+                Constant.FileColumn.DateTime,
+                Constant.FileColumn.DeleteFlag,
+                Constant.FileColumn.File,
+                Constant.FileColumn.Classification,
+                Constant.FileColumn.RelativePath,
+                Constant.FileColumn.UtcOffset
             };
-            columnsToUpdate.AddRange(this.table.UserControlIndicesByDataLabel.Keys);
+            columnsToUpdate.AddRange(this.table.UserColumnsByName.Keys);
 
             FileTuplesWithID tuples = new FileTuplesWithID(columnsToUpdate);
             List<object> values = new List<object>(columnsToUpdate.Count);
             foreach (string dataLabel in columnsToUpdate)
             {
-                values.Add(this.GetValue(dataLabel));
+                values.Add(this.GetDatabaseValue(dataLabel));
             }
             tuples.Add(this.ID, values);
             return tuples;
         }
 
-        public string GetDatabaseString(string dataLabel)
+        public object GetDatabaseValue(string dataLabel)
         {
             switch (dataLabel)
             {
-                case Constant.DatabaseColumn.DateTime:
-                    return DateTimeHandler.ToDatabaseDateTimeString(this.UtcDateTime);
-                case Constant.DatabaseColumn.DeleteFlag:
-                    return this.DeleteFlag ? Boolean.TrueString : Boolean.FalseString;
+                case Constant.FileColumn.DateTime:
+                    return this.UtcDateTime;
                 case nameof(this.DateTimeOffset):
-                    throw new NotSupportedException(String.Format("Unexpected data label {0}.", nameof(this.DateTimeOffset)));
-                case Constant.DatabaseColumn.File:
+                    throw new NotSupportedException(String.Format("Database values for {0} and {1} must be accessed through {2}.", nameof(this.UtcDateTime), nameof(this.UtcOffset), nameof(this.DateTimeOffset)));
+                case Constant.FileColumn.DeleteFlag:
+                    return this.DeleteFlag;
+                case Constant.FileColumn.File:
                     return this.FileName;
                 case Constant.DatabaseColumn.ID:
-                    return this.ID.ToString();
-                case Constant.DatabaseColumn.ImageQuality:
-                    return this.Classification.ToString();
-                case Constant.DatabaseColumn.RelativePath:
+                    return this.ID;
+                case Constant.FileColumn.Classification:
+                    return (int)this.Classification;
+                case Constant.FileColumn.RelativePath:
                     return this.RelativePath;
-                case Constant.DatabaseColumn.UtcOffset:
-                    return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
+                case Constant.FileColumn.UtcOffset:
+                    return DateTimeHandler.ToDatabaseUtcOffset(this.UtcOffset);
                 default:
-                    return this.UserControlValues[this.table.UserControlIndicesByDataLabel[dataLabel]];
+                    FileTableUserColumn userColumn = this.table.UserColumnsByName[dataLabel];
+                    switch (userColumn.DataType)
+                    {
+                        case FileDataType.Boolean:
+                            return this.UserFlags[userColumn.DataIndex];
+                        case FileDataType.ByteArray:
+                            return this.UserMarkerPositions[userColumn.DataIndex];
+                        case FileDataType.Integer:
+                            return this.UserCounters[userColumn.DataIndex];
+                        case FileDataType.String:
+                            return this.UserNotesAndChoices[userColumn.DataIndex];
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataIndex));
+                    }
             }
         }
 
         [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", Justification = "StyleCop bug.")]
-        public static string GetDataBindingPath(string dataLabel)
+        public static string GetDataBindingPath(ControlRow control)
         {
-            Debug.Assert(dataLabel != Constant.DatabaseColumn.UtcOffset, String.Format("Display and editing of UTC offset should be integrated into {0}.", nameof(DataEntryDateTimeOffset)));
+            string dataLabel = control.DataLabel;
+            Debug.Assert(dataLabel != Constant.FileColumn.UtcOffset, String.Format("Display and editing of UTC offset should be integrated into {0}.", nameof(DataEntryDateTimeOffset)));
 
-            if (dataLabel == Constant.DatabaseColumn.DateTime)
+            if (String.Equals(dataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal))
             {
                 return nameof(ImageRow.DateTimeOffset);
             }
-            if (dataLabel == Constant.DatabaseColumn.File)
+            if (String.Equals(dataLabel, Constant.FileColumn.File, StringComparison.Ordinal))
             {
                 return nameof(ImageRow.FileName);
             }
-            if ((dataLabel == Constant.DatabaseColumn.ID) ||
-                Constant.Control.StandardControls.Contains(dataLabel))
+            if (control.IsUserControl())
             {
-                return dataLabel;
+                return "[" + dataLabel + "]";
             }
-            return "[" + dataLabel + "]";
+            return dataLabel;
         }
 
         public static string GetDataLabel(string propertyName)
         {
-            if (propertyName == nameof(ImageRow.DateTimeOffset))
+            if (String.Equals(propertyName, nameof(ImageRow.DateTimeOffset), StringComparison.Ordinal))
             {
-                return Constant.DatabaseColumn.DateTime;
+                return Constant.FileColumn.DateTime;
             }
-            if (propertyName == nameof(ImageRow.FileName))
+            if (String.Equals(propertyName, nameof(ImageRow.FileName), StringComparison.Ordinal))
             {
-                return Constant.DatabaseColumn.File;
+                return Constant.FileColumn.File;
             }
 
             return propertyName;
@@ -316,24 +376,79 @@ namespace Carnassial.Data
         {
             switch (control.PropertyName)
             {
-                case Constant.DatabaseColumn.DateTime:
-                    throw new NotSupportedException(String.Format("Control has unexpected property name {0}.", Constant.DatabaseColumn.DateTime));
+                case Constant.FileColumn.DateTime:
+                    throw new NotSupportedException(String.Format("Control has unexpected property name {0}.", Constant.FileColumn.DateTime));
                 case nameof(this.DateTimeOffset):
                     return this.GetDisplayDateTime();
-                case Constant.DatabaseColumn.DeleteFlag:
+                case Constant.FileColumn.DeleteFlag:
                     return this.DeleteFlag ? Boolean.TrueString : Boolean.FalseString;
                 case nameof(this.FileName):
                     return this.FileName;
                 case Constant.DatabaseColumn.ID:
                     return this.ID.ToString();
-                case Constant.DatabaseColumn.ImageQuality:
+                case Constant.FileColumn.Classification:
                     return this.Classification.ToString();
-                case Constant.DatabaseColumn.RelativePath:
+                case Constant.FileColumn.RelativePath:
                     return this.RelativePath;
-                case Constant.DatabaseColumn.UtcOffset:
+                case Constant.FileColumn.UtcOffset:
                     return DateTimeHandler.ToDisplayUtcOffsetString(this.UtcOffset);
                 default:
-                    return this.UserControlValues[this.table.UserControlIndicesByDataLabel[control.DataLabel]];
+                    FileTableUserColumn userColumn = this.table.UserColumnsByName[control.DataLabel];
+                    switch (userColumn.DataType)
+                    {
+                        case FileDataType.Boolean:
+                            return this.UserFlags[userColumn.DataIndex] ? Boolean.TrueString : Boolean.FalseString;
+                        case FileDataType.Integer:
+                            return this.UserCounters[userColumn.DataIndex].ToString();
+                        case FileDataType.String:
+                            return this.UserNotesAndChoices[userColumn.DataIndex];
+                        case FileDataType.ByteArray:
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataType));
+                    }
+            }
+        }
+
+        public string GetExcelString(string dataLabel)
+        {
+            switch (dataLabel)
+            {
+                case Constant.FileColumn.DateTime:
+                    return DateTimeHandler.ToDatabaseDateTimeString(this.UtcDateTime);
+                case Constant.FileColumn.DeleteFlag:
+                    return this.DeleteFlag ? Boolean.TrueString : Boolean.FalseString;
+                case nameof(this.DateTimeOffset):
+                    throw new NotSupportedException(String.Format("Unexpected data label {0}.", nameof(this.DateTimeOffset)));
+                case Constant.FileColumn.File:
+                    return this.FileName;
+                case Constant.DatabaseColumn.ID:
+                    return this.ID.ToString();
+                case Constant.FileColumn.Classification:
+                    return this.Classification.ToString();
+                case Constant.FileColumn.RelativePath:
+                    return this.RelativePath;
+                case Constant.FileColumn.UtcOffset:
+                    return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
+                default:
+                    FileTableUserColumn userColumn = this.table.UserColumnsByName[dataLabel];
+                    switch (userColumn.DataType)
+                    {
+                        case FileDataType.Boolean:
+                            return this.UserFlags[userColumn.DataIndex] ? Boolean.TrueString : Boolean.FalseString;
+                        case FileDataType.ByteArray:
+                            byte[] value = this.UserMarkerPositions[userColumn.DataIndex];
+                            if (value == null)
+                            {
+                                return null;
+                            }
+                            return MarkersForCounter.MarkerPositionsToExcelString(value);
+                        case FileDataType.Integer:
+                            return this.UserCounters[userColumn.DataIndex].ToString();
+                        case FileDataType.String:
+                            return this.UserNotesAndChoices[userColumn.DataIndex];
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataType));
+                    }
             }
         }
 
@@ -348,27 +463,30 @@ namespace Carnassial.Data
             return Path.Combine(imageSetFolderPath, this.GetRelativePath());
         }
 
-        public MarkersForCounter GetMarkersForCounter(string dataLabel)
+        public MarkersForCounter GetMarkersForCounter(string counterDataLabel)
         {
-            MarkersForCounter markersForCounter = MarkersForCounter.Parse(dataLabel, this.GetDatabaseString(dataLabel));
+            FileTableUserColumn counterColumn = this.table.UserColumnsByName[counterDataLabel];
+            FileTableUserColumn markerColumn = this.table.UserColumnsByName[FileTable.GetMarkerPositionColumnName(counterDataLabel)];
+
+            MarkersForCounter markersForCounter = new MarkersForCounter(counterDataLabel, this.UserCounters[counterColumn.DataIndex]);
+            markersForCounter.MarkerPositionsFromFloatArray(this.UserMarkerPositions[markerColumn.DataIndex]);
             markersForCounter.PropertyChanged += this.MarkersForCounter_PropertyChanged;
             return markersForCounter;
         }
 
         public static string GetPropertyName(string dataLabel)
         {
-            Debug.Assert(dataLabel != Constant.DatabaseColumn.UtcOffset, String.Format("UTC offset should be accessed by {0}.", nameof(ImageRow.DateTimeOffset)));
+            Debug.Assert(dataLabel != Constant.FileColumn.UtcOffset, String.Format("UTC offset should be accessed by {0}.", nameof(ImageRow.DateTimeOffset)));
 
-            string propertyName = dataLabel;
-            if (propertyName == Constant.DatabaseColumn.DateTime)
+            if (String.Equals(dataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal))
             {
-                propertyName = nameof(ImageRow.DateTimeOffset);
+                return nameof(ImageRow.DateTimeOffset);
             }
-            if (dataLabel == Constant.DatabaseColumn.File)
+            if (String.Equals(dataLabel, Constant.FileColumn.File, StringComparison.Ordinal))
             {
                 return nameof(ImageRow.FileName);
             }
-            return propertyName;
+            return dataLabel;
         }
 
         public string GetRelativePath()
@@ -380,48 +498,42 @@ namespace Carnassial.Data
             return Path.Combine(this.RelativePath, this.FileName);
         }
 
-        public object GetValue(string dataLabel)
-        {
-            switch (dataLabel)
-            {
-                case Constant.DatabaseColumn.DateTime:
-                    return this.UtcDateTime;
-                case nameof(this.DateTimeOffset):
-                    throw new NotSupportedException(String.Format("Database values for {0} and {1} must be accessed through {2}.", nameof(this.UtcDateTime), nameof(this.UtcOffset), nameof(this.DateTimeOffset)));
-                case Constant.DatabaseColumn.DeleteFlag:
-                    return this.DeleteFlag.ToString();
-                case Constant.DatabaseColumn.File:
-                    return this.FileName;
-                case Constant.DatabaseColumn.ID:
-                    return this.ID;
-                case Constant.DatabaseColumn.ImageQuality:
-                    return this.Classification.ToString();
-                case Constant.DatabaseColumn.RelativePath:
-                    return this.RelativePath;
-                case Constant.DatabaseColumn.UtcOffset:
-                    return DateTimeHandler.ToDatabaseUtcOffset(this.UtcOffset);
-                default:
-                    return this.UserControlValues[this.table.UserControlIndicesByDataLabel[dataLabel]];
-            }
-        }
-
         public Dictionary<string, object> GetValues()
         {
             // UtcDateTime and UtcOffset aren't included as they're portions of DateTimeOffset
-            Dictionary<string, object> values = new Dictionary<string, object>()
+            Dictionary<string, object> valuesByDataLabel = new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { nameof(this.DateTimeOffset), this.DateTimeOffset },
-                { Constant.DatabaseColumn.DeleteFlag, this.DeleteFlag },
+                { Constant.FileColumn.DeleteFlag, this.DeleteFlag },
                 { nameof(this.FileName), this.FileName },
                 { Constant.DatabaseColumn.ID, this.ID },
-                { Constant.DatabaseColumn.ImageQuality, this.Classification },
-                { Constant.DatabaseColumn.RelativePath, this.RelativePath },
+                { Constant.FileColumn.Classification, this.Classification },
+                { Constant.FileColumn.RelativePath, this.RelativePath },
             };
-            foreach (KeyValuePair<string, int> userControl in this.table.UserControlIndicesByDataLabel)
+            foreach (KeyValuePair<string, FileTableUserColumn> columnAndName in this.table.UserColumnsByName)
             {
-                values[userControl.Key] = this.UserControlValues[userControl.Value];
+                FileTableUserColumn userColumn = columnAndName.Value;
+                object value;
+                switch (userColumn.DataType)
+                {
+                    case FileDataType.Boolean:
+                        value = this.UserFlags[userColumn.DataIndex];
+                        break;
+                    case FileDataType.ByteArray:
+                        value = this.UserMarkerPositions[userColumn.DataIndex];
+                        break;
+                    case FileDataType.Integer:
+                        value = this.UserCounters[userColumn.DataIndex];
+                        break;
+                    case FileDataType.String:
+                        value = this.UserNotesAndChoices[userColumn.DataIndex];
+                        break;
+                    default:
+                        throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataIndex));
+                }
+                valuesByDataLabel[columnAndName.Key] = value;
             }
-            return values;
+            return valuesByDataLabel;
         }
 
         public bool IsDisplayable()
@@ -555,11 +667,47 @@ namespace Carnassial.Data
             }
 
             string relativePath = NativeMethods.GetRelativePathFromDirectoryToDirectory(imageSetFolderPath, destinationFolderPath);
-            if (relativePath == String.Empty || relativePath == ".")
+            if (String.Equals(relativePath, String.Empty, StringComparison.Ordinal) || String.Equals(relativePath, ".", StringComparison.Ordinal))
             {
                 relativePath = null;
             }
             this.RelativePath = relativePath;
+            return true;
+        }
+
+        public static bool TryParseFileClassification(string fileClassificationAsString, out FileClassification classification)
+        {
+            if (String.Equals("Color", fileClassificationAsString, StringComparison.Ordinal) ||
+                String.Equals("Ok", fileClassificationAsString, StringComparison.Ordinal))
+            {
+                classification = FileClassification.Color;
+            }
+            else if (String.Equals("Greyscale", fileClassificationAsString, StringComparison.Ordinal))
+            {
+                classification = FileClassification.Greyscale;
+            }
+            else if (String.Equals("Video", fileClassificationAsString, StringComparison.Ordinal))
+            {
+                classification = FileClassification.Video;
+            }
+            else if (String.Equals("Corrupt", fileClassificationAsString, StringComparison.Ordinal))
+            {
+                classification = FileClassification.Corrupt;
+            }
+            else if (String.Equals("Dark", fileClassificationAsString, StringComparison.Ordinal))
+            {
+                classification = FileClassification.Dark;
+            }
+            else if (String.Equals("NoLongerAvailable", fileClassificationAsString, StringComparison.Ordinal))
+            {
+                classification = FileClassification.NoLongerAvailable;
+            }
+            else
+            {
+                classification = default(FileClassification);
+                return false;
+            }
+
             return true;
         }
 

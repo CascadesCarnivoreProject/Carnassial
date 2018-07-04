@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Carnassial.Data
 {
@@ -20,49 +21,56 @@ namespace Carnassial.Data
             this.disposed = false;
             this.fileDatabase = fileDatabase;
 
-            SQLiteParameter dateTime = new SQLiteParameter("@dateTime");
-            SQLiteParameter fileName = new SQLiteParameter("@fileName");
-            SQLiteParameter imageQuality = new SQLiteParameter("@imageQuality");
-            SQLiteParameter relativePath = new SQLiteParameter("@relativePath");
-            SQLiteParameter utcOffset = new SQLiteParameter("@utcOffset");
-
-            List<string> dataLabels = new List<string>();
-            List<string> defaultValues = new List<string>();
+            List<string> userControlDataLabels = new List<string>();
+            List<string> userControlDefaultValues = new List<string>();
             string deleteFlagDefaultValue = null;
-            foreach (KeyValuePair<string, ControlRow> column in fileDatabase.ControlsByDataLabel)
+            foreach (ControlRow control in fileDatabase.Controls)
             {
-                string dataLabel = column.Key;
-                if ((dataLabel == Constant.DatabaseColumn.ID) ||
-                    Constant.Control.StandardControls.Contains(dataLabel))
+                if (control.IsUserControl())
                 {
-                    if (dataLabel == Constant.DatabaseColumn.DeleteFlag)
+                    userControlDataLabels.Add(control.DataLabel);
+                    string defaultValue;
+                    switch (control.Type)
                     {
-                        deleteFlagDefaultValue = SQLiteDatabase.QuoteForSql(fileDatabase.FindControl(dataLabel).DefaultValue);
+                        case ControlType.Counter:
+                        case ControlType.Flag:
+                            Debug.Assert(Utilities.IsDigits(control.DefaultValue), "Default values for counters and flags should be numeric.");
+                            defaultValue = control.DefaultValue;
+                            break;
+                        case ControlType.FixedChoice:
+                        case ControlType.Note:
+                            defaultValue = SQLiteDatabase.QuoteForSql(control.DefaultValue);
+                            break;
+                        case ControlType.DateTime:
+                        case ControlType.UtcOffset:
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
                     }
-                    // don't specify ID in the insert statement as it's an autoincrement primary key
-                    // don't generate parameters for standard controls they're coded explicitly
-                    continue;
+                    userControlDefaultValues.Add(defaultValue);
                 }
-
-                dataLabels.Add(dataLabel);
-                defaultValues.Add(SQLiteDatabase.QuoteForSql(fileDatabase.FindControl(dataLabel).DefaultValue));
+                else if (String.Equals(control.DataLabel, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal))
+                {
+                    deleteFlagDefaultValue = control.DefaultValue;
+                }
+                // don't specify ID in the insert statement as it's an autoincrement primary key
+                // don't generate parameters for standard controls they're coded explicitly
             }
 
             string dataLabelsConcatenated = null;
             string defaultValuesConcatenated = null;
-            if (dataLabels.Count > 0)
+            if (userControlDataLabels.Count > 0)
             {
-                dataLabelsConcatenated = ", " + String.Join(", ", dataLabels);
-                defaultValuesConcatenated = ", " + String.Join(", ", defaultValues);
+                dataLabelsConcatenated = ", " + String.Join(", ", userControlDataLabels);
+                defaultValuesConcatenated = ", " + String.Join(", ", userControlDefaultValues);
             }
-            string fileInsertText = String.Format("INSERT INTO {0} ({1}, {2}, {3}, {4}, {5}, {6}{7}) VALUES (@dateTime, {8}, @fileName, @imageQuality, @relativePath, @utcOffset{9})",
-                                                  Constant.DatabaseTable.FileData,
-                                                  Constant.DatabaseColumn.DateTime,
-                                                  Constant.DatabaseColumn.DeleteFlag,
-                                                  Constant.DatabaseColumn.File,
-                                                  Constant.DatabaseColumn.ImageQuality,
-                                                  Constant.DatabaseColumn.RelativePath,
-                                                  Constant.DatabaseColumn.UtcOffset,
+            string fileInsertText = String.Format("INSERT INTO {0} ({1}, {2}, {3}, {4}, {5}, {6}{7}) VALUES (@DateTime, {8}, @FileName, @Classification, @RelativePath, @UtcOffset{9})",
+                                                  Constant.DatabaseTable.Files,
+                                                  Constant.FileColumn.DateTime,
+                                                  Constant.FileColumn.DeleteFlag,
+                                                  Constant.FileColumn.File,
+                                                  Constant.FileColumn.Classification,
+                                                  Constant.FileColumn.RelativePath,
+                                                  Constant.FileColumn.UtcOffset,
                                                   dataLabelsConcatenated,
                                                   deleteFlagDefaultValue,
                                                   defaultValuesConcatenated);
@@ -70,16 +78,16 @@ namespace Carnassial.Data
             this.Transaction = this.Connection.BeginTransaction();
             this.addFiles = new SQLiteCommand(fileInsertText, this.Connection, this.Transaction);
             // order must be kept in sync with parameter value sets AddFiles()
-            this.addFiles.Parameters.Add(dateTime);
-            this.addFiles.Parameters.Add(fileName);
-            this.addFiles.Parameters.Add(imageQuality);
-            this.addFiles.Parameters.Add(relativePath);
-            this.addFiles.Parameters.Add(utcOffset);
+            this.addFiles.Parameters.Add(new SQLiteParameter("@Classification"));
+            this.addFiles.Parameters.Add(new SQLiteParameter("@DateTime"));
+            this.addFiles.Parameters.Add(new SQLiteParameter("@FileName"));
+            this.addFiles.Parameters.Add(new SQLiteParameter("@RelativePath"));
+            this.addFiles.Parameters.Add(new SQLiteParameter("@UtcOffset"));
         }
 
         /// <summary>
-        /// Inserts files in the file table with default values for most columns.  However, a file's name, relative path, date time offset, and image quality
-        /// are populated.
+        /// Inserts files in the file table with their name, relative path, date time offset, and classification populated.
+        /// Other fields are set to their default values.
         /// </summary>
         public override int AddFiles(IList<FileLoad> files, int offset, int length)
         {
@@ -93,7 +101,7 @@ namespace Carnassial.Data
                 return 0;
             }
 
-            // insert performance
+            // insert performance of early Carnassial 2.2.0.3 development (still using 2.2.0.2 schema)
             //                                   column defaults   specified defaults
             //                  unparameterized  parameterized     parameterized
             // 100 rows/call    245us/row        
@@ -110,9 +118,9 @@ namespace Carnassial.Data
                 {
                     continue;
                 }
-                this.addFiles.Parameters[0].Value = fileToInsert.UtcDateTime;
-                this.addFiles.Parameters[1].Value = fileToInsert.FileName;
-                this.addFiles.Parameters[2].Value = fileToInsert.Classification.ToString();
+                this.addFiles.Parameters[0].Value = (int)fileToInsert.Classification;
+                this.addFiles.Parameters[1].Value = fileToInsert.UtcDateTime;
+                this.addFiles.Parameters[2].Value = fileToInsert.FileName;
                 this.addFiles.Parameters[3].Value = fileToInsert.RelativePath;
                 this.addFiles.Parameters[4].Value = DateTimeHandler.ToDatabaseUtcOffset(fileToInsert.UtcOffset);
 

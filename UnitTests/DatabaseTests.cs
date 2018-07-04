@@ -44,8 +44,8 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.MarkedForDeletion) == 0);
             Dictionary<FileClassification, int> fileCounts = fileDatabase.GetFileCountsByClassification();
             Assert.IsTrue(fileCounts.Count == 6);
-            int expectedColorImageCount = fileExpectations.Count(expectation => expectation.Quality == FileClassification.Color);
-            int expectedGreyscaleImageCount = fileExpectations.Count(expectation => expectation.Quality == FileClassification.Greyscale);
+            int expectedColorImageCount = fileExpectations.Count(expectation => expectation.Classification == FileClassification.Color);
+            int expectedGreyscaleImageCount = fileExpectations.Count(expectation => expectation.Classification == FileClassification.Greyscale);
             Assert.IsTrue(fileCounts[FileClassification.Color] == expectedColorImageCount);
             Assert.IsTrue(fileCounts[FileClassification.Corrupt] == 0);
             Assert.IsTrue(fileCounts[FileClassification.Dark] == 0);
@@ -78,12 +78,14 @@ namespace Carnassial.UnitTests
                     FileExpectations fileExpectation = fileExpectations[fileIndex];
                     fileExpectation.Verify(file, imageSetTimeZone);
 
-                    // verify no markers associated with file
-                    foreach (ControlRow control in counterControls)
+                    // verify markers associated with file
+                    foreach (ControlRow counter in counterControls)
                     {
-                        MarkersForCounter markerForCounter = file.GetMarkersForCounter(control.DataLabel);
-                        Assert.IsFalse(String.IsNullOrWhiteSpace(markerForCounter.DataLabel));
-                        Assert.IsTrue(markerForCounter.Markers.Count == 0);
+                        MarkersForCounter markerForCounter = file.GetMarkersForCounter(counter.DataLabel);
+                        Assert.IsTrue(String.Equals(markerForCounter.DataLabel, counter.DataLabel, StringComparison.Ordinal));
+                        Assert.IsTrue(markerForCounter.Count == (int)file[counter.DataLabel]);
+                        Assert.IsTrue(markerForCounter.Markers.Count >= 0);
+                        Assert.IsTrue(markerForCounter.Markers.Count <= (int)file[counter.DataLabel]);
                     }
 
                     // retrieval by specific method
@@ -100,24 +102,24 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(fileDatabase.Files.RowCount > 0);
             }
 
-            foreach (string dataLabel in fileDatabase.ControlsByDataLabel.Keys)
+            foreach (ControlRow control in fileDatabase.Controls)
             {
-                List<string> distinctValues = fileDatabase.GetDistinctValuesInFileDataColumn(dataLabel);
+                List<string> distinctValues = fileDatabase.GetDistinctValuesInFileDataColumn(control.DataLabel);
                 int expectedValues;
-                switch (dataLabel)
+                switch (control.DataLabel)
                 {
-                    case Constant.DatabaseColumn.DateTime:
-                    case Constant.DatabaseColumn.File:
+                    case Constant.FileColumn.DateTime:
+                    case Constant.FileColumn.File:
                     case Constant.DatabaseColumn.ID:
                         expectedValues = fileExpectations.Count;
                         break;
-                    case Constant.DatabaseColumn.RelativePath:
+                    case Constant.FileColumn.RelativePath:
                         expectedValues = fileExpectations.Select(expectation => expectation.RelativePath).Distinct().Count();
                         break;
-                    case Constant.DatabaseColumn.UtcOffset:
+                    case Constant.FileColumn.UtcOffset:
                         expectedValues = fileExpectations.Select(expectation => expectation.DateTime.Offset).Distinct().Count();
                         break;
-                    case Constant.DatabaseColumn.DeleteFlag:
+                    case Constant.FileColumn.DeleteFlag:
                     case TestConstant.DefaultDatabaseColumn.Choice3:
                     case TestConstant.DefaultDatabaseColumn.ChoiceNotVisible:
                     case TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel:
@@ -132,17 +134,17 @@ namespace Carnassial.UnitTests
                         expectedValues = 1;
                         break;
                     case TestConstant.DefaultDatabaseColumn.Choice0:
-                    case TestConstant.DefaultDatabaseColumn.Counter0:
                     case TestConstant.DefaultDatabaseColumn.FlagNotVisible:
-                    case Constant.DatabaseColumn.ImageQuality:
+                    case Constant.FileColumn.Classification:
                         expectedValues = 2;
                         break;
+                    case TestConstant.DefaultDatabaseColumn.Counter0:
                     case TestConstant.DefaultDatabaseColumn.Note0:
                     case TestConstant.DefaultDatabaseColumn.Note3:
                         expectedValues = 3;
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled data label '{0}'.", dataLabel));
+                        throw new NotSupportedException(String.Format("Unhandled data label '{0}'.", control.DataLabel));
                 }
                 Assert.IsTrue(distinctValues != null && distinctValues.Count == expectedValues);
                 Assert.IsTrue(distinctValues.Count == distinctValues.Distinct().Count());
@@ -198,7 +200,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 0);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Custom) == -1);
 
-            SearchTerm dateTime = fileDatabase.CustomSelection.SearchTerms.First(term => term.DataLabel == Constant.DatabaseColumn.DateTime);
+            SearchTerm dateTime = fileDatabase.CustomSelection.SearchTerms.First(term => String.Equals(term.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal));
             dateTime.UseForSearching = true;
             dateTime.DatabaseValue = new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero);
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
@@ -213,7 +215,7 @@ namespace Carnassial.UnitTests
             dateTime.UseForSearching = false;
             fileDatabase.CustomSelection.TermCombiningOperator = LogicalOperator.And;
 
-            SearchTerm fileName = fileDatabase.CustomSelection.SearchTerms.Single(term => term.DataLabel == Constant.DatabaseColumn.File);
+            SearchTerm fileName = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.File, StringComparison.Ordinal));
             fileName.UseForSearching = true;
             fileName.Operator = Constant.SearchTermOperator.Glob;
             fileName.DatabaseValue = "*" + Constant.File.JpgFileExtension.ToUpperInvariant();
@@ -221,21 +223,21 @@ namespace Carnassial.UnitTests
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
 
-            SearchTerm fileQuality = fileDatabase.CustomSelection.SearchTerms.Single(term => term.DataLabel == Constant.DatabaseColumn.ImageQuality);
-            fileQuality.UseForSearching = true;
-            fileQuality.Operator = Constant.SearchTermOperator.Equal;
-            fileQuality.DatabaseValue = FileSelection.Color.ToString();
+            SearchTerm fileClassification = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal));
+            fileClassification.UseForSearching = true;
+            fileClassification.Operator = Constant.SearchTermOperator.Equal;
+            fileClassification.DatabaseValue = (int)FileClassification.Color;
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 2);
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == expectedColorImageCount);
 
-            fileQuality.DatabaseValue = FileSelection.Greyscale.ToString();
+            fileClassification.DatabaseValue = (int)FileClassification.Greyscale;
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 2);
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == expectedGreyscaleImageCount);
 
-            fileQuality.DatabaseValue = FileSelection.Color.ToString();
-            SearchTerm relativePath = fileDatabase.CustomSelection.SearchTerms.Single(term => term.DataLabel == Constant.DatabaseColumn.RelativePath);
+            fileClassification.DatabaseValue = (int)FileClassification.Color;
+            SearchTerm relativePath = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.RelativePath, StringComparison.Ordinal));
             relativePath.UseForSearching = true;
             relativePath.Operator = Constant.SearchTermOperator.Equal;
             relativePath.DatabaseValue = fileExpectations[0].RelativePath;
@@ -243,15 +245,15 @@ namespace Carnassial.UnitTests
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == 1);
 
-            SearchTerm markedForDeletion = fileDatabase.CustomSelection.SearchTerms.Single(term => term.DataLabel == Constant.DatabaseColumn.DeleteFlag);
+            SearchTerm markedForDeletion = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal));
             markedForDeletion.UseForSearching = true;
             markedForDeletion.Operator = Constant.SearchTermOperator.Equal;
-            markedForDeletion.DatabaseValue = Boolean.FalseString;
+            markedForDeletion.DatabaseValue = false;
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == 1);
 
-            fileQuality.DatabaseValue = FileSelection.Dark.ToString();
+            fileClassification.DatabaseValue = (int)FileSelection.Dark;
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.All) == fileExpectations.Count);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Color) == expectedColorImageCount);
@@ -285,19 +287,18 @@ namespace Carnassial.UnitTests
                     int initialMarkers = markersForCounter.Markers.Count;
 
                     Point markerPosition = new Point((0.1 * counterIndex) + (0.1 * markerIndex), (0.05 * counterIndex) + (0.1 * markerIndex));
-                    markersForCounter.AddMarker(markerPosition);
+                    markersForCounter.AddMarker(new Marker(markersForCounter.DataLabel, markerPosition));
 
                     Assert.IsTrue(markersForCounter.Count == initialCounterCount + 1);
                     Assert.IsTrue(markersForCounter.Markers.Count == initialMarkers + 1);
-
-                    Point expectedPosition = new Point(Math.Round(markerPosition.X, 3), Math.Round(markerPosition.Y, 3));
-                    expectedPositions.Add(expectedPosition);
                 }
 
-                martenExpectations.UserControlsByDataLabel[counter.DataLabel] = markersForCounter.ToDatabaseString();
+                martenExpectations.UserControlsByDataLabel[counter.DataLabel] = markersForCounter.Count;
+                string dataLabelForMarkerPositions = FileTable.GetMarkerPositionColumnName(counter.DataLabel);
+                martenExpectations.UserControlsByDataLabel[dataLabelForMarkerPositions] = markersForCounter.MarkerPositionsToFloatArray();
             }
             martenExpectations.Verify(martenImage, imageSetTimeZone);
-            fileDatabase.SyncFileToDatabase(martenImage);
+            fileDatabase.TrySyncFileToDatabase(martenImage);
             martenExpectations.Verify(martenImage, imageSetTimeZone);
 
             // roundtrip
@@ -318,11 +319,13 @@ namespace Carnassial.UnitTests
 
                     Assert.IsTrue(markersForCounter.Count == initialCounterCount - 1);
                     Assert.IsTrue(markersForCounter.Markers.Count == initialMarkers - 1);
-                    martenExpectations.UserControlsByDataLabel[markersForCounter.DataLabel] = markersForCounter.ToDatabaseString();
+                    martenExpectations.UserControlsByDataLabel[markersForCounter.DataLabel] = markersForCounter.Count;
+                    string dataLabelForMarkerPositions = FileTable.GetMarkerPositionColumnName(markersForCounter.DataLabel);
+                    martenExpectations.UserControlsByDataLabel[dataLabelForMarkerPositions] = markersForCounter.MarkerPositionsToFloatArray();
                 }
             }
             martenExpectations.Verify(martenImage, imageSetTimeZone);
-            fileDatabase.SyncFileToDatabase(martenImage);
+            fileDatabase.TrySyncFileToDatabase(martenImage);
             martenExpectations.Verify(martenImage, imageSetTimeZone);
 
             // roundtrip
@@ -378,7 +381,7 @@ namespace Carnassial.UnitTests
                 ControlRow flagControl = templateDatabase.AppendUserDefinedControl(ControlType.Flag);
                 this.VerifyControl(flagControl);
                 ControlRow choiceControl = templateDatabase.AppendUserDefinedControl(ControlType.FixedChoice);
-                choiceControl.List = "DefaultChoice|OtherChoice";
+                choiceControl.WellKnownValues = "DefaultChoice|OtherChoice";
                 templateDatabase.TrySyncControlToDatabase(choiceControl);
                 this.VerifyControl(choiceControl);
                 ControlRow counterControl = templateDatabase.AppendUserDefinedControl(ControlType.Counter);
@@ -387,24 +390,24 @@ namespace Carnassial.UnitTests
 
             // modify control and spreadsheet orders
             // control order ends up reverse order from ID, spreadsheet order is alphabetical
-            Dictionary<string, long> newControlOrderByDataLabel = new Dictionary<string, long>();
-            long controlOrder = templateDatabase.Controls.RowCount;
+            Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
+            int controlOrder = templateDatabase.Controls.RowCount;
             for (int row = 0; row < templateDatabase.Controls.RowCount; --controlOrder, ++row)
             {
                 string dataLabel = templateDatabase.Controls[row].DataLabel;
                 newControlOrderByDataLabel.Add(dataLabel, controlOrder);
             }
-            templateDatabase.UpdateDisplayOrder(Constant.Control.ControlOrder, newControlOrderByDataLabel);
+            templateDatabase.UpdateDisplayOrder(Constant.ControlColumn.ControlOrder, newControlOrderByDataLabel);
 
             List<string> alphabeticalDataLabels = newControlOrderByDataLabel.Keys.ToList();
             alphabeticalDataLabels.Sort();
-            Dictionary<string, long> newSpreadsheetOrderByDataLabel = new Dictionary<string, long>();
-            long spreadsheetOrder = 0;
+            Dictionary<string, int> newSpreadsheetOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
+            int spreadsheetOrder = 0;
             foreach (string dataLabel in alphabeticalDataLabels)
             {
                 newSpreadsheetOrderByDataLabel.Add(dataLabel, ++spreadsheetOrder);
             }
-            templateDatabase.UpdateDisplayOrder(Constant.Control.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
+            templateDatabase.UpdateDisplayOrder(Constant.ControlColumn.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
             this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
 
             // remove some controls and verify the control and spreadsheet orders are properly updated
@@ -439,10 +442,10 @@ namespace Carnassial.UnitTests
 
             int listIndex = numberOfStandardControls + (3 * iterations) - 2;
             ControlRow listControl = templateDatabase.Controls[listIndex];
-            string modifiedList = listControl.List + "|NewChoice0|NewChoice1";
-            listControl.List = modifiedList;
+            string modifiedList = listControl.WellKnownValues + "|NewChoice0|NewChoice1";
+            listControl.WellKnownValues = modifiedList;
             templateDatabase.TrySyncControlToDatabase(listControl);
-            Assert.IsTrue(templateDatabase.Controls[listIndex].List == modifiedList);
+            Assert.IsTrue(templateDatabase.Controls[listIndex].WellKnownValues == modifiedList);
 
             int tooltipIndex = numberOfStandardControls + (3 * iterations) - 3;
             ControlRow tooltipControl = templateDatabase.Controls[tooltipIndex];
@@ -479,7 +482,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(templateDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
             Assert.IsTrue(templateDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
             Assert.IsTrue(templateDatabase.Controls[labelIndex].Label == modifiedLabel);
-            Assert.IsTrue(templateDatabase.Controls[listIndex].List == modifiedList);
+            Assert.IsTrue(templateDatabase.Controls[listIndex].WellKnownValues == modifiedList);
             Assert.IsTrue(templateDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
             Assert.IsTrue(templateDatabase.Controls[visibleIndex].Visible == modifiedVisible);
             Assert.IsTrue(templateDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
@@ -493,13 +496,13 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
             Assert.IsTrue(fileDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
             Assert.IsTrue(fileDatabase.Controls[labelIndex].Label == modifiedLabel);
-            Assert.IsTrue(fileDatabase.Controls[listIndex].List == modifiedList);
+            Assert.IsTrue(fileDatabase.Controls[listIndex].WellKnownValues == modifiedList);
             Assert.IsTrue(fileDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
             Assert.IsTrue(fileDatabase.Controls[visibleIndex].Visible == modifiedVisible);
             Assert.IsTrue(fileDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
 
             ControlRow newControlInFileDatabase = fileDatabase.Controls.Single(control => String.Equals(control.DataLabel, newControl.DataLabel, StringComparison.Ordinal));
-            Assert.IsTrue(fileDatabase.Files.UserControlIndicesByDataLabel.Count == expectedControlCount - numberOfStandardControls);
+            Assert.IsTrue(fileDatabase.Files.UserColumnsByName.Count == expectedControlCount - numberOfStandardControls + fileDatabase.Controls.Count(control => control.Type == ControlType.Counter)); // counters have two columns each
         }
 
         [TestMethod]
@@ -661,10 +664,10 @@ namespace Carnassial.UnitTests
 
             // template table synchronization
             // remove choices and change a note to a choice to produce a type failure
-            ControlRow choiceControl = templateDatabase.FindControl(TestConstant.DefaultDatabaseColumn.Choice0);
-            choiceControl.List = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
+            ControlRow choiceControl = templateDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0];
+            choiceControl.WellKnownValues = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
             templateDatabase.TrySyncControlToDatabase(choiceControl);
-            ControlRow noteControl = templateDatabase.FindControl(TestConstant.DefaultDatabaseColumn.Note0);
+            ControlRow noteControl = templateDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note0];
             noteControl.Type = ControlType.FixedChoice;
             templateDatabase.TrySyncControlToDatabase(noteControl);
 
@@ -1005,11 +1008,12 @@ namespace Carnassial.UnitTests
                 fileDatabase.SelectFiles(FileSelection.All);
                 Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount - filesBeforeMerge == 2);
 
-                // verify merge didn't affect existing file table content
+                // verify merge didn't affect existing file table content other than negligible truncation error in marker positions
                 for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
                 {
                     ImageRow file = fileDatabase.Files[fileIndex];
                     FileExpectations fileExpectation = fileExpectations[fileIndex];
+                    fileExpectation.SkipMarkerByteVerification = true;
                     fileExpectation.Verify(file, imageSetTimeZone);
                 }
             }
@@ -1230,7 +1234,7 @@ namespace Carnassial.UnitTests
                     // only Point is persisted to the database so other Marker fields should have default values on read
                     Assert.IsFalse(marker.ShowLabel);
                     Assert.IsTrue(marker.LabelShownPreviously);
-                    Assert.IsTrue(marker.DataLabel == markersForCounter.DataLabel);
+                    Assert.IsTrue(String.Equals(marker.DataLabel, markersForCounter.DataLabel, StringComparison.Ordinal));
                     Assert.IsFalse(marker.Emphasize);
                     Assert.IsFalse(marker.Highlight);
                     Assert.IsTrue(marker.Position == expectedPositions[markerIndex]);

@@ -10,7 +10,7 @@ namespace Carnassial.Database
         private List<string> relativePaths;
 
         public FileTuplesWithPath(IEnumerable<string> columns)
-            : base(Constant.DatabaseTable.FileData, columns)
+            : base(Constant.DatabaseTable.Files, columns)
         {
             this.fileNames = new List<string>();
             this.relativePaths = new List<string>();
@@ -36,7 +36,7 @@ namespace Carnassial.Database
             {
                 columnsToUpdate.Add(column + " = @" + column);
             }
-            string commandText = String.Format("UPDATE {0} SET {1} WHERE {2} = @{2} AND {3} = @{3}", this.Table, String.Join(", ", columnsToUpdate), Constant.DatabaseColumn.RelativePath, Constant.DatabaseColumn.File);
+            string commandText = String.Format("UPDATE {0} SET {1} WHERE {2} = @{2} AND {3} = @{3}", this.Table, String.Join(", ", columnsToUpdate), Constant.FileColumn.RelativePath, Constant.FileColumn.File);
 
             using (SQLiteCommand command = new SQLiteCommand(commandText, connection, transaction))
             {
@@ -45,9 +45,9 @@ namespace Carnassial.Database
                     SQLiteParameter parameter = new SQLiteParameter("@" + column);
                     command.Parameters.Add(parameter);
                 }
-                SQLiteParameter fileNameParameter = new SQLiteParameter("@" + Constant.DatabaseColumn.File);
+                SQLiteParameter fileNameParameter = new SQLiteParameter("@" + Constant.FileColumn.File);
                 command.Parameters.Add(fileNameParameter);
-                SQLiteParameter relativePathParameter = new SQLiteParameter("@" + Constant.DatabaseColumn.RelativePath);
+                SQLiteParameter relativePathParameter = new SQLiteParameter("@" + Constant.FileColumn.RelativePath);
                 command.Parameters.Add(relativePathParameter);
 
                 int parameters = this.Columns.Count;

@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using Carnassial.Database;
+using Microsoft.Win32;
 using System;
 using System.Globalization;
 using System.Windows;
@@ -68,12 +69,21 @@ namespace Carnassial.Util
             return defaultValue;
         }
 
-        public static TEnum ReadEnum<TEnum>(this RegistryKey registryKey, string subKeyPath, TEnum defaultValue) where TEnum : struct, IComparable, IConvertible, IFormattable
+        public static LogicalOperator ReadLogicalOperator(this RegistryKey registryKey, string subKeyPath, LogicalOperator defaultValue)
         {
             string valueAsString = registryKey.ReadString(subKeyPath);
             if (valueAsString != null)
             {
-                return (TEnum)Enum.Parse(typeof(TEnum), valueAsString);
+                if (String.Equals("And", valueAsString, StringComparison.Ordinal))
+                {
+                    return LogicalOperator.And;
+                }
+                if (String.Equals("Or", valueAsString, StringComparison.Ordinal))
+                {
+                    return LogicalOperator.Or;
+                }
+
+                throw new ArgumentOutOfRangeException(nameof(valueAsString), String.Format("Unknown enum value '{0}'.", valueAsString));
             }
 
             return defaultValue;

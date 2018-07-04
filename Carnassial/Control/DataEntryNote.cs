@@ -6,18 +6,12 @@ using System.Windows.Controls;
 
 namespace Carnassial.Control
 {
-    // A note lays out as a stack panel containing
+    // A note lays out as
     // - a label containing the descriptive label) 
     // - an editable textbox (containing the content) at the given width
     public class DataEntryNote : DataEntryControl<AutocompleteTextBox, Label>
     {
         private List<string> autocompletionsFromList;
-
-        /// <summary>Gets the content of the note</summary>
-        public override string Content
-        {
-            get { return this.ContentControl.Text; }
-        }
 
         public override bool ContentReadOnly
         {
@@ -42,18 +36,18 @@ namespace Carnassial.Control
         public DataEntryNote(ControlRow control, List<string> autocompletionsFromDatabase, bool readOnly, DataEntryControls styleProvider) :
             base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.Label, readOnly)
         {
-            this.SetChoices(control.GetChoices());
-            this.autocompletionsFromList = control.GetChoices();
-            if (this.autocompletionsFromList.Contains(control.DefaultValue) == false)
+            this.SetWellKnownValues(control.GetWellKnownValues());
+            this.autocompletionsFromList = control.GetWellKnownValues();
+            if (this.autocompletionsFromList.Contains(control.DefaultValue, StringComparer.Ordinal) == false)
             {
                 this.autocompletionsFromList.Add(control.DefaultValue);
             }
             this.MergeAutocompletions(autocompletionsFromDatabase);
 
-            this.ContentControl.SetBinding(AutocompleteTextBox.TextProperty, ImageRow.GetDataBindingPath(control.DataLabel));
+            this.ContentControl.SetBinding(AutocompleteTextBox.TextProperty, ImageRow.GetDataBindingPath(control));
         }
 
-        public override List<string> GetChoices()
+        public override List<string> GetWellKnownValues()
         {
             return this.ContentControl.Autocompletions;
         }
@@ -70,9 +64,9 @@ namespace Carnassial.Control
             }
         }
 
-        public override void SetChoices(List<string> choices)
+        public override void SetWellKnownValues(List<string> wellKnownValues)
         {
-            this.autocompletionsFromList = choices;
+            this.autocompletionsFromList = wellKnownValues;
             this.MergeAutocompletions(null);
         }
 

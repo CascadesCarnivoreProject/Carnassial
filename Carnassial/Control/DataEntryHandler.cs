@@ -37,7 +37,7 @@ namespace Carnassial.Control
         {
             this.IsProgrammaticUpdate = true;
 
-            FileTuplesWithID filesToUpdate = new FileTuplesWithID(Constant.DatabaseColumn.DeleteFlag, Constant.DatabaseColumn.ImageQuality);
+            FileTuplesWithID filesToUpdate = new FileTuplesWithID(Constant.FileColumn.DeleteFlag);
             List<long> fileIDsToDropFromDatabase = new List<long>();
             using (Recycler fileOperation = new Recycler())
             {
@@ -60,10 +60,11 @@ namespace Carnassial.Control
                     }
                     else
                     {
-                        // as only the file was deleted, change image quality to FileNoLongerAvailable and clear the delete flag
+                        // clear the delete flag
+                        // It is potentially desirable to change the classification to FileNoLongerAvailable but doing so is also
+                        // potentially undesirable.  For now, prefer not to blindly override color/greyscale/dark classifications.
                         file.DeleteFlag = false;
-                        file.Classification = FileClassification.NoLongerAvailable;
-                        filesToUpdate.Add(file.ID, Boolean.FalseString, FileSelection.NoLongerAvailable.ToString());
+                        filesToUpdate.Add(file.ID, false);
                     }
                 }
             }
@@ -111,7 +112,7 @@ namespace Carnassial.Control
 
         public Dictionary<string, object> GetCopyableFields(ImageRow file, List<DataEntryControl> controls)
         {
-            Dictionary<string, object> copyableFields = new Dictionary<string, object>();
+            Dictionary<string, object> copyableFields = new Dictionary<string, object>(StringComparer.Ordinal);
             foreach (DataEntryControl control in controls)
             {
                 if (control.Copyable)
@@ -144,48 +145,16 @@ namespace Carnassial.Control
         {
             Debug.Assert(control.Type != ControlType.DateTime, "Propagate context menu unexpectedly enabled on DateTime control.");
             Debug.Assert(control.Type != ControlType.UtcOffset, "Propagate context menu unexpectedly enabled on UTC offset control.");
-            bool isCounter = control.Type == ControlType.Counter;
-            bool isFlag = control.Type == ControlType.Flag;
-
             for (int fileIndex = this.ImageCache.CurrentRow - 1; fileIndex >= 0; --fileIndex)
             {
                 // search for a file with a value assigned for this field, starting from the previous file
                 object valueToTest = this.FileDatabase.Files[fileIndex][control.PropertyName];
-                if (this.IsNonEmpty(valueToTest, isCounter, isFlag))
+                if (control.IsCopyableValue(valueToTest))
                 {
                     return true;
                 }
             }
             return false;
-        }
-
-        private bool IsNonEmpty(object value, bool isCounter, bool isFlag)
-        {
-            if (isFlag && (value is bool))
-            {
-                // standard control flags
-                return (bool)value;
-            }
-
-            string valueAsString = (string)value;
-            if (String.IsNullOrEmpty(valueAsString))
-            {
-                return false;
-            }
-
-            if (isCounter)
-            {
-                return String.Equals(valueAsString, "0", StringComparison.Ordinal) == false;
-            }
-            else if (isFlag)
-            {
-                // user defined flags
-                return String.Equals(valueAsString, Boolean.TrueString, StringComparison.OrdinalIgnoreCase);
-            }
-            else
-            {
-                return true;
-            }
         }
 
         /// <summary>
@@ -199,7 +168,7 @@ namespace Carnassial.Control
             // - propagate context menu to copyable controls
             foreach (DataEntryControl dataEntryControl in dataEntryControls)
             {
-                ControlRow control = this.FileDatabase.ControlsByDataLabel[dataEntryControl.DataLabel];
+                ControlRow control = this.FileDatabase.Controls[dataEntryControl.DataLabel];
                 if (control.IsFilePathComponent())
                 {
                     Debug.Assert(dataEntryControl.ContentReadOnly, "File name and relative path are expected to be read only fields.");
@@ -254,9 +223,7 @@ namespace Carnassial.Control
                 return false;
             }
 
-            // update row in file table
-            this.FileDatabase.SyncFileToDatabase(this.ImageCache.Current);
-            return true;
+            return this.FileDatabase.TrySyncFileToDatabase(this.ImageCache.Current);
         }
 
         public static bool TryFindFocusedControl(IInputElement focusedElement, out DataEntryControl focusedControl)
@@ -292,15 +259,15 @@ namespace Carnassial.Control
         }
 
         // ask the user to confirm value propagation from the last value
-        private bool? ConfirmCopyForward(string value, int filesAffected, bool checkForZero)
+        private bool? ConfirmCopyForward(string value, int filesAffected)
         {
             MessageBox messageBox = new MessageBox("Please confirm copy forward for this field...", Application.Current.MainWindow, MessageBoxButton.YesNo);
             messageBox.Message.StatusImage = MessageBoxImage.Question;
             messageBox.Message.What = "Copy forward is not undoable and can overwrite existing values.";
             messageBox.Message.Result = "If you select yes, this operation will:" + Environment.NewLine;
-            if (!checkForZero && value.Equals(String.Empty))
+            if (String.IsNullOrWhiteSpace(value))
             {
-                messageBox.Message.Result += "\u2022 copy the (empty) value '" + value + "' in this field from here to the last of the selected files.";
+                messageBox.Message.Result += "\u2022 copy the empty or blank value '" + value + "' in this field from here to the last of the selected files.";
             }
             else
             {
@@ -318,7 +285,7 @@ namespace Carnassial.Control
             messageBox.Message.StatusImage = MessageBoxImage.Question;
             messageBox.Message.What = "Copy to all is not undoable and can overwrite existing values.";
             messageBox.Message.Result = "If you select yes, this operation will:" + Environment.NewLine;
-            if (!checkForZero && value.Equals(String.Empty))
+            if (!checkForZero && value.Equals(String.Empty, StringComparison.Ordinal))
             {
                 messageBox.Message.Result += "\u2022 clear this field across all " + filesAffected.ToString() + " selected files.";
             }
@@ -395,7 +362,7 @@ namespace Carnassial.Control
         private void MenuContextPropagateForward_Click(object sender, RoutedEventArgs e)
         {
             DataEntryControl control = (DataEntryControl)((ContextMenu)((MenuItem)sender).Parent).Tag;
-            this.TryCopyForward(control, control is DataEntryCounter);
+            this.TryCopyForward(control);
         }
 
         private void MenuContextPropagateFromLastValue_Click(object sender, RoutedEventArgs e)
@@ -408,7 +375,7 @@ namespace Carnassial.Control
         }
 
         /// <summary>Propagate the current value of this control forward from this point across the current selection.</summary>
-        private bool TryCopyForward(DataEntryControl control, bool checkForZeroValue)
+        private bool TryCopyForward(DataEntryControl control)
         {
             int filesAffected = this.FileDatabase.CurrentlySelectedFileCount - this.ImageCache.CurrentRow - 1;
             if (filesAffected < 1)
@@ -421,7 +388,7 @@ namespace Carnassial.Control
             }
 
             string displayValueForConfirm = this.ImageCache.Current.GetDisplayString(control);
-            if (this.ConfirmCopyForward(displayValueForConfirm, filesAffected, checkForZeroValue) != true)
+            if (this.ConfirmCopyForward(displayValueForConfirm, filesAffected) != true)
             {
                 return false;
             }
@@ -433,29 +400,20 @@ namespace Carnassial.Control
         }
 
         /// <summary>
-        /// Copy the closest, non-empty value in a file preceding this one to all intervening files plus the current file
+        /// Copy the closest, non-empty value in a file preceding this one to all intervening files and the current file.
         /// </summary>
         private bool TryCopyFromLastNonEmptyValue(DataEntryControl control, out object valueToCopy)
         {
-            bool isCounter = control.Type == ControlType.Counter;
-            bool isFlag = control.Type == ControlType.Flag;
-
             // search for a previous file with a value assigned for this field, starting from the previous row
             ImageRow fileWithLastNonEmptyValue = null;
             int indexToCopyFrom = Constant.Database.InvalidRow;
             string displayValueForConfirm = null;
-            valueToCopy = isCounter ? "0" : String.Empty;
+            valueToCopy = null;
             for (int previousIndex = this.ImageCache.CurrentRow - 1; previousIndex >= 0; previousIndex--)
             {
                 ImageRow file = this.FileDatabase.Files[previousIndex];
                 valueToCopy = file[control.PropertyName];
-                if (valueToCopy == null)
-                {
-                    continue;
-                }
-
-                // skip zero values for counters and false values for flags
-                if (this.IsNonEmpty(valueToCopy, isCounter, isFlag))
+                if (control.IsCopyableValue(valueToCopy))
                 {
                     indexToCopyFrom = previousIndex;
                     fileWithLastNonEmptyValue = file;
@@ -484,7 +442,7 @@ namespace Carnassial.Control
             return true;
         }
 
-        /// <summary>Copy the current value of this control to all files</summary>
+        /// <summary>Copy the current value of this control to all files.</summary>
         public bool TryCopyToAll(DataEntryControl control)
         {
             bool checkForZero = control is DataEntryCounter;

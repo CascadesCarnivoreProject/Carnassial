@@ -91,7 +91,7 @@ namespace Carnassial.Command
                 {
                     continue;
                 }
-                if ((previousValueNull == false) && previousValue.Equals(newValue.Value))
+                if ((previousValueNull && newValueNull) || previousValue.Equals(newValue.Value))
                 {
                     unchangedFields.Add(newValue.Key);
                 }

@@ -24,7 +24,7 @@ namespace Carnassial.Data
             this.ControlType = control.Type;
             this.DataLabel = control.DataLabel;
             this.Label = control.Label;
-            this.List = control.GetChoices();
+            this.List = control.GetWellKnownValues();
             this.Operator = Constant.SearchTermOperator.Equal;
             this.UseForSearching = false;
 
@@ -41,7 +41,7 @@ namespace Carnassial.Data
                     this.Operator = Constant.SearchTermOperator.GreaterThanOrEqual;
                     break;
                 case ControlType.Flag:
-                    this.DatabaseValue = Boolean.FalseString;
+                    this.DatabaseValue = false;
                     break;
                 case ControlType.FixedChoice:
                 case ControlType.Note:
@@ -102,16 +102,16 @@ namespace Carnassial.Data
             {
                 return false;
             }
-            if (this.DataLabel != other.DataLabel)
+            if (String.Equals(this.DataLabel, other.DataLabel, StringComparison.Ordinal) == false)
             {
                 return false;
             }
-            if (this.Label != other.Label)
+            if (String.Equals(this.Label, other.Label, StringComparison.Ordinal) == false)
             {
                 return false;
             }
             // this.List is excluded as doesn't affect the query fragment the term generates
-            if (this.Operator != other.Operator)
+            if (String.Equals(this.Operator, other.Operator, StringComparison.Ordinal) == false)
             {
                 return false;
             }
@@ -174,6 +174,9 @@ namespace Carnassial.Data
             {
                 case ControlType.DateTime:
                     value = DateTimeHandler.ToDisplayDateTimeUtcOffsetString((DateTimeOffset)this.DatabaseValue);
+                    break;
+                case ControlType.Flag:
+                    value = (bool)this.DatabaseValue ? Boolean.TrueString : Boolean.FalseString;
                     break;
                 case ControlType.UtcOffset:
                     value = DateTimeHandler.ToDisplayUtcOffsetString((TimeSpan)this.DatabaseValue);

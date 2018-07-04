@@ -146,19 +146,19 @@
     <Compile Include="Dialog\AboutEditor.xaml.cs">
       <DependentUpon>AboutEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\EditChoiceList.xaml.cs">
-      <DependentUpon>EditChoiceList.xaml</DependentUpon>
+    <Compile Include="Dialog\EditWellKnownValues.xaml.cs">
+      <DependentUpon>EditWellKnownValues.xaml</DependentUpon>
     </Compile>
     <Compile Include="Util\CallerMemberNameAttribute.cs" />
+    <Compile Include="Util\ControlTypeConverter.cs" />
     <Compile Include="Util\TrimmingConverter.cs" />
-    <Compile Include="EditorWindowExtensions.cs" />
     <Compile Include="Util\DataGridCellExtensions.cs" />
     <Compile Include="Util\EditorUserRegistrySettings.cs" />
     <Page Include="Dialog\AboutEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Dialog\EditChoiceList.xaml">
+    <Page Include="Dialog\EditWellKnownValues.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

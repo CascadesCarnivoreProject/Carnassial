@@ -1,9 +1,12 @@
 ﻿using Carnassial.Database;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Data;
+using System.ComponentModel;
 using System.Data.SQLite;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Carnassial.Data
 {
@@ -11,7 +14,14 @@ namespace Carnassial.Data
     // WPF's DataGrid requires IList as it does not support IList<T>.
     public class ControlTable : SQLiteTable<ControlRow>, IList, INotifyCollectionChanged
     {
+        private Dictionary<string, ControlRow> controlsByDataLabel;
+
         public event NotifyCollectionChangedEventHandler CollectionChanged;
+
+        public ControlTable()
+        {
+            this.controlsByDataLabel = new Dictionary<string, ControlRow>();
+        }
 
         int ICollection.Count
         {
@@ -55,6 +65,45 @@ namespace Carnassial.Data
         void ICollection.CopyTo(Array array, int arrayIndex)
         {
             ((IList)this.Rows).CopyTo(array, arrayIndex);
+        }
+
+        public static SQLiteTableSchema CreateSchema()
+        {
+            SQLiteTableSchema schema = new SQLiteTableSchema(Constant.DatabaseTable.Controls);
+            schema.ColumnDefinitions.Add(ColumnDefinition.CreatePrimaryKey());
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.Type, Constant.SQLiteAffninity.Integer)
+            {
+                NotNull = true
+            });
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.DataLabel, Constant.SQLiteAffninity.Text)
+            {
+                NotNull = true
+            });
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.Label, Constant.SQLiteAffninity.Text)
+            {
+                NotNull = true
+            });
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.ControlOrder, Constant.SQLiteAffninity.Integer)
+            {
+                NotNull = true
+            });
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.SpreadsheetOrder, Constant.SQLiteAffninity.Integer)
+            {
+                NotNull = true
+            });
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.WellKnownValues, Constant.SQLiteAffninity.Text));
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.DefaultValue, Constant.SQLiteAffninity.Text));
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.Tooltip, Constant.SQLiteAffninity.Text));
+            schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.AnalysisLabel));
+            schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.Copyable));
+            schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.IndexInFileTable));
+            schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.Visible));
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.MaxWidth, Constant.SQLiteAffninity.Integer)
+            {
+                DefaultValue = Constant.ControlDefault.MaxWidth.ToString(),
+                NotNull = true
+            });
+            return schema;
         }
 
         int IList.Add(object control)
@@ -102,10 +151,18 @@ namespace Carnassial.Data
             this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, control, index));
         }
 
+        public ControlRow this[string dataLabel]
+        {
+            get { return this.controlsByDataLabel[dataLabel]; }
+        }
+
+        public IEnumerable<ControlRow> InSpreadsheetOrder()
+        {
+            return this.OrderBy(control => control.SpreadsheetOrder);
+        }
+
         public override void Load(SQLiteDataReader reader)
         {
-            this.Rows.Clear();
-
             int analysisLabelIndex = -1;
             int controlOrderIndex = -1;
             int copyableIndex = -1;
@@ -114,6 +171,7 @@ namespace Carnassial.Data
             int idIndex = -1;
             int labelFileIndex = -1;
             int listIndex = -1;
+            int indexIndex = -1;
             int maxWidthIndex = -1;
             int spreadsheetOrderIndex = -1;
             int tooltipIndex = -1;
@@ -124,43 +182,46 @@ namespace Carnassial.Data
                 string columnName = reader.GetName(column);
                 switch (columnName)
                 {
-                    case Constant.Control.AnalysisLabel:
+                    case Constant.ControlColumn.AnalysisLabel:
                         analysisLabelIndex = column;
                         break;
-                    case Constant.Control.ControlOrder:
+                    case Constant.ControlColumn.ControlOrder:
                         controlOrderIndex = column;
                         break;
-                    case Constant.Control.Copyable:
+                    case Constant.ControlColumn.Copyable:
                         copyableIndex = column;
                         break;
-                    case Constant.Control.DataLabel:
+                    case Constant.ControlColumn.DataLabel:
                         dataLabelIndex = column;
                         break;
-                    case Constant.Control.DefaultValue:
+                    case Constant.ControlColumn.DefaultValue:
                         defaultValueIndex = column;
                         break;
                     case Constant.DatabaseColumn.ID:
                         idIndex = column;
                         break;
-                    case Constant.Control.Label:
+                    case Constant.ControlColumn.IndexInFileTable:
+                        indexIndex = column;
+                        break;
+                    case Constant.ControlColumn.Label:
                         labelFileIndex = column;
                         break;
-                    case Constant.Control.List:
+                    case Constant.ControlColumn.WellKnownValues:
                         listIndex = column;
                         break;
-                    case Constant.Control.SpreadsheetOrder:
+                    case Constant.ControlColumn.SpreadsheetOrder:
                         spreadsheetOrderIndex = column;
                         break;
-                    case Constant.Control.Tooltip:
+                    case Constant.ControlColumn.Tooltip:
                         tooltipIndex = column;
                         break;
-                    case Constant.Control.Type:
+                    case Constant.ControlColumn.Type:
                         typeIndex = column;
                         break;
-                    case Constant.Control.Visible:
+                    case Constant.ControlColumn.Visible:
                         visibleIndex = column;
                         break;
-                    case Constant.Control.Width:
+                    case Constant.ControlColumn.MaxWidth:
                         maxWidthIndex = column;
                         break;
                     default:
@@ -174,6 +235,7 @@ namespace Carnassial.Data
                                              (dataLabelIndex != -1) &&
                                              (defaultValueIndex != -1) &&
                                              (idIndex != -1) &&
+                                             (indexIndex != -1) &&
                                              (labelFileIndex != -1) &&
                                              (listIndex != -1) &&
                                              (maxWidthIndex != -1) &&
@@ -186,32 +248,66 @@ namespace Carnassial.Data
                 throw new SQLiteException(SQLiteErrorCode.Schema, "At least one standard column is missing from table " + reader.GetTableName(0));
             }
 
+            this.controlsByDataLabel.Clear();
+            this.Rows.Clear();
+
             while (reader.Read())
             {
                 // read file values
-                IDataRecord row = (IDataRecord)reader;
                 ControlRow control = new ControlRow()
                 {
-                    AnalysisLabel = row.GetBoolean(analysisLabelIndex),
-                    ControlOrder = row.GetInt64(controlOrderIndex),
-                    Copyable = Boolean.Parse(row.GetString(copyableIndex)),
-                    DataLabel = row.GetString(dataLabelIndex),
-                    DefaultValue = row.GetString(defaultValueIndex),
-                    ID = row.GetInt64(idIndex),
-                    Label = row.GetString(labelFileIndex),
-                    List = row.GetString(listIndex),
-                    MaxWidth = row.GetInt64(maxWidthIndex),
-                    SpreadsheetOrder = row.GetInt64(spreadsheetOrderIndex),
-                    Tooltip = row.GetString(tooltipIndex),
-                    Type = (ControlType)Enum.Parse(typeof(ControlType), row.GetString(typeIndex)),
-                    Visible = Boolean.Parse(row.GetString(visibleIndex))
+                    AnalysisLabel = reader.GetBoolean(analysisLabelIndex),
+                    ControlOrder = reader.GetInt32(controlOrderIndex),
+                    Copyable = reader.GetBoolean(copyableIndex),
+                    DataLabel = reader.GetString(dataLabelIndex),
+                    DefaultValue = reader.GetString(defaultValueIndex),
+                    ID = reader.GetInt64(idIndex),
+                    IndexInFileTable = reader.GetBoolean(indexIndex),
+                    Label = reader.GetString(labelFileIndex),
+                    WellKnownValues = reader.GetString(listIndex),
+                    MaxWidth = reader.GetInt32(maxWidthIndex),
+                    SpreadsheetOrder = reader.GetInt32(spreadsheetOrderIndex),
+                    Tooltip = reader.GetString(tooltipIndex),
+                    Type = (ControlType)reader.GetInt32(typeIndex),
+                    Visible = reader.GetBoolean(visibleIndex)
                 };
                 control.AcceptChanges();
+                control.PropertyChanged += this.OnControlFieldChanged;
 
+                this.controlsByDataLabel.Add(control.DataLabel, control);
                 this.Rows.Add(control);
             }
 
             this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
+
+        private void OnControlFieldChanged(object sender, PropertyChangedEventArgs controlChange)
+        {
+            if (String.Equals(controlChange.PropertyName, nameof(ControlRow.DataLabel), StringComparison.Ordinal) == false)
+            {
+                // nothing to do
+                return;
+            }
+
+            // if data label changed, update index in controlsByDataLabel
+            ControlRow control = (ControlRow)sender;
+            string oldDataLabel = null;
+            foreach (KeyValuePair<string, ControlRow> controlAndDataLabel in this.controlsByDataLabel)
+            {
+                if (Object.ReferenceEquals(control, controlAndDataLabel.Value))
+                {
+                    oldDataLabel = controlAndDataLabel.Key;
+                    break;
+                }
+            }
+            Debug.Assert(oldDataLabel != null, "Receved data label change notification for control not in control dictionary.");
+            this.controlsByDataLabel.Remove(oldDataLabel);
+            this.controlsByDataLabel.Add(control.DataLabel, control);
+        }
+
+        public bool TryGet(string dataLabel, out ControlRow control)
+        {
+            return this.controlsByDataLabel.TryGetValue(dataLabel, out control);
         }
     }
 }

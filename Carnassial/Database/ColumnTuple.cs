@@ -11,11 +11,6 @@ namespace Carnassial.Database
         public string Name { get; private set; }
         public object Value { get; private set; }
 
-        public ColumnTuple(string column, bool value)
-            : this(column, value ? Boolean.TrueString : Boolean.FalseString)
-        {
-        }
-
         public ColumnTuple(string column, DateTime value)
         {
             if (value.Kind != DateTimeKind.Utc)
@@ -27,19 +22,7 @@ namespace Carnassial.Database
             this.Value = value;
         }
 
-        public ColumnTuple(string column, long value)
-        {
-            this.Name = column;
-            this.Value = value;
-        }
-
-        protected ColumnTuple(string column, object value)
-        {
-            this.Name = column;
-            this.Value = value;
-        }
-
-        public ColumnTuple(string column, string value)
+        public ColumnTuple(string column, object value)
         {
             this.Name = column;
             this.Value = value;

@@ -39,7 +39,7 @@ namespace Carnassial.Util
             {
                 this.AudioFeedback = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.AudioFeedback, false);
                 this.CarnassialWindowPosition = registryKey.ReadRect(Constant.Registry.CarnassialKey.CarnassialWindowPosition, new Rect(0.0, 0.0, 1350.0, 900.0));
-                this.CustomSelectionTermCombiningOperator = registryKey.ReadEnum<LogicalOperator>(Constant.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, LogicalOperator.And);
+                this.CustomSelectionTermCombiningOperator = registryKey.ReadLogicalOperator(Constant.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, LogicalOperator.And);
                 this.DarkLuminosityThreshold = registryKey.ReadDouble(Constant.Registry.CarnassialKey.DarkLuminosityThreshold, Constant.Images.DarkLuminosityThresholdDefault);
                 this.MostRecentCheckForUpdates = registryKey.ReadDateTime(Constant.Registry.CarnassialKey.MostRecentCheckForUpdates, DateTime.UtcNow);
                 this.MostRecentImageSets = registryKey.ReadMostRecentlyUsedList(Constant.Registry.CarnassialKey.MostRecentlyUsedImageSets);
