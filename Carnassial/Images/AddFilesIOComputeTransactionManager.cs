@@ -82,7 +82,7 @@ namespace Carnassial.Images
         {
             int atoms = 0;
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-            UInt64 progressReportIntervalInMilliseconds = (UInt64)state.Throttles.GetDesiredIntervalBetweenFileLoadProgress().TotalMilliseconds;
+            UInt64 progressReportIntervalInMilliseconds = (UInt64)state.Throttles.GetDesiredProgressUpdateInterval().TotalMilliseconds;
             MemoryImage preallocatedThumbnail = null;
             for (FileLoadAtom loadAtom = this.GetNextComputeAtom(computeTaskNumber); loadAtom != null; loadAtom = this.GetNextComputeAtom(computeTaskNumber))
             {

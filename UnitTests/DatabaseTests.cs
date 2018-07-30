@@ -684,7 +684,7 @@ namespace Carnassial.UnitTests
             {
                 SkipDarkImagesCheck = false
             };
-            TimeSpan desiredStatusUpdateInterval = state.Throttles.GetDesiredIntervalBetweenFileLoadProgress();
+            TimeSpan desiredStatusUpdateInterval = state.Throttles.GetDesiredProgressUpdateInterval();
             string folderToLoad = Path.Combine(this.WorkingDirectory, TestConstant.File.HybridVideoDirectoryName);
             FileInfo[] imagesAndVideos = new DirectoryInfo(folderToLoad).GetFiles();
 
@@ -941,7 +941,7 @@ namespace Carnassial.UnitTests
                 List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
 
                 // roundtrip data
-                SpreadsheetReaderWriter readerWriter = new SpreadsheetReaderWriter();
+                SpreadsheetReaderWriter readerWriter = new SpreadsheetReaderWriter((SpreadsheetReadWriteStatus status) => { }, Constant.ThrottleValues.DesiredIntervalBetweenStatusUpdates);
                 string initialFilePath = this.GetUniqueFilePathForTest(Path.GetFileNameWithoutExtension(Constant.File.DefaultFileDatabaseFileName) + spreadsheetFileExtension);
                 if (xlsx)
                 {

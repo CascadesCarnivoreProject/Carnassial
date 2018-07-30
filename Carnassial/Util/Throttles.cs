@@ -14,7 +14,7 @@ namespace Carnassial.Util
             this.ResetToDefaults();
         }
 
-        public TimeSpan GetDesiredIntervalBetweenFileLoadProgress()
+        public TimeSpan GetDesiredProgressUpdateInterval()
         {
             if (this.DesiredIntervalBetweenRenders > Constant.ThrottleValues.DesiredIntervalBetweenStatusUpdates)
             {

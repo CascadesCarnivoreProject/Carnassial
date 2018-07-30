@@ -9,7 +9,12 @@ namespace Carnassial.Database
         private string table;
 
         public ColumnTuplesForInsert(string table, params string[] columns)
-            : base((IEnumerable<string>)columns)
+            : this(table, (IEnumerable<string>)columns)
+        {
+        }
+
+        public ColumnTuplesForInsert(string table, IEnumerable<string> columns)
+            : base(columns)
         {
             this.table = table;
         }
@@ -22,9 +27,14 @@ namespace Carnassial.Database
 
         public void Add(params object[] values)
         {
-            if (this.Columns.Count != values.Length)
+            this.Add((IList<object>)values);
+        }
+
+        public void Add(IList<object> values)
+        {
+            if (this.Columns.Count != values.Count)
             {
-                throw new ArgumentOutOfRangeException(nameof(values), String.Format("values needs to be of length {0} to match the columns configured but {1} values were passed.", this.Columns.Count, values.Length));
+                throw new ArgumentOutOfRangeException(nameof(values), String.Format("values needs to be of length {0} to match the columns configured but {1} values were passed.", this.Columns.Count, values.Count));
             }
 
             this.Values.Add(new List<object>(values));

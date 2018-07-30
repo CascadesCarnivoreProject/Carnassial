@@ -1,5 +1,5 @@
 ﻿using Carnassial.Database;
-using Carnassial.Images;
+using Carnassial.Interop;
 using Carnassial.Util;
 using OfficeOpenXml;
 using System;
@@ -16,11 +16,20 @@ namespace Carnassial.Data
     /// </summary>
     public class SpreadsheetReaderWriter
     {
+        private SpreadsheetReadWriteStatus status;
+
+        public SpreadsheetReaderWriter(Action<SpreadsheetReadWriteStatus> onProgressUpdate, TimeSpan desiredProgressUpdateInterval)
+        {
+            this.status = new SpreadsheetReadWriteStatus(onProgressUpdate, desiredProgressUpdateInterval);
+        }
+
         /// <summary>
         /// Export all data for the selected files to the .csv file indicated.
         /// </summary>
         public void ExportFileDataToCsv(FileDatabase database, string csvFilePath)
         {
+            this.status.BeginWrite(database.Files.RowCount);
+
             using (TextWriter fileWriter = new StreamWriter(csvFilePath, false))
             {
                 // write the header as defined by the data labels in the template file
@@ -41,16 +50,24 @@ namespace Carnassial.Data
                 }
                 fileWriter.WriteLine(header.ToString());
 
-                foreach (ImageRow file in database.Files)
+                for (int fileIndex = 0; fileIndex < database.Files.RowCount; ++fileIndex)
                 {
+                    ImageRow file = database.Files[fileIndex];
                     StringBuilder csvRow = new StringBuilder();
                     foreach (string dataLabel in columns)
                     {
                         csvRow.Append(this.AddColumnValue(file.GetExcelString(dataLabel)));
                     }
                     fileWriter.WriteLine(csvRow.ToString());
+
+                    if (this.status.ShouldReport())
+                    {
+                        this.status.Report(fileIndex);
+                    }
                 }
             }
+
+            this.status.Report(database.Files.RowCount);
         }
 
         /// <summary>
@@ -58,6 +75,8 @@ namespace Carnassial.Data
         /// </summary>
         public void ExportFileDataToXlsx(FileDatabase database, string xlsxFilePath)
         {
+            this.status.BeginWrite(database.Files.RowCount);
+
             using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
             {
                 List<string> columns = new List<string>(database.Controls.RowCount);
@@ -71,15 +90,18 @@ namespace Carnassial.Data
                 }
 
                 ExcelWorksheet worksheet = this.GetOrCreateBlankWorksheet(xlsxFile, Constant.Excel.FileDataWorksheetName, columns);
-
-                int row = 1;
-                foreach (ImageRow file in database.Files)
+                for (int fileIndex = 0; fileIndex < database.Files.RowCount; ++fileIndex)
                 {
-                    int columnIndex = 0;
-                    ++row;
-                    foreach (string column in columns)
+                    ImageRow file = database.Files[fileIndex];
+                    for (int columnIndex = 0; columnIndex < columns.Count; ++columnIndex)
                     {
-                        worksheet.Cells[row, ++columnIndex].Value = file.GetExcelString(column);
+                        string column = columns[columnIndex];
+                        worksheet.Cells[fileIndex + 2, columnIndex + 1].Value = file.GetExcelString(column);
+                    }
+
+                    if (this.status.ShouldReport())
+                    {
+                        this.status.Report(fileIndex);
                     }
                 }
 
@@ -88,6 +110,8 @@ namespace Carnassial.Data
 
                 xlsxFile.Save();
             }
+
+            this.status.Report(database.Files.RowCount);
         }
 
         private FileImportResult TryImportFileData(FileDatabase fileDatabase, Func<List<string>> readLine, string spreadsheetFilePath)
@@ -95,6 +119,16 @@ namespace Carnassial.Data
             if (fileDatabase.ImageSet.FileSelection != FileSelection.All)
             {
                 throw new ArgumentOutOfRangeException(nameof(fileDatabase), "Database doesn't have all files selected.  Checking for files already added to the image set would fail.");
+            }
+
+            string relativePathFromDatabaseToSpreadsheet = NativeMethods.GetRelativePathFromDirectoryToDirectory(Path.GetDirectoryName(fileDatabase.FilePath), Path.GetDirectoryName(spreadsheetFilePath));
+            if (String.Equals(relativePathFromDatabaseToSpreadsheet, ".", StringComparison.Ordinal))
+            {
+                relativePathFromDatabaseToSpreadsheet = null;
+            }
+            else if (relativePathFromDatabaseToSpreadsheet.IndexOf("..", StringComparison.Ordinal) != -1)
+            {
+                throw new NotSupportedException(String.Format("Canonicalization of relative path from database to spreadsheet '{0}' is not currently supported.", relativePathFromDatabaseToSpreadsheet));
             }
 
             // validate file header against the database
@@ -139,14 +173,19 @@ namespace Carnassial.Data
                 controlsInFileOrder.Add(controlsByColumn[column]);
             }
 
-            List<string> dataLabelsToUpdate = new List<string>(columnsInDatabase.Count);
-            dataLabelsToUpdate.AddRange(columnsInDatabase.Where(dataLabel => (String.Equals(dataLabel, Constant.FileColumn.File, StringComparison.Ordinal) == false) &&
-                                                                             (String.Equals(dataLabel, Constant.FileColumn.RelativePath, StringComparison.Ordinal) == false)));
+            List<string> dataLabelsForUpdate = new List<string>(columnsInDatabase.Count);
+            dataLabelsForUpdate.AddRange(columnsFromFileHeader.Where(column => (String.Equals(column, Constant.FileColumn.File, StringComparison.Ordinal) == false) &&
+                                                                              (String.Equals(column, Constant.FileColumn.RelativePath, StringComparison.Ordinal) == false)));
+            List<string> dataLabelsForInsert = new List<string>(dataLabelsForUpdate)
+            {
+                Constant.FileColumn.File,
+                Constant.FileColumn.RelativePath
+            };
 
-            FileTuplesWithID existingFilesToUpdate = new FileTuplesWithID(dataLabelsToUpdate);
             Dictionary<string, HashSet<string>> filesAlreadyInDatabaseByRelativePath = fileDatabase.Files.HashFileNamesByRelativePath();
-            List<FileLoad> newFilesToInsert = new List<FileLoad>();
-            FileTuplesWithPath newFilesToUpdate = new FileTuplesWithPath(dataLabelsToUpdate);
+            ColumnTuplesForInsert filesToInsert = new ColumnTuplesForInsert(Constant.DatabaseTable.Files, dataLabelsForInsert);
+            FileTuplesWithID filesToUpdate = new FileTuplesWithID(dataLabelsForUpdate);
+            this.status.Report(0);
             for (List<string> row = readLine.Invoke(); row != null; row = readLine.Invoke())
             {
                 if (row.Count == columnsInDatabase.Count - 1)
@@ -163,12 +202,12 @@ namespace Carnassial.Data
 
                 // assemble set of column values to update
                 string fileName = null;
-                string relativePath = null;
-                List<object> values = new List<object>();
-                for (int field = 0; field < row.Count; ++field)
+                string relativePathFromSpreadsheetDirectoryToFileDirectory = null;
+                List<object> values = new List<object>(dataLabelsForUpdate.Count);
+                for (int columnIndex = 0; columnIndex < row.Count; ++columnIndex)
                 {
-                    string dataLabel = columnsFromFileHeader[field];
-                    string value = row[field];
+                    string dataLabel = columnsFromFileHeader[columnIndex];
+                    string value = row[columnIndex];
 
                     // capture components of file's unique identifier for constructing where clause
                     // at least for now, it's assumed all renames or moves are done through Carnassial and hence relative path + file name form 
@@ -179,7 +218,7 @@ namespace Carnassial.Data
                     }
                     else if (String.Equals(dataLabel, Constant.FileColumn.RelativePath, StringComparison.Ordinal))
                     {
-                        relativePath = value;
+                        relativePathFromSpreadsheetDirectoryToFileDirectory = value;
                     }
                     else if (String.Equals(dataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal) && ImageRow.TryParseFileClassification(value, out FileClassification classification))
                     {
@@ -196,7 +235,7 @@ namespace Carnassial.Data
                     }
                     else
                     {
-                        ControlRow control = controlsInFileOrder[field];
+                        ControlRow control = controlsInFileOrder[columnIndex];
                         if (control.IsValidExcelData(value))
                         {
                             if (control.Type == ControlType.Counter)
@@ -241,6 +280,11 @@ namespace Carnassial.Data
 
                 // if file's already in the image set prepare to set its fields to those in the .csv
                 // if file's not in the image set prepare to add it to the image set
+                string relativePath = relativePathFromSpreadsheetDirectoryToFileDirectory;
+                if (relativePathFromDatabaseToSpreadsheet != null)
+                {
+                    relativePath = Path.Combine(relativePathFromDatabaseToSpreadsheet, relativePathFromSpreadsheetDirectoryToFileDirectory);
+                }
                 ImageRow file = null;
                 if (filesAlreadyInDatabaseByRelativePath.TryGetValue(relativePath, out HashSet<string> filesInFolder))
                 {
@@ -249,31 +293,27 @@ namespace Carnassial.Data
                         file = fileDatabase.Files.Single(fileName, relativePath);
                     }
                 }
+
                 if (file == null)
                 {
-                    file = fileDatabase.Files.CreateAndAppendFile(fileName, relativePath);
                     // newly created files have only their name and relative path set; populate all other fields with .csv data
                     // Population is done via update as insertion is done with default values.
-                    newFilesToInsert.Add(new FileLoad(file));
-                    newFilesToUpdate.Add(file.FileName, file.RelativePath, values);
+                    values.Add(fileName);
+                    values.Add(relativePath);
+                    filesToInsert.Add(values);
                 }
                 else
                 {
-                    existingFilesToUpdate.Add(file.ID, values);
+                    filesToUpdate.Add(file.ID, values);
                 }
             }
 
             // perform inserts and updates
-            // Inserts need to be done first so newly added files can be updated.
-            using (AddFilesTransaction addFiles = fileDatabase.CreateAddFilesTransaction())
-            {
-                addFiles.AddFiles(newFilesToInsert);
-                addFiles.Commit();
-            }
-            fileDatabase.UpdateFiles(existingFilesToUpdate, newFilesToUpdate);
+            fileDatabase.InsertFiles(filesToInsert);
+            fileDatabase.UpdateFiles(filesToUpdate);
 
-            result.FilesAdded = newFilesToInsert.Count;
-            result.FilesUpdated = existingFilesToUpdate.RowCount;
+            result.FilesAdded = filesToInsert.RowCount;
+            result.FilesUpdated = filesToUpdate.RowCount;
             return result;
         }
 
@@ -283,7 +323,10 @@ namespace Carnassial.Data
             {
                 using (StreamReader csvReader = new StreamReader(stream))
                 {
-                    return this.TryImportFileData(fileDatabase, () => { return this.ReadAndParseCsvLine(csvReader); }, csvFilePath);
+                    this.status.BeginCsvRead(csvReader.BaseStream.Length);
+                    FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadAndParseCsvLine(csvReader); }, csvFilePath);
+                    this.status.Report(csvReader.BaseStream.Position);
+                    return result;
                 }
             }
         }
@@ -297,12 +340,16 @@ namespace Carnassial.Data
                     ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets.FirstOrDefault(sheet => String.Equals(sheet.Name, Constant.Excel.FileDataWorksheetName, StringComparison.Ordinal));
                     if (worksheet == null)
                     {
-                        FileImportResult result = new FileImportResult();
-                        result.Errors.Add(String.Format("Worksheet {0} not found.", Constant.Excel.FileDataWorksheetName));
-                        return result;
+                        FileImportResult worksheetNotFound = new FileImportResult();
+                        worksheetNotFound.Errors.Add(String.Format("Worksheet {0} not found.", Constant.Excel.FileDataWorksheetName));
+                        return worksheetNotFound;
                     }
+
+                    this.status.BeginExcelRead(worksheet.Dimension.Rows);
                     int row = 0;
-                    return this.TryImportFileData(fileDatabase, () => { return this.ReadXlsxRow(worksheet, ++row); }, xlsxFilePath);
+                    FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadXlsxRow(worksheet, ++row); }, xlsxFilePath);
+                    this.status.Report(worksheet.Dimension.Rows);
+                    return result;
                 }
             }
             catch (IOException ioException)
@@ -447,6 +494,11 @@ namespace Carnassial.Data
                 parsedLine.Add(field);
             }
 
+            if (this.status.ShouldReport())
+            {
+                this.status.Report(csvReader.BaseStream.Position);
+            }
+
             return parsedLine;
         }
 
@@ -469,6 +521,11 @@ namespace Carnassial.Data
                 {
                     rowContent.Add(cell.Text);
                 }
+            }
+
+            if (this.status.ShouldReport())
+            {
+                this.status.Report(row);
             }
             return rowContent;
         }

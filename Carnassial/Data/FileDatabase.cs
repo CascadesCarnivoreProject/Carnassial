@@ -401,6 +401,14 @@ namespace Carnassial.Data
             return counts;
         }
 
+        public void InsertFiles(ColumnTuplesForInsert filesToInsert)
+        {
+            using (SQLiteConnection connection = this.Database.CreateConnection())
+            {
+                filesToInsert.Insert(connection);
+            }
+        }
+
         /// <summary>A convenience routine for checking to see if the file in the given row is displayable (i.e., not corrupted or missing)</summary>
         public bool IsFileDisplayable(int fileIndex)
         {
@@ -698,21 +706,6 @@ namespace Carnassial.Data
             using (SQLiteConnection connection = this.Database.CreateConnection())
             {
                 update.Update(connection);
-            }
-        }
-
-        public void UpdateFiles(FileTuplesWithID updateExisting, FileTuplesWithPath updateJustAdded)
-        {
-            this.CreateBackupIfNeeded();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                using (SQLiteTransaction transaction = connection.BeginTransaction())
-                {
-                    updateExisting.Update(connection, transaction);
-                    updateJustAdded.Update(connection, transaction);
-
-                    transaction.Commit();
-                }
             }
         }
 

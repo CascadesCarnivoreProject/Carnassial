@@ -383,6 +383,12 @@ namespace Carnassial
             return markers;
         }
 
+        private void HideLongRunningOperationFeedback()
+        {
+            this.LongRunningFeedback.Visibility = Visibility.Collapsed;
+            this.FileNavigationGrid.Visibility = Visibility.Visible;
+        }
+
         private async void Instructions_Drop(object sender, DragEventArgs dropEvent)
         {
             if (Utilities.IsSingleTemplateFileDrag(dropEvent, out string templateDatabaseFilePath))
@@ -742,7 +748,7 @@ namespace Carnassial
                 }
             }
 
-            PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.DataHandler.FileDatabase, this.DataHandler.ImageCache.Current.GetFilePath(this.FolderPath), this.State.Throttles.GetDesiredIntervalBetweenFileLoadProgress(), this);
+            PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.DataHandler.FileDatabase, this.DataHandler.ImageCache.Current.GetFilePath(this.FolderPath), this.State.Throttles.GetDesiredProgressUpdateInterval(), this);
             await this.ShowBulkFileEditDialogAsync(populateField);
         }
 
@@ -778,7 +784,7 @@ namespace Carnassial
 
         private async void MenuEditRereadDateTimesFromFiles_Click(object sender, RoutedEventArgs e)
         {
-            DateTimeRereadFromFiles rereadDates = new DateTimeRereadFromFiles(this.DataHandler.FileDatabase, this.State.Throttles.GetDesiredIntervalBetweenFileLoadProgress(), this);
+            DateTimeRereadFromFiles rereadDates = new DateTimeRereadFromFiles(this.DataHandler.FileDatabase, this.State.Throttles.GetDesiredProgressUpdateInterval(), this);
             await this.ShowBulkFileEditDialogAsync(rereadDates);
         }
 
@@ -960,43 +966,49 @@ namespace Carnassial
         }
 
         /// <summary>Write the .csv or .xlsx file and maybe send an open command to the system</summary>
-        private void MenuFileExportSpreadsheet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileExportSpreadsheet_Click(object sender, RoutedEventArgs e)
         {
             MenuItem menuItem = (MenuItem)sender;
             bool exportXlsx = (sender == this.MenuFileExportXlsxAndOpen) || (sender == this.MenuFileExportXlsx);
             bool openFile = (sender == this.MenuFileExportXlsxAndOpen) || (sender == this.MenuFileExportCsvAndOpen);
 
-            // backup any existing file as it's overwritten on export
             string spreadsheetFileExtension = exportXlsx ? Constant.File.ExcelFileExtension : Constant.File.CsvFileExtension;
             string spreadsheetFileName = Path.GetFileNameWithoutExtension(this.DataHandler.FileDatabase.FileName) + spreadsheetFileExtension;
             string spreadsheetFilePath = Path.Combine(this.FolderPath, spreadsheetFileName);
-            if (FileBackup.TryCreateBackup(this.FolderPath, spreadsheetFileName))
-            {
-                this.SetStatusMessage("Backup of {0} made.", spreadsheetFileName);
-            }
 
-            SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter();
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            this.ShowLongRunningOperationFeedback();
+            this.SetStatusMessage("Exporting spreadsheet...");
+            SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
             try
             {
-                if (exportXlsx)
+                await Task.Run(() =>
                 {
-                    spreadsheetWriter.ExportFileDataToXlsx(this.DataHandler.FileDatabase, spreadsheetFilePath);
-                }
-                else
-                {
-                    spreadsheetWriter.ExportFileDataToCsv(this.DataHandler.FileDatabase, spreadsheetFilePath);
-                }
-                this.SetStatusMessage("Data exported to " + spreadsheetFileName);
+                    // backup any existing file as it's overwritten on export
+                    FileBackup.TryCreateBackup(this.FolderPath, spreadsheetFileName);
 
-                if (openFile)
-                {
-                    // show the exported file in whatever program is associated with its extension
-                    Process process = new Process();
-                    process.StartInfo.UseShellExecute = true;
-                    process.StartInfo.RedirectStandardOutput = false;
-                    process.StartInfo.FileName = spreadsheetFilePath;
-                    process.Start();
-                }
+                    if (exportXlsx)
+                    {
+                        spreadsheetWriter.ExportFileDataToXlsx(this.DataHandler.FileDatabase, spreadsheetFilePath);
+                    }
+                    else
+                    {
+                        spreadsheetWriter.ExportFileDataToCsv(this.DataHandler.FileDatabase, spreadsheetFilePath);
+                    }
+                    stopwatch.Stop();
+
+                    if (openFile)
+                    {
+                        // show the exported file in whatever program is associated with its extension
+                        Process process = new Process();
+                        process.StartInfo.UseShellExecute = true;
+                        process.StartInfo.RedirectStandardOutput = false;
+                        process.StartInfo.FileName = spreadsheetFilePath;
+                        process.Start();
+                    }
+                });
             }
             catch (IOException exception)
             {
@@ -1009,6 +1021,12 @@ namespace Carnassial
                 messageBox.ShowDialog();
                 return;
             }
+            finally
+            {
+                this.HideLongRunningOperationFeedback();
+            }
+
+            this.SetStatusMessage("Data exported to {0} in {1:0.000}s ({2:0} files/second).", spreadsheetFileName, stopwatch.Elapsed.TotalSeconds, this.DataHandler.FileDatabase.CurrentlySelectedFileCount / stopwatch.Elapsed.TotalSeconds);
         }
 
         private async void MenuFileImportSpreadsheet_Click(object sender, RoutedEventArgs e)
@@ -1077,18 +1095,28 @@ namespace Carnassial
                 this.DataHandler.FileDatabase.SelectFiles(FileSelection.All);
             }
 
-            SpreadsheetReaderWriter spreadsheetReader = new SpreadsheetReaderWriter();
+            Stopwatch stopwatch = new Stopwatch();
             FileImportResult importResult;
             try
             {
-                if (spreadsheetFilePath.EndsWith(Constant.File.ExcelFileExtension, StringComparison.OrdinalIgnoreCase))
+                stopwatch.Start();
+                this.ShowLongRunningOperationFeedback();
+                this.SetStatusMessage("Importing spreadsheet...");
+
+                SpreadsheetReaderWriter spreadsheetReader = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
+                importResult = await Task.Run(() =>
                 {
-                    importResult = spreadsheetReader.TryImportFileDataFromXlsx(spreadsheetFilePath, this.DataHandler.FileDatabase);
-                }
-                else
-                {
-                    importResult = spreadsheetReader.TryImportFileDataFromCsv(spreadsheetFilePath, this.DataHandler.FileDatabase);
-                }
+                    if (spreadsheetFilePath.EndsWith(Constant.File.ExcelFileExtension, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return spreadsheetReader.TryImportFileDataFromXlsx(spreadsheetFilePath, this.DataHandler.FileDatabase);
+                    }
+                    else
+                    {
+                        return spreadsheetReader.TryImportFileDataFromCsv(spreadsheetFilePath, this.DataHandler.FileDatabase);
+                    }
+                });
+                stopwatch.Stop();
+
                 if (importResult.Errors.Count > 0)
                 {
                     MessageBox messageBox = new MessageBox("Spreadsheet import incomplete.", this);
@@ -1112,7 +1140,9 @@ namespace Carnassial
             }
             catch (IOException ioException)
             {
-                MessageBox messageBox = new MessageBox("Can't import the .csv file.", this);
+                this.SetStatusMessage("Couldn't import spreadsheet.");
+
+                MessageBox messageBox = new MessageBox("Can't import spreadsheet.", this);
                 messageBox.Message.StatusImage = MessageBoxImage.Error;
                 messageBox.Message.Problem = String.Format("The file {0} either could not be opened or could not be read.", spreadsheetFilePath);
                 messageBox.Message.Reason = "Most likely the file is open in another program.";
@@ -1122,14 +1152,21 @@ namespace Carnassial
                 messageBox.ShowDialog();
                 return;
             }
+            finally
+            {
+                this.HideLongRunningOperationFeedback();
+            }
 
-            // reload the file data table and update the enable/disable state of the user interface to match
+            // reload the in memory file table to pick up newly added files
+            // Also triggers an update to the enable/disable state of the user interface to match.
+            stopwatch.Start();
             await this.SelectFilesAndShowFileAsync(originalSelection);
-            this.EnableOrDisableMenusAndControls();
-            this.SetStatusMessage("{0} imported: {1} files added, {2} files updated.", Path.GetFileName(spreadsheetFilePath), importResult.FilesAdded, importResult.FilesUpdated);
 
             // clear undo/redo state as bulk edits aren't undoable
             this.OnBulkEdit(this, null);
+            stopwatch.Stop();
+
+            this.SetStatusMessage("{0} imported in {1:0.000}s: {2} files added, {3} files updated ({4:0} files/second).", Path.GetFileName(spreadsheetFilePath), stopwatch.Elapsed.TotalSeconds, importResult.FilesAdded, importResult.FilesUpdated, (importResult.FilesAdded + importResult.FilesUpdated) / stopwatch.Elapsed.TotalSeconds);
         }
 
         private async void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs e)
@@ -1967,6 +2004,12 @@ namespace Carnassial
             this.DataHandler.IsProgrammaticUpdate = false;
         }
 
+        private void ShowLongRunningOperationFeedback()
+        {
+            this.LongRunningFeedback.Visibility = Visibility.Visible;
+            this.FileNavigationGrid.Visibility = Visibility.Collapsed;
+        }
+
         private async Task ShowFileAsync(int fileIndex)
         {
             await this.ShowFileAsync(fileIndex, true);
@@ -2190,7 +2233,7 @@ namespace Carnassial
         // out parameters can't be used in anonymous methods, so a separate pointer to backgroundWorker is required for return to the caller
         private async Task<bool> TryAddFilesAsync(IEnumerable<string> folderPaths)
         {
-            AddFilesIOComputeTransactionManager folderLoad = new AddFilesIOComputeTransactionManager(this.UpdateFolderLoadProgress, this.State.Throttles.GetDesiredIntervalBetweenFileLoadProgress());
+            AddFilesIOComputeTransactionManager folderLoad = new AddFilesIOComputeTransactionManager(this.UpdateFolderLoadProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
             folderLoad.FolderPaths.AddRange(folderPaths);
             folderLoad.FindFilesToLoad(this.FolderPath);
             if (folderLoad.FilesToLoad == 0)
@@ -2218,9 +2261,8 @@ namespace Carnassial
                 return false;
             }
 
-            // update UI for import (visibility is inverse of RunWorkerCompleted)
-            this.FolderLoadProgress.Visibility = Visibility.Visible;
-            this.FileNavigatorSlider.Visibility = Visibility.Collapsed;
+            // update UI for import
+            this.ShowLongRunningOperationFeedback();
             this.MenuOptions.IsEnabled = true;
             folderLoad.ReportStatus();
             if (this.State.SkipDarkImagesCheck)
@@ -2260,13 +2302,12 @@ namespace Carnassial
             // shift UI to normal, non-loading state
             // Stopwatch is stopped before OnFolderLoadingCompleteAsync() to exclude load and render time of the first image.
             // Status message is updated after OnFolderLoadingCompleteAsync() because loading an image clears the status message.
-            this.FolderLoadProgress.Visibility = Visibility.Collapsed;
-            this.FileNavigatorSlider.Visibility = Visibility.Visible;
+            this.HideLongRunningOperationFeedback();
             stopwatch.Stop();
             await this.OnFileDatabaseOpenedOrFilesAddedAsync(true);
-            this.SetStatusMessage("{0} of {1} files added to image set in {2:0.000}s ({3:0.0} files/second, {4:0.000}s IO, {5:0.000}s compute, {6:0.000}s database).", filesAddedToDatabase, folderLoad.FilesToLoad, stopwatch.Elapsed.TotalSeconds, folderLoad.FilesToLoad / stopwatch.Elapsed.TotalSeconds, folderLoad.IODuration.TotalSeconds, folderLoad.ComputeDuration.TotalSeconds, folderLoad.DatabaseDuration.TotalSeconds);
+            this.SetStatusMessage("{0} of {1} files added to image set in {2:0.000}s ({3:0} files/second, {4:0.000}s IO, {5:0.000}s compute, {6:0.000}s database).", filesAddedToDatabase, folderLoad.FilesToLoad, stopwatch.Elapsed.TotalSeconds, folderLoad.FilesToLoad / stopwatch.Elapsed.TotalSeconds, folderLoad.IODuration.TotalSeconds, folderLoad.ComputeDuration.TotalSeconds, folderLoad.DatabaseDuration.TotalSeconds);
 
-            // update the user as to what files in the database
+            // update the user as to what files are in the database
             this.MaybeShowFileCountsDialog(true);
             return true;
         }
@@ -2358,7 +2399,7 @@ namespace Carnassial
 
             // try to get the file database file path
             // addFiles will be true if it's a new file database (meaning the user will be prompted import some files)
-            if (this.TrySelectDatabaseFile(templateDatabasePath, out string fileDatabaseFilePath, out bool addFiles) == false)
+            if (this.TrySelectDatabaseFile(templateDatabasePath, out string fileDatabaseFilePath, out bool tryAddFiles) == false)
             {
                 // no file database was selected
                 return false;
@@ -2423,15 +2464,17 @@ namespace Carnassial
             this.Title = Path.GetFileName(fileDatabase.FilePath) + " - " + Constant.MainWindowBaseTitle;
             imageSetLoadAndSetupTime.Stop();
 
-            if (addFiles)
+            bool filesAdded = false;
+            if (tryAddFiles)
             {
                 // if this is a new file database, try to load files (if any) from the same folder
-                await this.TryAddFilesAsync(new string[] { this.FolderPath });
+                filesAdded = await this.TryAddFilesAsync(new string[] { this.FolderPath });
             }
-            else
+
+            await this.OnFileDatabaseOpenedOrFilesAddedAsync(filesAdded);
+            if (filesAdded == false)
             {
-                await this.OnFileDatabaseOpenedOrFilesAddedAsync(false);
-                this.SetStatusMessage("Image set loaded in {0:0.000}s.", imageSetLoadAndSetupTime.Elapsed.TotalSeconds);
+                this.SetStatusMessage("Image set opened in {0:0.000}s ({1:0} files/second).", imageSetLoadAndSetupTime.Elapsed.TotalSeconds, this.DataHandler.FileDatabase.CurrentlySelectedFileCount / imageSetLoadAndSetupTime.Elapsed.TotalSeconds);
             }
             return true;
         }
@@ -2600,8 +2643,9 @@ namespace Carnassial
 
         private void UpdateFolderLoadProgress(FileLoadStatus progress)
         {
-            this.FolderLoadProgress.Message.Content = progress.GetMessage();
-            this.FolderLoadProgress.ProgressBar.Value = progress.GetPercentage();
+            StatusBarItem statusMessage = (StatusBarItem)this.LongRunningFeedback.StatusMessage.Items[0];
+            statusMessage.Content = progress.GetMessage();
+            this.LongRunningFeedback.ProgressBar.Value = progress.GetPercentage();
 
             if (progress.TryDetachImage(out MemoryImage image))
             {
@@ -2609,6 +2653,13 @@ namespace Carnassial
                 this.MarkableCanvas.SetNewImage(image, null);
                 image.Dispose();
             }
+        }
+
+        private void UpdateSpreadsheetProgress(SpreadsheetReadWriteStatus progress)
+        {
+            StatusBarItem statusMessage = (StatusBarItem)this.LongRunningFeedback.StatusMessage.Items[0];
+            statusMessage.Content = progress.GetMessage();
+            this.LongRunningFeedback.ProgressBar.Value = progress.GetPercentage();
         }
 
         private async void Window_Closing(object sender, CancelEventArgs e)

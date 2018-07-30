@@ -315,11 +315,11 @@
                     <Grid Grid.Column="0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <Grid Grid.Row="0">
+                        <control:FeedbackControl x:Name="LongRunningFeedback" Grid.Row="0" Visibility="Collapsed" />
+                        <Grid Name="FileNavigationGrid" Grid.Row="0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -327,12 +327,11 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                        <control:FeedbackControl x:Name="FolderLoadProgress" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed" />
-                            <Slider Name="FileNavigatorSlider" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" Background="{StaticResource NavigationSliderBackgroundBrush}" GotKeyboardFocus="FileNavigatorSlider_GotKeyboardFocus" Grid.Column="0" Grid.Row="1" LargeChange="1" Minimum="1" TickPlacement="BottomRight" ToolTip="Scroll through all selected files."
-                                Thumb.DragStarted="FileNavigatorSlider_DragStarted" 
-                                Thumb.DragCompleted="FileNavigatorSlider_DragCompleted"
-                                ValueChanged="FileNavigatorSlider_ValueChanged" />
-                            <StatusBar Name="FileNavigation" Background="{StaticResource NavigationSliderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="1" Grid.Row="1" MinWidth="150" Padding="0,0,5,0">
+                            <Slider Name="FileNavigatorSlider" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="0" Background="{StaticResource NavigationSliderBackgroundBrush}" GotKeyboardFocus="FileNavigatorSlider_GotKeyboardFocus" Grid.Column="0" Grid.Row="0" LargeChange="1" Minimum="1" TickPlacement="BottomRight" ToolTip="Scroll through all selected files."
+                                    Thumb.DragStarted="FileNavigatorSlider_DragStarted" 
+                                    Thumb.DragCompleted="FileNavigatorSlider_DragCompleted"
+                                    ValueChanged="FileNavigatorSlider_ValueChanged" />
+                            <StatusBar Name="FileNavigation" Background="{StaticResource NavigationSliderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="1" Grid.Row="0" MinWidth="160">
                                 <StatusBarItem Content="File:" FontWeight="Bold" Padding="2" />
                                 <StatusBarItem Content="0" Padding="2" />
                                 <StatusBarItem Content="of" Padding="2" />
@@ -340,7 +339,7 @@
                                 <StatusBarItem Content="(all files)" Padding="2" />
                             </StatusBar>
                         </Grid>
-                        <images:MarkableCanvas x:Name="MarkableCanvas" Background="{StaticResource ApplicationBackgroundBrush}" MarkerCreatedOrDeleted="MarkableCanvas_MarkerCreatedOrDeleted" Grid.Row="2" />
+                        <images:MarkableCanvas x:Name="MarkableCanvas" Background="{StaticResource ApplicationBackgroundBrush}" MarkerCreatedOrDeleted="MarkableCanvas_MarkerCreatedOrDeleted" Grid.Column="0" Grid.Row="1" />
                     </Grid>
                     <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="4" />
                     <Grid Name="ControlGrid" Background="{StaticResource ApplicationBackgroundBrush}" Grid.Column="2">

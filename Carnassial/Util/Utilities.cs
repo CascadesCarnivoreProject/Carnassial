@@ -191,6 +191,10 @@ namespace Carnassial.Util
                                                              CarnassialConfigurationSettings.GetIssuesBrowserAddress(),
                                                              CarnassialConfigurationSettings.GetDevTeamEmailLink().ToEmailAddress());
             exitNotification.Message.What = String.Format("{0}, {1}, .NET {2}{3}", typeof(CarnassialWindow).Assembly.GetName(), Environment.OSVersion, Utilities.GetDotNetVersion(), Environment.NewLine);
+            if ((owner is CarnassialWindow carnassial) && (carnassial.DataHandler != null) && (carnassial.DataHandler.FileDatabase != null))
+            {
+                exitNotification.Message.What = String.Format("{0}{1}", carnassial.DataHandler.FileDatabase.FilePath, Environment.NewLine);
+            }
             if (e.ExceptionObject != null)
             {
                 exitNotification.Message.What += e.ExceptionObject.ToString();

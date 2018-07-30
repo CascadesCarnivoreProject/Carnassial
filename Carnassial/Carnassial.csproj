@@ -214,7 +214,6 @@
     <Compile Include="Database\ColumnTuplesForInsert.cs" />
     <Compile Include="Database\ColumnTuples.cs" />
     <Compile Include="Database\FileTuplesWithID.cs" />
-    <Compile Include="Database\FileTuplesWithPath.cs" />
     <Compile Include="Data\ControlRow.cs" />
     <Compile Include="Database\LogicalOperator.cs" />
     <Compile Include="Data\FileClassification.cs" />
@@ -227,6 +226,7 @@
     <Compile Include="Database\SQLiteTable.cs" />
     <Compile Include="Database\Select.cs" />
     <Compile Include="Data\ImageSetTable.cs" />
+    <Compile Include="Data\SpreadsheetReadWriteStatus.cs" />
     <Compile Include="Data\UpdateFileDateTimeOffsetTransaction.cs" />
     <Compile Include="Data\UpdateFileColumnTransaction.cs" />
     <Compile Include="Data\FileTableUserColumn.cs" />

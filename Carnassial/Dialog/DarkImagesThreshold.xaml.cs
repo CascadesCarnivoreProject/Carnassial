@@ -124,7 +124,7 @@ namespace Carnassial.Dialog
             this.MenuReset.IsEnabled = false;
             this.userSettings.DarkLuminosityThreshold = 0.01 * this.DarkLuminosityThresholdPercent.Value;
 
-            using (this.reclassification = new DarkImagesIOComputeTransaction(this.UpdateClassificationStatus, this.userSettings.Throttles.GetDesiredIntervalBetweenFileLoadProgress()))
+            using (this.reclassification = new DarkImagesIOComputeTransaction(this.UpdateClassificationStatus, this.userSettings.Throttles.GetDesiredProgressUpdateInterval()))
             {
                 await reclassification.ReclassifyFilesAsync(this.fileDatabase, 0.01 * this.userSettings.DarkLuminosityThreshold, (int)this.ActualWidth);
             }
