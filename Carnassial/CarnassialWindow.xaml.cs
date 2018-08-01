@@ -2737,9 +2737,20 @@ namespace Carnassial
                 return;
             }
 
-            // pass all keys except navigation to data entry controls
-            if (this.DataEntryControls.IsKeyboardFocusWithin)
+            // pass all keys except control exit keys to data entry controls
+            if (this.DataEntryControls.ControlsView.IsKeyboardFocusWithin && (this.DataEntryControls.ControlsView.SelectedItem != null))
             {
+                // check if focus is actually within a control
+                // This check is needed to prevent focus unexpectedly going to the data entry controls in the case where
+                //   1) the controls, as is usually the case, don't fill the whole height of CarnassilWindow grid row they occupy
+                //   2) the user switched input focus to another application
+                //   3) the user clicks empty space near the controls to return input focus to Carnassial
+                // Without this check, this sequence results in the controls view having keyboard focus even though no control has 
+                // keyboard focus, which causes Carnassial to swallow keyboard input from the user and offer a confusing experience.
+                // Numerous other solutions are possible but, in general, create auto layout difficulties as Grids do not resize
+                // the height of auto rows or offer collapse priorities among star spacings.  Within Carnassial, probably the best
+                // xaml based alternative is a row height multibinding, but this is substantially more complex than checking whether
+                // a control is selected.
                 if ((currentKey.Key != Key.Escape) && (currentKey.Key != Key.Enter) && (currentKey.Key != Key.Tab))
                 {
                     return;

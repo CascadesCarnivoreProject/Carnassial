@@ -167,9 +167,10 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
     </Control.Resources>
-    <ListView Name="ControlsView" Background="{StaticResource ApplicationBackgroundBrush}" BorderThickness="0"
-              DragOver="ControlsView_DragOver" Drop="ControlsView_Drop" MouseMove="ControlsView_MouseMove"
-              HorizontalContentAlignment="Stretch" SelectionMode="Single">
+    <ListView Name="ControlsView" Background="{StaticResource ApplicationBackgroundBrush}" BorderThickness="0" 
+            DragOver="ControlsView_DragOver" Drop="ControlsView_Drop" MinWidth="100"
+            HorizontalContentAlignment="Stretch"  MouseMove="ControlsView_MouseMove"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionMode="Single">
         <ListView.ItemContainerStyle>
             <Style TargetType="ListViewItem">
                 <EventSetter Event="GotKeyboardFocus" Handler="ControlsViewItem_GotKeyboardFocus" />

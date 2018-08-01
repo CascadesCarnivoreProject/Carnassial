@@ -1,7 +1,6 @@
 <Window x:Class="Carnassial.Dialog.CustomSelection"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:control="clr-namespace:Carnassial.Control"
-        xmlns:local="clr-namespace:Carnassial"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -40,7 +39,7 @@
             </StackPanel>
             <Rectangle Fill="#FF868686" Height="1" />
         </StackPanel>
-        <ScrollViewer Grid.Row="2">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="2">
             <Grid Name="SearchTerms">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
