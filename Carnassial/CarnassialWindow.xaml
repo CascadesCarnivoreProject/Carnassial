@@ -217,6 +217,7 @@
                         </MenuItem>
                     </MenuItem>
                     <Separator />
+                    <MenuItem Name="MenuViewPlayFiles" Header="Play or pause _files" Click="MenuViewPlayFiles_Click" InputGestureText="Ctrl+Space" ToolTip="Start slideshow of files in the image set." />
                     <MenuItem Name="MenuViewPlayVideo" Header="Play or pause _video" Click="MenuViewPlayVideo_Click" InputGestureText="Space" ToolTip="Play the current video or pause it if it's currently playing.">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/PlayVideo_16x.png" />
@@ -323,6 +324,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -331,7 +333,8 @@
                                     Thumb.DragStarted="FileNavigatorSlider_DragStarted" 
                                     Thumb.DragCompleted="FileNavigatorSlider_DragCompleted"
                                     ValueChanged="FileNavigatorSlider_ValueChanged" />
-                            <StatusBar Name="FileNavigation" Background="{StaticResource NavigationSliderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="1" Grid.Row="0" MinWidth="160">
+                            <ToggleButton Name="PlayFilesButton" IsChecked="False" Click="MenuViewPlayFiles_Click" Style="{StaticResource PlayPauseButtonStyle}" Grid.Column="1" Grid.Row="0" />
+                            <StatusBar Name="FileNavigation" Background="{StaticResource NavigationSliderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="2" Grid.Row="0" MinWidth="160">
                                 <StatusBarItem Content="File:" FontWeight="Bold" Padding="2" />
                                 <StatusBarItem Content="0" Padding="2" />
                                 <StatusBarItem Content="of" Padding="2" />

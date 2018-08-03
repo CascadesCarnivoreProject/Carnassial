@@ -80,6 +80,102 @@
         </Setter>
     </Style>
 
+    <Style x:Key="PlayPauseButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border Background="{StaticResource NavigationSliderBackgroundBrush}" BorderThickness="0" Padding="5,0,5,0">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Content">
+                    <Setter.Value>
+                        <!-- pause icon -->
+                        <Viewbox Width="11" Height="12" Margin="2,1.5,2,1.5">
+                            <Rectangle Width="11" Height="12">
+                                <Rectangle.Fill>
+                                    <DrawingBrush>
+                                        <DrawingBrush.Drawing>
+                                            <DrawingGroup>
+                                                <DrawingGroup.Children>
+                                                    <GeometryDrawing Brush="{StaticResource ApplicationBorderForegroundBrush}">
+                                                        <GeometryDrawing.Geometry>
+                                                            <PathGeometry>
+                                                                <PathFigure IsClosed="True" StartPoint="0,0">
+                                                                    <LineSegment Point="0,1" />
+                                                                    <LineSegment Point="0.4,1" />
+                                                                    <LineSegment Point="0.4,0" />
+                                                                </PathFigure>
+                                                                <PathFigure IsClosed="True" StartPoint="0.6,0">
+                                                                    <LineSegment Point="0.6,1" />
+                                                                    <LineSegment Point="1,1" />
+                                                                    <LineSegment Point="1,0" />
+                                                                </PathFigure>
+                                                            </PathGeometry>
+                                                        </GeometryDrawing.Geometry>
+                                                    </GeometryDrawing>
+                                                </DrawingGroup.Children>
+                                            </DrawingGroup>
+                                        </DrawingBrush.Drawing>
+                                    </DrawingBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                        </Viewbox>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="False">
+                <Setter Property="Content">
+                    <Setter.Value>
+                        <!-- play icon -->
+                        <Viewbox Width="15" Height="15">
+                            <Rectangle Width="15" Height="15">
+                                <Rectangle.Fill>
+                                    <DrawingBrush>
+                                        <DrawingBrush.Drawing>
+                                            <DrawingGroup>
+                                                <DrawingGroup.Children>
+                                                    <GeometryDrawing Brush="{StaticResource ApplicationBorderForegroundBrush}">
+                                                        <GeometryDrawing.Geometry>
+                                                            <PathGeometry>
+                                                                <PathFigure IsClosed="True" StartPoint="0,0">
+                                                                    <LineSegment Point="0,1" />
+                                                                    <LineSegment Point="1,0.5" />
+                                                                </PathFigure>
+                                                            </PathGeometry>
+                                                        </GeometryDrawing.Geometry>
+                                                    </GeometryDrawing>
+                                                    <GeometryDrawing Brush="{StaticResource NavigationSliderBackgroundBrush}">
+                                                        <GeometryDrawing.Geometry>
+                                                            <PathGeometry>
+                                                                <PathGeometry.Figures>
+                                                                    <PathFigure IsClosed="True" StartPoint="0.13,0.15">
+                                                                        <PathFigure.Segments>
+                                                                            <LineSegment Point="0.13,0.85" />
+                                                                            <LineSegment Point="0.75,0.5" />
+                                                                        </PathFigure.Segments>
+                                                                    </PathFigure>
+                                                                </PathGeometry.Figures>
+                                                            </PathGeometry>
+                                                        </GeometryDrawing.Geometry>
+                                                    </GeometryDrawing>
+                                                </DrawingGroup.Children>
+                                            </DrawingGroup>
+                                        </DrawingBrush.Drawing>
+                                    </DrawingBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                        </Viewbox>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <Style x:Key="SystemCloseButton" TargetType="Button">
         <Setter Property="Command" Value="{Binding Source={x:Static SystemCommands.CloseWindowCommand}}" />
         <Setter Property="CommandParameter" Value="{RelativeSource Mode=FindAncestor,AncestorType=Window}" />

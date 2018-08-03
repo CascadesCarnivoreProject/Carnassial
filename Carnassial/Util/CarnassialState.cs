@@ -3,6 +3,7 @@ using Carnassial.Control;
 using System;
 using System.Collections.Generic;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace Carnassial.Util
 {
@@ -15,6 +16,10 @@ namespace Carnassial.Util
         public Dictionary<string, object> CurrentFileSnapshot { get; set; }
         public byte DifferenceThreshold { get; set; }
         public bool FileNavigatorSliderDragging { get; set; }
+
+        // timer for flushing FileNavigatorSlider drag events
+        public DispatcherTimer FileNavigatorSliderTimer { get; private set; }
+
         public DateTime MostRecentRender { get; set; }
         public string MostRecentFileAddFolderPath { get; set; }
         public int MostRecentlyFocusedControlIndex { get; set; }
@@ -35,7 +40,13 @@ namespace Carnassial.Util
             }
             this.CurrentFileSnapshot = new Dictionary<string, object>(StringComparer.Ordinal);
             this.DifferenceThreshold = Constant.Images.DifferenceThresholdDefault;
+
             this.FileNavigatorSliderDragging = false;
+            this.FileNavigatorSliderTimer = new DispatcherTimer()
+            {
+                Interval = TimeSpan.FromSeconds(1.0 / Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound)
+            };
+
             this.MostRecentRender = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;
             this.MostRecentFileAddFolderPath = null;
             this.MostRecentlyFocusedControlIndex = -1;

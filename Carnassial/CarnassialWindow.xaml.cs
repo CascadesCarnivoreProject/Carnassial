@@ -22,7 +22,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Threading;
 using DialogResult = System.Windows.Forms.DialogResult;
 using MessageBox = Carnassial.Dialog.MessageBox;
 using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
@@ -36,9 +35,6 @@ namespace Carnassial
     {
         private bool disposed;
         private SpeechSynthesizer speechSynthesizer;
-
-        // timer for flushing FileNavigatorSlider drag events
-        private DispatcherTimer fileNavigatorSliderTimer;
 
         public DataEntryHandler DataHandler { get; private set; }
         public CarnassialState State { get; private set; }
@@ -61,11 +57,8 @@ namespace Carnassial
             this.MenuOptionsSkipDarkFileCheck.IsChecked = this.State.SkipDarkImagesCheck;
 
             // timer callback so the display will update to the current slider position when the user pauses whilst dragging the slider 
-            this.fileNavigatorSliderTimer = new DispatcherTimer()
-            {
-                Interval = TimeSpan.FromSeconds(1.0 / Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound)
-            };
-            this.fileNavigatorSliderTimer.Tick += this.FileNavigatorSlider_TimerTick;
+            this.State.FileNavigatorSliderTimer.Tick += this.FileNavigatorSlider_TimerTick;
+            this.State.Throttles.FilePlayTimer.Tick += this.FilePlay_TimerTick;
 
             // populate lists of menu items
             for (int analysisSlot = 0; analysisSlot < Constant.AnalysisSlots; ++analysisSlot)
@@ -271,12 +264,12 @@ namespace Carnassial
         {
             this.State.FileNavigatorSliderDragging = false;
             await this.ShowFileAsync(this.FileNavigatorSlider);
-            this.fileNavigatorSliderTimer.Stop();
+            this.State.FileNavigatorSliderTimer.Stop();
         }
 
         private void FileNavigatorSlider_DragStarted(object sender, DragStartedEventArgs args)
         {
-            this.fileNavigatorSliderTimer.Start(); // The timer forces an image display update to the current slider position if the user pauses longer than the timer's interval. 
+            this.State.FileNavigatorSliderTimer.Start(); // The timer forces an image display update to the current slider position if the user pauses longer than the timer's interval. 
             this.State.FileNavigatorSliderDragging = true;
         }
 
@@ -301,7 +294,7 @@ namespace Carnassial
         private async void FileNavigatorSlider_TimerTick(object sender, EventArgs e)
         {
             await this.ShowFileAsync(this.FileNavigatorSlider);
-            this.fileNavigatorSliderTimer.Stop();
+            this.State.FileNavigatorSliderTimer.Stop();
         }
 
         private async void FileNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> args)
@@ -314,11 +307,20 @@ namespace Carnassial
             }
 
             DateTime utcNow = DateTime.UtcNow;
-            if ((this.State.FileNavigatorSliderDragging == false) || (utcNow - this.State.MostRecentRender > this.fileNavigatorSliderTimer.Interval))
+            if ((this.State.FileNavigatorSliderDragging == false) || (utcNow - this.State.MostRecentRender > this.State.FileNavigatorSliderTimer.Interval))
             {
                 await this.ShowFileAsync(this.FileNavigatorSlider);
                 this.State.MostRecentRender = utcNow;
                 args.Handled = true;
+            }
+        }
+
+        private async void FilePlay_TimerTick(object sender, EventArgs e)
+        {
+            await this.ShowFileWithoutSliderCallbackAsync(true, Keyboard.Modifiers);
+            if (this.DataHandler.ImageCache.CurrentRow == (this.DataHandler.FileDatabase.Files.RowCount - 1))
+            {
+                this.State.FileNavigatorSliderTimer.Stop();
             }
         }
 
@@ -1245,7 +1247,7 @@ namespace Carnassial
             if (advancedCarnassialOptions.ShowDialog() == true)
             {
                 // throttle may have changed; update rendering rate
-                this.fileNavigatorSliderTimer.Interval = this.State.Throttles.DesiredIntervalBetweenRenders;
+                this.State.FileNavigatorSliderTimer.Interval = this.State.Throttles.DesiredIntervalBetweenRenders;
             }
         }
 
@@ -1446,6 +1448,25 @@ namespace Carnassial
             this.MarkableCanvas.MagnifierZoomOut();
             this.MarkableCanvas.MagnifierZoomOut();
             this.MarkableCanvas.MagnifierZoomOut();
+        }
+
+        private void MenuViewPlayFiles_Click(object sender, RoutedEventArgs e)
+        {
+            // if this event doesn't result from a button click, toggle the play files button's state
+            if (sender != this.PlayFilesButton)
+            {
+                this.PlayFilesButton.IsChecked = !this.PlayFilesButton.IsChecked;
+            }
+
+            // switch from not playing files to playing files5 or vice versa
+            if (this.PlayFilesButton.IsChecked == true)
+            {
+                this.State.Throttles.FilePlayTimer.Start();
+            }
+            else
+            {
+                this.State.Throttles.FilePlayTimer.Stop();
+            }
         }
 
         private void MenuViewPlayVideo_Click(object sender, RoutedEventArgs e)
@@ -2737,8 +2758,8 @@ namespace Carnassial
                 return;
             }
 
-            // pass all keys except control exit keys to data entry controls
-            if (this.DataEntryControls.ControlsView.IsKeyboardFocusWithin && (this.DataEntryControls.ControlsView.SelectedItem != null))
+            // pass all keys except keys which move focus off of data entry controls to data entry controls
+            if (this.DataEntryControls.ControlsView.IsKeyboardFocusWithin)
             {
                 // check if focus is actually within a control
                 // This check is needed to prevent focus unexpectedly going to the data entry controls in the case where
@@ -2751,10 +2772,21 @@ namespace Carnassial
                 // the height of auto rows or offer collapse priorities among star spacings.  Within Carnassial, probably the best
                 // xaml based alternative is a row height multibinding, but this is substantially more complex than checking whether
                 // a control is selected.
-                if ((currentKey.Key != Key.Escape) && (currentKey.Key != Key.Enter) && (currentKey.Key != Key.Tab))
+                if (this.DataEntryControls.ControlsView.SelectedItem != null)
                 {
-                    return;
+                    if ((currentKey.Key != Key.Escape) && (currentKey.Key != Key.Enter) && (currentKey.Key != Key.Tab))
+                    {
+                        return;
+                    }
                 }
+            }
+
+            // stop any file play in progress when any key is pressed
+            bool wasPlayingFiles = false;
+            if (this.PlayFilesButton.IsChecked == true)
+            {
+                wasPlayingFiles = true;
+                this.MenuViewPlayFiles_Click(sender, null);
             }
 
             // check if input key or chord is a shortcut key and dispatch appropriately if so
@@ -2896,7 +2928,18 @@ namespace Carnassial
                     // if the current file's a video allow the user to hit the space bar to start or stop playing the video
                     // This is desirable as the play or pause button doesn't necessarily have focus and it saves the user having to click the button with
                     // the mouse.
-                    if (this.MarkableCanvas.TryPlayOrPauseVideo() == false)
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        // since the check before this switch stops any current play, only respond to this key if it's a request to
+                        // start a play
+                        // Without this check, MenuViewPlayFiles_Click() would be called twice if the user uses ctrl+enter to stop a
+                        // file play, resulting in the keystroke causing file play to continue.
+                        if (wasPlayingFiles == false)
+                        {
+                            this.MenuViewPlayFiles_Click(this, null);
+                        }
+                    }
+                    else if (this.MarkableCanvas.TryPlayOrPauseVideo() == false)
                     {
                         currentKey.Handled = true;
                         return;
@@ -3010,14 +3053,14 @@ namespace Carnassial
                         // the accumulator is allowed to build until the next render and the number of files traversed incremented (or decremented)
                         // accordingly.
                         DateTime utcNow = DateTime.UtcNow;
-                        if (utcNow - this.State.MostRecentRender > this.fileNavigatorSliderTimer.Interval)
+                        if (utcNow - this.State.MostRecentRender > this.State.FileNavigatorSliderTimer.Interval)
                         {
                             // awaiting an async function within WndProc() bricks the UI, so fire it asynchronously
                             int increment = (int)(this.State.MouseHorizontalScrollDelta / Constant.Gestures.MouseHWheelStep);
                             int newFileIndex = this.DataHandler.ImageCache.CurrentRow + increment;
-#pragma warning disable CS4014
+                            #pragma warning disable CS4014
                             this.ShowFileWithoutSliderCallbackAsync(newFileIndex, increment);
-#pragma warning restore CS4014
+                            #pragma warning restore CS4014
                             this.State.MostRecentRender = utcNow;
                             this.State.MouseHorizontalScrollDelta = 0;
                         }
