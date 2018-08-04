@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:control="clr-namespace:Carnassial.Control"
-        xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
         Title="(Re)classify dark files."
         Loaded="Window_Loaded" PreviewKeyDown="Window_PreviewKeyDown"
@@ -60,7 +59,7 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <Slider Name="FileNavigatorSlider" AutoToolTipPlacement="BottomRight" Grid.Row="0" HorizontalAlignment="Stretch" Padding="0" TickPlacement="BottomRight" VerticalAlignment="Center" />
-                <Image Name="Image" Grid.Row="1" HorizontalAlignment="Stretch" Margin="2,0,5,0" Stretch="Uniform" StretchDirection="Both" />
+                <control:FileDisplay x:Name="FileDisplay" HorizontalAlignment="Center" Grid.Row="1" Margin="2,0,5,0" />
             </Grid>
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>

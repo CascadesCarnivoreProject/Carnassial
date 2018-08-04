@@ -20,7 +20,7 @@
                             What="You may want to view only a subset of your images and videos which fit some criteria of interest to you."
                             Solution="Specify the search terms which describe your criteria. Each row below reflects one of your data fields.  Select one or more data fields that you want to use as part of your search, select the expresson you want to use, and select or enter the value you want to use to compare against the data field's contents."
                             Result="Only those files matching your search criteria will be displayed."
-                            Hint="Glob expressions are case sensitive and allow wildcards as follows:&#10;&#x2022; * matches any number of characters and ? matches any single character&#10;&#x2022; [abc] matches one of the indicated characters; [a-z] matches one character in the range of indicated characters.&#10;More complex queries can be created by right clicking on a label and duplicating the term."
+                            Hint="Like expressions are case insensitive and allow wildcards as follows:&#10;&#x2022; * matches any number of characters and ? matches any single character&#10;&#x2022; [abc] matches one of the indicated characters; [a-z] matches one character in the range of indicated characters.&#10;More complex queries can be created by right clicking on a label and duplicating the term."
                             HideExplanationCheckboxIsVisible="True" Grid.Row="0"/>
         <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Grid.Row="1">
             <Rectangle Fill="#FF868686" Height="1" />

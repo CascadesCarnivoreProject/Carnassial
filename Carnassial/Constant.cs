@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Carnassial.Control;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Media.Imaging;
 
 namespace Carnassial
@@ -237,14 +239,27 @@ namespace Carnassial
             public static readonly Lazy<BitmapImage> Copy = Images.LoadBitmap("Menu/Copy_16x.png");
             public static readonly Lazy<BitmapImage> Paste = Images.LoadBitmap("Menu/Paste_16x.png");
 
-            public static readonly Lazy<BitmapImage> CorruptFile = Images.LoadBitmap("CorruptFile_480x.png");
-            public static readonly Lazy<BitmapImage> FileNoLongerAvailable = Images.LoadBitmap("FileNoLongerAvailable_480x.png");
-            public static readonly Lazy<BitmapImage> NoSelectableFile = Images.LoadBitmap("NoSelectableFile_480x.png");
+            public static readonly FileDisplayMessage FileCorruptMessage;
+            public static readonly FileDisplayMessage FileNoLongerAvailableMessage;
+            public static readonly FileDisplayMessage NoSelectableFileMessage;
 
             public static readonly Lazy<BitmapImage> StatusError = Images.LoadBitmap("StatusCriticalError_64x.png");
             public static readonly Lazy<BitmapImage> StatusHelp = Images.LoadBitmap("StatusHelp_64x.png");
             public static readonly Lazy<BitmapImage> StatusInformation = Images.LoadBitmap("StatusInformation_64x.png");
             public static readonly Lazy<BitmapImage> StatusWarning = Images.LoadBitmap("StatusWarning_64x.png");
+
+            static Images()
+            {
+                Images.FileCorruptMessage = new FileDisplayMessage("Image or video not available.",
+                    ":-(", 72, 
+                    "The file appears corrupted and cannot be displayed.");
+                Images.FileNoLongerAvailableMessage = new FileDisplayMessage("Image or video not available.", 
+                    ":-(", 72,
+                    "The file cannot be found.  Was it moved or deleted?");
+                Images.NoSelectableFileMessage = new FileDisplayMessage("No file is available to display.", 
+                    "This occurs when\n• no image set is open\n• the image set has no files in it, or\n• no files are selected.", 12,
+                    "To resolve this\n• open an image set if one isn't open (File menu)\n• add files if the image set is empty (File menu), or\n• change the selection (Select menu)");
+            }
 
             private static Lazy<BitmapImage> LoadBitmap(string fileName)
             {
@@ -342,7 +357,7 @@ namespace Carnassial
         public static class SearchTermOperator
         {
             public const string Equal = "\u003D";
-            public const string Glob = " GLOB ";
+            public const string Glob = "GLOB";
             public const string GreaterThan = "\u003E";
             public const string GreaterThanOrEqual = "\u2265";
             public const string LessThan = "\u003C";

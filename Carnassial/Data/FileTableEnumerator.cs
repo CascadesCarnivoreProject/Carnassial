@@ -6,7 +6,7 @@ namespace Carnassial.Data
 {
     public class FileTableEnumerator : IEnumerator<ImageRow>
     {
-        protected FileDatabase Database { get; private set; }
+        protected FileDatabase FileDatabase { get; private set; }
 
         // the current file, null if its not been set or if the database is empty
         public ImageRow Current { get; private set; }
@@ -20,7 +20,7 @@ namespace Carnassial.Data
         public FileTableEnumerator(FileDatabase fileDatabase, int startingPosition)
         {
             this.CurrentRow = startingPosition;
-            this.Database = fileDatabase;
+            this.FileDatabase = fileDatabase;
 
             // OK if this fails as FileTableEnumerator..ctor(FileDatabase) passes -1 to match default enumerator behaviour
             this.TryMoveToFile(startingPosition);
@@ -70,11 +70,11 @@ namespace Carnassial.Data
 
         public virtual bool TryMoveToFile(int fileRowIndex)
         {
-            if (this.Database.IsFileRowInRange(fileRowIndex))
+            if (this.FileDatabase.IsFileRowInRange(fileRowIndex))
             {
                 this.CurrentRow = fileRowIndex;
                 // rebuild ImageProperties regardless of whether the row changed or not as this seek may be a refresh after a database change
-                this.Current = this.Database.Files[fileRowIndex];
+                this.Current = this.FileDatabase.Files[fileRowIndex];
                 return true;
             }
 

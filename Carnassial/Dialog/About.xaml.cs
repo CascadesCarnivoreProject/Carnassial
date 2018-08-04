@@ -17,7 +17,6 @@ namespace Carnassial.Dialog
         public About(Window owner)
         {
             this.InitializeComponent();
-            Utilities.TryFitWindowInWorkingArea(this);
 
             this.latestReleaseAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
             this.MostRecentCheckForUpdate = null;

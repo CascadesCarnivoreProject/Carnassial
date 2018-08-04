@@ -1,7 +1,6 @@
 ﻿<Window x:Class="Carnassial.Dialog.DateTimeFixedCorrection"
 		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:control="clr-namespace:Carnassial.Control"
-        xmlns:local="clr-namespace:Carnassial"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		Title="Date/time - Add a fixed correction value to all files selected."
         Loaded="Window_Loaded"
@@ -22,6 +21,9 @@
                             HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
         <Rectangle Fill="#FF868686" Height="1" Grid.Row="1" />
         <Grid Name="PrimaryPanel" Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -45,7 +47,7 @@
                 <Label Content="Corrected:" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Column="4" VerticalAlignment="Center" Margin="5,0,2,0" Padding="0,0,0,0" />
                 <control:DateTimeOffsetPicker x:Name="DateTimePicker" Width="165" HorizontalAlignment="Left" Grid.Column="5" />
             </Grid>
-            <Image Name="Image" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" Grid.Row="1" />
+            <control:FileDisplay x:Name="FileDisplay" HorizontalAlignment="Center" Grid.Row="1" />
         </Grid>
         <Grid Name="FeedbackPanel" Visibility="Collapsed" Grid.Row="2">
             <Grid.RowDefinitions>

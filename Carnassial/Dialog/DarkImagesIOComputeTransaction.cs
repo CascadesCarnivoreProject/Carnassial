@@ -77,7 +77,7 @@ namespace Carnassial.Dialog
                             {
                                 this.Status.Image.Dispose();
                             }
-                            MemoryImage image = firstFile.LoadAsync(fileDatabase.FolderPath, expectedDisplayWidth).GetAwaiter().GetResult();
+                            MemoryImage image = firstFile.TryLoadAsync(fileDatabase.FolderPath, expectedDisplayWidth).GetAwaiter().GetResult();
                             this.Status.Image = image;
                             this.Status.MostRecentImageUpdate = NativeMethods.GetTickCount64();
                         }

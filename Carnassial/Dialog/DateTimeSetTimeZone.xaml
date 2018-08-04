@@ -44,7 +44,7 @@
                 <Label Grid.Column="1" Grid.Row="1" Content="New time zone: " Margin="5,0,0,0" FontWeight="Bold" />
                 <control:TimeZonePicker Grid.Column="1" Grid.Row="1" x:Name="TimeZones" Margin="115,0,0,0" Width="375" />
             </Grid>
-            <Image Name="Image" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" HorizontalAlignment="Left" Grid.Row="1" />
+            <control:FileDisplay x:Name="FileDisplay" HorizontalAlignment="Center" Grid.Row="1" />
         </Grid>
         <Grid Name="FeedbackPanel" Visibility="Collapsed" Grid.Row="2">
             <Grid.RowDefinitions>

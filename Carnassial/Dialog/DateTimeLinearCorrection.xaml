@@ -1,7 +1,6 @@
 ﻿<Window x:Class="Carnassial.Dialog.DateTimeLinearCorrection"
 		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:control="clr-namespace:Carnassial.Control"
-        xmlns:local="clr-namespace:Carnassial"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		Title="Date/time - Add a varying correction value"
         Loaded="Window_Loaded"
@@ -99,9 +98,9 @@
                 <Label Content="dd-MMM-yyyy HH:mm:ss" HorizontalAlignment="Left"  HorizontalContentAlignment="Left" FontWeight="Normal" Grid.Row="0" Grid.Column="2" Name="LatestImageDateTime"/>
             </Grid>
 
-            <!-- images -->
-            <Image Name="EarliestImage" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" VerticalAlignment="Top" HorizontalAlignment="Stretch" Grid.Row="2" Grid.Column="0"/>
-            <Image Name="LatestImage" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" VerticalAlignment="Top" HorizontalAlignment="Stretch" Grid.Row="2" Grid.Column="1"/>
+            <!-- files -->
+            <control:FileDisplay x:Name="EarliestFileDisplay" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="2" />
+            <control:FileDisplay x:Name="LatestFileDisplay" HorizontalAlignment="Center" Grid.Column="1" Grid.Row="2" />
         </Grid>
         <Grid Name="FeedbackPanel" Visibility="Collapsed" Margin="10,0,10,0" Grid.Row="2">
             <Grid.RowDefinitions>

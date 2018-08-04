@@ -1,6 +1,5 @@
 ﻿using Carnassial.Control;
 using Carnassial.Data;
-using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Diagnostics;
@@ -220,14 +219,8 @@ namespace Carnassial.Dialog
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            using (MemoryImage earliestImage = await this.earliestFile.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width / 2))
-            {
-                earliestImage.SetSource(this.EarliestImage);
-            }
-            using (MemoryImage latestImage = await this.latestFile.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width / 2))
-            {
-                latestImage.SetSource(this.LatestImage);
-            }
+            await this.EarliestFileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.earliestFile);
+            await this.LatestFileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.latestFile);
             this.ClockDrift.TimeSpanDisplay.Focus();
         }
     }

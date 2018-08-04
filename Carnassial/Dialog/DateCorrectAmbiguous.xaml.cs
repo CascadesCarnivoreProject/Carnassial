@@ -1,5 +1,4 @@
 ﻿using Carnassial.Data;
-using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -166,10 +165,7 @@ namespace Carnassial.Dialog
 
             this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
-            using (MemoryImage image = await file.LoadAsync(this.database.FolderPath, (int)this.Width))
-            {
-                image.SetSource(this.Image);
-            }
+            await this.FileDisplay.DisplayAsync(this.database.FolderPath, file);
             this.FileName.Content = file.FileName;
             this.FileName.ToolTip = this.FileName.Content;
 
@@ -184,19 +180,15 @@ namespace Carnassial.Dialog
 
             if (isAmbiguousDate)
             {
-                ImageRow imageProperties;
-                imageProperties = this.database.Files[this.ambiguousDatesList[this.ambiguousDatesListIndex].StartRange];
-                this.OriginalDateLabel.Content = imageProperties.DateTimeOffset.Date;
+                ImageRow file = this.database.Files[this.ambiguousDatesList[this.ambiguousDatesListIndex].StartRange];
+                this.OriginalDateLabel.Content = file.DateTimeOffset.Date;
 
-                this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(imageProperties.DateTimeOffset, out DateTimeOffset swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(imageProperties.DateTimeOffset);
+                this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(file.DateTimeOffset, out DateTimeOffset swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(file.DateTimeOffset);
 
                 this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
 
-                using (MemoryImage image = await imageProperties.LoadAsync(this.database.FolderPath, (int)this.Width))
-                {
-                    image.SetSource(this.Image);
-                }
-                this.FileName.Content = imageProperties.FileName;
+                await this.FileDisplay.DisplayAsync(this.database.FolderPath, file);
+                this.FileName.Content = file.FileName;
                 this.FileName.ToolTip = this.FileName.Content;
 
                 // set the next button and the radio button back to their defaults
@@ -216,7 +208,7 @@ namespace Carnassial.Dialog
                 this.OriginalDate.Visibility = Visibility.Hidden;
                 this.SwappedDate.Visibility = Visibility.Hidden;
 
-                this.Image.Source = null;
+                this.FileDisplay.Clear();
                 this.FileName.Content = String.Empty;
                 this.FileName.ToolTip = this.FileName.Content;
 

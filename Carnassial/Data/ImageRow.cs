@@ -574,39 +574,6 @@ namespace Carnassial.Data
             return String.Equals(previousJpegName, fileName, StringComparison.OrdinalIgnoreCase);
         }
 
-        public async Task<MemoryImage> LoadAsync(string imageSetFolderPath)
-        {
-            return await this.LoadAsync(imageSetFolderPath, null);
-        }
-
-        public async virtual Task<MemoryImage> LoadAsync(string imageSetFolderPath, Nullable<int> expectedDisplayWidth)
-        {
-            string jpegPath = this.GetFilePath(imageSetFolderPath);
-            if (File.Exists(jpegPath) == false)
-            {
-                return new MemoryImage(Constant.Images.FileNoLongerAvailable.Value);
-            }
-
-            // 8MP average performance (n ~= 200), milliseconds
-            // scale factor  1.0  1/2   1/4    1/8
-            //               110  76.3  55.9   46.1
-            // Stopwatch stopwatch = new Stopwatch();
-            // stopwatch.Start();
-            using (FileStream stream = new FileStream(jpegPath, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
-            {
-                if (stream.Length < Constant.Images.SmallestValidJpegSizeInBytes)
-                {
-                    return new MemoryImage(Constant.Images.CorruptFile.Value);
-                }
-                byte[] buffer = new byte[stream.Length];
-                await stream.ReadAsync(buffer, 0, buffer.Length);
-                MemoryImage image = new MemoryImage(buffer, expectedDisplayWidth);
-                // stopwatch.Stop();
-                // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
-                return image;
-            }
-        }
-
         public void SetDateTimeOffsetFromFileInfo(FileInfo fileInfo)
         {
             // populate new image's default date and time
@@ -630,6 +597,35 @@ namespace Carnassial.Data
                     return jpeg.GetThumbnailProperties(ref preallocatedThumbnail);
                 }
                 return new ImageProperties(MetadataReadResult.Failed);
+            }
+        }
+
+        public async Task<MemoryImage> TryLoadAsync(string imageSetFolderPath)
+        {
+            return await this.TryLoadAsync(imageSetFolderPath, null);
+        }
+
+        public async virtual Task<MemoryImage> TryLoadAsync(string imageSetFolderPath, Nullable<int> expectedDisplayWidth)
+        {
+            // 8MP average performance (n ~= 200), milliseconds
+            // scale factor  1.0  1/2   1/4    1/8
+            //               110  76.3  55.9   46.1
+            // Stopwatch stopwatch = new Stopwatch();
+            // stopwatch.Start();
+            string jpegPath = this.GetFilePath(imageSetFolderPath);
+            using (FileStream stream = new FileStream(jpegPath, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
+            {
+                if (stream.Length < Constant.Images.SmallestValidJpegSizeInBytes)
+                {
+                    return null;
+                }
+
+                byte[] buffer = new byte[stream.Length];
+                await stream.ReadAsync(buffer, 0, buffer.Length);
+                MemoryImage image = new MemoryImage(buffer, expectedDisplayWidth);
+                // stopwatch.Stop();
+                // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
+                return image;
             }
         }
 

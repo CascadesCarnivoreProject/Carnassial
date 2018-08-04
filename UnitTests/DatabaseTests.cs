@@ -726,7 +726,7 @@ namespace Carnassial.UnitTests
 
                 if (expectedIsVideo == false)
                 {
-                    using (MemoryImage image = await file.LoadAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidth))
+                    using (MemoryImage image = await file.TryLoadAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidth))
                     {
                         stopwatch.Restart();
                         double luminosity = image.GetLuminosityAndColoration(0, out double coloration);

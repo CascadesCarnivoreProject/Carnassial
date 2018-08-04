@@ -1,8 +1,10 @@
 ﻿using Carnassial.Control;
 using Carnassial.Data;
+using Carnassial.Images;
 using Carnassial.Native;
 using Carnassial.Util;
 using System;
+using System.Diagnostics;
 using System.Windows;
 
 namespace Carnassial.Dialog
@@ -15,20 +17,22 @@ namespace Carnassial.Dialog
     public partial class DateTimeFixedCorrection : Window
     {
         private readonly FileDatabase fileDatabase;
-        private readonly ImageRow fileToDisplay;
+        private readonly ImageCache imageCache;
         private readonly DateTimeOffset initialDateTime;
 
         private bool displayingPreview;
 
-        public DateTimeFixedCorrection(FileDatabase fileDatabase, ImageRow fileToDisplay, Window owner)
+        public DateTimeFixedCorrection(FileDatabase fileDatabase, ImageCache imageCache, Window owner)
         {
             this.InitializeComponent();
             this.displayingPreview = false;
             this.fileDatabase = fileDatabase;
-            this.fileToDisplay = fileToDisplay;
+            this.imageCache = imageCache;
             this.Owner = owner;
 
-            // get the image filename and display it
+            // get the file's name and display it
+            ImageRow fileToDisplay = imageCache.Current;
+            Debug.Assert(fileToDisplay != null, "Current file unexpectedly null.");
             this.FileName.Content = fileToDisplay.FileName;
             this.FileName.ToolTip = this.FileName.Content;
 
@@ -109,11 +113,7 @@ namespace Carnassial.Dialog
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            // display the image
-            using (MemoryImage image = await this.fileToDisplay.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width))
-            {
-                image.SetSource(this.Image);
-            }
+            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.imageCache);
         }
     }
 }

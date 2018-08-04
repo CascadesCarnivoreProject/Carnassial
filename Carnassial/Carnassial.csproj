@@ -188,7 +188,14 @@
     <Compile Include="Control\AutocompleteTextBox.cs" />
     <Compile Include="Control\BooleanInverter.cs" />
     <Compile Include="Control\DataEntryControlContextMenuItemType.cs" />
+    <Compile Include="Control\FileDisplay.xaml.cs">
+      <DependentUpon>FileDisplay.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Control\FileDisplayWithMarkers.xaml.cs">
+      <DependentUpon>FileDisplayWithMarkers.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Control\HorizontalLineAdorner.cs" />
+    <Compile Include="Control\FileDisplayMessage.cs" />
     <Compile Include="Control\UtcOffsetPicker.cs" />
     <Compile Include="Database\IndexedPropertyChangedEventArgs.cs" />
     <Compile Include="Database\SecondaryIndex.cs" />
@@ -330,6 +337,14 @@
     </Compile>
     <Compile Include="WindowWithSystemMenu.cs" />
     <Page Include="Control\AnalysisButtons.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Control\FileDisplay.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Control\FileDisplayWithMarkers.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -504,7 +519,6 @@
     <Compile Include="Control\HelpUserControl.xaml.cs">
       <DependentUpon>HelpUserControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Images\MarkableCanvas.cs" />
     <Compile Include="Util\DateTimeHandler.cs" />
     <Compile Include="Command\UndoRedoChain.cs" />
     <Compile Include="Util\UriExtensions.cs" />
@@ -582,11 +596,6 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Carnassial.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\NoSelectableFile_480x.png" />
-    <Resource Include="Resources\CorruptFile_480x.png" />
-    <Resource Include="Resources\FileNoLongerAvailable_480x.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\StatusCriticalError_64x.png" />

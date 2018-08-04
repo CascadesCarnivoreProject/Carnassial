@@ -382,11 +382,11 @@ namespace Carnassial.UnitTests
                     Assert.IsNotNull(carnassial.DataHandler.ImageCache.Current);
 
                     this.ShowDialog(new About(carnassial));
-                    this.ShowDialog(new AdvancedCarnassialOptions(carnassial.State, carnassial.MarkableCanvas, carnassial));
+                    this.ShowDialog(new AdvancedCarnassialOptions(carnassial.State, carnassial.FileDisplay, carnassial));
                     this.ShowDialog(new ChooseFileDatabase(new string[] { TestConstant.File.DefaultNewFileDatabaseFileName }, TestConstant.File.DefaultTemplateDatabaseFileName, carnassial));
 
                     this.ShowDialog(new Dialog.CustomSelection(carnassial.DataHandler.FileDatabase, carnassial));
-                    using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.CurrentRow, new CarnassialState(), carnassial))
+                    using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache, new CarnassialState(), carnassial))
                     {
                         this.ShowDialog(darkThreshold);
                     }
@@ -394,7 +394,7 @@ namespace Carnassial.UnitTests
                     this.ShowDialog(new DateCorrectAmbiguous(carnassial.DataHandler.FileDatabase, carnassial));
                     this.ShowDialog(new DateDaylightSavingsTimeCorrection(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache, carnassial));
 
-                    DateTimeFixedCorrection clockSetCorrection = new DateTimeFixedCorrection(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current, carnassial);
+                    DateTimeFixedCorrection clockSetCorrection = new DateTimeFixedCorrection(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache, carnassial);
                     this.ShowDialog(clockSetCorrection);
 
                     DateTimeLinearCorrection clockDriftCorrection = new DateTimeLinearCorrection(carnassial.DataHandler.FileDatabase, carnassial);
@@ -402,7 +402,7 @@ namespace Carnassial.UnitTests
                     this.ShowDialog(clockDriftCorrection);
 
                     this.ShowDialog(new DateTimeRereadFromFiles(carnassial.DataHandler.FileDatabase, carnassial.State.Throttles.GetDesiredProgressUpdateInterval(), carnassial));
-                    this.ShowDialog(new DateTimeSetTimeZone(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current, carnassial));
+                    this.ShowDialog(new DateTimeSetTimeZone(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache, carnassial));
                     this.ShowDialog(new FileCountsByClassification(carnassial.DataHandler.FileDatabase.GetFileCountsByClassification(), carnassial));
                     this.ShowDialog(new EditLog(carnassial.DataHandler.FileDatabase.ImageSet.Log, carnassial));
 

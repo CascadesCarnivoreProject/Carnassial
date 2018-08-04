@@ -136,7 +136,7 @@ namespace Carnassial.Images
                     MemoryImage imageToDisplay = null;
                     if (((tickNow - this.Status.MostRecentImageUpdate) > Constant.ThrottleValues.DesiredIntervalBetweenImageUpdates.TotalMilliseconds) && (loadAtom.First.File != null) && (loadAtom.First.File.IsVideo == false))
                     {
-                        imageToDisplay = loadAtom.First.File.LoadAsync(fileDatabase.FolderPath, this.Status.ImageRenderWidth).GetAwaiter().GetResult();
+                        imageToDisplay = loadAtom.First.File.TryLoadAsync(fileDatabase.FolderPath, this.Status.ImageRenderWidth).GetAwaiter().GetResult();
                         this.Status.MostRecentImageUpdate = NativeMethods.GetTickCount64();
                     }
                     this.Status.UpdateImage(imageToDisplay);

@@ -23,7 +23,7 @@ namespace Carnassial.Data
         }
 
         #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public async override Task<MemoryImage> LoadAsync(string baseFolderPath, Nullable<int> expectedDisplayWidth)
+        public async override Task<MemoryImage> TryLoadAsync(string baseFolderPath, Nullable<int> expectedDisplayWidth)
         {
             throw new NotSupportedException();
         }

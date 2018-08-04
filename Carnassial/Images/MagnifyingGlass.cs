@@ -1,4 +1,5 @@
-﻿using Carnassial.Data;
+﻿using Carnassial.Control;
+using Carnassial.Data;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -20,6 +21,8 @@ namespace Carnassial.Images
         // current angle of the entire magnifying glass
         private double magnifyingGlassAngle;
 
+        private FileDisplayWithMarkers parent;
+
         private RotateTransform rotation;
         private TranslateTransform translation;
 
@@ -30,15 +33,13 @@ namespace Carnassial.Images
         /// </remarks>
         public double FieldOfView { get; set; }
 
-        public new MarkableCanvas Parent { get; set; }
-
-        public MagnifyingGlass(MarkableCanvas markableCanvas)
+        public MagnifyingGlass(FileDisplayWithMarkers fileDisplay)
         {
             this.FieldOfView = Constant.MarkableCanvas.MagnifyingGlassDefaultFieldOfView;
             this.IsEnabled = false;
             this.IsHitTestVisible = false;
             this.HorizontalAlignment = HorizontalAlignment.Left;
-            this.Parent = markableCanvas;
+            this.parent = fileDisplay;
             this.VerticalAlignment = VerticalAlignment.Top;
             this.Visibility = Visibility.Collapsed;
 
@@ -164,8 +165,8 @@ namespace Carnassial.Images
             }
 
             // given the mouse position over the displayed image find the equivalent position in magnified image (which is a different size)
-            Point mousePosition = Mouse.GetPosition(this.Parent.ImageToDisplay);
-            Point mouseLocationRatio = Marker.ConvertPointToRatio(mousePosition, this.Parent.ImageToDisplay.ActualWidth, this.Parent.ImageToDisplay.ActualHeight);
+            Point mousePosition = Mouse.GetPosition(this.parent.FileDisplay.Image);
+            Point mouseLocationRatio = Marker.ConvertPointToRatio(mousePosition, this.parent.FileDisplay.Image.ActualWidth, this.parent.FileDisplay.Image.ActualHeight);
             Point magnifiedLocation = Marker.ConvertRatioToPoint(mouseLocationRatio, canvasToMagnify.Width, canvasToMagnify.Height);
 
             // create a brush from the unaltered image in the magnification canvas and use it to fill the magnifying glass
@@ -181,9 +182,9 @@ namespace Carnassial.Images
             // figure out the magnifying glass angle needed
             // Often several angles work so choose a new angle whose difference from the existing angle will cause the least amount of animation 
             double leftEdge = Constant.MarkableCanvas.MagnifyingGlassDiameter;
-            double rightEdge = this.Parent.ImageToDisplay.ActualWidth - Constant.MarkableCanvas.MagnifyingGlassDiameter;
+            double rightEdge = this.parent.FileDisplay.Image.ActualWidth - Constant.MarkableCanvas.MagnifyingGlassDiameter;
             double topEdge = Constant.MarkableCanvas.MagnifyingGlassDiameter;
-            double bottomEdge = this.Parent.ImageToDisplay.ActualHeight - Constant.MarkableCanvas.MagnifyingGlassDiameter;
+            double bottomEdge = this.parent.FileDisplay.Image.ActualHeight - Constant.MarkableCanvas.MagnifyingGlassDiameter;
 
             double newMagnifyingGlassAngle;
             if ((mousePosition.X < leftEdge) && (mousePosition.Y < topEdge))

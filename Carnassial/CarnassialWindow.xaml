@@ -1,7 +1,6 @@
 ﻿<local:WindowWithSystemMenu x:Class="Carnassial.CarnassialWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:control="clr-namespace:Carnassial.Control"
-        xmlns:images="clr-namespace:Carnassial.Images"
         xmlns:local="clr-namespace:Carnassial"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         AutomationProperties.AutomationId="Carnassial" Icon="Carnassial.ico"
@@ -217,8 +216,8 @@
                         </MenuItem>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuViewPlayFiles" Header="Play or pause _files" Click="MenuViewPlayFiles_Click" InputGestureText="Ctrl+Space" ToolTip="Start slideshow of files in the image set." />
-                    <MenuItem Name="MenuViewPlayVideo" Header="Play or pause _video" Click="MenuViewPlayVideo_Click" InputGestureText="Space" ToolTip="Play the current video or pause it if it's currently playing.">
+                    <MenuItem Name="MenuViewPlayFiles" Header="Play or pause _files" Click="MenuViewPlayFiles_Click" InputGestureText="Ctrl+Space" Style="{StaticResource ApplicationMenuItem}" ToolTip="Start slideshow of files in the image set." />
+                    <MenuItem Name="MenuViewPlayVideo" Header="Play or pause _video" Click="MenuViewPlayVideo_Click" InputGestureText="Space" Style="{StaticResource ApplicationMenuItem}" ToolTip="Play the current video or pause it if it's currently playing.">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/PlayVideo_16x.png" />
                         </MenuItem.Icon>
@@ -342,7 +341,7 @@
                                 <StatusBarItem Content="(all files)" Padding="2" />
                             </StatusBar>
                         </Grid>
-                        <images:MarkableCanvas x:Name="MarkableCanvas" Background="{StaticResource ApplicationBackgroundBrush}" MarkerCreatedOrDeleted="MarkableCanvas_MarkerCreatedOrDeleted" Grid.Column="0" Grid.Row="1" />
+                        <control:FileDisplayWithMarkers x:Name="FileDisplay" Background="{StaticResource ApplicationBackgroundBrush}" MarkerCreatedOrDeleted="MarkableCanvas_MarkerCreatedOrDeleted" Grid.Column="0" Grid.Row="1" />
                     </Grid>
                     <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="4" />
                     <Grid Name="ControlGrid" Background="{StaticResource ApplicationBackgroundBrush}" Grid.Column="2">

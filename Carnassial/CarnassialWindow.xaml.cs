@@ -91,6 +91,8 @@ namespace Carnassial
             this.Height = this.State.CarnassialWindowPosition.Height;
             this.Width = this.State.CarnassialWindowPosition.Width;
             Utilities.TryFitWindowInWorkingArea(this);
+
+            this.FileDisplay.Display(Constant.Images.NoSelectableFileMessage);
         }
 
         private string FolderPath
@@ -128,9 +130,9 @@ namespace Carnassial
                     }
 
                     // sync image set properties
-                    if (this.MarkableCanvas != null)
+                    if (this.FileDisplay != null)
                     {
-                        this.DataHandler.FileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, this.MarkableCanvas.MagnifyingGlassEnabled);
+                        this.DataHandler.FileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, this.FileDisplay.MagnifyingGlassEnabled);
                     }
 
                     if (this.IsFileAvailable())
@@ -250,8 +252,8 @@ namespace Carnassial
             this.AnalysisButtons.EnableOrDisable(filesSelected, this.State.Analysis);
             this.DataEntryControls.IsEnabled = filesSelected;
             this.FileNavigatorSlider.IsEnabled = filesSelected;
-            this.MarkableCanvas.IsEnabled = filesSelected;
-            this.MarkableCanvas.MagnifyingGlassEnabled = filesSelected && this.DataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
+            this.FileDisplay.IsEnabled = filesSelected;
+            this.FileDisplay.MagnifyingGlassEnabled = filesSelected && this.DataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
 
             if (filesSelected == false)
             {
@@ -287,7 +289,7 @@ namespace Carnassial
 
         private void FileNavigatorSlider_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
-            this.FocusMarkableCanvas();
+            this.FocusFileDisplay();
         }
 
         // timer callback that forces image update to the current slider position. Invoked as the user pauses dragging the image slider 
@@ -324,9 +326,10 @@ namespace Carnassial
             }
         }
 
-        private void FocusMarkableCanvas()
+        private void FocusFileDisplay()
         {
-            this.MarkableCanvas.Focus();
+            Debug.Assert(this.FileDisplay.FileDisplay.Dock.Focusable, "FileDisplay isn't focusable.");
+            this.FileDisplay.FileDisplay.Dock.Focus();
         }
 
         private void FolderSelectionDialog_FolderChanging(object sender, CommonFileDialogFolderChangeEventArgs e)
@@ -516,7 +519,7 @@ namespace Carnassial
 
         public void RefreshDisplayedMarkers()
         {
-            this.MarkableCanvas.Markers = this.GetDisplayMarkers();
+            this.FileDisplay.Markers = this.GetDisplayMarkers();
         }
 
         private void MenuEdit_SubmenuOpened(object sender, RoutedEventArgs e)
@@ -570,7 +573,7 @@ namespace Carnassial
 
         private async void MenuEditDarkImages_Click(object sender, RoutedEventArgs e)
         {
-            using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(this.DataHandler.FileDatabase, this.DataHandler.ImageCache.CurrentRow, this.State, this))
+            using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(this.DataHandler.FileDatabase, this.DataHandler.ImageCache, this.State, this))
             {
                 await this.ShowBulkFileEditDialogAsync(darkThreshold);
             }
@@ -579,7 +582,7 @@ namespace Carnassial
         /// <summary>Correct the date by specifying an offset.</summary>
         private async void MenuEditDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
         {
-            DateTimeFixedCorrection fixedDateCorrection = new DateTimeFixedCorrection(this.DataHandler.FileDatabase, this.DataHandler.ImageCache.Current, this);
+            DateTimeFixedCorrection fixedDateCorrection = new DateTimeFixedCorrection(this.DataHandler.FileDatabase, this.DataHandler.ImageCache, this);
             await this.ShowBulkFileEditDialogAsync(fixedDateCorrection);
         }
 
@@ -810,7 +813,7 @@ namespace Carnassial
 
         private async void MenuEditSetTimeZone_Click(object sender, RoutedEventArgs e)
         {
-            DateTimeSetTimeZone setTimeZone = new DateTimeSetTimeZone(this.DataHandler.FileDatabase, this.DataHandler.ImageCache.Current, this);
+            DateTimeSetTimeZone setTimeZone = new DateTimeSetTimeZone(this.DataHandler.FileDatabase, this.DataHandler.ImageCache, this);
             await this.ShowBulkFileEditDialogAsync(setTimeZone);
         }
 
@@ -1243,7 +1246,7 @@ namespace Carnassial
         /// <summary>Show advanced Carnassial options</summary>
         private void MenuOptionsAdvancedCarnassialOptions_Click(object sender, RoutedEventArgs e)
         {
-            AdvancedCarnassialOptions advancedCarnassialOptions = new AdvancedCarnassialOptions(this.State, this.MarkableCanvas, this);
+            AdvancedCarnassialOptions advancedCarnassialOptions = new AdvancedCarnassialOptions(this.State, this.FileDisplay, this);
             if (advancedCarnassialOptions.ShowDialog() == true)
             {
                 // throttle may have changed; update rendering rate
@@ -1401,7 +1404,7 @@ namespace Carnassial
 
         private void MenuViewApplyBookmark_Click(object sender, RoutedEventArgs e)
         {
-            this.MarkableCanvas.ApplyBookmark();
+            this.FileDisplay.ApplyBookmark();
         }
 
         /// <summary>Toggle the magnifier on and off</summary>
@@ -1411,7 +1414,7 @@ namespace Carnassial
             displayMagnifier = !displayMagnifier;
             this.DataHandler.FileDatabase.ImageSet.Options = this.DataHandler.FileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, displayMagnifier);
             this.MenuOptionsDisplayMagnifier.IsChecked = displayMagnifier;
-            this.MarkableCanvas.MagnifyingGlassEnabled = displayMagnifier;
+            this.FileDisplay.MagnifyingGlassEnabled = displayMagnifier;
         }
 
         /// <summary>View the combined image differences</summary>
@@ -1423,9 +1426,9 @@ namespace Carnassial
         /// <summary>Increase the magnification of the magnifying glass by several keyboard steps.</summary>
         private void MenuViewMagnifierIncrease_Click(object sender, RoutedEventArgs e)
         {
-            this.MarkableCanvas.MagnifierZoomIn();
-            this.MarkableCanvas.MagnifierZoomIn();
-            this.MarkableCanvas.MagnifierZoomIn();
+            this.FileDisplay.MagnifierZoomIn();
+            this.FileDisplay.MagnifierZoomIn();
+            this.FileDisplay.MagnifierZoomIn();
         }
 
         private async void MenuViewGotoFile_Click(object sender, RoutedEventArgs e)
@@ -1445,9 +1448,9 @@ namespace Carnassial
         /// <summary>Decrease the magnification of the magnifying glass by several keyboard steps.</summary>
         private void MenuViewMagnifierDecrease_Click(object sender, RoutedEventArgs e)
         {
-            this.MarkableCanvas.MagnifierZoomOut();
-            this.MarkableCanvas.MagnifierZoomOut();
-            this.MarkableCanvas.MagnifierZoomOut();
+            this.FileDisplay.MagnifierZoomOut();
+            this.FileDisplay.MagnifierZoomOut();
+            this.FileDisplay.MagnifierZoomOut();
         }
 
         private void MenuViewPlayFiles_Click(object sender, RoutedEventArgs e)
@@ -1471,7 +1474,7 @@ namespace Carnassial
 
         private void MenuViewPlayVideo_Click(object sender, RoutedEventArgs e)
         {
-            this.MarkableCanvas.TryPlayOrPauseVideo();
+            this.FileDisplay.TryPlayOrPauseVideo();
         }
 
         /// <summary>Cycle through next and previous image differences</summary>
@@ -1482,7 +1485,7 @@ namespace Carnassial
 
         private void MenuViewSetBookmark_Click(object sender, RoutedEventArgs e)
         {
-            this.MarkableCanvas.SetBookmark();
+            this.FileDisplay.SetBookmark();
         }
 
         private async void MenuViewShowFirstFile_Click(object sender, RoutedEventArgs e)
@@ -1493,7 +1496,7 @@ namespace Carnassial
         private void MenuViewShowFiles_Click(object sender, RoutedEventArgs e)
         {
             this.Tabs.SelectedIndex = 1;
-            this.FocusMarkableCanvas();
+            this.FocusFileDisplay();
         }
 
         private void MenuViewShowInstructions_Click(object sender, RoutedEventArgs e)
@@ -1571,19 +1574,19 @@ namespace Carnassial
 
         private void MenuViewZoomIn_Click(object sender, RoutedEventArgs e)
         {
-            Point mousePosition = Mouse.GetPosition(this.MarkableCanvas.ImageToDisplay);
-            this.MarkableCanvas.ZoomIn();
+            Point mousePosition = Mouse.GetPosition(this.FileDisplay.FileDisplay.Image);
+            this.FileDisplay.ZoomIn();
         }
 
         private void MenuViewZoomOut_Click(object sender, RoutedEventArgs e)
         {
-            Point mousePosition = Mouse.GetPosition(this.MarkableCanvas.ImageToDisplay);
-            this.MarkableCanvas.ZoomOut();
+            Point mousePosition = Mouse.GetPosition(this.FileDisplay.FileDisplay.Image);
+            this.FileDisplay.ZoomOut();
         }
 
         private void MenuViewZoomToFit_Click(object sender, RoutedEventArgs e)
         {
-            this.MarkableCanvas.ZoomToFit();
+            this.FileDisplay.ZoomToFit();
         }
 
         private void MoveFocusToNextOrPreviousTabPosition(bool moveToPrevious)
@@ -1635,7 +1638,7 @@ namespace Carnassial
             // no control was found so set focus to the slider
             // this has also the desirable side effect of binding the controls into both next and previous loops so that keys can be used to cycle
             // continuously through them
-            this.FocusMarkableCanvas();
+            this.FocusFileDisplay();
             this.State.MostRecentlyFocusedControlIndex = -1;
         }
 
@@ -2041,10 +2044,7 @@ namespace Carnassial
             // if there is no file to show, then show an image indicating no image set or an empty image set
             if ((this.IsFileDatabaseAvailable() == false) || (this.DataHandler.FileDatabase.CurrentlySelectedFileCount < 1))
             {
-                using (MemoryImage noSelectableFile = new MemoryImage(Constant.Images.NoSelectableFile.Value))
-                {
-                    this.MarkableCanvas.SetNewImage(noSelectableFile, null);
-                }
+                this.FileDisplay.Display(Constant.Images.NoSelectableFileMessage);
                 this.RefreshDisplayedMarkers();
                 this.SetCurrentFile(Constant.Database.InvalidRow);
 
@@ -2120,17 +2120,7 @@ namespace Carnassial
             if (moveToFile.NewFileToDisplay)
             {
                 // show the file
-                List<Marker> displayMarkers = this.GetDisplayMarkers();
-
-                bool isVideo = this.DataHandler.ImageCache.Current.IsVideo;
-                if (isVideo)
-                {
-                    this.MarkableCanvas.SetNewVideo(this.DataHandler.ImageCache.Current.GetFileInfo(this.FolderPath), displayMarkers);
-                }
-                else
-                {
-                    this.MarkableCanvas.SetNewImage(this.DataHandler.ImageCache.GetCurrentImage(), displayMarkers);
-                }
+                this.FileDisplay.Display(this.DataHandler.FileDatabase.FolderPath, this.DataHandler.ImageCache, this.GetDisplayMarkers());
 
                 // add move to this file to the undo/redo chain if it's not already present
                 if (generateUndoRedoCommands)
@@ -2139,6 +2129,7 @@ namespace Carnassial
                 }
 
                 // enable or disable menu items whose availability depends on whether the file's an image or video
+                bool isVideo = this.DataHandler.ImageCache.Current.IsVideo;
                 bool isImage = !isVideo;
                 this.MenuOptionsDisplayMagnifier.IsEnabled = isImage;
                 this.MenuViewApplyBookmark.IsEnabled = isImage;
@@ -2574,7 +2565,7 @@ namespace Carnassial
                 // unaltered image should be cached
                 MemoryImage unalteredImage = this.DataHandler.ImageCache.GetCurrentImage();
                 Debug.Assert(unalteredImage != null, "Unaltered image not available from image cache.");
-                this.MarkableCanvas.SetDisplayImage(unalteredImage);
+                this.FileDisplay.Display(unalteredImage);
                 this.ClearStatusMessage();
                 return;
             }
@@ -2607,7 +2598,7 @@ namespace Carnassial
 
             // display differenced image
             // see above remarks about not modifying ImageToMagnify
-            this.MarkableCanvas.SetDisplayImage(this.DataHandler.ImageCache.GetCurrentImage());
+            this.FileDisplay.Display(this.DataHandler.ImageCache.GetCurrentImage());
             this.SetStatusMessage("Viewing differences from both next and previous files ({0:0.0}ms).", 1000.0 * this.DataHandler.ImageCache.AverageCombinedDifferenceTimeInSeconds);
         }
 
@@ -2625,9 +2616,15 @@ namespace Carnassial
             {
                 // unaltered image should be cached
                 MemoryImage unaltered = this.DataHandler.ImageCache.GetCurrentImage();
-                Debug.Assert(unaltered != null, "Unaltered image not available from image cache.");
-                this.MarkableCanvas.SetDisplayImage(unaltered);
-                this.ClearStatusMessage();
+                this.FileDisplay.Display(unaltered);
+                if (unaltered != null)
+                {
+                    this.ClearStatusMessage();
+                }
+                else
+                {
+                    this.SetStatusMessage("Difference can't be shown as the current file is not a displayable image (typically it's a video, missing, or corrupt).");
+                }
                 return;
             }
 
@@ -2658,7 +2655,7 @@ namespace Carnassial
             // display the differenced image
             // the magnifying glass always displays the original non-diferenced image so ImageToDisplay is updated and ImageToMagnify left unchnaged
             // this allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
-            this.MarkableCanvas.SetDisplayImage(this.DataHandler.ImageCache.GetCurrentImage());
+            this.FileDisplay.Display(this.DataHandler.ImageCache.GetCurrentImage());
             this.SetStatusMessage("Viewing difference from {0} file ({1:0.0}ms).", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next", 1000.0 * this.DataHandler.ImageCache.AverageDifferenceTimeInSeconds);
         }
 
@@ -2671,7 +2668,7 @@ namespace Carnassial
             if (progress.TryDetachImage(out MemoryImage image))
             {
                 progress.MaybeUpdateImageRenderWidth((int)this.Width);
-                this.MarkableCanvas.SetNewImage(image, null);
+                this.FileDisplay.Display(image, null);
                 image.Dispose();
             }
         }
@@ -2800,13 +2797,13 @@ namespace Carnassial
                     if (Keyboard.Modifiers == ModifierKeys.None)
                     {
                         // apply the current bookmark
-                        this.MarkableCanvas.ApplyBookmark();
+                        this.FileDisplay.ApplyBookmark();
                         currentKey.Handled = true;
                     }
                     else if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         // bookmark (save) the current pan / zoom of the display image
-                        this.MarkableCanvas.SetBookmark();
+                        this.FileDisplay.SetBookmark();
                         currentKey.Handled = true;
                     }
                     break;
@@ -2820,7 +2817,7 @@ namespace Carnassial
                     break;
                 case Key.D:
                     // decrease the magnifing glass zoom
-                    this.MarkableCanvas.MagnifierZoomOut();
+                    this.FileDisplay.MagnifierZoomOut();
                     currentKey.Handled = true;
                     break;
                 // return to full view of display image
@@ -2828,16 +2825,16 @@ namespace Carnassial
                 case Key.NumPad0:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
-                        this.MarkableCanvas.ZoomToFit();
+                        this.FileDisplay.ZoomToFit();
                         currentKey.Handled = true;
                     }
                     break;
                 case Key.OemMinus:
-                    this.MarkableCanvas.ZoomOut();
+                    this.FileDisplay.ZoomOut();
                     currentKey.Handled = true;
                     break;
                 case Key.OemPlus:
-                    this.MarkableCanvas.ZoomIn();
+                    this.FileDisplay.ZoomIn();
                     currentKey.Handled = true;
                     break;
                 case Key.D1:
@@ -2888,7 +2885,7 @@ namespace Carnassial
                 // exit current control, if any
                 case Key.Enter:
                 case Key.Escape:
-                    this.FocusMarkableCanvas();
+                    this.FocusFileDisplay();
                     currentKey.Handled = true;
                     break;
                 case Key.G:
@@ -2939,14 +2936,14 @@ namespace Carnassial
                             this.MenuViewPlayFiles_Click(this, null);
                         }
                     }
-                    else if (this.MarkableCanvas.TryPlayOrPauseVideo() == false)
+                    else if (this.FileDisplay.TryPlayOrPauseVideo() == false)
                     {
                         currentKey.Handled = true;
                         return;
                     }
                     break;
                 case Key.U:
-                    this.MarkableCanvas.MagnifierZoomIn();
+                    this.FileDisplay.MagnifierZoomIn();
                     currentKey.Handled = true;
                     break;
                 case Key.V:
@@ -3039,7 +3036,7 @@ namespace Carnassial
             // positive increments rather than the negative increment which is correct for the motion.  As it sometimes jumps large for swipe rights
             // as well the simplest solution is to declare the event out of range and drop it.  Some combining of drag events is done (MouseHWheelStep)
             // as moving to a new file is a relatively chunky operation and actioning every increment makes the user interface rather hyper.
-            if (msg == Constant.Win32Messages.WM_MOUSEHWHEEL && this.MarkableCanvas.IsFocused)
+            if (msg == Constant.Win32Messages.WM_MOUSEHWHEEL && this.FileDisplay.IsFocused)
             {
                 long wheelIncrement = wParam.ToInt64() >> 16;
                 if (Math.Abs(wheelIncrement) < Constant.Gestures.MaximumMouseHWheelIncrement)

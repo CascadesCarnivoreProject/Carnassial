@@ -161,7 +161,7 @@ namespace Carnassial.UnitTests
             FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultFileDatabaseFileName);
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
             ImageRow corruptFile = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.CorruptFieldScan, out MetadataReadResult corruptMetadataRead);
-            using (MemoryImage corruptImage = await corruptFile.LoadAsync(fileDatabase.FolderPath))
+            using (MemoryImage corruptImage = await corruptFile.TryLoadAsync(fileDatabase.FolderPath))
             {
                 Assert.IsTrue(corruptImage.DecodeError);
             }
@@ -230,7 +230,7 @@ namespace Carnassial.UnitTests
                     // load the image
                     FileInfo fileInfo = new FileInfo(Path.Combine(fileExpectation.RelativePath, fileExpectation.FileName));
                     ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, fileExpectation.RelativePath);
-                    using (MemoryImage image = await file.LoadAsync(this.WorkingDirectory))
+                    using (MemoryImage image = await file.TryLoadAsync(this.WorkingDirectory))
                     {
                         double luminosity = image.GetLuminosityAndColoration(0, out double coloration);
                         FileClassification classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
@@ -294,15 +294,15 @@ namespace Carnassial.UnitTests
                     // check if the image to diff against is matched
                     if (fileDatabase.IsFileRowInRange(previousNextImageRow))
                     {
-                        MemoryImage unalteredImage = await cache.Current.LoadAsync(fileDatabase.FolderPath);
+                        MemoryImage unalteredImage = await cache.Current.TryLoadAsync(fileDatabase.FolderPath);
                         ImageRow previousNextFile = fileDatabase.Files[previousNextImageRow];
-                        MemoryImage previousNextImage = await previousNextFile.LoadAsync(fileDatabase.FolderPath);
+                        MemoryImage previousNextImage = await previousNextFile.TryLoadAsync(fileDatabase.FolderPath);
                         bool mismatched = unalteredImage.MismatchedOrNot32BitBgra(previousNextImage);
 
                         if (fileDatabase.IsFileRowInRange(otherImageRowForCombined))
                         {
                             ImageRow otherFileForCombined = fileDatabase.Files[otherImageRowForCombined];
-                            MemoryImage otherImageForCombined = await otherFileForCombined.LoadAsync(fileDatabase.FolderPath);
+                            MemoryImage otherImageForCombined = await otherFileForCombined.TryLoadAsync(fileDatabase.FolderPath);
                             mismatched |= unalteredImage.MismatchedOrNot32BitBgra(otherImageForCombined);
                         }
 

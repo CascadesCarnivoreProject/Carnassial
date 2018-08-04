@@ -1,4 +1,5 @@
 ﻿using Carnassial.Data;
+using Carnassial.Images;
 using Carnassial.Native;
 using Carnassial.Util;
 using System;
@@ -10,24 +11,24 @@ namespace Carnassial.Dialog
     public partial class DateTimeSetTimeZone : Window
     {
         private readonly FileDatabase fileDatabase;
-        private readonly ImageRow fileToDisplay;
+        private readonly ImageCache imageCache;
 
         private bool displayingPreview;
 
-        public DateTimeSetTimeZone(FileDatabase fileDatabase, ImageRow fileToDisplay, Window owner)
+        public DateTimeSetTimeZone(FileDatabase fileDatabase, ImageCache imageCache, Window owner)
         {
             this.InitializeComponent();
             this.displayingPreview = false;
             this.fileDatabase = fileDatabase;
-            this.fileToDisplay = fileToDisplay;
+            this.imageCache = imageCache;
             this.Owner = owner;
 
             // get the file's current time
-            DateTimeOffset currentDateTime = fileToDisplay.DateTimeOffset;
+            DateTimeOffset currentDateTime = this.imageCache.Current.DateTimeOffset;
             this.OriginalDate.Content = DateTimeHandler.ToDisplayDateTimeUtcOffsetString(currentDateTime);
 
             // get the filename and display it
-            this.FileName.Content = fileToDisplay.FileName;
+            this.FileName.Content = this.imageCache.Current.FileName;
 
             // configure timezone picker
             this.TimeZones.SelectTimeZone(this.fileDatabase.ImageSet.GetTimeZoneInfo());
@@ -39,11 +40,7 @@ namespace Carnassial.Dialog
             Utilities.SetDefaultDialogPosition(this);
             Utilities.TryFitWindowInWorkingArea(this);
 
-            // display the image
-            using (MemoryImage image = await this.fileToDisplay.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width))
-            {
-                image.SetSource(this.Image);
-            }
+            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.imageCache);
         }
 
         private void PreviewDateTimeChanges()

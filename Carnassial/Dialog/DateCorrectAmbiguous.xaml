@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:control="clr-namespace:Carnassial.Control"
-        xmlns:local="clr-namespace:Carnassial"
         mc:Ignorable="d"
         Title="Date - Check and modify ambiguous dates." 
         Loaded="Window_Loaded"
@@ -55,7 +54,7 @@
                 <Button Name="NextDate" Content="_Next" Grid.Row="0" Grid.Column="5" Grid.RowSpan="2" Padding="6,5,6,5" Margin="6,5,6,5" Click="NextPreviousButton_Click" />
                 <Button Name="SwapAll" Content="_Swap all" HorizontalAlignment="Right" Grid.Row="0" Grid.Column="6" Grid.RowSpan="2" Padding="6,5,6,5" Margin="6,5,6,5" Click="SwapAllButton_Click" />
             </Grid>
-            <Image Name="Image" Stretch="Uniform" MinHeight="100" MinWidth="100" StretchDirection="Both" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Row="1" />
+            <control:FileDisplay x:Name="FileDisplay" HorizontalAlignment="Center" Grid.Row="1" />
         </Grid>
         <Grid Name="FeedbackPanel" Visibility="Collapsed" Grid.Row="2" >
             <Grid.RowDefinitions>

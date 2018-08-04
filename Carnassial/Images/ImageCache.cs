@@ -62,8 +62,7 @@ namespace Carnassial.Images
                 this.ResetDifferenceState(null);
                 foreach (MemoryImage image in this.unalteredImagesByID.Values)
                 {
-                    Debug.Assert(image != null, "Unaltered image unexpectedly null in image cache.");
-                    this.DisposeImageIfNeeded(image);
+                    this.DisposeImageIfNotNull(image);
                 }
             }
 
@@ -71,7 +70,7 @@ namespace Carnassial.Images
             this.disposed = true;
         }
 
-        private void DisposeImageIfNeeded(MemoryImage image)
+        private void DisposeImageIfNotNull(MemoryImage image)
         {
             // don't dispose resource backed images as doing so makes them unusable
             if (image != null)
@@ -138,15 +137,15 @@ namespace Carnassial.Images
             {
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
             }
-            else if (this.CurrentDifferenceState == ImageDifference.Next && this.CurrentRow == this.Database.CurrentlySelectedFileCount - 1)
+            else if (this.CurrentDifferenceState == ImageDifference.Next && this.CurrentRow == this.FileDatabase.CurrentlySelectedFileCount - 1)
             {
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
             }
-            else if (this.CurrentDifferenceState == ImageDifference.Next && !this.Database.IsFileDisplayable(this.CurrentRow + 1))
+            else if (this.CurrentDifferenceState == ImageDifference.Next && !this.FileDatabase.IsFileDisplayable(this.CurrentRow + 1))
             {
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
             }
-            else if (this.CurrentDifferenceState == ImageDifference.Previous && !this.Database.IsFileDisplayable(this.CurrentRow - 1))
+            else if (this.CurrentDifferenceState == ImageDifference.Previous && !this.FileDatabase.IsFileDisplayable(this.CurrentRow - 1))
             {
                 this.MoveToNextStateInPreviousNextDifferenceCycle();
             }
@@ -162,6 +161,13 @@ namespace Carnassial.Images
         public async Task<ImageDifferenceResult> TryCalculateDifferenceAsync(byte differenceThreshold)
         {
             if (this.Current == null || this.Current.IsVideo || this.Current.IsDisplayable() == false)
+            {
+                this.CurrentDifferenceState = ImageDifference.Unaltered;
+                return ImageDifferenceResult.CurrentImageNotAvailable;
+            }
+
+            MemoryImage unaltered = this.differenceCache[ImageDifference.Unaltered];
+            if (unaltered == null)
             {
                 this.CurrentDifferenceState = ImageDifference.Unaltered;
                 return ImageDifferenceResult.CurrentImageNotAvailable;
@@ -189,9 +195,6 @@ namespace Carnassial.Images
             {
                 return ImageDifferenceResult.NotCalculable;
             }
-
-            MemoryImage unaltered = this.differenceCache[ImageDifference.Unaltered];
-            Debug.Assert(unaltered != null, "Difference cache coherency error: unaltered image is null.");
 
             MemoryImage difference = null;
             bool differenceComputed = await Task.Run(() =>
@@ -224,6 +227,13 @@ namespace Carnassial.Images
                 return ImageDifferenceResult.CurrentImageNotAvailable;
             }
 
+            MemoryImage unaltered = this.differenceCache[ImageDifference.Unaltered];
+            if (unaltered == null)
+            {
+                this.CurrentDifferenceState = ImageDifference.Unaltered;
+                return ImageDifferenceResult.CurrentImageNotAvailable;
+            }
+
             MemoryImage previous = await this.TryGetPreviousImageAsync();
             if (previous == null)
             {
@@ -235,9 +245,6 @@ namespace Carnassial.Images
             {
                 return ImageDifferenceResult.NextImageNotAvailable;
             }
-
-            MemoryImage unaltered = this.differenceCache[ImageDifference.Unaltered];
-            Debug.Assert(unaltered != null, "Difference cache coherency error: unaltered image is null.");
 
             // all three images are available, so calculate and cache difference
             MemoryImage difference = null;
@@ -272,8 +279,7 @@ namespace Carnassial.Images
 
             if (this.unalteredImagesByID.TryRemove(id, out MemoryImage imageForID))
             {
-                Debug.Assert(imageForID != null, "Unaltered image unexpectedly null in image cache.");
-                this.DisposeImageIfNeeded(imageForID);
+                this.DisposeImageIfNotNull(imageForID);
             }
             lock (this.mostRecentlyUsedIDs)
             {
@@ -335,8 +341,7 @@ namespace Carnassial.Images
                             {
                                 if (this.unalteredImagesByID.TryRemove(fileIDToRemove, out MemoryImage imageForID))
                                 {
-                                    Debug.Assert(imageForID != null, "Unaltered image unexpectedly null in image cache.");
-                                    this.DisposeImageIfNeeded(imageForID);
+                                    this.DisposeImageIfNotNull(imageForID);
                                 }
                             }
                         }
@@ -376,14 +381,7 @@ namespace Carnassial.Images
                 return null;
             }
 
-            MemoryImage image = await this.TryGetImageAsync(file, 0);
-            if (image == null)
-            {
-                return null;
-            }
-
-            this.CacheImage(file.ID, image);
-            return image;
+            return await this.TryGetImageAsync(file, 0);
         }
 
         private async Task<MemoryImage> TryGetImageAsync(ImageRow file, int prefetchStride)
@@ -401,7 +399,7 @@ namespace Carnassial.Images
                 {
                     // load the requested image from disk as it isn't cached, doesn't have a prefetch running, and is needed right now 
                     // by the caller
-                    image = await file.LoadAsync(this.Database.FolderPath);
+                    image = await file.TryLoadAsync(this.FileDatabase.FolderPath);
                     this.CacheImage(file.ID, image);
                 }
             }
@@ -422,13 +420,13 @@ namespace Carnassial.Images
                 return true;
             }
 
-            if (this.Database.IsFileRowInRange(fileRow) == false)
+            if (this.FileDatabase.IsFileRowInRange(fileRow) == false)
             {
                 file = null;
                 return false;
             }
 
-            file = this.Database.Files[fileRow];
+            file = this.FileDatabase.Files[fileRow];
             return file.IsDisplayable();
         }
 
@@ -444,12 +442,12 @@ namespace Carnassial.Images
 
         private bool TryInitiatePrefetch(int fileIndex)
         {
-            if (this.Database.IsFileRowInRange(fileIndex) == false)
+            if (this.FileDatabase.IsFileRowInRange(fileIndex) == false)
             {
                 return false;
             }
 
-            ImageRow nextFile = this.Database.Files[fileIndex];
+            ImageRow nextFile = this.FileDatabase.Files[fileIndex];
             if (nextFile.IsVideo || this.unalteredImagesByID.ContainsKey(nextFile.ID) || this.prefetechesByID.ContainsKey(nextFile.ID))
             {
                 return false;
@@ -457,7 +455,7 @@ namespace Carnassial.Images
 
             Task prefetch = Task.Run((Func<Task>)(async () =>
             {
-                MemoryImage nextImage = await nextFile.LoadAsync((string)this.Database.FolderPath);
+                MemoryImage nextImage = await nextFile.TryLoadAsync((string)this.FileDatabase.FolderPath);
                 this.CacheImage(nextFile.ID, nextImage);
                 this.prefetechesByID.TryRemove(nextFile.ID, out Task ignored);
             }));

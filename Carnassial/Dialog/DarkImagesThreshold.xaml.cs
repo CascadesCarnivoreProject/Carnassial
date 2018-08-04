@@ -1,6 +1,5 @@
 ﻿using Carnassial.Data;
 using Carnassial.Images;
-using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Threading.Tasks;
@@ -22,14 +21,14 @@ namespace Carnassial.Dialog
         private DarkImagesIOComputeTransaction reclassification;
         private CarnassialUserRegistrySettings userSettings;
 
-        public DarkImagesThreshold(FileDatabase database, int currentFileIndex, CarnassialUserRegistrySettings state, Window owner)
+        public DarkImagesThreshold(FileDatabase database, ImageCache imageCache, CarnassialUserRegistrySettings state, Window owner)
         {
             this.InitializeComponent();
             this.Owner = owner;
 
             this.fileDatabase = database;
             this.disposed = false;
-            this.fileEnumerator = new FileTableEnumerator(database, currentFileIndex);
+            this.fileEnumerator = new FileTableEnumerator(database, imageCache.CurrentRow);
             this.imageProperties = null;
             this.isProgramaticNavigatiorSliderUpdate = false;
             this.previousFile = null;
@@ -70,10 +69,7 @@ namespace Carnassial.Dialog
                 return;
             }
 
-            using (MemoryImage image = await this.fileEnumerator.Current.LoadAsync(this.fileDatabase.FolderPath, (int)this.Width))
-            {
-                image.SetSource(this.Image);
-            }
+            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.fileEnumerator.Current);
             this.FileName.Content = this.fileEnumerator.Current.FileName;
             this.FileName.ToolTip = this.FileName.Content;
             this.imageProperties = this.fileEnumerator.Current.TryGetThumbnailProperties(this.fileDatabase.FolderPath);
@@ -218,7 +214,7 @@ namespace Carnassial.Dialog
             }
             if (status.Image != null)
             {
-                status.Image.SetSource(this.Image);
+                this.FileDisplay.Display(status.Image);
             }
 
             this.isProgramaticNavigatiorSliderUpdate = true;
