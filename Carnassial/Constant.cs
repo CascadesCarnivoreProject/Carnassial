@@ -16,6 +16,7 @@ namespace Carnassial
 
         public const string ApplicationName = "Carnassial";
         public const string Debug = "DEBUG";
+        public const int DefaultControlGridWidth = 300; // keep in sync with corresponding default in CarnassialWindow.xaml
         public const int LargeNumberOfFilesToDelete = 100;
         public const string MainWindowBaseTitle = "Carnassial: Simplifying Remote Camera Data";
         public const int MaximumUndoableCommands = 100;
@@ -326,6 +327,7 @@ namespace Carnassial
             {
                 public const string AudioFeedback = "AudioFeedback";
                 public const string CarnassialWindowPosition = "CarnassialWindowPosition";
+                public const string ControlGridWidth = "ControlGridWidth";
 
                 // most recently used operator for custom selections
                 public const string CustomSelectionTermCombiningOperator = "CustomSelectionTermCombiningOperator";

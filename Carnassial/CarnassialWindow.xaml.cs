@@ -49,7 +49,8 @@ namespace Carnassial
             this.Title = Constant.MainWindowBaseTitle;
 
             // recall user's state from prior sessions
-            this.State.ReadFromRegistry();
+            this.ControlGrid.Width = this.State.ControlGridWidth;
+            this.FileView.ColumnDefinitions[2].Width = new GridLength(this.ControlGrid.Width);
 
             this.MenuOptionsAudioFeedback.IsChecked = this.State.AudioFeedback;
             this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.State.SuppressSpreadsheetImportPrompt;
@@ -324,6 +325,14 @@ namespace Carnassial
             {
                 this.State.FileNavigatorSliderTimer.Stop();
             }
+        }
+
+        private void FileViewGridSplitter_DragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            // WPF's GridSplitter doesn't modify the width of grid elements even when set to resize the previous and next columns
+            // This is a quirk of GridSplitter's implementation, which is mainly intended to work with star sizing.  The below 
+            // workaround simply completes the propagation of the size change.
+            this.ControlGrid.Width -= e.HorizontalChange;
         }
 
         private void FocusFileDisplay()
@@ -2691,6 +2700,7 @@ namespace Carnassial
             {
                 this.State.CarnassialWindowPosition = new Rect(new Point(this.Left, this.Top), new Size(this.Width, this.Height));
             }
+            this.State.ControlGridWidth = (int)this.ControlGrid.Width;
             this.State.WriteToRegistry();
         }
 

@@ -310,6 +310,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <!-- ideally would be {Binding Source={x:Static local:Constant.DefaultControlGridWidth}} but the VS 2017 xaml editor doesn't support this -->
                         <ColumnDefinition Width="300" />
                     </Grid.ColumnDefinitions>
                     <Grid Grid.Column="0">
@@ -343,7 +344,7 @@
                         </Grid>
                         <control:FileDisplayWithMarkers x:Name="FileDisplay" Background="{StaticResource ApplicationBackgroundBrush}" MarkerCreatedOrDeleted="MarkableCanvas_MarkerCreatedOrDeleted" Grid.Column="0" Grid.Row="1" />
                     </Grid>
-                    <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="4" />
+                    <GridSplitter Grid.Column="1" DragCompleted="FileViewGridSplitter_DragCompleted" ResizeBehavior="PreviousAndNext" ResizeDirection="Columns" Width="4" />
                     <Grid Name="ControlGrid" Background="{StaticResource ApplicationBackgroundBrush}" Grid.Column="2">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />

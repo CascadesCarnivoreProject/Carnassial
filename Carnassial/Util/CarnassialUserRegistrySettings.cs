@@ -9,6 +9,7 @@ namespace Carnassial.Util
     {
         public bool AudioFeedback { get; set; }
         public Rect CarnassialWindowPosition { get; set; }
+        public int ControlGridWidth { get; set; }
         public LogicalOperator CustomSelectionTermCombiningOperator { get; set; }
         public double DarkLuminosityThreshold { get; set; }
         public DateTime MostRecentCheckForUpdates { get; set; }
@@ -39,6 +40,7 @@ namespace Carnassial.Util
             {
                 this.AudioFeedback = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.AudioFeedback, false);
                 this.CarnassialWindowPosition = registryKey.ReadRect(Constant.Registry.CarnassialKey.CarnassialWindowPosition, new Rect(0.0, 0.0, 1350.0, 900.0));
+                this.ControlGridWidth = registryKey.ReadInteger(Constant.Registry.CarnassialKey.ControlGridWidth, (int)Constant.DefaultControlGridWidth);
                 this.CustomSelectionTermCombiningOperator = registryKey.ReadLogicalOperator(Constant.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, LogicalOperator.And);
                 this.DarkLuminosityThreshold = registryKey.ReadDouble(Constant.Registry.CarnassialKey.DarkLuminosityThreshold, Constant.Images.DarkLuminosityThresholdDefault);
                 this.MostRecentCheckForUpdates = registryKey.ReadDateTime(Constant.Registry.CarnassialKey.MostRecentCheckForUpdates, DateTime.UtcNow);
@@ -58,6 +60,7 @@ namespace Carnassial.Util
             {
                 registryKey.Write(Constant.Registry.CarnassialKey.AudioFeedback, this.AudioFeedback);
                 registryKey.Write(Constant.Registry.CarnassialKey.CarnassialWindowPosition, this.CarnassialWindowPosition);
+                registryKey.Write(Constant.Registry.CarnassialKey.ControlGridWidth, this.ControlGridWidth);
                 registryKey.Write(Constant.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, this.CustomSelectionTermCombiningOperator.ToString());
                 registryKey.Write(Constant.Registry.CarnassialKey.DarkLuminosityThreshold, this.DarkLuminosityThreshold);
                 registryKey.Write(Constant.Registry.CarnassialKey.DesiredImageRendersPerSecond, this.Throttles.DesiredImageRendersPerSecond);
