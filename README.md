@@ -15,6 +15,7 @@ If you're a developer and would like to submit a pull request please see below.
 ### Development Environment
 Install [Visual Studio 2017 Community](https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx) or newer with the below options in addition to the defaults:
 
+* .NET 4.7.1 development and targeting
 * Common Tools -> GitHub Extension for Visual Studio
 
 Higher Visual Studio SKUs such as Enterprise are fine.  After Visual Studio installation:
@@ -28,7 +29,7 @@ Commits should
 * include appropriate test coverage
 * have no build warnings, pass code analysis (Analyze -> Run Code Analysis), and be free of StyleCop issues (right click solution -> Run StyleCop)
 
-Application and test development is done against .NET 4.6.1.  Carnassial is a 64 bit app and for the most part only an x64 build is needed for development and testing
+Application and test development is done against .NET 4.7.1.  Carnassial is a 64 bit app and for the most part only an x64 build is needed for development and testing
 (the installer automatically rewires itself to build x86 under an x64 build).  However, the Visual Studio development UI is a 32 bit app and is therefore unable to
 load controls from the regular Carnassial build for display in the WPF designer.  As a result, Carnassial has a vestigial x86 build which needs to be selected when 
 doing UI tasks if the view in the designer is to match what's displayed at x64 runtime.  (Building Carnassial as AnyCPU in the x64 build isn't an option as 
@@ -66,7 +67,7 @@ Known limitations:
 Known limitations with Windows 7:
 
 * The Recycle Bin part of age out of automatic .tdb and .ddb backups and deletion of files is untested.
-* Users may need to [install .NET 4.6.1 or newer](https://msdn.microsoft.com/en-us/library/bb822049.aspx) if it's not already present using, for example, the [.NET 4.7.1 web installer](https://www.microsoft.com/en-us/download/details.aspx?id=56115).
+* Users may need to [install .NET 4.7.1 or newer](https://msdn.microsoft.com/en-us/library/bb822049.aspx) if it's not already present using, for example, the [.NET installer](https://www.microsoft.com/net/download/dotnet-framework-runtime).
 
 ### History
 Carnassial is named for [carnassials](https://en.wikipedia.org/wiki/Carnassial) as its function is analogous (though unfortunately it lacks the teeth's self-sharpening properties).
