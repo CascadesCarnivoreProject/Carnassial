@@ -386,10 +386,6 @@ namespace Carnassial.UnitTests
                     this.ShowDialog(new ChooseFileDatabase(new string[] { TestConstant.File.DefaultNewFileDatabaseFileName }, TestConstant.File.DefaultTemplateDatabaseFileName, carnassial));
 
                     this.ShowDialog(new Dialog.CustomSelection(carnassial.DataHandler.FileDatabase, carnassial));
-                    using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache, new CarnassialState(), carnassial))
-                    {
-                        this.ShowDialog(darkThreshold);
-                    }
 
                     this.ShowDialog(new DateCorrectAmbiguous(carnassial.DataHandler.FileDatabase, carnassial));
                     this.ShowDialog(new DateDaylightSavingsTimeCorrection(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache, carnassial));
@@ -407,6 +403,10 @@ namespace Carnassial.UnitTests
                     this.ShowDialog(new EditLog(carnassial.DataHandler.FileDatabase.ImageSet.Log, carnassial));
 
                     this.ShowDialog(new PopulateFieldWithMetadata(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current.GetFilePath(carnassial.DataHandler.FileDatabase.FolderPath), carnassial.State.Throttles.GetDesiredProgressUpdateInterval(), carnassial));
+                    using (ReclassifyFiles reclassify = new ReclassifyFiles(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache, new CarnassialState(), carnassial))
+                    {
+                        this.ShowDialog(reclassify);
+                    }
                     this.ShowDialog(new RenameFileDatabaseFile(carnassial.DataHandler.FileDatabase.FileName, carnassial));
                     this.ShowDialog(new TemplateSynchronization(carnassial.DataHandler.FileDatabase.ControlSynchronizationIssues, carnassial));
 

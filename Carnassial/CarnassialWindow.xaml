@@ -100,67 +100,73 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuEditCopy" Header="_Copy values" Click="MenuEditCopy_Click" InputGestureText="Ctrl+C" Style="{StaticResource ApplicationMenuItem}" ToolTip="Copy data entered for the current file to the clipboard.">
-                        <MenuItem.Icon>
-                            <Image Source="Resources/Menu/Copy_16x.png" />
-                        </MenuItem.Icon>
+                    <MenuItem Header="Values of the _current file" Style="{StaticResource ApplicationMenuItem}">
+                        <MenuItem Name="MenuEditCopy" Header="_Copy values" Click="MenuEditCopy_Click" InputGestureText="Ctrl+C" ToolTip="Copy data entered for the current file to the clipboard.">
+                            <MenuItem.Icon>
+                                <Image Source="Resources/Menu/Copy_16x.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Name="MenuEditPaste" Header="_Paste values" Click="MenuEditPaste_Click" InputGestureText="Ctrl+V" ToolTip="Apply data copied to the clipboard to the current file.  Only fields marked copyable in the template are set.">
+                            <MenuItem.Icon>
+                                <Image Source="Resources/Menu/Paste_16x.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Name="MenuEditCopyPreviousValues" Header="Paste pre_vious values" Click="PastePreviousValues_Click" InputGestureText="Ctrl+P" ToolTip="Paste data entered for the previous file into this file.  Only fields marked copyable in the template are copied.">
+                            <MenuItem.Icon>
+                                <Image Source="Resources/Menu/CopyDynamicValue_16x.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Name="MenuEditCopyNextValues" Header="Paste ne_xt values" Click="PasteNextValues_Click" InputGestureText="Ctrl+N" ToolTip="Paste data entered for the previous file into this file.  Only fields marked copyable in the template are copied.">
+                            <MenuItem.Icon>
+                                <Image Source="Resources/Menu/CopyDynamicValue_16x.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem Name="MenuEditCopyValuesToAnalysis" Header="Copy values to _analysis" InputGestureText="Ctrl+1-9" ToolTip="Copy data entered for the current file where it can be reused under a particular analysis number." />
+                        <MenuItem Name="MenuEditPasteValuesFromAnalysis" Header="Paste values from anal_ysis" InputGestureText="1-9" ToolTip="Apply data in an analysis to the current file.  Only fields marked copyable in the template are set.">
+                            <MenuItem.Icon>
+                                <Image Source="Resources/Menu/CopyDynamicValue_16x.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Name="MenuEditResetValues" Header="Re_set values to defaults" Click="MenuEditResetValues_Click" InputGestureText="Ctrl+R" ToolTip="Reset data the defaults specified in the template.  Only fields marked copyable in the template are reset.">
+                            <MenuItem.Icon>
+                                <Image Source="Resources/Menu/Restart_16x.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </MenuItem>
-                    <MenuItem Name="MenuEditPaste" Header="_Paste values" Click="MenuEditPaste_Click" InputGestureText="Ctrl+V" Style="{StaticResource ApplicationMenuItem}" ToolTip="Apply data copied to the clipboard to the current file.  Only fields marked copyable in the template are set.">
-                        <MenuItem.Icon>
-                            <Image Source="Resources/Menu/Paste_16x.png" />
-                        </MenuItem.Icon>
+                    <MenuItem Header="Values of _multiple files" Style="{StaticResource ApplicationMenuItem}">
+                        <MenuItem Name="MenuEditRereadDateTimesfromFiles" Header="_Reread date/times from files..." Click="MenuEditRereadDateTimesFromFiles_Click" ToolTip="Reread dates and times from all selected files." />
+                        <MenuItem Name="MenuEditDaylightSavingsTimeCorrection" Header="Adjust for _daylight savings time..." Click="MenuEditDaylightSavingsTimeCorrection_Click" ToolTip="Correct daylight saving time issues" />
+                        <MenuItem Name="MenuEditDateTimeFixedCorrection" Header="Add a _fixed correction value to every date/time..." Click="MenuEditDateTimeFixedCorrection_Click" ToolTip="Correct for dates or times which are all off by a fixed amount, which happens if your camera was not set to the correct date/time." />
+                        <MenuItem Name="MenuEditDateTimeLinearCorrection" Header="Correct for camera _clock drift..." Click="MenuEditDateTimeLinearCorrection_Click" ToolTip="Correct for a camera's clock running fast or slow.">
+                            <MenuItem.Icon>
+                                <Image Source="Resources/Menu/TimePicker_16x.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem Name="MenuEditReclassify" Header="Reclassif_y files..." Click="MenuEditReclassify_Click" ToolTip="Determine which files are dark and light or reclassify your files.">
+                            <MenuItem.Icon>
+                                <Image Source="Resources/Menu/DarkTheme_16x.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Name="MenuEditPopulateFieldFromMetadata" Header="Populate a field with _metadata..." ToolTip="Match a data field with a metadata type. Then populate that field across all files with the corresponding metadata value." Click="MenuEditPopulateFieldFromMetadata_Click" />
+                        <Separator />
+                        <MenuItem Name="MenuEditModifyAmbiguousDates" Header="Correct for ambi_guous dates..." Click="MenuEditCorrectAmbiguousDates_Click" ToolTip="Check and optionally correct ambiguous dates (day-month vs month-day)." />
+                        <MenuItem Name="MenuEditSetTimeZone" Header="Set time _zone..." Click="MenuEditSetTimeZone_Click" ToolTip="Reassign the selected files to a particular time zone." />
                     </MenuItem>
-                    <MenuItem Name="MenuEditCopyPreviousValues" Header="Paste pre_vious values" Click="PastePreviousValues_Click" InputGestureText="Ctrl+P" Style="{StaticResource ApplicationMenuItem}" ToolTip="Paste data entered for the previous file into this file.  Only fields marked copyable in the template are copied.">
-                        <MenuItem.Icon>
-                            <Image Source="Resources/Menu/CopyDynamicValue_16x.png" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Name="MenuEditCopyNextValues" Header="Paste ne_xt values" Click="PasteNextValues_Click" InputGestureText="Ctrl+N" Style="{StaticResource ApplicationMenuItem}" ToolTip="Paste data entered for the previous file into this file.  Only fields marked copyable in the template are copied.">
-                        <MenuItem.Icon>
-                            <Image Source="Resources/Menu/CopyDynamicValue_16x.png" />
-                        </MenuItem.Icon>
+                    <MenuItem Header="_Delete files" Style="{StaticResource ApplicationMenuItem}">
+                        <MenuItem Name="MenuItemToggleCurrentFileDeleteFlag" Header="_Mark or unmark the current file for deletion" Click="MenuEditToggleCurrentFileDeleteFlag_Click" InputGestureText="Delete" ToolTip="Check or uncheck the current file's Delete? box.">
+                            <MenuItem.Icon>
+                                <Image Source="Resources/Menu/ShowHideDeletedItem_16x.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Name="MenuEditDeleteCurrentFile" Header="Delete the _current file..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes the file but not the data entered for it." />
+                        <MenuItem Name="MenuEditDeleteCurrentFileAndData" Header="Delete the current file and its _data..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes the file and the data entered for it." />
+                        <MenuItem Name="MenuEditDeleteFiles" Header="Delete _all files in the current selection marked for deletion..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, but leaves entered data intact." />
+                        <MenuItem Name="MenuEditDeleteFilesAndData" Header="D_elete all files in the current selection marked for deletion and their data..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files." />
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuEditCopyValuesToAnalysis" Header="Copy values to _analysis" InputGestureText="Ctrl+1-9" Style="{StaticResource ApplicationMenuItem}" ToolTip="Copy data entered for the current file where it can be reused under a particular analysis number." />
-                    <MenuItem Name="MenuEditPasteValuesFromAnalysis" Header="Paste values from anal_ysis" InputGestureText="1-9" Style="{StaticResource ApplicationMenuItem}" ToolTip="Apply data in an analysis to the current file.  Only fields marked copyable in the template are set.">
-                        <MenuItem.Icon>
-                            <Image Source="Resources/Menu/CopyDynamicValue_16x.png" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Name="MenuEditResetValues" Header="Re_set values to defaults" Click="MenuEditResetValues_Click" InputGestureText="Ctrl+R" Style="{StaticResource ApplicationMenuItem}" ToolTip="Reset data the defaults specified in the template.  Only fields marked copyable in the template are reset.">
-                        <MenuItem.Icon>
-                            <Image Source="Resources/Menu/Restart_16x.png" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <Separator />
-                    <MenuItem Name="MenuEditRereadDateTimesfromFiles" Header="Reread _date/times from files..." Click="MenuEditRereadDateTimesFromFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Reread dates and times from all selected files." />
-                    <MenuItem Name="MenuEditDaylightSavingsTimeCorrection" Header="Adjust for dayl_ight savings time..." Click="MenuEditDaylightSavingsTimeCorrection_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Correct daylight saving time issues" />
-                    <MenuItem Name="MenuEditDateTimeFixedCorrection" Header="Add a _fixed correction value to every date/time..." Click="MenuEditDateTimeFixedCorrection_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Correct for dates or times which are all off by a fixed amount, which happens if your camera was not set to the correct date/time." />
-                    <MenuItem Name="MenuEditDateTimeLinearCorrection" Header="Correct for camera clock drif_t..." Click="MenuEditDateTimeLinearCorrection_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Correct for a camera's clock running fast or slow.">
-                        <MenuItem.Icon>
-                            <Image Source="Resources/Menu/TimePicker_16x.png" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Name="MenuEditModifyAmbiguousDates" Header="Correct for ambi_guous dates..." Click="MenuEditCorrectAmbiguousDates_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Check and optionally correct ambiguous dates (day-month vs month-day)." />
-                    <MenuItem Name="MenuEditSetTimeZone" Header="Set time _zone..." Click="MenuEditSetTimeZone_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Reassign the selected files to a particular time zone." />
-                    <Separator />
-                    <MenuItem Name="MenuEditDarkImages" Header="Identify or reclassify dar_k files..." Click="MenuEditDarkImages_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Determine which files are dark and light or reclassify your files.">
-                        <MenuItem.Icon>
-                            <Image Source="Resources/Menu/DarkTheme_16x.png" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Name="MenuEditPopulateFieldFromMetadata" Header="Populate a field with _metadata..." Style="{StaticResource ApplicationMenuItem}" ToolTip="Match a data field with a metadata type. Then populate that field across all files with the corresponding metadata value." Click="MenuEditPopulateFieldFromMetadata_Click" />
-                    <MenuItem Name="MenuEditLog" Header="Note_s for this image set..." Click="MenuEditLog_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this image set" />
-                    <Separator />
-                    <MenuItem Name="MenuItemToggleCurrentFileDeleteFlag" Header="Mark or unmark the current file for d_eletion" Click="MenuEditToggleCurrentFileDeleteFlag_Click" InputGestureText="Delete" Style="{StaticResource ApplicationMenuItem}" ToolTip="Check or uncheck the current file's Delete? box.">
-                        <MenuItem.Icon>
-                            <Image Source="Resources/Menu/ShowHideDeletedItem_16x.png" />
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Name="MenuEditDeleteCurrentFile" Header="D_elete the current file..." Click="MenuEditDeleteFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Deletes the file but not the data entered for it." />
-                    <MenuItem Name="MenuEditDeleteCurrentFileAndData" Header="D_elete the current file and its data..." Click="MenuEditDeleteFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Deletes the file and the data entered for it." />
-                    <MenuItem Name="MenuEditDeleteFiles" Header="D_elete all files in the current selection marked for deletion..." Click="MenuEditDeleteFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Deletes images and videos marked for deletion in the current selection, but leaves entered data intact." />
-                    <MenuItem Name="MenuEditDeleteFilesAndData" Header="D_elete all files in the current selection marked for deletion and their data..." Click="MenuEditDeleteFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files." />
+                    <MenuItem Name="MenuEditLog" Header="_Notes for this image set..." Click="MenuEditLog_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this image set" />
                 </MenuItem>
 
                 <!-- options menu -->

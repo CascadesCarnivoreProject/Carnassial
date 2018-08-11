@@ -5,7 +5,6 @@ using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Jpeg;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using MetadataDirectory = MetadataExtractor.Directory;
 
@@ -83,7 +82,10 @@ namespace Carnassial.Images
             double thumbnailScale = (double)preallocatedThumbnail.PixelHeight / (double)imageHeight;
             infoBarHeight = (int)Math.Round(thumbnailScale * infoBarHeight);
             double luminosity = preallocatedThumbnail.GetLuminosityAndColoration(infoBarHeight, out double coloration);
-            return new ImageProperties(luminosity, coloration);
+            return new ImageProperties(luminosity, coloration)
+            {
+                MetadataResult = MetadataReadResult.Thumbnail
+            };
         }
 
         public ImageProperties GetProperties(Nullable<int> requestedWidth, ref MemoryImage preallocatedImage)

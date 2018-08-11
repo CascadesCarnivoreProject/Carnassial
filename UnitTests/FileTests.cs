@@ -123,10 +123,10 @@ namespace Carnassial.UnitTests
                     ImageDifferenceResult combinedDifferenceResult = await cache.TryCalculateCombinedDifferenceAsync(Constant.Images.DifferenceThresholdDefault - 2);
                     await this.CheckDifferenceResult(combinedDifferenceResult, cache, fileDatabase);
 
-                    MemoryImage differenceImage = cache.GetCurrentImage();
+                    CachedImage differenceImage = cache.GetCurrentImage();
                     if (combinedDifferenceResult == ImageDifferenceResult.Success)
                     {
-                        Assert.IsNotNull(differenceImage);
+                        Assert.IsNotNull(differenceImage.Image);
                     }
                 }
 
@@ -141,10 +141,10 @@ namespace Carnassial.UnitTests
                     ImageDifferenceResult differenceResult = await cache.TryCalculateDifferenceAsync(Constant.Images.DifferenceThresholdDefault + 2);
                     await this.CheckDifferenceResult(differenceResult, cache, fileDatabase);
 
-                    MemoryImage differenceImage = cache.GetCurrentImage();
+                    CachedImage differenceImage = cache.GetCurrentImage();
                     if (differenceResult == ImageDifferenceResult.Success)
                     {
-                        Assert.IsNotNull(differenceImage);
+                        Assert.IsNotNull(differenceImage.Image);
                     }
                 }
 
@@ -161,9 +161,11 @@ namespace Carnassial.UnitTests
             FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultFileDatabaseFileName);
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
             ImageRow corruptFile = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.CorruptFieldScan, out MetadataReadResult corruptMetadataRead);
-            using (MemoryImage corruptImage = await corruptFile.TryLoadAsync(fileDatabase.FolderPath))
+            using (CachedImage corruptImage = await corruptFile.TryLoadImageAsync(fileDatabase.FolderPath))
             {
-                Assert.IsTrue(corruptImage.DecodeError);
+                Assert.IsTrue(corruptImage.ImageNotDecodable == false);
+                Assert.IsTrue(corruptImage.FileNoLongerAvailable == false);
+                Assert.IsTrue(corruptImage.Image.DecodeError);
             }
         }
 
@@ -230,9 +232,9 @@ namespace Carnassial.UnitTests
                     // load the image
                     FileInfo fileInfo = new FileInfo(Path.Combine(fileExpectation.RelativePath, fileExpectation.FileName));
                     ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, fileExpectation.RelativePath);
-                    using (MemoryImage image = await file.TryLoadAsync(this.WorkingDirectory))
+                    using (CachedImage image = await file.TryLoadImageAsync(this.WorkingDirectory))
                     {
-                        double luminosity = image.GetLuminosityAndColoration(0, out double coloration);
+                        double luminosity = image.Image.GetLuminosityAndColoration(0, out double coloration);
                         FileClassification classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
                         if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
                         {
@@ -250,7 +252,7 @@ namespace Carnassial.UnitTests
 
         private async Task CheckDifferenceResult(ImageDifferenceResult result, ImageCache cache, FileDatabase fileDatabase)
         {
-            MemoryImage currentImage = cache.GetCurrentImage();
+            CachedImage currentImage = cache.GetCurrentImage();
             switch (result)
             {
                 case ImageDifferenceResult.CurrentImageNotAvailable:
@@ -258,11 +260,11 @@ namespace Carnassial.UnitTests
                 case ImageDifferenceResult.PreviousImageNotAvailable:
                     if (cache.CurrentDifferenceState == ImageDifference.Unaltered)
                     {
-                        Assert.IsNotNull(currentImage);
+                        Assert.IsNotNull(currentImage.Image);
                     }
                     else
                     {
-                        Assert.IsNull(currentImage);
+                        Assert.IsNull(currentImage.Image);
                     }
                     break;
                 case ImageDifferenceResult.NotCalculable:
@@ -294,16 +296,16 @@ namespace Carnassial.UnitTests
                     // check if the image to diff against is matched
                     if (fileDatabase.IsFileRowInRange(previousNextImageRow))
                     {
-                        MemoryImage unalteredImage = await cache.Current.TryLoadAsync(fileDatabase.FolderPath);
+                        CachedImage unalteredImage = await cache.Current.TryLoadImageAsync(fileDatabase.FolderPath);
                         ImageRow previousNextFile = fileDatabase.Files[previousNextImageRow];
-                        MemoryImage previousNextImage = await previousNextFile.TryLoadAsync(fileDatabase.FolderPath);
-                        bool mismatched = unalteredImage.MismatchedOrNot32BitBgra(previousNextImage);
+                        CachedImage previousNextImage = await previousNextFile.TryLoadImageAsync(fileDatabase.FolderPath);
+                        bool mismatched = unalteredImage.Image.MismatchedOrNot32BitBgra(previousNextImage.Image);
 
                         if (fileDatabase.IsFileRowInRange(otherImageRowForCombined))
                         {
                             ImageRow otherFileForCombined = fileDatabase.Files[otherImageRowForCombined];
-                            MemoryImage otherImageForCombined = await otherFileForCombined.TryLoadAsync(fileDatabase.FolderPath);
-                            mismatched |= unalteredImage.MismatchedOrNot32BitBgra(otherImageForCombined);
+                            CachedImage otherImageForCombined = await otherFileForCombined.TryLoadImageAsync(fileDatabase.FolderPath);
+                            mismatched |= unalteredImage.Image.MismatchedOrNot32BitBgra(otherImageForCombined.Image);
                         }
 
                         expectNullImage |= mismatched;
@@ -311,15 +313,15 @@ namespace Carnassial.UnitTests
 
                     if (expectNullImage)
                     {
-                        Assert.IsNull(currentImage, "Expected a null image for difference result {0} and state {1}.", result, cache.CurrentDifferenceState);
+                        Assert.IsNull(currentImage.Image, "Expected a null image for difference result {0} and state {1}.", result, cache.CurrentDifferenceState);
                     }
                     else
                     {
-                        Assert.IsNotNull(currentImage, "Expected an image for difference result {0} and state {1}.", result, cache.CurrentDifferenceState);
+                        Assert.IsNotNull(currentImage.Image, "Expected an image for difference result {0} and state {1}.", result, cache.CurrentDifferenceState);
                     }
                     break;
                 case ImageDifferenceResult.Success:
-                    Assert.IsNotNull(currentImage);
+                    Assert.IsNotNull(currentImage.Image);
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled result {0}.", result));
@@ -428,13 +430,13 @@ namespace Carnassial.UnitTests
             Assert.IsNotNull(cache.Current);
 
             // don't dispose current image as it's owned by the cache
-            MemoryImage currentImage = cache.GetCurrentImage();
-            Assert.IsNotNull(currentImage);
-            Assert.IsTrue(currentImage.DecodeError == false);
-            Assert.IsTrue(currentImage.Format == MemoryImage.PreferredPixelFormat);
-            Assert.IsTrue((1000 < currentImage.PixelHeight) && (currentImage.PixelHeight < 10000));
-            Assert.IsTrue((1000 < currentImage.PixelWidth) && (currentImage.PixelWidth < 10000));
-            Assert.IsTrue(currentImage.TotalPixels > 1000 * 1000);
+            CachedImage currentImage = cache.GetCurrentImage();
+            Assert.IsNotNull(currentImage.Image);
+            Assert.IsTrue(currentImage.Image.DecodeError == false);
+            Assert.IsTrue(currentImage.Image.Format == MemoryImage.PreferredPixelFormat);
+            Assert.IsTrue((1000 < currentImage.Image.PixelHeight) && (currentImage.Image.PixelHeight < 10000));
+            Assert.IsTrue((1000 < currentImage.Image.PixelWidth) && (currentImage.Image.PixelWidth < 10000));
+            Assert.IsTrue(currentImage.Image.TotalPixels > 1000 * 1000);
         }
     }
 }

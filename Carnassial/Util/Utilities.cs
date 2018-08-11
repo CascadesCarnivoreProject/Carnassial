@@ -68,9 +68,13 @@ namespace Carnassial.Util
                 }
             }
 
+            if (release >= 461808)
+            {
+                return "4.7.2 or later";
+            }
             if (release >= 461308)
             {
-                return "4.7.1 or later";
+                return "4.7.1";
             }
             if (release >= 460798)
             {
@@ -101,7 +105,7 @@ namespace Carnassial.Util
                 return "4.5";
             }
 
-            return "4.5 or later not detected";
+            return "4.0 or earlier";
         }
 
         public static int GetIncrement(bool forward, ModifierKeys modifiers)

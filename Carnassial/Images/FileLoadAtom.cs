@@ -62,11 +62,11 @@ namespace Carnassial.Images
                         firstProperties = this.First.Jpeg.GetThumbnailProperties(ref preallocatedImage);
                         this.First.MetadataReadResult |= MetadataReadResult.Thumbnail;
                     }
-                    if ((firstProperties == null) || (firstProperties.CanClassify == false))
+                    if ((firstProperties == null) || (firstProperties.HasColorationAndLuminosity == false))
                     {
                         firstProperties = this.First.Jpeg.GetProperties(Constant.Images.NoThumbnailClassificationRequestedWidthInPixels, ref preallocatedImage);
                     }
-                    if (firstProperties.CanClassify)
+                    if (firstProperties.HasColorationAndLuminosity)
                     {
                         this.First.File.Classification = firstProperties.EvaluateNewClassification(darkLuminosityThreshold);
                         this.First.MetadataReadResult |= MetadataReadResult.Classification;
@@ -74,7 +74,7 @@ namespace Carnassial.Images
                 }
                 else
                 {
-                    Debug.Assert(this.First.File.Classification == FileClassification.Corrupt, "First jpeg null but file not marked corrupt.");
+                    Debug.Assert((this.First.File.Classification == FileClassification.Corrupt) || (this.First.File.Classification == FileClassification.NoLongerAvailable), "First jpeg null but file not marked missing or corrupt.");
                 }
             }
 
@@ -96,7 +96,7 @@ namespace Carnassial.Images
                         {
                             ImageProperties thumbnailProperties = this.Second.Jpeg.GetThumbnailProperties(ref preallocatedImage);
                             this.Second.MetadataReadResult |= MetadataReadResult.Thumbnail;
-                            if (thumbnailProperties.CanClassify)
+                            if (thumbnailProperties.HasColorationAndLuminosity)
                             {
                                 this.Second.File.Classification = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
                                 this.Second.MetadataReadResult |= MetadataReadResult.Classification;
@@ -105,7 +105,7 @@ namespace Carnassial.Images
                     }
                     else
                     {
-                        Debug.Assert(this.Second.File.Classification == FileClassification.Corrupt, "Second jpeg null but file not marked corrupt.");
+                        Debug.Assert((this.Second.File.Classification == FileClassification.Corrupt) || (this.Second.File.Classification == FileClassification.NoLongerAvailable), "Second jpeg null but file not marked missing or corrupt.");
                     }
                 }
             }
@@ -136,7 +136,7 @@ namespace Carnassial.Images
                     {
                         ImageProperties thumbnailProperties = this.First.Jpeg.GetThumbnailProperties(ref preallocatedThumbnail);
                         this.First.MetadataReadResult |= MetadataReadResult.Thumbnail;
-                        if (thumbnailProperties.CanClassify)
+                        if (thumbnailProperties.HasColorationAndLuminosity)
                         {
                             this.First.File.Classification = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
                             this.First.MetadataReadResult |= MetadataReadResult.Classification;
@@ -171,7 +171,7 @@ namespace Carnassial.Images
                         {
                             ImageProperties thumbnailProperties = this.Second.Jpeg.GetThumbnailProperties(ref preallocatedThumbnail);
                             this.Second.MetadataReadResult |= MetadataReadResult.Thumbnail;
-                            if (thumbnailProperties.CanClassify)
+                            if (thumbnailProperties.HasColorationAndLuminosity)
                             {
                                 this.Second.File.Classification = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
                                 this.Second.MetadataReadResult |= MetadataReadResult.Classification;
@@ -207,26 +207,88 @@ namespace Carnassial.Images
 
         public void CreateJpegs(string imageSetFolderPath)
         {
-            if ((this.First.File != null) && (this.First.File.IsVideo == false))
+            this.CreateJpegs(imageSetFolderPath, true);
+        }
+
+        public void CreateJpegs(string imageSetFolderPath, bool checkFilesExist)
+        {
+            if (this.First.File != null)
             {
-                try
+                string firstFilePath = null;
+                if (checkFilesExist)
                 {
-                    this.First.Jpeg = new JpegImage(this.First.File.GetFilePath(imageSetFolderPath));
+                    FileInfo firstFileInfo = this.First.File.GetFileInfo(imageSetFolderPath);
+                    if (firstFileInfo.Exists)
+                    {
+                        firstFilePath = firstFileInfo.FullName;
+                    }
                 }
-                catch (IOException)
+                else
                 {
-                    this.First.File.Classification = FileClassification.Corrupt;
+                    firstFilePath = this.First.File.GetFilePath(imageSetFolderPath);
+                }
+
+                if (firstFilePath != null)
+                {
+                    if (this.First.File.IsVideo)
+                    {
+                        this.First.File.Classification = FileClassification.Video;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            this.First.Jpeg = new JpegImage(firstFilePath);
+                        }
+                        catch (IOException)
+                        {
+                            this.First.File.Classification = FileClassification.Corrupt;
+                        }
+                    }
+                }
+                else
+                {
+                    this.First.File.Classification = FileClassification.NoLongerAvailable;
                 }
             }
-            if (this.HasSecondFile && (this.Second.File.IsVideo == false))
+
+            if (this.HasSecondFile)
             {
-                try
+                string secondFilePath = null;
+                if (checkFilesExist)
                 {
-                this.Second.Jpeg = new JpegImage(this.Second.File.GetFilePath(imageSetFolderPath));
+                    FileInfo secondFileInfo = this.Second.File.GetFileInfo(imageSetFolderPath);
+                    if (secondFileInfo.Exists)
+                    {
+                        secondFilePath = secondFileInfo.FullName;
+                    }
                 }
-                catch (IOException)
+                else
                 {
-                    this.First.File.Classification = FileClassification.Corrupt;
+                    secondFilePath = this.First.File.GetFilePath(imageSetFolderPath);
+                }
+
+                if (secondFilePath != null)
+                {
+                    if (this.Second.File.IsVideo)
+                    {
+                        this.Second.File.Classification = FileClassification.Video;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            this.Second.Jpeg = new JpegImage(this.Second.File.GetFilePath(imageSetFolderPath));
+                        }
+                        catch (IOException)
+                        {
+                            this.Second.File.Classification = FileClassification.Corrupt;
+                        }
+                    }
+                }
+                else
+                {
+                    this.Second.File.Classification = FileClassification.NoLongerAvailable;
                 }
             }
         }
@@ -327,12 +389,23 @@ namespace Carnassial.Images
             }
         }
 
-        public void SetFiles(FileTable fileTable)
+        // an adapter API to allow FileIOComputeTransactionManagers working on existing files to use file add infrastructure
+        // An alternate implementation would bifurcate FileIOComputeTransactionManager to use ImageRows directly rather than FileLoad
+        // and remove FileTable.GetFilesByRelativePathAndName().  Doing so would be cleaner, but requires maintaining largely
+        // duplicate transaction and task code as well as an alternate FileLoadAtom implementation for relatively infrequent
+        // reclassify, metadata, and datetime reread operations.  Carnassial's present implementation accepts the relatively small
+        // runtime cost of adapting FileLoads to a populated file table over the cost of developing and maintaining the alternative.
+        public void SetFiles(Dictionary<string, Dictionary<string, ImageRow>> filesByRelativePathAndName)
         {
-            this.First.File = fileTable[this.Offset];
+            Dictionary<string, ImageRow> filesByName = filesByRelativePathAndName[this.RelativePath];
+
+            this.First.File = filesByName[this.First.FileName];
+            Debug.Assert(String.Equals(this.RelativePath, this.First.File.RelativePath, StringComparison.OrdinalIgnoreCase), String.Format("Relative path of atom '{0}' doesn't match relative path of first file '{1}'.", this.RelativePath, this.First.File.RelativePath));
+
             if (this.Second.FileName != null)
             {
-                this.Second.File = fileTable[this.Offset + 1];
+                this.Second.File = filesByName[this.Second.FileName];
+                Debug.Assert(String.Equals(this.RelativePath, this.Second.File.RelativePath, StringComparison.OrdinalIgnoreCase), String.Format("Relative path of atom '{0}' doesn't match relative path of first file '{1}'.", this.RelativePath, this.Second.File.RelativePath));
             }
         }
     }

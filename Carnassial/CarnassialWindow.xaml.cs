@@ -165,6 +165,7 @@ namespace Carnassial
             // reset undo/redo after reset of main state object as it touches some of the same state but also updates the enable state of undo/rendo menu items
             this.ResetUndoRedoState();
             this.SetStatusMessage("No image set is open.");
+            this.Title = Constant.MainWindowBaseTitle;
         }
 
         /// <summary>When the user selects a counter update the color and emphasis of its markers.</summary>
@@ -580,14 +581,6 @@ namespace Carnassial
             await this.ShowBulkFileEditDialogAsync(ambiguousDateCorrection);
         }
 
-        private async void MenuEditDarkImages_Click(object sender, RoutedEventArgs e)
-        {
-            using (DarkImagesThreshold darkThreshold = new DarkImagesThreshold(this.DataHandler.FileDatabase, this.DataHandler.ImageCache, this.State, this))
-            {
-                await this.ShowBulkFileEditDialogAsync(darkThreshold);
-            }
-        }
-
         /// <summary>Correct the date by specifying an offset.</summary>
         private async void MenuEditDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
         {
@@ -764,6 +757,14 @@ namespace Carnassial
 
             PopulateFieldWithMetadata populateField = new PopulateFieldWithMetadata(this.DataHandler.FileDatabase, this.DataHandler.ImageCache.Current.GetFilePath(this.FolderPath), this.State.Throttles.GetDesiredProgressUpdateInterval(), this);
             await this.ShowBulkFileEditDialogAsync(populateField);
+        }
+
+        private async void MenuEditReclassify_Click(object sender, RoutedEventArgs e)
+        {
+            using (ReclassifyFiles reclassify = new ReclassifyFiles(this.DataHandler.FileDatabase, this.DataHandler.ImageCache, this.State, this))
+            {
+                await this.ShowBulkFileEditDialogAsync(reclassify);
+            }
         }
 
         internal async void MenuEditRedo_Click(object sender, RoutedEventArgs e)
@@ -1106,7 +1107,7 @@ namespace Carnassial
             FileSelection originalSelection = this.DataHandler.FileDatabase.ImageSet.FileSelection;
             if (originalSelection != FileSelection.All)
             {
-                this.DataHandler.FileDatabase.SelectFiles(FileSelection.All);
+                this.DataHandler.SelectFiles(FileSelection.All);
             }
 
             Stopwatch stopwatch = new Stopwatch();
@@ -1893,7 +1894,7 @@ namespace Carnassial
             long previousFileID = this.DataHandler.ImageCache.GetCurrentFileID();
             FileSelection previousSelection = this.DataHandler.FileDatabase.ImageSet.FileSelection;
             this.DataHandler.TrySyncCurrentFileToDatabase();
-            this.DataHandler.FileDatabase.SelectFiles(selection);
+            this.DataHandler.SelectFiles(selection);
 
             // explain to user if their selection has gone empty and revert to all files
             if ((this.DataHandler.FileDatabase.CurrentlySelectedFileCount < 1) && (selection != FileSelection.All))
@@ -1918,33 +1919,33 @@ namespace Carnassial
                         messageBox.Message.Hint = "If you have files you think should be marked as Corrupted, set their ImageQuality to Corrupted and then reselect corrupted files.";
                         break;
                     case FileSelection.Custom:
-                        messageBox.Message.Problem = "No files currently match the custom selection so nothing can be shown.";
-                        messageBox.Message.Reason = "No files match the criteria set in the current Custom selection.";
+                        messageBox.Message.Problem = "No files currently match the custom selection.  So nothing can be shown.";
+                        messageBox.Message.Reason = "No files match the criteria set in the current custom selection.";
                         messageBox.Message.Hint = "Create a different custom selection and apply it view the matching files.";
                         break;
                     case FileSelection.Dark:
-                        messageBox.Message.Problem = "Dark files were previously selected but no files are currently dark so nothing can be shown.";
-                        messageBox.Message.Reason = "No files have their ImageQuality set to Dark.";
+                        messageBox.Message.Problem = "Dark files were previously selected but no files are currently dark.  So nothing can be shown.";
+                        messageBox.Message.Reason = "No files are currently classified as dark images.";
                         messageBox.Message.Hint = "If you have files you think should be marked as Dark, set their ImageQuality to Dark and then reselect dark files.";
                         break;
                     case FileSelection.Greyscale:
-                        messageBox.Message.Problem = "Greyscale images were previously selected but no files are currently classified as greyscale so nothing can be shown.";
-                        messageBox.Message.Reason = "No files are classified as greyscale images.";
+                        messageBox.Message.Problem = "Greyscale images were previously selected but no files are currently classified as greyscale.  So nothing can be shown.";
+                        messageBox.Message.Reason = "No files are currently classified as greyscale images.";
                         messageBox.Message.Hint = "If you have files you think should be marked as greyscale, set their ImageQuality field to Greyscale and then reselect greyscale files.";
                         break;
                     case FileSelection.NoLongerAvailable:
-                        messageBox.Message.Problem = "Files no londer available were previously selected but all files are availale so nothing can be shown.";
-                        messageBox.Message.Reason = "No files have their ImageQuality field set to FilesNoLongerAvailable.";
+                        messageBox.Message.Problem = "Files which are no longer available were selected but all files are now available.  So nothing can be shown.";
+                        messageBox.Message.Reason = "No files currently have their classification set to FilesNoLongerAvailable.";
                         messageBox.Message.Hint = "If you have removed files set their ImageQuality field to FilesNoLongerAvailable and then reselect files no longer available.";
                         break;
                     case FileSelection.MarkedForDeletion:
-                        messageBox.Message.Problem = "Files marked for deletion were previously selected but no files are currently marked so nothing can be shown.";
+                        messageBox.Message.Problem = "Files marked for deletion were previously selected but no files are currently marked.  So nothing can be shown.";
                         messageBox.Message.Reason = "No files have their Delete? box checked.";
                         messageBox.Message.Hint = "If you have files you think should be marked for deletion, check their Delete? box and then reselect files marked for deletion.";
                         break;
                     case FileSelection.Video:
-                        messageBox.Message.Problem = "Videos were previously selected but no files are currently classified as videos so nothing can be shown.";
-                        messageBox.Message.Reason = "No files are classified as videos.";
+                        messageBox.Message.Problem = "Videos were previously selected but no files are currently classified as videos.  So nothing can be shown.";
+                        messageBox.Message.Reason = "No files are currently classified as videos.";
                         messageBox.Message.Hint = "If you have files you think should be marked as videos, set their ImageQuality field to Video and then reselect video files.";
                         break;
                     default:
@@ -1953,8 +1954,7 @@ namespace Carnassial
                 messageBox.Message.Result = "The 'All files' selection will be applied, where all files in your image set are displayed.";
                 messageBox.ShowDialog();
 
-                selection = FileSelection.All;
-                this.DataHandler.FileDatabase.SelectFiles(selection);
+                this.DataHandler.SelectFiles(FileSelection.All);
             }
 
             // update UI for current selection
@@ -2010,7 +2010,7 @@ namespace Carnassial
                          (dialog.GetType() == typeof(DateTimeLinearCorrection)) ||
                          (dialog.GetType() == typeof(DateTimeRereadFromFiles)) ||
                          (dialog.GetType() == typeof(DateTimeSetTimeZone)) ||
-                         (dialog.GetType() == typeof(DarkImagesThreshold)) ||
+                         (dialog.GetType() == typeof(ReclassifyFiles)) ||
                          (dialog.GetType() == typeof(PopulateFieldWithMetadata)),
                          String.Format("Unexpected dialog {0}.", dialog.GetType()));
 
@@ -2022,7 +2022,7 @@ namespace Carnassial
                 // Often this won't be needed but it's nontrivial to determine if a bulk edit would affect which files are selected
                 // or change files' sort order.
                 long currentFileID = this.DataHandler.ImageCache.Current.ID;
-                this.DataHandler.FileDatabase.SelectFiles(this.DataHandler.FileDatabase.ImageSet.FileSelection);
+                this.DataHandler.SelectFiles(this.DataHandler.FileDatabase.ImageSet.FileSelection);
 
                 // show updated data for file
                 // Delete doesn't go through this code path so none of the bulk edit dialogs can result in a change in the file which 
@@ -2305,7 +2305,7 @@ namespace Carnassial
             FileSelection originalSelection = this.DataHandler.FileDatabase.ImageSet.FileSelection;
             if (originalSelection != FileSelection.All)
             {
-                this.DataHandler.FileDatabase.SelectFiles(FileSelection.All);
+                this.DataHandler.SelectFiles(FileSelection.All);
             }
 
             // load all files found
@@ -2317,7 +2317,7 @@ namespace Carnassial
             // if needed, revert to original selection
             if (originalSelection != this.DataHandler.FileDatabase.ImageSet.FileSelection)
             {
-                this.DataHandler.FileDatabase.SelectFiles(originalSelection);
+                this.DataHandler.SelectFiles(originalSelection);
             }
 
             // shift UI to normal, non-loading state
@@ -2572,8 +2572,8 @@ namespace Carnassial
             if (this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Unaltered)
             {
                 // unaltered image should be cached
-                MemoryImage unalteredImage = this.DataHandler.ImageCache.GetCurrentImage();
-                Debug.Assert(unalteredImage != null, "Unaltered image not available from image cache.");
+                CachedImage unalteredImage = this.DataHandler.ImageCache.GetCurrentImage();
+                Debug.Assert(unalteredImage.Image != null, "Unaltered image not available from image cache.");
                 this.FileDisplay.Display(unalteredImage);
                 this.ClearStatusMessage();
                 return;
@@ -2624,7 +2624,7 @@ namespace Carnassial
             if (this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Unaltered)
             {
                 // unaltered image should be cached
-                MemoryImage unaltered = this.DataHandler.ImageCache.GetCurrentImage();
+                CachedImage unaltered = this.DataHandler.ImageCache.GetCurrentImage();
                 this.FileDisplay.Display(unaltered);
                 if (unaltered != null)
                 {
@@ -2674,7 +2674,7 @@ namespace Carnassial
             statusMessage.Content = progress.GetMessage();
             this.LongRunningFeedback.ProgressBar.Value = progress.GetPercentage();
 
-            if (progress.TryDetachImage(out MemoryImage image))
+            if (progress.TryDetachImage(out CachedImage image))
             {
                 progress.MaybeUpdateImageRenderWidth((int)this.Width);
                 this.FileDisplay.Display(image, null);

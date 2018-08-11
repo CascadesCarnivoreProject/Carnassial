@@ -9,9 +9,8 @@ namespace Carnassial.Dialog
     {
         private bool disposed;
 
-        public FileClassification ClassificationToDisplay { get; set; }
         public ImageRow File { get; set; }
-        public MemoryImage Image { get; set; }
+        public CachedImage Image { get; set; }
         public ImageProperties ImageProperties { get; set; }
         public UInt64 MostRecentImageUpdate { get; set; }
         public UInt64 MostRecentStatusUpdate { get; set; }
@@ -19,7 +18,6 @@ namespace Carnassial.Dialog
 
         public ReclassifyStatus()
         {
-            this.ClassificationToDisplay = default(FileClassification);
             this.File = null;
             this.Image = null;
             this.ImageProperties = null;

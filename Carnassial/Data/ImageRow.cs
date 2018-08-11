@@ -587,33 +587,28 @@ namespace Carnassial.Data
             this.DateTimeOffset = new DateTimeOffset(earliestTimeLocal);
         }
 
-        public ImageProperties TryGetThumbnailProperties(string imageSetFolderPath)
+        public async Task<CachedImage> TryLoadImageAsync(string imageSetFolderPath)
         {
-            using (JpegImage jpeg = new JpegImage(this.GetFilePath(imageSetFolderPath)))
-            {
-                if ((jpeg.Metadata != null) || jpeg.TryGetMetadata())
-                {
-                    MemoryImage preallocatedThumbnail = null;
-                    return jpeg.GetThumbnailProperties(ref preallocatedThumbnail);
-                }
-                return new ImageProperties(MetadataReadResult.Failed);
-            }
+            return await this.TryLoadImageAsync(imageSetFolderPath, null);
         }
 
-        public async Task<MemoryImage> TryLoadAsync(string imageSetFolderPath)
-        {
-            return await this.TryLoadAsync(imageSetFolderPath, null);
-        }
-
-        public async virtual Task<MemoryImage> TryLoadAsync(string imageSetFolderPath, Nullable<int> expectedDisplayWidth)
+        public async virtual Task<CachedImage> TryLoadImageAsync(string imageSetFolderPath, Nullable<int> expectedDisplayWidth)
         {
             // 8MP average performance (n ~= 200), milliseconds
             // scale factor  1.0  1/2   1/4    1/8
             //               110  76.3  55.9   46.1
             // Stopwatch stopwatch = new Stopwatch();
             // stopwatch.Start();
-            string jpegPath = this.GetFilePath(imageSetFolderPath);
-            using (FileStream stream = new FileStream(jpegPath, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
+            FileInfo jpeg = this.GetFileInfo(imageSetFolderPath);
+            if (jpeg.Exists == false)
+            {
+                return new CachedImage()
+                {
+                    FileNoLongerAvailable = true
+                };
+            }
+
+            using (FileStream stream = new FileStream(jpeg.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
             {
                 if (stream.Length < Constant.Images.SmallestValidJpegSizeInBytes)
                 {
@@ -625,7 +620,7 @@ namespace Carnassial.Data
                 MemoryImage image = new MemoryImage(buffer, expectedDisplayWidth);
                 // stopwatch.Stop();
                 // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
-                return image;
+                return new CachedImage(image);
             }
         }
 

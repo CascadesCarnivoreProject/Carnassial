@@ -1,27 +1,28 @@
 ﻿using Carnassial.Data;
 using Carnassial.Images;
+using Carnassial.Native;
 using Carnassial.Util;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
 namespace Carnassial.Dialog
 {
-    public partial class DarkImagesThreshold : Window, IDisposable
+    public partial class ReclassifyFiles : Window, IDisposable
     {
         private const int MinimumDarkColorRectangleHeight = 10;
 
         private bool disposed;
         private FileDatabase fileDatabase;
         private FileTableEnumerator fileEnumerator;
-        private ImageProperties imageProperties;
         private bool isProgramaticNavigatiorSliderUpdate;
         private ImageRow previousFile;
-        private DarkImagesIOComputeTransaction reclassification;
+        private ReclassifyIOComputeTransaction reclassification;
         private CarnassialUserRegistrySettings userSettings;
 
-        public DarkImagesThreshold(FileDatabase database, ImageCache imageCache, CarnassialUserRegistrySettings state, Window owner)
+        public ReclassifyFiles(FileDatabase database, ImageCache imageCache, CarnassialUserRegistrySettings state, Window owner)
         {
             this.InitializeComponent();
             this.Owner = owner;
@@ -29,7 +30,6 @@ namespace Carnassial.Dialog
             this.fileDatabase = database;
             this.disposed = false;
             this.fileEnumerator = new FileTableEnumerator(database, imageCache.CurrentRow);
-            this.imageProperties = null;
             this.isProgramaticNavigatiorSliderUpdate = false;
             this.previousFile = null;
             this.reclassification = null;
@@ -41,8 +41,43 @@ namespace Carnassial.Dialog
         /// </summary>
         private void ClassifyCurrentFile()
         {
-            FileClassification newClassification = this.imageProperties.EvaluateNewClassification(0.01 * this.DarkLuminosityThresholdPercent.Value);
-            this.DisplayClassification(this.fileEnumerator.Current, this.imageProperties, newClassification);
+            ImageProperties imageProperties = null;
+
+            FileClassification newClassification;
+            FileInfo fileInfo = this.fileEnumerator.Current.GetFileInfo(this.fileDatabase.FolderPath);
+            if (fileInfo.Exists)
+            {
+                if (this.fileEnumerator.Current.IsVideo)
+                {
+                    newClassification = FileClassification.Video;
+                }
+                else
+                {
+                    using (JpegImage jpeg = new JpegImage(fileInfo.FullName))
+                    {
+                        if (jpeg.TryGetMetadata())
+                        {
+                            MemoryImage preallocatedImage = null;
+                            imageProperties = jpeg.GetThumbnailProperties(ref preallocatedImage);
+                            if (imageProperties.MetadataResult.HasFlag(MetadataReadResult.Thumbnail) == false)
+                            {
+                                imageProperties = jpeg.GetProperties(Constant.Images.NoThumbnailClassificationRequestedWidthInPixels, ref preallocatedImage);
+                            }
+                            newClassification = imageProperties.EvaluateNewClassification(0.01 * this.DarkLuminosityThresholdPercent.Value);
+                        }
+                        else
+                        {
+                            newClassification = FileClassification.Corrupt;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                newClassification = FileClassification.NoLongerAvailable;
+            }
+
+            this.DisplayClassification(this.fileEnumerator.Current, imageProperties, newClassification);
         }
 
         private void DisplayClassification(ImageRow file, ImageProperties imageProperties, FileClassification newClassificationToDisplay)
@@ -50,8 +85,13 @@ namespace Carnassial.Dialog
             this.OriginalClassification.Content = file.Classification;
             this.NewClassification.Content = newClassificationToDisplay;
 
-            if ((file.Classification == FileClassification.Corrupt) ||
-                (file.Classification == FileClassification.NoLongerAvailable))
+            if (newClassificationToDisplay == FileClassification.Video)
+            {
+                this.ClassificationInformation.Text = "File is a video and not subject to image classification.";
+            }
+            else if ((newClassificationToDisplay == FileClassification.Corrupt) ||
+                (newClassificationToDisplay == FileClassification.NoLongerAvailable) ||
+                (imageProperties == null))
             {
                 this.ClassificationInformation.Text = "File could not be loaded.  Classification skipped.";
             }
@@ -72,7 +112,6 @@ namespace Carnassial.Dialog
             await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.fileEnumerator.Current);
             this.FileName.Content = this.fileEnumerator.Current.FileName;
             this.FileName.ToolTip = this.FileName.Content;
-            this.imageProperties = this.fileEnumerator.Current.TryGetThumbnailProperties(this.fileDatabase.FolderPath);
 
             this.ClassifyCurrentFile();
             this.previousFile = this.fileEnumerator.Current;
@@ -120,7 +159,7 @@ namespace Carnassial.Dialog
             this.MenuReset.IsEnabled = false;
             this.userSettings.DarkLuminosityThreshold = 0.01 * this.DarkLuminosityThresholdPercent.Value;
 
-            using (this.reclassification = new DarkImagesIOComputeTransaction(this.UpdateClassificationStatus, this.userSettings.Throttles.GetDesiredProgressUpdateInterval()))
+            using (this.reclassification = new ReclassifyIOComputeTransaction(this.UpdateClassificationStatus, this.userSettings.Throttles.GetDesiredProgressUpdateInterval()))
             {
                 await reclassification.ReclassifyFilesAsync(this.fileDatabase, 0.01 * this.userSettings.DarkLuminosityThreshold, (int)this.ActualWidth);
             }
@@ -210,7 +249,7 @@ namespace Carnassial.Dialog
             {
                 this.FileName.Content = status.File.FileName;
                 this.FileName.ToolTip = this.FileName.Content;
-                this.DisplayClassification(status.File, status.ImageProperties, status.ClassificationToDisplay);
+                this.DisplayClassification(status.File, status.ImageProperties, status.File.Classification);
             }
             if (status.Image != null)
             {

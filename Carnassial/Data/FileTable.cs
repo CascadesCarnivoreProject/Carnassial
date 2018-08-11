@@ -124,6 +124,21 @@ namespace Carnassial.Data
             }
         }
 
+        public Dictionary<string, Dictionary<string, ImageRow>> GetFilesByRelativePathAndName()
+        {
+            Dictionary<string, Dictionary<string, ImageRow>> filesByRelativePathAndName = new Dictionary<string, Dictionary<string, ImageRow>>(StringComparer.OrdinalIgnoreCase);
+            foreach (ImageRow file in this.Rows)
+            {
+                if (filesByRelativePathAndName.TryGetValue(file.RelativePath, out Dictionary<string, ImageRow> filesInFolderByName) == false)
+                {
+                    filesInFolderByName = new Dictionary<string, ImageRow>(StringComparer.OrdinalIgnoreCase);
+                    filesByRelativePathAndName.Add(file.RelativePath, filesInFolderByName);
+                }
+                filesInFolderByName.Add(file.FileName, file);
+            }
+            return filesByRelativePathAndName;
+        }
+
         public SortedDictionary<string, List<string>> GetFileNamesByRelativePath()
         {
             SortedDictionary<string, List<string>> filesByRelativePath = new SortedDictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);

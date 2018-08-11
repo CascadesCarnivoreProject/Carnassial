@@ -41,12 +41,12 @@ namespace Carnassial.Data
             for (int fileIndex = offset; fileIndex < stopIndex; ++fileIndex)
             {
                 ImageRow fileToUpdate = files[fileIndex].File;
-                if (fileToUpdate == null)
+                if ((fileToUpdate == null) || (fileToUpdate.HasChanges == false))
                 {
                     continue;
                 }
                 this.updateFiles.Parameters[0].Value = fileToUpdate.ID;
-                this.updateFiles.Parameters[1].Value = fileToUpdate[this.dataLabel];
+                this.updateFiles.Parameters[1].Value = fileToUpdate.GetDatabaseValue(this.dataLabel);
 
                 this.updateFiles.ExecuteNonQuery();
                 fileToUpdate.AcceptChanges();

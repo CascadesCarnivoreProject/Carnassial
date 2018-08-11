@@ -8,7 +8,7 @@ namespace Carnassial.Images
     internal class FileLoadStatus : FileIOComputeTransactionStatus, IDisposable
     {
         private bool disposed;
-        private MemoryImage image;
+        private CachedImage image;
 
         public ImageRow CurrentFile { get; set; }
         public int ImageRenderWidth { get; private set; }
@@ -68,20 +68,20 @@ namespace Carnassial.Images
             this.ImageRenderWidth = Math.Max(Constant.Images.MinimumRenderWidth, possibleNewWidth);
         }
 
-        public void UpdateImage(MemoryImage imageToDisplay)
+        public void UpdateImage(CachedImage imageToDisplay)
         {
             // a race condition potentially exists between calls to this function and calls to TryDetachImage()
             // To avoid, both functions use Interlocked.Exchange() and, in this function, the released image is diposed after
             // this.image is set to the new image so that callers can't obtain an image which in the process of or is scheduled
             // for disposal.
-            MemoryImage oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
+            CachedImage oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
             if (oldImage != null)
             {
                 oldImage.Dispose();
             }
         }
 
-        public bool TryDetachImage(out MemoryImage image)
+        public bool TryDetachImage(out CachedImage image)
         {
             if (this.image == null)
             {

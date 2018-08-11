@@ -22,6 +22,7 @@ namespace Carnassial.Dialog
 
         public async Task ReadFieldAsync(FileDatabase fileDatabase, string dataLabel, Tag metadataField, bool clearIfNoMetadata)
         {
+            Dictionary<string, Dictionary<string, ImageRow>> filesByRelativePathAndName = fileDatabase.Files.GetFilesByRelativePathAndName();
             this.ComputeTaskBody = (int computeTaskNumber) =>
             {
                 int atoms = 0;
@@ -47,7 +48,7 @@ namespace Carnassial.Dialog
                         }
                         else
                         {
-                            loadAtom.First.File = null;
+                            Debug.Assert(loadAtom.First.File.HasChanges == false, "First file in load atom unexpectedly has changes.");
                             message = "No metadata found.  Field remains unaltered.";
                         }
                     }
@@ -71,7 +72,7 @@ namespace Carnassial.Dialog
                             }
                             else
                             {
-                                loadAtom.Second.File = null;
+                                Debug.Assert(loadAtom.Second.File.HasChanges == false, "Second file in load atom unexpectedly has changes.");
                                 message = "No metadata found.  Field remains unaltered.";
                             }
                         }
@@ -115,7 +116,14 @@ namespace Carnassial.Dialog
             {
                 for (FileLoadAtom loadAtom = this.GetNextIOAtom(ioTaskNumber); loadAtom != null; loadAtom = this.GetNextIOAtom(ioTaskNumber))
                 {
-                    loadAtom.SetFiles(fileDatabase.Files);
+                    loadAtom.SetFiles(filesByRelativePathAndName);
+                    Debug.Assert(loadAtom.HasAtLeastOneFile, "Load atom unexpectedly empty.");
+                    Debug.Assert(loadAtom.First.File.HasChanges == false, "First file in load atom unexpectedly has changes.");
+                    if (loadAtom.HasSecondFile)
+                    {
+                        Debug.Assert(loadAtom.Second.File.HasChanges == false, "Second file in load atom unexpectedly has changes.");
+                    }
+
                     loadAtom.CreateJpegs(fileDatabase.FolderPath);
                 }
             };

@@ -69,7 +69,7 @@ namespace Carnassial.Images
                 {
                     if (loadAtom.CreateAndAppendFiles(filesAlreadyInFileTableByRelativePath, fileDatabase.Files))
                     {
-                        loadAtom.CreateJpegs(fileDatabase.FolderPath);
+                        loadAtom.CreateJpegs(fileDatabase.FolderPath, false);
                     }
                 }
             };
@@ -133,10 +133,10 @@ namespace Carnassial.Images
                 {
                     this.Status.CurrentFile = loadAtom.First.File;
                     this.Status.CurrentFileIndex = this.FilesCompleted;
-                    MemoryImage imageToDisplay = null;
+                    CachedImage imageToDisplay = null;
                     if (((tickNow - this.Status.MostRecentImageUpdate) > Constant.ThrottleValues.DesiredIntervalBetweenImageUpdates.TotalMilliseconds) && (loadAtom.First.File != null) && (loadAtom.First.File.IsVideo == false))
                     {
-                        imageToDisplay = loadAtom.First.File.TryLoadAsync(fileDatabase.FolderPath, this.Status.ImageRenderWidth).GetAwaiter().GetResult();
+                        imageToDisplay = loadAtom.First.File.TryLoadImageAsync(fileDatabase.FolderPath, this.Status.ImageRenderWidth).GetAwaiter().GetResult();
                         this.Status.MostRecentImageUpdate = NativeMethods.GetTickCount64();
                     }
                     this.Status.UpdateImage(imageToDisplay);

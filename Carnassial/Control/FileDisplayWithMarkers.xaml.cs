@@ -337,7 +337,7 @@ namespace Carnassial.Control
         /// <summary>
         /// Sets only the display image and leaves markers and the magnifier image unchanged.  Used by the differencing routines to set the difference image.
         /// </summary>
-        public void Display(MemoryImage image)
+        public void Display(CachedImage image)
         {
             this.FileDisplay.Display(image);
         }
@@ -345,7 +345,7 @@ namespace Carnassial.Control
         /// <summary>
         /// Set a wholly new image.  Clears any existing markers and syncs the magnifier image to the display image.
         /// </summary>
-        public void Display(MemoryImage image, List<Marker> markers)
+        public void Display(CachedImage image, List<Marker> markers)
         {
             // initate render of new image for display
             this.Display(image);
@@ -363,7 +363,10 @@ namespace Carnassial.Control
             // Another race exists as this.Markers can be set during the above rendering, initiating a second, concurrent marker render.  This is unavoidable
             // due to the need to expose a marker property but is mitigated by accepting new markers through this API and performing the set above as 
             // this.markers rather than this.Markers.
-            image.SetSource(this.magifierImage);
+            if (image.Image != null)
+            {
+                image.Image.SetSource(this.magifierImage);
+            }
 
             // change to new markers
             // Assign property so any existing markers are cleared.
@@ -378,29 +381,21 @@ namespace Carnassial.Control
 
         public void Display(string folderPath, ImageCache imageCache, List<Marker> displayMarkers)
         {
-            FileInfo fileInfo = imageCache.Current.GetFileInfo(folderPath);
-            bool isVideo = imageCache.Current.IsVideo;
-            if (fileInfo.Exists == false)
+            if (imageCache.Current.IsVideo)
             {
-                this.Display(Constant.Images.FileNoLongerAvailableMessage);
-            }
-            else if (isVideo)
-            {
+                FileInfo fileInfo = imageCache.Current.GetFileInfo(folderPath);
+                if (fileInfo.Exists == false)
+                {
+                    this.Display(Constant.Images.FileNoLongerAvailableMessage);
+                }
+
                 // leave the magnifying glass's enabled state unchanged so user doesn't have to constantly keep re-enabling it in hybrid image sets
                 this.FileDisplay.Display(fileInfo);
                 this.markers = displayMarkers;
             }
             else
             {
-                MemoryImage image = imageCache.GetCurrentImage();
-                if (image == null)
-                {
-                    this.Display(Constant.Images.FileCorruptMessage);
-                }
-                else
-                {
-                    this.Display(image, displayMarkers);
-                }
+                this.Display(imageCache.GetCurrentImage(), displayMarkers);
             }
         }
 

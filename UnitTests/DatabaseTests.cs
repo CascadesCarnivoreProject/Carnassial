@@ -731,13 +731,13 @@ namespace Carnassial.UnitTests
 
                 if (expectedIsVideo == false)
                 {
-                    using (MemoryImage image = await file.TryLoadAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidth))
+                    using (CachedImage image = await file.TryLoadImageAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidth))
                     {
                         stopwatch.Restart();
-                        double luminosity = image.GetLuminosityAndColoration(0, out double coloration);
+                        double luminosity = image.Image.GetLuminosityAndColoration(0, out double coloration);
                         file.Classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
                         stopwatch.Stop();
-                        this.TestContext.WriteLine("Classify({0}, {1:0.00}MP): {2}ms", file.FileName, 1E-6 * image.TotalPixels, stopwatch.ElapsedMilliseconds);
+                        this.TestContext.WriteLine("Classify({0}, {1:0.00}MP): {2}ms", file.FileName, 1E-6 * image.Image.TotalPixels, stopwatch.ElapsedMilliseconds);
                         Assert.IsTrue(file.Classification == FileClassification.Color);
                     }
                 }
@@ -825,7 +825,7 @@ namespace Carnassial.UnitTests
             }
 
             // reclassify
-            using (DarkImagesIOComputeTransaction reclassify = new DarkImagesIOComputeTransaction(this.UpdateReclassifyProgress, desiredStatusUpdateInterval))
+            using (ReclassifyIOComputeTransaction reclassify = new ReclassifyIOComputeTransaction(this.UpdateReclassifyProgress, desiredStatusUpdateInterval))
             {
                 await reclassify.ReclassifyFilesAsync(fileDatabase, state.DarkLuminosityThreshold, Constant.Images.MinimumRenderWidth);
             }

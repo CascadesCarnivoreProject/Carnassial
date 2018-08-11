@@ -1,7 +1,7 @@
 ﻿using Carnassial.Data;
 using Carnassial.Images;
-using Carnassial.Native;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -24,8 +24,15 @@ namespace Carnassial.Control
 
         public void Display(FileInfo videoFile)
         {
-            this.Video.SetSource(new Uri(videoFile.FullName));
-            this.ShowVideo();
+            if (videoFile.Exists)
+            {
+                this.Video.SetSource(new Uri(videoFile.FullName));
+                this.ShowVideo();
+            }
+            else
+            {
+                this.Display(Constant.Images.FileNoLongerAvailableMessage);
+            }
         }
 
         public void Display(FileDisplayMessage message)
@@ -37,22 +44,27 @@ namespace Carnassial.Control
             this.ShowMessage();
         }
 
-        public void Display(MemoryImage image)
+        public void Display(CachedImage image)
         {
-            if (image != null)
+            if (image.ImageNotDecodable)
             {
-                image.SetSource(this.Image);
-                this.ShowImage();
+                this.Display(Constant.Images.FileCorruptMessage);
+            }
+            else if (image.FileNoLongerAvailable)
+            {
+                this.Display(Constant.Images.FileNoLongerAvailableMessage);
             }
             else
             {
-                this.Display(Constant.Images.FileCorruptMessage);
+                Debug.Assert(image.Image != null, "Cached images which could not be loaded should be marked corrupt or no longer available.");
+                image.Image.SetSource(this.Image);
+                this.ShowImage();
             }
         }
 
         public async Task DisplayAsync(string folderPath, ImageCache imageCache)
         {
-            MemoryImage image = imageCache.GetCurrentImage();
+            CachedImage image = imageCache.GetCurrentImage();
             if (image != null)
             {
                 this.Display(image);
@@ -65,18 +77,9 @@ namespace Carnassial.Control
 
         public async Task DisplayAsync(string folderPath, ImageRow file)
         {
-            FileInfo fileInfo = file.GetFileInfo(folderPath);
-            if (fileInfo.Exists == false)
+            if (file.IsVideo)
             {
-                this.Display(Constant.Images.FileNoLongerAvailableMessage);
-            }
-            else if (fileInfo.Length < Constant.Images.SmallestValidJpegSizeInBytes)
-            {
-                this.Display(Constant.Images.FileCorruptMessage);
-            }
-            else if (file.IsVideo)
-            {
-                this.Display(fileInfo);
+                this.Display(file.GetFileInfo(folderPath));
             }
             else
             {
@@ -95,12 +98,9 @@ namespace Carnassial.Control
                     expectedDisplayWidth = (int)(4.0 / 3.0 * this.ActualHeight);
                 }
 
-                using (MemoryImage image = await file.TryLoadAsync(folderPath, expectedDisplayWidth))
+                using (CachedImage image = await file.TryLoadImageAsync(folderPath, expectedDisplayWidth))
                 {
-                    if (image != null)
-                    {
-                        this.Display(image);
-                    }
+                    this.Display(image);
                 }
             }
         }

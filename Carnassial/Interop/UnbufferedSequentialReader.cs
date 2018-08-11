@@ -1,6 +1,7 @@
 ﻿using MetadataExtractor.IO;
 using Microsoft.Win32.SafeHandles;
 using System;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -10,23 +11,35 @@ namespace Carnassial.Interop
 {
     public class UnbufferedSequentialReader : SequentialReader, IDisposable
     {
+        private static ConcurrentDictionary<string, int> SectorSizeByPathRoot;
+
         private int bufferPosition;
         private bool disposed;
         private SafeFileHandle file;
         private int filePosition;
         private Lazy<long> length;
+        private Lazy<string> pathRoot;
 
         public byte[] Buffer { get; private set; }
+
+        static UnbufferedSequentialReader()
+        {
+            UnbufferedSequentialReader.SectorSizeByPathRoot = new ConcurrentDictionary<string, int>();
+        }
 
         public UnbufferedSequentialReader(string filePath)
             : base(true)
         {
             this.Buffer = null;
+            this.bufferPosition = 0;
             this.disposed = false;
             this.file = NativeMethods.CreateFileUnbuffered(filePath, false);
             this.filePosition = 0;
             this.length = new Lazy<long>(() => { return NativeMethods.GetFileSizeEx(this.file); });
-            this.bufferPosition = 0;
+            this.pathRoot = new Lazy<string>(() =>
+            {
+                return Path.GetPathRoot(filePath);
+            });
         }
 
         public long Length
@@ -105,9 +118,26 @@ namespace Carnassial.Interop
                 throw new NotSupportedException("Call " + nameof(this.ExtendBuffer) + "() before calling " + nameof(this.GetBytes) + "().");
             }
 
-            if ((this.bufferPosition + count) > this.Buffer.Length)
+            int endPosition = this.bufferPosition + count;
+            if (endPosition > this.Buffer.Length)
             {
-                throw new ArgumentOutOfRangeException("Requested read exceeds file buffer length.");
+                int minimumBytesRequired = endPosition - this.Buffer.Length;
+                int bytesToRead = minimumBytesRequired;
+                if (UnbufferedSequentialReader.SectorSizeByPathRoot.TryGetValue(this.pathRoot.Value, out int sectorSize) == false)
+                {
+                    sectorSize = NativeMethods.GetSectorSizeInBytes(this.pathRoot.Value);
+                    UnbufferedSequentialReader.SectorSizeByPathRoot.AddOrUpdate(this.pathRoot.Value, 
+                        sectorSize, 
+                        (string pathRoot, int previouslyRetrievedSectorSize) =>
+                        {
+                            return previouslyRetrievedSectorSize;
+                        });
+                }
+                if (minimumBytesRequired % sectorSize != 0)
+                {
+                    bytesToRead = sectorSize * (minimumBytesRequired / sectorSize + 1);
+                }
+                this.ExtendBuffer(bytesToRead);
             }
             ClrBuffer.BlockCopy(this.Buffer, this.bufferPosition, buffer, offset, count);
             this.bufferPosition += count;

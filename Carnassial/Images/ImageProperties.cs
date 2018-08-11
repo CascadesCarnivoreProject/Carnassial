@@ -23,14 +23,14 @@ namespace Carnassial.Images
             this.Luminosity = luminosity;
         }
 
-        public bool CanClassify
+        public bool HasColorationAndLuminosity
         {
             get { return (this.Coloration >= 0.0) && (this.Luminosity >= 0.0); }
         }
 
         public FileClassification EvaluateNewClassification(double darkLuminosityThreshold)
         {
-            if (this.CanClassify == false)
+            if (this.HasColorationAndLuminosity == false)
             {
                 switch (this.MetadataResult)
                 {
@@ -62,7 +62,7 @@ namespace Carnassial.Images
 
         public string GetClassificationDescription()
         {
-            if (this.CanClassify == false)
+            if (this.HasColorationAndLuminosity == false)
             {
                 return "File could not be loaded because it is missing or corrupt.";
             }

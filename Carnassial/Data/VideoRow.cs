@@ -17,13 +17,13 @@ namespace Carnassial.Data
         {
             get
             {
-                Debug.Assert((this.Classification != FileClassification.Dark) && (this.Classification != FileClassification.Color), "Video unexpectedly classified as image.");
+                // Debug.Assert(this.Classification == FileClassification.Video, "Video unexpectedly classified as image.");
                 return true;
             }
         }
 
         #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public async override Task<MemoryImage> TryLoadAsync(string baseFolderPath, Nullable<int> expectedDisplayWidth)
+        public async override Task<CachedImage> TryLoadImageAsync(string baseFolderPath, Nullable<int> expectedDisplayWidth)
         {
             throw new NotSupportedException();
         }

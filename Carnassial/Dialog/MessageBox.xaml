@@ -2,7 +2,6 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
-        xmlns:local="clr-namespace:Carnassial"
         AutomationProperties.AutomationId="CarnassialMessageBox"
         Loaded="Window_Loaded"
         MaxWidth="800" MaxHeight="860" MinWidth="640" MinHeight="200" SizeToContent="WidthAndHeight"

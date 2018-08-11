@@ -157,6 +157,15 @@ namespace Carnassial.Control
             return false;
         }
 
+        public void SelectFiles(FileSelection selection)
+        {
+            this.FileDatabase.SelectFiles(selection);
+            if (this.ImageCache.IsFileAvailable)
+            {
+                this.ImageCache.TryInvalidate(this.ImageCache.Current.ID);
+            }
+        }
+
         /// <summary>
         /// Add data event handler callbacks for (possibly invisible) controls
         /// </summary>

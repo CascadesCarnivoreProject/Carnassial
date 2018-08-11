@@ -228,6 +228,7 @@
     <Compile Include="Data\FileImportResult.cs" />
     <Compile Include="Data\FileTable.cs" />
     <Compile Include="Data\FileTransaction.cs" />
+    <Compile Include="Data\CachedImage.cs" />
     <Compile Include="Data\ImageSetOptions.cs" />
     <Compile Include="Data\ImageSetRow.cs" />
     <Compile Include="Database\SQLiteTable.cs" />
@@ -242,7 +243,7 @@
     <Compile Include="Dialog\AdvancedImageSetOptions.xaml.cs">
       <DependentUpon>AdvancedImageSetOptions.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\DarkImagesIOComputeTransaction.cs" />
+    <Compile Include="Dialog\ReclassifyIOComputeTransaction.cs" />
     <Compile Include="Dialog\DateCorrectAmbiguous.xaml.cs">
       <DependentUpon>DateCorrectAmbiguous.xaml</DependentUpon>
     </Compile>
@@ -413,7 +414,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Dialog\DarkImagesThreshold.xaml">
+    <Page Include="Dialog\ReclassifyFiles.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -475,8 +476,8 @@
     <Compile Include="Dialog\MessageBox.xaml.cs">
       <DependentUpon>MessageBox.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\DarkImagesThreshold.xaml.cs">
-      <DependentUpon>DarkImagesThreshold.xaml</DependentUpon>
+    <Compile Include="Dialog\ReclassifyFiles.xaml.cs">
+      <DependentUpon>ReclassifyFiles.xaml</DependentUpon>
     </Compile>
     <Compile Include="Dialog\PopulateFieldWithMetadata.xaml.cs">
       <DependentUpon>PopulateFieldWithMetadata.xaml</DependentUpon>
