@@ -50,6 +50,23 @@ namespace Carnassial.Util
             return DateTime.ParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, CultureInfo.InvariantCulture);
         }
 
+        public static TimeSpan ParseDisplayUtcOffsetString(string utcOffsetAsString)
+        {
+            bool negative = false;
+            if (utcOffsetAsString.StartsWith("-", StringComparison.Ordinal))
+            {
+                negative = true;
+                utcOffsetAsString = utcOffsetAsString.Substring(1);
+            }
+
+            TimeSpan utcOffset = TimeSpan.ParseExact(utcOffsetAsString, Constant.Time.UtcOffsetDisplayFormat, CultureInfo.InvariantCulture);
+            if (negative)
+            {
+                utcOffset = utcOffset.Negate();
+            }
+            return utcOffset;
+        }
+
         public static string ToDatabaseDateTimeString(DateTimeOffset dateTime)
         {
             return dateTime.UtcDateTime.ToString(Constant.Time.DateTimeDatabaseFormat);

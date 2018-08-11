@@ -1,4 +1,5 @@
-﻿using Carnassial.Database;
+﻿using Carnassial.Data;
+using Carnassial.Database;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -24,24 +25,19 @@ namespace Carnassial.Data
             {
                 // skip hidden controls as they're not normally a part of the user experience
                 // This is potentially problematic in corner cases; an option to show terms for all controls can be added if needed.
-                if (control.Visible == false)
+                if (control.Visible)
                 {
-                    continue;
-                }
+                    SearchTerm searchTerm = control.CreateSearchTerm();
+                    this.SearchTerms.Add(searchTerm);
 
-                // create search term for the control
-                SearchTerm searchTerm = new SearchTerm(control);
-                this.SearchTerms.Add(searchTerm);
-
-                if (control.Type == ControlType.DateTime)
-                {
-                    // provide turnkey support for querying on a range of datetimes by giving the user two search terms, one configured for the start of 
-                    // an interval and one for the end
-                    SearchTerm dateTimeLessThanOrEqual = new SearchTerm(searchTerm)
+                    if (control.Type == ControlType.DateTime)
                     {
-                        Operator = Constant.SearchTermOperator.LessThanOrEqual
-                    };
-                    this.SearchTerms.Add(dateTimeLessThanOrEqual);
+                        // provide turnkey support for querying on a range of datetimes by giving the user two search terms, one configured for the start of 
+                        // an interval and one for the end
+                        SearchTerm dateTimeLessThanOrEqual = searchTerm.Clone();
+                        dateTimeLessThanOrEqual.Operator = Constant.SearchTermOperator.LessThanOrEqual;
+                        this.SearchTerms.Add(dateTimeLessThanOrEqual);
+                    }
                 }
             }
         }
@@ -53,7 +49,7 @@ namespace Carnassial.Data
 
             foreach (SearchTerm searchTerm in other.SearchTerms)
             {
-                this.SearchTerms.Add(new SearchTerm(searchTerm));
+                this.SearchTerms.Add(searchTerm.Clone());
             }
         }
 
@@ -126,7 +122,7 @@ namespace Carnassial.Data
         {
             foreach (SearchTerm dateTimeTerm in this.SearchTerms.Where(term => String.Equals(term.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal)))
             {
-                dateTimeTerm.DatabaseValue = dateTimeOffset;
+                dateTimeTerm.DatabaseValue = dateTimeOffset.UtcDateTime;
             }
 
             SearchTerm utcOffsetTerm = this.SearchTerms.FirstOrDefault(term => String.Equals(term.DataLabel, Constant.FileColumn.UtcOffset, StringComparison.Ordinal));

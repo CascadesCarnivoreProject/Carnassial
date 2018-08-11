@@ -3,76 +3,69 @@ using Carnassial.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Carnassial.Data
 {
     /// <summary>
     /// A SearchTerm stores the search criteria for a field.
     /// </summary>
-    public class SearchTerm
+    public abstract class SearchTerm
     {
-        public ControlType ControlType { get; set; }
-        public object DatabaseValue { get; set; }
-        public string DataLabel { get; set; }
-        public string Label { get; set; }
-        public List<string> List { get; set; }
+        private object databaseValue;
+        private Lazy<List<object>> wellKnownValues;
+
+        public ControlType ControlType { get; private set; }
+        public string DataLabel { get; private set; }
+        public string Label { get; private set; }
         public string Operator { get; set; }
         public bool UseForSearching { get; set; }
 
-        public SearchTerm(ControlRow control)
+        protected SearchTerm(ControlRow control)
         {
             this.ControlType = control.Type;
+            this.databaseValue = null;
             this.DataLabel = control.DataLabel;
             this.Label = control.Label;
-            this.List = control.GetWellKnownValues();
             this.Operator = Constant.SearchTermOperator.Equal;
             this.UseForSearching = false;
-
-            switch (control.Type)
+            this.wellKnownValues = new Lazy<List<object>>(() =>
             {
-                case ControlType.Counter:
-                    this.DatabaseValue = "0";
-                    this.Operator = Constant.SearchTermOperator.GreaterThan;
-                    break;
-                case ControlType.DateTime:
-                    // before the CustomViewSelection dialog is first opened CarnassialWindow changes the default date time to the date time of the 
-                    // current file
-                    this.DatabaseValue = Constant.ControlDefault.DateTimeValue;
-                    this.Operator = Constant.SearchTermOperator.GreaterThanOrEqual;
-                    break;
-                case ControlType.Flag:
-                    this.DatabaseValue = false;
-                    break;
-                case ControlType.FixedChoice:
-                case ControlType.Note:
-                    this.DatabaseValue = control.DefaultValue;
-                    break;
-                case ControlType.UtcOffset:
-                    // the first time it's opened CustomViewSelection dialog changes this default to the offset of the current file
-                    this.DatabaseValue = Constant.ControlDefault.DateTimeValue.Offset;
-                    break;
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
-            }
+                List<string> wellKnownStrings = control.GetWellKnownValues();
+                List<object> wellKnownValues = new List<object>(wellKnownStrings.Count);
+                foreach (string wellKnownString in wellKnownStrings)
+                {
+                    wellKnownValues.Add(this.ConvertWellKnownValue(wellKnownString));
+                }
+                return wellKnownValues;
+            });
         }
 
-        public SearchTerm(SearchTerm other)
+        protected SearchTerm(SearchTerm other)
         {
             this.ControlType = other.ControlType;
-            this.DatabaseValue = other.DatabaseValue;
+            this.databaseValue = other.databaseValue;
             this.DataLabel = other.DataLabel;
             this.Label = other.Label;
-            if (other.List == null)
-            {
-                this.List = null;
-            }
-            else
-            {
-                this.List = new List<string>(other.List);
-            }
             this.Operator = other.Operator;
             this.UseForSearching = other.UseForSearching;
+            this.wellKnownValues = other.wellKnownValues;
         }
+
+        public object DatabaseValue
+        {
+            get { return this.databaseValue; }
+            set { this.databaseValue = this.ConvertDatabaseValue(value); }
+        }
+
+        public List<object> WellKnownValues
+        {
+            get { return this.wellKnownValues.Value; }
+        }
+
+        public abstract SearchTerm Clone();
+        protected abstract object ConvertDatabaseValue(object value);
+        protected abstract object ConvertWellKnownValue(string value);
 
         public override bool Equals(object obj)
         {
@@ -110,7 +103,6 @@ namespace Carnassial.Data
             {
                 return false;
             }
-            // this.List is excluded as doesn't affect the query fragment the term generates
             if (String.Equals(this.Operator, other.Operator, StringComparison.Ordinal) == false)
             {
                 return false;
@@ -119,13 +111,14 @@ namespace Carnassial.Data
             {
                 return false;
             }
+            // this.WellKnownValues is excluded as doesn't affect the query fragment the term generates
 
             return true;
         }
 
         public override int GetHashCode()
         {
-            // this.List is excluded as doesn't affect the query fragment the term generates
+            // this.WellKnownValues is excluded as doesn't affect the query fragment the term generates
             return Utilities.CombineHashCodes(this.ControlType, this.DatabaseValue, this.DataLabel, this.Label, this.Operator, this.UseForSearching);
         }
 
@@ -160,39 +153,131 @@ namespace Carnassial.Data
                     throw new NotSupportedException(String.Format("Unhandled search term operator '{0}'.", this.Operator));
             }
 
-            if (this.ControlType == ControlType.DateTime)
-            {
-                return new WhereClause(this.DataLabel, sqlOperator, ((DateTimeOffset)this.DatabaseValue).UtcDateTime);
-            }
             return new WhereClause(this.DataLabel, sqlOperator, this.DatabaseValue);
+        }
+    }
+
+    [SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1402:FileMayOnlyContainASingleClass", Justification = "StyleCop limitation.")]
+    public class SearchTerm<TColumnType> : SearchTerm
+    {
+        public SearchTerm(ControlRow control)
+            : base(control)
+        {
+        }
+
+        protected SearchTerm(SearchTerm<TColumnType> other)
+            : base(other)
+        {
+        }
+
+        public override SearchTerm Clone()
+        {
+            return new SearchTerm<TColumnType>(this);
+        }
+
+        protected override object ConvertDatabaseValue(object value)
+        {
+            if (value is string)
+            {
+                return this.ConvertWellKnownValue((string)value);
+            }
+
+            if (typeof(TColumnType) == typeof(bool))
+            {
+                int valueAsInt = (int)value;
+                if ((valueAsInt != 0) && (valueAsInt != 1))
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), "Valid integer values for boolean database columns are 0 and 1.");
+                }
+                return valueAsInt;
+            }
+            if (typeof(TColumnType) == typeof(DateTime))
+            {
+                DateTime dateTime = (DateTime)value;
+                if (dateTime.Kind != DateTimeKind.Utc)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), "DateTime not UTC.");
+                }
+                return dateTime;
+            }
+
+            return (TColumnType)value;
+        }
+
+        protected override object ConvertWellKnownValue(string value)
+        {
+            if (typeof(TColumnType) == typeof(bool))
+            {
+                int valueAsInt = Int32.Parse(value);
+                if ((valueAsInt != 0) && (valueAsInt != 1))
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), "Valid integer values for boolean database columns are 0 and 1.");
+                }
+                return valueAsInt;
+            }
+            if (typeof(TColumnType) == typeof(DateTime))
+            {
+                return DateTimeHandler.ParseDatabaseDateTimeString(value);
+            }
+            if (typeof(TColumnType) == typeof(FileClassification))
+            {
+                if (ImageRow.TryParseFileClassification(value, out FileClassification classification))
+                {
+                    return classification;
+                }
+                throw new ArgumentOutOfRangeException(nameof(value), String.Format("Unknown file classification '{0}'.", value));
+            }
+            if (typeof(TColumnType) == typeof(int))
+            {
+                return Int32.Parse(value);
+            }
+            if (typeof(TColumnType) == typeof(string))
+            {
+                return value;
+            }
+            if (typeof(TColumnType) == typeof(TimeSpan))
+            {
+                return DateTimeHandler.ParseDisplayUtcOffsetString(value).TotalHours;
+            }
+
+            throw new NotSupportedException(String.Format("Unhandled type {0}.", typeof(TColumnType)));
         }
 
         public override string ToString()
         {
-            string value;
-            switch (this.ControlType)
+            string displayValue;
+            if (typeof(TColumnType) == typeof(bool))
             {
-                case ControlType.DateTime:
-                    value = DateTimeHandler.ToDisplayDateTimeUtcOffsetString((DateTimeOffset)this.DatabaseValue);
-                    break;
-                case ControlType.Flag:
-                    value = (bool)this.DatabaseValue ? Boolean.TrueString : Boolean.FalseString;
-                    break;
-                case ControlType.UtcOffset:
-                    value = DateTimeHandler.ToDisplayUtcOffsetString((TimeSpan)this.DatabaseValue);
-                    break;
-                default:
-                    Debug.Assert((this.DatabaseValue == null) || (this.DatabaseValue is string), String.Format("Expected search term for '{0}' to be a string, not {1}.", this.DataLabel, this.DatabaseValue.GetType().Name));
-                    value = (string)this.DatabaseValue;
-                    break;
+                displayValue = (int)this.DatabaseValue == 1 ? Boolean.TrueString : Boolean.FalseString;
+            }
+            else if (typeof(TColumnType) == typeof(DateTime))
+            {
+                displayValue = DateTimeHandler.ToDisplayDateTimeString((DateTime)this.DatabaseValue);
+            }
+            else if ((typeof(TColumnType) == typeof(FileClassification)) || 
+                     (typeof(TColumnType) == typeof(int)))
+            {
+                displayValue = this.DatabaseValue.ToString();
+            }
+            else if (typeof(TColumnType) == typeof(string))
+            {
+                displayValue = (string)this.DatabaseValue;
+            }
+            else if (typeof(TColumnType) == typeof(TimeSpan))
+            {
+                displayValue = DateTimeHandler.ToDisplayUtcOffsetString(DateTimeHandler.FromDatabaseUtcOffset((double)this.DatabaseValue));
+            }
+            else
+            {
+                throw new NotSupportedException(String.Format("Unhandled type {0}.", typeof(TColumnType)));
             }
 
-            if (value.Length == 0)
+            if (String.IsNullOrEmpty(displayValue))
             {
-                value = "\"\"";  // an empty string, display it as ""
+                displayValue = "\"\"";  // an empty string, display it as ""
             }
 
-            return this.DataLabel + " " + this.Operator + " " + value;
+            return this.DataLabel + " " + this.Operator + " " + displayValue;
         }
     }
 }

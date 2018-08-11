@@ -315,6 +315,65 @@ namespace Carnassial.Data
             return controlTuples;
         }
 
+        public SearchTerm CreateSearchTerm()
+        {
+            switch (this.Type)
+            {
+                case ControlType.Counter:
+                    return new SearchTerm<int>(this)
+                    {
+                        DatabaseValue = 0,
+                        Operator = Constant.SearchTermOperator.GreaterThan
+                    };
+                case ControlType.DateTime:
+                    // before the CustomViewSelection dialog is first opened CarnassialWindow changes the default date time to the date time of the 
+                    // current file
+                    return new SearchTerm<DateTime>(this)
+                    {
+                        DatabaseValue = Constant.ControlDefault.DateTimeValue.UtcDateTime,
+                        Operator = Constant.SearchTermOperator.GreaterThanOrEqual
+                    };
+                case ControlType.Flag:
+                    return new SearchTerm<bool>(this)
+                    {
+                        DatabaseValue = this.DefaultValue
+                    };
+                case ControlType.FixedChoice:
+                    if (String.Equals(this.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
+                    {
+                        if (ImageRow.TryParseFileClassification(this.DefaultValue, out FileClassification defaultValue) == false)
+                        {
+                            defaultValue = FileClassification.Color;
+                        }
+                        SearchTerm searchTerm = new SearchTerm<FileClassification>(this)
+                        {
+                            DatabaseValue = defaultValue
+                        };
+                        return searchTerm;
+                    }
+                    else
+                    {
+                        return new SearchTerm<string>(this)
+                        {
+                            DatabaseValue = this.DefaultValue
+                        };
+                    }
+                case ControlType.Note:
+                    return new SearchTerm<string>(this)
+                    {
+                        DatabaseValue = this.DefaultValue
+                    };
+                case ControlType.UtcOffset:
+                    // the first time it's opened CustomViewSelection dialog changes this default to the offset of the current file
+                    return new SearchTerm<TimeSpan>(this)
+                    {
+                        DatabaseValue = Constant.ControlDefault.DateTimeValue.Offset
+                    };
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", this.Type));
+            }
+        }
+
         public ColumnTuplesWithID CreateUpdate()
         {
             List<ColumnTuple> columnTuples = new List<ColumnTuple>()

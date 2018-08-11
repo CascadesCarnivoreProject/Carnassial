@@ -1318,7 +1318,7 @@ namespace Carnassial
             // the first time the custom selection dialog is launched update the DateTime and UtcOffset search terms to the time of the current file
             // Don't need to check CustomSelectionChange.HasChanges() as a change is guaranteed.
             SearchTerm firstDateTimeSearchTerm = this.DataHandler.FileDatabase.CustomSelection.SearchTerms.First(searchTerm => String.Equals(searchTerm.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal));
-            if ((DateTimeOffset)firstDateTimeSearchTerm.DatabaseValue == Constant.ControlDefault.DateTimeValue)
+            if ((DateTime)firstDateTimeSearchTerm.DatabaseValue == Constant.ControlDefault.DateTimeValue.UtcDateTime)
             {
                 Data.CustomSelection customSelectionInitialSnapshot = new Data.CustomSelection(this.DataHandler.FileDatabase.CustomSelection);
                 DateTimeOffset defaultDate = this.DataHandler.ImageCache.Current.DateTimeOffset;

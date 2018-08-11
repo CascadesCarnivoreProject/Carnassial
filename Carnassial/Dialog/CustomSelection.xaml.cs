@@ -153,7 +153,7 @@ namespace Carnassial.Dialog
                         AllowLeadingWhitespace = true,
                         Autocompletions = this.fileDatabase.GetDistinctValuesInFileDataColumn(searchTerm.DataLabel),
                         IsEnabled = searchTerm.UseForSearching,
-                        Text = (string)searchTerm.DatabaseValue,
+                        Text = searchTerm.DatabaseValue?.ToString(),
                         Margin = CustomSelection.GridCellMargin,
                         Width = CustomSelection.DefaultControlWidth,
                         Height = CustomSelection.ValueTextBoxHeight,
@@ -175,7 +175,7 @@ namespace Carnassial.Dialog
                     this.SearchTerms.Children.Add(textBoxValue);
                     break;
                 case ControlType.DateTime:
-                    DateTimeOffset dateTime = (DateTimeOffset)this.fileDatabase.CustomSelection.SearchTerms[gridRowIndex - 1].DatabaseValue;
+                    DateTime dateTime = (DateTime)this.fileDatabase.CustomSelection.SearchTerms[gridRowIndex - 1].DatabaseValue;
 
                     DateTimeOffsetPicker dateValue = new DateTimeOffsetPicker()
                     {
@@ -197,8 +197,8 @@ namespace Carnassial.Dialog
                         Margin = CustomSelection.GridCellMargin
                     };
 
-                    // create the dropdown menu 
-                    comboBoxValue.ItemsSource = searchTerm.List;
+                    // create the dropdown menu
+                    comboBoxValue.ItemsSource = searchTerm.WellKnownValues;
                     comboBoxValue.SelectedItem = searchTerm.DatabaseValue;
                     comboBoxValue.SelectionChanged += this.FixedChoice_SelectionChanged;
                     Grid.SetRow(comboBoxValue, gridRowIndex);
@@ -211,14 +211,14 @@ namespace Carnassial.Dialog
                         Margin = CustomSelection.GridCellMargin,
                         VerticalAlignment = VerticalAlignment.Center,
                         HorizontalAlignment = HorizontalAlignment.Left,
-                        IsChecked = (bool)searchTerm.DatabaseValue,
+                        IsChecked = (int)searchTerm.DatabaseValue == 1 ? true : false,
                         IsEnabled = searchTerm.UseForSearching
                     };
                     flagCheckBox.Checked += this.Flag_CheckedOrUnchecked;
                     flagCheckBox.Unchecked += this.Flag_CheckedOrUnchecked;
 
                     Debug.Assert(flagCheckBox.IsChecked.HasValue, "Expected check box to be either checked or unchecked but it doesn't have a value.");
-                    searchTerm.DatabaseValue = flagCheckBox.IsChecked.Value;
+                    searchTerm.DatabaseValue = flagCheckBox.IsChecked.Value ? 1 : 0;
 
                     Grid.SetRow(flagCheckBox, gridRowIndex);
                     Grid.SetColumn(flagCheckBox, CustomSelection.ValueColumn);
@@ -295,7 +295,7 @@ namespace Carnassial.Dialog
         private void DateTime_ValueChanged(DateTimeOffsetPicker datePicker, DateTimeOffset newDateTime)
         {
             int row = Grid.GetRow(datePicker);
-            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = datePicker.Value;
+            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = datePicker.Value.UtcDateTime;
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -308,7 +308,16 @@ namespace Carnassial.Dialog
         {
             ComboBox comboBox = sender as ComboBox;
             int row = Grid.GetRow(comboBox);
-            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = comboBox.SelectedValue.ToString();
+
+            SearchTerm searchTerm = this.fileDatabase.CustomSelection.SearchTerms[row - 1];
+            if (String.Equals(searchTerm.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
+            {
+                searchTerm.DatabaseValue = (int)comboBox.SelectedValue;
+            }
+            else
+            {
+                searchTerm.DatabaseValue = (string)comboBox.SelectedValue;
+            }
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -318,7 +327,7 @@ namespace Carnassial.Dialog
             int row = Grid.GetRow(checkBox);
 
             Debug.Assert(checkBox.IsChecked.Value, "Expected check box to be either checked or unchecked but it doesn't have a value.");
-            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = checkBox.IsChecked.Value;
+            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = checkBox.IsChecked.Value ? 1 : 0;
             this.UpdateSearchCriteriaFeedback();
         }
 
@@ -333,7 +342,7 @@ namespace Carnassial.Dialog
             // duplicate search term
             SearchTerm searchTerm = (SearchTerm)((FrameworkElement)sender).Tag;
             int insertionIndex = this.fileDatabase.CustomSelection.SearchTerms.IndexOf(searchTerm) + 1;
-            SearchTerm termClone = new SearchTerm(searchTerm);
+            SearchTerm termClone = searchTerm.Clone();
             this.fileDatabase.CustomSelection.SearchTerms.Insert(insertionIndex, termClone);
 
             // work around WPF by rebuilding FrameworkElements in search term grid
@@ -411,14 +420,22 @@ namespace Carnassial.Dialog
         {
             TextBox textBox = sender as TextBox;
             int row = Grid.GetRow(textBox);
-            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = textBox.Text;
+            SearchTerm searchTerm = this.fileDatabase.CustomSelection.SearchTerms[row - 1];
+            if (searchTerm.ControlType == ControlType.Counter)
+            {
+                searchTerm.DatabaseValue = Int32.Parse(textBox.Text);
+            }
+            else
+            {
+                searchTerm.DatabaseValue = textBox.Text;
+            }
             this.UpdateSearchCriteriaFeedback();
         }
 
         private void UtcOffset_ValueChanged(TimeSpanPicker utcOffsetPicker, TimeSpan newTimeSpan)
         {
             int row = Grid.GetRow(utcOffsetPicker);
-            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = utcOffsetPicker.Value;
+            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = utcOffsetPicker.Value.TotalHours;
             this.UpdateSearchCriteriaFeedback();
         }
 

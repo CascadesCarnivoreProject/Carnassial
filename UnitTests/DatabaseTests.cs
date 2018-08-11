@@ -199,10 +199,14 @@ namespace Carnassial.UnitTests
             Assert.IsTrue((fileDatabase.Controls.RowCount - 4) == fileDatabase.CustomSelection.SearchTerms.Count);
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 0);
             Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Custom) == -1);
+            foreach (SearchTerm searchTerm in fileDatabase.CustomSelection.SearchTerms)
+            {
+                Assert.IsTrue(String.IsNullOrWhiteSpace(searchTerm.ToString()) == false);
+            }
 
             SearchTerm dateTime = fileDatabase.CustomSelection.SearchTerms.First(term => String.Equals(term.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal));
             dateTime.UseForSearching = true;
-            dateTime.DatabaseValue = new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero);
+            dateTime.DatabaseValue = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
@@ -248,7 +252,7 @@ namespace Carnassial.UnitTests
             SearchTerm markedForDeletion = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal));
             markedForDeletion.UseForSearching = true;
             markedForDeletion.Operator = Constant.SearchTermOperator.Equal;
-            markedForDeletion.DatabaseValue = false;
+            markedForDeletion.DatabaseValue = 0;
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
             fileDatabase.SelectFiles(FileSelection.Custom);
             Assert.IsTrue(fileDatabase.Files.RowCount == 1);
@@ -428,10 +432,11 @@ namespace Carnassial.UnitTests
 
             int defaultValueIndex = numberOfStandardControls + (3 * iterations) - 4;
             ControlRow defaultValueControl = templateDatabase.Controls[defaultValueIndex];
-            string modifiedDefaultValue = "Default value modification roundtrip.";
-            defaultValueControl.DefaultValue = modifiedDefaultValue;
+            Assert.IsTrue(defaultValueControl.Type == ControlType.Flag); // check
+            int modifiedDefaultValue = 1;
+            defaultValueControl.DefaultValue = modifiedDefaultValue.ToString();
             templateDatabase.TrySyncControlToDatabase(defaultValueControl);
-            Assert.IsTrue(templateDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
+            Assert.IsTrue(String.Equals(templateDatabase.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
 
             int labelIndex = numberOfStandardControls + (3 * iterations) - 3;
             ControlRow labelControl = templateDatabase.Controls[labelIndex];
@@ -480,7 +485,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(templateDatabase.Controls.RowCount == expectedControlCount);
             this.VerifyControls(templateDatabase);
             Assert.IsTrue(templateDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
-            Assert.IsTrue(templateDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
+            Assert.IsTrue(String.Equals(templateDatabase.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
             Assert.IsTrue(templateDatabase.Controls[labelIndex].Label == modifiedLabel);
             Assert.IsTrue(templateDatabase.Controls[listIndex].WellKnownValues == modifiedList);
             Assert.IsTrue(templateDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
@@ -494,7 +499,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileDatabase.Controls.RowCount == expectedControlCount);
             this.VerifyControls(fileDatabase);
             Assert.IsTrue(fileDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
-            Assert.IsTrue(fileDatabase.Controls[defaultValueIndex].DefaultValue == modifiedDefaultValue);
+            Assert.IsTrue(String.Equals(fileDatabase.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
             Assert.IsTrue(fileDatabase.Controls[labelIndex].Label == modifiedLabel);
             Assert.IsTrue(fileDatabase.Controls[listIndex].WellKnownValues == modifiedList);
             Assert.IsTrue(fileDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
