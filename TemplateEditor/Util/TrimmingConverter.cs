@@ -7,7 +7,7 @@ namespace Carnassial.Editor.Util
     /// <summary>
     /// Converter for control grid text.  Removes whitespace from beginning and end of string.
     /// </summary>
-    public class TrimmingConverter : IValueConverter
+    internal class TrimmingConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {

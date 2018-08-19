@@ -631,6 +631,10 @@ namespace Carnassial.Data
                 {
                     flag.DefaultValue = Constant.Sql.TrueString;
                 }
+                if (String.IsNullOrEmpty(flag.WellKnownValues) || (String.Equals(flag.WellKnownValues, Constant.ControlDefault.FlagWellKnownValues, StringComparison.Ordinal) == false))
+                {
+                    flag.WellKnownValues = Constant.ControlDefault.FlagWellKnownValues;
+                }
                 if (flag.HasChanges)
                 {
                     this.SyncControlToDatabase(connection, flag);

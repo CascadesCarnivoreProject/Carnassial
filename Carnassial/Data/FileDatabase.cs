@@ -498,7 +498,7 @@ namespace Carnassial.Data
 
                 if (fileDatabaseControl.Type != templateControl.Type)
                 {
-                    this.ControlSynchronizationIssues.Add(String.Format("- Field with data label '{0}' is of type '{1}' in the file database but of type '{2}' in the template.{3}", dataLabel, fileDatabaseControl.Type, templateControl.Type, Environment.NewLine));
+                    this.ControlSynchronizationIssues.Add(String.Format("- Field with data label '{0}' is of type '{1}' in the file database but of type '{2}' in the template.{3}", dataLabel, ControlTypeConverter.Convert(fileDatabaseControl.Type), ControlTypeConverter.Convert(templateControl.Type), Environment.NewLine));
                 }
 
                 if (fileDatabaseControl.Type == ControlType.FixedChoice)

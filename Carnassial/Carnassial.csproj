@@ -197,6 +197,8 @@
     <Compile Include="Control\HorizontalLineAdorner.cs" />
     <Compile Include="Control\FileDisplayMessage.cs" />
     <Compile Include="Control\UtcOffsetPicker.cs" />
+    <Compile Include="Util\ControlTypeConverter.cs" />
+    <Compile Include="Util\WellKnownValueConverter.cs" />
     <Compile Include="Database\IndexedPropertyChangedEventArgs.cs" />
     <Compile Include="Database\SecondaryIndex.cs" />
     <Compile Include="Database\SQLiteRow.cs" />

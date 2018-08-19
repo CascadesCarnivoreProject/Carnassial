@@ -47,6 +47,16 @@ namespace Carnassial.Editor
             }
         }
 
+        public static class Resources
+        {
+            public const string DefaultValueChoiceComboBox = "DefaultValueChoiceComboBox";
+            public const string DefaultValueFlagComboBox = "DefaultValueFlagComboBox";
+            public const string DefaultValueTextBox = "DefaultValueTextBox";
+
+            public const string DisplayFalseString = "False (unchecked)";
+            public const string DisplayTrueString = "True (checked)";
+        }
+
         // keys in EditorWindowStyle.xaml
         public static class StyleResources
         {

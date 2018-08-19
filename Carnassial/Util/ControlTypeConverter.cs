@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Carnassial.Editor.Util
+namespace Carnassial.Util
 {
     /// <summary>
     /// Display string converter for ControlTypes.  Uses preferred enum names rather than legacy values.
@@ -14,8 +14,12 @@ namespace Carnassial.Editor.Util
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             Debug.Assert(targetType == typeof(string), "Unhandled target type.");
+            return ControlTypeConverter.Convert((ControlType)value);
+        }
 
-            switch ((ControlType)value)
+        public static string Convert(ControlType type)
+        {
+            switch (type)
             {
                 case ControlType.Counter:
                     return "Counter";
@@ -30,41 +34,44 @@ namespace Carnassial.Editor.Util
                 case ControlType.UtcOffset:
                     return "UtcOffset";
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", parameter));
+                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", type));
             }
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             Debug.Assert(targetType == typeof(ControlType), "Unhandled target type.");
+            return ControlTypeConverter.ConvertBack((string)value);
+        }
 
-            string valueAsString = (string)value;
-            if (String.Equals(valueAsString, "Counter", StringComparison.Ordinal))
+        public static ControlType ConvertBack(string type)
+        {
+            if (String.Equals(type, "Counter", StringComparison.Ordinal))
             {
                 return ControlType.Counter;
             }
-            if (String.Equals(valueAsString, "DateTime", StringComparison.Ordinal))
+            if (String.Equals(type, "DateTime", StringComparison.Ordinal))
             {
                 return ControlType.DateTime;
             }
-            if (String.Equals(valueAsString, "FixedChoice", StringComparison.Ordinal))
+            if (String.Equals(type, "FixedChoice", StringComparison.Ordinal))
             {
                 return ControlType.FixedChoice;
             }
-            if (String.Equals(valueAsString, "Flag", StringComparison.Ordinal))
+            if (String.Equals(type, "Flag", StringComparison.Ordinal))
             {
                 return ControlType.Flag;
             }
-            if (String.Equals(valueAsString, "Note", StringComparison.Ordinal))
+            if (String.Equals(type, "Note", StringComparison.Ordinal))
             {
                 return ControlType.Note;
             }
-            if (String.Equals(valueAsString, "UtcOffset", StringComparison.Ordinal))
+            if (String.Equals(type, "UtcOffset", StringComparison.Ordinal))
             {
                 return ControlType.UtcOffset;
             }
 
-            throw new NotSupportedException(String.Format("Unhandled control type {0}.", parameter));
+            throw new NotSupportedException(String.Format("Unhandled control type '{0}'.", type));
         }
     }
 }

@@ -77,6 +77,7 @@ namespace Carnassial.Data
                 case ControlType.Flag:
                     this.defaultValue = Constant.ControlDefault.FlagValue;
                     this.tooltip = Constant.ControlDefault.FlagTooltip;
+                    this.wellKnownValues = Constant.ControlDefault.FlagWellKnownValues;
                     break;
                 case ControlType.UtcOffset:
                     this.copyable = false;
@@ -397,7 +398,7 @@ namespace Carnassial.Data
 
         public List<string> GetWellKnownValues()
         {
-            return this.WellKnownValues.Split(Constant.Control.ListDelimiter).ToList();
+            return WellKnownValueConverter.Convert(this.WellKnownValues);
         }
 
         public bool IsFilePathComponent()
@@ -428,7 +429,7 @@ namespace Carnassial.Data
                     return String.Equals(value, Boolean.FalseString, StringComparison.OrdinalIgnoreCase) ||
                            String.Equals(value, Boolean.TrueString, StringComparison.OrdinalIgnoreCase);
                 case ControlType.FixedChoice:
-                    // the editor doesn't currently enforce the default value is one of the well known values, so accept it as
+                    // historically, the editor didn't enforce the default value be a well known value, so accept it as
                     // valid independently
                     if (String.Equals(value, this.DefaultValue, StringComparison.Ordinal))
                     {
@@ -447,7 +448,7 @@ namespace Carnassial.Data
 
         public void SetWellKnownValues(List<string> wellKnownValues)
         {
-            this.WellKnownValues = String.Join(Constant.Control.ListDelimiter.ToString(), wellKnownValues);
+            this.WellKnownValues = WellKnownValueConverter.ConvertBack(wellKnownValues);
         }
 
         public bool Synchronize(ControlRow other)

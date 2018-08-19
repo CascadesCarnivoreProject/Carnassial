@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:carnassial="clr-namespace:Carnassial;assembly=Carnassial"
         xmlns:control="clr-namespace:Carnassial.Control;assembly=Carnassial"
-        xmlns:util="clr-namespace:Carnassial.Editor.Util"
+        xmlns:editorUtil="clr-namespace:Carnassial.Editor.Util"
+        xmlns:util="clr-namespace:Carnassial.Util;assembly=Carnassial"
         AutomationProperties.AutomationId="CarnassialTemplateEditor" Icon="Editor.ico" 
         Closing="Window_Closing" Loaded="Window_Loaded" Style="{StaticResource MainWindow}"
         Height="860" Width="1488" MinHeight="560" MinWidth="800">
@@ -16,8 +17,21 @@
     </Window.CommandBindings>
     <Window.Resources>
         <ResourceDictionary>
+            <editorUtil:ControlTypeDefaultValueSelector x:Key="ControlTypeDefaultValueSelector" />
+            <editorUtil:FlagValueConverter x:Key="FlagValueConverter" />
+            <editorUtil:TrimmingConverter x:Key="TrimmingConverter" />
             <util:ControlTypeConverter x:Key="ControlTypeConverter" />
-            <util:TrimmingConverter x:Key="TrimmingConverter" />
+            <util:WellKnownValueConverter x:Key="WellKnownValueConverter" />
+
+            <DataTemplate x:Key="DefaultValueChoiceComboBox">
+                <ComboBox ItemsSource="{Binding Path=WellKnownValues, Converter={StaticResource WellKnownValueConverter}}" SelectedItem="{Binding Path=DefaultValue}" ToolTip="The value the field will be set to by default." ToolTipService.ShowOnDisabled="True" BorderThickness="0" />
+            </DataTemplate>
+            <DataTemplate x:Key="DefaultValueFlagComboBox">
+                <ComboBox ItemsSource="{Binding Path=WellKnownValues, Converter={StaticResource FlagValueConverter}}" SelectedItem="{Binding Path=DefaultValue, Converter={StaticResource FlagValueConverter}}" ToolTip="The value the field will be set to by default." ToolTipService.ShowOnDisabled="True" BorderThickness="0" />
+            </DataTemplate>
+            <DataTemplate x:Key="DefaultValueTextBox">
+                <control:AutocompleteTextBox Autocompletions="{Binding Path=WellKnownValues, Converter={StaticResource WellKnownValueConverter}}" Text="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}}" ToolTip="The value the field will be set to by default." ToolTipService.ShowOnDisabled="True" BorderThickness="0" />
+            </DataTemplate>
         </ResourceDictionary>
     </Window.Resources>
     <Grid Style="{StaticResource ApplicationGrid}">
@@ -358,14 +372,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="Default Value" Binding="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}}" CanUserSort="False" MaxWidth="100" MinWidth="40">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The value the field will be set to by default."/>
-                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Header="Default Value" CanUserSort="False" MinWidth="40" CellTemplateSelector="{StaticResource ControlTypeDefaultValueSelector}" />
                                 <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
                                 <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
                                 <DataGridTextColumn MinWidth="50" Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource TrimmingConverter}}" Width="*" CanUserSort="False">

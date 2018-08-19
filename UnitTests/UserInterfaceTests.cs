@@ -498,11 +498,9 @@ namespace Carnassial.UnitTests
                         Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
                         if (String.Equals(control.DataLabel, TestConstant.CarnivoreDatabaseColumn.Pelage, StringComparison.Ordinal) ||
                             String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, StringComparison.Ordinal) ||
-                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, StringComparison.Ordinal) ||
                             String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Choice3, StringComparison.Ordinal) ||
                             String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Counter3, StringComparison.Ordinal) ||
-                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Flag0, StringComparison.Ordinal) ||
-                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, StringComparison.Ordinal))
+                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Flag0, StringComparison.Ordinal))
                         {
                             Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control), control.DataLabel);
                         }

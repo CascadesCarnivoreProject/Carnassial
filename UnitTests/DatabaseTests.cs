@@ -120,6 +120,7 @@ namespace Carnassial.UnitTests
                         expectedValues = fileExpectations.Select(expectation => expectation.DateTime.Offset).Distinct().Count();
                         break;
                     case Constant.FileColumn.DeleteFlag:
+                    case TestConstant.DefaultDatabaseColumn.Choice0:
                     case TestConstant.DefaultDatabaseColumn.Choice3:
                     case TestConstant.DefaultDatabaseColumn.ChoiceNotVisible:
                     case TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel:
@@ -129,12 +130,11 @@ namespace Carnassial.UnitTests
                     case TestConstant.DefaultDatabaseColumn.Flag0:
                     case TestConstant.DefaultDatabaseColumn.Flag3:
                     case TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel:
-                    case TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel:
                     case TestConstant.DefaultDatabaseColumn.NoteNotVisible:
                         expectedValues = 1;
                         break;
-                    case TestConstant.DefaultDatabaseColumn.Choice0:
                     case TestConstant.DefaultDatabaseColumn.FlagNotVisible:
+                    case TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel:
                     case Constant.FileColumn.Classification:
                         expectedValues = 2;
                         break;
@@ -677,7 +677,7 @@ namespace Carnassial.UnitTests
             templateDatabase.TrySyncControlToDatabase(noteControl);
 
             Assert.IsFalse(FileDatabase.TryCreateOrOpen(fileDatabase.FileName, templateDatabase, false, LogicalOperator.And, out fileDatabase));
-            Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 5);
+            Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 4);
         }
 
         [TestMethod]

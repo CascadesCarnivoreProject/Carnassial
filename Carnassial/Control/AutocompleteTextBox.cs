@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -10,16 +11,11 @@ namespace Carnassial.Control
 {
     public class AutocompleteTextBox : TextBox
     {
+        public static readonly DependencyProperty AutocompletionsProperty = DependencyProperty.Register("Autocompletions", typeof(List<string>), typeof(AutocompleteTextBox));
+
         private string mostRecentAutocompletion;
 
         public bool AllowLeadingWhitespace { get; set; }
-
-        // XamlWriter doesn't support generics so this property breaks anything triggering XamlWriter.Save(), such as clearing UI object collections
-        // containing the text box since the clear triggers undo and undo relies on serialization.
-        // If needed serialization support can be added via a TypeConverter.
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public List<string> Autocompletions { get; set; }
-
         public bool SuppressAutocompletion { get; set; }
 
         /// <summary>
@@ -33,6 +29,16 @@ namespace Carnassial.Control
             this.mostRecentAutocompletion = null;
             this.PreviewKeyDown += this.OnPreviewKeyDown;
             this.TextChanged += this.OnTextChanged;
+        }
+
+        // XamlWriter doesn't support generics so this property breaks anything triggering XamlWriter.Save(), such as clearing UI object collections
+        // containing the text box since the clear triggers undo and undo relies on serialization.
+        // If needed serialization support can be added via a TypeConverter.
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public List<string> Autocompletions
+        {
+            get { return (List<string>)this.GetValue(AutocompleteTextBox.AutocompletionsProperty); }
+            set { this.SetValue(AutocompleteTextBox.AutocompletionsProperty, value); }
         }
 
         private int GetIndexOfCurrentAutocompletion()

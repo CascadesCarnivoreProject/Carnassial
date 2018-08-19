@@ -50,10 +50,10 @@ namespace Carnassial
 
         public static class Control
         {
-            public const char ListDelimiter = '|';
             // hotkey characters in use by the top level of Carnassial's main menu or the three data entry buttons and therefore unavailable as control 
             // shortcuts in either upper or lower case
             public const string ReservedHotKeys = "FfEeOoVvSsHhPp123456789";
+            public const char WellKnownValuesDelimiter = '|';
 
             public static readonly ReadOnlyCollection<string> StandardControls = new List<string>()
             {
@@ -102,6 +102,7 @@ namespace Carnassial
 
             public const string FlagTooltip = "Toggle between true and false";
             public const string FlagValue = "0";
+            public const string FlagWellKnownValues = "0|1";
             public const string NoteTooltip = "Write a textual note";
 
             // standard controls

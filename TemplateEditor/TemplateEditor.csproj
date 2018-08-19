@@ -150,7 +150,8 @@
       <DependentUpon>EditWellKnownValues.xaml</DependentUpon>
     </Compile>
     <Compile Include="Util\CallerMemberNameAttribute.cs" />
-    <Compile Include="Util\ControlTypeConverter.cs" />
+    <Compile Include="Util\ControlTypeDefaultValueSelector.cs" />
+    <Compile Include="Util\FlagValueConverter.cs" />
     <Compile Include="Util\TrimmingConverter.cs" />
     <Compile Include="Util\DataGridCellExtensions.cs" />
     <Compile Include="Util\EditorUserRegistrySettings.cs" />
