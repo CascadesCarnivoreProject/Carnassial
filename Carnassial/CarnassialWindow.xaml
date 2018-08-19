@@ -74,7 +74,7 @@
                     <Separator />
                     <MenuItem Name="MenuFileRenameFileDatabase" Header="Rename the _data file..." Click="MenuFileRenameFileDatabase_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Renames the data file to a name of your choosing." />
                     <Separator />
-                    <MenuItem Name="MenuFileCloseImageSet" Header="C_lose image set" Click="MenuFileCloseImageSet_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Asks for a template and then opens an existing database or creates a new database.">
+                    <MenuItem Name="MenuFileCloseImageSet" Header="C_lose image set" Click="MenuFileCloseImageSet_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Closes the currently open image set so another can be opened.">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/CloseSolution_16x.png" />
                         </MenuItem.Icon>

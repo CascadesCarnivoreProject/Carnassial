@@ -5,7 +5,6 @@ using Carnassial.Database;
 using Carnassial.Dialog;
 using Carnassial.Github;
 using Carnassial.Images;
-using Carnassial.Native;
 using Carnassial.Util;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System;

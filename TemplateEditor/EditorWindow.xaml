@@ -75,6 +75,12 @@
                     <Separator />
                     <MenuItem Name="MenuFileRecentTemplates" Header="_Recent templates" IsEnabled="false" Style="{StaticResource ApplicationMenuItem}" ToolTip="Recently used templates."/>
                     <Separator />
+                    <MenuItem Name="MenuFileCloseTemplate" Header="C_lose template" Click="MenuFileCloseTemplate_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Closes the current template so another can be opened.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/CloseSolution_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator />
                     <MenuItem Header="E_xit" Click="MenuFileExit_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Quit the template editor.">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/Exit_16x.png" />

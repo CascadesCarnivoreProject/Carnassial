@@ -230,30 +230,26 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Editor.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\Carnassial\Resources\Calendar_24x.png">
+      <Link>Resources\Calendar_24x.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\Carnassial\Resources\Menu\CloseSolution_16x.png">
+      <Link>Resources\Menu\CloseSolution_16x.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
     <Resource Include="..\Carnassial\Resources\Menu\Exit_16x.png">
       <Link>Resources\Menu\Exit_16x.png</Link>
     </Resource>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Menu\NewFile_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="..\Carnassial\Resources\Menu\OpenFolder_16x.png">
       <Link>Resources\Menu\OpenFolder_16x.png</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Editor.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Carnassial\Carnassial.csproj">
-      <Project>{f223a2f9-f2c2-47a8-80f3-472349176579}</Project>
-      <Name>Carnassial</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\Carnassial\Resources\Calendar_24x.png">
-      <Link>Resources\Calendar_24x.png</Link>
     </Resource>
   </ItemGroup>
   <ItemGroup>
@@ -275,6 +271,15 @@
     <Resource Include="..\Carnassial\Resources\StatusCriticalError_64x.png">
       <Link>Resources\StatusCriticalError_64x.png</Link>
     </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Menu\NewFile_16x.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Carnassial\Carnassial.csproj">
+      <Project>{f223a2f9-f2c2-47a8-80f3-472349176579}</Project>
+      <Name>Carnassial</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets')" />

@@ -36,9 +36,6 @@ namespace Carnassial.Editor
         // database where the controls and image set defaults are stored
         private TemplateDatabase templateDatabase;
 
-        /// <summary>
-        /// Starts the UI.
-        /// </summary>
         public EditorWindow()
         {
             AppDomain.CurrentDomain.UnhandledException += this.OnUnhandledException;
@@ -51,7 +48,7 @@ namespace Carnassial.Editor
             this.Title = EditorConstant.MainWindowBaseTitle;
             Utilities.TryFitWindowInWorkingArea(this);
 
-            // Abort if some of the required dependencies are missing
+            // abort if some of the required dependencies are missing
             if (Dependencies.AreRequiredBinariesPresent(EditorConstant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
             {
                 Dependencies.ShowMissingBinariesDialog(EditorConstant.ApplicationName);
@@ -63,7 +60,7 @@ namespace Carnassial.Editor
 
             this.MenuOptionsShowAllColumns_Click(this.MenuOptionsShowAllColumns, null);
 
-            // Recall state from prior sessions
+            // recall state from prior sessions
             this.userSettings = new EditorUserRegistrySettings();
 
             // populate the most recent databases list
@@ -406,6 +403,44 @@ namespace Carnassial.Editor
             }
         }
 
+        private void EnableOrDisableMenusAndControls(bool templateLoaded)
+        {
+            this.AddCounterButton.IsEnabled = templateLoaded;
+            this.AddFixedChoiceButton.IsEnabled = templateLoaded;
+            this.AddNoteButton.IsEnabled = templateLoaded;
+            this.AddFlagButton.IsEnabled = templateLoaded;
+
+            this.MenuFileCloseTemplate.IsEnabled = templateLoaded;
+            this.MenuFileNewTemplate.IsEnabled = templateLoaded;
+            this.MenuFileOpenTemplate.IsEnabled = !templateLoaded;
+            this.MenuFileRecentTemplates.IsEnabled = !templateLoaded;
+            this.MenuOptions.IsEnabled = templateLoaded;
+            this.MenuView.IsEnabled = templateLoaded;
+
+            if (templateLoaded)
+            {
+                this.ControlDataGrid.ItemsSource = this.templateDatabase.Controls;
+
+                this.Tabs.SelectedIndex = 1;
+                this.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
+                this.userSettings.MostRecentTemplates.SetMostRecent(this.templateDatabase.FilePath);
+                this.MenuFileRecentTemplates_Refresh();
+
+                // populate controls interface in UX
+                this.RebuildControlPreview();
+                this.SynchronizeSpreadsheetOrderPreview();
+            }
+            else
+            {
+                this.ControlDataGrid.ItemsSource = null;
+                this.DataEntryControls.Clear();
+                this.SpreadsheetOrderPreview.Columns.Clear();
+
+                this.Tabs.SelectedIndex = 0;
+                this.Title = EditorConstant.MainWindowBaseTitle;
+            }
+        }
+
         /// <summary>
         /// Used in this code to get the child of a DataGridRows, DataGridCellsPresenter. This can be used to get the DataGridCell.
         /// WPF does not make it easy to get to the actual cells.
@@ -421,7 +456,7 @@ namespace Carnassial.Editor
                 child = v as T;
                 if (child == null)
                 {
-                    child = GetVisualChild<T>(v);
+                    child = EditorWindow.GetVisualChild<T>(v);
                 }
                 if (child != null)
                 {
@@ -440,19 +475,9 @@ namespace Carnassial.Editor
             bool templateLoaded = TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out this.templateDatabase);
             if (templateLoaded)
             {
-                this.ControlDataGrid.ItemsSource = this.templateDatabase.Controls;
-
-                // populate controls interface in UX
-                this.RebuildControlPreview();
-                this.SynchronizeSpreadsheetOrderPreview();
-                this.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
-
-                this.userSettings.MostRecentTemplates.SetMostRecent(templateDatabasePath);
             }
             else
             {
-                this.Title = EditorConstant.MainWindowBaseTitle;
-
                 // notify the user the template couldn't be loaded
                 MessageBox messageBox = new MessageBox("Carnassial could not load the template.", this);
                 messageBox.Message.Problem = "Carnassial could not load " + Path.GetFileName(templateDatabasePath) + Environment.NewLine;
@@ -465,19 +490,8 @@ namespace Carnassial.Editor
                 messageBox.ShowDialog();
             }
 
-            // update UI states
-            this.AddCounterButton.IsEnabled = templateLoaded;
-            this.AddFixedChoiceButton.IsEnabled = templateLoaded;
-            this.AddNoteButton.IsEnabled = templateLoaded;
-            this.AddFlagButton.IsEnabled = templateLoaded;
-
-            this.MenuFileNewTemplate.IsEnabled = templateLoaded;
-            this.MenuFileOpenTemplate.IsEnabled = !templateLoaded;
-            this.MenuFileRecentTemplates.IsEnabled = !templateLoaded;
-            this.MenuOptions.IsEnabled = templateLoaded;
-            this.MenuView.IsEnabled = templateLoaded;
-
-            this.Tabs.SelectedIndex = templateLoaded ? 1 : 0;
+            // update UI
+            this.EnableOrDisableMenusAndControls(templateLoaded);
         }
 
         private void Instructions_Drop(object sender, DragEventArgs dropEvent)
@@ -528,13 +542,20 @@ namespace Carnassial.Editor
             return true;
         }
 
+        private void MenuFileCloseTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            // flush any pending edits to the currently selected row
+            this.ControlDataGrid.CommitEdit();
+
+            this.EnableOrDisableMenusAndControls(false);
+        }
+
         /// <summary>
         /// Exits the application.
         /// </summary>
         private void MenuFileExit_Click(object sender, RoutedEventArgs e)
         {
-            // flush any pending edits to the currently selected row
-            this.ControlDataGrid.CommitEdit();
+            this.MenuFileCloseTemplate_Click(sender, e);
             Application.Current.Shutdown();
         }
 
