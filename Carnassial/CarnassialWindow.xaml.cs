@@ -323,7 +323,13 @@ namespace Carnassial
             await this.ShowFileWithoutSliderCallbackAsync(true, Keyboard.Modifiers);
             if (this.DataHandler.ImageCache.CurrentRow == (this.DataHandler.FileDatabase.Files.RowCount - 1))
             {
-                this.State.FileNavigatorSliderTimer.Stop();
+                // stop playing files since the end of the image set's been reached
+                this.MenuViewPlayFiles_Click(this, null);
+            }
+            else
+            {
+                this.DataHandler.FileDatabase.Files.TryGetPreviousFile(this.DataHandler.ImageCache.CurrentRow, out ImageRow previousFile);
+                this.State.Throttles.SetFilePlayInterval(previousFile, this.DataHandler.ImageCache.Current);
             }
         }
 
@@ -1470,14 +1476,15 @@ namespace Carnassial
                 this.PlayFilesButton.IsChecked = !this.PlayFilesButton.IsChecked;
             }
 
-            // switch from not playing files to playing files5 or vice versa
+            // switch from not playing files to playing files or vice versa
             if (this.PlayFilesButton.IsChecked == true)
             {
-                this.State.Throttles.FilePlayTimer.Start();
+                this.DataHandler.FileDatabase.Files.TryGetPreviousFile(this.DataHandler.ImageCache.CurrentRow, out ImageRow previousFile);
+                this.State.Throttles.StartFilePlayTimer(previousFile, this.DataHandler.ImageCache.Current);
             }
             else
             {
-                this.State.Throttles.FilePlayTimer.Stop();
+                this.State.Throttles.StopFilePlayTimer();
             }
         }
 

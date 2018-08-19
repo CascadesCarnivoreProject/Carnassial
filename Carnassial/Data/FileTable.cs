@@ -386,6 +386,18 @@ namespace Carnassial.Data
             });
         }
 
+        public bool TryGetPreviousFile(int fileIndex, out ImageRow previousFile)
+        {
+            if (fileIndex > 1)
+            {
+                previousFile = this[fileIndex - 1];
+                return true;
+            }
+
+            previousFile = null;
+            return false;
+        }
+
         public bool TryFind(long id, out ImageRow file, out int fileIndex)
         {
             for (fileIndex = 0; fileIndex < this.Rows.Count; ++fileIndex)

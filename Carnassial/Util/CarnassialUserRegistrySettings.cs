@@ -50,7 +50,9 @@ namespace Carnassial.Util
                 this.SuppressAmbiguousDatesDialog = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, false);
                 this.SuppressFileCountOnImportDialog = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressFileCountOnImportDialog, false);
                 this.SuppressSpreadsheetImportPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSpreadsheetImportPrompt, false);
+                this.Throttles.ImageClassificationChangeSlowdown = registryKey.ReadDouble(Constant.Registry.CarnassialKey.ImageClassificationChangeSlowdown, Constant.ThrottleValues.ImageClassificationSlowdownDefault);
                 this.Throttles.SetDesiredImageRendersPerSecond(registryKey.ReadDouble(Constant.Registry.CarnassialKey.DesiredImageRendersPerSecond, Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault));
+                this.Throttles.VideoSlowdown = registryKey.ReadDouble(Constant.Registry.CarnassialKey.VideoSlowdown, Constant.ThrottleValues.VideoSlowdownDefault);
             }
         }
 
@@ -64,6 +66,7 @@ namespace Carnassial.Util
                 registryKey.Write(Constant.Registry.CarnassialKey.CustomSelectionTermCombiningOperator, this.CustomSelectionTermCombiningOperator.ToString());
                 registryKey.Write(Constant.Registry.CarnassialKey.DarkLuminosityThreshold, this.DarkLuminosityThreshold);
                 registryKey.Write(Constant.Registry.CarnassialKey.DesiredImageRendersPerSecond, this.Throttles.DesiredImageRendersPerSecond);
+                registryKey.Write(Constant.Registry.CarnassialKey.ImageClassificationChangeSlowdown, this.Throttles.ImageClassificationChangeSlowdown);
                 registryKey.Write(Constant.Registry.CarnassialKey.MostRecentCheckForUpdates, this.MostRecentCheckForUpdates);
                 registryKey.Write(Constant.Registry.CarnassialKey.MostRecentlyUsedImageSets, this.MostRecentImageSets);
                 registryKey.Write(Constant.Registry.CarnassialKey.OrderFilesByDateTime, this.OrderFilesByDateTime);
@@ -71,6 +74,7 @@ namespace Carnassial.Util
                 registryKey.Write(Constant.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, this.SuppressAmbiguousDatesDialog);
                 registryKey.Write(Constant.Registry.CarnassialKey.SuppressFileCountOnImportDialog, this.SuppressFileCountOnImportDialog);
                 registryKey.Write(Constant.Registry.CarnassialKey.SuppressSpreadsheetImportPrompt, this.SuppressSpreadsheetImportPrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.VideoSlowdown, this.Throttles.VideoSlowdown);
             }
         }
     }

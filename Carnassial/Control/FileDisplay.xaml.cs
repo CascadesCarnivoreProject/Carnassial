@@ -150,6 +150,22 @@ namespace Carnassial.Control
             }
 
             this.Video.Visibility = Visibility.Visible;
+            if (this.ActualWidth > 0.0)
+            {
+                // override restretch behavior of the VideoPlayer's MediaElement
+                // Like the other panels of a FileDisplay, the video player control stretches to fill the FileDisplay by default.
+                // However, since FileDisplay's DockPanel lacks content alignment properties, it resizes itself to match its
+                // content.  Since MediaElement's width is zero until it finishes loading video in the background, this results in
+                // the FileDisplay contracting to match that of the VideoPlayer controls (which, as of Carnassial 2.2.0.3, happens
+                // to be 400 pixels) and then expanding to the width of the file display area in Carnassial's main window a few
+                // hundred milliseconds later when the video load completes.  The resulting width flicker is visually distracting
+                // and unnecessarily complicates analysis when playing or scrolling through image sets with videos.  The usual
+                // workaround for such WPF layout issues is to bind to a parent's AcutalWidth which, in this case, cannot be that
+                // of FileDisplay's DockPanel (due to its resizing behavior) and must therefore be the width of the FileDisplay 
+                // instead.  This could be done with an ancestor binding in XAML but the below line of code is slightly more efficient
+                // as the VideoPlayer's width is only updated when the player is displayed.
+                this.Video.Width = this.ActualWidth;
+            }
         }
     }
 }

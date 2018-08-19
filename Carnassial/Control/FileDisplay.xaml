@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <DockPanel Name="Dock" ClipToBounds="True" Focusable="True">
-        <Image x:Name="Image" Stretch="Uniform" StretchDirection="Both" Visibility="Collapsed" Grid.Column="0" Grid.Row="0" />
+        <Image x:Name="Image" Stretch="Uniform" StretchDirection="Both" Visibility="Collapsed" />
         <Viewbox Name="Message" HorizontalAlignment="Left" VerticalAlignment="Top">
             <TextBlock Name="MessageBlock" Margin="10,10,20,20">
                 <Run Name="MessageHeader" FontSize="14" />
@@ -21,6 +21,6 @@
                 <LineBreak />
             </TextBlock>
         </Viewbox>
-        <controls:VideoPlayer x:Name="Video" Visibility="Collapsed" Grid.Column="0" Grid.Row="0" />
+        <controls:VideoPlayer x:Name="Video" Visibility="Collapsed" />
     </DockPanel>
 </UserControl>

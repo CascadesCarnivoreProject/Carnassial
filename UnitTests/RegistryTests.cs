@@ -62,7 +62,9 @@ namespace Carnassial.UnitTests
             userSettings.SuppressAmbiguousDatesDialog = true;
             userSettings.SuppressFileCountOnImportDialog = true;
             userSettings.SuppressSpreadsheetImportPrompt = true;
+            userSettings.Throttles.ImageClassificationChangeSlowdown = Constant.ThrottleValues.ImageClassificationSlowdownMinimum;
             userSettings.Throttles.SetDesiredImageRendersPerSecond(Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
+            userSettings.Throttles.VideoSlowdown = Constant.ThrottleValues.VideoSlowdownMinimum;
 
             userSettings.WriteToRegistry();
             userSettings.ReadFromRegistry();
@@ -82,7 +84,9 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.SuppressAmbiguousDatesDialog);
             Assert.IsTrue(userSettings.SuppressFileCountOnImportDialog);
             Assert.IsTrue(userSettings.SuppressSpreadsheetImportPrompt);
+            Assert.IsTrue(userSettings.Throttles.ImageClassificationChangeSlowdown == Constant.ThrottleValues.ImageClassificationSlowdownMinimum);
             Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
+            Assert.IsTrue(userSettings.Throttles.VideoSlowdown == Constant.ThrottleValues.VideoSlowdownMinimum);
 
             Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
         }
@@ -144,7 +148,6 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.CarnassialWindowPosition.X == 0 && userSettings.CarnassialWindowPosition.Y == 0);
             Assert.IsTrue(userSettings.CarnassialWindowPosition.Width == 1350 && userSettings.CarnassialWindowPosition.Height == 900);
             Assert.IsTrue(userSettings.DarkLuminosityThreshold == Constant.Images.DarkLuminosityThresholdDefault);
-            Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
             Assert.IsNotNull(userSettings.MostRecentImageSets);
             Assert.IsTrue(userSettings.MostRecentImageSets.Count == 0);
             Assert.IsFalse(userSettings.MostRecentImageSets.TryGetMostRecent(out string mostRecentDatabasePath));
@@ -154,6 +157,9 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(userSettings.SuppressAmbiguousDatesDialog);
             Assert.IsFalse(userSettings.SuppressSpreadsheetImportPrompt);
             Assert.IsFalse(userSettings.SuppressFileCountOnImportDialog);
+            Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
+            Assert.IsTrue(userSettings.Throttles.ImageClassificationChangeSlowdown == Constant.ThrottleValues.ImageClassificationSlowdownDefault);
+            Assert.IsTrue(userSettings.Throttles.VideoSlowdown == Constant.ThrottleValues.VideoSlowdownDefault);
         }
     }
 }

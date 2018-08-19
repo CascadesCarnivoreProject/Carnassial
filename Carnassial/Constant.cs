@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
-using System.Windows.Documents;
 using System.Windows.Media.Imaging;
 
 namespace Carnassial
@@ -332,10 +331,12 @@ namespace Carnassial
 
                 // most recently used operator for custom selections
                 public const string CustomSelectionTermCombiningOperator = "CustomSelectionTermCombiningOperator";
+
                 public const string DarkLuminosityThreshold = "DarkLuminosityThreshold";
-                // the value for rendering
                 public const string DesiredImageRendersPerSecond = "DesiredImageRendersPerSecond";
+                public const string ImageClassificationChangeSlowdown = "ImageClassificationChangeSlowdown";
                 public const string MostRecentCheckForUpdates = "MostRecentCheckForUpdates";
+
                 // key containing the list of most recently image sets opened by Carnassial
                 public const string MostRecentlyUsedImageSets = "MostRecentlyUsedImageSets";
 
@@ -346,6 +347,8 @@ namespace Carnassial
                 public const string SuppressAmbiguousDatesDialog = "SuppressAmbiguousDatesDialog";
                 public const string SuppressFileCountOnImportDialog = "SuppressFileCountOnImportDialog";
                 public const string SuppressSpreadsheetImportPrompt = "SuppressSpreadsheetImportPrompt";
+
+                public const string VideoSlowdown = "VideoSlowdown";
             }
 
             public const string RootKey = @"Software\Cascades Carnivore Project\Carnassial\2.0";
@@ -401,9 +404,15 @@ namespace Carnassial
             public const double DesiredMaximumImageRendersPerSecondLowerBound = 1.0;
             public const double DesiredMaximumImageRendersPerSecondDefault = 5.0;
             public const double DesiredMaximumImageRendersPerSecondUpperBound = 12.0;
+            public const double ImageClassificationSlowdownDefault = 2.2;
+            public const double ImageClassificationSlowdownMaximum = 5.0;
+            public const double ImageClassificationSlowdownMinimum = 0.0;
             public const int MaximumBlackFrameAttempts = 5;
             public const int MaximumRenderAttempts = 10;
             public const int SleepForImageRenderInterval = 100;
+            public const double VideoSlowdownDefault = 5.0;
+            public const double VideoSlowdownMaximum = 10.0;
+            public const double VideoSlowdownMinimum = 0.0;
 
             public static readonly TimeSpan DesiredIntervalBetweenImageUpdates = TimeSpan.FromSeconds(5.0);
             public static readonly TimeSpan DesiredIntervalBetweenStatusUpdates = TimeSpan.FromMilliseconds(500);

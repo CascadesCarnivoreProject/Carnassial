@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Carnassial.Data;
+using System;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -9,12 +10,16 @@ namespace Carnassial.Util
         public double DesiredImageRendersPerSecond { get; private set; }
         public TimeSpan DesiredIntervalBetweenRenders { get; private set; }
         public DispatcherTimer FilePlayTimer { get; private set; }
+        public double ImageClassificationChangeSlowdown { get; set; }
         public int RepeatedKeyAcceptanceInterval { get; private set; }
+        public double VideoSlowdown { get; set; }
 
         public Throttles()
         {
             this.FilePlayTimer = new DispatcherTimer();
-            this.ResetToDefaults();
+            this.SetDesiredImageRendersPerSecond(Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
+            this.ImageClassificationChangeSlowdown = Constant.ThrottleValues.ImageClassificationSlowdownDefault;
+            this.VideoSlowdown = Constant.ThrottleValues.VideoSlowdownDefault;
         }
 
         public TimeSpan GetDesiredProgressUpdateInterval()
@@ -24,11 +29,6 @@ namespace Carnassial.Util
                 return this.DesiredIntervalBetweenRenders;
             }
             return Constant.ThrottleValues.DesiredIntervalBetweenStatusUpdates;
-        }
-
-        public void ResetToDefaults()
-        {
-            this.SetDesiredImageRendersPerSecond(Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
         }
 
         public void SetDesiredImageRendersPerSecond(double rendersPerSecond)
@@ -42,6 +42,34 @@ namespace Carnassial.Util
             this.DesiredImageRendersPerSecond = rendersPerSecond;
             this.DesiredIntervalBetweenRenders = TimeSpan.FromSeconds(1.0 / rendersPerSecond);
             this.RepeatedKeyAcceptanceInterval = (int)(((double)SystemParameters.KeyboardSpeed + 0.5 * rendersPerSecond) / rendersPerSecond);
+            this.FilePlayTimer.Interval = this.DesiredIntervalBetweenRenders;
+        }
+
+        public void SetFilePlayInterval(ImageRow previousFile, ImageRow currentFile)
+        {
+            if (currentFile.Classification == FileClassification.Video)
+            {
+                this.FilePlayTimer.Interval = TimeSpan.FromTicks((long)(this.VideoSlowdown * this.DesiredIntervalBetweenRenders.Ticks));
+            }
+            else if ((previousFile != null) && (previousFile.Classification != currentFile.Classification))
+            {
+                this.FilePlayTimer.Interval = TimeSpan.FromTicks((long)(this.ImageClassificationChangeSlowdown * this.DesiredIntervalBetweenRenders.Ticks));
+            }
+            else
+            {
+                this.FilePlayTimer.Interval = this.DesiredIntervalBetweenRenders;
+            }
+        }
+
+        public void StartFilePlayTimer(ImageRow previousFile, ImageRow currentFile)
+        {
+            this.SetFilePlayInterval(previousFile, currentFile);
+            this.FilePlayTimer.Start();
+        }
+
+        public void StopFilePlayTimer()
+        {
+            this.FilePlayTimer.Stop();
             this.FilePlayTimer.Interval = this.DesiredIntervalBetweenRenders;
         }
     }
