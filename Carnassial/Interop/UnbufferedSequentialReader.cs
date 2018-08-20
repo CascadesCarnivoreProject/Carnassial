@@ -99,7 +99,10 @@ namespace Carnassial.Interop
             }
             if (this.bufferPosition >= this.Buffer.Length)
             {
-                throw new NotSupportedException("Attempt to read byte beyond end of buffer.");
+                // caller only requested one more byte but unbuffered IO requires at least a sector be read
+                // This case is therefore reasonably robust against repeated calls to GetByte().  If needed for performance, multiple
+                // sectors could be read instead of one.
+                this.ExtendBuffer(this.GetSectorSize());
             }
             return this.Buffer[this.bufferPosition++];
         }
@@ -123,16 +126,7 @@ namespace Carnassial.Interop
             {
                 int minimumBytesRequired = endPosition - this.Buffer.Length;
                 int bytesToRead = minimumBytesRequired;
-                if (UnbufferedSequentialReader.SectorSizeByPathRoot.TryGetValue(this.pathRoot.Value, out int sectorSize) == false)
-                {
-                    sectorSize = NativeMethods.GetSectorSizeInBytes(this.pathRoot.Value);
-                    UnbufferedSequentialReader.SectorSizeByPathRoot.AddOrUpdate(this.pathRoot.Value, 
-                        sectorSize, 
-                        (string pathRoot, int previouslyRetrievedSectorSize) =>
-                        {
-                            return previouslyRetrievedSectorSize;
-                        });
-                }
+                int sectorSize = this.GetSectorSize();
                 if (minimumBytesRequired % sectorSize != 0)
                 {
                     bytesToRead = sectorSize * (minimumBytesRequired / sectorSize + 1);
@@ -141,6 +135,21 @@ namespace Carnassial.Interop
             }
             ClrBuffer.BlockCopy(this.Buffer, this.bufferPosition, buffer, offset, count);
             this.bufferPosition += count;
+        }
+
+        private int GetSectorSize()
+        {
+            if (UnbufferedSequentialReader.SectorSizeByPathRoot.TryGetValue(this.pathRoot.Value, out int sectorSize) == false)
+            {
+                sectorSize = NativeMethods.GetSectorSizeInBytes(this.pathRoot.Value);
+                UnbufferedSequentialReader.SectorSizeByPathRoot.AddOrUpdate(this.pathRoot.Value,
+                    sectorSize,
+                    (string pathRoot, int previouslyRetrievedSectorSize) =>
+                    {
+                        return previouslyRetrievedSectorSize;
+                    });
+            }
+            return sectorSize;
         }
 
         private unsafe int Read(byte[] buffer, long offset, int bytesToRead)
