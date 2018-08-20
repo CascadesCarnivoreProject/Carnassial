@@ -377,15 +377,6 @@ namespace Carnassial.Data
             }
         }
 
-        public ImageRow Single(string fileName, string relativePath)
-        {
-            return this.Rows.Single(file =>
-            {
-                return String.Equals(file.FileName, fileName, StringComparison.OrdinalIgnoreCase) &&
-                       String.Equals(file.RelativePath, relativePath, StringComparison.OrdinalIgnoreCase);
-            });
-        }
-
         public bool TryGetPreviousFile(int fileIndex, out ImageRow previousFile)
         {
             if (fileIndex > 1)

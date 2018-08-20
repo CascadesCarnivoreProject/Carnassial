@@ -716,12 +716,13 @@ namespace Carnassial.UnitTests
 
             // components for rereading metadata
             List<DateTimeOffset> fileDateTimes = new List<DateTimeOffset>(imagesAndVideos.Length);
+            Dictionary<string, Dictionary<string, ImageRow>> filesByRelativePathAndName = fileDatabase.Files.GetFilesByRelativePathAndName();
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
             ImageRow previousFile = null;
             for (int fileIndex = 0; fileIndex < imagesAndVideos.Length; ++fileIndex)
             {
                 FileInfo fileInfo = imagesAndVideos[fileIndex];
-                ImageRow file = fileDatabase.Files.Single(fileInfo.Name, TestConstant.File.HybridVideoDirectoryName);
+                ImageRow file = filesByRelativePathAndName[TestConstant.File.HybridVideoDirectoryName][fileInfo.Name];
                 Assert.IsTrue(String.Equals(file.FileName, fileInfo.Name, StringComparison.OrdinalIgnoreCase));
                 DateTimeOffset dateTimeOffsetAsAdded = file.DateTimeOffset;
                 bool expectedIsVideo = !fileInfo.Name.EndsWith(Constant.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase);
@@ -830,10 +831,11 @@ namespace Carnassial.UnitTests
                 await reclassify.ReclassifyFilesAsync(fileDatabase, state.DarkLuminosityThreshold, Constant.Images.MinimumRenderWidth);
             }
             fileDatabase.SelectFiles(FileSelection.All);
+            filesByRelativePathAndName = fileDatabase.Files.GetFilesByRelativePathAndName();
             for (int fileIndex = 0; fileIndex < imagesAndVideos.Length; ++fileIndex)
             {
                 FileInfo fileInfo = imagesAndVideos[fileIndex];
-                ImageRow file = fileDatabase.Files.Single(fileInfo.Name, TestConstant.File.HybridVideoDirectoryName);
+                ImageRow file = filesByRelativePathAndName[TestConstant.File.HybridVideoDirectoryName][fileInfo.Name];
                 if (file.IsVideo)
                 {
                     Assert.IsTrue(file.Classification == FileClassification.Video);

@@ -407,6 +407,11 @@ namespace Carnassial
         {
             this.LongRunningFeedback.Visibility = Visibility.Collapsed;
             this.FileNavigationGrid.Visibility = Visibility.Visible;
+
+            // reset state for the next long running operation
+            this.LongRunningFeedback.ProgressBar.Value = 0.0;
+            StatusBarItem statusMessage = (StatusBarItem)this.LongRunningFeedback.StatusMessage.Items[0];
+            statusMessage.Content = null;
         }
 
         private async void Instructions_Drop(object sender, DragEventArgs dropEvent)
@@ -1153,7 +1158,7 @@ namespace Carnassial
                     messageBox.Message.Hint = "The errors encountered were:";
                     foreach (string importError in importResult.Errors)
                     {
-                        messageBox.Message.Hint += "\u2022 " + importError;
+                        messageBox.Message.Hint += Environment.NewLine + "\u2022 " + importError;
                     }
                     messageBox.ShowDialog();
                 }

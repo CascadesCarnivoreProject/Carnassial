@@ -10,7 +10,10 @@ namespace Carnassial.Data
         private double currentPosition;
         private double endPosition;
         private bool isCsvRead;
-        private bool isExcelRead;
+        private bool isExcelWorkbookLoad;
+        private bool isExcelWorkbookRead;
+        private bool isExcelWorkbookSave;
+        private bool isTransactionCommit;
         private ulong mostRecentStatusUpdate;
         private IProgress<SpreadsheetReadWriteStatus> progress;
         private ulong progressUpdateIntervalInMilliseconds;
@@ -22,7 +25,10 @@ namespace Carnassial.Data
             this.currentPosition = 0.0;
             this.endPosition = -1.0;
             this.isCsvRead = false;
-            this.isExcelRead = false;
+            this.isExcelWorkbookLoad = false;
+            this.isExcelWorkbookRead = false;
+            this.isExcelWorkbookSave = false;
+            this.isTransactionCommit = false;
             this.mostRecentStatusUpdate = 0;
             this.progress = new Progress<SpreadsheetReadWriteStatus>(onProgressUpdate);
             this.progressUpdateIntervalInMilliseconds = (UInt64)progressUpdateInterval.TotalMilliseconds;
@@ -32,7 +38,10 @@ namespace Carnassial.Data
         {
             this.endPosition = (double)bytesToRead;
             this.isCsvRead = true;
-            this.isExcelRead = false;
+            this.isExcelWorkbookLoad = false;
+            this.isExcelWorkbookRead = false;
+            this.isExcelWorkbookSave = false;
+            this.isTransactionCommit = false;
             this.csvReadPositionDivisor = 1024.0;
             this.csvReadPositionUnit = "kB";
 
@@ -45,11 +54,49 @@ namespace Carnassial.Data
             this.Report(0);
         }
 
-        public void BeginExcelRead(int rowsToRead)
+        public void BeginExcelWorksheetLoad()
+        {
+            this.isCsvRead = false;
+            this.isExcelWorkbookLoad = true;
+            this.isExcelWorkbookRead = false;
+            this.isExcelWorkbookSave = false;
+            this.isTransactionCommit = false;
+
+            this.Report(0);
+        }
+
+        public void BeginExcelWorkbookRead(int rowsToRead)
         {
             this.endPosition = (double)rowsToRead;
             this.isCsvRead = false;
-            this.isExcelRead = true;
+            this.isExcelWorkbookLoad = false;
+            this.isExcelWorkbookRead = true;
+            this.isExcelWorkbookSave = false;
+            this.isTransactionCommit = false;
+
+            this.Report(0);
+        }
+
+        public void BeginExcelWorkbookSave()
+        {
+            this.endPosition = 1.0;
+            this.isCsvRead = false;
+            this.isExcelWorkbookLoad = false;
+            this.isExcelWorkbookRead = false;
+            this.isExcelWorkbookSave = true;
+            this.isTransactionCommit = false;
+
+            this.Report(0);
+        }
+
+        public void BeginTransactionCommit(int totalFilesToInsertAndUpdate)
+        {
+            this.endPosition = (double)totalFilesToInsertAndUpdate;
+            this.isCsvRead = false;
+            this.isExcelWorkbookLoad = false;
+            this.isExcelWorkbookRead = false;
+            this.isExcelWorkbookSave = false;
+            this.isTransactionCommit = true;
 
             this.Report(0);
         }
@@ -58,9 +105,17 @@ namespace Carnassial.Data
         {
             this.endPosition = (double)rowsToWrite;
             this.isCsvRead = false;
-            this.isExcelRead = false;
+            this.isExcelWorkbookLoad = false;
+            this.isExcelWorkbookRead = false;
+            this.isExcelWorkbookSave = false;
+            this.isTransactionCommit = false;
 
             this.Report(0);
+        }
+
+        public void EndExcelWorkbookSave()
+        {
+            this.Report(1);
         }
 
         public string GetMessage()
@@ -69,9 +124,21 @@ namespace Carnassial.Data
             {
                 return String.Format("Read {0:0.0} of {1:0.0}{2}...", this.currentPosition / this.csvReadPositionDivisor, this.endPosition / this.csvReadPositionDivisor, this.csvReadPositionUnit);
             }
-            if (this.isExcelRead)
+            if (this.isExcelWorkbookLoad)
+            {
+                return "Reading worksheet from Excel file...";
+            }
+            if (this.isExcelWorkbookRead)
             {
                 return String.Format("Read {0:0} of {1:0} rows...", this.currentPosition, this.endPosition);
+            }
+            if (this.isExcelWorkbookSave)
+            {
+                return "Saving Excel file...";
+            }
+            if (this.isTransactionCommit)
+            {
+                return "Updating Carnassial database...";
             }
             return String.Format("Writing row {0} of {1}...", this.currentPosition, this.endPosition);
         }

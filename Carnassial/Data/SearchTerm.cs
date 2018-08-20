@@ -32,6 +32,12 @@ namespace Carnassial.Data
             this.wellKnownValues = new Lazy<List<object>>(() =>
             {
                 List<string> wellKnownStrings = control.GetWellKnownValues();
+                if (String.Equals(this.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
+                {
+                    // remove duplicate Color entry due to Ok being included as a well known value
+                    wellKnownStrings.Remove(FileClassification.Color.ToString());
+                }
+
                 List<object> wellKnownValues = new List<object>(wellKnownStrings.Count);
                 foreach (string wellKnownString in wellKnownStrings)
                 {

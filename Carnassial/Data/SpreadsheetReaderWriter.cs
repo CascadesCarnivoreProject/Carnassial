@@ -108,10 +108,10 @@ namespace Carnassial.Data
                 // match column widths to content
                 worksheet.Cells[1, 1, worksheet.Dimension.Rows, worksheet.Dimension.Columns].AutoFitColumns(Constant.Excel.MinimumColumnWidth, Constant.Excel.MaximumColumnWidth);
 
+                this.status.BeginExcelWorkbookSave();
                 xlsxFile.Save();
+                this.status.EndExcelWorkbookSave();
             }
-
-            this.status.Report(database.Files.RowCount);
         }
 
         private FileImportResult TryImportFileData(FileDatabase fileDatabase, Func<List<string>> readLine, string spreadsheetFilePath)
@@ -182,7 +182,7 @@ namespace Carnassial.Data
                 Constant.FileColumn.RelativePath
             };
 
-            Dictionary<string, HashSet<string>> filesAlreadyInDatabaseByRelativePath = fileDatabase.Files.HashFileNamesByRelativePath();
+            Dictionary<string, Dictionary<string, ImageRow>> filesAlreadyInDatabaseByRelativePath = fileDatabase.Files.GetFilesByRelativePathAndName();
             ColumnTuplesForInsert filesToInsert = new ColumnTuplesForInsert(Constant.DatabaseTable.Files, dataLabelsForInsert);
             FileTuplesWithID filesToUpdate = new FileTuplesWithID(dataLabelsForUpdate);
             this.status.Report(0);
@@ -278,7 +278,7 @@ namespace Carnassial.Data
                     continue;
                 }
 
-                // if file's already in the image set prepare to set its fields to those in the .csv
+                // if file's already in the image set prepare to set its fields to those in the spreadsheet
                 // if file's not in the image set prepare to add it to the image set
                 string relativePath = relativePathFromSpreadsheetDirectoryToFileDirectory;
                 if (relativePathFromDatabaseToSpreadsheet != null)
@@ -286,17 +286,14 @@ namespace Carnassial.Data
                     relativePath = Path.Combine(relativePathFromDatabaseToSpreadsheet, relativePathFromSpreadsheetDirectoryToFileDirectory);
                 }
                 ImageRow file = null;
-                if (filesAlreadyInDatabaseByRelativePath.TryGetValue(relativePath, out HashSet<string> filesInFolder))
+                if (filesAlreadyInDatabaseByRelativePath.TryGetValue(relativePath, out Dictionary<string, ImageRow> filesInFolder))
                 {
-                    if (filesInFolder.Contains(fileName))
-                    {
-                        file = fileDatabase.Files.Single(fileName, relativePath);
-                    }
+                    filesInFolder.TryGetValue(fileName, out file);
                 }
 
                 if (file == null)
                 {
-                    // newly created files have only their name and relative path set; populate all other fields with .csv data
+                    // newly created files have only their name and relative path set; populate all other fields with spreadsheet data
                     // Population is done via update as insertion is done with default values.
                     values.Add(fileName);
                     values.Add(relativePath);
@@ -309,8 +306,16 @@ namespace Carnassial.Data
             }
 
             // perform inserts and updates
-            fileDatabase.InsertFiles(filesToInsert);
+            int totalFiles = filesToInsert.RowCount + filesToUpdate.RowCount;
+            this.status.BeginTransactionCommit(totalFiles);
+            if (filesToInsert.RowCount > 0)
+            {
+                fileDatabase.InsertFiles(filesToInsert);
+                this.status.Report(filesToInsert.RowCount);
+            }
+
             fileDatabase.UpdateFiles(filesToUpdate);
+            this.status.Report(totalFiles);
 
             result.FilesAdded = filesToInsert.RowCount;
             result.FilesUpdated = filesToUpdate.RowCount;
@@ -325,7 +330,6 @@ namespace Carnassial.Data
                 {
                     this.status.BeginCsvRead(csvReader.BaseStream.Length);
                     FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadAndParseCsvLine(csvReader); }, csvFilePath);
-                    this.status.Report(csvReader.BaseStream.Position);
                     return result;
                 }
             }
@@ -337,6 +341,7 @@ namespace Carnassial.Data
             {
                 using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
                 {
+                    this.status.BeginExcelWorksheetLoad();
                     ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets.FirstOrDefault(sheet => String.Equals(sheet.Name, Constant.Excel.FileDataWorksheetName, StringComparison.Ordinal));
                     if (worksheet == null)
                     {
@@ -345,10 +350,14 @@ namespace Carnassial.Data
                         return worksheetNotFound;
                     }
 
-                    this.status.BeginExcelRead(worksheet.Dimension.Rows);
+                    // cache worksheet dimensions
+                    // Profiling shows EPPlus 4.5.2.1 doesn't cache these values. worksheet.Cells.{Columns, Rows} can't be 
+                    // used instead as they indicate much larger values.
+                    ExcelAddressBase dimension = worksheet.Dimension;
+
+                    this.status.BeginExcelWorkbookRead(dimension.Rows);
                     int row = 0;
-                    FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadXlsxRow(worksheet, ++row); }, xlsxFilePath);
-                    this.status.Report(worksheet.Dimension.Rows);
+                    FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadXlsxRow(worksheet, dimension, ++row); }, xlsxFilePath);
                     return result;
                 }
             }
@@ -502,15 +511,16 @@ namespace Carnassial.Data
             return parsedLine;
         }
 
-        protected List<string> ReadXlsxRow(ExcelWorksheet worksheet, int row)
+        protected List<string> ReadXlsxRow(ExcelWorksheet worksheet, ExcelAddressBase dimension, int row)
         {
-            if (worksheet.Dimension.Rows < row)
+            if (dimension.Rows < row)
             {
                 return null;
             }
 
-            List<string> rowContent = new List<string>(worksheet.Dimension.Columns);
-            for (int column = 1; column <= worksheet.Dimension.Columns; ++column)
+            int columns = dimension.Columns;
+            List<string> rowContent = new List<string>(columns);
+            for (int column = 1; column <= columns; ++column)
             {
                 ExcelRange cell = worksheet.Cells[row, column];
                 if (cell.Value is bool cellValue)

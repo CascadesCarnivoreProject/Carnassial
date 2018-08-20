@@ -105,7 +105,8 @@ namespace Carnassial
             public const string NoteTooltip = "Write a textual note";
 
             // standard controls
-            // Classification list contains Ok for backwards compatibility. See remarks for FileSelection.Ok.
+            // Classification list contains Ok for backwards compatibility. See remarks for FileSelection.Ok and special case in 
+            // SearchTerm..ctor(ControlRow).
             public const string ClassificationTooltip = "Color image, greyscale image, dark if mostly black image, video, corrupt if it can't be read, no longer available if the file is missing.";
             public const string ClassificationWellKnownValues = "Color|Ok|Corrupt|Dark|Greyscale|NoLongerAvailable|Video";
 
@@ -120,12 +121,6 @@ namespace Carnassial
             public const string UtcOffsetTooltip = "Universal Time offset of the time zone for date and time taken";
 
             public static readonly DateTimeOffset DateTimeValue = new DateTimeOffset(1900, 1, 1, 12, 0, 0, 0, TimeSpan.Zero);
-        }
-
-        // see also ControlLabelStyle and ControlContentStyle
-        public static class ControlStyle
-        {
-            public const string ContainerStyle = "ContainerStyle";
         }
 
         public static class Database
