@@ -187,16 +187,18 @@ namespace Carnassial.UnitTests
             ImageRow bobcatImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightBobcat, out MetadataReadResult bobcatMetadataRead);
             Assert.IsTrue(bobcatMetadataRead.HasFlag(MetadataReadResult.DateTime));
 
-            using (AddFilesTransaction addFiles = fileDatabase.CreateAddFilesTransaction())
+            using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
             {
-                addFiles.AddFiles(new List<FileLoad>() { new FileLoad(martenImage), new FileLoad(bobcatImage) });
+                addFiles.AddToSequence(new List<FileLoad>() { new FileLoad(martenImage), new FileLoad(bobcatImage) }, 0, 2);
                 addFiles.Commit();
             }
             fileDatabase.SelectFiles(FileSelection.All);
 
             FileTableEnumerator fileEnumerator = new FileTableEnumerator(fileDatabase);
             Assert.IsTrue(fileEnumerator.TryMoveToFile(0));
+            martenImage = fileEnumerator.Current;
             Assert.IsTrue(fileEnumerator.MoveNext());
+            bobcatImage = fileEnumerator.Current;
 
             FileExpectations bobcatExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightBobcat)
             {
@@ -222,15 +224,12 @@ namespace Carnassial.UnitTests
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "bobcat");
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel].DefaultValue);
-            FileTuplesWithID bobcatUpdate = new FileTuplesWithID(new List<ColumnTuple>()
-                {
-                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.Choice0, "choice b"),
-                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.Counter0, 1),
-                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true),
-                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "bobcat"),
-                    new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult")
-                }, fileEnumerator.Current.ID);
-            fileDatabase.UpdateFiles(bobcatUpdate);
+            bobcatImage[TestConstant.DefaultDatabaseColumn.Choice0] = "choice b";
+            bobcatImage[TestConstant.DefaultDatabaseColumn.Counter0] = 1;
+            bobcatImage[TestConstant.DefaultDatabaseColumn.FlagNotVisible] = true;
+            bobcatImage[TestConstant.DefaultDatabaseColumn.Note3] = "bobcat";
+            bobcatImage[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
+            Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(bobcatImage));
 
             byte[] counter0MarkerPositions = this.HexStringToByteArray("7d31fc3ebeaa103f72a80b3f1db70f3fbb2c153f9ae80b3f");
             FileExpectations martenExpectation = new FileExpectations(TestConstant.FileExpectation.InfraredMarten)
@@ -265,7 +264,7 @@ namespace Carnassial.UnitTests
             martenFile[TestConstant.DefaultDatabaseColumn.Note3] = "American marten";
             martenFile[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
             Assert.IsTrue(martenFile.HasChanges);
-            fileDatabase.TrySyncFileToDatabase(martenFile);
+            Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenFile));
             Assert.IsFalse(martenFile.HasChanges);
 
             // assemble expectations
@@ -292,12 +291,16 @@ namespace Carnassial.UnitTests
                 ImageRow coyoteImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out MetadataReadResult coyoteMetadataRead);
                 Assert.IsTrue(coyoteMetadataRead.HasFlag(MetadataReadResult.DateTime));
 
-                using (AddFilesTransaction addFiles = fileDatabase.CreateAddFilesTransaction())
+                using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
                 {
-                    addFiles.AddFiles(new List<FileLoad>() { new FileLoad(martenPairImage), new FileLoad(coyoteImage) });
+                    addFiles.AddToSequence(new List<FileLoad>() { new FileLoad(martenPairImage), new FileLoad(coyoteImage) }, 0, 2);
                     addFiles.Commit();
                 }
                 fileDatabase.SelectFiles(FileSelection.All);
+                Assert.IsTrue(String.Equals(fileDatabase.Files[2].FileName, martenPairImage.FileName, StringComparison.Ordinal));
+                martenPairImage = fileDatabase.Files[2];
+                Assert.IsTrue(String.Equals(fileDatabase.Files[3].FileName, coyoteImage.FileName, StringComparison.Ordinal));
+                coyoteImage = fileDatabase.Files[3];
 
                 fileExpectations.Add(martenPairExpectation);
                 fileExpectations.Add(coyoteExpectation);
@@ -310,8 +313,8 @@ namespace Carnassial.UnitTests
                 coyoteImage[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
                 coyoteImage[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] = String.Empty;
                 coyoteImage[TestConstant.DefaultDatabaseColumn.Note0] = "escaped field, because a comma is present";
-                fileDatabase.TrySyncFileToDatabase(coyoteImage);
-                coyoteImage.AcceptChanges();
+                Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(coyoteImage));
+                Assert.IsFalse(coyoteImage.HasChanges);
 
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0].DefaultValue);
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
@@ -335,15 +338,11 @@ namespace Carnassial.UnitTests
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "escaped field, because a comma is present");
 
                 Assert.IsTrue(fileDatabase.Files[2].ID == martenPairExpectation.ID);
-                FileTuplesWithID martenPairImageUpdate = new FileTuplesWithID(new List<ColumnTuple>()
-                    {
-                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note3, "American marten"),
-                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult"),
-                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty),
-                        new ColumnTuple(TestConstant.DefaultDatabaseColumn.Note0, "escaped field due to presence of \",\"")
-                    },
-                    fileDatabase.Files[2].ID);
-                fileDatabase.UpdateFiles(martenPairImageUpdate);
+                martenPairImage[TestConstant.DefaultDatabaseColumn.Note3] = "American marten";
+                martenPairImage[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
+                martenPairImage[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] = String.Empty;
+                martenPairImage[TestConstant.DefaultDatabaseColumn.Note0] = "escaped field due to presence of \",\"";
+                Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenPairImage));
 
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0].DefaultValue);
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);

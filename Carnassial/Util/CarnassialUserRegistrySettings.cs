@@ -15,7 +15,7 @@ namespace Carnassial.Util
         public DateTime MostRecentCheckForUpdates { get; set; }
         public MostRecentlyUsedList<string> MostRecentImageSets { get; private set; }
         public bool OrderFilesByDateTime { get; set; }
-        public bool SkipDarkImagesCheck { get; set; }
+        public bool SkipFileClassification { get; set; }
         public bool SuppressAmbiguousDatesDialog { get; set; }
         public bool SuppressFileCountOnImportDialog { get; set; }
         public bool SuppressSpreadsheetImportPrompt { get; set; }
@@ -46,7 +46,7 @@ namespace Carnassial.Util
                 this.MostRecentCheckForUpdates = registryKey.ReadDateTime(Constant.Registry.CarnassialKey.MostRecentCheckForUpdates, DateTime.UtcNow);
                 this.MostRecentImageSets = registryKey.ReadMostRecentlyUsedList(Constant.Registry.CarnassialKey.MostRecentlyUsedImageSets);
                 this.OrderFilesByDateTime = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.OrderFilesByDateTime, false);
-                this.SkipDarkImagesCheck = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SkipDarkImagesCheck, false);
+                this.SkipFileClassification = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SkipDarkImagesCheck, false);
                 this.SuppressAmbiguousDatesDialog = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, false);
                 this.SuppressFileCountOnImportDialog = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressFileCountOnImportDialog, false);
                 this.SuppressSpreadsheetImportPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSpreadsheetImportPrompt, false);
@@ -70,7 +70,7 @@ namespace Carnassial.Util
                 registryKey.Write(Constant.Registry.CarnassialKey.MostRecentCheckForUpdates, this.MostRecentCheckForUpdates);
                 registryKey.Write(Constant.Registry.CarnassialKey.MostRecentlyUsedImageSets, this.MostRecentImageSets);
                 registryKey.Write(Constant.Registry.CarnassialKey.OrderFilesByDateTime, this.OrderFilesByDateTime);
-                registryKey.Write(Constant.Registry.CarnassialKey.SkipDarkImagesCheck, this.SkipDarkImagesCheck);
+                registryKey.Write(Constant.Registry.CarnassialKey.SkipDarkImagesCheck, this.SkipFileClassification);
                 registryKey.Write(Constant.Registry.CarnassialKey.SuppressAmbiguousDatesDialog, this.SuppressAmbiguousDatesDialog);
                 registryKey.Write(Constant.Registry.CarnassialKey.SuppressFileCountOnImportDialog, this.SuppressFileCountOnImportDialog);
                 registryKey.Write(Constant.Registry.CarnassialKey.SuppressSpreadsheetImportPrompt, this.SuppressSpreadsheetImportPrompt);

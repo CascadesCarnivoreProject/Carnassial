@@ -5,17 +5,16 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
-using System.Linq;
 
 namespace Carnassial.Data
 {
-    public class AddFilesTransaction : FileTransaction
+    public class AddFilesTransactionSequence : WindowedTransactionSequence<FileLoad>
     {
         private SQLiteCommand addFiles;
         private bool disposed;
         private FileDatabase fileDatabase;
 
-        public AddFilesTransaction(FileDatabase fileDatabase, SQLiteConnection connection)
+        public AddFilesTransactionSequence(FileDatabase fileDatabase, SQLiteConnection connection)
             : base(connection)
         {
             this.disposed = false;
@@ -89,17 +88,12 @@ namespace Carnassial.Data
         /// Inserts files in the file table with their name, relative path, date time offset, and classification populated.
         /// Other fields are set to their default values.
         /// </summary>
-        public override int AddFiles(IList<FileLoad> files, int offset, int length)
+        public override int AddToSequence(IList<FileLoad> files, int offset, int length)
         {
             Debug.Assert(files != null, nameof(files) + " is null.");
             Debug.Assert(offset >= 0, nameof(offset) + " is less than zero.");
             Debug.Assert(length >= 0, nameof(length) + " is less than zero.");
             Debug.Assert((offset + length) <= files.Count, String.Format("Offset {0} plus length {1} exceeds length of files ({2}.", offset, length, files.Count));
-            if (length < 1)
-            {
-                // nothing to do
-                return 0;
-            }
 
             // insert performance of early Carnassial 2.2.0.3 development (still using 2.2.0.2 schema)
             //                                   column defaults   specified defaults
@@ -113,19 +107,19 @@ namespace Carnassial.Data
             int stopIndex = offset + length;
             for (int fileIndex = offset; fileIndex < stopIndex; ++fileIndex)
             {
-                ImageRow fileToInsert = files[fileIndex].File;
-                if (fileToInsert == null)
+                ImageRow file = files[fileIndex].File;
+                if (file == null)
                 {
                     continue;
                 }
-                this.addFiles.Parameters[0].Value = (int)fileToInsert.Classification;
-                this.addFiles.Parameters[1].Value = fileToInsert.UtcDateTime;
-                this.addFiles.Parameters[2].Value = fileToInsert.FileName;
-                this.addFiles.Parameters[3].Value = fileToInsert.RelativePath;
-                this.addFiles.Parameters[4].Value = DateTimeHandler.ToDatabaseUtcOffset(fileToInsert.UtcOffset);
+                this.addFiles.Parameters[0].Value = (int)file.Classification;
+                this.addFiles.Parameters[1].Value = file.UtcDateTime;
+                this.addFiles.Parameters[2].Value = file.FileName;
+                this.addFiles.Parameters[3].Value = file.RelativePath;
+                this.addFiles.Parameters[4].Value = DateTimeHandler.ToDatabaseUtcOffset(file.UtcOffset);
 
                 this.addFiles.ExecuteNonQuery();
-                fileToInsert.AcceptChanges();
+                file.AcceptChanges();
                 ++filesAdded;
 
                 ++this.FilesInTransaction;

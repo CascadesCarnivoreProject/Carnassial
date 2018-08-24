@@ -58,7 +58,7 @@ namespace Carnassial.UnitTests
             string databasePath = Path.Combine(this.WorkingDirectory, Constant.File.DefaultFileDatabaseFileName);
             userSettings.MostRecentImageSets.SetMostRecent(databasePath);
             userSettings.OrderFilesByDateTime = true;
-            userSettings.SkipDarkImagesCheck = true;
+            userSettings.SkipFileClassification = true;
             userSettings.SuppressAmbiguousDatesDialog = true;
             userSettings.SuppressFileCountOnImportDialog = true;
             userSettings.SuppressSpreadsheetImportPrompt = true;
@@ -80,7 +80,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.MostRecentImageSets.TryGetMostRecent(out string mostRecentDatabasePath));
             Assert.IsTrue(mostRecentDatabasePath == databasePath);
             Assert.IsTrue(userSettings.OrderFilesByDateTime);
-            Assert.IsTrue(userSettings.SkipDarkImagesCheck);
+            Assert.IsTrue(userSettings.SkipFileClassification);
             Assert.IsTrue(userSettings.SuppressAmbiguousDatesDialog);
             Assert.IsTrue(userSettings.SuppressFileCountOnImportDialog);
             Assert.IsTrue(userSettings.SuppressSpreadsheetImportPrompt);
@@ -153,7 +153,7 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(userSettings.MostRecentImageSets.TryGetMostRecent(out string mostRecentDatabasePath));
             Assert.IsNull(mostRecentDatabasePath);
             Assert.IsFalse(userSettings.OrderFilesByDateTime);
-            Assert.IsFalse(userSettings.SkipDarkImagesCheck);
+            Assert.IsFalse(userSettings.SkipFileClassification);
             Assert.IsFalse(userSettings.SuppressAmbiguousDatesDialog);
             Assert.IsFalse(userSettings.SuppressSpreadsheetImportPrompt);
             Assert.IsFalse(userSettings.SuppressFileCountOnImportDialog);

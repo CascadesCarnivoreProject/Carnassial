@@ -2,7 +2,6 @@
 using Carnassial.Database;
 using Carnassial.Dialog;
 using Carnassial.Images;
-using Carnassial.Native;
 using Carnassial.Util;
 using MetadataExtractor.Formats.Exif;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -302,7 +301,7 @@ namespace Carnassial.UnitTests
                 martenExpectations.UserControlsByDataLabel[dataLabelForMarkerPositions] = markersForCounter.MarkerPositionsToFloatArray();
             }
             martenExpectations.Verify(martenImage, imageSetTimeZone);
-            fileDatabase.TrySyncFileToDatabase(martenImage);
+            Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenImage));
             martenExpectations.Verify(martenImage, imageSetTimeZone);
 
             // roundtrip
@@ -329,7 +328,7 @@ namespace Carnassial.UnitTests
                 }
             }
             martenExpectations.Verify(martenImage, imageSetTimeZone);
-            fileDatabase.TrySyncFileToDatabase(martenImage);
+            Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenImage));
             martenExpectations.Verify(martenImage, imageSetTimeZone);
 
             // roundtrip
@@ -687,7 +686,7 @@ namespace Carnassial.UnitTests
             FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
             CarnassialState state = new CarnassialState()
             {
-                SkipDarkImagesCheck = false
+                SkipFileClassification = false
             };
             TimeSpan desiredStatusUpdateInterval = state.Throttles.GetDesiredProgressUpdateInterval();
             string folderToLoad = Path.Combine(this.WorkingDirectory, TestConstant.File.HybridVideoDirectoryName);
@@ -959,23 +958,16 @@ namespace Carnassial.UnitTests
                     readerWriter.ExportFileDataToCsv(fileDatabase, initialFilePath);
                 }
 
-                FileImportResult importResult;
-                if (xlsx)
-                {
-                    importResult = readerWriter.TryImportFileDataFromXlsx(initialFilePath, fileDatabase);
-                }
-                else
-                {
-                    importResult = readerWriter.TryImportFileDataFromCsv(initialFilePath, fileDatabase);
-                }
+                FileImportResult importResult = readerWriter.TryImportFileData(initialFilePath, fileDatabase);
                 Assert.IsTrue(importResult.Errors.Count == 0);
 
-                // verify File table content hasn't changed
+                // verify file table content hasn't changed other than negligible truncation error in marker positions
                 TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
                 for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
                 {
                     ImageRow file = fileDatabase.Files[fileIndex];
                     FileExpectations fileExpectation = fileExpectations[fileIndex];
+                    fileExpectation.SkipMarkerByteVerification = true;
                     fileExpectation.Verify(file, imageSetTimeZone);
                 }
 
@@ -1002,14 +994,7 @@ namespace Carnassial.UnitTests
                 // merge and refresh in memory table
                 int filesBeforeMerge = fileDatabase.CurrentlySelectedFileCount;
                 string mergeFilePath = Path.Combine(Path.GetDirectoryName(initialFilePath), Path.GetFileNameWithoutExtension(initialFilePath) + ".FilesToMerge" + spreadsheetFileExtension);
-                if (xlsx)
-                {
-                    importResult = readerWriter.TryImportFileDataFromXlsx(mergeFilePath, fileDatabase);
-                }
-                else
-                {
-                    importResult = readerWriter.TryImportFileDataFromCsv(mergeFilePath, fileDatabase);
-                }
+                importResult = readerWriter.TryImportFileData(mergeFilePath, fileDatabase);
                 Assert.IsTrue(importResult.Errors.Count == 0);
 
                 fileDatabase.SelectFiles(FileSelection.All);
@@ -1099,9 +1084,9 @@ namespace Carnassial.UnitTests
             ImageRow coyoteImage = this.CreateFile(fileDatabase, secondImageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out metadataReadResult);
             Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTime);
 
-            using (AddFilesTransaction addFiles = fileDatabase.CreateAddFilesTransaction())
+            using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
             {
-                addFiles.AddFiles(new List<FileLoad>() { new FileLoad(martenPairImage), new FileLoad(coyoteImage) });
+                addFiles.AddToSequence(new List<FileLoad>() { new FileLoad(martenPairImage), new FileLoad(coyoteImage) }, 0, 2);
                 addFiles.Commit();
             }
             fileDatabase.SelectFiles(FileSelection.All);

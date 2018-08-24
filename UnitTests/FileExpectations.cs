@@ -91,7 +91,7 @@ namespace Carnassial.UnitTests
         public void Verify(ImageRow file, TimeZoneInfo timeZone)
         {
             Assert.IsTrue(file.Classification == this.Classification, "{0}: Expected Classification '{1}' but found '{2}'.", this.FileName, this.Classification, file.Classification);
-            Assert.IsTrue(file.DeleteFlag == this.DeleteFlag);
+            Assert.IsTrue(file.DeleteFlag == this.DeleteFlag, "0}: Expected DeleteFlag '{1}' but found '{2}'.", this.FileName, this.DeleteFlag, file.DeleteFlag);
             Assert.IsTrue(file.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, file.FileName);
             Assert.IsTrue(file.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, file.ID);
             Assert.IsTrue((file.IsVideo == file is VideoRow) && (file.IsVideo == (file.Classification == FileClassification.Video)));
@@ -120,7 +120,7 @@ namespace Carnassial.UnitTests
                     object expectedValue = userControlExpectation.Value;
                     if (expectedValue is bool expectedBool)
                     {
-                        Assert.IsTrue((bool)actualValue == expectedBool, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.ID, userControlExpectation.Key, expectedBool, actualValue);
+                        Assert.IsTrue((bool)actualValue == expectedBool, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedBool, actualValue);
                     }
                     else if (expectedValue is byte[] expectedBytes)
                     {
@@ -136,13 +136,13 @@ namespace Carnassial.UnitTests
                     }
                     else if (expectedValue is int expectedInt)
                     {
-                        Assert.IsTrue((int)actualValue == expectedInt, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.ID, userControlExpectation.Key, expectedInt, actualValue);
+                        Assert.IsTrue((int)actualValue == expectedInt, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedInt, actualValue);
                         MarkersForCounter markersForCounter = file.GetMarkersForCounter(dataLabel);
                         this.Verify(dataLabel, markersForCounter);
                     }
                     else
                     {
-                        Assert.IsTrue(String.Equals((string)actualValue, (string)expectedValue, StringComparison.Ordinal), "{0}: Expected {1} to be '{2}' but found '{3}'.", this.ID, userControlExpectation.Key, expectedValue, actualValue);
+                        Assert.IsTrue(String.Equals((string)actualValue, (string)expectedValue, StringComparison.Ordinal), "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedValue, actualValue);
                     }
                 }
             }

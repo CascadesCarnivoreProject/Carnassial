@@ -56,10 +56,10 @@ namespace Carnassial
 
             public static readonly ReadOnlyCollection<string> StandardControls = new List<string>()
             {
+                Constant.FileColumn.Classification,
                 Constant.FileColumn.DateTime,
                 Constant.FileColumn.DeleteFlag,
                 Constant.FileColumn.File,
-                Constant.FileColumn.Classification,
                 Constant.FileColumn.RelativePath,
                 Constant.FileColumn.UtcOffset
             }.AsReadOnly();

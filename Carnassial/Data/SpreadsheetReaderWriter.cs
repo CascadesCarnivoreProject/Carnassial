@@ -148,17 +148,76 @@ namespace Carnassial.Data
                 }
             }
 
-            List<string> columnsInDatabaseButNotInHeader = columnsInDatabase.Except(columnsFromFileHeader).ToList();
             FileImportResult result = new FileImportResult();
+            List<string> columnsInDatabaseButNotInHeader = columnsInDatabase.Except(columnsFromFileHeader).ToList();
             foreach (string column in columnsInDatabaseButNotInHeader)
             {
-                result.Errors.Add("- The column '" + column + "' is present in the image set but not in the file." + Environment.NewLine);
+                result.Errors.Add("- The column '" + column + "' is present in the image set but not in the spreadsheet file." + Environment.NewLine);
             }
 
             List<string> columnsInHeaderButNotDatabase = columnsFromFileHeader.Except(columnsInDatabase).ToList();
             foreach (string column in columnsInHeaderButNotDatabase)
             {
-                result.Errors.Add("- The column '" + column + "' is present in the file but not in the image set." + Environment.NewLine);
+                result.Errors.Add("- The column '" + column + "' is present in the spreadsheet file but not in the image set." + Environment.NewLine);
+            }
+
+            int classificationIndex = -1;
+            int dateTimeIndex = -1;
+            int deleteFlagIndex = -1;
+            int fileNameIndex = -1;
+            int relativePathIndex = -1;
+            int utcOffsetIndex = -1;
+            List<ControlRow> userControlsInFileOrder = new List<ControlRow>(columnsFromFileHeader.Count - Constant.Control.StandardControls.Count);
+            List<int> userControlIndices = new List<int>(columnsFromFileHeader.Count - Constant.Control.StandardControls.Count);
+            for (int columnIndex = 0; columnIndex < columnsFromFileHeader.Count; ++columnIndex)
+            {
+                string column = columnsFromFileHeader[columnIndex];
+                if (String.Equals(column, Constant.FileColumn.Classification, StringComparison.Ordinal))
+                {
+                    classificationIndex = columnIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.DateTime, StringComparison.Ordinal))
+                {
+                    dateTimeIndex = columnIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal))
+                {
+                    deleteFlagIndex = columnIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.File, StringComparison.Ordinal))
+                {
+                    fileNameIndex = columnIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.RelativePath, StringComparison.Ordinal))
+                {
+                    relativePathIndex = columnIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.UtcOffset, StringComparison.Ordinal))
+                {
+                    utcOffsetIndex = columnIndex;
+                }
+                else
+                {
+                    userControlsInFileOrder.Add(controlsByColumn[column]);
+                    userControlIndices.Add(columnIndex);
+                }
+            }
+
+            if (fileNameIndex == -1)
+            {
+                result.Errors.Add("- The column '" + Constant.FileColumn.File + "' must be present in the spreadsheet file." + Environment.NewLine);
+            }
+            if (relativePathIndex == -1)
+            {
+                result.Errors.Add("- The column '" + Constant.FileColumn.RelativePath + "' must be present in the spreadsheet file." + Environment.NewLine);
+            }
+            if (dateTimeIndex == -1)
+            {
+                result.Errors.Add("- The column '" + Constant.FileColumn.DateTime + "' must be present in the spreadsheet file." + Environment.NewLine);
+            }
+            if (utcOffsetIndex == -1)
+            {
+                result.Errors.Add("- The column '" + Constant.FileColumn.UtcOffset + "' must be present in the spreadsheet file." + Environment.NewLine);
             }
 
             if (result.Errors.Count > 0)
@@ -167,24 +226,10 @@ namespace Carnassial.Data
             }
 
             // read data for file from the .csv or .xlsx file
-            List<ControlRow> controlsInFileOrder = new List<ControlRow>(columnsFromFileHeader.Count);
-            foreach (string column in columnsFromFileHeader)
-            {
-                controlsInFileOrder.Add(controlsByColumn[column]);
-            }
-
-            List<string> dataLabelsForUpdate = new List<string>(columnsInDatabase.Count);
-            dataLabelsForUpdate.AddRange(columnsFromFileHeader.Where(column => (String.Equals(column, Constant.FileColumn.File, StringComparison.Ordinal) == false) &&
-                                                                              (String.Equals(column, Constant.FileColumn.RelativePath, StringComparison.Ordinal) == false)));
-            List<string> dataLabelsForInsert = new List<string>(dataLabelsForUpdate)
-            {
-                Constant.FileColumn.File,
-                Constant.FileColumn.RelativePath
-            };
-
             Dictionary<string, Dictionary<string, ImageRow>> filesAlreadyInDatabaseByRelativePath = fileDatabase.Files.GetFilesByRelativePathAndName();
-            ColumnTuplesForInsert filesToInsert = new ColumnTuplesForInsert(Constant.DatabaseTable.Files, dataLabelsForInsert);
-            FileTuplesWithID filesToUpdate = new FileTuplesWithID(dataLabelsForUpdate);
+            List<ImageRow> filesToInsert = new List<ImageRow>();
+            List<ImageRow> filesToUpdate = new List<ImageRow>();
+            int filesUnchanged = 0;
             this.status.Report(0);
             for (List<string> row = readLine.Invoke(); row != null; row = readLine.Invoke())
             {
@@ -200,129 +245,156 @@ namespace Carnassial.Data
                     Debug.Fail(String.Format("Expected {0} fields in line {1} but found {2}.", columnsInDatabase.Count, String.Join(",", row), row.Count));
                 }
 
-                // assemble set of column values to update
-                string fileName = null;
-                string relativePathFromSpreadsheetDirectoryToFileDirectory = null;
-                List<object> values = new List<object>(dataLabelsForUpdate.Count);
-                for (int columnIndex = 0; columnIndex < row.Count; ++columnIndex)
-                {
-                    string dataLabel = columnsFromFileHeader[columnIndex];
-                    string value = row[columnIndex];
-
-                    // capture components of file's unique identifier for constructing where clause
-                    // at least for now, it's assumed all renames or moves are done through Carnassial and hence relative path + file name form 
-                    // an immutable (and unique) ID
-                    if (String.Equals(dataLabel, Constant.FileColumn.File, StringComparison.Ordinal))
-                    {
-                        fileName = value;
-                    }
-                    else if (String.Equals(dataLabel, Constant.FileColumn.RelativePath, StringComparison.Ordinal))
-                    {
-                        relativePathFromSpreadsheetDirectoryToFileDirectory = value;
-                    }
-                    else if (String.Equals(dataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal) && ImageRow.TryParseFileClassification(value, out FileClassification classification))
-                    {
-                        values.Add((int)classification);
-                    }
-                    else if (String.Equals(dataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal) && DateTimeHandler.TryParseDatabaseDateTime(value, out DateTime dateTime))
-                    {
-                        values.Add(dateTime);
-                    }
-                    else if (String.Equals(dataLabel, Constant.FileColumn.UtcOffset, StringComparison.Ordinal) && DateTimeHandler.TryParseDatabaseUtcOffsetString(value, out TimeSpan utcOffset))
-                    {
-                        // offset needs to be converted to a double for database insert or update
-                        values.Add(DateTimeHandler.ToDatabaseUtcOffset(utcOffset));
-                    }
-                    else
-                    {
-                        ControlRow control = controlsInFileOrder[columnIndex];
-                        if (control.IsValidExcelData(value))
-                        {
-                            if (control.Type == ControlType.Counter)
-                            {
-                                if (String.IsNullOrEmpty(value))
-                                {
-                                    values.Add(null);
-                                }
-                                else if (Int32.TryParse(value, out int valueAsInt))
-                                {
-                                    values.Add(valueAsInt);
-                                }
-                                else
-                                {
-                                    values.Add(MarkersForCounter.MarkerPositionsFromExcelString(value));
-                                }
-                            }
-                            else if (control.Type == ControlType.Flag)
-                            {
-                                values.Add(Boolean.Parse(value));
-                            }
-                            else
-                            {
-                                // for all other columns, include a string value in update query if value is valid
-                                values.Add(value);
-                            }
-                        }
-                        else
-                        {
-                            // if value wasn't processed by a previous clause it's invalid (or there's a parsing bug)
-                            result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", value, dataLabel));
-                            values.Add(null);
-                        }
-                    }
-                }
-
+                // determine whether a new file needs to be added or if this row corresponds to a file already in the image set
+                // For now, it's assumed all renames or moves are done through Carnassial and hence relative path + file name form 
+                // an immutable (and unique) ID.
+                string fileName = row[fileNameIndex];
                 if (String.IsNullOrWhiteSpace(fileName))
                 {
-                    result.Errors.Add(String.Format("No file name found in row {0}.", row));
+                    result.Errors.Add(String.Format("No file name found in row {0}.  Row skipped, database will not be updated.", row));
                     continue;
                 }
 
-                // if file's already in the image set prepare to set its fields to those in the spreadsheet
-                // if file's not in the image set prepare to add it to the image set
-                string relativePath = relativePathFromSpreadsheetDirectoryToFileDirectory;
+                string relativePath = row[relativePathIndex];
                 if (relativePathFromDatabaseToSpreadsheet != null)
                 {
-                    relativePath = Path.Combine(relativePathFromDatabaseToSpreadsheet, relativePathFromSpreadsheetDirectoryToFileDirectory);
-                }
-                ImageRow file = null;
-                if (filesAlreadyInDatabaseByRelativePath.TryGetValue(relativePath, out Dictionary<string, ImageRow> filesInFolder))
-                {
-                    filesInFolder.TryGetValue(fileName, out file);
+                    relativePath = Path.Combine(relativePathFromDatabaseToSpreadsheet, relativePath);
                 }
 
-                if (file == null)
+                bool addFile = false;
+                if ((filesAlreadyInDatabaseByRelativePath.TryGetValue(relativePath, out Dictionary<string, ImageRow> filesInFolder) == false) ||
+                    (filesInFolder.TryGetValue(fileName, out ImageRow file) == false))
                 {
-                    // newly created files have only their name and relative path set; populate all other fields with spreadsheet data
-                    // Population is done via update as insertion is done with default values.
-                    values.Add(fileName);
-                    values.Add(relativePath);
-                    filesToInsert.Add(values);
+                    addFile = true;
+                    file = fileDatabase.Files.CreateAndAppendFile(fileName, relativePath);
+                }
+
+                // obtain file's date time and UTC offset
+                if (DateTimeHandler.TryParseDatabaseDateTime(row[dateTimeIndex], out DateTime dateTime))
+                {
+                    if (DateTimeHandler.TryParseDatabaseUtcOffsetString(row[utcOffsetIndex], out TimeSpan utcOffset))
+                    {
+                        file.DateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, utcOffset);
+                    }
+                    else
+                    {
+                        result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1} of file {2}.  Neither the file's date time nor UTC offset will be updated.", row[classificationIndex], Constant.FileColumn.UtcOffset, fileName));
+                    }
                 }
                 else
                 {
-                    filesToUpdate.Add(file.ID, values);
+                    result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1} of file {2}.  File's UTC offset will be ignored and neither its date time nor UTC offset will be updated.", row[classificationIndex], Constant.FileColumn.DateTime, fileName));
+                }
+
+                // remaining standard controls
+                if (classificationIndex != -1)
+                {
+                    if (ImageRow.TryParseFileClassification(row[classificationIndex], out FileClassification classification))
+                    {
+                        file.Classification = classification;
+                    }
+                    else
+                    {
+                        result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", row[classificationIndex], Constant.FileColumn.Classification));
+                    }
+                }
+
+                if (deleteFlagIndex != -1)
+                {
+                    if (Boolean.TryParse(row[deleteFlagIndex], out bool deleteFlag))
+                    {
+                        file.DeleteFlag = deleteFlag;
+                    }
+                    else
+                    {
+                        result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", row[deleteFlagIndex], Constant.FileColumn.DeleteFlag));
+                    }
+                }
+
+                // get values of user defined columns
+                for (int userControlIndex = 0; userControlIndex < userControlsInFileOrder.Count; ++userControlIndex)
+                {
+                    ControlRow userControl = userControlsInFileOrder[userControlIndex];
+                    int columnIndex = userControlIndices[userControlIndex];
+                    string column = columnsFromFileHeader[columnIndex];
+                    string valueAsString = row[columnIndex];
+
+                    if (userControl.IsValidExcelData(valueAsString, out object value))
+                    {
+                        file[column] = value;
+                    }
+                    else
+                    {
+                        // if value wasn't processed by a previous clause it's invalid (or there's a parsing bug)
+                        result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", valueAsString, column));
+                    }
+                }
+
+                if (addFile)
+                {
+                    filesToInsert.Add(file);
+                }
+                else if (file.HasChanges)
+                {
+                    filesToUpdate.Add(file);
+                }
+                else
+                {
+                    ++filesUnchanged;
                 }
             }
 
             // perform inserts and updates
-            int totalFiles = filesToInsert.RowCount + filesToUpdate.RowCount;
+            int totalFiles = filesToInsert.Count + filesToUpdate.Count;
             this.status.BeginTransactionCommit(totalFiles);
-            if (filesToInsert.RowCount > 0)
+            if (filesToInsert.Count > 0)
             {
-                fileDatabase.InsertFiles(filesToInsert);
-                this.status.Report(filesToInsert.RowCount);
+                using (FileTransactionSequence insertFiles = fileDatabase.CreateInsertFileTransaction())
+                {
+                    insertFiles.AddFiles(filesToInsert);
+                    insertFiles.Commit();
+                }
+                this.status.Report(filesToInsert.Count);
+            }
+            if (filesToUpdate.Count > 0)
+            {
+                using (FileTransactionSequence updateFiles = fileDatabase.CreateUpdateFileTransaction())
+                {
+                    updateFiles.AddFiles(filesToInsert);
+                    updateFiles.Commit();
+                }
+                this.status.Report(totalFiles);
             }
 
-            fileDatabase.UpdateFiles(filesToUpdate);
-            this.status.Report(totalFiles);
-
-            result.FilesAdded = filesToInsert.RowCount;
-            result.FilesUpdated = filesToUpdate.RowCount;
+            result.FilesAdded = filesToInsert.Count;
+            result.FilesProcessed = filesToInsert.Count + filesToUpdate.Count + filesUnchanged;
+            result.FilesUpdated = filesToUpdate.Count;
             return result;
         }
 
-        public FileImportResult TryImportFileDataFromCsv(string csvFilePath, FileDatabase fileDatabase)
+        public FileImportResult TryImportFileData(string spreadsheetFilePath, FileDatabase fileDatabase)
+        {
+            try
+            {
+                if (spreadsheetFilePath.EndsWith(Constant.File.ExcelFileExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    return this.TryImportFileDataFromXlsx(spreadsheetFilePath, fileDatabase);
+                }
+                else
+                {
+                    return this.TryImportFileDataFromCsv(spreadsheetFilePath, fileDatabase);
+                }
+            }
+            catch (IOException ioException)
+            {
+                return new FileImportResult()
+                {
+                    Exception = ioException
+                };
+            }
+        }
+
+        private FileImportResult TryImportFileDataFromCsv(string csvFilePath, FileDatabase fileDatabase)
         {
             using (FileStream stream = new FileStream(csvFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
@@ -335,7 +407,7 @@ namespace Carnassial.Data
             }
         }
 
-        public FileImportResult TryImportFileDataFromXlsx(string xlsxFilePath, FileDatabase fileDatabase)
+        private FileImportResult TryImportFileDataFromXlsx(string xlsxFilePath, FileDatabase fileDatabase)
         {
             try
             {

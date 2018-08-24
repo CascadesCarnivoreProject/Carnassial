@@ -31,58 +31,50 @@ namespace Carnassial.Data
             this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Markers)));
         }
 
-        public static bool IsValidExcelString(string value)
+        public static bool IsValidExcelString(string valueAsString, out object value)
         {
-            if (String.IsNullOrEmpty(value))
+            value = null;
+            if (String.IsNullOrEmpty(valueAsString))
             {
                 // position string might not contain any positions
                 return true;
             }
 
-            // count string
-            if (Int32.TryParse(value, out int ignored))
+            string[] positions = valueAsString.Split(Constant.Excel.MarkerPositionSeparator);
+            byte[] packedFloats = new byte[2 * positions.Length * sizeof(float)];
+            int byteIndex = -1;
+            foreach (string position in positions)
             {
-                return true;
-            }
-
-            // position string
-            for (int index = 0; index < value.Length; ++index)
-            {
-                char character = value[index];
-                if (character == Constant.Excel.MarkerPositionSeparator)
+                string[] xy = position.Split(Constant.Excel.MarkerCoordinateSeparator);
+                if (xy.Length != 2)
                 {
-                    continue;
+                    return false;
                 }
-
-                // must be kept in sync with MarkerPositionsToExcelString()
-                // 0         1
-                // 01234567890123456  7
-                // d.dddddd,d.dddddd (|d.dddddd,d.dddddd)*
-                if ((value.Length < (index + 2 * Constant.Excel.MarkerPositionFormat.Length + 1)) ||
-                    (value[index + 1] != '.') ||
-                    (value[index + 8] != ',') ||
-                    (value[index + 10] != '.') ||
-                    ((value[index] != '0') && (value[index] != '1')) ||
-                    ((value[index + 9] != '0') && (value[index + 9] != '1')) ||
-                    (Char.IsDigit(value, index + 2) == false) ||
-                    (Char.IsDigit(value, index + 3) == false) ||
-                    (Char.IsDigit(value, index + 4) == false) ||
-                    (Char.IsDigit(value, index + 5) == false) ||
-                    (Char.IsDigit(value, index + 6) == false) ||
-                    (Char.IsDigit(value, index + 7) == false) ||
-                    (Char.IsDigit(value, index + 11) == false) ||
-                    (Char.IsDigit(value, index + 12) == false) ||
-                    (Char.IsDigit(value, index + 13) == false) ||
-                    (Char.IsDigit(value, index + 14) == false) ||
-                    (Char.IsDigit(value, index + 15) == false) ||
-                    (Char.IsDigit(value, index + 16) == false))
+                if (float.TryParse(xy[0], out float x) == false)
+                {
+                    return false;
+                }
+                if (float.TryParse(xy[1], out float y) == false)
                 {
                     return false;
                 }
 
-                index += 2 * Constant.Excel.MarkerPositionFormat.Length;
+                byte[] xBytes = BitConverter.GetBytes(x);
+                Debug.Assert(xBytes.Length == 4, "Expected 32 bit float for marker x position.");
+                packedFloats[++byteIndex] = xBytes[0];
+                packedFloats[++byteIndex] = xBytes[1];
+                packedFloats[++byteIndex] = xBytes[2];
+                packedFloats[++byteIndex] = xBytes[3];
+
+                byte[] yBytes = BitConverter.GetBytes(y);
+                Debug.Assert(yBytes.Length == 4, "Expected 32 bit float for marker y position.");
+                packedFloats[++byteIndex] = yBytes[0];
+                packedFloats[++byteIndex] = yBytes[1];
+                packedFloats[++byteIndex] = yBytes[2];
+                packedFloats[++byteIndex] = yBytes[3];
             }
 
+            value = packedFloats;
             return true;
         }
 
@@ -111,38 +103,6 @@ namespace Carnassial.Data
                 packedFloats[++byteIndex] = yBytes[2];
                 packedFloats[++byteIndex] = yBytes[3];
             }
-            return packedFloats;
-        }
-
-        public static byte[] MarkerPositionsFromExcelString(string value)
-        {
-            Debug.Assert(value != null, "Position string unexpectedly null.");
-
-            string[] positions = value.Split(Constant.Excel.MarkerPositionSeparator);
-            byte[] packedFloats = new byte[2 * positions.Length * sizeof(float)];
-            int byteIndex = -1;
-            foreach (string position in positions)
-            {
-                string[] xy = position.Split(Constant.Excel.MarkerCoordinateSeparator);
-                Debug.Assert(xy.Length == 2, "IsValidExcelString() failed to detect malformed coordinate pair.");
-
-                float x = float.Parse(xy[0]);
-                byte[] xBytes = BitConverter.GetBytes(x);
-                Debug.Assert(xBytes.Length == 4, "Expected 32 bit float for marker x position.");
-                packedFloats[++byteIndex] = xBytes[0];
-                packedFloats[++byteIndex] = xBytes[1];
-                packedFloats[++byteIndex] = xBytes[2];
-                packedFloats[++byteIndex] = xBytes[3];
-
-                float y = float.Parse(xy[1]);
-                byte[] yBytes = BitConverter.GetBytes(y);
-                Debug.Assert(yBytes.Length == 4, "Expected 32 bit float for marker y position.");
-                packedFloats[++byteIndex] = yBytes[0];
-                packedFloats[++byteIndex] = yBytes[1];
-                packedFloats[++byteIndex] = yBytes[2];
-                packedFloats[++byteIndex] = yBytes[3];
-            }
-
             return packedFloats;
         }
 

@@ -1004,7 +1004,6 @@ namespace Carnassial
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            this.ShowLongRunningOperationFeedback();
             this.SetStatusMessage("Exporting spreadsheet...");
             SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
             try
@@ -1121,50 +1120,21 @@ namespace Carnassial
             }
 
             Stopwatch stopwatch = new Stopwatch();
-            FileImportResult importResult;
-            try
-            {
-                stopwatch.Start();
-                this.ShowLongRunningOperationFeedback();
-                this.SetStatusMessage("Importing spreadsheet...");
+            stopwatch.Start();
+            this.SetStatusMessage("Importing spreadsheet...");
 
-                SpreadsheetReaderWriter spreadsheetReader = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
-                importResult = await Task.Run(() =>
-                {
-                    if (spreadsheetFilePath.EndsWith(Constant.File.ExcelFileExtension, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return spreadsheetReader.TryImportFileDataFromXlsx(spreadsheetFilePath, this.DataHandler.FileDatabase);
-                    }
-                    else
-                    {
-                        return spreadsheetReader.TryImportFileDataFromCsv(spreadsheetFilePath, this.DataHandler.FileDatabase);
-                    }
-                });
+            SpreadsheetReaderWriter spreadsheetReader = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
+            FileImportResult importResult = await Task.Run(() =>
+            {
+                this.DataHandler.IsProgrammaticUpdate = true;
+                FileImportResult result = spreadsheetReader.TryImportFileData(spreadsheetFilePath, this.DataHandler.FileDatabase);
+                this.DataHandler.IsProgrammaticUpdate = false;
+                return result;
+            });
+
+            if (importResult.Exception != null)
+            {
                 stopwatch.Stop();
-
-                if (importResult.Errors.Count > 0)
-                {
-                    MessageBox messageBox = new MessageBox("Spreadsheet import incomplete.", this);
-                    messageBox.Message.StatusImage = MessageBoxImage.Error;
-                    messageBox.Message.Problem = String.Format("The file {0} could not be fully read.", spreadsheetFilePath);
-                    messageBox.Message.Reason = "The spreadsheet is not fully compatible with the current image set.";
-                    messageBox.Message.Solution = "Check that:" + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 The first row of the file is a header line." + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 The column names in the header line match the database." + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 Choice values use the correct case." + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 Counter values are numbers." + Environment.NewLine;
-                    messageBox.Message.Solution += "\u2022 Flag values are either 'true' or 'false'.";
-                    messageBox.Message.Result = "Either no data was imported or invalid parts of the spreadsheet were skipped.";
-                    messageBox.Message.Hint = "The errors encountered were:";
-                    foreach (string importError in importResult.Errors)
-                    {
-                        messageBox.Message.Hint += Environment.NewLine + "\u2022 " + importError;
-                    }
-                    messageBox.ShowDialog();
-                }
-            }
-            catch (IOException ioException)
-            {
                 this.SetStatusMessage("Couldn't import spreadsheet.");
 
                 MessageBox messageBox = new MessageBox("Can't import spreadsheet.", this);
@@ -1172,26 +1142,46 @@ namespace Carnassial
                 messageBox.Message.Problem = String.Format("The file {0} either could not be opened or could not be read.", spreadsheetFilePath);
                 messageBox.Message.Reason = "Most likely the file is open in another program.";
                 messageBox.Message.Solution = "If the file is open in another program, close it.";
-                messageBox.Message.Result = String.Format("{0}: {1}", ioException.GetType().FullName, ioException.Message);
+                messageBox.Message.Result = String.Format("{0}: {1}", importResult.Exception.GetType().FullName, importResult.Exception.Message);
                 messageBox.Message.Hint = "Is the file open in Excel?";
                 messageBox.ShowDialog();
-                return;
             }
-            finally
+            else if (importResult.Errors.Count > 0)
             {
-                this.HideLongRunningOperationFeedback();
+                stopwatch.Stop();
+
+                MessageBox messageBox = new MessageBox("Spreadsheet import incomplete.", this);
+                messageBox.Message.StatusImage = MessageBoxImage.Error;
+                messageBox.Message.Problem = String.Format("The file {0} could not be fully read.", spreadsheetFilePath);
+                messageBox.Message.Reason = "The spreadsheet is not fully compatible with the current image set.";
+                messageBox.Message.Solution = "Check that:" + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 The first row of the file is a header line." + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 The column names in the header line match the database." + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Choice values use the correct case." + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Counter values are numbers." + Environment.NewLine;
+                messageBox.Message.Solution += "\u2022 Flag values are either 'true' or 'false'.";
+                messageBox.Message.Result = "Either no data was imported or invalid parts of the spreadsheet were skipped.";
+                messageBox.Message.Hint = "The errors encountered were:";
+                foreach (string importError in importResult.Errors)
+                {
+                    messageBox.Message.Hint += Environment.NewLine + "\u2022 " + importError;
+                }
+                messageBox.ShowDialog();
             }
 
             // reload the in memory file table to pick up newly added files
             // Also triggers an update to the enable/disable state of the user interface to match.
-            stopwatch.Start();
             await this.SelectFilesAndShowFileAsync(originalSelection);
 
             // clear undo/redo state as bulk edits aren't undoable
+            this.HideLongRunningOperationFeedback();
             this.OnBulkEdit(this, null);
-            stopwatch.Stop();
+            if (stopwatch.IsRunning)
+            {
+                stopwatch.Stop();
+            }
 
-            this.SetStatusMessage("{0} imported in {1:0.000}s: {2} files added, {3} files updated ({4:0} files/second).", Path.GetFileName(spreadsheetFilePath), stopwatch.Elapsed.TotalSeconds, importResult.FilesAdded, importResult.FilesUpdated, (importResult.FilesAdded + importResult.FilesUpdated) / stopwatch.Elapsed.TotalSeconds);
+            this.SetStatusMessage("{0} imported in {1:0.000}s: {2} files added, {3} files updated (processed {4:0} files/second).", Path.GetFileName(spreadsheetFilePath), stopwatch.Elapsed.TotalSeconds, importResult.FilesAdded, importResult.FilesUpdated, importResult.FilesProcessed / stopwatch.Elapsed.TotalSeconds);
         }
 
         private async void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs e)

@@ -10,6 +10,7 @@ using MetadataExtractor.Formats.Exif.Makernotes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data.SQLite;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -255,43 +256,6 @@ namespace Carnassial.Data
         public TimeSpan UtcOffset
         {
             get { return this.dateTimeOffset.Offset; }
-        }
-
-        public static FileTuplesWithID CreateDateTimeUpdate(IEnumerable<ImageRow> files)
-        {
-            FileTuplesWithID dateTimeTuples = new FileTuplesWithID(Constant.FileColumn.DateTime, Constant.FileColumn.UtcOffset);
-            foreach (ImageRow file in files)
-            {
-                Debug.Assert(file != null, "files contains null.");
-                Debug.Assert(file.ID != Constant.Database.InvalidID, "CreateDateTimeUpdate() should only be called on ImageRows which are database backed.");
-
-                dateTimeTuples.Add(file.ID, file.UtcDateTime, DateTimeHandler.ToDatabaseUtcOffset(file.UtcOffset));
-            }
-
-            return dateTimeTuples;
-        }
-
-        public FileTuplesWithID CreateUpdate()
-        {
-            List<string> columnsToUpdate = new List<string>(Constant.Control.StandardControls.Count + this.table.UserColumnsByName.Count)
-            {
-                Constant.FileColumn.DateTime,
-                Constant.FileColumn.DeleteFlag,
-                Constant.FileColumn.File,
-                Constant.FileColumn.Classification,
-                Constant.FileColumn.RelativePath,
-                Constant.FileColumn.UtcOffset
-            };
-            columnsToUpdate.AddRange(this.table.UserColumnsByName.Keys);
-
-            FileTuplesWithID tuples = new FileTuplesWithID(columnsToUpdate);
-            List<object> values = new List<object>(columnsToUpdate.Count);
-            foreach (string dataLabel in columnsToUpdate)
-            {
-                values.Add(this.GetDatabaseValue(dataLabel));
-            }
-            tuples.Add(this.ID, values);
-            return tuples;
         }
 
         public object GetDatabaseValue(string dataLabel)

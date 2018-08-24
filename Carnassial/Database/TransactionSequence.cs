@@ -1,11 +1,9 @@
-﻿using Carnassial.Images;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data.SQLite;
 
-namespace Carnassial.Data
+namespace Carnassial.Database
 {
-    public abstract class FileTransaction : IDisposable
+    public class TransactionSequence : IDisposable
     {
         private bool disposed;
 
@@ -13,19 +11,12 @@ namespace Carnassial.Data
         protected int FilesInTransaction { get; set; }
         protected SQLiteTransaction Transaction { get; set; }
 
-        public FileTransaction(SQLiteConnection connection)
+        public TransactionSequence(SQLiteConnection connection)
         {
             this.Connection = connection;
             this.disposed = false;
             this.FilesInTransaction = 0;
         }
-
-        public void AddFiles(IList<FileLoad> files)
-        {
-            this.AddFiles(files, 0, files.Count);
-        }
-
-        public abstract int AddFiles(IList<FileLoad> files, int offset, int length);
 
         public virtual void Commit()
         {

@@ -96,7 +96,7 @@ namespace Carnassial.Images
                 if (loadAtom.HasAtLeastOneFile)
                 {
                     loadAtom.ReadDateTimeOffsets(fileDatabase.FolderPath, imageSetTimeZone);
-                    loadAtom.ClassifyFromThumbnails(state.DarkLuminosityThreshold, state.SkipDarkImagesCheck, ref preallocatedThumbnail);
+                    loadAtom.ClassifyFromThumbnails(state.DarkLuminosityThreshold, state.SkipFileClassification, ref preallocatedThumbnail);
                 }
 
                 // check if progress needs to be reported
@@ -125,7 +125,7 @@ namespace Carnassial.Images
                 // transfer completed rows to pending database insert, if needed
                 if (addFilesToTransaction)
                 {
-                    this.AddFilesToTransaction();
+                    this.AddToSequence();
                 }
 
                 // initiate progress report, if needed

@@ -1,4 +1,5 @@
 ﻿using Carnassial.Data;
+using Carnassial.Database;
 using Carnassial.Interop;
 using System;
 using System.Collections.Generic;
@@ -43,7 +44,7 @@ namespace Carnassial.Images
         private bool isCompleted;
         private bool isExceptional;
         private FileLoadAtom[] loadAtoms;
-        private FileTransaction transaction;
+        private WindowedTransactionSequence<FileLoad> transactionSequence;
 
         protected Func<int, int> ComputeTaskBody { get; set; }
         protected UInt64 DesiredStatusIntervalInMilliseconds { get; private set; }
@@ -88,7 +89,7 @@ namespace Carnassial.Images
             this.ShouldExitCurrentIteration = false;
             this.Status = new TStatus();
 
-            this.transaction = null;
+            this.transactionSequence = null;
             this.TransactionFileCount = 0;
 
             // physical cores              1  1  2  2  ?  4  4  ?  6   6  ?  8+
@@ -146,18 +147,18 @@ namespace Carnassial.Images
                 this.ioFilesByRelativePathEnumerator.Dispose();
                 this.ioTasks.Dispose();
                 this.loadAtoms.Dispose();
-                if (this.transaction != null)
+                if (this.transactionSequence != null)
                 {
-                    this.transaction.Dispose();
+                    this.transactionSequence.Dispose();
                 }
             }
 
             this.disposed = true;
         }
 
-        protected void AddFilesToTransaction()
+        protected void AddToSequence()
         {
-            this.TransactionFileCount += this.transaction.AddFiles(this.fileLoads, this.addFileStartIndex, this.addFileStopIndex - this.addFileStartIndex);
+            this.TransactionFileCount += this.transactionSequence.AddToSequence(this.fileLoads, this.addFileStartIndex, this.addFileStopIndex - this.addFileStartIndex);
             this.addFilesInProgress = false;
             this.addFileStartIndex = this.addFileStopIndex;
         }
@@ -239,7 +240,7 @@ namespace Carnassial.Images
             string firstFileName;
             string relativePath;
             string secondFileName = null;
-            lock (this.transaction)
+            lock (this.transactionSequence)
             {
                 while (this.ioFilesInCurrentFolderIndex >= this.ioFilesInCurrentFolder.Count)
                 {
@@ -309,7 +310,7 @@ namespace Carnassial.Images
             return loadAtom;
         }
 
-        protected async Task RunTasksAsync(FileTransaction transaction, SortedDictionary<string, List<string>> filesToLoadByRelativePath, int filesToLoad)
+        protected async Task RunTasksAsync(WindowedTransactionSequence<FileLoad> transactionSequence, SortedDictionary<string, List<string>> filesToLoadByRelativePath, int filesToLoad)
         {
             if (this.ComputeTaskBody == null)
             {
@@ -337,7 +338,7 @@ namespace Carnassial.Images
             this.ioFilesInCurrentFolder = this.ioFilesByRelativePathEnumerator.Current.Value;
             Debug.Assert(this.ioFilesInCurrentFolder != null, "List of files in folder is unexpectedly null.");
             this.loadAtoms = new FileLoadAtom[filesToLoad];
-            this.transaction = transaction;
+            this.transactionSequence = transactionSequence;
 
             this.ioTasksActive = this.ioTaskCount;
             for (int ioTask = 0; ioTask < this.ioTaskCount; ++ioTask)
@@ -391,8 +392,8 @@ namespace Carnassial.Images
             if ((this.isExceptional == false) && (this.ShouldExitCurrentIteration == false))
             {
                 this.addFileStopIndex = this.fileLoads.Length;
-                this.AddFilesToTransaction();
-                this.transaction.Commit();
+                this.AddToSequence();
+                this.transactionSequence.Commit();
             }
             this.isCompleted = true;
 

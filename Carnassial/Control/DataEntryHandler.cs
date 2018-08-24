@@ -37,7 +37,7 @@ namespace Carnassial.Control
         {
             this.IsProgrammaticUpdate = true;
 
-            FileTuplesWithID filesToUpdate = new FileTuplesWithID(Constant.FileColumn.DeleteFlag);
+            List<ImageRow> filesToUpdate = new List<ImageRow>();
             List<long> fileIDsToDropFromDatabase = new List<long>();
             using (Recycler fileOperation = new Recycler())
             {
@@ -64,7 +64,7 @@ namespace Carnassial.Control
                         // It is potentially desirable to change the classification to FileNoLongerAvailable but doing so is also
                         // potentially undesirable.  For now, prefer not to blindly override color/greyscale/dark classifications.
                         file.DeleteFlag = false;
-                        filesToUpdate.Add(file.ID, false);
+                        filesToUpdate.Add(file);
                     }
                 }
             }
@@ -73,15 +73,19 @@ namespace Carnassial.Control
             {
                 // drop files
                 Debug.Assert(fileIDsToDropFromDatabase.Count > 0, "No files are being deleted.");
-                Debug.Assert(filesToUpdate.RowCount == 0, "Files to update unexpectedly present.");
+                Debug.Assert(filesToUpdate.Count == 0, "Files to update unexpectedly present.");
                 this.FileDatabase.DeleteFiles(fileIDsToDropFromDatabase);
             }
             else
             {
                 // update file properties
                 Debug.Assert(fileIDsToDropFromDatabase.Count > 0, "Files to drop from database unexpectedly present.");
-                Debug.Assert(filesToUpdate.RowCount > 0, "No files are being to be deleted.");
-                this.FileDatabase.UpdateFiles(filesToUpdate);
+                Debug.Assert(filesToUpdate.Count > 0, "No files are being to be deleted.");
+                using (UpdateFileColumnTransactionSequence updateFiles = this.FileDatabase.CreateUpdateFileColumnTransaction(Constant.FileColumn.DeleteFlag))
+                {
+                    updateFiles.UpdateFiles(filesToUpdate);
+                    updateFiles.Commit();
+                }
             }
 
             this.BulkEdit?.Invoke(this, null);

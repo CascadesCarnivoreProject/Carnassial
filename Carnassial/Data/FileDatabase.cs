@@ -89,14 +89,16 @@ namespace Carnassial.Data
                 mostRecentAdjustment = newFileDateTime - currentImageDateTime;
                 file.DateTimeOffset = newFileDateTime;
                 filesToAdjust.Add(file);
-                file.AcceptChanges();
             }
 
             // update the database with the new date/times
             if (filesToAdjust.Count > 0)
             {
-                this.CreateBackupIfNeeded();
-                this.UpdateFiles(ImageRow.CreateDateTimeUpdate(filesToAdjust));
+                using (UpdateFileDateTimeOffsetTransactionSequence updateTransaction = this.CreateUpdateFileDateTimeTransaction())
+                {
+                    updateTransaction.UpdateFiles(filesToAdjust);
+                    updateTransaction.Commit();
+                }
 
                 // add log entry recording the change
                 StringBuilder log = new StringBuilder(Environment.NewLine);
@@ -112,22 +114,34 @@ namespace Carnassial.Data
             this.TrySyncImageSetToDatabase();
         }
 
-        public AddFilesTransaction CreateAddFilesTransaction()
+        public AddFilesTransactionSequence CreateAddFilesTransaction()
         {
             this.CreateBackupIfNeeded();
-            return new AddFilesTransaction(this, this.Database.CreateConnection());
+            return new AddFilesTransactionSequence(this, this.Database.CreateConnection());
         }
 
-        public UpdateFileDateTimeOffsetTransaction CreateUpdateDateTimeTransaction()
+        public FileTransactionSequence CreateInsertFileTransaction()
         {
             this.CreateBackupIfNeeded();
-            return new UpdateFileDateTimeOffsetTransaction(this.Database.CreateConnection());
+            return FileTransactionSequence.CreateInsert(this.Database.CreateConnection(), this.Files);
         }
 
-        public UpdateFileColumnTransaction CreateUpdateSingleColumnTransaction(string dataLabel)
+        public UpdateFileColumnTransactionSequence CreateUpdateFileColumnTransaction(string dataLabel)
         {
             this.CreateBackupIfNeeded();
-            return new UpdateFileColumnTransaction(dataLabel, this.Database.CreateConnection());
+            return new UpdateFileColumnTransactionSequence(dataLabel, this.Database.CreateConnection());
+        }
+
+        public UpdateFileDateTimeOffsetTransactionSequence CreateUpdateFileDateTimeTransaction()
+        {
+            this.CreateBackupIfNeeded();
+            return new UpdateFileDateTimeOffsetTransactionSequence(this.Database.CreateConnection());
+        }
+
+        public FileTransactionSequence CreateUpdateFileTransaction()
+        {
+            this.CreateBackupIfNeeded();
+            return FileTransactionSequence.CreateUpdate(this.Database.CreateConnection(), this.Files);
         }
 
         private Select CreateSelect(FileSelection selection)
@@ -252,11 +266,10 @@ namespace Carnassial.Data
             // update database with new datetimes
             if (filesToUpdate.Count > 0)
             {
-                this.CreateBackupIfNeeded();
-                FileTuplesWithID dateTimeUpdate = ImageRow.CreateDateTimeUpdate(filesToUpdate);
-                using (SQLiteConnection connection = this.Database.CreateConnection())
+                using (UpdateFileDateTimeOffsetTransactionSequence updateTransaction = this.CreateUpdateFileDateTimeTransaction())
                 {
-                    dateTimeUpdate.Update(connection);
+                    updateTransaction.UpdateFiles(filesToUpdate);
+                    updateTransaction.Commit();
                 }
 
                 StringBuilder log = new StringBuilder(Environment.NewLine);
@@ -401,14 +414,6 @@ namespace Carnassial.Data
             return counts;
         }
 
-        public void InsertFiles(ColumnTuplesForInsert filesToInsert)
-        {
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                filesToInsert.Insert(connection);
-            }
-        }
-
         /// <summary>A convenience routine for checking to see if the file in the given row is displayable (i.e., not corrupted or missing)</summary>
         public bool IsFileDisplayable(int fileIndex)
         {
@@ -429,15 +434,14 @@ namespace Carnassial.Data
         {
             Debug.Assert(destinationFolderPath.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase), String.Format("Destination path '{0}' is not under '{1}'.", destinationFolderPath, this.FolderPath));
 
-            FileTuplesWithID filesToUpdate = new FileTuplesWithID(Constant.FileColumn.RelativePath);
+            List<ImageRow> filesToUpdate = new List<ImageRow>();
             List<string> immovableFiles = new List<string>();
             foreach (ImageRow file in this.Files)
             {
                 Debug.Assert(file.HasChanges == false, "File has unexpected pending changes.");
                 if (file.TryMoveFileToFolder(this.FolderPath, destinationFolderPath))
                 {
-                    filesToUpdate.Add(file.ID, file.RelativePath);
-                    file.AcceptChanges();
+                    filesToUpdate.Add(file);
                 }
                 else
                 {
@@ -445,7 +449,12 @@ namespace Carnassial.Data
                 }
             }
 
-            this.UpdateFiles(filesToUpdate);
+            using (UpdateFileColumnTransactionSequence updateFiles = this.CreateUpdateFileColumnTransaction(Constant.FileColumn.RelativePath))
+            {
+                updateFiles.UpdateFiles(filesToUpdate);
+                updateFiles.Commit();
+            }
+
             return immovableFiles;
         }
 
@@ -689,24 +698,12 @@ namespace Carnassial.Data
                 return false;
             }
 
-            this.UpdateFiles(file.CreateUpdate());
-            file.AcceptChanges();
+            using (FileTransactionSequence updateFile = this.CreateUpdateFileTransaction())
+            {
+                updateFile.AddFile(file);
+                updateFile.Commit();
+            }
             return true;
-        }
-
-        public void UpdateFiles(FileTuplesWithID update)
-        {
-            if (update.RowCount < 1)
-            {
-                // nothing to do
-                return;
-            }
-
-            this.CreateBackupIfNeeded();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                update.Update(connection);
-            }
         }
 
         // set one property on all rows in the selection to a given value
@@ -727,21 +724,22 @@ namespace Carnassial.Data
             }
 
             object value = valueSource.GetDatabaseValue(control.DataLabel);
-            FileTuplesWithID filesToUpdate = new FileTuplesWithID(control.DataLabel);
+            List<ImageRow> filesToUpdate = new List<ImageRow>(toIndex - fromIndex + 1);
             for (int index = fromIndex; index <= toIndex; index++)
             {
                 // update data table
                 ImageRow file = this.Files[index];
                 Debug.Assert(file.HasChanges == false, "File has unexpected pending changes.");
                 file[control.PropertyName] = value;
-
                 // capture change for database update
-                filesToUpdate.Add(file.ID, value);
-                file.AcceptChanges();
+                filesToUpdate.Add(file);
             }
 
-            this.CreateBackupIfNeeded();
-            this.UpdateFiles(filesToUpdate);
+            using (UpdateFileColumnTransactionSequence updateFiles = this.CreateUpdateFileColumnTransaction(control.DataLabel))
+            {
+                updateFiles.UpdateFiles(filesToUpdate);
+                updateFiles.Commit();
+            }
         }
 
         private void UpdateFileTableTo2203Schema(SQLiteConnection connection, SQLiteTransaction transaction)

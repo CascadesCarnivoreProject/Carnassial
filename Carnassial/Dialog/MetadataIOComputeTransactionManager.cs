@@ -96,7 +96,7 @@ namespace Carnassial.Dialog
 
                     if (addFilesToTransaction)
                     {
-                        this.AddFilesToTransaction();
+                        this.AddToSequence();
                     }
 
                     if (updateStatus)
@@ -129,7 +129,7 @@ namespace Carnassial.Dialog
             };
 
             SortedDictionary<string, List<string>> filesToLoadByRelativePath = fileDatabase.Files.GetFileNamesByRelativePath();
-            await this.RunTasksAsync(fileDatabase.CreateUpdateSingleColumnTransaction(dataLabel), filesToLoadByRelativePath, fileDatabase.CurrentlySelectedFileCount);
+            await this.RunTasksAsync(fileDatabase.CreateUpdateFileColumnTransaction(dataLabel), filesToLoadByRelativePath, fileDatabase.CurrentlySelectedFileCount);
 
             this.Status.CurrentFileIndex = this.FilesCompleted;
             this.Progress.Report(this.Status);
