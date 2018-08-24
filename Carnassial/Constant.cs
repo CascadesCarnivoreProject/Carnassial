@@ -336,7 +336,7 @@ namespace Carnassial
                 public const string MostRecentlyUsedImageSets = "MostRecentlyUsedImageSets";
 
                 public const string OrderFilesByDateTime = "OrderFilesByDateTime";
-                public const string SkipDarkImagesCheck = "SkipDarkImagesCheck";
+                public const string SkipFileClassification = "SkipFileClassification";
 
                 // dialog opt outs
                 public const string SuppressAmbiguousDatesDialog = "SuppressAmbiguousDatesDialog";

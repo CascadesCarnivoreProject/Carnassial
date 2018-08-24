@@ -54,7 +54,7 @@ namespace Carnassial
             this.MenuOptionsAudioFeedback.IsChecked = this.State.AudioFeedback;
             this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.State.SuppressSpreadsheetImportPrompt;
             this.MenuOptionsOrderFilesByDateTime.IsChecked = this.State.OrderFilesByDateTime;
-            this.MenuOptionsSkipDarkFileCheck.IsChecked = this.State.SkipDarkImagesCheck;
+            this.MenuOptionsSkipFileClassification.IsChecked = this.State.SkipFileClassification;
 
             // timer callback so the display will update to the current slider position when the user pauses whilst dragging the slider 
             this.State.FileNavigatorSliderTimer.Tick += this.FileNavigatorSlider_TimerTick;
@@ -1308,10 +1308,10 @@ namespace Carnassial
             this.State.UndoRedoChain.AddCommand(orderingCommand);
         }
 
-        private void MenuOptionsSkipDarkFileCheck_Click(object sender, RoutedEventArgs e)
+        private void MenuOptionsSkipFileClassification_Click(object sender, RoutedEventArgs e)
         {
-            this.State.SkipDarkImagesCheck = !this.State.SkipDarkImagesCheck;
-            this.MenuOptionsSkipDarkFileCheck.IsChecked = this.State.SkipDarkImagesCheck;
+            this.State.SkipFileClassification = !this.State.SkipFileClassification;
+            this.MenuOptionsSkipFileClassification.IsChecked = this.State.SkipFileClassification;
         }
 
         private async void MenuSelectCustom_Click(object sender, RoutedEventArgs e)
@@ -2287,13 +2287,13 @@ namespace Carnassial
             this.ShowLongRunningOperationFeedback();
             this.MenuOptions.IsEnabled = true;
             folderLoad.ReportStatus();
-            if (this.State.SkipDarkImagesCheck)
+            if (this.State.SkipFileClassification)
             {
                 this.SetStatusMessage("Loading folders...");
             }
             else
             {
-                this.SetStatusMessage("Loading folders (if this is slower than you like and dark image detection isn't needed you can select Skip dark check in the Options menu right now)...");
+                this.SetStatusMessage("Loading folders (if this is slower than you like and file classification isn't needed you can select Skip classification in the Options menu right now)...");
             }
 
             // change to the files tab
@@ -2685,6 +2685,8 @@ namespace Carnassial
 
         private void UpdateSpreadsheetProgress(SpreadsheetReadWriteStatus progress)
         {
+            this.ShowLongRunningOperationFeedback();
+
             StatusBarItem statusMessage = (StatusBarItem)this.LongRunningFeedback.StatusMessage.Items[0];
             statusMessage.Content = progress.GetMessage();
             this.LongRunningFeedback.ProgressBar.Value = progress.GetPercentage();

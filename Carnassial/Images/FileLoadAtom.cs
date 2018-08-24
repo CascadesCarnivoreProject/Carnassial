@@ -113,14 +113,14 @@ namespace Carnassial.Images
             return firstProperties;
         }
 
-        public void ClassifyFromThumbnails(double darkLuminosityThreshold, bool skipDarkCheck, ref MemoryImage preallocatedThumbnail)
+        public void ClassifyFromThumbnails(double darkLuminosityThreshold, bool skipClassification, ref MemoryImage preallocatedThumbnail)
         {
             Debug.Assert(this.First.File != null, "First file unexpectedly null.");
             if (this.First.File.IsVideo)
             {
                 this.First.File.Classification = FileClassification.Video;
             }
-            else if (skipDarkCheck)
+            else if (skipClassification)
             {
                 this.First.File.Classification = FileClassification.Color;
             }
@@ -155,7 +155,7 @@ namespace Carnassial.Images
                 {
                     this.Second.File.Classification = FileClassification.Video;
                 }
-                else if (skipDarkCheck)
+                else if (skipClassification)
                 {
                     this.Second.File.Classification = FileClassification.Color;
                 }
