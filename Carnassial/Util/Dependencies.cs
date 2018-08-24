@@ -20,7 +20,6 @@ namespace Carnassial.Util
         {
             "Newtonsoft.Json.dll",
             // MetadataExtractor
-            "ICSharpCode.SharpZipLib.dll",
             "MetadataExtractor.dll",
             "XmpCore.dll",
             // SQLite

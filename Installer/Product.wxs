@@ -80,9 +80,6 @@
       <Component Id="EPPlus.xml" Guid="*" Win64="yes">
         <File Id="EPPlus.xml" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\EPPlus.xml" />
       </Component>
-      <Component Id="ICSharpCode.SharpZipLib.dll" Guid="*" Win64="yes">
-        <File Id="ICSharpCode.SharpZipLib.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\ICSharpCode.SharpZipLib.dll" />
-      </Component>
       <Component Id="MetadataExtractor.dll" Guid="*" Win64="yes">
         <File Id="MetadataExtractor.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\MetadataExtractor.dll" />
       </Component>
@@ -161,7 +158,6 @@
       <ComponentRef Id="$(var.TemplateEditor.TargetName).pdb" />
       <ComponentRef Id="EPPlus.dll" />
       <ComponentRef Id="EPPlus.xml" />
-      <ComponentRef Id="ICSharpCode.SharpZipLib.dll" />
       <ComponentRef Id="MetadataExtractor.dll" />
       <ComponentRef Id="MetadataExtractor.xml" />
       <ComponentRef Id="Microsoft.WindowsAPICodePack.dll" />
