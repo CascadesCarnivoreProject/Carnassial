@@ -1,5 +1,4 @@
-﻿using Carnassial.Database;
-using Carnassial.Interop;
+﻿using Carnassial.Interop;
 using Carnassial.Util;
 using OfficeOpenXml;
 using System;
@@ -75,8 +74,7 @@ namespace Carnassial.Data
         /// </summary>
         public void ExportFileDataToXlsx(FileDatabase database, string xlsxFilePath)
         {
-            this.status.BeginWrite(database.Files.RowCount);
-
+            this.status.BeginExcelWorksheetLoad();
             using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
             {
                 List<string> columns = new List<string>(database.Controls.RowCount);
@@ -89,7 +87,9 @@ namespace Carnassial.Data
                     }
                 }
 
-                ExcelWorksheet worksheet = this.GetOrCreateBlankWorksheet(xlsxFile, Constant.Excel.FileDataWorksheetName, columns);
+                ExcelWorksheet worksheet = this.GetOrCreateTrimmedWorksheet(xlsxFile, Constant.Excel.FileDataWorksheetName, database.Files.RowCount, columns);
+
+                this.status.BeginWrite(database.Files.RowCount);
                 for (int fileIndex = 0; fileIndex < database.Files.RowCount; ++fileIndex)
                 {
                     ImageRow file = database.Files[fileIndex];
@@ -105,8 +105,12 @@ namespace Carnassial.Data
                     }
                 }
 
-                // match column widths to content
-                worksheet.Cells[1, 1, worksheet.Dimension.Rows, worksheet.Dimension.Columns].AutoFitColumns(Constant.Excel.MinimumColumnWidth, Constant.Excel.MaximumColumnWidth);
+                // make a reasonable effort at matching column widths to content
+                // For performance, the number of rows included in autofitting is restricted.  More intelligent algorithms can be
+                // adopted if needed; see https://github.com/JanKallman/EPPlus/issues/191.
+                ExcelAddressBase dimension = worksheet.Dimension;
+                int rowsToAutoFit = Math.Min(dimension.Rows, Constant.Excel.MaximumRowsToIncludeInAutoFit);
+                worksheet.Cells[1, 1, rowsToAutoFit, dimension.Columns].AutoFitColumns(Constant.Excel.MinimumColumnWidth, Constant.Excel.MaximumColumnWidth);
 
                 this.status.BeginExcelWorkbookSave();
                 xlsxFile.Save();
@@ -457,18 +461,34 @@ namespace Carnassial.Data
             return value + ",";
         }
 
-        protected ExcelWorksheet GetOrCreateBlankWorksheet(ExcelPackage xlsxFile, string worksheetName, List<string> columnHeaders)
+        protected ExcelWorksheet GetOrCreateTrimmedWorksheet(ExcelPackage xlsxFile, string worksheetName, int dataRows, List<string> columnHeaders)
         {
-            // get empty worksheet
             ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets.FirstOrDefault(sheet => sheet.Name == worksheetName);
             if (worksheet == null)
             {
+                // create new worksheet
                 worksheet = xlsxFile.Workbook.Worksheets.Add(worksheetName);
                 worksheet.View.FreezePanes(2, 1);
             }
             else
             {
-                worksheet.Cells.Clear();
+                // if needed, trim existing worksheet to output size
+                // Existing data will be overwritten and therefore existing cells don't need to be cleared.  Avoiding such clearing
+                // meaningfully reduces overhead when writing updates to large, existing spreadsheets.
+                // - Carnassial 2.2.0.3 @ 65k rows: +45% overall write performance from not clearing
+                ExcelAddressBase dimension = worksheet.Dimension;
+                if (dimension.Columns > columnHeaders.Count)
+                {
+                    // remove unneeded columns
+                    worksheet.DeleteColumn(columnHeaders.Count + 1, dimension.Columns - columnHeaders.Count);
+                }
+
+                int totalRows = dataRows + 1;
+                if (dimension.Rows > totalRows)
+                {
+                    // remove unneeded rows
+                    worksheet.DeleteRow(totalRows + 1, dimension.Rows - totalRows);
+                }
             }
 
             // write header

@@ -159,6 +159,7 @@ namespace Carnassial
             public const char MarkerPositionSeparator = '|';
             public const double MaximumColumnWidth = 40.0;
             public const double MinimumColumnWidth = 5.0;
+            public const int MaximumRowsToIncludeInAutoFit = 250;
         }
 
         public static class Exif
