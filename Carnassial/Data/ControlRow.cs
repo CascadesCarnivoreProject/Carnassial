@@ -98,7 +98,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.analysisLabel != value;
+                if (this.analysisLabel == value)
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.analysisLabel = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.AnalysisLabel)));
             }
@@ -112,7 +116,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.controlOrder != value;
+                if (this.controlOrder == value)
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.controlOrder = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.ControlOrder)));
             }
@@ -126,8 +134,12 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.copyable != value;
+                if (this.copyable == value)
+                {
+                    return;
+                }
                 this.copyable = value;
+                this.HasChanges |= true;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Copyable)));
             }
         }
@@ -140,8 +152,12 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= String.Equals(this.dataLabel, value, StringComparison.Ordinal) == false;
+                if (String.Equals(this.dataLabel, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
                 this.dataLabel = value;
+                this.HasChanges |= true;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DataLabel)));
             }
         }
@@ -154,8 +170,12 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= String.Equals(this.defaultValue, value, StringComparison.Ordinal) == false;
+                if (String.Equals(this.defaultValue, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
                 this.defaultValue = value;
+                this.HasChanges |= true;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DefaultValue)));
             }
         }
@@ -168,7 +188,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.indexInFileTable != value;
+                if (this.indexInFileTable == value)
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.indexInFileTable = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.IndexInFileTable)));
             }
@@ -182,7 +206,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= String.Equals(this.label, value, StringComparison.Ordinal) == false;
+                if (String.Equals(this.label, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.label = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Label)));
             }
@@ -196,7 +224,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.maxWidth != value;
+                if (this.maxWidth == value)
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.maxWidth = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.MaxWidth)));
             }
@@ -212,7 +244,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.spreadSheetOrder != value;
+                if (this.spreadSheetOrder == value)
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.spreadSheetOrder = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.SpreadsheetOrder)));
             }
@@ -226,7 +262,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= String.Equals(this.tooltip, value, StringComparison.Ordinal) == false;
+                if (String.Equals(this.tooltip, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.tooltip = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Tooltip)));
             }
@@ -240,7 +280,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.type != value;
+                if (this.type == value)
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.type = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Type)));
             }
@@ -254,7 +298,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.visible != value;
+                if (this.visible == value)
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.visible = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Visible)));
             }
@@ -268,52 +316,14 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= String.Equals(this.wellKnownValues, value, StringComparison.Ordinal) == false;
+                if (String.Equals(this.wellKnownValues, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.wellKnownValues = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.WellKnownValues)));
             }
-        }
-
-        public static ColumnTuplesForInsert CreateInsert(params ControlRow[] controls)
-        {
-            return ControlRow.CreateInsert((IEnumerable<ControlRow>)controls);
-        }
-
-        public static ColumnTuplesForInsert CreateInsert(IEnumerable<ControlRow> controls)
-        {
-            ColumnTuplesForInsert controlTuples = new ColumnTuplesForInsert(Constant.DatabaseTable.Controls,
-                                                                            Constant.ControlColumn.AnalysisLabel,
-                                                                            Constant.ControlColumn.ControlOrder,
-                                                                            Constant.ControlColumn.Copyable,
-                                                                            Constant.ControlColumn.DataLabel,
-                                                                            Constant.ControlColumn.DefaultValue,
-                                                                            Constant.ControlColumn.IndexInFileTable,
-                                                                            Constant.ControlColumn.Label,
-                                                                            Constant.ControlColumn.WellKnownValues,
-                                                                            Constant.ControlColumn.SpreadsheetOrder,
-                                                                            Constant.ControlColumn.MaxWidth,
-                                                                            Constant.ControlColumn.Tooltip,
-                                                                            Constant.ControlColumn.Type,
-                                                                            Constant.ControlColumn.Visible);
-            foreach (ControlRow control in controls)
-            {
-                Debug.Assert(control != null, "controls contains null.");
-                controlTuples.Add(control.AnalysisLabel,
-                                  control.ControlOrder,
-                                  control.Copyable,
-                                  control.DataLabel,
-                                  control.DefaultValue,
-                                  control.IndexInFileTable,
-                                  control.Label,
-                                  control.WellKnownValues,
-                                  control.SpreadsheetOrder,
-                                  control.MaxWidth,
-                                  control.Tooltip,
-                                  (int)control.Type,
-                                  control.Visible);
-            }
-
-            return controlTuples;
         }
 
         public SearchTerm CreateSearchTerm()
@@ -373,27 +383,6 @@ namespace Carnassial.Data
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", this.Type));
             }
-        }
-
-        public ColumnTuplesWithID CreateUpdate()
-        {
-            List<ColumnTuple> columnTuples = new List<ColumnTuple>()
-            {
-                new ColumnTuple(Constant.ControlColumn.AnalysisLabel, this.AnalysisLabel),
-                new ColumnTuple(Constant.ControlColumn.ControlOrder, this.ControlOrder),
-                new ColumnTuple(Constant.ControlColumn.Copyable, this.Copyable),
-                new ColumnTuple(Constant.ControlColumn.DataLabel, this.DataLabel),
-                new ColumnTuple(Constant.ControlColumn.DefaultValue, this.DefaultValue),
-                new ColumnTuple(Constant.ControlColumn.IndexInFileTable, this.IndexInFileTable),
-                new ColumnTuple(Constant.ControlColumn.Label, this.Label),
-                new ColumnTuple(Constant.ControlColumn.WellKnownValues, this.WellKnownValues),
-                new ColumnTuple(Constant.ControlColumn.SpreadsheetOrder, this.SpreadsheetOrder),
-                new ColumnTuple(Constant.ControlColumn.MaxWidth, this.MaxWidth),
-                new ColumnTuple(Constant.ControlColumn.Tooltip, this.Tooltip),
-                new ColumnTuple(Constant.ControlColumn.Type, (int)this.Type),
-                new ColumnTuple(Constant.ControlColumn.Visible, this.Visible)
-            };
-            return new ColumnTuplesWithID(Constant.DatabaseTable.Controls, columnTuples, this.ID);
         }
 
         public List<string> GetWellKnownValues()

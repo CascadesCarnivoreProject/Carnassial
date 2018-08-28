@@ -1,6 +1,5 @@
 ﻿using Carnassial.Database;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace Carnassial.Data
@@ -32,8 +31,12 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.fileSelection != value;
+                if (this.fileSelection == value)
+                {
+                    return;
+                }
                 this.fileSelection = value;
+                this.HasChanges |= true;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.FileSelection)));
             }
         }
@@ -46,7 +49,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= String.Equals(this.initialFolderName, value, StringComparison.Ordinal) == false;
+                if (String.Equals(this.initialFolderName, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.initialFolderName = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.InitialFolderName)));
             }
@@ -60,7 +67,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.mostRecentFileID != value;
+                if (this.mostRecentFileID == value)
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.mostRecentFileID = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.MostRecentFileID)));
             }
@@ -76,7 +87,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= String.Equals(this.log, value, StringComparison.Ordinal) == false;
+                if (String.Equals(this.log, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.log = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.MostRecentFileID)));
             }
@@ -90,7 +105,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.options != value;
+                if (this.options == value)
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.options = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Options)));
             }
@@ -104,39 +123,14 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= String.Equals(this.timeZone, value, StringComparison.Ordinal) == false;
+                if (String.Equals(this.timeZone, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.timeZone = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.TimeZone)));
             }
-        }
-
-        public static ColumnTuplesForInsert CreateInsert(string folderPath)
-        {
-            return new ColumnTuplesForInsert(Constant.DatabaseTable.ImageSet,
-                new List<ColumnTuple>()
-                {
-                    new ColumnTuple(Constant.ImageSetColumn.FileSelection, (int)default(FileSelection)),
-                    new ColumnTuple(Constant.ImageSetColumn.InitialFolderName, folderPath),
-                    new ColumnTuple(Constant.ImageSetColumn.Log, Constant.Database.ImageSetDefaultLog),
-                    new ColumnTuple(Constant.ImageSetColumn.MostRecentFileID, Constant.Database.DefaultFileID),
-                    new ColumnTuple(Constant.ImageSetColumn.Options, (int)default(ImageSetOptions)),
-                    new ColumnTuple(Constant.ImageSetColumn.TimeZone, TimeZoneInfo.Local.Id)
-                });
-        }
-
-        public ColumnTuplesWithID CreateUpdate()
-        {
-            return new ColumnTuplesWithID(Constant.DatabaseTable.ImageSet,
-                new List<ColumnTuple>()
-                {
-                    new ColumnTuple(Constant.ImageSetColumn.FileSelection, (int)this.FileSelection),
-                    new ColumnTuple(Constant.ImageSetColumn.InitialFolderName, this.InitialFolderName),
-                    new ColumnTuple(Constant.ImageSetColumn.Log, this.Log),
-                    new ColumnTuple(Constant.ImageSetColumn.Options, (int)this.Options),
-                    new ColumnTuple(Constant.ImageSetColumn.MostRecentFileID, this.MostRecentFileID),
-                    new ColumnTuple(Constant.ImageSetColumn.TimeZone, this.TimeZone),
-                },
-                this.ID);
         }
 
         public TimeZoneInfo GetTimeZoneInfo()

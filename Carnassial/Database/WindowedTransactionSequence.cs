@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.Data.SQLite;
 
 namespace Carnassial.Database
 {
     public abstract class WindowedTransactionSequence<TInput> : TransactionSequence
     {
-        public WindowedTransactionSequence(SQLiteConnection connection)
-            : base(connection)
+        public WindowedTransactionSequence(SQLiteDatabase database)
+            : base(database)
         {
         }
 

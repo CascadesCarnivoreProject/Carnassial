@@ -10,7 +10,6 @@ using MetadataExtractor.Formats.Exif.Makernotes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data.SQLite;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -59,8 +58,12 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.classification != value;
+                if (this.classification == value)
+                {
+                    return;
+                }
                 this.classification = value;
+                this.HasChanges |= true;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Classification)));
             }
         }
@@ -73,8 +76,12 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.dateTimeOffset != value;
+                if (this.dateTimeOffset == value)
+                {
+                    return;
+                }
                 this.dateTimeOffset = value;
+                this.HasChanges |= true;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DateTimeOffset)));
             }
         }
@@ -87,8 +94,12 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= this.deleteFlag != value;
+                if (this.deleteFlag == value)
+                {
+                    return;
+                }
                 this.deleteFlag = value;
+                this.HasChanges |= true;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DeleteFlag)));
             }
         }
@@ -101,8 +112,12 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= String.Equals(this.fileName, value, StringComparison.Ordinal) == false;
+                if (String.Equals(this.fileName, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
                 this.fileName = value;
+                this.HasChanges |= true;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.FileName)));
             }
         }
@@ -116,13 +131,6 @@ namespace Carnassial.Data
             }
         }
 
-        private void MarkersForCounter_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            MarkersForCounter markers = (MarkersForCounter)sender;
-            this[markers.DataLabel] = markers.Count;
-            this[FileTable.GetMarkerPositionColumnName(markers.DataLabel)] = markers.MarkerPositionsToFloatArray();
-        }
-
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string RelativePath
@@ -133,7 +141,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.HasChanges |= String.Equals(this.relativePath, value, StringComparison.Ordinal) == false;
+                if (String.Equals(this.relativePath, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+                this.HasChanges |= true;
                 this.relativePath = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.RelativePath)));
             }
@@ -536,6 +548,13 @@ namespace Carnassial.Data
 
             string previousJpegName = previousFileNameWithoutExtension + Constant.File.JpgFileExtension;
             return String.Equals(previousJpegName, fileName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void MarkersForCounter_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            MarkersForCounter markers = (MarkersForCounter)sender;
+            this[markers.DataLabel] = markers.Count;
+            this[FileTable.GetMarkerPositionColumnName(markers.DataLabel)] = markers.MarkerPositionsToFloatArray();
         }
 
         public void SetDateTimeOffsetFromFileInfo(FileInfo fileInfo)

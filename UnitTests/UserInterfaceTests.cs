@@ -76,9 +76,12 @@ namespace Carnassial.UnitTests
                 this.WaitForRenderingComplete();
             }
 
-            // create template database and remove any image database from previous test executions
-            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName);
-            string templateDatabaseFilePath = templateDatabase.FilePath;
+            // create template database and remove any file database from previous test executions
+            string templateDatabaseFilePath;
+            using (TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName))
+            {
+                templateDatabaseFilePath = templateDatabase.FilePath;
+            }
 
             string fileDatabaseFilePath = Path.Combine(Path.GetDirectoryName(templateDatabaseFilePath), Path.GetFileNameWithoutExtension(templateDatabaseFilePath) + Constant.File.FileDatabaseFileExtension);
             if (File.Exists(fileDatabaseFilePath))
@@ -455,95 +458,99 @@ namespace Carnassial.UnitTests
                 foreach (DatabaseExpectations databaseExpectation in databaseExpectations)
                 {
                     FileDatabase fileDatabase = this.CreateFileDatabase(databaseExpectation.TemplateDatabaseFileName, databaseExpectation.FileName);
-                    DataEntryHandler dataHandler = new DataEntryHandler(fileDatabase);
-
-                    DataEntryControls controls = new DataEntryControls();
-                    controls.CreateControls(fileDatabase, dataHandler, (string dataLabel) => { return fileDatabase.GetDistinctValuesInFileDataColumn(dataLabel); });
-
-                    // 4 controls not visible in default database + 4 marker position columns + date time and utc offset as single control + no control for id column
-                    int expectedDataEntryControls = databaseExpectation.ExpectedColumns.Count - 4 - 4 - 1 - 1;
-                    Assert.IsTrue(controls.ControlsByDataLabel.Count == expectedDataEntryControls, "Expected {0} data entry controls to be generated but {1} were.", expectedDataEntryControls, controls.ControlsByDataLabel.Count);
-
-                    // check copies aren't possible when the image enumerator's not pointing to an image
-                    List<DataEntryControl> copyableControls = controls.Controls.Where(control => control.Copyable).ToList();
-                    foreach (DataEntryControl control in copyableControls)
+                    using (DataEntryHandler dataHandler = new DataEntryHandler(fileDatabase))
                     {
-                        Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
-                        Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
-                    }
+                        DataEntryControls controls = new DataEntryControls();
+                        controls.CreateControls(fileDatabase, dataHandler, (string dataLabel) => { return fileDatabase.GetDistinctValuesInFileDataColumn(dataLabel); });
 
-                    // check only copy forward is possible when enumerator's on first image
-                    List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
-                    foreach (FileExpectations fileExpectation in fileExpectations)
-                    {
-                        fileExpectation.RelativePath = "..";
-                    }
-                    Assert.IsTrue(dataHandler.ImageCache.MoveNext());
+                        // 4 controls not visible in default database + 4 marker position columns + date time and utc offset as single control + no control for id column
+                        int expectedDataEntryControls = databaseExpectation.ExpectedColumns.Count - 4 - 4 - 1 - 1;
+                        Assert.IsTrue(controls.ControlsByDataLabel.Count == expectedDataEntryControls, "Expected {0} data entry controls to be generated but {1} were.", expectedDataEntryControls, controls.ControlsByDataLabel.Count);
 
-                    foreach (DataEntryControl control in copyableControls)
-                    {
-                        Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
-                        Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
-                    }
+                        // check copies aren't possible when the image enumerator's not pointing to an image
+                        List<DataEntryControl> copyableControls = controls.Controls.Where(control => control.Copyable).ToList();
+                        foreach (DataEntryControl control in copyableControls)
+                        {
+                            Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
+                            Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
+                        }
 
-                    // check only copy last is possible when enumerator's on last image
-                    // check also copy last is not possible if no previous instance of the field has been filled out
-                    while (dataHandler.ImageCache.CurrentRow < fileExpectations.Count - 1)
-                    {
+                        // check only copy forward is possible when enumerator's on first image
+                        List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
+                        foreach (FileExpectations fileExpectation in fileExpectations)
+                        {
+                            fileExpectation.RelativePath = "..";
+                        }
                         Assert.IsTrue(dataHandler.ImageCache.MoveNext());
-                    }
 
-                    foreach (DataEntryControl control in copyableControls)
-                    {
-                        Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
-                        if (String.Equals(control.DataLabel, TestConstant.CarnivoreDatabaseColumn.Pelage, StringComparison.Ordinal) ||
-                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, StringComparison.Ordinal) ||
-                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Choice3, StringComparison.Ordinal) ||
-                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Counter3, StringComparison.Ordinal) ||
-                            String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Flag0, StringComparison.Ordinal))
+                        foreach (DataEntryControl control in copyableControls)
                         {
-                            Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control), control.DataLabel);
+                            Assert.IsTrue(dataHandler.IsCopyForwardPossible(control));
+                            Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control));
                         }
-                        else
+
+                        // check only copy last is possible when enumerator's on last image
+                        // check also copy last is not possible if no previous instance of the field has been filled out
+                        while (dataHandler.ImageCache.CurrentRow < fileExpectations.Count - 1)
                         {
-                            Assert.IsTrue(dataHandler.IsCopyFromLastNonEmptyValuePossible(control), control.DataLabel);
+                            Assert.IsTrue(dataHandler.ImageCache.MoveNext());
                         }
-                    }
 
-                    // propagation methods not covered due to requirement of UX interaction
-                    // dataHandler.CopyForward(control);
-                    // dataHandler.CopyFromLastValue(control);
-                    // dataHandler.CopyToAll(control);
-
-                    // verify roundtrip of fields subject to copy/paste and analysis assignment
-                    // AsDictionary() returns a dictionary with one fewer values than there are columns as the DateTime and UtcOffset
-                    // columns are merged to DateTimeOffset.
-                    Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(0));
-                    ImageRow firstFile = fileDatabase.Files[0];
-                    FileExpectations firstFileExpectations = fileExpectations[0];
-
-                    // DateTime and UtcOffset are merged into DateTime, so there should be one fewer value than there are columns
-                    // in the file table
-                    Dictionary<string, object> firstFileValuesByPropertyName = firstFile.GetValues();
-                    Assert.IsTrue(firstFileValuesByPropertyName.Count == databaseExpectation.ExpectedColumns.Count - 1);
-                    foreach (KeyValuePair<string, object> singlePropertyEdit in firstFileValuesByPropertyName)
-                    {
-                        if (singlePropertyEdit.Key == Constant.DatabaseColumn.ID)
+                        foreach (DataEntryControl control in copyableControls)
                         {
-                            continue;
+                            Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));
+                            if (String.Equals(control.DataLabel, TestConstant.CarnivoreDatabaseColumn.Pelage, StringComparison.Ordinal) ||
+                                String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, StringComparison.Ordinal) ||
+                                String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Choice3, StringComparison.Ordinal) ||
+                                String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Counter3, StringComparison.Ordinal) ||
+                                String.Equals(control.DataLabel, TestConstant.DefaultDatabaseColumn.Flag0, StringComparison.Ordinal))
+                            {
+                                Assert.IsFalse(dataHandler.IsCopyFromLastNonEmptyValuePossible(control), control.DataLabel);
+                            }
+                            else
+                            {
+                                Assert.IsTrue(dataHandler.IsCopyFromLastNonEmptyValuePossible(control), control.DataLabel);
+                            }
                         }
-                        firstFile[singlePropertyEdit.Key] = singlePropertyEdit.Value;
+
+                        // propagation methods not covered due to requirement of UX interaction
+                        // dataHandler.CopyForward(control);
+                        // dataHandler.CopyFromLastValue(control);
+                        // dataHandler.CopyToAll(control);
+
+                        // verify roundtrip of fields subject to copy/paste and analysis assignment
+                        // AsDictionary() returns a dictionary with one fewer values than there are columns as the DateTime and UtcOffset
+                        // columns are merged to DateTimeOffset.
+                        Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(0));
+                        ImageRow firstFile = fileDatabase.Files[0];
+                        FileExpectations firstFileExpectations = fileExpectations[0];
+
+                        // DateTime and UtcOffset are merged into DateTime, so there should be one fewer value than there are columns
+                        // in the file table
+                        Dictionary<string, object> firstFileValuesByPropertyName = firstFile.GetValues();
+                        Assert.IsTrue(firstFileValuesByPropertyName.Count == databaseExpectation.ExpectedColumns.Count - 1);
+                        foreach (KeyValuePair<string, object> singlePropertyEdit in firstFileValuesByPropertyName)
+                        {
+                            if (singlePropertyEdit.Key == Constant.DatabaseColumn.ID)
+                            {
+                                continue;
+                            }
+                            firstFile[singlePropertyEdit.Key] = singlePropertyEdit.Value;
+                        }
+
+                        TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
+                        firstFileExpectations.Verify(firstFile, imageSetTimeZone);
+
+                        // verify availability of database strings
+                        foreach (string dataLabel in databaseExpectation.ExpectedColumns)
+                        {
+                            string databaseString = firstFile.GetExcelString(dataLabel);
+                        }
                     }
 
-                    TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-                    firstFileExpectations.Verify(firstFile, imageSetTimeZone);
-
-                    // verify availability of database strings
-                    foreach (string dataLabel in databaseExpectation.ExpectedColumns)
-                    {
-                        string databaseString = firstFile.GetExcelString(dataLabel);
-                    }
-
+                    // force SQLite to release its handle on the database file so that it can be deleted
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
                     File.Delete(fileDatabase.FilePath);
                 }
             }

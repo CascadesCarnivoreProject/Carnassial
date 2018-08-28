@@ -193,7 +193,13 @@
     <Compile Include="Control\HorizontalLineAdorner.cs" />
     <Compile Include="Control\FileDisplayMessage.cs" />
     <Compile Include="Control\UtcOffsetPicker.cs" />
+    <Compile Include="Database\SQLiteAutoVacuum.cs" />
+    <Compile Include="Database\SQLiteLockMode.cs" />
+    <Compile Include="Database\SQLiteTemporaryStore.cs" />
+    <Compile Include="Database\SQLiteWalCheckpoint.cs" />
     <Compile Include="Database\WindowedTransactionSequence.cs" />
+    <Compile Include="Data\ImageSetTransactionSequence.cs" />
+    <Compile Include="Data\ControlTransactionSequence.cs" />
     <Compile Include="Data\FileTransactionSequence.cs" />
     <Compile Include="Util\ControlTypeConverter.cs" />
     <Compile Include="Util\WellKnownValueConverter.cs" />
@@ -217,9 +223,6 @@
     <Compile Include="Control\TextBoxUpDownAdorner.cs" />
     <Compile Include="Control\TimeZonePicker.cs" />
     <Compile Include="Database\ColumnDefinition.cs" />
-    <Compile Include="Database\ColumnTuplesForUpdate.cs" />
-    <Compile Include="Database\ColumnTuplesForInsert.cs" />
-    <Compile Include="Database\ColumnTuples.cs" />
     <Compile Include="Data\ControlRow.cs" />
     <Compile Include="Database\LogicalOperator.cs" />
     <Compile Include="Data\FileClassification.cs" />
@@ -316,8 +319,6 @@
     <Compile Include="Github\GithubReleaseClient.cs" />
     <Compile Include="Constant.cs" />
     <Compile Include="Data\CustomSelection.cs" />
-    <Compile Include="Database\ColumnTuple.cs" />
-    <Compile Include="Database\ColumnTuplesWithID.cs" />
     <Compile Include="Data\FileDatabase.cs" />
     <Compile Include="Data\SearchTerm.cs" />
     <Compile Include="Dialog\About.xaml.cs">

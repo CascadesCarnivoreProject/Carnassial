@@ -12,18 +12,16 @@ namespace Carnassial.Data
     {
         private SQLiteCommand addFiles;
         private bool disposed;
-        private FileDatabase fileDatabase;
 
-        public AddFilesTransactionSequence(FileDatabase fileDatabase, SQLiteConnection connection)
-            : base(connection)
+        public AddFilesTransactionSequence(SQLiteDatabase database, ControlTable controls)
+            : base(database)
         {
             this.disposed = false;
-            this.fileDatabase = fileDatabase;
 
             List<string> userControlDataLabels = new List<string>();
             List<string> userControlDefaultValues = new List<string>();
             string deleteFlagDefaultValue = null;
-            foreach (ControlRow control in fileDatabase.Controls)
+            foreach (ControlRow control in controls)
             {
                 if (control.IsUserControl())
                 {
@@ -74,8 +72,8 @@ namespace Carnassial.Data
                                                   deleteFlagDefaultValue,
                                                   defaultValuesConcatenated);
 
-            this.Transaction = this.Connection.BeginTransaction();
-            this.addFiles = new SQLiteCommand(fileInsertText, this.Connection, this.Transaction);
+            this.Transaction = this.Database.Connection.BeginTransaction();
+            this.addFiles = new SQLiteCommand(fileInsertText, this.Database.Connection, this.Transaction);
             // order must be kept in sync with parameter value sets AddFiles()
             this.addFiles.Parameters.Add(new SQLiteParameter("@Classification"));
             this.addFiles.Parameters.Add(new SQLiteParameter("@DateTime"));
@@ -122,8 +120,8 @@ namespace Carnassial.Data
                 file.AcceptChanges();
                 ++filesAdded;
 
-                ++this.FilesInTransaction;
-                if (this.FilesInTransaction >= Constant.Database.RowsPerTransaction)
+                ++this.RowsInCurrentTransaction;
+                if (this.RowsInCurrentTransaction >= Constant.Database.RowsPerTransaction)
                 {
                     this.addFiles = this.CommitAndBeginNew(this.addFiles);
                 }

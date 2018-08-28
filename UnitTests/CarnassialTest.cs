@@ -44,14 +44,15 @@ namespace Carnassial.UnitTests
         /// </summary>
         protected FileDatabase CloneFileDatabase(string templateDatabaseBaseFileName, string fileDatabaseFileName)
         {
-            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName);
+            using (TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName))
+            {
+                string fileDatabaseSourceFilePath = Path.Combine(this.WorkingDirectory, fileDatabaseFileName);
+                string fileDatabaseCloneFilePath = this.GetUniqueFilePathForTest(fileDatabaseFileName);
+                File.Copy(fileDatabaseSourceFilePath, fileDatabaseCloneFilePath, true);
 
-            string fileDatabaseSourceFilePath = Path.Combine(this.WorkingDirectory, fileDatabaseFileName);
-            string fileDatabaseCloneFilePath = this.GetUniqueFilePathForTest(fileDatabaseFileName);
-            File.Copy(fileDatabaseSourceFilePath, fileDatabaseCloneFilePath, true);
-
-            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseCloneFilePath, templateDatabase, false, LogicalOperator.And, out FileDatabase fileDatabase));
-            return fileDatabase;
+                Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabaseCloneFilePath, templateDatabase, false, LogicalOperator.And, out FileDatabase fileDatabase));
+                return fileDatabase;
+            }
         }
 
         /// <summary>
@@ -92,8 +93,10 @@ namespace Carnassial.UnitTests
         /// </summary>
         protected FileDatabase CreateFileDatabase(string templateDatabaseBaseFileName, string fileDatabaseBaseFileName)
         {
-            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName);
-            return this.CreateFileDatabase(templateDatabase, fileDatabaseBaseFileName);
+            using (TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName))
+            {
+                return this.CreateFileDatabase(templateDatabase, fileDatabaseBaseFileName);
+            }
         }
 
         /// <summary>

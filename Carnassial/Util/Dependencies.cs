@@ -76,13 +76,20 @@ namespace Carnassial.Util
             // can't use DialogMessageBox to show this message as that class requires the Carnassial window to be displayed.
             string messageTitle = String.Format("{0} needs to be in its original downloaded folder.", applicationName);
             StringBuilder message = new StringBuilder("Problem:" + Environment.NewLine);
-            message.AppendFormat("{0} won't run properly as it was not correctly installed.{1}{1}", applicationName, Environment.NewLine);
+            message.AppendFormat("{0} won't run properly as it was not correctly installed.", applicationName);
+            message.AppendLine();
+            message.AppendLine();
             message.AppendLine("Reason:");
-            message.AppendFormat("When you downloaded {0}, it was in a folder with several other files and folders it needs. You probably dragged {0} out of that folder.{1}{1}", applicationName, Environment.NewLine);
+            message.AppendFormat("When {0} was installed it was in a folder with several other files and folders it needs. Was it moved out of that folder?", applicationName);
+            message.AppendLine();
+            message.AppendLine();
             message.AppendLine("Solution:");
-            message.AppendFormat("Move the {0} program back to its original folder, or download it again.{1}{1}", applicationName, Environment.NewLine);
+            message.AppendFormat("Move {0} back to its original folder or reinstall it.", applicationName);
+            message.AppendLine();
+            message.AppendLine();
             message.AppendLine("Hint:");
-            message.AppendFormat("Create a shortcut if you want to access {0} outside its folder:{1}", applicationName, Environment.NewLine);
+            message.AppendFormat("Create a shortcut if you want to access {0} outside its folder:", applicationName);
+            message.AppendLine();
             message.AppendLine("1. From its original folder, right-click the Carnassial program icon.");
             message.AppendLine("2. Select 'Create Shortcut' from the menu.");
             message.Append("3. Drag the shortcut icon to the location of your choice.");

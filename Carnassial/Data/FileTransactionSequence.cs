@@ -13,15 +13,14 @@ namespace Carnassial.Data
         private FileTable fileTable;
         private SQLiteCommand insertOrUpdateFiles;
 
-        protected FileTransactionSequence(SQLiteConnection connection, StringBuilder command, FileTable fileTable)
-            : base(connection)
+        protected FileTransactionSequence(StringBuilder command, SQLiteDatabase database, FileTable fileTable)
+            : base(database)
         {
             this.disposed = false;
-            this.FilesInTransaction = 0;
             this.fileTable = fileTable;
-            this.Transaction = connection.BeginTransaction();
+            this.Transaction = database.Connection.BeginTransaction();
 
-            this.insertOrUpdateFiles = new SQLiteCommand(command.ToString(), this.Connection, this.Transaction);
+            this.insertOrUpdateFiles = new SQLiteCommand(command.ToString(), this.Database.Connection, this.Transaction);
             foreach (string standardColumn in Constant.Control.StandardControls)
             {
                 this.insertOrUpdateFiles.Parameters.Add(new SQLiteParameter("@" + standardColumn));
@@ -33,7 +32,7 @@ namespace Carnassial.Data
             this.insertOrUpdateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
         }
 
-        public static FileTransactionSequence CreateInsert(SQLiteConnection connection, FileTable fileTable)
+        public static FileTransactionSequence CreateInsert(SQLiteDatabase database, FileTable fileTable)
         {
             List<string> columns = new List<string>(1 + Constant.Control.StandardControls.Count + fileTable.UserColumnsByName.Count);
             List<string> parameterNames = new List<string>(1 + Constant.Control.StandardControls.Count + fileTable.UserColumnsByName.Count);
@@ -51,10 +50,10 @@ namespace Carnassial.Data
 
             StringBuilder insertCommand = new StringBuilder("INSERT INTO " + Constant.DatabaseTable.Files + " (" + String.Join(", ", columns) + ") VALUES (" + String.Join(", ", parameterNames) + ")");
 
-            return new FileTransactionSequence(connection, insertCommand, fileTable);
+            return new FileTransactionSequence(insertCommand, database, fileTable);
         }
 
-        public static FileTransactionSequence CreateUpdate(SQLiteConnection connection, FileTable fileTable)
+        public static FileTransactionSequence CreateUpdate(SQLiteDatabase database, FileTable fileTable)
         {
             StringBuilder updateCommand = new StringBuilder("UPDATE " + Constant.DatabaseTable.Files + " SET ");
             List<string> parameters = new List<string>(Constant.Control.StandardControls.Count + fileTable.UserColumnsByName.Count);
@@ -69,7 +68,7 @@ namespace Carnassial.Data
             updateCommand.Append(String.Join(", ", parameters));
             updateCommand.Append(" WHERE " + Constant.DatabaseColumn.ID + "=@" + Constant.DatabaseColumn.ID);
 
-            return new FileTransactionSequence(connection, updateCommand, fileTable);
+            return new FileTransactionSequence(updateCommand, database, fileTable);
         }
 
         protected override void Dispose(bool disposing)
@@ -120,8 +119,8 @@ namespace Carnassial.Data
                 this.insertOrUpdateFiles.ExecuteNonQuery();
                 file.AcceptChanges();
 
-                ++this.FilesInTransaction;
-                if (this.FilesInTransaction >= Constant.Database.RowsPerTransaction)
+                ++this.RowsInCurrentTransaction;
+                if (this.RowsInCurrentTransaction >= Constant.Database.RowsPerTransaction)
                 {
                     this.insertOrUpdateFiles = this.CommitAndBeginNew(this.insertOrUpdateFiles);
                 }

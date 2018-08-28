@@ -32,481 +32,495 @@ namespace Carnassial.UnitTests
         private void CreateReuseFileDatabase(string templateDatabaseBaseFileName, string fileDatabaseBaseFileName, Func<FileDatabase, List<FileExpectations>> addFiles)
         {
             // create database for test
-            FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabaseBaseFileName, fileDatabaseBaseFileName);
-            List<FileExpectations> fileExpectations = addFiles(fileDatabase);
-
-            // sanity coverage of image data table methods
-            int deletedFiles = fileDatabase.GetFileCount(FileSelection.MarkedForDeletion);
-            Assert.IsTrue(deletedFiles == 0);
-
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.All) == fileExpectations.Count);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.MarkedForDeletion) == 0);
-            Dictionary<FileClassification, int> fileCounts = fileDatabase.GetFileCountsByClassification();
-            Assert.IsTrue(fileCounts.Count == 6);
-            int expectedColorImageCount = fileExpectations.Count(expectation => expectation.Classification == FileClassification.Color);
-            int expectedGreyscaleImageCount = fileExpectations.Count(expectation => expectation.Classification == FileClassification.Greyscale);
-            Assert.IsTrue(fileCounts[FileClassification.Color] == expectedColorImageCount);
-            Assert.IsTrue(fileCounts[FileClassification.Corrupt] == 0);
-            Assert.IsTrue(fileCounts[FileClassification.Dark] == 0);
-            Assert.IsTrue(fileCounts[FileClassification.Greyscale] == expectedGreyscaleImageCount);
-            Assert.IsTrue(fileCounts[FileClassification.NoLongerAvailable] == 0);
-            Assert.IsTrue(fileCounts[FileClassification.Video] == 0);
-
-            FileTable filesToDelete = fileDatabase.GetFilesMarkedForDeletion();
-            Assert.IsTrue(filesToDelete.RowCount == 0);
-
-            // check images after initial add and again after reopen and application of selection
-            // checks are not performed after last selection in list is applied
-            List<ControlRow> counterControls = fileDatabase.Controls.Where(control => control.Type == ControlType.Counter).ToList();
-            Assert.IsTrue(counterControls.Count == 4);
-            string currentDirectoryName = Path.GetFileName(fileDatabase.FolderPath);
-            fileDatabase.SelectFiles(FileSelection.All);
-            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-            foreach (FileSelection nextSelection in new List<FileSelection>() { FileSelection.All, FileSelection.All })
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabaseBaseFileName, fileDatabaseBaseFileName))
             {
-                Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount == fileExpectations.Count);
+                List<FileExpectations> fileExpectations = addFiles(fileDatabase);
+
+                // sanity coverage of image data table methods
+                int deletedFiles = fileDatabase.GetFileCount(FileSelection.MarkedForDeletion);
+                Assert.IsTrue(deletedFiles == 0);
+
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.All) == fileExpectations.Count);
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.MarkedForDeletion) == 0);
+                Dictionary<FileClassification, int> fileCounts = fileDatabase.GetFileCountsByClassification();
+                Assert.IsTrue(fileCounts.Count == 6);
+                int expectedColorImageCount = fileExpectations.Count(expectation => expectation.Classification == FileClassification.Color);
+                int expectedGreyscaleImageCount = fileExpectations.Count(expectation => expectation.Classification == FileClassification.Greyscale);
+                Assert.IsTrue(fileCounts[FileClassification.Color] == expectedColorImageCount);
+                Assert.IsTrue(fileCounts[FileClassification.Corrupt] == 0);
+                Assert.IsTrue(fileCounts[FileClassification.Dark] == 0);
+                Assert.IsTrue(fileCounts[FileClassification.Greyscale] == expectedGreyscaleImageCount);
+                Assert.IsTrue(fileCounts[FileClassification.NoLongerAvailable] == 0);
+                Assert.IsTrue(fileCounts[FileClassification.Video] == 0);
+
+                FileTable filesToDelete = fileDatabase.GetFilesMarkedForDeletion();
+                Assert.IsTrue(filesToDelete.RowCount == 0);
+
+                // check images after initial add and again after reopen and application of selection
+                // checks are not performed after last selection in list is applied
+                List<ControlRow> counterControls = fileDatabase.Controls.Where(control => control.Type == ControlType.Counter).ToList();
+                Assert.IsTrue(counterControls.Count == 4);
+                string currentDirectoryName = Path.GetFileName(fileDatabase.FolderPath);
                 fileDatabase.SelectFiles(FileSelection.All);
-                Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
-                int displayableFileIndex = fileDatabase.GetCurrentOrNextDisplayableFile(fileDatabase.GetFileOrNextFileIndex(Constant.Database.DefaultFileID));
-                Assert.IsTrue(displayableFileIndex == 0);
-
-                for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
+                TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
+                foreach (FileSelection nextSelection in new List<FileSelection>() { FileSelection.All, FileSelection.All })
                 {
-                    // verify file
-                    ImageRow file = fileDatabase.Files[fileIndex];
-                    FileExpectations fileExpectation = fileExpectations[fileIndex];
-                    fileExpectation.Verify(file, imageSetTimeZone);
+                    Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount == fileExpectations.Count);
+                    fileDatabase.SelectFiles(FileSelection.All);
+                    Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
+                    int displayableFileIndex = fileDatabase.GetCurrentOrNextDisplayableFile(fileDatabase.GetFileOrNextFileIndex(Constant.Database.DefaultFileID));
+                    Assert.IsTrue(displayableFileIndex == 0);
 
-                    // verify markers associated with file
-                    foreach (ControlRow counter in counterControls)
+                    for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
                     {
-                        MarkersForCounter markerForCounter = file.GetMarkersForCounter(counter.DataLabel);
-                        Assert.IsTrue(String.Equals(markerForCounter.DataLabel, counter.DataLabel, StringComparison.Ordinal));
-                        Assert.IsTrue(markerForCounter.Count == (int)file[counter.DataLabel]);
-                        Assert.IsTrue(markerForCounter.Markers.Count >= 0);
-                        Assert.IsTrue(markerForCounter.Markers.Count <= (int)file[counter.DataLabel]);
+                        // verify file
+                        ImageRow file = fileDatabase.Files[fileIndex];
+                        FileExpectations fileExpectation = fileExpectations[fileIndex];
+                        fileExpectation.Verify(file, imageSetTimeZone);
+
+                        // verify markers associated with file
+                        foreach (ControlRow counter in counterControls)
+                        {
+                            MarkersForCounter markerForCounter = file.GetMarkersForCounter(counter.DataLabel);
+                            Assert.IsTrue(String.Equals(markerForCounter.DataLabel, counter.DataLabel, StringComparison.Ordinal));
+                            Assert.IsTrue(markerForCounter.Count == (int)file[counter.DataLabel]);
+                            Assert.IsTrue(markerForCounter.Markers.Count >= 0);
+                            Assert.IsTrue(markerForCounter.Markers.Count <= (int)file[counter.DataLabel]);
+                        }
+
+                        // retrieval by specific method
+                        Assert.IsTrue(fileDatabase.IsFileDisplayable(fileIndex));
+                        Assert.IsTrue(fileDatabase.IsFileRowInRange(fileIndex));
+
+                        // retrieval by table
+                        fileExpectation.Verify(fileDatabase.Files[fileIndex], imageSetTimeZone);
                     }
 
-                    // retrieval by specific method
-                    Assert.IsTrue(fileDatabase.IsFileDisplayable(fileIndex));
-                    Assert.IsTrue(fileDatabase.IsFileRowInRange(fileIndex));
-
-                    // retrieval by table
-                    fileExpectation.Verify(fileDatabase.Files[fileIndex], imageSetTimeZone);
-                 }
-
-                // reopen database for test and refresh images so next iteration of the loop checks state after reload
-                Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabase.FilePath, fileDatabase, false, LogicalOperator.And, out fileDatabase));
-                fileDatabase.SelectFiles(nextSelection);
-                Assert.IsTrue(fileDatabase.Files.RowCount > 0);
-            }
-
-            foreach (ControlRow control in fileDatabase.Controls)
-            {
-                List<string> distinctValues = fileDatabase.GetDistinctValuesInFileDataColumn(control.DataLabel);
-                int expectedValues;
-                switch (control.DataLabel)
-                {
-                    case Constant.FileColumn.DateTime:
-                    case Constant.FileColumn.File:
-                    case Constant.DatabaseColumn.ID:
-                        expectedValues = fileExpectations.Count;
-                        break;
-                    case Constant.FileColumn.RelativePath:
-                        expectedValues = fileExpectations.Select(expectation => expectation.RelativePath).Distinct().Count();
-                        break;
-                    case Constant.FileColumn.UtcOffset:
-                        expectedValues = fileExpectations.Select(expectation => expectation.DateTime.Offset).Distinct().Count();
-                        break;
-                    case Constant.FileColumn.DeleteFlag:
-                    case TestConstant.DefaultDatabaseColumn.Choice0:
-                    case TestConstant.DefaultDatabaseColumn.Choice3:
-                    case TestConstant.DefaultDatabaseColumn.ChoiceNotVisible:
-                    case TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel:
-                    case TestConstant.DefaultDatabaseColumn.Counter3:
-                    case TestConstant.DefaultDatabaseColumn.CounterNotVisible:
-                    case TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel:
-                    case TestConstant.DefaultDatabaseColumn.Flag0:
-                    case TestConstant.DefaultDatabaseColumn.Flag3:
-                    case TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel:
-                    case TestConstant.DefaultDatabaseColumn.NoteNotVisible:
-                        expectedValues = 1;
-                        break;
-                    case TestConstant.DefaultDatabaseColumn.FlagNotVisible:
-                    case TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel:
-                    case Constant.FileColumn.Classification:
-                        expectedValues = 2;
-                        break;
-                    case TestConstant.DefaultDatabaseColumn.Counter0:
-                    case TestConstant.DefaultDatabaseColumn.Note0:
-                    case TestConstant.DefaultDatabaseColumn.Note3:
-                        expectedValues = 3;
-                        break;
-                    default:
-                        throw new NotSupportedException(String.Format("Unhandled data label '{0}'.", control.DataLabel));
-                }
-                Assert.IsTrue(distinctValues != null && distinctValues.Count == expectedValues);
-                Assert.IsTrue(distinctValues.Count == distinctValues.Distinct().Count());
-            }
-
-            // sanity coverage of image set table methods
-            string originalTimeZoneID = fileDatabase.ImageSet.TimeZone;
-
-            this.VerifyDefaultImageSet(fileDatabase);
-            fileDatabase.ImageSet.FileSelection = FileSelection.Custom;
-            fileDatabase.ImageSet.MostRecentFileID = -1;
-            fileDatabase.AppendToImageSetLog(new StringBuilder("Test log entry."));
-            fileDatabase.ImageSet.Options = fileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, true);
-            fileDatabase.ImageSet.TimeZone = "Test Time Zone";
-            fileDatabase.TrySyncImageSetToDatabase();
-            Assert.IsTrue(fileDatabase.ImageSet.ID == 1);
-            Assert.IsTrue(fileDatabase.ImageSet.FileSelection == FileSelection.Custom);
-            Assert.IsTrue(fileDatabase.ImageSet.MostRecentFileID == -1);
-            Assert.IsTrue(fileDatabase.ImageSet.Log == Constant.Database.ImageSetDefaultLog + "Test log entry.");
-            Assert.IsTrue(fileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier));
-            Assert.IsTrue(fileDatabase.ImageSet.TimeZone == "Test Time Zone");
-
-            fileDatabase.ImageSet.TimeZone = originalTimeZoneID;
-
-            // time and date manipulation
-            fileDatabase.SelectFiles(FileSelection.All);
-            Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
-            List<DateTimeOffset> fileTimesBeforeAdjustment = fileDatabase.GetFileTimes().ToList();
-            TimeSpan adjustment = new TimeSpan(0, 1, 2, 3, 0);
-            fileDatabase.AdjustFileTimes(adjustment);
-            foreach (FileExpectations fileExpectation in fileExpectations)
-            {
-                fileExpectation.DateTime += adjustment;
-            }
-            this.VerifyFiles(fileDatabase, fileExpectations, imageSetTimeZone);
-            fileDatabase.SelectFiles(FileSelection.All);
-            this.VerifyFiles(fileDatabase, fileExpectations, imageSetTimeZone);
-
-            fileTimesBeforeAdjustment = fileDatabase.GetFileTimes().ToList();
-            adjustment = new TimeSpan(-1, -2, -3, -4, 0);
-            int startRow = 1;
-            int endRow = fileDatabase.CurrentlySelectedFileCount - 1;
-            fileDatabase.AdjustFileTimes(adjustment, startRow, endRow);
-            this.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, fileDatabase.GetFileTimes().ToList(), startRow, endRow, adjustment);
-            fileDatabase.SelectFiles(FileSelection.All);
-            this.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, fileDatabase.GetFileTimes().ToList(), startRow, endRow, adjustment);
-
-            fileDatabase.ExchangeDayAndMonthInFileDates(0, fileDatabase.Files.RowCount - 1);
-
-            // custom selection coverage
-            // search terms should be created for all visible controls except Folder, but DateTime gets two
-            Assert.IsTrue((fileDatabase.Controls.RowCount - 4) == fileDatabase.CustomSelection.SearchTerms.Count);
-            Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 0);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Custom) == -1);
-            foreach (SearchTerm searchTerm in fileDatabase.CustomSelection.SearchTerms)
-            {
-                Assert.IsTrue(String.IsNullOrWhiteSpace(searchTerm.ToString()) == false);
-            }
-
-            SearchTerm dateTime = fileDatabase.CustomSelection.SearchTerms.First(term => String.Equals(term.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal));
-            dateTime.UseForSearching = true;
-            dateTime.DatabaseValue = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
-            fileDatabase.SelectFiles(FileSelection.Custom);
-            Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
-
-            dateTime.Operator = Constant.SearchTermOperator.Equal;
-            Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
-            fileDatabase.SelectFiles(FileSelection.Custom);
-            Assert.IsTrue(fileDatabase.Files.RowCount == 0);
-
-            dateTime.UseForSearching = false;
-            fileDatabase.CustomSelection.TermCombiningOperator = LogicalOperator.And;
-
-            SearchTerm fileName = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.File, StringComparison.Ordinal));
-            fileName.UseForSearching = true;
-            fileName.Operator = Constant.SearchTermOperator.Glob;
-            fileName.DatabaseValue = "*" + Constant.File.JpgFileExtension.ToUpperInvariant();
-            Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
-            fileDatabase.SelectFiles(FileSelection.Custom);
-            Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
-
-            SearchTerm fileClassification = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal));
-            fileClassification.UseForSearching = true;
-            fileClassification.Operator = Constant.SearchTermOperator.Equal;
-            fileClassification.DatabaseValue = (int)FileClassification.Color;
-            Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 2);
-            fileDatabase.SelectFiles(FileSelection.Custom);
-            Assert.IsTrue(fileDatabase.Files.RowCount == expectedColorImageCount);
-
-            fileClassification.DatabaseValue = (int)FileClassification.Greyscale;
-            Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 2);
-            fileDatabase.SelectFiles(FileSelection.Custom);
-            Assert.IsTrue(fileDatabase.Files.RowCount == expectedGreyscaleImageCount);
-
-            fileClassification.DatabaseValue = (int)FileClassification.Color;
-            SearchTerm relativePath = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.RelativePath, StringComparison.Ordinal));
-            relativePath.UseForSearching = true;
-            relativePath.Operator = Constant.SearchTermOperator.Equal;
-            relativePath.DatabaseValue = fileExpectations[0].RelativePath;
-            Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 3);
-            fileDatabase.SelectFiles(FileSelection.Custom);
-            Assert.IsTrue(fileDatabase.Files.RowCount == 1);
-
-            SearchTerm markedForDeletion = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal));
-            markedForDeletion.UseForSearching = true;
-            markedForDeletion.Operator = Constant.SearchTermOperator.Equal;
-            markedForDeletion.DatabaseValue = 0;
-            Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
-            fileDatabase.SelectFiles(FileSelection.Custom);
-            Assert.IsTrue(fileDatabase.Files.RowCount == 1);
-
-            fileClassification.DatabaseValue = (int)FileSelection.Dark;
-            Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.All) == fileExpectations.Count);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Color) == expectedColorImageCount);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Corrupt) == 0);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Custom) == 0);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Dark) == 0);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Greyscale) == expectedGreyscaleImageCount);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.MarkedForDeletion) == 0);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.NoLongerAvailable) == 0);
-            Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Video) == 0);
-
-            // reread
-            fileDatabase.SelectFiles(FileSelection.All);
-
-            // get file for marker testing
-            int martenImageID = 1;
-            FileExpectations martenExpectations = fileExpectations.Single(expectation => expectation.ID == martenImageID);
-            ImageRow martenImage = fileDatabase.Files.Single(file => file.ID == martenImageID);
-            martenExpectations.Verify(martenImage, imageSetTimeZone);
-
-            // add markers
-            for (int counterIndex = 0; counterIndex < counterControls.Count; ++counterIndex)
-            {
-                ControlRow counter = counterControls[counterIndex];
-                MarkersForCounter markersForCounter = martenImage.GetMarkersForCounter(counter.DataLabel);
-
-                List<Point> expectedPositions = new List<Point>();
-                for (int markerIndex = 0; markerIndex < counterIndex; ++markerIndex)
-                {
-                    int initialCounterCount = markersForCounter.Count;
-                    int initialMarkers = markersForCounter.Markers.Count;
-
-                    Point markerPosition = new Point((0.1 * counterIndex) + (0.1 * markerIndex), (0.05 * counterIndex) + (0.1 * markerIndex));
-                    markersForCounter.AddMarker(new Marker(markersForCounter.DataLabel, markerPosition));
-
-                    Assert.IsTrue(markersForCounter.Count == initialCounterCount + 1);
-                    Assert.IsTrue(markersForCounter.Markers.Count == initialMarkers + 1);
+                    // reopen database for test and refresh images so next iteration of the loop checks state after reload
+                    Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabase.FilePath, fileDatabase, false, LogicalOperator.And, out FileDatabase fileDatabaseReopened));
+                    using (fileDatabaseReopened)
+                    {
+                        fileDatabaseReopened.SelectFiles(nextSelection);
+                        Assert.IsTrue(fileDatabaseReopened.Files.RowCount > 0);
+                    }
                 }
 
-                martenExpectations.UserControlsByDataLabel[counter.DataLabel] = markersForCounter.Count;
-                string dataLabelForMarkerPositions = FileTable.GetMarkerPositionColumnName(counter.DataLabel);
-                martenExpectations.UserControlsByDataLabel[dataLabelForMarkerPositions] = markersForCounter.MarkerPositionsToFloatArray();
-            }
-            martenExpectations.Verify(martenImage, imageSetTimeZone);
-            Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenImage));
-            martenExpectations.Verify(martenImage, imageSetTimeZone);
-
-            // roundtrip
-            fileDatabase.SelectFiles(FileSelection.All);
-            martenImage = fileDatabase.Files.Single(file => file.ID == martenImageID);
-            martenExpectations.Verify(martenImage, imageSetTimeZone);
-
-            // remove last marker
-            for (int counterIndex = 0; counterIndex < counterControls.Count; ++counterIndex)
-            {
-                MarkersForCounter markersForCounter = martenImage.GetMarkersForCounter(counterControls[counterIndex].DataLabel);
-                if (markersForCounter.Markers.Count > 0)
+                foreach (ControlRow control in fileDatabase.Controls)
                 {
-                    int initialCounterCount = markersForCounter.Count;
-                    int initialMarkers = markersForCounter.Markers.Count;
+                    List<string> distinctValues = fileDatabase.GetDistinctValuesInFileDataColumn(control.DataLabel);
+                    int expectedValues;
+                    switch (control.DataLabel)
+                    {
+                        case Constant.FileColumn.DateTime:
+                        case Constant.FileColumn.File:
+                        case Constant.DatabaseColumn.ID:
+                            expectedValues = fileExpectations.Count;
+                            break;
+                        case Constant.FileColumn.RelativePath:
+                            expectedValues = fileExpectations.Select(expectation => expectation.RelativePath).Distinct().Count();
+                            break;
+                        case Constant.FileColumn.UtcOffset:
+                            expectedValues = fileExpectations.Select(expectation => expectation.DateTime.Offset).Distinct().Count();
+                            break;
+                        case Constant.FileColumn.DeleteFlag:
+                        case TestConstant.DefaultDatabaseColumn.Choice0:
+                        case TestConstant.DefaultDatabaseColumn.Choice3:
+                        case TestConstant.DefaultDatabaseColumn.ChoiceNotVisible:
+                        case TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel:
+                        case TestConstant.DefaultDatabaseColumn.Counter3:
+                        case TestConstant.DefaultDatabaseColumn.CounterNotVisible:
+                        case TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel:
+                        case TestConstant.DefaultDatabaseColumn.Flag0:
+                        case TestConstant.DefaultDatabaseColumn.Flag3:
+                        case TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel:
+                        case TestConstant.DefaultDatabaseColumn.NoteNotVisible:
+                            expectedValues = 1;
+                            break;
+                        case TestConstant.DefaultDatabaseColumn.FlagNotVisible:
+                        case TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel:
+                        case Constant.FileColumn.Classification:
+                            expectedValues = 2;
+                            break;
+                        case TestConstant.DefaultDatabaseColumn.Counter0:
+                        case TestConstant.DefaultDatabaseColumn.Note0:
+                        case TestConstant.DefaultDatabaseColumn.Note3:
+                            expectedValues = 3;
+                            break;
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled data label '{0}'.", control.DataLabel));
+                    }
+                    Assert.IsTrue(distinctValues != null && distinctValues.Count == expectedValues);
+                    Assert.IsTrue(distinctValues.Count == distinctValues.Distinct().Count());
+                }
 
-                    markersForCounter.RemoveMarker(markersForCounter.Markers[markersForCounter.Markers.Count - 1]);
+                // sanity coverage of image set table methods
+                string originalTimeZoneID = fileDatabase.ImageSet.TimeZone;
 
-                    Assert.IsTrue(markersForCounter.Count == initialCounterCount - 1);
-                    Assert.IsTrue(markersForCounter.Markers.Count == initialMarkers - 1);
-                    martenExpectations.UserControlsByDataLabel[markersForCounter.DataLabel] = markersForCounter.Count;
-                    string dataLabelForMarkerPositions = FileTable.GetMarkerPositionColumnName(markersForCounter.DataLabel);
+                this.VerifyDefaultImageSet(fileDatabase);
+                fileDatabase.ImageSet.FileSelection = FileSelection.Custom;
+                fileDatabase.ImageSet.MostRecentFileID = -1;
+                fileDatabase.AppendToImageSetLog(new StringBuilder("Test log entry."));
+                fileDatabase.ImageSet.Options = fileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, true);
+                fileDatabase.ImageSet.TimeZone = "Test Time Zone";
+                fileDatabase.TrySyncImageSetToDatabase();
+                Assert.IsTrue(fileDatabase.ImageSet.ID == 1);
+                Assert.IsTrue(fileDatabase.ImageSet.FileSelection == FileSelection.Custom);
+                Assert.IsTrue(fileDatabase.ImageSet.MostRecentFileID == -1);
+                Assert.IsTrue(fileDatabase.ImageSet.Log == Constant.Database.ImageSetDefaultLog + "Test log entry.");
+                Assert.IsTrue(fileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier));
+                Assert.IsTrue(fileDatabase.ImageSet.TimeZone == "Test Time Zone");
+
+                fileDatabase.ImageSet.TimeZone = originalTimeZoneID;
+
+                // time and date manipulation
+                fileDatabase.SelectFiles(FileSelection.All);
+                Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
+                List<DateTimeOffset> fileTimesBeforeAdjustment = fileDatabase.GetFileTimes().ToList();
+                TimeSpan adjustment = new TimeSpan(0, 1, 2, 3, 0);
+                fileDatabase.AdjustFileTimes(adjustment);
+                foreach (FileExpectations fileExpectation in fileExpectations)
+                {
+                    fileExpectation.DateTime += adjustment;
+                }
+                this.VerifyFiles(fileDatabase, fileExpectations, imageSetTimeZone);
+                fileDatabase.SelectFiles(FileSelection.All);
+                this.VerifyFiles(fileDatabase, fileExpectations, imageSetTimeZone);
+
+                fileTimesBeforeAdjustment = fileDatabase.GetFileTimes().ToList();
+                adjustment = new TimeSpan(-1, -2, -3, -4, 0);
+                int startRow = 1;
+                int endRow = fileDatabase.CurrentlySelectedFileCount - 1;
+                fileDatabase.AdjustFileTimes(adjustment, startRow, endRow);
+                this.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, fileDatabase.GetFileTimes().ToList(), startRow, endRow, adjustment);
+                fileDatabase.SelectFiles(FileSelection.All);
+                this.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, fileDatabase.GetFileTimes().ToList(), startRow, endRow, adjustment);
+
+                fileDatabase.ExchangeDayAndMonthInFileDates(0, fileDatabase.Files.RowCount - 1);
+
+                // custom selection coverage
+                // search terms should be created for all visible controls except Folder, but DateTime gets two
+                Assert.IsTrue((fileDatabase.Controls.RowCount - 4) == fileDatabase.CustomSelection.SearchTerms.Count);
+                Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 0);
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Custom) == -1);
+                foreach (SearchTerm searchTerm in fileDatabase.CustomSelection.SearchTerms)
+                {
+                    Assert.IsTrue(String.IsNullOrWhiteSpace(searchTerm.ToString()) == false);
+                }
+
+                SearchTerm dateTime = fileDatabase.CustomSelection.SearchTerms.First(term => String.Equals(term.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal));
+                dateTime.UseForSearching = true;
+                dateTime.DatabaseValue = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
+                fileDatabase.SelectFiles(FileSelection.Custom);
+                Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
+
+                dateTime.Operator = Constant.SearchTermOperator.Equal;
+                Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
+                fileDatabase.SelectFiles(FileSelection.Custom);
+                Assert.IsTrue(fileDatabase.Files.RowCount == 0);
+
+                dateTime.UseForSearching = false;
+                fileDatabase.CustomSelection.TermCombiningOperator = LogicalOperator.And;
+
+                SearchTerm fileName = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.File, StringComparison.Ordinal));
+                fileName.UseForSearching = true;
+                fileName.Operator = Constant.SearchTermOperator.Glob;
+                fileName.DatabaseValue = "*" + Constant.File.JpgFileExtension.ToUpperInvariant();
+                Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
+                fileDatabase.SelectFiles(FileSelection.Custom);
+                Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
+
+                SearchTerm fileClassification = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal));
+                fileClassification.UseForSearching = true;
+                fileClassification.Operator = Constant.SearchTermOperator.Equal;
+                fileClassification.DatabaseValue = (int)FileClassification.Color;
+                Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 2);
+                fileDatabase.SelectFiles(FileSelection.Custom);
+                Assert.IsTrue(fileDatabase.Files.RowCount == expectedColorImageCount);
+
+                fileClassification.DatabaseValue = (int)FileClassification.Greyscale;
+                Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 2);
+                fileDatabase.SelectFiles(FileSelection.Custom);
+                Assert.IsTrue(fileDatabase.Files.RowCount == expectedGreyscaleImageCount);
+
+                fileClassification.DatabaseValue = (int)FileClassification.Color;
+                SearchTerm relativePath = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.RelativePath, StringComparison.Ordinal));
+                relativePath.UseForSearching = true;
+                relativePath.Operator = Constant.SearchTermOperator.Equal;
+                relativePath.DatabaseValue = fileExpectations[0].RelativePath;
+                Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 3);
+                fileDatabase.SelectFiles(FileSelection.Custom);
+                Assert.IsTrue(fileDatabase.Files.RowCount == 1);
+
+                SearchTerm markedForDeletion = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal));
+                markedForDeletion.UseForSearching = true;
+                markedForDeletion.Operator = Constant.SearchTermOperator.Equal;
+                markedForDeletion.DatabaseValue = 0;
+                Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
+                fileDatabase.SelectFiles(FileSelection.Custom);
+                Assert.IsTrue(fileDatabase.Files.RowCount == 1);
+
+                fileClassification.DatabaseValue = (int)FileSelection.Dark;
+                Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.All) == fileExpectations.Count);
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Color) == expectedColorImageCount);
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Corrupt) == 0);
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Custom) == 0);
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Dark) == 0);
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Greyscale) == expectedGreyscaleImageCount);
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.MarkedForDeletion) == 0);
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.NoLongerAvailable) == 0);
+                Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Video) == 0);
+
+                // reread
+                fileDatabase.SelectFiles(FileSelection.All);
+
+                // get file for marker testing
+                int martenImageID = 1;
+                FileExpectations martenExpectations = fileExpectations.Single(expectation => expectation.ID == martenImageID);
+                ImageRow martenImage = fileDatabase.Files.Single(file => file.ID == martenImageID);
+                martenExpectations.Verify(martenImage, imageSetTimeZone);
+
+                // add markers
+                for (int counterIndex = 0; counterIndex < counterControls.Count; ++counterIndex)
+                {
+                    ControlRow counter = counterControls[counterIndex];
+                    MarkersForCounter markersForCounter = martenImage.GetMarkersForCounter(counter.DataLabel);
+
+                    List<Point> expectedPositions = new List<Point>();
+                    for (int markerIndex = 0; markerIndex < counterIndex; ++markerIndex)
+                    {
+                        int initialCounterCount = markersForCounter.Count;
+                        int initialMarkers = markersForCounter.Markers.Count;
+
+                        Point markerPosition = new Point((0.1 * counterIndex) + (0.1 * markerIndex), (0.05 * counterIndex) + (0.1 * markerIndex));
+                        markersForCounter.AddMarker(new Marker(markersForCounter.DataLabel, markerPosition));
+
+                        Assert.IsTrue(markersForCounter.Count == initialCounterCount + 1);
+                        Assert.IsTrue(markersForCounter.Markers.Count == initialMarkers + 1);
+                    }
+
+                    martenExpectations.UserControlsByDataLabel[counter.DataLabel] = markersForCounter.Count;
+                    string dataLabelForMarkerPositions = FileTable.GetMarkerPositionColumnName(counter.DataLabel);
                     martenExpectations.UserControlsByDataLabel[dataLabelForMarkerPositions] = markersForCounter.MarkerPositionsToFloatArray();
                 }
-            }
-            martenExpectations.Verify(martenImage, imageSetTimeZone);
-            Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenImage));
-            martenExpectations.Verify(martenImage, imageSetTimeZone);
+                martenExpectations.Verify(martenImage, imageSetTimeZone);
+                Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenImage));
+                martenExpectations.Verify(martenImage, imageSetTimeZone);
 
-            // roundtrip
-            fileDatabase.SelectFiles(FileSelection.All);
-            martenImage = fileDatabase.Files.Single(file => file.ID == martenImageID);
-            martenExpectations.Verify(martenImage, imageSetTimeZone);
+                // roundtrip
+                fileDatabase.SelectFiles(FileSelection.All);
+                martenImage = fileDatabase.Files.Single(file => file.ID == martenImageID);
+                martenExpectations.Verify(martenImage, imageSetTimeZone);
+
+                // remove last marker
+                for (int counterIndex = 0; counterIndex < counterControls.Count; ++counterIndex)
+                {
+                    MarkersForCounter markersForCounter = martenImage.GetMarkersForCounter(counterControls[counterIndex].DataLabel);
+                    if (markersForCounter.Markers.Count > 0)
+                    {
+                        int initialCounterCount = markersForCounter.Count;
+                        int initialMarkers = markersForCounter.Markers.Count;
+
+                        markersForCounter.RemoveMarker(markersForCounter.Markers[markersForCounter.Markers.Count - 1]);
+
+                        Assert.IsTrue(markersForCounter.Count == initialCounterCount - 1);
+                        Assert.IsTrue(markersForCounter.Markers.Count == initialMarkers - 1);
+                        martenExpectations.UserControlsByDataLabel[markersForCounter.DataLabel] = markersForCounter.Count;
+                        string dataLabelForMarkerPositions = FileTable.GetMarkerPositionColumnName(markersForCounter.DataLabel);
+                        martenExpectations.UserControlsByDataLabel[dataLabelForMarkerPositions] = markersForCounter.MarkerPositionsToFloatArray();
+                    }
+                }
+                martenExpectations.Verify(martenImage, imageSetTimeZone);
+                Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenImage));
+                martenExpectations.Verify(martenImage, imageSetTimeZone);
+
+                // roundtrip
+                fileDatabase.SelectFiles(FileSelection.All);
+                martenImage = fileDatabase.Files.Single(file => file.ID == martenImageID);
+                martenExpectations.Verify(martenImage, imageSetTimeZone);
+            }
         }
 
         [TestMethod]
         public void CreateUpdateReuseTemplateDatabase()
         {
             string templateDatabaseBaseFileName = TestConstant.File.DefaultNewTemplateDatabaseFileName;
-            TemplateDatabase templateDatabase = this.CreateTemplateDatabase(templateDatabaseBaseFileName);
-
-            // populate template database
-            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
-            int numberOfStandardControls = Constant.Control.StandardControls.Count;
-            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls);
-            this.VerifyControls(templateDatabase);
-
-            ControlRow newControl = templateDatabase.AppendUserDefinedControl(ControlType.Counter);
-            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 1);
-            this.VerifyControl(newControl);
-
-            newControl = templateDatabase.AppendUserDefinedControl(ControlType.FixedChoice);
-            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 2);
-            this.VerifyControl(newControl);
-
-            newControl = templateDatabase.AppendUserDefinedControl(ControlType.Flag);
-            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 3);
-            this.VerifyControl(newControl);
-
-            newControl = templateDatabase.AppendUserDefinedControl(ControlType.Note);
-            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 4);
-            this.VerifyControl(newControl);
-            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
-
-            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 2]);
-            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 3);
-            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 2]);
-            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 2);
-            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 0]);
-            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 1);
-            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 0]);
-            Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls);
-            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
-
-            int iterations = 10;
-            for (int iteration = 0; iteration < iterations; ++iteration)
+            using (TemplateDatabase templateDatabase = this.CreateTemplateDatabase(templateDatabaseBaseFileName))
             {
-                ControlRow noteControl = templateDatabase.AppendUserDefinedControl(ControlType.Note);
-                this.VerifyControl(noteControl);
-                ControlRow flagControl = templateDatabase.AppendUserDefinedControl(ControlType.Flag);
-                this.VerifyControl(flagControl);
-                ControlRow choiceControl = templateDatabase.AppendUserDefinedControl(ControlType.FixedChoice);
-                choiceControl.WellKnownValues = "DefaultChoice|OtherChoice";
-                templateDatabase.TrySyncControlToDatabase(choiceControl);
-                this.VerifyControl(choiceControl);
-                ControlRow counterControl = templateDatabase.AppendUserDefinedControl(ControlType.Counter);
-                this.VerifyControl(counterControl);
+                // populate template database
+                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+                int numberOfStandardControls = Constant.Control.StandardControls.Count;
+                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls);
+                this.VerifyControls(templateDatabase);
+
+                ControlRow newControl = templateDatabase.AppendUserDefinedControl(ControlType.Counter);
+                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 1);
+                this.VerifyControl(newControl);
+
+                newControl = templateDatabase.AppendUserDefinedControl(ControlType.FixedChoice);
+                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 2);
+                this.VerifyControl(newControl);
+
+                newControl = templateDatabase.AppendUserDefinedControl(ControlType.Flag);
+                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 3);
+                this.VerifyControl(newControl);
+
+                newControl = templateDatabase.AppendUserDefinedControl(ControlType.Note);
+                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 4);
+                this.VerifyControl(newControl);
+                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+
+                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 2]);
+                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 3);
+                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 2]);
+                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 2);
+                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 0]);
+                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls + 1);
+                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 0]);
+                Assert.IsTrue(templateDatabase.Controls.RowCount == numberOfStandardControls);
+                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+
+                int iterations = 10;
+                for (int iteration = 0; iteration < iterations; ++iteration)
+                {
+                    ControlRow noteControl = templateDatabase.AppendUserDefinedControl(ControlType.Note);
+                    this.VerifyControl(noteControl);
+                    ControlRow flagControl = templateDatabase.AppendUserDefinedControl(ControlType.Flag);
+                    this.VerifyControl(flagControl);
+                    ControlRow choiceControl = templateDatabase.AppendUserDefinedControl(ControlType.FixedChoice);
+                    choiceControl.WellKnownValues = "DefaultChoice|OtherChoice";
+                    templateDatabase.TrySyncControlToDatabase(choiceControl);
+                    this.VerifyControl(choiceControl);
+                    ControlRow counterControl = templateDatabase.AppendUserDefinedControl(ControlType.Counter);
+                    this.VerifyControl(counterControl);
+                }
+
+                // modify control and spreadsheet orders
+                // control order ends up reverse order from ID, spreadsheet order is alphabetical
+                Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
+                int controlOrder = templateDatabase.Controls.RowCount;
+                for (int row = 0; row < templateDatabase.Controls.RowCount; --controlOrder, ++row)
+                {
+                    string dataLabel = templateDatabase.Controls[row].DataLabel;
+                    newControlOrderByDataLabel.Add(dataLabel, controlOrder);
+                }
+                templateDatabase.UpdateDisplayOrder(Constant.ControlColumn.ControlOrder, newControlOrderByDataLabel);
+
+                List<string> alphabeticalDataLabels = newControlOrderByDataLabel.Keys.ToList();
+                alphabeticalDataLabels.Sort();
+                Dictionary<string, int> newSpreadsheetOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
+                int spreadsheetOrder = 0;
+                foreach (string dataLabel in alphabeticalDataLabels)
+                {
+                    newSpreadsheetOrderByDataLabel.Add(dataLabel, ++spreadsheetOrder);
+                }
+                templateDatabase.UpdateDisplayOrder(Constant.ControlColumn.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
+                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+
+                // remove some controls and verify the control and spreadsheet orders are properly updated
+                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 22]);
+                templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 16]);
+                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+
+                // create a database to capture the current template into its template table
+                using (FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName))
+                {
+                    // modify UX properties of some controls by data row manipulation
+                    int copyableIndex = numberOfStandardControls + (3 * iterations) - 1;
+                    ControlRow copyableControl = templateDatabase.Controls[copyableIndex];
+                    bool modifiedCopyable = !copyableControl.Copyable;
+                    copyableControl.Copyable = modifiedCopyable;
+                    templateDatabase.TrySyncControlToDatabase(copyableControl);
+                    Assert.IsTrue(templateDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
+
+                    int defaultValueIndex = numberOfStandardControls + (3 * iterations) - 4;
+                    ControlRow defaultValueControl = templateDatabase.Controls[defaultValueIndex];
+                    Assert.IsTrue(defaultValueControl.Type == ControlType.Flag); // check
+                    int modifiedDefaultValue = 1;
+                    defaultValueControl.DefaultValue = modifiedDefaultValue.ToString();
+                    templateDatabase.TrySyncControlToDatabase(defaultValueControl);
+                    Assert.IsTrue(String.Equals(templateDatabase.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
+
+                    int labelIndex = numberOfStandardControls + (3 * iterations) - 3;
+                    ControlRow labelControl = templateDatabase.Controls[labelIndex];
+                    string modifiedLabel = "Label modification roundtrip.";
+                    labelControl.Label = modifiedLabel;
+                    templateDatabase.TrySyncControlToDatabase(labelControl);
+                    Assert.IsTrue(templateDatabase.Controls[labelIndex].Label == modifiedLabel);
+
+                    int listIndex = numberOfStandardControls + (3 * iterations) - 2;
+                    ControlRow listControl = templateDatabase.Controls[listIndex];
+                    string modifiedList = listControl.WellKnownValues + "|NewChoice0|NewChoice1";
+                    listControl.WellKnownValues = modifiedList;
+                    templateDatabase.TrySyncControlToDatabase(listControl);
+                    Assert.IsTrue(templateDatabase.Controls[listIndex].WellKnownValues == modifiedList);
+
+                    int tooltipIndex = numberOfStandardControls + (3 * iterations) - 3;
+                    ControlRow tooltipControl = templateDatabase.Controls[tooltipIndex];
+                    string modifiedTooltip = "Tooltip modification roundtrip.";
+                    tooltipControl.Tooltip = modifiedTooltip;
+                    templateDatabase.TrySyncControlToDatabase(tooltipControl);
+                    Assert.IsTrue(templateDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
+
+                    int widthIndex = numberOfStandardControls + (3 * iterations) - 2;
+                    ControlRow widthControl = templateDatabase.Controls[widthIndex];
+                    int modifiedWidth = 1000;
+                    widthControl.MaxWidth = modifiedWidth;
+                    templateDatabase.TrySyncControlToDatabase(widthControl);
+                    Assert.IsTrue(templateDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
+
+                    int visibleIndex = numberOfStandardControls + (3 * iterations) - 3;
+                    ControlRow visibleControl = templateDatabase.Controls[visibleIndex];
+                    bool modifiedVisible = !visibleControl.Visible;
+                    visibleControl.Visible = modifiedVisible;
+                    templateDatabase.TrySyncControlToDatabase(visibleControl);
+                    Assert.IsTrue(templateDatabase.Controls[visibleIndex].Visible == modifiedVisible);
+
+                    newControl = templateDatabase.AppendUserDefinedControl(ControlType.Note);
+                    newControl.AnalysisLabel = true;
+                    templateDatabase.TrySyncControlToDatabase(newControl);
+
+                    // reopen the template database and check again
+                    string templateDatabaseFilePath = templateDatabase.FilePath;
+                    Assert.IsTrue(TemplateDatabase.TryCreateOrOpen(templateDatabaseFilePath, out TemplateDatabase templateDatabaseReopened));
+
+                    using (templateDatabaseReopened)
+                    {
+                        this.VerifyTemplateDatabase(templateDatabaseReopened, templateDatabaseFilePath);
+                        int expectedControlCount = numberOfStandardControls + (4 * iterations) - 1;
+                        Assert.IsTrue(templateDatabaseReopened.Controls.RowCount == expectedControlCount);
+                        this.VerifyControls(templateDatabaseReopened);
+                        Assert.IsTrue(templateDatabaseReopened.Controls[copyableIndex].Copyable == modifiedCopyable);
+                        Assert.IsTrue(String.Equals(templateDatabaseReopened.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
+                        Assert.IsTrue(templateDatabaseReopened.Controls[labelIndex].Label == modifiedLabel);
+                        Assert.IsTrue(templateDatabaseReopened.Controls[listIndex].WellKnownValues == modifiedList);
+                        Assert.IsTrue(templateDatabaseReopened.Controls[tooltipIndex].Tooltip == modifiedTooltip);
+                        Assert.IsTrue(templateDatabaseReopened.Controls[visibleIndex].Visible == modifiedVisible);
+                        Assert.IsTrue(templateDatabaseReopened.Controls[widthIndex].MaxWidth == modifiedWidth);
+
+                        // reopen the file database to synchronize its template table with the modified table in the current template
+                        Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabase.FilePath, templateDatabaseReopened, false, LogicalOperator.And, out FileDatabase fileDatabaseReopened));
+                        using (fileDatabaseReopened)
+                        {
+                            Assert.IsTrue(fileDatabaseReopened.ControlSynchronizationIssues.Count == 0);
+                            this.VerifyTemplateDatabase(fileDatabaseReopened, fileDatabaseReopened.FilePath);
+                            Assert.IsTrue(fileDatabaseReopened.Controls.RowCount == expectedControlCount);
+                            this.VerifyControls(fileDatabaseReopened);
+                            Assert.IsTrue(fileDatabaseReopened.Controls[copyableIndex].Copyable == modifiedCopyable);
+                            Assert.IsTrue(String.Equals(fileDatabaseReopened.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
+                            Assert.IsTrue(fileDatabaseReopened.Controls[labelIndex].Label == modifiedLabel);
+                            Assert.IsTrue(fileDatabaseReopened.Controls[listIndex].WellKnownValues == modifiedList);
+                            Assert.IsTrue(fileDatabaseReopened.Controls[tooltipIndex].Tooltip == modifiedTooltip);
+                            Assert.IsTrue(fileDatabaseReopened.Controls[visibleIndex].Visible == modifiedVisible);
+                            Assert.IsTrue(fileDatabaseReopened.Controls[widthIndex].MaxWidth == modifiedWidth);
+
+                            ControlRow newControlInFileDatabase = fileDatabaseReopened.Controls.Single(control => String.Equals(control.DataLabel, newControl.DataLabel, StringComparison.Ordinal));
+                            Assert.IsTrue(fileDatabaseReopened.Files.UserColumnsByName.Count == expectedControlCount - numberOfStandardControls + fileDatabaseReopened.Controls.Count(control => control.Type == ControlType.Counter)); // counters have two columns each
+                        }
+                    }
+                }
             }
-
-            // modify control and spreadsheet orders
-            // control order ends up reverse order from ID, spreadsheet order is alphabetical
-            Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
-            int controlOrder = templateDatabase.Controls.RowCount;
-            for (int row = 0; row < templateDatabase.Controls.RowCount; --controlOrder, ++row)
-            {
-                string dataLabel = templateDatabase.Controls[row].DataLabel;
-                newControlOrderByDataLabel.Add(dataLabel, controlOrder);
-            }
-            templateDatabase.UpdateDisplayOrder(Constant.ControlColumn.ControlOrder, newControlOrderByDataLabel);
-
-            List<string> alphabeticalDataLabels = newControlOrderByDataLabel.Keys.ToList();
-            alphabeticalDataLabels.Sort();
-            Dictionary<string, int> newSpreadsheetOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
-            int spreadsheetOrder = 0;
-            foreach (string dataLabel in alphabeticalDataLabels)
-            {
-                newSpreadsheetOrderByDataLabel.Add(dataLabel, ++spreadsheetOrder);
-            }
-            templateDatabase.UpdateDisplayOrder(Constant.ControlColumn.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
-            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
-
-            // remove some controls and verify the control and spreadsheet orders are properly updated
-            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 22]);
-            templateDatabase.RemoveUserDefinedControl(templateDatabase.Controls[numberOfStandardControls + 16]);
-            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
-
-            // create a database to capture the current template into its template table
-            FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName);
-
-            // modify UX properties of some controls by data row manipulation
-            int copyableIndex = numberOfStandardControls + (3 * iterations) - 1;
-            ControlRow copyableControl = templateDatabase.Controls[copyableIndex];
-            bool modifiedCopyable = !copyableControl.Copyable;
-            copyableControl.Copyable = modifiedCopyable;
-            templateDatabase.TrySyncControlToDatabase(copyableControl);
-            Assert.IsTrue(templateDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
-
-            int defaultValueIndex = numberOfStandardControls + (3 * iterations) - 4;
-            ControlRow defaultValueControl = templateDatabase.Controls[defaultValueIndex];
-            Assert.IsTrue(defaultValueControl.Type == ControlType.Flag); // check
-            int modifiedDefaultValue = 1;
-            defaultValueControl.DefaultValue = modifiedDefaultValue.ToString();
-            templateDatabase.TrySyncControlToDatabase(defaultValueControl);
-            Assert.IsTrue(String.Equals(templateDatabase.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
-
-            int labelIndex = numberOfStandardControls + (3 * iterations) - 3;
-            ControlRow labelControl = templateDatabase.Controls[labelIndex];
-            string modifiedLabel = "Label modification roundtrip.";
-            labelControl.Label = modifiedLabel;
-            templateDatabase.TrySyncControlToDatabase(labelControl);
-            Assert.IsTrue(templateDatabase.Controls[labelIndex].Label == modifiedLabel);
-
-            int listIndex = numberOfStandardControls + (3 * iterations) - 2;
-            ControlRow listControl = templateDatabase.Controls[listIndex];
-            string modifiedList = listControl.WellKnownValues + "|NewChoice0|NewChoice1";
-            listControl.WellKnownValues = modifiedList;
-            templateDatabase.TrySyncControlToDatabase(listControl);
-            Assert.IsTrue(templateDatabase.Controls[listIndex].WellKnownValues == modifiedList);
-
-            int tooltipIndex = numberOfStandardControls + (3 * iterations) - 3;
-            ControlRow tooltipControl = templateDatabase.Controls[tooltipIndex];
-            string modifiedTooltip = "Tooltip modification roundtrip.";
-            tooltipControl.Tooltip = modifiedTooltip;
-            templateDatabase.TrySyncControlToDatabase(tooltipControl);
-            Assert.IsTrue(templateDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
-
-            int widthIndex = numberOfStandardControls + (3 * iterations) - 2;
-            ControlRow widthControl = templateDatabase.Controls[widthIndex];
-            int modifiedWidth = 1000;
-            widthControl.MaxWidth = modifiedWidth;
-            templateDatabase.TrySyncControlToDatabase(widthControl);
-            Assert.IsTrue(templateDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
-
-            int visibleIndex = numberOfStandardControls + (3 * iterations) - 3;
-            ControlRow visibleControl = templateDatabase.Controls[visibleIndex];
-            bool modifiedVisible = !visibleControl.Visible;
-            visibleControl.Visible = modifiedVisible;
-            templateDatabase.TrySyncControlToDatabase(visibleControl);
-            Assert.IsTrue(templateDatabase.Controls[visibleIndex].Visible == modifiedVisible);
-
-            newControl = templateDatabase.AppendUserDefinedControl(ControlType.Note);
-            newControl.AnalysisLabel = true;
-            templateDatabase.TrySyncControlToDatabase(newControl);
-
-            // reopen the template database and check again
-            string templateDatabaseFilePath = templateDatabase.FilePath;
-            Assert.IsTrue(TemplateDatabase.TryCreateOrOpen(templateDatabaseFilePath, out templateDatabase));
-            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseFilePath);
-            int expectedControlCount = numberOfStandardControls + (4 * iterations) - 1;
-            Assert.IsTrue(templateDatabase.Controls.RowCount == expectedControlCount);
-            this.VerifyControls(templateDatabase);
-            Assert.IsTrue(templateDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
-            Assert.IsTrue(String.Equals(templateDatabase.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
-            Assert.IsTrue(templateDatabase.Controls[labelIndex].Label == modifiedLabel);
-            Assert.IsTrue(templateDatabase.Controls[listIndex].WellKnownValues == modifiedList);
-            Assert.IsTrue(templateDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
-            Assert.IsTrue(templateDatabase.Controls[visibleIndex].Visible == modifiedVisible);
-            Assert.IsTrue(templateDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
-
-            // reopen the file database to synchronize its template table with the modified table in the current template
-            Assert.IsTrue(FileDatabase.TryCreateOrOpen(fileDatabase.FilePath, templateDatabase, false, LogicalOperator.And, out fileDatabase));
-            Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 0);
-            this.VerifyTemplateDatabase(fileDatabase, fileDatabase.FilePath);
-            Assert.IsTrue(fileDatabase.Controls.RowCount == expectedControlCount);
-            this.VerifyControls(fileDatabase);
-            Assert.IsTrue(fileDatabase.Controls[copyableIndex].Copyable == modifiedCopyable);
-            Assert.IsTrue(String.Equals(fileDatabase.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
-            Assert.IsTrue(fileDatabase.Controls[labelIndex].Label == modifiedLabel);
-            Assert.IsTrue(fileDatabase.Controls[listIndex].WellKnownValues == modifiedList);
-            Assert.IsTrue(fileDatabase.Controls[tooltipIndex].Tooltip == modifiedTooltip);
-            Assert.IsTrue(fileDatabase.Controls[visibleIndex].Visible == modifiedVisible);
-            Assert.IsTrue(fileDatabase.Controls[widthIndex].MaxWidth == modifiedWidth);
-
-            ControlRow newControlInFileDatabase = fileDatabase.Controls.Single(control => String.Equals(control.DataLabel, newControl.DataLabel, StringComparison.Ordinal));
-            Assert.IsTrue(fileDatabase.Files.UserColumnsByName.Count == expectedControlCount - numberOfStandardControls + fileDatabase.Controls.Count(control => control.Type == ControlType.Counter)); // counters have two columns each
         }
 
         [TestMethod]
@@ -644,241 +658,250 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void FileDatabaseNegative()
         {
-            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName);
-            FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultFileDatabaseFileName);
-            this.PopulateDefaultDatabase(fileDatabase);
+            using (TemplateDatabase templateDatabase = this.CloneTemplateDatabase(TestConstant.File.DefaultTemplateDatabaseFileName))
+            {
+                using (FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultFileDatabaseFileName))
+                {
+                    this.PopulateDefaultDatabase(fileDatabase);
 
-            // FileDatabase methods
-            int firstDisplayableFile = fileDatabase.GetCurrentOrNextDisplayableFile(fileDatabase.CurrentlySelectedFileCount);
-            Assert.IsTrue(firstDisplayableFile == fileDatabase.CurrentlySelectedFileCount - 1);
+                    // FileDatabase methods
+                    int firstDisplayableFile = fileDatabase.GetCurrentOrNextDisplayableFile(fileDatabase.CurrentlySelectedFileCount);
+                    Assert.IsTrue(firstDisplayableFile == fileDatabase.CurrentlySelectedFileCount - 1);
 
-            int closestDisplayableFile = fileDatabase.GetFileOrNextFileIndex(Int64.MinValue);
-            Assert.IsTrue(closestDisplayableFile == 0);
-            closestDisplayableFile = fileDatabase.GetFileOrNextFileIndex(Int64.MaxValue);
-            Assert.IsTrue(closestDisplayableFile == fileDatabase.CurrentlySelectedFileCount - 1);
+                    int closestDisplayableFile = fileDatabase.GetFileOrNextFileIndex(Int64.MinValue);
+                    Assert.IsTrue(closestDisplayableFile == 0);
+                    closestDisplayableFile = fileDatabase.GetFileOrNextFileIndex(Int64.MaxValue);
+                    Assert.IsTrue(closestDisplayableFile == fileDatabase.CurrentlySelectedFileCount - 1);
 
-            Assert.IsFalse(fileDatabase.IsFileDisplayable(-1));
-            Assert.IsFalse(fileDatabase.IsFileDisplayable(fileDatabase.CurrentlySelectedFileCount));
+                    Assert.IsFalse(fileDatabase.IsFileDisplayable(-1));
+                    Assert.IsFalse(fileDatabase.IsFileDisplayable(fileDatabase.CurrentlySelectedFileCount));
 
-            Assert.IsFalse(fileDatabase.IsFileRowInRange(-1));
-            Assert.IsFalse(fileDatabase.IsFileRowInRange(fileDatabase.CurrentlySelectedFileCount));
+                    Assert.IsFalse(fileDatabase.IsFileRowInRange(-1));
+                    Assert.IsFalse(fileDatabase.IsFileRowInRange(fileDatabase.CurrentlySelectedFileCount));
 
-            ImageRow file = fileDatabase.Files[0];
-            FileInfo fileInfo = file.GetFileInfo(fileDatabase.FolderPath);
+                    ImageRow file = fileDatabase.Files[0];
+                    FileInfo fileInfo = file.GetFileInfo(fileDatabase.FolderPath);
 
-            // template table synchronization
-            // remove choices and change a note to a choice to produce a type failure
-            ControlRow choiceControl = templateDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0];
-            choiceControl.WellKnownValues = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
-            templateDatabase.TrySyncControlToDatabase(choiceControl);
-            ControlRow noteControl = templateDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note0];
-            noteControl.Type = ControlType.FixedChoice;
-            templateDatabase.TrySyncControlToDatabase(noteControl);
+                    // template table synchronization
+                    // remove choices and change a note to a choice to produce a type failure
+                    ControlRow choiceControl = templateDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0];
+                    choiceControl.WellKnownValues = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
+                    templateDatabase.TrySyncControlToDatabase(choiceControl);
+                    ControlRow noteControl = templateDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note0];
+                    noteControl.Type = ControlType.FixedChoice;
+                    templateDatabase.TrySyncControlToDatabase(noteControl);
 
-            Assert.IsFalse(FileDatabase.TryCreateOrOpen(fileDatabase.FileName, templateDatabase, false, LogicalOperator.And, out fileDatabase));
-            Assert.IsTrue(fileDatabase.ControlSynchronizationIssues.Count == 4);
+                    Assert.IsFalse(FileDatabase.TryCreateOrOpen(fileDatabase.FileName, templateDatabase, false, LogicalOperator.And, out FileDatabase fileDatabaseReopened));
+                    using (fileDatabaseReopened)
+                    {
+                        Assert.IsTrue(fileDatabaseReopened.ControlSynchronizationIssues.Count == 4);
+                    }
+                }
+            }
         }
 
         [TestMethod]
         public async Task HybridVideoFileIOTransactionsAsync()
         {
             // add files to database
-            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
-            CarnassialState state = new CarnassialState()
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName))
             {
-                SkipFileClassification = false
-            };
-            TimeSpan desiredStatusUpdateInterval = state.Throttles.GetDesiredProgressUpdateInterval();
-            string folderToLoad = Path.Combine(this.WorkingDirectory, TestConstant.File.HybridVideoDirectoryName);
-            FileInfo[] imagesAndVideos = new DirectoryInfo(folderToLoad).GetFiles();
+                CarnassialState state = new CarnassialState()
+                {
+                    SkipFileClassification = false
+                };
+                TimeSpan desiredStatusUpdateInterval = state.Throttles.GetDesiredProgressUpdateInterval();
+                string folderToLoad = Path.Combine(this.WorkingDirectory, TestConstant.File.HybridVideoDirectoryName);
+                FileInfo[] imagesAndVideos = new DirectoryInfo(folderToLoad).GetFiles();
 
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
-            using (AddFilesIOComputeTransactionManager folderLoad = new AddFilesIOComputeTransactionManager(this.UpdateFolderLoadProgress, desiredStatusUpdateInterval))
-            {
-                folderLoad.FolderPaths.Add(folderToLoad);
-                folderLoad.FindFilesToLoad(fileDatabase.FolderPath);
-                Assert.IsTrue(folderLoad.FilesToLoad == imagesAndVideos.Length);
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                using (AddFilesIOComputeTransactionManager folderLoad = new AddFilesIOComputeTransactionManager(this.UpdateFolderLoadProgress, desiredStatusUpdateInterval))
+                {
+                    folderLoad.FolderPaths.Add(folderToLoad);
+                    folderLoad.FindFilesToLoad(fileDatabase.FolderPath);
+                    Assert.IsTrue(folderLoad.FilesToLoad == imagesAndVideos.Length);
 
-                int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, state, Constant.Images.MinimumRenderWidth);
-                Assert.IsTrue(filesLoaded == imagesAndVideos.Length);
-                Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
+                    int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, state, Constant.Images.MinimumRenderWidth);
+                    Assert.IsTrue(filesLoaded == imagesAndVideos.Length);
+                    Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
+                    fileDatabase.SelectFiles(FileSelection.All);
+                    Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
+                    this.TestContext.WriteLine("AddFilesAsync({0}): {1:0.000}s", filesLoaded, stopwatch.Elapsed.TotalSeconds);
+
+                    Assert.IsTrue(folderLoad.IODuration >= TimeSpan.Zero);
+                    Assert.IsTrue(folderLoad.ComputeDuration >= folderLoad.IODuration);
+                    Assert.IsTrue(folderLoad.DatabaseDuration >= folderLoad.ComputeDuration);
+                }
+                stopwatch.Stop();
+
+                // components for rereading metadata
+                List<DateTimeOffset> fileDateTimes = new List<DateTimeOffset>(imagesAndVideos.Length);
+                Dictionary<string, Dictionary<string, ImageRow>> filesByRelativePathAndName = fileDatabase.Files.GetFilesByRelativePathAndName();
+                TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
+                ImageRow previousFile = null;
+                for (int fileIndex = 0; fileIndex < imagesAndVideos.Length; ++fileIndex)
+                {
+                    FileInfo fileInfo = imagesAndVideos[fileIndex];
+                    ImageRow file = filesByRelativePathAndName[TestConstant.File.HybridVideoDirectoryName][fileInfo.Name];
+                    Assert.IsTrue(String.Equals(file.FileName, fileInfo.Name, StringComparison.OrdinalIgnoreCase));
+                    DateTimeOffset dateTimeOffsetAsAdded = file.DateTimeOffset;
+                    bool expectedIsVideo = !fileInfo.Name.EndsWith(Constant.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase);
+                    Assert.IsTrue(file.IsVideo == expectedIsVideo);
+                    FileClassification expectedClassification = expectedIsVideo ? FileClassification.Video : FileClassification.Color;
+                    Assert.IsTrue(file.Classification == expectedClassification);
+
+                    if (expectedIsVideo == false)
+                    {
+                        using (CachedImage image = await file.TryLoadImageAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidth))
+                        {
+                            stopwatch.Restart();
+                            double luminosity = image.Image.GetLuminosityAndColoration(0, out double coloration);
+                            file.Classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
+                            stopwatch.Stop();
+                            this.TestContext.WriteLine("Classify({0}, {1:0.00}MP): {2}ms", file.FileName, 1E-6 * image.Image.TotalPixels, stopwatch.ElapsedMilliseconds);
+                            Assert.IsTrue(file.Classification == FileClassification.Color);
+                        }
+                    }
+                    else
+                    {
+                        Assert.IsTrue(file.Classification == FileClassification.Video);
+                    }
+
+                    // for images, verify the date can be found in metadata
+                    // for videos, verify the date is found in the previous image's metadata or not found if there's no previous image
+                    FileLoad firstLoad = new FileLoad(file);
+                    FileLoad secondLoad = new FileLoad((string)null);
+                    bool isSecondFile = false;
+                    if (file.IsVideo && (previousFile != null) && (previousFile.IsVideo == false))
+                    {
+                        secondLoad = firstLoad;
+                        firstLoad = new FileLoad(previousFile);
+                        isSecondFile = true;
+                    }
+                    MetadataReadResult metadataReadResult;
+                    using (FileLoadAtom loadAtom = new FileLoadAtom(file.RelativePath, firstLoad, secondLoad, 0))
+                    {
+                        loadAtom.CreateJpegs(fileDatabase.FolderPath);
+                        loadAtom.ReadDateTimeOffsets(fileDatabase.FolderPath, imageSetTimeZone);
+                        metadataReadResult = isSecondFile ? loadAtom.Second.MetadataReadResult : loadAtom.First.MetadataReadResult;
+                    }
+
+                    Assert.IsFalse(metadataReadResult.HasFlag(MetadataReadResult.Failed));
+                    Assert.IsTrue(this.DateTimesWithinOneMillisecond(file.DateTimeOffset, dateTimeOffsetAsAdded));
+                    if (String.Equals(file.FileName, "06260001.AVI", StringComparison.OrdinalIgnoreCase) ||
+                        String.Equals(Path.GetFileNameWithoutExtension(file.FileName), "06260048", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // 06260001.AVI, 06260048.AVI, and 06260048.mp4 lack an associated .jpg to read metadata from
+                        Assert.IsTrue(metadataReadResult == MetadataReadResult.None);
+                        Assert.IsTrue(file.DateTimeOffset.Date >= TestConstant.FileExpectation.HybridVideoFileDate);
+                        Assert.IsTrue(file.DateTimeOffset.Date < DateTime.Now);
+                    }
+                    else if (String.Equals(Path.GetExtension(file.FileName), Constant.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Assert.IsTrue(file.DateTimeOffset.Date == TestConstant.FileExpectation.HybridVideoFileDate);
+                        Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTime);
+                    }
+                    else
+                    {
+                        Assert.IsTrue(file.DateTimeOffset.Date == TestConstant.FileExpectation.HybridVideoFileDate);
+                        Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTimeInferredFromPrevious);
+                    }
+
+                    fileDateTimes.Add(dateTimeOffsetAsAdded);
+                    previousFile = file;
+                }
+
+                // verify add of files already added doesn't duplicate them
+                using (AddFilesIOComputeTransactionManager folderLoad = new AddFilesIOComputeTransactionManager(this.UpdateFolderLoadProgress, desiredStatusUpdateInterval))
+                {
+                    folderLoad.FolderPaths.Add(folderToLoad);
+                    folderLoad.FindFilesToLoad(fileDatabase.FolderPath);
+                    int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, state, Constant.Images.MinimumRenderWidth);
+                    Assert.IsTrue(filesLoaded == 0);
+                }
                 fileDatabase.SelectFiles(FileSelection.All);
                 Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
-                this.TestContext.WriteLine("AddFilesAsync({0}): {1:0.000}s", filesLoaded, stopwatch.Elapsed.TotalSeconds);
 
-                Assert.IsTrue(folderLoad.IODuration >= TimeSpan.Zero);
-                Assert.IsTrue(folderLoad.ComputeDuration >= folderLoad.IODuration);
-                Assert.IsTrue(folderLoad.DatabaseDuration >= folderLoad.ComputeDuration);
-            }
-            stopwatch.Stop();
-
-            // components for rereading metadata
-            List<DateTimeOffset> fileDateTimes = new List<DateTimeOffset>(imagesAndVideos.Length);
-            Dictionary<string, Dictionary<string, ImageRow>> filesByRelativePathAndName = fileDatabase.Files.GetFilesByRelativePathAndName();
-            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-            ImageRow previousFile = null;
-            for (int fileIndex = 0; fileIndex < imagesAndVideos.Length; ++fileIndex)
-            {
-                FileInfo fileInfo = imagesAndVideos[fileIndex];
-                ImageRow file = filesByRelativePathAndName[TestConstant.File.HybridVideoDirectoryName][fileInfo.Name];
-                Assert.IsTrue(String.Equals(file.FileName, fileInfo.Name, StringComparison.OrdinalIgnoreCase));
-                DateTimeOffset dateTimeOffsetAsAdded = file.DateTimeOffset;
-                bool expectedIsVideo = !fileInfo.Name.EndsWith(Constant.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase);
-                Assert.IsTrue(file.IsVideo == expectedIsVideo);
-                FileClassification expectedClassification = expectedIsVideo ? FileClassification.Video : FileClassification.Color;
-                Assert.IsTrue(file.Classification == expectedClassification);
-
-                if (expectedIsVideo == false)
+                // reread datetimes
+                ObservableArray<DateTimeRereadResult> dateTimeResults = new ObservableArray<DateTimeRereadResult>(imagesAndVideos.Length, DateTimeRereadResult.Default);
+                using (DateTimeRereadIOComputeTransactionManager rereadDateTimes = new DateTimeRereadIOComputeTransactionManager(this.UpdateDateTimeRereadProgress, dateTimeResults, desiredStatusUpdateInterval))
                 {
-                    using (CachedImage image = await file.TryLoadImageAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidth))
+                    await rereadDateTimes.RereadDateTimesAsync(fileDatabase);
+                    Assert.IsTrue(rereadDateTimes.FilesCompleted == imagesAndVideos.Length);
+                    foreach (DateTimeRereadResult feedbackRow in dateTimeResults)
                     {
-                        stopwatch.Restart();
-                        double luminosity = image.Image.GetLuminosityAndColoration(0, out double coloration);
-                        file.Classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
-                        stopwatch.Stop();
-                        this.TestContext.WriteLine("Classify({0}, {1:0.00}MP): {2}ms", file.FileName, 1E-6 * image.Image.TotalPixels, stopwatch.ElapsedMilliseconds);
+                        Assert.IsNotNull(feedbackRow);
+                        Assert.IsFalse(String.IsNullOrWhiteSpace(feedbackRow.FileName));
+                        Assert.IsFalse(String.IsNullOrWhiteSpace(feedbackRow.Message));
+                    }
+                    Assert.IsTrue(rereadDateTimes.IODuration >= TimeSpan.Zero);
+                    Assert.IsTrue(rereadDateTimes.ComputeDuration >= rereadDateTimes.IODuration);
+                    Assert.IsTrue(rereadDateTimes.DatabaseDuration >= rereadDateTimes.ComputeDuration);
+                }
+                for (int fileIndex = 0; fileIndex < imagesAndVideos.Length; ++fileIndex)
+                {
+                    DateTimeOffset dateTimeOffsetAsAdded = fileDateTimes[fileIndex];
+                    ImageRow file = fileDatabase.Files[fileIndex];
+                    Assert.IsTrue(this.DateTimesWithinOneMillisecond(file.DateTimeOffset, dateTimeOffsetAsAdded));
+                }
+
+                // reclassify
+                using (ReclassifyIOComputeTransaction reclassify = new ReclassifyIOComputeTransaction(this.UpdateReclassifyProgress, desiredStatusUpdateInterval))
+                {
+                    await reclassify.ReclassifyFilesAsync(fileDatabase, state.DarkLuminosityThreshold, Constant.Images.MinimumRenderWidth);
+                }
+                fileDatabase.SelectFiles(FileSelection.All);
+                filesByRelativePathAndName = fileDatabase.Files.GetFilesByRelativePathAndName();
+                for (int fileIndex = 0; fileIndex < imagesAndVideos.Length; ++fileIndex)
+                {
+                    FileInfo fileInfo = imagesAndVideos[fileIndex];
+                    ImageRow file = filesByRelativePathAndName[TestConstant.File.HybridVideoDirectoryName][fileInfo.Name];
+                    if (file.IsVideo)
+                    {
+                        Assert.IsTrue(file.Classification == FileClassification.Video);
+                    }
+                    else
+                    {
                         Assert.IsTrue(file.Classification == FileClassification.Color);
                     }
                 }
-                else
+
+                // read metadata
+                MetadataTag note0Tag;
+                MetadataTag note3Tag;
+                using (JpegImage jpeg = new JpegImage(imagesAndVideos.First(file => JpegImage.IsJpeg(file.FullName)).FullName))
                 {
-                    Assert.IsTrue(file.Classification == FileClassification.Video);
+                    Assert.IsTrue(jpeg.TryGetMetadata());
+                    ExifSubIfdDirectory subIfd = jpeg.Metadata.OfType<ExifSubIfdDirectory>().Single();
+                    note0Tag = subIfd.Tags.Single(tag => tag.Type == ExifSubIfdDirectory.TagExifImageHeight);
+                    note3Tag = subIfd.Tags.Single(tag => tag.Type == ExifSubIfdDirectory.TagExifImageWidth);
+                }
+                ObservableArray<MetadataFieldResult> metadataResults = new ObservableArray<MetadataFieldResult>(imagesAndVideos.Length, MetadataFieldResult.Default);
+                using (MetadataIOComputeTransactionManager readMetadata = new MetadataIOComputeTransactionManager(this.UpdateMetadataProgress, metadataResults, desiredStatusUpdateInterval))
+                {
+                    await readMetadata.ReadFieldAsync(fileDatabase, TestConstant.DefaultDatabaseColumn.Note0, note0Tag, false);
+                }
+                fileDatabase.SelectFiles(FileSelection.All);
+                foreach (MetadataFieldResult result in metadataResults)
+                {
+                    Assert.IsFalse(Object.ReferenceEquals(result, MetadataFieldResult.Default));
+                    Assert.IsFalse(String.IsNullOrWhiteSpace(result.FileName));
+                    Assert.IsFalse(String.IsNullOrWhiteSpace(result.Message));
                 }
 
-                // for images, verify the date can be found in metadata
-                // for videos, verify the date is found in the previous image's metadata or not found if there's no previous image
-                FileLoad firstLoad = new FileLoad(file);
-                FileLoad secondLoad = new FileLoad((string)null);
-                bool isSecondFile = false;
-                if (file.IsVideo && (previousFile != null) && (previousFile.IsVideo == false))
+                metadataResults = new ObservableArray<MetadataFieldResult>(imagesAndVideos.Length, MetadataFieldResult.Default);
+                using (MetadataIOComputeTransactionManager readMetadata = new MetadataIOComputeTransactionManager(this.UpdateMetadataProgress, metadataResults, desiredStatusUpdateInterval))
                 {
-                    secondLoad = firstLoad;
-                    firstLoad = new FileLoad(previousFile);
-                    isSecondFile = true;
+                    await readMetadata.ReadFieldAsync(fileDatabase, TestConstant.DefaultDatabaseColumn.Note3, note3Tag, true);
                 }
-                MetadataReadResult metadataReadResult;
-                using (FileLoadAtom loadAtom = new FileLoadAtom(file.RelativePath, firstLoad, secondLoad, 0))
+                fileDatabase.SelectFiles(FileSelection.All);
+                foreach (MetadataFieldResult result in metadataResults)
                 {
-                    loadAtom.CreateJpegs(fileDatabase.FolderPath);
-                    loadAtom.ReadDateTimeOffsets(fileDatabase.FolderPath, imageSetTimeZone);
-                    metadataReadResult = isSecondFile ? loadAtom.Second.MetadataReadResult : loadAtom.First.MetadataReadResult;
+                    Assert.IsFalse(Object.ReferenceEquals(result, MetadataFieldResult.Default));
+                    Assert.IsFalse(String.IsNullOrWhiteSpace(result.FileName));
+                    Assert.IsFalse(String.IsNullOrWhiteSpace(result.Message));
                 }
-
-                Assert.IsFalse(metadataReadResult.HasFlag(MetadataReadResult.Failed));
-                Assert.IsTrue(this.DateTimesWithinOneMillisecond(file.DateTimeOffset, dateTimeOffsetAsAdded));
-                if (String.Equals(file.FileName, "06260001.AVI", StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(Path.GetFileNameWithoutExtension(file.FileName), "06260048", StringComparison.OrdinalIgnoreCase))
-                {
-                    // 06260001.AVI, 06260048.AVI, and 06260048.mp4 lack an associated .jpg to read metadata from
-                    Assert.IsTrue(metadataReadResult == MetadataReadResult.None);
-                    Assert.IsTrue(file.DateTimeOffset.Date >= TestConstant.FileExpectation.HybridVideoFileDate);
-                    Assert.IsTrue(file.DateTimeOffset.Date < DateTime.Now);
-                }
-                else if (String.Equals(Path.GetExtension(file.FileName), Constant.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase))
-                {
-                    Assert.IsTrue(file.DateTimeOffset.Date == TestConstant.FileExpectation.HybridVideoFileDate);
-                    Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTime);
-                }
-                else
-                {
-                    Assert.IsTrue(file.DateTimeOffset.Date == TestConstant.FileExpectation.HybridVideoFileDate);
-                    Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTimeInferredFromPrevious);
-                }
-
-                fileDateTimes.Add(dateTimeOffsetAsAdded);
-                previousFile = file;
-            }
-
-            // verify add of files already added doesn't duplicate them
-            using (AddFilesIOComputeTransactionManager folderLoad = new AddFilesIOComputeTransactionManager(this.UpdateFolderLoadProgress, desiredStatusUpdateInterval))
-            {
-                folderLoad.FolderPaths.Add(folderToLoad);
-                folderLoad.FindFilesToLoad(fileDatabase.FolderPath);
-                int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, state, Constant.Images.MinimumRenderWidth);
-                Assert.IsTrue(filesLoaded == 0);
-            }
-            fileDatabase.SelectFiles(FileSelection.All);
-            Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
-
-            // reread datetimes
-            ObservableArray<DateTimeRereadResult> dateTimeResults = new ObservableArray<DateTimeRereadResult>(imagesAndVideos.Length, DateTimeRereadResult.Default);
-            using (DateTimeRereadIOComputeTransactionManager rereadDateTimes = new DateTimeRereadIOComputeTransactionManager(this.UpdateDateTimeRereadProgress, dateTimeResults, desiredStatusUpdateInterval))
-            {
-                await rereadDateTimes.RereadDateTimesAsync(fileDatabase);
-                Assert.IsTrue(rereadDateTimes.FilesCompleted == imagesAndVideos.Length);
-                foreach (DateTimeRereadResult feedbackRow in dateTimeResults)
-                {
-                    Assert.IsNotNull(feedbackRow);
-                    Assert.IsFalse(String.IsNullOrWhiteSpace(feedbackRow.FileName));
-                    Assert.IsFalse(String.IsNullOrWhiteSpace(feedbackRow.Message));
-                }
-                Assert.IsTrue(rereadDateTimes.IODuration >= TimeSpan.Zero);
-                Assert.IsTrue(rereadDateTimes.ComputeDuration >= rereadDateTimes.IODuration);
-                Assert.IsTrue(rereadDateTimes.DatabaseDuration >= rereadDateTimes.ComputeDuration);
-            }
-            for (int fileIndex = 0; fileIndex < imagesAndVideos.Length; ++fileIndex)
-            {
-                DateTimeOffset dateTimeOffsetAsAdded = fileDateTimes[fileIndex];
-                ImageRow file = fileDatabase.Files[fileIndex];
-                Assert.IsTrue(this.DateTimesWithinOneMillisecond(file.DateTimeOffset, dateTimeOffsetAsAdded));
-            }
-
-            // reclassify
-            using (ReclassifyIOComputeTransaction reclassify = new ReclassifyIOComputeTransaction(this.UpdateReclassifyProgress, desiredStatusUpdateInterval))
-            {
-                await reclassify.ReclassifyFilesAsync(fileDatabase, state.DarkLuminosityThreshold, Constant.Images.MinimumRenderWidth);
-            }
-            fileDatabase.SelectFiles(FileSelection.All);
-            filesByRelativePathAndName = fileDatabase.Files.GetFilesByRelativePathAndName();
-            for (int fileIndex = 0; fileIndex < imagesAndVideos.Length; ++fileIndex)
-            {
-                FileInfo fileInfo = imagesAndVideos[fileIndex];
-                ImageRow file = filesByRelativePathAndName[TestConstant.File.HybridVideoDirectoryName][fileInfo.Name];
-                if (file.IsVideo)
-                {
-                    Assert.IsTrue(file.Classification == FileClassification.Video);
-                }
-                else
-                {
-                    Assert.IsTrue(file.Classification == FileClassification.Color);
-                }
-            }
-
-            // read metadata
-            MetadataTag note0Tag;
-            MetadataTag note3Tag;
-            using (JpegImage jpeg = new JpegImage(imagesAndVideos.First(file => JpegImage.IsJpeg(file.FullName)).FullName))
-            {
-                Assert.IsTrue(jpeg.TryGetMetadata());
-                ExifSubIfdDirectory subIfd = jpeg.Metadata.OfType<ExifSubIfdDirectory>().Single();
-                note0Tag = subIfd.Tags.Single(tag => tag.Type == ExifSubIfdDirectory.TagExifImageHeight);
-                note3Tag = subIfd.Tags.Single(tag => tag.Type == ExifSubIfdDirectory.TagExifImageWidth);
-            }
-            ObservableArray<MetadataFieldResult> metadataResults = new ObservableArray<MetadataFieldResult>(imagesAndVideos.Length, MetadataFieldResult.Default);
-            using (MetadataIOComputeTransactionManager readMetadata = new MetadataIOComputeTransactionManager(this.UpdateMetadataProgress, metadataResults, desiredStatusUpdateInterval))
-            {
-                await readMetadata.ReadFieldAsync(fileDatabase, TestConstant.DefaultDatabaseColumn.Note0, note0Tag, false);
-            }
-            fileDatabase.SelectFiles(FileSelection.All);
-            foreach (MetadataFieldResult result in metadataResults)
-            {
-                Assert.IsFalse(Object.ReferenceEquals(result, MetadataFieldResult.Default));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(result.FileName));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(result.Message));
-            }
-
-            metadataResults = new ObservableArray<MetadataFieldResult>(imagesAndVideos.Length, MetadataFieldResult.Default);
-            using (MetadataIOComputeTransactionManager readMetadata = new MetadataIOComputeTransactionManager(this.UpdateMetadataProgress, metadataResults, desiredStatusUpdateInterval))
-            {
-                await readMetadata.ReadFieldAsync(fileDatabase, TestConstant.DefaultDatabaseColumn.Note3, note3Tag, true);
-            }
-            fileDatabase.SelectFiles(FileSelection.All);
-            foreach (MetadataFieldResult result in metadataResults)
-            {
-                Assert.IsFalse(Object.ReferenceEquals(result, MetadataFieldResult.Default));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(result.FileName));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(result.Message));
             }
         }
 
@@ -912,27 +935,29 @@ namespace Carnassial.UnitTests
             File.Copy(fileExpectation.FileName, sourceFilePath);
             FileInfo fileInfo = new FileInfo(sourceFilePath);
 
-            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
-            ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, String.Empty);
-            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-            using (FileLoadAtom loadAtom = new FileLoadAtom(file.RelativePath, new FileLoad(file), new FileLoad((string)null), 0))
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName))
             {
-                loadAtom.CreateJpegs(fileDatabase.FolderPath);
-                loadAtom.ReadDateTimeOffsets(fileDatabase.FolderPath, imageSetTimeZone);
+                ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, String.Empty);
+                TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
+                using (FileLoadAtom loadAtom = new FileLoadAtom(file.RelativePath, new FileLoad(file), new FileLoad((string)null), 0))
+                {
+                    loadAtom.CreateJpegs(fileDatabase.FolderPath);
+                    loadAtom.ReadDateTimeOffsets(fileDatabase.FolderPath, imageSetTimeZone);
+                }
+
+                fileExpectation.FileName = Path.GetFileName(sourceFilePath);
+                fileExpectation.Verify(file, imageSetTimeZone);
+
+                // move file
+                Assert.IsTrue(file.TryMoveFileToFolder(fileDatabase.FolderPath, subfolderPath));
+                fileExpectation.RelativePath = Path.GetFileName(subfolderPath);
+                fileExpectation.Verify(file, imageSetTimeZone);
+
+                // move file back
+                Assert.IsTrue(file.TryMoveFileToFolder(fileDatabase.FolderPath, fileDatabase.FolderPath));
+                fileExpectation.RelativePath = null;
+                fileExpectation.Verify(file, imageSetTimeZone);
             }
-
-            fileExpectation.FileName = Path.GetFileName(sourceFilePath);
-            fileExpectation.Verify(file, imageSetTimeZone);
-
-            // move file
-            Assert.IsTrue(file.TryMoveFileToFolder(fileDatabase.FolderPath, subfolderPath));
-            fileExpectation.RelativePath = Path.GetFileName(subfolderPath);
-            fileExpectation.Verify(file, imageSetTimeZone);
-
-            // move file back
-            Assert.IsTrue(file.TryMoveFileToFolder(fileDatabase.FolderPath, fileDatabase.FolderPath));
-            fileExpectation.RelativePath = null;
-            fileExpectation.Verify(file, imageSetTimeZone);
         }
 
         [TestMethod]
@@ -943,71 +968,77 @@ namespace Carnassial.UnitTests
                 bool xlsx = spreadsheetFileExtension == Constant.File.ExcelFileExtension;
 
                 // create database, push test images into the database, and load the image data table
-                FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
-                List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
-
-                // roundtrip data
-                SpreadsheetReaderWriter readerWriter = new SpreadsheetReaderWriter((SpreadsheetReadWriteStatus status) => { }, Constant.ThrottleValues.DesiredIntervalBetweenStatusUpdates);
-                string initialFilePath = this.GetUniqueFilePathForTest(Path.GetFileNameWithoutExtension(Constant.File.DefaultFileDatabaseFileName) + spreadsheetFileExtension);
-                if (xlsx)
+                using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName))
                 {
-                    readerWriter.ExportFileDataToXlsx(fileDatabase, initialFilePath);
-                }
-                else
-                {
-                    readerWriter.ExportFileDataToCsv(fileDatabase, initialFilePath);
+                    List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
+
+                    // roundtrip data
+                    SpreadsheetReaderWriter readerWriter = new SpreadsheetReaderWriter((SpreadsheetReadWriteStatus status) => { }, Constant.ThrottleValues.DesiredIntervalBetweenStatusUpdates);
+                    string initialFilePath = this.GetUniqueFilePathForTest(Path.GetFileNameWithoutExtension(Constant.File.DefaultFileDatabaseFileName) + spreadsheetFileExtension);
+                    if (xlsx)
+                    {
+                        readerWriter.ExportFileDataToXlsx(fileDatabase, initialFilePath);
+                    }
+                    else
+                    {
+                        readerWriter.ExportFileDataToCsv(fileDatabase, initialFilePath);
+                    }
+
+                    FileImportResult importResult = readerWriter.TryImportFileData(initialFilePath, fileDatabase);
+                    Assert.IsTrue(importResult.Errors.Count == 0);
+
+                    // verify file table content hasn't changed other than negligible truncation error in marker positions
+                    TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
+                    for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
+                    {
+                        ImageRow file = fileDatabase.Files[fileIndex];
+                        FileExpectations fileExpectation = fileExpectations[fileIndex];
+                        fileExpectation.SkipMarkerByteVerification = true;
+                        fileExpectation.Verify(file, imageSetTimeZone);
+                    }
+
+                    // verify consistency of .csv export
+                    string roundtripFilePath = Path.Combine(Path.GetDirectoryName(initialFilePath), Path.GetFileNameWithoutExtension(initialFilePath) + ".Roundtrip" + spreadsheetFileExtension);
+                    if (xlsx)
+                    {
+                        readerWriter.ExportFileDataToXlsx(fileDatabase, roundtripFilePath);
+                    }
+                    else
+                    {
+                        readerWriter.ExportFileDataToCsv(fileDatabase, roundtripFilePath);
+                    }
+
+                    if (xlsx == false)
+                    {
+                        // check .csv content is identical
+                        // For .xlsx this isn't meaningful as file internals can change.
+                        string initialFileContent = File.ReadAllText(initialFilePath);
+                        string roundtripFileContent = File.ReadAllText(roundtripFilePath);
+                        Assert.IsTrue(initialFileContent == roundtripFileContent, "Initial and roundtrip {0} files don't match.", spreadsheetFileExtension);
+                    }
+
+                    // merge and refresh in memory table
+                    int filesBeforeMerge = fileDatabase.CurrentlySelectedFileCount;
+                    string mergeFilePath = Path.Combine(Path.GetDirectoryName(initialFilePath), Path.GetFileNameWithoutExtension(initialFilePath) + ".FilesToMerge" + spreadsheetFileExtension);
+                    importResult = readerWriter.TryImportFileData(mergeFilePath, fileDatabase);
+                    Assert.IsTrue(importResult.Errors.Count == 0);
+
+                    fileDatabase.SelectFiles(FileSelection.All);
+                    Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount - filesBeforeMerge == 2);
+
+                    // verify merge didn't affect existing file table content other than negligible truncation error in marker positions
+                    for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
+                    {
+                        ImageRow file = fileDatabase.Files[fileIndex];
+                        FileExpectations fileExpectation = fileExpectations[fileIndex];
+                        fileExpectation.SkipMarkerByteVerification = true;
+                        fileExpectation.Verify(file, imageSetTimeZone);
+                    }
                 }
 
-                FileImportResult importResult = readerWriter.TryImportFileData(initialFilePath, fileDatabase);
-                Assert.IsTrue(importResult.Errors.Count == 0);
-
-                // verify file table content hasn't changed other than negligible truncation error in marker positions
-                TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-                for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
-                {
-                    ImageRow file = fileDatabase.Files[fileIndex];
-                    FileExpectations fileExpectation = fileExpectations[fileIndex];
-                    fileExpectation.SkipMarkerByteVerification = true;
-                    fileExpectation.Verify(file, imageSetTimeZone);
-                }
-
-                // verify consistency of .csv export
-                string roundtripFilePath = Path.Combine(Path.GetDirectoryName(initialFilePath), Path.GetFileNameWithoutExtension(initialFilePath) + ".Roundtrip" + spreadsheetFileExtension);
-                if (xlsx)
-                {
-                    readerWriter.ExportFileDataToXlsx(fileDatabase, roundtripFilePath);
-                }
-                else
-                {
-                    readerWriter.ExportFileDataToCsv(fileDatabase, roundtripFilePath);
-                }
-
-                if (xlsx == false)
-                {
-                    // check .csv content is identical
-                    // For .xlsx this isn't meaningful as file internals can change.
-                    string initialFileContent = File.ReadAllText(initialFilePath);
-                    string roundtripFileContent = File.ReadAllText(roundtripFilePath);
-                    Assert.IsTrue(initialFileContent == roundtripFileContent, "Initial and roundtrip {0} files don't match.", spreadsheetFileExtension);
-                }
-
-                // merge and refresh in memory table
-                int filesBeforeMerge = fileDatabase.CurrentlySelectedFileCount;
-                string mergeFilePath = Path.Combine(Path.GetDirectoryName(initialFilePath), Path.GetFileNameWithoutExtension(initialFilePath) + ".FilesToMerge" + spreadsheetFileExtension);
-                importResult = readerWriter.TryImportFileData(mergeFilePath, fileDatabase);
-                Assert.IsTrue(importResult.Errors.Count == 0);
-
-                fileDatabase.SelectFiles(FileSelection.All);
-                Assert.IsTrue(fileDatabase.CurrentlySelectedFileCount - filesBeforeMerge == 2);
-
-                // verify merge didn't affect existing file table content other than negligible truncation error in marker positions
-                for (int fileIndex = 0; fileIndex < fileExpectations.Count; ++fileIndex)
-                {
-                    ImageRow file = fileDatabase.Files[fileIndex];
-                    FileExpectations fileExpectation = fileExpectations[fileIndex];
-                    fileExpectation.SkipMarkerByteVerification = true;
-                    fileExpectation.Verify(file, imageSetTimeZone);
-                }
+                // force SQLite to release its handle on the database file
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
         }
 
@@ -1019,9 +1050,10 @@ namespace Carnassial.UnitTests
         {
             // load database
             string templateDatabaseBaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName;
-            TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName);
-
-            this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+            using (TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName))
+            {
+                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
+            }
         }
 
         [TestMethod]
@@ -1052,62 +1084,68 @@ namespace Carnassial.UnitTests
         private void TimeZones(string initialTimeZoneID, string secondTimeZoneID)
         {
             // create file database and populate images in initial time zone
-            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName);
-            Assert.IsTrue(fileDatabase.ImageSet.TimeZone == TimeZoneInfo.Local.Id);
-            // TimeZoneInfo doesn't implement operator == so Equals() must be called
-            Assert.IsTrue(TimeZoneInfo.Local.Equals(fileDatabase.ImageSet.GetTimeZoneInfo()));
-
-            fileDatabase.ImageSet.TimeZone = initialTimeZoneID;
-            fileDatabase.TrySyncImageSetToDatabase();
-
-            TimeZoneInfo initialImageSetTimeZone = TimeZoneInfo.FindSystemTimeZoneById(initialTimeZoneID);
-            Assert.IsTrue(fileDatabase.ImageSet.TimeZone == initialTimeZoneID);
-            Assert.IsTrue(initialImageSetTimeZone.Equals(fileDatabase.ImageSet.GetTimeZoneInfo()));
-
-            List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase, true);
-
-            // change to second time zone
-            fileDatabase.ImageSet.TimeZone = secondTimeZoneID;
-            fileDatabase.TrySyncImageSetToDatabase();
-
-            TimeZoneInfo secondImageSetTimeZone = TimeZoneInfo.FindSystemTimeZoneById(secondTimeZoneID);
-            Assert.IsTrue(fileDatabase.ImageSet.TimeZone == secondTimeZoneID);
-            Assert.IsTrue(secondImageSetTimeZone.Equals(fileDatabase.ImageSet.GetTimeZoneInfo()));
-
-            // verify date times of existing images haven't changed
-            int initialFileCount = fileDatabase.Files.RowCount;
-            this.VerifyFiles(fileDatabase, fileExpectations, initialImageSetTimeZone, initialFileCount, secondImageSetTimeZone);
-
-            // add more images
-            ImageRow martenPairImage = this.CreateFile(fileDatabase, secondImageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out MetadataReadResult metadataReadResult);
-            Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTime);
-            ImageRow coyoteImage = this.CreateFile(fileDatabase, secondImageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out metadataReadResult);
-            Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTime);
-
-            using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName))
             {
-                addFiles.AddToSequence(new List<FileLoad>() { new FileLoad(martenPairImage), new FileLoad(coyoteImage) }, 0, 2);
-                addFiles.Commit();
+                Assert.IsTrue(fileDatabase.ImageSet.TimeZone == TimeZoneInfo.Local.Id);
+                // TimeZoneInfo doesn't implement operator == so Equals() must be called
+                Assert.IsTrue(TimeZoneInfo.Local.Equals(fileDatabase.ImageSet.GetTimeZoneInfo()));
+
+                fileDatabase.ImageSet.TimeZone = initialTimeZoneID;
+                fileDatabase.TrySyncImageSetToDatabase();
+
+                TimeZoneInfo initialImageSetTimeZone = TimeZoneInfo.FindSystemTimeZoneById(initialTimeZoneID);
+                Assert.IsTrue(fileDatabase.ImageSet.TimeZone == initialTimeZoneID);
+                Assert.IsTrue(initialImageSetTimeZone.Equals(fileDatabase.ImageSet.GetTimeZoneInfo()));
+
+                List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase, true);
+
+                // change to second time zone
+                fileDatabase.ImageSet.TimeZone = secondTimeZoneID;
+                fileDatabase.TrySyncImageSetToDatabase();
+
+                TimeZoneInfo secondImageSetTimeZone = TimeZoneInfo.FindSystemTimeZoneById(secondTimeZoneID);
+                Assert.IsTrue(fileDatabase.ImageSet.TimeZone == secondTimeZoneID);
+                Assert.IsTrue(secondImageSetTimeZone.Equals(fileDatabase.ImageSet.GetTimeZoneInfo()));
+
+                // verify date times of existing images haven't changed
+                int initialFileCount = fileDatabase.Files.RowCount;
+                this.VerifyFiles(fileDatabase, fileExpectations, initialImageSetTimeZone, initialFileCount, secondImageSetTimeZone);
+
+                // add more images
+                ImageRow martenPairImage = this.CreateFile(fileDatabase, secondImageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out MetadataReadResult metadataReadResult);
+                Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTime);
+                ImageRow coyoteImage = this.CreateFile(fileDatabase, secondImageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out metadataReadResult);
+                Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTime);
+
+                using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
+                {
+                    addFiles.AddToSequence(new List<FileLoad>() { new FileLoad(martenPairImage), new FileLoad(coyoteImage) }, 0, 2);
+                    addFiles.Commit();
+                }
+                fileDatabase.SelectFiles(FileSelection.All);
+
+                // generate expectations for new images
+                FileExpectations martenPairExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair)
+                {
+                    ID = fileExpectations.Count + 1,
+                    SkipUserControlVerification = true
+                };
+                fileExpectations.Add(martenPairExpectation);
+
+                FileExpectations daylightCoyoteExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightCoyote)
+                {
+                    ID = fileExpectations.Count + 1,
+                    SkipUserControlVerification = true
+                };
+                fileExpectations.Add(daylightCoyoteExpectation);
+
+                // verify new images pick up the current timezone
+                this.VerifyFiles(fileDatabase, fileExpectations, initialImageSetTimeZone, initialFileCount, secondImageSetTimeZone);
             }
-            fileDatabase.SelectFiles(FileSelection.All);
 
-            // generate expectations for new images
-            FileExpectations martenPairExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair)
-            {
-                ID = fileExpectations.Count + 1,
-                SkipUserControlVerification = true
-            };
-            fileExpectations.Add(martenPairExpectation);
-
-            FileExpectations daylightCoyoteExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightCoyote)
-            {
-                ID = fileExpectations.Count + 1,
-                SkipUserControlVerification = true
-            };
-            fileExpectations.Add(daylightCoyoteExpectation);
-
-            // verify new images pick up the current timezone
-            this.VerifyFiles(fileDatabase, fileExpectations, initialImageSetTimeZone, initialFileCount, secondImageSetTimeZone);
+            // force SQLite to release its handle on the database file
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         private bool DateTimesWithinOneMillisecond(DateTimeOffset actual, DateTimeOffset expected)

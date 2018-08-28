@@ -1,5 +1,4 @@
 ﻿using Carnassial.Data;
-using Carnassial.Database;
 using Carnassial.Images;
 using Carnassial.Interop;
 using System;
@@ -109,6 +108,7 @@ namespace Carnassial.Control
             {
                 this.TrySyncCurrentFileToDatabase();
                 this.ImageCache.Dispose();
+                this.FileDatabase.Dispose();
             }
 
             this.disposed = true;

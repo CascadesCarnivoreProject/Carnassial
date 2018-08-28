@@ -1233,7 +1233,7 @@ namespace Carnassial
             RenameFileDatabaseFile renameFileDatabase = new RenameFileDatabaseFile(this.DataHandler.FileDatabase.FileName, this);
             if (renameFileDatabase.ShowDialog() == true)
             {
-                this.DataHandler.FileDatabase.RenameFile(renameFileDatabase.NewFileName);
+                this.DataHandler.FileDatabase.RenameDatabaseFile(renameFileDatabase.NewFileName);
             }
         }
 
@@ -2416,6 +2416,7 @@ namespace Carnassial
 
                 this.State.MostRecentImageSets.TryRemove(templateDatabasePath);
                 this.MenuFileRecentImageSets_Refresh();
+                templateDatabase.Dispose();
                 return false;
             }
 
@@ -2424,6 +2425,7 @@ namespace Carnassial
             if (this.TrySelectDatabaseFile(templateDatabasePath, out string fileDatabaseFilePath, out bool tryAddFiles) == false)
             {
                 // no file database was selected
+                templateDatabase.Dispose();
                 return false;
             }
 
@@ -2431,16 +2433,18 @@ namespace Carnassial
             // of the file database
             imageSetLoadAndSetupTime.Start();
             bool fileDatabaseCreatedOrOpened = FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, this.State.OrderFilesByDateTime, this.State.CustomSelectionTermCombiningOperator, out FileDatabase fileDatabase);
+            templateDatabase.Dispose();
             imageSetLoadAndSetupTime.Stop();
             if (fileDatabaseCreatedOrOpened == false)
             {
-                if (fileDatabase.ControlSynchronizationIssues.Count > 0)
+                if ((fileDatabase != null) && (fileDatabase.ControlSynchronizationIssues.Count > 0))
                 {
                     // notify user the template and database are out of sync
                     TemplateSynchronization templatesNotCompatibleDialog = new TemplateSynchronization(fileDatabase.ControlSynchronizationIssues, this);
                     if (templatesNotCompatibleDialog.ShowDialog() != true)
                     {
                         // user indicated not to update to the current template or cancelled out of the dialog
+                        fileDatabase.Dispose();
                         Application.Current.Shutdown();
                         return false;
                     }
@@ -2458,12 +2462,17 @@ namespace Carnassial
                     messageBox.Message.Hint = "If the database can't be opened in a SQLite database editor the file is corrupt.";
                     messageBox.Message.StatusImage = MessageBoxImage.Error;
                     messageBox.ShowDialog();
+                    if (fileDatabase != null)
+                    {
+                        fileDatabase.Dispose();
+                    }
                     return false;
                 }
             }
 
             // valid template and file database loaded
-            // generate and render the data entry controls regardless of whether there are actually any files in the file database.
+            // Generate and render the data entry controls regardless of whether there are actually any files in the file database.
+            // DataEntryHandler takes ownership of fileDatabase and is responsible for disposing it.
             imageSetLoadAndSetupTime.Start();
             this.DataHandler = new DataEntryHandler(fileDatabase);
             this.DataHandler.BulkEdit += this.OnBulkEdit;
@@ -2493,9 +2502,9 @@ namespace Carnassial
                 filesAdded = await this.TryAddFilesAsync(new string[] { this.FolderPath });
             }
 
-            await this.OnFileDatabaseOpenedOrFilesAddedAsync(filesAdded);
             if (filesAdded == false)
             {
+                await this.OnFileDatabaseOpenedOrFilesAddedAsync(filesAdded);
                 this.SetStatusMessage("Image set opened in {0:0.000}s ({1:0} files/second).", imageSetLoadAndSetupTime.Elapsed.TotalSeconds, this.DataHandler.FileDatabase.CurrentlySelectedFileCount / imageSetLoadAndSetupTime.Elapsed.TotalSeconds);
             }
             return true;

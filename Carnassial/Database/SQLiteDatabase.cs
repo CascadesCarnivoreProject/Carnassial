@@ -9,38 +9,36 @@ using System.Linq;
 namespace Carnassial.Database
 {
     /// <summary>
-    /// A helper layer over SQLiteConnection providing connection origination and some low level database operations.  See <see cref="ColumnTuple"/>,
-    /// <see cref="ColumnTuplesForUpdate"/>, and <see cref="ColumnTuplesForInsert"/> for related functionality.
+    /// A helper layer over SQLiteConnection providing connection origination and some low level database operations.
     /// </summary>
-    public class SQLiteDatabase
+    public class SQLiteDatabase : IDisposable
     {
-        private string connectionString;
+        private bool disposed;
+
+        public SQLiteConnection Connection { get; protected set; }
 
         /// <summary>
         /// Prepares a database connection.  Creates the database file if it does not exist.
         /// </summary>
         /// <param name="inputFile">the file containing the database</param>
-        public SQLiteDatabase(string inputFile)
+        protected SQLiteDatabase(string inputFile)
         {
+            this.disposed = false;
+
             if (!File.Exists(inputFile))
             {
                 SQLiteConnection.CreateFile(inputFile);
             }
-            SQLiteConnectionStringBuilder connectionStringBuilder = new SQLiteConnectionStringBuilder()
-            {
-                DataSource = inputFile,
-                DateTimeKind = DateTimeKind.Utc
-            };
-            this.connectionString = connectionStringBuilder.ConnectionString;
+            this.OpenConnection(inputFile);
         }
 
         /// <summary>
         /// Add a column to the table at position columnNumber using the provided definition.
         /// </summary>
-        public void AddColumnToTable(SQLiteConnection connection, SQLiteTransaction transaction, string table, int columnNumber, ColumnDefinition columnDefinition)
+        protected void AddColumnToTable(SQLiteTransaction transaction, string table, int columnNumber, ColumnDefinition columnDefinition)
         {
             // get table's current schema
-            SQLiteTableSchema currentSchema = this.GetTableSchema(connection, table);
+            SQLiteTableSchema currentSchema = this.GetTableSchema(table);
             if (currentSchema.ColumnDefinitions.Any(column => String.Equals(column.Name, columnDefinition.Name, StringComparison.Ordinal)))
             {
                 throw new ArgumentException(String.Format("Column '{0}' is already present in table '{1}'.", columnDefinition.Name, table), nameof(columnDefinition));
@@ -53,9 +51,10 @@ namespace Carnassial.Database
             // optimization for appending column to end of table
             if (columnNumber >= currentSchema.ColumnDefinitions.Count)
             {
-                using (SQLiteCommand command = new SQLiteCommand("ALTER TABLE " + table + " ADD COLUMN " + columnDefinition.ToString(), connection))
+                using (SQLiteCommand command = new SQLiteCommand("ALTER TABLE " + table + " ADD COLUMN " + columnDefinition.ToString(), this.Connection))
                 {
                     command.ExecuteNonQuery();
+                    Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
                 }
                 return;
             }
@@ -64,9 +63,9 @@ namespace Carnassial.Database
             SQLiteTableSchema newSchema = new SQLiteTableSchema(table + "Replacement");
             newSchema.ColumnDefinitions.AddRange(currentSchema.ColumnDefinitions);
             newSchema.ColumnDefinitions.Insert(columnNumber, columnDefinition);
-            this.CopyTableToNewSchema(connection, transaction, table, newSchema, currentSchema.ColumnDefinitions, currentSchema.ColumnDefinitions);
-            this.DropAndReplaceTable(connection, transaction, table, newSchema.Table);
-            newSchema.CreateIndices(connection, transaction);
+            this.CopyTableToNewSchema(transaction, table, newSchema, currentSchema.ColumnDefinitions, currentSchema.ColumnDefinitions);
+            this.DropAndReplaceTable(transaction, table, newSchema.Table);
+            newSchema.CreateIndices(this.Connection, transaction);
         }
 
         /// <summary>
@@ -75,16 +74,16 @@ namespace Carnassial.Database
         /// <remarks>
         /// It's assumed the specified column contains only the values True for true.  All other values will be converted to 0 (false).
         /// </remarks>
-        public void ConvertBooleanStringColumnToInteger(SQLiteConnection connection, SQLiteTransaction transaction, string table, string column)
+        protected void ConvertBooleanStringColumnToInteger(SQLiteTransaction transaction, string table, string column)
         {
-            this.ConvertStringColumnToInteger(connection, transaction, table, column, () =>
+            this.ConvertStringColumnToInteger(transaction, table, column, () =>
             {
                 return ColumnDefinition.CreateBoolean(column);
             },
             (SQLiteTableSchema newSchema) =>
             {
                 string commandText = String.Format("UPDATE {0} SET {1} = @{1} WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @{1}AsString)", newSchema.Table, column, Constant.DatabaseColumn.ID, table);
-                using (SQLiteCommand command = new SQLiteCommand(commandText, connection, transaction))
+                using (SQLiteCommand command = new SQLiteCommand(commandText, this.Connection, transaction))
                 {
                     SQLiteParameter integerParameter = new SQLiteParameter("@" + column, true);
                     SQLiteParameter stringParameter = new SQLiteParameter("@" + column + "AsString", Boolean.TrueString);
@@ -92,13 +91,14 @@ namespace Carnassial.Database
                     command.Parameters.Add(stringParameter);
 
                     command.ExecuteNonQuery();
+                    Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
                 }
             });
         }
 
-        public void ConvertNonFlagEnumStringColumnToInteger<TEnum>(SQLiteConnection connection, SQLiteTransaction transaction, string table, string column) where TEnum : struct, IComparable, IFormattable, IConvertible
+        protected void ConvertNonFlagEnumStringColumnToInteger<TEnum>(SQLiteTransaction transaction, string table, string column) where TEnum : struct, IComparable, IFormattable, IConvertible
         {
-            this.ConvertStringColumnToInteger(connection, transaction, table, column, () =>
+            this.ConvertStringColumnToInteger(transaction, table, column, () =>
             {
                 return new ColumnDefinition(column, Constant.SQLiteAffninity.Integer)
                 {
@@ -109,7 +109,7 @@ namespace Carnassial.Database
             (SQLiteTableSchema newSchema) =>
             {
                 string commandText = String.Format("UPDATE {0} SET {1} = @{1} WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @{1}AsString)", newSchema.Table, column, Constant.DatabaseColumn.ID, table);
-                using (SQLiteCommand command = new SQLiteCommand(commandText, connection, transaction))
+                using (SQLiteCommand command = new SQLiteCommand(commandText, this.Connection, transaction))
                 {
                     SQLiteParameter integerParameter = new SQLiteParameter("@" + column);
                     SQLiteParameter stringParameter = new SQLiteParameter("@" + column + "AsString");
@@ -127,17 +127,18 @@ namespace Carnassial.Database
                         integerParameter.Value = value.ToInt32(CultureInfo.InvariantCulture);
                         stringParameter.Value = name;
                         command.ExecuteNonQuery();
+                        Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
                     }
                 }
             });
         }
 
-        private void ConvertStringColumnToInteger(SQLiteConnection connection, SQLiteTransaction transaction, string table, string column, Func<ColumnDefinition> createIntegerColumnDefinition, Action<SQLiteTableSchema> copyNonDefaultValues)
+        private void ConvertStringColumnToInteger(SQLiteTransaction transaction, string table, string column, Func<ColumnDefinition> createIntegerColumnDefinition, Action<SQLiteTableSchema> copyNonDefaultValues)
         {
             ColumnDefinition stringColumn = null;
             int stringColumnIndex = -1;
             List<ColumnDefinition> columnsToCopy = new List<ColumnDefinition>();
-            SQLiteTableSchema currentSchema = this.GetTableSchema(connection, table);
+            SQLiteTableSchema currentSchema = this.GetTableSchema(table);
             for (int columnIndex = 0; columnIndex < currentSchema.ColumnDefinitions.Count; ++columnIndex)
             {
                 ColumnDefinition candidateColumn = currentSchema.ColumnDefinitions[columnIndex];
@@ -168,19 +169,18 @@ namespace Carnassial.Database
             };
             newSchema.ColumnDefinitions[stringColumnIndex] = createIntegerColumnDefinition.Invoke();
             Debug.Assert(String.Equals(newSchema.ColumnDefinitions[stringColumnIndex].DefaultValue, "0", StringComparison.Ordinal), "Default value of boolean column is expected to be false.");
-            this.CopyTableToNewSchema(connection, transaction, table, newSchema, columnsToCopy, columnsToCopy);
+            this.CopyTableToNewSchema(transaction, table, newSchema, columnsToCopy, columnsToCopy);
 
             // copy non-default values
             copyNonDefaultValues.Invoke(newSchema);
 
-            this.DropAndReplaceTable(connection, transaction, table, newSchema.Table);
-            newSchema.CreateIndices(connection, transaction);
+            this.DropAndReplaceTable(transaction, table, newSchema.Table);
+            newSchema.CreateIndices(this.Connection, transaction);
         }
 
         /// <summary>
         /// Add, remove, or rename columns in a table.
         /// </summary>
-        /// <param name="connection">The database connection to use.</param>
         /// <param name="transaction">The database transaction to use.</param>
         /// <param name="existingTable">The table to modify.</param>
         /// <param name="newSchema">The table's new schema.</param>
@@ -192,7 +192,7 @@ namespace Carnassial.Database
         /// - remove a column newColumns, sourceColumns, and destinationColumns are all the same
         /// - rename columns newColumns and destinationColumns are the same and sourceColumns differs only in the column names
         /// </remarks>
-        private void CopyTableToNewSchema(SQLiteConnection connection, SQLiteTransaction transaction, string existingTable, SQLiteTableSchema newSchema, List<ColumnDefinition> sourceColumns, List<ColumnDefinition> destinationColumns)
+        private void CopyTableToNewSchema(SQLiteTransaction transaction, string existingTable, SQLiteTableSchema newSchema, List<ColumnDefinition> sourceColumns, List<ColumnDefinition> destinationColumns)
         {
             if (sourceColumns.Count != destinationColumns.Count)
             {
@@ -207,7 +207,7 @@ namespace Carnassial.Database
             // Since the caller will most likely be dropping the original table and renaming the new table to replace the original
             // don't create indicies at this point. SQLite will remove any exisiting indices when the original table is dropped, 
             // allowing them to be recreated with the same names after the replacement table is renamed into place.
-            newSchema.CreateTable(connection, transaction);
+            newSchema.CreateTable(this.Connection, transaction);
 
             // copy specified part of the old table's contents to the new table
             // SQLite doesn't allow autoincrement columns to be copied but their values are preserved as rows are inserted in the
@@ -216,27 +216,21 @@ namespace Carnassial.Database
             List<string> destinationColumnNames = destinationColumns.Where(column => column.Autoincrement == false).Select(column => column.Name).ToList();
 
             string copyColumns = "INSERT INTO " + newSchema.Table + " (" + String.Join(", ", destinationColumnNames) + ") SELECT " + String.Join(", ", sourceColumnNames) + " FROM " + existingTable;
-            using (SQLiteCommand command = new SQLiteCommand(copyColumns, connection, transaction))
+            using (SQLiteCommand command = new SQLiteCommand(copyColumns, this.Connection, transaction))
             {
                 command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
         }
 
-        public SQLiteConnection CreateConnection()
-        {
-            SQLiteConnection connection = new SQLiteConnection(this.connectionString);
-            connection.Open();
-            return connection;
-        }
-
-        public void DeleteColumn(SQLiteConnection connection, SQLiteTransaction transaction, string table, string column)
+        protected void DeleteColumn(SQLiteTransaction transaction, string table, string column)
         {
             if (String.IsNullOrWhiteSpace(column))
             {
                 throw new ArgumentOutOfRangeException(nameof(column));
             }
 
-            SQLiteTableSchema currentSchema = this.GetTableSchema(connection, table);
+            SQLiteTableSchema currentSchema = this.GetTableSchema(table);
             if (currentSchema.ColumnDefinitions.Any(columnDefinition => String.Equals(columnDefinition.Name, column, StringComparison.Ordinal)))
             {
                 throw new ArgumentOutOfRangeException(nameof(column));
@@ -263,77 +257,181 @@ namespace Carnassial.Database
             }
             newSchema.ColumnDefinitions.RemoveAt(columnToRemove);
 
-            this.CopyTableToNewSchema(connection, transaction, table, newSchema, newSchema.ColumnDefinitions, newSchema.ColumnDefinitions);
-            this.DropAndReplaceTable(connection, transaction, table, newSchema.Table);
-            newSchema.CreateIndices(connection, transaction);
+            this.CopyTableToNewSchema(transaction, table, newSchema, newSchema.ColumnDefinitions, newSchema.ColumnDefinitions);
+            this.DropAndReplaceTable(transaction, table, newSchema.Table);
+            newSchema.CreateIndices(this.Connection, transaction);
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.Connection.Dispose();
+            }
+            this.disposed = true;
         }
 
         /// <summary>
         /// Drops the given table and renames the other specified to have the same name as the dropped table.
         /// </summary>
-        private void DropAndReplaceTable(SQLiteConnection connection, SQLiteTransaction transaction, string tableToDrop, string tableToRename)
+        private void DropAndReplaceTable(SQLiteTransaction transaction, string tableToDrop, string tableToRename)
         {
             // drop the old table and rename the new table into place
-            using (SQLiteCommand command = new SQLiteCommand("DROP TABLE " + tableToDrop, connection, transaction))
+            using (SQLiteCommand command = new SQLiteCommand("DROP TABLE " + tableToDrop, this.Connection, transaction))
             {
                 command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
-            using (SQLiteCommand command = new SQLiteCommand("ALTER TABLE " + tableToRename + " RENAME TO " + tableToDrop, connection, transaction))
+            using (SQLiteCommand command = new SQLiteCommand("ALTER TABLE " + tableToRename + " RENAME TO " + tableToDrop, this.Connection, transaction))
             {
                 command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
         }
 
-        public List<object> GetDistinctValuesInColumn(string table, string column)
+        protected SQLiteAutoVacuum GetAutoVacuum()
         {
-            using (SQLiteConnection connection = this.CreateConnection())
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA AUTO_VACUUM", this.Connection))
             {
-                using (SQLiteCommand command = new SQLiteCommand("SELECT DISTINCT " + column + " FROM " + table, connection))
-                {
-                    using (SQLiteDataReader reader = command.ExecuteReader())
-                    {
-                        List<object> distinctValues = new List<object>();
-                        while (reader.Read())
-                        {
-                            distinctValues.Add(reader[column]);
-                        }
-                        return distinctValues;
-                    }
-                }
+                SQLiteAutoVacuum vacuum = (SQLiteAutoVacuum)(long)command.ExecuteScalar();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+                return vacuum;
             }
         }
 
-        public void LoadDataTableFromSelect<TRow>(SQLiteTable<TRow> table, SQLiteConnection connection, Select select)
+        protected int GetCacheSize()
         {
-            using (SQLiteCommand command = select.CreateSelect(connection))
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA CACHE_SIZE", this.Connection))
+            {
+                int cacheSize = (int)(long)command.ExecuteScalar();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+                return cacheSize;
+            }
+        }
+
+        protected List<object> GetDistinctValuesInColumn(string table, string column)
+        {
+            using (SQLiteCommand command = new SQLiteCommand("SELECT DISTINCT " + column + " FROM " + table, this.Connection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
-                    table.Load(reader);
+                    List<object> distinctValues = new List<object>();
+                    while (reader.Read())
+                    {
+                        distinctValues.Add(reader[column]);
+                    }
+
+                    Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Done, "Result code indicates error.");
+                    return distinctValues;
                 }
             }
         }
 
-        public List<string> GetTableNames(SQLiteConnection connection)
+        protected SQLiteJournalModeEnum GetJournalMode()
         {
-            using (SQLiteCommand command = new SQLiteCommand("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name", connection))
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA JOURNAL_MODE", this.Connection))
+            {
+                string mode = (string)command.ExecuteScalar();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+
+                if (String.Equals(mode, "Delete", StringComparison.OrdinalIgnoreCase))
+                {
+                    return SQLiteJournalModeEnum.Delete;
+                }
+                else if (String.Equals(mode, "Memory", StringComparison.OrdinalIgnoreCase))
+                {
+                    return SQLiteJournalModeEnum.Memory;
+                }
+                else if (String.Equals(mode, "Off", StringComparison.OrdinalIgnoreCase))
+                {
+                    return SQLiteJournalModeEnum.Off;
+                }
+                else if (String.Equals(mode, "Persist", StringComparison.OrdinalIgnoreCase))
+                {
+                    return SQLiteJournalModeEnum.Persist;
+                }
+                else if (String.Equals(mode, "Truncate", StringComparison.OrdinalIgnoreCase))
+                {
+                    return SQLiteJournalModeEnum.Truncate;
+                }
+                else if (String.Equals(mode, "Wal", StringComparison.OrdinalIgnoreCase))
+                {
+                    return SQLiteJournalModeEnum.Wal;
+                }
+                else
+                {
+                    throw new NotSupportedException(String.Format("Unhandled synchronous mode '{0}'.", mode));
+                }
+            }
+        }
+
+        protected SQLiteLockMode GetLockingMode()
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA LOCKING_MODE", this.Connection))
+            {
+                string mode = (string)command.ExecuteScalar();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+
+                if (String.Equals(mode, "Exclusive", StringComparison.OrdinalIgnoreCase))
+                {
+                    return SQLiteLockMode.Exclusive;
+                }
+                else if (String.Equals(mode, "Normal", StringComparison.OrdinalIgnoreCase))
+                {
+                    return SQLiteLockMode.Normal;
+                }
+                else
+                {
+                    throw new NotSupportedException(String.Format("Unhandled synchronous mode '{0}'.", mode));
+                }
+            }
+        }
+
+        protected SynchronizationModes GetSynchronous()
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA SYNCHRONOUS", this.Connection))
+            {
+                // as of SQLite 1.0.109.1 SynchronizationModes.Extra is missing; this can be worked around if needed
+                SynchronizationModes mode = (SynchronizationModes)(long)command.ExecuteScalar();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+                return mode;
+            }
+        }
+
+        protected List<string> GetTableNames()
+        {
+            using (SQLiteCommand command = new SQLiteCommand("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name", this.Connection))
             {
                 SQLiteDataReader reader = command.ExecuteReader();
+
                 List<string> tableNames = new List<string>();
                 while (reader.Read())
                 {
                     tableNames.Add(reader[0].ToString());
                 }
+
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Done, "Result code indicates error.");
                 return tableNames;
             }
         }
 
-        public SQLiteTableSchema GetTableSchema(SQLiteConnection connection, string table)
+        protected SQLiteTableSchema GetTableSchema(string table)
         {
             // as of SQLite 1.0.108 columns are returned in order so sorting by number is not strictly necessary
             // Column numbering is explicitly respected in the order of return for robustness, however.
             Dictionary<int, ColumnDefinition> columnDefinitionsByNumber = new Dictionary<int, ColumnDefinition>();
-            using (SQLiteCommand command = new SQLiteCommand("PRAGMA TABLE_INFO(" + table + ")", connection))
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA TABLE_INFO(" + table + ")", this.Connection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
@@ -375,6 +473,7 @@ namespace Carnassial.Database
                         // field 0 is column number
                         columnDefinitionsByNumber.Add(reader.GetInt32(0), columnDefinition);
                     }
+                    Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Done, "Result code indicates error.");
                 }
             }
 
@@ -388,7 +487,7 @@ namespace Carnassial.Database
             // add secondary indices to schema
             // Currently, only indices on single columns are supported.
             List<string> tableIndices = new List<string>();
-            using (SQLiteCommand command = new SQLiteCommand("PRAGMA INDEX_LIST(" + table + ")", connection))
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA INDEX_LIST(" + table + ")", this.Connection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
@@ -404,12 +503,13 @@ namespace Carnassial.Database
                             throw new NotSupportedException(String.Format("Unhandled index origin '{0}'.", origin));
                         }
                     }
+                    Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Done, "Result code indicates error.");
                 }
             }
 
             foreach (string index in tableIndices)
             {
-                using (SQLiteCommand command = new SQLiteCommand("PRAGMA INDEX_INFO(" + index + ")", connection))
+                using (SQLiteCommand command = new SQLiteCommand("PRAGMA INDEX_INFO(" + index + ")", this.Connection))
                 {
                     using (SQLiteDataReader reader = command.ExecuteReader())
                     {
@@ -417,6 +517,7 @@ namespace Carnassial.Database
                         {
                             schema.Indices.Add(new SecondaryIndex(table, index, reader.GetString(2)));
                         }
+                        Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Done, "Result code indicates error.");
                     }
                 }
             }
@@ -424,12 +525,78 @@ namespace Carnassial.Database
             return schema;
         }
 
-        public Version GetUserVersion(SQLiteConnection connection)
+        protected SQLiteTemporaryStore GetTemporaryStore()
         {
-            using (SQLiteCommand command = new SQLiteCommand("PRAGMA USER_VERSION", connection))
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA TEMP_STORE", this.Connection))
+            {
+                SQLiteTemporaryStore store = (SQLiteTemporaryStore)(long)command.ExecuteScalar();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+                return store;
+            }
+        }
+
+        protected Version GetUserVersion()
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA USER_VERSION", this.Connection))
             {
                 int version = (int)(long)command.ExecuteScalar();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
                 return new Version((version & 0x7f000000) >> 24, (version & 0x00ff0000) >> 16, (version & 0x0000ff00) >> 8, version & 0x000000ff);
+            }
+        }
+
+        protected int GetWalAutocheckpoint()
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA WAL_AUTOCHECKPOINT", this.Connection))
+            {
+                int interval = (int)(long)command.ExecuteScalar();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+                return interval;
+            }
+        }
+
+        protected void IncrementalVacuum(SQLiteTransaction transaction)
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA INCREMENTAL_VACUUM", this.Connection, transaction))
+            {
+                command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+            }
+        }
+
+        protected void LoadDataTableFromSelect<TRow>(SQLiteTable<TRow> table, Select select)
+        {
+            using (SQLiteCommand command = select.CreateSelect(this.Connection))
+            {
+                using (SQLiteDataReader reader = command.ExecuteReader())
+                {
+                    table.Load(reader);
+                    Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Done, "Result code indicates error.");
+                }
+            }
+        }
+
+        protected void OpenConnection(string databaseFilePath)
+        {
+            SQLiteConnectionStringBuilder connectionStringBuilder = new SQLiteConnectionStringBuilder()
+            {
+                DataSource = databaseFilePath,
+                DateTimeKind = DateTimeKind.Utc,
+                JournalMode = SQLiteJournalModeEnum.Memory,
+                SyncMode = SynchronizationModes.Off
+            };
+
+            this.Connection = new SQLiteConnection(connectionStringBuilder.ConnectionString);
+            this.Connection.Open();
+            this.SetTemporaryStore(SQLiteTemporaryStore.Memory);
+        }
+
+        protected void Optimize()
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA OPTIMIZE", this.Connection))
+            {
+                command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
         }
 
@@ -448,7 +615,7 @@ namespace Carnassial.Database
             return "'" + value.Replace("'", "''") + "'";
         }
 
-        public void RenameColumn(SQLiteConnection connection, SQLiteTransaction transaction, string table, string currentColumnName, string newColumnName, Action<ColumnDefinition> modifyColumnDefinition)
+        protected void RenameColumn(SQLiteTransaction transaction, string table, string currentColumnName, string newColumnName, Action<ColumnDefinition> modifyColumnDefinition)
         {
             if (String.IsNullOrWhiteSpace(currentColumnName))
             {
@@ -459,7 +626,7 @@ namespace Carnassial.Database
                 throw new ArgumentOutOfRangeException(nameof(newColumnName));
             }
 
-            SQLiteTableSchema currentSchema = this.GetTableSchema(connection, table);
+            SQLiteTableSchema currentSchema = this.GetTableSchema(table);
             if (currentSchema.ColumnDefinitions.Any(column => String.Equals(column.Name, currentColumnName, StringComparison.Ordinal)) == false)
             {
                 throw new ArgumentException(String.Format("No column named '{0}' exists to rename.", currentColumnName), nameof(currentColumnName));
@@ -488,20 +655,48 @@ namespace Carnassial.Database
                 }
             }
 
-            this.CopyTableToNewSchema(connection, transaction, table, newSchema, currentSchema.ColumnDefinitions, newSchema.ColumnDefinitions);
-            this.DropAndReplaceTable(connection, transaction, table, newSchema.Table);
-            newSchema.CreateIndices(connection, transaction);
+            this.CopyTableToNewSchema(transaction, table, newSchema, currentSchema.ColumnDefinitions, newSchema.ColumnDefinitions);
+            this.DropAndReplaceTable(transaction, table, newSchema.Table);
+            newSchema.CreateIndices(this.Connection, transaction);
         }
 
-        public void RenameTable(SQLiteConnection connection, SQLiteTransaction transaction, string currentTable, string newTable)
+        protected void RenameTable(SQLiteTransaction transaction, string currentTable, string newTable)
         {
-            using (SQLiteCommand command = new SQLiteCommand("ALTER TABLE " + currentTable + " RENAME TO " + newTable, connection, transaction))
+            using (SQLiteCommand command = new SQLiteCommand("ALTER TABLE " + currentTable + " RENAME TO " + newTable, this.Connection, transaction))
             {
                 command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             } 
         }
 
-        public void SetUserVersion(SQLiteConnection connection, SQLiteTransaction transaction, Version version)
+        protected void SetAutoVacuum(SQLiteAutoVacuum vacuum)
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA AUTO_VACUUM = " + (int)vacuum, this.Connection))
+            {
+                command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+            }
+        }
+
+        protected void SetLockingMode(SQLiteLockMode mode)
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA LOCKING_MODE = " + mode.ToString().ToUpperInvariant(), this.Connection))
+            {
+                command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+            }
+        }
+
+        protected void SetTemporaryStore(SQLiteTemporaryStore store)
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA TEMP_STORE = " + (int)store, this.Connection))
+            {
+                command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+            }
+        }
+
+        protected void SetUserVersion(SQLiteTransaction transaction, Version version)
         {
             if ((version.Major < 0) || (version.Major > 127))
             {
@@ -521,9 +716,28 @@ namespace Carnassial.Database
             }
 
             int versionAsInt = (version.Major << 24) | (version.Minor << 16) | (version.Build << 8) | version.Revision;
-            using (SQLiteCommand command = new SQLiteCommand("PRAGMA USER_VERSION(" + versionAsInt.ToString() + ")", connection))
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA USER_VERSION(" + versionAsInt.ToString() + ")", this.Connection, transaction))
             {
                 command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+            }
+        }
+
+        protected void SetWalAutocheckpoint(int interval)
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA WAL_AUTOCHECKPOINT = " + interval, this.Connection))
+            {
+                command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+            }
+        }
+
+        protected void WalCheckpoint(SQLiteWalCheckpoint checkpoint)
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA WAL_CHECKPOINT(" + checkpoint.ToString().ToUpperInvariant() + ")", this.Connection))
+            {
+                command.ExecuteNonQuery();
+                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
         }
     }

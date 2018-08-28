@@ -117,31 +117,31 @@ namespace Carnassial.Data
         public AddFilesTransactionSequence CreateAddFilesTransaction()
         {
             this.CreateBackupIfNeeded();
-            return new AddFilesTransactionSequence(this, this.Database.CreateConnection());
+            return new AddFilesTransactionSequence(this, this.Controls);
         }
 
         public FileTransactionSequence CreateInsertFileTransaction()
         {
             this.CreateBackupIfNeeded();
-            return FileTransactionSequence.CreateInsert(this.Database.CreateConnection(), this.Files);
+            return FileTransactionSequence.CreateInsert(this, this.Files);
         }
 
         public UpdateFileColumnTransactionSequence CreateUpdateFileColumnTransaction(string dataLabel)
         {
             this.CreateBackupIfNeeded();
-            return new UpdateFileColumnTransactionSequence(dataLabel, this.Database.CreateConnection());
+            return new UpdateFileColumnTransactionSequence(dataLabel, this);
         }
 
         public UpdateFileDateTimeOffsetTransactionSequence CreateUpdateFileDateTimeTransaction()
         {
             this.CreateBackupIfNeeded();
-            return new UpdateFileDateTimeOffsetTransactionSequence(this.Database.CreateConnection());
+            return new UpdateFileDateTimeOffsetTransactionSequence(this);
         }
 
         public FileTransactionSequence CreateUpdateFileTransaction()
         {
             this.CreateBackupIfNeeded();
-            return FileTransactionSequence.CreateUpdate(this.Database.CreateConnection(), this.Files);
+            return FileTransactionSequence.CreateUpdate(this, this.Files);
         }
 
         private Select CreateSelect(FileSelection selection)
@@ -181,7 +181,7 @@ namespace Carnassial.Data
             return select;
         }
 
-        // Delete the data (including markers) associated with the files identified by the list of IDs.
+        // drop the data (including markers) associated with the files identified by the list of IDs.
         public void DeleteFiles(List<long> fileIDs)
         {
             if (fileIDs.Count < 1)
@@ -191,33 +191,26 @@ namespace Carnassial.Data
             }
 
             this.CreateBackupIfNeeded();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
+            using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
             {
-                using (SQLiteTransaction transaction = connection.BeginTransaction())
+                using (SQLiteCommand deleteFiles = new SQLiteCommand(String.Format("DELETE FROM {0} WHERE {1} = @Id", Constant.DatabaseTable.Files, Constant.DatabaseColumn.ID), this.Connection, transaction))
                 {
-                    SQLiteCommand deleteFiles = new SQLiteCommand(String.Format("DELETE FROM {0} WHERE {1} = @Id", Constant.DatabaseTable.Files, Constant.DatabaseColumn.ID), connection, transaction);
-                    try
-                    {
-                        SQLiteParameter id = new SQLiteParameter("@Id");
-                        deleteFiles.Parameters.Add(id);
+                    SQLiteParameter id = new SQLiteParameter("@Id");
+                    deleteFiles.Parameters.Add(id);
 
-                        foreach (long fileID in fileIDs)
-                        {
-                            id.Value = fileID;
-                            deleteFiles.ExecuteNonQuery();
-                        }
-
-                        transaction.Commit();
-                    }
-                    finally
+                    foreach (long fileID in fileIDs)
                     {
-                        deleteFiles.Dispose();
+                        id.Value = fileID;
+                        deleteFiles.ExecuteNonQuery();
                     }
+
+                    this.IncrementalVacuum(transaction);
+                    transaction.Commit();
                 }
             }
         }
 
-        // Update all the date fields between the start and end index by swapping the days and months.
+        // swap the days and months of all file dates between the start and end index
         public void ExchangeDayAndMonthInFileDates(int startRow, int endRow)
         {
             if (this.IsFileRowInRange(startRow) == false)
@@ -273,9 +266,12 @@ namespace Carnassial.Data
                 }
 
                 StringBuilder log = new StringBuilder(Environment.NewLine);
-                log.AppendFormat("System entry: Swapped days and months for {0} files.{1}", filesToUpdate.Count, Environment.NewLine);
-                log.AppendFormat("The first file adjusted was '{0}' and the last '{1}'.{2}", firstFile.FileName, lastFile.FileName, Environment.NewLine);
-                log.AppendFormat("The last file's date was changed from '{0}' to '{1}'.{2}", DateTimeHandler.ToDisplayDateString(mostRecentOriginalDateTime), DateTimeHandler.ToDisplayDateString(mostRecentReversedDateTime), Environment.NewLine);
+                log.AppendFormat("System entry: Swapped days and months for {0} files.", filesToUpdate.Count);
+                log.AppendLine();
+                log.AppendFormat("The first file adjusted was '{0}' and the last '{1}'.", firstFile.FileName, lastFile.FileName);
+                log.AppendLine();
+                log.AppendFormat("The last file's date was changed from '{0}' to '{1}'.", DateTimeHandler.ToDisplayDateString(mostRecentOriginalDateTime), DateTimeHandler.ToDisplayDateString(mostRecentReversedDateTime));
+                log.AppendLine();
                 this.AppendToImageSetLog(log);
             }
         }
@@ -358,19 +354,16 @@ namespace Carnassial.Data
         public FileTable GetFilesMarkedForDeletion()
         {
             Select select = new Select(Constant.DatabaseTable.Files, new WhereClause(Constant.FileColumn.DeleteFlag, Constant.SqlOperator.Equal, Constant.Sql.TrueString));
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                FileTable filesToDelete = new FileTable();
-                filesToDelete.SetUserControls(this.Controls);
-                this.Database.LoadDataTableFromSelect(filesToDelete, connection, select);
-                return filesToDelete;
-            }
+            FileTable filesToDelete = new FileTable();
+            filesToDelete.SetUserControls(this.Controls);
+            this.LoadDataTableFromSelect(filesToDelete, select);
+            return filesToDelete;
         }
 
         public List<string> GetDistinctValuesInFileDataColumn(string dataLabel)
         {
             List<string> distinctValues = new List<string>();
-            foreach (object value in this.Database.GetDistinctValuesInColumn(Constant.DatabaseTable.Files, dataLabel))
+            foreach (object value in this.GetDistinctValuesInColumn(Constant.DatabaseTable.Files, dataLabel))
             {
                 distinctValues.Add(value.ToString());
             }
@@ -386,31 +379,27 @@ namespace Carnassial.Data
                 return -1;
             }
 
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                return (int)select.Count(connection);
-            }
+            return (int)select.Count(this.Connection);
         }
 
-        private int GetFileCount(SQLiteConnection connection, FileClassification classification)
+        private int GetFileCount(FileClassification classification)
         {
             Select select = new Select(Constant.DatabaseTable.Files);
             select.Where.Add(new WhereClause(Constant.FileColumn.Classification, Constant.SqlOperator.Equal, (int)classification));
-            return (int)select.Count(connection);
+            return (int)select.Count(this.Connection);
         }
 
         public Dictionary<FileClassification, int> GetFileCountsByClassification()
         {
-            Dictionary<FileClassification, int> counts = new Dictionary<FileClassification, int>(4);
-            using (SQLiteConnection connection = this.Database.CreateConnection())
+            Dictionary<FileClassification, int> counts = new Dictionary<FileClassification, int>()
             {
-                counts[FileClassification.Color] = this.GetFileCount(connection, FileClassification.Color);
-                counts[FileClassification.Corrupt] = this.GetFileCount(connection, FileClassification.Corrupt);
-                counts[FileClassification.Dark] = this.GetFileCount(connection, FileClassification.Dark);
-                counts[FileClassification.Greyscale] = this.GetFileCount(connection, FileClassification.Greyscale);
-                counts[FileClassification.NoLongerAvailable] = this.GetFileCount(connection, FileClassification.NoLongerAvailable);
-                counts[FileClassification.Video] = this.GetFileCount(connection, FileClassification.Video);
-            }
+                { FileClassification.Color, this.GetFileCount(FileClassification.Color) },
+                { FileClassification.Corrupt, this.GetFileCount(FileClassification.Corrupt) },
+                { FileClassification.Dark, this.GetFileCount(FileClassification.Dark) },
+                { FileClassification.Greyscale, this.GetFileCount(FileClassification.Greyscale) },
+                { FileClassification.NoLongerAvailable, this.GetFileCount(FileClassification.NoLongerAvailable) },
+                { FileClassification.Video, this.GetFileCount(FileClassification.Video) }
+            };
             return counts;
         }
 
@@ -467,18 +456,15 @@ namespace Carnassial.Data
             base.OnDatabaseCreated(templateDatabase);
 
             SQLiteTableSchema fileTableSchema = FileTable.CreateSchema(this.Controls);
-            using (SQLiteConnection connection = this.Database.CreateConnection())
+            using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
             {
-                using (SQLiteTransaction transaction = connection.BeginTransaction())
-                {
-                    fileTableSchema.CreateTableAndIndicies(connection, transaction);
-                    transaction.Commit();
-                }
-
-                // load in memory file table
-                this.Files.SetUserControls(this.Controls);
-                this.SelectFiles(connection, this.ImageSet.FileSelection);
+                fileTableSchema.CreateTableAndIndicies(this.Connection, transaction);
+                transaction.Commit();
             }
+
+            // load in memory file table
+            this.Files.SetUserControls(this.Controls);
+            this.SelectFiles(this.ImageSet.FileSelection);
         }
 
         protected override bool OnExistingDatabaseOpened(TemplateDatabase templateDatabase)
@@ -522,18 +508,18 @@ namespace Carnassial.Data
                 }
             }
 
-            using (SQLiteConnection connection = this.Database.CreateConnection())
+            // if there are no synchronization difficulties 
+            // - synchronize existing controls in the file database's Control table to those in the template's Control table
+            // - add any new columns needed to the file table
+            if (this.ControlSynchronizationIssues.Count == 0)
             {
-                // if there are no synchronization difficulties 
-                // - synchronize existing controls in the file database's Control table to those in the template's Control table
-                // - add any new columns needed to the file table
-                if (this.ControlSynchronizationIssues.Count == 0)
+                using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
                 {
-                    using (SQLiteTransaction transaction = connection.BeginTransaction())
+                    // synchronize any changes in existing controls
+                    List<SecondaryIndex> indicesToCreate = new List<SecondaryIndex>();
+                    List<SecondaryIndex> indicesToDrop = new List<SecondaryIndex>();
+                    using (ControlTransactionSequence synchronizeControls = ControlTransactionSequence.CreateUpdate(this, transaction))
                     {
-                        // synchronize any changes in existing controls
-                        List<SecondaryIndex> indicesToCreate = new List<SecondaryIndex>();
-                        List<SecondaryIndex> indicesToDrop = new List<SecondaryIndex>();
                         foreach (string dataLabel in fileDataLabels)
                         {
                             ControlRow thisControl = this.Controls[dataLabel];
@@ -543,8 +529,7 @@ namespace Carnassial.Data
 
                             if (thisControl.Synchronize(otherControl))
                             {
-                                ColumnTuplesWithID controlUpdate = thisControl.CreateUpdate();
-                                controlUpdate.Update(connection, transaction);
+                                synchronizeControls.AddControl(thisControl);
 
                                 if (thisIndex != otherIndex)
                                 {
@@ -560,20 +545,22 @@ namespace Carnassial.Data
                                 }
                             }
                         }
+                    }
 
-                        // update file table to 2.2.0.3 schema
-                        Version databaseVersion = this.Database.GetUserVersion(connection);
-                        if (databaseVersion < Constant.Release.V2_2_0_3)
-                        {
-                            this.UpdateFileTableTo2203Schema(connection, transaction);
-                        }
+                    // update file table to 2.2.0.3 schema
+                    Version databaseVersion = this.GetUserVersion();
+                    if (databaseVersion < Constant.Release.V2_2_0_3)
+                    {
+                        this.UpdateFileTableTo2203Schema(transaction);
+                    }
 
-                        // add any new controls to the file database's control and file tables
+                    // add any new controls to the file database's control and file tables
+                    using (ControlTransactionSequence insertControls = ControlTransactionSequence.CreateInsert(this, transaction))
+                    {
                         foreach (string dataLabelToAdd in templateDataLabels.Except(fileDataLabels))
                         {
                             ControlRow templateControl = templateDatabase.Controls[dataLabelToAdd];
-                            ColumnTuplesForInsert controlTableInsert = ControlRow.CreateInsert(templateControl);
-                            controlTableInsert.Insert(connection, transaction);
+                            insertControls.AddControl(templateControl);
 
                             foreach (ColumnDefinition columnToAdd in FileTable.CreateFileTableColumnDefinitions(templateControl))
                             {
@@ -582,7 +569,7 @@ namespace Carnassial.Data
                                 {
                                     throw new SQLiteException(SQLiteErrorCode.Constraint, String.Format("Internal consistency failure: could not add file table column for data label '{0}' because it could not be found in the template table's control definitions.", dataLabelToAdd));
                                 }
-                                this.Database.AddColumnToTable(connection, transaction, Constant.DatabaseTable.Files, columnNumber, columnToAdd);
+                                this.AddColumnToTable(transaction, Constant.DatabaseTable.Files, columnNumber, columnToAdd);
                             }
 
                             if (templateControl.IndexInFileTable)
@@ -590,41 +577,48 @@ namespace Carnassial.Data
                                 indicesToCreate.Add(SecondaryIndex.CreateFileTableIndex(templateControl));
                             }
                         }
-
-                        // update indices
-                        foreach (SecondaryIndex index in indicesToCreate)
-                        {
-                            index.Create(connection, transaction);
-                        }
-                        foreach (SecondaryIndex index in indicesToDrop)
-                        {
-                            index.Drop(connection, transaction);
-                        }
-
-                        transaction.Commit();
                     }
 
-                    // load the updated controls table
-                    this.GetControlsSortedByControlOrder(connection);
+                    // update indices
+                    foreach (SecondaryIndex index in indicesToCreate)
+                    {
+                        index.Create(this.Connection, transaction);
+                    }
+                    foreach (SecondaryIndex index in indicesToDrop)
+                    {
+                        index.Drop(this.Connection, transaction);
+                    }
+
+                    transaction.Commit();
                 }
+
+                // load the updated controls table
+                this.GetControlsSortedByControlOrder();
 
                 // load in memory file table
                 this.Files.SetUserControls(this.Controls);
-                this.SelectFiles(connection, this.ImageSet.FileSelection);
+                this.SelectFiles(this.ImageSet.FileSelection);
             }
 
             // return true if there are synchronization issues as the database was still opened successfully
             return true;
         }
 
-        public void RenameFile(string newFileName)
+        public void RenameDatabaseFile(string newFileName)
         {
-            if (File.Exists(Path.Combine(this.FolderPath, this.FileName)))
-            {
-                File.Move(Path.Combine(this.FolderPath, this.FileName), Path.Combine(this.FolderPath, newFileName));
-                this.FileName = newFileName;
-                this.Database = new SQLiteDatabase(Path.Combine(this.FolderPath, newFileName));
-            }
+            // force SQLite to release its handle on the database file
+            this.Connection.Dispose();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            // rename database file and update associated fields
+            string newFilePath = Path.Combine(this.FolderPath, newFileName);
+            File.Move(this.FilePath, newFilePath);
+            this.FileName = newFileName;
+            this.FilePath = newFilePath;
+
+            // reconnect to database file
+            this.OpenConnection(newFilePath);
         }
 
         /// <summary> 
@@ -637,25 +631,17 @@ namespace Carnassial.Data
         {
             // Stopwatch stopwatch = new Stopwatch();
             // stopwatch.Start();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                this.SelectFiles(connection, selection);
-            }
-            // stopwatch.Stop();
-            // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
-        }
-
-        private void SelectFiles(SQLiteConnection connection, FileSelection selection)
-        {
             Select select = this.CreateSelect(selection);
             if (this.OrderFilesByDateTime)
             {
                 select.OrderBy = Constant.FileColumn.DateTime;
             }
-            this.Database.LoadDataTableFromSelect(this.Files, connection, select);
+            this.LoadDataTableFromSelect(this.Files, select);
 
             // persist the current selection
             this.ImageSet.FileSelection = selection;
+            // stopwatch.Stop();
+            // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
         }
 
         public static bool TryCreateOrOpen(string filePath, TemplateDatabase templateDatabase, bool orderFilesByDate, LogicalOperator customSelectionTermCombiningOperator, out FileDatabase fileDatabase)
@@ -742,25 +728,25 @@ namespace Carnassial.Data
             }
         }
 
-        private void UpdateFileTableTo2203Schema(SQLiteConnection connection, SQLiteTransaction transaction)
+        private void UpdateFileTableTo2203Schema(SQLiteTransaction transaction)
         {
             // rename FileData table to Files
             #pragma warning disable CS0618 // Type or member is obsolete
-            this.Database.RenameTable(connection, transaction, Constant.DatabaseTable.FileData, Constant.DatabaseTable.Files);
+            this.RenameTable(transaction, Constant.DatabaseTable.FileData, Constant.DatabaseTable.Files);
             #pragma warning restore CS0618 // Type or member is obsolete
 
             // convert string ImageQuality column (2.2.0.2 schema) to integer Classification column (2.2.0.3 schema)
-            SQLiteTableSchema currentFileSchema = this.Database.GetTableSchema(connection, Constant.DatabaseTable.Files);
+            SQLiteTableSchema currentFileSchema = this.GetTableSchema(Constant.DatabaseTable.Files);
             #pragma warning disable CS0618 // Type or member is obsolete
             if (currentFileSchema.ColumnDefinitions.SingleOrDefault(column => String.Equals(column.Name, Constant.FileColumn.ImageQuality, StringComparison.Ordinal)) != null)
             {
-                this.Database.RenameColumn(connection, transaction, Constant.DatabaseTable.Files, Constant.FileColumn.ImageQuality, Constant.FileColumn.Classification, (ColumnDefinition newColumnDefinition) =>
+                this.RenameColumn(transaction, Constant.DatabaseTable.Files, Constant.FileColumn.ImageQuality, Constant.FileColumn.Classification, (ColumnDefinition newColumnDefinition) =>
                 {
                     newColumnDefinition.DefaultValue = ((int)default(FileClassification)).ToString();
                     newColumnDefinition.NotNull = true;
                 });
                 #pragma warning restore CS0618 // Type or member is obsolete
-                this.Database.ConvertNonFlagEnumStringColumnToInteger<FileClassification>(connection, transaction, Constant.DatabaseTable.Files, Constant.FileColumn.Classification);
+                this.ConvertNonFlagEnumStringColumnToInteger<FileClassification>(transaction, Constant.DatabaseTable.Files, Constant.FileColumn.Classification);
             }
 
             // convert flag controls from text to integer columns
@@ -769,11 +755,11 @@ namespace Carnassial.Data
                 ColumnDefinition currentColumn = currentFileSchema.ColumnDefinitions.Single(column => String.Equals(column.Name, control.DataLabel, StringComparison.Ordinal));
                 if (String.Equals(currentColumn.Type, Constant.SQLiteAffninity.Integer, StringComparison.OrdinalIgnoreCase) == false)
                 {
-                    this.Database.ConvertBooleanStringColumnToInteger(connection, transaction, Constant.DatabaseTable.Files, control.DataLabel);
+                    this.ConvertBooleanStringColumnToInteger(transaction, Constant.DatabaseTable.Files, control.DataLabel);
                 }
             }
 
-            this.Database.SetUserVersion(connection, transaction, Constant.Release.V2_2_0_3);
+            this.SetUserVersion(transaction, Constant.Release.V2_2_0_3);
         }
     }
 }

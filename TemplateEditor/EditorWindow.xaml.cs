@@ -26,11 +26,12 @@ using MessageBox = Carnassial.Dialog.MessageBox;
 
 namespace Carnassial.Editor
 {
-    public partial class EditorWindow : WindowWithSystemMenu
+    public partial class EditorWindow : WindowWithSystemMenu, IDisposable
     {
         // state tracking
         private bool controlDataGridBeingUpdatedByCode;
         private bool controlDataGridCellEditForcedByCode;
+        private bool disposed;
         private EditorUserRegistrySettings userSettings;
 
         // database where the controls and image set defaults are stored
@@ -57,6 +58,7 @@ namespace Carnassial.Editor
 
             this.controlDataGridBeingUpdatedByCode = false;
             this.controlDataGridCellEditForcedByCode = false;
+            this.disposed = false;
 
             this.MenuOptionsShowAllColumns_Click(this.MenuOptionsShowAllColumns, null);
 
@@ -386,6 +388,26 @@ namespace Carnassial.Editor
             this.RebuildControlPreview();
         }
 
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing && (this.templateDatabase != null))
+            {
+                this.templateDatabase.Dispose();
+            }
+            this.disposed = true;
+        }
+
         // raise a dialog box that lets the user edit the list of choices or note control default autocompletions
         private void EditWellKnownValues_Click(object sender, RoutedEventArgs e)
         {
@@ -473,10 +495,7 @@ namespace Carnassial.Editor
 
             // create a new template file if one does not exist or load a DB file if there is one.
             bool templateLoaded = TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out this.templateDatabase);
-            if (templateLoaded)
-            {
-            }
-            else
+            if (templateLoaded == false)
             {
                 // notify the user the template couldn't be loaded
                 MessageBox messageBox = new MessageBox("Carnassial could not load the template.", this);

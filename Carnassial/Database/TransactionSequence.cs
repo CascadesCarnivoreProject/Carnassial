@@ -6,32 +6,50 @@ namespace Carnassial.Database
     public class TransactionSequence : IDisposable
     {
         private bool disposed;
+        private bool ownsTransaction;
 
-        protected SQLiteConnection Connection { get; private set; }
-        protected int FilesInTransaction { get; set; }
+        protected SQLiteDatabase Database { get; private set; }
+        protected int RowsCommitted { get; private set; }
+        protected int RowsInCurrentTransaction { get; set; }
         protected SQLiteTransaction Transaction { get; set; }
 
-        public TransactionSequence(SQLiteConnection connection)
+        protected TransactionSequence(SQLiteDatabase database)
         {
-            this.Connection = connection;
+            this.Database = database;
             this.disposed = false;
-            this.FilesInTransaction = 0;
+            this.ownsTransaction = true;
+            this.RowsCommitted = 0;
+            this.RowsInCurrentTransaction = 0;
         }
 
-        public virtual void Commit()
+        protected TransactionSequence(SQLiteDatabase database, SQLiteTransaction transaction)
+            : this(database)
+        {
+            if (transaction == null)
+            {
+                this.Transaction = database.Connection.BeginTransaction();
+            }
+            else
+            {
+                this.ownsTransaction = false;
+                this.Transaction = transaction;
+            }
+        }
+
+        public void Commit()
         {
             this.Transaction.Commit();
+            this.RowsCommitted += this.RowsInCurrentTransaction;
+            this.RowsInCurrentTransaction = 0;
         }
 
         protected SQLiteCommand CommitAndBeginNew(SQLiteCommand command)
         {
-            this.Transaction.Commit();
-            this.FilesInTransaction = 0;
-
-            this.Transaction = this.Connection.BeginTransaction();
+            this.Commit();
+            this.Transaction = this.Database.Connection.BeginTransaction();
 
             SQLiteCommand previousCommand = command;
-            SQLiteCommand newCommand = new SQLiteCommand(previousCommand.CommandText, this.Connection, this.Transaction);
+            SQLiteCommand newCommand = new SQLiteCommand(previousCommand.CommandText, this.Database.Connection, this.Transaction);
             foreach (SQLiteParameter parameter in previousCommand.Parameters)
             {
                 newCommand.Parameters.Add(parameter);
@@ -55,8 +73,10 @@ namespace Carnassial.Database
 
             if (disposing)
             {
-                this.Transaction.Dispose();
-                this.Connection.Dispose();
+                if (this.ownsTransaction)
+                {
+                    this.Transaction.Dispose();
+                }
             }
 
             this.disposed = true;

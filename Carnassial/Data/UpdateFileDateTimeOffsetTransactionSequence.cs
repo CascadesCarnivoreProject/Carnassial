@@ -13,14 +13,14 @@ namespace Carnassial.Data
         private bool disposed;
         private SQLiteCommand updateFiles;
 
-        public UpdateFileDateTimeOffsetTransactionSequence(SQLiteConnection connection)
-            : base(connection)
+        public UpdateFileDateTimeOffsetTransactionSequence(SQLiteDatabase database)
+            : base(database)
         {
             this.disposed = false;
 
             string updateCommand = String.Format("UPDATE {0} SET {1}=@{1}, {2}=@{2} WHERE {3}=@{3}", Constant.DatabaseTable.Files, Constant.FileColumn.DateTime, Constant.FileColumn.UtcOffset, Constant.DatabaseColumn.ID);
-            this.Transaction = connection.BeginTransaction();
-            this.updateFiles = new SQLiteCommand(updateCommand, this.Connection, this.Transaction);
+            this.Transaction = database.Connection.BeginTransaction();
+            this.updateFiles = new SQLiteCommand(updateCommand, this.Database.Connection, this.Transaction);
             this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
             this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.FileColumn.DateTime));
             this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.FileColumn.UtcOffset));
@@ -51,8 +51,8 @@ namespace Carnassial.Data
                 file.AcceptChanges();
                 ++filesAdded;
 
-                ++this.FilesInTransaction;
-                if (this.FilesInTransaction >= Constant.Database.RowsPerTransaction)
+                ++this.RowsInCurrentTransaction;
+                if (this.RowsInCurrentTransaction >= Constant.Database.RowsPerTransaction)
                 {
                     this.updateFiles = this.CommitAndBeginNew(this.updateFiles);
                 }
@@ -95,8 +95,8 @@ namespace Carnassial.Data
                 this.updateFiles.ExecuteNonQuery();
                 file.AcceptChanges();
 
-                ++this.FilesInTransaction;
-                if (this.FilesInTransaction >= Constant.Database.RowsPerTransaction)
+                ++this.RowsInCurrentTransaction;
+                if (this.RowsInCurrentTransaction >= Constant.Database.RowsPerTransaction)
                 {
                     this.updateFiles = this.CommitAndBeginNew(this.updateFiles);
                 }

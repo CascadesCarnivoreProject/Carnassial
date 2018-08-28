@@ -43,7 +43,7 @@ namespace Carnassial.Database
                 List<string> whereClauses = new List<string>(this.Where.Count);
                 foreach (WhereClause clause in this.Where)
                 {
-                    if (numberOfClausesByColumn.TryGetValue(clause.Name, out int clausesEncounteredForThisColumn) == false)
+                    if (numberOfClausesByColumn.TryGetValue(clause.Column, out int clausesEncounteredForThisColumn) == false)
                     {
                         clausesEncounteredForThisColumn = 0;
                     }
@@ -57,16 +57,16 @@ namespace Carnassial.Database
                     }
                     if (valueIsNullOrEmpty && clause.Operator == Constant.SearchTermOperator.Equal)
                     {
-                        whereClauses.Add("(" + clause.Name + " IS NULL OR " + clause.Name + " = '')");
+                        whereClauses.Add("(" + clause.Column + " IS NULL OR " + clause.Column + " = '')");
                     }
                     else
                     {
-                        string parameterName = "@" + clause.Name + clausesEncounteredForThisColumn.ToString();
-                        whereClauses.Add(clause.Name + " " + clause.Operator + " " + parameterName);
+                        string parameterName = "@" + clause.Column + clausesEncounteredForThisColumn.ToString();
+                        whereClauses.Add(clause.Column + " " + clause.Operator + " " + parameterName);
                         whereParameters.Add(new SQLiteParameter(parameterName, clause.Value));
                     }
 
-                    numberOfClausesByColumn[clause.Name] = ++clausesEncounteredForThisColumn;
+                    numberOfClausesByColumn[clause.Column] = ++clausesEncounteredForThisColumn;
                 }
 
                 string whereCombiningTerm;

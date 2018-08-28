@@ -51,166 +51,174 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public async Task Cache()
         {
-            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
-            List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
-
-            using (ImageCache cache = new ImageCache(fileDatabase))
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName))
             {
-                Assert.IsNull(cache.Current);
-                Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
-                Assert.IsTrue(cache.CurrentRow == -1);
+                List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
 
-                Assert.IsTrue(cache.MoveNext());
-                Assert.IsTrue(cache.MoveNext());
-                Assert.IsTrue(cache.MovePrevious());
-                Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
-                Assert.IsTrue(cache.CurrentRow == 0);
-                this.VerifyCurrentImage(cache);
-
-                MoveToFileResult moveToFile = await cache.TryMoveToFileAsync(0, 0);
-                Assert.IsTrue(moveToFile.Succeeded);
-                Assert.IsFalse(moveToFile.NewFileToDisplay);
-                moveToFile = await cache.TryMoveToFileAsync(0, 1);
-                Assert.IsTrue(moveToFile.Succeeded);
-                Assert.IsFalse(moveToFile.NewFileToDisplay);
-                moveToFile = await cache.TryMoveToFileAsync(1, 0);
-                Assert.IsTrue(moveToFile.Succeeded);
-                Assert.IsTrue(moveToFile.NewFileToDisplay);
-                moveToFile = await cache.TryMoveToFileAsync(1, -1);
-                Assert.IsTrue(moveToFile.Succeeded);
-                Assert.IsFalse(moveToFile.NewFileToDisplay);
-                this.VerifyCurrentImage(cache);
-
-                Assert.IsTrue(cache.TryInvalidate(1));
-                moveToFile = await cache.TryMoveToFileAsync(0, 0);
-                Assert.IsTrue(moveToFile.Succeeded);
-                Assert.IsTrue(moveToFile.NewFileToDisplay);
-                moveToFile = await cache.TryMoveToFileAsync(1, 0);
-                Assert.IsTrue(moveToFile.Succeeded);
-                Assert.IsTrue(moveToFile.NewFileToDisplay);
-                this.VerifyCurrentImage(cache);
-
-                Assert.IsTrue(cache.TryInvalidate(2));
-                moveToFile = await cache.TryMoveToFileAsync(1, 1);
-                Assert.IsTrue(moveToFile.Succeeded);
-                Assert.IsTrue(moveToFile.NewFileToDisplay);
-                moveToFile = await cache.TryMoveToFileAsync(1, 0);
-                Assert.IsTrue(moveToFile.Succeeded);
-                Assert.IsFalse(moveToFile.NewFileToDisplay);
-                moveToFile = await cache.TryMoveToFileAsync(0, -1);
-                Assert.IsTrue(moveToFile.Succeeded);
-                Assert.IsTrue(moveToFile.NewFileToDisplay);
-                this.VerifyCurrentImage(cache);
-
-                moveToFile = await cache.TryMoveToFileAsync(fileExpectations.Count, 0);
-                Assert.IsFalse(moveToFile.Succeeded);
-                moveToFile = await cache.TryMoveToFileAsync(fileExpectations.Count, 0);
-                Assert.IsFalse(moveToFile.Succeeded);
-
-                moveToFile = await cache.TryMoveToFileAsync(0, 0);
-                Assert.IsTrue(moveToFile.Succeeded);
-                moveToFile = await cache.TryMoveToFileAsync(1, 0);
-                Assert.IsTrue(moveToFile.Succeeded);
-                moveToFile = await cache.TryMoveToFileAsync(fileExpectations.Count, 0);
-                Assert.IsFalse(moveToFile.Succeeded);
-
-                for (int step = 0; step < 4; ++step)
+                using (ImageCache cache = new ImageCache(fileDatabase))
                 {
-                    cache.MoveToNextStateInCombinedDifferenceCycle();
-                    Assert.IsTrue((cache.CurrentDifferenceState == ImageDifference.Combined) ||
-                                  (cache.CurrentDifferenceState == ImageDifference.Unaltered));
+                    Assert.IsNull(cache.Current);
+                    Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
+                    Assert.IsTrue(cache.CurrentRow == -1);
 
-                    ImageDifferenceResult combinedDifferenceResult = await cache.TryCalculateCombinedDifferenceAsync(Constant.Images.DifferenceThresholdDefault - 2);
-                    await this.CheckDifferenceResult(combinedDifferenceResult, cache, fileDatabase);
+                    Assert.IsTrue(cache.MoveNext());
+                    Assert.IsTrue(cache.MoveNext());
+                    Assert.IsTrue(cache.MovePrevious());
+                    Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
+                    Assert.IsTrue(cache.CurrentRow == 0);
+                    this.VerifyCurrentImage(cache);
 
-                    CachedImage differenceImage = cache.GetCurrentImage();
-                    if (combinedDifferenceResult == ImageDifferenceResult.Success)
+                    MoveToFileResult moveToFile = await cache.TryMoveToFileAsync(0, 0);
+                    Assert.IsTrue(moveToFile.Succeeded);
+                    Assert.IsFalse(moveToFile.NewFileToDisplay);
+                    moveToFile = await cache.TryMoveToFileAsync(0, 1);
+                    Assert.IsTrue(moveToFile.Succeeded);
+                    Assert.IsFalse(moveToFile.NewFileToDisplay);
+                    moveToFile = await cache.TryMoveToFileAsync(1, 0);
+                    Assert.IsTrue(moveToFile.Succeeded);
+                    Assert.IsTrue(moveToFile.NewFileToDisplay);
+                    moveToFile = await cache.TryMoveToFileAsync(1, -1);
+                    Assert.IsTrue(moveToFile.Succeeded);
+                    Assert.IsFalse(moveToFile.NewFileToDisplay);
+                    this.VerifyCurrentImage(cache);
+
+                    Assert.IsTrue(cache.TryInvalidate(1));
+                    moveToFile = await cache.TryMoveToFileAsync(0, 0);
+                    Assert.IsTrue(moveToFile.Succeeded);
+                    Assert.IsTrue(moveToFile.NewFileToDisplay);
+                    moveToFile = await cache.TryMoveToFileAsync(1, 0);
+                    Assert.IsTrue(moveToFile.Succeeded);
+                    Assert.IsTrue(moveToFile.NewFileToDisplay);
+                    this.VerifyCurrentImage(cache);
+
+                    Assert.IsTrue(cache.TryInvalidate(2));
+                    moveToFile = await cache.TryMoveToFileAsync(1, 1);
+                    Assert.IsTrue(moveToFile.Succeeded);
+                    Assert.IsTrue(moveToFile.NewFileToDisplay);
+                    moveToFile = await cache.TryMoveToFileAsync(1, 0);
+                    Assert.IsTrue(moveToFile.Succeeded);
+                    Assert.IsFalse(moveToFile.NewFileToDisplay);
+                    moveToFile = await cache.TryMoveToFileAsync(0, -1);
+                    Assert.IsTrue(moveToFile.Succeeded);
+                    Assert.IsTrue(moveToFile.NewFileToDisplay);
+                    this.VerifyCurrentImage(cache);
+
+                    moveToFile = await cache.TryMoveToFileAsync(fileExpectations.Count, 0);
+                    Assert.IsFalse(moveToFile.Succeeded);
+                    moveToFile = await cache.TryMoveToFileAsync(fileExpectations.Count, 0);
+                    Assert.IsFalse(moveToFile.Succeeded);
+
+                    moveToFile = await cache.TryMoveToFileAsync(0, 0);
+                    Assert.IsTrue(moveToFile.Succeeded);
+                    moveToFile = await cache.TryMoveToFileAsync(1, 0);
+                    Assert.IsTrue(moveToFile.Succeeded);
+                    moveToFile = await cache.TryMoveToFileAsync(fileExpectations.Count, 0);
+                    Assert.IsFalse(moveToFile.Succeeded);
+
+                    for (int step = 0; step < 4; ++step)
                     {
-                        Assert.IsNotNull(differenceImage.Image);
+                        cache.MoveToNextStateInCombinedDifferenceCycle();
+                        Assert.IsTrue((cache.CurrentDifferenceState == ImageDifference.Combined) ||
+                                      (cache.CurrentDifferenceState == ImageDifference.Unaltered));
+
+                        ImageDifferenceResult combinedDifferenceResult = await cache.TryCalculateCombinedDifferenceAsync(Constant.Images.DifferenceThresholdDefault - 2);
+                        await this.CheckDifferenceResult(combinedDifferenceResult, cache, fileDatabase);
+
+                        CachedImage differenceImage = cache.GetCurrentImage();
+                        if (combinedDifferenceResult == ImageDifferenceResult.Success)
+                        {
+                            Assert.IsNotNull(differenceImage.Image);
+                        }
                     }
-                }
 
-                Assert.IsTrue(cache.TryMoveToFile(0));
-                for (int step = 0; step < 7; ++step)
-                {
-                    cache.MoveToNextStateInPreviousNextDifferenceCycle();
-                    Assert.IsTrue((cache.CurrentDifferenceState == ImageDifference.Next) ||
-                                  (cache.CurrentDifferenceState == ImageDifference.Previous) ||
-                                  (cache.CurrentDifferenceState == ImageDifference.Unaltered));
-
-                    ImageDifferenceResult differenceResult = await cache.TryCalculateDifferenceAsync(Constant.Images.DifferenceThresholdDefault + 2);
-                    await this.CheckDifferenceResult(differenceResult, cache, fileDatabase);
-
-                    CachedImage differenceImage = cache.GetCurrentImage();
-                    if (differenceResult == ImageDifferenceResult.Success)
+                    Assert.IsTrue(cache.TryMoveToFile(0));
+                    for (int step = 0; step < 7; ++step)
                     {
-                        Assert.IsNotNull(differenceImage.Image);
-                    }
-                }
+                        cache.MoveToNextStateInPreviousNextDifferenceCycle();
+                        Assert.IsTrue((cache.CurrentDifferenceState == ImageDifference.Next) ||
+                                      (cache.CurrentDifferenceState == ImageDifference.Previous) ||
+                                      (cache.CurrentDifferenceState == ImageDifference.Unaltered));
 
-                cache.Reset();
-                Assert.IsNull(cache.Current);
-                Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
-                Assert.IsTrue(cache.CurrentRow == Constant.Database.InvalidRow);
+                        ImageDifferenceResult differenceResult = await cache.TryCalculateDifferenceAsync(Constant.Images.DifferenceThresholdDefault + 2);
+                        await this.CheckDifferenceResult(differenceResult, cache, fileDatabase);
+
+                        CachedImage differenceImage = cache.GetCurrentImage();
+                        if (differenceResult == ImageDifferenceResult.Success)
+                        {
+                            Assert.IsNotNull(differenceImage.Image);
+                        }
+                    }
+
+                    cache.Reset();
+                    Assert.IsNull(cache.Current);
+                    Assert.IsTrue(cache.CurrentDifferenceState == ImageDifference.Unaltered);
+                    Assert.IsTrue(cache.CurrentRow == Constant.Database.InvalidRow);
+                }
             }
         }
 
         [TestMethod]
         public async Task CorruptFileAsync()
         {
-            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultFileDatabaseFileName);
-            TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-            ImageRow corruptFile = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.CorruptFieldScan, out MetadataReadResult corruptMetadataRead);
-            using (CachedImage corruptImage = await corruptFile.TryLoadImageAsync(fileDatabase.FolderPath))
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultFileDatabaseFileName))
             {
-                Assert.IsTrue(corruptImage.ImageNotDecodable == false);
-                Assert.IsTrue(corruptImage.FileNoLongerAvailable == false);
-                Assert.IsTrue(corruptImage.Image.DecodeError);
+                TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
+                ImageRow corruptFile = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.CorruptFieldScan, out MetadataReadResult corruptMetadataRead);
+                using (CachedImage corruptImage = await corruptFile.TryLoadImageAsync(fileDatabase.FolderPath))
+                {
+                    Assert.IsTrue(corruptImage.ImageNotDecodable == false);
+                    Assert.IsTrue(corruptImage.FileNoLongerAvailable == false);
+                    Assert.IsTrue(corruptImage.Image.DecodeError);
+                }
             }
         }
 
         [TestMethod]
         public void ExifBushnell()
         {
-            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName);
-            IReadOnlyCollection<MetadataDirectory> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.InfraredMarten);
-            ExifIfd0Directory ifd0 = metadata.OfType<ExifIfd0Directory>().Single();
-            ExifSubIfdDirectory subIfd = metadata.OfType<ExifSubIfdDirectory>().Single();
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName))
+            {
+                IReadOnlyCollection<MetadataDirectory> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.InfraredMarten);
+                ExifIfd0Directory ifd0 = metadata.OfType<ExifIfd0Directory>().Single();
+                ExifSubIfdDirectory subIfd = metadata.OfType<ExifSubIfdDirectory>().Single();
 
-            Assert.IsTrue(DateTime.TryParseExact(ifd0.GetDescription(ExifIfd0Directory.TagDateTime), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTime));
-            Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeDigitized), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeDigitized));
-            Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(ifd0.GetDescription(ExifSubIfdDirectory.TagSoftware)));
+                Assert.IsTrue(DateTime.TryParseExact(ifd0.GetDescription(ExifIfd0Directory.TagDateTime), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTime));
+                Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeDigitized), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeDigitized));
+                Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(ifd0.GetDescription(ExifSubIfdDirectory.TagSoftware)));
+            }
         }
 
         [TestMethod]
         public void ExifReconyxHyperfire()
         {
-            FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName);
-            IReadOnlyCollection<MetadataDirectory> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.DaylightMartenPair);
-            ExifIfd0Directory ifd0 = metadata.OfType<ExifIfd0Directory>().Single();
-            ExifSubIfdDirectory subIfd = metadata.OfType<ExifSubIfdDirectory>().Single();
-            ReconyxHyperFireMakernoteDirectory hyperfire = metadata.OfType<ReconyxHyperFireMakernoteDirectory>().Single();
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName))
+            {
+                IReadOnlyCollection<MetadataDirectory> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.DaylightMartenPair);
+                ExifIfd0Directory ifd0 = metadata.OfType<ExifIfd0Directory>().Single();
+                ExifSubIfdDirectory subIfd = metadata.OfType<ExifSubIfdDirectory>().Single();
+                ReconyxHyperFireMakernoteDirectory hyperfire = metadata.OfType<ReconyxHyperFireMakernoteDirectory>().Single();
 
-            Assert.IsFalse(String.IsNullOrWhiteSpace(subIfd.GetDescription(ExifSubIfdDirectory.TagExposureTime)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(subIfd.GetDescription(ExifSubIfdDirectory.TagExposureTime)));
 
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagAmbientTemperature)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagAmbientTemperatureFahrenheit)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagBatteryVoltage)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagBrightness)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagContrast)));
-            Assert.IsTrue(DateTime.TryParseExact(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagEventNumber)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagFirmwareVersion)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagInfraredIlluminator)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagMakernoteVersion)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagMoonPhase)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSaturation)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSequence)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSerialNumber)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSharpness)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagTriggerMode)));
-            Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagUserLabel)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagAmbientTemperature)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagAmbientTemperatureFahrenheit)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagBatteryVoltage)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagBrightness)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagContrast)));
+                Assert.IsTrue(DateTime.TryParseExact(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagEventNumber)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagFirmwareVersion)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagInfraredIlluminator)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagMakernoteVersion)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagMoonPhase)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSaturation)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSequence)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSerialNumber)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSharpness)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagTriggerMode)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagUserLabel)));
+            }
         }
 
         [TestMethod]
@@ -224,27 +232,29 @@ namespace Carnassial.UnitTests
                 new FileExpectations(TestConstant.FileExpectation.InfraredMarten)
             };
 
-            TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName);
-            FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName);
+            using (TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName))
             {
-                foreach (FileExpectations fileExpectation in fileExpectations)
+                using (FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName))
                 {
-                    // load the image
-                    FileInfo fileInfo = new FileInfo(Path.Combine(fileExpectation.RelativePath, fileExpectation.FileName));
-                    ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, fileExpectation.RelativePath);
-                    using (CachedImage image = await file.TryLoadImageAsync(this.WorkingDirectory))
+                    foreach (FileExpectations fileExpectation in fileExpectations)
                     {
-                        double luminosity = image.Image.GetLuminosityAndColoration(0, out double coloration);
-                        FileClassification classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
-                        if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
+                        // load the image
+                        FileInfo fileInfo = new FileInfo(Path.Combine(fileExpectation.RelativePath, fileExpectation.FileName));
+                        ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, fileExpectation.RelativePath);
+                        using (CachedImage image = await file.TryLoadImageAsync(this.WorkingDirectory))
                         {
-                            Assert.Fail("{0}: Expected luminosity to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Luminosity, luminosity);
+                            double luminosity = image.Image.GetLuminosityAndColoration(0, out double coloration);
+                            FileClassification classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
+                            if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
+                            {
+                                Assert.Fail("{0}: Expected luminosity to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Luminosity, luminosity);
+                            }
+                            if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
+                            {
+                                Assert.Fail("{0}: Expected coloration to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Coloration, coloration);
+                            }
+                            Assert.IsTrue(classification == fileExpectation.Classification, "{0}: Expected classification {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Classification, classification);
                         }
-                        if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
-                        {
-                            Assert.Fail("{0}: Expected coloration to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Coloration, coloration);
-                        }
-                        Assert.IsTrue(classification == fileExpectation.Classification, "{0}: Expected classification {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Classification, classification);
                     }
                 }
             }

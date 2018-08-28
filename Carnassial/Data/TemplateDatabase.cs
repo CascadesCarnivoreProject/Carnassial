@@ -12,16 +12,14 @@ namespace Carnassial.Data
     /// <summary>
     /// Carnassial template database
     /// </summary>
-    public class TemplateDatabase
+    public class TemplateDatabase : SQLiteDatabase
     {
         private DateTime mostRecentBackup;
 
         public ControlTable Controls { get; private set; }
 
-        protected SQLiteDatabase Database { get; set; }
-
-        /// <summary>Gets the path of the database on disk.</summary>
-        public string FilePath { get; private set; }
+        /// <summary>Gets or sets the path of the database on disk.</summary>
+        public string FilePath { get; protected set; }
 
         /// <summary>Gets the complete path to the folder containing the database.</summary>
         public string FolderPath { get; private set; }
@@ -29,12 +27,11 @@ namespace Carnassial.Data
         public ImageSetRow ImageSet { get; private set; }
 
         protected TemplateDatabase(string filePath)
+            : base(filePath)
         {
             this.mostRecentBackup = FileBackup.GetMostRecentBackup(filePath);
 
             this.Controls = new ControlTable();
-            // open or create database
-            this.Database = new SQLiteDatabase(filePath);
             this.FilePath = filePath;
             this.FolderPath = Path.GetDirectoryName(filePath);
         }
@@ -45,14 +42,14 @@ namespace Carnassial.Data
 
             // create the row for the new control in the data table
             ControlRow newControl = new ControlRow(controlType, this.GetNextUniqueDataLabel(controlType.ToString()), this.Controls.RowCount + 1);
-            ColumnTuplesForInsert newControlInsert = ControlRow.CreateInsert(newControl);
-            using (SQLiteConnection connection = this.Database.CreateConnection())
+            using (ControlTransactionSequence insertControl = ControlTransactionSequence.CreateInsert(this))
             {
-                newControlInsert.Insert(connection);
-
-                // refresh in memory table in order to get the new control's ID
-                this.GetControlsSortedByControlOrder(connection);
+                insertControl.AddControl(newControl);
+                insertControl.Commit();
             }
+
+            // refresh in memory table in order to get the new control's ID
+            this.GetControlsSortedByControlOrder();
             return this.Controls[this.Controls.RowCount - 1];
         }
 
@@ -64,18 +61,24 @@ namespace Carnassial.Data
                 return;
             }
 
-            FileBackup.TryCreateBackup(this.FilePath);
-            this.mostRecentBackup = DateTime.UtcNow;
+            if (FileBackup.TryCreateBackup(this.FilePath))
+            {
+                this.mostRecentBackup = DateTime.UtcNow;
+            }
+            else
+            {
+                throw new IOException("Could not back up '" + this.FilePath + "'.");
+            }
         }
 
-        protected void GetControlsSortedByControlOrder(SQLiteConnection connection)
+        protected void GetControlsSortedByControlOrder()
         {
             Select select = new Select(Constant.DatabaseTable.Controls)
             {
                 OrderBy = Constant.ControlColumn.ControlOrder
             };
 
-            this.Database.LoadDataTableFromSelect(this.Controls, connection, select);
+            this.LoadDataTableFromSelect(this.Controls, select);
         }
 
         public string GetNextUniqueDataLabel(string dataLabelPrefix)
@@ -99,10 +102,10 @@ namespace Carnassial.Data
             return nextDataLabel;
         }
 
-        private void LoadImageSet(SQLiteConnection connection)
+        private void LoadImageSet()
         {
             ImageSetTable imageSetTable = new ImageSetTable();
-            this.Database.LoadDataTableFromSelect(imageSetTable, connection, new Select(Constant.DatabaseTable.ImageSet));
+            this.LoadDataTableFromSelect(imageSetTable, new Select(Constant.DatabaseTable.ImageSet));
             this.ImageSet = imageSetTable[0];
         }
 
@@ -120,44 +123,38 @@ namespace Carnassial.Data
             long removedSpreadsheetOrder = controlToRemove.SpreadsheetOrder;
 
             // regenerate counter and spreadsheet orders; if they're greater than the one removed, decrement
-            ColumnTuplesWithID controlOrderUpdates = new ColumnTuplesWithID(Constant.DatabaseTable.Controls, Constant.ControlColumn.ControlOrder);
-            ColumnTuplesWithID spreadsheetOrderUpdates = new ColumnTuplesWithID(Constant.DatabaseTable.Controls, Constant.ControlColumn.SpreadsheetOrder);
             foreach (ControlRow control in this.Controls)
             {
                 if (control.ControlOrder > removedControlOrder)
                 {
                     --control.ControlOrder;
-                    controlOrderUpdates.Add(control.ID, control.ControlOrder);
                 }
 
                 if (control.SpreadsheetOrder > removedSpreadsheetOrder)
                 {
                     --control.SpreadsheetOrder;
-                    spreadsheetOrderUpdates.Add(control.ID, control.SpreadsheetOrder);
                 }
             }
 
             // drop the control from the database and data table
-            using (SQLiteConnection connection = this.Database.CreateConnection())
+            using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
             {
-                using (SQLiteTransaction transaction = connection.BeginTransaction())
+                using (SQLiteCommand removeControl = new SQLiteCommand("DELETE FROM " + Constant.DatabaseTable.Controls + Constant.Sql.Where + Constant.DatabaseColumn.ID + " = " + controlToRemove.ID, this.Connection))
                 {
-                    using (SQLiteCommand removeControl = new SQLiteCommand("DELETE FROM " + Constant.DatabaseTable.Controls + Constant.Sql.Where + Constant.DatabaseColumn.ID + " = " + controlToRemove.ID, connection))
-                    {
-                        removeControl.ExecuteNonQuery();
-                    }
-
-                    controlOrderUpdates.Update(connection, transaction);
-                    spreadsheetOrderUpdates.Update(connection, transaction);
-
-                    transaction.Commit();
+                    removeControl.ExecuteNonQuery();
+                }
+                using (ControlTransactionSequence remainingControlUpdate = ControlTransactionSequence.CreateUpdate(this, transaction))
+                {
+                    remainingControlUpdate.AddControls(this.Controls);
                 }
 
-                // refresh in memory table
-                // Using Remove() rather than rebuilding the table would be desirable but doing so changes row ordering and requires a resort.
-                // This path is seldom used and isn't performance sensitive so simplicity is favored instead.
-                this.GetControlsSortedByControlOrder(connection);
+                transaction.Commit();
             }
+
+            // refresh in memory table
+            // Using Remove() rather than rebuilding the table would be desirable but doing so changes row ordering and requires a resort.
+            // This path is seldom used and isn't performance sensitive so simplicity is favored instead.
+            this.GetControlsSortedByControlOrder();
         }
 
         public static bool TryCreateOrOpen(string filePath, out TemplateDatabase templateDatabase)
@@ -198,11 +195,8 @@ namespace Carnassial.Data
             }
 
             this.CreateBackupIfNeeded();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                this.SyncControlToDatabase(connection, control);
-                return true;
-            }
+            this.SyncControlToDatabase(control);
+            return true;
         }
 
         public bool TrySyncImageSetToDatabase()
@@ -214,24 +208,15 @@ namespace Carnassial.Data
 
             // don't trigger backups on image set updates as none of the properties in the image set table is particularly important
             // For example, this avoids creating a backup when a custom selection is reverted to all when Carnassial exits.
-            ColumnTuplesWithID imageSetUpdate = this.ImageSet.CreateUpdate();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
+            using (ImageSetTransactionSequence imageSetUpdate = ImageSetTransactionSequence.CreateUpdate(this))
             {
-                imageSetUpdate.Update(connection);
+                imageSetUpdate.AddImageSet(this.ImageSet);
+                imageSetUpdate.Commit();
             }
-            this.ImageSet.AcceptChanges();
             return true;
         }
 
         public void UpdateDisplayOrder(string orderColumnName, Dictionary<string, int> newOrderByDataLabel)
-        {
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                this.UpdateDisplayOrder(connection, orderColumnName, newOrderByDataLabel);
-            }
-        }
-
-        private void UpdateDisplayOrder(SQLiteConnection connection, string orderColumnName, Dictionary<string, int> newOrderByDataLabel)
         {
             // argument validation
             if (orderColumnName != Constant.ControlColumn.ControlOrder && orderColumnName != Constant.ControlColumn.SpreadsheetOrder)
@@ -261,7 +246,6 @@ namespace Carnassial.Data
             }
 
             // update in memory table with new order
-            ColumnTuplesWithID controlsToUpdate = new ColumnTuplesWithID(Constant.DatabaseTable.Controls, orderColumnName);
             foreach (ControlRow control in this.Controls)
             {
                 string dataLabel = control.DataLabel;
@@ -277,20 +261,19 @@ namespace Carnassial.Data
                     default:
                         throw new NotSupportedException(String.Format("Unhandled column '{0}'.", orderColumnName));
                 }
-                controlsToUpdate.Add(control.ID, newOrder);
             }
 
             // sync new order to database
-            using (SQLiteTransaction transaction = connection.BeginTransaction())
+            using (ControlTransactionSequence controlUpdate = ControlTransactionSequence.CreateUpdate(this))
             {
-                controlsToUpdate.Update(connection, transaction);
-                transaction.Commit();
+                controlUpdate.AddControls(this.Controls);
+                controlUpdate.Commit();
             }
 
             // if the control order changed rebuild the in memory table to sort it in the new order
             if (orderColumnName == Constant.ControlColumn.ControlOrder)
             {
-                this.GetControlsSortedByControlOrder(connection);
+                this.GetControlsSortedByControlOrder();
             }
         }
 
@@ -298,47 +281,57 @@ namespace Carnassial.Data
         {
             SQLiteTableSchema controlTableSchema = ControlTable.CreateSchema();
             SQLiteTableSchema imageSetTableSchema = ImageSetTable.CreateSchema();
-            using (SQLiteConnection connection = this.Database.CreateConnection())
+            // set pragmas which don't have persistent effect when issued from within a transaction
+            this.SetAutoVacuum(SQLiteAutoVacuum.Incremental);
+
+            using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
             {
-                using (SQLiteTransaction transaction = connection.BeginTransaction())
+                // set pragmas available within a transaction
+                this.SetUserVersion(transaction, Constant.Release.V2_2_0_3);
+
+                // create empty control table and image set tables
+                controlTableSchema.CreateTableAndIndicies(this.Connection, transaction);
+                imageSetTableSchema.CreateTableAndIndicies(this.Connection, transaction);
+
+                if (other == null)
                 {
-                    controlTableSchema.CreateTableAndIndicies(connection, transaction);
-
-                    imageSetTableSchema.CreateTableAndIndicies(connection, transaction);
-                    ColumnTuplesForInsert imageSetRow = ImageSetRow.CreateInsert(Path.GetFileName(this.FolderPath));
-                    imageSetRow.Insert(connection, transaction);
-
-                    transaction.Commit();
-                }
-
-                // if an existing template database was passed, clone its contents into this database and populate the in memory table
-                if (other != null)
-                {
-                    using (SQLiteTransaction transaction = connection.BeginTransaction())
+                    // populate image set table
+                    using (ImageSetTransactionSequence insertImageSet = ImageSetTransactionSequence.CreateInsert(this, transaction))
                     {
-                        ColumnTuplesForInsert controlsToAdd = ControlRow.CreateInsert(other.Controls);
-                        controlsToAdd.Insert(connection, transaction);
-
-                        ColumnTuplesWithID imageSet = other.ImageSet.CreateUpdate();
-                        imageSet.Update(connection, transaction);
-
-                        Version version;
-                        using (SQLiteConnection otherConnection = other.Database.CreateConnection())
+                        insertImageSet.AddImageSet(new ImageSetRow()
                         {
-                            version = other.Database.GetUserVersion(otherConnection);
-                        }
-                        this.Database.SetUserVersion(connection, transaction, version);
-
-                        transaction.Commit();
+                            InitialFolderName = Path.GetFileName(this.FolderPath),
+                            Log = Constant.Database.ImageSetDefaultLog,
+                            TimeZone = TimeZoneInfo.Local.Id
+                        });
+                    }
+                }
+                else
+                {
+                    Version otherVersion = other.GetUserVersion();
+                    if (otherVersion != Constant.Release.V2_2_0_3)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(other), String.Format("Unexpected database version {0}.", otherVersion));
                     }
 
-                    this.GetControlsSortedByControlOrder(connection);
-                    this.LoadImageSet(connection);
-                    return;
+                    // if an existing template database was passed, clone its contents into this database
+                    using (ControlTransactionSequence insertControls = ControlTransactionSequence.CreateInsert(this, transaction))
+                    {
+                        insertControls.AddControls(other.Controls);
+                    }
+                    using (ImageSetTransactionSequence insertImageSet = ImageSetTransactionSequence.CreateInsert(this, transaction))
+                    {
+                        insertImageSet.AddImageSet(other.ImageSet);
+                    }
                 }
 
+                transaction.Commit();
+            }
+
+            if (other == null)
+            {
                 // no existing table to clone, so add standard controls to template table
-                this.GetControlsSortedByControlOrder(connection);
+                this.GetControlsSortedByControlOrder();
                 int controlOrder = 0; // one based count incremented for every new control
 
                 // standard controls
@@ -376,67 +369,52 @@ namespace Carnassial.Data
                 };
 
                 // insert standard controls into the controls table
-                ColumnTuplesForInsert controls = ControlRow.CreateInsert(new List<ControlRow>()
+                using (ControlTransactionSequence transaction = ControlTransactionSequence.CreateInsert(this))
                 {
-                    file,
-                    relativePath,
-                    dateTime,
-                    utcOffset,
-                    classification,
-                    deleteFlag
-                });
-
-                using (SQLiteTransaction transaction = connection.BeginTransaction())
-                {
-                    controls.Insert(connection, transaction);
-                    this.Database.SetUserVersion(connection, transaction, Constant.Release.V2_2_0_3);
-
+                    transaction.AddControls(file, relativePath, dateTime, utcOffset, classification, deleteFlag);
                     transaction.Commit();
                 }
-
-                // reload controls table to get updated IDs
-                this.GetControlsSortedByControlOrder(connection);
-                // ensure image set is available
-                this.LoadImageSet(connection);
             }
+
+            // reload controls table to get updated IDs
+            this.GetControlsSortedByControlOrder();
+            // ensure image set is available
+            this.LoadImageSet();
         }
 
         protected virtual bool OnExistingDatabaseOpened(TemplateDatabase other)
         {
-            using (SQLiteConnection connection = this.Database.CreateConnection())
+            List<string> tables = this.GetTableNames();
+            if (tables.Contains(Constant.DatabaseTable.Controls, StringComparer.Ordinal) == false)
             {
-                List<string> tables = this.Database.GetTableNames(connection);
-                if (tables.Contains(Constant.DatabaseTable.Controls, StringComparer.Ordinal) == false)
-                {
-                    // if no table named Controls, then this is a database from Timelapse rather than Carnassial
-                    return false;
-                }
-
-                if (this.Database.GetUserVersion(connection) < Constant.Release.V2_2_0_3)
-                {
-                    this.UpdateControlTableTo2203Schema(connection);
-                    using (SQLiteTransaction transaction = connection.BeginTransaction())
-                    {
-                        this.UpdateImageSetTo2203Schema(connection, transaction, tables);
-
-                        if (other == null)
-                        {
-                            // if this is a template database being opened go ahead and update its version
-                            // If it's a file database, don't update the database as the caller also needs to perform updates to complete
-                            // version migration.
-                            this.Database.SetUserVersion(connection, transaction, Constant.Release.V2_2_0_3);
-                        }
-
-                        transaction.Commit();
-                    }
-                }
-                else
-                {
-                    this.GetControlsSortedByControlOrder(connection);
-                }
-
-                this.LoadImageSet(connection);
+                // if no table named Controls, then this is a database from Timelapse rather than Carnassial
+                return false;
             }
+
+            if (this.GetUserVersion() < Constant.Release.V2_2_0_3)
+            {
+                this.UpdateControlTableTo2203Schema();
+                using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
+                {
+                    this.UpdateImageSetTo2203Schema(transaction, tables);
+
+                    if (other == null)
+                    {
+                        // if this is a template database being opened go ahead and update its version
+                        // If it's a file database, don't update the database as the caller also needs to perform updates to complete
+                        // version migration.
+                        this.SetUserVersion(transaction, Constant.Release.V2_2_0_3);
+                    }
+
+                    transaction.Commit();
+                }
+            }
+            else
+            {
+                this.GetControlsSortedByControlOrder();
+            }
+
+            this.LoadImageSet();
             return true;
         }
 
@@ -477,24 +455,23 @@ namespace Carnassial.Data
                 }
             }
 
-            using (SQLiteConnection connection = this.Database.CreateConnection())
-            {
-                this.UpdateDisplayOrder(connection, Constant.ControlColumn.ControlOrder, newControlOrderByDataLabel);
-                this.UpdateDisplayOrder(connection, Constant.ControlColumn.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
-                this.GetControlsSortedByControlOrder(connection);
-            }
+            this.UpdateDisplayOrder(Constant.ControlColumn.ControlOrder, newControlOrderByDataLabel);
+            this.UpdateDisplayOrder(Constant.ControlColumn.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
+            this.GetControlsSortedByControlOrder();
         }
 
-        private void SyncControlToDatabase(SQLiteConnection connection, ControlRow control)
+        private void SyncControlToDatabase(ControlRow control)
         {
             Debug.Assert(control.HasChanges, "Unexpected call to sync control without changes.");
 
-            ColumnTuplesWithID controlUpdate = control.CreateUpdate();
-            controlUpdate.Update(connection);
-            control.AcceptChanges();
+            using (ControlTransactionSequence updateControl = ControlTransactionSequence.CreateUpdate(this))
+            {
+                updateControl.AddControl(control);
+                updateControl.Commit();
+            }
         }
 
-        private void UpdateControlTableTo2203Schema(SQLiteConnection connection)
+        private void UpdateControlTableTo2203Schema()
         {
             // if this is a .tdb from Carnassial 2.2.0.2 or earlier
             // - insert AnalysisLabel column in controls table
@@ -505,7 +482,7 @@ namespace Carnassial.Data
             bool convertTypeToInteger = false;
             bool renameList = false;
             bool renameWidth = false;
-            SQLiteTableSchema currentSchema = this.Database.GetTableSchema(connection, Constant.DatabaseTable.Controls);
+            SQLiteTableSchema currentSchema = this.GetTableSchema(Constant.DatabaseTable.Controls);
             if (currentSchema.ColumnDefinitions.SingleOrDefault(column => column.Name == Constant.ControlColumn.AnalysisLabel) == null)
             {
                 addAnalysisLabel = true;
@@ -539,7 +516,7 @@ namespace Carnassial.Data
 
             if (addAnalysisLabel || addIndex || convertCopyableAndVisibleToInteger || convertTypeToInteger || renameList || renameWidth)
             {
-                using (SQLiteTransaction transaction = connection.BeginTransaction())
+                using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
                 {
                     if (addAnalysisLabel)
                     {
@@ -548,7 +525,7 @@ namespace Carnassial.Data
                             DefaultValue = 0.ToString(),
                             NotNull = true
                         };
-                        this.Database.AddColumnToTable(connection, transaction, Constant.DatabaseTable.Controls, 6, analysisLabel);
+                        this.AddColumnToTable(transaction, Constant.DatabaseTable.Controls, 6, analysisLabel);
                     }
                     if (addIndex)
                     {
@@ -557,28 +534,28 @@ namespace Carnassial.Data
                             DefaultValue = 0.ToString(),
                             NotNull = true
                         };
-                        this.Database.AddColumnToTable(connection, transaction, Constant.DatabaseTable.Controls, 11, index);
+                        this.AddColumnToTable(transaction, Constant.DatabaseTable.Controls, 11, index);
                     }
 
                     if (convertCopyableAndVisibleToInteger)
                     {
-                        this.Database.ConvertBooleanStringColumnToInteger(connection, transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Copyable);
-                        this.Database.ConvertBooleanStringColumnToInteger(connection, transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Visible);
+                        this.ConvertBooleanStringColumnToInteger(transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Copyable);
+                        this.ConvertBooleanStringColumnToInteger(transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Visible);
                     }
                     if (convertTypeToInteger)
                     {
-                        this.Database.ConvertNonFlagEnumStringColumnToInteger<ControlType>(connection, transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Type);
+                        this.ConvertNonFlagEnumStringColumnToInteger<ControlType>(transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Type);
                     }
 
                     if (renameList)
                     {
                         #pragma warning disable CS0618 // Type or member is obsolete
-                        this.Database.RenameColumn(connection, transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.List, Constant.ControlColumn.WellKnownValues, (ColumnDefinition columnWithNameChanged) => { });
+                        this.RenameColumn(transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.List, Constant.ControlColumn.WellKnownValues, (ColumnDefinition columnWithNameChanged) => { });
                     }
                     if (renameWidth)
                     {
                         #pragma warning disable CS0618 // Type or member is obsolete
-                        this.Database.RenameColumn(connection, transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Width, Constant.ControlColumn.MaxWidth, (ColumnDefinition columnWithNameChanged) =>
+                        this.RenameColumn(transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Width, Constant.ControlColumn.MaxWidth, (ColumnDefinition columnWithNameChanged) =>
                         #pragma warning restore CS0618 // Type or member is obsolete
                         {
                             columnWithNameChanged.DefaultValue = Constant.ControlDefault.MaxWidth.ToString();
@@ -590,7 +567,7 @@ namespace Carnassial.Data
                 }
             }
 
-            this.GetControlsSortedByControlOrder(connection);
+            this.GetControlsSortedByControlOrder();
 
             // rename image quality control to classification
             #pragma warning disable CS0618 // Type or member is obsolete
@@ -599,7 +576,7 @@ namespace Carnassial.Data
             if (imageQuality != null)
             {
                 imageQuality.DataLabel = Constant.FileColumn.Classification;
-                this.SyncControlToDatabase(connection, imageQuality);
+                this.SyncControlToDatabase(imageQuality);
             }
 
             // update choices and tooltip for file classification to Carnassial 2.2.0.3 schema if they're not already set as such
@@ -609,7 +586,7 @@ namespace Carnassial.Data
                 imageQuality.Label = Constant.FileColumn.Classification;
                 classification.Tooltip = Constant.ControlDefault.ClassificationTooltip;
                 classification.WellKnownValues = Constant.ControlDefault.ClassificationWellKnownValues;
-                this.SyncControlToDatabase(connection, classification);
+                this.SyncControlToDatabase(classification);
             }
 
             // set index flag on date time control if it's not already set
@@ -617,7 +594,7 @@ namespace Carnassial.Data
             if (dateTime.IndexInFileTable == false)
             {
                 dateTime.IndexInFileTable = true;
-                this.SyncControlToDatabase(connection, dateTime);
+                this.SyncControlToDatabase(dateTime);
             }
 
             // update defaults for flags to Carnassial 2.2.0.3 schema if they're not already set as such
@@ -637,27 +614,34 @@ namespace Carnassial.Data
                 }
                 if (flag.HasChanges)
                 {
-                    this.SyncControlToDatabase(connection, flag);
+                    this.SyncControlToDatabase(flag);
                 }
             }
         }
 
-        private void UpdateImageSetTo2203Schema(SQLiteConnection connection, SQLiteTransaction transaction, List<string> tables)
+        private void UpdateImageSetTo2203Schema(SQLiteTransaction transaction, List<string> tables)
         {
             if (tables.Contains(Constant.DatabaseTable.ImageSet, StringComparer.Ordinal) == false)
             {
                 // create default ImageSet table if this is a .tdb from Carnassial 2.2.0.1 or earlier
                 SQLiteTableSchema imageSetTableSchema = ImageSetTable.CreateSchema();
-                imageSetTableSchema.CreateTableAndIndicies(connection, transaction);
-                ColumnTuplesForInsert imageSetRow = ImageSetRow.CreateInsert(Path.GetFileName(this.FolderPath));
-                imageSetRow.Insert(connection, transaction);
+                imageSetTableSchema.CreateTableAndIndicies(this.Connection, transaction);
+                using (ImageSetTransactionSequence insertImageSet = ImageSetTransactionSequence.CreateInsert(this, transaction))
+                {
+                    insertImageSet.AddImageSet(new ImageSetRow()
+                    {
+                        InitialFolderName = Path.GetFileName(this.FolderPath),
+                        Log = Constant.Database.ImageSetDefaultLog,
+                        TimeZone = TimeZoneInfo.Local.Id
+                    });
+                }
             }
             else
             {
                 // ImageSetOptions is a [Flags] enum but can be treated as a non-flag enum as of Carnassial 2.2.0.3 as
                 // its only values are None (0x0) and Magnifier (0x1).
-                this.Database.ConvertNonFlagEnumStringColumnToInteger<FileSelection>(connection, transaction, Constant.DatabaseTable.ImageSet, Constant.ImageSetColumn.FileSelection);
-                this.Database.ConvertNonFlagEnumStringColumnToInteger<ImageSetOptions>(connection, transaction, Constant.DatabaseTable.ImageSet, Constant.ImageSetColumn.Options);
+                this.ConvertNonFlagEnumStringColumnToInteger<FileSelection>(transaction, Constant.DatabaseTable.ImageSet, Constant.ImageSetColumn.FileSelection);
+                this.ConvertNonFlagEnumStringColumnToInteger<ImageSetOptions>(transaction, Constant.DatabaseTable.ImageSet, Constant.ImageSetColumn.Options);
             }
         }
     }

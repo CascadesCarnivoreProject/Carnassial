@@ -86,6 +86,23 @@ namespace Carnassial
             public const string List = "List";
             [Obsolete("Legacy value for backwards compatibility with Carnassial 2.2.0.2 and earlier.")]
             public const string Width = "Width";
+
+            public static readonly ReadOnlyCollection<string> Columns = new List<string>()
+            {
+                ControlColumn.AnalysisLabel,
+                ControlColumn.ControlOrder,
+                ControlColumn.Copyable,
+                ControlColumn.DataLabel,
+                ControlColumn.DefaultValue,
+                ControlColumn.IndexInFileTable,
+                ControlColumn.Label,
+                ControlColumn.MaxWidth,
+                ControlColumn.SpreadsheetOrder,
+                ControlColumn.Tooltip,
+                ControlColumn.Type,
+                ControlColumn.Visible,
+                ControlColumn.WellKnownValues
+            }.AsReadOnly();
         }
 
         public static class ControlDefault
@@ -287,6 +304,16 @@ namespace Carnassial
             public const string MostRecentFileID = "MostRecentFileID";
             public const string Options = "Options";
             public const string TimeZone = "TimeZone";
+
+            public static readonly ReadOnlyCollection<string> Columns = new List<string>()
+            {
+                ImageSetColumn.FileSelection,
+                ImageSetColumn.InitialFolderName,
+                ImageSetColumn.Log,
+                ImageSetColumn.MostRecentFileID,
+                ImageSetColumn.Options,
+                ImageSetColumn.TimeZone
+            }.AsReadOnly();
         }
 
         public static class MarkableCanvas

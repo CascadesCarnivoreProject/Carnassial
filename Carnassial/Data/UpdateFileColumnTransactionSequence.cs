@@ -13,14 +13,14 @@ namespace Carnassial.Data
         private bool disposed;
         private SQLiteCommand updateFiles;
 
-        public UpdateFileColumnTransactionSequence(string dataLabel, SQLiteConnection connection)
-            : base(connection)
+        public UpdateFileColumnTransactionSequence(string dataLabel, SQLiteDatabase database)
+            : base(database)
         {
             this.dataLabel = dataLabel;
 
             string fileUpdateText = String.Format("UPDATE {0} SET {1}=@{1} WHERE {2}=@{2}", Constant.DatabaseTable.Files, dataLabel, Constant.DatabaseColumn.ID);
-            this.Transaction = connection.BeginTransaction();
-            this.updateFiles = new SQLiteCommand(fileUpdateText, this.Connection, this.Transaction);
+            this.Transaction = database.Connection.BeginTransaction();
+            this.updateFiles = new SQLiteCommand(fileUpdateText, this.Database.Connection, this.Transaction);
             this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
             this.updateFiles.Parameters.Add(new SQLiteParameter("@" + dataLabel));
         }
@@ -48,8 +48,8 @@ namespace Carnassial.Data
                 file.AcceptChanges();
                 ++filesAdded;
 
-                ++this.FilesInTransaction;
-                if (this.FilesInTransaction >= Constant.Database.RowsPerTransaction)
+                ++this.RowsInCurrentTransaction;
+                if (this.RowsInCurrentTransaction >= Constant.Database.RowsPerTransaction)
                 {
                     this.updateFiles = this.CommitAndBeginNew(this.updateFiles);
                 }
@@ -90,8 +90,8 @@ namespace Carnassial.Data
                 this.updateFiles.ExecuteNonQuery();
                 file.AcceptChanges();
 
-                ++this.FilesInTransaction;
-                if (this.FilesInTransaction >= Constant.Database.RowsPerTransaction)
+                ++this.RowsInCurrentTransaction;
+                if (this.RowsInCurrentTransaction >= Constant.Database.RowsPerTransaction)
                 {
                     this.updateFiles = this.CommitAndBeginNew(this.updateFiles);
                 }
