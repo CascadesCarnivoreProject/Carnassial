@@ -176,6 +176,88 @@ namespace Carnassial.Data
             return filesByRelativePath;
         }
 
+        public FileTableSpreadsheetMap IndexSpreadsheetColumns(List<string> columnsFromSpreadsheet)
+        {
+            FileTableSpreadsheetMap spreadsheetMap = new FileTableSpreadsheetMap();
+            for (int columnIndex = 0; columnIndex < columnsFromSpreadsheet.Count; ++columnIndex)
+            {
+                string column = columnsFromSpreadsheet[columnIndex];
+                if (String.Equals(column, Constant.FileColumn.Classification, StringComparison.Ordinal))
+                {
+                    spreadsheetMap.ClassificationIndex = columnIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.DateTime, StringComparison.Ordinal))
+                {
+                    spreadsheetMap.DateTimeIndex = columnIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal))
+                {
+                    spreadsheetMap.DeleteFlagIndex = columnIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.File, StringComparison.Ordinal))
+                {
+                    spreadsheetMap.FileNameIndex = columnIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.RelativePath, StringComparison.Ordinal))
+                {
+                    spreadsheetMap.RelativePathIndex = columnIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.UtcOffset, StringComparison.Ordinal))
+                {
+                    spreadsheetMap.UtcOffsetIndex = columnIndex;
+                }
+                else
+                {
+                    FileTableUserColumn userColumn = this.UserColumnsByName[column];
+                    switch (userColumn.Control.Type)
+                    {
+                        case ControlType.Counter:
+                            if (userColumn.DataType == FileDataType.Integer)
+                            {
+                                spreadsheetMap.UserCounterIndices.Add(columnIndex);
+                            }
+                            else if (userColumn.DataType == FileDataType.ByteArray)
+                            {
+                                spreadsheetMap.UserMarkerIndices.Add(columnIndex);
+                            }
+                            else
+                            {
+                                throw new NotSupportedException(String.Format("Unhandled data type {0} for column {1}.", userColumn.DataType, userColumn.Control.DataLabel));
+                            }
+                            spreadsheetMap.UserCounters.Add(userColumn);
+                            break;
+                        case ControlType.FixedChoice:
+                            spreadsheetMap.UserChoiceDataIndices.Add(userColumn.DataIndex);
+                            spreadsheetMap.UserChoiceIndices.Add(columnIndex);
+                            spreadsheetMap.UserChoices.Add(userColumn);
+
+                            List<string> choiceValues = userColumn.Control.GetWellKnownValues();
+                            if (choiceValues.Contains(userColumn.Control.DefaultValue, StringComparer.Ordinal) == false)
+                            {
+                                // back compat: prior to Carnassial 2.2.0.3 the editor didn't require a choice's default value also
+                                // be a well known value, so include the default as an acceptable value if it's not a well known value
+                                choiceValues.Add(userColumn.Control.DefaultValue);
+                            }
+                            spreadsheetMap.UserChoiceValues.Add(choiceValues);
+                            break;
+                        case ControlType.Flag:
+                            spreadsheetMap.UserFlagIndices.Add(columnIndex);
+                            spreadsheetMap.UserFlags.Add(userColumn);
+                            break;
+                        case ControlType.Note:
+                            spreadsheetMap.UserNoteDataIndices.Add(userColumn.DataIndex);
+                            spreadsheetMap.UserNoteIndices.Add(columnIndex);
+                            spreadsheetMap.UserNotes.Add(userColumn);
+                            break;
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled control type {0} for column {1}.", userColumn.Control.Type, userColumn.Control.DataLabel));
+                    }
+                }
+            }
+
+            return spreadsheetMap;
+        }
+
         public static bool IsVideo(string fileName)
         {
             return fileName.EndsWith(Constant.File.AviFileExtension, StringComparison.OrdinalIgnoreCase) ||

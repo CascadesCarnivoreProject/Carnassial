@@ -234,7 +234,7 @@ namespace Carnassial.Data
                                 break;
                             case FileDataType.ByteArray:
                                 byte[] valueAsByteArray = (byte[])value;
-                                valueDifferent = this.UserMarkerPositions[userColumn.DataIndex] != valueAsByteArray;
+                                valueDifferent = this.ByteArraysEqual(this.UserMarkerPositions[userColumn.DataIndex], valueAsByteArray) == false;
                                 this.UserMarkerPositions[userColumn.DataIndex] = valueAsByteArray;
                                 break;
                             case FileDataType.Integer:
@@ -252,7 +252,7 @@ namespace Carnassial.Data
                         }
                         if (valueDifferent)
                         {
-                            this.HasChanges |= valueDifferent;
+                            this.HasChanges |= true;
                             this.PropertyChanged?.Invoke(this, new IndexedPropertyChangedEventArgs<string>(propertyName));
                         }
                         break;
@@ -268,6 +268,19 @@ namespace Carnassial.Data
         public TimeSpan UtcOffset
         {
             get { return this.dateTimeOffset.Offset; }
+        }
+
+        private bool ByteArraysEqual(byte[] currentValue, byte[] newValue)
+        {
+            if (currentValue == null)
+            {
+                return newValue == null;
+            }
+            if (newValue == null)
+            {
+                return false;
+            }
+            return currentValue.SequenceEqual(newValue);
         }
 
         public object GetDatabaseValue(string dataLabel)
@@ -568,6 +581,155 @@ namespace Carnassial.Data
             Debug.Assert(fileInfo.Exists, "Attempt to read DateTimeOffset from nonexistent file.");
             DateTime earliestTimeLocal = fileInfo.CreationTime < fileInfo.LastWriteTime ? fileInfo.CreationTime : fileInfo.LastWriteTime;
             this.DateTimeOffset = new DateTimeOffset(earliestTimeLocal);
+        }
+
+        public void SetValuesFromSpreadsheet(FileTableSpreadsheetMap spreadsheetMap, List<string> row, FileImportResult result)
+        {
+            // obtain file's date time and UTC offset
+            if (DateTimeHandler.TryParseDatabaseDateTime(row[spreadsheetMap.DateTimeIndex], out DateTime dateTime))
+            {
+                if (DateTimeHandler.TryParseDatabaseUtcOffsetString(row[spreadsheetMap.UtcOffsetIndex], out TimeSpan utcOffset))
+                {
+                    this.DateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, utcOffset);
+                }
+                else
+                {
+                    result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1} of file {2}.  Neither the file's date time nor UTC offset will be updated.", row[spreadsheetMap.UtcOffsetIndex], Constant.FileColumn.UtcOffset, fileName));
+                }
+            }
+            else
+            {
+                result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1} of file {2}.  File's UTC offset will be ignored and neither its date time nor UTC offset will be updated.", row[spreadsheetMap.DateTimeIndex], Constant.FileColumn.DateTime, fileName));
+            }
+
+            // remaining standard controls
+            if (spreadsheetMap.ClassificationIndex != -1)
+            {
+                if (ImageRow.TryParseFileClassification(row[spreadsheetMap.ClassificationIndex], out FileClassification classification))
+                {
+                    this.Classification = classification;
+                }
+                else
+                {
+                    result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", row[spreadsheetMap.ClassificationIndex], Constant.FileColumn.Classification));
+                }
+            }
+
+            if (spreadsheetMap.DeleteFlagIndex != -1)
+            {
+                if (Boolean.TryParse(row[spreadsheetMap.DeleteFlagIndex], out bool deleteFlag))
+                {
+                    this.DeleteFlag = deleteFlag;
+                }
+                else
+                {
+                    result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", row[spreadsheetMap.DeleteFlagIndex], Constant.FileColumn.DeleteFlag));
+                }
+            }
+
+            // get values of user defined columns
+            // choices
+            for (int indexIndex = 0; indexIndex < spreadsheetMap.UserCounterIndices.Count; ++indexIndex)
+            {
+                int choiceIndex = spreadsheetMap.UserChoiceIndices[indexIndex];
+                int dataIndex = spreadsheetMap.UserChoiceDataIndices[indexIndex];
+                List<string> choiceValues = spreadsheetMap.UserChoiceValues[indexIndex];
+                string choice = row[choiceIndex];
+
+                if (choiceValues.Contains(choice, StringComparer.Ordinal))
+                {
+                    if (String.Equals(this.UserNotesAndChoices[dataIndex], choice, StringComparison.Ordinal) == false)
+                    {
+                        this.HasChanges |= true;
+                        this.UserNotesAndChoices[dataIndex] = choice;
+                        this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                    }
+                }
+                else
+                {
+                    result.Errors.Add(String.Format("Choice '{0}' is not a valid option for the column {1}.", choice, spreadsheetMap.UserChoices[indexIndex].Control.DataLabel));
+                }
+            }
+
+            // counters
+            for (int dataIndex = 0; dataIndex < spreadsheetMap.UserCounterIndices.Count; ++dataIndex)
+            {
+                int countIndex = spreadsheetMap.UserCounterIndices[dataIndex];
+                string countAsString = row[countIndex];
+                if (Int32.TryParse(countAsString, out int count))
+                {
+                    if (this.UserCounters[dataIndex] != count)
+                    {
+                        this.HasChanges |= true;
+                        this.UserCounters[dataIndex] = count;
+                        this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                    }
+                }
+                else
+                {
+                    result.Errors.Add(String.Format("'{0}' is not an integer count for the column {1}.", countAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                }
+
+                int markerIndex = spreadsheetMap.UserMarkerIndices[dataIndex];
+                string markerAsString = row[markerIndex];
+                if (MarkersForCounter.TryParseExcelStringToPackedFloats(markerAsString, out byte[] packedFloats))
+                {
+                    if (this.ByteArraysEqual(this.UserMarkerPositions[dataIndex], packedFloats) == false)
+                    {
+                        this.HasChanges |= true;
+                        this.UserMarkerPositions[dataIndex] = packedFloats;
+                        this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                    }
+                }
+                else
+                {
+                    result.Errors.Add(String.Format("Marker position sequence '{0}' is not valid for the column {1}.", markerAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                }
+            }
+
+            // flags
+            for (int dataIndex = 0; dataIndex < spreadsheetMap.UserFlagIndices.Count; ++dataIndex)
+            {
+                int flagIndex = spreadsheetMap.UserFlagIndices[dataIndex];
+                string flagAsString = row[flagIndex];
+
+                bool flag;
+                if (String.Equals(flagAsString, Boolean.FalseString, StringComparison.OrdinalIgnoreCase))
+                {
+                    flag = false;
+                }
+                else if (String.Equals(flagAsString, Boolean.TrueString, StringComparison.OrdinalIgnoreCase))
+                {
+                    flag = true;
+                }
+                else
+                {
+                    result.Errors.Add(String.Format("'{0}' is not a valid value for the flag column {1}.  Flags must be either true or false, case insensitive.", flagAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                    continue;
+                }
+
+                if (this.UserFlags[dataIndex] != flag)
+                {
+                    this.HasChanges |= true;
+                    this.UserFlags[dataIndex] = flag;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(spreadsheetMap.UserFlags[dataIndex].Control.DataLabel));
+                }
+            }
+
+            // notes
+            for (int indexIndex = 0; indexIndex < spreadsheetMap.UserNoteIndices.Count; ++indexIndex)
+            {
+                int dataIndex = spreadsheetMap.UserNoteDataIndices[indexIndex];
+                int noteIndex = spreadsheetMap.UserNoteIndices[indexIndex];
+
+                string note = row[noteIndex];
+                if (String.Equals(this.UserNotesAndChoices[dataIndex], note, StringComparison.Ordinal) == false)
+                {
+                    this.HasChanges |= true;
+                    this.UserNotesAndChoices[dataIndex] = note;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(spreadsheetMap.UserNotes[indexIndex].Control.DataLabel));
+                }
+            }
         }
 
         public async Task<CachedImage> TryLoadImageAsync(string imageSetFolderPath)

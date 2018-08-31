@@ -31,53 +31,6 @@ namespace Carnassial.Data
             this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Markers)));
         }
 
-        public static bool IsValidExcelString(string valueAsString, out object value)
-        {
-            value = null;
-            if (String.IsNullOrEmpty(valueAsString))
-            {
-                // position string might not contain any positions
-                return true;
-            }
-
-            string[] positions = valueAsString.Split(Constant.Excel.MarkerPositionSeparator);
-            byte[] packedFloats = new byte[2 * positions.Length * sizeof(float)];
-            int byteIndex = -1;
-            foreach (string position in positions)
-            {
-                string[] xy = position.Split(Constant.Excel.MarkerCoordinateSeparator);
-                if (xy.Length != 2)
-                {
-                    return false;
-                }
-                if (float.TryParse(xy[0], out float x) == false)
-                {
-                    return false;
-                }
-                if (float.TryParse(xy[1], out float y) == false)
-                {
-                    return false;
-                }
-
-                byte[] xBytes = BitConverter.GetBytes(x);
-                Debug.Assert(xBytes.Length == 4, "Expected 32 bit float for marker x position.");
-                packedFloats[++byteIndex] = xBytes[0];
-                packedFloats[++byteIndex] = xBytes[1];
-                packedFloats[++byteIndex] = xBytes[2];
-                packedFloats[++byteIndex] = xBytes[3];
-
-                byte[] yBytes = BitConverter.GetBytes(y);
-                Debug.Assert(yBytes.Length == 4, "Expected 32 bit float for marker y position.");
-                packedFloats[++byteIndex] = yBytes[0];
-                packedFloats[++byteIndex] = yBytes[1];
-                packedFloats[++byteIndex] = yBytes[2];
-                packedFloats[++byteIndex] = yBytes[3];
-            }
-
-            value = packedFloats;
-            return true;
-        }
-
         public byte[] MarkerPositionsToFloatArray()
         {
             if (this.Markers.Count < 1)
@@ -184,6 +137,52 @@ namespace Carnassial.Data
             }
 
             Debug.Fail("Attempt to remove marker not associated with counter.");
+        }
+
+        public static bool TryParseExcelStringToPackedFloats(string valueAsString, out byte[] packedFloats)
+        {
+            packedFloats = null;
+            if (String.IsNullOrEmpty(valueAsString))
+            {
+                // position string might not contain any positions
+                return true;
+            }
+
+            string[] positions = valueAsString.Split(Constant.Excel.MarkerPositionSeparator);
+            packedFloats = new byte[2 * positions.Length * sizeof(float)];
+            int byteIndex = -1;
+            foreach (string position in positions)
+            {
+                string[] xy = position.Split(Constant.Excel.MarkerCoordinateSeparator);
+                if (xy.Length != 2)
+                {
+                    return false;
+                }
+                if (float.TryParse(xy[0], out float x) == false)
+                {
+                    return false;
+                }
+                if (float.TryParse(xy[1], out float y) == false)
+                {
+                    return false;
+                }
+
+                byte[] xBytes = BitConverter.GetBytes(x);
+                Debug.Assert(xBytes.Length == 4, "Expected 32 bit float for marker x position.");
+                packedFloats[++byteIndex] = xBytes[0];
+                packedFloats[++byteIndex] = xBytes[1];
+                packedFloats[++byteIndex] = xBytes[2];
+                packedFloats[++byteIndex] = xBytes[3];
+
+                byte[] yBytes = BitConverter.GetBytes(y);
+                Debug.Assert(yBytes.Length == 4, "Expected 32 bit float for marker y position.");
+                packedFloats[++byteIndex] = yBytes[0];
+                packedFloats[++byteIndex] = yBytes[1];
+                packedFloats[++byteIndex] = yBytes[2];
+                packedFloats[++byteIndex] = yBytes[3];
+            }
+
+            return true;
         }
     }
 }

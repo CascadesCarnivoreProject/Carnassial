@@ -405,61 +405,6 @@ namespace Carnassial.Data
             return true;
         }
 
-        public bool IsValidExcelData(string valueAsString, out object value)
-        {
-            value = valueAsString;
-            switch (this.Type)
-            {
-                case ControlType.Counter:
-                    // count string
-                    if (Int32.TryParse(valueAsString, out int valueAsInt))
-                    {
-                        value = valueAsInt;
-                        return true;
-                    }
-                    // marker string
-                    return MarkersForCounter.IsValidExcelString(valueAsString, out value);
-                case ControlType.DateTime:
-                    DateTime dateTime;
-                    bool isValid = DateTimeHandler.TryParseDatabaseDateTime(valueAsString, out dateTime);
-                    value = dateTime;
-                    return isValid;
-                case ControlType.Flag:
-                    if (String.Equals(valueAsString, Boolean.FalseString, StringComparison.OrdinalIgnoreCase))
-                    {
-                        value = false;
-                        return true;
-                    }
-                    else if (String.Equals(valueAsString, Boolean.TrueString, StringComparison.OrdinalIgnoreCase))
-                    {
-                        value = true;
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                case ControlType.FixedChoice:
-                    Debug.Assert(String.Equals(this.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal) == false, "Classification expected to be handled by" + nameof(SpreadsheetReaderWriter) + ".");
-                    // historically, the editor didn't enforce the default value be a well known value, so accept it as
-                    // valid independently
-                    if (String.Equals(valueAsString, this.DefaultValue, StringComparison.Ordinal))
-                    {
-                        return true;
-                    }
-                    return this.GetWellKnownValues().Contains(valueAsString, StringComparer.Ordinal);
-                case ControlType.Note:
-                    return true;
-                case ControlType.UtcOffset:
-                    double utcOffset;
-                    isValid = double.TryParse(valueAsString, out utcOffset);
-                    value = utcOffset;
-                    return isValid;
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", this.Type));
-            }
-        }
-
         public void SetWellKnownValues(List<string> wellKnownValues)
         {
             this.WellKnownValues = WellKnownValueConverter.ConvertBack(wellKnownValues);

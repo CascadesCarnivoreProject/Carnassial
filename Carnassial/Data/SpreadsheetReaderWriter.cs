@@ -1,5 +1,4 @@
 ﻿using Carnassial.Interop;
-using Carnassial.Util;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
@@ -16,10 +15,28 @@ namespace Carnassial.Data
     public class SpreadsheetReaderWriter
     {
         private SpreadsheetReadWriteStatus status;
+        private List<string> xlsxRow;
 
         public SpreadsheetReaderWriter(Action<SpreadsheetReadWriteStatus> onProgressUpdate, TimeSpan desiredProgressUpdateInterval)
         {
             this.status = new SpreadsheetReadWriteStatus(onProgressUpdate, desiredProgressUpdateInterval);
+            this.xlsxRow = null;
+        }
+
+        private string AddColumnValue(string value)
+        {
+            if (value == null)
+            {
+                return ",";
+            }
+            if (value.IndexOfAny("\",\x0A\x0D".ToCharArray()) > -1)
+            {
+                // commas, double quotation marks, line feeds (\x0A), and carriage returns (\x0D) require leading and ending double quotation marks be added
+                // double quotation marks within the field also have to be escaped as double quotes
+                return "\"" + value.Replace("\"", "\"\"") + "\"" + ",";
+            }
+
+            return value + ",";
         }
 
         /// <summary>
@@ -96,7 +113,10 @@ namespace Carnassial.Data
                     for (int columnIndex = 0; columnIndex < columns.Count; ++columnIndex)
                     {
                         string column = columns[columnIndex];
+                        // Profiling shows comparable speed for ExcelWorksheet.Cells[] and ExcelWorksheet.SetValue() but suggests
+                        // .Cells may be somewhat preferable.  Code review of the two paths is ambiguous so use .Cells for now.
                         worksheet.Cells[fileIndex + 2, columnIndex + 1].Value = file.GetExcelString(column);
+                        // worksheet.SetValue(fileIndex + 2, columnIndex + 1, file.GetExcelString(column));
                     }
 
                     if (this.status.ShouldReport())
@@ -118,352 +138,9 @@ namespace Carnassial.Data
             }
         }
 
-        private FileImportResult TryImportFileData(FileDatabase fileDatabase, Func<List<string>> readLine, string spreadsheetFilePath)
-        {
-            if (fileDatabase.ImageSet.FileSelection != FileSelection.All)
-            {
-                throw new ArgumentOutOfRangeException(nameof(fileDatabase), "Database doesn't have all files selected.  Checking for files already added to the image set would fail.");
-            }
-
-            string relativePathFromDatabaseToSpreadsheet = NativeMethods.GetRelativePathFromDirectoryToDirectory(Path.GetDirectoryName(fileDatabase.FilePath), Path.GetDirectoryName(spreadsheetFilePath));
-            if (String.Equals(relativePathFromDatabaseToSpreadsheet, ".", StringComparison.Ordinal))
-            {
-                relativePathFromDatabaseToSpreadsheet = null;
-            }
-            else if (relativePathFromDatabaseToSpreadsheet.IndexOf("..", StringComparison.Ordinal) != -1)
-            {
-                throw new NotSupportedException(String.Format("Canonicalization of relative path from database to spreadsheet '{0}' is not currently supported.", relativePathFromDatabaseToSpreadsheet));
-            }
-
-            // validate file header against the database
-            List<string> columnsFromFileHeader = readLine.Invoke();
-            List<string> columnsInDatabase = new List<string>(fileDatabase.Controls.RowCount);
-            Dictionary<string, ControlRow> controlsByColumn = new Dictionary<string, ControlRow>();
-            foreach (ControlRow control in fileDatabase.Controls)
-            {
-                controlsByColumn.Add(control.DataLabel, control);
-                columnsInDatabase.Add(control.DataLabel);
-
-                if (control.Type == ControlType.Counter)
-                {
-                    string markerColumn = FileTable.GetMarkerPositionColumnName(control.DataLabel);
-                    controlsByColumn.Add(markerColumn, control);
-                    columnsInDatabase.Add(markerColumn);
-                }
-            }
-
-            FileImportResult result = new FileImportResult();
-            List<string> columnsInDatabaseButNotInHeader = columnsInDatabase.Except(columnsFromFileHeader).ToList();
-            foreach (string column in columnsInDatabaseButNotInHeader)
-            {
-                result.Errors.Add("- The column '" + column + "' is present in the image set but not in the spreadsheet file." + Environment.NewLine);
-            }
-
-            List<string> columnsInHeaderButNotDatabase = columnsFromFileHeader.Except(columnsInDatabase).ToList();
-            foreach (string column in columnsInHeaderButNotDatabase)
-            {
-                result.Errors.Add("- The column '" + column + "' is present in the spreadsheet file but not in the image set." + Environment.NewLine);
-            }
-
-            int classificationIndex = -1;
-            int dateTimeIndex = -1;
-            int deleteFlagIndex = -1;
-            int fileNameIndex = -1;
-            int relativePathIndex = -1;
-            int utcOffsetIndex = -1;
-            List<ControlRow> userControlsInFileOrder = new List<ControlRow>(columnsFromFileHeader.Count - Constant.Control.StandardControls.Count);
-            List<int> userControlIndices = new List<int>(columnsFromFileHeader.Count - Constant.Control.StandardControls.Count);
-            for (int columnIndex = 0; columnIndex < columnsFromFileHeader.Count; ++columnIndex)
-            {
-                string column = columnsFromFileHeader[columnIndex];
-                if (String.Equals(column, Constant.FileColumn.Classification, StringComparison.Ordinal))
-                {
-                    classificationIndex = columnIndex;
-                }
-                else if (String.Equals(column, Constant.FileColumn.DateTime, StringComparison.Ordinal))
-                {
-                    dateTimeIndex = columnIndex;
-                }
-                else if (String.Equals(column, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal))
-                {
-                    deleteFlagIndex = columnIndex;
-                }
-                else if (String.Equals(column, Constant.FileColumn.File, StringComparison.Ordinal))
-                {
-                    fileNameIndex = columnIndex;
-                }
-                else if (String.Equals(column, Constant.FileColumn.RelativePath, StringComparison.Ordinal))
-                {
-                    relativePathIndex = columnIndex;
-                }
-                else if (String.Equals(column, Constant.FileColumn.UtcOffset, StringComparison.Ordinal))
-                {
-                    utcOffsetIndex = columnIndex;
-                }
-                else
-                {
-                    userControlsInFileOrder.Add(controlsByColumn[column]);
-                    userControlIndices.Add(columnIndex);
-                }
-            }
-
-            if (fileNameIndex == -1)
-            {
-                result.Errors.Add("- The column '" + Constant.FileColumn.File + "' must be present in the spreadsheet file." + Environment.NewLine);
-            }
-            if (relativePathIndex == -1)
-            {
-                result.Errors.Add("- The column '" + Constant.FileColumn.RelativePath + "' must be present in the spreadsheet file." + Environment.NewLine);
-            }
-            if (dateTimeIndex == -1)
-            {
-                result.Errors.Add("- The column '" + Constant.FileColumn.DateTime + "' must be present in the spreadsheet file." + Environment.NewLine);
-            }
-            if (utcOffsetIndex == -1)
-            {
-                result.Errors.Add("- The column '" + Constant.FileColumn.UtcOffset + "' must be present in the spreadsheet file." + Environment.NewLine);
-            }
-
-            if (result.Errors.Count > 0)
-            {
-                return result;
-            }
-
-            // read data for file from the .csv or .xlsx file
-            Dictionary<string, Dictionary<string, ImageRow>> filesAlreadyInDatabaseByRelativePath = fileDatabase.Files.GetFilesByRelativePathAndName();
-            List<ImageRow> filesToInsert = new List<ImageRow>();
-            List<ImageRow> filesToUpdate = new List<ImageRow>();
-            int filesUnchanged = 0;
-            this.status.Report(0);
-            for (List<string> row = readLine.Invoke(); row != null; row = readLine.Invoke())
-            {
-                if (row.Count == columnsInDatabase.Count - 1)
-                {
-                    // .csv files are ambiguous in the sense a trailing comma may or may not be present at the end of the line
-                    // if the final field has a value this case isn't a concern, but if the final field has no value then there's
-                    // no way for the parser to know the exact number of fields in the line
-                    row.Add(String.Empty);
-                }
-                else if (row.Count != columnsInDatabase.Count)
-                {
-                    Debug.Fail(String.Format("Expected {0} fields in line {1} but found {2}.", columnsInDatabase.Count, String.Join(",", row), row.Count));
-                }
-
-                // determine whether a new file needs to be added or if this row corresponds to a file already in the image set
-                // For now, it's assumed all renames or moves are done through Carnassial and hence relative path + file name form 
-                // an immutable (and unique) ID.
-                string fileName = row[fileNameIndex];
-                if (String.IsNullOrWhiteSpace(fileName))
-                {
-                    result.Errors.Add(String.Format("No file name found in row {0}.  Row skipped, database will not be updated.", row));
-                    continue;
-                }
-
-                string relativePath = row[relativePathIndex];
-                if (relativePathFromDatabaseToSpreadsheet != null)
-                {
-                    relativePath = Path.Combine(relativePathFromDatabaseToSpreadsheet, relativePath);
-                }
-
-                bool addFile = false;
-                if ((filesAlreadyInDatabaseByRelativePath.TryGetValue(relativePath, out Dictionary<string, ImageRow> filesInFolder) == false) ||
-                    (filesInFolder.TryGetValue(fileName, out ImageRow file) == false))
-                {
-                    addFile = true;
-                    file = fileDatabase.Files.CreateAndAppendFile(fileName, relativePath);
-                }
-
-                // obtain file's date time and UTC offset
-                if (DateTimeHandler.TryParseDatabaseDateTime(row[dateTimeIndex], out DateTime dateTime))
-                {
-                    if (DateTimeHandler.TryParseDatabaseUtcOffsetString(row[utcOffsetIndex], out TimeSpan utcOffset))
-                    {
-                        file.DateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, utcOffset);
-                    }
-                    else
-                    {
-                        result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1} of file {2}.  Neither the file's date time nor UTC offset will be updated.", row[classificationIndex], Constant.FileColumn.UtcOffset, fileName));
-                    }
-                }
-                else
-                {
-                    result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1} of file {2}.  File's UTC offset will be ignored and neither its date time nor UTC offset will be updated.", row[classificationIndex], Constant.FileColumn.DateTime, fileName));
-                }
-
-                // remaining standard controls
-                if (classificationIndex != -1)
-                {
-                    if (ImageRow.TryParseFileClassification(row[classificationIndex], out FileClassification classification))
-                    {
-                        file.Classification = classification;
-                    }
-                    else
-                    {
-                        result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", row[classificationIndex], Constant.FileColumn.Classification));
-                    }
-                }
-
-                if (deleteFlagIndex != -1)
-                {
-                    if (Boolean.TryParse(row[deleteFlagIndex], out bool deleteFlag))
-                    {
-                        file.DeleteFlag = deleteFlag;
-                    }
-                    else
-                    {
-                        result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", row[deleteFlagIndex], Constant.FileColumn.DeleteFlag));
-                    }
-                }
-
-                // get values of user defined columns
-                for (int userControlIndex = 0; userControlIndex < userControlsInFileOrder.Count; ++userControlIndex)
-                {
-                    ControlRow userControl = userControlsInFileOrder[userControlIndex];
-                    int columnIndex = userControlIndices[userControlIndex];
-                    string column = columnsFromFileHeader[columnIndex];
-                    string valueAsString = row[columnIndex];
-
-                    if (userControl.IsValidExcelData(valueAsString, out object value))
-                    {
-                        file[column] = value;
-                    }
-                    else
-                    {
-                        // if value wasn't processed by a previous clause it's invalid (or there's a parsing bug)
-                        result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", valueAsString, column));
-                    }
-                }
-
-                if (addFile)
-                {
-                    filesToInsert.Add(file);
-                }
-                else if (file.HasChanges)
-                {
-                    filesToUpdate.Add(file);
-                }
-                else
-                {
-                    ++filesUnchanged;
-                }
-            }
-
-            // perform inserts and updates
-            int totalFiles = filesToInsert.Count + filesToUpdate.Count;
-            this.status.BeginTransactionCommit(totalFiles);
-            if (filesToInsert.Count > 0)
-            {
-                using (FileTransactionSequence insertFiles = fileDatabase.CreateInsertFileTransaction())
-                {
-                    insertFiles.AddFiles(filesToInsert);
-                    insertFiles.Commit();
-                }
-                this.status.Report(filesToInsert.Count);
-            }
-            if (filesToUpdate.Count > 0)
-            {
-                using (FileTransactionSequence updateFiles = fileDatabase.CreateUpdateFileTransaction())
-                {
-                    updateFiles.AddFiles(filesToInsert);
-                    updateFiles.Commit();
-                }
-                this.status.Report(totalFiles);
-            }
-
-            result.FilesAdded = filesToInsert.Count;
-            result.FilesProcessed = filesToInsert.Count + filesToUpdate.Count + filesUnchanged;
-            result.FilesUpdated = filesToUpdate.Count;
-            return result;
-        }
-
-        public FileImportResult TryImportFileData(string spreadsheetFilePath, FileDatabase fileDatabase)
-        {
-            try
-            {
-                if (spreadsheetFilePath.EndsWith(Constant.File.ExcelFileExtension, StringComparison.OrdinalIgnoreCase))
-                {
-                    return this.TryImportFileDataFromXlsx(spreadsheetFilePath, fileDatabase);
-                }
-                else
-                {
-                    return this.TryImportFileDataFromCsv(spreadsheetFilePath, fileDatabase);
-                }
-            }
-            catch (IOException ioException)
-            {
-                return new FileImportResult()
-                {
-                    Exception = ioException
-                };
-            }
-        }
-
-        private FileImportResult TryImportFileDataFromCsv(string csvFilePath, FileDatabase fileDatabase)
-        {
-            using (FileStream stream = new FileStream(csvFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                using (StreamReader csvReader = new StreamReader(stream))
-                {
-                    this.status.BeginCsvRead(csvReader.BaseStream.Length);
-                    FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadAndParseCsvLine(csvReader); }, csvFilePath);
-                    return result;
-                }
-            }
-        }
-
-        private FileImportResult TryImportFileDataFromXlsx(string xlsxFilePath, FileDatabase fileDatabase)
-        {
-            try
-            {
-                using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
-                {
-                    this.status.BeginExcelWorksheetLoad();
-                    ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets.FirstOrDefault(sheet => String.Equals(sheet.Name, Constant.Excel.FileDataWorksheetName, StringComparison.Ordinal));
-                    if (worksheet == null)
-                    {
-                        FileImportResult worksheetNotFound = new FileImportResult();
-                        worksheetNotFound.Errors.Add(String.Format("Worksheet {0} not found.", Constant.Excel.FileDataWorksheetName));
-                        return worksheetNotFound;
-                    }
-
-                    // cache worksheet dimensions
-                    // Profiling shows EPPlus 4.5.2.1 doesn't cache these values. worksheet.Cells.{Columns, Rows} can't be 
-                    // used instead as they indicate much larger values.
-                    ExcelAddressBase dimension = worksheet.Dimension;
-
-                    this.status.BeginExcelWorkbookRead(dimension.Rows);
-                    int row = 0;
-                    FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadXlsxRow(worksheet, dimension, ++row); }, xlsxFilePath);
-                    return result;
-                }
-            }
-            catch (IOException ioException)
-            {
-                FileImportResult result = new FileImportResult();
-                result.Errors.Add(ioException.ToString());
-                return result;
-            }
-        }
-
-        private string AddColumnValue(string value)
-        {
-            if (value == null)
-            {
-                return ",";
-            }
-            if (value.IndexOfAny("\",\x0A\x0D".ToCharArray()) > -1)
-            {
-                // commas, double quotation marks, line feeds (\x0A), and carriage returns (\x0D) require leading and ending double quotation marks be added
-                // double quotation marks within the field also have to be escaped as double quotes
-                return "\"" + value.Replace("\"", "\"\"") + "\"" + ",";
-            }
-
-            return value + ",";
-        }
-
         protected ExcelWorksheet GetOrCreateTrimmedWorksheet(ExcelPackage xlsxFile, string worksheetName, int dataRows, List<string> columnHeaders)
         {
-            ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets.FirstOrDefault(sheet => sheet.Name == worksheetName);
+            ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets[worksheetName];
             if (worksheet == null)
             {
                 // create new worksheet
@@ -611,25 +288,269 @@ namespace Carnassial.Data
             }
 
             int columns = dimension.Columns;
-            List<string> rowContent = new List<string>(columns);
+            if (this.xlsxRow == null)
+            {
+                // if the Excel row list hasn't been initialized, populate it
+                // Using a pre-populated row list avoids calling into GC on each row and calling List<>.Add() on each field. 
+                // Row storage can be made thread safe if multithreaded Excel reads become supported.
+                this.xlsxRow = new List<string>(columns);
+                for (int column = 1; column <= columns; ++column)
+                {
+                    this.xlsxRow.Add(null);
+                }
+            }
+
             for (int column = 1; column <= columns; ++column)
             {
-                ExcelRange cell = worksheet.Cells[row, column];
-                if (cell.Value is bool cellValue)
+                // As of EPPlus 4.5.2.1, profiling ranks these data access approaches from fastest to slowest:
+                //   1) ExcelWorksheet.GetValue<string>()
+                //   2) ExcelWorksheet.GetValue() followed by minor manipulation in Carnassial
+                //   3) ExcelWorksheet.Cells[row, column].Text
+                //   4) ExcelWorksheet.Cells[row, column].Value
+                // The performance advantage of avoiding .Cells is roughly 25%.  GetValue<string>() is 3-4% faster than GetValue().
+                string value = worksheet.GetValue<string>(row, column);
+                if (value == null)
                 {
-                    rowContent.Add(cellValue ? Boolean.TrueString : Boolean.FalseString);
+                    // null and String.Empty are equivalent but, for now, alias nulls to String.Empty
+                    // This provides back compat with Carnassial versions before 2.2.0.3 which called Cells[].Text and therefore
+                    // received String.Empty as the cell value from EPPlus rather than null.
+                    value = String.Empty;
                 }
-                else
-                {
-                    rowContent.Add(cell.Text);
-                }
+                this.xlsxRow[column - 1] = value;
             }
 
             if (this.status.ShouldReport())
             {
                 this.status.Report(row);
             }
-            return rowContent;
+            return this.xlsxRow;
+        }
+
+        private FileImportResult TryImportFileData(FileDatabase fileDatabase, Func<List<string>> readLine, string spreadsheetFilePath)
+        {
+            if (fileDatabase.ImageSet.FileSelection != FileSelection.All)
+            {
+                throw new ArgumentOutOfRangeException(nameof(fileDatabase), "Database doesn't have all files selected.  Checking for files already added to the image set would fail.");
+            }
+
+            string relativePathFromDatabaseToSpreadsheet = NativeMethods.GetRelativePathFromDirectoryToDirectory(Path.GetDirectoryName(fileDatabase.FilePath), Path.GetDirectoryName(spreadsheetFilePath));
+            if (String.Equals(relativePathFromDatabaseToSpreadsheet, ".", StringComparison.Ordinal))
+            {
+                relativePathFromDatabaseToSpreadsheet = null;
+            }
+            else if (relativePathFromDatabaseToSpreadsheet.IndexOf("..", StringComparison.Ordinal) != -1)
+            {
+                throw new NotSupportedException(String.Format("Canonicalization of relative path from database to spreadsheet '{0}' is not currently supported.", relativePathFromDatabaseToSpreadsheet));
+            }
+
+            // validate file header against the database
+            List<string> columnsFromFileHeader = readLine.Invoke();
+            List<string> columnsInDatabase = new List<string>(fileDatabase.Controls.RowCount);
+            foreach (ControlRow control in fileDatabase.Controls)
+            {
+                columnsInDatabase.Add(control.DataLabel);
+
+                if (control.Type == ControlType.Counter)
+                {
+                    string markerColumn = FileTable.GetMarkerPositionColumnName(control.DataLabel);
+                    columnsInDatabase.Add(markerColumn);
+                }
+            }
+
+            FileImportResult result = new FileImportResult();
+            List<string> columnsInDatabaseButNotInHeader = columnsInDatabase.Except(columnsFromFileHeader).ToList();
+            foreach (string column in columnsInDatabaseButNotInHeader)
+            {
+                result.Errors.Add("- The column '" + column + "' is present in the image set but not in the spreadsheet file." + Environment.NewLine);
+            }
+
+            List<string> columnsInHeaderButNotDatabase = columnsFromFileHeader.Except(columnsInDatabase).ToList();
+            foreach (string column in columnsInHeaderButNotDatabase)
+            {
+                result.Errors.Add("- The column '" + column + "' is present in the spreadsheet file but not in the image set." + Environment.NewLine);
+            }
+
+            FileTableSpreadsheetMap spreadsheetMap = fileDatabase.Files.IndexSpreadsheetColumns(columnsFromFileHeader);
+            if (spreadsheetMap.FileNameIndex == -1)
+            {
+                result.Errors.Add("- The column '" + Constant.FileColumn.File + "' must be present in the spreadsheet file." + Environment.NewLine);
+            }
+            if (spreadsheetMap.RelativePathIndex == -1)
+            {
+                result.Errors.Add("- The column '" + Constant.FileColumn.RelativePath + "' must be present in the spreadsheet file." + Environment.NewLine);
+            }
+            if (spreadsheetMap.DateTimeIndex == -1)
+            {
+                result.Errors.Add("- The column '" + Constant.FileColumn.DateTime + "' must be present in the spreadsheet file." + Environment.NewLine);
+            }
+            if (spreadsheetMap.UtcOffsetIndex == -1)
+            {
+                result.Errors.Add("- The column '" + Constant.FileColumn.UtcOffset + "' must be present in the spreadsheet file." + Environment.NewLine);
+            }
+
+            if (result.Errors.Count > 0)
+            {
+                return result;
+            }
+
+            // read data for file from the .csv or .xlsx file
+            Dictionary<string, Dictionary<string, ImageRow>> filesAlreadyInDatabaseByRelativePath = fileDatabase.Files.GetFilesByRelativePathAndName();
+            List<ImageRow> filesToInsert = new List<ImageRow>();
+            List<ImageRow> filesToUpdate = new List<ImageRow>();
+            int filesUnchanged = 0;
+            this.status.Report(0);
+            for (List<string> row = readLine.Invoke(); row != null; row = readLine.Invoke())
+            {
+                if (row.Count == columnsInDatabase.Count - 1)
+                {
+                    // .csv files are ambiguous in the sense a trailing comma may or may not be present at the end of the line
+                    // if the final field has a value this case isn't a concern, but if the final field has no value then there's
+                    // no way for the parser to know the exact number of fields in the line
+                    row.Add(String.Empty);
+                }
+                else if (row.Count != columnsInDatabase.Count)
+                {
+                    Debug.Fail(String.Format("Expected {0} fields in line {1} but found {2}.", columnsInDatabase.Count, String.Join(",", row), row.Count));
+                }
+
+                // determine whether a new file needs to be added or if this row corresponds to a file already in the image set
+                // For now, it's assumed all renames or moves are done through Carnassial and hence relative path + file name form 
+                // an immutable (and unique) ID.
+                string fileName = row[spreadsheetMap.FileNameIndex];
+                if (String.IsNullOrWhiteSpace(fileName))
+                {
+                    result.Errors.Add(String.Format("No file name found in row {0}.  Row skipped, database will not be updated.", row));
+                    continue;
+                }
+
+                string relativePath = row[spreadsheetMap.RelativePathIndex];
+                if (relativePathFromDatabaseToSpreadsheet != null)
+                {
+                    relativePath = Path.Combine(relativePathFromDatabaseToSpreadsheet, relativePath);
+                }
+
+                bool addFile = false;
+                if ((filesAlreadyInDatabaseByRelativePath.TryGetValue(relativePath, out Dictionary<string, ImageRow> filesInFolder) == false) ||
+                    (filesInFolder.TryGetValue(fileName, out ImageRow file) == false))
+                {
+                    addFile = true;
+                    file = fileDatabase.Files.CreateAndAppendFile(fileName, relativePath);
+                }
+                Debug.Assert(addFile || (file.HasChanges == false), "Existing file unexpectedly has changes.");
+
+                // move row data into file
+                file.SetValuesFromSpreadsheet(spreadsheetMap, row, result);
+
+                if (addFile)
+                {
+                    filesToInsert.Add(file);
+                }
+                else if (file.HasChanges)
+                {
+                    filesToUpdate.Add(file);
+                }
+                else
+                {
+                    ++filesUnchanged;
+                }
+            }
+
+            // perform inserts and updates
+            int totalFiles = filesToInsert.Count + filesToUpdate.Count;
+            this.status.BeginTransactionCommit(totalFiles);
+            if (filesToInsert.Count > 0)
+            {
+                using (FileTransactionSequence insertFiles = fileDatabase.CreateInsertFileTransaction())
+                {
+                    insertFiles.AddFiles(filesToInsert);
+                    insertFiles.Commit();
+                }
+                this.status.Report(filesToInsert.Count);
+            }
+            if (filesToUpdate.Count > 0)
+            {
+                using (FileTransactionSequence updateFiles = fileDatabase.CreateUpdateFileTransaction())
+                {
+                    updateFiles.AddFiles(filesToUpdate);
+                    updateFiles.Commit();
+                }
+                this.status.Report(totalFiles);
+            }
+
+            result.FilesAdded = filesToInsert.Count;
+            result.FilesProcessed = filesToInsert.Count + filesToUpdate.Count + filesUnchanged;
+            result.FilesUpdated = filesToUpdate.Count;
+            return result;
+        }
+
+        public FileImportResult TryImportFileData(string spreadsheetFilePath, FileDatabase fileDatabase)
+        {
+            try
+            {
+                if (spreadsheetFilePath.EndsWith(Constant.File.ExcelFileExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    return this.TryImportFileDataFromXlsx(spreadsheetFilePath, fileDatabase);
+                }
+                else
+                {
+                    return this.TryImportFileDataFromCsv(spreadsheetFilePath, fileDatabase);
+                }
+            }
+            catch (IOException ioException)
+            {
+                return new FileImportResult()
+                {
+                    Exception = ioException
+                };
+            }
+        }
+
+        private FileImportResult TryImportFileDataFromCsv(string csvFilePath, FileDatabase fileDatabase)
+        {
+            using (FileStream stream = new FileStream(csvFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                using (StreamReader csvReader = new StreamReader(stream))
+                {
+                    this.status.BeginCsvRead(csvReader.BaseStream.Length);
+                    FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadAndParseCsvLine(csvReader); }, csvFilePath);
+                    return result;
+                }
+            }
+        }
+
+        private FileImportResult TryImportFileDataFromXlsx(string xlsxFilePath, FileDatabase fileDatabase)
+        {
+            try
+            {
+                using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
+                {
+                    this.status.BeginExcelWorksheetLoad();
+                    ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets[Constant.Excel.FileDataWorksheetName];
+                    if (worksheet == null)
+                    {
+                        FileImportResult worksheetNotFound = new FileImportResult();
+                        worksheetNotFound.Errors.Add(String.Format("Worksheet {0} not found.", Constant.Excel.FileDataWorksheetName));
+                        return worksheetNotFound;
+                    }
+
+                    // cache worksheet dimensions
+                    // Profiling shows EPPlus 4.5.2.1 doesn't cache the worksheet's size, so keep it on the heap for efficiency. 
+                    // ExcelWorksheet.Cells.{Columns, Rows} can't be used for this purpose these properties indicate the maximum
+                    // worksheet size rather than the range populated with data.
+                    ExcelAddressBase dimension = worksheet.Dimension;
+
+                    this.status.BeginExcelWorkbookRead(dimension.Rows);
+                    int row = 0;
+                    FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadXlsxRow(worksheet, dimension, ++row); }, xlsxFilePath);
+                    return result;
+                }
+            }
+            catch (IOException ioException)
+            {
+                FileImportResult result = new FileImportResult();
+                result.Errors.Add(ioException.ToString());
+                return result;
+            }
         }
     }
 }

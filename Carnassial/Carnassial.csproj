@@ -198,6 +198,7 @@
     <Compile Include="Database\SQLiteTemporaryStore.cs" />
     <Compile Include="Database\SQLiteWalCheckpoint.cs" />
     <Compile Include="Database\WindowedTransactionSequence.cs" />
+    <Compile Include="Data\FileTableSpreadsheetMap.cs" />
     <Compile Include="Data\ImageSetTransactionSequence.cs" />
     <Compile Include="Data\ControlTransactionSequence.cs" />
     <Compile Include="Data\FileTransactionSequence.cs" />
